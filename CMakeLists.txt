@@ -12,6 +12,7 @@ set(PROMEKI_SOURCES
     src/error.cpp
     src/shareddata.cpp
     src/point2d.cpp
+    src/size2d.cpp
 )
 
 add_library(promeki SHARED ${PROMEKI_SOURCES})
