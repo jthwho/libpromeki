@@ -29,12 +29,62 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <cstdint>
 
 namespace promeki {
 
 class String : public std::string {
         public:
                 static constexpr const char *WhitespaceChars = " \t\n\r\f\v";
+ 
+                static String number(int8_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(uint8_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(int16_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(uint16_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(int32_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(uint32_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(int64_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
+                static String number(uint64_t value, 
+                                int base = 10, 
+                                int padding = 0, 
+                                char padchar = ' ',
+                                bool addPrefix = false);
+
 
                 template <typename T>
                 static String dec(const T &val, int padding = 0, char padchar = ' ') {
@@ -178,6 +228,76 @@ class String : public std::string {
                 bool isNumeric() const {
                         return !empty() && std::all_of(begin(), end(), ::isdigit);
                 }
+
+                String &arg(const String &str);
+
+                String &arg(int8_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+                String &arg(uint8_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+
+                String &arg(int16_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+                String &arg(uint16_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+
+                String &arg(int32_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+                String &arg(uint32_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+                String &arg(int64_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+                String &arg(uint64_t value, 
+                            int base = 10, 
+                            int padding = 0, 
+                            char padchar = ' ',
+                            bool addPrefix = false) {
+                        return arg(number(value, base, padding, padchar, addPrefix));
+                }
+
+
 };
 
 }

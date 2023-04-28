@@ -41,7 +41,7 @@
                 return false; \
         }
 
-#define PROMEKI_MSG(msg) messageUnitTest(unit, msg);
+#define PROMEKI_TEST_MSG(msg) messageUnitTest(unit, msg);
 
 namespace promeki {
 

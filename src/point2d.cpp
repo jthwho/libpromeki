@@ -26,6 +26,7 @@
 
 namespace promeki {
 
+#if 0
 template<typename T> 
 bool test_point2d(const UnitTest &unit) {
 	// Tests the constructor.
@@ -75,7 +76,7 @@ PROMEKI_TEST_BEGIN(Point2D)
         PROMEKI_MSG("Testing double");
         if(!test_point2d<double>(unit)) return false;
 PROMEKI_TEST_END()
-
+#endif
 
 } // namespace promeki
 

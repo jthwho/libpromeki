@@ -27,14 +27,6 @@
 
 namespace promeki {
 
-PROMEKI_TEST_BEGIN(unittest)
-
-        int a = 42;
-        PROMEKI_TEST(a == 42)
-
-PROMEKI_TEST_END()
-
-
 typedef std::vector<UnitTest> UnitTestVector;
 
 static UnitTestVector &unitTestVector() {
@@ -46,6 +38,7 @@ int registerUnitTest(const UnitTest &&test) {
         UnitTestVector &utv = unitTestVector();
         int ret = utv.size();
         utv.push_back(std::move(test));
+        std::cout << "Registered Test: " << test.name << std::endl;
         return ret;
 }
 

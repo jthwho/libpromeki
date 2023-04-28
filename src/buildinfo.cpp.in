@@ -1,0 +1,58 @@
+/*****************************************************************************
+ * buildinfo.cpp.in
+ * April 27, 2023
+ *
+ * Copyright 2023 - Howard Logic
+ * https://howardlogic.com
+ * All Rights Reserved
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ *
+ *****************************************************************************/
+
+#include <promeki/buildinfo.h>
+
+namespace promeki {
+
+static const char *_buildType() {
+#ifdef _MSC_VER
+#   ifdef _DEBUG
+    return "Debug";
+#   else
+    return "Release";
+#   endif
+#else
+    return "@BUILD_INFO_TYPE@";
+#endif
+
+};
+
+static const BuildInfo _buildInfo = {
+    "@BUILD_INFO_NAME@",
+    "@BUILD_INFO_VERSION@",
+    "@BUILD_INFO_REPOIDENT@",
+    "@BUILD_INFO_DATE@",
+    "@BUILD_INFO_TIME@",
+    "@BUILD_INFO_HOSTNAME@",
+    _buildType(),
+    @BUILD_INFO_VERSION_BETA@,
+    @BUILD_INFO_VERSION_RC@
+};
+
+const BuildInfo *getBuildInfo() {
+    return &_buildInfo;
+}
+
+} // namespace promeki
+

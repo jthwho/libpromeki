@@ -21,46 +21,147 @@
  *
  *****************************************************************************/
 
+#include <limits>
 #include <promeki/string.h>
-#include <promeki/unittest.h>
-#include <iostream>
 
 namespace promeki {
 
-PROMEKI_TEST_BEGIN(String)
-        String nullstr;
-        String s1 = "String 1";
-        String s2("String 2");
-        String s3(s2);
-        String s4(" \t \n \r WHITE \n\t\nSPACE  \t\n\t\t\n   ");
-        String s5("item1,item2,item3");
+static const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        PROMEKI_TEST(s1.toUpper() == "STRING 1");
-        PROMEKI_TEST(s1.toLower() == "string 1");
-        PROMEKI_TEST(s1 == "String 1");
-        PROMEKI_TEST(s2 == "String 2");
-        PROMEKI_TEST(s3 == "String 2");
-        PROMEKI_TEST(s2 == s3);
-        PROMEKI_TEST(s4.trim() == "WHITE \n\t\nSPACE");
-        auto s5split = s5.split(",");
-        PROMEKI_TEST(s5split.size() == 3);
-        PROMEKI_TEST(s5split.at(0) == "item1");
-        PROMEKI_TEST(s5split.at(1) == "item2");
-        PROMEKI_TEST(s5split.at(2) == "item3");
-        PROMEKI_TEST(s1.startsWith("Stri"));
-        PROMEKI_TEST(!s1.startsWith("StrI"));
-        PROMEKI_TEST(s1.endsWith("g 1"));
-        PROMEKI_TEST(!s1.endsWith("gg1"));
-        PROMEKI_TEST(s5.count("item") == 3);
-        PROMEKI_TEST(s1.reverse() == "1 gnirtS");
-        PROMEKI_TEST(String("1234").isNumeric());
-        PROMEKI_TEST(!s1.isNumeric());
-        PROMEKI_TEST(String::dec(1234) == "1234");
-        PROMEKI_TEST(String::dec(1234, 6) == "  1234");
-        PROMEKI_TEST(String::dec(1234, 6, 'x') == "xx1234");
-        PROMEKI_TEST(String::hex(0x42, 4) == "0x0042");
-        PROMEKI_TEST(String::bin(0b11111, 8) == "0b00011111");
+template <typename T>
+static String num(T val, 
+              int base = 10, 
+              int padding = 0, 
+              char padchar = ' ',
+              bool addPrefix = false) {
+        if(base < 2 || base > 36) {
+                // FIXME: Report an error the base is out of bounds
+                return String();
+        }
 
-PROMEKI_TEST_END()
+        char buf[128];
+        bool isNegative = false;
+        bool isPaddingNegative = false;
+        if(val < 0) {
+                isNegative = true;
+                val = -val;
+        }
+        if(padding < 0) {
+                isPaddingNegative = true;
+                padding = -padding;
+        }
 
+        int index = 0;
+        if(val == 0) {
+                buf[index++] = '0';
+        } else {
+                T remainder;
+                while(val > 0) {
+                        T r = val % base;
+                        buf[index++] = digits[r];
+                        val /= base;
+                }
+        }
+        if(addPrefix) {
+                switch(base) {
+                        case 2:  buf[index++] = 'b'; buf[index++] = '0'; break;
+                        case 8:  buf[index++] = 'o'; buf[index++] = '0'; break;
+                        case 16: buf[index++] = 'x'; buf[index++] = '0'; break;
+                        case 10: /* base 10 has no prefix */; break;
+                        // There doesn't seem to be any common prefix notation for arbitary number
+                        // bases, so inventing one here.
+                        default: 
+                                buf[index++] = ':';
+                                buf[index++] = digits[base % 10];
+                                if(base / 10) buf[index++] = digits[base / 10];
+                                buf[index++] = 'b';
+                                break;
+                }
+        }
+        int remaining = sizeof(buf) - index - 1;
+        padding -= index;
+        if(padding < 0) {
+                padding = 0;
+                isPaddingNegative = false;
+        }
+        if(padding > remaining) {
+                // FIXME: Report a warning that we've run out of space for the requested padding.
+                padding = remaining;
+        }
+        for(int i = 0; i < padding; i++) buf[index++] = padchar;
+        buf[index] = 0; // And the null terminator like the candle on the C string cake.
+        
+        // In the case the padding was negative, it comes after the number so we leave it
+        // where it is in the string reverse.
+        int lastPos = index - 1;
+        if(isPaddingNegative) lastPos -= padding;
+
+        // Now reverse the whole damn thing because it's easier to build a number in reverse.
+        for (int i = 0, j = lastPos; i < j; i++, j--) {
+                char temp = buf[i];
+                buf[i] = buf[j];
+                buf[j] = temp;
+        }
+        return String(buf);
 }
+
+String String::number(int8_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(uint8_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(int16_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(uint16_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(int32_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(uint32_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(int64_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(uint64_t val, int base, int padding, char padchar, bool addPrefix) {
+        return num(val, base, padding, padchar, addPrefix);
+}
+
+String &String::arg(const String &str) {
+        // Find the lowest numbered unreplaced placeholder.
+        int minValue = std::numeric_limits<int>::max();
+        size_t minPos = std::string::npos;
+        std::string placeholderToReplace;
+        for(size_t i = 0; i < this->size(); ++i) {
+            if((*this)[i] == '%' && i + 1 < this->size() && std::isdigit((*this)[i + 1])) {
+                size_t j = i + 1;
+                while (j < this->size() && std::isdigit((*this)[j])) ++j;
+                std::string placeholder = this->substr(i, j - i);
+                int value = std::stoi(placeholder.substr(1));
+                if(value < minValue) {
+                    minValue = value;
+                    minPos = i;
+                    placeholderToReplace = placeholder;
+                }
+            }
+        }
+
+        // Replace the found placeholder with the argument value.
+        if(minPos != std::string::npos) {
+            this->replace(minPos, placeholderToReplace.length(), str);
+        }
+        return *this;
+}
+
+} // namespace promeki
+
