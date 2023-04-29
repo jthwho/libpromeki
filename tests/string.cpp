@@ -67,7 +67,7 @@ PROMEKI_TEST_BEGIN(String)
         PROMEKI_TEST(String::number(12345, 20, 10, ' ', true) == "  b20:1AH5");
         PROMEKI_TEST(String::number(12345, 4, 6, ' ', true) == "b4:3000321");
         PROMEKI_TEST(String("%3 %2 %1").arg(3).arg(2).arg(1) == "1 2 3");
-
+        PROMEKI_TEST(String("Two hundred and twenty-six billion, four hundred eighty-three million, One Hundred And Thirty-Four Thousand Two Hundred and Ninety-Six").parseNumberWords() == 226483134296);
 PROMEKI_TEST_END()
 
 

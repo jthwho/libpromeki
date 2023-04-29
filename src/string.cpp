@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <map>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/logger.h>
@@ -226,6 +227,53 @@ unsigned int String::toUInt(Error *e) const {
         return ret;
 }
 
+int64_t String::parseNumberWords(bool *success) const {
+        static const std::map<std::string, int64_t> numberWords = {
+                {"zero", 0}, {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4},
+                {"five", 5}, {"six", 6}, {"seven", 7}, {"eight", 8}, {"nine", 9},
+                {"ten", 10}, {"eleven", 11}, {"twelve", 12}, {"thirteen", 13},
+                {"fourteen", 14}, {"fifteen", 15}, {"sixteen", 16}, {"seventeen", 17},
+                {"eighteen", 18}, {"nineteen", 19}, {"twenty", 20}, {"thirty", 30},
+                {"forty", 40}, {"fifty", 50}, {"sixty", 60}, {"seventy", 70},
+                {"eighty", 80}, {"ninety", 90}, {"hundred", 100}, {"thousand", 1000},
+                {"million", 1000000}, {"billion", 1000000000}
+        };
+
+        std::string copy = d;
+        for(char &c : copy) if(!std::isalpha(c)) c = ' ';
+        std::istringstream iss(copy);
+        std::string token;
+        int64_t value = 0;
+        int64_t current = 0;
+        bool found = false;
+
+        while (iss >> token) {
+                for(char &c : token) c = std::tolower(static_cast<unsigned char>(c));
+                auto it = numberWords.find(token);
+                if(it != numberWords.end()) {
+                        found = true;
+                        int64_t wordval = it->second;
+                        if(wordval >= 1000) {
+                                if(!current) current = 1;
+                                value += current * wordval;
+                                current = 0;
+                        } else if(wordval >= 100) {
+                                if(!current) current = 1;
+                                current *= wordval;
+                        } else {
+                                current += wordval;
+                        }
+                        //promekiInfo("%s %lld %lld", token.c_str(), (long long)current, (long long)value);
+                } else if (token == "and") {
+                        continue;
+                } else {
+                        break;
+                }
+        }
+        value += current;
+        if(success != nullptr) *success = found;
+        return value;
+}
 
 } // namespace promeki
 

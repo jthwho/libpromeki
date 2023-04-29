@@ -385,6 +385,8 @@ class String {
                 int toInt(Error *err = nullptr) const;
                 unsigned int toUInt(Error *err = nullptr) const;
 
+                int64_t parseNumberWords(bool *success = nullptr) const;
+
         private:
                 // Composition of std::string because apparently inheriting std::string
                 // to add functionality is a bad idea due to the lack of virtual destructor

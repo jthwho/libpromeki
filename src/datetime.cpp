@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <iomanip>
+#include <map>
 #include <promeki/datetime.h>
 #include <promeki/logger.h>
 
@@ -70,7 +71,7 @@ static String addSubsecondToFormat(double ns, const char *fmt, bool &jumpSecond)
 }
        
 
-String DateTime::strftime(const char *fmt, const std::tm &tm) {
+String DateTime::strftime(const std::tm &tm, const char *fmt) {
         char buf[64];
         size_t ct = std::strftime(buf, sizeof(buf) - 1, fmt, &tm);
         return String(buf, ct);
@@ -83,55 +84,75 @@ String DateTime::toString(const char *fmt) const {
         auto t = std::chrono::system_clock::to_time_t(_value);
         if(jumpSecond) t++;
         std::tm tm = *std::localtime(&t);
-        return strftime(newfmt.cstr(), tm);
+        return strftime(tm, newfmt.cstr());
 }
 
+DateTime DateTime::fromNow(const String &description) {
+        using namespace std::chrono;
+        static const std::map<std::string, system_clock::duration> units = {
+                {"second", seconds(1)},
+                {"minute", minutes(1)},
+                {"hour", hours(1)},
+                {"day", hours(24)},
+                {"week", hours(24 * 7)}
+        };
+
+        std::istringstream iss(description.stds());
+        int64_t count = 0;
+        std::string token;
+        system_clock::duration total_duration = seconds(0);
+        int months = 0;
+        int years = 0;
+
+        while(iss >> token) {
+                // Make the token string lowercase for case-insensitive comparison
+                for(char& c : token) c = std::tolower(c);
+
+                // Handle "next" and "previous" tokens
+                if(token == "next") {
+                        count = 1;
+                        continue;
+                } else if (token == "previous") {
+                        count = -1;
+                        continue;
+                }
+
+                // Try to parse the token as an integer count
+                if(std::istringstream(token) >> count) continue;
+
+                // FIXME: Need to use the String::parseNumberWords()
+                //if(parse_number_word(token, count)) continue;
+
+                // Remove trailing 's' if present (e.g., "days" -> "day")
+                if (token.back() == 's') token.pop_back();
+
+                // Look up the duration unit in the map and accumulate the total duration
+                auto it = units.find(token);
+                if (it != units.end()) {
+                        total_duration += count * it->second;
+                } else if (token == "month") {
+                        months += count;
+                } else if (token == "year") {
+                        years += count;
+                }
+        }
+
+        // Calculate the future DateTime based on the current time and the total duration
+        system_clock::time_point future_time = system_clock::now() + total_duration;
+
+        // Convert time_point to std::tm to handle months and years
+        std::time_t future_time_t = system_clock::to_time_t(future_time);
+        std::tm future_tm = *std::localtime(&future_time_t);
+        future_tm.tm_mon += months;
+        future_tm.tm_year += years;
+
+        // Normalize the std::tm structure and convert back to time_point
+        std::time_t normalized_time_t = std::mktime(&future_tm);
+        future_time = system_clock::from_time_t(normalized_time_t);
+
+        return DateTime(future_time);
+}
 
 } // namespace promeki
 
-#if 0
-static String formatTime(const std::tm &tm, const std::chrono::microseconds &microseconds, const std::string& format) {
-        std::string result;
-        bool inside_token = false;
-        std::string subsecond_token;
-        for (char c : format) {
-                if (inside_token) {
-                        if (c >= '0' && c <= '9') {
-                                subsecond_token += c;
-                        } else {
-                                inside_token = false;
-                                if (c == 'f') {
-                                        int num_digits = subsecond_token.empty() ? 6 : std::stoi(subsecond_token);
-                                        num_digits = std::clamp(num_digits, 1, 6);
-                                        char buffer[7];
-                                        std::snprintf(buffer, sizeof(buffer), "%.*ld", num_digits, static_cast<long>(microseconds.count() / static_cast<int>(std::pow(10, 6 - num_digits))));
-                                        result += buffer;
-                                } else {
-                                        char buffer[64];
-                                        std::string token = "%" + std::string(1, c);
-                                        std::strftime(buffer, sizeof(buffer), token.c_str(), &tm);
-                                        result += buffer;
-                                }
-                        }
-                } else if (c == '%') {
-                        inside_token = true;
-                        subsecond_token.clear();
-                } else {
-                        result += c;
-                }
-        }
-        if (inside_token) {
-                int num_digits = subsecond_token.empty() ? 6 : std::stoi(subsecond_token);
-                num_digits = std::clamp(num_digits, 1, 6);
-                char buffer[7];
-                std::snprintf(buffer, sizeof(buffer), "%.*ld", num_digits, static_cast<long>(microseconds.count() / static_cast<int>(std::pow(10, 6 - num_digits))));
-                result += buffer;
-        }
-        return result;
-}
-
-// Returns the current timestamp as a human-readable date and time string.
-// The user can pass in a custom format, or use the default format if none is provided.
-// The custom token %f followed by an optional integer specifies the subsecond value with the given number of significant digits.
-#endif
 
