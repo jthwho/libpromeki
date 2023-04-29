@@ -30,11 +30,16 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdint>
+#include <promeki/util.h>
 
 namespace promeki {
 
-class String : public std::string {
+class Error;
+
+class String {
         public:
+                static const size_t npos = std::string::npos;
+
                 static constexpr const char *WhitespaceChars = " \t\n\r\f\v";
  
                 static String number(int8_t value, 
@@ -103,7 +108,7 @@ class String : public std::string {
 
                 template <typename T>
                 static String bin(const T &val, int digits = 32, bool addPrefix = true) {
-                        String ret;
+                        std::string ret;
                         if(addPrefix) ret += "0b";
                         T mask = static_cast<T>(1) << (digits - 1);
                         for(int i = 0; i < digits; i++) {
@@ -113,70 +118,153 @@ class String : public std::string {
                         return ret;
                 }
 
-                String() {
+                PROMEKI_PRINTF_FUNC(1, 2) static String sprintf(const char *fmt, ...);
 
+                String() { }
+                String(const char *str) : d(str) { }
+                String(const char *str, size_t len) : d(str, len) { }
+                String(size_t ct, char c) : d(ct, c) { }
+                String(const std::string &str) : d(str) { }
+                String(const std::string &&str) : d(str) { }
+
+                std::string &stds() {
+                        return d;
                 }
 
-                String(const char *str) : std::string(str) {
-
+                const std::string &stds() const {
+                        return d;
                 }
 
-                String(const std::string &str) : std::string(str) {
-
+                const char *cstr() const {
+                        return d.c_str();
                 }
 
-                String(const std::string &&str) : std::string(std::move(str)) {
-
+                size_t size() const {
+                        return d.size();
                 }
 
-                String(const String &str) : std::string(str) {
-
+                void resize(size_t val) {
+                        d.resize(val);
+                        return;
                 }
 
-                String(const String &&str) : std::string(std::move(str)) {
-
+                size_t length() const {
+                        return d.length();
                 }
-                
+
+                bool empty() const {
+                        return d.empty();
+                }
+
+                size_t find(char val) const {
+                        return d.find(val);
+                }
+
+                String substr(size_t pos = 0, size_t len = npos) {
+                        return substr(pos, len);
+                }
+
                 String &operator=(const std::string &str) {
-                        *this = str;
+                        d = str;
                         return *this;
                 }
 
                 String &operator=(const std::string &&str) {
-                        if(&str == static_cast<std::string *>(this)) return *this;
-                        std::string::operator=(std::move(str));
+                        d = str;
                         return *this;
                 }
 
-                String &operator=(const String &str) {
-                        *this = str;
+                String operator+(const String &val) const {
+                        return String(d + val.d);
+                }
+
+                String operator+(const std::string &val) const {
+                        return String(d + val);
+                }
+
+                String operator+(const char *val) const {
+                        return String(d + val);
+                }
+
+                String operator+(char val) const {
+                        return String(d + val);
+                }
+
+                String &operator+=(const String &val) {
+                        d += val.d;
                         return *this;
                 }
 
-                String &operator=(const String &&str) {
-                        if(&str == this) return *this;
-                        std::string::operator=(std::move(str));
+                String &operator+=(const std::string &val) {
+                        d += val;
                         return *this;
+                }
+
+                String &operator+=(const char *val) {
+                        d += val;
+                        return *this;
+                }
+
+                String &operator+=(char val) {
+                        d += val;
+                        return *this;
+                }
+
+                char &operator[](int index) {
+                        return d[index];
+                }
+
+                const char &operator[](int index) const {
+                        return d[index];
+                }
+
+                bool operator==(const String &val) const {
+                        return d == val.d;
+                }
+
+                bool operator==(const char *val) const {
+                        return d == val;
+                }
+
+                bool operator==(char val) const {
+                        return d.size() == 1 && d[0] == val;
+                }
+
+                bool operator!=(const String &val) const {
+                        return d != val.d;
+                }
+
+                bool operator!=(const char *val) const {
+                        return d != val;
+                }
+
+                bool operator!=(char val) const {
+                        return d.size() != 1 || d[0] != val;
+                }
+
+               friend std::ostream &operator<<(std::ostream& os, const String &val) {
+                        os << val.d;
+                        return os;
                 }
 
                 String toUpper() const {
-                        String result(*this);
+                        std::string result(d);
                         std::transform(result.begin(), result.end(), result.begin(), ::toupper);
                         return result;
                 }
 
                 String toLower() const {
-                        String result(*this);
+                        std::string result(d);
                         std::transform(result.begin(), result.end(), result.begin(), ::tolower);
                         return result;
                 }
 
                 String trim() const {
-                        String result;
-                        size_t first = find_first_not_of(WhitespaceChars);
+                        std::string result;
+                        size_t first = d.find_first_not_of(WhitespaceChars);
                         if(first != std::string::npos) {
-                                size_t last = find_last_not_of(WhitespaceChars);
-                                result = substr(first, last - first + 1);
+                                size_t last = d.find_last_not_of(WhitespaceChars);
+                                result = d.substr(first, last - first + 1);
                         }
                         return result;
                 }
@@ -184,35 +272,33 @@ class String : public std::string {
                 std::vector<String> split(const std::string& delimiter) const {
                         std::vector<String> result;
                         size_t pos = 0;
-                        std::string str = *this;
-                        while ((pos = str.find(delimiter)) != std::string::npos) {
+                        std::string str = d;
+                        while((pos = str.find(delimiter)) != std::string::npos) {
                                 String token = str.substr(0, pos);
                                 if (!token.empty()) {
                                         result.push_back(token);
                                 }
                                 str.erase(0, pos + delimiter.length());
                         }
-                        if (!str.empty()) {
+                        if(!str.empty()) {
                                 result.push_back(str);
                         }
                         return result;
                 }
 
-                bool startsWith(const std::string& prefix) const {
-                        return compare(0, prefix.size(), prefix) == 0;
+                bool startsWith(const String &prefix) const {
+                        return d.compare(0, prefix.size(), prefix.d) == 0;
                 }
 
-                bool endsWith(const std::string& suffix) const {
-                        if (suffix.size() > size()) {
-                                return false;
-                        }
-                        return std::equal(suffix.rbegin(), suffix.rend(), rbegin());
+                bool endsWith(const String &suffix) const {
+                        if(suffix.size() > size()) return false;
+                        return std::equal(suffix.d.rbegin(), suffix.d.rend(), d.rbegin());
                 }
 
-                size_t count(const std::string& substr) const {
+                size_t count(const String &substr) const {
                         size_t count = 0;
                         size_t pos = 0;
-                        while ((pos = find(substr, pos)) != std::string::npos) {
+                        while((pos = d.find(substr.d, pos)) != std::string::npos) {
                                 ++count;
                                 pos += substr.length();
                         }
@@ -220,13 +306,13 @@ class String : public std::string {
                 }
 
                 String reverse() const {
-                        String result(*this);
+                        std::string result(d);
                         std::reverse(result.begin(), result.end());
                         return result;
                 }
 
                 bool isNumeric() const {
-                        return !empty() && std::all_of(begin(), end(), ::isdigit);
+                        return !empty() && std::all_of(d.begin(), d.end(), ::isdigit);
                 }
 
                 String &arg(const String &str);
@@ -246,7 +332,6 @@ class String : public std::string {
                             bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
-
 
                 String &arg(int16_t value, 
                             int base = 10, 
@@ -297,7 +382,14 @@ class String : public std::string {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
+                int toInt(Error *err = nullptr) const;
+                unsigned int toUInt(Error *err = nullptr) const;
 
+        private:
+                // Composition of std::string because apparently inheriting std::string
+                // to add functionality is a bad idea due to the lack of virtual destructor
+                // and object slicing.
+                std::string d;
 };
 
 }

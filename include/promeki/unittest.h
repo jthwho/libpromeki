@@ -25,6 +25,7 @@
 
 #include <promeki/string.h>
 #include <promeki/util.h>
+#include <promeki/logger.h>
 #include <functional>
 
 #define PROMEKI_TEST_BEGIN(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_unittest_, PROMEKI_UNIQUE_ID) = \
@@ -35,13 +36,13 @@
 
 #define PROMEKI_TEST(test) \
         if(test) { \
-                signalUnitTest(unit, PROMEKI_STRINGIFY(test), true); \
+                promekiInfo("PASS: %s", PROMEKI_STRINGIFY(test)); \
         } else { \
-                signalUnitTest(unit, PROMEKI_STRINGIFY(test), false); \
+                promekiErr("FAIL: %s", PROMEKI_STRINGIFY(test)); \
                 return false; \
         }
 
-#define PROMEKI_TEST_MSG(msg) messageUnitTest(unit, msg);
+#define PROMEKI_TEST_MSG(msg) promekiInfo("----: %s", String(msg).cstr());
 
 namespace promeki {
 
@@ -54,8 +55,6 @@ struct UnitTest {
 
 int registerUnitTest(const UnitTest &&test);
 bool runUnitTests();
-void signalUnitTest(const UnitTest &test, const String &desc, bool state);
-void messageUnitTest(const UnitTest &test, const String &msg);
 
 }
 

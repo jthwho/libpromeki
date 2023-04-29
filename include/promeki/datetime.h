@@ -1,6 +1,6 @@
 /*****************************************************************************
- * unittest.cpp
- * April 26, 2023
+ * datetime.h
+ * April 28, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,12 +21,38 @@
  *
  *****************************************************************************/
 
-#include <promeki/unittest.h>
-#include <promeki/logger.h>
-using namespace promeki;
+#pragma once
 
-// Run the built in unit tests
-int main(int argc, char *argv[]) {
-        return runUnitTests() ? 0 : 42;
-}
+#include <chrono>
+#include <ctime>
+#include <promeki/string.h>
 
+namespace promeki {
+
+class DateTime {
+        public:
+                constexpr static const char *defaultFormat = "%Y-%M-%D %H:%M:%S";
+
+                using Value = std::chrono::system_clock::time_point;
+
+                static DateTime now() {
+                        return DateTime(std::chrono::system_clock::now());
+                }
+
+                static String strftime(const char *format, const std::tm &tm);
+
+                DateTime() { }
+                DateTime(const Value &val) : _value(val) { }
+
+                String toString(const char *format = defaultFormat) const;
+
+                Value value() const {
+                        return _value;
+                }
+
+        private:
+                Value   _value;
+};
+
+
+} // namespace promeki

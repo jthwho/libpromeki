@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -65,6 +65,10 @@ set(PROMEKI_SOURCES
     src/point2d.cpp
     src/size2d.cpp
     src/mempool.cpp
+    src/logger.cpp
+    src/ansistream.cpp
+    src/fileinfo.cpp
+    src/datetime.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -74,6 +78,7 @@ set(UNITTEST_SOURCES
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
+target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
 
 add_executable(unittest ${UNITTEST_SOURCES})
 target_link_libraries(unittest PRIVATE ${APP_NAME})

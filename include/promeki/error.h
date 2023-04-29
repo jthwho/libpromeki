@@ -22,16 +22,23 @@
  *****************************************************************************/
 
 #pragma once
+
 #include <promeki/string.h>
 
 namespace promeki {
 
 class Error {
         public:
-                static void registerErrorCode(int code, const String &desc);
-                static String errorCodeDesc(int code);
+                enum Code {
+                        Ok = 0,
+                        Invalid,
+                        OutOfRange
+                };
 
-                Error(int code = 0) : _code(code) {
+                static void registerErrorCode(Code code, const String &desc);
+                static String errorCodeDesc(Code code);
+
+                Error(Code code = Ok) : _code(code) {
 
                 }
 
@@ -39,7 +46,7 @@ class Error {
 
                 }
 
-                int code() const {
+                Code code() const {
                         return _code;
                 }
 
@@ -56,7 +63,7 @@ class Error {
                 }
 
         private:
-                int     _code;
+                Code    _code;
 };
 
 } // namespace promeki

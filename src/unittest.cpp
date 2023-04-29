@@ -24,6 +24,7 @@
 #include <iostream>
 #include <vector>
 #include <promeki/unittest.h>
+#include <promeki/logger.h>
 
 namespace promeki {
 
@@ -38,33 +39,24 @@ int registerUnitTest(const UnitTest &&test) {
         UnitTestVector &utv = unitTestVector();
         int ret = utv.size();
         utv.push_back(std::move(test));
-        std::cout << "Registered Test: " << test.name << std::endl;
+        promekiInfo("Registered Test: %s", test.name.cstr());
         return ret;
-}
-
-void signalUnitTest(const UnitTest &unit, const String &test, bool status) {
-        std::cout << "  " << (status ? "PASS" : "FAIL") << ": " << test << std::endl;
-        return;
-}
-
-void messageUnitTest(const UnitTest &unit, const String &msg) {
-        std::cout << "  " << "-- " << msg << " --" << std::endl;
-        return;
 }
 
 bool runUnitTests() {
         const UnitTestVector &utv = unitTestVector();
-        std::cout << "Total Unit Tests: " << utv.size() << std::endl;
+        promekiInfo("Total Unit Tests: %d", (int)utv.size());
         for(int i = 0; i < utv.size(); i++) {
                 const UnitTest &ut = utv.at(i);
-                std::cout << "Running Test Unit '" << ut.name << "' from " << ut.file << ":" << ut.line << std::endl;
+                promekiInfo("Running Test '%s' from %s:%d", 
+                        ut.name.cstr(), ut.file.cstr(), ut.line);
                 bool ret = ut.func(ut);
                 if(!ret) {
-                        std::cout << "ERROR: Test Failed In This Unit" << std::endl;
+                        promekiErr("Test '%s' failed", ut.name.cstr());
                         return false;
                 }
         }
-        std::cout << "SUCCESS.  All tests passed" << std::endl;
+        promekiInfo("All tests pass.  Good job.");
         return true;
 }
 

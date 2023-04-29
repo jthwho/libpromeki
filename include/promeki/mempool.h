@@ -28,6 +28,7 @@
 #include <set>
 #include <mutex>
 #include <algorithm>
+#include <promeki/string.h>
 
 namespace promeki {
 
@@ -95,6 +96,11 @@ class MemPool {
                         return;
                 }
 
+                const String &name() const { return _name; }
+                void setName(const String &val) {
+                        _name = val;
+                        return;
+                }
                 Stats stats() const;
                 BlockSet memoryMap() const;
                 void dump() const;
@@ -102,6 +108,7 @@ class MemPool {
                 void free(void* ptr);
 
        private:
+                String                  _name;
                 mutable std::mutex      _mutex;
                 BlockSet                _freeBlocks;
                 BlockMap                _allocatedBlocks;

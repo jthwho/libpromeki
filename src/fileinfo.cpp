@@ -1,6 +1,6 @@
 /*****************************************************************************
- * unittest.cpp
- * April 26, 2023
+ * fileinfo.cpp
+ * April 28, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,12 +21,9 @@
  *
  *****************************************************************************/
 
-#include <promeki/unittest.h>
-#include <promeki/logger.h>
-using namespace promeki;
+#include <promeki/fileinfo.h>
 
-// Run the built in unit tests
-int main(int argc, char *argv[]) {
-        return runUnitTests() ? 0 : 42;
-}
+namespace promeki {
 
+
+} // namespace promeki

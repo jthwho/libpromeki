@@ -23,12 +23,12 @@
 
 #include <iostream>
 #include <promeki/mempool.h>
-#include <promeki/string.h>
+#include <promeki/logger.h>
 
 namespace promeki {
 
 MemPool::MemPool() {
-
+        _name = String::hex(reinterpret_cast<uintptr_t>(this));
 }
 
 void MemPool::addRegion(uintptr_t startingAddress, size_t size) {
@@ -72,18 +72,14 @@ MemPool::BlockSet MemPool::memoryMap() const {
 
 void MemPool::dump() const {
         BlockSet map = memoryMap();
+        promekiInfo("MemPool '%s' Dump", _name.cstr());
         for(const auto& block : map) {
                 if(block.allocated) {
-                        std::cout << String("ALLOC [%1] %2 bytes, %3 align")
-                        .arg(block.address, 16, -18, ' ', true)
-                        .arg(block.size)
-                        .arg(block.alignment)
-                        << std::endl;
+                        promekiInfo("A [0x%16llX] %d bytes, %d align",
+                                (unsigned long long)block.address, (int)block.size, (int)block.alignment);
                 } else {
-                        std::cout << String("FREE  [%1] %2 bytes")
-                        .arg(block.address, 16, -18, ' ', true)
-                        .arg(block.size)
-                        << std::endl;
+                        promekiInfo("F [0x%16llX] %d bytes",
+                                (unsigned long long)block.address, (int)block.size);
                 }
         }
         return;
@@ -91,7 +87,8 @@ void MemPool::dump() const {
 
 void *MemPool::allocate(size_t size, size_t alignment) {
         if(!isValidAlignment(alignment)) {
-                std::cout << "Allocate Failed: alignment invalid. Size " << size << ", Alignment " << alignment << std::endl;
+                promekiErr("MemPool '%s': allocate failed, alignment invalid. Size %d, Align %d", 
+                                _name.cstr(), (int)size, (int)alignment);
                 return nullptr;
         }
         std::lock_guard<std::mutex> lock(_mutex);
@@ -126,7 +123,8 @@ void *MemPool::allocate(size_t size, size_t alignment) {
                         return reinterpret_cast<void*>(alignedAddress);
                 }
         }
-        std::cout << "Allocate Failed: unable to find free block large enough. Size " << size << ", Alignment " << alignment << std::endl;
+        promekiErr("MemPool '%s': allocate failed, unable to find free block large enough. Size %d, Align %d", 
+                        _name.cstr(), (int)size, (int)alignment);
         return nullptr; // No suitable block found
 }
 
@@ -149,8 +147,8 @@ void MemPool::free(void* ptr) {
         // should be coalesced
         auto insret = _freeBlocks.insert(block);
         if(!insret.second) {
-                // FIXME: Add a proper warning when logging gets enabled.
-                std::cout << "FAILED TO INSERT BLOCK" << std::endl;
+                promekiErr("MemPool '%s': free %p (%p) failed to insert block", 
+                        _name.cstr(), ptr, (void *)block.address);
                 return;
         }
 
@@ -176,7 +174,8 @@ void MemPool::free(void* ptr) {
                 _freeBlocks.erase(itf);
                 insret = _freeBlocks.insert(block);
                 if(!insret.second) {
-                        std::cout << "FAILED TO INSERT UPDATED BLOCK" << std::endl;
+                        promekiErr("MemPool '%s': free %p (%p) failed to insert updated block", 
+                                _name.cstr(), ptr, (void *)block.address);
                         return;
                 }
         }

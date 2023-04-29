@@ -21,8 +21,13 @@
  *
  *****************************************************************************/
 
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <promeki/string.h>
+#include <promeki/error.h>
+#include <promeki/logger.h>
 
 namespace promeki {
 
@@ -39,9 +44,13 @@ static String num(T val,
                 return String();
         }
 
-        char buf[128];
+        std::string ret;
+        ret.resize(128);
+
+        char *buf = ret.data();
         bool isNegative = false;
         bool isPaddingNegative = false;
+
         if(val < 0) {
                 isNegative = true;
                 val = -val;
@@ -78,7 +87,7 @@ static String num(T val,
                                 break;
                 }
         }
-        int remaining = sizeof(buf) - index - 1;
+        int remaining = ret.size() - index - 1;
         padding -= index;
         if(padding < 0) {
                 padding = 0;
@@ -102,7 +111,34 @@ static String num(T val,
                 buf[i] = buf[j];
                 buf[j] = temp;
         }
-        return String(buf);
+        ret.resize(index);
+        //promekiInfo("str: %d, base %d, pad %d, pc '%c', %s, index %d, ret '%s'",
+        //        (int)val, (int)base, (int)padding, (int)padchar, addPrefix ? "prefix" : "noprefix", 
+        //        (int)index, ret.c_str());
+        return String(ret);
+}
+
+String String::sprintf(const char *fmt, ...) {
+        std::string ret;
+        ret.resize(256); // Pick a good first guess at the size.
+        // Attempt to format the string into the reserved buffer
+        va_list args;
+        va_start(args, fmt);
+        int length = std::vsnprintf(ret.data(), ret.size() + 1, fmt, args);
+        va_end(args);
+        if(length < 0) return String();
+        // Check if the string was longer than our initial guess.  If not,
+        // do it again with the actual length.
+        if(static_cast<size_t>(length) > ret.size()) {
+                ret.resize(length);
+                va_start(args, fmt);
+                std::vsnprintf(ret.data(), ret.size() + 1, fmt, args);
+                va_end(args);
+        } else {
+                // The reserved size was sufficient; update the string size
+                ret.resize(length);
+        }
+        return ret;
 }
 
 String String::number(int8_t val, int base, int padding, char padchar, bool addPrefix) {
@@ -142,11 +178,11 @@ String &String::arg(const String &str) {
         int minValue = std::numeric_limits<int>::max();
         size_t minPos = std::string::npos;
         std::string placeholderToReplace;
-        for(size_t i = 0; i < this->size(); ++i) {
-            if((*this)[i] == '%' && i + 1 < this->size() && std::isdigit((*this)[i + 1])) {
+        for(size_t i = 0; i < d.size(); ++i) {
+            if(d[i] == '%' && i + 1 < d.size() && std::isdigit(d[i + 1])) {
                 size_t j = i + 1;
-                while (j < this->size() && std::isdigit((*this)[j])) ++j;
-                std::string placeholder = this->substr(i, j - i);
+                while (j < d.size() && std::isdigit(d[j])) ++j;
+                std::string placeholder = d.substr(i, j - i);
                 int value = std::stoi(placeholder.substr(1));
                 if(value < minValue) {
                     minValue = value;
@@ -157,11 +193,39 @@ String &String::arg(const String &str) {
         }
 
         // Replace the found placeholder with the argument value.
-        if(minPos != std::string::npos) {
-            this->replace(minPos, placeholderToReplace.length(), str);
-        }
+        if(minPos != std::string::npos) d.replace(minPos, placeholderToReplace.length(), str.d);
         return *this;
 }
+
+int String::toInt(Error *e) const {
+        Error err;
+        int ret;
+        try {
+                ret = std::stoi(d);
+        } catch(const std::invalid_argument &) {
+                err = Error::Invalid;
+        } catch (const std::out_of_range &) {
+                err = Error::OutOfRange;
+        }
+        if(e != nullptr) *e = err;
+        return ret;
+}
+
+unsigned int String::toUInt(Error *e) const {
+        Error err;
+        unsigned long ret;
+        try {
+                ret = std::stoul(d);
+        } catch(const std::invalid_argument &) {
+                err = Error::Invalid;
+        } catch (const std::out_of_range &) {
+                err = Error::OutOfRange;
+        }
+        if(ret > static_cast<unsigned long>(std::numeric_limits<unsigned int>::max())) err = Error::OutOfRange;
+        if(e != nullptr) *e = err;
+        return ret;
+}
+
 
 } // namespace promeki
 
