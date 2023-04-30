@@ -70,10 +70,11 @@ set(PROMEKI_SOURCES
     src/fileinfo.cpp
     src/datetime.cpp
     src/timestamp.cpp
-    src/pixelformat.cpp
-    src/imagedesc.cpp
     src/memspace.cpp
     src/buffer.cpp
+    src/pixelformat.cpp
+    src/pixel.cpp
+    src/imagedesc.cpp
     src/image.cpp
 )
 
