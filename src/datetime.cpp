@@ -97,7 +97,7 @@ DateTime DateTime::fromNow(const String &description) {
                 {"week", hours(24 * 7)}
         };
 
-        std::istringstream iss(description.stds());
+        std::istringstream iss(description);
         int64_t count = 0;
         std::string token;
         system_clock::duration total_duration = seconds(0);

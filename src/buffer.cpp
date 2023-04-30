@@ -1,6 +1,6 @@
 /*****************************************************************************
- * promeki.h
- * April 26, 2023
+ * buffer.cpp
+ * April 29, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,8 +21,10 @@
  *
  *****************************************************************************/
 
-#pragma once
+#include <promeki/buffer.h>
 
-namespace Promeki {
+namespace promeki {
+
 
 } // namespace promeki
+

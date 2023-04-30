@@ -23,8 +23,83 @@
 
 #pragma once
 
+#include <promeki/shareddata.h>
+#include <promeki/size2d.h>
+#include <promeki/pixelformat.h>
+
 namespace promeki {
 
+class ImageDesc {
+        class Data : public SharedData {
+                public:
+                        Size2D          size;
+                        PixelFormat     pixelFormat;
+
+                        Data() = default;
+                        Data(const Size2D &s, const PixelFormat &p) :
+                                size(s), pixelFormat(p) { }
+
+                        bool isValid() const {
+                                return size.isValid() && pixelFormat.isValid();
+                        }
+
+                        String toString() const {
+                                String ret = size.toString();
+                                ret += ' ';
+                                ret += pixelFormat.name();
+                                return ret;
+                        }
+        };
+
+        public:
+                ImageDesc() : d(new Data) { }
+                ImageDesc(const Size2D &sz, const PixelFormat &pfmt) :
+                        d(new Data(sz, pfmt)) { }
+                ImageDesc(size_t w, size_t h, const PixelFormat &pfmt) :
+                        d(new Data(Size2D(w, h), pfmt)) { }
+
+                bool isValid() const {
+                        return d->isValid();
+                }
+
+                const Size2D &size() const {
+                        return d->size;
+                }
+
+                size_t width() const {
+                        return d->size.width();
+                }
+
+                size_t height() const {
+                        return d->size.height();
+                }
+
+                void setSize(const Size2D &val) {
+                        d->size = val;
+                        return;
+                }
+
+                void setSize(int width, int height) {
+                        d->size.set(width, height);
+                        return;
+                }
+
+                const PixelFormat &pixelFormat() const {
+                        return d->pixelFormat;
+                }
+
+                void setPixelFormat(const PixelFormat &val) {
+                        d->pixelFormat = val;
+                        return;
+                }
+
+                String toString() const {
+                        return d->toString();
+                }
+
+        private:
+                SharedDataPtr<Data> d;
+};
 
 } // namespace promeki
 

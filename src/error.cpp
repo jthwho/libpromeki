@@ -21,9 +21,6 @@
  *
  *****************************************************************************/
 
-
 #include <promeki/error.h>
 
-using namespace promeki;
-
-
+namespace promeki {}   // namespace promeki

@@ -1,6 +1,6 @@
 /*****************************************************************************
- * promeki.h
- * April 26, 2023
+ * image.cpp
+ * April 29, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,8 +21,25 @@
  *
  *****************************************************************************/
 
-#pragma once
+#include <promeki/unittest.h>
+#include <promeki/image.h>
 
-namespace Promeki {
+using namespace promeki;
 
-} // namespace promeki
+
+PROMEKI_TEST_BEGIN(Image)
+        ImageDesc d(1920, 1080, PixelFormat::RGB10);
+        promekiInfo("ImageDesc: %s", d.toString().cstr());
+        PROMEKI_TEST(d.size().isValid());
+        const PixelFormat &pfmt = d.pixelFormat();
+
+        Image img1(d);
+        promekiInfo("Image: %s", img1.desc().toString().cstr());
+        PROMEKI_TEST(pfmt.stride(d.size()) == 1920 * 4);
+        PROMEKI_TEST(pfmt.size(d.size()) == 1920 * 1080 * 4);
+        PROMEKI_TEST(img1.size().isValid());
+        PROMEKI_TEST(img1.desc().isValid());
+        PROMEKI_TEST(img1.isValid());
+
+PROMEKI_TEST_END()
+

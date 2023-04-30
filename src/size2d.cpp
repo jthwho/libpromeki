@@ -23,4 +23,4 @@
 
 #include <promeki/size2d.h>
 
-
+namespace promeki {}   // namespace promeki

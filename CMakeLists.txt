@@ -69,12 +69,20 @@ set(PROMEKI_SOURCES
     src/ansistream.cpp
     src/fileinfo.cpp
     src/datetime.cpp
+    src/timestamp.cpp
+    src/pixelformat.cpp
+    src/imagedesc.cpp
+    src/memspace.cpp
+    src/buffer.cpp
+    src/image.cpp
 )
 
 set(UNITTEST_SOURCES
     tests/unittest.cpp
     tests/mempool.cpp
     tests/string.cpp
+    tests/shareddata.cpp
+    tests/image.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})

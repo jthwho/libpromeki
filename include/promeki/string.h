@@ -36,8 +36,20 @@ namespace promeki {
 
 class Error;
 
+// A more versitle string object, inspired by the Qt QString object.  Internally it uses
+// std::string, but removes some of its verbosity. For the most part, you should be able
+// to use this string just as you would std::string.  It implements cast overloading for
+// std::string, so you should be able to pass it directly to a function that uses a
+// std::string.  If you want to use any of the std::string functions that aren't exported
+// directly in the String interface, you can use the stds() function as it'll give you 
+// a reference or const reference to the underlying std::string object.
 class String {
         public:
+                using Iterator = std::string::iterator;
+                using ConstIterator = std::string::const_iterator;
+                using RevIterator = std::string::reverse_iterator;
+                using ConstRevIterator = std::string::const_reverse_iterator;
+
                 static const size_t npos = std::string::npos;
 
                 static constexpr const char *WhitespaceChars = " \t\n\r\f\v";
@@ -135,6 +147,38 @@ class String {
                         return d;
                 }
 
+                Iterator begin() noexcept {
+                        return d.begin();
+                }
+
+                ConstIterator begin() const noexcept {
+                        return d.begin();
+                }
+                
+                Iterator end() noexcept {
+                        return d.end();
+                }
+
+                ConstIterator end() const noexcept {
+                        return d.end();
+                }
+
+                RevIterator rbegin() noexcept {
+                        return d.rbegin();
+                }
+
+                ConstRevIterator rbegin() const noexcept {
+                        return d.rbegin();
+                }
+
+                RevIterator rend() noexcept {
+                        return d.rend();
+                }
+
+                ConstRevIterator rend() const noexcept {
+                        return d.rend();
+                }
+
                 const char *cstr() const {
                         return d.c_str();
                 }
@@ -162,6 +206,18 @@ class String {
 
                 String substr(size_t pos = 0, size_t len = npos) {
                         return substr(pos, len);
+                }
+
+                operator std::string&() {
+                        return d;
+                }
+
+                operator const std::string &() const {
+                        return d;
+                }
+
+                operator const char *() const {
+                        return d.c_str();
                 }
 
                 String &operator=(const std::string &str) {
@@ -242,9 +298,14 @@ class String {
                         return d.size() != 1 || d[0] != val;
                 }
 
-               friend std::ostream &operator<<(std::ostream& os, const String &val) {
+                friend std::ostream &operator<<(std::ostream &os, const String &val) {
                         os << val.d;
                         return os;
+                }
+
+                friend std::istream &operator>>(std::istream &in, String &val) {
+                        in >> val.d;
+                        return in;
                 }
 
                 String toUpper() const {

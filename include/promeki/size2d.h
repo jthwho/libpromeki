@@ -23,40 +23,39 @@
 
 #pragma once
 
+#include <promeki/string.h>
 namespace promeki {
 
-template <typename T>
-class Size2D {
+template<typename T> class Size2DTemplate {
         public:
-                Size2D(const T &width = 0, const T &height = 0) :
-                        _width(width), _height(height) { }
-                ~Size2D() { }
+                Size2DTemplate(const T & width = 0, const T & height = 0) : _width(width), _height(height) {}
+                ~Size2DTemplate() {}
 
                 bool isValid() const {
-                        return _width > 0 && _height > 0;
+                        return (_width > 0) && (_height > 0);
                 }
 
-                void set(const T &w, const T &h) {
-                        _width = w;
+                void set(const T & w, const T & h) {
+                        _width  = w;
                         _height = h;
                         return;
                 }
 
-                void setWidth(const T &val) {
+                void setWidth(const T & val) {
                         _width = val;
                         return;
                 }
 
-                const T &width() const {
+                const T & width() const {
                         return _width;
                 }
 
-                void setHeight(const T &val) {
+                void setHeight(const T & val) {
                         _height = val;
                         return;
                 }
 
-                const T &height() const {
+                const T & height() const {
                         return _height;
                 }
 
@@ -64,14 +63,37 @@ class Size2D {
                         return _width * _height;
                 }
 
+                String toString() const {
+                        return "[" + std::to_string(_width) + ", " + std::to_string(_height) + "]";
+                }
+
+                friend std::ostream & operator<<(std::ostream & os, const Size2DTemplate<T> & size) {
+                        os << size.toString();
+                        return os;
+                }
+
+                friend std::istream & operator>>(std::istream & input, Size2DTemplate<T> &s) {
+                        char open_bracket, comma, close_bracket;
+                        T    w, h;
+                        input >> std::ws >> open_bracket >> std::ws >> w >> std::ws >> comma >> std::ws >> h >>
+                                std::ws >> close_bracket;
+                        if(input.fail() || open_bracket != '[' || comma != ',' || close_bracket != ']') {
+                                input.setstate(std::ios::failbit);
+                        } else {
+                                s._width  = w;
+                                s._height = h;
+                        }
+                        return input;
+                }
+
         private:
-                T       _width = 0;
-                T       _height = 0;
+                T _width  = 0;
+                T _height = 0;
 };
 
-using Size2Di = Size2D<int>;
-using Size2Df = Size2D<float>;
-using Size2Dd = Size2D<double>;
+using Size2D = Size2DTemplate<size_t>;
+using Size2Df = Size2DTemplate<float>;
+using Size2Dd = Size2DTemplate<double>;
 
-} // namespace promeki
+}   // namespace promeki
 

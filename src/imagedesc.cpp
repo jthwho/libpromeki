@@ -1,6 +1,6 @@
 /*****************************************************************************
- * promeki.h
- * April 26, 2023
+ * imagedesc.cpp
+ * April 29, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,8 +21,9 @@
  *
  *****************************************************************************/
 
-#pragma once
+#include <promeki/imagedesc.h>
 
-namespace Promeki {
+namespace promeki {
+
 
 } // namespace promeki
