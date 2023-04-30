@@ -76,6 +76,7 @@ set(PROMEKI_SOURCES
     src/pixel.cpp
     src/imagedesc.cpp
     src/image.cpp
+    src/matrix3x3.cpp
 )
 
 set(UNITTEST_SOURCES
