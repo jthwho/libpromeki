@@ -31,14 +31,29 @@ namespace promeki {
 
 class Image {
         public:
+                static const int MaxPlanes = 4;
+
+                static int clampPlaneIndex(int val) {
+                        if(val < 0) val = 0;
+                        if(val >= MaxPlanes) val = MaxPlanes - 1;
+                        return val;
+                }
+
                 class Data : public SharedData {
                         public:
                                 ImageDesc       desc;
-                                Buffer          plane[PixelFormat::MaxComponents];
+                                Buffer          plane[MaxPlanes];
 
                                 Data() = default;
                                 Data(const ImageDesc &desc, const MemSpace &ms);
                                 void clear();
+                                bool fill(char value) const {
+                                        int ct = desc.planes();
+                                        for(int i = 0; i < ct; i++) {
+                                                if(!plane[i].fill(value)) return false;
+                                        }
+                                        return true;
+                                }
 
                         private:
                                 bool allocate(const ImageDesc &desc, const MemSpace &ms);
@@ -70,6 +85,24 @@ class Image {
 
                 size_t height() const {
                         return d->desc.height();
+                }
+
+                const Buffer &plane(int index = 0) const {
+                        index = clampPlaneIndex(index);
+                        return d->plane[index];
+                }
+
+                Buffer &plane(int index = 0) {
+                        index = clampPlaneIndex(index);
+                        return d->plane[index];
+                }
+
+                bool fill(char value) const {
+                        return d->fill(value);
+                }
+
+                bool zero() const {
+                        return d->fill(0);
                 }
 
         private:

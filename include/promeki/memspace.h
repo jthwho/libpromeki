@@ -39,27 +39,30 @@ class MemSpace {
                         String name;
                         void *(*alloc)(size_t bytes, size_t align);
                         void (*release)(void *ptr);
-                        bool (*copy)(void *to, const void *from, size_t bytes);
-                        bool (*copyToSpace)(ID toSpace, void *to, const void *from, size_t bytes);
+                        bool (*copy)(ID toSpace, void *to, const void *from, size_t bytes);
+                        bool (*set)(void *to, size_t bytes, char value);
                 };
 
                 MemSpace(ID id = Default) : d(lookup(id)) { }
 
-                void *alloc(size_t bytes, size_t align) {
+                void *alloc(size_t bytes, size_t align) const {
                         return d->alloc(bytes, align);
                 }
 
-                void release(void *ptr) {
+                void release(void *ptr) const {
+                        if(ptr == nullptr) return;
                         d->release(ptr);
                         return;
                 }
                 
-                bool copy(void *to, const void *from, size_t bytes) {
-                        return d->copy(to, from, bytes);
+                bool copy(ID toSpace, void *to, const void *from, size_t bytes) const {
+                        if(to == nullptr || from == nullptr) return false;
+                        return d->copy(toSpace, to, from, bytes);
                 }
 
-                bool copyToSpace(ID toSpace, void *to, const void *from, size_t bytes) {
-                        return d->copyToSpace(toSpace, to, from, bytes);
+                bool set(void *to, size_t bytes, char value) const {
+                        if(to == nullptr) return false;
+                        return d->set(to, bytes, value);
                 }
 
         private:

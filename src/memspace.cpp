@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include <cstdlib>
+#include <cstring>
 #include <promeki/memspace.h>
 #include <promeki/logger.h>
 #include <promeki/structdatabase.h>
@@ -34,26 +35,6 @@ namespace promeki {
         .name = PROMEKI_STRINGIFY(item)
 
 static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
-    {
-        DEFINE_SPACE(MemSpace::System),
-        .alloc = [](size_t bytes, size_t align) -> void * {
-            return std::aligned_alloc(align, bytes);
-        },
-        .release = [](void *ptr) -> void {
-            std::free(ptr);
-            return;
-        },
-        .copy = [](void *to, const void *from, size_t bytes) -> bool {
-            return false;
-        },
-        .copyToSpace = [](MemSpace::ID id, void *to, const void *from, size_t bytes) -> bool {
-            return false;
-        }
-    }
-};
-
-#if 0
-static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
         {
                 DEFINE_SPACE(MemSpace::System),
                 .alloc = [](size_t bytes, size_t align) -> void * {
@@ -63,23 +44,26 @@ static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
                         std::free(ptr);
                         return;
                 },
-                .copy = [](void *to, const void *from, size_t bytes) -> bool {
-                        return false;
+                .copy = [](MemSpace::ID id, void *to, const void *from, size_t bytes) -> bool {
+                        bool ret = false;
+                        switch(id) {
+                                case MemSpace::System: 
+                                        std::memcpy(to, from, bytes); 
+                                        ret = true;
+                                        break;
+                                default:
+                                        // Do Nothing
+                                        break;
+                        }
+                        return ret;
                 },
-                .copyToSpace = [](int toSpace, void *to, const void *from, size_t bytes) -> bool {
-                        return false;
+                .set = [](void *to, size_t bytes, char value) -> bool {
+                        std::memset(to, value, bytes);
+                        return true;
                 }
-        },
-        {
-                .id = 100,
-                .name = "Test",
-                .alloc = nullptr,
-                .release = nullptr,
-                .copy = nullptr,
-                .copyToSpace = nullptr
         }
 };
-#endif
+
 
 const MemSpace::Ops *MemSpace::lookup(ID id) {
         return &db.get(id);

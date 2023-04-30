@@ -40,6 +40,17 @@ PROMEKI_TEST_BEGIN(Image)
         PROMEKI_TEST(img1.size().isValid());
         PROMEKI_TEST(img1.desc().isValid());
         PROMEKI_TEST(img1.isValid());
+        PROMEKI_TEST(img1.fill(42));
+
+        char *data = static_cast<char *>(img1.plane().data());
+
+        String hexDump;
+        for(int i = 0; i < 16; i++) {
+                hexDump += String::number(data[i], 16, 2, '0');
+                hexDump += ' ';
+        }
+        promekiInfo("Data: %s", hexDump.cstr());
+        PROMEKI_TEST(data[0] == 42);
 
 PROMEKI_TEST_END()
 

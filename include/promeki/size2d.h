@@ -64,7 +64,7 @@ template<typename T> class Size2DTemplate {
                 }
 
                 String toString() const {
-                        return "[" + std::to_string(_width) + ", " + std::to_string(_height) + "]";
+                        return std::to_string(_width) + "x" + std::to_string(_height);
                 }
 
                 friend std::ostream & operator<<(std::ostream & os, const Size2DTemplate<T> & size) {
@@ -73,11 +73,10 @@ template<typename T> class Size2DTemplate {
                 }
 
                 friend std::istream & operator>>(std::istream & input, Size2DTemplate<T> &s) {
-                        char open_bracket, comma, close_bracket;
+                        char x;
                         T    w, h;
-                        input >> std::ws >> open_bracket >> std::ws >> w >> std::ws >> comma >> std::ws >> h >>
-                                std::ws >> close_bracket;
-                        if(input.fail() || open_bracket != '[' || comma != ',' || close_bracket != ']') {
+                        input >> std::ws >> w >> x >> h;
+                        if(input.fail() || x != 'x') {
                                 input.setstate(std::ios::failbit);
                         } else {
                                 s._width  = w;

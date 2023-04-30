@@ -93,6 +93,10 @@ class ImageDesc {
                         return;
                 }
 
+                int planes() const {
+                        return d->pixelFormat.planes();
+                }
+
                 String toString() const {
                         return d->toString();
                 }

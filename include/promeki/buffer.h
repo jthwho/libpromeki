@@ -52,6 +52,10 @@ class Buffer {
                                 ~Data() {
                                         if(owned) ms.release(data);
                                 }
+
+                                bool fill(char value) const {
+                                        return ms.set(data, size, value);
+                                }
                 };
 
                 Buffer() : d(new Data()) { }
@@ -62,14 +66,18 @@ class Buffer {
 
 
                 bool isValid() const { return d->data != nullptr; }
-                void *data() { return d->data; }
-                const void *data() const { return d->data; }
+                void *data() const { return d->data; }
                 size_t size() const { return d->size; }
                 size_t align() const { return d->align; }
                 const MemSpace &memSpace() const { return d->ms; }
+
                 void setOwnershipEnabled(bool val) {
                         d->owned = val;
                         return;
+                }
+
+                bool fill(char value) const {
+                        return d->fill(value);
                 }
 
         private:
