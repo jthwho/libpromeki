@@ -23,10 +23,16 @@
 
 #include <promeki/unittest.h>
 #include <promeki/logger.h>
+#include <promeki/buildinfo.h>
+
 using namespace promeki;
 
 // Run the built in unit tests
 int main(int argc, char *argv[]) {
+        const BuildInfo *info = getBuildInfo();
+
+        promekiInfo("Running Unit Tests");
+        logBuildInfo(); 
         return runUnitTests() ? 0 : 42;
 }
 

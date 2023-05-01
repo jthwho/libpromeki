@@ -1,6 +1,6 @@
 /*****************************************************************************
- * buildinfo.h
- * April 27, 2023
+ * variant.cpp
+ * April 30, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,26 +21,8 @@
  *
  *****************************************************************************/
 
-#pragma once
+#include <promeki/variant.h>
 
 namespace promeki {
 
-typedef struct {
-    const char * name;
-    const char * version;
-    const char * repoident;
-    const char * date;
-    const char * time;
-    const char * hostname;
-    const char * type;
-    int          betaVersion;
-    int          rcVersion;
-} BuildInfo;
-
-const BuildInfo * getBuildInfo();
-
-// Writes all the build info to the log output
-void logBuildInfo();
-
 } // namespace promeki
-

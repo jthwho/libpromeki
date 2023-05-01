@@ -26,6 +26,7 @@
 #include <promeki/shareddata.h>
 #include <promeki/size2d.h>
 #include <promeki/pixelformat.h>
+#include <promeki/metadata.h>
 
 namespace promeki {
 
@@ -34,6 +35,7 @@ class ImageDesc {
                 public:
                         Size2D          size;
                         PixelFormat     pixelFormat;
+                        Metadata        metadata;
 
                         Data() = default;
                         Data(const Size2D &s, const PixelFormat &p) :
@@ -91,6 +93,14 @@ class ImageDesc {
                 void setPixelFormat(const PixelFormat &val) {
                         d->pixelFormat = val;
                         return;
+                }
+
+                const Metadata &metadata() const {
+                        return d->metadata;
+                }
+
+                Metadata &metadata() {
+                        return d->metadata;
                 }
 
                 int planes() const {

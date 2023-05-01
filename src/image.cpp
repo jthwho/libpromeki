@@ -33,23 +33,24 @@ Image::Data::Data(const ImageDesc &desc, const MemSpace &ms) : desc(desc) {
 
 void Image::Data::clear() {
         desc = ImageDesc();
-        for(int i = 0; i < PROMEKI_ARRAY_SIZE(plane); i++) plane[i] = Buffer();
+        planeList.clear();
         return;
 }
 
 bool Image::Data::allocate(const ImageDesc &desc, const MemSpace &ms) {
         const PixelFormat &pfmt = desc.pixelFormat();
         int planes = desc.pixelFormat().planes();
+        Buffer::List list(planes);
         for(int i = 0; i < planes; i++) {
                 size_t size = pfmt.size(desc.size(), i);
-                plane[i] = Buffer(size, Buffer::DefaultAlign, ms);
-                if(!plane[i].isValid()) {
+                Buffer b = Buffer(size, Buffer::DefaultAlign, ms);
+                if(!b.isValid()) {
                         promekiErr("Image(%s) plane %d allocate failed", desc.toString().cstr(), i);
-                        clear();
                         return false;
                 }
-
+                list[i] = b;
         }
+        planeList = list;
         return true;
 }
 

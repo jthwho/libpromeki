@@ -31,28 +31,19 @@ namespace promeki {
 
 class Image {
         public:
-                static const int MaxPlanes = 4;
-
-                static int clampPlaneIndex(int val) {
-                        if(val < 0) val = 0;
-                        if(val >= MaxPlanes) val = MaxPlanes - 1;
-                        return val;
-                }
-
                 class Data : public SharedData {
                         public:
                                 ImageDesc       desc;
-                                Buffer          plane[MaxPlanes];
+                                Buffer::List    planeList;
 
                                 Data() = default;
                                 Data(const ImageDesc &desc, const MemSpace &ms);
                                 void clear();
                                 bool fill(char value) const {
-                                        int ct = desc.planes();
-                                        for(int i = 0; i < ct; i++) {
-                                                if(!plane[i].fill(value)) return false;
+                                        for(auto &p : planeList) {
+                                                if(!p.fill(value)) return false;
                                         }
-                                        return true;
+                                        return !planeList.empty();
                                 }
 
                         private:
@@ -75,6 +66,10 @@ class Image {
                         return d->desc;
                 }
 
+                const PixelFormat &pixelFormat() const {
+                        return d->desc.pixelFormat();
+                }
+
                 const Size2D &size() const {
                         return d->desc.size();
                 }
@@ -87,18 +82,36 @@ class Image {
                         return d->desc.height();
                 }
 
-                const Buffer &plane(int index = 0) const {
-                        index = clampPlaneIndex(index);
-                        return d->plane[index];
+                const Metadata &metadata() const {
+                        return d->desc.metadata();
                 }
 
-                Buffer &plane(int index = 0) {
-                        index = clampPlaneIndex(index);
-                        return d->plane[index];
+                Metadata &metadata() {
+                        return d->desc.metadata();
+                }
+
+                size_t stride(int plane = 0) const {
+                        return d->desc.pixelFormat().stride(size(), plane);
+                }
+
+                Buffer plane(int index = 0) const {
+                        return d->planeList[index];
+                }
+
+                Buffer::List planes() const {
+                        return d->planeList;
+                }
+
+                void *data(int index = 0) const {
+                        return d->planeList[index].data();
                 }
 
                 bool fill(char value) const {
                         return d->fill(value);
+                }
+
+                bool fill(const PixelFormat::CompList &value) const {
+                        return pixelFormat().fill(*this, value);
                 }
 
                 bool zero() const {

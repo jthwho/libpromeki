@@ -31,36 +31,22 @@
 
 #define PROMEKI_FOURCC(code) \
 ( \
-        static_cast<uint32_t>(code[0]) | \
-        (static_cast<uint32_t>(code[1])) << 8 | \
-        (static_cast<uint32_t>(code[2])) << 16 | \
-        (static_cast<uint32_t>(code[3])) << 24 \
+        static_cast<PixelFormat::FourCC>(code[0]) | \
+        (static_cast<PixelFormat::FourCC>(code[1])) << 8 | \
+        (static_cast<PixelFormat::FourCC>(code[2])) << 16 | \
+        (static_cast<PixelFormat::FourCC>(code[3])) << 24 \
 )
 
 namespace promeki {
 
-enum PixelSampling {
-        PixelSamplingUndefined = 0,
-        PixelSampling444,
-        PixelSampling422,
-        PixelSampling411,
-        PixelSampling420
-};
+class Image;
 
-enum PixelCompID {
-        PixelCompNone           = ' ',
-        PixelCompR              = 'R',
-        PixelCompG              = 'G',
-        PixelCompB              = 'B',
-        PixelCompA              = 'A',
-        PixelCompY              = 'Y',
-        PixelCompU              = 'U',
-        PixelCompV              = 'V'
-};
-
-
+// This class provides an interface for interacting with data in a particular pixel 
+// packing format.  It's important to note this object does not concern itself with 
+// the concept of color, but merely components within that packed data.
 class PixelFormat {
         public:
+                // The ID of the unique packing format for the pixel.
                 enum ID {
                         Invalid = 0,
                         RGBA8,
@@ -70,26 +56,70 @@ class PixelFormat {
                         YUV10_422
                 };
 
-                static const int MaxComponents = 4;
+                enum Sampling {
+                        SamplingUndefined = 0,
+                        Sampling444,
+                        Sampling422,
+                        Sampling411,
+                        Sampling420
+                };
+
+                enum CompType {
+                        CompEmpty = 0,
+                        CompAlpha,
+                        CompRed,
+                        CompGreen,
+                        CompBlue,
+                        CompY,             // Aka Luma
+                        CompCb,            // Aka U
+                        CompCr             // Aka V
+                };
+
+                using Comp = uint16_t;
+                using CompList = std::vector<Comp>;
+
+                struct CompDesc {
+                        int             plane;
+                        CompType        type;
+                        size_t          bits;
+                };
+
+                // Function returns the number of bytes per line
+                typedef size_t (*StrideFunc)(const Size2D &size);
+
+                // Function returns the number of bytes to make an image of size
+                typedef size_t (*SizeFunc)(const Size2D &size);
+
+                // Function fills the image with pixel value from component list.
+                // Must be given an array with at least the correct number of 
+                // components. Returns true if successful
+                typedef bool (*FillFunc)(const Image &img, const Comp *comps);
+
+                struct PlaneDesc {
+                        String          name;
+                        StrideFunc      stride;
+                        SizeFunc        size;
+                };
+
+                typedef uint32_t FourCC;
 
                 struct Data {
-                        ID                      id;
-                        String                  name;
-                        String                  desc;
-                        int                     comps; 
-                        int                     ppab;           // Pixels per alignment block
-                        int                     bpab;           // Bytes per alignment block
-                        int                     planes;
-                        bool                    hasAlpha;
-                        PixelSampling           sampling;
-                        int                     compBits[MaxComponents];
-                        PixelCompID             compID[MaxComponents];
-                        std::vector<uint32_t>   fourccList;
+                        ID                              id;
+                        String                          name;
+                        String                          desc;
+                        Sampling                        sampling;
+                        size_t                          pixelsPerBlock;
+                        size_t                          bytesPerBlock;
+                        bool                            hasAlpha;
+                        std::vector<FourCC>             fourccList;
+                        std::vector<CompDesc>           compList;
+                        std::vector<PlaneDesc>          planeList;
 
-                        // Functions that return information about a specific buffer of pixelformat
-                        size_t (*stride)(const Size2D &size, int plane);
-                        size_t (*size)(const Size2D &size, int plane);
+                        // Image level operations
+                        FillFunc                        fill;
                 };
+
+                static const String &formatName(ID id);
 
                 PixelFormat(ID id = Invalid) : d(lookup(id)) { }
                 PixelFormat &operator=(const PixelFormat &o) {
@@ -114,16 +144,23 @@ class PixelFormat {
                 const String &name() const { return d->name; }
                 const String &desc() const { return d->desc; }
 
-                int components() const { return d->comps; }
-                int planes() const { return d->planes; }
-
+                size_t comps() const { return d->compList.size(); }
+                size_t planes() const { return d->planeList.size(); }
                 size_t stride(const Size2D &s, int p = 0) const {
-                        return d->stride(s, p);
+                        StrideFunc func = d->planeList[p].stride;
+                        return func == nullptr ? 0 : func(s);
                 }
 
                 size_t size(const Size2D &s, int p = 0) const {
-                        return d->size(s, p);
+                        SizeFunc func = d->planeList[p].size;
+                        return func == nullptr ? 0 : func(s);
                 }
+
+                bool fill(const Image &img, const CompList &comps) const {
+                        return fill(img, comps.data(), comps.size());
+                }
+
+                bool fill(const Image &img, const Comp *comps, size_t compCount) const;
 
         private:
                 const Data *d = nullptr;

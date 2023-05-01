@@ -3,6 +3,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(Git QUIET REQUIRED)
+find_package(PNG)
 
 set(APP_NAME "promeki")
 set(APP_VENDOR "HOWARDLOGIC")
@@ -70,6 +71,8 @@ set(PROMEKI_SOURCES
     src/fileinfo.cpp
     src/datetime.cpp
     src/timestamp.cpp
+    src/variant.cpp
+    src/metadata.cpp
     src/memspace.cpp
     src/buffer.cpp
     src/pixelformat.cpp
@@ -77,6 +80,8 @@ set(PROMEKI_SOURCES
     src/imagedesc.cpp
     src/image.cpp
     src/matrix3x3.cpp
+    src/colorspaceconverter.cpp
+    src/imagefile.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -89,6 +94,21 @@ set(UNITTEST_SOURCES
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
 target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
+
+# If the system has libpng, set it up.
+#if(PNG_FOUND)
+#        target_link_libraries(${APP_NAME} PUBLIC PNG::PNG)
+#        target_include_directories(${APP_NAME} PRIVATE ${PNG_INCLUDE_DIRS})
+#        target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_HAS_LIBPNG)
+#        target_sources(${APP_NAME} PRIVATE png.cpp)
+#endif()
+
+# FIXME: The find_package() doesn't seem to find png, so do it manually for now
+target_link_libraries(${APP_NAME} PUBLIC png)
+#target_include_directories(${APP_NAME} PRIVATE ${PNG_INCLUDE_DIRS})
+target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_PNG)
+target_sources(${APP_NAME} PRIVATE src/png.cpp)
+
 
 add_executable(unittest ${UNITTEST_SOURCES})
 target_link_libraries(unittest PRIVATE ${APP_NAME})

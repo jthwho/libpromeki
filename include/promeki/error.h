@@ -31,36 +31,46 @@ class Error {
         public:
                 enum Code {
                         Ok = 0,
+                        UnsupportedSystemError,
+                        LibraryFailure,
+                        NotImplemented,
+                        PixelFormatNotSupported,
+                        OutOfRange,
+                        PermissionDenied,
+                        TryAgain,
+                        BadFileDesc,
+                        Busy,
+                        Exists,
+                        BadAddress,
+                        TooLarge,
+                        Interrupt,
                         Invalid,
-                        OutOfRange
+                        IOError,
+                        IsDir,
+                        TooManyOpenFiles,
+                        TooManyOpenSysFiles,
+                        NotExist,
+                        NoMem,
+                        NoSpace,
+                        NotDir,
+                        NoPermission,
+                        ReadOnly,
+                        IllegalSeek,
+                        Timeout,
+                        CrossDeviceLink
                 };
 
-                static void registerErrorCode(Code code, const String &desc);
-                static String errorCodeDesc(Code code);
-
-                Error(Code code = Ok) : _code(code) {
-
-                }
-
-                ~Error() {
-
-                }
-
-                Code code() const {
-                        return _code;
-                }
-
-                bool isOk() const {
-                        return _code == 0;
-                }
-
-                bool isError() const {
-                        return _code != 0;
-                }
-
-                String desc() const {
-                        return errorCodeDesc(_code);
-                }
+                // Returns an error code based on the current errno
+                static Error syserr();
+                Error(Code code = Ok) : _code(code) { }
+                ~Error() { }
+                Code code() const { return _code; }
+                bool isOk() const { return _code == 0; }
+                bool isError() const { return _code != 0; }
+                const String &name() const;
+                const String &desc() const;
+                const String &systemErrorName() const;
+                int systemError() const;
 
         private:
                 Code    _code;

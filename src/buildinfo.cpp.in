@@ -22,6 +22,7 @@
  *****************************************************************************/
 
 #include <promeki/buildinfo.h>
+#include <promeki/logger.h>
 
 namespace promeki {
 
@@ -52,6 +53,19 @@ static const BuildInfo _buildInfo = {
 
 const BuildInfo *getBuildInfo() {
     return &_buildInfo;
+}
+
+void logBuildInfo() {
+        promekiInfo("%s v%s {%s} [%s] (Built %s %s by %s)", 
+                _buildInfo.name,
+                _buildInfo.version,
+                _buildInfo.repoident,
+                _buildInfo.type,
+                _buildInfo.date,
+                _buildInfo.time,
+                _buildInfo.hostname
+        );
+        return;
 }
 
 } // namespace promeki

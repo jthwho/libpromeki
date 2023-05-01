@@ -31,12 +31,12 @@
 namespace promeki {
 
 #define DEFINE_SPACE(item) \
-        .id = item, \
+        .id = MemSpace::item, \
         .name = PROMEKI_STRINGIFY(item)
 
 static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
         {
-                DEFINE_SPACE(MemSpace::System),
+                DEFINE_SPACE(System),
                 .alloc = [](size_t bytes, size_t align) -> void * {
                         return std::aligned_alloc(align, bytes);
                 },

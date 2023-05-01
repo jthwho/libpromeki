@@ -1,6 +1,6 @@
 /*****************************************************************************
- * buildinfo.h
- * April 27, 2023
+ * imagefile.cpp
+ * April 29, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,26 +21,42 @@
  *
  *****************************************************************************/
 
-#pragma once
+#include <promeki/imagefile.h>
+#include <promeki/logger.h>
+#include <promeki/structdatabase.h>
+#include <promeki/util.h>
 
 namespace promeki {
 
-typedef struct {
-    const char * name;
-    const char * version;
-    const char * repoident;
-    const char * date;
-    const char * time;
-    const char * hostname;
-    const char * type;
-    int          betaVersion;
-    int          rcVersion;
-} BuildInfo;
+#ifdef PROMEKI_ENABLE_PNG
+// Implementation for these live in src/png.cpp
+Error imageFileSavePNG(const String &fn, const Image &img);
+//Image imageFileLoadPNG(const String &fn, Error &err);
+#endif
 
-const BuildInfo * getBuildInfo();
+#define DEFINE_FORMAT(item) \
+        .id = ImageFile::item, \
+        .name = PROMEKI_STRINGIFY(item)
 
-// Writes all the build info to the log output
-void logBuildInfo();
+static StructDatabase<ImageFile::ID, ImageFile::Data> db = {
+        {
+                DEFINE_FORMAT(Invalid),
+                .load = nullptr,
+                .save = nullptr
+        },
+#ifdef PROMEKI_ENABLE_PNG
+        {
+                DEFINE_FORMAT(PNG),
+                .load = nullptr,
+                .save = imageFileSavePNG
+        }
+#endif
+};
+
+
+const ImageFile::Data *ImageFile::lookup(ID id) {
+        return &db.get(id);
+}
 
 } // namespace promeki
 

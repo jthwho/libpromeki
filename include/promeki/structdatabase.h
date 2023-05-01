@@ -34,6 +34,10 @@ namespace promeki {
 template<typename KeyType, typename StructType>
 class StructDatabase {
         public:
+                typedef std::map<KeyType, StructType> Map;
+
+                StructDatabase() = default;
+
                 StructDatabase(const std::initializer_list<StructType> &&list) {
                         load(std::move(list));
                 }
@@ -56,8 +60,11 @@ class StructDatabase {
                         return;
                 }
 
+                const Map &database() const { return map; }
+                Map &database() { return map; }
+
         private:
-                std::map<KeyType, StructType> map;
+                Map map;
 };
 
 } // namespace promeki

@@ -1,6 +1,6 @@
 /*****************************************************************************
- * buildinfo.h
- * April 27, 2023
+ * colorspaceconverter.h
+ * April 30, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -25,22 +25,28 @@
 
 namespace promeki {
 
-typedef struct {
-    const char * name;
-    const char * version;
-    const char * repoident;
-    const char * date;
-    const char * time;
-    const char * hostname;
-    const char * type;
-    int          betaVersion;
-    int          rcVersion;
-} BuildInfo;
+struct CSC {
+        float   matrix[3][3];
+        float   offset[3];
+};
 
-const BuildInfo * getBuildInfo();
 
-// Writes all the build info to the log output
-void logBuildInfo();
+const CSC RGB_to_YCbCr_Rec709 = {
+    {
+        {0.2126f, 0.7152f, 0.0722f},
+        {-0.1146f, -0.3854f, 0.5f},
+        {0.5f, -0.4542f, -0.0458f}
+    },
+    {16.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f}
+};
+
+const CSC YCbCr_Rec709_to_RGB = {
+    {
+        {1.0f, 0.0f, 1.5748f},
+        {1.0f, -0.1873f, -0.4681f},
+        {1.0f, 1.8556f, 0.0f}
+    },
+    {-16.0f / 255.0f, -128.0f / 255.0f, -128.0f / 255.0f}
+};
 
 } // namespace promeki
-

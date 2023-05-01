@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <vector>
 #include <promeki/shareddata.h>
 #include <promeki/memspace.h>
 
@@ -31,6 +32,8 @@ namespace promeki {
 class Buffer {
         public:
                 const static size_t DefaultAlign = 4096; // FIXME: Use the system page size
+                
+                using List = std::vector<Buffer>;
 
                 class Data : public SharedData {
                         public:

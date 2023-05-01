@@ -21,9 +21,10 @@
  *
  *****************************************************************************/
 
-#include <map>
+#include <cstring>
 #include <promeki/pixelformat.h>
 #include <promeki/structdatabase.h>
+#include <promeki/image.h>
 
 namespace promeki {
 
@@ -31,93 +32,145 @@ namespace promeki {
         .id = PixelFormat::fmt, \
         .name = PROMEKI_STRINGIFY(fmt)
 
+inline size_t stride_RGBA8(const Size2D &size) {
+        return size.width() * 4;
+}
+
+inline size_t size_RGBA8(const Size2D &size) {
+        return stride_RGBA8(size) * size.height();
+}
+
+inline bool fill_RGBA8(const Image &img, const PixelFormat::Comp *comps) {
+        const Size2D &size = img.size();
+        size_t stride = stride_RGBA8(size);
+        uint8_t *line0 = static_cast<uint8_t *>(img.plane().data());
+        uint8_t *buf;
+        const uint8_t pixel[4] = { static_cast<uint8_t>(comps[0]),
+                                   static_cast<uint8_t>(comps[1]),
+                                   static_cast<uint8_t>(comps[2]),
+                                   static_cast<uint8_t>(comps[3]) };
+        // First, fill the first line w/ the pixel value
+        buf = line0;
+        for(int i = 0; i < size.width(); i++) {
+                std::memcpy(buf, pixel, 4);
+                buf += 4;
+        }
+        // Now, fill the rest of the lines from the first.
+        buf = line0 + stride;
+        for(int i = 1; i < size.height(); i++) {
+                std::memcpy(buf, line0, stride);
+                buf += stride;
+        }
+        return true;
+}
+
+inline size_t stride_RGB8(const Size2D &size) {
+        return size.width() * 3;
+}
+
+inline size_t size_RGB8(const Size2D &size) {
+        return stride_RGB8(size) * size.height();
+}
+
+inline size_t stride_RGB10(const Size2D &size) {
+        return size.width() * 4;
+}
+
+inline size_t size_RGB10(const Size2D &size) {
+        return stride_RGB10(size) * size.height();
+}
+
+inline size_t stride_YUV8_422(const Size2D &size) {
+        // A YUV8 line should always be aligned to 4 bytes, since
+        // each "block" contains 2 Y samples, 1 Cb, and 1 Cr.
+        // This generally means in practice you'll never see odd
+        // widths for this format, but we'll do the checking here
+        // just in case.
+        return PROMEKI_ALIGN_UP(size.width() * 2, 4);
+}
+        
+inline size_t size_YUV8_422(const Size2D &size) {
+        return stride_YUV8_422(size) * 2;
+}
+
+inline size_t stride_YUV10_422(const Size2D &size) {
+        size_t w = size.width();
+        return (w % 6) ? (w / 6 + 1) * 16 : (w / 6) * 16;
+}
+
+inline size_t size_YUV10_422(const Size2D &size) {
+        return stride_YUV10_422(size) * size.height();
+}
+
 static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
         { 
                 DEFINE_FORMAT(Invalid),
                 .desc = "Invalid",
-                .comps = 0, 
-                .ppab = 0, 
-                .bpab = 0, 
-                .planes = 1,
+                .sampling = PixelFormat::SamplingUndefined, 
+                .pixelsPerBlock = 0,
+                .bytesPerBlock = 0,
                 .hasAlpha = false,
-                .sampling = PixelSamplingUndefined, 
-                .compBits = {0, 0, 0, 0}, 
-                .compID = {PixelCompNone, PixelCompNone, PixelCompNone, PixelCompNone},
-                .stride = [](const Size2D &, int) -> size_t { 
-                        return 0;
-                },
-                .size = [](const Size2D &, int) -> size_t {
-                        return 0;
-                }
         },
         { 
                 DEFINE_FORMAT(RGBA8),
                 .desc = "8bit RGBA",
-                .comps = 4,
-                .ppab = 1,
-                .bpab = 4, 
-                .planes = 1,
+                .sampling = PixelFormat::Sampling444,
+                .pixelsPerBlock = 1,
+                .bytesPerBlock = 4, 
                 .hasAlpha = true,
-                .sampling = PixelSampling444,
-                .compBits = {8, 8, 8, 8}, 
-                .compID = {PixelCompR, PixelCompG, PixelCompB, PixelCompA},
                 .fourccList = { PROMEKI_FOURCC("RGBA") },
-                .stride = [](const Size2D &size, int plane) -> size_t {
-                        return size.width() * 4;
+                .compList = {
+                        { 0, .type = PixelFormat::CompRed,   .bits = 8 },
+                        { 0, .type = PixelFormat::CompGreen, .bits = 8 },
+                        { 0, .type = PixelFormat::CompBlue,  .bits = 8 },
+                        { 0, .type = PixelFormat::CompAlpha, .bits = 8 }
                 },
-                .size = [](const Size2D &size, int plane) -> size_t {
-                        return size.area() * 4;
-                }
+                .planeList = {
+                        { .stride = stride_RGBA8, .size = size_RGBA8 }
+                },
+                .fill = fill_RGBA8
         },
         { 
                 DEFINE_FORMAT(RGB8),
                 .desc = "8bit RGB",
-                .comps = 3,
-                .ppab = 1,
-                .bpab = 3, 
-                .planes = 1,
-                .hasAlpha = true,
-                .sampling = PixelSampling444,
-                .compBits = {8, 8, 8, 0}, 
-                .compID = {PixelCompR, PixelCompG, PixelCompB, PixelCompNone},
+                .sampling = PixelFormat::Sampling444,
+                .pixelsPerBlock = 1,
+                .bytesPerBlock = 3,
+                .hasAlpha = false,
                 .fourccList = { PROMEKI_FOURCC("RGB2") },
-                .stride = [](const Size2D &size, int plane) -> size_t {
-                        return size.width() * 3;
+                .compList = {
+                        { 0, .type = PixelFormat::CompRed,   .bits = 8 },
+                        { 0, .type = PixelFormat::CompGreen, .bits = 8 },
+                        { 0, .type = PixelFormat::CompBlue,  .bits = 8 }
                 },
-                .size = [](const Size2D &size, int plane) -> size_t {
-                        return size.area() * 3;
+                .planeList = {
+                        { .stride = stride_RGB8, .size = size_RGB8 }
                 }
         },
         { 
                 DEFINE_FORMAT(RGB10),
                 .desc = "10bit RGB",
-                .comps = 3,
-                .ppab = 1,
-                .bpab = 4, 
-                .planes = 1,
+                .sampling = PixelFormat::Sampling444,
+                .pixelsPerBlock = 1,
+                .bytesPerBlock = 4, 
                 .hasAlpha = false,
-                .sampling = PixelSampling444,
-                .compBits = {10, 10, 10, 0}, 
-                .compID = {PixelCompR, PixelCompG, PixelCompB, PixelCompNone},
                 .fourccList = { PROMEKI_FOURCC("r210") },
-                .stride = [](const Size2D &size, int plane) -> size_t {
-                        return size.width() * 4;
+                .compList = {
+                        { 0, .type = PixelFormat::CompRed,   .bits = 10 },
+                        { 0, .type = PixelFormat::CompGreen, .bits = 10 },
+                        { 0, .type = PixelFormat::CompBlue,  .bits = 10 }
                 },
-                .size = [](const Size2D &size, int plane) -> size_t {
-                        return size.area() * 4;
+                .planeList = {
+                        { .stride = stride_RGB10, .size = size_RGB10 }
                 }
         },
         { 
                 DEFINE_FORMAT(YUV8_422),
                 .desc = "8bit Y'CbCr 4:2:2",
-                .comps = 3,
-                .ppab = 1,
-                .bpab = 2, 
-                .planes = 1,
+                .sampling = PixelFormat::Sampling422,
+                .pixelsPerBlock = 2,
+                .bytesPerBlock = 4,
                 .hasAlpha = false,
-                .sampling = PixelSampling422,
-                .compBits = {8, 8, 8, 0}, 
-                .compID = {PixelCompY, PixelCompU, PixelCompV, PixelCompNone},
                 .fourccList = {
                         PROMEKI_FOURCC("UYVY"),
                         PROMEKI_FOURCC("UYNV"),
@@ -130,40 +183,59 @@ static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
                         PROMEKI_FOURCC("2Vuy"),
                         PROMEKI_FOURCC("2Vu1")
                 },
-                .stride = [](const Size2D &size, int plane) -> size_t {
-                        return size.width() * 2;
+                .compList = {
+                        { 0, .type = PixelFormat::CompY,  .bits = 8 },
+                        { 0, .type = PixelFormat::CompCb, .bits = 8 },
+                        { 0, .type = PixelFormat::CompCr, .bits = 8 }
                 },
-                .size = [](const Size2D &size, int plane) -> size_t {
-                        return size.area() * 2;
+                .planeList = {
+                        { .stride = stride_YUV8_422, .size = size_YUV8_422 }
                 }
         },
         { 
                 DEFINE_FORMAT(YUV10_422),
                 .desc = "10bit Y'CbCr 4:2:2",
-                .comps = 3,
-                .ppab = 6,
-                .bpab = 16, 
-                .planes = 1,
+                .sampling = PixelFormat::Sampling422,
+                .pixelsPerBlock = 6,
+                .bytesPerBlock = 16, 
                 .hasAlpha = false,
-                .sampling = PixelSampling422,
-                .compBits = {10, 10, 10, 0}, 
-                .compID = {PixelCompY, PixelCompU, PixelCompV, PixelCompNone},
                 .fourccList = { PROMEKI_FOURCC("v210") },
-                .stride = [](const Size2D &size, int plane) -> size_t {
-                        size_t w = size.width();
-                        return (w % 6) ? (w / 6 + 1) * 16 : (w / 6) * 16;
+                .compList = {
+                        { 0, .type = PixelFormat::CompY,  .bits = 10 },
+                        { 0, .type = PixelFormat::CompCb, .bits = 10 },
+                        { 0, .type = PixelFormat::CompCr, .bits = 10 }
                 },
-                .size = [](const Size2D &size, int plane) -> size_t {
-                        size_t w = size.width();
-                        size_t s = (w % 6) ? (w / 6 + 1) * 16 : (w / 6) * 16;
-                        return s * size.height();
+                .planeList = {
+                        { .stride = stride_YUV10_422, .size = size_YUV10_422 }
                 }
         },
 
 };
 
+const String &PixelFormat::formatName(ID id) {
+        return db.get(id).name;
+}
+
 const PixelFormat::Data *PixelFormat::lookup(ID id) {
         return &db.get(id);
+}
+
+bool PixelFormat::fill(const Image &img, const Comp *c, size_t compCount) const {
+        // FIXME: We don't check the image is in a memory space we can access.
+        // Need to work out a way to dispatch to different fill() functions for different
+        // memory spaces.
+        if(comps() > compCount) {
+                promekiErr("Attempting to fill image '%s', but not given enough comps. Given %d, expected %d",
+                        img.desc().toString().cstr(), (int)compCount, (int)comps());
+                return false;
+        }
+        if(id() != img.pixelFormat().id()) {
+                promekiErr("Attempt to fill image '%s', but this is wrong pixel format (%s)",
+                        img.desc().toString().cstr(), d->name.cstr());
+                return false;
+        }
+        FillFunc func = d->fill;
+        return func == nullptr ? false : func(img, c);
 }
 
 } // namespace promeki

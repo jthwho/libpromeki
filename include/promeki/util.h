@@ -35,6 +35,9 @@
 // Returns the number of elements in a statically defined simple array.
 #define PROMEKI_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
+// Some useful alignment macros
+#define PROMEKI_ALIGN_UP(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
+
 // Use the PROMEKI_PRINTF_FUNC to hint to the compiler a particular variadic function
 // uses printf() symantics.  This will allow the compiler to check that the variable
 // arguments match up with the format.
