@@ -67,6 +67,10 @@ template<typename T> class Size2DTemplate {
                         return std::to_string(_width) + "x" + std::to_string(_height);
                 }
 
+                operator String() const {
+                        return toString();
+                }
+
                 friend std::ostream & operator<<(std::ostream & os, const Size2DTemplate<T> & size) {
                         os << size.toString();
                         return os;

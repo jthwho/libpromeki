@@ -34,6 +34,7 @@ class ImageDesc {
         class Data : public SharedData {
                 public:
                         Size2D          size;
+                        bool            interlaced = false;
                         PixelFormat     pixelFormat;
                         Metadata        metadata;
 
@@ -86,6 +87,15 @@ class ImageDesc {
                         return;
                 }
 
+                bool interlaced() const {
+                        return d->interlaced;
+                }
+
+                void setInterlaced(bool val) {
+                        d->interlaced = val;
+                        return;
+                }
+
                 const PixelFormat &pixelFormat() const {
                         return d->pixelFormat;
                 }
@@ -109,6 +119,10 @@ class ImageDesc {
 
                 String toString() const {
                         return d->toString();
+                }
+
+                operator String() const {
+                        return toString();
                 }
 
         private:

@@ -1,6 +1,6 @@
 /*****************************************************************************
- * metadata.cpp
- * April 30, 2023
+ * ciepoint.cpp
+ * May 01, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,18 +21,18 @@
  *
  *****************************************************************************/
 
-#include <promeki/metadata.h>
-#include <promeki/string.h>
+#include <promeki/unittest.h>
+#include <promeki/ciepoint.h>
+
+using namespace promeki;
 
 
-namespace promeki {
+PROMEKI_TEST_BEGIN(CIEPoint)
+        for(double wl = CIEPoint::MinWavelength; wl < (CIEPoint::MinWavelength + 10.0); wl += 0.1) {
+                auto [x, y, z] = CIEPoint::wavelengthToXYZ(wl);
+                promekiInfo("%lf %lf %lf %lf", wl, x, y, z);
+        }
 
-#define X(name) { Metadata::name, PROMEKI_STRINGIFY(name) },
-static std::map<Metadata::ID, String> metadataIDNames = { PROMEKI_ENUM_METADATA_ID };
-#undef X
+PROMEKI_TEST_END()
 
-const String &Metadata::idName(ID id) {
-        return metadataIDNames[id];
-}
 
-} // namespace promeki

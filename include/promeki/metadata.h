@@ -25,14 +25,22 @@
 
 #include <map>
 #include <promeki/variant.h>
+#include <promeki/util.h>
+
+#define PROMEKI_ENUM_METADATA_ID \
+        X(Invalid) \
+        X(Timecode) \
+        X(Gamma)
 
 namespace promeki {
 
 class Metadata {
         public:
-                enum ID {
-                        Timecode        = 0,
-                };
+                #define X(name) name,
+                enum ID { PROMEKI_ENUM_METADATA_ID };
+                #undef X
+
+                static const String &idName(ID id);
 
                 template <typename T> void set(ID id, const T &value) {
                         d[id] = Variant(value);

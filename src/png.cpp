@@ -91,8 +91,9 @@ Error imageFileSavePNG(const String &filename, const Image &image) {
                         std::fclose(fp);
 			return Error::PixelFormatNotSupported;
 	}
-	
-        int interlaced = 0; // FIXME: We probably need to add an interlaced flag to the ImageDesc object
+
+        // If the image is interlaced, use ADAM7 encoding
+        int interlaced = image.desc().interlaced() ? PNG_INTERLACE_ADAM7 : PNG_INTERLACE_NONE; 
 	png_set_IHDR(pngp, infop, image.width(), image.height(), depth, color,
                 interlaced, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	

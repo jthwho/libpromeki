@@ -82,6 +82,8 @@ set(PROMEKI_SOURCES
     src/matrix3x3.cpp
     src/colorspaceconverter.cpp
     src/imagefile.cpp
+    src/ciepoint.cpp
+    src/colorspace.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -90,6 +92,7 @@ set(UNITTEST_SOURCES
     tests/string.cpp
     tests/shareddata.cpp
     tests/image.cpp
+    tests/ciepoint.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})

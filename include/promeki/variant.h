@@ -40,6 +40,7 @@ template <typename... Types> class __Variant {
                 // Note: the enum list must be in the same order as the Variant type arguments.
                 enum Type {
                         TypeInvalid = 0,
+                        TypeBool,
                         TypeU8,
                         TypeS8,
                         TypeU16,
@@ -99,7 +100,7 @@ template <typename... Types> class __Variant {
 };
 
 using Variant = __Variant<
-        std::monostate, uint8_t, int8_t, uint16_t, int16_t,
+        std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t,
         uint32_t, int32_t, uint64_t, int64_t, float, double, 
         String, DateTime, TimeStamp, PixelFormat, Size2D>;
 

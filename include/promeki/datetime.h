@@ -121,6 +121,10 @@ class DateTime {
                 }
 
                 String toString(const char *format = DefaultFormat) const;
+
+                operator String() const {
+                        return toString();
+                }
                 
                 time_t toTimeT() const {
                         return std::chrono::system_clock::to_time_t(_value);
