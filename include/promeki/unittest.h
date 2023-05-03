@@ -26,6 +26,7 @@
 #include <promeki/string.h>
 #include <promeki/util.h>
 #include <promeki/logger.h>
+#include <promeki/regex.h>
 #include <functional>
 
 #define PROMEKI_TEST_BEGIN(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_unittest_, PROMEKI_UNIQUE_ID) = \
@@ -54,7 +55,7 @@ struct UnitTest {
 };
 
 int registerUnitTest(const UnitTest &&test);
-bool runUnitTests();
+bool runUnitTests(const RegEx &testNameFilter = ".+"); // Run all tests by default.
 
 }
 

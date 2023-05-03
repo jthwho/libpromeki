@@ -154,13 +154,9 @@ class String {
                 ConstIterator begin() const noexcept {
                         return d.begin();
                 }
-                
-                Iterator end() noexcept {
-                        return d.end();
-                }
 
-                ConstIterator end() const noexcept {
-                        return d.end();
+                ConstIterator cbegin() const noexcept {
+                        return d.cbegin();
                 }
 
                 RevIterator rbegin() noexcept {
@@ -169,6 +165,18 @@ class String {
 
                 ConstRevIterator rbegin() const noexcept {
                         return d.rbegin();
+                }
+ 
+                Iterator end() noexcept {
+                        return d.end();
+                }
+
+                ConstIterator end() const noexcept {
+                        return d.end();
+                }
+
+                ConstIterator cend() const noexcept {
+                        return d.end();
                 }
 
                 RevIterator rend() noexcept {
@@ -187,6 +195,11 @@ class String {
                         return d.size();
                 }
 
+                void clear() {
+                        d.clear();
+                        return;
+                }
+
                 void resize(size_t val) {
                         d.resize(val);
                         return;
@@ -196,7 +209,7 @@ class String {
                         return d.length();
                 }
 
-                bool empty() const {
+                bool isEmpty() const {
                         return d.empty();
                 }
 
@@ -204,8 +217,8 @@ class String {
                         return d.find(val);
                 }
 
-                String substr(size_t pos = 0, size_t len = npos) {
-                        return substr(pos, len);
+                String substr(size_t pos = 0, size_t len = npos) const {
+                        return d.substr(pos, len);
                 }
 
                 operator std::string&() {
@@ -298,6 +311,10 @@ class String {
                         return d.size() != 1 || d[0] != val;
                 }
 
+                friend bool operator<(const String &lhs, const String &rhs) {
+                        return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+                }
+
                 friend std::ostream &operator<<(std::ostream &os, const String &val) {
                         os << val.d;
                         return os;
@@ -330,25 +347,28 @@ class String {
                         return result;
                 }
 
+                // FIXME: Make this return StringList
                 std::vector<String> split(const std::string& delimiter) const {
                         std::vector<String> result;
                         size_t pos = 0;
                         std::string str = d;
                         while((pos = str.find(delimiter)) != std::string::npos) {
                                 String token = str.substr(0, pos);
-                                if (!token.empty()) {
+                                if (!token.isEmpty()) {
                                         result.push_back(token);
                                 }
                                 str.erase(0, pos + delimiter.length());
                         }
-                        if(!str.empty()) {
-                                result.push_back(str);
-                        }
+                        if(!str.empty()) result.push_back(str);
                         return result;
                 }
 
                 bool startsWith(const String &prefix) const {
                         return d.compare(0, prefix.size(), prefix.d) == 0;
+                }
+
+                bool startsWith(char c) const {
+                        return !isEmpty() && *this[0] == c;
                 }
 
                 bool endsWith(const String &suffix) const {
@@ -373,7 +393,7 @@ class String {
                 }
 
                 bool isNumeric() const {
-                        return !empty() && std::all_of(d.begin(), d.end(), ::isdigit);
+                        return !isEmpty() && std::all_of(d.begin(), d.end(), ::isdigit);
                 }
 
                 String &arg(const String &str);
@@ -443,8 +463,10 @@ class String {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
+                bool toBool(Error *err = nullptr) const;
                 int toInt(Error *err = nullptr) const;
                 unsigned int toUInt(Error *err = nullptr) const;
+                double toDouble(Error *err = nullptr) const;
 
                 int64_t parseNumberWords(bool *success = nullptr) const;
 

@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <cmath>
+#include <array>
 #include <promeki/point2d.h>
 
 namespace promeki {
@@ -32,7 +34,10 @@ class CIEPoint : public Point2Dd {
                 static constexpr double MinWavelength = 360;
                 static constexpr double MaxWavelength = 700;
 
-                using XYZ = std::tuple<double, double, double>;
+                using XYZ = std::array<double, 3>;
+
+                static const CIEPoint D50;
+                static const CIEPoint D55;
 
                 static bool isValidWavelength(double val) {
                         return val >= MinWavelength && val <= MaxWavelength;
@@ -40,7 +45,27 @@ class CIEPoint : public Point2Dd {
                 static XYZ wavelengthToXYZ(double wavelength);
                 static CIEPoint wavelengthToCIEPoint(double wavelength);
 
-                CIEPoint(double x = 0, double y = 0) : Point2Dd(x, y) { }
+                static CIEPoint colorTempToWhitePoint(double cct) {
+                        // from http://www.brucelindbloom.com/index.html?Eqn_T_to_xy.html
+                        double x, y;
+                        if(cct < 4000) {
+                                return CIEPoint(); // Invalid.
+                        } else if(cct <= 7000.0) {
+                                x = (-4.6070e9  / std::pow(cct, 3)) +
+                                    ( 2.9678e6  / std::pow(cct, 2)) +
+                                    ( 0.09911e3 / cct) + 0.244063;
+                        } else if(cct <= 25000) {
+                                x = (-2.0064e9  / std::pow(cct, 3)) +
+                                    ( 1.9108e6  / std::pow(cct, 2)) +
+                                    ( 0.24748e3 / cct) + 0.237040;
+                        } else {
+                                return CIEPoint(); // Invalid
+                        }
+                        y = (-3.0 * std::pow(x, 2)) + (2.870 * x) - 0.275;
+                        return CIEPoint(x, y);
+                }
+
+                CIEPoint(double x = -1.0, double y = -1.0) : Point2Dd(x, y) { }
                 CIEPoint(const Point2Dd& other) : Point2Dd(other) { }
                 CIEPoint(const std::initializer_list<double>& list) : Point2Dd(list) { }
 
@@ -61,6 +86,16 @@ class CIEPoint : public Point2Dd {
                         return u >= 0 && u <= 0.6 && v >= 0 && v <= 0.6 && u + v <= 0.6;
                 }
 
+                double colorTemp() const {
+                        // McCamy's approximation
+                        double n = (x() - 0.3320) / (0.1858 - y());
+                        return 437.0 * std::pow(n, 3.0) + 
+                               3601.0 * std::pow(n, 2.0) + 
+                               6861.0 * n + 5517;
+                }
+
 };
+
+inline const CIEPoint CIEPoint::D55(0.33242, 0.34743);
 
 } // namespace promeki

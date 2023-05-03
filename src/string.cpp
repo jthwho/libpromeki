@@ -198,6 +198,27 @@ String &String::arg(const String &str) {
         return *this;
 }
 
+bool String::toBool(Error *e) const {
+        Error err;
+        bool ret = false;
+        if(d == "1") {
+                ret = true;
+        } else if(d == "0") {
+                ret = false;
+        } else {
+                String s = toLower();
+                if(s == "true") {
+                        ret = true;
+                } else if(s == "false") {
+                        ret = false;
+                } else {
+                        err = Error::Invalid;
+                }
+        }
+        if(e != nullptr) *e = err;
+        return ret;
+}
+
 int String::toInt(Error *e) const {
         Error err;
         int ret;
@@ -223,6 +244,20 @@ unsigned int String::toUInt(Error *e) const {
                 err = Error::OutOfRange;
         }
         if(ret > static_cast<unsigned long>(std::numeric_limits<unsigned int>::max())) err = Error::OutOfRange;
+        if(e != nullptr) *e = err;
+        return ret;
+}
+
+double String::toDouble(Error *e) const {
+        Error err;
+        double ret;
+        try {
+                ret = std::stod(d);
+        } catch(const std::invalid_argument &) {
+                err = Error::Invalid;
+        } catch (const std::out_of_range &) {
+                err = Error::OutOfRange;
+        }
         if(e != nullptr) *e = err;
         return ret;
 }

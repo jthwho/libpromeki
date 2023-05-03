@@ -61,8 +61,11 @@ set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
     src/unittest.cpp
     src/string.cpp
+    src/stringlist.cpp
+    src/regex.cpp
     src/error.cpp
     src/shareddata.cpp
+    src/point.cpp
     src/point2d.cpp
     src/size2d.cpp
     src/mempool.cpp
@@ -84,6 +87,7 @@ set(PROMEKI_SOURCES
     src/imagefile.cpp
     src/ciepoint.cpp
     src/colorspace.cpp
+    src/cmdlineparser.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -93,6 +97,7 @@ set(UNITTEST_SOURCES
     tests/shareddata.cpp
     tests/image.cpp
     tests/ciepoint.cpp
+    tests/point.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})

@@ -43,20 +43,22 @@ int registerUnitTest(const UnitTest &&test) {
         return ret;
 }
 
-bool runUnitTests() {
+bool runUnitTests(const RegEx &filter) {
         const UnitTestVector &utv = unitTestVector();
-        promekiInfo("Total Unit Tests: %d", (int)utv.size());
-        for(int i = 0; i < utv.size(); i++) {
-                const UnitTest &ut = utv.at(i);
+        int testsRun = 0;
+        promekiInfo("Starting unit tests with filter '%s'", filter.pattern().cstr());
+        for(const auto &item : unitTestVector()) {
+                if(!filter.match(item.name)) continue;
                 promekiInfo("Running Test '%s' from %s:%d", 
-                        ut.name.cstr(), ut.file.cstr(), ut.line);
-                bool ret = ut.func(ut);
+                        item.name.cstr(), item.file.cstr(), item.line);
+                bool ret = item.func(item);
                 if(!ret) {
-                        promekiErr("Test '%s' failed", ut.name.cstr());
+                        promekiErr("Test '%s' failed", item.name.cstr());
                         return false;
                 }
+                testsRun++;
         }
-        promekiInfo("All tests pass.  Good job.");
+        promekiInfo("Successfuly ran %d of %d total tests.", testsRun, (int)unitTestVector().size());
         return true;
 }
 
