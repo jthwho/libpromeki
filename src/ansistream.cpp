@@ -45,6 +45,10 @@ static bool checkForAnsiSupport() {
                 "ansi",
                 "linux"
         };
+
+        const char* force = std::getenv("PROMEKI_ANSI");
+        if(force) return String(force).toBool();
+
         const char* term = std::getenv("TERM");
         if(term) {
                 for(int i = 0; i < PROMEKI_ARRAY_SIZE(supportedTerminals); i++) {

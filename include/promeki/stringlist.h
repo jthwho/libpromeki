@@ -157,7 +157,23 @@ class StringList {
                 ConstIterator cend() const {
                         return d.cend();
                 }
-                
+
+                Iterator insert(ConstIterator pos, const String &val) {
+                        return d.insert(pos, val);
+                }
+
+                Iterator insert(ConstIterator pos, size_t ct, const String &val) {
+                        return d.insert(pos, ct, val);
+                }
+
+                template <typename InputIt> Iterator insert(ConstIterator pos, InputIt first, InputIt last) {
+                        return d.insert(pos, first, last);
+                }
+
+                //Iterator insert(ConstIterator pos, initializer_list<String> list) {
+                //        return d.insert(pos, list);
+                //}
+
                 StringList sort() const {
                         StringList ret = *this;
                         std::sort(ret.begin(), ret.end());

@@ -27,26 +27,36 @@
 
 namespace promeki {
 
-int CmdLineParser::parse(const StringList &args) {
+int CmdLineParser::parse(StringList args) {
         _args.clear(); // Clear the args.
         bool optionParsingEnabled = true;
-        for(size_t i = 0; i < args.size(); ++i) {
-                const String &arg = args[i];
+        for(auto arg = args.begin(); arg != args.end(); ++arg) {
                 if(!optionParsingEnabled) {
-                        _args += arg;
+                        _args += *arg;
                         continue;
                 }
-                if(arg == "--") {
+                if(*arg == "--") {
                         optionParsingEnabled = false;
                         continue;
                 }
-                if(!arg.startsWith('-') || arg.size() == 1) {
-                        _args += arg;
+                if(!arg->startsWith('-') || arg->size() == 1) {
+                        _args += *arg;
                         continue;
                 }
-                String optstr = arg[1] == '-' ? arg.substr(2) : String(1, arg[1]);
-                auto optionIt = _options.find(optstr);
-                if(optionIt == _options.end()) {
+                if((*arg)[1] != '-') {
+                        // In the case of a short name that has an option, split them,
+                        // update the option, and add the option arg to the list
+                        if(arg->size() > 2) {
+                                String a = arg->substr(0, 2);
+                                String o = arg->substr(2);
+                                *arg = a;
+                                arg = args.insert(arg + 1, o);
+                                --arg;
+                        }
+                }
+                String optstr = (*arg)[1] == '-' ? arg->substr(2) : String(1, (*arg)[1]);
+                auto optionIt = _optionsMap.find(optstr);
+                if(optionIt == _optionsMap.end()) {
                         promekiErr("Command line option '%s' isn't valid", optstr.cstr());
                         return 9911;
                 }
@@ -56,11 +66,11 @@ int CmdLineParser::parse(const StringList &args) {
                 if(argType == Option::ArgNone) {
                         ret = std::get<OptionCallback>(option.callback)();
                 } else {
-                        if(i == args.size() - 1) {
+                        if(arg + 1 == args.end()) {
                                 promekiErr("Command line option '%s' requires an option", optstr.cstr());
                                 return 9912;
                         }
-                        const String &optarg = args[i + 1];
+                        const String &optarg = *(arg + 1);
                         if(argType == Option::ArgBool) {
                                 Error err;
                                 bool val = optarg.toBool(&err);
@@ -95,11 +105,65 @@ int CmdLineParser::parse(const StringList &args) {
                                 promekiErr("libpromeki bug! Command line option '%s' has an unsupported option type", optstr.cstr());
                                 return 9915;
                         }
-                        i++; // Skip the argument
+                        ++arg; // Skip the argument
                         if(ret) return ret;
                 }
         }
         return 0;
+}
+
+String CmdLineParser::optionFullName(bool shortName, const Option &option) {
+        String ret;
+        if(shortName) {
+                if(option.shortName == 0) return String();
+                ret += '-';
+                ret += option.shortName;
+        } else {
+                if(option.longName.isEmpty()) return String();
+                ret += "--";
+                ret += option.longName;
+        }
+        switch(option.argType()) {
+                case Option::ArgBool: ret += " <bool>"; break;
+                case Option::ArgInt: ret += " <int>"; break;
+                case Option::ArgDouble: ret += " <float>"; break;
+                case Option::ArgString: ret += " <string>"; break;
+        }
+        return ret;
+}
+
+StringList CmdLineParser::generateUsage() const {
+        StringList list;
+        int shortSpace = 0;
+        int longSpace = 0;
+        // First, walk through all the items and get the largest strings
+        // so we'll know how to format everything
+        for(const auto &item : _options) {
+                String shortName = optionFullName(true, item);
+                String longName = optionFullName(false, item);
+                if(shortName.size() > shortSpace) shortSpace = shortName.size();
+                if(longName.size() > longSpace) longSpace = longName.size();
+        }
+        int totalSpace = shortSpace + longSpace;
+        if(shortSpace && longSpace) totalSpace += 2; // the ", " between long and short items.
+
+        // Now, assemble the list
+        for(const auto &item : _options) {
+                String name;
+                if(item.shortName != 0) {
+                        name += optionFullName(true, item);
+                } else {
+                        if(longSpace) name += String(shortSpace, ' ');
+                }
+                if(!item.longName.isEmpty()) {
+                        if(shortSpace) name += item.shortName ? ", " : "  ";
+                        name += optionFullName(false, item);
+                }
+                name += String(totalSpace - name.size(), ' ');
+                String line = name + " " + item.desc;
+                list += line;
+        }
+        return list;
 }
 
 } // namespace promeki

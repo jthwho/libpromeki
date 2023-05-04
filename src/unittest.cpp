@@ -39,7 +39,6 @@ int registerUnitTest(const UnitTest &&test) {
         UnitTestVector &utv = unitTestVector();
         int ret = utv.size();
         utv.push_back(std::move(test));
-        promekiInfo("Registered Test: %s", test.name.cstr());
         return ret;
 }
 

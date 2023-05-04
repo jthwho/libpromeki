@@ -62,14 +62,16 @@ class CmdLineParser {
 
                                 char                    shortName = 0;
                                 String                  longName;
+                                String                  desc;
                                 OptionCallbackVariant   callback;
 
                                 Option() = default;
-                                Option(char sn, const char *ln, OptionCallback cb) : shortName(sn), longName(ln), callback(cb) {}
-                                Option(char sn, const char *ln, OptionBoolCallback cb) : shortName(sn), longName(ln), callback(cb) {}
-                                Option(char sn, const char *ln, OptionIntCallback cb) : shortName(sn), longName(ln), callback(cb) {}
-                                Option(char sn, const char *ln, OptionDoubleCallback cb) : shortName(sn), longName(ln), callback(cb) {}
-                                Option(char sn, const char *ln, OptionStringCallback cb) : shortName(sn), longName(ln), callback(cb) {}
+                                Option(char sn, const String &ln, const String &d, OptionCallbackVariant cb) : 
+                                        shortName(sn), longName(ln), desc(d), callback(cb) {}
+                                //Option(char sn, const String &ln, OptionBoolCallback cb) : shortName(sn), longName(ln), callback(cb) {}
+                                //Option(char sn, const char *ln, OptionIntCallback cb) : shortName(sn), longName(ln), callback(cb) {}
+                                //Option(char sn, const char *ln, OptionDoubleCallback cb) : shortName(sn), longName(ln), callback(cb) {}
+                                //Option(char sn, const char *ln, OptionStringCallback cb) : shortName(sn), longName(ln), callback(cb) {}
                                 
                                 ArgType argType() const {
                                         if(std::holds_alternative<OptionCallback>(callback)) return ArgNone;
@@ -85,11 +87,12 @@ class CmdLineParser {
                 void registerOptions(const std::initializer_list<Option> &options) {
                         for(const auto &opt : options) {
                                 if(opt.shortName != 0) {
-                                        _options[String(1, opt.shortName)] = opt;
+                                        _optionsMap[String(1, opt.shortName)] = opt;
                                 }
                                 if(!opt.longName.isEmpty()) {
-                                        _options[opt.longName] = opt;
+                                        _optionsMap[opt.longName] = opt;
                                 }
+                                _options.push_back(opt);
                         }
                 }
 
@@ -97,6 +100,7 @@ class CmdLineParser {
 
                 // Clear the object, including the 
                 void clear() {
+                        _optionsMap.clear();
                         _options.clear();
                         _args.clear();
                         return;
@@ -112,15 +116,24 @@ class CmdLineParser {
 
                 // Does the parsing.  Returns 0 on success or some other
                 // number that you've returned from one of your option callbacks.
-                int parse(const StringList &args);
+                int parse(StringList args);
 
+                // Returns the arguments left after parsing out the options
                 int argCount() const { return _args.size(); }
+
+                // Returns an argument left after parsing
                 const String &arg(int index) const { return _args[index]; }
 
+                // Generates a string list with each line containing the help for
+                // one option.  This should be suitable for printing to the screen
+                StringList generateUsage() const;
 
         private:
-                std::map<String, Option>        _options;
+                std::map<String, Option>        _optionsMap;
+                std::vector<Option>             _options;
                 StringList                      _args;
+
+                static String optionFullName(bool optionName, const Option &option);
 };
 
 } // namespace promeki

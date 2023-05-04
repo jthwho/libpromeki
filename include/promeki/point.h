@@ -54,6 +54,8 @@ template <typename T, size_t NumValues> class Point {
                         }
                         return p;
                 }
+
+                static constexpr size_t Dimensions = NumValues;
                 
                 Point() : d{} { }
 
@@ -88,20 +90,28 @@ template <typename T, size_t NumValues> class Point {
                         return *this;
                 }
 
-                template <typename U>
-                        Point<T, NumValues>& operator=(U value) {
-                                static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
-                                for (size_t i = 0; i < NumValues; ++i) {
-                                        d[i] = static_cast<T>(value);
-                                }
-                                return *this;
+                template <typename U> Point<T, NumValues>& operator=(U value) {
+                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
+                        for (size_t i = 0; i < NumValues; ++i) {
+                                d[i] = static_cast<T>(value);
                         }
+                        return *this;
+                }
+
                 T& operator[](size_t index) {
                         return d[index];
                 }
 
                 const T& operator[](size_t index) const {
                         return d[index];
+                }
+
+                T *data() {
+                        return d.data();
+                }
+
+                const T*data() const {
+                        return d.data();
                 }
 
                 Point<T, NumValues>& operator+=(const Point<T, NumValues>& other) {
@@ -150,15 +160,7 @@ template <typename T, size_t NumValues> class Point {
                         }
                         return ss.str();
                 }
-
-                const T *data() const {
-                        return d;
-                }
-
-                T *data()  {
-                        return d;
-                }
-                
+               
                 template <typename U> double distanceTo(const Point<U, NumValues>& other) const {
                         double sum = 0;
                         for(size_t i = 0; i < NumValues; ++i) {

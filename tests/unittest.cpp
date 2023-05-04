@@ -21,6 +21,7 @@
  *
  *****************************************************************************/
 
+#include <cstdlib>
 #include <promeki/unittest.h>
 #include <promeki/logger.h>
 #include <promeki/buildinfo.h>
@@ -28,37 +29,31 @@
 
 using namespace promeki;
 
+void outputUsage(const CmdLineParser &p) {
+        StringList lines = p.generateUsage();
+        for(const auto &line : lines) {
+                std::cout << line << std::endl;
+        }
+        exit(0);
+        return;
+}
+
 // Run the built in unit tests
 int main(int argc, char **argv) {
         String filter = ".+";
         CmdLineParser cmdLine;
         cmdLine.registerOptions({
-                CmdLineParser::Option('t', "test", 
-                        CmdLineParser::OptionCallback([](){ 
-                                promekiInfo("Test option"); 
-                                return 0; 
-                        })
-                ),
-                CmdLineParser::Option('b', "bool", 
-                        CmdLineParser::OptionBoolCallback([](bool val) { 
-                                promekiInfo("Test Bool %s option", val ? "true" : "false"); 
+                CmdLineParser::Option('f', "filter", "regex match to select which tests should run",
+                        CmdLineParser::OptionStringCallback([&](const String &val) { 
+                                filter = val;
                                 return 0; })
                 ),
-                CmdLineParser::Option('i', "int", 
-                        CmdLineParser::OptionIntCallback([](int val) { 
-                                promekiInfo("Test int %d option", val); 
-                                return 0; })
-                ),
-                CmdLineParser::Option('d', "double", 
-                        CmdLineParser::OptionDoubleCallback([](double val) { 
-                                promekiInfo("Test Double %lf option", val); 
-                                return 0; })
-                ),
-                CmdLineParser::Option('s', "string", 
-                        CmdLineParser::OptionStringCallback([](const String &val) { 
-                                promekiInfo("Test Bool %s option", val.cstr()); 
+                CmdLineParser::Option('h', "", "show the usage",
+                        CmdLineParser::OptionCallback([&]() { 
+                                outputUsage(cmdLine);
                                 return 0; })
                 )
+
         });
 
         int ret = cmdLine.parseMain(argc, argv);
@@ -66,7 +61,6 @@ int main(int argc, char **argv) {
                 promekiErr("Argument parsing failed with %d", ret);
                 return ret;
         }
-        if(cmdLine.argCount()) filter = cmdLine.arg(0);
 
         logBuildInfo(); 
         return runUnitTests(filter) ? 0 : 9999;

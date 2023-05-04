@@ -88,6 +88,7 @@ set(PROMEKI_SOURCES
     src/ciepoint.cpp
     src/colorspace.cpp
     src/cmdlineparser.cpp
+    src/file.cpp
 )
 
 set(UNITTEST_SOURCES
