@@ -30,6 +30,7 @@
 #include <promeki/datetime.h>
 #include <promeki/pixelformat.h>
 #include <promeki/size2d.h>
+#include <promeki/uuid.h>
 
 namespace promeki {
 
@@ -55,7 +56,8 @@ template <typename... Types> class __Variant {
                         TypeDateTime,
                         TypeTimeStamp,
                         TypePixelFormat,
-                        TypeSize2D
+                        TypeSize2D,
+                        TypeUUID
                 };
 
                 __Variant() = default;
@@ -102,6 +104,7 @@ template <typename... Types> class __Variant {
 using Variant = __Variant<
         std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t,
         uint32_t, int32_t, uint64_t, int64_t, float, double, 
-        String, DateTime, TimeStamp, PixelFormat, Size2D>;
+        String, DateTime, TimeStamp, PixelFormat, Size2D,
+        UUID>;
 
 } // namespace promeki

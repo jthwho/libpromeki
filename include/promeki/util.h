@@ -24,6 +24,11 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
+
+namespace promeki {
+
+class Error;
 
 // Macro string conversion and concatination
 #define PROMEKI_STRINGIFY_IMPL(value) #value
@@ -134,4 +139,9 @@ T promekiCubic(const std::array<T, 4>& points, T t) {
     T d = points[1];
     return a * t * t * t + b * t * t + c * t + d;
 }
+
+// Writes bytes worth of random data to buf
+Error promekiRand(uint8_t *buf, size_t bytes);
+
+} // namespace promeki
 

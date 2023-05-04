@@ -59,11 +59,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
+    src/util.cpp
     src/unittest.cpp
     src/string.cpp
     src/stringlist.cpp
     src/regex.cpp
     src/error.cpp
+    src/uuid.cpp
     src/shareddata.cpp
     src/point.cpp
     src/point2d.cpp
@@ -99,6 +101,7 @@ set(UNITTEST_SOURCES
     tests/image.cpp
     tests/ciepoint.cpp
     tests/point.cpp
+    tests/uuid.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
