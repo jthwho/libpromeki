@@ -29,32 +29,29 @@
 
 namespace promeki {
 
-CIEPoint::XYZ CIEPoint::wavelengthToXYZ(double val) {
-        if(!CIEPoint::isValidWavelength(val)) return { -1.0, -1.0, -1.0 };
+XYZColor CIEPoint::wavelengthToXYZ(double val) {
+        if(!CIEPoint::isValidWavelength(val)) return XYZColor();
         double tmp;
-        double pct = std::modf(val, &tmp);
+        double t = std::modf(val, &tmp);
         int index = static_cast<int>(tmp);
         index -= (int)CIEPoint::MinWavelength; // Our table starts at this point.
         const CIEWavelength &left = cieWavelengthTable[index];
-        if(pct == 0.0) return left.xyz;
+        if(t == 0.0) return left.xyz;
         const CIEWavelength &right = cieWavelengthTable[index + 1]; 
-        return { promekiLerp(std::get<0>(left.xyz), std::get<0>(right.xyz), pct),
-                 promekiLerp(std::get<1>(left.xyz), std::get<0>(right.xyz), pct),
-                 promekiLerp(std::get<2>(left.xyz), std::get<2>(right.xyz), pct) };
+        return left.xyz.lerp(right.xyz, t);
 }
 
 CIEPoint CIEPoint::wavelengthToCIEPoint(double val) {
-        if(!CIEPoint::isValidWavelength(val)) return { -1.0, -1.0, -1.0 };
+        if(!CIEPoint::isValidWavelength(val)) return CIEPoint();
         double tmp;
-        double pct = std::modf(val, &tmp);
+        double t = std::modf(val, &tmp);
         int index = static_cast<int>(tmp);
         index -= (int)CIEPoint::MinWavelength; // Our table starts at this point.
         const CIEWavelength &left = cieWavelengthTable[index];
-        if(pct == 0.0) return left.xy;
+        if(t == 0.0) return left.xy;
         const CIEWavelength &right = cieWavelengthTable[index + 1]; 
-        return left.xy.lerp(right.xy, pct);
+        return left.xy.lerp(right.xy, t);
 }
-
 
 } // namespace promeki
 

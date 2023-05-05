@@ -33,6 +33,7 @@ class Error {
                         Ok = 0,
                         UnsupportedSystemError,
                         LibraryFailure,
+                        SingularMatrix,
                         NotImplemented,
                         PixelFormatNotSupported,
                         OutOfRange,

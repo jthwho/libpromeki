@@ -25,24 +25,24 @@
 
 #include <cmath>
 #include <array>
-#include <promeki/point2d.h>
+#include <promeki/point.h>
+#include <promeki/xyzcolor.h>
 
 namespace promeki {
 
-class CIEPoint : public Point2Dd {
+class CIEPoint {
         public:
+                using DataType = Array<double, 2>;
                 static constexpr double MinWavelength = 360;
                 static constexpr double MaxWavelength = 700;
 
-                using XYZ = std::array<double, 3>;
-
-                static const CIEPoint D50;
-                static const CIEPoint D55;
+                //static const CIEPoint D50;
+                //static const CIEPoint D55;
 
                 static bool isValidWavelength(double val) {
                         return val >= MinWavelength && val <= MaxWavelength;
                 }
-                static XYZ wavelengthToXYZ(double wavelength);
+                static XYZColor wavelengthToXYZ(double wavelength);
                 static CIEPoint wavelengthToCIEPoint(double wavelength);
 
                 static CIEPoint colorTempToWhitePoint(double cct) {
@@ -65,14 +65,17 @@ class CIEPoint : public Point2Dd {
                         return CIEPoint(x, y);
                 }
 
-                CIEPoint(double x = -1.0, double y = -1.0) : Point2Dd(x, y) { }
-                CIEPoint(const Point2Dd& other) : Point2Dd(other) { }
-                CIEPoint(const std::initializer_list<double>& list) : Point2Dd(list) { }
+                CIEPoint(double x = -1.0, double y = -1.0) : d(x, y) { }
+                CIEPoint(const DataType &other) : d(other) { }
 
                 bool isValid() const {
-                        return isInside(0.0, 0.0, 0.8, 0.9);
+                        return d.isBetween(DataType(0.0, 0.0), DataType(0.8, 0.9));
                 }
-                
+
+                CIEPoint lerp(const CIEPoint &other, double t) const {
+                        return d.lerp(other.d, t);
+                }
+#if 0 
                 XYZ toXYZ(double Y = 1.0) const {
                         double X = (x() * Y) / y();
                         double Z = ((1.0 - x() - y()) * Y) / y();
@@ -93,9 +96,11 @@ class CIEPoint : public Point2Dd {
                                3601.0 * std::pow(n, 2.0) + 
                                6861.0 * n + 5517;
                 }
+#endif
+        private:
+                DataType d;
 
 };
 
-inline const CIEPoint CIEPoint::D55(0.33242, 0.34743);
 
 } // namespace promeki

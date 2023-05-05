@@ -1,6 +1,6 @@
 /*****************************************************************************
- * point.cpp
- * May 02, 2023
+ * matrix.cpp
+ * May 04, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,20 +21,9 @@
  *
  *****************************************************************************/
 
-#include <promeki/unittest.h>
-#include <promeki/point.h>
+#include <promeki/matrix.h>
 
-using namespace promeki;
-
-PROMEKI_TEST_BEGIN(Point)
-        Point2D p1(1, 2);
-        Point2D p2(5, 4);
-
-        PROMEKI_TEST(p1.toString() == "1, 2");
-        PROMEKI_TEST(p1 * p2 == Point2D(5, 8));
-        PROMEKI_TEST(p1.x() == 1);
-        PROMEKI_TEST(p1.y() == 2);
-
-PROMEKI_TEST_END()
+namespace promeki {
 
 
+} // namespace promeki

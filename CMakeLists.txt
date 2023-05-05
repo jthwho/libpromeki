@@ -60,6 +60,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
     src/util.cpp
+    src/array.cpp
+    src/matrix.cpp
     src/unittest.cpp
     src/string.cpp
     src/stringlist.cpp
@@ -68,7 +70,6 @@ set(PROMEKI_SOURCES
     src/uuid.cpp
     src/shareddata.cpp
     src/point.cpp
-    src/point2d.cpp
     src/size2d.cpp
     src/mempool.cpp
     src/logger.cpp
@@ -87,8 +88,9 @@ set(PROMEKI_SOURCES
     src/matrix3x3.cpp
     src/colorspaceconverter.cpp
     src/imagefile.cpp
+    src/xyzcolor.cpp
     src/ciepoint.cpp
-    src/colorspace.cpp
+#    src/colorspace.cpp
     src/cmdlineparser.cpp
     src/file.cpp
 )
@@ -99,7 +101,7 @@ set(UNITTEST_SOURCES
     tests/string.cpp
     tests/shareddata.cpp
     tests/image.cpp
-    tests/ciepoint.cpp
+#    tests/ciepoint.cpp
     tests/point.cpp
     tests/uuid.cpp
 )

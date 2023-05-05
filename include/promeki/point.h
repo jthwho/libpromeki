@@ -23,141 +23,122 @@
 
 #pragma once
 
-#include <array>
 #include <cmath>
-#include <cstddef>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/logger.h>
+#include <promeki/array.h>
 
 namespace promeki {
 
 template <typename T, size_t NumValues> class Point {
         public:
-                static Point<T, NumValues> fromString(const String &val, Error *err = nullptr) {
-                        Point<T, NumValues> p;
+               static Error fromString(const String &val, Point &d) {
                         std::stringstream ss(val);
                         ss >> std::ws;
                         for(size_t i = 0; i < NumValues; ++i) {
-                                if(!(ss >> p.d[i])) {
-                                        if(err != nullptr) *err = Error::Invalid;
-                                        return Point<T, NumValues>();
-                                }
+                                if(!(ss >> d[i])) return Error::Invalid;
                                 ss >> std::ws;
                                 if(i < NumValues - 1) {
                                         char c;
-                                        if(!(ss >> c) || c != ',') {
-                                                if(err != nullptr) *err = Error::Invalid;
-                                                return Point<T, NumValues>();
-                                        }
+                                        if(!(ss >> c) || c != ',') return Error::Invalid;
                                 }
                         }
-                        return p;
+                        return Error::Ok;
                 }
 
-                static constexpr size_t Dimensions = NumValues;
-                
-                Point() : d{} { }
-
-                Point(const String &str) : d(fromString(str)) { }
-
-                template <typename... Args> Point(Args&&... args) : d{std::forward<Args>(args)...} {
-                        static_assert(sizeof...(Args) == NumValues, "Incorrect number of arguments");
+                static Point fromString(const String &str, Error *err = nullptr) {
+                        Array<T, NumValues> d;
+                        Error e = fromString(str, d);
+                        if(err != nullptr) *err = e;
+                        return e.isOk() ? d : Point();
                 }
 
-                template <typename U, size_t OtherNumValues> Point(const Point<U, OtherNumValues>& other) {
-                        static_assert(std::is_convertible_v<T, T>, "Incompatible types");
-                        static_assert(OtherNumValues <= NumValues, "Incompatible sizes");
-                        for(size_t i = 0; i < NumValues; ++i) {
-                                d[i] = i < OtherNumValues ? other[i] : T{};
-                        }
-                }
-
-                template <typename U> Point<T, NumValues>& operator=(const Point<U, NumValues>& other) {
-                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] = static_cast<T>(other[i]);
-                        }
-                        return *this;
-                }
-
-                template <typename U, size_t OtherNumValues> Point<T, NumValues>& operator=(const Point<U, OtherNumValues>& other) {
-                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
-                        static_assert(OtherNumValues <= NumValues, "Incompatible sizes");
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] = i < OtherNumValues ? static_cast<T>(other[i]) : T{};
-                        }
-                        return *this;
-                }
-
-                template <typename U> Point<T, NumValues>& operator=(U value) {
-                        static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] = static_cast<T>(value);
-                        }
-                        return *this;
-                }
-
-                T& operator[](size_t index) {
-                        return d[index];
-                }
-
-                const T& operator[](size_t index) const {
-                        return d[index];
-                }
-
-                T *data() {
-                        return d.data();
-                }
-
-                const T*data() const {
-                        return d.data();
-                }
-
-                Point<T, NumValues>& operator+=(const Point<T, NumValues>& other) {
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] += other[i];
-                        }
-                        return *this;
-                }
-
-                Point<T, NumValues>& operator-=(const Point<T, NumValues>& other) {
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] -= other[i];
-                        }
-                        return *this;
-                }
-
-                Point<T, NumValues>& operator*=(const T& scalar) {
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] *= scalar;
-                        }
-                        return *this;
-                }
-
-                Point<T, NumValues>& operator/=(const T& scalar) {
-                        for (size_t i = 0; i < NumValues; ++i) {
-                                d[i] /= scalar;
-                        }
-                        return *this;
-                }
-                
+                Point() : d{} {}
+                Point(const Array<T, NumValues> &val) : d(val) {}
+                template<typename... Args> Point(Args... args) : d{static_cast<T>(args)...} {}
+                Point<T, NumValues>(const String &str) : d(fromString(str)) { }
+                virtual ~Point() { }
+ 
                 operator String() const {
                         return toString();
                 }
 
-                T sum() const {
-                        T ret{};
-                        for(size_t i = 0; i < NumValues; ++i) ret += d[i];
-                        return ret;
+                operator const Array<T, NumValues>&() {
+                        return d;
+                }
+
+                bool operator==(const Array<T, NumValues> &val) const {
+                        return d == val;
+                }
+
+                bool operator!=(const Array<T, NumValues> &val) const {
+                        return d != val;
+                }
+
+                Point &operator+=(const Array<T, NumValues> &val) {
+                        d += val;
+                        return *this;
+                }
+                
+                Point &operator-=(const Array<T, NumValues> &val) {
+                        d -= val;
+                        return *this;
+                }
+
+                Point &operator*=(const Array<T, NumValues> &val) {
+                        d *= val;
+                        return *this;
+                }
+
+                Point &operator/=(const Array<T, NumValues> &val) {
+                        d /= val;
+                        return *this;
+                }
+                
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> const T &x() const {
+                        return d[0];
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> T &x() {
+                        return d[0];
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 1, int> = 0> void setX(const T &val) {
+                        d[0] = val;
+                        return;
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> const T &y() const {
+                        return d[1];
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> T &y() {
+                        return d[1];
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 2, int> = 0> void setY(const T &val) {
+                        d[1] = val;
+                        return;
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> const T &z() const {
+                        return d[2];
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> T &z() {
+                        return d[2];
+                }
+
+                template<size_t N = NumValues, typename std::enable_if_t<N >= 3, int> = 0> void setZ(const T &val) {
+                        d[2] = val;
+                        return;
                 }
 
                 String toString() const {
                         std::stringstream ss;
                         ss << d[0];
-                        for(size_t i = 1; i < NumValues; ++i) {
-                                ss << ", " << d[i];
-                        }
+                        for(size_t i = 1; i < NumValues; ++i) ss << ", " << d[i];
                         return ss.str();
                 }
                
@@ -170,14 +151,7 @@ template <typename T, size_t NumValues> class Point {
                         return std::sqrt(sum);
                 }
                 
-                template <typename U> Point<T, NumValues> lerp(const Point<U, NumValues>& other, double t) const {
-                        static_assert(std::is_floating_point_v<decltype(t)>, "T must be a floating-point type");
-                        Point<T, NumValues> result;
-                        for(size_t i = 0; i < NumValues; ++i) {
-                                result[i] = static_cast<T>((1 - t) * static_cast<double>(d[i]) + t * static_cast<double>(other[i]));
-                        }
-                        return result;
-                }
+                Point<T, NumValues> lerp(const Point<T, NumValues> &other, double t) const { return d.lerp(other, t); }
 
                 template <typename U> Point<T, NumValues> clamp(
                                 const Point<U, NumValues>& minVal, 
@@ -192,42 +166,29 @@ template <typename T, size_t NumValues> class Point {
                         return result;
                 }
 
-                friend Point<T, NumValues> operator+(Point<T, NumValues> lhs, const Point<T, NumValues>& rhs) {
-                        lhs += rhs;
-                        return lhs;
-                }
-
-                friend Point<T, NumValues> operator-(Point<T, NumValues> lhs, const Point<T, NumValues>& rhs) {
-                        lhs -= rhs;
-                        return lhs;
-                }
-
-                friend Point<T, NumValues> operator*(Point<T, NumValues> lhs, const T& scalar) {
-                        lhs *= scalar;
-                        return lhs;
-                }
-
-                friend Point<T, NumValues> operator*(const T& scalar, Point<T, NumValues> rhs) {
-                        rhs *= scalar;
-                        return rhs;
-                }
-
-                friend Point<T, NumValues> operator/(Point<T, NumValues> lhs, const T& scalar) {
-                        lhs /= scalar;
-                        return lhs;
-                }
-
-                friend bool operator==(const Point<T, NumValues>& lhs, const Point<T, NumValues>& rhs) {
-                        for(size_t i = 0; i < NumValues; ++i) {
-                                if(lhs[i] != rhs[i]) {
+                bool isWithinBounds(const Point<T, NumValues>& min, const Point<T, NumValues>& max) const {
+                        for (size_t i = 0; i < NumValues; ++i) {
+                                if (d[i] < min.d[i] || d[i] > max.d[i]) {
                                         return false;
                                 }
                         }
                         return true;
                 }
+                
+                friend Point operator+(const Array<T, NumValues> &lh, const Array<T, NumValues> &rh) {
+                        return Point(lh + rh);
+                }
+                
+                friend Point operator-(const Array<T, NumValues> &lh, const Array<T, NumValues> &rh) {
+                        return Point(lh - rh);
+                }
 
-                friend bool operator!=(const Point<T, NumValues>& lhs, const Point<T, NumValues>& rhs) {
-                        return !(lhs == rhs);
+                friend Point operator*(const Array<T, NumValues> &lh, const Array<T, NumValues> &rh) {
+                        return Point(lh * rh);
+                }
+
+                friend Point operator/(const Array<T, NumValues> &lh, const Array<T, NumValues> &rh) {
+                        return Point(lh / rh);
                 }
 
                 friend std::ostream &operator<<(std::ostream &os, const Point<T, NumValues>& p) {
@@ -246,7 +207,7 @@ template <typename T, size_t NumValues> class Point {
                 }
 
         private:
-                std::array<T, NumValues> d;
+                Array<T, NumValues>     d;
 };
 
 using Point2D = Point<int, 2>;

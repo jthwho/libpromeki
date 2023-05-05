@@ -2,13 +2,14 @@
 #pragma once
 
 #include <promeki/ciepoint.h>
+#include <promeki/xyzcolor.h>
 
 namespace promeki {
 
 struct CIEWavelength {
-	double        wavelength;
-	CIEPoint::XYZ xyz;
-	CIEPoint      xy;
+	double          wavelength;
+	XYZColor        xyz;
+	CIEPoint        xy;
 };
 
 static const CIEWavelength cieWavelengthTable[] = {
