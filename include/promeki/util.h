@@ -30,6 +30,24 @@ namespace promeki {
 
 class Error;
 
+#if defined(_WIN32)
+#define PROMEKI_PLATFORM_WINDOWS 32
+#define PROMEKI_PLATFORM "Win32"
+#elif defined(_WIN64)
+#define PROMEKI_PLATFORM_WINDOWS 64
+#define PROMEKI_PLATFORM "Win64"
+#elif defined(__APPLE__)
+#define PROMEKI_PLATFORM_APPLE 1
+#define PROMEKI_PLATFORM "MacOS"
+#elif defined(__linux__)
+#define PROMEKI_PLATFORM_LINUX 1
+#define PROMEKI_PLATFORM "Linux"
+#else
+#define PROMEKI_PLATFORM_UNKNOWN 1
+#define PROMEKI_PLATFORM "Unknown"
+#endif
+
+
 // Macro string conversion and concatination
 #define PROMEKI_STRINGIFY_IMPL(value) #value
 #define PROMEKI_STRINGIFY(value) PROMEKI_STRINGIFY_IMPL(value)

@@ -31,7 +31,8 @@ namespace promeki {
 
 class Buffer {
         public:
-                const static size_t DefaultAlign = 4096; // FIXME: Use the system page size
+                static size_t getPageSize();
+                static const size_t DefaultAlign;
                 
                 using List = std::vector<Buffer>;
 
@@ -39,6 +40,7 @@ class Buffer {
                         public:
                                 MemSpace        ms;
                                 void            *data           = nullptr;
+                                void            *odata          = nullptr;
                                 size_t          size            = 0;
                                 size_t          align           = 0;
                                 bool            owned           = true;
@@ -46,14 +48,14 @@ class Buffer {
                                 Data() = default;
                                 
                                 Data(void *p, size_t s, size_t an, bool own, const MemSpace &m) :
-                                        ms(m), data(p), size(s), align(an), owned(own) { }
+                                        ms(m), data(p), odata(p), size(s), align(an), owned(own) { }
 
                                 Data(size_t sz, size_t an, const MemSpace &m) : ms(m), size(sz), align(an) { 
-                                        data = ms.alloc(size, align);
+                                        odata = data = ms.alloc(size, align);
                                 }
 
                                 ~Data() {
-                                        if(owned) ms.release(data);
+                                        if(owned) ms.release(odata);
                                 }
 
                                 bool fill(char value) const {
@@ -74,6 +76,13 @@ class Buffer {
                 size_t align() const { return d->align; }
                 const MemSpace &memSpace() const { return d->ms; }
 
+                // Shifts the value returned by data() by the given number of bytes.
+                // Be careful when using this to make sure you've allocated enough
+                // memory to account of the shift size.
+                void shiftData(size_t bytes) {
+                        d->data = static_cast<void *>(static_cast<uint8_t *>(d->data) + bytes);
+                        return;
+                }
                 void setOwnershipEnabled(bool val) {
                         d->owned = val;
                         return;

@@ -75,7 +75,7 @@ void Logger::writeLog(const Command &cmd) {
         const char *level = levelToString(cmd.level);
 
         AnsiStream term(std::cout);
-        
+        term.setAnsiEnabled(AnsiStream::stdoutSupportsANSI());
         String srcLocation = FileInfo(cmd.file).fileName();
         srcLocation += ':';
         srcLocation += String::dec(cmd.line);

@@ -58,13 +58,21 @@ class Error {
                         ReadOnly,
                         IllegalSeek,
                         Timeout,
-                        CrossDeviceLink
+                        CrossDeviceLink,
+                        NoFrameRate
                 };
 
                 // Returns an error code based on the current errno
                 static Error syserr();
                 Error(Code code = Ok) : _code(code) { }
                 ~Error() { }
+                bool operator==(const Error &other) const { return _code == other._code; }
+                bool operator!=(const Error &other) const { return _code != other._code; }
+                bool operator<(const Error &other) const { return _code < other._code; }
+                bool operator<=(const Error &other) const { return _code <= other._code; }
+                bool operator>(const Error &other) const { return _code > other._code; }
+                bool operator>=(const Error &other) const { return _code >= other._code; }
+
                 Code code() const { return _code; }
                 bool isOk() const { return _code == 0; }
                 bool isError() const { return _code != 0; }

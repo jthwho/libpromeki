@@ -77,6 +77,7 @@ set(PROMEKI_SOURCES
     src/fileinfo.cpp
     src/datetime.cpp
     src/timestamp.cpp
+    src/timecode.cpp
     src/variant.cpp
     src/metadata.cpp
     src/memspace.cpp
@@ -104,6 +105,7 @@ set(UNITTEST_SOURCES
 #    tests/ciepoint.cpp
     tests/point.cpp
     tests/uuid.cpp
+    tests/timecode.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})

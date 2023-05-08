@@ -22,12 +22,10 @@
  *****************************************************************************/
 
 #include <promeki/file.h>
+#include <promeki/util.h>
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <Windows.h>
-#elif __APPLE__
-#include <fcntl.h>
-#include <unistd.h>
 #else
 #include <fcntl.h>
 #include <unistd.h>
@@ -53,7 +51,7 @@ File::~File() {
         close();
 }
 
-#ifdef _WIN32
+#if defined(PROMEKI_PLATFORM_WINDOWS)
 // FIXME: The windows code here needs love.
 bool File::isOpen() const {
         return false;

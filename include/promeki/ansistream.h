@@ -57,13 +57,18 @@ class AnsiStream : public std::ostream {
                         Default = 39
                 };
 
-                static bool getWindowSize(int &rows, int &cols);
-                static bool isAnsiSupported();
+                static bool stdoutWindowSize(int &rows, int &cols);
+                static bool stdoutSupportsANSI();
 
                 AnsiStream(std::ostream &output) : 
                         std::ostream(output.rdbuf()),
-                        _enabled(isAnsiSupported())
+                        _enabled(true)
                 { }
+
+                void setAnsiEnabled(bool val) {
+                        _enabled = val;
+                        return;
+                }
 
                 AnsiStream &setForeground(Color color, TextStyle style = Bold) {
                         if(!_enabled) return *this;

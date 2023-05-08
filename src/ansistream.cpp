@@ -69,7 +69,7 @@ static bool checkForAnsiSupport() {
         return false;
 }
 
-bool AnsiStream::isAnsiSupported() {
+bool AnsiStream::stdoutSupportsANSI() {
         // Only needs to happen once, so we check for ansi support and then
         // cache the answer for the future.
         static bool checked = false;
@@ -78,7 +78,7 @@ bool AnsiStream::isAnsiSupported() {
         return ret;
 }
 
-bool AnsiStream::getWindowSize(int &rows, int &cols) {
+bool AnsiStream::stdoutWindowSize(int &rows, int &cols) {
 #if defined(_WIN32) || defined(_WIN64)
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
