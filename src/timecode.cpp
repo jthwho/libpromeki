@@ -38,7 +38,6 @@ Timecode &Timecode::operator++() {
                         if(_min >= 60) {
                                 _min = 0;
                                 _hour++;
-                                if(_hour >= 24) _hour = 0;
                         }
                 }
         }
@@ -54,8 +53,7 @@ Timecode &Timecode::operator--() {
                         _sec = 59;
                         if(_min == 0) {
                                 _min = 59;
-                                if(_hour == 0) _hour = 23;
-                                else _hour--;
+                                _hour--;
                         } else _min--;
                 } else _sec--;
         } else _frame--;
@@ -69,17 +67,26 @@ Timecode Timecode::fromFrameNumber(const Mode &mode, FrameNumber frameNumber) {
         int framesPerMin = framesPerSec * 60;
         int framesPerHour = framesPerMin * 60;
         FrameNumber ct = frameNumber;
+        if(mode.isDropFrame() && mode.fps() == 30) {
+                int dropFramesPerHour = framesPerHour - 108;
+                int dropFramesPer10Min = (framesPerMin * 10) - 18;
+                int dropFramesPerMin = framesPerMin - 2;
+                int dropct = 0;
+                int fnum = frameNumber;
+                dropct += (fnum / dropFramesPerHour) * 108; fnum %= dropFramesPerHour;
+                dropct += (fnum / dropFramesPer10Min) * 18; fnum %= dropFramesPer10Min;
+                if(fnum >= framesPerMin) {
+                        dropct += 2;
+                        fnum -= framesPerMin;
+                        dropct += (fnum / dropFramesPerMin) * 2;
+                }
+                ct += dropct;
+        }
         h = ct / framesPerHour; ct %= framesPerHour;
         m = ct / framesPerMin;  ct %= framesPerMin;       
         s = ct / framesPerSec;
         f = ct % framesPerSec;
-        Timecode tc(mode, h, m, s, f);
-        if(mode.isDropFrame() && mode.fps() == 30) {
-                // FIXME: There's got to be a better way to do this.
-                int drop = (h * 108) + ((m - (m / 10)) * 2);
-                for(int i = 0; i < drop; i++) ++tc;
-        }
-        return tc;
+        return Timecode(mode, h, m, s, f);
 }
 
 std::pair<Timecode, Error> Timecode::fromString(const String &str) {

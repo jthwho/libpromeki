@@ -27,7 +27,7 @@
 using namespace promeki;
 
 PROMEKI_TEST_BEGIN(Timecode)
-        const int framesToTest = 2160000;
+        const int framesToTest = 24 * 60 * 60 * 30;
 
         auto [ tcs1, err ] = Timecode::fromString("01:02:03:04");
         PROMEKI_TEST(err.isOk());
