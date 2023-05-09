@@ -28,7 +28,7 @@
 #include <promeki/structdatabase.h>
 #include <promeki/util.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 #define DEFINE_SPACE(item) \
         .id = MemSpace::item, \
@@ -69,5 +69,5 @@ const MemSpace::Ops *MemSpace::lookup(ID id) {
         return &db.get(id);
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

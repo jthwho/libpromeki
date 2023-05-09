@@ -25,9 +25,10 @@
 
 #include <cstdint>
 #include <vector>
+#include <promeki/namespace.h>
 #include <promeki/pixelformat.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Pixel {
         public:
@@ -38,4 +39,5 @@ class Pixel {
                 std::vector<uint8_t>    _data;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

@@ -23,11 +23,12 @@
 
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/image.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class ImageFile {
         public:
@@ -65,5 +66,6 @@ class ImageFile {
                 static const Data *lookup(ID id);
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+
 

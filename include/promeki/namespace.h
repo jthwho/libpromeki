@@ -1,6 +1,6 @@
 /*****************************************************************************
- * promeki.h
- * April 26, 2023
+ * namespace.h
+ * May 08, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -23,6 +23,7 @@
 
 #pragma once
 
-namespace Promeki {
+#define PROMEKI_NAMESPACE_BEGIN         namespace promeki {
+#define PROMEKI_NAMESPACE_END           }
 
-} // namespace promeki
+

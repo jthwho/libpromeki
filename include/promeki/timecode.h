@@ -24,10 +24,11 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Timecode {
         public:
@@ -181,4 +182,4 @@ class Timecode {
 };
 
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END

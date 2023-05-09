@@ -25,7 +25,7 @@
 #include <promeki/error.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 int CmdLineParser::parse(StringList args) {
         _args.clear(); // Clear the args.
@@ -166,5 +166,5 @@ StringList CmdLineParser::generateUsage() const {
         return list;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

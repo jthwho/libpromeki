@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/util.h>
 #include <promeki/logger.h>
@@ -45,7 +46,7 @@
 
 #define PROMEKI_TEST_MSG(msg) promekiInfo("----: %s", String(msg).cstr());
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 struct UnitTest {
         String                                                          name;
@@ -57,5 +58,5 @@ struct UnitTest {
 int registerUnitTest(const UnitTest &&test);
 bool runUnitTests(const RegEx &testNameFilter = ".+"); // Run all tests by default.
 
-}
+PROMEKI_NAMESPACE_END
 

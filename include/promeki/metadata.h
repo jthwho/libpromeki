@@ -24,6 +24,7 @@
 #pragma once
 
 #include <map>
+#include <promeki/namespace.h>
 #include <promeki/variant.h>
 #include <promeki/util.h>
 
@@ -32,7 +33,7 @@
         X(Timecode) \
         X(Gamma)
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Metadata {
         public:
@@ -63,4 +64,5 @@ class Metadata {
                 std::map<ID, Variant> d;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

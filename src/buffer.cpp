@@ -30,7 +30,7 @@
 #include <unistd.h>
 #endif
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 const size_t Buffer::DefaultAlign = getPageSize();
 
@@ -48,5 +48,5 @@ size_t Buffer::getPageSize() {
         return ret;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

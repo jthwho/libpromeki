@@ -23,7 +23,7 @@
 
 #include <promeki/uuid.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 inline int hexCharToVal(char num) {
         int val;
@@ -130,5 +130,5 @@ String UUID::toString() const {
         return buf;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

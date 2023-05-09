@@ -24,12 +24,13 @@
 #pragma once
 
 #include <cmath>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/logger.h>
 #include <promeki/array.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 template <typename T, size_t NumValues> class Point {
         public:
@@ -220,4 +221,5 @@ using Point4D = Point<int, 4>;
 using Point4Df = Point<float, 4>;
 using Point4Dd = Point<double, 4>;
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

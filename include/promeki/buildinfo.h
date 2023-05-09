@@ -23,7 +23,9 @@
 
 #pragma once
 
-namespace promeki {
+#include <promeki/namespace.h>
+
+PROMEKI_NAMESPACE_BEGIN
 
 typedef struct {
     const char * name;
@@ -42,5 +44,5 @@ const BuildInfo * getBuildInfo();
 // Writes all the build info to the log output
 void logBuildInfo();
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

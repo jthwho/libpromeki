@@ -24,9 +24,10 @@
 #pragma once
 
 #include <array>
+#include <promeki/namespace.h>
 #include <promeki/ciepoint.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class ColorSpace {
         public:
@@ -72,4 +73,5 @@ class ColorSpace {
                 static const Data *lookup(ID val);
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

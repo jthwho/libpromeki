@@ -23,4 +23,7 @@
 
 #include <promeki/size2d.h>
 
-namespace promeki {}   // namespace promeki
+PROMEKI_NAMESPACE_BEGIN
+
+PROMEKI_NAMESPACE_END
+

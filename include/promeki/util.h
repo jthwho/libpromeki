@@ -25,8 +25,9 @@
 
 #include <array>
 #include <cstdint>
+#include <promeki/namespace.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Error;
 
@@ -161,5 +162,5 @@ T promekiCubic(const std::array<T, 4>& points, T t) {
 // Writes bytes worth of random data to buf
 Error promekiRand(uint8_t *buf, size_t bytes);
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

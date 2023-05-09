@@ -25,10 +25,10 @@
 
 #include <filesystem>
 #include <optional>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 
-namespace promeki {
-
+PROMEKI_NAMESPACE_BEGIN
 
 class FileInfo {
         public:
@@ -109,5 +109,5 @@ class FileInfo {
 
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

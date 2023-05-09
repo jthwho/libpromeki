@@ -29,7 +29,7 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 void pngError(png_structp png, png_const_charp msg) {
         promekiErr("libpng: %s", msg);
@@ -117,5 +117,5 @@ Error imageFileSavePNG(const String &filename, const Image &image) {
 	return Error::Ok;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

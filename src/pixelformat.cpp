@@ -26,7 +26,7 @@
 #include <promeki/structdatabase.h>
 #include <promeki/image.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 #define DEFINE_FORMAT(fmt) \
         .id = PixelFormat::fmt, \
@@ -238,4 +238,5 @@ bool PixelFormat::fill(const Image &img, const Comp *c, size_t compCount) const 
         return func == nullptr ? false : func(img, c);
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

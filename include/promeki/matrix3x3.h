@@ -26,8 +26,9 @@
 #include <ostream>
 #include <cmath>
 #include <immintrin.h>
+#include <promeki/namespace.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Matrix3x3 {
         public:
@@ -296,4 +297,5 @@ class Matrix3x3 {
 };
 
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

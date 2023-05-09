@@ -26,8 +26,9 @@
 #include <mutex>
 #include <queue>
 #include <condition_variable>
+#include <promeki/namespace.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 // A thread-safe queue implementation
 template <typename T>
@@ -101,5 +102,5 @@ class TSQueue {
 
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

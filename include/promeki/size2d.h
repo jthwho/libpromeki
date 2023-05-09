@@ -23,8 +23,10 @@
 
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/string.h>
-namespace promeki {
+
+PROMEKI_NAMESPACE_BEGIN
 
 template<typename T> class Size2DTemplate {
         public:
@@ -98,5 +100,5 @@ using Size2D = Size2DTemplate<size_t>;
 using Size2Df = Size2DTemplate<float>;
 using Size2Dd = Size2DTemplate<double>;
 
-}   // namespace promeki
+PROMEKI_NAMESPACE_END
 

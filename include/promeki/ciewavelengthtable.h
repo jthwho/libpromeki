@@ -1,10 +1,11 @@
 // CIE 1931 Wavelength Table
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/ciepoint.h>
 #include <promeki/xyzcolor.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 struct CIEWavelength {
 	double          wavelength;
@@ -486,4 +487,5 @@ static const CIEWavelength cieWavelengthTable[] = {
 	{ 830.0, { 0.734690, 0.265310, 0.000000 }, { 0.734690, 0.265310 } },
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

@@ -25,8 +25,9 @@
 
 #include <chrono>
 #include <thread>
+#include <promeki/namespace.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class TimeStamp {
         public:
@@ -135,6 +136,5 @@ inline TimeStamp operator-(const TimeStamp& ts, const TimeStamp::Duration& durat
         return result;
 }
 
-} // namespace promeki
-
+PROMEKI_NAMESPACE_END
 

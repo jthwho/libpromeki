@@ -24,8 +24,7 @@
 #include <promeki/metadata.h>
 #include <promeki/string.h>
 
-
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 #define X(name) { Metadata::name, PROMEKI_STRINGIFY(name) },
 static std::map<Metadata::ID, String> metadataIDNames = { PROMEKI_ENUM_METADATA_ID };
@@ -35,4 +34,5 @@ const String &Metadata::idName(ID id) {
         return metadataIDNames[id];
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

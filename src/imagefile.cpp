@@ -26,7 +26,7 @@
 #include <promeki/structdatabase.h>
 #include <promeki/util.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 #ifdef PROMEKI_ENABLE_PNG
 // Implementation for these live in src/png.cpp
@@ -58,5 +58,6 @@ const ImageFile::Data *ImageFile::lookup(ID id) {
         return &db.get(id);
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+
 

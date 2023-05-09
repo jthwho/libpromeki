@@ -26,7 +26,7 @@
 #include <promeki/ansistream.h>
 #include <promeki/fileinfo.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 Logger &Logger::defaultLogger() {
         static Logger ret;
@@ -116,5 +116,5 @@ void Logger::openLogFile(const Command &cmd) {
         return;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

@@ -25,6 +25,9 @@
 
 #include <cstddef>
 #include <array>
+#include <promeki/namespace.h>
+
+PROMEKI_NAMESPACE_BEGIN
 
 // The base template class for a point.  Put any code that's general to the concept of an 
 // array of values in this class.
@@ -225,4 +228,6 @@ template <typename T, size_t NumValues> class Array {
         protected:
                 DataType d;
 };
+
+PROMEKI_NAMESPACE_END
 

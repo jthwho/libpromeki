@@ -26,10 +26,10 @@
 #include <iostream>
 #include <memory>
 #include <atomic>
-
+#include <promeki/namespace.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 /* Usage Example: 
  
@@ -218,8 +218,5 @@ class ExplicitSharedDataPtr {
 		T *d = nullptr;
 };
 
-
-
-} // namespace promeki
-
+PROMEKI_NAMESPACE_END
 

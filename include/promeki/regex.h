@@ -24,10 +24,11 @@
 #pragma once
 
 #include <regex>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class RegEx {
         public:
@@ -114,4 +115,5 @@ class RegEx {
                 String          p;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

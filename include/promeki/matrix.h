@@ -24,10 +24,11 @@
 #pragma once
 
 #include <cmath>
+#include <promeki/namespace.h>
 #include <promeki/array.h>
 #include <promeki/error.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 template <typename T, size_t W, size_t H>
 class Matrix {
@@ -437,4 +438,5 @@ class Matrix {
                 DataType d;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

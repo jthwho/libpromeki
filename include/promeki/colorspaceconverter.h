@@ -23,7 +23,9 @@
 
 #pragma once
 
-namespace promeki {
+#include <promeki/namespace.h>
+
+PROMEKI_NAMESPACE_BEGIN
 
 struct CSC {
         float   matrix[3][3];
@@ -49,4 +51,5 @@ const CSC YCbCr_Rec709_to_RGB = {
     {-16.0f / 255.0f, -128.0f / 255.0f, -128.0f / 255.0f}
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

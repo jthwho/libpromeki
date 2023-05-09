@@ -25,10 +25,11 @@
 
 #include <array>
 #include <cstdint>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class UUID {
         public:
@@ -123,4 +124,5 @@ class UUID {
                 DataFormat d;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

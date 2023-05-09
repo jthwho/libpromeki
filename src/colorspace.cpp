@@ -30,7 +30,7 @@
         .id = ColorSpace::value, \
         .name = PROMEKI_STRINGIFY(value)
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static double transferLinear(double val) {
         return val;
@@ -155,5 +155,6 @@ const ColorSpace::Data *ColorSpace::lookup(ID id) {
         return &db.get(id);
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+
 

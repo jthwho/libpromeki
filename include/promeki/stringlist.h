@@ -24,10 +24,11 @@
 #pragma once
 
 #include <vector>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class StringList {
         public:
@@ -246,4 +247,5 @@ class StringList {
 
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

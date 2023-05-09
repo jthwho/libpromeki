@@ -24,10 +24,11 @@
 #pragma once
 
 #include <vector>
+#include <promeki/namespace.h>
 #include <promeki/shareddata.h>
 #include <promeki/memspace.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Buffer {
         public:
@@ -97,4 +98,5 @@ class Buffer {
 
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

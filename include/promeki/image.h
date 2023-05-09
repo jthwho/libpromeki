@@ -23,11 +23,12 @@
 
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/shareddata.h>
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Image {
         public:
@@ -122,4 +123,5 @@ class Image {
                 SharedDataPtr<Data> d;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

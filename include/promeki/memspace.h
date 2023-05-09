@@ -23,9 +23,10 @@
 
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class MemSpace {
         public:
@@ -70,5 +71,6 @@ class MemSpace {
                 static const Ops *lookup(ID id);
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+
 

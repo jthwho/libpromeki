@@ -28,9 +28,10 @@
 #include <set>
 #include <mutex>
 #include <algorithm>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 // Creates a memory pool that can be allocated from.  It does not use the
 // memory buffer that's given for any metadata, so you can use this to
@@ -114,5 +115,5 @@ class MemPool {
                 BlockMap                _allocatedBlocks;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

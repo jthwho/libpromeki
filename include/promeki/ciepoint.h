@@ -25,10 +25,11 @@
 
 #include <cmath>
 #include <array>
+#include <promeki/namespace.h>
 #include <promeki/point.h>
 #include <promeki/xyzcolor.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class CIEPoint {
         public:
@@ -102,5 +103,5 @@ class CIEPoint {
 
 };
 
+PROMEKI_NAMESPACE_END
 
-} // namespace promeki

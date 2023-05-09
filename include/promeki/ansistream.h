@@ -26,10 +26,11 @@
 #include <iostream>
 #include <ostream>
 #include <cstring>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/util.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class AnsiStream : public std::ostream {
         public:
@@ -227,4 +228,5 @@ class AnsiStream : public std::ostream {
 };
 
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

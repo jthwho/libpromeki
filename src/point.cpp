@@ -23,7 +23,7 @@
 
 #include <promeki/point.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_NAMESPACE_END
 
-} // namespace promeki

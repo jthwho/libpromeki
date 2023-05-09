@@ -27,7 +27,7 @@
 #include <promeki/datetime.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static String addSubsecondToFormat(double ns, const char *fmt, bool &jumpSecond) {
         String newfmt;
@@ -153,6 +153,5 @@ DateTime DateTime::fromNow(const String &description) {
         return DateTime(future_time);
 }
 
-} // namespace promeki
-
+PROMEKI_NAMESPACE_END
 

@@ -25,12 +25,13 @@
 
 #include <variant>
 #include <map>
+#include <promeki/namespace.h>
 #include <promeki/cmdlineparser.h>
 #include <promeki/stringlist.h>
 #include <promeki/string.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class CmdLineParser {
         public:
@@ -136,4 +137,4 @@ class CmdLineParser {
                 static String optionFullName(bool optionName, const Option &option);
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END

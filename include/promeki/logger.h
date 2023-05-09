@@ -27,11 +27,12 @@
 #include <atomic>
 #include <iostream>
 #include <fstream>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/tsqueue.h>
 #include <promeki/datetime.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 // Variadic macros for logging at various levels
 
@@ -133,5 +134,5 @@ class Logger {
 
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

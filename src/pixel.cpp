@@ -23,8 +23,7 @@
 
 #include <promeki/pixel.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
-
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

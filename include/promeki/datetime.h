@@ -26,9 +26,10 @@
 #include <chrono>
 #include <ctime>
 #include <sstream>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class DateTime {
         public:
@@ -144,4 +145,5 @@ class DateTime {
 };
 
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

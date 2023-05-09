@@ -23,9 +23,10 @@
 
 #pragma once
 
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Error {
         public:
@@ -85,6 +86,5 @@ class Error {
                 Code    _code;
 };
 
-} // namespace promeki
-
+PROMEKI_NAMESPACE_END
 

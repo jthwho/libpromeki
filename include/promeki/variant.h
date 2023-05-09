@@ -25,6 +25,7 @@
 
 #include <variant>
 #include <cstdint>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
 #include <promeki/datetime.h>
@@ -33,7 +34,7 @@
 #include <promeki/uuid.h>
 #include <promeki/timecode.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 // Note, this template is never intended to be used directly, just to provide the template
 // to be used by Variant
@@ -109,4 +110,5 @@ using Variant = __Variant<
         String, DateTime, TimeStamp, PixelFormat, Size2D,
         UUID, Timecode>;
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

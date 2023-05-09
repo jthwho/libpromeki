@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/util.h>
 #include <promeki/size2d.h>
@@ -37,7 +38,7 @@
         (static_cast<PixelFormat::FourCC>(code[3])) << 24 \
 )
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Image;
 
@@ -168,5 +169,5 @@ class PixelFormat {
                 static const Data *lookup(ID id);
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

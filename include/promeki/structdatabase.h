@@ -24,8 +24,9 @@
 #pragma once
 
 #include <map>
+#include <promeki/namespace.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 // Provides a structure database that can be initialized from a initialization list.  This allows
 // you to initialize a structure database on startup.  The struct must contain an item named 'id'.
@@ -67,4 +68,5 @@ class StructDatabase {
                 Map map;
 };
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

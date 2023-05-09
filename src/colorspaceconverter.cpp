@@ -23,6 +23,7 @@
 
 #include <promeki/colorspaceconverter.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

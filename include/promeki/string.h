@@ -30,9 +30,10 @@
 #include <sstream>
 #include <iomanip>
 #include <cstdint>
+#include <promeki/namespace.h>
 #include <promeki/util.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class Error;
 
@@ -477,5 +478,5 @@ class String {
                 std::string d;
 };
 
-}
+PROMEKI_NAMESPACE_END
 

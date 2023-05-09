@@ -24,10 +24,11 @@
 #pragma once
 
 #include <sstream>
+#include <promeki/namespace.h>
 #include <promeki/array.h>
 #include <promeki/string.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 class XYZColor {
         public:
@@ -65,5 +66,5 @@ class XYZColor {
                 DataType d;
 };
 
+PROMEKI_NAMESPACE_END
 
-} // namespace promeki

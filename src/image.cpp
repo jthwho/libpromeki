@@ -25,7 +25,7 @@
 #include <promeki/logger.h>
 #include <promeki/util.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 Image::Data::Data(const ImageDesc &desc, const MemSpace &ms) : desc(desc) {
         allocate(desc, ms);
@@ -54,5 +54,5 @@ bool Image::Data::allocate(const ImageDesc &desc, const MemSpace &ms) {
         return true;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

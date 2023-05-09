@@ -25,7 +25,7 @@
 #include <promeki/mempool.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 MemPool::MemPool() {
         _name = String::hex(reinterpret_cast<uintptr_t>(this));
@@ -182,6 +182,5 @@ void MemPool::free(void* ptr) {
         return;
 }
 
-
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

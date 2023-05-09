@@ -23,6 +23,7 @@
 
 #include <promeki/matrix3x3.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

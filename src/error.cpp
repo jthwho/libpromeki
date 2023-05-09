@@ -40,7 +40,7 @@
 #define NONE -1
 #define OK 0
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 struct ErrorData {
         Error::Code             id;
@@ -119,4 +119,5 @@ int Error::systemError() const {
         return db.get(_code).systemError;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
+

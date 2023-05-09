@@ -31,7 +31,7 @@
 #include <unistd.h>
 #endif
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static int fileFlagsToPOSIX(int flags) {
         int ret = O_LARGEFILE;
@@ -124,5 +124,5 @@ Error File::truncate(FileBytes offset) const {
 
 #endif
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

@@ -25,7 +25,7 @@
 #include <promeki/timecode.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 Timecode &Timecode::operator++() {
         _frame++;
@@ -191,5 +191,5 @@ std::pair<Timecode::FrameNumber, Error> Timecode::toFrameNumber() const {
         return { ret, Error() };
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

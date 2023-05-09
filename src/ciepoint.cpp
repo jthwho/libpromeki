@@ -26,8 +26,7 @@
 #include <promeki/ciewavelengthtable.h>
 #include <promeki/util.h>
 
-
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 XYZColor CIEPoint::wavelengthToXYZ(double val) {
         if(!CIEPoint::isValidWavelength(val)) return XYZColor();
@@ -53,5 +52,5 @@ CIEPoint CIEPoint::wavelengthToCIEPoint(double val) {
         return left.xy.lerp(right.xy, t);
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

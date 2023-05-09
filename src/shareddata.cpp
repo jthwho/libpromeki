@@ -23,4 +23,8 @@
 
 #include <promeki/shareddata.h>
 
+PROMEKI_NAMESPACE_BEGIN
+
+PROMEKI_NAMESPACE_END
+
 

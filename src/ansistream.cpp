@@ -32,7 +32,7 @@
 #include <promeki/ansistream.h>
 #include <promeki/error.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static bool checkForAnsiSupport() {
         static const char *supportedTerminals[] = {
@@ -131,6 +131,5 @@ bool AnsiStream::getCursorPosition(std::istream &input, int &row, int &col) {
         return false;
 }
 
-
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

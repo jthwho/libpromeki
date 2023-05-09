@@ -24,7 +24,7 @@
 #include <promeki/buildinfo.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static const char *_buildType() {
 #ifdef _MSC_VER
@@ -68,5 +68,5 @@ void logBuildInfo() {
         return;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

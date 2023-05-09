@@ -26,7 +26,7 @@
 #include <promeki/util.h>
 #include <promeki/error.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static Error fallbackRand(uint8_t *data, size_t bytes) {
         std::random_device rd;
@@ -41,5 +41,5 @@ Error promekiRand(uint8_t *data, size_t bytes) {
         return fallbackRand(data, bytes);
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

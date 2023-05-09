@@ -30,7 +30,7 @@
 #include <promeki/error.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 static const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -310,5 +310,5 @@ int64_t String::parseNumberWords(bool *success) const {
         return value;
 }
 
-} // namespace promeki
+PROMEKI_NAMESPACE_END
 

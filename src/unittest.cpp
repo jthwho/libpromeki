@@ -26,7 +26,7 @@
 #include <promeki/unittest.h>
 #include <promeki/logger.h>
 
-namespace promeki {
+PROMEKI_NAMESPACE_BEGIN
 
 typedef std::vector<UnitTest> UnitTestVector;
 
@@ -61,5 +61,5 @@ bool runUnitTests(const RegEx &filter) {
         return true;
 }
 
-}
+PROMEKI_NAMESPACE_END
 
