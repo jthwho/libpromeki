@@ -24,12 +24,14 @@
 #pragma once
 
 #include <array>
+#include <stdexcept>
 #include <cstdint>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class Error;
+class StringList;
 
 #if defined(_WIN32)
 #define PROMEKI_PLATFORM_WINDOWS 32
@@ -48,6 +50,16 @@ class Error;
 #define PROMEKI_PLATFORM "Unknown"
 #endif
 
+// Runtime time assert
+#define PROMEKI_ASSERT(x) if(!(x)) { \
+        promekiErr("Assertion failed: " PROMEKI_STRINGIFY(x)); \
+        promekiLogStackTrace(Logger::Err); \
+        promekiLogSync(); \
+        throw std::runtime_error(__FILE__ ":" PROMEKI_STRINGIFY(__LINE__) " Assertion failed: " PROMEKI_STRINGIFY(x)); \
+}
+
+// Compile time assert
+#define PROMEKI_STATIC_ASSERT(x) static_assert(x, __LINE__ ":" PROMEKI_STRINGIFY(__LINE__) " Assertion failed: " PROMEKI_STRINGIFY(x));
 
 // Macro string conversion and concatination
 #define PROMEKI_STRINGIFY_IMPL(value) #value
@@ -106,6 +118,8 @@ class Error;
 #       define PROMEKI_PACKED_STRUCT_BEGIN
 #       define PROMEKI_PACKED_STRUCT_END
 #endif
+
+StringList promekiStackTrace(bool demangle = true);
 
 template<typename T>
 inline T promekiLerp(const T& a, const T& b, const double& t) {

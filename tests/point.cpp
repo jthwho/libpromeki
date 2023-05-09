@@ -23,6 +23,7 @@
 
 #include <promeki/unittest.h>
 #include <promeki/point.h>
+#include <promeki/util.h>
 
 using namespace promeki;
 
@@ -34,7 +35,6 @@ PROMEKI_TEST_BEGIN(Point)
         PROMEKI_TEST(p1 * p2 == Point2D(5, 8));
         PROMEKI_TEST(p1.x() == 1);
         PROMEKI_TEST(p1.y() == 2);
-
 PROMEKI_TEST_END()
 
 

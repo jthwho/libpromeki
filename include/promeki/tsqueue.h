@@ -25,8 +25,12 @@
 
 #include <mutex>
 #include <queue>
+#include <vector>
+#include <chrono>
 #include <condition_variable>
 #include <promeki/namespace.h>
+
+using namespace std::chrono_literals;
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -42,14 +46,21 @@ class TSQueue {
                 void push(const T &val) {
                         Locker locker(_mutex);
                         _queue.push(val);
-                        _cv.notify_one();
+                        _cv.notify_all();
                         return;
                 }
 
                 void push(const T &&val) {
                         Locker locker(_mutex);
                         _queue.push(std::move(val));
-                        _cv.notify_one();
+                        _cv.notify_all();
+                        return;
+                }
+
+                void push(const std::vector<T> &list) {
+                        Locker locker(_mutex);
+                        for(const auto &item : list) _queue.push(item);
+                        _cv.notify_all();
                         return;
                 }
 
@@ -83,6 +94,12 @@ class TSQueue {
                         return true;
                 }
 
+                void waitForEmpty() {
+                        Locker locker(_mutex);
+                        while(!_cv.wait_for(locker, 100ms, [this] { return _queue.empty(); }));
+                        return;
+                }
+
                 size_t size() const {
                         Locker locker(_mutex);
                         return _queue.size();
@@ -99,7 +116,6 @@ class TSQueue {
                 mutable std::mutex              _mutex;
                 std::condition_variable         _cv;
                 std::queue<T>                   _queue;
-
 };
 
 PROMEKI_NAMESPACE_END

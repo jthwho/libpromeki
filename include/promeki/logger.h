@@ -29,6 +29,7 @@
 #include <fstream>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/stringlist.h>
 #include <promeki/tsqueue.h>
 #include <promeki/datetime.h>
 
@@ -38,6 +39,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 #define promekiLogImpl(level, format, ...) Logger::defaultLogger().log(level, __FILE__, __LINE__, String::sprintf(format, ##__VA_ARGS__))
 #define promekiLog(level, format, ...) promekiLogImpl(level, format, ##__VA_ARGS__)
+#define promekiLogSync() Logger::defaultLogger().sync()
+#define promekiLogStackTrace(level) Logger::defaultLogger().log(level, __FILE__, __LINE__, promekiStackTrace())
 
 #define promekiDebug(format, ...) promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__)
 #define promekiInfo(format, ...)  promekiLog(Logger::LogLevel::Info,  format, ##__VA_ARGS__)
@@ -87,6 +90,24 @@ class Logger {
                         _queue.push(cmd);
                 }
 
+                void log(LogLevel loglevel, const char *file, int line, const StringList &lines) {
+                        if(loglevel && loglevel < level()) return;
+                        DateTime ts = DateTime::now();
+                        std::vector<Command> cmdlist;
+                        for(const auto &item : lines) {
+                                Command cmd;
+                                cmd.cmd = CmdLog;
+                                cmd.level = loglevel;
+                                cmd.file = file;
+                                cmd.line = line;
+                                cmd.msg = item;
+                                cmd.ts = ts;
+                                cmdlist.push_back(cmd);
+                        }
+                        _queue.push(cmdlist);
+                        return;
+                }
+
                 void setLogFile(const std::string &filename) {
                         Command cmd;
                         cmd.cmd = CmdSetFile;
@@ -102,6 +123,13 @@ class Logger {
 
                 void setConsoleLoggingEnabled(bool val) {
                         _consoleLogging = val;
+                        return;
+                }
+
+                // Block until this command has been evaluated by the logger.  This 
+                // ensures all logging events up to this point have been written out
+                void sync() {
+                        _queue.waitForEmpty();
                         return;
                 }
 

@@ -38,13 +38,17 @@ static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
         {
                 DEFINE_SPACE(System),
                 .alloc = [](size_t bytes, size_t align) -> void * {
-                        return std::aligned_alloc(align, bytes);
+                        void *ret = std::aligned_alloc(align, bytes);
+                        PROMEKI_ASSERT(ret != nullptr);
+                        return ret;
                 },
                 .release = [](void *ptr) -> void {
                         std::free(ptr);
                         return;
                 },
                 .copy = [](MemSpace::ID id, void *to, const void *from, size_t bytes) -> bool {
+                        PROMEKI_ASSERT(from != nullptr);
+                        PROMEKI_ASSERT(to != nullptr);
                         bool ret = false;
                         switch(id) {
                                 case MemSpace::System: 
@@ -52,12 +56,15 @@ static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
                                         ret = true;
                                         break;
                                 default:
-                                        // Do Nothing
+                                        promekiErr("(%p -> %p, %llu bytes) Copy from memspace %d to system not allowed",
+                                                from, to, (unsigned long long)bytes, id);
+                                        ret = false;
                                         break;
                         }
                         return ret;
                 },
                 .set = [](void *to, size_t bytes, char value) -> bool {
+                        PROMEKI_ASSERT(to != nullptr);
                         std::memset(to, value, bytes);
                         return true;
                 }

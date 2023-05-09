@@ -244,6 +244,11 @@ class String {
                         return *this;
                 }
 
+                String &operator=(const char *str) {
+                        d = str;
+                        return *this;
+                }
+
                 String operator+(const String &val) const {
                         return String(d + val.d);
                 }

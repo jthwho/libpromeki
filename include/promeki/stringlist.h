@@ -26,7 +26,6 @@
 #include <vector>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
-#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

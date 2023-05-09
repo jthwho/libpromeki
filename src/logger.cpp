@@ -48,9 +48,11 @@ const char *Logger::levelToString(int level) {
 
 void Logger::worker() {
         bool running = true;
+        size_t cmdct = 0;
 
         while(running) {
                 Command cmd = _queue.pop();
+                cmdct++;
                 switch(cmd.cmd) {
                         case CmdLog:
                                 writeLog(cmd);
@@ -60,6 +62,12 @@ void Logger::worker() {
                                 break;
                         case CmdTerminate:
                                 running = false;
+                                cmd.level = Force;
+                                cmd.msg = String::sprintf("Logger %p terminated, %llu total commands", this, (unsigned long long)cmdct);
+                                cmd.file = "LOGGER";
+                                cmd.line = 0;
+                                cmd.ts = DateTime::now();
+                                writeLog(cmd);
                                 break;
                 }
         }
