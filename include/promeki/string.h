@@ -222,6 +222,18 @@ class String {
                         return d.substr(pos, len);
                 }
 
+                String mid(size_t pos, size_t count = npos) const {
+                        return d.substr(pos, count);
+                }
+
+                String left(size_t count) const {
+                        return d.substr(0, count);
+                }
+
+                String right(std::size_t count) const {
+                        return d.substr(d.length() - count, count);
+                }
+
                 operator std::string&() {
                         return d;
                 }

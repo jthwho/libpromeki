@@ -94,6 +94,7 @@ set(PROMEKI_SOURCES
 #    src/colorspace.cpp
     src/cmdlineparser.cpp
     src/file.cpp
+    src/numname.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -106,6 +107,7 @@ set(UNITTEST_SOURCES
     tests/point.cpp
     tests/uuid.cpp
     tests/timecode.cpp
+    tests/numname.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
