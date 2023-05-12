@@ -26,11 +26,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-void NumName::analyze(const String &str) {
+NumName NumName::parse(const String &str, int *val) {
 	int len = str.size();
 	int nStart = -1;	// Point where the number starts
 	int nEnd = -1;		// Point where the number ends
-	int pLen;
 
 	// We first parse the string backwards to find the first digit run.
 	for(int i = len - 1; i >= 0; i--) {
@@ -49,17 +48,16 @@ void NumName::analyze(const String &str) {
 	if(nEnd != -1 && nStart == -1) nStart = 0;
 	
 	// If there is no number run, this string is not a NumName.
-	if(nEnd == -1) return;
+	if(nEnd == -1) return NumName();
 
-	dl = nEnd - nStart + 1;
-	pLen = len - nEnd - 1;
-	//val = str.mid(nStart, dl).toInt();
-	px = nStart ? str.left(nStart) : "";
-	sx = pLen ? str.right(pLen) : "";
-	// Check for padding
+	int dl = nEnd - nStart + 1;
+	int pLen = len - nEnd - 1;
+	if(val != nullptr) *val = str.mid(nStart, dl).toInt();
+	String px = nStart ? str.left(nStart) : String();
+	String sx = pLen ? str.right(pLen) : String();
 	char fc = str[nStart];
-	pad = (dl > 1) ? (fc == '0' || fc == '#') : false;
-	return;
+	bool pad = (dl > 1) ? (fc == '0' || fc == '#') : false;
+	return NumName(px, sx, dl, pad);
 }
 
 PROMEKI_NAMESPACE_END

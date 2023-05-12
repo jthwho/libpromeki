@@ -32,10 +32,12 @@ PROMEKI_NAMESPACE_BEGIN
 // "007 Bond", or "test.098.dpx") into it's componenets.
 class NumName {
 	public:
-		NumName() = default;
-		NumName(const String &str) {
-                        analyze(str);
-                }
+                static NumName parse(const String &str, int *val = nullptr);
+
+                NumName() = default;
+		NumName(const String &prefix, const String &suffix, int digits, bool padded) :
+                        px(prefix), sx(suffix), dl(digits), pad(padded) {}
+		NumName(const String &str) { *this = parse(str); }
 
 		/** True if the name is a valid numname */
 		bool isValid() const { return dl > 0; }
@@ -96,7 +98,6 @@ class NumName {
 		int 		dl      = 0; 	        // Digit length
 		bool 		pad     = false;	// Padding
 
-		void analyze(const String &str);
 };
 
 PROMEKI_NAMESPACE_END

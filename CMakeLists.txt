@@ -95,6 +95,7 @@ set(PROMEKI_SOURCES
     src/cmdlineparser.cpp
     src/file.cpp
     src/numname.cpp
+    src/numnameseq.cpp
 )
 
 set(UNITTEST_SOURCES
