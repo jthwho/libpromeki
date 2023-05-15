@@ -29,26 +29,32 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class StringList;
+
 // Describes a NumName sequence
 class NumNameSeq {
         public:
                 using List = std::vector<NumNameSeq>;
 
+                // Parses a list of num name objects from the string list.
+                // Any objects that can't be num names will be left in the
+                // input list.
+                static List parseList(StringList &input);
+
                 NumNameSeq() = default;
-                NumNameSeq(const NumName &n, size_t o, size_t l) :
-                        _name(n), _offset(o), _length(l) {}
+                NumNameSeq(const NumName &n, size_t h, size_t t) :
+                        _name(n), _head(h), _tail(t) {}
 
                 const NumName &name() const { return _name; }
-                bool isValid() const { return _length > 0; }
-                size_t offset() const { return _offset; }
-                size_t length() const { return _length; }
-                size_t head() const { return _offset; }
-                size_t tail() const { return _offset + _length; }
+                bool isValid() const { return _name.isValid(); }
+                size_t length() const { return _tail - _head + 1; }
+                size_t head() const { return _head; }
+                size_t tail() const { return _tail; }
                 
         private:
                 NumName         _name;
-                size_t          _offset = 0;
-                size_t          _length = 0;
+                size_t          _head = 0;
+                size_t          _tail = 0;
 };
 
 PROMEKI_NAMESPACE_END

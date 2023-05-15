@@ -111,14 +111,12 @@ class StringList {
                         return ret;
                 }
 
-                void erase(const ConstIterator &val) {
-                        d.erase(val);
-                        return;
+                ConstIterator erase(const ConstIterator &val) {
+                        return d.erase(val);
                 }
 
-                void erase(const Iterator &val) {
-                        d.erase(val);
-                        return;
+                Iterator erase(const Iterator &val) {
+                        return d.erase(val);
                 }
 
                 void clear() {

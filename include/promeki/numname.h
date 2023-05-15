@@ -53,7 +53,7 @@ class NumName {
 		/** Returns the suffix of the numname (string after the number) */
 		String suffix() const { return sx; }
 
-		/** Returns the number of padding digits in the number (or 0 if none, or -1 if invalid) */
+		/** Returns true if digits include padding */
 		bool isPadded() const { return pad; }
 
 		/** Returns the number of digits in the value (including any padding digits) */
@@ -90,6 +90,14 @@ class NumName {
 
                 bool operator!=(const NumName &other) const {
                         return !(*this == other);
+                }
+                
+                bool isInSequence(const NumName &n) const {
+                        if(!n.isValid() || n.px != px || n.sx != sx) return false;
+                        if(n.pad && !pad && n.dl > dl) return false;
+                        if(!n.pad && pad && dl > n.dl) return false;
+                        if(n.pad && pad && n.dl != dl) return false;
+                        return true;
                 }
 
 	private:
