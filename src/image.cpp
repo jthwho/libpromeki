@@ -38,11 +38,11 @@ void Image::Data::clear() {
 }
 
 bool Image::Data::allocate(const ImageDesc &desc, const MemSpace &ms) {
-        const PixelFormat &pfmt = desc.pixelFormat();
-        int planes = desc.pixelFormat().planes();
+        const PixelFormat *pixfmt = desc.pixelFormat();
+        int planes = pixfmt->planeCount();
         Buffer::List list(planes);
         for(int i = 0; i < planes; i++) {
-                size_t size = pfmt.size(desc.size(), i);
+                size_t size = pixfmt->planeSize(i, desc);
                 Buffer b = Buffer(size, Buffer::DefaultAlign, ms);
                 if(!b.isValid()) {
                         promekiErr("Image(%s) plane %d allocate failed", desc.toString().cstr(), i);

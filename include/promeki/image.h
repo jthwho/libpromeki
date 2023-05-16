@@ -27,6 +27,7 @@
 #include <promeki/shareddata.h>
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
+#include <promeki/paintengine.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -54,10 +55,10 @@ class Image {
                 Image() : d(new Data()) { }
                 Image(const ImageDesc &d, const MemSpace &ms = MemSpace::Default) : 
                         d(new Data(d, ms)) { }
-                Image(const Size2D &s, const PixelFormat &fmt, const MemSpace &ms = MemSpace::Default) :
-                        d(new Data(ImageDesc(s, fmt), ms)) { }
-                Image(size_t w, size_t h, const PixelFormat &fmt, const MemSpace &ms = MemSpace::Default) : 
-                        d(new Data(ImageDesc(w, h, fmt), ms)) { }
+                Image(const Size2D &s, int pixfmt, const MemSpace &ms = MemSpace::Default) :
+                        d(new Data(ImageDesc(s, pixfmt), ms)) { }
+                Image(size_t w, size_t h, int pixfmt, const MemSpace &ms = MemSpace::Default) : 
+                        d(new Data(ImageDesc(w, h, pixfmt), ms)) { }
 
                 bool isValid() const {
                         return d->desc.isValid();
@@ -67,7 +68,11 @@ class Image {
                         return d->desc;
                 }
 
-                const PixelFormat &pixelFormat() const {
+                int pixelFormatID() const {
+                        return d->desc.pixelFormatID();
+                }
+
+                const PixelFormat *pixelFormat() const {
                         return d->desc.pixelFormat();
                 }
 
@@ -91,8 +96,8 @@ class Image {
                         return d->desc.metadata();
                 }
 
-                size_t stride(int plane = 0) const {
-                        return d->desc.pixelFormat().stride(size(), plane);
+                size_t lineStride(int plane = 0) const {
+                        return d->desc.pixelFormat()->lineStride(plane, d->desc);
                 }
 
                 Buffer plane(int index = 0) const {
@@ -111,12 +116,8 @@ class Image {
                         return d->fill(value);
                 }
 
-                bool fill(const PixelFormat::CompList &value) const {
-                        return pixelFormat().fill(*this, value);
-                }
-
-                bool zero() const {
-                        return d->fill(0);
+                PaintEngine createPaintEngine() const {
+                        return d->desc.pixelFormat()->createPaintEngine(*this);
                 }
 
         private:

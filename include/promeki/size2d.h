@@ -25,6 +25,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/point.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -48,7 +49,7 @@ template<typename T> class Size2DTemplate {
                         return;
                 }
 
-                const T & width() const {
+                const T &width() const {
                         return _width;
                 }
 
@@ -57,7 +58,7 @@ template<typename T> class Size2DTemplate {
                         return;
                 }
 
-                const T & height() const {
+                const T &height() const {
                         return _height;
                 }
 
@@ -71,6 +72,13 @@ template<typename T> class Size2DTemplate {
 
                 operator String() const {
                         return toString();
+                }
+
+                template <typename N> bool pointIsInside(const Point<N, 2> &p) const {
+                        return p.x() >= 0 && 
+                               p.x() < _width &&
+                               p.y() >= 0 &&
+                               p.y() < _height;
                 }
 
                 friend std::ostream & operator<<(std::ostream & os, const Size2DTemplate<T> & size) {

@@ -30,6 +30,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class ImageFileIO;
+
 class ImageFile {
         public:
                 enum ID {
@@ -37,33 +39,33 @@ class ImageFile {
                         PNG
                 };
 
-                typedef Error (*LoadFunc)(const String &filename, Image &img);
-                typedef Error (*SaveFunc)(const String &filename, const Image &image);
+                ImageFile(int id = 0);
 
-                struct Data {
-                        ID              id;
-                        String          name;
-                        LoadFunc        load;
-                        SaveFunc        save;
-                };
-
-                ImageFile(ID id = Invalid) : d(lookup(id)) { }
-
-                Error load(const String &filename, Image &img) {
-                        if(d->load == nullptr) return Error::NotImplemented;
-                        return d->load(filename, img);
+                const String &filename() const {
+                        return _filename;
                 }
 
-                Error save(const String &filename, const Image &img) {
-                        if(d->save == nullptr) {
-                                return Error::NotImplemented;
-                        }
-                        return d->save(filename, img);
+                void setFilename(const String &val) {
+                        _filename = val;
+                        return;
                 }
+
+                const Image &image() const {
+                        return _image;
+                }
+
+                void setImage(const Image &val) {
+                        _image = val;
+                        return;
+                }
+
+                Error load();
+                Error save();
 
         private:
-                const Data *d = nullptr;
-                static const Data *lookup(ID id);
+                String                  _filename;
+                Image                   _image;
+                const ImageFileIO       *_io;
 };
 
 PROMEKI_NAMESPACE_END

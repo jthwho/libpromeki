@@ -34,33 +34,38 @@ PROMEKI_NAMESPACE_BEGIN
 class ImageDesc {
         class Data : public SharedData {
                 public:
-                        Size2D          size;
-                        bool            interlaced = false;
-                        PixelFormat     pixelFormat;
-                        Metadata        metadata;
+                        Size2D                  size;
+                        size_t                  linePad = 0;
+                        size_t                  lineAlign = 1;
+                        bool                    interlaced = false;
+                        const PixelFormat       *pixelFormat;
+                        Metadata                metadata;
 
-                        Data() = default;
-                        Data(const Size2D &s, const PixelFormat &p) :
-                                size(s), pixelFormat(p) { }
+                        Data() : pixelFormat(PixelFormat::lookup(PixelFormat::Invalid)) {}
+                        Data(const Size2D &s, int pf) : size(s), pixelFormat(PixelFormat::lookup(pf)) {}
 
                         bool isValid() const {
-                                return size.isValid() && pixelFormat.isValid();
+                                return size.isValid() && pixelFormat->isValid();
                         }
 
                         String toString() const {
                                 String ret = size.toString();
                                 ret += ' ';
-                                ret += pixelFormat.name();
+                                ret += pixelFormat->name();
                                 return ret;
                         }
         };
 
         public:
                 ImageDesc() : d(new Data) { }
-                ImageDesc(const Size2D &sz, const PixelFormat &pfmt) :
-                        d(new Data(sz, pfmt)) { }
-                ImageDesc(size_t w, size_t h, const PixelFormat &pfmt) :
-                        d(new Data(Size2D(w, h), pfmt)) { }
+                ImageDesc(const Size2D &sz, int pixfmt) :
+                        d(new Data(sz, pixfmt)) { }
+                ImageDesc(size_t w, size_t h, int pixfmt) :
+                        d(new Data(Size2D(w, h), pixfmt)) { }
+
+                int pixelFormatID() const {
+                        return d->pixelFormat->id();
+                }
 
                 bool isValid() const {
                         return d->isValid();
@@ -88,6 +93,24 @@ class ImageDesc {
                         return;
                 }
 
+                size_t linePad() const {
+                        return d->linePad;
+                }
+
+                void setLinePad(size_t val) {
+                        d->linePad = val;
+                        return;
+                }
+
+                size_t lineAlign() const {
+                        return d->lineAlign;
+                }
+
+                void setLineAlign(size_t val) {
+                        d->lineAlign = val;
+                        return;
+                }
+
                 bool interlaced() const {
                         return d->interlaced;
                 }
@@ -97,12 +120,12 @@ class ImageDesc {
                         return;
                 }
 
-                const PixelFormat &pixelFormat() const {
+                const PixelFormat *pixelFormat() const {
                         return d->pixelFormat;
                 }
 
-                void setPixelFormat(const PixelFormat &val) {
-                        d->pixelFormat = val;
+                void setPixelFormat(int pixfmt) {
+                        d->pixelFormat = PixelFormat::lookup(pixfmt);
                         return;
                 }
 
@@ -114,8 +137,8 @@ class ImageDesc {
                         return d->metadata;
                 }
 
-                int planes() const {
-                        return d->pixelFormat.planes();
+                int planeCount() const {
+                        return d->pixelFormat->planeCount();
                 }
 
                 String toString() const {

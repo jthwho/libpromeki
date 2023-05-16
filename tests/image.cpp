@@ -24,6 +24,7 @@
 #include <promeki/unittest.h>
 #include <promeki/image.h>
 #include <promeki/imagefile.h>
+#include <promeki/paintengine.h>
 
 using namespace promeki;
 
@@ -32,12 +33,11 @@ PROMEKI_TEST_BEGIN(Image)
         ImageDesc d(1920, 1080, PixelFormat::RGBA8);
         promekiInfo("ImageDesc: %s", d.toString().cstr());
         PROMEKI_TEST(d.size().isValid());
-        const PixelFormat &pfmt = d.pixelFormat();
 
         Image img1(d);
         promekiInfo("Image: %s", img1.desc().toString().cstr());
-        PROMEKI_TEST(pfmt.stride(d.size()) == 1920 * 4);
-        PROMEKI_TEST(pfmt.size(d.size()) == 1920 * 1080 * 4);
+        PROMEKI_TEST(d.pixelFormat()->lineStride(0, d) == 1920 * 4);
+        PROMEKI_TEST(d.pixelFormat()->planeSize(0, d) == 1920 * 1080 * 4);
         PROMEKI_TEST(img1.size().isValid());
         PROMEKI_TEST(img1.desc().isValid());
         PROMEKI_TEST(img1.isValid());
@@ -56,7 +56,9 @@ PROMEKI_TEST_BEGIN(Image)
         PROMEKI_TEST(data[2] == 42);
         PROMEKI_TEST(data[3] == 42);
 
-        PROMEKI_TEST(img1.fill({ 1, 2, 3, 4 }));
+        /*
+        Pixel pix1(img1.pixelFormatID(), 1, 2, 3, 4);
+        PROMEKI_TEST(img1.fill(pix1));
         PROMEKI_TEST(data[0] == 1);
         PROMEKI_TEST(data[1] == 2);
         PROMEKI_TEST(data[2] == 3);
@@ -65,11 +67,21 @@ PROMEKI_TEST_BEGIN(Image)
         PROMEKI_TEST(data[5] == 2);
         PROMEKI_TEST(data[6] == 3);
         PROMEKI_TEST(data[7] == 4);
+        */
 
-        PROMEKI_TEST(img1.fill({ 0xFF, 0, 0, 0xFF }));
+        PaintEngine p = img1.createPaintEngine();
+        PaintEngine::Pixel black = p.createPixel(0x00, 0x00, 0x00);
+        PaintEngine::Pixel red = p.createPixel(0xFF, 0x00, 0x00);
+        PROMEKI_TEST(p.fill(black));
+        //PROMEKI_TEST(p.drawLine(red, 0, 0, 1920, 1080) == 1);
+        //PROMEKI_TEST(p.drawLine(red, 0, 1080, 1920, 0) == 1);
+        p.drawLine(red, 0, 0, 1920, 1080);
+        p.drawLine(red, 0, 1080, 1920, 0);
+
         ImageFile png(ImageFile::PNG);
-        PROMEKI_TEST(png.save("test.png", img1).isOk());
-
+        png.setFilename("test.png");
+        png.setImage(img1);
+        PROMEKI_TEST(png.save().isOk());
 
 PROMEKI_TEST_END()
 

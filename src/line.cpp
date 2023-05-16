@@ -1,6 +1,6 @@
 /*****************************************************************************
- * pixel.cpp
- * April 30, 2023
+ * line.cpp
+ * May 15, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,7 +21,7 @@
  *
  *****************************************************************************/
 
-#include <promeki/pixel.h>
+#include <promeki/line.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

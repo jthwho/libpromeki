@@ -1,6 +1,6 @@
 /*****************************************************************************
- * imagefile.cpp
- * April 29, 2023
+ * fourcc.cpp
+ * May 15, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,26 +21,9 @@
  *
  *****************************************************************************/
 
-#include <promeki/imagefile.h>
-#include <promeki/imagefileio.h>
-#include <promeki/logger.h>
+#include <promeki/fourcc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-ImageFile::ImageFile(int id) : 
-        _io(ImageFileIO::lookup(id)) 
-{
-
-}
-
-Error ImageFile::load() {
-        return _io->load(*this);
-}
-
-Error ImageFile::save() {
-        return _io->save(*this);
-}
-
 PROMEKI_NAMESPACE_END
-
 

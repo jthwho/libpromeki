@@ -60,9 +60,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
     src/util.cpp
+    src/fourcc.cpp
     src/array.cpp
     src/matrix.cpp
     src/unittest.cpp
+    src/list.cpp
     src/string.cpp
     src/stringlist.cpp
     src/regex.cpp
@@ -70,6 +72,7 @@ set(PROMEKI_SOURCES
     src/uuid.cpp
     src/shareddata.cpp
     src/point.cpp
+    src/line.cpp
     src/size2d.cpp
     src/mempool.cpp
     src/logger.cpp
@@ -82,12 +85,15 @@ set(PROMEKI_SOURCES
     src/metadata.cpp
     src/memspace.cpp
     src/buffer.cpp
+    src/paintengine.cpp
     src/pixelformat.cpp
-    src/pixel.cpp
+    src/pixelformat_rgb8.cpp
+    src/pixelformat_rgba8.cpp
     src/imagedesc.cpp
     src/image.cpp
     src/matrix3x3.cpp
     src/colorspaceconverter.cpp
+    src/imagefileio.cpp
     src/imagefile.cpp
     src/xyzcolor.cpp
     src/ciepoint.cpp
@@ -124,9 +130,9 @@ target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
 
 # FIXME: The find_package() doesn't seem to find png, so do it manually for now
 target_link_libraries(${APP_NAME} PUBLIC png)
-#target_include_directories(${APP_NAME} PRIVATE ${PNG_INCLUDE_DIRS})
-target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_PNG)
-target_sources(${APP_NAME} PRIVATE src/png.cpp)
+target_include_directories(${APP_NAME} PRIVATE ${PNG_INCLUDE_DIRS})
+#target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_PNG)
+target_sources(${APP_NAME} PRIVATE src/imagefileio_png.cpp)
 
 
 add_executable(unittest ${UNITTEST_SOURCES})
