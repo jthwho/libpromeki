@@ -67,6 +67,10 @@ PaintEngine::Impl::~Impl() {
 
 }
 
+bool PaintEngine::Impl::blit(const Point2D &destTopLeft, const Image &src, const Point2D &srcTopLeft, const Size2D &srcSize) const {
+        return false;
+}
+
 PaintEngine::Pixel PaintEngine::Impl::createPixel(const uint16_t *comps, size_t compCount) const {
         return PaintEngine::Pixel();
 }

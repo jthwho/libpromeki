@@ -39,6 +39,7 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         size = img.size();
                         buf = static_cast<uint8_t *>(image.plane(0).data());
                         stride = img.lineStride(0);
+                        _pixelFormat = img.pixelFormat();
                 }
 
                 PaintEngine::Pixel createPixel(const uint16_t *c, size_t ct) const override {

@@ -23,12 +23,16 @@
 
 #pragma once
 #include <promeki/namespace.h>
+#include <promeki/pixelformat.h>
 #include <promeki/shareddata.h>
 #include <promeki/list.h>
+#include <promeki/size2d.h>
 #include <promeki/point.h>
 #include <promeki/line.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class Image;
 
 class PaintEngine {
 	public:
@@ -39,6 +43,13 @@ class PaintEngine {
                 class Impl : public SharedData {
                         public:
                                 virtual ~Impl();
+
+                                // Returns the pixel format used by this PaintEngine
+                                const PixelFormat *pixelFormat() const { return _pixelFormat; }
+
+                                // Blits from the src buffer to the surface.
+                                virtual bool blit(const Point2D &destTopLeft, const Image &src, 
+                                                const Point2D &srcTopLeft, const Size2D &srcSize) const;
 
                                 // Creates a pixel for this underlying data format of the paint engine.  This format is meant
                                 // to be specific to the underlying data format and may contain extra versions of the pixel
@@ -70,12 +81,19 @@ class PaintEngine {
                                 //virtual void drawFilledCircle(const QPoint &pt, int radius);
                                 //virtual void drawEllipse(const QPoint &center, const QSize &size);
                                 //virtual void drawFilledEllipse(const QPoint &center, const QSize &size);
+                                
+                        protected:
+                                const PixelFormat       *_pixelFormat = nullptr;
                 };
 
                 static PointList plotLine(int x1, int y1, int x2, int y2);
 
                 PaintEngine() : d(new Impl) {};
                 PaintEngine(Impl *impl) : d(impl) {}
+
+                const PixelFormat *pixelFormat() const {
+                        return d->pixelFormat();
+                }
 
                 Pixel createPixel(const uint16_t *comps, size_t compCount) const {
                         return d->createPixel(comps, compCount);
@@ -132,6 +150,12 @@ class PaintEngine {
                 bool fill(const Pixel &pixel) {
                         return d->fill(pixel);
                 }
+
+                bool blit(const Point2D &destTopLeft, const Image &src, 
+                          const Point2D &srcTopLeft = Point2D(0, 0), const Size2D &srcSize = Size2D()) const {
+                        return d->blit(destTopLeft, src, srcTopLeft, srcSize);
+                }
+
 
         private:
                 ExplicitSharedDataPtr<Impl> d;

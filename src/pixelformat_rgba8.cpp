@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  *****************************************************************************/
+
+#include <algorithm>
 #include <cstring>
 #include <promeki/pixelformat.h>
 #include <promeki/paintengine.h>
@@ -39,6 +41,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         size = img.size();
                         buf = static_cast<uint8_t *>(image.plane(0).data());
                         stride = img.lineStride(0);
+                        _pixelFormat = img.pixelFormat();
                 }
 
                 PaintEngine::Pixel createPixel(const uint16_t *c, size_t ct) const override {
@@ -111,6 +114,49 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                                 ret++;
                         }
                         return ret;
+                }
+
+                bool blit(const Point2D &dpt, const Image &src, const Point2D &spt, const Size2D &ssz) const override {
+                        static const int bytesPerPixel = 4;
+                        const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0).data());
+                        size_t srcStride = src.lineStride(0);
+
+                        int destX = dpt.x();
+                        int destY = dpt.y();
+                        int destWidth = size.width() - destX;
+                        int destHeight = size.height() - destY;
+                        int srcX = spt.x();
+                        int srcY = spt.y(); 
+                        if(destX < 0 || destY < 0 || destWidth < 0 || destHeight < 0) return false;
+                        if(srcX < 0 || srcY < 0 || srcX >= src.width() || srcY >= src.height()) return false;
+
+                        int srcWidth, srcHeight;
+                        if(ssz.isValid()) {
+                                srcWidth = ssz.width();
+                                srcHeight = ssz.height();
+                                int maxWidth = src.width();
+                                int maxHeight = src.height();
+                                if(srcWidth + srcX > maxWidth) srcWidth = maxWidth - srcX;
+                                if(srcHeight + srcY > maxHeight) srcHeight = maxHeight - srcY;
+                        } else {
+                                srcWidth = src.width() - srcX;
+                                srcHeight = src.height() - srcY;
+                        }
+                        if(srcWidth > destWidth) srcWidth = destWidth;
+                        if(srcHeight > destHeight) srcHeight = destHeight;
+                        if(srcWidth + destX > destWidth) srcWidth -= destX;
+                        if(srcHeight + destY > destHeight) srcHeight -= destY;
+                        if(srcWidth <= 0 || srcHeight <= 0) return false;
+
+                        size_t lineBytes = srcWidth * bytesPerPixel;
+                        const uint8_t *srcLine = inbuf + srcY * srcStride + srcX * bytesPerPixel;
+                        uint8_t *destLine = buf + destY * stride + destX * bytesPerPixel;
+                        for(int y = 0; y < srcHeight; ++y) {
+                                std::memcpy(destLine, srcLine, lineBytes);
+                                destLine += stride;
+                                srcLine += srcStride;
+                        }
+                        return true;
                 }
 };
 
