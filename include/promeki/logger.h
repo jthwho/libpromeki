@@ -32,20 +32,38 @@
 #include <promeki/stringlist.h>
 #include <promeki/tsqueue.h>
 #include <promeki/datetime.h>
+#include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 // Variadic macros for logging at various levels
+
+#define PROMEKI_DEBUG(name) \
+        [[maybe_unused]] static const char *__promeki_debug_name = PROMEKI_STRINGIFY(name); \
+        [[maybe_unused]] static bool __promeki_debug_enabled = \
+        promekiRegisterDebug(&__promeki_debug_enabled, PROMEKI_STRINGIFY(name), __FILE__, __LINE__);
 
 #define promekiLogImpl(level, format, ...) Logger::defaultLogger().log(level, __FILE__, __LINE__, String::sprintf(format, ##__VA_ARGS__))
 #define promekiLog(level, format, ...) promekiLogImpl(level, format, ##__VA_ARGS__)
 #define promekiLogSync() Logger::defaultLogger().sync()
 #define promekiLogStackTrace(level) Logger::defaultLogger().log(level, __FILE__, __LINE__, promekiStackTrace())
 
-#define promekiDebug(format, ...) promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__)
+#define promekiDebug(format, ...) if(__promeki_debug_enabled) { promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__); }
 #define promekiInfo(format, ...)  promekiLog(Logger::LogLevel::Info,  format, ##__VA_ARGS__)
 #define promekiWarn(format, ...)  promekiLog(Logger::LogLevel::Warn,  format, ##__VA_ARGS__)
 #define promekiErr(format, ...)   promekiLog(Logger::LogLevel::Err,   format, ##__VA_ARGS__)
+
+bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int line);
+
+#define PROMEKI_BENCHMARK_BEGIN(name) \
+        TimeStamp __promeki_debug_timestamp_##name; \
+        if(__promeki_debug_enabled) { __promeki_debug_timestamp_##name = TimeStamp::now(); }
+
+#define PROMEKI_BENCHMARK_END(name) \
+        if(__promeki_debug_enabled) { \
+                Logger::defaultLogger().log(Logger::LogLevel::Debug, __FILE__, __LINE__, String::sprintf("[%s] %s took %.9lf sec", \
+                        __promeki_debug_name, PROMEKI_STRINGIFY(name), __promeki_debug_timestamp_##name.elapsedSeconds())); \
+        }
 
 class Logger {
         public:
@@ -60,7 +78,7 @@ class Logger {
                 static Logger &defaultLogger();
                 static const char *levelToString(int level);
 
-                Logger() : _level(Info), _consoleLogging(true) {
+                Logger() : _level(Debug), _consoleLogging(true) {
                         _thread = std::thread(&Logger::worker, this);
                 }
 

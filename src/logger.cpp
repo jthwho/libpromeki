@@ -21,12 +21,57 @@
  *
  *****************************************************************************/
 
+#include <map>
 #include <sstream>
+#include <cstdlib>
 #include <promeki/logger.h>
 #include <promeki/ansistream.h>
 #include <promeki/fileinfo.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+struct DebugDatabaseItem {
+        bool    *enabler;
+        String  name;
+        String  file;
+        int     line;
+};
+
+using DebugDatabase = std::map<String, DebugDatabaseItem>;
+
+static DebugDatabase &debugDatabase() {
+        static DebugDatabase ret;
+        return ret;
+}
+
+static bool checkForEnvDebugEnable(const String &name) {
+        static bool done = false;
+        static StringList list;
+        if(!done) {
+                done = true;
+                const char *enval = std::getenv("PROMEKI_DEBUG_ENABLE");
+                if(enval == nullptr) return false;
+                list = String(enval).split(",");
+                if(!list.isEmpty()) {
+                        promekiInfo("Env PROMEKI_DEBUG_ENABLE: %s", list.join(", ").cstr());
+                }
+        }
+        return list.contains(name);
+}
+
+bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int line) {
+        DebugDatabase &db = debugDatabase();
+        auto item = db.find(name);
+        if(item != db.end()) {
+                promekiWarn("Attempt to define debug channel '%s' in %s:%d, but already defined in %s:%d",
+                        name, file, line, item->second.file.cstr(), item->second.line);
+                return false;
+        }
+        db[name] = { enabler, name, file, line };
+        bool ret = checkForEnvDebugEnable(name);
+        if(ret) promekiInfo("Debug '%s' Enabled", name);
+        return ret;
+}
 
 Logger &Logger::defaultLogger() {
         static Logger ret;

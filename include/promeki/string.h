@@ -36,6 +36,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Error;
+class StringList;
 
 // A more versitle string object, inspired by the Qt QString object.  Internally it uses
 // std::string, but removes some of its verbosity. For the most part, you should be able
@@ -365,21 +366,7 @@ class String {
                         return result;
                 }
 
-                // FIXME: Make this return StringList
-                std::vector<String> split(const std::string& delimiter) const {
-                        std::vector<String> result;
-                        size_t pos = 0;
-                        std::string str = d;
-                        while((pos = str.find(delimiter)) != std::string::npos) {
-                                String token = str.substr(0, pos);
-                                if (!token.isEmpty()) {
-                                        result.push_back(token);
-                                }
-                                str.erase(0, pos + delimiter.length());
-                        }
-                        if(!str.empty()) result.push_back(str);
-                        return result;
-                }
+                StringList split(const std::string& delimiter) const;
 
                 bool startsWith(const String &prefix) const {
                         return d.compare(0, prefix.size(), prefix.d) == 0;

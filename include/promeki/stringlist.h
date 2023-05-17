@@ -45,12 +45,20 @@ class StringList {
                 }
                 template<typename Iterator> StringList(Iterator begin, Iterator end) : d(begin, end) {}
 
-                const String &operator[](int index) const {
+                const String &operator[](size_t index) const {
                         return d[index];
                 }
 
-                String &operator[](int index) {
+                String &operator[](size_t index) {
                         return d[index];
+                }
+
+                const String &at(size_t index) const {
+                        return d.at(index);
+                }
+
+                String &at(size_t index) {
+                        return d.at(index);
                 }
 
                 bool operator==(const StringList& other) const {
@@ -232,6 +240,10 @@ class StringList {
                 void replace(const String& oldStr, const String& newStr) {
                         std::replace(d.begin(), d.end(), oldStr, newStr);
                         return;
+                }
+
+                bool contains(const String &str) const {
+                        return std::find(d.begin(), d.end(), str) != d.end();
                 }
                 
                 friend StringList operator+(StringList lhs, const StringList& rhs) {

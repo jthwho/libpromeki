@@ -86,6 +86,25 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         }
                         return ret;
                 }
+
+                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2D *points, 
+                                const float *alphas, size_t count) const override {
+                        size_t ret = 0;
+                        const uint8_t *pdata = pixel.data();
+                        for(size_t i = 0; i < count; i++) {
+                                const Point2D &p = points[i];
+                                if(!size.pointIsInside(p)) continue;
+                                float alpha = alphas[i];
+                                float invAlpha = 1.0 - alpha;
+                                uint8_t *pix = buf + (stride * p.y()) + (p.x() * 3);
+                                pix[0] = (pdata[0] * alpha) + (pix[0] * invAlpha);
+                                pix[1] = (pdata[1] * alpha) + (pix[1] * invAlpha);
+                                pix[2] = (pdata[2] * alpha) + (pix[2] * invAlpha);
+                                ret++;
+                        }
+                        return ret;
+                }
+
 };
 
 class PixelFormat_RGB8 : public PixelFormat {

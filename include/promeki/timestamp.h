@@ -89,34 +89,34 @@ class TimeStamp {
                 }
 
                 double seconds() const {
-                        return std::chrono::duration_cast<std::chrono::seconds>(_value.time_since_epoch()).count();
+                        return std::chrono::duration_cast<std::chrono::duration<double>>(_value.time_since_epoch()).count();
                 }
 
-                double milliseconds() const {
+                int64_t milliseconds() const {
                         return std::chrono::duration_cast<std::chrono::milliseconds>(_value.time_since_epoch()).count();
                 }
 
-                double microseconds() const {
+                int64_t microseconds() const {
                         return std::chrono::duration_cast<std::chrono::microseconds>(_value.time_since_epoch()).count();
                 }
 
-                double nanoseconds() const {
+                int64_t nanoseconds() const {
                         return std::chrono::duration_cast<std::chrono::nanoseconds>(_value.time_since_epoch()).count();
                 }
 
                 double elapsedSeconds() const {
-                        return std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - _value).count();
+                        return std::chrono::duration_cast<std::chrono::duration<double>>(Clock::now() - _value).count();
                 }
 
-                double elapsedMilliseconds() const {
+                int64_t elapsedMilliseconds() const {
                         return std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - _value).count();
                 }
 
-                double elapsedMicroseconds() const {
+                int64_t elapsedMicroseconds() const {
                         return std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - _value).count();
                 }
 
-                double elapsedNanoseconds() const {
+                int64_t elapsedNanoseconds() const {
                         return std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - _value).count();
                 }
 

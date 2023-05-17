@@ -76,6 +76,10 @@ size_t PaintEngine::Impl::drawPoints(const Pixel &pixel, const Point2D *points, 
         return 0;
 }
 
+size_t PaintEngine::Impl::compositePoints(const Pixel &pixel, const Point2D *points, const float *alphas, size_t pointCount) const {
+        return drawPoints(pixel, points, pointCount);
+}
+
 bool PaintEngine::Impl::fill(const Pixel &pixel) const {
         return false;
 }

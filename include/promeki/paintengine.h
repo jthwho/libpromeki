@@ -33,15 +33,37 @@ PROMEKI_NAMESPACE_BEGIN
 class PaintEngine {
 	public:
                 using Pixel = List<uint8_t>;
+                using PointList = List<Point2D>;
+                using AlphaList = List<float>;
 
                 class Impl : public SharedData {
                         public:
                                 virtual ~Impl();
 
-                                virtual Pixel createPixel(const uint16_t *comps, size_t compCount) const;         
+                                // Creates a pixel for this underlying data format of the paint engine.  This format is meant
+                                // to be specific to the underlying data format and may contain extra versions of the pixel
+                                // componenets in the various packings to make drawing the pixel a fast operation.  Don't 
+                                // modify the returned Pixel object unless you know the underlying packing format of the
+                                // Pixel itself.
+                                virtual Pixel createPixel(const uint16_t *comps, size_t compCount) const;
+
+                                // Draws a set of points to the underlying surface.
                                 virtual size_t drawPoints(const Pixel &pixel, const Point2D *points, size_t pointCount) const;
+
+                                // Composites a set of points to the underlying surface.  The default version of this will just
+                                // call drawPoints and not do any compositing.  It's up to the given surface implementation to
+                                // reimplement if compositing should be a supported operation.
+                                virtual size_t compositePoints(const Pixel &pixel, const Point2D *points, 
+                                                const float *alphas, size_t pointCount) const;
+
+                                // Fills the entire surface with a pixel.
                                 virtual bool fill(const Pixel &pixel) const;
+
+                                // Draws lines.  The default behavior is to render the lines into a point list and call
+                                // drawPoints.  You can reimplement this for your surface if this can be made a natively
+                                // faster operation.
                                 virtual size_t drawLines(const Pixel &pixel, const Line2D *lines, size_t count) const;
+
                                 //virtual void drawRect(const QRect &rect);
                                 //virtual void drawFilledRect(const QRect &rect);
                                 //virtual void drawCircle(const QPoint &pt, int radius);
@@ -50,7 +72,7 @@ class PaintEngine {
                                 //virtual void drawFilledEllipse(const QPoint &center, const QSize &size);
                 };
 
-                static List<Point2D> plotLine(int x1, int y1, int x2, int y2);
+                static PointList plotLine(int x1, int y1, int x2, int y2);
 
                 PaintEngine() : d(new Impl) {};
                 PaintEngine(Impl *impl) : d(impl) {}
@@ -80,6 +102,18 @@ class PaintEngine {
 
                 size_t drawPoints(const Pixel &pixel, const Point2D *points, size_t pointCount) const {
                         return d->drawPoints(pixel, points, pointCount);
+                }
+
+                size_t drawPoints(const Pixel &pixel, const PointList &points) const {
+                        return d->drawPoints(pixel, points.data(), points.size());
+                }
+
+                size_t compositePoints(const Pixel &pixel, const Point2D *points, const float *alphas, size_t pointCount) const {
+                        return d->compositePoints(pixel, points, alphas, pointCount);
+                }
+
+                size_t compositePoints(const Pixel &pixel, const PointList &points, const AlphaList &alphas) const {
+                        return d->compositePoints(pixel, points.data(), alphas.data(), points.size());
                 }
 
                 size_t drawLines(const Pixel &pixel, const Line2D *lines, size_t lineCount) const {

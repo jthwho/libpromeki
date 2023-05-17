@@ -27,6 +27,7 @@
 #include <limits>
 #include <map>
 #include <promeki/string.h>
+#include <promeki/stringlist.h>
 #include <promeki/error.h>
 #include <promeki/logger.h>
 
@@ -308,6 +309,21 @@ int64_t String::parseNumberWords(bool *success) const {
         value += current;
         if(success != nullptr) *success = found;
         return value;
+}
+
+StringList String::split(const std::string& delimiter) const {
+        StringList result;
+        size_t pos = 0;
+        std::string str = d;
+        while((pos = str.find(delimiter)) != std::string::npos) {
+                String token = str.substr(0, pos);
+                if (!token.isEmpty()) {
+                        result += token;
+                }
+                str.erase(0, pos + delimiter.length());
+        }
+        if(!str.empty()) result += str;
+        return result;
 }
 
 PROMEKI_NAMESPACE_END
