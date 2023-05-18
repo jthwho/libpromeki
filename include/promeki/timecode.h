@@ -30,6 +30,11 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+// Class for holding and manipulating timecode.  While this class supports all the 
+// capabilities of SMPTE timecode, it exceeds it in many ways.  It makes no
+// restrictions on hour counts above 23, or frame rates above 30.  It will, of course
+// attempt to do the best it can when asked to output a SMPTE timecode (i.e. the
+// hours will be modulo 24).
 class Timecode {
         public:
                 using FrameNumber = uint32_t;
@@ -45,9 +50,9 @@ class Timecode {
                 };
 
                 enum Flags {
-                        Valid           = 0x00000001,
-                        DropFrame       = 0x00000002,
-                        FirstField      = 0x00000004
+                        Valid           = 0x00000001,   // It's a valid timecode.
+                        DropFrame       = 0x00000002,   // We're using drop frame.  This only matters if fps is 30
+                        FirstField      = 0x00000004    // VITC has a field bit, so we do too (although ours is inverted).
                 };
 
                 class Mode {
