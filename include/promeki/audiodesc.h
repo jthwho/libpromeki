@@ -33,6 +33,69 @@ PROMEKI_NAMESPACE_BEGIN
 
 class AudioDesc {
         public:
+                static const int32_t MinS24 = -8388608;
+                static const int32_t MaxS24 = 8388607;
+                static const int32_t MinU24 = 0;
+                static const int32_t MaxU24 = 16777215;
+
+                template <typename IntegerType, IntegerType Min, IntegerType Max> 
+                static float integerToFloat(IntegerType value) {
+                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
+                        constexpr float min = static_cast<float>(Min);
+                        constexpr float max = static_cast<float>(Max);
+                        return((static_cast<float>(value) - min) * 2.0f / (max - min)) - 1.0f;
+                }
+
+                template <typename IntegerType> 
+                static float integerToFloat(IntegerType value) {
+                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
+                        return integerToFloat<IntegerType,
+                               std::numeric_limits<IntegerType>::min(),
+                               std::numeric_limits<IntegerType>::max()>(value);
+                }
+
+                template <typename IntegerType, IntegerType Min, IntegerType Max> 
+                static IntegerType floatToInteger(float value) {
+                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
+                        const float min = static_cast<float>(Min);
+                        const float max = static_cast<float>(Max);
+                        if(value <= -1.0f) return Min;
+                        else if(value >= 1.0f) return Max;
+                        return static_cast<IntegerType>((value + 1.0f) * 0.5f * (max - min) + min);
+                }
+
+                template <typename IntegerType> 
+                static IntegerType floatToInteger(float value) {
+                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
+                        return floatToInteger<IntegerType, 
+                               std::numeric_limits<IntegerType>::min(), 
+                               std::numeric_limits<IntegerType>::max()>(value);
+                }
+
+                template <typename IntegerType, bool InputIsBigEndian> 
+                static void samplesToFloat(float *out, const uint8_t *inbuf, size_t samples) {
+                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
+                        const IntegerType *in = reinterpret_cast<const IntegerType *>(inbuf);
+                        for(size_t i = 0; i < samples; ++i) {
+                                IntegerType val = *in++;
+                                if constexpr (InputIsBigEndian != System::isBigEndian()) System::swapEndian(val);
+                                *out++ = integerToFloat<IntegerType>(val);
+                        }
+                        return;
+                }
+
+                template <typename IntegerType, bool OutputIsBigEndian> 
+                static void floatToSamples(uint8_t *outbuf, const float *in, size_t samples) {
+                        static_assert(std::is_integral<IntegerType>::value, "IntegerType must be an integer.");
+                        IntegerType *out = reinterpret_cast<IntegerType *>(outbuf);
+                        for(size_t i = 0; i < samples; ++i) {
+                                IntegerType val = floatToInteger<IntegerType>(*in++);
+                                if constexpr (OutputIsBigEndian != System::isBigEndian()) System::swapEndian(val);
+                                *out++ = val;
+                        }
+                        return;
+                }
+
                 struct Format {
                         int             id;
                         String          name;
@@ -42,6 +105,8 @@ class AudioDesc {
                         bool            isSigned;
                         bool            isPlanar;
                         bool            isBigEndian;
+                        void (*samplesToFloat)(float *out, const uint8_t *in, size_t samples);
+                        void (*floatToSamples)(uint8_t *out, const float *in, size_t samples);
                 };
 
                 static const Format *lookupFormat(int id);
@@ -132,6 +197,17 @@ class AudioDesc {
                         return d->metadata;
                 }
 
+                void samplesToFloat(float *out, const uint8_t *in, size_t samples) const {
+                        d->samplesToFloat(out, in, samples);
+                        return;
+                }
+
+                void floatToSamples(uint8_t *out, const float *in, size_t samples) const {
+                        d->floatToSamples(out, in, samples);
+                        return;
+                }
+
+
         private:
                 class Data : public SharedData {
                         public:
@@ -177,6 +253,16 @@ class AudioDesc {
 
                                 size_t bufferSize(size_t samples) const {
                                         return format->bytesPerSample * channels * samples;
+                                }
+
+                                void samplesToFloat(float *out, const uint8_t *in, size_t samples) const {
+                                        format->samplesToFloat(out, in, samples * channels);
+                                        return;
+                                }
+
+                                void floatToSamples(uint8_t *out, const float *in, size_t samples) const {
+                                        format->floatToSamples(out, in, samples * channels);
+                                        return;
                                 }
                 };
 

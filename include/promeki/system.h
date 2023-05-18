@@ -43,7 +43,7 @@ class System {
                 }
 
                 // Does an endian swap of the value
-                template<typename T> void swapEndian(T &value) {
+                template<typename T> static void swapEndian(T &value) {
                         static_assert(std::is_arithmetic<T>::value, "swab() requires an arithmetic type");
                         constexpr size_t size = sizeof(T);
                         if constexpr (size == 1) return;
@@ -58,7 +58,7 @@ class System {
 
                 // Swaps the endian of the value if the value and the machine are different endian
                 // directions.
-                template<typename T, bool ValueIsBigEndian> void makeNativeEndian(T &value) {
+                template<typename T, bool ValueIsBigEndian> static void makeNativeEndian(T &value) {
                         if constexpr (ValueIsBigEndian && isBigEndian()) return;
                         swab(value);
                         return;

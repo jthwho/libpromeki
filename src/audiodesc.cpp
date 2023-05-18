@@ -35,7 +35,10 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 0,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = [](float *, const uint8_t *, size_t){},
+                .floatToSamples = [](uint8_t *, const float *, size_t){}
+
         },
         { 
                 .id = AudioDesc::PCMI_Float32LE,
@@ -45,7 +48,27 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 32,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = [](float *out, const uint8_t *inbuf, size_t samples) {
+                        const float *in = reinterpret_cast<const float *>(inbuf);
+                        for(size_t i = 0; i < samples; ++i) {
+                                float val = *in++;
+                                if constexpr (System::isBigEndian()) System::swapEndian(val);
+                                *out++ = val;
+                        }
+                        return;
+                },
+                .floatToSamples = [](uint8_t *outbuf, const float *in, size_t samples) {
+                        float *out = reinterpret_cast<float *>(outbuf);
+                        for(size_t i = 0; i < samples; ++i) {
+                                float val = *in++;
+                                if constexpr (System::isBigEndian()) System::swapEndian(val);
+                                *out++ = val;
+                        }
+                        return;
+
+
+                }
         },
         { 
                 .id = AudioDesc::PCMI_Float32BE,
@@ -55,7 +78,27 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 32,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = true
+                .isBigEndian = true,
+                .samplesToFloat = [](float *out, const uint8_t *inbuf, size_t samples) {
+                        const float *in = reinterpret_cast<const float *>(inbuf);
+                        for(size_t i = 0; i < samples; ++i) {
+                                float val = *in++;
+                                if constexpr (System::isLittleEndian()) System::swapEndian(val);
+                                *out++ = val;
+                        }
+                        return;
+                },
+                .floatToSamples = [](uint8_t *outbuf, const float *in, size_t samples) {
+                        float *out = reinterpret_cast<float *>(outbuf);
+                        for(size_t i = 0; i < samples; ++i) {
+                                float val = *in++;
+                                if constexpr (System::isLittleEndian()) System::swapEndian(val);
+                                *out++ = val;
+                        }
+                        return;
+
+
+                }
         },
         { 
                 .id = AudioDesc::PCMI_S8,
@@ -65,7 +108,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 8,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = AudioDesc::samplesToFloat<int8_t, false>,
+                .floatToSamples = AudioDesc::floatToSamples<int8_t, false>
         },
         { 
                 .id = AudioDesc::PCMI_U8,
@@ -75,7 +120,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 8,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = AudioDesc::samplesToFloat<uint8_t, false>,
+                .floatToSamples = AudioDesc::floatToSamples<uint8_t, false>
         },
         { 
                 .id = AudioDesc::PCMI_S16LE,
@@ -85,7 +132,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 16,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = AudioDesc::samplesToFloat<int16_t, false>,
+                .floatToSamples = AudioDesc::floatToSamples<int16_t, false>
         },
         { 
                 .id = AudioDesc::PCMI_U16LE,
@@ -95,7 +144,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 16,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = AudioDesc::samplesToFloat<uint16_t, false>,
+                .floatToSamples = AudioDesc::floatToSamples<uint16_t, false>
         },
         { 
                 .id = AudioDesc::PCMI_S16BE,
@@ -105,7 +156,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 16,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = true
+                .isBigEndian = true,
+                .samplesToFloat = AudioDesc::samplesToFloat<int16_t, true>,
+                .floatToSamples = AudioDesc::floatToSamples<int16_t, true>
         },
         { 
                 .id = AudioDesc::PCMI_U16BE,
@@ -115,9 +168,11 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 16,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = true
-        },
-        { 
+                .isBigEndian = true,
+                .samplesToFloat = AudioDesc::samplesToFloat<uint16_t, true>,
+                .floatToSamples = AudioDesc::floatToSamples<uint16_t, true>
+         },
+         { 
                 .id = AudioDesc::PCMI_S24LE,
                 .name = "PCMI_S24LE",
                 .desc = "PCM Interleaved 24bit Signed Little Endian",
@@ -125,7 +180,28 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 24,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = [](float *out, const uint8_t *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = static_cast<int32_t>(in[0])       |
+                                              static_cast<int32_t>(in[1]) << 8  |
+                                              static_cast<int32_t>(in[2]) << 16;
+                                *out++ = AudioDesc::integerToFloat<int32_t, AudioDesc::MinS24, AudioDesc::MaxS24>(val);
+                                in += 3;
+                        }
+                        return;
+                },
+                .floatToSamples = [](uint8_t *out, const float *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = AudioDesc::floatToInteger<int32_t, AudioDesc::MinS24, AudioDesc::MaxS24>(*in++);
+                                out[0] = static_cast<uint8_t>(val & 0xFF);
+                                out[1] = static_cast<uint8_t>((val >> 8) & 0xFF);
+                                out[2] = static_cast<uint8_t>((val >> 16) & 0xFF);
+                                out += 3;
+                        }
+                        return;
+
+                } 
         },
         { 
                 .id = AudioDesc::PCMI_U24LE,
@@ -135,7 +211,28 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 24,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = [](float *out, const uint8_t *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = static_cast<int32_t>(in[0])       |
+                                              static_cast<int32_t>(in[1]) << 8  |
+                                              static_cast<int32_t>(in[2]) << 16;
+                                *out++ = AudioDesc::integerToFloat<int32_t, AudioDesc::MinU24, AudioDesc::MaxU24>(val);
+                                in += 3;
+                        }
+                        return;
+                },
+                .floatToSamples = [](uint8_t *out, const float *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = AudioDesc::floatToInteger<int32_t, AudioDesc::MinU24, AudioDesc::MaxU24>(*in++);
+                                out[0] = static_cast<uint8_t>(val & 0xFF);
+                                out[1] = static_cast<uint8_t>((val >> 8) & 0xFF);
+                                out[2] = static_cast<uint8_t>((val >> 16) & 0xFF);
+                                out += 3;
+                        }
+                        return;
+
+                } 
         },
         { 
                 .id = AudioDesc::PCMI_S24BE,
@@ -145,7 +242,28 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 24,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = true
+                .isBigEndian = true,
+                .samplesToFloat = [](float *out, const uint8_t *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = static_cast<int32_t>(in[0]) << 16 |
+                                              static_cast<int32_t>(in[1]) << 8  |
+                                              static_cast<int32_t>(in[2]);
+                                *out++ = AudioDesc::integerToFloat<int32_t, AudioDesc::MinS24, AudioDesc::MaxS24>(val);
+                                in += 3;
+                        }
+                        return;
+                },
+                .floatToSamples = [](uint8_t *out, const float *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = AudioDesc::floatToInteger<int32_t, AudioDesc::MinS24, AudioDesc::MaxS24>(*in++);
+                                out[0] = static_cast<uint8_t>((val >> 16) & 0xFF);
+                                out[1] = static_cast<uint8_t>((val >> 8) & 0xFF);
+                                out[2] = static_cast<uint8_t>(val & 0xFF);
+                                out += 3;
+                        }
+                        return;
+
+                } 
         },
         { 
                 .id = AudioDesc::PCMI_U24BE,
@@ -155,7 +273,28 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 24,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = true
+                .isBigEndian = true,
+                .samplesToFloat = [](float *out, const uint8_t *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = static_cast<int32_t>(in[0]) << 16 |
+                                              static_cast<int32_t>(in[1]) << 8  |
+                                              static_cast<int32_t>(in[2]);
+                                *out++ = AudioDesc::integerToFloat<int32_t, AudioDesc::MinU24, AudioDesc::MaxU24>(val);
+                                in += 3;
+                        }
+                        return;
+                },
+                .floatToSamples = [](uint8_t *out, const float *in, size_t samples) {
+                        for(size_t i = 0; i < samples; ++i) {
+                                int32_t val = AudioDesc::floatToInteger<int32_t, AudioDesc::MinU24, AudioDesc::MaxU24>(*in++);
+                                out[0] = static_cast<uint8_t>((val >> 16) & 0xFF);
+                                out[1] = static_cast<uint8_t>((val >> 8) & 0xFF);
+                                out[2] = static_cast<uint8_t>(val & 0xFF);
+                                out += 3;
+                        }
+                        return;
+
+                } 
         },
         { 
                 .id = AudioDesc::PCMI_S32LE,
@@ -165,9 +304,11 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 32,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = false
-        },
-        { 
+                .isBigEndian = false,
+                .samplesToFloat = AudioDesc::samplesToFloat<int32_t, false>,
+                .floatToSamples = AudioDesc::floatToSamples<int32_t, false>
+         },
+         { 
                 .id = AudioDesc::PCMI_U32LE,
                 .name = "PCMI_U32LE",
                 .desc = "PCM Interleaved 32bit Unsigned Little Endian",
@@ -175,7 +316,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 32,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = false
+                .isBigEndian = false,
+                .samplesToFloat = AudioDesc::samplesToFloat<uint32_t, false>,
+                .floatToSamples = AudioDesc::floatToSamples<uint32_t, false>
         },
         { 
                 .id = AudioDesc::PCMI_S32BE,
@@ -185,7 +328,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 32,
                 .isSigned = true,
                 .isPlanar = false,
-                .isBigEndian = true
+                .isBigEndian = true,
+                .samplesToFloat = AudioDesc::samplesToFloat<int32_t, true>,
+                .floatToSamples = AudioDesc::floatToSamples<int32_t, true>
         },
         { 
                 .id = AudioDesc::PCMI_U32BE,
@@ -195,7 +340,9 @@ static StructDatabase<int, AudioDesc::Format> db = {
                 .bitsPerSample = 32,
                 .isSigned = false,
                 .isPlanar = false,
-                .isBigEndian = true
+                .isBigEndian = true,
+                .samplesToFloat = AudioDesc::samplesToFloat<uint32_t, true>,
+                .floatToSamples = AudioDesc::floatToSamples<uint32_t, true>
         }
 };
 
