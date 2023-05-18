@@ -58,7 +58,7 @@ template <typename T, size_t NumValues> class Point {
                 Point() : d{} {}
                 Point(const Array<T, NumValues> &val) : d(val) {}
                 template<typename... Args> Point(Args... args) : d{static_cast<T>(args)...} {}
-                Point<T, NumValues>(const String &str) : d(fromString(str)) { }
+                Point(const String &str) : d(fromString(str)) { }
                 virtual ~Point() { }
  
                 operator String() const {

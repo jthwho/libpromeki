@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(APP_NAME "promeki")
@@ -60,6 +60,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
+    src/system.cpp
     src/util.cpp
     src/fourcc.cpp
     src/array.cpp

@@ -37,33 +37,6 @@ class Buffer {
                 
                 using List = std::vector<Buffer>;
 
-                class Data : public SharedData {
-                        public:
-                                MemSpace        ms;
-                                void            *data           = nullptr;
-                                void            *odata          = nullptr;
-                                size_t          size            = 0;
-                                size_t          align           = 0;
-                                bool            owned           = true;
-
-                                Data() = default;
-                                
-                                Data(void *p, size_t s, size_t an, bool own, const MemSpace &m) :
-                                        ms(m), data(p), odata(p), size(s), align(an), owned(own) { }
-
-                                Data(size_t sz, size_t an, const MemSpace &m) : ms(m), size(sz), align(an) { 
-                                        odata = data = ms.alloc(size, align);
-                                }
-
-                                ~Data() {
-                                        if(owned) ms.release(odata);
-                                }
-
-                                bool fill(char value) const {
-                                        return ms.set(data, size, value);
-                                }
-                };
-
                 Buffer() : d(new Data()) { }
                 Buffer(size_t sz, size_t an = DefaultAlign, const MemSpace &ms = MemSpace::Default) :
                         d(new Data(sz, an, ms)) { }
@@ -94,6 +67,33 @@ class Buffer {
                 }
 
         private:
+                class Data : public SharedData {
+                        public:
+                                MemSpace        ms;
+                                void            *data           = nullptr;
+                                void            *odata          = nullptr;
+                                size_t          size            = 0;
+                                size_t          align           = 0;
+                                bool            owned           = true;
+
+                                Data() = default;
+                                
+                                Data(void *p, size_t s, size_t an, bool own, const MemSpace &m) :
+                                        ms(m), data(p), odata(p), size(s), align(an), owned(own) { }
+
+                                Data(size_t sz, size_t an, const MemSpace &m) : ms(m), size(sz), align(an) { 
+                                        odata = data = ms.alloc(size, align);
+                                }
+
+                                ~Data() {
+                                        if(owned) ms.release(odata);
+                                }
+
+                                bool fill(char value) const {
+                                        return ms.set(data, size, value);
+                                }
+                };
+
                 ExplicitSharedDataPtr<Data> d;
 
 };

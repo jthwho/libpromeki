@@ -1,5 +1,5 @@
 /*****************************************************************************
- * audio.cpp
+ * system.cpp
  * May 17, 2023
  *
  * Copyright 2023 - Howard Logic
@@ -21,23 +21,9 @@
  *
  *****************************************************************************/
 
-#include <cstdint>
-#include <limits>
-#include <promeki/audio.h>
-#include <promeki/logger.h>
+#include <promeki/system.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-bool Audio::Data::allocate(const MemSpace &ms) {
-        size_t size = desc.bufferSize(samples);
-        Buffer b = Buffer(size, Buffer::DefaultAlign, ms);
-        if(!b.isValid()) {
-                promekiErr("Audio(%s, %d samples) allocate %d failed", 
-                        desc.toString().cstr(), (int)samples, (int)size);
-                return false;
-        }
-        return true;
-}
 
 PROMEKI_NAMESPACE_END
 

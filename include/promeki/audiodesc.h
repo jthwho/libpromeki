@@ -27,6 +27,7 @@
 #include <promeki/shareddata.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
+#include <promeki/system.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -66,6 +67,8 @@ class AudioDesc {
                         PCMI_S32BE,
                         PCMI_U32BE
                 };
+
+                static constexpr DataType NativeType = System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
 
                 AudioDesc() : d(new Data) { }
                 AudioDesc(DataType dt, float sr, size_t ch) : d(new Data(dt, sr, ch)) { }
