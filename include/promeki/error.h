@@ -64,7 +64,8 @@ class Error {
                         AlreadyOpen,
                         NotSupported,
                         OpenFailed,
-                        NotOpen
+                        NotOpen,
+                        EndOfFile
                 };
 
                 // Returns an error code based on the current errno

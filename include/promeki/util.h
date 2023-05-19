@@ -26,6 +26,8 @@
 #include <array>
 #include <stdexcept>
 #include <cstdint>
+#include <limits>
+#include <type_traits>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -120,6 +122,20 @@ class StringList;
 #endif
 
 StringList promekiStackTrace(bool demangle = true);
+
+template <typename OutputType, typename InputType>
+void promekiConvert(const InputType &input, bool *ok = nullptr) {
+        static_assert(std::is_integral<InputType>::value || std::is_floating_point<InputType>::value, 
+                        "InputType must be an integer or floating point type");
+        static_assert(std::is_integral<OutputType>::value || std::is_floating_point<OutputType>::value, 
+                        "OutputType must be an integer or floating point type");
+        if (input > std::numeric_limits<OutputType>::max() || input < std::numeric_limits<OutputType>::lowest()) {
+                if(ok != nullptr) *ok = false;
+                return OutputType();
+        }
+        if(ok != nullptr) *ok = true;
+        return static_cast<OutputType>(input);
+}
 
 template<typename T>
 inline T promekiLerp(const T& a, const T& b, const double& t) {

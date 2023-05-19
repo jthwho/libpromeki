@@ -41,11 +41,16 @@ class DateTime {
                         return DateTime(std::chrono::system_clock::now());
                 }
                 
-                static DateTime fromString(const String &str, const char *fmt = DefaultFormat) {
+                static DateTime fromString(const String &str, const char *fmt = DefaultFormat, bool *ok = nullptr) {
                         std::tm tm = {};
                         std::istringstream ss(str.stds());
                         ss >> std::get_time(&tm, fmt);
-                        return ss.fail() ? DateTime() : DateTime(tm);
+                        if(ss.fail()) {
+                                if(ok != nullptr) *ok = false;
+                                return DateTime();
+                        }
+                        if(ok != nullptr) *ok = true;
+                        return DateTime(tm);
                 }
 
                 static DateTime fromNow(const String &description);

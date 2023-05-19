@@ -39,8 +39,10 @@ StringList Metadata::dump() const {
         StringList ret;
         for(const auto &[id, value] : d) {
                 String s = idName(id);
-                s += ": ";
-                s += value.toString();
+                s += " [";
+                s += value.typeName();
+                s += "]: ";
+                s += value.get<String>();
                 ret += s;
         }
         return ret;

@@ -34,9 +34,11 @@ PROMEKI_TEST_BEGIN(Audio)
         Error err;
         AudioDesc desc(48000, 2);
         desc.metadata().set(Metadata::Title, "This is the title");
+        desc.metadata().set(Metadata::Timecode, Timecode(10, 30, 00, 00, Timecode::NDF30));
+
         PROMEKI_TEST(desc.isValid());
         PROMEKI_TEST(desc.isNative());
-
+        Logger::defaultLogger().log(Logger::Info, __FILE__, __LINE__, desc.metadata().dump());
         AudioGen gen(desc);
         
         AudioFile file = AudioFile::createWriter("test.wav");

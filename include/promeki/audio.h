@@ -54,6 +54,10 @@ class Audio {
                         return d->samples;
                 }
 
+                size_t maxSamples() const {
+                        return d->maxSamples;
+                }
+
                 size_t frames() const {
                         return d->samples * d->desc.channels();
                 }
@@ -71,6 +75,10 @@ class Audio {
                         return;
                 }
 
+                bool resize(size_t val) {
+                        return d->resize(val);
+                }
+
                 template <typename T> T *data() const {
                         return reinterpret_cast<T *>(d->buffer.data());
                 }
@@ -81,14 +89,22 @@ class Audio {
                                 Buffer                  buffer;
                                 AudioDesc               desc;
                                 size_t                  samples = 0;
+                                size_t                  maxSamples = 0;
 
                                 Data() = default;
-                                Data(const AudioDesc &d, size_t s, const MemSpace &ms) : desc(d), samples(s) {
+                                Data(const AudioDesc &d, size_t s, const MemSpace &ms) : 
+                                desc(d), samples(s), maxSamples(s) {
                                         allocate(ms);
                                 }
 
                                 bool isValid() const {
                                         return desc.isValid();
+                                }
+
+                                bool resize(size_t val) {
+                                        if(val > maxSamples) return false;
+                                        samples = val;
+                                        return true;
                                 }
 
                         private:

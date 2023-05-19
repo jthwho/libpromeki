@@ -61,27 +61,38 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
 
                 int computeLibSndFormat() {
                         int ret = 0;
+                        bool pcm = false;
                         String ext = FileInfo(_filename).suffix().toLower();
-                        if(ext == "wav" || ext == "bwf") ret |= SF_FORMAT_WAV;
-                        else if(ext == "aif" || ext == "aiff") ret |= SF_FORMAT_AIFF;
-                        else {
+                        if(ext == "wav" || ext == "bwf") {
+                                ret |= SF_FORMAT_WAV;
+                                pcm = true;
+                        } else if(ext == "aif" || ext == "aiff") {
+                                ret |= SF_FORMAT_AIFF;
+                                pcm = true;
+                        } else if(ext == "ogg") {
+                                ret |= (SF_FORMAT_OGG | SF_FORMAT_VORBIS);
+                                pcm = false;
+                        } else {
                                 promekiWarn("%s: invalid extension", _filename.cstr());
                                 return 0;
                         }
-                        switch(_desc.dataType()) {
-                                case AudioDesc::PCMI_Float32LE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_LITTLE); break;
-                                case AudioDesc::PCMI_Float32BE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_BIG); break;
-                                case AudioDesc::PCMI_S8: ret |= SF_FORMAT_PCM_S8; break;
-                                case AudioDesc::PCMI_U8: ret |= SF_FORMAT_PCM_U8; break;
-                                case AudioDesc::PCMI_S16LE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_LITTLE); break;
-                                case AudioDesc::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_BIG); break;
-                                case AudioDesc::PCMI_S24LE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_LITTLE); break;
-                                case AudioDesc::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_BIG); break;
-                                case AudioDesc::PCMI_S32LE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_LITTLE); break;
-                                case AudioDesc::PCMI_S32BE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_BIG); break;
-                                default:
-                                        promekiWarn("%s incompatible audio desc: %s\n", _filename.cstr(), _desc.toString().cstr());
+                        if(pcm) {
+                                switch(_desc.dataType()) {
+                                        case AudioDesc::PCMI_Float32LE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_LITTLE); break;
+                                        case AudioDesc::PCMI_Float32BE: ret |= (SF_FORMAT_FLOAT | SF_ENDIAN_BIG); break;
+                                        case AudioDesc::PCMI_S8: ret |= SF_FORMAT_PCM_S8; break;
+                                        case AudioDesc::PCMI_U8: ret |= SF_FORMAT_PCM_U8; break;
+                                        case AudioDesc::PCMI_S16LE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_LITTLE); break;
+                                        case AudioDesc::PCMI_S16BE: ret |= (SF_FORMAT_PCM_16 | SF_ENDIAN_BIG); break;
+                                        case AudioDesc::PCMI_S24LE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_LITTLE); break;
+                                        case AudioDesc::PCMI_S24BE: ret |= (SF_FORMAT_PCM_24 | SF_ENDIAN_BIG); break;
+                                        case AudioDesc::PCMI_S32LE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_LITTLE); break;
+                                        case AudioDesc::PCMI_S32BE: ret |= (SF_FORMAT_PCM_32 | SF_ENDIAN_BIG); break;
+                                        default:
+                                                promekiWarn("%s: incompatible audio desc: %s\n", 
+                                                        _filename.cstr(), _desc.toString().cstr());
                                         return 0;
+                                }
                         }
                         return ret;
                 }
@@ -93,13 +104,13 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                 void close() override {
                         if(_file == nullptr) return;
                         int ret = sf_close(_file);
-                        if(ret) promekiWarn("sf_close of %s failed with %d", _filename.cstr(), ret);
+                        if(ret) promekiWarn("%s: sf_close failed with %d", _filename.cstr(), ret);
                         _file = nullptr;
                 }
 
                 Error open() override {
                         if(_file != nullptr) {
-                                promekiWarn("Attempt to open %s again", _filename.cstr());
+                                promekiWarn("%s: Attempt to open again", _filename.cstr());
                                 return Error::AlreadyOpen;
                         }
                         int mode = 0;
@@ -113,7 +124,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 case AudioFile::Writer: {
                                         mode = SFM_WRITE; 
                                         if(!_desc.isValid()) {
-                                                promekiWarn("Can't open %s for write, don't have a valid desc", _filename.cstr());
+                                                promekiWarn("%s: Can't open for write, desc isn't valid", _filename.cstr());
                                                 return Error::OpenFailed;
                                         }
                                         std::memset(&_info, 0, sizeof(_info));
@@ -121,26 +132,26 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                         _info.channels = _desc.channels();
                                         _info.format = computeLibSndFormat();
                                         if(_info.format == 0) {
-                                                promekiWarn("Can't write %s, format not supported", _filename.cstr());
+                                                promekiWarn("%s: Can't write, format not supported", _filename.cstr());
                                                 return Error::NotSupported;
                                         }
                                 }
                                 break;
 
                                 default:
-                                        promekiWarn("Can't open %s, operation %d not supported", _filename.cstr(), _operation);
+                                        promekiWarn("%s: Can't open, operation %d not supported", _filename.cstr(), _operation);
                                         return Error::NotSupported;
                         }
                         _file = sf_open(_filename.cstr(), mode, &_info);
                         if(_file == nullptr) {
-                                promekiWarn("Failed to open %s: %s", _filename.cstr(), sf_strerror(nullptr));
+                                promekiWarn("%s: Failed to open: %s", _filename.cstr(), sf_strerror(nullptr));
                                 return Error::OpenFailed;
                         }
                         switch(_operation) {
                                 case AudioFile::Reader:
                                         _desc = computeDesc();
                                         if(!_desc.isValid()) {
-                                                promekiWarn("Can't open %s, file data isn't a supported format", _filename.cstr());
+                                                promekiWarn("%s: Can't open, file data isn't a supported format", _filename.cstr());
                                                 return Error::NotSupported;
                                         }
                                         break;
@@ -151,7 +162,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                                 const auto &map = metadataMap[i];
                                                 if(m.contains(map.metadataID)) {
                                                         int ret = sf_set_string(_file, map.sndfileID, 
-                                                                m.get(map.metadataID).toString().cstr());
+                                                                m.get(map.metadataID).get<String>().cstr());
                                                         if(ret) promekiWarn("%s: Failed to write metadata %d", 
                                                                 _filename.cstr(), map.metadataID);
                                                 }
@@ -166,15 +177,15 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
 
                 Error write(const Audio &audio) override {
                         if(_operation != AudioFile::Writer) {
-                                promekiWarn("Attempt to write to %s, but in operation %d", _filename.cstr(), _operation);
+                                promekiWarn("%s: Attempt to write but in operation %d", _filename.cstr(), _operation);
                                 return Error::Invalid;
                         }
                         if(_file == nullptr) {
-                                promekiWarn("Attempt to write to %s, but not open", _filename.cstr());
+                                promekiWarn("%s: Attempt to write but not open", _filename.cstr());
                                 return Error::NotOpen;
                         }
                         if(audio.desc() != _desc) {
-                                promekiWarn("Attempt to write to %s with %s, but set to %s",
+                                promekiWarn("%s: Attempt to write with '%s', but set to '%s'",
                                         _filename.cstr(), audio.desc().toString().cstr(),
                                         _desc.toString().cstr());
                                 return Error::Invalid;
@@ -183,17 +194,17 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         switch(_desc.dataType()) {
                                 case AudioDesc::PCMI_Float32LE:
                                 case AudioDesc::PCMI_Float32BE:
-                                        ct = sf_write_float(_file, audio.data<float>(), audio.frames());
+                                        ct = sf_writef_float(_file, audio.data<float>(), audio.samples());
                                         break;
 
                                 case AudioDesc::PCMI_S16LE:
                                 case AudioDesc::PCMI_S16BE:
-                                        ct = sf_write_short(_file, audio.data<int16_t>(), audio.frames());
+                                        ct = sf_writef_short(_file, audio.data<int16_t>(), audio.samples());
                                         break;
 
                                 case AudioDesc::PCMI_S32LE:
                                 case AudioDesc::PCMI_S32BE:
-                                        ct = sf_write_int(_file, audio.data<int32_t>(), audio.frames());
+                                        ct = sf_writef_int(_file, audio.data<int32_t>(), audio.samples());
                                         break;
 
                                 default:
@@ -202,8 +213,41 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         return Error::Ok;
                 }
 
-                Error read(Audio &audio, size_t samples) override {
-                        return Error::NotSupported;
+                Error read(Audio &out, size_t samples) override {
+                        if(_operation != AudioFile::Reader) {
+                                promekiWarn("%s: Attempt to read but in operation %d", _filename.cstr(), _operation);
+                                return Error::Invalid;
+                        }
+                        if(_file == nullptr) {
+                                promekiWarn("%s: Attempt to read to but not open", _filename.cstr());
+                                return Error::NotOpen;
+                        }
+                        Audio audio(_desc, samples);
+
+                        sf_count_t ct = 0;
+                        switch(_desc.dataType()) {
+                                case AudioDesc::PCMI_Float32LE:
+                                case AudioDesc::PCMI_Float32BE:
+                                        ct = sf_readf_float(_file, audio.data<float>(), audio.samples());
+                                        break;
+
+                                case AudioDesc::PCMI_S16LE:
+                                case AudioDesc::PCMI_S16BE:
+                                        ct = sf_readf_short(_file, audio.data<int16_t>(), audio.samples());
+                                        break;
+
+                                case AudioDesc::PCMI_S32LE:
+                                case AudioDesc::PCMI_S32BE:
+                                        ct = sf_readf_int(_file, audio.data<int32_t>(), audio.samples());
+                                        break;
+
+                                default:
+                                        return Error::NotSupported;
+                        }
+                        if(ct == 0) return Error::EndOfFile;
+                        audio.resize(ct);
+                        out = audio;
+                        return Error::Ok;
                 }
 
         private:
@@ -215,7 +259,7 @@ class AudioFileFactory_LibSndFile : public AudioFileFactory {
         public:
                 AudioFileFactory_LibSndFile() {
                         _name = "libsndfile";
-                        _exts = { "wav", "bwf", "aiff", "aif" };
+                        _exts = { "wav", "bwf", "aiff", "aif", "ogg" };
                 }
 
                 ~AudioFileFactory_LibSndFile() {

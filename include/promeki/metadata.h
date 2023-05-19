@@ -42,7 +42,18 @@
         X(License) \
         X(TrackNumber) \
         X(Genre) \
-        X(EnableBWF)
+        X(EnableBWF) \
+        X(Description) \
+        X(Originator) \
+        X(OriginatorReference) \
+        X(OriginationDate) \
+        X(OriginationTime) \
+        X(FrameRate) \
+        X(UMID) \
+        X(CodingHistory) \
+        X(CompressionLevel) \
+        X(EnableVBR) \
+        X(VBRQuality)
 
 PROMEKI_NAMESPACE_BEGIN
 

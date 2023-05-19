@@ -474,6 +474,18 @@ class String {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
+                template <typename OutputType> OutputType to(bool *ok = nullptr) const {
+                        OutputType ret;
+                        std::istringstream iss(d);
+                        iss >> ret;
+                        if(iss.fail() || !iss.eof()) {
+                                if(ok != nullptr) *ok = false;
+                                return OutputType{};
+                        }
+                        if(ok != nullptr) *ok = true;
+                        return ret;
+                }
+
                 bool toBool(Error *err = nullptr) const;
                 int toInt(Error *err = nullptr) const;
                 unsigned int toUInt(Error *err = nullptr) const;

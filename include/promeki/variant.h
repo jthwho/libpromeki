@@ -26,6 +26,7 @@
 #include <variant>
 #include <cstdint>
 #include <promeki/namespace.h>
+#include <promeki/util.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
 #include <promeki/datetime.h>
@@ -37,84 +38,29 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-class StringVisitor {
+#define PROMEKI_VARIANT_TYPES           \
+        X(TypeInvalid, std::monostate)  \
+        X(TypeBool, bool)               \
+        X(TypeU8, uint8_t)              \
+        X(TypeS8, int8_t)               \
+        X(TypeU16, uint16_t)            \
+        X(TypeS16, int16_t)             \
+        X(TypeU32, uint32_t)            \
+        X(TypeS32, int32_t)             \
+        X(TypeU64, uint64_t)            \
+        X(TypeS64, int64_t)             \
+        X(TypeFloat, float)             \
+        X(TypeDouble, double)           \
+        X(TypeString, String)           \
+        X(TypeDateTime, DateTime)       \
+        X(TypeTimeStamp, TimeStamp)     \
+        X(TypeSize2D, Size2D)           \
+        X(TypeUUID, UUID)               \
+        X(TypeTimecode, Timecode)       \
+        X(TypeRational, Rational<int>)
+
+class VariantDummy {
         public:
-
-        String operator()(const std::monostate &) {
-                return String();
-        }
-        
-        String operator()(const bool &val) const {
-                return String::number(val);
-        }
-        
-        String operator()(const uint8_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const int8_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const uint16_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const int16_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const uint32_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const int32_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const uint64_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const int64_t &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const float &val) const {
-                return String::number(val);
-        }
-
-        String operator()(const double &val) const {
-                return String::number(val);
-        }
-        
-        String operator()(const String &val) const {
-                return val;
-        }
-
-        String operator()(const DateTime &val) const {
-                return val.toString();
-        }
-
-        String operator()(const TimeStamp &val) const {
-                return val.toString();
-        }
-
-        String operator()(const Size2D &val) const {
-                return val.toString();
-        }
-
-        String operator()(const UUID &val) const {
-                return val.toString();
-        }
-
-        String operator()(const Timecode &val) const {
-                return val.toString().first;
-        }
-
-        String operator()(const Rational<int> &val) const {
-                return val.toString();
-        }
 
 };
 
@@ -123,27 +69,16 @@ class StringVisitor {
 template <typename... Types> class __Variant {
         public:
                 // Note: the enum list must be in the same order as the Variant type arguments.
-                enum Type {
-                        TypeInvalid = 0,
-                        TypeBool,
-                        TypeU8,
-                        TypeS8,
-                        TypeU16,
-                        TypeS16,
-                        TypeU32,
-                        TypeS32,
-                        TypeU64,
-                        TypeS64,
-                        TypeFloat,
-                        TypeDouble,
-                        TypeString,
-                        TypeDateTime,
-                        TypeTimeStamp,
-                        TypeSize2D,
-                        TypeUUID,
-                        TypeTimecode,
-                        TypeRational
-                };
+                #define X(name, type) name,
+                enum Type { PROMEKI_VARIANT_TYPES };
+                #undef X
+
+                #define X(name, type) PROMEKI_STRINGIFY(type),
+                static const char *typeName(size_t id) {
+                        static const char *items[] = { PROMEKI_VARIANT_TYPES };
+                        return items[id];
+                }
+                #undef X
 
                 __Variant() = default;
                 template <typename T> __Variant(const T& value) : v(value) { }
@@ -153,35 +88,145 @@ template <typename... Types> class __Variant {
                 }
 
                 template <typename T> void set(const T &value) { v = value; }
-                template <typename T> T get(bool *ok = nullptr) {
-                        T ret;
-                        try {
-                                ret = std::get<T>(v);
+                
+                template <typename To> To get(bool *ok = nullptr) const {
+                        return std::visit([ok](auto &&arg) -> To {
+                                using From = std::decay_t<decltype(arg)>;
                                 if(ok != nullptr) *ok = true;
-                        } catch(std::bad_variant_access const &) {
-                                ret = T();
+                                if constexpr (std::is_same_v<From, To>) {
+                                        return arg;
+
+                                } else if constexpr (std::is_same_v<To, bool>) {
+                                        if constexpr (std::is_integral<From>::value || 
+                                                std::is_floating_point<From>::value) return arg ? true : false;
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                
+                                } else if constexpr (std::is_same_v<To, int8_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, uint8_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, int16_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, uint16_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, int32_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, uint32_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, int64_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, uint64_t>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, float>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, double>) {
+                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
+                                        if constexpr (std::is_integral<From>::value || 
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+
+                                } else if constexpr (std::is_same_v<To, DateTime>) {
+                                        if constexpr (std::is_same_v<From, String>) return DateTime::fromString(
+                                                        arg, DateTime::DefaultFormat, ok);
+
+                                } else if constexpr (std::is_same_v<To, UUID>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                Error err;
+                                                UUID ret = UUID::fromString(arg, &err);
+                                                if(err.isError()) {
+                                                        if(ok != nullptr) *ok = false;
+                                                        return UUID();
+                                                }
+                                                return ret;
+                                        }
+
+                                } else if constexpr (std::is_same_v<To, Timecode>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                std::pair<Timecode, Error> ret = Timecode::fromString(arg);
+                                                if(ret.second.isError()) {
+                                                        if(ok != nullptr) *ok = false;
+                                                        return Timecode();
+                                                }
+                                                return ret.first;
+                                        }
+
+
+                                } else if constexpr (std::is_same_v<To, String>) {
+                                        if constexpr (std::is_same_v<From, bool>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, uint8_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, int16_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, uint16_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, int32_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, uint32_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, int64_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, uint64_t>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, float>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, double>) return String::number(arg);
+                                        if constexpr (std::is_same_v<From, DateTime>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, TimeStamp>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, Size2D>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, UUID>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first;
+                                        if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
+
+                                }
                                 if(ok != nullptr) *ok = false;
-                        }
-                        return ret;
+                                return To{};
+                        }, v);
                 }
 
                 Type type() const {
                         return static_cast<Type>(v.index());
                 }
 
-                String toString() const {
-                        return std::visit(StringVisitor{}, v);
+                const char *typeName() const {
+                        return typeName(type());
                 }
 
         private:
                 std::variant<Types...> v;
 };
 
-using Variant = __Variant<
-        std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t,
-        uint32_t, int32_t, uint64_t, int64_t, float, double, 
-        String, DateTime, TimeStamp, Size2D, UUID, Timecode,
-        Rational<int>>;
+#define X(name, type) type,
+using Variant = __Variant< PROMEKI_VARIANT_TYPES VariantDummy >;
+#undef X
 
 PROMEKI_NAMESPACE_END
 

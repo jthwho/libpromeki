@@ -61,6 +61,7 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(NotSupported, NONE, "Not Supported"),
         DEFINE_ERROR(OpenFailed, NONE, "Open Failed"),
         DEFINE_ERROR(NotOpen, NONE, "Not Open"),
+        DEFINE_ERROR(EndOfFile, NONE, "End Of File"),
 
         DEFINE_ERROR(NotImplemented, ENOSYS, "Not implemented"),
         DEFINE_ERROR(OutOfRange, ERANGE, "Out of range"),
