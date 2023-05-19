@@ -154,12 +154,14 @@ template <typename... Types> class __Variant {
                                         if constexpr (std::is_integral<From>::value || 
                                                         std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
 
                                 } else if constexpr (std::is_same_v<To, double>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
                                         if constexpr (std::is_integral<From>::value || 
                                                         std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
 
                                 } else if constexpr (std::is_same_v<To, DateTime>) {
                                         if constexpr (std::is_same_v<From, String>) return DateTime::fromString(

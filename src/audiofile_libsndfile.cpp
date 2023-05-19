@@ -52,7 +52,7 @@ static const MetadataMap metadataMap[] = {
 class AudioFile_LibSndFile : public AudioFile::Impl {
         public:
                 AudioFile_LibSndFile(AudioFile::Operation op) : AudioFile::Impl(op) {
-
+                        memset(&_info, 0, sizeof(_info));
                 }
 
                 ~AudioFile_LibSndFile() {
@@ -97,6 +97,41 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         return ret;
                 }
 
+                void writeBroadcastInfo() {
+                        if(_file == nullptr || _operation != AudioFile::Writer) return;
+                        if(!_desc.metadata().get(Metadata::EnableBWF).get<bool>()) return;
+                        SF_BROADCAST_INFO bcinfo;
+                        Timecode tc = _desc.metadata().get(Metadata::Timecode).get<Timecode>();
+                        double frameRate = _desc.metadata().get(Metadata::FrameRate).get<double>();
+                        uint64_t timeref = tc.toFrameNumber().first * frameRate * _desc.sampleRate();
+                        DateTime datetime = _desc.metadata().contains(Metadata::OriginationDateTime) ?
+                                _desc.metadata().get(Metadata::OriginationDateTime).get<DateTime>() :
+                                DateTime::now();
+                        String time = datetime.toString("%H:%M:%S");
+                        String date = datetime.toString("%Y-%m-%d");
+                        String description = _desc.metadata().get(Metadata::Description).get<String>();
+                        String originator = _desc.metadata().get(Metadata::Originator).get<String>();
+                        String originatorReference = _desc.metadata().get(Metadata::OriginatorReference).get<String>();
+                        String codingHistory = _desc.metadata().get(Metadata::CodingHistory).get<String>();
+
+                        memset(&bcinfo, 0, sizeof(bcinfo));
+                        bcinfo.version = 1;
+                        bcinfo.time_reference_low = timeref & 0xFFFFFFFF;
+                        bcinfo.time_reference_high = timeref >> 32;
+                        bcinfo.coding_history_size = codingHistory.size();
+                        strncpy(bcinfo.coding_history, codingHistory.cstr(), sizeof(bcinfo.coding_history));
+                        strncpy(bcinfo.originator, originator.cstr(), sizeof(bcinfo.originator));
+                        strncpy(bcinfo.originator_reference, originatorReference.cstr(), sizeof(bcinfo.originator_reference));
+                        strncpy(bcinfo.description, description.cstr(), sizeof(bcinfo.description));
+                        strncpy(bcinfo.origination_date, date.cstr(), sizeof(bcinfo.origination_date));
+                        strncpy(bcinfo.origination_time, time.cstr(), sizeof(bcinfo.origination_time));
+                        int ret = sf_command(_file, SFC_SET_BROADCAST_INFO, &bcinfo, sizeof(bcinfo));
+                        if(ret != SF_TRUE) {
+                                promekiWarn("%s: failed to write broadcast info", _filename.cstr());
+                        }
+                        return;
+                }
+
                 AudioDesc computeDesc() {
                         return AudioDesc();
                 }
@@ -106,6 +141,10 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         int ret = sf_close(_file);
                         if(ret) promekiWarn("%s: sf_close failed with %d", _filename.cstr(), ret);
                         _file = nullptr;
+                }
+
+                size_t sampleCount() const override {
+                        return _info.frames;
                 }
 
                 Error open() override {
@@ -167,6 +206,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                                                 _filename.cstr(), map.metadataID);
                                                 }
                                         }
+                                        writeBroadcastInfo();
                                         break;
                                 default:
                                         /* Do Nothing */

@@ -46,8 +46,7 @@
         X(Description) \
         X(Originator) \
         X(OriginatorReference) \
-        X(OriginationDate) \
-        X(OriginationTime) \
+        X(OriginationDateTime) \
         X(FrameRate) \
         X(UMID) \
         X(CodingHistory) \

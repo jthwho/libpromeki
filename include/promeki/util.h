@@ -124,7 +124,7 @@ class StringList;
 StringList promekiStackTrace(bool demangle = true);
 
 template <typename OutputType, typename InputType>
-void promekiConvert(const InputType &input, bool *ok = nullptr) {
+OutputType promekiConvert(const InputType &input, bool *ok = nullptr) {
         static_assert(std::is_integral<InputType>::value || std::is_floating_point<InputType>::value, 
                         "InputType must be an integer or floating point type");
         static_assert(std::is_integral<OutputType>::value || std::is_floating_point<OutputType>::value, 

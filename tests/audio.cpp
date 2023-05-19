@@ -25,6 +25,8 @@
 #include <promeki/audio.h>
 #include <promeki/audiofile.h>
 #include <promeki/audiogen.h>
+#include <promeki/rational.h>
+#include <promeki/uuid.h>
 
 using namespace promeki;
 
@@ -33,8 +35,14 @@ PROMEKI_DEBUG(AudioTest);
 PROMEKI_TEST_BEGIN(Audio)
         Error err;
         AudioDesc desc(48000, 2);
+        desc.metadata().set(Metadata::Description, "Testing Audio File");
+        desc.metadata().set(Metadata::Originator, "libpromeki unit testing");
+        desc.metadata().set(Metadata::CodingHistory, "Some sort of coding history");
+        desc.metadata().set(Metadata::OriginatorReference, UUID::generate());
         desc.metadata().set(Metadata::Title, "This is the title");
-        desc.metadata().set(Metadata::Timecode, Timecode(10, 30, 00, 00, Timecode::NDF30));
+        desc.metadata().set(Metadata::EnableBWF, true);
+        desc.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF30, 10, 30, 00, 00));
+        desc.metadata().set(Metadata::FrameRate, Rational(30000, 1001));
 
         PROMEKI_TEST(desc.isValid());
         PROMEKI_TEST(desc.isNative());
