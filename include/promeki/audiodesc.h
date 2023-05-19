@@ -136,10 +136,21 @@ class AudioDesc {
                 static constexpr DataType NativeType = System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
 
                 AudioDesc() : d(new Data) { }
+                AudioDesc(float sr, size_t ch) : d(new Data(NativeType, sr, ch)) { }
                 AudioDesc(DataType dt, float sr, size_t ch) : d(new Data(dt, sr, ch)) { }
+
+                bool operator==(const AudioDesc &other) const { return d == other.d; }
 
                 bool isValid() const {
                         return d->isValid();
+                }
+
+                bool isNative() const {
+                        return d->dataType == NativeType;
+                }
+
+                AudioDesc workingDesc() const {
+                        return AudioDesc(NativeType, d->sampleRate, d->channels);
                 }
 
                 String toString() const {
@@ -228,6 +239,13 @@ class AudioDesc {
                                                 channels = 0;
                                                 format = lookupFormat(Invalid);
                                         }
+                                }
+
+                                bool operator==(const Data &other) const {
+                                        // FIXME: We don't currently compare metadata
+                                        return dataType == other.dataType &&
+                                               sampleRate == other.sampleRate &&
+                                               channels == other.channels;
                                 }
 
                                 bool isValid() const {

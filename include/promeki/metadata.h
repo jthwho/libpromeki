@@ -31,9 +31,22 @@
 #define PROMEKI_ENUM_METADATA_ID \
         X(Invalid) \
         X(Timecode) \
-        X(Gamma)
+        X(Gamma) \
+        X(Title) \
+        X(Copyright) \
+        X(Software) \
+        X(Artist) \
+        X(Comment) \
+        X(Date) \
+        X(Album) \
+        X(License) \
+        X(TrackNumber) \
+        X(Genre) \
+        X(EnableBWF)
 
 PROMEKI_NAMESPACE_BEGIN
+
+class StringList;
 
 class Metadata {
         public:
@@ -47,7 +60,7 @@ class Metadata {
                         d[id] = Variant(value);
                         return;
                 }
-                Variant get(ID id) const { return d.at(id); }
+                const Variant &get(ID id) const { return d.at(id); }
                 bool contains(ID id) const { return d.find(id) != d.end(); }
                 void remove(ID id) { d.erase(id); return; }
                 void clear() { d.clear(); return; }
@@ -59,6 +72,8 @@ class Metadata {
                         }
                         return;
                 }
+
+                StringList dump() const;
 
         private:
                 std::map<ID, Variant> d;

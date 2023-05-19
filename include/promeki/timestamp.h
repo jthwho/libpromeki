@@ -26,6 +26,7 @@
 #include <chrono>
 #include <thread>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -118,6 +119,14 @@ class TimeStamp {
 
                 int64_t elapsedNanoseconds() const {
                         return std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - _value).count();
+                }
+
+                String toString() const {
+                        return String::number(seconds());
+                }
+
+                operator String() const {
+                        return toString();
                 }
 
         private:

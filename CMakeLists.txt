@@ -62,6 +62,7 @@ set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
     src/system.cpp
     src/util.cpp
+    src/rational.cpp
     src/fourcc.cpp
     src/array.cpp
     src/matrix.cpp
@@ -95,6 +96,8 @@ set(PROMEKI_SOURCES
     src/image.cpp
     src/audiodesc.cpp
     src/audio.cpp
+    src/audiofilefactory.cpp
+    src/audiofile.cpp
     src/audiogen.cpp
     src/matrix3x3.cpp
     src/colorspaceconverter.cpp
@@ -120,6 +123,7 @@ set(UNITTEST_SOURCES
     tests/uuid.cpp
     tests/timecode.cpp
     tests/numname.cpp
+    tests/audio.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
@@ -138,6 +142,11 @@ if(FREETYPE_FOUND)
         target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_FREETYPE)
         target_sources(${APP_NAME} PRIVATE src/fontpainter.cpp)
 endif()
+
+target_link_libraries(${APP_NAME} PUBLIC sndfile)
+target_include_directories(${APP_NAME} PRIVATE ${SNDFILE_INCLUDE_DIRS})
+target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_SNDFILE)
+target_sources(${APP_NAME} PRIVATE src/audiofile_libsndfile.cpp)
 
 add_executable(unittest ${UNITTEST_SOURCES})
 target_link_libraries(unittest PRIVATE ${APP_NAME})

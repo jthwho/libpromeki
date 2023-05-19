@@ -57,6 +57,11 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(PixelFormatNotSupported, NONE, "Pixel format not supported"),
         DEFINE_ERROR(SingularMatrix, NONE, "Matrix is singular"),
         DEFINE_ERROR(NoFrameRate, NONE, "No frame rate"),
+        DEFINE_ERROR(AlreadyOpen, NONE, "Already Open"),
+        DEFINE_ERROR(NotSupported, NONE, "Not Supported"),
+        DEFINE_ERROR(OpenFailed, NONE, "Open Failed"),
+        DEFINE_ERROR(NotOpen, NONE, "Not Open"),
+
         DEFINE_ERROR(NotImplemented, ENOSYS, "Not implemented"),
         DEFINE_ERROR(OutOfRange, ERANGE, "Out of range"),
         DEFINE_ERROR(PermissionDenied, EACCES, "Permission denied"),

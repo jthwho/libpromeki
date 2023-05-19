@@ -1,6 +1,6 @@
 /*****************************************************************************
- * metadata.cpp
- * April 30, 2023
+ * rational.cpp
+ * May 18, 2023
  *
  * Copyright 2023 - Howard Logic
  * https://howardlogic.com
@@ -21,30 +21,10 @@
  *
  *****************************************************************************/
 
-#include <promeki/metadata.h>
-#include <promeki/string.h>
-#include <promeki/stringlist.h>
+#include <promeki/rational.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-#define X(name) { Metadata::name, PROMEKI_STRINGIFY(name) },
-static std::map<Metadata::ID, String> metadataIDNames = { PROMEKI_ENUM_METADATA_ID };
-#undef X
-
-const String &Metadata::idName(ID id) {
-        return metadataIDNames[id];
-}
-
-StringList Metadata::dump() const {
-        StringList ret;
-        for(const auto &[id, value] : d) {
-                String s = idName(id);
-                s += ": ";
-                s += value.toString();
-                ret += s;
-        }
-        return ret;
-}
 
 PROMEKI_NAMESPACE_END
 

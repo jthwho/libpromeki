@@ -49,11 +49,11 @@ static bool checkForEnvDebugEnable(const String &name) {
         static StringList list;
         if(!done) {
                 done = true;
-                const char *enval = std::getenv("PROMEKI_DEBUG_ENABLE");
+                const char *enval = std::getenv("PROMEKI_DEBUG");
                 if(enval == nullptr) return false;
                 list = String(enval).split(",");
                 if(!list.isEmpty()) {
-                        promekiInfo("Env PROMEKI_DEBUG_ENABLE: %s", list.join(", ").cstr());
+                        promekiInfo("Env PROMEKI_DEBUG: %s", list.join(", ").cstr());
                 }
         }
         return list.contains(name);

@@ -35,6 +35,14 @@ PROMEKI_NAMESPACE_BEGIN
 
 static const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+template <typename T> 
+std::string floatToString(T value, int precision, std::ios_base::fmtflags encodingStyle = std::ios_base::fixed) {
+        std::stringstream ss;
+        ss.setf(encodingStyle);
+        ss << std::setprecision(precision) << value;
+        return ss.str();
+}
+
 template <typename T>
 static String num(T val, 
               int base = 10, 
@@ -173,6 +181,14 @@ String String::number(int64_t val, int base, int padding, char padchar, bool add
 
 String String::number(uint64_t val, int base, int padding, char padchar, bool addPrefix) {
         return num(val, base, padding, padchar, addPrefix);
+}
+
+String String::number(float val, int precision) {
+        return floatToString(val, precision);
+}
+
+String String::number(double val, int precision) {
+        return floatToString(val, precision);
 }
 
 String &String::arg(const String &str) {

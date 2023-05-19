@@ -36,6 +36,7 @@ bool Audio::Data::allocate(const MemSpace &ms) {
                         desc.toString().cstr(), (int)samples, (int)size);
                 return false;
         }
+        buffer = b;
         return true;
 }
 

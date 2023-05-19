@@ -60,7 +60,11 @@ class Error {
                         IllegalSeek,
                         Timeout,
                         CrossDeviceLink,
-                        NoFrameRate
+                        NoFrameRate,
+                        AlreadyOpen,
+                        NotSupported,
+                        OpenFailed,
+                        NotOpen
                 };
 
                 // Returns an error code based on the current errno

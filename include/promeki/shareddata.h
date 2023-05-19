@@ -146,6 +146,15 @@ class SharedDataPtr {
 			return *d;
 		}
 
+                bool operator==(const SharedDataPtr &other) const {
+                        if(d == other.d) return true;
+                        return *d == *other.d;
+                }
+
+                bool operator!=(const SharedDataPtr &other) const {
+                        return !(*this == other);
+                }
+
 	private:
 		T *d = nullptr;
 };

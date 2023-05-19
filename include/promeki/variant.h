@@ -33,8 +33,90 @@
 #include <promeki/size2d.h>
 #include <promeki/uuid.h>
 #include <promeki/timecode.h>
+#include <promeki/rational.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class StringVisitor {
+        public:
+
+        String operator()(const std::monostate &) {
+                return String();
+        }
+        
+        String operator()(const bool &val) const {
+                return String::number(val);
+        }
+        
+        String operator()(const uint8_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const int8_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const uint16_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const int16_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const uint32_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const int32_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const uint64_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const int64_t &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const float &val) const {
+                return String::number(val);
+        }
+
+        String operator()(const double &val) const {
+                return String::number(val);
+        }
+        
+        String operator()(const String &val) const {
+                return val;
+        }
+
+        String operator()(const DateTime &val) const {
+                return val.toString();
+        }
+
+        String operator()(const TimeStamp &val) const {
+                return val.toString();
+        }
+
+        String operator()(const Size2D &val) const {
+                return val.toString();
+        }
+
+        String operator()(const UUID &val) const {
+                return val.toString();
+        }
+
+        String operator()(const Timecode &val) const {
+                return val.toString().first;
+        }
+
+        String operator()(const Rational<int> &val) const {
+                return val.toString();
+        }
+
+};
 
 // Note, this template is never intended to be used directly, just to provide the template
 // to be used by Variant
@@ -59,7 +141,8 @@ template <typename... Types> class __Variant {
                         TypeTimeStamp,
                         TypeSize2D,
                         TypeUUID,
-                        TypeTimecode
+                        TypeTimecode,
+                        TypeRational
                 };
 
                 __Variant() = default;
@@ -69,34 +152,25 @@ template <typename... Types> class __Variant {
                         return v.index() != 0;
                 }
 
-                template <typename T> void set(const T& value) { v = value; }
-                template <typename T> T get() const { return v; }
-
-
-                template <typename T> T get(bool *ok = nullptr) const {
-                        if(std::holds_alternative<T>(v)) {
+                template <typename T> void set(const T &value) { v = value; }
+                template <typename T> T get(bool *ok = nullptr) {
+                        T ret;
+                        try {
+                                ret = std::get<T>(v);
                                 if(ok != nullptr) *ok = true;
-                                return std::get<T>(v);
-                        } else {
-                                return std::visit([ok](const auto &value) -> T {
-                                        if constexpr (std::is_convertible_v<decltype(value), T>) {
-                                                if(ok != nullptr) *ok = true;
-                                                return static_cast<T>(value);
-                                        } 
-                                }, v);
+                        } catch(std::bad_variant_access const &) {
+                                ret = T();
+                                if(ok != nullptr) *ok = false;
                         }
-                        if(ok != nullptr) *ok = true;
-                        return T();
+                        return ret;
                 }
 
                 Type type() const {
                         return static_cast<Type>(v.index());
                 }
 
-                template <typename T> bool canConvertTo() const {
-                        return std::visit([](const auto &value) -> bool {
-                                return std::is_convertible_v<decltype(value), T>; 
-                        }, v);
+                String toString() const {
+                        return std::visit(StringVisitor{}, v);
                 }
 
         private:
@@ -106,7 +180,8 @@ template <typename... Types> class __Variant {
 using Variant = __Variant<
         std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t,
         uint32_t, int32_t, uint64_t, int64_t, float, double, 
-        String, DateTime, TimeStamp, Size2D, UUID, Timecode>;
+        String, DateTime, TimeStamp, Size2D, UUID, Timecode,
+        Rational<int>>;
 
 PROMEKI_NAMESPACE_END
 

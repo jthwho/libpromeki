@@ -104,6 +104,12 @@ class String {
                                 char padchar = ' ',
                                 bool addPrefix = false);
 
+                static String number(bool value) {
+                        return value ? "true" : "false";
+                }
+
+                static String number(float value, int precision = 9);
+                static String number(double value, int precision = 9);
 
                 template <typename T>
                 static String dec(const T &val, int padding = 0, char padchar = ' ') {

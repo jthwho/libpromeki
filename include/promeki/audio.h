@@ -42,12 +42,20 @@ class Audio {
                         return d->isValid();
                 }
 
+                bool isNative() const {
+                        return d->desc.isNative();
+                }
+
                 const AudioDesc &desc() const {
                         return d->desc;
                 }
 
                 size_t samples() const {
                         return d->samples;
+                }
+
+                size_t frames() const {
+                        return d->samples * d->desc.channels();
                 }
 
                 const Buffer &buffer() const {
@@ -63,6 +71,10 @@ class Audio {
                         return;
                 }
 
+                template <typename T> T *data() const {
+                        return reinterpret_cast<T *>(d->buffer.data());
+                }
+
         private:
                 class Data : public SharedData {
                         public:
@@ -71,7 +83,9 @@ class Audio {
                                 size_t                  samples = 0;
 
                                 Data() = default;
-                                Data(const AudioDesc &d, size_t s, const MemSpace &ms) : desc(d), samples(s) {}
+                                Data(const AudioDesc &d, size_t s, const MemSpace &ms) : desc(d), samples(s) {
+                                        allocate(ms);
+                                }
 
                                 bool isValid() const {
                                         return desc.isValid();

@@ -30,6 +30,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(MemSpace)
+
 #define DEFINE_SPACE(item) \
         .id = MemSpace::item, \
         .name = PROMEKI_STRINGIFY(item)
@@ -40,9 +42,11 @@ static StructDatabase<MemSpace::ID, MemSpace::Ops> db = {
                 .alloc = [](size_t bytes, size_t align) -> void * {
                         void *ret = std::aligned_alloc(align, bytes);
                         PROMEKI_ASSERT(ret != nullptr);
+                        promekiDebug("%p: system allocate %d, align %d", ret, (int)bytes, (int)align);
                         return ret;
                 },
                 .release = [](void *ptr) -> void {
+                        promekiDebug("%p: system free", ptr);
                         std::free(ptr);
                         return;
                 },

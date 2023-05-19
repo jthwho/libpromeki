@@ -49,23 +49,19 @@ class AudioGen {
 		AudioGen(const AudioDesc &desc);
 		Audio generate(size_t samples);
 
-                const Config &config(int chan) const {
+                const Config &config(size_t chan) const {
                         return _chanConfig[chan];
                 }
 
-                Config &config(int chan) {
-                        return _chanConfig[chan];
-                }
-
-                void setConfig(int chan, const Config &val) {
-                        _chanConfig[chan] = val;
-                        return;
-                }
+                void setConfig(size_t chan, Config val);
 
 	private:
                 AudioDesc       _desc;
                 List<Config>    _chanConfig;
                 size_t          _sampleCount = 0;
+
+                void genSilence(size_t chan, float *data, size_t samples) const;
+                void genSine(size_t chan, float *data, size_t samples) const;
 };
 
 PROMEKI_NAMESPACE_END
