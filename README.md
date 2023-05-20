@@ -46,7 +46,12 @@ using namespace promeki;
 ```
 
 ## Documentation
-1. [API Documentation](docs/doxygen/html/index.html)
+You can build the API documentation by using the `docs` target in your cmake generated build.  So, for example, if you've
+generated a make based build system, you should be able to type `make docs` and doxygen will be run to generate the docs.
+NOTE: This target will only exist if you've got doxygen installed (and cmake can find it).
+
+Additionally, you can find a copy of the documentation here:
+[API Documentation](https://howardlogic.com/libpromeki/api/)
 
 ## Debugging
 If you build the library with `PROMEKI_DEBUG_ENABLE` defined, this will enable the `promekiDebug()` function
