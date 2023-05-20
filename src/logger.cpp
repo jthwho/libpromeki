@@ -27,6 +27,7 @@
 #include <promeki/logger.h>
 #include <promeki/ansistream.h>
 #include <promeki/fileinfo.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -37,7 +38,9 @@ struct DebugDatabaseItem {
         int     line;
 };
 
-using DebugDatabase = std::map<String, DebugDatabaseItem>;
+using DebugDatabaseItemList = List<DebugDatabaseItem>;
+
+using DebugDatabase = std::map<String, DebugDatabaseItemList>;
 
 static DebugDatabase &debugDatabase() {
         static DebugDatabase ret;
@@ -60,16 +63,13 @@ static bool checkForEnvDebugEnable(const String &name) {
 }
 
 bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int line) {
-        DebugDatabase &db = debugDatabase();
-        auto item = db.find(name);
-        if(item != db.end()) {
-                promekiWarn("Attempt to define debug channel '%s' in %s:%d, but already defined in %s:%d",
-                        name, file, line, item->second.file.cstr(), item->second.line);
+        if(enabler == nullptr) {
+                promekiWarn("Got a null enabler");
                 return false;
         }
-        db[name] = { enabler, name, file, line };
+        DebugDatabase &db = debugDatabase();
         bool ret = checkForEnvDebugEnable(name);
-        if(ret) promekiInfo("Debug '%s' Enabled", name);
+        db[name] += { enabler, name, file, line };
         return ret;
 }
 

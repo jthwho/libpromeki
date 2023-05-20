@@ -46,7 +46,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
 
                 PaintEngine::Pixel createPixel(const uint16_t *c, size_t ct) const override {
                         PaintEngine::Pixel ret;
-                        ret.resize(3);
+                        ret.resize(4);
                         if(ct == 1) {
                                 ret[0] = c[0];
                                 ret[1] = c[0];

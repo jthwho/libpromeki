@@ -25,6 +25,7 @@
 #include <cstddef>
 #include <vector>
 #include <initializer_list>
+#include <functional>
 #include <promeki/namespace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -37,6 +38,7 @@ class List {
                 using ConstIterator = typename std::vector<T>::const_iterator;
                 using RevIterator = typename std::vector<T>::reverse_iterator;
                 using ConstRevIterator = typename std::vector<T>::const_reverse_iterator;
+                using TestFunc = std::function<bool(const T &)>;
 
                 List() = default;
                 explicit List(size_t size) : d(size) {}
@@ -191,8 +193,29 @@ class List {
                         return d.emplace(pos, std::move(value));
                 }
 
-                Iterator erase(ConstIterator pos) {
+                Iterator remove(ConstIterator pos) {
                         return d.erase(pos);
+                }
+
+                Iterator remove(size_t index) {
+                        return d.remove(index);
+                }
+
+                void removeIf(TestFunc func) {
+                        d.erase(std::remove_if(d.begin(), d.end(), func));
+                        return;
+                }
+
+                bool removeFirst(const T &value) {
+                        bool ret = false;
+                        for(auto item = begin(); item != end(); ++item) {
+                                if(*item == value) {
+                                        remove(item);
+                                        ret = true;
+                                        break;
+                                }
+                        }
+                        return ret;
                 }
 
                 void pushToBack(const T &value) {

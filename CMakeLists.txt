@@ -60,6 +60,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
+    src/objectbase.cpp
     src/system.cpp
     src/util.cpp
     src/rational.cpp
@@ -110,6 +111,7 @@ set(PROMEKI_SOURCES
     src/file.cpp
     src/numname.cpp
     src/numnameseq.cpp
+    src/signal.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -124,10 +126,12 @@ set(UNITTEST_SOURCES
     tests/timecode.cpp
     tests/numname.cpp
     tests/audio.cpp
+    tests/objectbase.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
 target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
+target_compile_definitions(${APP_NAME} PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 
 if(PNG_FOUND)
         target_link_libraries(${APP_NAME} PUBLIC png)
@@ -149,6 +153,7 @@ target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_SNDFILE)
 target_sources(${APP_NAME} PRIVATE src/audiofile_libsndfile.cpp)
 
 add_executable(unittest ${UNITTEST_SOURCES})
+target_compile_definitions(unittest PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 target_link_libraries(unittest PRIVATE ${APP_NAME})
 add_test(NAME unittest COMMAND unittest)
  

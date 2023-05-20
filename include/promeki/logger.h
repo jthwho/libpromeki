@@ -48,7 +48,12 @@ PROMEKI_NAMESPACE_BEGIN
 #define promekiLogSync() Logger::defaultLogger().sync()
 #define promekiLogStackTrace(level) Logger::defaultLogger().log(level, __FILE__, __LINE__, promekiStackTrace())
 
+#ifdef PROMEKI_DEBUG_ENABLE
 #define promekiDebug(format, ...) if(__promeki_debug_enabled) { promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__); }
+#else
+#define promekiDebug(format, ...)
+#endif
+
 #define promekiInfo(format, ...)  promekiLog(Logger::LogLevel::Info,  format, ##__VA_ARGS__)
 #define promekiWarn(format, ...)  promekiLog(Logger::LogLevel::Warn,  format, ##__VA_ARGS__)
 #define promekiErr(format, ...)   promekiLog(Logger::LogLevel::Err,   format, ##__VA_ARGS__)
