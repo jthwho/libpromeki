@@ -155,4 +155,28 @@ add_executable(unittest ${UNITTEST_SOURCES})
 target_compile_definitions(unittest PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 target_link_libraries(unittest PRIVATE ${APP_NAME})
 add_test(NAME unittest COMMAND unittest)
- 
+
+ # Find Doxygen package (optional)
+ find_package(Doxygen)
+
+# Check if Doxygen is installed
+if(DOXYGEN_FOUND)
+
+        # Set input and output files
+        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+        set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+
+        # Configure the Doxyfile for the current build
+        configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+
+        # Add a custom target to run Doxygen whenever the project is built
+        add_custom_target(doc_doxygen ALL
+                        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                        COMMENT "Generating API documentation with Doxygen"
+                        VERBATIM)
+
+else(DOXYGEN_FOUND)
+        message("Doxygen needs to be installed to generate the documentation")
+endif(DOXYGEN_FOUND)
+

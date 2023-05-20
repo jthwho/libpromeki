@@ -36,6 +36,18 @@ executing the following from within the root of the source tree:
 1. `cmake -DCMAKE_BUILD_TYPE=Release ..`
 1. And then running the generated build system (e.g. make, ninja, xcode, visual studio, etc)
 
+## Use Tips
+Here's some tips on how to best utilize the library in your application:
+1. Add the /path/to/promeki_codebase/include to your compiler's include path
+1. Use the `#include <promeki/header.h>` method to include any promeki files
+1. Everything in promeki is in the `promeki` namespace.  Often you can get away with using the entire namespace with:
+```c++
+using namespace promeki;
+```
+
+## Documentation
+1. [API Documentation](docs/doxygen/html/index.html)
+
 ## Debugging
 If you build the library with `PROMEKI_DEBUG_ENABLE` defined, this will enable the `promekiDebug()` function
 to write debug information to the log.  Each source file that wants to use `promekiDebug()` must also call
@@ -45,7 +57,7 @@ to enable debug output of certain debug channels.  You can provide a comma separ
 multiple channels at once.  So, for example:
 
 In your source file:
-```
+```c++
 PROMEKI_DEBUG(MyChannel)
 
 // elsewhere in your code
@@ -53,7 +65,7 @@ promekiDebug("This is a debug log entry")
 ```
 
 And then when running your application:
-```
+```sh
 export PROMEKI_DEBUG=MyChannel
 ./yourapp
 ```
