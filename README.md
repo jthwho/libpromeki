@@ -1,4 +1,5 @@
 # libpromeki
+<img src="./docs/promeki_logo.jpg" alt="ProMEKI Logo" width="100" height="100">
 
 PROfessional MEdia toolKIt - A C++ library targeted towards professional audio / video media needs.
 
