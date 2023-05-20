@@ -26,6 +26,8 @@
 
 using namespace promeki;
 
+PROMEKI_DEBUG(ObjectBaseTest)
+
 class TestOne : public ObjectBase {
         public:
                 TestOne(ObjectBase *p = nullptr) : ObjectBase(p) {
@@ -35,10 +37,16 @@ class TestOne : public ObjectBase {
                 PROMEKI_SIGNAL(somethingHappened, const String &);
 
                 void makeSomethingHappen() {
-                        somethingHappened.emit("Hello World");
+                        promekiInfo("%p is going to emit somethingHappened", this);
+                        somethingHappened.emit("Something!");
                         return;
                 }
 
+                void makeSomethingElseHappen() {
+                        auto params = somethingHappened.packParams("Something Else!");
+                        somethingHappened.packedEmit(params);
+                        return;
+                }
 };
 
 class TestTwo : public ObjectBase {
@@ -48,7 +56,7 @@ class TestTwo : public ObjectBase {
                 }
 
                 void handleSomething(const String &val) {
-                        promekiInfo("TestTwo::handleSomething(%s)", val.cstr());
+                        promekiInfo("TestTwo::handleSomething(%s) %p", val.cstr(), signalSender());
                         return;
                 }
 
@@ -62,5 +70,6 @@ PROMEKI_TEST_BEGIN(ObjectBase)
         one.somethingHappened.connect(&two, &TestTwo::handleSomething);
 
         one.makeSomethingHappen();
+        one.makeSomethingElseHappen();
 
 PROMEKI_TEST_END()

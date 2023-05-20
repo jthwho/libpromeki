@@ -3,6 +3,18 @@
 
 PROfessional MEdia toolKIt - A C++ library targeted towards professional audio / video media needs.
 
+## History
+The bulk of the code that makes up libpromeki started out life as code that existed across multiple libraries originally developed
+by my (now defunct) company, [SpectSoft](https://en.wikipedia.org/wiki/SpectSoft), for our video disk recorder product 
+called RaveHD. During its run, it was used in post production, vfx, animation, and other 
+media related sectors. At that time, the entire application stack was built on top of the [Qt](https://www.qt.io/)
+framework.  The Qt design patterns, aesthetic, and general way of doing things has certainly informed
+much of how this library was architected.
+
+What you see now is a library that takes the good bits from that old code base and 
+has removed the Qt coupling and replaced it with modern C++ native STL.  Hopefully you'll find it as useful
+as I have over the years.  --jth
+
 ## Dependencies
 1. C++20
 1. C++ filesystem library
@@ -30,7 +42,7 @@ to write debug information to the log.  Each source file that wants to use `prom
 `PROMEKI_DEBUG(<DEBUG_NAME>)` at the top of the source file.  This creates a debug channel by this name and
 assigns this source scope to this debug channel.  You can then use the `PROMEKI_DEBUG` environment variable
 to enable debug output of certain debug channels.  You can provide a comma separated list for debugging
-mutiple channels at once.  So, for example:
+multiple channels at once.  So, for example:
 
 In your source file:
 ```

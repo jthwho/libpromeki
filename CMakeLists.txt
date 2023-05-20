@@ -111,7 +111,6 @@ set(PROMEKI_SOURCES
     src/file.cpp
     src/numname.cpp
     src/numnameseq.cpp
-    src/signal.cpp
 )
 
 set(UNITTEST_SOURCES

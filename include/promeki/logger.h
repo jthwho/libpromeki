@@ -39,9 +39,11 @@ PROMEKI_NAMESPACE_BEGIN
 // Variadic macros for logging at various levels
 
 #define PROMEKI_DEBUG(name) \
-        [[maybe_unused]] static const char *__promeki_debug_name = PROMEKI_STRINGIFY(name); \
-        [[maybe_unused]] static bool __promeki_debug_enabled = \
-        promekiRegisterDebug(&__promeki_debug_enabled, PROMEKI_STRINGIFY(name), __FILE__, __LINE__);
+        namespace { \
+                [[maybe_unused]] static const char *__promeki_debug_name = PROMEKI_STRINGIFY(name); \
+                [[maybe_unused]] static bool __promeki_debug_enabled = \
+                promekiRegisterDebug(&__promeki_debug_enabled, PROMEKI_STRINGIFY(name), __FILE__, __LINE__); \
+        }
 
 #define promekiLogImpl(level, format, ...) Logger::defaultLogger().log(level, __FILE__, __LINE__, String::sprintf(format, ##__VA_ARGS__))
 #define promekiLog(level, format, ...) promekiLogImpl(level, format, ##__VA_ARGS__)
