@@ -24,54 +24,133 @@
 #pragma once
 
 #include <functional>
-#include <promeki/list.h>
 #include <promeki/namespace.h>
+#include <promeki/objectbase.h>
+#include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class String;
 class AudioDesc;
 
-// Base class for any object that does audio processing.
-class AudioBlock {
+/**
+ * @brief Base class for an audio processing block
+ * This object defines an interface for composing an audio processing chain.
+ */
+class AudioBlock : public ObjectBase {
+        PROMEKI_OBJECT
         public: 
+                /**
+                 * @brief Config used by the derived class to configure AudioBlock
+                 * This config is passed in by the derived class to configure the
+                 * audio block on instantiation.
+                 */
                 class Config {
                         public:
-                                // Number of channels this object can source,
-                                // or 0 if not a source
+                                /**
+                                 * @brief Number of channels this block can source
+                                 * Should be set to zero if this block can not source any channels
+                                 */
                                 size_t  sourceChannels = 0;
-                                // Number of channels this object can sink,
-                                // or 0 if not a sink
-                                size_t  sinkChannels = 0;
+                                /**
+                                 * @brief Number of channels this block can sink
+                                 * Should be set to zero if this block can not sink any channels
+                                 */
+                                 size_t  sinkChannels = 0;
                 };
 
-                AudioBlock(const Config &config) : _blockConfig(config) {}
+                /**
+                 * @brief Constructs an AudioBlock with a given configuration
+                 */
+                AudioBlock(const Config &config, ObjectBase *parent = nullptr);
                 virtual ~AudioBlock() {}
 
-                // Source Functions
+                /**
+                 * @brief Returns true if the audio block is a source
+                 */
                 bool isSource() const { return _blockConfig.sourceChannels > 0; }
-                bool isSourceValid(size_t val) const { return val < _blockConfig.sourceChannels; }
-                size_t sourceChannels() const { return _blockConfig.sourceChannels; }
-                virtual AudioDesc sourceDesc(size_t channel) const;
-                virtual bool setSourceDesc(size_t channel, const AudioDesc &val);
-                virtual String sourceName(size_t channel) const;
-                virtual bool setSourceName(size_t channel, const String &val);
-                virtual ssize_t sourceSamplesAvailable(size_t channel) const;
-                virtual void setSourceNotify(size_t channel, NotifyFunc func);
 
-                // Sink Functions
+                /**
+                 * @brief Returns true if the given source index is valid
+                 */
+                bool isSourceValid(size_t val) const { return val < _blockConfig.sourceChannels; }
+                
+                /**
+                 * @brief Returns the number of channels this object can source
+                 */
+                size_t sourceChannels() const { return _blockConfig.sourceChannels; }
+
+                /**
+                 * @brief Returns the audio description for a given source channel
+                 */
+                virtual AudioDesc sourceDesc(size_t channel) const;
+
+                /**
+                 * @brief Sets the audio description for a given source channel
+                 */
+                virtual bool setSourceDesc(size_t channel, const AudioDesc &val);
+
+                /**
+                 * @brief Returns the name of a given source channel
+                 */
+                virtual String sourceName(size_t channel) const;
+
+                /**
+                 * @brief Sets the name of a given source channel
+                 */
+                virtual bool setSourceName(size_t channel, const String &val);
+
+                /**
+                 * @brief Returns the number of samples that are available on a source channel
+                 * @return Number of samples available or -1 if unknown 
+                 */
+                virtual ssize_t sourceSamplesAvailable(size_t channel) const;
+
+                /**
+                 * @brief Returns true if the object is an audio sink
+                 */
                 bool isSink() const { return _blockConfig.sinkChannels > 0; }
-                bool isSinkValid(size_t val) const { return val < _blockConfig.sinkValid; }
+
+                /**
+                 * @brief Returns true if the given sink channel is valid
+                 */
+                bool isSinkValid(size_t val) const { return val < _blockConfig.sinkChannels; }
+
+                /**
+                 * @brief Returns the number of sink channels
+                 */
                 size_t sinkChannels() const { return _blockConfig.sinkChannels; }
+
+                /**
+                 * @brief Returns the audio description of a given sink channel
+                 */
                 virtual AudioDesc sinkDesc(size_t channel) const;
+
+                /**
+                 * @brief Sets the audio description of a given sink channel
+                 */
                 virtual bool setSinkDesc(size_t channel, const AudioDesc &val);
+
+                /**
+                 * @brief Returns the name of a given sink channel
+                 */
                 virtual String sinkName(size_t channel) const;
+
+                /**
+                 * @brief Sets the name of a given sink channel
+                 */
                 virtual bool setSinkName(size_t channel, const String &val);
+
+                /**
+                 * @brief Returns the number of samples a sink channel can currently accept
+                 * Will return the number of sample the sink channel can accept or -1 if unknown
+                 */
                 virtual ssize_t sinkSamplesAllowed(size_t channel) const;
-                virtual void setSinkNotify(size_t channel, NotifyFunc func);
 
         private:
                 Config          _blockConfig;
+                StringList      _sourceNameList;
+                StringList      _sinkNameList;
 
 };
 

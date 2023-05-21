@@ -1,29 +1,18 @@
-/*****************************************************************************
- * namespace.h
- * May 08, 2023
+/** 
+ * @file namespace.h
+ * @copyright Howard Logic. All rights reserved.
  *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+ * See LICENSE file in the source root folder for license information.
+ */
 
 #pragma once
 
+/// \def PROMEKI_NAMESPACE_BEGIN
+/// Starts a promeki namespace block
 #define PROMEKI_NAMESPACE_BEGIN         namespace promeki {
+
+/// \def PROMEKI_NAMESPACE_END
+/// Ends a promeki namespace block
 #define PROMEKI_NAMESPACE_END           }
 
 

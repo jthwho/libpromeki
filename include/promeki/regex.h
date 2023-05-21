@@ -104,7 +104,7 @@ class RegEx {
                         std::smatch match;
                         auto pos = str.cbegin();
                         while(std::regex_search(pos, str.cend(), match, d)) {
-                                matches.add(match.str());
+                                matches += match.str();
                                 pos = match.suffix().first;
                         }
                         return matches;

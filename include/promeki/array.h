@@ -1,25 +1,9 @@
-/*****************************************************************************
- * array.h
- * May 04, 2023
+/** 
+ * @file array.h
+ * @copyright Howard Logic. All rights reserved.
  *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+ * See LICENSE file in the source root folder for license information.
+ */
 
 #pragma once
 
@@ -29,20 +13,49 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-// The base template class for a point.  Put any code that's general to the concept of an 
-// array of values in this class.
+/**
+ * @brief Wrapper around std::array
+ * The goal of this object it to make working with std::array easier and to
+ * extend the functionality.
+ */
 template <typename T, size_t NumValues> class Array {
         public:
+                /**
+                 * @brief std::array definition of the underlying data
+                 */
                 using DataType = std::array<T, NumValues>;
 
+                /**
+                 * @brief Default constructor.
+                 * Constructs the std::array object, but leaves it uninitialized.
+                 */
                 Array() : d{} {}
+
+                /**
+                 * @brief Constructs an object from a std::array reference */
                 Array(const DataType &val) : d(val) {}
+
+                /**
+                 * @brief Constructs an object from a std::array rvalue */
                 Array(const DataType &&val) : d(std::move(val)) {}
+
+                /**
+                 * @brief Constructs an object from an argument list
+                 */
                 template<typename... Args> Array(Args... args) : d{static_cast<T>(args)...} {}
+
                 ~Array() {}
 
+                /**
+                 * @brief Returns the number of elements in the array.
+                 * This is fixed at compile time.
+                 */
                 size_t size() const { return d.size(); }
 
+                /**
+                 * @brief Constructs an object from another Array object of different size. 
+                 * The other array object must have a size equal to or greater than this object.
+                 * If the other is smaller, you'll get a static assert compile time error */
                 template <typename U, size_t OtherNumValues> Array(const Array<U, OtherNumValues>& other) {
                         static_assert(std::is_convertible_v<T, T>, "Incompatible types");
                         static_assert(OtherNumValues <= NumValues, "Incompatible sizes");
@@ -51,6 +64,10 @@ template <typename T, size_t NumValues> class Array {
                         }
                 }
 
+                /** 
+                 * @brief Assigns from another Array object of a different or same type.
+                 * Will fail to compile if types can't be converted.
+                 */
                 template <typename U> Array<T, NumValues>& operator=(const Array<U, NumValues>& other) {
                         static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
                         for (size_t i = 0; i < NumValues; ++i) {
@@ -59,6 +76,10 @@ template <typename T, size_t NumValues> class Array {
                         return *this;
                 }
 
+                /**
+                 * @brief Assigns from another Array object of a different or same type and size
+                 * Will fail to compile if types can't be converted or other array is too small.
+                 */
                 template <typename U, size_t OtherNumValues> Array<T, NumValues>& operator=(const Array<U, OtherNumValues>& other) {
                         static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
                         static_assert(OtherNumValues <= NumValues, "Incompatible sizes");
@@ -68,6 +89,9 @@ template <typename T, size_t NumValues> class Array {
                         return *this;
                 }
 
+                /**
+                 * @brief Assigns all items in the array from a given type
+                 * Will fail to compile if type can't be converted */
                 template <typename U> Array<T, NumValues>& operator=(U value) {
                         static_assert(std::is_assignable_v<T&, U>, "Incompatible types");
                         for (size_t i = 0; i < NumValues; ++i) {
@@ -76,60 +100,98 @@ template <typename T, size_t NumValues> class Array {
                         return *this;
                 }
 
+                /**
+                 * @brief Returns an item reference of item at index
+                 * NOTE: This does not do any bounds checking
+                 */
                 T& operator[](size_t index) {
                         return d[index];
                 }
 
+                /**
+                 * @brief Returns a const item reference of item at index
+                 * NOTE: This does not do any bounds checking
+                 */
                 const T& operator[](size_t index) const {
                         return d[index];
                 }
-                
+
+                /**
+                 * @brief Adds array to this one.
+                 */
                 Array<T, NumValues>& operator+=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] += other[i];
                         return *this;
                 }
 
-                Array<T, NumValues>& operator-=(const Array<T, NumValues> &other) {
+                /**
+                 * @brief Subtracts array from this one.
+                 */
+                 Array<T, NumValues>& operator-=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] -= other[i];
                         return *this;
                 }
 
-                Array<T, NumValues>& operator*=(const Array<T, NumValues> &other) {
+                /**
+                 * @brief Multiplies array with this one
+                 */
+                 Array<T, NumValues>& operator*=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] *= other[i];
                         return *this;
                 }
 
-                Array<T, NumValues>& operator/=(const Array<T, NumValues> &other) {
+                /**
+                 * @brief Divides an array with this one.
+                 */
+                 Array<T, NumValues>& operator/=(const Array<T, NumValues> &other) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] /= other[i];
                         return *this;
                 }
 
-                Array<T, NumValues>& operator+=(const T &scalar) {
+                /**
+                 * @brief Adds a scaler value to all indexes.
+                 */
+                 Array<T, NumValues>& operator+=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] += scalar;
                         return *this;
                 }
 
-                Array<T, NumValues>& operator-=(const T &scalar) {
+                /**
+                 * @brief Subtracts a scaler value from all indexes
+                 */
+                 Array<T, NumValues>& operator-=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] -= scalar;
                         return *this;
                 }
 
+                /**
+                 * @brief Multiplies every index by a scaler
+                 */
                 Array<T, NumValues>& operator*=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] *= scalar;
                         return *this;
                 }
 
+                /**
+                 * @brief Divides every index by a scaler 
+                 */
                 Array<T, NumValues>& operator/=(const T &scalar) {
                         for (size_t i = 0; i < NumValues; ++i) d[i] /= scalar;
                         return *this;
                 }
 
+                /**
+                 * @brief Returns the sum of all the array indexes
+                 */
                 T sum() const {
                         T ret{};
                         for(size_t i = 0; i < NumValues; ++i) ret += d[i];
                         return ret;
                 }
 
+                /**
+                 * @brief Returns the mean of all the array items
+                 */
                 double mean() const {
                         double val = 0.0;
                         for(size_t i = 0; i < NumValues; ++i) val += static_cast<double>(d[i]);
@@ -137,14 +199,23 @@ template <typename T, size_t NumValues> class Array {
                         return val;
                 }
 
+                /**
+                 * @brief Returns a naked array pointer to the array data
+                 */
                 T *data() {
                         return d.data();
                 }
 
+                /**
+                 * @brief Returns a const naked array pointer to the array data
+                 */
                 const T *data() const {
                         return d.data();
                 }
 
+                /**
+                 * @brief Returns true if all elements are zero
+                 */
                 bool isZero() const {
                         for(size_t i = 0; i < NumValues; i++) {
                                 if(d[i] != 0) return false;
@@ -152,12 +223,20 @@ template <typename T, size_t NumValues> class Array {
                         return true;
                 }
 
+                /**
+                 * @brief Provides a linear interpolated array between this one and other
+                 * @param[in] other Other array to lerp between
+                 * @param[in] v Lerp value (0.0 = this array, 1.0 = other array)
+                 */
                 Array<T, NumValues> lerp(const Array<T, NumValues> &other, double v) const {
                         Array<T, NumValues> ret;
                         for(size_t i = 0; i < d.size(); ++i) ret[i] = ((1.0 - v) * d[i]) + (v * other.d[i]);
                         return ret;
                 }
 
+                /**
+                 * @brief Clamps items in the array to values between >= min and <= max
+                 */
                 Array<T, NumValues> clamp(const Array<T, NumValues> &min, const Array<T, NumValues> &max) const {
                         Array<T, NumValues> ret;
                         for(size_t i = 0; i < d.size(); ++i) {
@@ -168,6 +247,9 @@ template <typename T, size_t NumValues> class Array {
                         return ret;
                 }
 
+                /**
+                 * @brief Returns true if all the elements are between the min and max given
+                 */
                 bool isBetween(const Array<T, NumValues> &min, const Array<T, NumValues> &max) const {
                         Array<T, NumValues> ret;
                         for(size_t i = 0; i < d.size(); ++i) {
@@ -230,4 +312,5 @@ template <typename T, size_t NumValues> class Array {
 };
 
 PROMEKI_NAMESPACE_END
+
 

@@ -1,25 +1,9 @@
-/*****************************************************************************
- * audio.h
- * May 17, 2023
+/** 
+ * @file audio.h
+ * @copyright Howard Logic. All rights reserved.
  *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+ * See LICENSE file in the source root folder for license information.
+ */
 
 #pragma once
 
@@ -31,54 +15,101 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/**
+ * @brief Object to hold some number of audio samples
+ * @ingroup DataObject
+ *
+ * This object is meant to hold some number of audio samples.  It
+ * uses the SharedData and wrapper scheme to ensure fast shallow
+ * copying of data and copy-on-write semantics.
+ */
 class Audio {
         public:
+                /**
+                 * @brief Constructs an invalid Audio object */
                 Audio() : d(new Data) {}
+
+                /**
+                 * @brief Constructs an Audio object for given AudioDesc and samples.
+                 */
                 Audio(const AudioDesc &desc, size_t samples, 
                       const MemSpace &ms = MemSpace::Default) : 
                         d(new Data(desc, samples, ms)) {}
 
+                /**
+                 * @brief Returns true if the object is valid */
                 bool isValid() const {
                         return d->isValid();
                 }
 
+                /**
+                 * @brief Returns true if the object is in the native float32 format for this system
+                 */
                 bool isNative() const {
                         return d->desc.isNative();
                 }
 
+                /**
+                 * @brief Returns the AudioDesc that describes the audio contained in this object
+                 */
                 const AudioDesc &desc() const {
                         return d->desc;
                 }
 
+                /**
+                 * @brief Returns the number of samples, irrespective of the channels
+                 */
                 size_t samples() const {
                         return d->samples;
                 }
 
+                /**
+                 * @brief Returns the maximum number of samples this object can contain
+                 */
                 size_t maxSamples() const {
                         return d->maxSamples;
                 }
 
+                /**
+                 * @brief Returns the number number of audio samples times the number of channels
+                 */
                 size_t frames() const {
                         return d->samples * d->desc.channels();
                 }
 
+                /**
+                 * @brief Returns a const reference to the buffer that holds the audio data
+                 */
                 const Buffer &buffer() const {
                         return d->buffer;
                 }
 
+                /**
+                 * @brief Returns a reference to the buffer that holds the audio data
+                 */
                 Buffer &buffer() {
                         return d->buffer;
                 }
 
+                /**
+                 * @brief Zeros out all the audio data
+                 */
                 void zero() const {
                         d->buffer.fill(0);
                         return;
                 }
 
+                /**
+                 * @brief Resizes the audio samples to a value between 0 and maxSamples()
+                 * @return True if successful, false if out of range.
+                 */
                 bool resize(size_t val) {
                         return d->resize(val);
                 }
 
+                /**
+                 * @brief Returns the audio data pointer in the template format given
+                 */
                 template <typename T> T *data() const {
                         return reinterpret_cast<T *>(d->buffer.data());
                 }
@@ -115,5 +146,6 @@ class Audio {
 };
 
 PROMEKI_NAMESPACE_END
+
 
 

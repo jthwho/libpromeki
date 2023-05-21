@@ -111,7 +111,7 @@ class CmdLineParser {
                 // function.
                 int parseMain(int argc, char **argv) {
                         StringList args(argc, (const char **)argv);
-                        args.removeFirst();
+                        args.remove(0);
                         return parse(args);
                 }
 

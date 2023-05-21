@@ -25,6 +25,13 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+// FIXME: It'd be nice to unmunge the name
+ObjectBase::MetaInfo::MetaInfo(ObjectBase *o, const char *n) :
+        _object(o),
+        _name(n)
+{
+        promekiInfo("%p MetaInfo %s", o, n);
+}
 
 PROMEKI_NAMESPACE_END
 

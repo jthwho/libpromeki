@@ -47,7 +47,7 @@ NumNameSeq::List NumNameSeq::parseList(StringList &list) {
                                 if((name.isPadded() && !n.isPadded()) || (name.digits() > n.digits())) n = name;
                                 if(value < i->_head) i->_head = value;
                                 if(value > i->_tail) i->_tail = value;
-                                item = list.erase(item);
+                                item = list.remove(item);
                                 found = true;
                                 break;
                         }
@@ -55,7 +55,7 @@ NumNameSeq::List NumNameSeq::parseList(StringList &list) {
                 if(found) continue;
                 // Ok, not found in the return list, so it's new.
                 ret.push_back(NumNameSeq(name, value, value));
-                item = list.erase(item);
+                item = list.remove(item);
 	}
         return ret;
 }

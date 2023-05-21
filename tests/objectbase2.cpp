@@ -28,7 +28,7 @@
 using namespace promeki;
 
 
-PROMEKI_TEST_BEGIN(ObjectBase)
+PROMEKI_TEST_BEGIN(ObjectBase2)
 
         TestOne one;
         TestTwo two;
@@ -42,3 +42,4 @@ PROMEKI_TEST_BEGIN(ObjectBase)
         one.makeSomethingElseHappen();
 
 PROMEKI_TEST_END()
+

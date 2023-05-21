@@ -23,236 +23,34 @@
 
 #pragma once
 
-#include <vector>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class StringList {
+/** 
+ * @brief Manages a list of strings
+ */
+class StringList : public List<String> {
         public:
-                using Iterator = std::vector<String>::iterator;
-                using ConstIterator = std::vector<String>::const_iterator;
+                using List::List;
+                using List::operator+=;
+                using List::operator=;
 
-                StringList() = default;
-                explicit StringList(size_t n) : d(n) {}
-                StringList(size_t n, const String& value) : d(n, value) {}
-                StringList(std::initializer_list<String> init) : d(init) {}
-                StringList(size_t ct, const char **items) : d{} {
-                        for(int i = 0; i < ct; i++) {
-                                add(String(items[i]));
-                        }
-                }
-                template<typename Iterator> StringList(Iterator begin, Iterator end) : d(begin, end) {}
-
-                const String &operator[](size_t index) const {
-                        return d[index];
-                }
-
-                String &operator[](size_t index) {
-                        return d[index];
-                }
-
-                const String &at(size_t index) const {
-                        return d.at(index);
-                }
-
-                String &at(size_t index) {
-                        return d.at(index);
-                }
-
-                bool operator==(const StringList& other) const {
-                        return d == other.d;
-                }
-
-                bool operator!=(const StringList& other) const {
-                        return !(*this == other);
-                }
-
-                StringList& operator+=(const StringList& other) {
-                        d.insert(d.end(), other.d.begin(), other.d.end());
-                        return *this;
-                }
-
-                StringList& operator+=(const String &str) {
-                        d.push_back(str);
-                        return *this;
-                }
-
-                void add(const String &val) {
-                        d.push_back(val);
-                        return;
-                }
-
-                void addToFront(const String &val) {
-                        d.insert(d.begin(), val);
-                        return;
-                }
-
-                void removeLast() {
-                        if(!isEmpty()) d.pop_back();
-                        return;
-                }
-
-                void removeFirst() {
-                        if(!isEmpty()) d.erase(d.begin());
-                        return;
-                }
-
-                String firstItem() const {
-                        return isEmpty() ? String() : d.front();
-                }
-
-                String lastItem() const {
-                        return isEmpty() ? String() : d.back();
-                }
-
-                String popFirst() {
-                        String ret = firstItem();
-                        removeFirst();
-                        return ret;
-                }
-
-                String popLast() {
-                        String ret = lastItem();
-                        removeLast();
-                        return ret;
-                }
-
-                ConstIterator erase(const ConstIterator &val) {
-                        return d.erase(val);
-                }
-
-                Iterator erase(const Iterator &val) {
-                        return d.erase(val);
-                }
-
-                void clear() {
-                        d.clear();
-                        return;
-                }
-
-                bool isEmpty() const {
-                        return d.empty();
-                }
-
-                size_t size() const {
-                        return d.size();
-                }
-
-                Iterator begin() {
-                        return d.begin();
-                }
-
-                Iterator end() {
-                        return d.end();
-                }
-
-                ConstIterator begin() const {
-                        return d.begin();
-                }
-
-                ConstIterator end() const {
-                        return d.end();
-                }
-
-                ConstIterator cbegin() const {
-                        return d.cbegin();
-                }
-
-                ConstIterator cend() const {
-                        return d.cend();
-                }
-
-                Iterator insert(ConstIterator pos, const String &val) {
-                        return d.insert(pos, val);
-                }
-
-                Iterator insert(ConstIterator pos, size_t ct, const String &val) {
-                        return d.insert(pos, ct, val);
-                }
-
-                template <typename InputIt> Iterator insert(ConstIterator pos, InputIt first, InputIt last) {
-                        return d.insert(pos, first, last);
-                }
-
-                //Iterator insert(ConstIterator pos, initializer_list<String> list) {
-                //        return d.insert(pos, list);
-                //}
-
-                StringList sort() const {
-                        StringList ret = *this;
-                        std::sort(ret.begin(), ret.end());
-                        return ret;
-                }
-
-                StringList reverse() const {
-                        StringList ret = *this;
-                        std::reverse(ret.begin(), ret.end());
-                        return ret;
-                }
-
-                StringList unique() {
-                        StringList ret = sort();
-                        d.erase(std::unique(ret.begin(), ret.end()), ret.end());
-                        return ret;
+                StringList(size_t ct, const char **list) {
+                        reserve(ct);
+                        for(size_t i = 0; i < ct; ++i) pushToBack(list[i]);
                 }
 
                 String join(const String& delimiter) const {
                         String result;
-                        for(const auto &str : d) {
-                                result += str;
-                                if(&str != &d.back()) result += delimiter;
+                        for(auto it = constBegin(); it != constEnd(); ++it) {
+                                result += *it;
+                                if(it + 1 != constEnd()) result += delimiter;
                         }
                         return result;
-                }
-                
-                int find(const String& str, size_t pos = 0) const {
-                        if(pos >= d.size()) return -1;
-                        auto it = std::find(d.begin() + pos, d.end(), str);
-                        if(it == d.end()) return -1;
-                        return static_cast<int>(std::distance(d.begin(), it));
-                }
-
-                template<typename Func> void forEach(Func func) {
-                        for(auto& str : d) func(str);
-                        return;
-                }
-
-                StringList subList(size_t start, size_t len) const {
-                        if (start >= d.size()) {
-                                return StringList();
-                        }
-                        auto end = std::min(start + len, d.size());
-                        return StringList(d.begin() + start, d.begin() + end);
-                }
-
-                void remove(const String& str) {
-                        d.erase(std::remove(d.begin(), d.end(), str), d.end());
-                }
-
-                void removeAt(size_t index) {
-                        if (index < d.size()) {
-                                d.erase(d.begin() + index);
-                        }
-                }
-
-                void replace(const String& oldStr, const String& newStr) {
-                        std::replace(d.begin(), d.end(), oldStr, newStr);
-                        return;
-                }
-
-                bool contains(const String &str) const {
-                        return std::find(d.begin(), d.end(), str) != d.end();
-                }
-                
-                friend StringList operator+(StringList lhs, const StringList& rhs) {
-                        lhs += rhs;
-                        return lhs;
-                }
-
-        private:        
-                std::vector<String> d;
+                } 
 
 };
 

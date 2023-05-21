@@ -100,6 +100,7 @@ set(PROMEKI_SOURCES
     src/audiofilefactory.cpp
     src/audiofile.cpp
     src/audiogen.cpp
+    src/audioblock.cpp
     src/matrix3x3.cpp
     src/colorspaceconverter.cpp
     src/imagefileio.cpp
@@ -126,6 +127,7 @@ set(UNITTEST_SOURCES
     tests/numname.cpp
     tests/audio.cpp
     tests/objectbase.cpp
+    tests/objectbase2.cpp
 )
 
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})

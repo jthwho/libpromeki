@@ -30,6 +30,9 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/**
+ * @brief Wrapper around std::vector that provides extra functionality
+ */
 template <typename T>
 class List {
         public:
@@ -69,7 +72,7 @@ class List {
                 }
 
                 List &operator+=(T &&item) {
-                        emplaceToBack(std::move(item));
+                        pushToBack(std::move(item));
                         return *this;
                 }
 
@@ -79,7 +82,7 @@ class List {
                 }
 
                 List &operator+=(List &&list) {
-                        emplaceToBack(std::move(list));
+                        pushToBack(std::move(list));
                         return *this;
                 }
 
@@ -87,12 +90,28 @@ class List {
                         return d.begin();
                 }
 
+                ConstIterator begin() const noexcept {
+                        return d.cbegin();
+                }
+
+                ConstIterator cbegin() const noexcept {
+                        return d.cbegin();
+                }
+
                 ConstIterator constBegin() const noexcept {
                         return d.cbegin();
                 }
 
+                RevIterator rbegin() noexcept {
+                        return d.rbegin();
+                }
+
                 RevIterator revBegin() noexcept {
                         return d.rbegin();
+                }
+
+                ConstRevIterator crbegin() const noexcept {
+                        return d.crbegin();
                 }
 
                 ConstRevIterator constRevBegin() const noexcept {
@@ -103,12 +122,28 @@ class List {
                         return d.end();
                 }
 
+                ConstIterator end() const noexcept {
+                        return d.cend();
+                }
+
                 ConstIterator cend() const noexcept {
                         return d.cend();
                 }
 
+                ConstIterator constEnd() const noexcept {
+                        return d.cend();
+                }
+
+                RevIterator rend() noexcept {
+                        return d.rend();
+                }
+
                 RevIterator revEnd() noexcept {
                         return d.rend();
+                }
+
+                ConstRevIterator crend() const noexcept {
+                        return d.crend();
                 }
 
                 ConstRevIterator constRevEnd() const noexcept {
@@ -189,8 +224,30 @@ class List {
                         return d.insert(pos, value);
                 }
 
-                Iterator emplace(ConstIterator pos, T &&value) {
-                        return d.emplace(pos, std::move(value));
+                Iterator insert(ConstIterator pos, T &&value) {
+                        return d.insert(pos, std::move(value));
+                }
+
+                Iterator insert(size_t pos, const T &value) {
+                        return d.insert(constBegin() + pos, value);
+                }
+
+                Iterator insert(size_t pos, T &&value) {
+                        return d.insert(constBegin() + pos, std::move(value));
+                }
+
+                /**
+                 * @brief Emplaces an object right before the given position
+                 */
+                template <typename... Args> Iterator emplace(ConstIterator pos, Args &&...args) {
+                        return d.emplace(pos, std::forward<Args>(args)...);
+                }
+
+                /**
+                 * @brief Emplaces an object right before the given position
+                 */
+                template <typename... Args> Iterator emplace(size_t pos, Args &&...args) {
+                        return d.emplace(constBegin() + pos, std::forward<Args>(args)...);
                 }
 
                 Iterator remove(ConstIterator pos) {
@@ -198,14 +255,21 @@ class List {
                 }
 
                 Iterator remove(size_t index) {
-                        return d.remove(index);
+                        return d.erase(d.begin() + index);
                 }
 
+                /**
+                 * @brief Runs a test function on all the items and removes them if it returns true
+                 */
                 void removeIf(TestFunc func) {
                         d.erase(std::remove_if(d.begin(), d.end(), func));
                         return;
                 }
 
+                /**
+                 * @brief Removes the first instance of value for the list
+                 * @return True if found an item and removed it, false if it didn't
+                 */
                 bool removeFirst(const T &value) {
                         bool ret = false;
                         for(auto item = begin(); item != end(); ++item) {
@@ -218,44 +282,123 @@ class List {
                         return ret;
                 }
 
+                /**
+                 * @brief Pushes an item onto the back of the list
+                 */
                 void pushToBack(const T &value) {
                         d.push_back(value);
                         return;
                 }
 
+                /**
+                 * @brief Pushes a list of items to the back of the list
+                 */
                 void pushToBack(const List<T> &list) {
                         d.insert(d.end(), list.d.begin(), list.d.end());
                         return;
                 }
 
-                void emplaceToBack(T &&value) {
-                        d.emplace_back(std::move(value));
+                /**
+                 * @brief Moves a list of items to the back of the list
+                 */
+                void pushToBack(T &&value) {
+                        d.push_back(std::move(value));
                         return;
                 }
 
-                void emplaceToBack(List<T> &&list) {
+                /**
+                 * @brief Moves a list of items to the back of the list
+                 */
+                void pushToBack(List<T> &&list) {
                         d.insert(d.end(), std::make_move_iterator(list.d.begin()), std::make_move_iterator(list.d.end()));
                         return;
                 }
 
+                /**
+                 * @brief Emplaces an object on the back of the list
+                 */
+                template <typename... Args> Iterator emplaceToBack(Args &&...args) {
+                        return d.emplace_back(std::forward<Args>(args)...);
+                }
+
+                /**
+                 * @brief Removes an item from the back of the list
+                 */
                 void popFromBack() {
                         d.pop_back();
                         return;
                 }
 
+                /**
+                 * @brief Resizes the list
+                 * If the new size is smaller, items beyond new size will be removed.
+                 * If the new size is larger, new items will be default constructed
+                 */
                 void resize(size_t newSize) {
                         d.resize(newSize);
                         return;
                 }
 
+                /**
+                 * @brief Resizes the list, constructs any new items with given value
+                 */
                 void resize(size_t newSize, const T &value) {
                         d.resize(newSize, value);
                         return;
                 }
 
+                /**
+                 * @brief Swaps the list data with another list of the same type
+                 */
                 void swap(List<T> &other) noexcept {
                         d.swap(other.d);
                         return;
+                }
+
+                /**
+                 * @brief Sets an item in the list or returns false if item index doesn't exist
+                 */
+                bool set(size_t index, const T &val) {
+                        if(index >= size()) return false;
+                        d[index] = val;
+                        return true;
+                }
+
+                /**
+                 * @brief Returns this list, but sorted.
+                 */
+                List<T> sort() const {
+                        auto ret = *this;
+                        std::sort(ret.begin(), ret.end());
+                        return ret;
+                }
+
+                /**
+                 * @brief Returns this list, but reversed
+                 */
+                List<T> reverse() const {
+                        auto ret = *this;
+                        std::reverse(ret.begin(), ret.end());
+                        return ret;
+                }
+
+                /**
+                 * @brief Returns a list of all the unique items in this list
+                 */
+                List<T> unique() {
+                        auto ret = sort();
+                        erase(std::unique(ret.begin(), ret.end()), ret.end());
+                        return ret;
+                }
+
+                /**
+                 * @brief Returns true if the list contains the given value
+                 */
+                bool contains(const T &val) const {
+                        for(const auto &item : d) {
+                                if(item == val) return true;
+                        }
+                        return false;
                 }
 
                 friend bool operator==(const List<T> &lhs, const List<T> &rhs) {
