@@ -35,6 +35,7 @@
 #include <promeki/uuid.h>
 #include <promeki/timecode.h>
 #include <promeki/rational.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -229,6 +230,8 @@ template <typename... Types> class __Variant {
 #define X(name, type) type,
 using Variant = __Variant< PROMEKI_VARIANT_TYPES VariantDummy >;
 #undef X
+
+using VariantList = List<Variant>;
 
 PROMEKI_NAMESPACE_END
 

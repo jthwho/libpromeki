@@ -23,22 +23,23 @@
 
 #include <promeki/unittest.h>
 #include <promeki/objectbase.h>
+#include <promeki/signal.h>
+#include <promeki/slot.h>
 #include "test.h"
 
 using namespace promeki;
 
-
 PROMEKI_TEST_BEGIN(ObjectBase)
+        
+        TestOne::metaInfo().dumpToLog();
+        TestTwo::metaInfo().dumpToLog();
 
         TestOne one;
         TestTwo two;
 
-        one.somethingHappened.connect(&two, &TestTwo::handleSomething);
-
-        one.metaInfo();
-        two.metaInfo();
-
+        promekiInfo("TestOne = %p", &one);
+        promekiInfo("TestTwo = %p", &two);
+        TestOne::connect(&one.somethingHappenedSignal, &two.handleSomethingSlot);
         one.makeSomethingHappen();
-        one.makeSomethingElseHappen();
 
 PROMEKI_TEST_END()

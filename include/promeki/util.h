@@ -64,6 +64,7 @@ class StringList;
 #define PROMEKI_STATIC_ASSERT(x) static_assert(x, __LINE__ ":" PROMEKI_STRINGIFY(__LINE__) " Assertion failed: " PROMEKI_STRINGIFY(x));
 
 // Macro string conversion and concatination
+#define PROMEKI_STRINGIFY_ARGS(...) #__VA_ARGS__
 #define PROMEKI_STRINGIFY_IMPL(value) #value
 #define PROMEKI_STRINGIFY(value) PROMEKI_STRINGIFY_IMPL(value)
 #define PROMEKI_CONCAT_IMPL(v1, v2) v1##v2

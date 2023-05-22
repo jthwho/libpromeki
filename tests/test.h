@@ -30,38 +30,39 @@ using namespace promeki;
 PROMEKI_DEBUG(ObjectBaseTest)
 
 class TestOne : public ObjectBase {
-        PROMEKI_OBJECT
+        PROMEKI_OBJECT(TestOne, ObjectBase);
         public:
                 TestOne(ObjectBase *p = nullptr) : ObjectBase(p) {
 
                 }
 
                 PROMEKI_SIGNAL(somethingHappened, const String &);
+                PROMEKI_SIGNAL(foo, const String &, bool, void *);
 
                 void makeSomethingHappen() {
-                        promekiInfo("%p is going to emit somethingHappened", this);
-                        somethingHappened.emit("Something!");
+                        somethingHappenedSignal.emit("Something!");
                         return;
                 }
 
                 void makeSomethingElseHappen() {
-                        auto params = somethingHappened.packParams("Something Else!");
-                        somethingHappened.packedEmit(params);
+                        somethingHappenedSignal.emit("Something Else!");
                         return;
                 }
 };
 
 class TestTwo : public ObjectBase {
-        PROMEKI_OBJECT
+        PROMEKI_OBJECT(TestTwo, ObjectBase);
         public:
                 TestTwo(ObjectBase *p = nullptr) : ObjectBase(p) {
 
                 }
 
-                void handleSomething(const String &val) {
-                        promekiInfo("TestTwo::handleSomething(%s) %p", val.cstr(), signalSender());
-                        return;
-                }
+                PROMEKI_SLOT(handleSomething, const String &);
 
 };
+
+inline void TestTwo::handleSomething(const String &val) {
+        promekiInfo("TestTwo::handleSomething(%s) %p", val.cstr(), signalSender());
+        return;
+}
 

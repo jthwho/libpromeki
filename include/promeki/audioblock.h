@@ -38,7 +38,7 @@ class AudioDesc;
  * This object defines an interface for composing an audio processing chain.
  */
 class AudioBlock : public ObjectBase {
-        PROMEKI_OBJECT
+        PROMEKI_OBJECT(AudioBlock, ObjectBase);
         public: 
                 /**
                  * @brief Config used by the derived class to configure AudioBlock
@@ -107,6 +107,12 @@ class AudioBlock : public ObjectBase {
                 virtual ssize_t sourceSamplesAvailable(size_t channel) const;
 
                 /**
+                 * @brief Signal emitted when a source has samples available
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(sourceHasSamples, AudioBlock *, size_t);
+
+                /**
                  * @brief Returns true if the object is an audio sink
                  */
                 bool isSink() const { return _blockConfig.sinkChannels > 0; }
@@ -146,6 +152,12 @@ class AudioBlock : public ObjectBase {
                  * Will return the number of sample the sink channel can accept or -1 if unknown
                  */
                 virtual ssize_t sinkSamplesAllowed(size_t channel) const;
+
+                /**
+                 * @brief Signal emitted whenever a sink channel can accept more samples
+                 * @signal
+                 */
+                PROMEKI_SIGNAL(sinkReadyForSamples, AudioBlock *, size_t);
 
         private:
                 Config          _blockConfig;

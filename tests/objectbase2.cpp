@@ -33,13 +33,6 @@ PROMEKI_TEST_BEGIN(ObjectBase2)
         TestOne one;
         TestTwo two;
 
-        one.somethingHappened.connect(&two, &TestTwo::handleSomething);
-
-        one.metaInfo();
-        two.metaInfo();
-
-        one.makeSomethingHappen();
-        one.makeSomethingElseHappen();
 
 PROMEKI_TEST_END()
 

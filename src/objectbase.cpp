@@ -22,15 +22,32 @@
  *****************************************************************************/
 
 #include <promeki/objectbase.h>
+#include <promeki/system.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-// FIXME: It'd be nice to unmunge the name
-ObjectBase::MetaInfo::MetaInfo(ObjectBase *o, const char *n) :
-        _object(o),
-        _name(n)
-{
-        promekiInfo("%p MetaInfo %s", o, n);
+const char *ObjectBase::MetaInfo::name() const {
+        if(_demangledName.isEmpty()) {
+                _demangledName = System::demangleSymbol(_name);
+        }
+        return _demangledName.cstr();
+}
+
+void ObjectBase::MetaInfo::dumpToLog() const {
+        String pad;
+        for(const MetaInfo *info = this; info != nullptr; info = info->parent()) {
+                promekiInfo("%s%s", pad.cstr(), info->name());
+                for(size_t i = 0; i < info->signalList().size(); ++i) {
+                        const SignalMeta *signal = info->signalList()[i];
+                        promekiInfo("%s  SIGNAL %d: %s", pad.cstr(), (int)i, signal->name());
+                }
+                for(size_t i = 0; i < info->slotList().size(); ++i) {
+                        const SlotMeta *slot = info->slotList()[i];
+                        promekiInfo("%s  SLOT   %d: %s", pad.cstr(), (int)i, slot->name());
+                }
+                pad += "  ";
+        }
+        return;
 }
 
 PROMEKI_NAMESPACE_END

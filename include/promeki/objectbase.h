@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <map>
 #include <tuple>
 #include <functional>
 #include <promeki/namespace.h>
@@ -14,15 +15,36 @@
 #include <promeki/util.h>
 #include <promeki/logger.h>
 #include <promeki/util.h>
+#include <promeki/signal.h>
+#include <promeki/slot.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-/**
- * @brief Creates a signal within a ObjectBase derived object.
- * You should use this macro to create your signal definitions with your object class definition
- */
-#define PROMEKI_SIGNAL(name, ...) \
-        Signal<__VA_ARGS__> name = Signal<__VA_ARGS__>(PROMEKI_STRINGIFY(name) "(" PROMEKI_STRINGIFY(__VA_ARGS__) ")", this);
+#define PROMEKI_OBJECT(ObjectName, ParentObjectName) \
+        public: \
+                static const MetaInfo &metaInfo() { \
+                        static const MetaInfo __metaInfo( \
+                                typeid(ObjectName).name(), \
+                                &ParentObjectName::metaInfo() \
+                        ); \
+                        return __metaInfo; \
+                }
+               
+#define PROMEKI_SIGNAL(SIGNALNAME, ...) \
+        static constexpr const char *SIGNALNAME##SignalName = PROMEKI_STRINGIFY(SIGNALNAME) "(" PROMEKI_STRINGIFY_ARGS(__VA_ARGS__) ")"; \
+        static inline SignalMeta SIGNALNAME##SignalMeta = SignalMeta(metaInfo(), SIGNALNAME##SignalName); \
+        Signal<__VA_ARGS__> SIGNALNAME##Signal = Signal<__VA_ARGS__>(this, SIGNALNAME##SignalName);
+
+#define PROMEKI_SLOT(SLOTNAME, ...) \
+        static constexpr const char *SLOTNAME##SlotName = PROMEKI_STRINGIFY(SLOTNAME) "(" PROMEKI_STRINGIFY_ARGS(__VA_ARGS__) ")"; \
+        static inline SlotMeta SLOTNAME##SlotMeta = SlotMeta(metaInfo(), SLOTNAME##SlotName); \
+        void SLOTNAME(__VA_ARGS__); \
+        Slot<__VA_ARGS__> SLOTNAME##Slot = Slot<__VA_ARGS__>( \
+                [this](auto&&... args) { this->SLOTNAME(std::forward<decltype(args)>(args)...); }, \
+                this, SLOTNAME##SlotName \
+        ); \
+        int SLOTNAME##SlotID = registerSlot(&SLOTNAME##Slot);
+ 
 
 PROMEKI_DEBUG(ObjectBase)
 
@@ -30,14 +52,35 @@ class ObjectBase;
 
 using ObjectBaseList = List<ObjectBase *>;
 
-
-#define PROMEKI_OBJECT \
-        private: \
-                MetaInfo __metaInfo = MetaInfo(this, typeid(*this).name()); \
-        public: \
-                virtual const MetaInfo &metaInfo() const { \
-                        return __metaInfo; \
+/**
+ * @brief Object that holds a pointer to an ObjectBase (or derived) object.
+ * This class will register itself with the given ObjectBase object.  When
+ * the registered ObjectBase object is destroyed, it will null the internal
+ * pointer.  You can use this object to ensure you don't have dangling
+ * pointers to ObjectBase objects. */
+class ObjectBasePtr {
+        friend class ObjectBase;
+        public:
+                ObjectBasePtr(ObjectBase *object = nullptr) : p(object) { link(); }
+                ObjectBasePtr(const ObjectBasePtr &object) : p(object.p) { link(); }
+                ~ObjectBasePtr() { unlink(); }
+                ObjectBasePtr &operator=(const ObjectBasePtr &object) {
+                        unlink();
+                        p = object.p;
+                        link();
+                        return *this;
                 }
+
+                bool isValid() const { return p != nullptr; }
+                ObjectBase *data() { return p; }
+                const ObjectBase *data() const { return p; }
+
+        private:
+                ObjectBase *p = nullptr;
+
+                void link();
+                void unlink();
+};
 
 
 /** 
@@ -55,190 +98,97 @@ using ObjectBaseList = List<ObjectBase *>;
  * 
  */
 class ObjectBase {
+        friend class ObjectBasePtr;
         public:
-                /** 
-                 * @brief Keeps track of a single signal.
-                 *
-                 * Normally, you'd use the PROMEKI_SIGNAL(signalName, Arg...) macro to create one
-                 * or more of these objects in your ObjectBase derived class.  This object takes
-                 * care of managing all the connections to this signal as well as allowing you
-                 * to emit it at runtime.
-                 */
-                template <typename... Args> class Signal {
-                        public:
-                                using Prototype = void(Args...);
-                                using PrototypeFunc = std::function<Prototype>;
-                                using PrototypeFuncList = List<PrototypeFunc>;
-                                using ParamContainer = std::tuple<std::remove_reference_t<Args>...>;
-
-                                /**
-                                 * @brief Signal constructor.  
-                                 *
-                                 * It must be given a name and parent object.  This is handled
-                                 * for you in the PROMEKI_SIGNAL() macro.
-                                 */
-                                Signal(const char *n, ObjectBase *o) : _name(n), _owner(o) {
-                                        promekiDebug("%s [%p] Signal(%p)", _name, this, _owner);
-                                }
-
-                                /**
-                                 * @brief Returns the name of this signal
-                                 */
-                                const char *name() const { return _name; }
-
-                                /** 
-                                 * @brief Allows you to connect this signal to a normal lambda
-                                 * @return The slot connection ID.
-                                 *
-                                 * NOTE: The lambda prototype must match the one used to define this signal.
-                                 */
-                                size_t connect(PrototypeFunc slot) {
-                                        size_t slotID = _slots.size();
-                                        _slots += Info(slot);
-                                        promekiDebug("%s [%p] connect() = %d", _name, this, (int)slotID);
-                                        return slotID;
-                                }
-
-                                /** 
-                                 * @brief Connect this signal to an object member function.
-                                 * @return The slot connection ID
-                                 * NOTE: The object member function prototype must be the same
-                                 * prototype this object was declared as.
-                                 *
-                                 * Example usage:
-                                 * @code{.cpp}
-                                 * someObject->someSignal.connect(myObjectPtr, &MyObject::memberFunction);
-                                 * @endcode
-                                 */
-                                template <typename T> size_t connect(T *obj, void (T::*memberFunction)(Args...)) {
-                                        size_t slotID = _slots.size();
-                                        _slots += Info(
-                                                        ([obj, memberFunction](Args... args) {
-                                                         (obj->*memberFunction)(args...);
-                                                         }), obj
-                                                      );
-                                        obj->addCleanupFunc([&](ObjectBase *object) { disconnectFromObject(object); });
-                                        promekiDebug("%s [%p] connect(%p) = %d", _name, this, obj, (int)slotID);
-                                        return slotID;
-                                }
-
-                                /**
-                                 * @brief Disconnect a slot by the slot ID
-                                 *
-                                 * You can use the slot ID you were given when you called connect() to disconnect that
-                                 * slot from this signal 
-                                 */
-                                void disconnect(size_t slotID) {
-                                        _slots.remove(slotID);
-                                        promekiDebug("%s [%p] disconnect(%d), %d left", _name, this, (int)slotID, (int)_slots.size());
-                                        return;
-                                }
-
-                                /**
-                                 * @brief Disconnect a slot by the slot object and member function
-                                 * This allows you to disconnect a slot by the member function
-                                 *
-                                 * Example usage:
-                                 * @code{.cpp}
-                                 * someObject->someSignal.disconnect(myObjectPtr, &MyObject::memberFunction);
-                                 * @endcode
-                                 */
-                                template <typename T> void disconnect(T *object, void (T::*memberFunction)(Args...)) {
-                                        _slots.removeIf([object, memberFunction](const Info &info) { 
-                                                        return info.object == object && info.func == memberFunction; 
-                                                        });
-                                        promekiDebug("%s [%p] disconnect(%p), %d left", _name, this, object, (int)_slots.size());
-                                        return;
-                                }
-
-                                /**
-                                 * @brief Disconnects any connected slots from object 
-                                 */
-                                void disconnectFromObject(ObjectBase *object) {
-                                        _slots.removeIf([object](const Info &info) { return info.object == object; });
-                                        promekiDebug("%s [%p] disconnectFromObject(%p), %d left", _name, this, object, (int)_slots.size());
-                                        return;
-                                }
-
-                                /**
-                                 * @brief Emits this signal.
-                                 * This causes any connected slots to be called with the arguments you supplied to the emit.
-                                 */
-                                void emit(Args... args) {
-                                        promekiDebug("%s [%p] emit", _name, this);
-                                        for (const auto &slot : _slots) {
-                                                ObjectBase *oldSender = slot.object->_signalSender;
-                                                slot.object->_signalSender = _owner;
-                                                slot.func(args...);
-                                                slot.object->_signalSender = oldSender;
-                                        }
-                                        return;
-                                }
-
-                                /**
-                                 * @brief Emits the signal using a ParamContainer
-                                 * Normally, you won't need to call this as emit() will call this if
-                                 * needed.  It functions by packing all the parameters into an object
-                                 * and calling the slots with that object.  This is slower than a normal
-                                 * emit, which is essentially a function call.  This will copy the arguments
-                                 * into the object (regardless if given by reference) */
-                                void packedEmit(const ParamContainer &params) {
-                                        promekiDebug("%s [%p] emitFromContainer", _name, this);
-                                        for (const auto &slot : _slots) {
-                                                ObjectBase *oldSender = slot.object->_signalSender;
-                                                slot.object->_signalSender = _owner;
-                                                std::apply(slot.func, params);
-                                                slot.object->_signalSender = oldSender;
-                                        }
-                                }
-
-                                /**
-                                 * @brief Packs the arguments into a ParamContainer
-                                 * This packs all the signal parameters into ParamContainer object
-                                 * that can be used to marshal the data to either defer the emit
-                                 * or pass it as an event to another object (ex: on another thread).
-                                 * Note, this will also make copies of any arguments passed by
-                                 * reference as the references probably aren't going to be valid
-                                 * by the time you want to use the container.
-                                 */
-                                ParamContainer packParams(Args&&... args) {
-                                        return ParamContainer(std::forward<Args>(args)...);
-                                }
-
-                        private:
-                                class Info {
-                                        public:
-                                                PrototypeFunc   func;
-                                                ObjectBase      *object = nullptr;
-
-                                                Info(PrototypeFunc f, ObjectBase *obj = nullptr) : func(f), object(obj) {}
-                                };
-
-                                const char              *_name;
-                                ObjectBase              *_owner;
-                                List<Info>              _slots;
-                };
+                class SignalMeta;
+                class SlotMeta;
 
                 /**
                  * @brief Captures all the metadata about this object.
                  */
                 class MetaInfo {
+                        friend class SignalMeta;
+                        friend class SlotMeta;
                         public:
-                                MetaInfo(ObjectBase *object, const char *name);
+                                using SignalList = List<SignalMeta *>;
+                                using SlotList = List<SlotMeta *>;
+                                MetaInfo(const char *n, const MetaInfo *p = nullptr) : _parent(p), _name(n) {}
 
-                                ObjectBase *object() const { return _object; }
-                                const String &name() const { return _name; }
+                                const MetaInfo *parent() const { return _parent; }
+                                const char *name() const;
+                                const SignalList &signalList() const { return _signalList; }
+                                const SlotList &slotList() const { return _slotList; }
+                                void dumpToLog() const;
 
                         private:
-                                ObjectBase      *_object;
-                                String          _name;
+                                const MetaInfo                  *_parent;
+                                const char                      *_name;
+                                mutable String                  _demangledName;
+                                mutable SignalList              _signalList;
+                                mutable SlotList                _slotList;
                 };
 
-                PROMEKI_OBJECT // Needs to be below MetaInfo
+                class SignalMeta {
+                        public:
+                                SignalMeta(const MetaInfo &m, const char *n) :
+                                        _meta(m), _name(n) 
+                                {
+                                        m._signalList += this;
+                                }
+
+                                const char *name() const { return _name; }
+                        private:
+                                const MetaInfo  &_meta;
+                                const char      *_name;
+                };
+
+                class SlotMeta {
+                        public:
+                                SlotMeta(const MetaInfo &m, const char *n) :
+                                        _meta(m), _name(n) 
+                                {
+                                        m._slotList += this;
+                                }
+
+                                const char *name() const { return _name; }
+                        private:
+                                const MetaInfo  &_meta;
+                                const char      *_name;
+                };
+
+                static const MetaInfo &metaInfo() {
+                        static const MetaInfo __metaInfo(
+                                typeid(ObjectBase).name()); 
+                        return __metaInfo; 
+                }
 
                 /**
-                 * @brief Prototype used to register a cleanup function */
-                using CleanupFunc = std::function<void(ObjectBase *)>;
+                 * @brief connects a signal and slot together.
+                 * This function assumes both the signal and slot exist in a ObjectBase or derived object
+                 */
+                template <typename... Args> static void connect(Signal<Args...> *signal, Slot<Args...> *slot) {
+                        if(signal == nullptr || slot == nullptr) return;
+
+                        // Connect the slot to the signal.
+                        signal->connect([signal, slot](Args... args) {
+                                ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
+                                ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
+                                ObjectBase *prevSender = slotObject->_signalSender;
+                                slotObject->_signalSender = signalObject;
+                                slot->exec(args...);
+                                slotObject->_signalSender = prevSender;
+                        }, slot->owner());
+
+                        // Register a cleanup
+                        ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
+                        ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
+                        slotObject->_cleanupList += Cleanup(
+                                signalObject, \
+                                [signal](ObjectBase *ptr){ signal->disconnectFromObject(ptr); }
+                        );
+                }
+
+                using SlotVariantFunc = std::function<void(const VariantList &)>;
 
                 /**
                  * @brief Default ObjectBase constructor
@@ -250,12 +200,11 @@ class ObjectBase {
                  * that this object is destroyed if the parent is destroyed.
                  */
                 ObjectBase(ObjectBase *p = nullptr) : _parent(p) {
-                        metaInfo();
                         if(_parent != nullptr) _parent->addChild(this);
                 }
 
                 virtual ~ObjectBase() {
-                        aboutToDestroy.emit(this);
+                        aboutToDestroySignal.emit(this);
                         setParent(nullptr);
                         destroyChildren();
                         runCleanup();
@@ -286,17 +235,19 @@ class ObjectBase {
                  * @brief Returns a list of children of this object
                  * @return List of children
                  */
-                const ObjectBaseList &children() const {
-                        return _children;
+                const ObjectBaseList &childList() const {
+                        return _childList;
                 }
 
-                /**
-                 * @brief Registers a function to be called when this object is destroyed.  
-                 * This can be used to clean up dangling pointers, closing files, etc
-                 */
-                void addCleanupFunc(CleanupFunc func) {
-                        _cleanup += func;
-                        return;
+                template <typename... Args> int registerSlot(Slot<Args...> *slot) {
+                        int ret = _slotList.size();
+                        slot->setID(ret);
+                        _slotList += SlotItem(
+                                ret,
+                                slot->prototype(),
+                                [slot](const VariantList &args) { slot->exec(args); }
+                        );
+                        return ret;
                 }
 
                 /** Object is about to be destroyed
@@ -313,36 +264,74 @@ class ObjectBase {
                 ObjectBase *signalSender() { return _signalSender; }
 
         private:
-                ObjectBase              *_parent = nullptr;
-                ObjectBase              *_signalSender = nullptr;
-                ObjectBaseList          _children;
-                List<CleanupFunc>       _cleanup;
+                using CleanupFunc = std::function<void(ObjectBase *)>;
+
+                struct SlotItem {
+                        int                     id;
+                        const char              *prototype;
+                        SlotVariantFunc         variantFunc;
+                };
+
+                struct Cleanup {
+                        ObjectBasePtr           object;
+                        CleanupFunc             func;
+                };
+
+                ObjectBase                                      *_parent = nullptr;
+                ObjectBase                                      *_signalSender = nullptr;
+                ObjectBaseList                                  _childList;
+                List<SlotItem>                                  _slotList;
+                std::map<ObjectBasePtr *, ObjectBasePtr *>      _pointerMap;
+                List<Cleanup>                                   _cleanupList;
 
                 void addChild(ObjectBase *c) {
-                        _children += c;
+                        _childList += c;
                         return;
                 }
 
                 void removeChild(ObjectBase *c) {
-                        _children.removeFirst(c);
+                        _childList.removeFirst(c);
                         return;
                 }
 
                 void destroyChildren() {
-                        for(auto child : _children) {
+                        for(auto child : _childList) {
                                 child->removeChild(this);
                                 delete child;
                         }
-                        _children.clear();
+                        _childList.clear();
                         return;
                 }
 
                 void runCleanup() {
-                        for(auto item : _cleanup) item(this);
-                        _cleanup.clear();
+                        // Null out any ObjectBasePtr's that are currently pointing
+                        // to this object.
+                        for(auto item : _pointerMap) item.first->p = nullptr;
+                        _pointerMap.clear();
+
+                        // Walk down the cleanup list and run any cleanup functions
+                        for(auto &item : _cleanupList) {
+                                if(!item.object.isValid()) continue;
+                                item.func(this);
+                        }
+                        _cleanupList.clear();
                         return;
                 }
 };
+
+inline void ObjectBasePtr::link() {
+        if(p != nullptr) p->_pointerMap[this] = this;
+        return;
+}
+
+inline void ObjectBasePtr::unlink() {
+        if(p != nullptr) {
+                auto it = p->_pointerMap.find(this);
+                p->_pointerMap.erase(it);
+        }
+        p = nullptr;
+}
+
 
 PROMEKI_NAMESPACE_END
 

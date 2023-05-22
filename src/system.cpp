@@ -21,9 +21,21 @@
  *
  *****************************************************************************/
 
+#include <memory>
+#include <cxxabi.h>
 #include <promeki/system.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+String System::demangleSymbol(const char *val, bool useCache) {
+        int status = 0;
+        std::unique_ptr<char, void(*)(void*)> result(
+                abi::__cxa_demangle(val, nullptr, nullptr, &status),
+                std::free
+        );
+        return (status == 0) ? result.get() : val;
+}
 
 PROMEKI_NAMESPACE_END
 

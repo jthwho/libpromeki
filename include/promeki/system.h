@@ -32,6 +32,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class String;
+
 class System {
         public:
                 static constexpr bool isLittleEndian() {
@@ -63,6 +65,8 @@ class System {
                         swab(value);
                         return;
                 }
+
+                static String demangleSymbol(const char *symbol, bool useCache = true);
 };
 
 PROMEKI_NAMESPACE_END
