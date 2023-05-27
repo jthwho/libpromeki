@@ -9,6 +9,7 @@ set(APP_HUMAN_VENDOR "Howard Logic")
 set(APP_VERSION "1.0.0")
 set(APP_VERSION_RC 0) # If this is a release candidate, set this value to the release candidate version (non zero)
 set(APP_VERSION_BETA 0) # If this is a beta, set this value to the beta version (non-zero)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(${APP_NAME} VERSION ${APP_VERSION})
 include(CTest)
