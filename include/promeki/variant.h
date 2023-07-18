@@ -75,8 +75,9 @@ template <typename... Types> class __Variant {
                 #undef X
 
                 #define X(name, type) PROMEKI_STRINGIFY(type),
-                static const char *typeName(size_t id) {
+                static const char *typeName(Type id) {
                         static const char *items[] = { PROMEKI_VARIANT_TYPES };
+                        PROMEKI_ASSERT(id < PROMEKI_ARRAY_SIZE(items));
                         return items[id];
                 }
                 #undef X
