@@ -118,6 +118,7 @@ set(PROMEKI_SOURCES
     src/numnameseq.cpp
     src/signal.cpp
     src/slot.cpp
+    src/frame.cpp
 )
 
 set(UNITTEST_SOURCES
