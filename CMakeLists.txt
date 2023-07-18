@@ -63,6 +63,7 @@ include_directories(
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
+    src/application.cpp
     src/objectbase.cpp
     src/system.cpp
     src/util.cpp
