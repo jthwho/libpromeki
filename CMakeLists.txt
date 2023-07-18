@@ -57,7 +57,9 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/src/buildinfo.cpp.in
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
@@ -133,8 +135,11 @@ set(UNITTEST_SOURCES
     tests/objectbase2.cpp
 )
 
+add_subdirectory(thirdparty)
+
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
 target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
+target_link_libraries(${APP_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_compile_definitions(${APP_NAME} PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 
 if(PNG_FOUND)
