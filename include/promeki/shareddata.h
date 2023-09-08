@@ -56,175 +56,175 @@ int main() {
 */
 
 class SharedData {
-	public:
-                ~SharedData() = default;
-		SharedData() : __ref(0) { }
-                SharedData(const SharedData &o) : __ref(0) { }
-                SharedData &operator=(const SharedData &) = delete;
+    public:
+        ~SharedData() = default;
+        SharedData() : __ref(0) { }
+        SharedData(const SharedData &o) : __ref(0) { }
+        SharedData &operator=(const SharedData &) = delete;
 
-		void ref() const {
-			__ref.fetch_add(1, std::memory_order_relaxed);
-                        return;
-		}
+        void ref() const {
+            __ref.fetch_add(1, std::memory_order_relaxed);
+            return;
+        }
 
-                // Returns true if the data has been fully deref'ed
-	        bool deref() const {
-			return __ref.fetch_sub(1, std::memory_order_release) == 1;
-                }
+        // Returns true if the data has been fully deref'ed
+        bool deref() const {
+            return __ref.fetch_sub(1, std::memory_order_release) == 1;
+        }
 
-                int refCount() const {
-                        return __ref;
-                }
+        int refCount() const {
+            return __ref;
+        }
 
-        private:
-                mutable std::atomic<int> __ref;
+    private:
+        mutable std::atomic<int> __ref;
 };
 
 template<typename T>
 class SharedDataPtr {
-	public:
-		SharedDataPtr() : d(nullptr) { 
-                        //promekiInfo("%p created (empty)", this);
-                }
+    public:
+        SharedDataPtr() : d(nullptr) { 
+            //promekiInfo("%p created (empty)", this);
+        }
 
-                SharedDataPtr(T *data) : d(data) {
-                        //promekiInfo("%p created with data %p", this, d);
-                        if(d != nullptr) d->ref();
-                }
-	
-                SharedDataPtr(const SharedDataPtr &other) : d(other.d) { 
-                        //promekiInfo("%p copied with data %p", this, d);
-                        if(d != nullptr) d->ref(); 
-                }
-		
-                ~SharedDataPtr() { 
-                        //promekiInfo("%p destroyed, data %p", this, d);
-                        if(d != nullptr && d->deref()) delete d;
-                }
-		
-                SharedDataPtr &operator=(const SharedDataPtr &other) {
-                        //promekiInfo("%p assign from %p, old %p, new %p", this, &other, d, other.d);
-			if(d == other.d) return *this;
-			if(d != nullptr && d->deref()) delete d;
-			d = other.d;
-			if(d != nullptr) d->ref();
-			return *this;
-		}
+        SharedDataPtr(T *data) : d(data) {
+            //promekiInfo("%p created with data %p", this, d);
+            if(d != nullptr) d->ref();
+        }
 
-                bool isValid() const {
-                        return d != nullptr;
-                }
-                
-                void detach() {
-                        if(d == nullptr || d->refCount() == 1) return;
-                        //promekiInfo("%p detach start with %p", this, d);
-                        T *x = new T(*d);
-                        x->ref();
-                        if(d->deref()) delete d;
-                        d = x;
-                        //promekiInfo("%p detach end with %p", this, d);
-                        return;
-                }
+        SharedDataPtr(const SharedDataPtr &other) : d(other.d) { 
+            //promekiInfo("%p copied with data %p", this, d);
+            if(d != nullptr) d->ref(); 
+        }
 
-		T *operator->() {
-                        //promekiInfo("%p non const ->", this);
-			detach();
-			return d;
-		}
+        ~SharedDataPtr() { 
+            //promekiInfo("%p destroyed, data %p", this, d);
+            if(d != nullptr && d->deref()) delete d;
+        }
 
-		const T *operator->() const {
-			return d;
-		}
+        SharedDataPtr &operator=(const SharedDataPtr &other) {
+            //promekiInfo("%p assign from %p, old %p, new %p", this, &other, d, other.d);
+            if(d == other.d) return *this;
+            if(d != nullptr && d->deref()) delete d;
+            d = other.d;
+            if(d != nullptr) d->ref();
+            return *this;
+        }
 
-		T &operator*() {
-                        //promekiInfo("%p non const *", this);
-			detach();
-			return *d;
-		}
+        bool isValid() const {
+            return d != nullptr;
+        }
 
-		const T &operator*() const {
-			return *d;
-		}
+        void detach() {
+            if(d == nullptr || d->refCount() == 1) return;
+            //promekiInfo("%p detach start with %p", this, d);
+            T *x = new T(*d);
+            x->ref();
+            if(d->deref()) delete d;
+            d = x;
+            //promekiInfo("%p detach end with %p", this, d);
+            return;
+        }
 
-                bool operator==(const SharedDataPtr &other) const {
-                        if(d == other.d) return true;
-                        return *d == *other.d;
-                }
+        T *operator->() {
+            //promekiInfo("%p non const ->", this);
+            detach();
+            return d;
+        }
 
-                bool operator!=(const SharedDataPtr &other) const {
-                        return !(*this == other);
-                }
+        const T *operator->() const {
+            return d;
+        }
 
-	private:
-		T *d = nullptr;
+        T &operator*() {
+            //promekiInfo("%p non const *", this);
+            detach();
+            return *d;
+        }
+
+        const T &operator*() const {
+            return *d;
+        }
+
+        bool operator==(const SharedDataPtr &other) const {
+            if(d == other.d) return true;
+            return *d == *other.d;
+        }
+
+        bool operator!=(const SharedDataPtr &other) const {
+            return !(*this == other);
+        }
+
+    private:
+        T *d = nullptr;
 };
 
 template<typename T>
 class ExplicitSharedDataPtr {
-	public:
-		ExplicitSharedDataPtr() : d(nullptr) { 
-                        //promekiInfo("%p created (empty)", this);
-                }
+    public:
+        ExplicitSharedDataPtr() : d(nullptr) { 
+            //promekiInfo("%p created (empty)", this);
+        }
 
-                ExplicitSharedDataPtr(T *data) : d(data) {
-                        //promekiInfo("%p created with data %p", this, d);
-                        if(d != nullptr) d->ref();
-                }
-	
-                ExplicitSharedDataPtr(const ExplicitSharedDataPtr &other) : d(other.d) { 
-                        //promekiInfo("%p copied with data %p", this, d);
-                        if(d != nullptr) d->ref(); 
-                }
-		
-                ~ExplicitSharedDataPtr() { 
-                        //promekiInfo("%p destroyed, data %p", this, d);
-                        if(d != nullptr && d->deref()) delete d;
-                }
-		
-                ExplicitSharedDataPtr &operator=(const ExplicitSharedDataPtr &other) {
-                        //promekiInfo("%p assign from %p, old %p, new %p", this, &other, d, other.d);
-			if(d == other.d) return *this;
-			if(d != nullptr && d->deref()) delete d;
-			d = other.d;
-			if(d != nullptr) d->ref();
-			return *this;
-		}
+        ExplicitSharedDataPtr(T *data) : d(data) {
+            //promekiInfo("%p created with data %p", this, d);
+            if(d != nullptr) d->ref();
+        }
 
-                bool isValid() const {
-                        return d != nullptr;
-                }
-                
-                void detach() {
-                        if(d == nullptr || d->refCount() == 1) return;
-                        //promekiInfo("%p detach start with %p", this, d);
-                        T *x = new T(*d);
-                        x->ref();
-                        if(d->deref()) delete d;
-                        d = x;
-                        //promekiInfo("%p detach end with %p", this, d);
-                        return;
-                }
+        ExplicitSharedDataPtr(const ExplicitSharedDataPtr &other) : d(other.d) { 
+            //promekiInfo("%p copied with data %p", this, d);
+            if(d != nullptr) d->ref(); 
+        }
 
-		T *operator->() {
-                        //promekiInfo("%p non const ->", this);
-			return d;
-		}
+        ~ExplicitSharedDataPtr() { 
+            //promekiInfo("%p destroyed, data %p", this, d);
+            if(d != nullptr && d->deref()) delete d;
+        }
 
-		const T *operator->() const {
-			return d;
-		}
+        ExplicitSharedDataPtr &operator=(const ExplicitSharedDataPtr &other) {
+            //promekiInfo("%p assign from %p, old %p, new %p", this, &other, d, other.d);
+            if(d == other.d) return *this;
+            if(d != nullptr && d->deref()) delete d;
+            d = other.d;
+            if(d != nullptr) d->ref();
+            return *this;
+        }
 
-		T &operator*() {
-                        //promekiInfo("%p non const *", this);
-			return *d;
-		}
+        bool isValid() const {
+            return d != nullptr;
+        }
 
-		const T &operator*() const {
-			return *d;
-		}
+        void detach() {
+            if(d == nullptr || d->refCount() == 1) return;
+            //promekiInfo("%p detach start with %p", this, d);
+            T *x = new T(*d);
+            x->ref();
+            if(d->deref()) delete d;
+            d = x;
+            //promekiInfo("%p detach end with %p", this, d);
+            return;
+        }
 
-	private:
-		T *d = nullptr;
+        T *operator->() {
+            //promekiInfo("%p non const ->", this);
+            return d;
+        }
+
+        const T *operator->() const {
+            return d;
+        }
+
+        T &operator*() {
+            //promekiInfo("%p non const *", this);
+            return *d;
+        }
+
+        const T &operator*() const {
+            return *d;
+        }
+
+    private:
+        T *d = nullptr;
 };
 
 PROMEKI_NAMESPACE_END
