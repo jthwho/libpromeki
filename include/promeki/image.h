@@ -47,6 +47,7 @@ class Image {
                                         }
                                         return !planeList.empty();
                                 }
+                                Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const;
 
                         private:
                                 bool allocate(const ImageDesc &desc, const MemSpace &ms);
@@ -118,6 +119,10 @@ class Image {
 
                 PaintEngine createPaintEngine() const {
                         return d->desc.pixelFormat()->createPaintEngine(*this);
+                }
+
+                Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
+                    return d->convert(pixelFormat, metadata);
                 }
 
         private:

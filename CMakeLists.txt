@@ -121,6 +121,7 @@ set(PROMEKI_SOURCES
     src/signal.cpp
     src/slot.cpp
     src/frame.cpp
+    src/codec.cpp
 )
 
 set(UNITTEST_SOURCES
