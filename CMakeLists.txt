@@ -17,6 +17,7 @@ include(CTest)
 find_package(Git QUIET REQUIRED)
 find_package(PNG)
 find_package(Freetype)
+find_package(JPEG)
 
 execute_process(
     COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
@@ -97,6 +98,7 @@ set(PROMEKI_SOURCES
     src/pixelformat.cpp
     src/pixelformat_rgb8.cpp
     src/pixelformat_rgba8.cpp
+    src/pixelformat_jpeg.cpp
     src/imagedesc.cpp
     src/image.cpp
     src/audiodesc.cpp

@@ -50,7 +50,10 @@ class PixelFormat {
                         RGB8,
                         RGB10,
                         YUV8_422,
-                        YUV10_422
+                        YUV10_422,
+                        JPEG_RGBA8,
+                        JPEG_RGB8,
+                        JPEG_YUV8_422
                 };
 
                 enum Sampling {
@@ -96,6 +99,7 @@ class PixelFormat {
                 size_t pixelsPerBlock() const { return _pixelsPerBlock; }
                 size_t bytesPerBlock() const { return _bytesPerBlock; }
                 bool hasAlpha() const { return _hasAlpha; }
+                bool compressed() const { return _compressed; }
                 const FourCCList &fourccList() const { return _fourccList; }
                 size_t compCount() const { return _compList.size(); }
                 const CompDesc &compDesc(size_t index) const { return _compList[index]; }
@@ -121,6 +125,7 @@ class PixelFormat {
                 size_t                          _pixelsPerBlock = 0;
                 size_t                          _bytesPerBlock = 0;
                 bool                            _hasAlpha = false;
+                bool                            _compressed = false;
                 FourCCList                      _fourccList;
                 List<CompDesc>                  _compList;
                 List<PlaneDesc>                 _planeList;

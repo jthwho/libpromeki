@@ -52,7 +52,8 @@
         X(CodingHistory) \
         X(CompressionLevel) \
         X(EnableVBR) \
-        X(VBRQuality)
+        X(VBRQuality) \
+        X(CompressedSize)
 
 PROMEKI_NAMESPACE_BEGIN
 
