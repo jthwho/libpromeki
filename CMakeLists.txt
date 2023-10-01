@@ -146,6 +146,7 @@ add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
 target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
 target_link_libraries(${APP_NAME} PRIVATE nlohmann_json::nlohmann_json)
 target_compile_definitions(${APP_NAME} PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+add_dependencies(${APP_NAME} libjpeg-turbo-build)
 
 if(PNG_FOUND)
         target_link_libraries(${APP_NAME} PUBLIC png)
