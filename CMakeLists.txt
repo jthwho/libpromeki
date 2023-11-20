@@ -122,6 +122,7 @@ set(PROMEKI_SOURCES
     src/slot.cpp
     src/frame.cpp
     src/codec.cpp
+    src/pidcontroller.cpp
 )
 
 set(UNITTEST_SOURCES
