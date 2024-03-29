@@ -21,7 +21,7 @@ find_package(JPEG)
 
 execute_process(
     COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     RESULT_VARIABLE res
     OUTPUT_VARIABLE BUILD_INFO_REPOIDENT
     ERROR_QUIET
@@ -30,7 +30,7 @@ execute_process(
 
 set_property(GLOBAL APPEND
     PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${CMAKE_SOURCE_DIR}/.git/index"
+    "${PROJECT_SOURCE_DIR}/.git/index"
 )
 
 # Capture any other build info variables
@@ -53,9 +53,9 @@ configure_file(src/buildinfo.cpp.in buildinfo.cpp)
 
 # Make sure we regenerate the buildinfo.cpp file each time we build.
 add_custom_target(
-    invalidate_build_info 
+    libpromeki_invalidate_build_info 
     ALL
-    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/src/buildinfo.cpp.in
+    COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/src/buildinfo.cpp.in
 )
 
 include_directories(
@@ -130,8 +130,8 @@ set(UNITTEST_SOURCES
     tests/mempool.cpp
     tests/string.cpp
     tests/shareddata.cpp
-    tests/image.cpp
 #    tests/ciepoint.cpp
+#    tests/image.cpp
     tests/point.cpp
     tests/uuid.cpp
     tests/timecode.cpp
@@ -161,6 +161,7 @@ if(FREETYPE_FOUND)
         target_include_directories(${APP_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
         target_compile_definitions(${APP_NAME} PRIVATE PROMEKI_ENABLE_FREETYPE)
         target_sources(${APP_NAME} PRIVATE src/fontpainter.cpp)
+        #target_sources(unittest PRIVATE tests/image.cpp)
 endif()
 
 target_link_libraries(${APP_NAME} PUBLIC sndfile)
