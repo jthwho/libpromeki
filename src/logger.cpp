@@ -129,16 +129,23 @@ void Logger::writeLog(const Command &cmd) {
 
         AnsiStream term(std::cout);
         term.setAnsiEnabled(AnsiStream::stdoutSupportsANSI());
-        String srcLocation = FileInfo(cmd.file).fileName();
-        srcLocation += ':';
-        srcLocation += String::dec(cmd.line);
+        bool hasSrc = false;
+        String srcLocation;
+        if(cmd.file != nullptr) {
+            srcLocation = FileInfo(cmd.file).fileName();
+            srcLocation += ':';
+            srcLocation += String::dec(cmd.line);
+            hasSrc = true;
+        }
 
         String ts = cmd.ts.toString("%F %T.3");
 
         if(_file.is_open()) {
                 _file << ts;
-                _file << ' ';
-                _file << srcLocation;
+                if(hasSrc) {
+                    _file << ' ';
+                    _file << srcLocation;
+                }
                 _file << ' ';
                 _file << level;
                 _file << ' ';
@@ -147,8 +154,10 @@ void Logger::writeLog(const Command &cmd) {
         if(_consoleLogging) {
                 term.setForeground(AnsiStream::Cyan);
                 term << ts;
-                term << ' ';
-                term << srcLocation;
+                if(hasSrc) {
+                    term << ' ';
+                    term << srcLocation;
+                }
                 switch(cmd.level) {
                         case Warn: term.setForeground(AnsiStream::Yellow); break;
                         case Err:  term.setForeground(AnsiStream::Red); break;

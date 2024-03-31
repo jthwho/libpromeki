@@ -141,7 +141,7 @@ class String {
                 PROMEKI_PRINTF_FUNC(1, 2) static String sprintf(const char *fmt, ...);
 
                 String() { }
-                String(const char *str) : d(str) { }
+                String(const char *str) : d(str == nullptr ? std::string() : str) { }
                 String(const char *str, size_t len) : d(str, len) { }
                 String(size_t ct, char c) : d(ct, c) { }
                 String(const std::string &str) : d(str) { }
