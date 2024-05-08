@@ -26,7 +26,24 @@
 #include <promeki/system.h>
 #include <promeki/string.h>
 
+#include <iostream>
+ #include <array>
+ #include <cstring>
+ #include <cerrno>
+ #ifdef PROMEKI_WINDOWS
+     #include <winsock2.h>
+     #pragma comment(lib, "ws2_32.lib")
+ #else
+     #include <unistd.h>
+ #endif
+
+
 PROMEKI_NAMESPACE_BEGIN
+
+String System::hostname() {
+    std::array<char, HOST_NAME_MAX> hostname;
+     return gethostname(hostname.data(), hostname.size()) == 0 ? hostname.data() : String();
+}
 
 String System::demangleSymbol(const char *val, bool useCache) {
         int status = 0;

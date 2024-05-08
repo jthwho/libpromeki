@@ -90,7 +90,7 @@ Timecode Timecode::fromFrameNumber(const Mode &mode, FrameNumber frameNumber) {
 }
 
 std::pair<Timecode, Error> Timecode::fromString(const String &str) {
-        std::istringstream iss(str);
+        std::istringstream iss(str.stds());
         int h, m, s, f;
         char sv[4];
         FlagsType flags = Valid;

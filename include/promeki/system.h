@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <cstdint>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -36,6 +37,8 @@ class String;
 
 class System {
         public:
+                static String hostname();
+
                 static constexpr bool isLittleEndian() {
                         return std::endian::native == std::endian::little;
                 }

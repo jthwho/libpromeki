@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/util.h>
+#include <Poco/Dynamic/Var.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -241,6 +242,8 @@ class String {
                         return d.substr(d.length() - count, count);
                 }
 
+                operator Poco::Dynamic::Var() const { return d; }
+
                 operator std::string&() {
                         return d;
                 }
@@ -379,7 +382,7 @@ class String {
                 }
 
                 bool startsWith(char c) const {
-                        return !isEmpty() && *this[0] == c;
+                        return !isEmpty() && d[0] == c;
                 }
 
                 bool endsWith(const String &suffix) const {

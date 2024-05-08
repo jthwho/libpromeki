@@ -77,11 +77,11 @@ class RegEx {
 
                 static constexpr Flag DefaultFlags = ECMAScript | Optimize;
 
-                RegEx(const String &pattern, Flag flags = DefaultFlags) : d(pattern, flags), p(pattern) {}
+                RegEx(const String &pattern, Flag flags = DefaultFlags) : d(pattern.cstr(), flags), p(pattern) {}
                 RegEx(const char *pattern, Flag flags = DefaultFlags) : d(pattern, flags), p(pattern) {}
 
                 RegEx &operator=(const String &pattern) {
-                        d = pattern;
+                        d = pattern.cstr();
                         p = pattern;
                         return *this;
                 }

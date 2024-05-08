@@ -143,11 +143,37 @@ set(UNITTEST_SOURCES
 
 add_subdirectory(thirdparty)
 
+# External Projects ###########################################################
+# As a matter of course, we install all external:
+# libraries (both shared and static) in ${CMAKE_BINARY_DIR}/lib
+# applications in ${CMAKE_BINARY_DIR}/bin
+# includes in ${CMAKE_BINARY_DIR}/include
+
+ExternalProject_Add(
+    poco
+    URL https://github.com/pocoproject/poco/archive/refs/tags/poco-1.13.3-release.tar.gz
+    SOURCE_DIR ${CMAKE_BINARY_DIR}/poco
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}
+)
+include_directories(${CMAKE_BINARY_DIR}/include)
+link_directories(${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE STRING "Runtime directory")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Library directory")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Archive directory")
+
+# The Promeki Library Build ###################################################
 add_library(${APP_NAME} SHARED ${PROMEKI_SOURCES})
+set_target_properties(${APP_NAME} PROPERTIES
+    VERSION ${APP_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
-target_link_libraries(${APP_NAME} PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(${APP_NAME} PUBLIC PocoFoundation)
+target_link_libraries(${APP_NAME} PUBLIC PocoNet)
+target_link_libraries(${APP_NAME} PUBLIC PocoJSON)
+target_link_libraries(${APP_NAME} PRIVATE nlohmann_json::nlohmann_json) ## FIXME: Will remove as we've got PocoJSON now.
 target_compile_definitions(${APP_NAME} PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-add_dependencies(${APP_NAME} libjpeg-turbo-build)
+add_dependencies(${APP_NAME} poco libjpeg-turbo-build)
 
 if(PNG_FOUND)
         target_link_libraries(${APP_NAME} PUBLIC png)
@@ -174,8 +200,8 @@ target_compile_definitions(unittest PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENAB
 target_link_libraries(unittest PRIVATE ${APP_NAME})
 add_test(NAME unittest COMMAND unittest)
 
- # Find Doxygen package (optional)
- find_package(Doxygen)
+# Find Doxygen package (optional)
+find_package(Doxygen)
 
 # Check if Doxygen is installed
 if(DOXYGEN_FOUND)
