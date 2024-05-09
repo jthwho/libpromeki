@@ -28,6 +28,7 @@
 #include <promeki/metadata.h>
 #include <promeki/string.h>
 #include <promeki/system.h>
+#include <promeki/json.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -136,8 +137,8 @@ class AudioDesc {
                 static constexpr DataType NativeType = System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
 
                 AudioDesc() : d(new Data) { }
-                AudioDesc(float sr, size_t ch) : d(new Data(NativeType, sr, ch)) { }
-                AudioDesc(DataType dt, float sr, size_t ch) : d(new Data(dt, sr, ch)) { }
+                AudioDesc(float sr, unsigned int ch) : d(new Data(NativeType, sr, ch)) { }
+                AudioDesc(DataType dt, float sr, unsigned int ch) : d(new Data(dt, sr, ch)) { }
 
                 bool operator==(const AudioDesc &other) const { return d == other.d; }
 
@@ -157,6 +158,10 @@ class AudioDesc {
                         return d->toString();
                 }
 
+                JsonObject toJson() const {
+                    return d->toJson();
+                }
+
                 size_t bytesPerSample() const {
                         return d->format->bytesPerSample;
                 }
@@ -165,7 +170,7 @@ class AudioDesc {
                         return d->bytesPerSampleStride();
                 }
 
-                size_t channelBufferOffset(size_t chan, size_t bufferSamples) const {
+                size_t channelBufferOffset(unsigned int chan, size_t bufferSamples) const {
                         return d->channelBufferOffset(chan, bufferSamples);
                 }
 
@@ -191,11 +196,11 @@ class AudioDesc {
                         return;
                 }
 
-                size_t channels() const {
+                unsigned int channels() const {
                         return d->channels;
                 }
 
-                void setChannels(size_t val) {
+                void setChannels(unsigned int val) {
                         d->channels = val;
                         return;
                 }
@@ -224,12 +229,12 @@ class AudioDesc {
                         public:
                                 int                     dataType = 0;
                                 float                   sampleRate = 0.0f;
-                                size_t                  channels = 0;
+                                unsigned int            channels = 0;
                                 Metadata                metadata;
                                 const Format            *format = nullptr;
 
                                 Data() : format(lookupFormat(Invalid)) {}
-                                Data(int dt, float sr, size_t c) : 
+                                Data(int dt, float sr, unsigned int c) : 
                                         dataType(dt), sampleRate(sr), 
                                         channels(c), format(lookupFormat(dt)) 
                                 {
@@ -253,8 +258,17 @@ class AudioDesc {
                                 }
                                 
                                 String toString() const {
-                                        return String::sprintf("[%s %fHz %dc]", 
-                                                format->name.cstr(), sampleRate, (int)channels);
+                                        return String::sprintf("[%s %fHz %uc]", 
+                                                format->name.cstr(), sampleRate, channels);
+                                }
+
+                                JsonObject toJson() const {
+                                    JsonObject ret;
+                                    ret.set("DataType", format->name); 
+                                    ret.set("SampleRate", sampleRate);
+                                    ret.set("Channels", channels);
+                                    if(!metadata.isEmpty()) ret.set("Metadata", metadata.toJson());
+                                    return ret;
                                 }
 
                                 size_t bytesPerSampleStride() const {
@@ -263,7 +277,7 @@ class AudioDesc {
                                                 format->bytesPerSample * channels;
                                 }
 
-                                size_t channelBufferOffset(size_t chan, size_t bufferSamples) const {
+                                size_t channelBufferOffset(unsigned int chan, size_t bufferSamples) const {
                                         return format->isPlanar ? 
                                                 format->bytesPerSample * bufferSamples * chan :
                                                 format->bytesPerSample * chan;

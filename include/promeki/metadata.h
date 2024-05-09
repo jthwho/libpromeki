@@ -27,6 +27,7 @@
 #include <promeki/namespace.h>
 #include <promeki/variant.h>
 #include <promeki/util.h>
+#include <promeki/json.h>
 
 #define PROMEKI_ENUM_METADATA_ID \
         X(Invalid) \
@@ -76,6 +77,7 @@ class Metadata {
                 void remove(ID id) { d.erase(id); return; }
                 void clear() { d.clear(); return; }
                 size_t size() const { return d.size(); }
+                bool isEmpty() const { return d.size() == 0; }
 
                 template <typename Func> void forEach(Func &&func) const {
                         for(const auto &[id, value] : d) {
@@ -85,6 +87,14 @@ class Metadata {
                 }
 
                 StringList dump() const;
+
+                JsonObject toJson() const {
+                    JsonObject ret;
+                    for(const auto &[id, value] : d) {
+                        ret.setFromVariant(idName(id), value);
+                    }
+                    return ret;
+                }
 
         private:
                 std::map<ID, Variant> d;

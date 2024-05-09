@@ -224,6 +224,21 @@ template <typename... Types> class __Variant {
                         return typeName(type());
                 }
 
+                __Variant toStandardType() const {
+                    switch(type()) {
+                        case TypeString:
+                        case TypeDateTime:
+                        case TypeTimeStamp:
+                        case TypeSize2D:
+                        case TypeUUID:
+                        case TypeTimecode:
+                        case TypeRational:
+                            return get<std::string>();
+                            break;
+                    }
+                    return *this;
+                }
+
         private:
                 std::variant<Types...> v;
 };
