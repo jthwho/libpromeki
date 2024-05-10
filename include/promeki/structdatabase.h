@@ -25,17 +25,20 @@
 
 #include <map>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 // Provides a structure database that can be initialized from a initialization list.  This allows
-// you to initialize a structure database on startup.  The struct must contain an item named 'id'.
+// you to initialize a structure database on startup.  The struct must contain an item named 'id'
+// and 'name'.
 // This id will be used as the key in the map.  Also, the ID 0 must exist as this will be returned
-// in the case an id is not found.
+// in the case an id is not found.  The name must be a unique name for the struct entry.
 template<typename KeyType, typename StructType>
 class StructDatabase {
         public:
                 typedef std::map<KeyType, StructType> Map;
+                typedef std::map<String, KeyType> NameMap;
 
                 StructDatabase() = default;
 
@@ -45,6 +48,7 @@ class StructDatabase {
 
                 void add(const StructType &&val) {
                         map[val.id] = std::move(val);
+                        nameMap[val.name] = val.id;
                         return;
                 }
 
@@ -56,6 +60,13 @@ class StructDatabase {
                         throw std::runtime_error("StructDatabase is missing an invalid entry (id 0)");
                 }
 
+                KeyType lookupKeyByName(const String &name) const {
+                        auto it = nameMap.find(name);
+                        return (it != nameMap.end()) ? 
+                            it->second :
+                            static_cast<KeyType>(0);
+                }
+                        
                 void load(const std::initializer_list<StructType> &&list) {
                         for(auto &&item : list) add(std::move(item));
                         return;
@@ -66,6 +77,7 @@ class StructDatabase {
 
         private:
                 Map map;
+                NameMap nameMap;
 };
 
 PROMEKI_NAMESPACE_END

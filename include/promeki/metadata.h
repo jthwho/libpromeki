@@ -30,31 +30,31 @@
 #include <promeki/json.h>
 
 #define PROMEKI_ENUM_METADATA_ID \
-        X(Invalid) \
-        X(Timecode) \
-        X(Gamma) \
-        X(Title) \
-        X(Copyright) \
-        X(Software) \
-        X(Artist) \
-        X(Comment) \
-        X(Date) \
-        X(Album) \
-        X(License) \
-        X(TrackNumber) \
-        X(Genre) \
-        X(EnableBWF) \
-        X(Description) \
-        X(Originator) \
-        X(OriginatorReference) \
-        X(OriginationDateTime) \
-        X(FrameRate) \
-        X(UMID) \
-        X(CodingHistory) \
-        X(CompressionLevel) \
-        X(EnableVBR) \
-        X(VBRQuality) \
-        X(CompressedSize)
+        X(Invalid, std::monostate) \
+        X(Timecode, class Timecode) \
+        X(Gamma, double) \
+        X(Title, String) \
+        X(Copyright, String) \
+        X(Software, String) \
+        X(Artist, String) \
+        X(Comment, String) \
+        X(Date, String) \
+        X(Album, String) \
+        X(License, String) \
+        X(TrackNumber, int) \
+        X(Genre, String) \
+        X(EnableBWF, bool) \
+        X(Description, String) \
+        X(Originator, String) \
+        X(OriginatorReference, String) \
+        X(OriginationDateTime, String) \
+        X(FrameRate, Rational<int>) \
+        X(UMID, String) \
+        X(CodingHistory, String) \
+        X(CompressionLevel, double) \
+        X(EnableVBR, bool) \
+        X(VBRQuality, double) \
+        X(CompressedSize, int)
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -62,11 +62,13 @@ class StringList;
 
 class Metadata {
         public:
-                #define X(name) name,
+                #define X(name, type) name,
                 enum ID { PROMEKI_ENUM_METADATA_ID };
                 #undef X
 
-                static const String &idName(ID id);
+                static const String &idToString(ID id);
+                static ID stringToID(const String &val);
+                static Metadata fromJson(const JsonObject &json, bool *ok = nullptr);
 
                 template <typename T> void set(ID id, const T &value) {
                         d[id] = Variant(value);
@@ -91,7 +93,7 @@ class Metadata {
                 JsonObject toJson() const {
                     JsonObject ret;
                     for(const auto &[id, value] : d) {
-                        ret.setFromVariant(idName(id), value);
+                        ret.setFromVariant(idToString(id), value);
                     }
                     return ret;
                 }

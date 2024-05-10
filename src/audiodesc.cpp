@@ -350,5 +350,19 @@ const AudioDesc::Format *AudioDesc::lookupFormat(int id) {
         return &db.get(id);
 }
 
+AudioDesc::DataType AudioDesc::stringToDataType(const String &val) {
+    DataType ret = (DataType)db.lookupKeyByName(val);
+    return ret;
+}
+
+AudioDesc AudioDesc::fromJson(const JsonObject &json, bool *ok) {
+    bool good = true;
+    DataType type = stringToDataType(json.getString("DataType"));
+    float sampleRate = json.getDouble("SampleRate");
+    unsigned int chans = json.getUInt("Channels");
+    if(type == Invalid || sampleRate <= 0.0 || chans < 1) return new Data();
+    return new Data(type, sampleRate, chans);
+}
+
 PROMEKI_NAMESPACE_END
 

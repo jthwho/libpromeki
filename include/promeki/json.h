@@ -43,7 +43,9 @@ class JsonInterface {
 
         bool contains(const KeyType &key) const { return d->has(key); }
 
-        int getInt(const KeyType &key, bool *ok = nullptr) const { return get<int>(key, ok); }
+        bool getBool(const KeyType &key, bool *ok = nullptr) const { return get<bool>(key, ok); }
+        int64_t getInt(const KeyType &key, bool *ok = nullptr) const { return get<int64_t>(key, ok); }
+        uint64_t getUInt(const KeyType &key, bool *ok = nullptr) const { return get<uint64_t>(key, ok); }
         double getDouble(const KeyType &key, bool *ok = nullptr) const { return get<double>(key, ok); }
         String getString(const KeyType &key, bool *ok = nullptr) const { return get<std::string>(key, ok); }
 
@@ -98,8 +100,10 @@ class JsonInterface {
         }
 
         template <typename Func> void forEach(Func &&func) const {
-            for(const auto &[id, value] : d) {
-                func(id, value);
+            for(const auto &[id, value] : *d) {
+                String _id = id;
+                Variant _val = Variant::fromPocoVar(value);
+                func(_id, _val);
             }
             return;
         }

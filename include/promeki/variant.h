@@ -36,6 +36,7 @@
 #include <promeki/timecode.h>
 #include <promeki/rational.h>
 #include <promeki/list.h>
+#include <Poco/Dynamic/Var.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -65,6 +66,7 @@ class VariantDummy {
 
 };
 
+
 // Note, this template is never intended to be used directly, just to provide the template
 // to be used by Variant
 template <typename... Types> class __Variant {
@@ -82,8 +84,21 @@ template <typename... Types> class __Variant {
                 }
                 #undef X
 
+                static __Variant fromPocoVar(const Poco::Dynamic::Var &val) {
+                    if(val.isBoolean()) return val.convert<bool>();
+                    if(val.isInteger()) return val.isSigned() ? val.convert<int64_t>() : val.convert<uint64_t>();
+                    if(val.isNumeric()) return val.convert<double>();
+                    __Variant ret;
+                    try {
+                        ret = val.convert<std::string>();
+                    } catch(...) { /* Do Nothing */ }
+                    return ret;
+                }
+
                 __Variant() = default;
                 template <typename T> __Variant(const T& value) : v(value) { }
+
+                       
 
                 bool isValid() const {
                         return v.index() != 0;

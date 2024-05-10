@@ -136,6 +136,9 @@ class AudioDesc {
 
                 static constexpr DataType NativeType = System::isLittleEndian() ? PCMI_Float32LE : PCMI_Float32BE;
 
+                static DataType stringToDataType(const String &val);
+                static AudioDesc fromJson(const JsonObject &json, bool *ok = nullptr);
+
                 AudioDesc() : d(new Data) { }
                 AudioDesc(float sr, unsigned int ch) : d(new Data(NativeType, sr, ch)) { }
                 AudioDesc(DataType dt, float sr, unsigned int ch) : d(new Data(dt, sr, ch)) { }
@@ -297,6 +300,8 @@ class AudioDesc {
                                         return;
                                 }
                 };
+
+                AudioDesc(Data *val) : d(val) {} 
 
                 SharedDataPtr<Data> d;
 };
