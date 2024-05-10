@@ -21,12 +21,10 @@ PROMEKI_NAMESPACE_BEGIN
 template <typename PocoType, typename PocoPtr, typename KeyType>
 class JsonInterface {
     public:
-        static JsonInterface parse(const String &str, bool *ok = nullptr) {
+        static PocoPtr parse(const String &str, bool *ok = nullptr) {
             Poco::JSON::Parser parser;
             auto result = parser.parse(str.stds());
-            PocoPtr ret = result.extract<PocoPtr>();
-            if(ok != nullptr) *ok = ret != nullptr;
-            return ret;
+            return result.extract<PocoPtr>();
         }
 
         JsonInterface() : d(new PocoType()) {}
@@ -99,14 +97,6 @@ class JsonInterface {
             return;
         }
 
-        template <typename Func> void forEach(Func &&func) const {
-            for(const auto &[id, value] : *d) {
-                String _id = id;
-                Variant _val = Variant::fromPocoVar(value);
-                func(_id, _val);
-            }
-            return;
-        }
 
     protected:
         PocoPtr d;
@@ -127,8 +117,29 @@ class JsonInterface {
 };
 
 template <typename PocoType, typename PocoPtr, typename KeyType>
+class JsonInterfaceObject : public JsonInterface<PocoType, PocoPtr, KeyType> {
+    public:
+
+        JsonInterfaceObject() = default;
+        JsonInterfaceObject(const PocoPtr &obj) : JsonInterface<PocoType, PocoPtr, KeyType>(obj) {}
+
+        template <typename Func> void forEach(Func &&func) const {
+            for(const auto &[id, value] : *JsonInterface<PocoType, PocoPtr, KeyType>::d) {
+                String _id = id;
+                Variant _val = Variant::fromPocoVar(value);
+                func(_id, _val);
+            }
+            return;
+        }
+};
+
+template <typename PocoType, typename PocoPtr, typename KeyType>
 class JsonInterfaceArray : public JsonInterface<PocoType, PocoPtr, KeyType> {
     public:
+
+        JsonInterfaceArray() = default;
+        JsonInterfaceArray(const PocoPtr &obj) : JsonInterface<PocoType, PocoPtr, KeyType>(obj) {}
+
         void addNull() { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(Poco::Dynamic::Var()); }
         void add(const Poco::JSON::Object::Ptr &val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
         void add(const Poco::JSON::Array::Ptr &val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
@@ -158,10 +169,21 @@ class JsonInterfaceArray : public JsonInterface<PocoType, PocoPtr, KeyType> {
             }
             return;
         }
-       
+ 
+        /* FIXME
+        template <typename Func> void forEach(Func &&func) const {
+            int count = JsonInterface<PocoType, PocoPtr, KeyType>::size();
+            for(int i = 0; i < count; i++) {
+                Variant _val =
+                func(_val);
+            }
+            return;
+        }
+        */
+      
 };
 
-using JsonObject = JsonInterface<Poco::JSON::Object, Poco::JSON::Object::Ptr, std::string>;
+using JsonObject = JsonInterfaceObject<Poco::JSON::Object, Poco::JSON::Object::Ptr, std::string>;
 using JsonArray  = JsonInterfaceArray<Poco::JSON::Array, Poco::JSON::Array::Ptr, int>;
 
 #if 0
