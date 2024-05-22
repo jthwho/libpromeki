@@ -76,6 +76,14 @@ template <typename T = int> class Rational {
                         return os;
                 }
 
+                T numerator() const {
+                    return _num;
+                }
+
+                T denominator() const {
+                    return _den;
+                }
+
                 double toDouble() const {
                         return static_cast<double>(_num) / static_cast<double>(_den);
                 }

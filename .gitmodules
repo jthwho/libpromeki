@@ -1,6 +1,3 @@
-[submodule "thirdparty/json"]
-	path = thirdparty/json
-	url = ../../thirdparty/json.git
 [submodule "thirdparty/libjpeg-turbo"]
 	path = thirdparty/libjpeg-turbo
 	url = ../../thirdparty/libjpeg-turbo.git

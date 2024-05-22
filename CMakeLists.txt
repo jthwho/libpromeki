@@ -124,6 +124,8 @@ set(PROMEKI_SOURCES
     src/codec.cpp
     src/pidcontroller.cpp
     src/json.cpp
+    src/framerate.cpp
+    src/videodesc.cpp
 )
 
 set(UNITTEST_SOURCES
@@ -142,13 +144,13 @@ set(UNITTEST_SOURCES
     tests/objectbase2.cpp
 )
 
-add_subdirectory(thirdparty)
 
 # External Projects ###########################################################
 # As a matter of course, we install all external:
 # libraries (both shared and static) in ${CMAKE_BINARY_DIR}/lib
 # applications in ${CMAKE_BINARY_DIR}/bin
 # includes in ${CMAKE_BINARY_DIR}/include
+include(ExternalProject)
 
 ExternalProject_Add(
     poco
@@ -156,6 +158,13 @@ ExternalProject_Add(
     SOURCE_DIR ${CMAKE_BINARY_DIR}/poco
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}
 )
+
+ExternalProject_Add(
+    libjpeg-turbo
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libjpeg-turbo
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}
+)
+
 include_directories(${CMAKE_BINARY_DIR}/include)
 link_directories(${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE STRING "Runtime directory")
@@ -172,9 +181,8 @@ target_link_libraries(${APP_NAME} PUBLIC stdc++fs)
 target_link_libraries(${APP_NAME} PUBLIC PocoFoundation)
 target_link_libraries(${APP_NAME} PUBLIC PocoNet)
 target_link_libraries(${APP_NAME} PUBLIC PocoJSON)
-target_link_libraries(${APP_NAME} PRIVATE nlohmann_json::nlohmann_json) ## FIXME: Will remove as we've got PocoJSON now.
 target_compile_definitions(${APP_NAME} PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-add_dependencies(${APP_NAME} poco libjpeg-turbo-build)
+add_dependencies(${APP_NAME} poco libjpeg-turbo)
 
 if(PNG_FOUND)
         target_link_libraries(${APP_NAME} PUBLIC png)
