@@ -79,6 +79,7 @@ set(PROMEKI_SOURCES
     src/regex.cpp
     src/error.cpp
     src/uuid.cpp
+    src/sharedptr.cpp
     src/shareddata.cpp
     src/point.cpp
     src/line.cpp
@@ -142,6 +143,7 @@ set(UNITTEST_SOURCES
     tests/audio.cpp
     tests/objectbase.cpp
     tests/objectbase2.cpp
+    tests/sharedptr.cpp
 )
 
 
