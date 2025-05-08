@@ -51,7 +51,7 @@ generated a make based build system, you should be able to type `make docs` and 
 NOTE: This target will only exist if you've got doxygen installed (and cmake can find it).
 
 Additionally, you can find a copy of the documentation here:
-[API Documentation](https://howardlogic.com/libpromeki/api/)
+[API Documentation](https://howardlogic.com/doxygen/libpromeki)
 
 ## Debugging
 If you build the library with `PROMEKI_DEBUG_ENABLE` defined, this will enable the `promekiDebug()` function
