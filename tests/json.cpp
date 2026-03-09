@@ -3,7 +3,7 @@
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
  *
- * See LICENSE file in the project root folder for license information
+ * See LICENSE file in the project root folder for license information.
  */
 
 #include <doctest/doctest.h>
@@ -50,13 +50,13 @@ TEST_CASE("JsonObject_Types") {
 // ============================================================================
 
 TEST_CASE("JsonObject_Parse") {
-    bool ok = false;
-    JsonObject obj = JsonObject::parse("{\"key\": 42}", &ok);
-    CHECK(ok);
+    Error err;
+    JsonObject obj = JsonObject::parse("{\"key\": 42}", &err);
+    CHECK(err.isOk());
     CHECK(obj.getInt("key") == 42);
 
-    JsonObject bad = JsonObject::parse("not json", &ok);
-    CHECK(!ok);
+    JsonObject bad = JsonObject::parse("not json", &err);
+    CHECK(err.isError());
     CHECK(!bad.isValid());
 }
 
@@ -72,9 +72,9 @@ TEST_CASE("JsonObject_Nested") {
     outer.set("inner", inner);
     CHECK(outer.valueIsObject("inner"));
 
-    bool ok = false;
-    JsonObject got = outer.getObject("inner", &ok);
-    CHECK(ok);
+    Error err;
+    JsonObject got = outer.getObject("inner", &err);
+    CHECK(err.isOk());
     CHECK(got.getInt("value") == 99);
 }
 
@@ -141,13 +141,12 @@ TEST_CASE("JsonObject_Clear") {
 
 TEST_CASE("JsonObject_MissingKeys") {
     JsonObject obj;
-    bool ok = true;
-    obj.getInt("missing", &ok);
-    CHECK(!ok);
+    Error err;
+    obj.getInt("missing", &err);
+    CHECK(err.isError());
 
-    ok = true;
-    obj.getString("missing", &ok);
-    CHECK(!ok);
+    obj.getString("missing", &err);
+    CHECK(err.isError());
 
     CHECK(!obj.contains("missing"));
 }
@@ -190,15 +189,15 @@ TEST_CASE("JsonArray_Basic") {
 }
 
 TEST_CASE("JsonArray_Parse") {
-    bool ok = false;
-    JsonArray arr = JsonArray::parse("[1, 2, 3]", &ok);
-    CHECK(ok);
+    Error err;
+    JsonArray arr = JsonArray::parse("[1, 2, 3]", &err);
+    CHECK(err.isOk());
     CHECK(arr.size() == 3);
     CHECK(arr.getInt(0) == 1);
     CHECK(arr.getInt(2) == 3);
 
-    JsonArray bad = JsonArray::parse("not json", &ok);
-    CHECK(!ok);
+    JsonArray bad = JsonArray::parse("not json", &err);
+    CHECK(err.isError());
 }
 
 // ============================================================================
@@ -231,9 +230,9 @@ TEST_CASE("JsonArray_Nested") {
     arr.add(obj);
     CHECK(arr.valueIsObject(0));
 
-    bool ok = false;
-    JsonObject got = arr.getObject(0, &ok);
-    CHECK(ok);
+    Error err;
+    JsonObject got = arr.getObject(0, &err);
+    CHECK(err.isOk());
     CHECK(got.getInt("x") == 10);
 }
 
@@ -246,9 +245,9 @@ TEST_CASE("JsonArray_NestedArray") {
     outer.add(inner);
     CHECK(outer.valueIsArray(0));
 
-    bool ok = false;
-    JsonArray got = outer.getArray(0, &ok);
-    CHECK(ok);
+    Error err;
+    JsonArray got = outer.getArray(0, &err);
+    CHECK(err.isOk());
     CHECK(got.size() == 2);
     CHECK(got.getInt(0) == 1);
 }
@@ -283,9 +282,9 @@ TEST_CASE("JsonObject_WithArray") {
     obj.set("list", arr);
     CHECK(obj.valueIsArray("list"));
 
-    bool ok = false;
-    JsonArray got = obj.getArray("list", &ok);
-    CHECK(ok);
+    Error err;
+    JsonArray got = obj.getArray("list", &err);
+    CHECK(err.isOk());
     CHECK(got.size() == 2);
 }
 
@@ -297,13 +296,12 @@ TEST_CASE("JsonArray_OutOfBounds") {
     JsonArray arr;
     arr.add(1);
 
-    bool ok = true;
-    arr.getInt(5, &ok);
-    CHECK(!ok);
+    Error err;
+    arr.getInt(5, &err);
+    CHECK(err.isError());
 
-    ok = true;
-    arr.getInt(-1, &ok);
-    CHECK(!ok);
+    arr.getInt(-1, &err);
+    CHECK(err.isError());
 }
 
 // ============================================================================

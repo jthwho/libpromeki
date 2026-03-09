@@ -12,6 +12,7 @@
 #include <sstream>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,15 +26,15 @@ class DateTime {
                         return DateTime(std::chrono::system_clock::now());
                 }
                 
-                static DateTime fromString(const String &str, const char *fmt = DefaultFormat, bool *ok = nullptr) {
+                static DateTime fromString(const String &str, const char *fmt = DefaultFormat, Error *err = nullptr) {
                         std::tm tm = {};
                         std::istringstream ss(str.stds());
                         ss >> std::get_time(&tm, fmt);
                         if(ss.fail()) {
-                                if(ok != nullptr) *ok = false;
+                                if(err != nullptr) *err = Error::Invalid;
                                 return DateTime();
                         }
-                        if(ok != nullptr) *ok = true;
+                        if(err != nullptr) *err = Error::Ok;
                         return DateTime(tm);
                 }
 

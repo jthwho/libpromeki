@@ -30,7 +30,7 @@ class Image {
                                         for(auto &p : planeList) {
                                                 if(!p.fill(value)) return false;
                                         }
-                                        return !planeList.empty();
+                                        return !planeList.isEmpty();
                                 }
                                 Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const;
 
@@ -107,7 +107,7 @@ class Image {
                 }
 
                 Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
-                    return d->convert(pixelFormat, metadata);
+                        return d->convert(pixelFormat, metadata);
                 }
 
                 int referenceCount() const { return d.referenceCount(); }

@@ -2,7 +2,7 @@
  * @file objectbase.h
  * @copyright Howard Logic. All rights reserved.
  *
- * See LICENSE file in the source root folder for license information.
+ * See LICENSE file in the project root folder for license information.
  */
 
 #pragma once
@@ -14,7 +14,6 @@
 #include <promeki/list.h>
 #include <promeki/util.h>
 #include <promeki/logger.h>
-#include <promeki/util.h>
 #include <promeki/signal.h>
 #include <promeki/slot.h>
 

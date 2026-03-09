@@ -3,7 +3,7 @@
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
  *
- * See LICENSE file in the project root folder for license information
+ * See LICENSE file in the project root folder for license information.
  */
 
 #include <cstring>
@@ -176,9 +176,9 @@ TEST_CASE("Buffer_DefaultAlign") {
 
 TEST_CASE("Buffer_List") {
     Buffer::List list;
-    list.push_back(Buffer(64));
-    list.push_back(Buffer(128));
-    list.push_back(Buffer(256));
+    list.pushToBack(Buffer(64));
+    list.pushToBack(Buffer(128));
+    list.pushToBack(Buffer(256));
     CHECK(list.size() == 3);
     CHECK(list[0].size() == 64);
     CHECK(list[1].size() == 128);

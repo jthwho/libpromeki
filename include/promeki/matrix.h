@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cmath>
+#include <stdexcept>
 #include <promeki/namespace.h>
 #include <promeki/array.h>
 #include <promeki/error.h>

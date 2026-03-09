@@ -34,7 +34,7 @@ class List {
                 List(const List &other) : d(other.d) {}
                 List(List &&other) noexcept : d(std::move(other.d)) {}
                 List(std::initializer_list<T> initList) : d(initList) {}
-                virtual ~List() {};
+                ~List() = default;
 
                 List &operator=(const List &other) {
                         d = other.d;
@@ -247,7 +247,7 @@ class List {
                  * @brief Runs a test function on all the items and removes them if it returns true
                  */
                 void removeIf(TestFunc func) {
-                        d.erase(std::remove_if(d.begin(), d.end(), func));
+                        d.erase(std::remove_if(d.begin(), d.end(), func), d.end());
                         return;
                 }
 
@@ -302,7 +302,7 @@ class List {
                 /**
                  * @brief Emplaces an object on the back of the list
                  */
-                template <typename... Args> Iterator emplaceToBack(Args &&...args) {
+                template <typename... Args> T &emplaceToBack(Args &&...args) {
                         return d.emplace_back(std::forward<Args>(args)...);
                 }
 

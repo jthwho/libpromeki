@@ -3,7 +3,7 @@
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
  *
- * See LICENSE file in the project root folder for license information
+ * See LICENSE file in the project root folder for license information.
  */
 
 #include <doctest/doctest.h>
@@ -144,9 +144,9 @@ TEST_CASE("Metadata_JsonRoundTrip") {
     CHECK(json.contains("Gamma"));
     CHECK(json.contains("TrackNumber"));
 
-    bool ok = false;
-    Metadata m2 = Metadata::fromJson(json, &ok);
-    CHECK(ok);
+    Error err;
+    Metadata m2 = Metadata::fromJson(json, &err);
+    CHECK(err.isOk());
     CHECK(m2.size() == 3);
     CHECK(m2.get(Metadata::Title).get<String>() == "Test");
     CHECK(m2.get(Metadata::TrackNumber).get<int32_t>() == 7);

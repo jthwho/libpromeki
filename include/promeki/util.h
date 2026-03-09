@@ -13,10 +13,10 @@
 #include <limits>
 #include <type_traits>
 #include <promeki/namespace.h>
+#include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class Error;
 class StringList;
 
 #if defined(_WIN32)
@@ -109,16 +109,16 @@ class StringList;
 StringList promekiStackTrace(bool demangle = true);
 
 template <typename OutputType, typename InputType>
-OutputType promekiConvert(const InputType &input, bool *ok = nullptr) {
-        static_assert(std::is_integral<InputType>::value || std::is_floating_point<InputType>::value, 
+OutputType promekiConvert(const InputType &input, Error *err = nullptr) {
+        static_assert(std::is_integral<InputType>::value || std::is_floating_point<InputType>::value,
                         "InputType must be an integer or floating point type");
-        static_assert(std::is_integral<OutputType>::value || std::is_floating_point<OutputType>::value, 
+        static_assert(std::is_integral<OutputType>::value || std::is_floating_point<OutputType>::value,
                         "OutputType must be an integer or floating point type");
         if (input > std::numeric_limits<OutputType>::max() || input < std::numeric_limits<OutputType>::lowest()) {
-                if(ok != nullptr) *ok = false;
+                if(err != nullptr) *err = Error::Invalid;
                 return OutputType();
         }
-        if(ok != nullptr) *ok = true;
+        if(err != nullptr) *err = Error::Ok;
         return static_cast<OutputType>(input);
 }
 

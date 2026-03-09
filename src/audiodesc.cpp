@@ -339,12 +339,15 @@ AudioDesc::DataType AudioDesc::stringToDataType(const String &val) {
     return ret;
 }
 
-AudioDesc AudioDesc::fromJson(const JsonObject &json, bool *ok) {
-    bool good = true;
+AudioDesc AudioDesc::fromJson(const JsonObject &json, Error *err) {
     DataType type = stringToDataType(json.getString("DataType"));
     float sampleRate = json.getDouble("SampleRate");
     unsigned int chans = json.getUInt("Channels");
-    if(type == Invalid || sampleRate <= 0.0 || chans < 1) return new Data();
+    if(type == Invalid || sampleRate <= 0.0 || chans < 1) {
+        if(err) *err = Error::Invalid;
+        return new Data();
+    }
+    if(err) *err = Error::Ok;
     return new Data(type, sampleRate, chans);
 }
 

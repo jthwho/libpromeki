@@ -3,7 +3,7 @@
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
  *
- * See LICENSE file in the project root folder for license information
+ * See LICENSE file in the project root folder for license information.
  */
 
 #include <doctest/doctest.h>
@@ -87,9 +87,9 @@ TEST_CASE("Variant_IntToString") {
 
 TEST_CASE("Variant_StringToInt") {
     Variant v(String("123"));
-    bool ok = false;
-    int32_t val = v.get<int32_t>(&ok);
-    CHECK(ok);
+    Error err;
+    int32_t val = v.get<int32_t>(&err);
+    CHECK(err.isOk());
     CHECK(val == 123);
 }
 

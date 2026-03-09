@@ -39,7 +39,7 @@ bool Image::Data::allocate(const ImageDesc &desc, const MemSpace &ms) {
 }
 
 Image Image::Data::convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
-    return Image();
+        return Image();
 }
 
 PROMEKI_NAMESPACE_END

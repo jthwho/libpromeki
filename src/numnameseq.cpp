@@ -38,7 +38,7 @@ NumNameSeq::List NumNameSeq::parseList(StringList &list) {
                 }
                 if(found) continue;
                 // Ok, not found in the return list, so it's new.
-                ret.push_back(NumNameSeq(name, value, value));
+                ret.pushToBack(NumNameSeq(name, value, value));
                 item = list.remove(item);
 	}
         return ret;

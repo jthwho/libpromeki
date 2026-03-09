@@ -518,6 +518,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/json.cpp
         tests/variant.cpp
         tests/buffer.cpp
+        tests/list.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

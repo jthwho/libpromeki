@@ -53,7 +53,7 @@ class Metadata {
 
                 static const String &idToString(ID id);
                 static ID stringToID(const String &val);
-                static Metadata fromJson(const JsonObject &json, bool *ok = nullptr);
+                static Metadata fromJson(const JsonObject &json, Error *err = nullptr);
 
                 Metadata() : d(SharedPtr<Data>::create()) {}
 

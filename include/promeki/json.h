@@ -21,15 +21,15 @@ class JsonArray;
 
 class JsonObject {
     public:
-        static JsonObject parse(const String &str, bool *ok = nullptr) {
+        static JsonObject parse(const String &str, Error *err = nullptr) {
             JsonObject ret;
             try {
                 ret.d.modify()->j = nlohmann::json::parse(str.stds());
                 if(!ret.d->j.is_object()) throw std::runtime_error("not an object");
-                if(ok) *ok = true;
+                if(err) *err = Error::Ok;
             } catch(...) {
                 ret.d.modify()->j = nlohmann::json::object();
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
             }
             return ret;
         }
@@ -56,25 +56,25 @@ class JsonObject {
 
         bool contains(const std::string &key) const { return d->j.contains(key); }
 
-        bool getBool(const std::string &key, bool *ok = nullptr) const { return get<bool>(key, ok); }
-        int64_t getInt(const std::string &key, bool *ok = nullptr) const { return get<int64_t>(key, ok); }
-        uint64_t getUInt(const std::string &key, bool *ok = nullptr) const { return get<uint64_t>(key, ok); }
-        double getDouble(const std::string &key, bool *ok = nullptr) const { return get<double>(key, ok); }
-        String getString(const std::string &key, bool *ok = nullptr) const { return get<std::string>(key, ok); }
+        bool getBool(const std::string &key, Error *err = nullptr) const { return get<bool>(key, err); }
+        int64_t getInt(const std::string &key, Error *err = nullptr) const { return get<int64_t>(key, err); }
+        uint64_t getUInt(const std::string &key, Error *err = nullptr) const { return get<uint64_t>(key, err); }
+        double getDouble(const std::string &key, Error *err = nullptr) const { return get<double>(key, err); }
+        String getString(const std::string &key, Error *err = nullptr) const { return get<std::string>(key, err); }
 
-        JsonObject getObject(const std::string &key, bool *ok = nullptr) const {
+        JsonObject getObject(const std::string &key, Error *err = nullptr) const {
             auto it = d->j.find(key);
             if(it == d->j.end() || !it->is_object()) {
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
                 return JsonObject();
             }
-            if(ok) *ok = true;
+            if(err) *err = Error::Ok;
             JsonObject ret;
             ret.d.modify()->j = *it;
             return ret;
         }
 
-        inline JsonArray getArray(const std::string &key, bool *ok = nullptr) const;
+        inline JsonArray getArray(const std::string &key, Error *err = nullptr) const;
 
         String toString(unsigned int indent = 0) const {
             if(indent == 0) return d->j.dump();
@@ -142,17 +142,17 @@ class JsonObject {
         SharedPtr<Data> d;
 
         template <typename T>
-        T get(const std::string &key, bool *ok = nullptr) const {
+        T get(const std::string &key, Error *err = nullptr) const {
             auto it = d->j.find(key);
             if(it == d->j.end()) {
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
                 return T{};
             }
-            return getVal<T>(*it, ok);
+            return getVal<T>(*it, err);
         }
 
         template <typename T>
-        static T getVal(const nlohmann::json &val, bool *ok) {
+        static T getVal(const nlohmann::json &val, Error *err) {
             T ret{};
             bool good = false;
             try {
@@ -169,22 +169,22 @@ class JsonObject {
                     else if(!val.is_null()) { ret = val.dump(); good = true; }
                 }
             } catch(...) {}
-            if(ok) *ok = good;
+            if(err) *err = good ? Error::Ok : Error::Invalid;
             return ret;
         }
 };
 
 class JsonArray {
     public:
-        static JsonArray parse(const String &str, bool *ok = nullptr) {
+        static JsonArray parse(const String &str, Error *err = nullptr) {
             JsonArray ret;
             try {
                 ret.d.modify()->j = nlohmann::json::parse(str.stds());
                 if(!ret.d->j.is_array()) throw std::runtime_error("not an array");
-                if(ok) *ok = true;
+                if(err) *err = Error::Ok;
             } catch(...) {
                 ret.d.modify()->j = nlohmann::json::array();
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
             }
             return ret;
         }
@@ -198,29 +198,29 @@ class JsonArray {
         bool valueIsObject(int index) const { return index >= 0 && index < size() && d->j[index].is_object(); }
         bool valueIsArray(int index) const { return index >= 0 && index < size() && d->j[index].is_array(); }
 
-        bool getBool(int index, bool *ok = nullptr) const { return get<bool>(index, ok); }
-        int64_t getInt(int index, bool *ok = nullptr) const { return get<int64_t>(index, ok); }
-        uint64_t getUInt(int index, bool *ok = nullptr) const { return get<uint64_t>(index, ok); }
-        double getDouble(int index, bool *ok = nullptr) const { return get<double>(index, ok); }
-        String getString(int index, bool *ok = nullptr) const { return get<std::string>(index, ok); }
+        bool getBool(int index, Error *err = nullptr) const { return get<bool>(index, err); }
+        int64_t getInt(int index, Error *err = nullptr) const { return get<int64_t>(index, err); }
+        uint64_t getUInt(int index, Error *err = nullptr) const { return get<uint64_t>(index, err); }
+        double getDouble(int index, Error *err = nullptr) const { return get<double>(index, err); }
+        String getString(int index, Error *err = nullptr) const { return get<std::string>(index, err); }
 
-        JsonObject getObject(int index, bool *ok = nullptr) const {
+        JsonObject getObject(int index, Error *err = nullptr) const {
             if(index < 0 || index >= size() || !d->j[index].is_object()) {
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
                 return JsonObject();
             }
-            if(ok) *ok = true;
+            if(err) *err = Error::Ok;
             JsonObject ret;
             ret.d.modify()->j = d->j[index];
             return ret;
         }
 
-        JsonArray getArray(int index, bool *ok = nullptr) const {
+        JsonArray getArray(int index, Error *err = nullptr) const {
             if(index < 0 || index >= size() || !d->j[index].is_array()) {
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
                 return JsonArray();
             }
-            if(ok) *ok = true;
+            if(err) *err = Error::Ok;
             JsonArray ret;
             ret.d.modify()->j = d->j[index];
             return ret;
@@ -291,23 +291,23 @@ class JsonArray {
         SharedPtr<Data> d;
 
         template <typename T>
-        T get(int index, bool *ok = nullptr) const {
+        T get(int index, Error *err = nullptr) const {
             if(index < 0 || index >= size()) {
-                if(ok) *ok = false;
+                if(err) *err = Error::Invalid;
                 return T{};
             }
-            return JsonObject::getVal<T>(d->j[index], ok);
+            return JsonObject::getVal<T>(d->j[index], err);
         }
 };
 
 // Inline definitions that depend on JsonArray being complete
-inline JsonArray JsonObject::getArray(const std::string &key, bool *ok) const {
+inline JsonArray JsonObject::getArray(const std::string &key, Error *err) const {
     auto it = d->j.find(key);
     if(it == d->j.end() || !it->is_array()) {
-        if(ok) *ok = false;
+        if(err) *err = Error::Invalid;
         return JsonArray();
     }
-    if(ok) *ok = true;
+    if(err) *err = Error::Ok;
     JsonArray ret;
     ret.d.modify()->j = *it;
     return ret;

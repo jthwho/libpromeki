@@ -16,11 +16,11 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/util.h>
+#include <promeki/error.h>
 #include <promeki/sharedptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class Error;
 class StringList;
 
 // A more versitle string object, inspired by the Qt QString object.  Internally it uses
@@ -463,15 +463,15 @@ class String {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                template <typename OutputType> OutputType to(bool *ok = nullptr) const {
+                template <typename OutputType> OutputType to(Error *err = nullptr) const {
                         OutputType ret;
                         std::istringstream iss(d->s);
                         iss >> ret;
                         if(iss.fail() || !iss.eof()) {
-                                if(ok != nullptr) *ok = false;
+                                if(err != nullptr) *err = Error::Invalid;
                                 return OutputType{};
                         }
-                        if(ok != nullptr) *ok = true;
+                        if(err != nullptr) *err = Error::Ok;
                         return ret;
                 }
 
@@ -480,7 +480,7 @@ class String {
                 unsigned int toUInt(Error *err = nullptr) const;
                 double toDouble(Error *err = nullptr) const;
 
-                int64_t parseNumberWords(bool *success = nullptr) const;
+                int64_t parseNumberWords(Error *err = nullptr) const;
 
                 int referenceCount() const {
                         return d.referenceCount();

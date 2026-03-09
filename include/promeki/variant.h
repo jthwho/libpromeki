@@ -44,15 +44,14 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeTimecode, Timecode)       \
         X(TypeRational, Rational<int>)
 
-class VariantDummy {
-        public:
-
-};
-
+namespace detail {
+        // Sentinel type used to absorb trailing comma from X-macro expansion
+        struct VariantEnd {};
+}
 
 // Note, this template is never intended to be used directly, just to provide the template
 // to be used by Variant
-template <typename... Types> class __Variant {
+template <typename... Types> class VariantImpl {
         public:
                 // Note: the enum list must be in the same order as the Variant type arguments.
                 #define X(name, type) name,
@@ -67,22 +66,20 @@ template <typename... Types> class __Variant {
                 }
                 #undef X
 
-                static __Variant fromJson(const nlohmann::json &val) {
-                    if(val.is_null()) return __Variant();
-                    if(val.is_boolean()) return val.get<bool>();
-                    if(val.is_number_integer()) {
-                        if(val.is_number_unsigned()) return val.get<uint64_t>();
-                        return val.get<int64_t>();
-                    }
-                    if(val.is_number_float()) return val.get<double>();
-                    if(val.is_string()) return String(val.get<std::string>());
-                    return String(val.dump());
+                static VariantImpl fromJson(const nlohmann::json &val) {
+                        if(val.is_null()) return VariantImpl();
+                        if(val.is_boolean()) return val.get<bool>();
+                        if(val.is_number_integer()) {
+                                if(val.is_number_unsigned()) return val.get<uint64_t>();
+                                return val.get<int64_t>();
+                        }
+                        if(val.is_number_float()) return val.get<double>();
+                        if(val.is_string()) return String(val.get<std::string>());
+                        return String(val.dump());
                 }
 
-                __Variant() = default;
-                template <typename T> __Variant(const T& value) : v(value) { }
-
-                       
+                VariantImpl() = default;
+                template <typename T> VariantImpl(const T& value) : v(value) { }
 
                 bool isValid() const {
                         return v.index() != 0;
@@ -90,90 +87,90 @@ template <typename... Types> class __Variant {
 
                 template <typename T> void set(const T &value) { v = value; }
                 
-                template <typename To> To get(bool *ok = nullptr) const {
-                        return std::visit([ok](auto &&arg) -> To {
+                template <typename To> To get(Error *err = nullptr) const {
+                        return std::visit([err](auto &&arg) -> To {
                                 using From = std::decay_t<decltype(arg)>;
-                                if(ok != nullptr) *ok = true;
+                                if(err != nullptr) *err = Error::Ok;
                                 if constexpr (std::is_same_v<From, To>) {
                                         return arg;
 
                                 } else if constexpr (std::is_same_v<To, bool>) {
-                                        if constexpr (std::is_integral<From>::value || 
+                                        if constexpr (std::is_integral<From>::value ||
                                                 std::is_floating_point<From>::value) return arg ? true : false;
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
-                                
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
+
                                 } else if constexpr (std::is_same_v<To, int8_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, uint8_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, int16_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, uint16_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, int32_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, uint32_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, int64_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, uint64_t>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
                                 } else if constexpr (std::is_same_v<To, float>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
 
                                 } else if constexpr (std::is_same_v<To, double>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value || 
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, ok);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(ok);
+                                        if constexpr (std::is_integral<From>::value ||
+                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
+                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
 
                                 } else if constexpr (std::is_same_v<To, DateTime>) {
                                         if constexpr (std::is_same_v<From, String>) return DateTime::fromString(
-                                                        arg, DateTime::DefaultFormat, ok);
+                                                        arg, DateTime::DefaultFormat, err);
 
                                 } else if constexpr (std::is_same_v<To, UUID>) {
                                         if constexpr (std::is_same_v<From, String>) {
-                                                Error err;
-                                                UUID ret = UUID::fromString(arg, &err);
-                                                if(err.isError()) {
-                                                        if(ok != nullptr) *ok = false;
+                                                Error e;
+                                                UUID ret = UUID::fromString(arg, &e);
+                                                if(e.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
                                                         return UUID();
                                                 }
                                                 return ret;
@@ -183,7 +180,7 @@ template <typename... Types> class __Variant {
                                         if constexpr (std::is_same_v<From, String>) {
                                                 std::pair<Timecode, Error> ret = Timecode::fromString(arg);
                                                 if(ret.second.isError()) {
-                                                        if(ok != nullptr) *ok = false;
+                                                        if(err != nullptr) *err = Error::Invalid;
                                                         return Timecode();
                                                 }
                                                 return ret.first;
@@ -210,7 +207,7 @@ template <typename... Types> class __Variant {
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
 
                                 }
-                                if(ok != nullptr) *ok = false;
+                                if(err != nullptr) *err = Error::Invalid;
                                 return To{};
                         }, v);
                 }
@@ -223,19 +220,19 @@ template <typename... Types> class __Variant {
                         return typeName(type());
                 }
 
-                __Variant toStandardType() const {
-                    switch(type()) {
-                        case TypeString:
-                        case TypeDateTime:
-                        case TypeTimeStamp:
-                        case TypeSize2D:
-                        case TypeUUID:
-                        case TypeTimecode:
-                        case TypeRational:
-                            return get<std::string>();
-                            break;
-                    }
-                    return *this;
+                VariantImpl toStandardType() const {
+                        switch(type()) {
+                                case TypeString:
+                                case TypeDateTime:
+                                case TypeTimeStamp:
+                                case TypeSize2D:
+                                case TypeUUID:
+                                case TypeTimecode:
+                                case TypeRational:
+                                        return get<std::string>();
+                                        break;
+                        }
+                        return *this;
                 }
 
         private:
@@ -243,7 +240,7 @@ template <typename... Types> class __Variant {
 };
 
 #define X(name, type) type,
-using Variant = __Variant< PROMEKI_VARIANT_TYPES VariantDummy >;
+using Variant = VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd >;
 #undef X
 
 using VariantList = List<Variant>;

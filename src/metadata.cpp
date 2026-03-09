@@ -28,7 +28,7 @@ Metadata::ID Metadata::stringToID(const String &val) {
     return metadataStringToID[val];
 }
 
-Metadata Metadata::fromJson(const JsonObject &json, bool *ok) {
+Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
     Metadata ret;
     bool good = true;
     json.forEach([&good, &ret](const String &key, const Variant &val) {
@@ -54,7 +54,7 @@ Metadata Metadata::fromJson(const JsonObject &json, bool *ok) {
         ret.set(id, mval);
         return;
     });
-    if(ok != nullptr) *ok = good;
+    if(err != nullptr) *err = good ? Error::Ok : Error::Invalid;
     return ret;
 }
 

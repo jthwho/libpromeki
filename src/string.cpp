@@ -269,7 +269,7 @@ double String::toDouble(Error *e) const {
         return ret;
 }
 
-int64_t String::parseNumberWords(bool *success) const {
+int64_t String::parseNumberWords(Error *err) const {
         static const std::map<std::string, int64_t> numberWords = {
                 {"zero", 0}, {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4},
                 {"five", 5}, {"six", 6}, {"seven", 7}, {"eight", 8}, {"nine", 9},
@@ -313,7 +313,7 @@ int64_t String::parseNumberWords(bool *success) const {
                 }
         }
         value += current;
-        if(success != nullptr) *success = found;
+        if(err != nullptr) *err = found ? Error::Ok : Error::Invalid;
         return value;
 }
 

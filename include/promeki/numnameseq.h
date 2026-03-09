@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <vector>
 #include <promeki/namespace.h>
+#include <promeki/list.h>
 #include <promeki/numname.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -18,7 +18,7 @@ class StringList;
 // Describes a NumName sequence
 class NumNameSeq {
         public:
-                using List = std::vector<NumNameSeq>;
+                using List = promeki::List<NumNameSeq>;
 
                 // Parses a list of num name objects from the string list.
                 // Any objects that can't be num names will be left in the

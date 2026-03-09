@@ -3,7 +3,7 @@
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
  * 
- * See LICENSE file in the project root folder for license information
+ * See LICENSE file in the project root folder for license information.
  */
 
 #pragma once
@@ -25,32 +25,32 @@ PROMEKI_NAMESPACE_BEGIN
     X(FPS_2398,     "23.98",    24000,      1001)
 
 class FrameRate {
-    public:
-        using RationalType = Rational<unsigned int>;
+        public:
+                using RationalType = Rational<unsigned int>;
 
 #define X(type, string, num, den) type,
-        enum WellKnownRate {
-            FPS_NotWellKnown = 0,
-            PROMEKI_WELL_KNOWN_FRAME_RATES
-        };
+                enum WellKnownRate {
+                        FPS_NotWellKnown = 0,
+                        PROMEKI_WELL_KNOWN_FRAME_RATES
+                };
 #undef X
 
-        FrameRate() = default;
-        FrameRate(WellKnownRate rate);
-        FrameRate(const RationalType &r);
+                FrameRate() = default;
+                FrameRate(WellKnownRate rate);
+                FrameRate(const RationalType &r);
 
-        bool isValid() const { return _fps.numerator() > 0; }
-        unsigned int numerator() const { return _fps.numerator(); }
-        unsigned int denominator() const { return _fps.denominator(); }
-        double toDouble() const { return _fps.toDouble(); }
-        String toString() const { return _fps.toString(); }
+                bool isValid() const { return _fps.numerator() > 0; }
+                unsigned int numerator() const { return _fps.numerator(); }
+                unsigned int denominator() const { return _fps.denominator(); }
+                double toDouble() const { return _fps.toDouble(); }
+                String toString() const { return _fps.toString(); }
 
-        bool isWellKnownRate() const { return _rate != FPS_NotWellKnown; }
-        WellKnownRate wellKnownRate() const { return _rate; }
+                bool isWellKnownRate() const { return _rate != FPS_NotWellKnown; }
+                WellKnownRate wellKnownRate() const { return _rate; }
 
-    private:
-        RationalType    _fps;
-        WellKnownRate   _rate = FPS_NotWellKnown;
+        private:
+                RationalType    _fps;
+                WellKnownRate   _rate = FPS_NotWellKnown;
 };
 
 PROMEKI_NAMESPACE_END

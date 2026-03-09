@@ -8,8 +8,8 @@
 #pragma once
 
 #include <cstring>
-#include <vector>
 #include <promeki/namespace.h>
+#include <promeki/list.h>
 #include <promeki/sharedptr.h>
 #include <promeki/memspace.h>
 
@@ -20,7 +20,7 @@ class Buffer {
                 static size_t getPageSize();
                 static const size_t DefaultAlign;
                 
-                using List = std::vector<Buffer>;
+                using List = promeki::List<Buffer>;
 
                 Buffer() : d(SharedPtr<Data, false>::create()) { }
                 Buffer(size_t sz, size_t an = DefaultAlign, const MemSpace &ms = MemSpace::Default) :

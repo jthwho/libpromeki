@@ -61,11 +61,11 @@ template <typename T = int> class Rational {
                 }
 
                 T numerator() const {
-                    return _num;
+                        return _num;
                 }
 
                 T denominator() const {
-                    return _den;
+                        return _den;
                 }
 
                 double toDouble() const {

@@ -8,9 +8,10 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class String;
 
 class Error {
         public:
