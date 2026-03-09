@@ -359,10 +359,52 @@ std::pair<T, Error> pop(unsigned int timeoutMs = 0);
 
 ## Testing
 
-- Tests use the **doctest** framework (vendored in `thirdparty/`).
-- Test files live in `tests/` and are named after the class they test (e.g., `tests/string.cpp`).
-- Tests are compiled and run automatically during the build.
-- Each test file should include `<promeki/unittest.h>` and use `TEST_CASE` / `SUBCASE`.
+Tests use the [doctest](https://github.com/doctest/doctest) framework, vendored in `thirdparty/doctest/`.
+
+### File Layout
+
+- Test files live in `tests/` and are named after the class they test (e.g., `tests/string.cpp` for `String`).
+- Each test file includes `<doctest/doctest.h>` (not a promeki wrapper).
+- A shared `tests/doctest_main.cpp` defines the `main()` entry point with `DOCTEST_CONFIG_IMPLEMENT`. Individual test files should **not** define `main()`.
+- Tests are compiled and run automatically during the build via CTest.
+
+### Structure
+
+Use `TEST_CASE` for each class or logical grouping, and `SUBCASE` for individual behaviors:
+
+```cpp
+#include <doctest/doctest.h>
+#include <promeki/myclass.h>
+
+using namespace promeki;
+
+TEST_CASE("MyClass") {
+        SUBCASE("default construction") {
+                MyClass obj;
+                CHECK(obj.isValid());
+        }
+
+        SUBCASE("fromString") {
+                auto [result, err] = MyClass::fromString("hello");
+                CHECK(err.isOk());
+                CHECK(result.name() == "hello");
+        }
+}
+```
+
+### Assertions
+
+Prefer these doctest macros:
+
+- `CHECK(expr)` — non-fatal assertion (test continues on failure).
+- `CHECK_FALSE(expr)` — check that an expression is false.
+- `CHECK(val == doctest::Approx(expected))` — floating-point comparison.
+- `CHECK(val == doctest::Approx(expected).epsilon(0.001))` — with custom tolerance.
+- `REQUIRE(expr)` — fatal assertion (test stops on failure). Use sparingly, only when subsequent checks depend on this one passing.
+
+### Build Integration
+
+Each library (`core`, `proav`, `music`) has its own test executable (`unittest-core`, `unittest-proav`, `unittest-music`). Test executables link against their respective library and are registered with CTest. The `run-tests` custom target runs all tests as part of the normal build.
 
 ---
 

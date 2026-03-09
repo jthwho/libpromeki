@@ -12,7 +12,7 @@ instead of reinventing infrastructure.
 
 ## Library Architecture
 
-libpromeki is split into two shared libraries:
+libpromeki is split into three shared libraries:
 
 **promeki-core** — General-purpose C++ utilities with no media-specific
 dependencies.  Includes strings with copy-on-write, shared pointers,
@@ -26,8 +26,15 @@ registry, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG),
 font painting, color space conversion, codecs, and frame/video
 descriptors.
 
-You can use promeki-core on its own for non-media projects, or link
-against promeki-proav to get the full media toolkit.
+**promeki-music** — Music and MIDI utilities built on top of
+promeki-proav.  Includes MIDI note representation with named constants
+for all 128 notes and General MIDI percussion, customizable note name
+overlays, musical scales with degree-to-MIDI mapping, and a
+note-sequence parser for text-based musical notation.
+
+You can use promeki-core on its own for non-media projects, link
+against promeki-proav to get the full media toolkit, or add
+promeki-music for music and MIDI functionality.
 
 ## No Dependency Hell
 
@@ -37,7 +44,7 @@ built as static libraries with `-fPIC`, and absorbed directly into
 `libpromeki-proav.so`.  Their headers are installed under
 `promeki/thirdparty/` to avoid collisions with system versions.
 
-When you install libpromeki, you get two shared libraries and a set of
+When you install libpromeki, you get three shared libraries and a set of
 headers.  Your application links against `promeki::core` and/or
 `promeki::proav` — no chasing down system packages, no version
 mismatches, no transitive dependency surprises.
@@ -75,13 +82,14 @@ cmake --build build -j$(nproc)
 | Option | Default | Description |
 |--------|---------|-------------|
 | `PROMEKI_BUILD_PROAV` | `ON` | Build the promeki-proav media library |
+| `PROMEKI_BUILD_MUSIC` | `ON` | Build the promeki-music library (requires proav) |
 | `PROMEKI_BUILD_TESTS` | `ON` | Build unit tests |
 | `PROMEKI_BUILD_DOCS` | `OFF` | Build Doxygen API documentation |
 
-To build only the core library without the media components:
+To build only the core library without media or music components:
 
 ```sh
-cmake -B build -DPROMEKI_BUILD_PROAV=OFF
+cmake -B build -DPROMEKI_BUILD_PROAV=OFF -DPROMEKI_BUILD_MUSIC=OFF
 ```
 
 ### Running Tests
@@ -100,7 +108,7 @@ cmake --install build --prefix /opt/promeki
 ```
 
 This installs:
-- `lib/libpromeki-core.so` and `lib/libpromeki-proav.so` (versioned, with SONAME)
+- `lib/libpromeki-core.so`, `lib/libpromeki-proav.so`, and `lib/libpromeki-music.so` (versioned, with SONAME)
 - `include/promeki/` — all public headers
 - `include/promeki/thirdparty/` — bundled third-party headers
 - `lib/cmake/promeki/` — CMake package config files
@@ -118,6 +126,9 @@ target_link_libraries(myapp PRIVATE promeki::core)
 
 # For media/audio/video functionality (includes core):
 target_link_libraries(myapp PRIVATE promeki::proav)
+
+# For music/MIDI functionality (includes proav and core):
+target_link_libraries(myapp PRIVATE promeki::music)
 ```
 
 If you installed to a non-standard prefix, tell CMake where to find it:

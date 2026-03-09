@@ -17,9 +17,10 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # Build options
-option(PROMEKI_BUILD_PROAV "Build the promeki-proav library" ON)
-option(PROMEKI_BUILD_TESTS "Build unit tests" ON)
-option(PROMEKI_BUILD_DOCS  "Build documentation" OFF)
+option(PROMEKI_BUILD_PROAV  "Build the promeki-proav library"  ON)
+option(PROMEKI_BUILD_MUSIC  "Build the promeki-music library"  ON)
+option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
+option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
 
 find_package(Git QUIET REQUIRED)
 
@@ -423,6 +424,44 @@ if(PROMEKI_BUILD_PROAV)
     )
 endif()
 
+# Music Library ################################################################
+
+if(PROMEKI_BUILD_MUSIC)
+    if(NOT PROMEKI_BUILD_PROAV)
+        message(FATAL_ERROR "promeki-music requires promeki-proav (PROMEKI_BUILD_PROAV=ON)")
+    endif()
+
+    set(PROMEKI_MUSIC_HEADERS
+        include/promeki/musicalnote.h
+        include/promeki/musicalscale.h
+        include/promeki/midinote.h
+        include/promeki/midinotenames.h
+        include/promeki/notesequenceparser.h
+    )
+
+    set(PROMEKI_MUSIC_SOURCES
+        src/musicalscale.cpp
+        src/midinote.cpp
+        src/midinotenames.cpp
+        src/notesequenceparser.cpp
+    )
+
+    add_library(promeki-music SHARED ${PROMEKI_MUSIC_SOURCES})
+    add_library(promeki::music ALIAS promeki-music)
+    set_target_properties(promeki-music PROPERTIES
+        VERSION ${APP_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME promeki-music
+        EXPORT_NAME music
+    )
+    target_include_directories(promeki-music PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+    target_link_libraries(promeki-music PUBLIC promeki-proav)
+    target_compile_definitions(promeki-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+endif()
+
 # Install ######################################################################
 
 # License and attribution notices
@@ -477,6 +516,25 @@ if(PROMEKI_BUILD_PROAV)
     )
     install(EXPORT promeki-proav-targets
         FILE promeki-proav-targets.cmake
+        NAMESPACE promeki::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
+    )
+endif()
+
+# Music library and headers
+if(PROMEKI_BUILD_MUSIC)
+    install(TARGETS promeki-music
+        EXPORT promeki-music-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+    install(FILES ${PROMEKI_MUSIC_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
+    )
+    install(EXPORT promeki-music-targets
+        FILE promeki-music-targets.cmake
         NAMESPACE promeki::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
     )
@@ -547,10 +605,27 @@ if(PROMEKI_BUILD_TESTS)
         add_test(NAME unittest-proav COMMAND unittest-proav)
     endif()
 
+    if(PROMEKI_BUILD_MUSIC)
+        set(UNITTEST_MUSIC_SOURCES
+            tests/doctest_main.cpp
+            tests/midinote.cpp
+            tests/midinotenames.cpp
+            tests/musicalscale.cpp
+            tests/notesequenceparser.cpp
+        )
+        add_executable(unittest-music ${UNITTEST_MUSIC_SOURCES})
+        target_compile_definitions(unittest-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_include_directories(unittest-music PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+        target_link_libraries(unittest-music PRIVATE promeki-music)
+        add_test(NAME unittest-music COMMAND unittest-music)
+    endif()
+
     # Run tests as part of the normal build
     add_custom_target(run-tests ALL
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        DEPENDS unittest-core $<$<BOOL:${PROMEKI_BUILD_PROAV}>:unittest-proav>
+        DEPENDS unittest-core
+            $<$<BOOL:${PROMEKI_BUILD_PROAV}>:unittest-proav>
+            $<$<BOOL:${PROMEKI_BUILD_MUSIC}>:unittest-music>
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running unit tests"
     )

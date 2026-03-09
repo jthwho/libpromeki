@@ -8,4 +8,9 @@ if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/promeki-proav-targets.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/promeki-proav-targets.cmake")
 endif()
 
+# Import music targets if they were built and installed
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/promeki-music-targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/promeki-music-targets.cmake")
+endif()
+
 check_required_components(promeki)
