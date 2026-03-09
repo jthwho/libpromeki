@@ -1,25 +1,26 @@
 /**
  * @file      timecode.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/timecode.h>
+#include <promeki/logger.h>
 
 using namespace promeki;
 
-PROMEKI_TEST_BEGIN(Timecode)
+TEST_CASE("Timecode") {
         const int framesToTest = 24 * 60 * 60 * 30;
 
         auto [ tcs1, err ] = Timecode::fromString("01:02:03:04");
-        PROMEKI_TEST(err.isOk());
-        PROMEKI_TEST(tcs1 == Timecode(1, 2, 3, 4));
+        CHECK(err.isOk());
+        CHECK(tcs1 == Timecode(1, 2, 3, 4));
 
         Timecode tc1(Timecode::DF30);
         promekiInfo("TC1: %s", tc1.toString().first.cstr());
-        PROMEKI_TEST(tc1.toFrameNumber().first == 0);
+        CHECK(tc1.toFrameNumber().first == 0);
         int last = 0;
         bool fnumCorrect = true;
         for(int i = 0; i < framesToTest; i++) {
@@ -43,21 +44,10 @@ PROMEKI_TEST_BEGIN(Timecode)
                 }
                 last = fnum;
         }
-        PROMEKI_TEST(fnumCorrect);
+        CHECK(fnumCorrect);
         promekiInfo("TC1: %s", tc1.toString().first.cstr());
-        PROMEKI_TEST(tc1.toFrameNumber().first == framesToTest);
-        /*
-        for(int i = 0; i < 60; i++) {
-                tc1--;
-                promekiInfo("%s", tc1.toString().cstr());
-        }
-        */
+        CHECK(tc1.toFrameNumber().first == framesToTest);
         for(int i = 0; i < framesToTest; i++) tc1--;
         promekiInfo("TC1: %s", tc1.toString().first.cstr());
-        PROMEKI_TEST(tc1.toFrameNumber().first == 0);
-
-
-
-PROMEKI_TEST_END()
-
-
+        CHECK(tc1.toFrameNumber().first == 0);
+}

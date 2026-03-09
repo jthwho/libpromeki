@@ -119,7 +119,6 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/timecode.h
     include/promeki/timestamp.h
     include/promeki/tsqueue.h
-    include/promeki/unittest.h
     include/promeki/util.h
     include/promeki/uuid.h
     include/promeki/variant.h
@@ -136,7 +135,6 @@ set(PROMEKI_CORE_SOURCES
     src/array.cpp
     src/matrix.cpp
     src/matrix3x3.cpp
-    src/unittest.cpp
     src/list.cpp
     src/string.cpp
     src/stringlist.cpp
@@ -184,6 +182,11 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/thirdparty-include/promeki/thirdparty)
 file(CREATE_LINK
     ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include/nlohmann
     ${CMAKE_BINARY_DIR}/thirdparty-include/promeki/thirdparty/nlohmann
+    SYMBOLIC
+)
+file(CREATE_LINK
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
+    ${CMAKE_BINARY_DIR}/thirdparty-include/promeki/thirdparty/doctest
     SYMBOLIC
 )
 target_include_directories(promeki-core PUBLIC
@@ -427,6 +430,9 @@ install(FILES ${PROMEKI_CORE_HEADERS}
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include/nlohmann
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
 )
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
+)
 
 # Export core targets
 install(EXPORT promeki-core-targets
@@ -483,7 +489,7 @@ install(FILES
 
 if(PROMEKI_BUILD_TESTS)
     set(UNITTEST_SOURCES
-        tests/unittest.cpp
+        tests/doctest_main.cpp
         tests/mempool.cpp
         tests/string.cpp
         tests/point.cpp
@@ -501,12 +507,13 @@ if(PROMEKI_BUILD_TESTS)
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
     target_compile_definitions(unittest-core PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+    target_include_directories(unittest-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
     target_link_libraries(unittest-core PRIVATE promeki-core)
     add_test(NAME unittest-core COMMAND unittest-core)
 
     if(PROMEKI_BUILD_PROAV)
         set(UNITTEST_PROAV_SOURCES
-            tests/unittest.cpp
+            tests/doctest_main.cpp
             tests/audio.cpp
             tests/imagedesc.cpp
             tests/audiodesc.cpp
@@ -515,9 +522,18 @@ if(PROMEKI_BUILD_TESTS)
         )
         add_executable(unittest-proav ${UNITTEST_PROAV_SOURCES})
         target_compile_definitions(unittest-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_include_directories(unittest-proav PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-proav PRIVATE promeki-proav)
         add_test(NAME unittest-proav COMMAND unittest-proav)
     endif()
+
+    # Run tests as part of the normal build
+    add_custom_target(run-tests ALL
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+        DEPENDS unittest-core $<$<BOOL:${PROMEKI_BUILD_PROAV}>:unittest-proav>
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running unit tests"
+    )
 endif()
 
 # Documentation ################################################################

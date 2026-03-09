@@ -1,22 +1,23 @@
 /**
  * @file      audio.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/audio.h>
 #include <promeki/audiofile.h>
 #include <promeki/audiogen.h>
 #include <promeki/rational.h>
 #include <promeki/uuid.h>
+#include <promeki/logger.h>
 
 using namespace promeki;
 
 PROMEKI_DEBUG(AudioTest);
 
-PROMEKI_TEST_BEGIN(Audio)
+TEST_CASE("Audio") {
         Error err;
         AudioDesc desc(48000, 2);
         desc.metadata().set(Metadata::Description, "Testing Audio File");
@@ -28,16 +29,16 @@ PROMEKI_TEST_BEGIN(Audio)
         desc.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF30, 10, 30, 00, 00));
         desc.metadata().set(Metadata::FrameRate, Rational(30000, 1001));
 
-        PROMEKI_TEST(desc.isValid());
-        PROMEKI_TEST(desc.isNative());
+        CHECK(desc.isValid());
+        CHECK(desc.isNative());
         Logger::defaultLogger().log(Logger::Info, __FILE__, __LINE__, desc.metadata().dump());
         AudioGen gen(desc);
-        
+
         AudioFile file = AudioFile::createWriter("test.wav");
-        PROMEKI_TEST(file.isValid());
+        REQUIRE(file.isValid());
         file.setDesc(desc);
         err = file.open();
-        PROMEKI_TEST(err.isOk());
+        REQUIRE(err.isOk());
         for(int i = 0; i < 10; i++) {
                 if(i % 2) {
                         gen.setConfig(0, { AudioGen::Sine, 1000.0, 0.3, 0.0, 0.5 });
@@ -47,10 +48,9 @@ PROMEKI_TEST_BEGIN(Audio)
                         gen.setConfig(1, { AudioGen::Sine, 750.0, 0.3, 0.0, 0.5 });
                 }
                 Audio audio = gen.generate(4800);
-                PROMEKI_TEST(audio.isValid());
+                CHECK(audio.isValid());
                 err = file.write(audio);
-                PROMEKI_TEST(err.isOk());
+                CHECK(err.isOk());
         }
 
-PROMEKI_TEST_END()
-
+}

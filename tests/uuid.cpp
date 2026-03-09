@@ -1,16 +1,17 @@
 /**
  * @file      uuid.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/uuid.h>
+#include <promeki/logger.h>
 
 using namespace promeki;
 
-PROMEKI_TEST_BEGIN(UUID)
+TEST_CASE("UUID") {
         UUID v1;
         UUID v2 = UUID::generate();
         UUID v3("94eb2454-5116-4814-889f-7eb9bcb58bf1");
@@ -26,14 +27,11 @@ PROMEKI_TEST_BEGIN(UUID)
         promekiInfo("v4: %s", v4.toString().cstr());
         promekiInfo("v5: %s", v5.toString().cstr());
 
-        PROMEKI_TEST(!v1.isValid());
-        PROMEKI_TEST(v2.isValid());
-        PROMEKI_TEST(v3.isValid());
-        PROMEKI_TEST(v4.isValid());
-        PROMEKI_TEST(!v5.isValid());
-        PROMEKI_TEST(v3 == v4);
-        PROMEKI_TEST(v6.toString() == u1);
-
-PROMEKI_TEST_END()
-
-
+        CHECK(!v1.isValid());
+        CHECK(v2.isValid());
+        CHECK(v3.isValid());
+        CHECK(v4.isValid());
+        CHECK(!v5.isValid());
+        CHECK(v3 == v4);
+        CHECK(v6.toString() == u1);
+}

@@ -6,7 +6,7 @@
  * See LICENSE file in the project root folder for license information
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/videodesc.h>
 
 using namespace promeki;
@@ -15,85 +15,85 @@ using namespace promeki;
 // Default construction
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_Default)
+TEST_CASE("VideoDesc_Default") {
     VideoDesc vd;
-    PROMEKI_TEST(!vd.isValid());
-    PROMEKI_TEST(vd.referenceCount() == 1);
-PROMEKI_TEST_END()
+    CHECK(!vd.isValid());
+    CHECK(vd.referenceCount() == 1);
+}
 
 // ============================================================================
 // Set frame rate
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_SetFrameRate)
+TEST_CASE("VideoDesc_SetFrameRate") {
     VideoDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_2997));
-    PROMEKI_TEST(vd.frameRate().isValid());
-    PROMEKI_TEST(vd.frameRate().numerator() == 30000);
-    PROMEKI_TEST(vd.frameRate().denominator() == 1001);
-PROMEKI_TEST_END()
+    CHECK(vd.frameRate().isValid());
+    CHECK(vd.frameRate().numerator() == 30000);
+    CHECK(vd.frameRate().denominator() == 1001);
+}
 
 // ============================================================================
 // Valid with image
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_ValidWithImage)
+TEST_CASE("VideoDesc_ValidWithImage") {
     VideoDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_24));
-    PROMEKI_TEST(!vd.isValid());
+    CHECK(!vd.isValid());
 
     vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::RGBA8));
-    PROMEKI_TEST(vd.isValid());
-    PROMEKI_TEST(vd.imageList().size() == 1);
-PROMEKI_TEST_END()
+    CHECK(vd.isValid());
+    CHECK(vd.imageList().size() == 1);
+}
 
 // ============================================================================
 // Valid with audio
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_ValidWithAudio)
+TEST_CASE("VideoDesc_ValidWithAudio") {
     VideoDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_25));
     vd.audioList().pushToBack(AudioDesc(48000.0f, 2));
-    PROMEKI_TEST(vd.isValid());
-    PROMEKI_TEST(vd.audioList().size() == 1);
-PROMEKI_TEST_END()
+    CHECK(vd.isValid());
+    CHECK(vd.audioList().size() == 1);
+}
 
 // ============================================================================
 // Copy-on-write
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_CopyOnWrite)
+TEST_CASE("VideoDesc_CopyOnWrite") {
     VideoDesc v1;
     v1.setFrameRate(FrameRate(FrameRate::FPS_24));
     v1.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::RGBA8));
 
     VideoDesc v2 = v1;
-    PROMEKI_TEST(v1.referenceCount() == 2);
+    CHECK(v1.referenceCount() == 2);
 
     v2.setFrameRate(FrameRate(FrameRate::FPS_30));
-    PROMEKI_TEST(v1.referenceCount() == 1);
-    PROMEKI_TEST(v2.referenceCount() == 1);
-    PROMEKI_TEST(v1.frameRate().numerator() == 24);
-    PROMEKI_TEST(v2.frameRate().numerator() == 30);
-PROMEKI_TEST_END()
+    CHECK(v1.referenceCount() == 1);
+    CHECK(v2.referenceCount() == 1);
+    CHECK(v1.frameRate().numerator() == 24);
+    CHECK(v2.frameRate().numerator() == 30);
+}
 
 // ============================================================================
 // Metadata
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_Metadata)
+TEST_CASE("VideoDesc_Metadata") {
     VideoDesc vd;
-    PROMEKI_TEST(vd.metadata().isEmpty());
+    CHECK(vd.metadata().isEmpty());
     vd.metadata().set(Metadata::Title, String("Test Video"));
-    PROMEKI_TEST(!vd.metadata().isEmpty());
-PROMEKI_TEST_END()
+    CHECK(!vd.metadata().isEmpty());
+}
 
 // ============================================================================
 // Multiple images and audio
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(VideoDesc_MultipleStreams)
+TEST_CASE("VideoDesc_MultipleStreams") {
     VideoDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_2398));
     vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::RGBA8));
@@ -101,7 +101,7 @@ PROMEKI_TEST_BEGIN(VideoDesc_MultipleStreams)
     vd.audioList().pushToBack(AudioDesc(48000.0f, 2));
     vd.audioList().pushToBack(AudioDesc(48000.0f, 8));
 
-    PROMEKI_TEST(vd.isValid());
-    PROMEKI_TEST(vd.imageList().size() == 2);
-    PROMEKI_TEST(vd.audioList().size() == 2);
-PROMEKI_TEST_END()
+    CHECK(vd.isValid());
+    CHECK(vd.imageList().size() == 2);
+    CHECK(vd.audioList().size() == 2);
+}

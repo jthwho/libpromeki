@@ -41,7 +41,7 @@ class String {
                 using RevIterator = std::string::reverse_iterator;
                 using ConstRevIterator = std::string::const_reverse_iterator;
 
-                static const size_t npos = std::string::npos;
+                static constexpr size_t npos = std::string::npos;
 
                 static constexpr const char *WhitespaceChars = " \t\n\r\f\v";
 

@@ -6,7 +6,7 @@
  * See LICENSE file in the project root folder for license information
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/json.h>
 
 using namespace promeki;
@@ -15,20 +15,20 @@ using namespace promeki;
 // JsonObject basic
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_Basic)
+TEST_CASE("JsonObject_Basic") {
     JsonObject obj;
-    PROMEKI_TEST(!obj.isValid());
-    PROMEKI_TEST(obj.size() == 0);
-    PROMEKI_TEST(obj.referenceCount() == 1);
+    CHECK(!obj.isValid());
+    CHECK(obj.size() == 0);
+    CHECK(obj.referenceCount() == 1);
 
     obj.set("name", "test");
-    PROMEKI_TEST(obj.isValid());
-    PROMEKI_TEST(obj.size() == 1);
-    PROMEKI_TEST(obj.contains("name"));
-    PROMEKI_TEST(obj.getString("name") == "test");
-PROMEKI_TEST_END()
+    CHECK(obj.isValid());
+    CHECK(obj.size() == 1);
+    CHECK(obj.contains("name"));
+    CHECK(obj.getString("name") == "test");
+}
 
-PROMEKI_TEST_BEGIN(JsonObject_Types)
+TEST_CASE("JsonObject_Types") {
     JsonObject obj;
     obj.set("bool", true);
     obj.set("int", 42);
@@ -36,127 +36,127 @@ PROMEKI_TEST_BEGIN(JsonObject_Types)
     obj.set("string", "hello");
     obj.setNull("null");
 
-    PROMEKI_TEST(obj.getBool("bool") == true);
-    PROMEKI_TEST(obj.getInt("int") == 42);
-    PROMEKI_TEST(obj.getDouble("double") > 3.13);
-    PROMEKI_TEST(obj.getDouble("double") < 3.15);
-    PROMEKI_TEST(obj.getString("string") == "hello");
-    PROMEKI_TEST(obj.valueIsNull("null"));
-    PROMEKI_TEST(!obj.valueIsNull("string"));
-PROMEKI_TEST_END()
+    CHECK(obj.getBool("bool") == true);
+    CHECK(obj.getInt("int") == 42);
+    CHECK(obj.getDouble("double") > 3.13);
+    CHECK(obj.getDouble("double") < 3.15);
+    CHECK(obj.getString("string") == "hello");
+    CHECK(obj.valueIsNull("null"));
+    CHECK(!obj.valueIsNull("string"));
+}
 
 // ============================================================================
 // JsonObject parse
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_Parse)
+TEST_CASE("JsonObject_Parse") {
     bool ok = false;
     JsonObject obj = JsonObject::parse("{\"key\": 42}", &ok);
-    PROMEKI_TEST(ok);
-    PROMEKI_TEST(obj.getInt("key") == 42);
+    CHECK(ok);
+    CHECK(obj.getInt("key") == 42);
 
     JsonObject bad = JsonObject::parse("not json", &ok);
-    PROMEKI_TEST(!ok);
-    PROMEKI_TEST(!bad.isValid());
-PROMEKI_TEST_END()
+    CHECK(!ok);
+    CHECK(!bad.isValid());
+}
 
 // ============================================================================
 // JsonObject nested
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_Nested)
+TEST_CASE("JsonObject_Nested") {
     JsonObject inner;
     inner.set("value", 99);
 
     JsonObject outer;
     outer.set("inner", inner);
-    PROMEKI_TEST(outer.valueIsObject("inner"));
+    CHECK(outer.valueIsObject("inner"));
 
     bool ok = false;
     JsonObject got = outer.getObject("inner", &ok);
-    PROMEKI_TEST(ok);
-    PROMEKI_TEST(got.getInt("value") == 99);
-PROMEKI_TEST_END()
+    CHECK(ok);
+    CHECK(got.getInt("value") == 99);
+}
 
 // ============================================================================
 // JsonObject COW
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_CopyOnWrite)
+TEST_CASE("JsonObject_CopyOnWrite") {
     JsonObject obj;
     obj.set("key", "original");
 
     JsonObject copy = obj;
-    PROMEKI_TEST(obj.referenceCount() == 2);
+    CHECK(obj.referenceCount() == 2);
 
     copy.set("key", "modified");
-    PROMEKI_TEST(obj.referenceCount() == 1);
-    PROMEKI_TEST(copy.referenceCount() == 1);
-    PROMEKI_TEST(obj.getString("key") == "original");
-    PROMEKI_TEST(copy.getString("key") == "modified");
-PROMEKI_TEST_END()
+    CHECK(obj.referenceCount() == 1);
+    CHECK(copy.referenceCount() == 1);
+    CHECK(obj.getString("key") == "original");
+    CHECK(copy.getString("key") == "modified");
+}
 
-PROMEKI_TEST_BEGIN(JsonObject_CopyOnWriteAddKey)
+TEST_CASE("JsonObject_CopyOnWriteAddKey") {
     JsonObject obj;
     obj.set("a", 1);
 
     JsonObject copy = obj;
-    PROMEKI_TEST(obj.referenceCount() == 2);
+    CHECK(obj.referenceCount() == 2);
 
     copy.set("b", 2);
-    PROMEKI_TEST(obj.referenceCount() == 1);
-    PROMEKI_TEST(obj.size() == 1);
-    PROMEKI_TEST(copy.size() == 2);
-PROMEKI_TEST_END()
+    CHECK(obj.referenceCount() == 1);
+    CHECK(obj.size() == 1);
+    CHECK(copy.size() == 2);
+}
 
 // ============================================================================
 // JsonObject toString
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_ToString)
+TEST_CASE("JsonObject_ToString") {
     JsonObject obj;
     obj.set("key", "value");
     String s = obj.toString();
-    PROMEKI_TEST(s.size() > 0);
-    PROMEKI_TEST(s.find('{') != String::npos);
-PROMEKI_TEST_END()
+    CHECK(s.size() > 0);
+    CHECK(s.find('{') != String::npos);
+}
 
 // ============================================================================
 // JsonObject clear
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_Clear)
+TEST_CASE("JsonObject_Clear") {
     JsonObject obj;
     obj.set("a", 1);
     obj.set("b", 2);
-    PROMEKI_TEST(obj.size() == 2);
+    CHECK(obj.size() == 2);
 
     obj.clear();
-    PROMEKI_TEST(obj.size() == 0);
-PROMEKI_TEST_END()
+    CHECK(obj.size() == 0);
+}
 
 // ============================================================================
 // JsonObject missing keys
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_MissingKeys)
+TEST_CASE("JsonObject_MissingKeys") {
     JsonObject obj;
     bool ok = true;
     obj.getInt("missing", &ok);
-    PROMEKI_TEST(!ok);
+    CHECK(!ok);
 
     ok = true;
     obj.getString("missing", &ok);
-    PROMEKI_TEST(!ok);
+    CHECK(!ok);
 
-    PROMEKI_TEST(!obj.contains("missing"));
-PROMEKI_TEST_END()
+    CHECK(!obj.contains("missing"));
+}
 
 // ============================================================================
 // JsonObject forEach
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_ForEach)
+TEST_CASE("JsonObject_ForEach") {
     JsonObject obj;
     obj.set("a", 1);
     obj.set("b", 2);
@@ -166,98 +166,98 @@ PROMEKI_TEST_BEGIN(JsonObject_ForEach)
     obj.forEach([&count](const String &key, const Variant &val) {
         count++;
     });
-    PROMEKI_TEST(count == 3);
-PROMEKI_TEST_END()
+    CHECK(count == 3);
+}
 
 // ============================================================================
 // JsonArray basic
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_Basic)
+TEST_CASE("JsonArray_Basic") {
     JsonArray arr;
-    PROMEKI_TEST(!arr.isValid());
-    PROMEKI_TEST(arr.size() == 0);
-    PROMEKI_TEST(arr.referenceCount() == 1);
+    CHECK(!arr.isValid());
+    CHECK(arr.size() == 0);
+    CHECK(arr.referenceCount() == 1);
 
     arr.add(42);
     arr.add("hello");
     arr.add(true);
-    PROMEKI_TEST(arr.isValid());
-    PROMEKI_TEST(arr.size() == 3);
-    PROMEKI_TEST(arr.getInt(0) == 42);
-    PROMEKI_TEST(arr.getString(1) == "hello");
-    PROMEKI_TEST(arr.getBool(2) == true);
-PROMEKI_TEST_END()
+    CHECK(arr.isValid());
+    CHECK(arr.size() == 3);
+    CHECK(arr.getInt(0) == 42);
+    CHECK(arr.getString(1) == "hello");
+    CHECK(arr.getBool(2) == true);
+}
 
-PROMEKI_TEST_BEGIN(JsonArray_Parse)
+TEST_CASE("JsonArray_Parse") {
     bool ok = false;
     JsonArray arr = JsonArray::parse("[1, 2, 3]", &ok);
-    PROMEKI_TEST(ok);
-    PROMEKI_TEST(arr.size() == 3);
-    PROMEKI_TEST(arr.getInt(0) == 1);
-    PROMEKI_TEST(arr.getInt(2) == 3);
+    CHECK(ok);
+    CHECK(arr.size() == 3);
+    CHECK(arr.getInt(0) == 1);
+    CHECK(arr.getInt(2) == 3);
 
     JsonArray bad = JsonArray::parse("not json", &ok);
-    PROMEKI_TEST(!ok);
-PROMEKI_TEST_END()
+    CHECK(!ok);
+}
 
 // ============================================================================
 // JsonArray COW
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_CopyOnWrite)
+TEST_CASE("JsonArray_CopyOnWrite") {
     JsonArray arr;
     arr.add(1);
     arr.add(2);
 
     JsonArray copy = arr;
-    PROMEKI_TEST(arr.referenceCount() == 2);
+    CHECK(arr.referenceCount() == 2);
 
     copy.add(3);
-    PROMEKI_TEST(arr.referenceCount() == 1);
-    PROMEKI_TEST(arr.size() == 2);
-    PROMEKI_TEST(copy.size() == 3);
-PROMEKI_TEST_END()
+    CHECK(arr.referenceCount() == 1);
+    CHECK(arr.size() == 2);
+    CHECK(copy.size() == 3);
+}
 
 // ============================================================================
 // JsonArray nested
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_Nested)
+TEST_CASE("JsonArray_Nested") {
     JsonObject obj;
     obj.set("x", 10);
 
     JsonArray arr;
     arr.add(obj);
-    PROMEKI_TEST(arr.valueIsObject(0));
+    CHECK(arr.valueIsObject(0));
 
     bool ok = false;
     JsonObject got = arr.getObject(0, &ok);
-    PROMEKI_TEST(ok);
-    PROMEKI_TEST(got.getInt("x") == 10);
-PROMEKI_TEST_END()
+    CHECK(ok);
+    CHECK(got.getInt("x") == 10);
+}
 
-PROMEKI_TEST_BEGIN(JsonArray_NestedArray)
+TEST_CASE("JsonArray_NestedArray") {
     JsonArray inner;
     inner.add(1);
     inner.add(2);
 
     JsonArray outer;
     outer.add(inner);
-    PROMEKI_TEST(outer.valueIsArray(0));
+    CHECK(outer.valueIsArray(0));
 
     bool ok = false;
     JsonArray got = outer.getArray(0, &ok);
-    PROMEKI_TEST(ok);
-    PROMEKI_TEST(got.size() == 2);
-    PROMEKI_TEST(got.getInt(0) == 1);
-PROMEKI_TEST_END()
+    CHECK(ok);
+    CHECK(got.size() == 2);
+    CHECK(got.getInt(0) == 1);
+}
 
 // ============================================================================
 // JsonArray forEach
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_ForEach)
+TEST_CASE("JsonArray_ForEach") {
     JsonArray arr;
     arr.add(10);
     arr.add(20);
@@ -267,68 +267,68 @@ PROMEKI_TEST_BEGIN(JsonArray_ForEach)
     arr.forEach([&sum](const Variant &val) {
         sum += val.get<int32_t>();
     });
-    PROMEKI_TEST(sum == 60);
-PROMEKI_TEST_END()
+    CHECK(sum == 60);
+}
 
 // ============================================================================
 // JsonObject with array
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonObject_WithArray)
+TEST_CASE("JsonObject_WithArray") {
     JsonArray arr;
     arr.add(1);
     arr.add(2);
 
     JsonObject obj;
     obj.set("list", arr);
-    PROMEKI_TEST(obj.valueIsArray("list"));
+    CHECK(obj.valueIsArray("list"));
 
     bool ok = false;
     JsonArray got = obj.getArray("list", &ok);
-    PROMEKI_TEST(ok);
-    PROMEKI_TEST(got.size() == 2);
-PROMEKI_TEST_END()
+    CHECK(ok);
+    CHECK(got.size() == 2);
+}
 
 // ============================================================================
 // JsonArray bounds
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_OutOfBounds)
+TEST_CASE("JsonArray_OutOfBounds") {
     JsonArray arr;
     arr.add(1);
 
     bool ok = true;
     arr.getInt(5, &ok);
-    PROMEKI_TEST(!ok);
+    CHECK(!ok);
 
     ok = true;
     arr.getInt(-1, &ok);
-    PROMEKI_TEST(!ok);
-PROMEKI_TEST_END()
+    CHECK(!ok);
+}
 
 // ============================================================================
 // JsonArray clear
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_Clear)
+TEST_CASE("JsonArray_Clear") {
     JsonArray arr;
     arr.add(1);
     arr.add(2);
-    PROMEKI_TEST(arr.size() == 2);
+    CHECK(arr.size() == 2);
 
     arr.clear();
-    PROMEKI_TEST(arr.size() == 0);
-PROMEKI_TEST_END()
+    CHECK(arr.size() == 0);
+}
 
 // ============================================================================
 // JsonArray null
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(JsonArray_Null)
+TEST_CASE("JsonArray_Null") {
     JsonArray arr;
     arr.addNull();
     arr.add(42);
-    PROMEKI_TEST(arr.size() == 2);
-    PROMEKI_TEST(arr.valueIsNull(0));
-    PROMEKI_TEST(!arr.valueIsNull(1));
-PROMEKI_TEST_END()
+    CHECK(arr.size() == 2);
+    CHECK(arr.valueIsNull(0));
+    CHECK(!arr.valueIsNull(1));
+}

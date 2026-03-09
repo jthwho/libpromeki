@@ -1,20 +1,21 @@
 /**
  * @file      objectbase.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/objectbase.h>
 #include <promeki/signal.h>
 #include <promeki/slot.h>
+#include <promeki/logger.h>
 #include "test.h"
 
 using namespace promeki;
 
-PROMEKI_TEST_BEGIN(ObjectBase)
-        
+TEST_CASE("ObjectBase") {
+
         TestOne::metaInfo().dumpToLog();
         TestTwo::metaInfo().dumpToLog();
 
@@ -26,4 +27,4 @@ PROMEKI_TEST_BEGIN(ObjectBase)
         TestOne::connect(&one.somethingHappenedSignal, &two.handleSomethingSlot);
         one.makeSomethingHappen();
 
-PROMEKI_TEST_END()
+}

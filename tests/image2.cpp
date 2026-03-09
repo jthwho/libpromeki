@@ -6,7 +6,7 @@
  * See LICENSE file in the project root folder for license information
  */
 
-#include <promeki/unittest.h>
+#include <doctest/doctest.h>
 #include <promeki/image.h>
 
 using namespace promeki;
@@ -15,90 +15,90 @@ using namespace promeki;
 // Default construction
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_Default)
+TEST_CASE("Image_Default") {
     Image img;
-    PROMEKI_TEST(!img.isValid());
-    PROMEKI_TEST(img.referenceCount() == 1);
-PROMEKI_TEST_END()
+    CHECK(!img.isValid());
+    CHECK(img.referenceCount() == 1);
+}
 
 // ============================================================================
 // Construction with desc
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_Construct)
+TEST_CASE("Image_Construct") {
     Image img(1920, 1080, PixelFormat::RGBA8);
-    PROMEKI_TEST(img.isValid());
-    PROMEKI_TEST(img.width() == 1920);
-    PROMEKI_TEST(img.height() == 1080);
-    PROMEKI_TEST(img.pixelFormatID() == PixelFormat::RGBA8);
-    PROMEKI_TEST(img.referenceCount() == 1);
-PROMEKI_TEST_END()
+    CHECK(img.isValid());
+    CHECK(img.width() == 1920);
+    CHECK(img.height() == 1080);
+    CHECK(img.pixelFormatID() == PixelFormat::RGBA8);
+    CHECK(img.referenceCount() == 1);
+}
 
-PROMEKI_TEST_BEGIN(Image_ConstructFromDesc)
+TEST_CASE("Image_ConstructFromDesc") {
     ImageDesc desc(1920, 1080, PixelFormat::RGB8);
     Image img(desc);
-    PROMEKI_TEST(img.isValid());
-    PROMEKI_TEST(img.width() == 1920);
-    PROMEKI_TEST(img.pixelFormatID() == PixelFormat::RGB8);
-PROMEKI_TEST_END()
+    CHECK(img.isValid());
+    CHECK(img.width() == 1920);
+    CHECK(img.pixelFormatID() == PixelFormat::RGB8);
+}
 
 // ============================================================================
 // Fill
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_Fill)
+TEST_CASE("Image_Fill") {
     Image img(64, 64, PixelFormat::RGBA8);
-    PROMEKI_TEST(img.isValid());
-    PROMEKI_TEST(img.fill(0xAB));
+    REQUIRE(img.isValid());
+    CHECK(img.fill(0xAB));
 
     const uint8_t *ptr = static_cast<const uint8_t *>(img.data());
-    PROMEKI_TEST(ptr[0] == 0xAB);
-    PROMEKI_TEST(ptr[1] == 0xAB);
-PROMEKI_TEST_END()
+    CHECK(ptr[0] == 0xAB);
+    CHECK(ptr[1] == 0xAB);
+}
 
 // ============================================================================
 // Plane access
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_Plane)
+TEST_CASE("Image_Plane") {
     Image img(64, 64, PixelFormat::RGBA8);
-    PROMEKI_TEST(img.isValid());
+    REQUIRE(img.isValid());
     Buffer p = img.plane(0);
-    PROMEKI_TEST(p.isValid());
-    PROMEKI_TEST(p.data() != nullptr);
-PROMEKI_TEST_END()
+    CHECK(p.isValid());
+    CHECK(p.data() != nullptr);
+}
 
 // ============================================================================
 // Shared copy (COW)
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_SharedCopy)
+TEST_CASE("Image_SharedCopy") {
     Image img1(64, 64, PixelFormat::RGBA8);
     Image img2 = img1;
-    PROMEKI_TEST(img1.referenceCount() == 2);
-    PROMEKI_TEST(img2.referenceCount() == 2);
-    PROMEKI_TEST(img1.width() == img2.width());
-    PROMEKI_TEST(img1.height() == img2.height());
-PROMEKI_TEST_END()
+    CHECK(img1.referenceCount() == 2);
+    CHECK(img2.referenceCount() == 2);
+    CHECK(img1.width() == img2.width());
+    CHECK(img1.height() == img2.height());
+}
 
 // ============================================================================
 // Metadata
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_Metadata)
+TEST_CASE("Image_Metadata") {
     Image img(64, 64, PixelFormat::RGBA8);
-    PROMEKI_TEST(img.metadata().isEmpty());
+    CHECK(img.metadata().isEmpty());
 
     img.metadata().set(Metadata::Title, String("Test Image"));
-    PROMEKI_TEST(!img.metadata().isEmpty());
-    PROMEKI_TEST(img.metadata().get(Metadata::Title).get<String>() == "Test Image");
-PROMEKI_TEST_END()
+    CHECK(!img.metadata().isEmpty());
+    CHECK(img.metadata().get(Metadata::Title).get<String>() == "Test Image");
+}
 
 // ============================================================================
 // Line stride
 // ============================================================================
 
-PROMEKI_TEST_BEGIN(Image_LineStride)
+TEST_CASE("Image_LineStride") {
     Image img(1920, 1080, PixelFormat::RGBA8);
-    PROMEKI_TEST(img.lineStride() == 1920 * 4);
-PROMEKI_TEST_END()
+    CHECK(img.lineStride() == 1920 * 4);
+}
