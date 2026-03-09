@@ -1,25 +1,9 @@
-/*****************************************************************************
- * metadata.h
- * April 30, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      metadata.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
@@ -28,6 +12,7 @@
 #include <promeki/variant.h>
 #include <promeki/util.h>
 #include <promeki/json.h>
+#include <promeki/sharedptr.h>
 
 #define PROMEKI_ENUM_METADATA_ID \
         X(Invalid, std::monostate) \
@@ -70,19 +55,21 @@ class Metadata {
                 static ID stringToID(const String &val);
                 static Metadata fromJson(const JsonObject &json, bool *ok = nullptr);
 
+                Metadata() : d(SharedPtr<Data>::create()) {}
+
                 template <typename T> void set(ID id, const T &value) {
-                        d[id] = Variant(value);
+                        d.modify()->map[id] = Variant(value);
                         return;
                 }
-                const Variant &get(ID id) const { return d.at(id); }
-                bool contains(ID id) const { return d.find(id) != d.end(); }
-                void remove(ID id) { d.erase(id); return; }
-                void clear() { d.clear(); return; }
-                size_t size() const { return d.size(); }
-                bool isEmpty() const { return d.size() == 0; }
+                const Variant &get(ID id) const { return d->map.at(id); }
+                bool contains(ID id) const { return d->map.find(id) != d->map.end(); }
+                void remove(ID id) { d.modify()->map.erase(id); return; }
+                void clear() { d.modify()->map.clear(); return; }
+                size_t size() const { return d->map.size(); }
+                bool isEmpty() const { return d->map.size() == 0; }
 
                 template <typename Func> void forEach(Func &&func) const {
-                        for(const auto &[id, value] : d) {
+                        for(const auto &[id, value] : d->map) {
                                 func(id, value);
                         }
                         return;
@@ -92,15 +79,24 @@ class Metadata {
 
                 JsonObject toJson() const {
                     JsonObject ret;
-                    for(const auto &[id, value] : d) {
+                    for(const auto &[id, value] : d->map) {
                         ret.setFromVariant(idToString(id), value);
                     }
                     return ret;
                 }
 
+                int referenceCount() const { return d.referenceCount(); }
+
         private:
-                std::map<ID, Variant> d;
+                class Data {
+                        PROMEKI_SHARED_FINAL(Data)
+                        public:
+                                std::map<ID, Variant> map;
+                                Data() = default;
+                                Data(const Data &o) = default;
+                };
+
+                SharedPtr<Data> d;
 };
 
 PROMEKI_NAMESPACE_END
-

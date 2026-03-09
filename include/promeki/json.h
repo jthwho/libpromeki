@@ -2,266 +2,319 @@
  * @file      json.h
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information
  */
 
 #pragma once
 
+#include <sstream>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/variant.h>
-#include <Poco/JSON/Object.h>
-#include <Poco/JSON/Array.h>
-#include <Poco/JSON/Parser.h>
-#include <Poco/Dynamic/Var.h>
+#include <promeki/sharedptr.h>
+#include <promeki/thirdparty/nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
 
-template <typename PocoType, typename PocoPtr, typename KeyType>
-class JsonInterface {
-    public:
-        static PocoPtr parse(const String &str, bool *ok = nullptr) {
-            Poco::JSON::Parser parser;
-            auto result = parser.parse(str.stds());
-            return result.extract<PocoPtr>();
-        }
+class JsonArray;
 
-        JsonInterface() : d(new PocoType()) {}
-        JsonInterface(const PocoPtr &obj) : d(obj == nullptr ? new PocoType() : obj) {}
-
-        operator PocoPtr() const { return d; }
-
-        int size() const { return d->size(); }
-        bool isValid() const { return size() > 0; }
-
-        bool valueIsNull(const KeyType &key) const { return d->isNull(key); }
-        bool valueIsObject(const KeyType &key) const { return d->isObject(key); }
-        bool valueIsArray(const KeyType &key) const { return d->isArray(key); }
-
-        bool contains(const KeyType &key) const { return d->has(key); }
-
-        bool getBool(const KeyType &key, bool *ok = nullptr) const { return get<bool>(key, ok); }
-        int64_t getInt(const KeyType &key, bool *ok = nullptr) const { return get<int64_t>(key, ok); }
-        uint64_t getUInt(const KeyType &key, bool *ok = nullptr) const { return get<uint64_t>(key, ok); }
-        double getDouble(const KeyType &key, bool *ok = nullptr) const { return get<double>(key, ok); }
-        String getString(const KeyType &key, bool *ok = nullptr) const { return get<std::string>(key, ok); }
-
-        Poco::JSON::Object::Ptr getObject(const KeyType &key, bool *ok = nullptr) const { 
-            Poco::JSON::Object::Ptr ret = d->getObject(key); 
-            if(ok != nullptr) *ok = (ret != nullptr);
-            return ret;
-        }
-
-        Poco::JSON::Array::Ptr getArray(const KeyType &key, bool *ok = nullptr) const {
-            Poco::JSON::Array::Ptr ret = d->getArray(key);
-            if(ok != nullptr) *ok = (ret != nullptr);
-            return ret;
-        }
- 
-        String toString(unsigned int indent = 0) const {
-            std::stringstream ss;
-            d->stringify(ss, indent);
-            return ss.str();
-        }
-
-        void clear() { d->clear(); }
-
-        void setNull(const KeyType &key) { d->set(key, Poco::Dynamic::Var()); }
-        void set(const KeyType &key, const Poco::JSON::Object::Ptr &val) { d->set(key, val); }
-        void set(const KeyType &key, const Poco::JSON::Array::Ptr &val) { d->set(key, val); }
-        void set(const KeyType &key, int val) { d->set(key, val); }
-        void set(const KeyType &key, unsigned int val) { d->set(key, val); }
-        void set(const KeyType &key, float val) { d->set(key, val); }
-        void set(const KeyType &key, double val) { d->set(key, val); }
-        void set(const KeyType &key, const char *val) { d->set(key, std::string(val)); }
-        void set(const KeyType &key, const String &val) { d->set(key, val.stds()); }
-        void set(const KeyType &key, const UUID &val) { d->set(key, val.toString().stds()); }
-
-        void setFromVariant(const KeyType &key, const Variant &val) {
-            switch(val.type()) {
-                case Variant::TypeInvalid: d->set(key, Poco::Dynamic::Var()); break;
-                case Variant::TypeBool: d->set(key, val.get<bool>()); break;
-                case Variant::TypeU8: d->set(key, val.get<uint8_t>()); break;
-                case Variant::TypeS8: d->set(key, val.get<int8_t>()); break;
-                case Variant::TypeU16: d->set(key, val.get<uint16_t>()); break;
-                case Variant::TypeS16: d->set(key, val.get<int16_t>()); break;
-                case Variant::TypeU32: d->set(key, val.get<uint32_t>()); break;
-                case Variant::TypeS32: d->set(key, val.get<int32_t>()); break;
-                case Variant::TypeU64: d->set(key, val.get<uint64_t>()); break;
-                case Variant::TypeS64: d->set(key, val.get<int64_t>()); break;
-                case Variant::TypeFloat: d->set(key, val.get<float>()); break;
-                case Variant::TypeDouble: d->set(key, val.get<double>()); break;
-                default: d->set(key, val.get<String>().stds()); break;
-            }
-            return;
-        }
-
-
-    protected:
-        PocoPtr d;
-
-        template <typename T>
-        T get(const KeyType &key, bool *ok = nullptr) const {
-            auto v = d->get(key);
-            T ret = {};
-            bool good = false;
-            try {
-                ret = v.template convert<T>();
-                good = true;
-            } catch(...) { /* Do nothing, String() will be returned */ }
-            if(ok != nullptr) *ok = good;
-            return ret;
-        }
-
-};
-
-template <typename PocoType, typename PocoPtr, typename KeyType>
-class JsonInterfaceObject : public JsonInterface<PocoType, PocoPtr, KeyType> {
-    public:
-
-        JsonInterfaceObject() = default;
-        JsonInterfaceObject(const PocoPtr &obj) : JsonInterface<PocoType, PocoPtr, KeyType>(obj) {}
-
-        template <typename Func> void forEach(Func &&func) const {
-            for(const auto &[id, value] : *JsonInterface<PocoType, PocoPtr, KeyType>::d) {
-                String _id = id;
-                Variant _val = Variant::fromPocoVar(value);
-                func(_id, _val);
-            }
-            return;
-        }
-};
-
-template <typename PocoType, typename PocoPtr, typename KeyType>
-class JsonInterfaceArray : public JsonInterface<PocoType, PocoPtr, KeyType> {
-    public:
-
-        JsonInterfaceArray() = default;
-        JsonInterfaceArray(const PocoPtr &obj) : JsonInterface<PocoType, PocoPtr, KeyType>(obj) {}
-
-        void addNull() { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(Poco::Dynamic::Var()); }
-        void add(const Poco::JSON::Object::Ptr &val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
-        void add(const Poco::JSON::Array::Ptr &val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
-        void add(int val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
-        void add(unsigned int val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
-        void add(float val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
-        void add(double val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val); }
-        void add(const char *val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(std::string(val)); }
-        void add(const String &val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.stds()); }
-        void add(const UUID &val) { JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.toString().stds()); }
-
-        void addFromVariant(const Variant &val) {
-            switch(val.type()) {
-                case Variant::TypeInvalid: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(Poco::Dynamic::Var()); break;
-                case Variant::TypeBool: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<bool>()); break;
-                case Variant::TypeU8: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<uint8_t>()); break;
-                case Variant::TypeS8: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<int8_t>()); break;
-                case Variant::TypeU16: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<uint16_t>()); break;
-                case Variant::TypeS16: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<int16_t>()); break;
-                case Variant::TypeU32: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<uint32_t>()); break;
-                case Variant::TypeS32: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<int32_t>()); break;
-                case Variant::TypeU64: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<uint64_t>()); break;
-                case Variant::TypeS64: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<int64_t>()); break;
-                case Variant::TypeFloat: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<float>()); break;
-                case Variant::TypeDouble: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<double>()); break;
-                default: JsonInterface<PocoType, PocoPtr, KeyType>::d->add(val.get<String>().stds()); break;
-            }
-            return;
-        }
- 
-        /* FIXME
-        template <typename Func> void forEach(Func &&func) const {
-            int count = JsonInterface<PocoType, PocoPtr, KeyType>::size();
-            for(int i = 0; i < count; i++) {
-                Variant _val =
-                func(_val);
-            }
-            return;
-        }
-        */
-      
-};
-
-using JsonObject = JsonInterfaceObject<Poco::JSON::Object, Poco::JSON::Object::Ptr, std::string>;
-using JsonArray  = JsonInterfaceArray<Poco::JSON::Array, Poco::JSON::Array::Ptr, int>;
-
-#if 0
-/** Class to make working w/ Poco JSON Objects a tad easier */
 class JsonObject {
     public:
-        JsonObject() : d(new Poco::JSON::Object()) {}
-        JsonObject(const Poco::JSON::Object::Ptr &obj) : d(obj == nullptr ? new Poco::JSON::Object() : obj) {}
+        static JsonObject parse(const String &str, bool *ok = nullptr) {
+            JsonObject ret;
+            try {
+                ret.d.modify()->j = nlohmann::json::parse(str.stds());
+                if(!ret.d->j.is_object()) throw std::runtime_error("not an object");
+                if(ok) *ok = true;
+            } catch(...) {
+                ret.d.modify()->j = nlohmann::json::object();
+                if(ok) *ok = false;
+            }
+            return ret;
+        }
 
-        Poco::JSON::Object::Ptr pocoObject() const { return d; }
-        int size() const { return d->size(); }
+        JsonObject() : d(SharedPtr<Data>::create(nlohmann::json::object())) {}
+
+        int size() const { return static_cast<int>(d->j.size()); }
         bool isValid() const { return size() > 0; }
 
-        int getInt(const String &key, bool *ok = nullptr) const { return get<int>(key, ok); }
-        double getDouble(const String &key, bool *ok = nullptr) const { return get<double>(key, ok); }
-        String getString(const String &key, bool *ok = nullptr) const { return get<std::string>(key, ok); }
-        Poco::JSON::Object::Ptr getObject(const String &key, bool *ok = nullptr) const { 
-            Poco::JSON::Object::Ptr ret = d->getObject(key); 
-            if(ok != nullptr) *ok = (ret != nullptr);
-            return ret;
+        bool valueIsNull(const std::string &key) const {
+            auto it = d->j.find(key);
+            return it != d->j.end() && it->is_null();
         }
-        Poco::JSON::Array::Ptr getArray(const String &key, bool *ok = nullptr) const {
-            Poco::JSON::Array::Ptr ret = d->getArray(key);
-            if(ok != nullptr) *ok = (ret != nullptr);
-            return ret;
-        }
-        
-        void set(const String &key, const JsonObject &val) { d->set(key, val.d); }
 
-        void set(const String &key, int val) { d->set(key, val); }
-        void set(const String &key, unsigned int val) { d->set(key, val); }
-        void set(const String &key, float val) { d->set(key, val); }
-        void set(const String &key, double val) { d->set(key, val); }
-        void set(const String &key, const char *val) { d->set(key, std::string(val)); }
-        void set(const String &key, const String &val) { d->set(key, val.stds()); }
-        void set(const String &key, const Variant &val) {
-            switch(val.type()) {
-                case Variant::TypeInvalid: d->set(key, Poco::Dynamic::Var()); break;
-                case Variant::TypeBool: d->set(key, val.get<bool>()); break;
-                case Variant::TypeU8: d->set(key, val.get<uint8_t>()); break;
-                case Variant::TypeS8: d->set(key, val.get<int8_t>()); break;
-                case Variant::TypeU16: d->set(key, val.get<uint16_t>()); break;
-                case Variant::TypeS16: d->set(key, val.get<int16_t>()); break;
-                case Variant::TypeU32: d->set(key, val.get<uint32_t>()); break;
-                case Variant::TypeS32: d->set(key, val.get<int32_t>()); break;
-                case Variant::TypeU64: d->set(key, val.get<uint64_t>()); break;
-                case Variant::TypeS64: d->set(key, val.get<int64_t>()); break;
-                case Variant::TypeFloat: d->set(key, val.get<float>()); break;
-                case Variant::TypeDouble: d->set(key, val.get<double>()); break;
-                default: d->set(key, val.get<String>().stds()); break;
-            }
-            return;
+        bool valueIsObject(const std::string &key) const {
+            auto it = d->j.find(key);
+            return it != d->j.end() && it->is_object();
         }
-        void set(const String &key, const UUID &val) { d->set(key, val.toString().stds()); }
+
+        bool valueIsArray(const std::string &key) const {
+            auto it = d->j.find(key);
+            return it != d->j.end() && it->is_array();
+        }
+
+        bool contains(const std::string &key) const { return d->j.contains(key); }
+
+        bool getBool(const std::string &key, bool *ok = nullptr) const { return get<bool>(key, ok); }
+        int64_t getInt(const std::string &key, bool *ok = nullptr) const { return get<int64_t>(key, ok); }
+        uint64_t getUInt(const std::string &key, bool *ok = nullptr) const { return get<uint64_t>(key, ok); }
+        double getDouble(const std::string &key, bool *ok = nullptr) const { return get<double>(key, ok); }
+        String getString(const std::string &key, bool *ok = nullptr) const { return get<std::string>(key, ok); }
+
+        JsonObject getObject(const std::string &key, bool *ok = nullptr) const {
+            auto it = d->j.find(key);
+            if(it == d->j.end() || !it->is_object()) {
+                if(ok) *ok = false;
+                return JsonObject();
+            }
+            if(ok) *ok = true;
+            JsonObject ret;
+            ret.d.modify()->j = *it;
+            return ret;
+        }
+
+        inline JsonArray getArray(const std::string &key, bool *ok = nullptr) const;
 
         String toString(unsigned int indent = 0) const {
-            std::stringstream ss;
-            d->stringify(ss, indent);
-            return ss.str();
+            if(indent == 0) return d->j.dump();
+            return d->j.dump(static_cast<int>(indent));
         }
 
+        void clear() { d.modify()->j.clear(); }
+
+        void setNull(const std::string &key) { d.modify()->j[key] = nullptr; }
+        void set(const std::string &key, const JsonObject &val) { d.modify()->j[key] = val.d->j; }
+        inline void set(const std::string &key, const JsonArray &val);
+        void set(const std::string &key, bool val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, int val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, unsigned int val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, int64_t val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, uint64_t val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, float val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, double val) { d.modify()->j[key] = val; }
+        void set(const std::string &key, const char *val) { d.modify()->j[key] = std::string(val); }
+        void set(const std::string &key, const String &val) { d.modify()->j[key] = val.stds(); }
+        void set(const std::string &key, const UUID &val) { d.modify()->j[key] = val.toString().stds(); }
+
+        void setFromVariant(const std::string &key, const Variant &val) {
+            auto &j = d.modify()->j;
+            switch(val.type()) {
+                case Variant::TypeInvalid: j[key] = nullptr; break;
+                case Variant::TypeBool:    j[key] = val.get<bool>(); break;
+                case Variant::TypeU8:      j[key] = val.get<uint8_t>(); break;
+                case Variant::TypeS8:      j[key] = val.get<int8_t>(); break;
+                case Variant::TypeU16:     j[key] = val.get<uint16_t>(); break;
+                case Variant::TypeS16:     j[key] = val.get<int16_t>(); break;
+                case Variant::TypeU32:     j[key] = val.get<uint32_t>(); break;
+                case Variant::TypeS32:     j[key] = val.get<int32_t>(); break;
+                case Variant::TypeU64:     j[key] = val.get<uint64_t>(); break;
+                case Variant::TypeS64:     j[key] = val.get<int64_t>(); break;
+                case Variant::TypeFloat:   j[key] = val.get<float>(); break;
+                case Variant::TypeDouble:  j[key] = val.get<double>(); break;
+                default:                   j[key] = val.get<String>().stds(); break;
+            }
+        }
+
+        template <typename Func> void forEach(Func &&func) const {
+            for(auto it = d->j.begin(); it != d->j.end(); ++it) {
+                String key = it.key();
+                Variant val = Variant::fromJson(it.value());
+                func(key, val);
+            }
+        }
+
+        int referenceCount() const { return d.referenceCount(); }
+
     private:
-        Poco::JSON::Object::Ptr d;
+        friend class JsonArray;
+
+        class Data {
+            PROMEKI_SHARED_FINAL(Data)
+            public:
+                nlohmann::json j;
+                Data() = default;
+                Data(const nlohmann::json &val) : j(val) {}
+                Data(nlohmann::json &&val) : j(std::move(val)) {}
+                Data(const Data &o) = default;
+        };
+
+        SharedPtr<Data> d;
 
         template <typename T>
-        T get(const String &key, bool *ok = nullptr) const {
-            auto v = d->get(key);
-            T ret = {};
+        T get(const std::string &key, bool *ok = nullptr) const {
+            auto it = d->j.find(key);
+            if(it == d->j.end()) {
+                if(ok) *ok = false;
+                return T{};
+            }
+            return getVal<T>(*it, ok);
+        }
+
+        template <typename T>
+        static T getVal(const nlohmann::json &val, bool *ok) {
+            T ret{};
             bool good = false;
             try {
-                ret = v.convert<T>();
-                good = true;
-            } catch(...) { /* Do nothing, String() will be returned */ }
-            if(ok != nullptr) *ok = good;
+                if constexpr (std::is_same_v<T, bool>) {
+                    if(val.is_boolean()) { ret = val.get<bool>(); good = true; }
+                    else if(val.is_number_integer()) { ret = val.get<int64_t>() != 0; good = true; }
+                } else if constexpr (std::is_integral_v<T>) {
+                    if(val.is_number()) { ret = static_cast<T>(val.get<int64_t>()); good = true; }
+                    else if(val.is_boolean()) { ret = val.get<bool>() ? 1 : 0; good = true; }
+                } else if constexpr (std::is_floating_point_v<T>) {
+                    if(val.is_number()) { ret = val.get<T>(); good = true; }
+                } else if constexpr (std::is_same_v<T, std::string>) {
+                    if(val.is_string()) { ret = val.get<std::string>(); good = true; }
+                    else if(!val.is_null()) { ret = val.dump(); good = true; }
+                }
+            } catch(...) {}
+            if(ok) *ok = good;
             return ret;
         }
 };
-#endif
+
+class JsonArray {
+    public:
+        static JsonArray parse(const String &str, bool *ok = nullptr) {
+            JsonArray ret;
+            try {
+                ret.d.modify()->j = nlohmann::json::parse(str.stds());
+                if(!ret.d->j.is_array()) throw std::runtime_error("not an array");
+                if(ok) *ok = true;
+            } catch(...) {
+                ret.d.modify()->j = nlohmann::json::array();
+                if(ok) *ok = false;
+            }
+            return ret;
+        }
+
+        JsonArray() : d(SharedPtr<Data>::create(nlohmann::json::array())) {}
+
+        int size() const { return static_cast<int>(d->j.size()); }
+        bool isValid() const { return size() > 0; }
+
+        bool valueIsNull(int index) const { return index >= 0 && index < size() && d->j[index].is_null(); }
+        bool valueIsObject(int index) const { return index >= 0 && index < size() && d->j[index].is_object(); }
+        bool valueIsArray(int index) const { return index >= 0 && index < size() && d->j[index].is_array(); }
+
+        bool getBool(int index, bool *ok = nullptr) const { return get<bool>(index, ok); }
+        int64_t getInt(int index, bool *ok = nullptr) const { return get<int64_t>(index, ok); }
+        uint64_t getUInt(int index, bool *ok = nullptr) const { return get<uint64_t>(index, ok); }
+        double getDouble(int index, bool *ok = nullptr) const { return get<double>(index, ok); }
+        String getString(int index, bool *ok = nullptr) const { return get<std::string>(index, ok); }
+
+        JsonObject getObject(int index, bool *ok = nullptr) const {
+            if(index < 0 || index >= size() || !d->j[index].is_object()) {
+                if(ok) *ok = false;
+                return JsonObject();
+            }
+            if(ok) *ok = true;
+            JsonObject ret;
+            ret.d.modify()->j = d->j[index];
+            return ret;
+        }
+
+        JsonArray getArray(int index, bool *ok = nullptr) const {
+            if(index < 0 || index >= size() || !d->j[index].is_array()) {
+                if(ok) *ok = false;
+                return JsonArray();
+            }
+            if(ok) *ok = true;
+            JsonArray ret;
+            ret.d.modify()->j = d->j[index];
+            return ret;
+        }
+
+        String toString(unsigned int indent = 0) const {
+            if(indent == 0) return d->j.dump();
+            return d->j.dump(static_cast<int>(indent));
+        }
+
+        void clear() { d.modify()->j.clear(); }
+
+        void addNull() { d.modify()->j.push_back(nullptr); }
+        void add(const JsonObject &val) { d.modify()->j.push_back(val.d->j); }
+        void add(const JsonArray &val) { d.modify()->j.push_back(val.d->j); }
+        void add(bool val) { d.modify()->j.push_back(val); }
+        void add(int val) { d.modify()->j.push_back(val); }
+        void add(unsigned int val) { d.modify()->j.push_back(val); }
+        void add(int64_t val) { d.modify()->j.push_back(val); }
+        void add(uint64_t val) { d.modify()->j.push_back(val); }
+        void add(float val) { d.modify()->j.push_back(val); }
+        void add(double val) { d.modify()->j.push_back(val); }
+        void add(const char *val) { d.modify()->j.push_back(std::string(val)); }
+        void add(const String &val) { d.modify()->j.push_back(val.stds()); }
+        void add(const UUID &val) { d.modify()->j.push_back(val.toString().stds()); }
+
+        void addFromVariant(const Variant &val) {
+            auto &j = d.modify()->j;
+            switch(val.type()) {
+                case Variant::TypeInvalid: j.push_back(nullptr); break;
+                case Variant::TypeBool:    j.push_back(val.get<bool>()); break;
+                case Variant::TypeU8:      j.push_back(val.get<uint8_t>()); break;
+                case Variant::TypeS8:      j.push_back(val.get<int8_t>()); break;
+                case Variant::TypeU16:     j.push_back(val.get<uint16_t>()); break;
+                case Variant::TypeS16:     j.push_back(val.get<int16_t>()); break;
+                case Variant::TypeU32:     j.push_back(val.get<uint32_t>()); break;
+                case Variant::TypeS32:     j.push_back(val.get<int32_t>()); break;
+                case Variant::TypeU64:     j.push_back(val.get<uint64_t>()); break;
+                case Variant::TypeS64:     j.push_back(val.get<int64_t>()); break;
+                case Variant::TypeFloat:   j.push_back(val.get<float>()); break;
+                case Variant::TypeDouble:  j.push_back(val.get<double>()); break;
+                default:                   j.push_back(val.get<String>().stds()); break;
+            }
+        }
+
+        template <typename Func> void forEach(Func &&func) const {
+            for(const auto &elem : d->j) {
+                Variant val = Variant::fromJson(elem);
+                func(val);
+            }
+        }
+
+        int referenceCount() const { return d.referenceCount(); }
+
+    private:
+        friend class JsonObject;
+
+        class Data {
+            PROMEKI_SHARED_FINAL(Data)
+            public:
+                nlohmann::json j;
+                Data() = default;
+                Data(const nlohmann::json &val) : j(val) {}
+                Data(nlohmann::json &&val) : j(std::move(val)) {}
+                Data(const Data &o) = default;
+        };
+
+        SharedPtr<Data> d;
+
+        template <typename T>
+        T get(int index, bool *ok = nullptr) const {
+            if(index < 0 || index >= size()) {
+                if(ok) *ok = false;
+                return T{};
+            }
+            return JsonObject::getVal<T>(d->j[index], ok);
+        }
+};
+
+// Inline definitions that depend on JsonArray being complete
+inline JsonArray JsonObject::getArray(const std::string &key, bool *ok) const {
+    auto it = d->j.find(key);
+    if(it == d->j.end() || !it->is_array()) {
+        if(ok) *ok = false;
+        return JsonArray();
+    }
+    if(ok) *ok = true;
+    JsonArray ret;
+    ret.d.modify()->j = *it;
+    return ret;
+}
+
+inline void JsonObject::set(const std::string &key, const JsonArray &val) {
+    d.modify()->j[key] = val.d->j;
+}
 
 PROMEKI_NAMESPACE_END
-

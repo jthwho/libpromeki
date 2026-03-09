@@ -1,30 +1,14 @@
-/*****************************************************************************
- * imagedesc.h
- * April 27, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      imagedesc.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/size2d.h>
 #include <promeki/pixelformat.h>
 #include <promeki/metadata.h>
@@ -32,7 +16,8 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class ImageDesc {
-        class Data : public SharedData {
+        class Data {
+                PROMEKI_SHARED_FINAL(Data)
                 public:
                         Size2D                  size;
                         size_t                  linePad = 0;
@@ -57,11 +42,11 @@ class ImageDesc {
         };
 
         public:
-                ImageDesc() : d(new Data) { }
+                ImageDesc() : d(SharedPtr<Data>::create()) { }
                 ImageDesc(const Size2D &sz, int pixfmt) :
-                        d(new Data(sz, pixfmt)) { }
+                        d(SharedPtr<Data>::create(sz, pixfmt)) { }
                 ImageDesc(size_t w, size_t h, int pixfmt) :
-                        d(new Data(Size2D(w, h), pixfmt)) { }
+                        d(SharedPtr<Data>::create(Size2D(w, h), pixfmt)) { }
 
                 int pixelFormatID() const {
                         return d->pixelFormat->id();
@@ -84,12 +69,12 @@ class ImageDesc {
                 }
 
                 void setSize(const Size2D &val) {
-                        d->size = val;
+                        d.modify()->size = val;
                         return;
                 }
 
                 void setSize(int width, int height) {
-                        d->size.set(width, height);
+                        d.modify()->size.set(width, height);
                         return;
                 }
 
@@ -98,7 +83,7 @@ class ImageDesc {
                 }
 
                 void setLinePad(size_t val) {
-                        d->linePad = val;
+                        d.modify()->linePad = val;
                         return;
                 }
 
@@ -107,7 +92,7 @@ class ImageDesc {
                 }
 
                 void setLineAlign(size_t val) {
-                        d->lineAlign = val;
+                        d.modify()->lineAlign = val;
                         return;
                 }
 
@@ -116,7 +101,7 @@ class ImageDesc {
                 }
 
                 void setInterlaced(bool val) {
-                        d->interlaced = val;
+                        d.modify()->interlaced = val;
                         return;
                 }
 
@@ -125,7 +110,7 @@ class ImageDesc {
                 }
 
                 void setPixelFormat(int pixfmt) {
-                        d->pixelFormat = PixelFormat::lookup(pixfmt);
+                        d.modify()->pixelFormat = PixelFormat::lookup(pixfmt);
                         return;
                 }
 
@@ -134,7 +119,7 @@ class ImageDesc {
                 }
 
                 Metadata &metadata() {
-                        return d->metadata;
+                        return d.modify()->metadata;
                 }
 
                 int planeCount() const {
@@ -149,8 +134,10 @@ class ImageDesc {
                         return toString();
                 }
 
+                int referenceCount() const { return d.referenceCount(); }
+
         private:
-                SharedDataPtr<Data> d;
+                SharedPtr<Data> d;
 };
 
 PROMEKI_NAMESPACE_END

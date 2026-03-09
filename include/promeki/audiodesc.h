@@ -1,30 +1,14 @@
-/*****************************************************************************
- * audiodesc.h
- * May 17, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      audiodesc.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/metadata.h>
 #include <promeki/string.h>
 #include <promeki/system.h>
@@ -139,11 +123,15 @@ class AudioDesc {
                 static DataType stringToDataType(const String &val);
                 static AudioDesc fromJson(const JsonObject &json, bool *ok = nullptr);
 
-                AudioDesc() : d(new Data) { }
-                AudioDesc(float sr, unsigned int ch) : d(new Data(NativeType, sr, ch)) { }
-                AudioDesc(DataType dt, float sr, unsigned int ch) : d(new Data(dt, sr, ch)) { }
+                AudioDesc() : d(SharedPtr<Data>::create()) { }
+                AudioDesc(float sr, unsigned int ch) : d(SharedPtr<Data>::create(NativeType, sr, ch)) { }
+                AudioDesc(DataType dt, float sr, unsigned int ch) : d(SharedPtr<Data>::create(dt, sr, ch)) { }
 
-                bool operator==(const AudioDesc &other) const { return d == other.d; }
+                bool operator==(const AudioDesc &other) const {
+                        if(d == other.d) return true;
+                        if(d.isNull() || other.d.isNull()) return false;
+                        return *d == *other.d;
+                }
 
                 bool isValid() const {
                         return d->isValid();
@@ -186,7 +174,7 @@ class AudioDesc {
                 }
 
                 void setDataType(DataType val) {
-                        d->dataType = val;
+                        d.modify()->dataType = val;
                         return;
                 }
 
@@ -195,7 +183,7 @@ class AudioDesc {
                 }
 
                 void setSampleRate(float val) {
-                        d->sampleRate = val;
+                        d.modify()->sampleRate = val;
                         return;
                 }
 
@@ -204,7 +192,7 @@ class AudioDesc {
                 }
 
                 void setChannels(unsigned int val) {
-                        d->channels = val;
+                        d.modify()->channels = val;
                         return;
                 }
 
@@ -213,7 +201,7 @@ class AudioDesc {
                 }
 
                 Metadata &metadata() {
-                        return d->metadata;
+                        return d.modify()->metadata;
                 }
 
                 void samplesToFloat(float *out, const uint8_t *in, size_t samples) const {
@@ -226,9 +214,11 @@ class AudioDesc {
                         return;
                 }
 
+                int referenceCount() const { return d.referenceCount(); }
 
         private:
-                class Data : public SharedData {
+                class Data {
+                        PROMEKI_SHARED_FINAL(Data)
                         public:
                                 int                     dataType = 0;
                                 float                   sampleRate = 0.0f;
@@ -301,9 +291,9 @@ class AudioDesc {
                                 }
                 };
 
-                AudioDesc(Data *val) : d(val) {} 
+                AudioDesc(Data *val) : d(SharedPtr<Data>::takeOwnership(val)) {}
 
-                SharedDataPtr<Data> d;
+                SharedPtr<Data> d;
 };
 
 PROMEKI_NAMESPACE_END

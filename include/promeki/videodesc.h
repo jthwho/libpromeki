@@ -9,7 +9,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/list.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
@@ -23,24 +23,27 @@ class VideoDesc {
         using ImageDescList = List<ImageDesc>;
         using AudioDescList = List<AudioDesc>;
 
-        VideoDesc() : d(new Data) { }
+        VideoDesc() : d(SharedPtr<Data>::create()) { }
 
         bool isValid() const { return d->isValid(); }
 
         const FrameRate &frameRate() const { return d->frameRate; }
-        void setFrameRate(const FrameRate &val) { d->frameRate = val; }
+        void setFrameRate(const FrameRate &val) { d.modify()->frameRate = val; }
 
         const ImageDescList &imageList() const { return d->imageList; }
-        ImageDescList &imageList() { return d->imageList; }
+        ImageDescList &imageList() { return d.modify()->imageList; }
 
         const AudioDescList &audioList() const { return d->audioList; }
-        AudioDescList &audioList() { return d->audioList; }
+        AudioDescList &audioList() { return d.modify()->audioList; }
 
         const Metadata &metadata() const { return d->metadata; }
-        Metadata &metadata() { return d->metadata; }
+        Metadata &metadata() { return d.modify()->metadata; }
+
+        int referenceCount() const { return d.referenceCount(); }
 
     private:
-        class Data : public SharedData {
+        class Data {
+            PROMEKI_SHARED_FINAL(Data)
             public:
                 FrameRate           frameRate;
                 ImageDescList       imageList;
@@ -50,7 +53,7 @@ class VideoDesc {
                 // A video description is valid if it has a valid frame rate and at least one image or audio description.
                 bool isValid() const { return frameRate.isValid() && (imageList.size() > 0 || audioList.size() > 0); }
         };
-        SharedDataPtr<Data> d;
+        SharedPtr<Data> d;
 };
 
 PROMEKI_NAMESPACE_END

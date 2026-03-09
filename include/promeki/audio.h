@@ -8,7 +8,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/audiodesc.h>
 #include <promeki/buffer.h>
 #include <promeki/list.h>
@@ -27,14 +27,14 @@ class Audio {
         public:
                 /**
                  * @brief Constructs an invalid Audio object */
-                Audio() : d(new Data) {}
+                Audio() : d(SharedPtr<Data>::create()) {}
 
                 /**
                  * @brief Constructs an Audio object for given AudioDesc and samples.
                  */
-                Audio(const AudioDesc &desc, size_t samples, 
-                      const MemSpace &ms = MemSpace::Default) : 
-                        d(new Data(desc, samples, ms)) {}
+                Audio(const AudioDesc &desc, size_t samples,
+                      const MemSpace &ms = MemSpace::Default) :
+                        d(SharedPtr<Data>::create(desc, samples, ms)) {}
 
                 /**
                  * @brief Returns true if the object is valid */
@@ -88,7 +88,7 @@ class Audio {
                  * @brief Returns a reference to the buffer that holds the audio data
                  */
                 Buffer &buffer() {
-                        return d->buffer;
+                        return d.modify()->buffer;
                 }
 
                 /**
@@ -104,7 +104,7 @@ class Audio {
                  * @return True if successful, false if out of range.
                  */
                 bool resize(size_t val) {
-                        return d->resize(val);
+                        return d.modify()->resize(val);
                 }
 
                 /**
@@ -114,8 +114,11 @@ class Audio {
                         return reinterpret_cast<T *>(d->buffer.data());
                 }
 
+                int referenceCount() const { return d.referenceCount(); }
+
         private:
-                class Data : public SharedData {
+                class Data {
+                        PROMEKI_SHARED_FINAL(Data)
                         public:
                                 Buffer                  buffer;
                                 AudioDesc               desc;
@@ -142,7 +145,7 @@ class Audio {
                                 bool allocate(const MemSpace &ms);
                 };
 
-                SharedDataPtr<Data> d;
+                SharedPtr<Data> d;
 };
 
 PROMEKI_NAMESPACE_END

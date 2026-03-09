@@ -1,0 +1,231 @@
+Third-Party Software Notices and Licenses
+==========================================
+
+libpromeki incorporates the following third-party libraries.  Their
+compiled code is statically linked into libpromeki-proav and their
+headers are distributed under the promeki/thirdparty/ include path.
+
+This software is based in part on the work of the Independent JPEG Group.
+
+Portions of this software are copyright (c) 2025 The FreeType Project
+(https://freetype.org).  All rights reserved.
+
+
+==========================================================================
+ zlib  (v1.3.1)
+ License: zlib License
+ https://github.com/madler/zlib
+==========================================================================
+
+Copyright (C) 1995-2022 Jean-loup Gailly and Mark Adler
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+
+
+==========================================================================
+ libpng  (v1.6.55)
+ License: PNG Reference Library License version 2
+ https://github.com/glennrp/libpng
+==========================================================================
+
+Copyright (c) 1995-2026 The PNG Reference Library Authors.
+Copyright (c) 2018-2026 Cosmin Truta.
+Copyright (c) 2000-2002, 2004, 2006-2018 Glenn Randers-Pehrson.
+Copyright (c) 1996-1997 Andreas Dilger.
+Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
+
+The software is supplied "as is", without warranty of any kind,
+express or implied, including, without limitation, the warranties
+of merchantability, fitness for a particular purpose, title, and
+non-infringement.  In no event shall the Copyright owners, or
+anyone distributing the software, be liable for any damages or
+other liability, whether in contract, tort or otherwise, arising
+from, out of, or in connection with the software, or the use or
+other dealings in the software, even if advised of the possibility
+of such damage.
+
+Permission is hereby granted to use, copy, modify, and distribute
+this software, or portions hereof, for any purpose, without fee,
+subject to the following restrictions:
+
+ 1. The origin of this software must not be misrepresented; you
+    must not claim that you wrote the original software.  If you
+    use this software in a product, an acknowledgment in the product
+    documentation would be appreciated, but is not required.
+
+ 2. Altered source versions must be plainly marked as such, and must
+    not be misrepresented as being the original software.
+
+ 3. This Copyright notice may not be removed or altered from any
+    source or altered source distribution.
+
+
+==========================================================================
+ FreeType  (v2.14.2)
+ License: The FreeType Project License (FTL)
+ https://freetype.org
+==========================================================================
+
+Copyright 1996-2002, 2006 by
+David Turner, Robert Wilhelm, and Werner Lemberg
+
+This license grants a worldwide, royalty-free, perpetual and
+irrevocable right and license to use, execute, perform, compile,
+display, copy, create derivative works of, distribute and sublicense
+the FreeType Project (in both source and object code forms) and
+derivative works thereof for any purpose; and to authorize others to
+exercise some or all of the rights granted herein, subject to the
+following conditions:
+
+  o Redistribution of source code must retain this license file
+    (`FTL.TXT') unaltered; any additions, deletions or changes to the
+    original files must be clearly indicated in accompanying
+    documentation.  The copyright notices of the unaltered, original
+    files must be preserved in all copies of source files.
+
+  o Redistribution in binary form must provide a disclaimer that
+    states that the software is based in part of the work of the
+    FreeType Team, in the distribution documentation.  We also
+    encourage you to put an URL to the FreeType web page in your
+    documentation, though this isn't mandatory.
+
+Neither the FreeType authors and contributors nor you shall use the
+name of the other for commercial, advertising, or promotional
+purposes without specific prior written permission.
+
+THE FREETYPE PROJECT IS PROVIDED `AS IS' WITHOUT WARRANTY OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+IN NO EVENT WILL ANY OF THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY DAMAGES CAUSED BY THE USE OR THE INABILITY TO USE, OF THE
+FREETYPE PROJECT.
+
+The full FreeType Project License is available in the source tree at
+thirdparty/freetype/docs/FTL.TXT.
+
+
+==========================================================================
+ libjpeg-turbo  (v3.1.0)
+ License: IJG License + Modified (3-clause) BSD License
+ https://github.com/libjpeg-turbo/libjpeg-turbo
+==========================================================================
+
+libjpeg-turbo is covered by two compatible BSD-style open source licenses:
+
+- The IJG (Independent JPEG Group) License, which applies to the libjpeg
+  API library and associated programs.
+
+- The Modified (3-clause) BSD License, which applies to the TurboJPEG API
+  library and associated programs, as well as the build system.
+
+The Modified (3-clause) BSD License:
+
+  Copyright (C)2009-2024 D. R. Commander.  All Rights Reserved.
+  Copyright (C)2015 Viktor Szathmary.  All Rights Reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  - Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+  - Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+  - Neither the name of the libjpeg-turbo Project nor the names of its
+    contributors may be used to endorse or promote products derived from this
+    software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS",
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+The full IJG License is available in the source tree at
+thirdparty/libjpeg-turbo/README.ijg.  The full libjpeg-turbo license
+details are at thirdparty/libjpeg-turbo/LICENSE.md.
+
+
+==========================================================================
+ nlohmann/json  (v3.11.3)
+ License: MIT License
+ https://github.com/nlohmann/json
+==========================================================================
+
+Copyright (c) 2013-2022 Niels Lohmann
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+==========================================================================
+ libsndfile  (v1.2.2)
+ License: GNU Lesser General Public License v2.1 (LGPL-2.1-or-later)
+ https://github.com/libsndfile/libsndfile
+
+ *** LICENSE COMPATIBILITY NOTE ***
+==========================================================================
+
+libsndfile is licensed under the GNU Lesser General Public License,
+version 2.1 or later.
+
+LGPL-2.1 imposes restrictions on static linking that are more stringent
+than the MIT license used by libpromeki.  Specifically, LGPL Section 6
+requires that when a "work that uses the Library" is distributed with
+the Library statically linked in, the distributor must provide the means
+for users to re-link the work against a modified version of the Library
+(e.g. by providing object files or by using dynamic linking).
+
+As of this writing, the static linking of libsndfile into
+libpromeki-proav is a known compliance issue under active investigation.
+The library is used for its broadcast WAV (BWF) file support, which is
+a requirement for professional audio workflows.  Options being evaluated
+include:
+
+  1. Switching libsndfile to dynamic linking (the simplest LGPL-
+     compliant approach, but adds a runtime dependency for consumers).
+
+  2. Replacing libsndfile with a permissively-licensed alternative
+     that supports the required broadcast WAV features.
+
+  3. Providing object files alongside the shared library to satisfy
+     LGPL Section 6(a) re-linking requirements.
+
+Until this is resolved, users who redistribute libpromeki binaries
+should be aware of the LGPL obligations.  The full text of the LGPL-2.1
+is available in the source tree at thirdparty/libsndfile/COPYING.

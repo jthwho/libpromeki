@@ -1,30 +1,14 @@
-/*****************************************************************************
- * audiofile.h
- * May 18, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      audiofile.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/audio.h>
@@ -39,7 +23,8 @@ class AudioFile {
                         Writer
                 };
 
-                class Impl : public SharedData {
+                class Impl {
+                        PROMEKI_SHARED(Impl)
                         public:
                                 Impl(Operation op) : _operation(op) {}
                                 virtual ~Impl();
@@ -87,25 +72,25 @@ class AudioFile {
                 static AudioFile createReader(const String &filename) { return createForOperation(Reader, filename); }
                 static AudioFile createWriter(const String &filename) { return createForOperation(Writer, filename); }
 
-                AudioFile() : d(new Impl(InvalidOperation)) {};
-                AudioFile(Impl *impl) : d(impl) {};
+                AudioFile() : d(SharedPtr<Impl>::create(InvalidOperation)) {};
+                AudioFile(Impl *impl) : d(SharedPtr<Impl>::takeOwnership(impl)) {};
 
                 bool isValid() const { return d->isValid(); }
                 Operation operation() const { return d->operation(); }
                 const String &filename() const { return d->filename(); }
-                void setFilename(const String &val) { d->setFilename(val); return; }
+                void setFilename(const String &val) { d.modify()->setFilename(val); return; }
                 AudioDesc desc() const { return d->desc(); }
-                void setDesc(const AudioDesc &val) { d->setDesc(val); return; }
-                
-                Error open() { return d->open(); }
-                void close() { d->close(); return; }
-                Error read(Audio &audio, size_t maxSamples) { return d->read(audio, maxSamples); }
-                Error write(const Audio &audio) { return d->write(audio); }
-                Error seekToSample(size_t sample) { return d->seekToSample(sample); }
+                void setDesc(const AudioDesc &val) { d.modify()->setDesc(val); return; }
+
+                Error open() { return d.modify()->open(); }
+                void close() { d.modify()->close(); return; }
+                Error read(Audio &audio, size_t maxSamples) { return d.modify()->read(audio, maxSamples); }
+                Error write(const Audio &audio) { return d.modify()->write(audio); }
+                Error seekToSample(size_t sample) { return d.modify()->seekToSample(sample); }
                 size_t sampleCount() const { return d->sampleCount(); }
 
         private:
-                SharedDataPtr<Impl> d;
+                SharedPtr<Impl> d;
 };
 
 PROMEKI_NAMESPACE_END

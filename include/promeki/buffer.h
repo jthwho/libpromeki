@@ -1,31 +1,16 @@
-/*****************************************************************************
- * buffer.h
- * April 29, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      buffer.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
+#include <cstring>
 #include <vector>
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/memspace.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -37,11 +22,11 @@ class Buffer {
                 
                 using List = std::vector<Buffer>;
 
-                Buffer() : d(new Data()) { }
+                Buffer() : d(SharedPtr<Data, false>::create()) { }
                 Buffer(size_t sz, size_t an = DefaultAlign, const MemSpace &ms = MemSpace::Default) :
-                        d(new Data(sz, an, ms)) { }
+                        d(SharedPtr<Data, false>::create(sz, an, ms)) { }
                 Buffer(void *p, size_t sz, size_t an = 0, bool own = false, const MemSpace &ms = MemSpace::Default) :
-                        d(new Data(p, sz, an, own, ms)) { }
+                        d(SharedPtr<Data, false>::create(p, sz, an, own, ms)) { }
 
 
                 bool isValid() const { return d->data != nullptr; }
@@ -54,11 +39,11 @@ class Buffer {
                 // Be careful when using this to make sure you've allocated enough
                 // memory to account of the shift size.
                 void shiftData(size_t bytes) {
-                        d->data = static_cast<void *>(static_cast<uint8_t *>(d->data) + bytes);
+                        d.modify()->data = static_cast<void *>(static_cast<uint8_t *>(d.modify()->data) + bytes);
                         return;
                 }
                 void setOwnershipEnabled(bool val) {
-                        d->owned = val;
+                        d.modify()->owned = val;
                         return;
                 }
 
@@ -66,8 +51,11 @@ class Buffer {
                         return d->fill(value);
                 }
 
+                int referenceCount() const { return d.referenceCount(); }
+
         private:
-                class Data : public SharedData {
+                class Data {
+                        PROMEKI_SHARED_FINAL(Data)
                         public:
                                 MemSpace        ms;
                                 void            *data           = nullptr;
@@ -77,12 +65,21 @@ class Buffer {
                                 bool            owned           = true;
 
                                 Data() = default;
-                                
+
                                 Data(void *p, size_t s, size_t an, bool own, const MemSpace &m) :
                                         ms(m), data(p), odata(p), size(s), align(an), owned(own) { }
 
-                                Data(size_t sz, size_t an, const MemSpace &m) : ms(m), size(sz), align(an) { 
+                                Data(size_t sz, size_t an, const MemSpace &m) : ms(m), size(sz), align(an) {
                                         odata = data = ms.alloc(size, align);
+                                }
+
+                                Data(const Data &o) : ms(o.ms), size(o.size), align(o.align), owned(true) {
+                                        if(o.data != nullptr) {
+                                                odata = data = ms.alloc(size, align);
+                                                size_t shift = static_cast<uint8_t *>(o.data) - static_cast<uint8_t *>(o.odata);
+                                                std::memcpy(odata, o.odata, size + shift);
+                                                data = static_cast<uint8_t *>(odata) + shift;
+                                        }
                                 }
 
                                 ~Data() {
@@ -94,7 +91,7 @@ class Buffer {
                                 }
                 };
 
-                ExplicitSharedDataPtr<Data> d;
+                SharedPtr<Data, false> d;
 
 };
 

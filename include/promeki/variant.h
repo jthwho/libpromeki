@@ -1,25 +1,9 @@
-/*****************************************************************************
- * variant.h
- * April 30, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      variant.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
@@ -30,13 +14,12 @@
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
 #include <promeki/datetime.h>
-#include <promeki/pixelformat.h>
 #include <promeki/size2d.h>
 #include <promeki/uuid.h>
 #include <promeki/timecode.h>
 #include <promeki/rational.h>
 #include <promeki/list.h>
-#include <Poco/Dynamic/Var.h>
+#include <promeki/thirdparty/nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -84,15 +67,16 @@ template <typename... Types> class __Variant {
                 }
                 #undef X
 
-                static __Variant fromPocoVar(const Poco::Dynamic::Var &val) {
-                    if(val.isBoolean()) return val.convert<bool>();
-                    if(val.isInteger()) return val.isSigned() ? val.convert<int64_t>() : val.convert<uint64_t>();
-                    if(val.isNumeric()) return val.convert<double>();
-                    __Variant ret;
-                    try {
-                        ret = val.convert<std::string>();
-                    } catch(...) { /* Do Nothing */ }
-                    return ret;
+                static __Variant fromJson(const nlohmann::json &val) {
+                    if(val.is_null()) return __Variant();
+                    if(val.is_boolean()) return val.get<bool>();
+                    if(val.is_number_integer()) {
+                        if(val.is_number_unsigned()) return val.get<uint64_t>();
+                        return val.get<int64_t>();
+                    }
+                    if(val.is_number_float()) return val.get<double>();
+                    if(val.is_string()) return String(val.get<std::string>());
+                    return String(val.dump());
                 }
 
                 __Variant() = default;

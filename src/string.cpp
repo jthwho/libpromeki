@@ -1,25 +1,9 @@
-/*****************************************************************************
- * string.cpp
- * April 26, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      string.cpp
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #include <cstdarg>
 #include <cstdio>
@@ -193,14 +177,18 @@ String String::number(double val, int precision) {
 
 String &String::arg(const String &str) {
         // Find the lowest numbered unreplaced placeholder.
+        // Note: we take a const ref to d->s for searching.  If modify() below
+        // triggers a COW detach, this ref remains valid because the old Data is
+        // still held by other SharedPtrs (otherwise detach wouldn't trigger).
+        const std::string &s = d->s;
         int minValue = std::numeric_limits<int>::max();
         size_t minPos = std::string::npos;
         std::string placeholderToReplace;
-        for(size_t i = 0; i < d.size(); ++i) {
-            if(d[i] == '%' && i + 1 < d.size() && std::isdigit(d[i + 1])) {
+        for(size_t i = 0; i < s.size(); ++i) {
+            if(s[i] == '%' && i + 1 < s.size() && std::isdigit(s[i + 1])) {
                 size_t j = i + 1;
-                while (j < d.size() && std::isdigit(d[j])) ++j;
-                std::string placeholder = d.substr(i, j - i);
+                while (j < s.size() && std::isdigit(s[j])) ++j;
+                std::string placeholder = s.substr(i, j - i);
                 int value = std::stoi(placeholder.substr(1));
                 if(value < minValue) {
                     minValue = value;
@@ -211,16 +199,18 @@ String &String::arg(const String &str) {
         }
 
         // Replace the found placeholder with the argument value.
-        if(minPos != std::string::npos) d.replace(minPos, placeholderToReplace.length(), str.d);
+        if(minPos != std::string::npos) {
+                d.modify()->s.replace(minPos, placeholderToReplace.length(), str.d->s);
+        }
         return *this;
 }
 
 bool String::toBool(Error *e) const {
         Error err;
         bool ret = false;
-        if(d == "1") {
+        if(d->s == "1") {
                 ret = true;
-        } else if(d == "0") {
+        } else if(d->s == "0") {
                 ret = false;
         } else {
                 String s = toLower();
@@ -240,7 +230,7 @@ int String::toInt(Error *e) const {
         Error err;
         int ret;
         try {
-                ret = std::stoi(d);
+                ret = std::stoi(d->s);
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
         } catch (const std::out_of_range &) {
@@ -254,7 +244,7 @@ unsigned int String::toUInt(Error *e) const {
         Error err;
         unsigned long ret;
         try {
-                ret = std::stoul(d);
+                ret = std::stoul(d->s);
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
         } catch (const std::out_of_range &) {
@@ -269,7 +259,7 @@ double String::toDouble(Error *e) const {
         Error err;
         double ret;
         try {
-                ret = std::stod(d);
+                ret = std::stod(d->s);
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
         } catch (const std::out_of_range &) {
@@ -291,7 +281,7 @@ int64_t String::parseNumberWords(bool *success) const {
                 {"million", 1000000}, {"billion", 1000000000}
         };
 
-        std::string copy = d;
+        std::string copy = d->s;
         for(char &c : copy) if(!std::isalpha(c)) c = ' ';
         std::istringstream iss(copy);
         std::string token;
@@ -330,7 +320,7 @@ int64_t String::parseNumberWords(bool *success) const {
 StringList String::split(const std::string& delimiter) const {
         StringList result;
         size_t pos = 0;
-        std::string str = d;
+        std::string str = d->s;
         while((pos = str.find(delimiter)) != std::string::npos) {
                 String token = str.substr(0, pos);
                 if (!token.isEmpty()) {

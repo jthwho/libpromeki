@@ -2,14 +2,17 @@
  * @file      sharedptr.h
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information
  */
 
 #pragma once
 
+#include <atomic>
+#include <cassert>
+#include <typeinfo>
+#include <utility>
 #include <promeki/namespace.h>
-#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -18,7 +21,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * You may use this in your class definition to quickly implement the functionality
  * required to make an object into a native shared object.  Note, this macro assumes
- * you'll be using polymorphism and so will create a virtual __clone() function.
+ * you'll be using polymorphism and so will create a virtual _promeki_clone() function.
  * You'll need to ensure you make your destructor virtual.
  *
  * Example:
@@ -33,14 +36,14 @@ PROMEKI_NAMESPACE_BEGIN
  * @endcode
  *
  * It does the following:
- * - Adds a public member "RefCount __refct" for the reference counting.
- * - Adds a "virtual BASE *__clone() const" function that returns a new copy of
+ * - Adds a public member "RefCount _promeki_refct" for the reference counting.
+ * - Adds a "virtual BASE *_promeki_clone() const" function that returns a new copy of
  *   the object (using the object's copy constructor).
  */
 #define PROMEKI_SHARED(BASE) \
     public: \
-        RefCount __refct; \
-        virtual BASE *__clone() const { return new BASE(*this); }
+        RefCount _promeki_refct; \
+        virtual BASE *_promeki_clone() const { return new BASE(*this); }
 
 /**
  * @brief Macro to simplify making a derived object into a native shared object
@@ -62,14 +65,36 @@ PROMEKI_NAMESPACE_BEGIN
  */
 #define PROMEKI_SHARED_DERIVED(BASE, DERIVED) \
     public: \
-        virtual BASE *__clone() const override { return new DERIVED(*this); }
+        virtual BASE *_promeki_clone() const override { return new DERIVED(*this); }
+
+/**
+ * @brief Macro for non-polymorphic native shared objects.
+ *
+ * Use this instead of PROMEKI_SHARED when the class will never be subclassed
+ * (e.g. private inner Data classes).  It avoids the overhead of a vtable pointer
+ * by using non-virtual _promeki_clone().  The class does not need a virtual destructor.
+ *
+ * Example:
+ *
+ * @code
+ * class Data {
+ *     PROMEKI_SHARED_FINAL(Data)
+ *     public:
+ *         int value = 0;
+ * };
+ * @endcode
+ */
+#define PROMEKI_SHARED_FINAL(TYPE) \
+    public: \
+        RefCount _promeki_refct; \
+        TYPE *_promeki_clone() const { return new TYPE(*this); }
 
 /**
  * @brief An atomic reference count object
  *
  * Since it's atomic, operations are guaranteed to be consistent across threads.  This also
  * means there's going to be an increased cost over a simple reference count.  However,
- * this is generally still faster than any locking semantics that would be required to 
+ * this is generally still faster than any locking semantics that would be required to
  * syncronize data between threads.
  */
 class RefCount {
@@ -88,9 +113,12 @@ class RefCount {
         }
 
         bool dec() {
-            // relaxed, because we don't care about reordering, just that the operation
-            // is atomic.
-            return v.fetch_sub(1, std::memory_order_relaxed) == 1;
+            // acq_rel ensures that:
+            // - release: all memory operations before the dec are visible to the thread
+            //   that will eventually delete the object.
+            // - acquire: when the count reaches zero, the deleting thread sees all
+            //   memory operations from threads that previously released their references.
+            return v.fetch_sub(1, std::memory_order_acq_rel) == 1;
         }
 
         int value() const {
@@ -108,7 +136,7 @@ class RefCount {
   * counting. It uses an internal RefCount object to track the number of references and ensures that
   * the managed object is deleted when the reference count drops to zero.  Generally you don't need
   * to use this object directly, since it will be created by SharedPtr when SharedPtr has been typed
-  * with an object that isn't a natively reference counted object (i.e. has no __refct member)
+  * with an object that isn't a natively reference counted object (i.e. has no _promeki_refct member)
   *
   * Limitations:
   * - This class assumes that the managed object can be safely deleted.
@@ -120,15 +148,15 @@ class RefCount {
 template<typename T>
 class SharedPtrProxy {
     public:
-        RefCount    __refct;
+        RefCount    _promeki_refct;
 
         SharedPtrProxy(T *o) : _object(o) {}
         ~SharedPtrProxy() { delete _object; }
-        T *__clone() const {
+        T *_promeki_clone() const {
             // When using a proxy data type, i.e. not a "native" shared object,
             // there's no way to make a copy from a derived object work.
             assert(typeid(*_object) == typeid(T));
-            return new T(*_object); 
+            return new T(*_object);
         }
         T *object() const { return _object; }
     private:
@@ -136,19 +164,24 @@ class SharedPtrProxy {
 };
 
 template<typename T, typename = void> struct IsSharedObject : std::false_type {};
-template<typename T> struct IsSharedObject<T, std::void_t<decltype(&T::__refct)>> : std::true_type {};
+template<typename T> struct IsSharedObject<T, std::void_t<decltype(&T::_promeki_refct)>> : std::true_type {};
 
 /**
   * @brief A smart pointer class with reference counting and optional copy-on-write semantics.
   *
   * This class provides a reference-counted smart pointer for managing the lifetime of objects.
   * It supports both native reference counting and proxy-based reference counting for objects
-  * that do not natively support it. Additionally, it offers (default enabled) copy-on-write 
+  * that do not natively support it. Additionally, it offers (default enabled) copy-on-write
   * semantics to optimize performance when multiple references exist.
   *
   * Typical use case:
   * @code
-  * SharedPtr<MyClass> ptr(new MyClass());
+  * // Create a new shared object in-place
+  * auto ptr = SharedPtr<MyClass>::create(arg1, arg2);
+  *
+  * // Or take ownership of an existing raw pointer
+  * auto ptr2 = SharedPtr<MyClass>::takeOwnership(existingRawPtr);
+  *
   * SharedPtr<MyClass> copy = ptr; // Reference count is incremented
   *
   * // You can now push the copy into another thread and the reference counting
@@ -171,7 +204,7 @@ template<typename T> struct IsSharedObject<T, std::void_t<decltype(&T::__refct)>
   * - The reference counting operations are thread-safe.
   * - It is assumed that multiple threads may hold SharedPtr instances to the same object.
   * - Only one thread will delete the shared data when the reference count drops to zero.
-  * - Individual SharedPtr instances are not thread-safe and should be used with appropriate 
+  * - Individual SharedPtr instances are not thread-safe and should be used with appropriate
   *   synchronization if shared between threads.  If you're doing this, however, you're probably
   *   doing something wrong.
   *
@@ -202,11 +235,22 @@ class SharedPtr {
 
         SharedPtr() = default;
 
-        // No need to create acquire, since newly created objects will
-        // have a reference count of 1
-        SharedPtr(T *obj) { setData(obj); };
         SharedPtr(const SharedPtr &sp) : _data(sp._data) { acquire(); }
+        SharedPtr(SharedPtr &&sp) noexcept : _data(sp._data) { sp._data = nullptr; }
         ~SharedPtr() { release(); }
+
+        template<typename... Args>
+        static SharedPtr create(Args&&... args) {
+            SharedPtr sp;
+            sp.setData(new T(std::forward<Args>(args)...));
+            return sp;
+        }
+
+        static SharedPtr takeOwnership(T *obj) {
+            SharedPtr sp;
+            if(obj != nullptr) sp.setData(obj);
+            return sp;
+        }
 
         SharedPtr &operator=(const SharedPtr &sp) {
             if(&sp == this) return *this; // we're setting to ourself, nothing changes.
@@ -216,11 +260,16 @@ class SharedPtr {
             return *this;
         }
 
-        SharedPtr &operator=(T *obj) {
+        SharedPtr &operator=(SharedPtr &&sp) noexcept {
+            if(&sp == this) return *this;
             release();
-            setData(obj);
-            acquire();
+            _data = sp._data;
+            sp._data = nullptr;
             return *this;
+        }
+
+        void swap(SharedPtr &other) noexcept {
+            std::swap(_data, other._data);
         }
 
         void clear() {
@@ -231,8 +280,8 @@ class SharedPtr {
 
         void detach() {
             // We only detach if not null and ref count > 1
-            if(_data == nullptr || _data->__refct.value() < 2) return;
-            T *copy = _data->__clone();
+            if(_data == nullptr || _data->_promeki_refct.value() < 2) return;
+            T *copy = _data->_promeki_clone();
             release();
             setData(copy);
             // No need to acquire, since new Data object will have a refct of 1
@@ -247,60 +296,73 @@ class SharedPtr {
             return _data != nullptr;
         }
 
+        explicit operator bool() const {
+            return _data != nullptr;
+        }
+
+        bool operator==(const SharedPtr &other) const {
+            return _data == other._data;
+        }
+
+        bool operator!=(const SharedPtr &other) const {
+            return _data != other._data;
+        }
+
+        bool operator==(std::nullptr_t) const {
+            return _data == nullptr;
+        }
+
+        bool operator!=(std::nullptr_t) const {
+            return _data != nullptr;
+        }
+
         int referenceCount() const {
-            return _data == nullptr ? 0 : _data->__refct.value();
+            return _data == nullptr ? 0 : _data->_promeki_refct.value();
         }
 
         const T *ptr() const {
-            T *ret;
+            assert(_data != nullptr);
             if constexpr (IsSharedObject<T>::value) {
-                ret = _data;
+                return _data;
             } else {
-                assert(_data != nullptr);
-                ret = _data->object();
+                return _data->object();
             }
-            return ret;
         }
 
         T *modify() {
+            assert(_data != nullptr);
             if constexpr (CopyOnWrite) detach();
-            T *ret;
             if constexpr (IsSharedObject<T>::value) {
-                ret = _data;
+                return _data;
             } else {
-                assert(_data != nullptr);
-                ret = _data->object();
+                return _data->object();
             }
-            return ret;
         }
 
         const T *operator->() const {
-            assert(_data != nullptr);
             return ptr();
         }
 
         const T &operator*() const {
-            assert(_data != nullptr);
             return *ptr();
         }
 
     private:
         ST *_data = nullptr;
 
-
         // This function assumes you've already assigned _data to the Data you'd like to acquire
         void acquire() {
             if(_data == nullptr) return;
-            _data->__refct.inc();
+            _data->_promeki_refct.inc();
             return;
         }
 
         // This function releases _data, and if the reference count has dropped to zero, deletes it
-        // however it does not change _data so it will be stale after calling this function.  
+        // however it does not change _data so it will be stale after calling this function.
         // This assumes you know this and are about to change _data (i.e. in a swap situation)
         void release() {
             if(_data == nullptr) return;
-            if(_data->__refct.dec()) delete _data;
+            if(_data->_promeki_refct.dec()) delete _data;
             return;
         }
 
@@ -317,4 +379,3 @@ class SharedPtr {
 
 
 PROMEKI_NAMESPACE_END
-

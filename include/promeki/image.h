@@ -1,30 +1,14 @@
-/*****************************************************************************
- * image.h
- * April 29, 2023
- *
- * Copyright 2023 - Howard Logic
- * https://howardlogic.com
- * All Rights Reserved
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>
- *
- *****************************************************************************/
+/**
+ * @file      image.h
+ * @copyright Howard Logic. All rights reserved.
+ * 
+ * See LICENSE file in the project root folder for license information.
+ */
 
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/shareddata.h>
+#include <promeki/sharedptr.h>
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
 #include <promeki/paintengine.h>
@@ -33,7 +17,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 class Image {
         public:
-                class Data : public SharedData {
+                class Data {
+                        PROMEKI_SHARED_FINAL(Data)
                         public:
                                 ImageDesc       desc;
                                 Buffer::List    planeList;
@@ -53,13 +38,13 @@ class Image {
                                 bool allocate(const ImageDesc &desc, const MemSpace &ms);
                 };
 
-                Image() : d(new Data()) { }
-                Image(const ImageDesc &d, const MemSpace &ms = MemSpace::Default) : 
-                        d(new Data(d, ms)) { }
+                Image() : d(SharedPtr<Data>::create()) { }
+                Image(const ImageDesc &d, const MemSpace &ms = MemSpace::Default) :
+                        d(SharedPtr<Data>::create(d, ms)) { }
                 Image(const Size2D &s, int pixfmt, const MemSpace &ms = MemSpace::Default) :
-                        d(new Data(ImageDesc(s, pixfmt), ms)) { }
-                Image(size_t w, size_t h, int pixfmt, const MemSpace &ms = MemSpace::Default) : 
-                        d(new Data(ImageDesc(w, h, pixfmt), ms)) { }
+                        d(SharedPtr<Data>::create(ImageDesc(s, pixfmt), ms)) { }
+                Image(size_t w, size_t h, int pixfmt, const MemSpace &ms = MemSpace::Default) :
+                        d(SharedPtr<Data>::create(ImageDesc(w, h, pixfmt), ms)) { }
 
                 bool isValid() const {
                         return d->desc.isValid();
@@ -94,7 +79,7 @@ class Image {
                 }
 
                 Metadata &metadata() {
-                        return d->desc.metadata();
+                        return d.modify()->desc.metadata();
                 }
 
                 size_t lineStride(int plane = 0) const {
@@ -125,8 +110,10 @@ class Image {
                     return d->convert(pixelFormat, metadata);
                 }
 
+                int referenceCount() const { return d.referenceCount(); }
+
         private:
-                SharedDataPtr<Data> d;
+                SharedPtr<Data> d;
 };
 
 PROMEKI_NAMESPACE_END

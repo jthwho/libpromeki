@@ -1,3 +1,18 @@
 [submodule "thirdparty/libjpeg-turbo"]
 	path = thirdparty/libjpeg-turbo
-	url = ../../thirdparty/libjpeg-turbo.git
+	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
+[submodule "thirdparty/nlohmann-json"]
+	path = thirdparty/nlohmann-json
+	url = https://github.com/nlohmann/json.git
+[submodule "thirdparty/libsndfile"]
+	path = thirdparty/libsndfile
+	url = https://github.com/libsndfile/libsndfile.git
+[submodule "thirdparty/zlib"]
+	path = thirdparty/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "thirdparty/libpng"]
+	path = thirdparty/libpng
+	url = https://github.com/glennrp/libpng.git
+[submodule "thirdparty/freetype"]
+	path = thirdparty/freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype.git
