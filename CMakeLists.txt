@@ -11,7 +11,7 @@ set(APP_VERSION_RC 0) # If this is a release candidate, set this value to the re
 set(APP_VERSION_BETA 0) # If this is a beta, set this value to the beta version (non-zero)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(${APP_NAME} VERSION ${APP_VERSION} LANGUAGES CXX)
+project(${APP_NAME} VERSION ${APP_VERSION} LANGUAGES C CXX)
 include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -75,6 +75,16 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_Install OFF CACHE INTERNAL "")
 set(JSON_SystemInclude ON CACHE INTERNAL "")
 add_subdirectory(thirdparty/nlohmann-json EXCLUDE_FROM_ALL)
+
+# libvtc (video timecode library, static)
+set(VTC_BUILD_SHARED OFF CACHE INTERNAL "")
+set(VTC_BUILD_STATIC ON CACHE INTERNAL "")
+set(VTC_BUILD_UTILS OFF CACHE INTERNAL "")
+set(VTC_BUILD_TESTS OFF CACHE INTERNAL "")
+set(VTC_BUILD_GUI OFF CACHE INTERNAL "")
+set(VTC_BUILD_CPP OFF CACHE INTERNAL "")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_subdirectory(thirdparty/libvtc EXCLUDE_FROM_ALL)
 
 # Core Library #################################################################
 
@@ -200,7 +210,12 @@ target_include_directories(promeki-core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
 )
+target_include_directories(promeki-core PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libvtc/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
+)
 target_link_libraries(promeki-core PUBLIC stdc++fs)
+target_link_libraries(promeki-core PRIVATE vtc_static m)
 target_compile_definitions(promeki-core PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 
 # ProAV Library ################################################################

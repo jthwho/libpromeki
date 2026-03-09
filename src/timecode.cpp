@@ -1,179 +1,105 @@
 /**
  * @file      timecode.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <sstream>
 #include <promeki/timecode.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-Timecode &Timecode::operator++() {
-        _frame++;
-        if(_frame >= fps()) {
-                _frame = 0;
-                _sec++;
-                if(_sec >= 60) {
-                        _sec = 0;
-                        _min++;
-                        if(_min >= 60) {
-                                _min = 0;
-                                _hour++;
-                        }
-                }
+VtcTimecode Timecode::toVtc() const {
+        VtcTimecode vtc;
+        vtc.hour = _hour;
+        vtc.min = _min;
+        vtc.sec = _sec;
+        vtc.frame = _frame;
+        vtc.userbits = 0;
+        vtc.format = _mode.vtcFormat();
+        vtc.flags = 0;
+        if(_flags & FirstField) vtc.flags |= VTC_TC_FLAG_FIELD_1;
+        return vtc;
+}
+
+void Timecode::fromVtc(const VtcTimecode &vtc) {
+        _hour = vtc.hour;
+        _min = vtc.min;
+        _sec = vtc.sec;
+        _frame = vtc.frame;
+        if(vtc.format) {
+                _mode = Mode(vtc.format);
+        } else {
+                // Parsed digits but no format determined — valid but format-less
+                _mode = Mode(0u, 0u);
         }
-        if(isDropFrame() && (_min % 10 != 0) && (_sec == 0) && (_frame == 0)) _frame = 2;
+        _flags = 0;
+        if(vtc.flags & VTC_TC_FLAG_FIELD_1) _flags |= FirstField;
+}
+
+Timecode &Timecode::operator++() {
+        VtcTimecode vtc = toVtc();
+        vtc_timecode_increment(&vtc);
+        fromVtc(vtc);
         return *this;
 }
 
 Timecode &Timecode::operator--() {
-        if(isDropFrame() && (_min % 10 != 0) && (_sec == 0) && (_frame == 2)) _frame = 0;
-        if(_frame == 0) {
-                _frame = fps() - 1;
-                if(_sec == 0) {
-                        _sec = 59;
-                        if(_min == 0) {
-                                _min = 59;
-                                _hour--;
-                        } else _min--;
-                } else _sec--;
-        } else _frame--;
+        VtcTimecode vtc = toVtc();
+        vtc_timecode_decrement(&vtc);
+        fromVtc(vtc);
         return *this;
 }
 
 Timecode Timecode::fromFrameNumber(const Mode &mode, FrameNumber frameNumber) {
-        if(!mode.isValid() || mode.fps() == 0) return Timecode(mode); 
-        DigitType h, m, s, f;
-        int framesPerSec = mode.fps();
-        int framesPerMin = framesPerSec * 60;
-        int framesPerHour = framesPerMin * 60;
-        FrameNumber ct = frameNumber;
-        if(mode.isDropFrame() && mode.fps() == 30) {
-                int dropFramesPerHour = framesPerHour - 108;
-                int dropFramesPer10Min = (framesPerMin * 10) - 18;
-                int dropFramesPerMin = framesPerMin - 2;
-                int dropct = 0;
-                int fnum = frameNumber;
-                dropct += (fnum / dropFramesPerHour) * 108; fnum %= dropFramesPerHour;
-                dropct += (fnum / dropFramesPer10Min) * 18; fnum %= dropFramesPer10Min;
-                if(fnum >= framesPerMin) {
-                        dropct += 2;
-                        fnum -= framesPerMin;
-                        dropct += (fnum / dropFramesPerMin) * 2;
-                }
-                ct += dropct;
-        }
-        h = ct / framesPerHour; ct %= framesPerHour;
-        m = ct / framesPerMin;  ct %= framesPerMin;       
-        s = ct / framesPerSec;
-        f = ct % framesPerSec;
-        return Timecode(mode, h, m, s, f);
+        if(!mode.isValid() || mode.fps() == 0) return Timecode(mode);
+        VtcTimecode vtc;
+        VtcError err = vtc_timecode_from_frames(&vtc, mode.vtcFormat(), frameNumber);
+        if(err != VTC_ERR_OK) return Timecode(mode);
+        Timecode tc(mode);
+        tc._hour = vtc.hour;
+        tc._min = vtc.min;
+        tc._sec = vtc.sec;
+        tc._frame = vtc.frame;
+        return tc;
 }
 
 std::pair<Timecode, Error> Timecode::fromString(const String &str) {
-        std::istringstream iss(str.stds());
-        int h, m, s, f;
-        char sv[4];
-        FlagsType flags = Valid;
-        int fps = 0;
-        if(!(iss >> h)) { 
-                promekiErr("Failed to parse hour from '%s'", str.cstr());
-                return { Timecode(), Error::Invalid };
-
-        }
-        if(!(iss >> sv[0])) {
-                promekiErr("Failed to parse h:m delimiter from '%s'", str.cstr());
+        VtcTimecode vtc;
+        VtcError err = vtc_timecode_from_string(&vtc, str.cstr());
+        if(err != VTC_ERR_OK) {
+                promekiErr("Failed to parse timecode from '%s': %s", str.cstr(), vtc_error_string(err));
                 return { Timecode(), Error::Invalid };
         }
-        if(!(iss >> m)) {
-                promekiErr("Failed to parse minute from '%s'", str.cstr());
-                return { Timecode(), Error::Invalid };
-        }
-        if(!(iss >> sv[1])) {
-                promekiErr("Failed to parse m:s delimiter from '%s'", str.cstr());
-                return { Timecode(), Error::Invalid };
-        }
-        if(!(iss >> s)) {
-                promekiErr("Failed to parse seconds from '%s'", str.cstr());
-                return { Timecode(), Error::Invalid };
-        }
-        if(!(iss >> sv[2])) {
-                promekiErr("Failed to parse s:f delimiter from '%s'", str.cstr());
-                return { Timecode(), Error::Invalid };
-        }
-        if(!(iss >> f)) {
-                promekiErr("Failed to parse frame from '%s'", str.cstr());
-                return { Timecode(), Error::Invalid };
-        }
-        if((iss >> sv[3]) && sv[3] == '/') {
-                if(!(iss >> fps)) {
-                        promekiErr("Failed to parse fps in '%s'", str.cstr());
-                        return { Timecode(), Error::Invalid };
-                }
-        }
-        if(sv[2] == ';' || sv[2] == ',' || sv[1] == ';' || sv[0] == ';') {
-                flags |= DropFrame;
-                if(fps == 0) fps = 30;
-        }
-        if(sv[2] == '.' || sv[2] == ',') {
-                flags |= FirstField;
-        }
-        //promekiInfo("Parsed %d fps, 0x%X flags, %02d:%02d:%02d:%02d", (int)fps, (unsigned int)flags, (int)h, (int)m, (int)s, (int)f);
-        return { Timecode(Mode(fps, flags), h, m, s, f), Error() };
+        Timecode tc;
+        tc.fromVtc(vtc);
+        return { tc, Error() };
 }
 
-std::pair<String, Error> Timecode::toString() const {
+std::pair<String, Error> Timecode::toString(const VtcStringFormat *fmt) const {
         if(!isValid()) return { String(), Error::Invalid };
-        FrameRate rate = fps();
-        if(_hour > 99 || _min > 99 || _sec > 99 || _frame > 99 || rate > 99) {
-                return { String(), Error::TooLarge };
+        if(!_mode.hasFormat()) return { String(), Error::NoFrameRate };
+        VtcTimecode vtc = toVtc();
+        char buf[64];
+        VtcError err = vtc_timecode_to_string(&vtc, fmt, buf, sizeof(buf));
+        if(err != VTC_ERR_OK) {
+                return { String(), Error::Invalid };
         }
-        char div2;
-        char div1;
-        if(isDropFrame()) {
-                div1 = ',';
-                div2 = ';';
-        } else {
-                div1 = '.';
-                div2 = ':';
-        }
-        char buf[32];
-        char *b = buf;
-        *b++  = _hour / 10 + '0';
-        *b++  = _hour % 10 + '0';
-        *b++  = div2;
-        *b++  = _min / 10 + '0';
-        *b++  = _min % 10 + '0';
-        *b++  = div2;
-        *b++  = _sec / 10 + '0';
-        *b++  = _sec % 10 + '0';
-        *b++  = isFirstField() ? div1 : div2;
-        *b++  = _frame / 10 + '0';
-        *b++ = _frame % 10 + '0';
-        *b++ = '/';
-        *b++ = rate / 10 + '0';
-        *b++ = rate % 10 + '0';
-        *b++ = 0;
-        return { buf, Error() };
+        return { String(buf), Error() };
 }
 
 std::pair<Timecode::FrameNumber, Error> Timecode::toFrameNumber() const {
         if(!isValid()) return { 0, Error::Invalid };
-        if(fps() == 0) return { 0, Error::NoFrameRate };
-        int framesPerSec = fps();
-        int framesPerMin = framesPerSec * 60;
-        int framesPerHour = framesPerMin * 60;
-        FrameNumber ret = _frame + (_sec * framesPerSec) + (_min * framesPerMin) + (_hour * framesPerHour);
-	/* If this is drop frame timecode make changes to the frame number */
-	if(isDropFrame() && fps() == 30) {
-		ret -= (_hour * 108);
-		ret -= ((_min - (_min / 10)) * 2);
-	}
-        return { ret, Error() };
+        if(!_mode.hasFormat()) return { 0, Error::NoFrameRate };
+        VtcTimecode vtc = toVtc();
+        uint64_t frameNum;
+        VtcError err = vtc_timecode_to_frames(&vtc, &frameNum);
+        if(err != VTC_ERR_OK) {
+                if(err == VTC_ERR_NO_FRAME_RATE) return { 0, Error::NoFrameRate };
+                return { 0, Error::Invalid };
+        }
+        return { frameNum, Error() };
 }
 
 PROMEKI_NAMESPACE_END
-
