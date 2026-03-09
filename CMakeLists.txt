@@ -122,13 +122,14 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/signal.h
     include/promeki/size2d.h
     include/promeki/slot.h
+    include/promeki/streamstring.h
     include/promeki/string.h
     include/promeki/stringlist.h
     include/promeki/structdatabase.h
     include/promeki/system.h
     include/promeki/timecode.h
     include/promeki/timestamp.h
-    include/promeki/tsqueue.h
+    include/promeki/queue.h
     include/promeki/util.h
     include/promeki/uuid.h
     include/promeki/variant.h
@@ -519,6 +520,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/variant.cpp
         tests/buffer.cpp
         tests/list.cpp
+        tests/logger.cpp
+        tests/queue.cpp
+        tests/streamstring.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

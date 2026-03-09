@@ -9,12 +9,13 @@
 
 #include <thread>
 #include <atomic>
+#include <future>
 #include <iostream>
 #include <fstream>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
-#include <promeki/tsqueue.h>
+#include <promeki/queue.h>
 #include <promeki/datetime.h>
 #include <promeki/timestamp.h>
 
@@ -24,9 +25,9 @@ PROMEKI_NAMESPACE_BEGIN
 
 #define PROMEKI_DEBUG(name) \
         namespace { \
-                [[maybe_unused]] static const char *__promeki_debug_name = PROMEKI_STRINGIFY(name); \
-                [[maybe_unused]] static bool __promeki_debug_enabled = \
-                promekiRegisterDebug(&__promeki_debug_enabled, PROMEKI_STRINGIFY(name), __FILE__, __LINE__); \
+                [[maybe_unused]] static const char *_promeki_debug_name = PROMEKI_STRINGIFY(name); \
+                [[maybe_unused]] static bool _promeki_debug_enabled = \
+                promekiRegisterDebug(&_promeki_debug_enabled, PROMEKI_STRINGIFY(name), __FILE__, __LINE__); \
         }
 
 #define promekiLogImpl(level, format, ...) Logger::defaultLogger().log(level, __FILE__, __LINE__, String::sprintf(format, ##__VA_ARGS__))
@@ -35,7 +36,7 @@ PROMEKI_NAMESPACE_BEGIN
 #define promekiLogStackTrace(level) Logger::defaultLogger().log(level, __FILE__, __LINE__, promekiStackTrace())
 
 #ifdef PROMEKI_DEBUG_ENABLE
-#define promekiDebug(format, ...) if(__promeki_debug_enabled) { promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__); }
+#define promekiDebug(format, ...) if(_promeki_debug_enabled) { promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__); }
 #else
 #define promekiDebug(format, ...)
 #endif
@@ -47,13 +48,13 @@ PROMEKI_NAMESPACE_BEGIN
 bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int line);
 
 #define PROMEKI_BENCHMARK_BEGIN(name) \
-        TimeStamp __promeki_debug_timestamp_##name; \
-        if(__promeki_debug_enabled) { __promeki_debug_timestamp_##name = TimeStamp::now(); }
+        TimeStamp _promeki_debug_timestamp_##name; \
+        if(_promeki_debug_enabled) { _promeki_debug_timestamp_##name = TimeStamp::now(); }
 
 #define PROMEKI_BENCHMARK_END(name) \
-        if(__promeki_debug_enabled) { \
+        if(_promeki_debug_enabled) { \
                 Logger::defaultLogger().log(Logger::LogLevel::Debug, __FILE__, __LINE__, String::sprintf("[%s] %s took %.9lf sec", \
-                        __promeki_debug_name, PROMEKI_STRINGIFY(name), __promeki_debug_timestamp_##name.elapsedSeconds())); \
+                        _promeki_debug_name, PROMEKI_STRINGIFY(name), _promeki_debug_timestamp_##name.elapsedSeconds())); \
         }
 
 class Logger {
@@ -67,7 +68,7 @@ class Logger {
                 };
 
                 static Logger &defaultLogger();
-                static const char *levelToString(int level);
+                static const char *levelToString(LogLevel level);
 
                 Logger() : _level(Debug), _consoleLogging(true) {
                         _thread = std::thread(&Logger::worker, this);
@@ -126,7 +127,7 @@ class Logger {
 
                 void setLogLevel(LogLevel level) {
                         _level = level;
-                        log(Force, "LOGGER", 0, String("Logging Level Chanaged to %1").arg(level));
+                        log(Force, "LOGGER", 0, String::sprintf("Logging Level Changed to %d", level));
                         return;
                 }
 
@@ -135,37 +136,55 @@ class Logger {
                         return;
                 }
 
-                // Block until this command has been evaluated by the logger.  This 
-                // ensures all logging events up to this point have been written out
-                void sync() {
-                        _queue.waitForEmpty();
-                        return;
+                /**
+                 * @brief Blocks until all queued log commands have been processed.
+                 * @param timeoutMs Maximum time to wait in milliseconds.  A value
+                 *        of zero (the default) waits indefinitely.
+                 * @return Error::Ok if the sync completed, Error::Timeout if the
+                 *         timeout elapsed first.
+                 */
+                Error sync(unsigned int timeoutMs = 0) {
+                        auto p = std::make_shared<std::promise<void>>();
+                        auto f = p->get_future();
+                        Command cmd;
+                        cmd.cmd = CmdSync;
+                        cmd.syncPromise = std::move(p);
+                        _queue.push(std::move(cmd));
+                        if(timeoutMs == 0) {
+                                f.wait();
+                                return Error::Ok;
+                        }
+                        if(f.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
+                                return Error::Ok;
+                        }
+                        return Error::Timeout;
                 }
 
         private:
                 enum CommandType {
                         CmdLog,
                         CmdSetFile,
+                        CmdSync,
                         CmdTerminate
                 };
 
                 struct Command {
-                        CommandType     cmd;
-                        int             level;
-                        const char *    file;
-                        int             line;
-                        String          msg;
-                        DateTime        ts;
+                        CommandType                             cmd;
+                        int                                     level;
+                        const char *                            file;
+                        int                                     line;
+                        String                                  msg;
+                        DateTime                                ts;
+                        std::shared_ptr<std::promise<void>>     syncPromise;
                 };
 
                 std::thread             _thread;
                 std::atomic<int>        _level;
                 std::atomic<bool>       _consoleLogging;
                 std::ofstream           _file;
-                TSQueue<Command>        _queue;
+                Queue<Command>        _queue;
 
                 void worker();
-                void writeLine(const String &msg);
                 void writeLog(const Command &cmd);
                 void openLogFile(const Command &cmd);
 

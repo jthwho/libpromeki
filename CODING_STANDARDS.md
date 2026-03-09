@@ -10,6 +10,7 @@ libpromeki provides Qt-inspired C++ core classes built on top of the C++ standar
 - **No raw ownership**: Memory is managed via `SharedPtr`, `Buffer`, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in `ObjectBase`).
 - **Error codes over exceptions**: Use the `Error` class and return values rather than throwing. Constructors never throw.
 - **Minimal abstraction**: Wrap `std::` types to improve ergonomics, but don't add layers of indirection for their own sake.
+- **Blocking calls must support timeouts**: Any function that can block the calling thread should accept a `timeoutMs` parameter (type `unsigned int`, in milliseconds). The default value should be `0`, meaning "wait indefinitely." When a timeout expires, the function should return `Error::Timeout`. This convention applies unless the specific use case makes millisecond-granularity timeouts inappropriate (e.g., a frame-accurate deadline might use a different unit).
 
 ---
 
@@ -300,6 +301,59 @@ PROMEKI_NAMESPACE_END
 ```
 
 Do not use `using namespace promeki;` in headers.
+
+---
+
+## Documentation (Doxygen)
+
+All public API surfaces should be documented with Doxygen comments using the `/** ... */` style.
+
+### Class Documentation
+
+Every class should have a `@brief` line followed by a longer description when appropriate. Use `@tparam` for template parameters and `@note` for important caveats:
+
+```cpp
+/**
+ * @brief Thread-safe FIFO queue.
+ *
+ * All public methods are safe to call concurrently from multiple
+ * threads.  Internally synchronized with a mutex and condition
+ * variable.
+ *
+ * @note waitForEmpty() indicates that all items have been removed
+ * from the queue, not that they have been fully processed by the
+ * consumer.
+ *
+ * @tparam T The element type stored in the queue.
+ */
+template <typename T>
+class Queue { ... };
+```
+
+### Method Documentation
+
+Every public method should have at minimum a `@brief` line. Document parameters, return values, and template parameters as applicable:
+
+- `@param name` — describe each parameter. Use `@param[out]` or `@param[in,out]` for output/inout parameters.
+- `@return` — describe the return value. For `Error` returns, state the possible error codes.
+- `@tparam` — describe template parameters on templated methods.
+
+```cpp
+/**
+ * @brief Removes and returns the front element, blocking until
+ *        one is available or the timeout expires.
+ * @param timeoutMs Maximum time to wait in milliseconds.  A value
+ *        of zero (the default) waits indefinitely.
+ * @return A pair of the dequeued element (default-constructed on
+ *         timeout) and Error::Ok or Error::Timeout.
+ */
+std::pair<T, Error> pop(unsigned int timeoutMs = 0);
+```
+
+### What Not to Document
+
+- Private members and implementation details do not require Doxygen comments (plain `//` comments are fine when needed).
+- Trivial getters/setters that are self-explanatory from their name and signature may omit Doxygen, but prefer documenting them when there are non-obvious semantics.
 
 ---
 

@@ -62,7 +62,7 @@ Logger &Logger::defaultLogger() {
         return ret;
 }
 
-const char *Logger::levelToString(int level) {
+const char *Logger::levelToString(LogLevel level) {
         const char *ret;
         switch(level) {
                 case Force: ret = "[ ]"; break;
@@ -80,14 +80,17 @@ void Logger::worker() {
         size_t cmdct = 0;
 
         while(running) {
-                Command cmd = _queue.pop();
+                auto [cmd, err] = _queue.pop();
                 cmdct++;
                 switch(cmd.cmd) {
                         case CmdLog:
                                 writeLog(cmd);
                                 break;
-                        case CmdSetFile: 
+                        case CmdSetFile:
                                 openLogFile(cmd);
+                                break;
+                        case CmdSync:
+                                cmd.syncPromise->set_value();
                                 break;
                         case CmdTerminate:
                                 running = false;
@@ -103,23 +106,18 @@ void Logger::worker() {
         _file.close();
 }
 
-void Logger::writeLine(const String &str) {
-        std::cout << str << std::endl;
-        return;
-}
-
 void Logger::writeLog(const Command &cmd) {
-        const char *level = levelToString(cmd.level);
+        const char *level = levelToString(static_cast<LogLevel>(cmd.level));
 
         AnsiStream term(std::cout);
         term.setAnsiEnabled(AnsiStream::stdoutSupportsANSI());
         bool hasSrc = false;
         String srcLocation;
         if(cmd.file != nullptr) {
-            srcLocation = FileInfo(cmd.file).fileName();
-            srcLocation += ':';
-            srcLocation += String::dec(cmd.line);
-            hasSrc = true;
+                srcLocation = FileInfo(cmd.file).fileName();
+                srcLocation += ':';
+                srcLocation += String::dec(cmd.line);
+                hasSrc = true;
         }
 
         String ts = cmd.ts.toString("%F %T.3");
@@ -127,20 +125,21 @@ void Logger::writeLog(const Command &cmd) {
         if(_file.is_open()) {
                 _file << ts;
                 if(hasSrc) {
-                    _file << ' ';
-                    _file << srcLocation;
+                        _file << ' ';
+                        _file << srcLocation;
                 }
                 _file << ' ';
                 _file << level;
                 _file << ' ';
                 _file << cmd.msg;
+                _file << std::endl;
         }
         if(_consoleLogging) {
                 term.setForeground(AnsiStream::Cyan);
                 term << ts;
                 if(hasSrc) {
-                    term << ' ';
-                    term << srcLocation;
+                        term << ' ';
+                        term << srcLocation;
                 }
                 switch(cmd.level) {
                         case Warn: term.setForeground(AnsiStream::Yellow); break;
@@ -159,6 +158,18 @@ void Logger::writeLog(const Command &cmd) {
 }
 
 void Logger::openLogFile(const Command &cmd) {
+        if(_file.is_open()) _file.close();
+        _file.open(cmd.msg.stds(), std::ios::out | std::ios::app);
+        if(!_file.is_open()) {
+                Command errcmd;
+                errcmd.cmd = CmdLog;
+                errcmd.level = Err;
+                errcmd.file = "LOGGER";
+                errcmd.line = 0;
+                errcmd.msg = String::sprintf("Failed to open log file: %s", cmd.msg.cstr());
+                errcmd.ts = DateTime::now();
+                writeLog(errcmd);
+        }
         return;
 }
 
