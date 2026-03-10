@@ -1,5 +1,5 @@
 # libpromeki
-![ProMEKI Logo](docs/promeki_logo.jpg)
+<img src="docs/promeki_logo.jpg" alt="ProMEKI Logo" width="100">
 
 PROfessional MEdia toolKIt — A modern C++20 library that makes writing
 audio, video, and media applications in C++ easier.

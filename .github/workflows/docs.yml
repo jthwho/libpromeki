@@ -66,6 +66,8 @@ jobs:
           VERSION="${{ steps.version.outputs.name }}"
           rm -rf "gh-pages/$VERSION"
           cp -r docs-output/html "gh-pages/$VERSION"
+          mkdir -p "gh-pages/$VERSION/docs"
+          cp docs/*.jpg "gh-pages/$VERSION/docs/"
           touch gh-pages/.nojekyll
 
       - name: Generate index page
