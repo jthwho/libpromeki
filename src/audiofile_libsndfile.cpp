@@ -311,7 +311,7 @@ class AudioFileFactory_LibSndFile : public AudioFileFactory {
                         if(file == nullptr) return false;
                         // FIXME: Have a look at the info struct and decide if we actually can read it.
                         sf_close(file);
-                        return false;
+                        return true;
                 }
 
 };

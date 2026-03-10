@@ -67,7 +67,8 @@ String DateTime::toString(const char *fmt) const {
         String newfmt = addSubsecondToFormat(std::chrono::duration<double>(ns).count(), fmt, jumpSecond);
         auto t = std::chrono::system_clock::to_time_t(_value);
         if(jumpSecond) t++;
-        std::tm tm = *std::localtime(&t);
+        std::tm tm = {};
+        localtime_r(&t, &tm);
         return strftime(tm, newfmt.cstr());
 }
 
@@ -126,7 +127,8 @@ DateTime DateTime::fromNow(const String &description) {
 
         // Convert time_point to std::tm to handle months and years
         std::time_t future_time_t = system_clock::to_time_t(future_time);
-        std::tm future_tm = *std::localtime(&future_time_t);
+        std::tm future_tm = {};
+        localtime_r(&future_time_t, &future_tm);
         future_tm.tm_mon += months;
         future_tm.tm_year += years;
 

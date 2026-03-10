@@ -10,61 +10,92 @@
 
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/stringlist.h>
+#include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class UUID;
-
 /**
- * @brief Promeki application lifecycle manager.
+ * @brief Application-wide state for the promeki library.
  *
- * You must create this object before using any promeki library calls. It must
- * live for the entire lifetime you're using the promeki library. Typically,
- * this object would be created on the stack in the main() function so it
- * leaves scope right before application termination.
+ * Provides global application identity (name, UUID, command-line arguments)
+ * used by other parts of the library such as UUID v3/v5 generation.
+ *
+ * All accessors are static and work whether or not an instance has been
+ * constructed.  Optionally, an Application object can be created on the
+ * stack in main() to capture argc/argv and register as the current
+ * instance (similar to QApplication):
+ *
+ * @code
+ * int main(int argc, char **argv) {
+ *         Application app(argc, argv);
+ *         Application::setAppName("myapp");
+ *         // ...
+ * }
+ * @endcode
+ *
+ * If no instance is created, the static accessors operate on
+ * default-constructed internal state.
  */
 class Application {
-    public:
+        public:
+                /**
+                 * @brief Constructs and registers an Application instance.
+                 * @param argc Argument count from main().
+                 * @param argv Argument vector from main().
+                 *
+                 * Stores the command-line arguments and sets this as the
+                 * current Application.  Only one instance should exist at
+                 * a time.
+                 */
+                Application(int argc, char **argv);
 
-        /**
-         * @brief Returns the current application object pointer.
-         * @return Pointer to the active Application, or nullptr if none exists.
-         */
-        static Application *current();
+                /** @brief Destroys the Application and clears the current instance. */
+                ~Application();
 
-        /** @brief Constructs and activates the Application instance. */
-        Application();
+                Application(const Application &) = delete;
+                Application(Application &&) = delete;
+                Application &operator=(const Application &) = delete;
+                Application &operator=(Application &&) = delete;
 
-        /** @brief Destroys the Application instance and releases resources. */
-        ~Application();
+                /**
+                 * @brief Returns the command-line arguments.
+                 * @return The arguments passed to the constructor, or an empty
+                 *         list if no instance was created.
+                 */
+                static const StringList &arguments();
 
-        /**
-         * @brief Returns the application UUID used as a namespace for UUID v3/v5 generation.
-         * @return The application namespace UUID.
-         */
-        const UUID &appUUID() const;
+                /**
+                 * @brief Returns the application UUID used as a namespace for UUID v3/v5 generation.
+                 * @return The application namespace UUID.
+                 */
+                static const UUID &appUUID();
 
-        /**
-         * @brief Sets the application UUID used as a namespace for UUID v3/v5 generation.
-         * @param uuid The namespace UUID to use.
-         */
-        void setAppUUID(const UUID &uuid);
+                /**
+                 * @brief Sets the application UUID used as a namespace for UUID v3/v5 generation.
+                 * @param uuid The namespace UUID to use.
+                 */
+                static void setAppUUID(const UUID &uuid);
 
-        /**
-         * @brief Returns the application name used for UUID v3/v5 generation.
-         * @return The application name string.
-         */
-        const String &appName() const;
+                /**
+                 * @brief Returns the application name used for UUID v3/v5 generation.
+                 * @return The application name string.
+                 */
+                static const String &appName();
 
-        /**
-         * @brief Sets the application name used for UUID v3/v5 generation.
-         * @param name The application name to use.
-         */
-        void setAppName(const String &name);
+                /**
+                 * @brief Sets the application name used for UUID v3/v5 generation.
+                 * @param name The application name to use.
+                 */
+                static void setAppName(const String &name);
 
-    private:
-        struct Data;
-        Data *_d;
+        private:
+                struct Data {
+                        StringList      arguments;
+                        UUID            appUUID;
+                        String          appName;
+                };
+                static Data &data();
 };
 
 PROMEKI_NAMESPACE_END

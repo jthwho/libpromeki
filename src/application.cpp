@@ -6,58 +6,46 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/namespace.h>
 #include <promeki/application.h>
-#include <promeki/uuid.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-struct Application::Data {
-    UUID   appUUID;
-    String appName;
-};
-
-static Application **currentApplicationPtr() {
-    static Application *app = nullptr;
-    return &app;
+Application::Data &Application::data() {
+        static Data d;
+        return d;
 }
 
-Application *Application::current() {
-    return *currentApplicationPtr();
-}
-
-Application::Application() : _d(new Data) {
-    if(current() != nullptr) {
-        promekiErr("Application(%p): Another promeki application object already exists (%p)!", this, current());
-    } else {
-        *currentApplicationPtr() = this;
-    }
+Application::Application(int argc, char **argv) {
+        data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
+        return;
 }
 
 Application::~Application() {
-    if(current() != this) {
-        promekiErr("Application(%p): Application object destroyed, but not current application (%p)", this, current());
-    } else {
-        *currentApplicationPtr() = nullptr;
-    }
-    delete _d;
+        data().arguments.clear();
+        return;
 }
 
-const UUID &Application::appUUID() const {
-    return _d->appUUID;
+const StringList &Application::arguments() {
+        return data().arguments;
+}
+
+const UUID &Application::appUUID() {
+        return data().appUUID;
 }
 
 void Application::setAppUUID(const UUID &uuid) {
-    _d->appUUID = uuid;
+        data().appUUID = uuid;
+        return;
 }
 
-const String &Application::appName() const {
-    return _d->appName;
+const String &Application::appName() {
+        return data().appName;
 }
 
 void Application::setAppName(const String &name) {
-    _d->appName = name;
+        data().appName = name;
+        return;
 }
 
 PROMEKI_NAMESPACE_END

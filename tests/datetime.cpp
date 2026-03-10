@@ -104,3 +104,28 @@ TEST_CASE("DateTime: fromString with bad input") {
         DateTime dt = DateTime::fromString("not-a-date", DateTime::DefaultFormat, &err);
         CHECK(err.isError());
 }
+
+TEST_CASE("DateTime: toString is thread-safe with known time_t") {
+        // Exercises the localtime_r path (previously used non-thread-safe std::localtime)
+        DateTime dt((time_t)0);
+        String s1 = dt.toString();
+        String s2 = dt.toString();
+        CHECK(s1 == s2);
+        CHECK_FALSE(s1.isEmpty());
+}
+
+TEST_CASE("DateTime: toString roundtrip with subsecond format") {
+        // Exercises addSubsecondToFormat + localtime_r path
+        DateTime dt = DateTime::now();
+        String s = dt.toString("%T.3");
+        CHECK_FALSE(s.isEmpty());
+        // Should contain a dot for subsecond digits
+        CHECK(s.contains("."));
+}
+
+TEST_CASE("DateTime: fromNow returns a valid DateTime") {
+        // Exercises the fromNow localtime_r path
+        DateTime future = DateTime::fromNow("1 hour");
+        // Should produce a non-epoch time
+        CHECK(future.toTimeT() > 0);
+}

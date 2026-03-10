@@ -50,7 +50,7 @@ Error File::open(int flags) {
         return Error::NotImplemented;
 }
 
-void close() {
+void File::close() {
         return;
 }
 

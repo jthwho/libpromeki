@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <promeki/uuid.h>
+#include <promeki/list.h>
 #include <promeki/util.h>
 #include <promeki/md5.h>
 #include <promeki/sha1.h>
@@ -48,15 +49,11 @@ UUID UUID::generate(int version) {
         switch(version) {
                 case 1: return generateV1();
                 case 3: {
-                        Application *app = Application::current();
-                        PROMEKI_ASSERT(app != nullptr);
-                        return generateV3(app->appUUID(), app->appName());
+                        return generateV3(Application::appUUID(), Application::appName());
                 }
                 case 4: return generateV4();
                 case 5: {
-                        Application *app = Application::current();
-                        PROMEKI_ASSERT(app != nullptr);
-                        return generateV5(app->appUUID(), app->appName());
+                        return generateV5(Application::appUUID(), Application::appName());
                 }
                 case 7: return generateV7();
                 default:
@@ -77,18 +74,11 @@ UUID UUID::generateV3(const UUID &ns, const String &name) {
         const auto &nsData = ns.data();
         size_t nameLen = name.size();
         size_t totalLen = 16 + nameLen;
-        uint8_t buf[16 + 256];
-        uint8_t *heap = nullptr;
-        uint8_t *input = buf;
-        if(totalLen > sizeof(buf)) {
-                heap = new uint8_t[totalLen];
-                input = heap;
-        }
-        std::memcpy(input, nsData.data(), 16);
-        std::memcpy(input + 16, name.cstr(), nameLen);
+        List<uint8_t> input(totalLen);
+        std::memcpy(input.data(), nsData.data(), 16);
+        std::memcpy(input.data() + 16, name.cstr(), nameLen);
 
-        MD5Digest hash = md5(input, totalLen);
-        delete[] heap;
+        MD5Digest hash = md5(input.data(), totalLen);
 
         DataFormat d;
         std::memcpy(d.data(), hash.data(), 16);
@@ -113,18 +103,11 @@ UUID UUID::generateV5(const UUID &ns, const String &name) {
         const auto &nsData = ns.data();
         size_t nameLen = name.size();
         size_t totalLen = 16 + nameLen;
-        uint8_t buf[16 + 256];
-        uint8_t *heap = nullptr;
-        uint8_t *input = buf;
-        if(totalLen > sizeof(buf)) {
-                heap = new uint8_t[totalLen];
-                input = heap;
-        }
-        std::memcpy(input, nsData.data(), 16);
-        std::memcpy(input + 16, name.cstr(), nameLen);
+        List<uint8_t> input(totalLen);
+        std::memcpy(input.data(), nsData.data(), 16);
+        std::memcpy(input.data() + 16, name.cstr(), nameLen);
 
-        SHA1Digest hash = sha1(input, totalLen);
-        delete[] heap;
+        SHA1Digest hash = sha1(input.data(), totalLen);
 
         // Use first 16 bytes of the 20-byte SHA-1 digest
         DataFormat d;
