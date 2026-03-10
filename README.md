@@ -1,5 +1,5 @@
 # libpromeki
-<img src="./docs/promeki_logo.jpg" alt="ProMEKI Logo" width="100" height="100">
+![ProMEKI Logo](docs/promeki_logo.jpg)
 
 PROfessional MEdia toolKIt — A modern C++20 library that makes writing
 audio, video, and media applications in C++ easier.
@@ -174,7 +174,7 @@ cmake --build build --target docs
 ```
 
 A hosted copy of the documentation is available at:
-[API Documentation](https://howardlogic.com/doxygen/libpromeki)
+[API Documentation](https://jthwho.github.io/libpromeki/main/)
 
 ## Debugging
 
