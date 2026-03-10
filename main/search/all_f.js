@@ -15,7 +15,7 @@ var searchData=
   ['onnewlinefunc_12',['OnNewLineFunc',['../classStreamString.html#a14c26f2adcda09c0f9762cf0c0c78109',1,'StreamString']]],
   ['open_13',['open',['../classFile.html#a1287e5bcae5b1dfcb48bb1c3f86a323f',1,'File::open()'],['../classAudioFile.html#a1c684bfb2373b6f84cb0aab81c416c5c',1,'AudioFile::open()'],['../classAudioFile_1_1Impl.html#abbe81845a0d20b354420e6c170f1d992',1,'AudioFile::Impl::open()']]],
   ['openfailed_14',['OpenFailed',['../classError.html#ab5980e13b879db253df802b0950d1708a67e1f2f9dd20f6721897f4eca0aaed8b',1,'Error']]],
-  ['operation_15',['operation',['../classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153',1,'AudioFile::Operation'],['../classAudioFile_1_1Impl.html#abf8837570fd97ba61d0724f16a086294',1,'AudioFile::Impl::operation()'],['../classAudioFile.html#a284a401272bc06e34950003d37c6b977',1,'AudioFile::operation()']]],
+  ['operation_15',['operation',['../classAudioFile_1_1Impl.html#abf8837570fd97ba61d0724f16a086294',1,'AudioFile::Impl::operation()'],['../classAudioFile.html#a284a401272bc06e34950003d37c6b977',1,'AudioFile::operation() const'],['../classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153',1,'AudioFile::Operation']]],
   ['operator_20const_20array_3c_20t_2c_20numvalues_20_3e_20_26_16',['operator const Array&lt; T, NumValues &gt; &amp;',['../classPoint.html#a8f32a4e4edc7db7645f85dc9a1e0f71e',1,'Point']]],
   ['operator_20const_20char_20_2a_17',['operator const char *',['../classString.html#a9a12caedc885ac44c86d104a8cb60f82',1,'String']]],
   ['operator_20const_20std_3a_3astring_20_26_18',['string &amp;',['../classString.html#ae221432cbc04c8e88dc5b699c15b5dc4',1,'String']]],

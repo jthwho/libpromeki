@@ -6,7 +6,7 @@ var searchData=
   ['lerp_3',['lerp',['../classArray.html#aba9f9b3a4c6c5c1a9f6e022e13365d2a',1,'Array::lerp()'],['../classCIEPoint.html#adc2df790aa8c46ed8c7e38e48924c348',1,'CIEPoint::lerp()'],['../classXYZColor.html#a2aad808d2583054783fe8ae945354a23',1,'XYZColor::lerp()']]],
   ['level_4',['level',['../classLogger.html#a39e0f0acc067c89f56c970ec521651a2',1,'Logger']]],
   ['leveltostring_5',['levelToString',['../classLogger.html#af845837cc23651a6a2f8df277544a438',1,'Logger']]],
-  ['line_6',['line',['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line(const Pt &amp;&amp;s, const Pt &amp;&amp;e)'],['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()=default'],['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()']]],
+  ['line_6',['line',['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()'],['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line(const Pt &amp;&amp;s, const Pt &amp;&amp;e)'],['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()=default']]],
   ['linealign_7',['lineAlign',['../classImageDesc.html#a6d2eb3160c87fda340202a5c964b344c',1,'ImageDesc']]],
   ['linepad_8',['linePad',['../classImageDesc.html#ad95611a6f599daf285cbf4d5035e6495',1,'ImageDesc']]],
   ['linestride_9',['linestride',['../classImage.html#abf9283ed3c232c709afcd5dd22bd60f1',1,'Image::lineStride()'],['../classPixelFormat.html#ac041db304ac63fee5905cb1ac680492f',1,'PixelFormat::lineStride()']]],

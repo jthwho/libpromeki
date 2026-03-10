@@ -5,7 +5,7 @@ var searchData=
   ['wavelength_2',['wavelength',['../structCIEWavelength.html#ace5358d72cd31e2bc856186095542d2d',1,'CIEWavelength']]],
   ['wavelengthtociepoint_3',['wavelengthToCIEPoint',['../classCIEPoint.html#ad021c124585cbb21a4446cc016376593',1,'CIEPoint']]],
   ['wavelengthtoxyz_4',['wavelengthToXYZ',['../classCIEPoint.html#a4a159482918b4dcbe92efb3393629a5d',1,'CIEPoint']]],
-  ['wellknownrate_5',['wellknownrate',['../classFrameRate.html#a93b0aff90172523f99ac5dd2a357fbc3',1,'FrameRate::wellKnownRate() const'],['../classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c',1,'FrameRate::WellKnownRate']]],
+  ['wellknownrate_5',['wellknownrate',['../classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c',1,'FrameRate::WellKnownRate'],['../classFrameRate.html#a93b0aff90172523f99ac5dd2a357fbc3',1,'FrameRate::wellKnownRate() const']]],
   ['what_20not_20to_20document_6',['What Not to Document',['../md_CODING__STANDARDS.html#autotoc_md58',1,'']]],
   ['whitepoint_7',['whitePoint',['../classColorSpace.html#aa1ed0c598671a9b239b2482f2592fb95',1,'ColorSpace']]],
   ['whitespacechars_8',['WhitespaceChars',['../classString.html#a3e9dafc40e847e0c7edb5ac3ed695853',1,'String']]],

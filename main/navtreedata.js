@@ -117,12 +117,12 @@ var NAVTREEINDEX =
 "classAudioFile_1_1Impl.html#ad4480eed21f50ad798e694e6ef0c6225",
 "classFontPainter.html#ade478428aecd16fbe4bf0cf2d1cc4c36",
 "classList.html#ab12e7189bb986c82f8e38074dd204687",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a3dbebd16dfab74aeceb80542a78e5dac",
-"classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d",
-"classPoint.html#a1d6567cfed979a2f1b14e963ed8072c3",
-"classStringList.html#a58f310d3e93f46efc806b53259928371",
-"functions_g.html",
-"structMemPool_1_1Stats.html#a49907afc1308b5d746be81bc4486654d"
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a37ec39a1fd8832fb2ccf12a26c85e46c",
+"classMusicalScale.html#ab4ea447e6bfe93846ef993f84cafe3f3",
+"classPixelFormat.html#af3de320e1c5023224ea1eac25df61d85",
+"classString.html#afc2a7dab6eec01a4881f5235192ff2dd",
+"functions_func_s.html",
+"structColorSpace_1_1Data.html#a94a33a0edeff8ba39d2ded68b6be239c"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
