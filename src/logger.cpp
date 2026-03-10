@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <promeki/logger.h>
 #include <promeki/ansistream.h>
-#include <promeki/fileinfo.h>
 #include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -75,6 +74,54 @@ const char *Logger::levelToString(LogLevel level) {
         return ret;
 }
 
+Logger::LogFormatter Logger::defaultFileFormatter() {
+        return [](const DateTime &ts, LogLevel level, const char *file, int line, const String &msg) -> String {
+                const char *lvl = levelToString(level);
+                String result = ts.toString("%F %T.3");
+                if(file != nullptr) {
+                        result += ' ';
+                        result += file;
+                        result += ':';
+                        result += String::dec(line);
+                }
+                result += ' ';
+                result += lvl;
+                result += ' ';
+                result += msg;
+                return result;
+        };
+}
+
+Logger::LogFormatter Logger::defaultConsoleFormatter() {
+        return [](const DateTime &ts, LogLevel level, const char *file, int line, const String &msg) -> String {
+                bool ansi = AnsiStream::stdoutSupportsANSI();
+                const char *lvl = levelToString(level);
+
+                String result;
+                if(ansi) result += "\033[1;36m"; // Cyan
+                result += ts.toString("%F %T.3");
+                if(file != nullptr) {
+                        result += ' ';
+                        result += file;
+                        result += ':';
+                        result += String::dec(line);
+                }
+                if(ansi) {
+                        switch(level) {
+                                case Warn: result += "\033[1;33m"; break; // Yellow
+                                case Err:  result += "\033[1;31m"; break; // Red
+                                default:   result += "\033[1;32m"; break; // Green
+                        }
+                }
+                result += ' ';
+                result += lvl;
+                if(ansi) result += "\033[0m"; // Reset
+                result += ' ';
+                result += msg;
+                return result;
+        };
+}
+
 void Logger::worker() {
         bool running = true;
         size_t cmdct = 0;
@@ -82,95 +129,51 @@ void Logger::worker() {
         while(running) {
                 auto [cmd, err] = _queue.pop();
                 cmdct++;
-                switch(cmd.cmd) {
-                        case CmdLog:
-                                writeLog(cmd);
-                                break;
-                        case CmdSetFile:
-                                openLogFile(cmd);
-                                break;
-                        case CmdSync:
-                                cmd.syncPromise->set_value();
-                                break;
-                        case CmdTerminate:
+                std::visit([&](auto &&arg) {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, CmdLog>) {
+                                writeLog(arg);
+                        } else if constexpr (std::is_same_v<T, CmdSetFile>) {
+                                openLogFile(arg.filename);
+                        } else if constexpr (std::is_same_v<T, CmdSetFormatter>) {
+                                if(arg.console) {
+                                        _consoleFormatter = arg.formatter ? arg.formatter : defaultConsoleFormatter();
+                                } else {
+                                        _fileFormatter = arg.formatter ? arg.formatter : defaultFileFormatter();
+                                }
+                        } else if constexpr (std::is_same_v<T, CmdSync>) {
+                                arg.promise->set_value();
+                        } else if constexpr (std::is_same_v<T, CmdTerminate>) {
                                 running = false;
-                                cmd.level = Force;
-                                cmd.msg = String::sprintf("Logger %p terminated, %llu total commands", this, (unsigned long long)cmdct);
-                                cmd.file = "LOGGER";
-                                cmd.line = 0;
-                                cmd.ts = DateTime::now();
-                                writeLog(cmd);
-                                break;
-                }
+                                CmdLog logcmd{Debug, "LOGGER", 0,
+                                        String::sprintf("Logger %p terminated, %llu total commands",
+                                                this, (unsigned long long)cmdct),
+                                        DateTime::now()};
+                                writeLog(logcmd);
+                        }
+                }, cmd);
         }
         _file.close();
 }
 
-void Logger::writeLog(const Command &cmd) {
-        const char *level = levelToString(static_cast<LogLevel>(cmd.level));
-
-        AnsiStream term(std::cout);
-        term.setAnsiEnabled(AnsiStream::stdoutSupportsANSI());
-        bool hasSrc = false;
-        String srcLocation;
-        if(cmd.file != nullptr) {
-                srcLocation = FileInfo(cmd.file).fileName();
-                srcLocation += ':';
-                srcLocation += String::dec(cmd.line);
-                hasSrc = true;
-        }
-
-        String ts = cmd.ts.toString("%F %T.3");
-
+void Logger::writeLog(const CmdLog &cmd) {
         if(_file.is_open()) {
-                _file << ts;
-                if(hasSrc) {
-                        _file << ' ';
-                        _file << srcLocation;
-                }
-                _file << ' ';
-                _file << level;
-                _file << ' ';
-                _file << cmd.msg;
-                _file << std::endl;
+                _file << _fileFormatter(cmd.ts, cmd.level, cmd.file, cmd.line, cmd.msg) << std::endl;
         }
         if(_consoleLogging) {
-                term.setForeground(AnsiStream::Cyan);
-                term << ts;
-                if(hasSrc) {
-                        term << ' ';
-                        term << srcLocation;
-                }
-                switch(cmd.level) {
-                        case Warn: term.setForeground(AnsiStream::Yellow); break;
-                        case Err:  term.setForeground(AnsiStream::Red); break;
-                        default:   term.setForeground(AnsiStream::Green); break;
-                }
-                term << ' ';
-                term << level;
-                term << ' ';
-                term.setForeground(AnsiStream::White);
-                term << cmd.msg;
-                term.reset();
-                term << std::endl;
+                std::cout << _consoleFormatter(cmd.ts, cmd.level, cmd.file, cmd.line, cmd.msg) << "\033[0m" << std::endl;
         }
-        return;
 }
 
-void Logger::openLogFile(const Command &cmd) {
+void Logger::openLogFile(const String &filename) {
         if(_file.is_open()) _file.close();
-        _file.open(cmd.msg.stds(), std::ios::out | std::ios::app);
+        _file.open(filename.stds(), std::ios::out | std::ios::app);
         if(!_file.is_open()) {
-                Command errcmd;
-                errcmd.cmd = CmdLog;
-                errcmd.level = Err;
-                errcmd.file = "LOGGER";
-                errcmd.line = 0;
-                errcmd.msg = String::sprintf("Failed to open log file: %s", cmd.msg.cstr());
-                errcmd.ts = DateTime::now();
-                writeLog(errcmd);
+                CmdLog cmd{Err, "LOGGER", 0,
+                        String::sprintf("Failed to open log file: %s", filename.cstr()),
+                        DateTime::now()};
+                writeLog(cmd);
         }
-        return;
 }
 
 PROMEKI_NAMESPACE_END

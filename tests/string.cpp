@@ -257,6 +257,51 @@ TEST_CASE("String_Substrings") {
 }
 
 // ============================================================================
+// Find and Contains
+// ============================================================================
+
+TEST_CASE("String_FindSubstring") {
+        String s = "Hello World";
+
+        CHECK(s.find(String("World")) == 6);
+        CHECK(s.find(String("Hello")) == 0);
+        CHECK(s.find(String("xyz")) == String::npos);
+        CHECK(s.find(String("")) == 0);
+}
+
+TEST_CASE("String_Contains") {
+        String s = "Hello World";
+
+        SUBCASE("Contains char") {
+                CHECK(s.contains('H'));
+                CHECK(s.contains('W'));
+                CHECK(s.contains(' '));
+                CHECK_FALSE(s.contains('z'));
+        }
+
+        SUBCASE("Contains String") {
+                CHECK(s.contains(String("Hello")));
+                CHECK(s.contains(String("World")));
+                CHECK(s.contains(String("lo Wo")));
+                CHECK_FALSE(s.contains(String("xyz")));
+        }
+
+        SUBCASE("Contains C string") {
+                CHECK(s.contains("Hello"));
+                CHECK(s.contains("World"));
+                CHECK(s.contains("lo Wo"));
+                CHECK_FALSE(s.contains("xyz"));
+        }
+
+        SUBCASE("Empty string") {
+                String empty;
+                CHECK_FALSE(empty.contains('a'));
+                CHECK_FALSE(empty.contains("abc"));
+                CHECK(s.contains(""));
+        }
+}
+
+// ============================================================================
 // Conversion operators
 // ============================================================================
 

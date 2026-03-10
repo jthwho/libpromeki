@@ -7,11 +7,14 @@
 
 #pragma once
 
+#include <mutex>
 #include <thread>
 #include <atomic>
 #include <future>
+#include <variant>
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
@@ -21,19 +24,40 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/** @brief Extracts the file name from a full path at compile time. */
+static consteval const char *sourceFileName(const char *path) {
+        const char *ret = path;
+        for(const char *p = path; *p; ++p) {
+                if(*p == '/' || *p == '\\') ret = p + 1;
+        }
+        return ret;
+}
+
+#ifdef __FILE_NAME__
+#define PROMEKI_SOURCE_FILE __FILE_NAME__
+#else
+#define PROMEKI_SOURCE_FILE promeki::sourceFileName(__FILE__)
+#endif
+
 // Variadic macros for logging at various levels
 
 #define PROMEKI_DEBUG(name) \
         namespace { \
                 [[maybe_unused]] static const char *_promeki_debug_name = PROMEKI_STRINGIFY(name); \
                 [[maybe_unused]] static bool _promeki_debug_enabled = \
-                promekiRegisterDebug(&_promeki_debug_enabled, PROMEKI_STRINGIFY(name), __FILE__, __LINE__); \
+                promekiRegisterDebug(&_promeki_debug_enabled, PROMEKI_STRINGIFY(name), PROMEKI_SOURCE_FILE, __LINE__); \
         }
 
-#define promekiLogImpl(level, format, ...) Logger::defaultLogger().log(level, __FILE__, __LINE__, String::sprintf(format, ##__VA_ARGS__))
+#define promekiLogImpl(_plevel, format, ...) \
+        do { if(!(_plevel) || (_plevel) >= Logger::defaultLogger().level()) \
+                Logger::defaultLogger().log(_plevel, PROMEKI_SOURCE_FILE, __LINE__, String::sprintf(format, ##__VA_ARGS__)); \
+        } while(0)
 #define promekiLog(level, format, ...) promekiLogImpl(level, format, ##__VA_ARGS__)
 #define promekiLogSync() Logger::defaultLogger().sync()
-#define promekiLogStackTrace(level) Logger::defaultLogger().log(level, __FILE__, __LINE__, promekiStackTrace())
+#define promekiLogStackTrace(_plevel) \
+        do { if(!(_plevel) || (_plevel) >= Logger::defaultLogger().level()) \
+                Logger::defaultLogger().log(_plevel, PROMEKI_SOURCE_FILE, __LINE__, promekiStackTrace()); \
+        } while(0)
 
 #ifdef PROMEKI_DEBUG_ENABLE
 #define promekiDebug(format, ...) if(_promeki_debug_enabled) { promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__); }
@@ -75,6 +99,15 @@ class Logger {
                 };
 
                 /**
+                 * @brief Function type for formatting log messages.
+                 *
+                 * A formatter receives the timestamp, log level, source file, source line,
+                 * and message text, and returns a fully formatted string ready for output.
+                 */
+                using LogFormatter = std::function<String(const DateTime &ts, LogLevel level,
+                        const char *file, int line, const String &msg)>;
+
+                /**
                  * @brief Returns the singleton default Logger instance.
                  * @return A reference to the default Logger.
                  */
@@ -87,19 +120,31 @@ class Logger {
                  */
                 static const char *levelToString(LogLevel level);
 
+                /**
+                 * @brief Returns the default file log formatter.
+                 *
+                 * Produces plain text lines in the format:
+                 * `TIMESTAMP SOURCE:LINE [LEVEL] MESSAGE`
+                 */
+                static LogFormatter defaultFileFormatter();
+
+                /**
+                 * @brief Returns the default console log formatter.
+                 *
+                 * Produces ANSI-colored lines suitable for terminal output.
+                 */
+                static LogFormatter defaultConsoleFormatter();
+
                 /** @brief Constructs a Logger and starts the worker thread. */
-                Logger() : _level(Debug), _consoleLogging(true) {
+                Logger() : _level(Info), _consoleLogging(true),
+                        _fileFormatter(defaultFileFormatter()),
+                        _consoleFormatter(defaultConsoleFormatter()) {
                         _thread = std::thread(&Logger::worker, this);
                 }
 
                 /** @brief Destructor. Signals the worker thread to terminate and waits for it to finish. */
                 ~Logger() {
-                        // Signal the worker thread to terminate
-                        Command cmd;
-                        cmd.cmd = CmdTerminate;
-                        _queue.push(cmd);
-
-                        // Wait for the worker thread to finish
+                        _queue.emplace(CmdTerminate{});
                         _thread.join();
                 }
 
@@ -119,15 +164,7 @@ class Logger {
                  * @param msg      The log message text.
                  */
                 void log(LogLevel loglevel, const char *file, int line, const String &msg) {
-                        if(loglevel && loglevel < level()) return;
-                        Command cmd;
-                        cmd.cmd = CmdLog;
-                        cmd.level = loglevel;
-                        cmd.file = file;
-                        cmd.line = line;
-                        cmd.msg = msg;
-                        cmd.ts = DateTime::now();
-                        _queue.push(cmd);
+                        _queue.emplace(CmdLog{loglevel, file, line, msg, DateTime::now()});
                 }
 
                 /**
@@ -138,21 +175,12 @@ class Logger {
                  * @param lines    A StringList where each entry becomes a separate log line.
                  */
                 void log(LogLevel loglevel, const char *file, int line, const StringList &lines) {
-                        if(loglevel && loglevel < level()) return;
                         DateTime ts = DateTime::now();
                         List<Command> cmdlist;
                         for(const auto &item : lines) {
-                                Command cmd;
-                                cmd.cmd = CmdLog;
-                                cmd.level = loglevel;
-                                cmd.file = file;
-                                cmd.line = line;
-                                cmd.msg = item;
-                                cmd.ts = ts;
-                                cmdlist.pushToBack(cmd);
+                                cmdlist.pushToBack(CmdLog{loglevel, file, line, item, ts});
                         }
-                        _queue.push(cmdlist);
-                        return;
+                        _queue.push(std::move(cmdlist));
                 }
 
                 /**
@@ -160,10 +188,7 @@ class Logger {
                  * @param filename Path to the log file. The file is opened by the worker thread.
                  */
                 void setLogFile(const String &filename) {
-                        Command cmd;
-                        cmd.cmd = CmdSetFile;
-                        cmd.msg = filename;
-                        _queue.push(cmd);
+                        _queue.emplace(CmdSetFile{filename});
                 }
 
                 /**
@@ -186,6 +211,48 @@ class Logger {
                 }
 
                 /**
+                 * @brief Returns the current file log formatter.
+                 */
+                LogFormatter fileFormatter() const {
+                        std::lock_guard<std::mutex> lock(_formatterMutex);
+                        return _fileFormatter;
+                }
+
+                /**
+                 * @brief Returns the current console log formatter.
+                 */
+                LogFormatter consoleFormatter() const {
+                        std::lock_guard<std::mutex> lock(_formatterMutex);
+                        return _consoleFormatter;
+                }
+
+                /**
+                 * @brief Sets a custom formatter for file log output.
+                 * @param formatter The formatter function. Pass an empty std::function
+                 *        to restore the default.
+                 */
+                void setFileFormatter(LogFormatter formatter) {
+                        {
+                                std::lock_guard<std::mutex> lock(_formatterMutex);
+                                _fileFormatter = formatter ? formatter : defaultFileFormatter();
+                        }
+                        _queue.emplace(CmdSetFormatter{std::move(formatter), false});
+                }
+
+                /**
+                 * @brief Sets a custom formatter for console log output.
+                 * @param formatter The formatter function. Pass an empty std::function
+                 *        to restore the default.
+                 */
+                void setConsoleFormatter(LogFormatter formatter) {
+                        {
+                                std::lock_guard<std::mutex> lock(_formatterMutex);
+                                _consoleFormatter = formatter ? formatter : defaultConsoleFormatter();
+                        }
+                        _queue.emplace(CmdSetFormatter{std::move(formatter), true});
+                }
+
+                /**
                  * @brief Blocks until all queued log commands have been processed.
                  * @param timeoutMs Maximum time to wait in milliseconds.  A value
                  *        of zero (the default) waits indefinitely.
@@ -195,10 +262,7 @@ class Logger {
                 Error sync(unsigned int timeoutMs = 0) {
                         auto p = std::make_shared<std::promise<void>>();
                         auto f = p->get_future();
-                        Command cmd;
-                        cmd.cmd = CmdSync;
-                        cmd.syncPromise = std::move(p);
-                        _queue.push(std::move(cmd));
+                        _queue.emplace(CmdSync{std::move(p)});
                         if(timeoutMs == 0) {
                                 f.wait();
                                 return Error::Ok;
@@ -210,32 +274,43 @@ class Logger {
                 }
 
         private:
-                enum CommandType {
-                        CmdLog,
-                        CmdSetFile,
-                        CmdSync,
-                        CmdTerminate
+                struct CmdLog {
+                        LogLevel        level;
+                        const char *    file;
+                        int             line;
+                        String          msg;
+                        DateTime        ts;
                 };
 
-                struct Command {
-                        CommandType                             cmd;
-                        int                                     level;
-                        const char *                            file;
-                        int                                     line;
-                        String                                  msg;
-                        DateTime                                ts;
-                        std::shared_ptr<std::promise<void>>     syncPromise;
+                struct CmdSetFile {
+                        String          filename;
                 };
+
+                struct CmdSetFormatter {
+                        LogFormatter    formatter;
+                        bool            console;
+                };
+
+                struct CmdSync {
+                        std::shared_ptr<std::promise<void>> promise;
+                };
+
+                struct CmdTerminate {};
+
+                using Command = std::variant<CmdLog, CmdSetFile, CmdSetFormatter, CmdSync, CmdTerminate>;
 
                 std::thread             _thread;
                 std::atomic<int>        _level;
                 std::atomic<bool>       _consoleLogging;
                 std::ofstream           _file;
-                Queue<Command>        _queue;
+                Queue<Command>          _queue;
+                mutable std::mutex      _formatterMutex;
+                LogFormatter            _fileFormatter;
+                LogFormatter            _consoleFormatter;
 
                 void worker();
-                void writeLog(const Command &cmd);
-                void openLogFile(const Command &cmd);
+                void writeLog(const CmdLog &cmd);
+                void openLogFile(const String &filename);
 
 };
 

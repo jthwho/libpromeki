@@ -362,6 +362,42 @@ class String {
                 }
 
                 /**
+                 * @brief Finds the first occurrence of a substring.
+                 * @param val The substring to search for.
+                 * @return The position of the substring, or npos if not found.
+                 */
+                size_t find(const String &val) const {
+                        return _s.find(val._s);
+                }
+
+                /**
+                 * @brief Checks if the string contains the given character.
+                 * @param val The character to search for.
+                 * @return True if the character is found.
+                 */
+                bool contains(char val) const {
+                        return _s.find(val) != std::string::npos;
+                }
+
+                /**
+                 * @brief Checks if the string contains the given substring.
+                 * @param val The substring to search for.
+                 * @return True if the substring is found.
+                 */
+                bool contains(const String &val) const {
+                        return _s.find(val._s) != std::string::npos;
+                }
+
+                /**
+                 * @brief Checks if the string contains the given C string.
+                 * @param val The C string to search for.
+                 * @return True if the substring is found.
+                 */
+                bool contains(const char *val) const {
+                        return _s.find(val) != std::string::npos;
+                }
+
+                /**
                  * @brief Returns a substring.
                  * @param pos Starting position.
                  * @param len Maximum number of characters (default: to end of string).

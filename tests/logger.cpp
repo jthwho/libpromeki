@@ -31,8 +31,8 @@ TEST_CASE("Logger_levelToString") {
 TEST_CASE("Logger_LogLevelFiltering") {
         Logger &logger = Logger::defaultLogger();
 
-        SUBCASE("Default level is Debug") {
-                CHECK(logger.level() == Logger::Debug);
+        SUBCASE("Default level is Info") {
+                CHECK(logger.level() == Logger::Info);
         }
 
         SUBCASE("setLogLevel changes threshold") {
@@ -41,9 +41,9 @@ TEST_CASE("Logger_LogLevelFiltering") {
                 CHECK(logger.level() == Logger::Warn);
 
                 // Restore default
-                logger.setLogLevel(Logger::Debug);
+                logger.setLogLevel(Logger::Info);
                 logger.sync();
-                CHECK(logger.level() == Logger::Debug);
+                CHECK(logger.level() == Logger::Info);
         }
 }
 
@@ -100,7 +100,7 @@ TEST_CASE("Logger_ForceLevel") {
         logger.sync();
 
         // Restore
-        logger.setLogLevel(Logger::Debug);
+        logger.setLogLevel(Logger::Info);
         logger.sync();
         CHECK(true);
 }
@@ -157,6 +157,81 @@ TEST_CASE("Logger_LogFileOutput") {
 
         // Clean up
         std::filesystem::remove(tmpPath);
+}
+
+// ============================================================================
+// Custom formatters
+// ============================================================================
+
+TEST_CASE("Logger_CustomFileFormatter") {
+        Logger &logger = Logger::defaultLogger();
+
+        std::string tmpPath = std::filesystem::temp_directory_path().string() + "/promeki_logger_formatter_test.log";
+        std::filesystem::remove(tmpPath);
+
+        // Set a custom file formatter that uses a different format
+        logger.setFileFormatter([](const DateTime &ts, Logger::LogLevel level,
+                const char *file, int line, const String &msg) -> String {
+                return String::sprintf("CUSTOM|%s|%s", Logger::levelToString(level), msg.cstr());
+        });
+        logger.setLogFile(tmpPath);
+        logger.sync();
+
+        logger.log(Logger::Warn, __FILE__, __LINE__, "custom formatter test");
+        logger.sync();
+
+        std::ifstream infile(tmpPath);
+        REQUIRE(infile.is_open());
+        std::string contents((std::istreambuf_iterator<char>(infile)),
+                              std::istreambuf_iterator<char>());
+        infile.close();
+
+        CHECK(contents.find("CUSTOM|[W]|custom formatter test") != std::string::npos);
+
+        // Restore default by passing empty function
+        logger.setFileFormatter({});
+        logger.sync();
+
+        std::filesystem::remove(tmpPath);
+}
+
+TEST_CASE("Logger_CustomConsoleFormatter") {
+        Logger &logger = Logger::defaultLogger();
+
+        // Save the current console formatter
+        auto saved = logger.consoleFormatter();
+
+        // Set a custom console formatter and verify no crash
+        logger.setConsoleFormatter([](const DateTime &ts, Logger::LogLevel level,
+                const char *file, int line, const String &msg) -> String {
+                return String::sprintf("[CONSOLE] %s %s", Logger::levelToString(level), msg.cstr());
+        });
+
+        logger.log(Logger::Info, __FILE__, __LINE__, "custom console formatter test");
+        logger.sync();
+
+        // Restore previous formatter
+        logger.setConsoleFormatter(saved);
+        logger.sync();
+
+        CHECK(true);
+}
+
+TEST_CASE("Logger_DefaultFormatters") {
+        // Verify the default formatters can be obtained and called
+        auto fileFmt = Logger::defaultFileFormatter();
+        auto consoleFmt = Logger::defaultConsoleFormatter();
+
+        DateTime ts = DateTime::now();
+        String fileResult = fileFmt(ts, Logger::Info, "test.cpp", 42, "hello");
+        String consoleResult = consoleFmt(ts, Logger::Info, "test.cpp", 42, "hello");
+
+        CHECK(fileResult.contains("[I]"));
+        CHECK(fileResult.contains("hello"));
+        CHECK(fileResult.contains("test.cpp:42"));
+
+        CHECK(consoleResult.contains("[I]"));
+        CHECK(consoleResult.contains("hello"));
 }
 
 // ============================================================================
