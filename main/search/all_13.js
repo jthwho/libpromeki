@@ -135,7 +135,7 @@ var searchData=
   ['sourcesamplesavailable_132',['sourceSamplesAvailable',['../classAudioBlock.html#ae2b33f89f8c400a8ee2ceb9bc592345f',1,'AudioBlock']]],
   ['split_133',['split',['../classString.html#aada9792ed2957a9a90e5557bc42efd57',1,'String']]],
   ['sprintf_134',['sprintf',['../classString.html#a5deff0f28cdedb981f63457592900d86',1,'String']]],
-  ['standards_135',['libpromeki Coding Standards',['../md_CODING__STANDARDS.html',1,'']]],
+  ['standards_135',['Coding Standards',['../md_CODING__STANDARDS.html',1,'']]],
   ['start_136',['start',['../classLine.html#a2a3e391c28027f33fdf95f5507ce9796',1,'Line']]],
   ['startswith_137',['startswith',['../classString.html#a79b3159d024ecadcf8e2f228b4db0bb3',1,'String::startsWith(char c) const'],['../classString.html#a222b0f57fc72231c09aebfabd9ef0813',1,'String::startsWith(const String &amp;prefix) const']]],
   ['starttime_138',['startTime',['../classMusicalNote.html#aabe7f61edf89779c2af119acaaab4409',1,'MusicalNote']]],

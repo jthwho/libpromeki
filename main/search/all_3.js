@@ -37,7 +37,7 @@ var searchData=
   ['code_34',['code',['../classError.html#a60e324cad0f40f97cc857ebea9444167',1,'Error::code() const'],['../classError.html#ab5980e13b879db253df802b0950d1708',1,'Error::Code']]],
   ['codec_35',['codec',['../classCodec.html',1,'Codec'],['../classCodec.html#a5af50c0e815ccec26356cd0669009919',1,'Codec::Codec()']]],
   ['codec_2eh_36',['codec.h',['../codec_8h.html',1,'']]],
-  ['coding_20standards_37',['libpromeki Coding Standards',['../md_CODING__STANDARDS.html',1,'']]],
+  ['coding_20standards_37',['Coding Standards',['../md_CODING__STANDARDS.html',1,'']]],
   ['collate_38',['Collate',['../classRegEx.html#abecc66b192e56d7bd9764931a59d9e1a',1,'RegEx']]],
   ['colmean_39',['colMean',['../classMatrix.html#a212fee2b3104dfdd07a963ff058f8147',1,'Matrix']]],
   ['color_40',['Color',['../classAnsiStream.html#a68a76cfb86493db710deaebb0148c671',1,'AnsiStream']]],

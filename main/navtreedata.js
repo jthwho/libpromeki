@@ -25,25 +25,12 @@
 var NAVTREE =
 [
   [ "libpromeki", "index.html", [
-    [ "Library Architecture", "index.html#autotoc_md1", null ],
-    [ "No Dependency Hell", "index.html#autotoc_md2", null ],
-    [ "History", "index.html#autotoc_md3", null ],
-    [ "Building", "index.html#autotoc_md4", [
-      [ "CMake Build Options", "index.html#autotoc_md5", null ],
-      [ "Running Tests", "index.html#autotoc_md6", null ],
-      [ "Installing", "index.html#autotoc_md7", null ]
-    ] ],
-    [ "Using libpromeki in Your Project", "index.html#autotoc_md8", [
-      [ "Include Conventions", "index.html#autotoc_md9", null ]
-    ] ],
-    [ "Documentation", "index.html#autotoc_md10", null ],
-    [ "Debugging", "index.html#autotoc_md11", null ],
-    [ "License", "index.html#autotoc_md12", null ],
+    [ "PROfessional MEdia toolKIt", "index.html", "index" ],
     [ "Data Object Categories", "dataobjects.html", [
       [ "Simple", "dataobjects.html#simple", null ],
       [ "Shareable", "dataobjects.html#shareable", null ]
     ] ],
-    [ "libpromeki Coding Standards", "md_CODING__STANDARDS.html", [
+    [ "Coding Standards", "md_CODING__STANDARDS.html", [
       [ "Design Philosophy", "md_CODING__STANDARDS.html#autotoc_md14", null ],
       [ "Object Categories", "md_CODING__STANDARDS.html#object-categories", [
         [ "Data Objects", "md_CODING__STANDARDS.html#autotoc_md16", null ],
@@ -135,7 +122,7 @@ var NAVTREEINDEX =
 "classQueue.html#a3c2bd12f74fab343a6f72043692b0932",
 "classSystem.html",
 "functions_~.html",
-"structSignal_1_1removeConstAndRef.html"
+"structPixelFormat_1_1PlaneDesc.html#a728bb0fb9515c28f2bf333b070b98c77"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
