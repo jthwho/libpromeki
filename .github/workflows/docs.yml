@@ -45,6 +45,7 @@ jobs:
         run: doxygen Doxyfile
 
       - name: Checkout gh-pages
+        id: checkout-pages
         uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -53,12 +54,12 @@ jobs:
         continue-on-error: true
 
       - name: Initialize gh-pages if needed
+        if: steps.checkout-pages.outcome == 'failure'
         run: |
-          if [ ! -d gh-pages/.git ]; then
-            mkdir -p gh-pages
-            cd gh-pages
-            git init -b gh-pages
-          fi
+          rm -rf gh-pages
+          mkdir gh-pages
+          cd gh-pages
+          git init -b gh-pages
 
       - name: Deploy version
         run: |
