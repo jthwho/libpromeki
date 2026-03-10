@@ -7,12 +7,14 @@
 
 #pragma once
 
-/// \def PROMEKI_NAMESPACE_BEGIN
-/// Starts a promeki namespace block
+/** @def PROMEKI_NAMESPACE_BEGIN
+ *  @brief Starts a promeki namespace block.
+ */
 #define PROMEKI_NAMESPACE_BEGIN         namespace promeki {
 
-/// \def PROMEKI_NAMESPACE_END
-/// Ends a promeki namespace block
+/** @def PROMEKI_NAMESPACE_END
+ *  @brief Ends a promeki namespace block.
+ */
 #define PROMEKI_NAMESPACE_END           }
 
 

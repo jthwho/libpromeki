@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <map>
 #include <promeki/namespace.h>
 #include <promeki/variant.h>
+#include <promeki/map.h>
 #include <promeki/util.h>
 #include <promeki/json.h>
 #include <promeki/sharedptr.h>
@@ -45,58 +45,128 @@ PROMEKI_NAMESPACE_BEGIN
 
 class StringList;
 
+/**
+ * @brief Key-value metadata container using typed Variant values.
+ *
+ * Stores metadata entries keyed by a well-known ID enum. Each value
+ * is stored as a Variant, supporting types such as String, int,
+ * double, bool, Timecode, and Rational. Supports JSON serialization
+ * and deserialization. When shared ownership is needed, use Metadata::Ptr.
+ */
 class Metadata {
+        PROMEKI_SHARED_FINAL(Metadata)
         public:
+                /** @brief Shared pointer type for Metadata. */
+                using Ptr = SharedPtr<Metadata>;
+
+                /** @brief Enumeration of well-known metadata keys. */
                 #define X(name, type) name,
                 enum ID { PROMEKI_ENUM_METADATA_ID };
                 #undef X
 
+                /**
+                 * @brief Converts a metadata ID to its string name.
+                 * @param id The metadata ID.
+                 * @return A const reference to the name string.
+                 */
                 static const String &idToString(ID id);
+
+                /**
+                 * @brief Converts a string name to a metadata ID.
+                 * @param val The name string.
+                 * @return The corresponding ID, or Invalid if not found.
+                 */
                 static ID stringToID(const String &val);
+
+                /**
+                 * @brief Deserializes a Metadata object from a JSON object.
+                 * @param json The source JSON object.
+                 * @param err  Optional error output.
+                 * @return The deserialized Metadata.
+                 */
                 static Metadata fromJson(const JsonObject &json, Error *err = nullptr);
 
-                Metadata() : d(SharedPtr<Data>::create()) {}
+                /** @brief Constructs an empty Metadata object. */
+                Metadata() = default;
 
+                /**
+                 * @brief Sets a metadata value for the given ID.
+                 * @tparam T The value type.
+                 * @param id    The metadata key.
+                 * @param value The value to store.
+                 */
                 template <typename T> void set(ID id, const T &value) {
-                        d.modify()->map[id] = Variant(value);
+                        _map[id] = Variant(value);
                         return;
                 }
-                const Variant &get(ID id) const { return d->map.at(id); }
-                bool contains(ID id) const { return d->map.find(id) != d->map.end(); }
-                void remove(ID id) { d.modify()->map.erase(id); return; }
-                void clear() { d.modify()->map.clear(); return; }
-                size_t size() const { return d->map.size(); }
-                bool isEmpty() const { return d->map.size() == 0; }
 
+                /**
+                 * @brief Returns the Variant value for the given ID.
+                 * @param id The metadata key.
+                 * @return A const reference to the Variant value.
+                 */
+                const Variant &get(ID id) const { return _map[id]; }
+
+                /**
+                 * @brief Returns true if the given ID has been set.
+                 * @param id The metadata key.
+                 * @return true if the key exists.
+                 */
+                bool contains(ID id) const { return _map.contains(id); }
+
+                /**
+                 * @brief Removes the entry for the given ID.
+                 * @param id The metadata key to remove.
+                 */
+                void remove(ID id) { _map.remove(id); return; }
+
+                /** @brief Removes all metadata entries. */
+                void clear() { _map.clear(); return; }
+
+                /**
+                 * @brief Returns the number of metadata entries.
+                 * @return The entry count.
+                 */
+                size_t size() const { return _map.size(); }
+
+                /**
+                 * @brief Returns true if no metadata entries are stored.
+                 * @return true if empty.
+                 */
+                bool isEmpty() const { return _map.size() == 0; }
+
+                /**
+                 * @brief Iterates over all metadata entries, invoking a callback for each.
+                 * @tparam Func Callable type with signature void(ID, const Variant &).
+                 * @param func The callback to invoke for each entry.
+                 */
                 template <typename Func> void forEach(Func &&func) const {
-                        for(const auto &[id, value] : d->map) {
+                        for(const auto &[id, value] : _map) {
                                 func(id, value);
                         }
                         return;
                 }
 
+                /**
+                 * @brief Returns a human-readable dump of all metadata entries.
+                 * @return A StringList with one entry per metadata key-value pair.
+                 */
                 StringList dump() const;
 
+                /**
+                 * @brief Serializes this Metadata to a JSON object.
+                 * @return A JsonObject containing all metadata entries.
+                 */
                 JsonObject toJson() const {
                     JsonObject ret;
-                    for(const auto &[id, value] : d->map) {
+                    for(const auto &[id, value] : _map) {
                         ret.setFromVariant(idToString(id), value);
                     }
                     return ret;
                 }
 
-                int referenceCount() const { return d.referenceCount(); }
-
         private:
-                class Data {
-                        PROMEKI_SHARED_FINAL(Data)
-                        public:
-                                std::map<ID, Variant> map;
-                                Data() = default;
-                                Data(const Data &o) = default;
-                };
-
-                SharedPtr<Data> d;
+                Map<ID, Variant> _map;
 };
 
 PROMEKI_NAMESPACE_END

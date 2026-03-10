@@ -70,9 +70,9 @@ TEST_CASE("Queue_Emplace") {
 // Vector push
 // ============================================================================
 
-TEST_CASE("Queue_VectorPush") {
+TEST_CASE("Queue_ListPush") {
     Queue<int> q;
-    std::vector<int> items = {10, 20, 30, 40};
+    List<int> items = {10, 20, 30, 40};
     q.push(items);
     CHECK(q.size() == 4);
     CHECK(q.pop().first == 10);

@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <map>
 #include <promeki/string.h>
+#include <promeki/map.h>
 #include <promeki/stringlist.h>
 #include <promeki/musicalnote.h>
 #include <promeki/musicalscale.h>
@@ -72,7 +72,7 @@ class NoteSequenceParser {
                 double                        _currentTime = 0.0;
                 Params                        _params;
                 List<Params>                  _paramStack;
-                std::map<std::string, Params> _namedParams;
+                Map<String, Params> _namedParams;
                 MusicalNote::List             _notes;
                 StringList                    _errors;
 
@@ -99,13 +99,13 @@ class NoteSequenceParser {
                 char        current() const;
                 char        peek(int offset) const;
                 bool        atEnd() const;
-                std::string readParenArg();
+                String readParenArg();
                 double      parseDurationModifier();
                 void        emitNote(float midiNote, int dots, double lengthMod);
                 void        emitRest(int dots, double lengthMod);
                 void        addError(const String &msg);
 
-                static double parseNoteLengthValue(const std::string &s);
+                static double parseNoteLengthValue(const String &s);
                 static double applyDots(double length, int dots);
 };
 

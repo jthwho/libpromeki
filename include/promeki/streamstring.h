@@ -15,46 +15,80 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-// A std::streambuf subclass that collects stream output into a String,
-// splitting on newlines and calling onNewLine() for each complete line.
-//
-// The onNewLine callback receives a non-const reference to the line buffer
-// and returns true to clear it, or false to keep accumulating.
-//
-// Usage with a callback (e.g. routing to the logger):
-//   StreamString ss([](String &line) {
-//           promekiInfo("%s", line.cstr());
-//           return true;
-//   });
-//   ss.stream() << "Hello " << 42 << std::endl;
+/**
+ * @brief Stream buffer that collects output into a String, splitting on newlines.
+ *
+ * StreamString is a std::streambuf subclass that accumulates characters
+ * written to its associated std::ostream.  When a newline or EOF is
+ * encountered, it invokes the onNewLine callback with the accumulated
+ * line.  The callback returns true to clear the line buffer, or false
+ * to keep accumulating.
+ *
+ * Example usage (routing stream output to the logger):
+ * @code
+ *   StreamString ss([](String &line) {
+ *           promekiInfo("%s", line.cstr());
+ *           return true;
+ *   });
+ *   ss.stream() << "Hello " << 42 << std::endl;
+ * @endcode
+ */
 class StreamString : public std::streambuf {
         public:
+                /** @brief Callback type invoked for each completed line. */
                 using OnNewLineFunc = std::function<bool(String &)>;
 
+                /** @brief Constructs a StreamString with no callback. */
                 StreamString() : _stream(this) { }
+
+                /**
+                 * @brief Constructs a StreamString with a newline callback.
+                 * @param func Callback invoked when a complete line is available.
+                 */
                 StreamString(OnNewLineFunc func) : _onNewLine(std::move(func)), _stream(this) { }
 
-                // Not copyable or movable because _stream holds a pointer to this
+                /** @brief Deleted copy constructor (stream holds a pointer to this). */
                 StreamString(const StreamString &) = delete;
+                /** @brief Deleted copy assignment operator. */
                 StreamString &operator=(const StreamString &) = delete;
+                /** @brief Deleted move constructor. */
                 StreamString(StreamString &&) = delete;
+                /** @brief Deleted move assignment operator. */
                 StreamString &operator=(StreamString &&) = delete;
 
+                /**
+                 * @brief Returns the std::ostream associated with this buffer.
+                 * @return Reference to the output stream.
+                 */
                 std::ostream &stream() { return _stream; }
 
+                /**
+                 * @brief Sets or replaces the newline callback.
+                 * @param func New callback to invoke on each complete line.
+                 */
                 void setOnNewLine(OnNewLineFunc func) {
                         _onNewLine = std::move(func);
                         return;
                 }
 
+                /**
+                 * @brief Returns the current (possibly incomplete) line buffer.
+                 * @return Const reference to the accumulated line.
+                 */
                 const String &line() const { return _line; }
 
+                /** @brief Clears the accumulated line buffer. */
                 void clear() {
                         _line.clear();
                         return;
                 }
 
         protected:
+                /**
+                 * @brief Handles a single character written to the stream.
+                 * @param ch The character to process, or EOF.
+                 * @return The character that was processed.
+                 */
                 int overflow(int ch) override {
                         if(ch == '\n' || ch == EOF) {
                                 flush();
@@ -64,6 +98,7 @@ class StreamString : public std::streambuf {
                         return ch;
                 }
 
+                /** @brief Synchronizes the stream buffer by flushing the current line. */
                 int sync() override {
                         flush();
                         return 0;

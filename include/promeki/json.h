@@ -19,132 +19,250 @@ PROMEKI_NAMESPACE_BEGIN
 
 class JsonArray;
 
+/**
+ * @brief JSON object container wrapping nlohmann::json.
+ *
+ * Provides a type-safe interface for building and querying JSON objects.
+ * Values can be accessed by key with typed getters that perform safe
+ * conversions.  Supports nesting via JsonObject and JsonArray values.
+ */
 class JsonObject {
+    PROMEKI_SHARED_FINAL(JsonObject)
     public:
+        /** @brief Shared pointer type for JsonObject. */
+        using Ptr = SharedPtr<JsonObject>;
+
+        /**
+         * @brief Parses a JSON object from a string.
+         * @param str The JSON string to parse.
+         * @param err Optional error output; set to Error::Invalid on failure.
+         * @return The parsed JsonObject, or an empty object on failure.
+         */
         static JsonObject parse(const String &str, Error *err = nullptr) {
             JsonObject ret;
             try {
-                ret.d.modify()->j = nlohmann::json::parse(str.stds());
-                if(!ret.d->j.is_object()) throw std::runtime_error("not an object");
+                ret._j = nlohmann::json::parse(str.stds());
+                if(!ret._j.is_object()) throw std::runtime_error("not an object");
                 if(err) *err = Error::Ok;
             } catch(...) {
-                ret.d.modify()->j = nlohmann::json::object();
+                ret._j = nlohmann::json::object();
                 if(err) *err = Error::Invalid;
             }
             return ret;
         }
 
-        JsonObject() : d(SharedPtr<Data>::create(nlohmann::json::object())) {}
+        /** @brief Constructs an empty JSON object. */
+        JsonObject() : _j(nlohmann::json::object()) {}
 
-        int size() const { return static_cast<int>(d->j.size()); }
+        /** @brief Returns the number of key-value pairs in the object. */
+        int size() const { return static_cast<int>(_j.size()); }
+
+        /** @brief Returns true if the object contains at least one key-value pair. */
         bool isValid() const { return size() > 0; }
 
-        bool valueIsNull(const std::string &key) const {
-            auto it = d->j.find(key);
-            return it != d->j.end() && it->is_null();
+        /**
+         * @brief Returns true if the value for the given key is null.
+         * @param key The key to check.
+         * @return true if the key exists and its value is null.
+         */
+        bool valueIsNull(const String &key) const {
+            auto it = _j.find(key.stds());
+            return it != _j.end() && it->is_null();
         }
 
-        bool valueIsObject(const std::string &key) const {
-            auto it = d->j.find(key);
-            return it != d->j.end() && it->is_object();
+        /**
+         * @brief Returns true if the value for the given key is a JSON object.
+         * @param key The key to check.
+         * @return true if the key exists and its value is an object.
+         */
+        bool valueIsObject(const String &key) const {
+            auto it = _j.find(key.stds());
+            return it != _j.end() && it->is_object();
         }
 
-        bool valueIsArray(const std::string &key) const {
-            auto it = d->j.find(key);
-            return it != d->j.end() && it->is_array();
+        /**
+         * @brief Returns true if the value for the given key is a JSON array.
+         * @param key The key to check.
+         * @return true if the key exists and its value is an array.
+         */
+        bool valueIsArray(const String &key) const {
+            auto it = _j.find(key.stds());
+            return it != _j.end() && it->is_array();
         }
 
-        bool contains(const std::string &key) const { return d->j.contains(key); }
+        /**
+         * @brief Returns true if the object contains the given key.
+         * @param key The key to look up.
+         * @return true if the key exists in the object.
+         */
+        bool contains(const String &key) const { return _j.contains(key.stds()); }
 
-        bool getBool(const std::string &key, Error *err = nullptr) const { return get<bool>(key, err); }
-        int64_t getInt(const std::string &key, Error *err = nullptr) const { return get<int64_t>(key, err); }
-        uint64_t getUInt(const std::string &key, Error *err = nullptr) const { return get<uint64_t>(key, err); }
-        double getDouble(const std::string &key, Error *err = nullptr) const { return get<double>(key, err); }
-        String getString(const std::string &key, Error *err = nullptr) const { return get<std::string>(key, err); }
+        /**
+         * @brief Returns the boolean value for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output; set to Error::Invalid if the key is missing or not convertible.
+         * @return The boolean value, or false on failure.
+         */
+        bool getBool(const String &key, Error *err = nullptr) const { return get<bool>(key, err); }
 
-        JsonObject getObject(const std::string &key, Error *err = nullptr) const {
-            auto it = d->j.find(key);
-            if(it == d->j.end() || !it->is_object()) {
+        /**
+         * @brief Returns the signed 64-bit integer value for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output.
+         * @return The integer value, or 0 on failure.
+         */
+        int64_t getInt(const String &key, Error *err = nullptr) const { return get<int64_t>(key, err); }
+
+        /**
+         * @brief Returns the unsigned 64-bit integer value for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output.
+         * @return The unsigned integer value, or 0 on failure.
+         */
+        uint64_t getUInt(const String &key, Error *err = nullptr) const { return get<uint64_t>(key, err); }
+
+        /**
+         * @brief Returns the double-precision floating-point value for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output.
+         * @return The double value, or 0.0 on failure.
+         */
+        double getDouble(const String &key, Error *err = nullptr) const { return get<double>(key, err); }
+
+        /**
+         * @brief Returns the string value for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output.
+         * @return The string value, or an empty String on failure.
+         */
+        String getString(const String &key, Error *err = nullptr) const { return get<std::string>(key, err); }
+
+        /**
+         * @brief Returns the nested JsonObject for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output; set to Error::Invalid if the key is missing or not an object.
+         * @return The nested JsonObject, or an empty object on failure.
+         */
+        JsonObject getObject(const String &key, Error *err = nullptr) const {
+            auto it = _j.find(key.stds());
+            if(it == _j.end() || !it->is_object()) {
                 if(err) *err = Error::Invalid;
                 return JsonObject();
             }
             if(err) *err = Error::Ok;
             JsonObject ret;
-            ret.d.modify()->j = *it;
+            ret._j = *it;
             return ret;
         }
 
-        inline JsonArray getArray(const std::string &key, Error *err = nullptr) const;
+        /**
+         * @brief Returns the nested JsonArray for the given key.
+         * @param key The key to look up.
+         * @param err Optional error output; set to Error::Invalid if the key is missing or not an array.
+         * @return The nested JsonArray, or an empty array on failure.
+         */
+        inline JsonArray getArray(const String &key, Error *err = nullptr) const;
 
+        /**
+         * @brief Serializes the object to a JSON string.
+         * @param indent Number of spaces per indentation level. Zero produces compact output.
+         * @return The serialized JSON string.
+         */
         String toString(unsigned int indent = 0) const {
-            if(indent == 0) return d->j.dump();
-            return d->j.dump(static_cast<int>(indent));
+            if(indent == 0) return _j.dump();
+            return _j.dump(static_cast<int>(indent));
         }
 
-        void clear() { d.modify()->j.clear(); }
+        /** @brief Removes all key-value pairs from the object. */
+        void clear() { _j.clear(); }
 
-        void setNull(const std::string &key) { d.modify()->j[key] = nullptr; }
-        void set(const std::string &key, const JsonObject &val) { d.modify()->j[key] = val.d->j; }
-        inline void set(const std::string &key, const JsonArray &val);
-        void set(const std::string &key, bool val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, int val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, unsigned int val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, int64_t val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, uint64_t val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, float val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, double val) { d.modify()->j[key] = val; }
-        void set(const std::string &key, const char *val) { d.modify()->j[key] = std::string(val); }
-        void set(const std::string &key, const String &val) { d.modify()->j[key] = val.stds(); }
-        void set(const std::string &key, const UUID &val) { d.modify()->j[key] = val.toString().stds(); }
+        /**
+         * @brief Sets the value for the given key to null.
+         * @param key The key to set.
+         */
+        void setNull(const String &key) { _j[key.stds()] = nullptr; }
 
-        void setFromVariant(const std::string &key, const Variant &val) {
-            auto &j = d.modify()->j;
+        /**
+         * @brief Sets a nested JsonObject value for the given key.
+         * @param key The key to set.
+         * @param val The JsonObject value.
+         */
+        void set(const String &key, const JsonObject &val) { _j[key.stds()] = val._j; }
+
+        /**
+         * @brief Sets a nested JsonArray value for the given key.
+         * @param key The key to set.
+         * @param val The JsonArray value.
+         */
+        inline void set(const String &key, const JsonArray &val);
+
+        /** @brief Sets a boolean value for the given key. */
+        void set(const String &key, bool val) { _j[key.stds()] = val; }
+        /** @brief Sets an int value for the given key. */
+        void set(const String &key, int val) { _j[key.stds()] = val; }
+        /** @brief Sets an unsigned int value for the given key. */
+        void set(const String &key, unsigned int val) { _j[key.stds()] = val; }
+        /** @brief Sets a signed 64-bit integer value for the given key. */
+        void set(const String &key, int64_t val) { _j[key.stds()] = val; }
+        /** @brief Sets an unsigned 64-bit integer value for the given key. */
+        void set(const String &key, uint64_t val) { _j[key.stds()] = val; }
+        /** @brief Sets a float value for the given key. */
+        void set(const String &key, float val) { _j[key.stds()] = val; }
+        /** @brief Sets a double value for the given key. */
+        void set(const String &key, double val) { _j[key.stds()] = val; }
+        /** @brief Sets a C-string value for the given key. */
+        void set(const String &key, const char *val) { _j[key.stds()] = std::string(val); }
+        /** @brief Sets a String value for the given key. */
+        void set(const String &key, const String &val) { _j[key.stds()] = val.stds(); }
+        /** @brief Sets a UUID value (stored as its string representation) for the given key. */
+        void set(const String &key, const UUID &val) { _j[key.stds()] = val.toString().stds(); }
+
+        /**
+         * @brief Sets a value from a Variant, automatically selecting the JSON type.
+         * @param key The key to set.
+         * @param val The Variant whose value and type determine the stored JSON value.
+         */
+        void setFromVariant(const String &key, const Variant &val) {
+            const auto &k = key.stds();
             switch(val.type()) {
-                case Variant::TypeInvalid: j[key] = nullptr; break;
-                case Variant::TypeBool:    j[key] = val.get<bool>(); break;
-                case Variant::TypeU8:      j[key] = val.get<uint8_t>(); break;
-                case Variant::TypeS8:      j[key] = val.get<int8_t>(); break;
-                case Variant::TypeU16:     j[key] = val.get<uint16_t>(); break;
-                case Variant::TypeS16:     j[key] = val.get<int16_t>(); break;
-                case Variant::TypeU32:     j[key] = val.get<uint32_t>(); break;
-                case Variant::TypeS32:     j[key] = val.get<int32_t>(); break;
-                case Variant::TypeU64:     j[key] = val.get<uint64_t>(); break;
-                case Variant::TypeS64:     j[key] = val.get<int64_t>(); break;
-                case Variant::TypeFloat:   j[key] = val.get<float>(); break;
-                case Variant::TypeDouble:  j[key] = val.get<double>(); break;
-                default:                   j[key] = val.get<String>().stds(); break;
+                case Variant::TypeInvalid: _j[k] = nullptr; break;
+                case Variant::TypeBool:    _j[k] = val.get<bool>(); break;
+                case Variant::TypeU8:      _j[k] = val.get<uint8_t>(); break;
+                case Variant::TypeS8:      _j[k] = val.get<int8_t>(); break;
+                case Variant::TypeU16:     _j[k] = val.get<uint16_t>(); break;
+                case Variant::TypeS16:     _j[k] = val.get<int16_t>(); break;
+                case Variant::TypeU32:     _j[k] = val.get<uint32_t>(); break;
+                case Variant::TypeS32:     _j[k] = val.get<int32_t>(); break;
+                case Variant::TypeU64:     _j[k] = val.get<uint64_t>(); break;
+                case Variant::TypeS64:     _j[k] = val.get<int64_t>(); break;
+                case Variant::TypeFloat:   _j[k] = val.get<float>(); break;
+                case Variant::TypeDouble:  _j[k] = val.get<double>(); break;
+                default:                   _j[k] = val.get<String>().stds(); break;
             }
         }
 
+        /**
+         * @brief Iterates over all key-value pairs in the object.
+         * @tparam Func Callable with signature void(const String &key, const Variant &val).
+         * @param func The function to invoke for each key-value pair.
+         */
         template <typename Func> void forEach(Func &&func) const {
-            for(auto it = d->j.begin(); it != d->j.end(); ++it) {
+            for(auto it = _j.begin(); it != _j.end(); ++it) {
                 String key = it.key();
                 Variant val = Variant::fromJson(it.value());
                 func(key, val);
             }
         }
 
-        int referenceCount() const { return d.referenceCount(); }
-
     private:
         friend class JsonArray;
 
-        class Data {
-            PROMEKI_SHARED_FINAL(Data)
-            public:
-                nlohmann::json j;
-                Data() = default;
-                Data(const nlohmann::json &val) : j(val) {}
-                Data(nlohmann::json &&val) : j(std::move(val)) {}
-                Data(const Data &o) = default;
-        };
-
-        SharedPtr<Data> d;
+        nlohmann::json _j;
 
         template <typename T>
-        T get(const std::string &key, Error *err = nullptr) const {
-            auto it = d->j.find(key);
-            if(it == d->j.end()) {
+        T get(const String &key, Error *err = nullptr) const {
+            auto it = _j.find(key.stds());
+            if(it == _j.end()) {
                 if(err) *err = Error::Invalid;
                 return T{};
             }
@@ -174,121 +292,217 @@ class JsonObject {
         }
 };
 
+/**
+ * @brief JSON array container wrapping nlohmann::json.
+ *
+ * Provides a type-safe interface for building and querying JSON arrays.
+ * Elements are accessed by index with typed getters that perform safe
+ * conversions.  Supports nesting via JsonObject and JsonArray elements.
+ */
 class JsonArray {
+    PROMEKI_SHARED_FINAL(JsonArray)
     public:
+        /** @brief Shared pointer type for JsonArray. */
+        using Ptr = SharedPtr<JsonArray>;
+
+        /**
+         * @brief Parses a JSON array from a string.
+         * @param str The JSON string to parse.
+         * @param err Optional error output; set to Error::Invalid on failure.
+         * @return The parsed JsonArray, or an empty array on failure.
+         */
         static JsonArray parse(const String &str, Error *err = nullptr) {
             JsonArray ret;
             try {
-                ret.d.modify()->j = nlohmann::json::parse(str.stds());
-                if(!ret.d->j.is_array()) throw std::runtime_error("not an array");
+                ret._j = nlohmann::json::parse(str.stds());
+                if(!ret._j.is_array()) throw std::runtime_error("not an array");
                 if(err) *err = Error::Ok;
             } catch(...) {
-                ret.d.modify()->j = nlohmann::json::array();
+                ret._j = nlohmann::json::array();
                 if(err) *err = Error::Invalid;
             }
             return ret;
         }
 
-        JsonArray() : d(SharedPtr<Data>::create(nlohmann::json::array())) {}
+        /** @brief Constructs an empty JSON array. */
+        JsonArray() : _j(nlohmann::json::array()) {}
 
-        int size() const { return static_cast<int>(d->j.size()); }
+        /** @brief Returns the number of elements in the array. */
+        int size() const { return static_cast<int>(_j.size()); }
+
+        /** @brief Returns true if the array contains at least one element. */
         bool isValid() const { return size() > 0; }
 
-        bool valueIsNull(int index) const { return index >= 0 && index < size() && d->j[index].is_null(); }
-        bool valueIsObject(int index) const { return index >= 0 && index < size() && d->j[index].is_object(); }
-        bool valueIsArray(int index) const { return index >= 0 && index < size() && d->j[index].is_array(); }
+        /**
+         * @brief Returns true if the element at the given index is null.
+         * @param index The zero-based element index.
+         */
+        bool valueIsNull(int index) const { return index >= 0 && index < size() && _j[index].is_null(); }
 
+        /**
+         * @brief Returns true if the element at the given index is a JSON object.
+         * @param index The zero-based element index.
+         */
+        bool valueIsObject(int index) const { return index >= 0 && index < size() && _j[index].is_object(); }
+
+        /**
+         * @brief Returns true if the element at the given index is a JSON array.
+         * @param index The zero-based element index.
+         */
+        bool valueIsArray(int index) const { return index >= 0 && index < size() && _j[index].is_array(); }
+
+        /**
+         * @brief Returns the boolean value at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The boolean value, or false on failure.
+         */
         bool getBool(int index, Error *err = nullptr) const { return get<bool>(index, err); }
+
+        /**
+         * @brief Returns the signed 64-bit integer value at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The integer value, or 0 on failure.
+         */
         int64_t getInt(int index, Error *err = nullptr) const { return get<int64_t>(index, err); }
+
+        /**
+         * @brief Returns the unsigned 64-bit integer value at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The unsigned integer value, or 0 on failure.
+         */
         uint64_t getUInt(int index, Error *err = nullptr) const { return get<uint64_t>(index, err); }
+
+        /**
+         * @brief Returns the double-precision floating-point value at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The double value, or 0.0 on failure.
+         */
         double getDouble(int index, Error *err = nullptr) const { return get<double>(index, err); }
+
+        /**
+         * @brief Returns the string value at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The string value, or an empty String on failure.
+         */
         String getString(int index, Error *err = nullptr) const { return get<std::string>(index, err); }
 
+        /**
+         * @brief Returns the nested JsonObject at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The nested JsonObject, or an empty object on failure.
+         */
         JsonObject getObject(int index, Error *err = nullptr) const {
-            if(index < 0 || index >= size() || !d->j[index].is_object()) {
+            if(index < 0 || index >= size() || !_j[index].is_object()) {
                 if(err) *err = Error::Invalid;
                 return JsonObject();
             }
             if(err) *err = Error::Ok;
             JsonObject ret;
-            ret.d.modify()->j = d->j[index];
+            ret._j = _j[index];
             return ret;
         }
 
+        /**
+         * @brief Returns the nested JsonArray at the given index.
+         * @param index The zero-based element index.
+         * @param err Optional error output.
+         * @return The nested JsonArray, or an empty array on failure.
+         */
         JsonArray getArray(int index, Error *err = nullptr) const {
-            if(index < 0 || index >= size() || !d->j[index].is_array()) {
+            if(index < 0 || index >= size() || !_j[index].is_array()) {
                 if(err) *err = Error::Invalid;
                 return JsonArray();
             }
             if(err) *err = Error::Ok;
             JsonArray ret;
-            ret.d.modify()->j = d->j[index];
+            ret._j = _j[index];
             return ret;
         }
 
+        /**
+         * @brief Serializes the array to a JSON string.
+         * @param indent Number of spaces per indentation level. Zero produces compact output.
+         * @return The serialized JSON string.
+         */
         String toString(unsigned int indent = 0) const {
-            if(indent == 0) return d->j.dump();
-            return d->j.dump(static_cast<int>(indent));
+            if(indent == 0) return _j.dump();
+            return _j.dump(static_cast<int>(indent));
         }
 
-        void clear() { d.modify()->j.clear(); }
+        /** @brief Removes all elements from the array. */
+        void clear() { _j.clear(); }
 
-        void addNull() { d.modify()->j.push_back(nullptr); }
-        void add(const JsonObject &val) { d.modify()->j.push_back(val.d->j); }
-        void add(const JsonArray &val) { d.modify()->j.push_back(val.d->j); }
-        void add(bool val) { d.modify()->j.push_back(val); }
-        void add(int val) { d.modify()->j.push_back(val); }
-        void add(unsigned int val) { d.modify()->j.push_back(val); }
-        void add(int64_t val) { d.modify()->j.push_back(val); }
-        void add(uint64_t val) { d.modify()->j.push_back(val); }
-        void add(float val) { d.modify()->j.push_back(val); }
-        void add(double val) { d.modify()->j.push_back(val); }
-        void add(const char *val) { d.modify()->j.push_back(std::string(val)); }
-        void add(const String &val) { d.modify()->j.push_back(val.stds()); }
-        void add(const UUID &val) { d.modify()->j.push_back(val.toString().stds()); }
+        /** @brief Appends a null value to the array. */
+        void addNull() { _j.push_back(nullptr); }
+        /** @brief Appends a JsonObject to the array. */
+        void add(const JsonObject &val) { _j.push_back(val._j); }
+        /** @brief Appends a JsonArray to the array. */
+        void add(const JsonArray &val) { _j.push_back(val._j); }
+        /** @brief Appends a boolean value to the array. */
+        void add(bool val) { _j.push_back(val); }
+        /** @brief Appends an int value to the array. */
+        void add(int val) { _j.push_back(val); }
+        /** @brief Appends an unsigned int value to the array. */
+        void add(unsigned int val) { _j.push_back(val); }
+        /** @brief Appends a signed 64-bit integer to the array. */
+        void add(int64_t val) { _j.push_back(val); }
+        /** @brief Appends an unsigned 64-bit integer to the array. */
+        void add(uint64_t val) { _j.push_back(val); }
+        /** @brief Appends a float value to the array. */
+        void add(float val) { _j.push_back(val); }
+        /** @brief Appends a double value to the array. */
+        void add(double val) { _j.push_back(val); }
+        /** @brief Appends a C-string value to the array. */
+        void add(const char *val) { _j.push_back(std::string(val)); }
+        /** @brief Appends a String value to the array. */
+        void add(const String &val) { _j.push_back(val.stds()); }
+        /** @brief Appends a UUID (stored as its string representation) to the array. */
+        void add(const UUID &val) { _j.push_back(val.toString().stds()); }
 
+        /**
+         * @brief Appends a value from a Variant, automatically selecting the JSON type.
+         * @param val The Variant whose value and type determine the appended JSON element.
+         */
         void addFromVariant(const Variant &val) {
-            auto &j = d.modify()->j;
             switch(val.type()) {
-                case Variant::TypeInvalid: j.push_back(nullptr); break;
-                case Variant::TypeBool:    j.push_back(val.get<bool>()); break;
-                case Variant::TypeU8:      j.push_back(val.get<uint8_t>()); break;
-                case Variant::TypeS8:      j.push_back(val.get<int8_t>()); break;
-                case Variant::TypeU16:     j.push_back(val.get<uint16_t>()); break;
-                case Variant::TypeS16:     j.push_back(val.get<int16_t>()); break;
-                case Variant::TypeU32:     j.push_back(val.get<uint32_t>()); break;
-                case Variant::TypeS32:     j.push_back(val.get<int32_t>()); break;
-                case Variant::TypeU64:     j.push_back(val.get<uint64_t>()); break;
-                case Variant::TypeS64:     j.push_back(val.get<int64_t>()); break;
-                case Variant::TypeFloat:   j.push_back(val.get<float>()); break;
-                case Variant::TypeDouble:  j.push_back(val.get<double>()); break;
-                default:                   j.push_back(val.get<String>().stds()); break;
+                case Variant::TypeInvalid: _j.push_back(nullptr); break;
+                case Variant::TypeBool:    _j.push_back(val.get<bool>()); break;
+                case Variant::TypeU8:      _j.push_back(val.get<uint8_t>()); break;
+                case Variant::TypeS8:      _j.push_back(val.get<int8_t>()); break;
+                case Variant::TypeU16:     _j.push_back(val.get<uint16_t>()); break;
+                case Variant::TypeS16:     _j.push_back(val.get<int16_t>()); break;
+                case Variant::TypeU32:     _j.push_back(val.get<uint32_t>()); break;
+                case Variant::TypeS32:     _j.push_back(val.get<int32_t>()); break;
+                case Variant::TypeU64:     _j.push_back(val.get<uint64_t>()); break;
+                case Variant::TypeS64:     _j.push_back(val.get<int64_t>()); break;
+                case Variant::TypeFloat:   _j.push_back(val.get<float>()); break;
+                case Variant::TypeDouble:  _j.push_back(val.get<double>()); break;
+                default:                   _j.push_back(val.get<String>().stds()); break;
             }
         }
 
+        /**
+         * @brief Iterates over all elements in the array.
+         * @tparam Func Callable with signature void(const Variant &val).
+         * @param func The function to invoke for each element.
+         */
         template <typename Func> void forEach(Func &&func) const {
-            for(const auto &elem : d->j) {
+            for(const auto &elem : _j) {
                 Variant val = Variant::fromJson(elem);
                 func(val);
             }
         }
 
-        int referenceCount() const { return d.referenceCount(); }
-
     private:
         friend class JsonObject;
 
-        class Data {
-            PROMEKI_SHARED_FINAL(Data)
-            public:
-                nlohmann::json j;
-                Data() = default;
-                Data(const nlohmann::json &val) : j(val) {}
-                Data(nlohmann::json &&val) : j(std::move(val)) {}
-                Data(const Data &o) = default;
-        };
-
-        SharedPtr<Data> d;
+        nlohmann::json _j;
 
         template <typename T>
         T get(int index, Error *err = nullptr) const {
@@ -296,25 +510,25 @@ class JsonArray {
                 if(err) *err = Error::Invalid;
                 return T{};
             }
-            return JsonObject::getVal<T>(d->j[index], err);
+            return JsonObject::getVal<T>(_j[index], err);
         }
 };
 
 // Inline definitions that depend on JsonArray being complete
-inline JsonArray JsonObject::getArray(const std::string &key, Error *err) const {
-    auto it = d->j.find(key);
-    if(it == d->j.end() || !it->is_array()) {
+inline JsonArray JsonObject::getArray(const String &key, Error *err) const {
+    auto it = _j.find(key.stds());
+    if(it == _j.end() || !it->is_array()) {
         if(err) *err = Error::Invalid;
         return JsonArray();
     }
     if(err) *err = Error::Ok;
     JsonArray ret;
-    ret.d.modify()->j = *it;
+    ret._j = *it;
     return ret;
 }
 
-inline void JsonObject::set(const std::string &key, const JsonArray &val) {
-    d.modify()->j[key] = val.d->j;
+inline void JsonObject::set(const String &key, const JsonArray &val) {
+    _j[key.stds()] = val._j;
 }
 
 PROMEKI_NAMESPACE_END

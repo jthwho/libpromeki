@@ -345,10 +345,10 @@ AudioDesc AudioDesc::fromJson(const JsonObject &json, Error *err) {
     unsigned int chans = json.getUInt("Channels");
     if(type == Invalid || sampleRate <= 0.0 || chans < 1) {
         if(err) *err = Error::Invalid;
-        return new Data();
+        return AudioDesc();
     }
     if(err) *err = Error::Ok;
-    return new Data(type, sampleRate, chans);
+    return AudioDesc(type, sampleRate, chans);
 }
 
 PROMEKI_NAMESPACE_END

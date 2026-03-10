@@ -1,4 +1,10 @@
-// CIE 1931 Wavelength Table
+/**
+ * @file      ciewavelengthtable.h
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
 #pragma once
 
 #include <promeki/namespace.h>
@@ -7,12 +13,14 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/** @brief A single entry in the CIE 1931 wavelength lookup table. */
 struct CIEWavelength {
-	double          wavelength;
-	XYZColor        xyz;
-	CIEPoint        xy;
+	double          wavelength; ///< Wavelength in nanometers.
+	XYZColor        xyz;        ///< CIE 1931 XYZ tristimulus values.
+	CIEPoint        xy;         ///< CIE 1931 chromaticity coordinates (x, y).
 };
 
+/** @brief CIE 1931 standard observer wavelength table (360 nm - 830 nm). */
 static const CIEWavelength cieWavelengthTable[] = {
 	{ 360.0, { 0.175560, 0.005290, 0.819150 }, { 0.175560, 0.005290 } },
 	{ 361.0, { 0.175480, 0.005290, 0.819230 }, { 0.175480, 0.005290 } },

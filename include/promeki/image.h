@@ -1,7 +1,7 @@
 /**
  * @file      image.h
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -15,106 +15,196 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/**
+ * @brief Raster image with pixel format, planes, and metadata.
+ *
+ * Holds image pixel data organized into one or more memory planes
+ * according to the image's pixel format. Provides convenience
+ * accessors for dimensions, pixel format, and metadata, as well as
+ * pixel format conversion and paint engine creation.
+ * When shared ownership is needed, use Image::Ptr.
+ */
 class Image {
+        PROMEKI_SHARED_FINAL(Image)
         public:
-                class Data {
-                        PROMEKI_SHARED_FINAL(Data)
-                        public:
-                                ImageDesc       desc;
-                                Buffer::List    planeList;
+                /** @brief Shared pointer type for Image. */
+                using Ptr = SharedPtr<Image>;
 
-                                Data() = default;
-                                Data(const ImageDesc &desc, const MemSpace &ms);
-                                void clear();
-                                bool fill(char value) const {
-                                        for(auto &p : planeList) {
-                                                if(!p.fill(value)) return false;
-                                        }
-                                        return !planeList.isEmpty();
-                                }
-                                Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const;
+                /** @brief List of Image values. */
+                using List = promeki::List<Image>;
 
-                        private:
-                                bool allocate(const ImageDesc &desc, const MemSpace &ms);
-                };
+                /** @brief List of shared Image pointers. */
+                using PtrList = promeki::List<Ptr>;
 
-                Image() : d(SharedPtr<Data>::create()) { }
-                Image(const ImageDesc &d, const MemSpace &ms = MemSpace::Default) :
-                        d(SharedPtr<Data>::create(d, ms)) { }
+                /** @brief Constructs an invalid (empty) image. */
+                Image() = default;
+
+                /**
+                 * @brief Constructs an image from an image descriptor.
+                 * @param desc Image descriptor specifying size, pixel format, and metadata.
+                 * @param ms   Memory space to allocate plane buffers from.
+                 */
+                Image(const ImageDesc &desc, const MemSpace &ms = MemSpace::Default);
+
+                /**
+                 * @brief Constructs an image from a size and pixel format ID.
+                 * @param s      Image dimensions.
+                 * @param pixfmt Pixel format identifier.
+                 * @param ms     Memory space to allocate from.
+                 */
                 Image(const Size2D &s, int pixfmt, const MemSpace &ms = MemSpace::Default) :
-                        d(SharedPtr<Data>::create(ImageDesc(s, pixfmt), ms)) { }
+                        Image(ImageDesc(s, pixfmt), ms) { }
+
+                /**
+                 * @brief Constructs an image from width, height, and pixel format ID.
+                 * @param w      Image width in pixels.
+                 * @param h      Image height in pixels.
+                 * @param pixfmt Pixel format identifier.
+                 * @param ms     Memory space to allocate from.
+                 */
                 Image(size_t w, size_t h, int pixfmt, const MemSpace &ms = MemSpace::Default) :
-                        d(SharedPtr<Data>::create(ImageDesc(w, h, pixfmt), ms)) { }
+                        Image(ImageDesc(w, h, pixfmt), ms) { }
 
+                /**
+                 * @brief Returns true if the image has a valid descriptor and allocated planes.
+                 * @return true if the image descriptor is valid.
+                 */
                 bool isValid() const {
-                        return d->desc.isValid();
+                        return _desc.isValid();
                 }
 
+                /**
+                 * @brief Returns the image descriptor.
+                 * @return A const reference to the ImageDesc.
+                 */
                 const ImageDesc &desc() const {
-                        return d->desc;
+                        return _desc;
                 }
 
+                /**
+                 * @brief Returns the pixel format identifier.
+                 * @return The pixel format ID integer.
+                 */
                 int pixelFormatID() const {
-                        return d->desc.pixelFormatID();
+                        return _desc.pixelFormatID();
                 }
 
+                /**
+                 * @brief Returns a pointer to the PixelFormat object.
+                 * @return The PixelFormat pointer, or nullptr if unknown.
+                 */
                 const PixelFormat *pixelFormat() const {
-                        return d->desc.pixelFormat();
+                        return _desc.pixelFormat();
                 }
 
+                /**
+                 * @brief Returns the image dimensions.
+                 * @return A const reference to the Size2D.
+                 */
                 const Size2D &size() const {
-                        return d->desc.size();
+                        return _desc.size();
                 }
 
+                /**
+                 * @brief Returns the image width in pixels.
+                 * @return The width.
+                 */
                 size_t width() const {
-                        return d->desc.width();
+                        return _desc.width();
                 }
 
+                /**
+                 * @brief Returns the image height in pixels.
+                 * @return The height.
+                 */
                 size_t height() const {
-                        return d->desc.height();
+                        return _desc.height();
                 }
 
+                /**
+                 * @brief Returns a const reference to the image metadata.
+                 * @return The metadata.
+                 */
                 const Metadata &metadata() const {
-                        return d->desc.metadata();
+                        return _desc.metadata();
                 }
 
+                /**
+                 * @brief Returns a mutable reference to the image metadata.
+                 * @return The metadata.
+                 */
                 Metadata &metadata() {
-                        return d.modify()->desc.metadata();
+                        return _desc.metadata();
                 }
 
+                /**
+                 * @brief Returns the line stride in bytes for the given plane.
+                 * @param plane The plane index (defaults to 0).
+                 * @return The number of bytes per scanline.
+                 */
                 size_t lineStride(int plane = 0) const {
-                        return d->desc.pixelFormat()->lineStride(plane, d->desc);
+                        return _desc.pixelFormat()->lineStride(plane, _desc);
                 }
 
-                Buffer plane(int index = 0) const {
-                        return d->planeList[index];
+                /**
+                 * @brief Returns the buffer for the given image plane.
+                 * @param index The plane index (defaults to 0).
+                 * @return A const reference to the Buffer shared pointer.
+                 */
+                const Buffer::Ptr &plane(int index = 0) const {
+                        return _planeList[index];
                 }
 
-                Buffer::List planes() const {
-                        return d->planeList;
+                /**
+                 * @brief Returns the list of all plane buffers.
+                 * @return A const reference to the Buffer::PtrList.
+                 */
+                const Buffer::PtrList &planes() const {
+                        return _planeList;
                 }
 
+                /**
+                 * @brief Returns a raw data pointer for the given plane.
+                 * @param index The plane index (defaults to 0).
+                 * @return A void pointer to the plane's pixel data.
+                 */
                 void *data(int index = 0) const {
-                        return d->planeList[index].data();
+                        return _planeList[index]->data();
                 }
 
+                /**
+                 * @brief Fills all image planes with the given byte value.
+                 * @param value The byte value to fill with.
+                 * @return true on success, false if no planes exist or a fill fails.
+                 */
                 bool fill(char value) const {
-                        return d->fill(value);
+                        for(auto &p : _planeList) {
+                                if(!p->fill(value)) return false;
+                        }
+                        return !_planeList.isEmpty();
                 }
 
+                /**
+                 * @brief Creates a paint engine for drawing on this image.
+                 * @return A PaintEngine configured for this image's pixel format.
+                 */
                 PaintEngine createPaintEngine() const {
-                        return d->desc.pixelFormat()->createPaintEngine(*this);
+                        return _desc.pixelFormat()->createPaintEngine(*this);
                 }
 
-                Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
-                        return d->convert(pixelFormat, metadata);
-                }
-
-                int referenceCount() const { return d.referenceCount(); }
+                /**
+                 * @brief Converts this image to a different pixel format.
+                 * @param pixelFormat The target pixel format ID.
+                 * @param metadata    Metadata to attach to the converted image.
+                 * @return A new Image in the target pixel format.
+                 */
+                Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const;
 
         private:
-                SharedPtr<Data> d;
+                ImageDesc       _desc;
+                Buffer::PtrList _planeList;
+
+                bool allocate(const MemSpace &ms);
 };
 
 PROMEKI_NAMESPACE_END
-

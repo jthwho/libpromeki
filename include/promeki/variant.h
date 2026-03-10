@@ -23,6 +23,40 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/**
+ * @brief X-macro that defines all supported Variant types.
+ *
+ * Each entry has the form `X(EnumName, CppType)`.  The macro is expanded in
+ * several contexts inside VariantImpl:
+ *  - To generate the Type enum (TypeInvalid, TypeBool, ..., TypeRational).
+ *  - To generate the `typeName()` lookup table.
+ *  - To instantiate the `std::variant` template parameter list.
+ *
+ * The order of entries determines the numeric value of each Type enumerator
+ * and **must** match the order of template arguments passed to `std::variant`.
+ *
+ * | Enumerator    | C++ type            |
+ * |---------------|---------------------|
+ * | TypeInvalid   | `std::monostate`    |
+ * | TypeBool      | `bool`              |
+ * | TypeU8        | `uint8_t`           |
+ * | TypeS8        | `int8_t`            |
+ * | TypeU16       | `uint16_t`          |
+ * | TypeS16       | `int16_t`           |
+ * | TypeU32       | `uint32_t`          |
+ * | TypeS32       | `int32_t`           |
+ * | TypeU64       | `uint64_t`          |
+ * | TypeS64       | `int64_t`           |
+ * | TypeFloat     | `float`             |
+ * | TypeDouble    | `double`            |
+ * | TypeString    | `String`            |
+ * | TypeDateTime  | `DateTime`          |
+ * | TypeTimeStamp | `TimeStamp`         |
+ * | TypeSize2D    | `Size2D`            |
+ * | TypeUUID      | `UUID`              |
+ * | TypeTimecode  | `Timecode`          |
+ * | TypeRational  | `Rational<int>`     |
+ */
 #define PROMEKI_VARIANT_TYPES           \
         X(TypeInvalid, std::monostate)  \
         X(TypeBool, bool)               \
@@ -45,20 +79,38 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeRational, Rational<int>)
 
 namespace detail {
-        // Sentinel type used to absorb trailing comma from X-macro expansion
+        /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
         struct VariantEnd {};
 }
 
-// Note, this template is never intended to be used directly, just to provide the template
-// to be used by Variant
+/**
+ * @brief Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.
+ *
+ * VariantImpl is a thin wrapper around `std::variant` that adds a Type enum,
+ * human-readable type names, and automatic type-conversion logic via the
+ * templated get() method.  It is not intended to be used directly; instead use
+ * the `Variant` type alias which is instantiated with the concrete type list.
+ *
+ * @tparam Types  The set of types the variant can hold (generated from PROMEKI_VARIANT_TYPES).
+ */
 template <typename... Types> class VariantImpl {
         public:
-                // Note: the enum list must be in the same order as the Variant type arguments.
                 #define X(name, type) name,
+                /**
+                 * @brief Enumerates every type the variant can hold.
+                 *
+                 * The enumerator order matches the template argument order so that
+                 * `std::variant::index()` can be cast directly to a Type value.
+                 */
                 enum Type { PROMEKI_VARIANT_TYPES };
                 #undef X
 
                 #define X(name, type) PROMEKI_STRINGIFY(type),
+                /**
+                 * @brief Returns the human-readable C++ type name for the given Type enumerator.
+                 * @param[in] id  The Type enumerator value.
+                 * @return A null-terminated string such as `"bool"`, `"String"`, etc.
+                 */
                 static const char *typeName(Type id) {
                         static const char *items[] = { PROMEKI_VARIANT_TYPES };
                         PROMEKI_ASSERT(id < PROMEKI_ARRAY_SIZE(items));
@@ -66,6 +118,21 @@ template <typename... Types> class VariantImpl {
                 }
                 #undef X
 
+                /**
+                 * @brief Constructs a VariantImpl from a JSON value, inferring the best native type.
+                 *
+                 * Mapping rules:
+                 *  - `null`            -> invalid (default-constructed) variant
+                 *  - boolean           -> `bool`
+                 *  - unsigned integer  -> `uint64_t`
+                 *  - signed integer    -> `int64_t`
+                 *  - floating-point    -> `double`
+                 *  - string            -> `String`
+                 *  - anything else     -> `String` (via `json::dump()`)
+                 *
+                 * @param val  The JSON value to convert.
+                 * @return A VariantImpl holding the converted value.
+                 */
                 static VariantImpl fromJson(const nlohmann::json &val) {
                         if(val.is_null()) return VariantImpl();
                         if(val.is_boolean()) return val.get<bool>();
@@ -78,15 +145,44 @@ template <typename... Types> class VariantImpl {
                         return String(val.dump());
                 }
 
+                /** @brief Default-constructs an invalid (empty) variant holding std::monostate. */
                 VariantImpl() = default;
+
+                /**
+                 * @brief Constructs a variant holding a copy of @p value.
+                 * @tparam T  The type of the value; must be one of the supported variant types.
+                 * @param value  The value to store.
+                 */
                 template <typename T> VariantImpl(const T& value) : v(value) { }
 
+                /** @brief Returns true if the variant holds a value other than std::monostate. */
                 bool isValid() const {
                         return v.index() != 0;
                 }
 
+                /**
+                 * @brief Replaces the currently held value with @p value.
+                 * @tparam T  The type of the new value; must be one of the supported variant types.
+                 * @param value  The value to store.
+                 */
                 template <typename T> void set(const T &value) { v = value; }
-                
+
+                /**
+                 * @brief Converts the stored value to the requested type @p To.
+                 *
+                 * The method uses `std::visit` with a compile-time conversion matrix.
+                 * If the stored type is already @p To, the value is returned directly.
+                 * Otherwise an appropriate conversion is attempted (numeric casts,
+                 * string parsing, `toString()` calls, etc.).  When no conversion path
+                 * exists, a default-constructed @p To is returned and @p err (if
+                 * non-null) is set to Error::Invalid.
+                 *
+                 * @tparam To  The desired result type.
+                 * @param err  Optional pointer to an Error that receives Error::Ok on
+                 *             success or Error::Invalid when the conversion is not
+                 *             possible.
+                 * @return The converted value, or a default-constructed @p To on failure.
+                 */
                 template <typename To> To get(Error *err = nullptr) const {
                         return std::visit([err](auto &&arg) -> To {
                                 using From = std::decay_t<decltype(arg)>;
@@ -212,14 +308,26 @@ template <typename... Types> class VariantImpl {
                         }, v);
                 }
 
+                /** @brief Returns the Type enumerator for the currently held value. */
                 Type type() const {
                         return static_cast<Type>(v.index());
                 }
 
+                /** @brief Returns the human-readable type name of the currently held value. */
                 const char *typeName() const {
                         return typeName(type());
                 }
 
+                /**
+                 * @brief Converts complex types to their String representation, leaving simple types unchanged.
+                 *
+                 * Types such as String, DateTime, TimeStamp, Size2D, UUID, Timecode, and
+                 * Rational are converted to String via `get<std::string>()`.  All other
+                 * types (numeric, bool, invalid) are returned as-is.
+                 *
+                 * @return A new VariantImpl containing either the original value or its
+                 *         String representation.
+                 */
                 VariantImpl toStandardType() const {
                         switch(type()) {
                                 case TypeString:
@@ -240,9 +348,11 @@ template <typename... Types> class VariantImpl {
 };
 
 #define X(name, type) type,
+/** @brief Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES. */
 using Variant = VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd >;
 #undef X
 
+/** @brief Convenience alias for a List of Variant values. */
 using VariantList = List<Variant>;
 
 PROMEKI_NAMESPACE_END

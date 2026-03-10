@@ -57,23 +57,42 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
                         _promeki_debug_name, PROMEKI_STRINGIFY(name), _promeki_debug_timestamp_##name.elapsedSeconds())); \
         }
 
+/**
+ * @brief Asynchronous thread-safe logging facility.
+ *
+ * All log messages are enqueued and written by a dedicated worker thread.
+ * Supports multiple log levels, optional console output, and file logging.
+ */
 class Logger {
         public:
+                /** @brief Severity levels for log messages. */
                 enum LogLevel {
-                        Force   = 0,      // Forced messages are always logged
-                        Debug   = 1,
-                        Info    = 2,
-                        Warn    = 3,
-                        Err     = 4
+                        Force   = 0,      ///< @brief Forced messages are always logged.
+                        Debug   = 1,      ///< @brief Debug-level messages.
+                        Info    = 2,      ///< @brief Informational messages.
+                        Warn    = 3,      ///< @brief Warning messages.
+                        Err     = 4       ///< @brief Error messages.
                 };
 
+                /**
+                 * @brief Returns the singleton default Logger instance.
+                 * @return A reference to the default Logger.
+                 */
                 static Logger &defaultLogger();
+
+                /**
+                 * @brief Converts a LogLevel to its string representation.
+                 * @param level The log level to convert.
+                 * @return A C string such as "DEBUG", "INFO", "WARN", or "ERR".
+                 */
                 static const char *levelToString(LogLevel level);
 
+                /** @brief Constructs a Logger and starts the worker thread. */
                 Logger() : _level(Debug), _consoleLogging(true) {
                         _thread = std::thread(&Logger::worker, this);
                 }
 
+                /** @brief Destructor. Signals the worker thread to terminate and waits for it to finish. */
                 ~Logger() {
                         // Signal the worker thread to terminate
                         Command cmd;
@@ -84,10 +103,21 @@ class Logger {
                         _thread.join();
                 }
 
+                /**
+                 * @brief Returns the current minimum log level.
+                 * @return The log level as an integer.
+                 */
                 int level() const {
                         return _level;
                 }
 
+                /**
+                 * @brief Enqueues a single log message.
+                 * @param loglevel The severity level of the message.
+                 * @param file     The source file name (typically __FILE__).
+                 * @param line     The source line number (typically __LINE__).
+                 * @param msg      The log message text.
+                 */
                 void log(LogLevel loglevel, const char *file, int line, const String &msg) {
                         if(loglevel && loglevel < level()) return;
                         Command cmd;
@@ -100,10 +130,17 @@ class Logger {
                         _queue.push(cmd);
                 }
 
+                /**
+                 * @brief Enqueues multiple log messages with the same timestamp.
+                 * @param loglevel The severity level of the messages.
+                 * @param file     The source file name (typically __FILE__).
+                 * @param line     The source line number (typically __LINE__).
+                 * @param lines    A StringList where each entry becomes a separate log line.
+                 */
                 void log(LogLevel loglevel, const char *file, int line, const StringList &lines) {
                         if(loglevel && loglevel < level()) return;
                         DateTime ts = DateTime::now();
-                        std::vector<Command> cmdlist;
+                        List<Command> cmdlist;
                         for(const auto &item : lines) {
                                 Command cmd;
                                 cmd.cmd = CmdLog;
@@ -112,25 +149,37 @@ class Logger {
                                 cmd.line = line;
                                 cmd.msg = item;
                                 cmd.ts = ts;
-                                cmdlist.push_back(cmd);
+                                cmdlist.pushToBack(cmd);
                         }
                         _queue.push(cmdlist);
                         return;
                 }
 
-                void setLogFile(const std::string &filename) {
+                /**
+                 * @brief Sets the log output file.
+                 * @param filename Path to the log file. The file is opened by the worker thread.
+                 */
+                void setLogFile(const String &filename) {
                         Command cmd;
                         cmd.cmd = CmdSetFile;
                         cmd.msg = filename;
                         _queue.push(cmd);
                 }
 
+                /**
+                 * @brief Changes the minimum log level.
+                 * @param level The new minimum log level. Messages below this are discarded.
+                 */
                 void setLogLevel(LogLevel level) {
                         _level = level;
                         log(Force, "LOGGER", 0, String::sprintf("Logging Level Changed to %d", level));
                         return;
                 }
 
+                /**
+                 * @brief Enables or disables console (stderr) log output.
+                 * @param val true to enable console logging, false to disable.
+                 */
                 void setConsoleLoggingEnabled(bool val) {
                         _consoleLogging = val;
                         return;

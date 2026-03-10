@@ -13,62 +13,79 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** Discrete Proportional-Integral-Derivative (D-PID) controller
- * This class implements a PID 
- * To use it, you'll need the following:
- * 
- * - A function that returns a ValueType.  This would be the type of the
- *   value that you're feeding into your device/object/whatever under control.
- *   Most likely it'll be some form of a floating point value, but doesn't have
- *   to be if the object implements all the required math used by this function
- *   (i.e. could be give an object that abstracts integer math for systems w/o
- *    floating point)
- *   
- *   This function should return the currently measured value of the device/object
- *   under control.  In a closed-loop use case, this would return the instantanious
- *   measurement of that value (i.e. the actual speed of the car as measured by the
- *   speedometer).  However, you can also simply provide the last value that was
- *   requested by the step() function.  This would effectively be using the PID in
- *   open-loop mode.  Which, still gives you the benifits of filtering of set point,
- *   but doesn't actually react to actual device behavior.
+/**
+ * @brief Discrete Proportional-Integral-Derivative (PID) controller.
  *
- * - A function that returns a TimeType.  This would typically be a floating point
- *   continuously linear incrementing number of seconds, but technically doesn't have to be
- *   in seconds, just that it represents some linear time progression.  Note that a single
- *   integer step is assumed to be the integration and derivative time.
+ * Implements a standard PID control loop parameterized on value and time types.
+ * The controller requires two callbacks: one that returns the current measured
+ * value of the process variable (for closed-loop control) or the last requested
+ * output (for open-loop control), and one that returns the current time as a
+ * monotonically increasing value.
+ *
+ * @tparam ValueType The numeric type for gains, set point, and control output (default: double).
+ * @tparam TimeType  The numeric type for time values (default: double).
  */
-
 template <typename ValueType = double, typename TimeType = double>
 class PIDController {
  public:
+     /** @brief Callback type that returns the current time. */
      using CurrentTimeFunc = std::function<TimeType()>;
+     /** @brief Callback type that returns the current measured process value. */
      using CurrentValueFunc = std::function<ValueType()>;
 
+     /**
+      * @brief Constructs a PID controller with the given feedback callbacks.
+      * @param currentValueFunc Callback returning the current process value.
+      * @param currentTimeFunc  Callback returning the current time.
+      */
      PIDController(CurrentValueFunc currentValueFunc, CurrentTimeFunc currentTimeFunc)
-         : _gainP(1), _gainI(0), _gainD(0), 
-           _setPoint(0), _integral(0), _prevError(0), 
+         : _gainP(1), _gainI(0), _gainD(0),
+           _setPoint(0), _integral(0), _prevError(0),
            _currentValue(currentValueFunc), _currentTime(currentTimeFunc),
            _prevUpdate(_currentTime()) {}
 
-     // Get and set the proportional gain
+     /** @brief Returns the proportional gain. */
      ValueType getGainP() const { return _gainP; }
+
+     /**
+      * @brief Sets the proportional gain.
+      * @param val The new proportional gain value.
+      */
      void setGainP(const ValueType &val) { _gainP = val; }
 
-     // Get and set the integral gain
+     /** @brief Returns the integral gain. */
      ValueType getGainI() const { return _gainI; }
+
+     /**
+      * @brief Sets the integral gain.
+      * @param val The new integral gain value.
+      */
      void setGainI(const ValueType &val) { _gainI = val; }
 
-     // Get and set the derivative gain
+     /** @brief Returns the derivative gain. */
      ValueType getGainD() const { return _gainD; }
+
+     /**
+      * @brief Sets the derivative gain.
+      * @param val The new derivative gain value.
+      */
      void setGainD(const ValueType &val) { _gainD = val; }
 
-     // Updates the set point (the value you'd like the PID to converge on)
+     /**
+      * @brief Updates the set point (target value the PID should converge on).
+      * @param val The desired target value.
+      */
      void updateSetPoint(const ValueType &val) { _setPoint = val; }
 
-     // Steps the PID in time and returns the control value that should be sent to whatever the
-     // PID is controlling.  Typically you'd call this in equal time slices and as often as possible 
-     // and as frequently as possible.  If this is called too infrequently, the PID may not be able
-     // to cope with changes effectively.
+     /**
+      * @brief Advances the PID by one time step and returns the control output.
+      *
+      * Should be called at regular intervals as frequently as possible.
+      * If called too infrequently, the controller may not respond to
+      * changes effectively.
+      *
+      * @return The computed control value to apply to the controlled device.
+      */
      ValueType step() {
          TimeType now = _currentTime();
          TimeType dt = now - _prevUpdate;
@@ -83,7 +100,7 @@ class PIDController {
          return _gainP * error + _gainI * _integral + _gainD * derivative;
      }
 
-     // Resets the PID internal state
+     /** @brief Resets the integral accumulator, previous error, and update timestamp. */
      void reset() {
          _integral = {};
          _prevError = {};
@@ -98,9 +115,9 @@ private:
      ValueType _integral = 0;
      ValueType _prevError = 0;
      ValueType _setPoint = 0;
-     TimeType _prevUpdate = 0;
      CurrentValueFunc _currentValue;
      CurrentTimeFunc _currentTime;
+     TimeType _prevUpdate = 0;
 };
 
 

@@ -177,18 +177,14 @@ String String::number(double val, int precision) {
 
 String &String::arg(const String &str) {
         // Find the lowest numbered unreplaced placeholder.
-        // Note: we take a const ref to d->s for searching.  If modify() below
-        // triggers a COW detach, this ref remains valid because the old Data is
-        // still held by other SharedPtrs (otherwise detach wouldn't trigger).
-        const std::string &s = d->s;
         int minValue = std::numeric_limits<int>::max();
         size_t minPos = std::string::npos;
         std::string placeholderToReplace;
-        for(size_t i = 0; i < s.size(); ++i) {
-            if(s[i] == '%' && i + 1 < s.size() && std::isdigit(s[i + 1])) {
+        for(size_t i = 0; i < _s.size(); ++i) {
+            if(_s[i] == '%' && i + 1 < _s.size() && std::isdigit(_s[i + 1])) {
                 size_t j = i + 1;
-                while (j < s.size() && std::isdigit(s[j])) ++j;
-                std::string placeholder = s.substr(i, j - i);
+                while (j < _s.size() && std::isdigit(_s[j])) ++j;
+                std::string placeholder = _s.substr(i, j - i);
                 int value = std::stoi(placeholder.substr(1));
                 if(value < minValue) {
                     minValue = value;
@@ -200,7 +196,7 @@ String &String::arg(const String &str) {
 
         // Replace the found placeholder with the argument value.
         if(minPos != std::string::npos) {
-                d.modify()->s.replace(minPos, placeholderToReplace.length(), str.d->s);
+                _s.replace(minPos, placeholderToReplace.length(), str._s);
         }
         return *this;
 }
@@ -208,9 +204,9 @@ String &String::arg(const String &str) {
 bool String::toBool(Error *e) const {
         Error err;
         bool ret = false;
-        if(d->s == "1") {
+        if(_s == "1") {
                 ret = true;
-        } else if(d->s == "0") {
+        } else if(_s == "0") {
                 ret = false;
         } else {
                 String s = toLower();
@@ -230,7 +226,7 @@ int String::toInt(Error *e) const {
         Error err;
         int ret;
         try {
-                ret = std::stoi(d->s);
+                ret = std::stoi(_s);
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
         } catch (const std::out_of_range &) {
@@ -244,7 +240,7 @@ unsigned int String::toUInt(Error *e) const {
         Error err;
         unsigned long ret;
         try {
-                ret = std::stoul(d->s);
+                ret = std::stoul(_s);
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
         } catch (const std::out_of_range &) {
@@ -259,7 +255,7 @@ double String::toDouble(Error *e) const {
         Error err;
         double ret;
         try {
-                ret = std::stod(d->s);
+                ret = std::stod(_s);
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
         } catch (const std::out_of_range &) {
@@ -281,7 +277,7 @@ int64_t String::parseNumberWords(Error *err) const {
                 {"million", 1000000}, {"billion", 1000000000}
         };
 
-        std::string copy = d->s;
+        std::string copy = _s;
         for(char &c : copy) if(!std::isalpha(c)) c = ' ';
         std::istringstream iss(copy);
         std::string token;
@@ -320,7 +316,7 @@ int64_t String::parseNumberWords(Error *err) const {
 StringList String::split(const std::string& delimiter) const {
         StringList result;
         size_t pos = 0;
-        std::string str = d->s;
+        std::string str = _s;
         while((pos = str.find(delimiter)) != std::string::npos) {
                 String token = str.substr(0, pos);
                 if (!token.isEmpty()) {

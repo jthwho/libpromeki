@@ -15,28 +15,36 @@ PROMEKI_NAMESPACE_BEGIN
 
 class Audio;
 
+/** @brief Audio signal generator for producing test tones and silence. */
 class AudioGen {
 	public:
+                /** @brief Type of audio signal to generate. */
                 enum Type {
-                        Silence = 0,
-                        Sine
+                        Silence = 0,   ///< Generate silence (all zeros).
+                        Sine           ///< Generate a sine wave.
                 };
 
+                /** @brief Per-channel configuration for the audio generator. */
                 struct Config {
-                        Type            type;
-                        float           freq;
-                        float           amplitude;
-                        float           phase;
-                        float           dutyCycle;
+                        Type            type;           ///< Signal type to generate.
+                        float           freq;           ///< Frequency in Hz.
+                        float           amplitude;      ///< Amplitude (0.0 to 1.0).
+                        float           phase;          ///< Phase offset in radians.
+                        float           dutyCycle;      ///< Duty cycle (reserved for future waveform types).
                 };
 
+                /** @brief Constructs an audio generator with the given audio description. */
 		AudioGen(const AudioDesc &desc);
+
+                /** @brief Generates the specified number of audio samples. */
 		Audio generate(size_t samples);
 
+                /** @brief Returns the configuration for the given channel. */
                 const Config &config(size_t chan) const {
                         return _chanConfig[chan];
                 }
 
+                /** @brief Sets the configuration for the given channel. */
                 void setConfig(size_t chan, Config val);
 
 	private:

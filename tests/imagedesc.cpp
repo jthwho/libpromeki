@@ -19,7 +19,6 @@ TEST_CASE("ImageDesc_Default") {
     ImageDesc desc;
     CHECK(!desc.isValid());
     CHECK(desc.pixelFormatID() == PixelFormat::Invalid);
-    CHECK(desc.referenceCount() == 1);
 }
 
 // ============================================================================
@@ -91,29 +90,23 @@ TEST_CASE("ImageDesc_SetInterlaced") {
 }
 
 // ============================================================================
-// Copy-on-write
+// Copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("ImageDesc_CopyOnWrite") {
+TEST_CASE("ImageDesc_CopyIsIndependent") {
     ImageDesc d1(1920, 1080, PixelFormat::RGBA8);
     ImageDesc d2 = d1;
-    CHECK(d1.referenceCount() == 2);
-    CHECK(d2.referenceCount() == 2);
 
     d2.setSize(3840, 2160);
-    CHECK(d1.referenceCount() == 1);
-    CHECK(d2.referenceCount() == 1);
     CHECK(d1.width() == 1920);
     CHECK(d2.width() == 3840);
 }
 
-TEST_CASE("ImageDesc_CopyOnWritePixelFormat") {
+TEST_CASE("ImageDesc_CopyPixelFormatIndependent") {
     ImageDesc d1(1920, 1080, PixelFormat::RGBA8);
     ImageDesc d2 = d1;
-    CHECK(d1.referenceCount() == 2);
 
     d2.setPixelFormat(PixelFormat::RGB8);
-    CHECK(d1.referenceCount() == 1);
     CHECK(d1.pixelFormatID() == PixelFormat::RGBA8);
     CHECK(d2.pixelFormatID() == PixelFormat::RGB8);
 }

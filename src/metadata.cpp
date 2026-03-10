@@ -60,7 +60,7 @@ Metadata Metadata::fromJson(const JsonObject &json, Error *err) {
 
 StringList Metadata::dump() const {
         StringList ret;
-        for(const auto &[id, value] : d->map) {
+        for(const auto &[id, value] : _map) {
                 String s = idToString(id);
                 s += " [";
                 s += value.typeName();

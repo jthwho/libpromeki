@@ -84,7 +84,7 @@ void *MemPool::allocate(size_t size, size_t alignment) {
                 // and use that size to determine if 
                 size_t padding = it->padding(alignment);
                 size_t totalSize = size + padding;
-                if(totalSize >= size) {
+                if(it->size >= totalSize) {
                         // Copy the free block and modify it to represent
                         // the allocated block.
                         Block block = *it;
@@ -103,7 +103,7 @@ void *MemPool::allocate(size_t size, size_t alignment) {
                                 freeBlock.address = block.address + block.size;
                                 _freeBlocks.insert(freeBlock);
                         }
-                        _freeBlocks.erase(it);
+                        _freeBlocks.remove(it);
                         return reinterpret_cast<void*>(alignedAddress);
                 }
         }
@@ -120,7 +120,7 @@ void MemPool::free(void* ptr) {
         
         // Copy the block here and remove it from the allocated blocks
         Block block = it->second;
-        _allocatedBlocks.erase(it);
+        _allocatedBlocks.remove(it);
 
         // Make sure we mark the block as not allocated so it'll report correctly if we
         // ask for a complete block list later.
@@ -144,18 +144,18 @@ void MemPool::free(void* ptr) {
         if(itfPrev != _freeBlocks.end() && block.follows(*itfPrev)) {
                 block.address = itfPrev->address;
                 block.size += itfPrev->size;
-                _freeBlocks.erase(itfPrev);
+                _freeBlocks.remove(itfPrev);
                 update = true;
         }
         if(itfNext != _freeBlocks.end() && itfNext->follows(block)) {
                 block.size += itfNext->size;
-                _freeBlocks.erase(itfNext);
+                _freeBlocks.remove(itfNext);
                 update = true;
         }
         // If update, we need to remove the block we just added and add it again
         // since it got bigger and might have changed address.
         if(update) {
-                _freeBlocks.erase(itf);
+                _freeBlocks.remove(itf);
                 insret = _freeBlocks.insert(block);
                 if(!insret.second) {
                         promekiErr("MemPool '%s': free %p (%p) failed to insert updated block", 

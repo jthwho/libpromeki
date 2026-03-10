@@ -18,7 +18,6 @@ using namespace promeki;
 TEST_CASE("VideoDesc_Default") {
     VideoDesc vd;
     CHECK(!vd.isValid());
-    CHECK(vd.referenceCount() == 1);
 }
 
 // ============================================================================
@@ -60,20 +59,17 @@ TEST_CASE("VideoDesc_ValidWithAudio") {
 }
 
 // ============================================================================
-// Copy-on-write
+// Copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("VideoDesc_CopyOnWrite") {
+TEST_CASE("VideoDesc_CopyIsIndependent") {
     VideoDesc v1;
     v1.setFrameRate(FrameRate(FrameRate::FPS_24));
     v1.imageList().pushToBack(ImageDesc(1920, 1080, PixelFormat::RGBA8));
 
     VideoDesc v2 = v1;
-    CHECK(v1.referenceCount() == 2);
 
     v2.setFrameRate(FrameRate(FrameRate::FPS_30));
-    CHECK(v1.referenceCount() == 1);
-    CHECK(v2.referenceCount() == 1);
     CHECK(v1.frameRate().numerator() == 24);
     CHECK(v2.frameRate().numerator() == 30);
 }

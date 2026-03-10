@@ -6,11 +6,55 @@ This document describes the coding conventions and design patterns used througho
 
 libpromeki provides Qt-inspired C++ core classes built on top of the C++ standard library. The goal is to offer friendlier, less verbose APIs than `std::` while retaining full interoperability. Key principles:
 
-- **Value semantics with copy-on-write**: Classes that hold data use `SharedPtr<Data>` internally so copies are O(1) and mutations only deep-copy when shared.
+- **Value semantics**: All data classes are plain value types. The layer above decides whether to use `MyClass::Ptr` (SharedPtr) for shared ownership.
 - **No raw ownership**: Memory is managed via `SharedPtr`, `Buffer`, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in `ObjectBase`).
 - **Error codes over exceptions**: Use the `Error` class and return values rather than throwing. Constructors never throw.
 - **Minimal abstraction**: Wrap `std::` types to improve ergonomics, but don't add layers of indirection for their own sake.
 - **Blocking calls must support timeouts**: Any function that can block the calling thread should accept a `timeoutMs` parameter (type `unsigned int`, in milliseconds). The default value should be `0`, meaning "wait indefinitely." When a timeout expires, the function should return `Error::Timeout`. This convention applies unless the specific use case makes millisecond-granularity timeouts inappropriate (e.g., a frame-accurate deadline might use a different unit).
+
+---
+
+## Object Categories {#object-categories}
+
+libpromeki classes fall into two distinct categories with different ownership, copying, and lifetime rules.
+
+### Data Objects
+
+Data objects represent values or containers of values. They are the vast majority of classes in the library. Key traits:
+
+- **Copyable by value.** They can be freely copied, assigned, passed by value, and stored in containers.
+- **No identity.** Two data objects with the same contents are interchangeable. They have no inherent notion of "this specific instance."
+- **Thread-safe when shared.** When managed by `SharedPtr`, the reference counting is atomic. Individual instances are not internally synchronized unless the class documents otherwise (e.g., `Queue`).
+
+Data objects subdivide into two categories based on size, usage patterns, and sharing semantics. See also the @ref dataobjects "Data Object Categories" page.
+
+| Category | Internal storage | SharedPtr support | Examples |
+|---|---|---|---|
+| **Simple** | Direct member variables | None — no `PROMEKI_SHARED_FINAL`, no `RefCount` overhead | `Point`, `Size2D`, `Rational`, `FourCC`, `UUID`, `Timecode`, `TimeStamp`, `XYZColor` |
+| **Shareable** | Direct member variables | `PROMEKI_SHARED_FINAL` + `using Ptr = SharedPtr<ClassName>` | `String`, `Buffer`, `AudioDesc`, `ImageDesc`, `VideoDesc`, `Metadata`, `JsonObject`, `JsonArray`, `List<T>`, `Map<K,V>`, `Set<K>`, `Array<T,N>`, `Image`, `Audio`, `Frame` |
+
+**Simple** types are small and cheap to copy — no reference counting needed. **Shareable** types store data directly (no internal `SharedPtr<Data>`) but include `PROMEKI_SHARED_FINAL` so they *can* be managed by `SharedPtr` when shared ownership is needed. The layer above decides whether to use `MyClass::Ptr` for shared ownership. Media objects like `Image` and `Audio` hold buffers via `Buffer::Ptr` for zero-copy buffer sharing even when the object itself is copied.
+
+### Functional Objects (ObjectBase)
+
+Functional objects represent active entities with identity, behavior, and relationships. They derive from `ObjectBase`. Key traits:
+
+- **Not copyable.** Each instance is unique. Copying is deleted.
+- **Identity matters.** A functional object *is* a specific thing, not just a bag of data. Signals are connected to *this* object, children belong to *this* parent.
+- **Parent/child ownership.** Lifetime is managed through a tree: destroying a parent destroys its children. Raw pointers are used for non-owning references within the tree.
+- **Signals and slots.** Communication between functional objects uses the signal/slot system, not return values.
+- **No SharedPtr.** These objects use `PROMEKI_OBJECT` / `PROMEKI_SHARED` macros for their own reflection and signal infrastructure, not for SharedPtr-style sharing.
+
+Examples: `AudioBlock`, custom processing nodes, application-level objects.
+
+### Choosing the Right Category
+
+Ask: "Does this class represent a *value* or a *thing*?"
+
+- A timecode, an image description, a list of strings — these are values. Use a data object.
+- An audio processing node, a file watcher, a UI widget — these are things with identity. Derive from `ObjectBase`.
+
+When in doubt, prefer a data object. Most classes in a library like this are data.
 
 ---
 
@@ -49,7 +93,6 @@ class MyClass {
                 // ...
 
         private:
-                // Inner Data class (if SharedPtr pattern)
                 // Members
 };
 
@@ -100,8 +143,6 @@ Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 ### Member Variables
 
 - **Private members**: underscore prefix — `_width`, `_height`, `_mode`, `_parent`
-- **SharedPtr data member**: simply `d` — `SharedPtr<Data> d;`
-- **Inner Data class fields**: no prefix, camelCase — `desc`, `planeList`, `imageList`
 
 ### Enums
 
@@ -144,69 +185,69 @@ Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 
 ## The SharedPtr / Copy-on-Write Pattern
 
-This is a central design decision. Classes that hold non-trivial data should use the SharedPtr pattern for implicit sharing with copy-on-write semantics.
+SharedPtr provides reference-counted smart pointers with optional copy-on-write semantics (see [Object Categories](#object-categories) above).
 
-### When to Use SharedPtr
+### Shareable Data Objects Support SharedPtr
 
-Use it for classes that:
-- Hold dynamically allocated or non-trivial data (images, buffers, strings, audio)
-- Are frequently copied by value
-- Benefit from O(1) copies with deferred deep-copy on mutation
+Every shareable data object includes the `PROMEKI_SHARED_FINAL` macro, which adds zero-cost `RefCount` and `_promeki_clone()` hooks so the object can be managed by `SharedPtr` without proxy indirection. Simple data objects do not include this macro — they are too small to benefit from reference counting.
 
-Do **not** use it for:
-- Small value types (Point, Size2D, Rational, FourCC) — these are cheap to copy directly.
-- Template containers (List, Array) — these wrap `std::vector`/`std::array` directly.
-- ObjectBase-derived objects — these use parent/child ownership instead.
+Every shareable data object must provide the following type aliases in its `public:` section:
 
-### How to Implement
-
-1. Declare a private inner `Data` class with the `PROMEKI_SHARED_FINAL(Data)` macro:
-   ```cpp
-   class MyClass {
-           public:
-                   // ... public API ...
-
-           private:
-                   class Data {
-                           PROMEKI_SHARED_FINAL(Data)
-                           public:
-                                   SomeType field1;
-                                   OtherType field2;
-
-                                   Data() = default;
-                                   Data(const Data &o) = default;
-                   };
-
-                   SharedPtr<Data> d;
-   };
-   ```
-
-2. Default constructor creates a valid (but empty) shared data:
-   ```cpp
-   MyClass() : d(SharedPtr<Data>::create()) { }
-   ```
-
-3. **Const access** uses `d->field` (no copy triggered):
-   ```cpp
-   int width() const { return d->desc.width(); }
-   ```
-
-4. **Mutable access** uses `d.modify()->field` (triggers deep copy if shared):
-   ```cpp
-   void setWidth(int w) { d.modify()->desc.setWidth(w); }
-   ```
-
-5. Expose `referenceCount()` for debugging:
-   ```cpp
-   int referenceCount() const { return d.referenceCount(); }
-   ```
-
-### Copy-on-Write Disabled
-
-For types where COW semantics are wrong (e.g., `Buffer` manages external memory), disable COW:
 ```cpp
-SharedPtr<Data, false> d;  // Reference counting only, no COW
+class Image {
+        PROMEKI_SHARED_FINAL(Image)
+        public:
+                using Ptr = SharedPtr<Image>;
+                using List = promeki::List<Image>;
+                using PtrList = promeki::List<Ptr>;
+                // ...
+};
+
+// Usage: always MyClass::Ptr, never SharedPtr<MyClass>
+Buffer::Ptr buf = Buffer::Ptr::create(1024);
+Image::Ptr img = Image::Ptr::create(desc);
+List<int>::Ptr sharedList = List<int>::Ptr::create();
 ```
+
+- `Ptr` — SharedPtr alias for shared ownership.
+- `List` — convenience alias for `promeki::List<MyClass>` (plain value list).
+- `PtrList` — convenience alias for `promeki::List<Ptr>` (shared pointer list).
+
+This convention makes shared ownership explicit at the call site and provides a consistent spelling throughout the codebase. Use `MyClass::Ptr` wherever you would have used a raw pointer for shared ownership.
+
+### No Internal SharedPtr<Data>
+
+No data objects use `SharedPtr<Data>` internally. All data objects store their data directly as member variables. The decision to share is made by the *composing* layer, not baked into each data object. If a caller needs shared ownership, they use `MyClass::Ptr` (i.e., `SharedPtr<MyClass>`) explicitly.
+
+Media objects like `Image` and `Audio` hold their buffers via `Buffer::Ptr`, so pixel and sample data is shared across copies without deep copies. When the object itself is copied, only the descriptors and shared pointer references are duplicated — the actual buffer memory is not.
+
+Do **not** use `SharedPtr<Data>` internally for any data object:
+- Simple value types (Point, Size2D, Rational, UUID, etc.) — cheap to copy, no SharedPtr support needed.
+- Shareable value types (String, AudioDesc, Image, Audio, etc.) — store data directly; use `Ptr` externally when sharing is needed.
+- Template containers (List, Array, Map, Set) — wrap standard containers directly.
+- Functional objects (ObjectBase-derived) — not copyable; use parent/child ownership.
+
+### How to Implement (Shareable Classes)
+
+Shareable classes store data directly as member variables and include `PROMEKI_SHARED_FINAL` so they can be managed by `SharedPtr` externally:
+
+```cpp
+class AudioDesc {
+        PROMEKI_SHARED_FINAL(AudioDesc)
+        public:
+                using Ptr = SharedPtr<AudioDesc>;
+                using List = promeki::List<AudioDesc>;
+                using PtrList = promeki::List<Ptr>;
+                // ... public API ...
+
+        private:
+                int         _sampleRate = 0;
+                int         _channels   = 0;
+                SampleFormat _format    = SampleFormat::Invalid;
+};
+```
+
+No internal `SharedPtr<Data>`, no `d->field` / `d.modify()->field` pattern. Just direct member access. When shared ownership is needed, callers use `AudioDesc::Ptr`.
 
 ---
 
@@ -253,7 +294,7 @@ Avoid mixing patterns within the same class without good reason.
 
 ### String
 
-- Wraps `std::string` with SharedPtr COW.
+- Wraps `std::string` as a plain shareable value type (no internal SharedPtr).
 - Use `String` everywhere in the public API, not `std::string`.
 - `stds()` provides access to the underlying `std::string` when needed.
 - Implicit conversions to `std::string&`, `const char*` are provided for interop.
@@ -274,20 +315,22 @@ Avoid mixing patterns within the same class without good reason.
 ### Buffer
 
 - Manages raw memory with optional ownership and alignment.
-- Uses `SharedPtr<Data, false>` (ref counting without COW).
+- A shareable value type — use `Buffer::Ptr` (`SharedPtr<Buffer>`) for shared ownership.
+- `Buffer::List` is `List<Buffer>` (plain buffer list); `Buffer::PtrList` is `List<Buffer::Ptr>` (shared pointer list). Media classes hold buffers via `Buffer::Ptr` for zero-copy sharing.
 - Tied to `MemSpace` for allocation abstraction.
 
 ---
 
 ## ObjectBase and Signals/Slots
 
-Classes that need signals/slots and parent-child relationships derive from `ObjectBase`.
+Functional objects (see [Object Categories](#object-categories)) derive from `ObjectBase` to gain identity, parent/child ownership, and signal/slot communication.
 
 - Use `PROMEKI_OBJECT(ClassName, ParentClassName)` macro in the public section.
 - Define signals with `PROMEKI_SIGNAL(name, ArgTypes...)`.
 - Define slots with `PROMEKI_SLOT(name, ArgTypes...)`.
 - Connect with `ObjectBase::connect(&obj.signalNameSignal, &other.slotNameSlot)`.
-- ObjectBase objects are **not** copyable — they use pointer-based parent/child trees.
+- Functional objects are **not** copyable — they use pointer-based parent/child trees.
+- Do **not** use `PROMEKI_SHARED_FINAL` on ObjectBase-derived classes. They have their own ownership model and are never managed by SharedPtr.
 
 ---
 

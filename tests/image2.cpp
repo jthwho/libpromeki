@@ -18,7 +18,6 @@ using namespace promeki;
 TEST_CASE("Image_Default") {
     Image img;
     CHECK(!img.isValid());
-    CHECK(img.referenceCount() == 1);
 }
 
 // ============================================================================
@@ -31,7 +30,6 @@ TEST_CASE("Image_Construct") {
     CHECK(img.width() == 1920);
     CHECK(img.height() == 1080);
     CHECK(img.pixelFormatID() == PixelFormat::RGBA8);
-    CHECK(img.referenceCount() == 1);
 }
 
 TEST_CASE("Image_ConstructFromDesc") {
@@ -63,20 +61,18 @@ TEST_CASE("Image_Fill") {
 TEST_CASE("Image_Plane") {
     Image img(64, 64, PixelFormat::RGBA8);
     REQUIRE(img.isValid());
-    Buffer p = img.plane(0);
-    CHECK(p.isValid());
-    CHECK(p.data() != nullptr);
+    const Buffer::Ptr &p = img.plane(0);
+    CHECK(p->isValid());
+    CHECK(p->data() != nullptr);
 }
 
 // ============================================================================
 // Shared copy (COW)
 // ============================================================================
 
-TEST_CASE("Image_SharedCopy") {
+TEST_CASE("Image_Copy") {
     Image img1(64, 64, PixelFormat::RGBA8);
     Image img2 = img1;
-    CHECK(img1.referenceCount() == 2);
-    CHECK(img2.referenceCount() == 2);
     CHECK(img1.width() == img2.width());
     CHECK(img1.height() == img2.height());
 }
@@ -101,4 +97,101 @@ TEST_CASE("Image_Metadata") {
 TEST_CASE("Image_LineStride") {
     Image img(1920, 1080, PixelFormat::RGBA8);
     CHECK(img.lineStride() == 1920 * 4);
+}
+
+// ============================================================================
+// Construction from Size2D
+// ============================================================================
+
+TEST_CASE("Image_ConstructFromSize2D") {
+    Size2D sz(640, 480);
+    Image img(sz, PixelFormat::RGBA8);
+    CHECK(img.isValid());
+    CHECK(img.width() == 640);
+    CHECK(img.height() == 480);
+    CHECK(img.size().width() == sz.width());
+    CHECK(img.size().height() == sz.height());
+}
+
+// ============================================================================
+// Desc accessor
+// ============================================================================
+
+TEST_CASE("Image_DescAccessor") {
+    Image img(1280, 720, PixelFormat::RGB8);
+    REQUIRE(img.isValid());
+    const ImageDesc &desc = img.desc();
+    CHECK(desc.isValid());
+    CHECK(desc.width() == 1280);
+    CHECK(desc.height() == 720);
+    CHECK(desc.pixelFormatID() == PixelFormat::RGB8);
+}
+
+// ============================================================================
+// PixelFormat accessor
+// ============================================================================
+
+TEST_CASE("Image_PixelFormat") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    const PixelFormat *pf = img.pixelFormat();
+    REQUIRE(pf != nullptr);
+    CHECK(pf->id() == PixelFormat::RGBA8);
+    CHECK(pf->isValid());
+}
+
+// ============================================================================
+// Planes list
+// ============================================================================
+
+TEST_CASE("Image_Planes") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    const Buffer::PtrList &pl = img.planes();
+    CHECK(pl.size() >= 1);
+    CHECK(pl[0]->isValid());
+}
+
+// ============================================================================
+// Data pointer
+// ============================================================================
+
+TEST_CASE("Image_DataPointer") {
+    Image img(32, 32, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    void *ptr = img.data();
+    CHECK(ptr != nullptr);
+    CHECK(ptr == img.plane(0)->data());
+}
+
+// ============================================================================
+// Default image is not valid, fill returns false
+// ============================================================================
+
+TEST_CASE("Image_FillInvalid") {
+    Image img;
+    CHECK(!img.isValid());
+    CHECK(!img.fill(0));
+}
+
+// ============================================================================
+// RGB8 pixel format and line stride
+// ============================================================================
+
+TEST_CASE("Image_RGB8_LineStride") {
+    Image img(100, 100, PixelFormat::RGB8);
+    REQUIRE(img.isValid());
+    CHECK(img.lineStride() == 100 * 3);
+    CHECK(img.pixelFormatID() == PixelFormat::RGB8);
+}
+
+// ============================================================================
+// PaintEngine creation
+// ============================================================================
+
+TEST_CASE("Image_CreatePaintEngine") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    PaintEngine pe = img.createPaintEngine();
+    CHECK(pe.pixelFormat() != nullptr);
 }

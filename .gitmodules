@@ -19,3 +19,6 @@
 [submodule "thirdparty/libvtc"]
 	path = thirdparty/libvtc
 	url = https://github.com/jthwho/libvtc.git
+[submodule "thirdparty/doxygen-awesome-css"]
+	path = thirdparty/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git

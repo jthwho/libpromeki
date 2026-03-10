@@ -28,7 +28,7 @@ inline size_t size_RGBA8(const Size2D &size) {
 inline bool fill_RGBA8(const Image &img, const PixelFormat::Comp *comps) {
         const Size2D &size = img.size();
         size_t stride = stride_RGBA8(size);
-        uint8_t *line0 = static_cast<uint8_t *>(img.plane().data());
+        uint8_t *line0 = static_cast<uint8_t *>(img.plane()->data());
         uint8_t *buf;
         const uint8_t pixel[4] = { static_cast<uint8_t>(comps[0]),
                                    static_cast<uint8_t>(comps[1]),

@@ -21,7 +21,6 @@ TEST_CASE("Buffer_Default") {
     CHECK(!b.isValid());
     CHECK(b.data() == nullptr);
     CHECK(b.size() == 0);
-    CHECK(b.referenceCount() == 1);
 }
 
 // ============================================================================
@@ -33,7 +32,6 @@ TEST_CASE("Buffer_Allocate") {
     CHECK(b.isValid());
     CHECK(b.data() != nullptr);
     CHECK(b.size() == 1024);
-    CHECK(b.referenceCount() == 1);
 }
 
 TEST_CASE("Buffer_AllocateWithAlign") {
@@ -82,28 +80,44 @@ TEST_CASE("Buffer_FillZero") {
 }
 
 // ============================================================================
-// Shared (no COW)
+// Copy semantics (deep copy, independent buffers)
 // ============================================================================
 
-TEST_CASE("Buffer_SharedCopy") {
+TEST_CASE("Buffer_CopyIsIndependent") {
     Buffer b1(256);
     CHECK(b1.fill(0x42));
 
     Buffer b2 = b1;
-    CHECK(b1.referenceCount() == 2);
-    CHECK(b2.referenceCount() == 2);
-    // Both point to the same memory (no COW)
-    CHECK(b1.data() == b2.data());
-    CHECK(b1.size() == b2.size());
+    // Deep copy — different memory, same content
+    CHECK(b2.isValid());
+    CHECK(b2.size() == b1.size());
+    CHECK(b2.data() != b1.data());
+
+    const uint8_t *p1 = static_cast<const uint8_t *>(b1.data());
+    const uint8_t *p2 = static_cast<const uint8_t *>(b2.data());
+    CHECK(p2[0] == 0x42);
+    CHECK(p2[255] == 0x42);
+
+    // Mutating b2 does not affect b1
+    b2.fill(0x00);
+    CHECK(p1[0] == 0x42);
+    CHECK(p2[0] == 0x00);
 }
 
-TEST_CASE("Buffer_SharedMultiple") {
-    Buffer b1(128);
-    Buffer b2 = b1;
-    Buffer b3 = b1;
-    CHECK(b1.referenceCount() == 3);
-    CHECK(b2.referenceCount() == 3);
-    CHECK(b3.referenceCount() == 3);
+// ============================================================================
+// Shared ownership via Buffer::Ptr
+// ============================================================================
+
+TEST_CASE("Buffer_SharedPtr") {
+    auto b1 = Buffer::Ptr::create(256);
+    CHECK(b1->fill(0x42));
+    CHECK(b1.referenceCount() == 1);
+
+    Buffer::Ptr b2 = b1;
+    CHECK(b1.referenceCount() == 2);
+    CHECK(b2.referenceCount() == 2);
+    // Both point to the same buffer
+    CHECK(b1->data() == b2->data());
 }
 
 // ============================================================================
@@ -126,9 +140,6 @@ TEST_CASE("Buffer_ShiftData") {
 // ============================================================================
 
 TEST_CASE("Buffer_SetOwnership") {
-    // Allocate a buffer, then disable ownership so it won't free
-    // (We can't easily verify the free doesn't happen, but we can
-    //  verify the call doesn't crash and the buffer remains valid)
     char mem[64];
     Buffer b(mem, sizeof(mem), 1, true);
     b.setOwnershipEnabled(false);
@@ -171,16 +182,16 @@ TEST_CASE("Buffer_DefaultAlign") {
 }
 
 // ============================================================================
-// List type
+// PtrList type (List<Buffer::Ptr>)
 // ============================================================================
 
-TEST_CASE("Buffer_List") {
-    Buffer::List list;
-    list.pushToBack(Buffer(64));
-    list.pushToBack(Buffer(128));
-    list.pushToBack(Buffer(256));
+TEST_CASE("Buffer_PtrList") {
+    Buffer::PtrList list;
+    list.pushToBack(Buffer::Ptr::create(64));
+    list.pushToBack(Buffer::Ptr::create(128));
+    list.pushToBack(Buffer::Ptr::create(256));
     CHECK(list.size() == 3);
-    CHECK(list[0].size() == 64);
-    CHECK(list[1].size() == 128);
-    CHECK(list[2].size() == 256);
+    CHECK(list[0]->size() == 64);
+    CHECK(list[1]->size() == 128);
+    CHECK(list[2]->size() == 256);
 }

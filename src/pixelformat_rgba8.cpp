@@ -24,7 +24,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                 PaintEngine_RGBA8(const Image &img) {
                         image = img;
                         size = img.size();
-                        buf = static_cast<uint8_t *>(image.plane(0).data());
+                        buf = static_cast<uint8_t *>(image.plane(0)->data());
                         stride = img.lineStride(0);
                         _pixelFormat = img.pixelFormat();
                 }
@@ -103,7 +103,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
 
                 bool blit(const Point2D &dpt, const Image &src, const Point2D &spt, const Size2D &ssz) const override {
                         static const int bytesPerPixel = 4;
-                        const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0).data());
+                        const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t srcStride = src.lineStride(0);
 
                         int destX = dpt.x();

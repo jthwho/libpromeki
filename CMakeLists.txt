@@ -106,6 +106,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/line.h
     include/promeki/list.h
     include/promeki/logger.h
+    include/promeki/map.h
     include/promeki/matrix.h
     include/promeki/matrix3x3.h
     include/promeki/mempool.h
@@ -119,6 +120,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/point.h
     include/promeki/rational.h
     include/promeki/regex.h
+    include/promeki/set.h
     include/promeki/sharedptr.h
     include/promeki/signal.h
     include/promeki/size2d.h
@@ -146,10 +148,12 @@ set(PROMEKI_CORE_SOURCES
     src/fourcc.cpp
     src/array.cpp
     src/matrix.cpp
+    src/map.cpp
     src/matrix3x3.cpp
     src/list.cpp
     src/string.cpp
     src/stringlist.cpp
+    src/set.cpp
     src/regex.cpp
     src/error.cpp
     src/uuid.cpp
@@ -363,6 +367,7 @@ if(PROMEKI_BUILD_PROAV)
         src/pixelformat_rgba8.cpp
         src/pixelformat_jpeg.cpp
         src/paintengine.cpp
+        src/colorspace.cpp
         src/colorspaceconverter.cpp
         src/xyzcolor.cpp
         src/ciepoint.cpp
@@ -581,6 +586,32 @@ if(PROMEKI_BUILD_TESTS)
         tests/logger.cpp
         tests/queue.cpp
         tests/streamstring.cpp
+        tests/rational.cpp
+        tests/map.cpp
+        tests/error.cpp
+        tests/fourcc.cpp
+        tests/size2d.cpp
+        tests/line.cpp
+        tests/array.cpp
+        tests/stringlist.cpp
+        tests/framerate.cpp
+        tests/datetime.cpp
+        tests/timestamp.cpp
+        tests/matrix.cpp
+        tests/matrix3x3.cpp
+        tests/regex.cpp
+        tests/application.cpp
+        tests/system.cpp
+        tests/memspace.cpp
+        tests/file.cpp
+        tests/buildinfo.cpp
+        tests/pidcontroller.cpp
+        tests/set.cpp
+        tests/structdatabase.cpp
+        tests/cmdlineparser.cpp
+        tests/ansistream.cpp
+        tests/fileinfo.cpp
+        tests/signal.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
@@ -597,6 +628,19 @@ if(PROMEKI_BUILD_TESTS)
             tests/audiodesc.cpp
             tests/videodesc.cpp
             tests/image2.cpp
+            tests/pixelformat.cpp
+            tests/frame.cpp
+            tests/colorspace.cpp
+            tests/xyzcolor.cpp
+            tests/imagefileio.cpp
+            tests/codec.cpp
+            tests/colorspaceconverter.cpp
+            tests/ciewavelengthtable.cpp
+            tests/audioblock.cpp
+            tests/audiofilefactory.cpp
+            tests/ciepoint.cpp
+            tests/imagefile.cpp
+            tests/paintengine.cpp
         )
         add_executable(unittest-proav ${UNITTEST_PROAV_SOURCES})
         target_compile_definitions(unittest-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
@@ -612,6 +656,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/midinotenames.cpp
             tests/musicalscale.cpp
             tests/notesequenceparser.cpp
+            tests/musicalnote.cpp
         )
         add_executable(unittest-music ${UNITTEST_MUSIC_SOURCES})
         target_compile_definitions(unittest-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
@@ -633,18 +678,24 @@ endif()
 
 # Documentation ################################################################
 
-if(PROMEKI_BUILD_DOCS)
-    find_package(Doxygen)
-    if(DOXYGEN_FOUND)
-        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-        set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-        configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-        add_custom_target(docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Generating API documentation with Doxygen"
-            VERBATIM)
-    else()
-        message("Doxygen needs to be installed to generate the documentation")
+set(PROMEKI_DOCS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen" CACHE PATH
+    "Output directory for generated documentation")
+
+find_package(Doxygen QUIET)
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM)
+    if(PROMEKI_BUILD_DOCS)
+        add_custom_target(docs-all ALL DEPENDS docs)
+    endif()
+else()
+    if(PROMEKI_BUILD_DOCS)
+        message(FATAL_ERROR "PROMEKI_BUILD_DOCS is ON but Doxygen was not found")
     endif()
 endif()

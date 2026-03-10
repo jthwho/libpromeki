@@ -44,9 +44,13 @@ class AudioBlock : public ObjectBase {
                 };
 
                 /**
-                 * @brief Constructs an AudioBlock with a given configuration
+                 * @brief Constructs an AudioBlock with a given configuration.
+                 * @param config Block configuration specifying source and sink channel counts.
+                 * @param parent Optional parent object.
                  */
                 AudioBlock(const Config &config, ObjectBase *parent = nullptr);
+
+                /** @brief Virtual destructor. */
                 virtual ~AudioBlock() {}
 
                 /**
@@ -55,7 +59,9 @@ class AudioBlock : public ObjectBase {
                 bool isSource() const { return _blockConfig.sourceChannels > 0; }
 
                 /**
-                 * @brief Returns true if the given source index is valid
+                 * @brief Returns true if the given source index is valid.
+                 * @param val Zero-based source channel index to check.
+                 * @return true if the index is within the source channel range.
                  */
                 bool isSourceValid(size_t val) const { return val < _blockConfig.sourceChannels; }
                 
@@ -65,28 +71,39 @@ class AudioBlock : public ObjectBase {
                 size_t sourceChannels() const { return _blockConfig.sourceChannels; }
 
                 /**
-                 * @brief Returns the audio description for a given source channel
+                 * @brief Returns the audio description for a given source channel.
+                 * @param channel Zero-based source channel index.
+                 * @return The AudioDesc for the specified channel.
                  */
                 virtual AudioDesc sourceDesc(size_t channel) const;
 
                 /**
-                 * @brief Sets the audio description for a given source channel
+                 * @brief Sets the audio description for a given source channel.
+                 * @param channel Zero-based source channel index.
+                 * @param val     The AudioDesc to set.
+                 * @return true on success, false if the channel index is invalid.
                  */
                 virtual bool setSourceDesc(size_t channel, const AudioDesc &val);
 
                 /**
-                 * @brief Returns the name of a given source channel
+                 * @brief Returns the name of a given source channel.
+                 * @param channel Zero-based source channel index.
+                 * @return The channel name.
                  */
                 virtual String sourceName(size_t channel) const;
 
                 /**
-                 * @brief Sets the name of a given source channel
+                 * @brief Sets the name of a given source channel.
+                 * @param channel Zero-based source channel index.
+                 * @param val     The name to assign.
+                 * @return true on success, false if the channel index is invalid.
                  */
                 virtual bool setSourceName(size_t channel, const String &val);
 
                 /**
-                 * @brief Returns the number of samples that are available on a source channel
-                 * @return Number of samples available or -1 if unknown 
+                 * @brief Returns the number of samples available on a source channel.
+                 * @param channel Zero-based source channel index.
+                 * @return Number of samples available, or -1 if unknown.
                  */
                 virtual ssize_t sourceSamplesAvailable(size_t channel) const;
 
@@ -102,7 +119,9 @@ class AudioBlock : public ObjectBase {
                 bool isSink() const { return _blockConfig.sinkChannels > 0; }
 
                 /**
-                 * @brief Returns true if the given sink channel is valid
+                 * @brief Returns true if the given sink channel index is valid.
+                 * @param val Zero-based sink channel index to check.
+                 * @return true if the index is within the sink channel range.
                  */
                 bool isSinkValid(size_t val) const { return val < _blockConfig.sinkChannels; }
 
@@ -112,28 +131,39 @@ class AudioBlock : public ObjectBase {
                 size_t sinkChannels() const { return _blockConfig.sinkChannels; }
 
                 /**
-                 * @brief Returns the audio description of a given sink channel
+                 * @brief Returns the audio description of a given sink channel.
+                 * @param channel Zero-based sink channel index.
+                 * @return The AudioDesc for the specified channel.
                  */
                 virtual AudioDesc sinkDesc(size_t channel) const;
 
                 /**
-                 * @brief Sets the audio description of a given sink channel
+                 * @brief Sets the audio description of a given sink channel.
+                 * @param channel Zero-based sink channel index.
+                 * @param val     The AudioDesc to set.
+                 * @return true on success, false if the channel index is invalid.
                  */
                 virtual bool setSinkDesc(size_t channel, const AudioDesc &val);
 
                 /**
-                 * @brief Returns the name of a given sink channel
+                 * @brief Returns the name of a given sink channel.
+                 * @param channel Zero-based sink channel index.
+                 * @return The channel name.
                  */
                 virtual String sinkName(size_t channel) const;
 
                 /**
-                 * @brief Sets the name of a given sink channel
+                 * @brief Sets the name of a given sink channel.
+                 * @param channel Zero-based sink channel index.
+                 * @param val     The name to assign.
+                 * @return true on success, false if the channel index is invalid.
                  */
                 virtual bool setSinkName(size_t channel, const String &val);
 
                 /**
-                 * @brief Returns the number of samples a sink channel can currently accept
-                 * Will return the number of sample the sink channel can accept or -1 if unknown
+                 * @brief Returns the number of samples a sink channel can currently accept.
+                 * @param channel Zero-based sink channel index.
+                 * @return Number of samples the channel can accept, or -1 if unknown.
                  */
                 virtual ssize_t sinkSamplesAllowed(size_t channel) const;
 

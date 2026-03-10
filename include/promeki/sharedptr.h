@@ -99,12 +99,21 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class RefCount {
     public:
-        // Reference count starts at 1 by default.
+        /** @brief Constructs a reference count initialized to 1. */
         RefCount() : v(1) {}
 
-        // A copy of the reference count should reset the reference count to 1
+        /** @brief Copy constructor resets the reference count to 1 for the new object. */
         RefCount(const RefCount &o) : v(1) {}
 
+        /** @brief Copy assignment resets the reference count to 1. */
+        RefCount &operator=(const RefCount &) { v.store(1, std::memory_order_relaxed); return *this; }
+
+        /**
+         * @brief Atomically increments the reference count.
+         *
+         * Uses relaxed memory ordering since only the atomic increment itself
+         * needs to be consistent.
+         */
         void inc() {
             // relaxed, because we don't care about the order of the underlying memory operations
             // just that the overall +1 happens atomically
@@ -112,6 +121,10 @@ class RefCount {
             return;
         }
 
+        /**
+         * @brief Atomically decrements the reference count.
+         * @return True if the count has reached zero (caller should delete the object).
+         */
         bool dec() {
             // acq_rel ensures that:
             // - release: all memory operations before the dec are visible to the thread
@@ -121,6 +134,7 @@ class RefCount {
             return v.fetch_sub(1, std::memory_order_acq_rel) == 1;
         }
 
+        /** @brief Returns the current reference count value. */
         int value() const {
             return v.load(std::memory_order_relaxed);
         }

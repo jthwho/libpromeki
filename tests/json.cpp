@@ -19,7 +19,6 @@ TEST_CASE("JsonObject_Basic") {
     JsonObject obj;
     CHECK(!obj.isValid());
     CHECK(obj.size() == 0);
-    CHECK(obj.referenceCount() == 1);
 
     obj.set("name", "test");
     CHECK(obj.isValid());
@@ -79,32 +78,27 @@ TEST_CASE("JsonObject_Nested") {
 }
 
 // ============================================================================
-// JsonObject COW
+// JsonObject copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("JsonObject_CopyOnWrite") {
+TEST_CASE("JsonObject_CopyIsIndependent") {
     JsonObject obj;
     obj.set("key", "original");
 
     JsonObject copy = obj;
-    CHECK(obj.referenceCount() == 2);
 
     copy.set("key", "modified");
-    CHECK(obj.referenceCount() == 1);
-    CHECK(copy.referenceCount() == 1);
     CHECK(obj.getString("key") == "original");
     CHECK(copy.getString("key") == "modified");
 }
 
-TEST_CASE("JsonObject_CopyOnWriteAddKey") {
+TEST_CASE("JsonObject_CopyAddKeyIndependent") {
     JsonObject obj;
     obj.set("a", 1);
 
     JsonObject copy = obj;
-    CHECK(obj.referenceCount() == 2);
 
     copy.set("b", 2);
-    CHECK(obj.referenceCount() == 1);
     CHECK(obj.size() == 1);
     CHECK(copy.size() == 2);
 }
@@ -176,7 +170,6 @@ TEST_CASE("JsonArray_Basic") {
     JsonArray arr;
     CHECK(!arr.isValid());
     CHECK(arr.size() == 0);
-    CHECK(arr.referenceCount() == 1);
 
     arr.add(42);
     arr.add("hello");
@@ -201,19 +194,17 @@ TEST_CASE("JsonArray_Parse") {
 }
 
 // ============================================================================
-// JsonArray COW
+// JsonArray copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("JsonArray_CopyOnWrite") {
+TEST_CASE("JsonArray_CopyIsIndependent") {
     JsonArray arr;
     arr.add(1);
     arr.add(2);
 
     JsonArray copy = arr;
-    CHECK(arr.referenceCount() == 2);
 
     copy.add(3);
-    CHECK(arr.referenceCount() == 1);
     CHECK(arr.size() == 2);
     CHECK(copy.size() == 3);
 }

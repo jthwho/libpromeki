@@ -19,8 +19,13 @@ PROMEKI_NAMESPACE_BEGIN
 
 static int fileFlagsToPOSIX(int flags) {
         int ret = O_LARGEFILE;
-        if(flags & File::ReadOnly)      ret |= O_RDONLY;
-        if(flags & File::WriteOnly)     ret |= O_WRONLY;
+        if((flags & File::ReadWrite) == File::ReadWrite) {
+                ret |= O_RDWR;
+        } else if(flags & File::ReadOnly) {
+                ret |= O_RDONLY;
+        } else if(flags & File::WriteOnly) {
+                ret |= O_WRONLY;
+        }
         if(flags & File::Create)        ret |= O_CREAT;
         if(flags & File::Append)        ret |= O_APPEND;
         if(flags & File::NonBlocking)   ret |= O_NONBLOCK;
@@ -64,7 +69,11 @@ Error File::setDirectIOEnabled(bool val) {
 
 Error File::open(int flags) {
         int openFlags = fileFlagsToPOSIX(flags);
-        _handle = ::open(_filename.cstr(), flags);
+        if(openFlags & O_CREAT) {
+                _handle = ::open(_filename.cstr(), openFlags, 0666);
+        } else {
+                _handle = ::open(_filename.cstr(), openFlags);
+        }
         if(_handle == FileHandleClosedValue) return Error::syserr();
         _flags = flags;
         return Error();

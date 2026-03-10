@@ -147,7 +147,7 @@ void NoteSequenceParser::parseVibrato() {
         // Parse "depth" or "depth, rate".
         auto comma = arg.find(',');
         try {
-                if(comma != std::string::npos) {
+                if(comma != String::npos) {
                         _params.vibrato     = std::stof(arg.substr(0, comma));
                         _params.vibratoRate = std::stof(arg.substr(comma + 1));
                 } else {
@@ -165,7 +165,7 @@ void NoteSequenceParser::parseTremolo() {
 
         auto comma = arg.find(',');
         try {
-                if(comma != std::string::npos) {
+                if(comma != String::npos) {
                         _params.tremolo     = std::stof(arg.substr(0, comma));
                         _params.tremoloRate = std::stof(arg.substr(comma + 1));
                 } else {
@@ -413,7 +413,7 @@ bool NoteSequenceParser::atEnd() const {
         return _pos >= _input.stds().size();
 }
 
-std::string NoteSequenceParser::readParenArg() {
+String NoteSequenceParser::readParenArg() {
         const std::string &s = _input.stds();
         if(current() != '(') {
                 addError("Expected '('");
@@ -452,7 +452,7 @@ double NoteSequenceParser::parseDurationModifier() {
         return 1.0;
 }
 
-double NoteSequenceParser::parseNoteLengthValue(const std::string &s) {
+double NoteSequenceParser::parseNoteLengthValue(const String &s) {
         size_t pos = 0;
         auto skipSpaces = [&]() {
                 while(pos < s.size() && s[pos] == ' ') pos++;

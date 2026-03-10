@@ -19,7 +19,6 @@ TEST_CASE("AudioDesc_Default") {
     AudioDesc desc;
     CHECK(!desc.isValid());
     CHECK(desc.dataType() == AudioDesc::Invalid);
-    CHECK(desc.referenceCount() == 1);
 }
 
 // ============================================================================
@@ -68,28 +67,23 @@ TEST_CASE("AudioDesc_SetDataType") {
 }
 
 // ============================================================================
-// Copy-on-write
+// Copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("AudioDesc_CopyOnWrite") {
+TEST_CASE("AudioDesc_CopyIsIndependent") {
     AudioDesc d1(48000.0f, 2);
     AudioDesc d2 = d1;
-    CHECK(d1.referenceCount() == 2);
 
     d2.setSampleRate(96000.0f);
-    CHECK(d1.referenceCount() == 1);
-    CHECK(d2.referenceCount() == 1);
     CHECK(d1.sampleRate() < 48001.0f);
     CHECK(d2.sampleRate() > 95999.0f);
 }
 
-TEST_CASE("AudioDesc_CopyOnWriteChannels") {
+TEST_CASE("AudioDesc_CopyChannelsIndependent") {
     AudioDesc d1(48000.0f, 2);
     AudioDesc d2 = d1;
-    CHECK(d1.referenceCount() == 2);
 
     d2.setChannels(8);
-    CHECK(d1.referenceCount() == 1);
     CHECK(d1.channels() == 2);
     CHECK(d2.channels() == 8);
 }

@@ -70,7 +70,10 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(ReadOnly, EROFS, "Read-only file system"),
         DEFINE_ERROR(IllegalSeek, ESPIPE, "Illegal seek"),
         DEFINE_ERROR(Timeout, ETIMEDOUT, "Timed out"),
-        DEFINE_ERROR(CrossDeviceLink, EXDEV, "Cross-device link")
+        DEFINE_ERROR(CrossDeviceLink, EXDEV, "Cross-device link"),
+
+        DEFINE_ERROR(InvalidArgument, NONE, "Invalid argument passed to function"),
+        DEFINE_ERROR(InvalidDimension, NONE, "Invalid dimension for operation")
 };
 
 Error Error::syserr() {

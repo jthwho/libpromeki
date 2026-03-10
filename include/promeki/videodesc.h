@@ -2,7 +2,7 @@
  * @file      videodesc.h
  * @author    Jason Howard <jth@howardlogic.com>
  * @copyright Howard Logic.  All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -18,42 +18,51 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/** @brief Describes a video format including frame rate, image layers, audio channels, and metadata. */
 class VideoDesc {
+    PROMEKI_SHARED_FINAL(VideoDesc)
     public:
+        /** @brief Shared pointer type for VideoDesc. */
+        using Ptr = SharedPtr<VideoDesc>;
+
+        /** @brief List of ImageDesc values describing each image layer. */
         using ImageDescList = List<ImageDesc>;
+
+        /** @brief List of AudioDesc values describing each audio channel group. */
         using AudioDescList = List<AudioDesc>;
 
-        VideoDesc() : d(SharedPtr<Data>::create()) { }
+        /** @brief Constructs a default (invalid) video description. */
+        VideoDesc() = default;
 
-        bool isValid() const { return d->isValid(); }
+        /** @brief Returns true if the video description is valid (has a valid frame rate and at least one image or audio description). */
+        bool isValid() const { return _frameRate.isValid() && (_imageList.size() > 0 || _audioList.size() > 0); }
 
-        const FrameRate &frameRate() const { return d->frameRate; }
-        void setFrameRate(const FrameRate &val) { d.modify()->frameRate = val; }
+        /** @brief Returns the frame rate. */
+        const FrameRate &frameRate() const { return _frameRate; }
+        /** @brief Sets the frame rate.
+         *  @param val The new frame rate. */
+        void setFrameRate(const FrameRate &val) { _frameRate = val; }
 
-        const ImageDescList &imageList() const { return d->imageList; }
-        ImageDescList &imageList() { return d.modify()->imageList; }
+        /** @brief Returns a const reference to the list of image descriptions. */
+        const ImageDescList &imageList() const { return _imageList; }
+        /** @brief Returns a mutable reference to the list of image descriptions. */
+        ImageDescList &imageList() { return _imageList; }
 
-        const AudioDescList &audioList() const { return d->audioList; }
-        AudioDescList &audioList() { return d.modify()->audioList; }
+        /** @brief Returns a const reference to the list of audio descriptions. */
+        const AudioDescList &audioList() const { return _audioList; }
+        /** @brief Returns a mutable reference to the list of audio descriptions. */
+        AudioDescList &audioList() { return _audioList; }
 
-        const Metadata &metadata() const { return d->metadata; }
-        Metadata &metadata() { return d.modify()->metadata; }
-
-        int referenceCount() const { return d.referenceCount(); }
+        /** @brief Returns a const reference to the metadata. */
+        const Metadata &metadata() const { return _metadata; }
+        /** @brief Returns a mutable reference to the metadata. */
+        Metadata &metadata() { return _metadata; }
 
     private:
-        class Data {
-            PROMEKI_SHARED_FINAL(Data)
-            public:
-                FrameRate           frameRate;
-                ImageDescList       imageList;
-                AudioDescList       audioList;
-                Metadata            metadata;
-
-                // A video description is valid if it has a valid frame rate and at least one image or audio description.
-                bool isValid() const { return frameRate.isValid() && (imageList.size() > 0 || audioList.size() > 0); }
-        };
-        SharedPtr<Data> d;
+        FrameRate           _frameRate;
+        ImageDescList       _imageList;
+        AudioDescList       _audioList;
+        Metadata            _metadata;
 };
 
 PROMEKI_NAMESPACE_END

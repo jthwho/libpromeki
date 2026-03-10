@@ -23,7 +23,6 @@ TEST_CASE("String_Construction") {
         String nullstr;
         CHECK(nullstr.isEmpty());
         CHECK(nullstr.size() == 0);
-        CHECK(nullstr.referenceCount() == 1);
 
         // From C string
         String s1 = "Hello";
@@ -53,83 +52,52 @@ TEST_CASE("String_Construction") {
 }
 
 // ============================================================================
-// Copy-on-write semantics
+// Copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("String_CopyOnWrite") {
+TEST_CASE("String_CopyIsIndependent") {
         String s1 = "Original";
-        CHECK(s1.referenceCount() == 1);
 
-        // Copy should share data
+        // Copy is a value copy
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
-        CHECK(s2.referenceCount() == 2);
         CHECK(s1 == s2);
         CHECK(s1 == "Original");
 
-        // Mutating s2 should detach (COW)
+        // Mutating s2 does not affect s1
         s2[0] = 'X';
-        CHECK(s1.referenceCount() == 1);
-        CHECK(s2.referenceCount() == 1);
         CHECK(s1 == "Original");
         CHECK(s2 == "Xriginal");
 }
 
-TEST_CASE("String_CopyOnWriteAppend") {
+TEST_CASE("String_CopyAppendIndependent") {
         String s1 = "Hello";
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
 
-        // operator+= should detach s2
         s2 += " World";
-        CHECK(s1.referenceCount() == 1);
-        CHECK(s2.referenceCount() == 1);
         CHECK(s1 == "Hello");
         CHECK(s2 == "Hello World");
 }
 
-TEST_CASE("String_CopyOnWriteClear") {
+TEST_CASE("String_CopyClearIndependent") {
         String s1 = "Hello";
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
 
         s2.clear();
-        CHECK(s1.referenceCount() == 1);
-        CHECK(s2.referenceCount() == 1);
         CHECK(s1 == "Hello");
         CHECK(s2.isEmpty());
 }
 
-TEST_CASE("String_CopyOnWriteChain") {
-        String s1 = "Original";
-        String s2 = s1;
-        String s3 = s1;
-        String s4 = s1;
-        CHECK(s1.referenceCount() == 4);
-
-        // Mutate s3 — only s3 should detach
-        s3 += "!";
-        CHECK(s1.referenceCount() == 3);
-        CHECK(s3.referenceCount() == 1);
-        CHECK(s1 == "Original");
-        CHECK(s3 == "Original!");
-}
-
-TEST_CASE("String_CopyOnWriteAssign") {
+TEST_CASE("String_CopyAssignIndependent") {
         String s1 = "Hello";
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
 
-        // Assigning a new value should release old shared data
         s2 = "Goodbye";
-        CHECK(s1.referenceCount() == 1);
-        CHECK(s2.referenceCount() == 1);
         CHECK(s1 == "Hello");
         CHECK(s2 == "Goodbye");
 }
 
 // ============================================================================
-// String operations (original tests)
+// String operations
 // ============================================================================
 
 TEST_CASE("String_Operations") {
@@ -173,7 +141,7 @@ TEST_CASE("String_Operations") {
         CHECK(String("%3 %2 %1").arg(3).arg(2).arg(1) == "1 2 3");
         CHECK(String("Two hundred and twenty-six billion, four hundred eighty-three million, One Hundred And Thirty-Four Thousand Two Hundred and Ninety-Six").parseNumberWords() == 226483134296);
 
-        // Range-for mutation (tests non-const begin/end with COW)
+        // Range-for mutation
         for(char &c : s2) c = 'x';
         CHECK(s2 == "xxxxxxxx");
 }
@@ -186,21 +154,17 @@ TEST_CASE("String_Concatenation") {
         String a = "Hello";
         String b = " World";
 
-        // operator+ (String)
         String c = a + b;
         CHECK(c == "Hello World");
         CHECK(a == "Hello");
         CHECK(b == " World");
 
-        // operator+ (const char *)
         String d = a + " There";
         CHECK(d == "Hello There");
 
-        // operator+ (char)
         String e = a + '!';
         CHECK(e == "Hello!");
 
-        // operator+ (std::string)
         String f = a + std::string(" Std");
         CHECK(f == "Hello Std");
 }
@@ -250,9 +214,7 @@ TEST_CASE("String_IndexOperator") {
 
         // Non-const index (mutating)
         String s2 = s;
-        CHECK(s.referenceCount() == 2);
         s2[0] = 'J';
-        CHECK(s.referenceCount() == 1);
         CHECK(s == "Hello");
         CHECK(s2 == "Jello");
 }
@@ -277,7 +239,6 @@ TEST_CASE("String_Assignment") {
         String other = "Other";
         s = other;
         CHECK(s == "Other");
-        CHECK(s.referenceCount() == 2);
 }
 
 // ============================================================================
@@ -302,15 +263,12 @@ TEST_CASE("String_Substrings") {
 TEST_CASE("String_Conversions") {
         String s = "Test";
 
-        // const std::string &
         const std::string &ref = s.stds();
         CHECK(ref == "Test");
 
-        // const char *
         const char *cstr = s.cstr();
         CHECK(std::string(cstr) == "Test");
 
-        // operator const char *
         const char *cstr2 = s;
         CHECK(std::string(cstr2) == "Test");
 }
@@ -322,42 +280,33 @@ TEST_CASE("String_Conversions") {
 TEST_CASE("String_ConstIterators") {
         const String s = "Hello";
 
-        // const iteration should not trigger COW
         std::string result;
         for(auto it = s.begin(); it != s.end(); ++it) {
                 result += *it;
         }
         CHECK(result == "Hello");
-        CHECK(s.referenceCount() == 1);
 }
 
 TEST_CASE("String_NonConstIterators") {
         String s1 = "Hello";
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
 
-        // Non-const begin/end should trigger COW detach
         for(auto it = s2.begin(); it != s2.end(); ++it) {
                 *it = 'x';
         }
-        CHECK(s1.referenceCount() == 1);
-        CHECK(s2.referenceCount() == 1);
         CHECK(s1 == "Hello");
         CHECK(s2 == "xxxxx");
 }
 
 // ============================================================================
-// stds() and modify semantics
+// stds() mutation
 // ============================================================================
 
 TEST_CASE("String_StdsNonConst") {
         String s1 = "Hello";
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
 
-        // Non-const stds() should trigger detach
         s2.stds() = "Changed";
-        CHECK(s1.referenceCount() == 1);
         CHECK(s1 == "Hello");
         CHECK(s2 == "Changed");
 }
@@ -452,7 +401,7 @@ TEST_CASE("String_NumericConversions") {
 }
 
 // ============================================================================
-// Thread safety of COW
+// Thread safety (String copies are independent values)
 // ============================================================================
 
 static void stringThreadFunc(String str, int iterations) {
@@ -463,7 +412,7 @@ static void stringThreadFunc(String str, int iterations) {
         }
 }
 
-TEST_CASE("String_ThreadSafeCOW") {
+TEST_CASE("String_ThreadSafeCopy") {
         const int ThreadCount = 8;
         const int Iterations = 10000;
         String shared = "Thread safe string data";
@@ -476,7 +425,6 @@ TEST_CASE("String_ThreadSafeCOW") {
                 t.join();
         }
 
-        CHECK(shared.referenceCount() == 1);
         CHECK(shared == "Thread safe string data");
 }
 
@@ -493,36 +441,28 @@ TEST_CASE("String_ArgReplacement") {
 }
 
 // ============================================================================
-// COW with arg (mutating in-place)
+// Arg with copy
 // ============================================================================
 
-TEST_CASE("String_CopyOnWriteArg") {
+TEST_CASE("String_CopyArgIndependent") {
         String s1 = "%1 world";
         String s2 = s1;
-        CHECK(s1.referenceCount() == 2);
 
         s2.arg("hello");
-        CHECK(s1.referenceCount() == 1);
         CHECK(s1 == "%1 world");
         CHECK(s2 == "hello world");
 }
 
 // ============================================================================
-// Empty string sharing
+// Empty string
 // ============================================================================
 
 TEST_CASE("String_EmptyStrings") {
         String a;
         String b;
-        // Each empty string has its own Data (they're constructed independently)
         CHECK(a.isEmpty());
         CHECK(b.isEmpty());
         CHECK(a == b);
-
-        // Copy should share
-        String c = a;
-        CHECK(a.referenceCount() == 2);
-        CHECK(c.referenceCount() == 2);
 }
 
 // ============================================================================

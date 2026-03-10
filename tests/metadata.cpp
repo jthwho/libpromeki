@@ -20,7 +20,6 @@ TEST_CASE("Metadata_Basic") {
     Metadata m;
     CHECK(m.isEmpty());
     CHECK(m.size() == 0);
-    CHECK(m.referenceCount() == 1);
 
     m.set(Metadata::Title, String("Test Title"));
     CHECK(!m.isEmpty());
@@ -68,36 +67,30 @@ TEST_CASE("Metadata_RemoveAndClear") {
 }
 
 // ============================================================================
-// Copy-on-write
+// Copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("Metadata_CopyOnWrite") {
+TEST_CASE("Metadata_CopyIsIndependent") {
     Metadata m1;
     m1.set(Metadata::Title, String("Original"));
 
     Metadata m2 = m1;
-    CHECK(m1.referenceCount() == 2);
-    CHECK(m2.referenceCount() == 2);
     CHECK(m2.get(Metadata::Title).get<String>() == "Original");
 
-    // Mutate m2 — should detach
+    // Mutating m2 does not affect m1
     m2.set(Metadata::Title, String("Modified"));
-    CHECK(m1.referenceCount() == 1);
-    CHECK(m2.referenceCount() == 1);
     CHECK(m1.get(Metadata::Title).get<String>() == "Original");
     CHECK(m2.get(Metadata::Title).get<String>() == "Modified");
 }
 
-TEST_CASE("Metadata_CopyOnWriteRemove") {
+TEST_CASE("Metadata_CopyRemoveIsIndependent") {
     Metadata m1;
     m1.set(Metadata::Title, String("Title"));
     m1.set(Metadata::Artist, String("Artist"));
 
     Metadata m2 = m1;
-    CHECK(m1.referenceCount() == 2);
 
     m2.remove(Metadata::Title);
-    CHECK(m1.referenceCount() == 1);
     CHECK(m1.size() == 2);
     CHECK(m2.size() == 1);
 }

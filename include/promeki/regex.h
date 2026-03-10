@@ -14,75 +14,107 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/**
+ * @brief Regular expression wrapper around std::regex.
+ *
+ * Provides a simplified interface for pattern matching, searching, and
+ * extracting matches from strings using standard C++ regular expressions.
+ */
 class RegEx {
         public:
+                /** @brief Syntax option flags for controlling regex behavior. */
                 using Flag = std::regex_constants::syntax_option_type;
 
-                // Character matching should be performed without regard to case.
+                /** @brief Case-insensitive matching. */
                 static constexpr Flag IgnoreCase = std::regex::icase;
-                // When performing matches, all marked sub-expressions (expr) are 
-                // treated as non-marking sub-expressions (?:expr). No matches 
-                // are stored in the supplied std::regex_match structure and 
-                // mark_count() is zero.
+
+                /** @brief Treat all sub-expressions as non-marking; no matches are stored. */
                 static constexpr Flag NoSubs = std::regex::nosubs;
 
-                // Instructs the regular expression engine to make matching faster, 
-                // with the potential cost of making construction slower. For 
-                // example, this might mean converting a non-deterministic FSA to 
-                // a deterministic FSA.
+                /** @brief Optimize the regex for faster matching at the cost of slower construction. */
                 static constexpr Flag Optimize = std::regex::optimize;
 
-                // Character ranges of the form "[a-b]" will be locale sensitive.
+                /** @brief Make character ranges like "[a-b]" locale sensitive. */
                 static constexpr Flag Collate = std::regex::collate;
 
-                // Use the Modified ECMAScript regular expression grammar.
+                /** @brief Use the Modified ECMAScript regular expression grammar. */
                 static constexpr Flag ECMAScript = std::regex::ECMAScript;
 
-                // Use the basic POSIX regular expression grammar (grammar documentation).
+                /** @brief Use the basic POSIX regular expression grammar. */
                 static constexpr Flag Basic = std::regex::basic;
 
-                // Use the extended POSIX regular expression grammar (grammar documentation).
+                /** @brief Use the extended POSIX regular expression grammar. */
                 static constexpr Flag Extended = std::regex::extended;
 
-                // Use the regular expression grammar used by the awk 
-                // utility in POSIX (grammar documentation).
+                /** @brief Use the awk POSIX regular expression grammar. */
                 static constexpr Flag Awk = std::regex::awk;
 
-                // Use the regular expression grammar used by the grep utility 
-                // in POSIX. This is effectively the same as the basic option 
-                // with the addition of newline '\n' as an alternation separator.
+                /** @brief Use the grep POSIX regular expression grammar. */
                 static constexpr Flag Grep = std::regex::grep;
 
-                // Use the regular expression grammar used by the grep utility, 
-                // with the -E option, in POSIX. This is effectively the same 
-                // as the extended option with the addition of newline '\n' as 
-                // an alternation separator in addition to '|'.
+                /** @brief Use the egrep (grep -E) POSIX regular expression grammar. */
                 static constexpr Flag EGrep = std::regex::egrep;
 
+                /** @brief Default flags: ECMAScript grammar with optimization enabled. */
                 static constexpr Flag DefaultFlags = ECMAScript | Optimize;
 
+                /**
+                 * @brief Constructs a RegEx from a String pattern.
+                 * @param pattern The regular expression pattern.
+                 * @param flags   Syntax option flags (default: DefaultFlags).
+                 */
                 RegEx(const String &pattern, Flag flags = DefaultFlags) : d(pattern.cstr(), flags), p(pattern) {}
+
+                /**
+                 * @brief Constructs a RegEx from a C string pattern.
+                 * @param pattern The regular expression pattern.
+                 * @param flags   Syntax option flags (default: DefaultFlags).
+                 */
                 RegEx(const char *pattern, Flag flags = DefaultFlags) : d(pattern, flags), p(pattern) {}
 
+                /**
+                 * @brief Assigns a new pattern to this regex.
+                 * @param pattern The new regular expression pattern.
+                 * @return Reference to this RegEx.
+                 */
                 RegEx &operator=(const String &pattern) {
                         d = pattern.cstr();
                         p = pattern;
                         return *this;
                 }
 
+                /**
+                 * @brief Returns the current pattern string.
+                 * @return The regular expression pattern.
+                 */
                 String pattern() const {
                         return p;
                 }
 
+                /**
+                 * @brief Tests whether the entire string matches the pattern.
+                 * @param str The string to test.
+                 * @return True if the full string matches the regular expression.
+                 */
                 bool match(const String &str) const {
                         std::smatch m;
                         return std::regex_match(str.stds(), m, d);
                 }
 
+                /**
+                 * @brief Searches for the first occurrence of the pattern within the string.
+                 * @param str The string to search in.
+                 * @return True if any substring matches the regular expression.
+                 */
                 bool search(const String &str) const {
                         return std::regex_search(str.stds(), d);
                 }
 
+                /**
+                 * @brief Returns all non-overlapping matches of the pattern in the string.
+                 * @param str The string to search in.
+                 * @return A StringList containing every matching substring.
+                 */
                 StringList matches(const String& str) const {
                         StringList matches;
                         std::smatch match;

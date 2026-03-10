@@ -1,7 +1,7 @@
 /**
  * @file      image.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -11,36 +11,29 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-Image::Data::Data(const ImageDesc &desc, const MemSpace &ms) : desc(desc) {
-        allocate(desc, ms);
+Image::Image(const ImageDesc &desc, const MemSpace &ms) : _desc(desc) {
+        allocate(ms);
 }
 
-void Image::Data::clear() {
-        desc = ImageDesc();
-        planeList.clear();
-        return;
-}
-
-bool Image::Data::allocate(const ImageDesc &desc, const MemSpace &ms) {
-        const PixelFormat *pixfmt = desc.pixelFormat();
+bool Image::allocate(const MemSpace &ms) {
+        const PixelFormat *pixfmt = _desc.pixelFormat();
         int planes = pixfmt->planeCount();
-        Buffer::List list(planes);
+        Buffer::PtrList list;
         for(int i = 0; i < planes; i++) {
-                size_t size = pixfmt->planeSize(i, desc);
-                Buffer b = Buffer(size, Buffer::DefaultAlign, ms);
-                if(!b.isValid()) {
-                        promekiErr("Image(%s) plane %d allocate failed", desc.toString().cstr(), i);
+                size_t size = pixfmt->planeSize(i, _desc);
+                auto buf = Buffer::Ptr::create(size, Buffer::DefaultAlign, ms);
+                if(!buf->isValid()) {
+                        promekiErr("Image(%s) plane %d allocate failed", _desc.toString().cstr(), i);
                         return false;
                 }
-                list[i] = b;
+                list.pushToBack(buf);
         }
-        planeList = list;
+        _planeList = list;
         return true;
 }
 
-Image Image::Data::convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
+Image Image::convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
         return Image();
 }
 
 PROMEKI_NAMESPACE_END
-

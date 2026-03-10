@@ -12,19 +12,27 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** Promeki Application Object
- *  You must create this object before using any promeki library calls.  It must 
- *  live for the entire lifetime you're using the promeki library.  Typically,
- *  this object would be created on the stack in the main() function so it
- *  leaves scope right before application termination.
+/**
+ * @brief Promeki application lifecycle manager.
+ *
+ * You must create this object before using any promeki library calls. It must
+ * live for the entire lifetime you're using the promeki library. Typically,
+ * this object would be created on the stack in the main() function so it
+ * leaves scope right before application termination.
  */
 class Application {
     public:
-        
-        /** Returns the current application object pointer or nullptr if none */
+
+        /**
+         * @brief Returns the current application object pointer.
+         * @return Pointer to the active Application, or nullptr if none exists.
+         */
         static Application *current();
 
+        /** @brief Constructs and activates the Application instance. */
         Application();
+
+        /** @brief Destroys the Application instance and releases resources. */
         ~Application();
 
     private:

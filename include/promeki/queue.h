@@ -9,11 +9,11 @@
 
 #include <mutex>
 #include <queue>
-#include <vector>
 #include <chrono>
 #include <condition_variable>
 #include <promeki/namespace.h>
 #include <promeki/error.h>
+#include <promeki/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -77,9 +77,9 @@ class Queue {
 
                 /**
                  * @brief Pushes every element in @p list onto the back of the queue.
-                 * @param list Vector of values to enqueue.
+                 * @param list List of values to enqueue.
                  */
-                void push(const std::vector<T> &list) {
+                void push(const List<T> &list) {
                         Locker locker(_mutex);
                         for(const auto &item : list) _queue.push(item);
                         _cv.notify_all();

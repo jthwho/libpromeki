@@ -22,7 +22,7 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                 PaintEngine_RGB8(const Image &img) {
                         image = img;
                         size = img.size();
-                        buf = static_cast<uint8_t *>(image.plane(0).data());
+                        buf = static_cast<uint8_t *>(image.plane(0)->data());
                         stride = img.lineStride(0);
                         _pixelFormat = img.pixelFormat();
                 }

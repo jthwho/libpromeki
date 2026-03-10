@@ -75,7 +75,7 @@ UUID UUID::fromString(const char *str, Error *err) {
         if(!hexStr(d, str, err)) return UUID();
 
         if(err != nullptr) *err = Error::Ok;
-        return static_cast<DataFormat>(data);
+        return UUID(data);
 }
 
 inline void strHex(char *str, const uint8_t *d) {

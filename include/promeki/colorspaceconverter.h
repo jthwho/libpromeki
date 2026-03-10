@@ -11,12 +11,18 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+/**
+ * @brief Color Space Conversion matrix and offset.
+ *
+ * Holds a 3x3 transformation matrix and a 3-element offset vector used
+ * for converting pixel values between color spaces (e.g. RGB to YCbCr).
+ */
 struct CSC {
-        float   matrix[3][3];
-        float   offset[3];
+        float   matrix[3][3];   ///< 3x3 color conversion matrix.
+        float   offset[3];     ///< Per-channel offset applied before or after the matrix.
 };
 
-
+/** @brief Conversion matrix from RGB to YCbCr using ITU-R BT.709 coefficients. */
 const CSC RGB_to_YCbCr_Rec709 = {
     {
         {0.2126f, 0.7152f, 0.0722f},
@@ -26,6 +32,7 @@ const CSC RGB_to_YCbCr_Rec709 = {
     {16.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f}
 };
 
+/** @brief Conversion matrix from YCbCr (BT.709) to RGB. */
 const CSC YCbCr_Rec709_to_RGB = {
     {
         {1.0f, 0.0f, 1.5748f},

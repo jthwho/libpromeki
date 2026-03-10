@@ -1,0 +1,63 @@
+/**
+ * @page dataobjects Data Object Categories
+ *
+ * @brief How data objects are categorized by ownership and sharing semantics.
+ *
+ * Every data object in promeki falls into one of two categories based on
+ * its size, usage patterns, and sharing semantics.
+ *
+ * @section simple Simple
+ *
+ * Small, lightweight value types that are always used directly.  They have
+ * no @ref RefCount overhead and cannot be wrapped in @ref SharedPtr.
+ * Copying is cheap (a few words of memory), so there is no benefit to
+ * reference counting.
+ *
+ * | Class | Description |
+ * |-------|-------------|
+ * | @ref Point | N-dimensional coordinate |
+ * | @ref Rational | Exact fraction (num/den) |
+ * | @ref Size2DTemplate "Size2D" | 2D width/height pair |
+ * | @ref UUID | 128-bit unique identifier |
+ * | @ref Timecode | SMPTE timecode (H:M:S:F) |
+ * | @ref TimeStamp | Steady-clock time point |
+ * | @ref XYZColor | CIE XYZ color triple |
+ *
+ * @section shareable Shareable
+ *
+ * Value types that store their data directly as member variables (no internal
+ * @ref SharedPtr).  Each class includes @c PROMEKI_SHARED_FINAL so it can be
+ * wrapped in @ref SharedPtr when shared ownership is needed.  Every shareable
+ * class provides a @c Ptr typedef:
+ *
+ * @code
+ * // Explicit shared ownership at the call site
+ * Metadata::Ptr meta = Metadata::Ptr::create();
+ * meta.modify()->set(Metadata::Title, String("Hello"));
+ * @endcode
+ *
+ * When used as a local variable or as a member of another class, no
+ * heap allocation or reference counting occurs — the object is a plain value.
+ *
+ * Shareable classes also provide convenience type aliases for collections:
+ * - @c List — a @ref promeki::List of plain objects (e.g. @c Image::List)
+ * - @c PtrList — a @ref promeki::List of @c Ptr (e.g. @c Buffer::PtrList)
+ *
+ * | Class | Description |
+ * |-------|-------------|
+ * | @ref String | std::string wrapper |
+ * | @ref Buffer | Aligned memory buffer |
+ * | @ref AudioDesc | Audio format descriptor |
+ * | @ref ImageDesc | Image format descriptor |
+ * | @ref VideoDesc | Video format descriptor |
+ * | @ref Metadata | Typed key-value metadata |
+ * | @ref JsonObject | JSON object wrapper |
+ * | @ref JsonArray | JSON array wrapper |
+ * | @ref List | Generic list (std::vector wrapper) |
+ * | @ref Map | Ordered map (std::map wrapper) |
+ * | @ref Set | Ordered set (std::set wrapper) |
+ * | @ref Array | Fixed-size array (std::array wrapper) |
+ * | @ref Image | Image descriptor + pixel buffer planes |
+ * | @ref Audio | Audio descriptor + sample buffer |
+ * | @ref Frame | Container of images, audio, and metadata |
+ */

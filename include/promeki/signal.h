@@ -1,5 +1,5 @@
-/** 
- * @file objectbase.h
+/**
+ * @file      signal.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -14,27 +14,40 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** 
- * @brief Keeps track of a single signal
+/**
+ * @brief Type-safe signal/slot mechanism for decoupled event notification.
+ *
+ * Allows connecting callable slots (lambdas or member functions) that are
+ * invoked when the signal is emitted. Template parameters define the
+ * argument types passed through the signal.
+ *
+ * @tparam Args The argument types carried by the signal.
  */
 template <typename... Args> class Signal {
         public:
+                /** @brief Callable type that slots must conform to. */
                 using Function = std::function<void(Args...)>;
 
+                /** @brief Metafunction that strips const and reference qualifiers from a type. */
                 template <typename T> struct removeConstAndRef {
                         using type = std::remove_const_t<std::remove_reference_t<T>>;
                 };
 
+                /** @brief Convenience alias for removeConstAndRef. */
                 template <typename T> using RemoveConstAndRef = typename removeConstAndRef<T>::type;
 
                 /**
-                 * @brief Packs the arguments into a VariantList
-                 * This packs all the signal parameters into VariantList object
+                 * @brief Packs the arguments into a VariantList.
+                 *
+                 * Packs all the signal parameters into a VariantList object
                  * that can be used to marshal the data to either defer the emit
-                 * or pass it as an event to another object (ex: on another thread).
+                 * or pass it as an event to another object (e.g. on another thread).
                  * Note, this will also make copies of any arguments passed by
-                 * reference as the references probably aren't going to be valid
+                 * reference as the references probably won't be valid
                  * by the time you want to use the container.
+                 *
+                 * @param args The signal arguments to pack.
+                 * @return A VariantList containing copies of all arguments.
                  */
                 static VariantList pack(Args... args) {
                         return { Variant(RemoveConstAndRef<Args>(args))... };
@@ -42,10 +55,11 @@ template <typename... Args> class Signal {
 
                 /**
                  * @brief Signal constructor.
-                 * @param[in] owner Pointer of the object/data that owns this signal.
+                 * @param[in] owner Pointer to the object/data that owns this signal.
+                 * @param[in] prototype Optional prototype string describing the signal signature.
                  */
-                Signal(void *owner = nullptr, const char *protoype = nullptr) : 
-                        _owner(owner), _prototype(nullptr) {}
+                Signal(void *owner = nullptr, const char *prototype = nullptr) :
+                        _owner(owner), _prototype(prototype) {}
 
                 /**
                  * @brief Returns the owner of this signal, or nullptr if not defined
@@ -57,11 +71,16 @@ template <typename... Args> class Signal {
                  */
                 const char *prototype() const { return _prototype; }
 
-                /** 
-                 * @brief Allows you to connect this signal to a normal lambda
-                 * @return The slot connection ID.
+                /**
+                 * @brief Connects this signal to a callable (lambda or function).
                  *
-                 * NOTE: The lambda prototype must match the one used to define this signal.
+                 * The callable prototype must match the argument types used to
+                 * define this signal.
+                 *
+                 * @param slot The callable to invoke when the signal is emitted.
+                 * @param ptr  Optional pointer associated with this connection,
+                 *             used for later disconnection by object.
+                 * @return The slot connection ID.
                  */
                 size_t connect(Function slot, void *ptr = nullptr) {
                         size_t slotID = _slots.size();
@@ -69,16 +88,21 @@ template <typename... Args> class Signal {
                         return slotID;
                 }
 
-                /** 
-                 * @brief Connect this signal to an object member function.
-                 * @return The slot connection ID
-                 * NOTE: The object member function prototype must be the same
-                 * prototype this object was declared as.
+                /**
+                 * @brief Connects this signal to an object member function.
+                 *
+                 * The member function prototype must match the argument types
+                 * used to define this signal.
                  *
                  * Example usage:
                  * @code{.cpp}
                  * someSignal.connect(myObjectPtr, &MyObject::memberFunction);
                  * @endcode
+                 *
+                 * @tparam T The object type.
+                 * @param obj Pointer to the object instance.
+                 * @param memberFunction Pointer to the member function to call.
+                 * @return The slot connection ID.
                  */
                 template <typename T> size_t connect(T *obj, void (T::*memberFunction)(Args...)) {
                         size_t slotID = _slots.size();
@@ -92,10 +116,12 @@ template <typename... Args> class Signal {
                 }
 
                 /**
-                 * @brief Disconnect a slot by the slot ID
+                 * @brief Disconnects a slot by its connection ID.
                  *
-                 * You can use the slot ID you were given when you called connect() to disconnect that
-                 * slot from this signal 
+                 * Use the ID returned by connect() to disconnect that slot
+                 * from this signal.
+                 *
+                 * @param slotID The connection ID returned by connect().
                  */
                 void disconnect(size_t slotID) {
                         _slots.remove(slotID);
@@ -103,13 +129,16 @@ template <typename... Args> class Signal {
                 }
 
                 /**
-                 * @brief Disconnect a slot by the slot object and member function
-                 * This allows you to disconnect a slot by the member function
+                 * @brief Disconnects a slot by its object and member function.
                  *
                  * Example usage:
                  * @code{.cpp}
                  * someObject->someSignal.disconnect(myObjectPtr, &MyObject::memberFunction);
                  * @endcode
+                 *
+                 * @tparam T The object type.
+                 * @param object Pointer to the object whose slot should be removed.
+                 * @param memberFunction Pointer to the member function to disconnect.
                  */
                 template <typename T> void disconnect(const T *object, void (T::*memberFunction)(Args...)) {
                         _slots.removeIf([object, memberFunction](const Info &info) { 
@@ -119,7 +148,10 @@ template <typename... Args> class Signal {
                 }
 
                 /**
-                 * @brief Disconnects any connected slots from object 
+                 * @brief Disconnects all slots connected from the given object.
+                 *
+                 * @tparam T The object type.
+                 * @param object Pointer to the object whose slots should be removed.
                  */
                 template <typename T> void disconnectFromObject(const T *object) {
                         _slots.removeIf([object](const Info &info) { return static_cast<const T *>(info.object) == object; });
@@ -128,7 +160,11 @@ template <typename... Args> class Signal {
 
                 /**
                  * @brief Emits this signal.
-                 * This causes any connected slots to be called with the arguments you supplied to the emit.
+                 *
+                 * Invokes every connected slot with the supplied arguments,
+                 * in the order they were connected.
+                 *
+                 * @param args The arguments to forward to each slot.
                  */
                 void emit(Args... args) const {
                         for (const auto &slot : _slots) slot.func(args...);

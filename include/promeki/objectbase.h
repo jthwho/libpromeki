@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <map>
 #include <tuple>
 #include <functional>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
+#include <promeki/map.h>
 #include <promeki/util.h>
 #include <promeki/logger.h>
 #include <promeki/signal.h>
@@ -60,9 +60,19 @@ using ObjectBaseList = List<ObjectBase *>;
 class ObjectBasePtr {
         friend class ObjectBase;
         public:
+                /**
+                 * @brief Constructs a pointer tracking the given ObjectBase.
+                 * @param object The ObjectBase to track, or nullptr.
+                 */
                 ObjectBasePtr(ObjectBase *object = nullptr) : p(object) { link(); }
+
+                /** @brief Copy constructor. Tracks the same ObjectBase as the source. */
                 ObjectBasePtr(const ObjectBasePtr &object) : p(object.p) { link(); }
+
+                /** @brief Destructor. Unlinks from the tracked ObjectBase. */
                 ~ObjectBasePtr() { unlink(); }
+
+                /** @brief Copy assignment operator. Re-links to the new ObjectBase. */
                 ObjectBasePtr &operator=(const ObjectBasePtr &object) {
                         unlink();
                         p = object.p;
@@ -70,8 +80,13 @@ class ObjectBasePtr {
                         return *this;
                 }
 
+                /** @brief Returns true if the tracked pointer is not null. */
                 bool isValid() const { return p != nullptr; }
+
+                /** @brief Returns a mutable pointer to the tracked ObjectBase. */
                 ObjectBase *data() { return p; }
+
+                /** @brief Returns a const pointer to the tracked ObjectBase. */
                 const ObjectBase *data() const { return p; }
 
         private:
@@ -111,12 +126,26 @@ class ObjectBase {
                         public:
                                 using SignalList = List<SignalMeta *>;
                                 using SlotList = List<SlotMeta *>;
+                                /**
+                                 * @brief Constructs MetaInfo with a type name and optional parent.
+                                 * @param n The mangled type name (typically from typeid).
+                                 * @param p The parent MetaInfo, or nullptr for the root.
+                                 */
                                 MetaInfo(const char *n, const MetaInfo *p = nullptr) : _parent(p), _name(n) {}
 
+                                /** @brief Returns the parent MetaInfo, or nullptr if this is the root. */
                                 const MetaInfo *parent() const { return _parent; }
+
+                                /** @brief Returns the demangled type name. */
                                 const char *name() const;
+
+                                /** @brief Returns the list of signals registered for this type. */
                                 const SignalList &signalList() const { return _signalList; }
+
+                                /** @brief Returns the list of slots registered for this type. */
                                 const SlotList &slotList() const { return _slotList; }
+
+                                /** @brief Dumps all MetaInfo fields to the log output. */
                                 void dumpToLog() const;
 
                         private:
@@ -127,38 +156,53 @@ class ObjectBase {
                                 mutable SlotList                _slotList;
                 };
 
+                /** @brief Metadata entry describing a signal on an ObjectBase-derived class. */
                 class SignalMeta {
                         public:
+                                /**
+                                 * @brief Constructs a SignalMeta and registers it with the given MetaInfo.
+                                 * @param m The MetaInfo of the owning class.
+                                 * @param n The signal prototype string.
+                                 */
                                 SignalMeta(const MetaInfo &m, const char *n) :
-                                        _meta(m), _name(n) 
+                                        _meta(m), _name(n)
                                 {
                                         m._signalList += this;
                                 }
 
+                                /** @brief Returns the signal prototype string. */
                                 const char *name() const { return _name; }
                         private:
                                 const MetaInfo  &_meta;
                                 const char      *_name;
                 };
 
+                /** @brief Metadata entry describing a slot on an ObjectBase-derived class. */
                 class SlotMeta {
                         public:
+                                /**
+                                 * @brief Constructs a SlotMeta and registers it with the given MetaInfo.
+                                 * @param m The MetaInfo of the owning class.
+                                 * @param n The slot prototype string.
+                                 */
                                 SlotMeta(const MetaInfo &m, const char *n) :
-                                        _meta(m), _name(n) 
+                                        _meta(m), _name(n)
                                 {
                                         m._slotList += this;
                                 }
 
+                                /** @brief Returns the slot prototype string. */
                                 const char *name() const { return _name; }
                         private:
                                 const MetaInfo  &_meta;
                                 const char      *_name;
                 };
 
+                /** @brief Returns the MetaInfo for the ObjectBase class. */
                 static const MetaInfo &metaInfo() {
                         static const MetaInfo __metaInfo(
-                                typeid(ObjectBase).name()); 
-                        return __metaInfo; 
+                                typeid(ObjectBase).name());
+                        return __metaInfo;
                 }
 
                 /**
@@ -187,6 +231,7 @@ class ObjectBase {
                         );
                 }
 
+                /** @brief Function type for invoking a slot with a list of Variants. */
                 using SlotVariantFunc = std::function<void(const VariantList &)>;
 
                 /**
@@ -202,6 +247,7 @@ class ObjectBase {
                         if(_parent != nullptr) _parent->addChild(this);
                 }
 
+                /** @brief Destructor. Emits aboutToDestroy, detaches from parent, and destroys children. */
                 virtual ~ObjectBase() {
                         aboutToDestroySignal.emit(this);
                         setParent(nullptr);
@@ -238,6 +284,12 @@ class ObjectBase {
                         return _childList;
                 }
 
+                /**
+                 * @brief Registers a slot with this object and assigns it an ID.
+                 * @tparam Args The slot's parameter types.
+                 * @param slot Pointer to the Slot to register.
+                 * @return The assigned slot ID.
+                 */
                 template <typename... Args> int registerSlot(Slot<Args...> *slot) {
                         int ret = _slotList.size();
                         slot->setID(ret);
@@ -260,6 +312,7 @@ class ObjectBase {
                 PROMEKI_SIGNAL(aboutToDestroy, ObjectBase *);
 
         protected:
+                /** @brief Returns the ObjectBase that emitted the signal currently being handled. */
                 ObjectBase *signalSender() { return _signalSender; }
 
         private:
@@ -280,7 +333,7 @@ class ObjectBase {
                 ObjectBase                                      *_signalSender = nullptr;
                 ObjectBaseList                                  _childList;
                 List<SlotItem>                                  _slotList;
-                std::map<ObjectBasePtr *, ObjectBasePtr *>      _pointerMap;
+                Map<ObjectBasePtr *, ObjectBasePtr *>           _pointerMap;
                 List<Cleanup>                                   _cleanupList;
 
                 void addChild(ObjectBase *c) {
@@ -295,7 +348,7 @@ class ObjectBase {
 
                 void destroyChildren() {
                         for(auto child : _childList) {
-                                child->removeChild(this);
+                                child->_parent = nullptr;
                                 delete child;
                         }
                         _childList.clear();
@@ -326,7 +379,7 @@ inline void ObjectBasePtr::link() {
 inline void ObjectBasePtr::unlink() {
         if(p != nullptr) {
                 auto it = p->_pointerMap.find(this);
-                p->_pointerMap.erase(it);
+                p->_pointerMap.remove(it);
         }
         p = nullptr;
 }
