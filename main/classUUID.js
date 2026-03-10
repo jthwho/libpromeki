@@ -22,5 +22,6 @@ var classUUID =
     [ "operator>", "classUUID.html#a1c60b221246136fd302ccc0d1db6ca63", null ],
     [ "operator>=", "classUUID.html#a04ab8051cb5319b366c2d4c6e1ae6d32", null ],
     [ "raw", "classUUID.html#a957c19ce29ccf5c605f543a5a5050e57", null ],
-    [ "toString", "classUUID.html#a672087c7725579f63cca9a3b210084cc", null ]
+    [ "toString", "classUUID.html#a672087c7725579f63cca9a3b210084cc", null ],
+    [ "version", "classUUID.html#a07c51b3f1a0766c42a46bf73cbbb903f", null ]
 ];

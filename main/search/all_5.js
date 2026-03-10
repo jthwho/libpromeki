@@ -25,6 +25,6 @@ var searchData=
   ['errors_22',['errors',['../classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d',1,'NoteSequenceParser']]],
   ['exclusive_23',['Exclusive',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513ad2aa136051b8c5497603c92b00f6fe97',1,'File']]],
   ['exec_24',['exec',['../classSlot.html#aef6761b6b6fd10fe2af0ae7d557ad0ba',1,'Slot::exec(Args... args)'],['../classSlot.html#a70493bcca1dd8707157457ae6776869c',1,'Slot::exec(const VariantList &amp;variantList)']]],
-  ['exists_25',['exists',['../classFileInfo.html#a47d49db8cb8797153885c4d5b7b0911f',1,'FileInfo::exists()'],['../classError.html#ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7',1,'Error::Exists']]],
+  ['exists_25',['exists',['../classError.html#ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7',1,'Error::Exists'],['../classFileInfo.html#a47d49db8cb8797153885c4d5b7b0911f',1,'FileInfo::exists()']]],
   ['extended_26',['Extended',['../classRegEx.html#a563873bebc0099d7febb442e31ad9af6',1,'RegEx']]]
 ];

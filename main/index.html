@@ -108,7 +108,7 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <h1><a class="anchor" id="autotoc_md1"></a>
 Library Architecture</h1>
 <p>libpromeki is split into three shared libraries:</p>
-<p><b>promeki-core</b> — General-purpose C++ utilities with no media-specific dependencies. Includes strings with copy-on-write, shared pointers, points/matrices, date/time, timecode, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID) version 4.">UUID</a>, logging, JSON, signals/slots, an object system, command-line parsing, file I/O, memory pools, and a unit test framework.</p>
+<p><b>promeki-core</b> — General-purpose C++ utilities with no media-specific dependencies. Includes strings with copy-on-write, shared pointers, points/matrices, date/time, timecode, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, logging, JSON, signals/slots, an object system, command-line parsing, file I/O, memory pools, and a unit test framework.</p>
 <p><b>promeki-proav</b> — Professional audio/video classes built on top of promeki-core. Includes image and audio descriptors, pixel format registry, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG), font painting, color space conversion, codecs, and frame/video descriptors.</p>
 <p><b>promeki-music</b> — Music and MIDI utilities built on top of promeki-proav. Includes MIDI note representation with named constants for all 128 notes and General MIDI percussion, customizable note name overlays, musical scales with degree-to-MIDI mapping, and a note-sequence parser for text-based musical notation.</p>
 <p>You can use promeki-core on its own for non-media projects, link against promeki-proav to get the full media toolkit, or add promeki-music for music and MIDI functionality.</p>
@@ -191,12 +191,12 @@ Include Conventions</h2>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> name(<span class="stringliteral">&quot;hello&quot;</span>);</div>
 <div class="line"><a class="code hl_class" href="classTimecode.html">Timecode</a> <a class="code hl_class" href="classList.html">tc</a>(1, 2, 3, 4, FrameRate::fps24());</div>
-<div class="line"><a class="code hl_class" href="classUUID.html">UUID</a> <span class="keywordtype">id</span> = <a class="code hl_function" href="classUUID.html#a23873bc706c716cf0a0dff72dbd81717">UUID::generate</a>();</div>
+<div class="line"><a class="code hl_class" href="classUUID.html">UUID</a> <span class="keywordtype">id</span> = <a class="code hl_function" href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a>();</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:28</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">A versatile string class inspired by Qt's QString.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 <div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:28</div></div>
-<div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID) version 4.</div><div class="ttdef"><b>Definition</b> uuid.h:25</div></div>
-<div class="ttc" id="aclassUUID_html_a23873bc706c716cf0a0dff72dbd81717"><div class="ttname"><a href="classUUID.html#a23873bc706c716cf0a0dff72dbd81717">UUID::generate</a></div><div class="ttdeci">static UUID generate()</div><div class="ttdoc">Generates a random version 4 UUID.</div><div class="ttdef"><b>Definition</b> uuid.h:34</div></div>
+<div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID).</div><div class="ttdef"><b>Definition</b> uuid.h:25</div></div>
+<div class="ttc" id="aclassUUID_html_aa4b21b5eec74fc441124669adb10ed78"><div class="ttname"><a href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a></div><div class="ttdeci">static UUID generate(int version=4)</div><div class="ttdoc">Convenience generator that dispatches to the appropriate generateVn() function.</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
 Documentation</h1>
 <p>Build the API documentation (requires Doxygen):</p>
@@ -224,7 +224,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-10 02:13:22 from commit 14f8d54 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-10 03:20:06 from commit 2e6db42 (1.0.0).</li>
   </ul>
 </div>
 </body>

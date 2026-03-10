@@ -14,6 +14,7 @@ var annotated_dup =
     [ "AudioGen", "classAudioGen.html", "classAudioGen" ],
     [ "Buffer", "classBuffer.html", "classBuffer" ],
     [ "BuildInfo", "structBuildInfo.html", "structBuildInfo" ],
+    [ "ByteArray", "classByteArray.html", "classByteArray" ],
     [ "CIEPoint", "classCIEPoint.html", "classCIEPoint" ],
     [ "CIEWavelength", "structCIEWavelength.html", "structCIEWavelength" ],
     [ "CmdLineParser", "classCmdLineParser.html", "classCmdLineParser" ],

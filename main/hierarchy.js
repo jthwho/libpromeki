@@ -15,6 +15,7 @@ var hierarchy =
     [ "MemPool::Block", "classMemPool_1_1Block.html", null ],
     [ "Buffer", "classBuffer.html", null ],
     [ "BuildInfo", "structBuildInfo.html", null ],
+    [ "ByteArray< NumBytes >", "classByteArray.html", null ],
     [ "CIEPoint", "classCIEPoint.html", null ],
     [ "CIEWavelength", "structCIEWavelength.html", null ],
     [ "CmdLineParser", "classCmdLineParser.html", null ],

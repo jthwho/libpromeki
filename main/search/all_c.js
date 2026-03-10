@@ -12,7 +12,7 @@ var searchData=
   ['library_20architecture_9',['Library Architecture',['../index.html#autotoc_md1',1,'']]],
   ['libraryfailure_10',['LibraryFailure',['../classError.html#ab5980e13b879db253df802b0950d1708ad7cf29e5c28336196d31c8b72407a4b2',1,'Error']]],
   ['license_11',['License',['../index.html#autotoc_md12',1,'']]],
-  ['line_12',['line',['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()=default'],['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line(const Pt &amp;&amp;s, const Pt &amp;&amp;e)'],['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()'],['../classLine.html',1,'Line&lt; T, N &gt;']]],
+  ['line_12',['line',['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()'],['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()'],['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line(const Pt &amp;&amp;s, const Pt &amp;&amp;e)'],['../classLine.html',1,'Line&lt; T, N &gt;']]],
   ['line_2eh_13',['line.h',['../line_8h.html',1,'']]],
   ['line2d_14',['Line2D',['../line_8h.html#aebcb510d6689c4db1bb338ad7acd4be2',1,'line.h']]],
   ['line2dd_15',['Line2Dd',['../line_8h.html#ae5ad9518743ae3ebe745addb8878427f',1,'line.h']]],
