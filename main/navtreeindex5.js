@@ -1,9 +1,5 @@
 var NAVTREEINDEX5 =
 {
-"classMusicalScale.html#ab4ea447e6bfe93846ef993f84cafe3f3":[5,0,47,8],
-"classMusicalScale.html#accbc2263f7c4a793d574b29b7bbdc7eb":[5,0,47,4],
-"classMusicalScale.html#af983b5427331167c82d7b0a93de0a332":[5,0,47,2],
-"classNoteSequenceParser.html":[5,0,48],
 "classNoteSequenceParser.html#a0321a78ca3d84b14322bb1002c029cdd":[5,0,48,1],
 "classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d":[5,0,48,0],
 "classNumName.html":[5,0,49],
@@ -249,5 +245,9 @@ var NAVTREEINDEX5 =
 "classPixelFormat.html#aea8ebb7c3ac91427a37948e0b11b9678":[5,0,55,22],
 "classPixelFormat.html#aeb9539f5630acf1aefffb925a7107c05":[5,0,55,64],
 "classPixelFormat.html#aebad94562b303985bd3e111e30a29e5f":[5,0,55,7],
-"classPixelFormat.html#aed21382058bccf1e0e85e323f0b2c287":[5,0,55,26]
+"classPixelFormat.html#aed21382058bccf1e0e85e323f0b2c287":[5,0,55,26],
+"classPixelFormat.html#af3de320e1c5023224ea1eac25df61d85":[5,0,55,44],
+"classPixelFormat.html#afbb83437fa494a1e0d3477e24af9c3cb":[5,0,55,59],
+"classPoint.html":[5,0,56],
+"classPoint.html#a0135b3428c135d65e285e8f20017f3d3":[5,0,56,17]
 };

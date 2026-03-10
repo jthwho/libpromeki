@@ -47,7 +47,7 @@ var searchData=
   ['tremolo_44',['tremolo',['../classMusicalNote.html#a8bb56002e10df5cda9edea4f9108b1d4',1,'MusicalNote']]],
   ['tremolorate_45',['tremoloRate',['../classMusicalNote.html#a1ea91f45616a3d3aac0c7e367a584849',1,'MusicalNote']]],
   ['trim_46',['trim',['../classString.html#a5ed648f71d99bb8aef15e8ba35422a30',1,'String']]],
-  ['truncate_47',['truncate',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a6e0c983dc71e31345fa3a7818ac285d8',1,'File::Truncate'],['../classFile.html#a8e597055fcd374e04fd2dfa18d2981b1',1,'File::truncate(FileBytes offset) const']]],
+  ['truncate_47',['truncate',['../classFile.html#a8e597055fcd374e04fd2dfa18d2981b1',1,'File::truncate(FileBytes offset) const'],['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a6e0c983dc71e31345fa3a7818ac285d8',1,'File::Truncate']]],
   ['tryagain_48',['TryAgain',['../classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b',1,'Error']]],
   ['type_49',['type',['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7',1,'AudioGen::Type'],['../classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be',1,'VariantImpl::Type'],['../classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc',1,'VariantImpl::type() const'],['../structPixelFormat_1_1CompDesc.html#ad2a4aec42f568711cd7a3753e72f168e',1,'PixelFormat::CompDesc::type'],['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type']]],
   ['typename_50',['typename',['../classVariantImpl.html#a84e464175ece32c791091b2e1e6bf379',1,'VariantImpl::typeName() const'],['../classVariantImpl.html#a1d14d0933592c16d77425a86ae5e590f',1,'VariantImpl::typeName(Type id)']]],

@@ -1,9 +1,5 @@
 var NAVTREEINDEX7 =
 {
-"classString.html#afc2a7dab6eec01a4881f5235192ff2dd":[5,0,68,79],
-"classString.html#afdc8b433338b27be2c5dec8f944bc83c":[5,0,68,53],
-"classString.html#aff784088ec6763b3890ff9d6e4160e70":[5,0,68,59],
-"classStringList.html":[5,0,69],
 "classStringList.html#a091ca41992f35860c542c08655198f20":[5,0,69,8],
 "classStringList.html#a2a45098d6d0f1125a7382068802e2905":[5,0,69,0],
 "classStringList.html#a2d13a399886da74b3f860420109c53f5":[5,0,69,16],
@@ -249,5 +245,9 @@ var NAVTREEINDEX7 =
 "functions_func_n.html":[5,3,1,14],
 "functions_func_o.html":[5,3,1,15],
 "functions_func_p.html":[5,3,1,16],
-"functions_func_r.html":[5,3,1,17]
+"functions_func_r.html":[5,3,1,17],
+"functions_func_s.html":[5,3,1,18],
+"functions_func_t.html":[5,3,1,19],
+"functions_func_u.html":[5,3,1,20],
+"functions_func_v.html":[5,3,1,21]
 };

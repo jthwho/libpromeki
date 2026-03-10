@@ -114,15 +114,15 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"classAudioFile_1_1Impl.html#ad4480eed21f50ad798e694e6ef0c6225",
-"classFontPainter.html#ade478428aecd16fbe4bf0cf2d1cc4c36",
-"classList.html#ab12e7189bb986c82f8e38074dd204687",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a37ec39a1fd8832fb2ccf12a26c85e46c",
-"classMusicalScale.html#ab4ea447e6bfe93846ef993f84cafe3f3",
-"classPixelFormat.html#af3de320e1c5023224ea1eac25df61d85",
-"classString.html#afc2a7dab6eec01a4881f5235192ff2dd",
-"functions_func_s.html",
-"structColorSpace_1_1Data.html#a94a33a0edeff8ba39d2ded68b6be239c"
+"classAudioFile_1_1Impl.html#afb469e88ea005cce7f301c72eac6d673",
+"classFourCC.html#a43169556060fb3ceb85d99f0ba565254",
+"classList.html#abbcaffd39f09f5057012b20b6ca41498",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a3dbb9008c90ad17b191fa6e3c864257c",
+"classNoteSequenceParser.html#a0321a78ca3d84b14322bb1002c029cdd",
+"classPoint.html#a0491e52bf1adfca2dbf08f825fcea426",
+"classStringList.html#a091ca41992f35860c542c08655198f20",
+"functions_func_w.html",
+"structIsSharedObject.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
