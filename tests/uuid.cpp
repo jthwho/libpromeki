@@ -7,12 +7,18 @@
 
 #include <doctest/doctest.h>
 #include <promeki/uuid.h>
+#include <promeki/application.h>
 
 using namespace promeki;
 
 TEST_CASE("UUID: default is invalid") {
         UUID v;
         CHECK_FALSE(v.isValid());
+}
+
+TEST_CASE("UUID: default version is 0") {
+        UUID v;
+        CHECK(v.version() == 0);
 }
 
 TEST_CASE("UUID: generate is valid") {
@@ -110,4 +116,122 @@ TEST_CASE("UUID: fromString valid") {
         Error err;
         UUID v = UUID::fromString("94eb2454-5116-4814-889f-7eb9bcb58bf1", &err);
         CHECK(v.isValid());
+}
+
+TEST_CASE("UUID: generateV4 is valid and version 4") {
+        UUID v = UUID::generateV4();
+        CHECK(v.isValid());
+        CHECK(v.version() == 4);
+}
+
+TEST_CASE("UUID: generate default is version 4") {
+        UUID v = UUID::generate();
+        CHECK(v.version() == 4);
+}
+
+TEST_CASE("UUID: generateV7 is valid and version 7") {
+        UUID v = UUID::generateV7();
+        CHECK(v.isValid());
+        CHECK(v.version() == 7);
+}
+
+TEST_CASE("UUID: generateV7 embeds timestamp") {
+        UUID a = UUID::generateV7();
+        UUID b = UUID::generateV7();
+        CHECK(a.isValid());
+        CHECK(b.isValid());
+        CHECK(a != b);
+}
+
+TEST_CASE("UUID: generateV7 with explicit timestamp") {
+        int64_t ts = 1700000000000LL; // 2023-11-14T22:13:20Z
+        UUID a = UUID::generateV7(ts);
+        UUID b = UUID::generateV7(ts);
+        CHECK(a.isValid());
+        CHECK(b.isValid());
+        CHECK(a.version() == 7);
+        // Same timestamp but different random bits
+        CHECK(a != b);
+        // First 6 bytes (48-bit timestamp) should be identical
+        const uint8_t *ra = a.raw();
+        const uint8_t *rb = b.raw();
+        for(int i = 0; i < 6; i++) {
+                CHECK(ra[i] == rb[i]);
+        }
+}
+
+TEST_CASE("UUID: generateV7 explicit timestamps are sortable") {
+        int64_t ts1 = 1700000000000LL;
+        int64_t ts2 = 1700000001000LL; // 1 second later
+        UUID a = UUID::generateV7(ts1);
+        UUID b = UUID::generateV7(ts2);
+        CHECK(b > a);
+}
+
+TEST_CASE("UUID: generateV3 is deterministic") {
+        UUID ns("6ba7b810-9dad-11d1-80b4-00c04fd430c8"); // DNS namespace
+        String name("example.com");
+        UUID a = UUID::generateV3(ns, name);
+        UUID b = UUID::generateV3(ns, name);
+        CHECK(a == b);
+        CHECK(a.version() == 3);
+}
+
+TEST_CASE("UUID: generateV3 different names produce different UUIDs") {
+        UUID ns("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID a = UUID::generateV3(ns, "foo");
+        UUID b = UUID::generateV3(ns, "bar");
+        CHECK(a != b);
+}
+
+TEST_CASE("UUID: generateV5 is deterministic") {
+        UUID ns("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        String name("example.com");
+        UUID a = UUID::generateV5(ns, name);
+        UUID b = UUID::generateV5(ns, name);
+        CHECK(a == b);
+        CHECK(a.version() == 5);
+}
+
+TEST_CASE("UUID: generateV5 different names produce different UUIDs") {
+        UUID ns("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID a = UUID::generateV5(ns, "foo");
+        UUID b = UUID::generateV5(ns, "bar");
+        CHECK(a != b);
+}
+
+TEST_CASE("UUID: generateV3 and generateV5 produce different results for same input") {
+        UUID ns("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+        UUID v3 = UUID::generateV3(ns, "example.com");
+        UUID v5 = UUID::generateV5(ns, "example.com");
+        CHECK(v3 != v5);
+}
+
+TEST_CASE("UUID: generate convenience with v3 uses Application") {
+        Application app;
+        app.setAppUUID(UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
+        app.setAppName("test-app");
+        UUID v = UUID::generate(3);
+        CHECK(v.isValid());
+        CHECK(v.version() == 3);
+        // Should match explicit call with same params
+        UUID expected = UUID::generateV3(app.appUUID(), app.appName());
+        CHECK(v == expected);
+}
+
+TEST_CASE("UUID: generate convenience with v5 uses Application") {
+        Application app;
+        app.setAppUUID(UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8"));
+        app.setAppName("test-app");
+        UUID v = UUID::generate(5);
+        CHECK(v.isValid());
+        CHECK(v.version() == 5);
+        UUID expected = UUID::generateV5(app.appUUID(), app.appName());
+        CHECK(v == expected);
+}
+
+TEST_CASE("UUID: version from parsed string") {
+        // This is a known v4 UUID
+        UUID v("94eb2454-5116-4814-889f-7eb9bcb58bf1");
+        CHECK(v.version() == 4);
 }

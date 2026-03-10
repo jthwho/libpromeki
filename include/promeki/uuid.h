@@ -1,7 +1,7 @@
 /**
  * @file      uuid.h
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -17,10 +17,10 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Universally Unique Identifier (UUID) version 4.
+ * @brief Universally Unique Identifier (UUID).
  *
- * Generates and manipulates RFC 4122 version 4 (random) UUIDs.
- * Supports creation, string conversion, comparison, and validity checks.
+ * Generates and manipulates RFC 4122 / RFC 9562 UUIDs.
+ * Supports versions 1 (stub), 3, 4, 5, and 7.
  */
 class UUID {
         public:
@@ -28,19 +28,52 @@ class UUID {
                 using DataFormat = Array<uint8_t, 16>;
 
                 /**
+                 * @brief Convenience generator that dispatches to the appropriate generateVn() function.
+                 * @param version UUID version to generate (default: 4).
+                 *
+                 * For versions 3 and 5, the namespace UUID and name are taken from the
+                 * Application object (appUUID and appName).
+                 *
+                 * @return A valid UUID, or an invalid UUID if the version is unsupported
+                 *         or if generation fails.
+                 */
+                static UUID generate(int version = 4);
+
+                /**
+                 * @brief Generates a version 1 (timestamp + MAC) UUID.
+                 * @note Not implemented. Calling this will trigger an assertion failure.
+                 */
+                static UUID generateV1();
+
+                /**
+                 * @brief Generates a version 3 (MD5 namespace) UUID.
+                 * @param ns   The namespace UUID.
+                 * @param name The name to hash within the namespace.
+                 * @return A deterministic version 3 UUID.
+                 */
+                static UUID generateV3(const UUID &ns, const String &name);
+
+                /**
                  * @brief Generates a random version 4 UUID.
                  * @return A valid UUID, or an invalid (all-zero) UUID on failure.
                  */
-                static UUID generate() {
-                        DataFormat d;
-                        Error err = promekiRand(d.data(), d.size());
-                        if(err.isOk()) {
-                                d[6] = (d[6] & 0x0F) | 0x40; // Set to verison 4
-                                d[8] = (d[8] & 0x3F) | 0x80; // Set the variant to 2
-                                return UUID(d);
-                        }
-                        return UUID();
-                }
+                static UUID generateV4();
+
+                /**
+                 * @brief Generates a version 5 (SHA-1 namespace) UUID.
+                 * @param ns   The namespace UUID.
+                 * @param name The name to hash within the namespace.
+                 * @return A deterministic version 5 UUID.
+                 */
+                static UUID generateV5(const UUID &ns, const String &name);
+
+                /**
+                 * @brief Generates a version 7 (Unix timestamp + random) UUID.
+                 * @param timestampMs Unix timestamp in milliseconds. If negative,
+                 *        the current system time is used.
+                 * @return A valid, time-sortable UUID.
+                 */
+                static UUID generateV7(int64_t timestampMs = -1);
 
                 /**
                  * @brief Parses a UUID from a string representation.
@@ -139,6 +172,15 @@ class UUID {
                 }
 
                 /**
+                 * @brief Returns the UUID version number.
+                 * @return The version (1-8) encoded in the UUID, or 0 if invalid.
+                 */
+                int version() const {
+                        if(!isValid()) return 0;
+                        return (d[6] >> 4) & 0x0F;
+                }
+
+                /**
                  * @brief Returns the standard string representation of the UUID.
                  * @return A String in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".
                  */
@@ -165,4 +207,3 @@ class UUID {
 };
 
 PROMEKI_NAMESPACE_END
-

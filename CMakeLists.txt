@@ -157,6 +157,8 @@ set(PROMEKI_CORE_SOURCES
     src/regex.cpp
     src/error.cpp
     src/uuid.cpp
+    src/md5.cpp
+    src/sha1.cpp
     src/sharedptr.cpp
     src/point.cpp
     src/line.cpp
@@ -573,6 +575,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/string.cpp
         tests/point.cpp
         tests/uuid.cpp
+        tests/bytearray.cpp
+        tests/md5.cpp
+        tests/sha1.cpp
         tests/timecode.cpp
         tests/numname.cpp
         tests/objectbase.cpp

@@ -1,11 +1,17 @@
 /**
  * @file      uuid.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <chrono>
 #include <promeki/uuid.h>
+#include <promeki/util.h>
+#include <promeki/md5.h>
+#include <promeki/sha1.h>
+#include <promeki/application.h>
+#include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -36,6 +42,122 @@ inline bool hexStr(uint8_t *to, const char *buf, Error *err) {
         }
         *to = d1 * 16 + d2;
         return true;
+}
+
+UUID UUID::generate(int version) {
+        switch(version) {
+                case 1: return generateV1();
+                case 3: {
+                        Application *app = Application::current();
+                        PROMEKI_ASSERT(app != nullptr);
+                        return generateV3(app->appUUID(), app->appName());
+                }
+                case 4: return generateV4();
+                case 5: {
+                        Application *app = Application::current();
+                        PROMEKI_ASSERT(app != nullptr);
+                        return generateV5(app->appUUID(), app->appName());
+                }
+                case 7: return generateV7();
+                default:
+                        promekiErr("UUID::generate: unsupported version %d", version);
+                        PROMEKI_ASSERT(false);
+                        return UUID();
+        }
+}
+
+UUID UUID::generateV1() {
+        promekiErr("UUID::generateV1: not implemented");
+        PROMEKI_ASSERT(false);
+        return UUID();
+}
+
+UUID UUID::generateV3(const UUID &ns, const String &name) {
+        // Concatenate namespace UUID bytes + name bytes, then MD5 hash
+        const auto &nsData = ns.data();
+        size_t nameLen = name.size();
+        size_t totalLen = 16 + nameLen;
+        uint8_t buf[16 + 256];
+        uint8_t *heap = nullptr;
+        uint8_t *input = buf;
+        if(totalLen > sizeof(buf)) {
+                heap = new uint8_t[totalLen];
+                input = heap;
+        }
+        std::memcpy(input, nsData.data(), 16);
+        std::memcpy(input + 16, name.cstr(), nameLen);
+
+        MD5Digest hash = md5(input, totalLen);
+        delete[] heap;
+
+        DataFormat d;
+        std::memcpy(d.data(), hash.data(), 16);
+        d[6] = (d[6] & 0x0F) | 0x30; // Version 3
+        d[8] = (d[8] & 0x3F) | 0x80; // Variant 2
+        return UUID(d);
+}
+
+UUID UUID::generateV4() {
+        DataFormat d;
+        Error err = promekiRand(d.data(), d.size());
+        if(err.isOk()) {
+                d[6] = (d[6] & 0x0F) | 0x40; // Version 4
+                d[8] = (d[8] & 0x3F) | 0x80; // Variant 2
+                return UUID(d);
+        }
+        return UUID();
+}
+
+UUID UUID::generateV5(const UUID &ns, const String &name) {
+        // Concatenate namespace UUID bytes + name bytes, then SHA-1 hash
+        const auto &nsData = ns.data();
+        size_t nameLen = name.size();
+        size_t totalLen = 16 + nameLen;
+        uint8_t buf[16 + 256];
+        uint8_t *heap = nullptr;
+        uint8_t *input = buf;
+        if(totalLen > sizeof(buf)) {
+                heap = new uint8_t[totalLen];
+                input = heap;
+        }
+        std::memcpy(input, nsData.data(), 16);
+        std::memcpy(input + 16, name.cstr(), nameLen);
+
+        SHA1Digest hash = sha1(input, totalLen);
+        delete[] heap;
+
+        // Use first 16 bytes of the 20-byte SHA-1 digest
+        DataFormat d;
+        std::memcpy(d.data(), hash.data(), 16);
+        d[6] = (d[6] & 0x0F) | 0x50; // Version 5
+        d[8] = (d[8] & 0x3F) | 0x80; // Variant 2
+        return UUID(d);
+}
+
+UUID UUID::generateV7(int64_t timestampMs) {
+        // 48-bit millisecond Unix timestamp + 74 bits of random data
+        if(timestampMs < 0) {
+                auto now = std::chrono::system_clock::now();
+                timestampMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        now.time_since_epoch()).count();
+        }
+        uint64_t timestamp = static_cast<uint64_t>(timestampMs);
+
+        DataFormat d;
+        Error err = promekiRand(d.data(), d.size());
+        if(!err.isOk()) return UUID();
+
+        // Bytes 0-5: 48-bit timestamp (big-endian)
+        d[0] = static_cast<uint8_t>(timestamp >> 40);
+        d[1] = static_cast<uint8_t>(timestamp >> 32);
+        d[2] = static_cast<uint8_t>(timestamp >> 24);
+        d[3] = static_cast<uint8_t>(timestamp >> 16);
+        d[4] = static_cast<uint8_t>(timestamp >> 8);
+        d[5] = static_cast<uint8_t>(timestamp);
+
+        d[6] = (d[6] & 0x0F) | 0x70; // Version 7
+        d[8] = (d[8] & 0x3F) | 0x80; // Variant 2
+        return UUID(d);
 }
 
 UUID UUID::fromString(const char *str, Error *err) {
@@ -115,4 +237,3 @@ String UUID::toString() const {
 }
 
 PROMEKI_NAMESPACE_END
-
