@@ -1,0 +1,77 @@
+/**
+ * @page utils Utility Applications
+ *
+ * @brief Utility applications that demonstrate library usage and provide
+ * functional testing.
+ *
+ * The @c utils/ directory contains a suite of standalone utility applications
+ * that use the promeki library.  They serve two purposes:
+ *
+ * - **Demonstration** — Each utility is a self-contained example of how to
+ *   set up a CMake project that consumes libpromeki via @c find_package(promeki).
+ *   They show real-world usage patterns for the library's APIs.
+ *
+ * - **Functional testing** — While the unit tests (in @c tests/) exercise
+ *   individual classes in isolation, the utilities exercise the library as a
+ *   whole, in the same way an actual client application would.  This helps
+ *   catch integration-level issues that unit tests may miss.
+ *
+ * @section utils_building Building
+ *
+ * Utilities are built by default as part of the normal library build.
+ * The option @c PROMEKI_BUILD_UTILS (default @c ON) controls this:
+ *
+ * @code
+ * cmake -DPROMEKI_BUILD_UTILS=OFF ..   # skip building utilities
+ * @endcode
+ *
+ * When built, the utility executables are placed in the @c bin/ directory of
+ * the build tree alongside the unit test executables.  They are also installed
+ * as part of @c make @c install.
+ *
+ * @section utils_standalone Standalone Build
+ *
+ * The @c utils/ directory has its own top-level @c CMakeLists.txt and can be
+ * built independently against an installed copy of libpromeki, just like any
+ * external project:
+ *
+ * @code
+ * cd utils
+ * mkdir build && cd build
+ * cmake -DCMAKE_PREFIX_PATH=/path/to/promeki/install ..
+ * make
+ * @endcode
+ *
+ * This is exactly the workflow that any third-party consumer of the library
+ * would follow, making the utilities a living reference for integration.
+ *
+ * @section utils_adding Adding a New Utility
+ *
+ * Each utility lives in its own subdirectory under @c utils/:
+ *
+ * @code
+ * utils/
+ *   CMakeLists.txt          # top-level, includes each subdirectory
+ *   promeki-info/
+ *     CMakeLists.txt         # add_executable + target_link_libraries
+ *     main.cpp
+ *   my-new-util/
+ *     CMakeLists.txt
+ *     main.cpp
+ * @endcode
+ *
+ * To add a new utility:
+ *
+ * 1. Create a new subdirectory under @c utils/ (e.g. @c utils/my-new-util/).
+ * 2. Add a @c CMakeLists.txt that creates the executable and links against the
+ *    appropriate promeki target(s) (@c promeki::core, @c promeki::proav, or
+ *    @c promeki::music).
+ * 3. Include an @c install(TARGETS ...) rule so it gets installed.
+ * 4. Add an @c add_subdirectory() call in @c utils/CMakeLists.txt.
+ *
+ * @section utils_list Current Utilities
+ *
+ * | Utility        | Library        | Description                          |
+ * |----------------|----------------|--------------------------------------|
+ * | promeki-info   | promeki::core  | Prints library build information     |
+ */

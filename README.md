@@ -91,6 +91,24 @@ To build only the core library without media or music components:
 cmake -B build -DPROMEKI_BUILD_PROAV=OFF -DPROMEKI_BUILD_MUSIC=OFF
 ```
 
+### Cleaning
+
+The `libclean` target removes only the promeki library objects, test
+executables, and utilities while preserving third-party builds.  This
+avoids rebuilding vendored dependencies (zlib, libpng, FreeType, etc.)
+which rarely change:
+
+```sh
+cmake --build build --target libclean
+```
+
+To clean everything including third-party builds, use the standard CMake
+`clean` target:
+
+```sh
+cmake --build build --target clean
+```
+
 ### Running Tests
 
 ```sh

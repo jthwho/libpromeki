@@ -19,6 +19,7 @@ include(CMakePackageConfigHelpers)
 # Build options
 option(PROMEKI_BUILD_PROAV  "Build the promeki-proav library"  ON)
 option(PROMEKI_BUILD_MUSIC  "Build the promeki-music library"  ON)
+option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
 option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
 option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
 
@@ -469,6 +470,12 @@ if(PROMEKI_BUILD_MUSIC)
     target_compile_definitions(promeki-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
+# Utility Applications #########################################################
+
+if(PROMEKI_BUILD_UTILS)
+    add_subdirectory(utils)
+endif()
+
 # Install ######################################################################
 
 # License and attribution notices
@@ -680,6 +687,64 @@ if(PROMEKI_BUILD_TESTS)
         COMMENT "Running unit tests"
     )
 endif()
+
+# Custom Clean Targets #########################################################
+# libclean:  removes only promeki library objects, tests, and utils
+#            (preserves third-party builds so they don't need to be rebuilt)
+# clean:     built-in CMake target that removes everything including third-party
+
+set(PROMEKI_CLEAN_DIRS
+    ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-core.dir
+    ${CMAKE_BINARY_DIR}/CMakeFiles/libpromeki_invalidate_build_info.dir
+    ${CMAKE_BINARY_DIR}/buildinfo.cpp
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-core*
+)
+
+set(PROMEKI_CLEAN_TEST_DIRS "")
+if(PROMEKI_BUILD_TESTS)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-core.dir
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-core
+        ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.dir
+    )
+endif()
+
+if(PROMEKI_BUILD_PROAV)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-proav.dir
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-proav*
+    )
+    if(PROMEKI_BUILD_TESTS)
+        list(APPEND PROMEKI_CLEAN_DIRS
+            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-proav.dir
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-proav
+        )
+    endif()
+endif()
+
+if(PROMEKI_BUILD_MUSIC)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-music.dir
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-music*
+    )
+    if(PROMEKI_BUILD_TESTS)
+        list(APPEND PROMEKI_CLEAN_DIRS
+            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-music.dir
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-music
+        )
+    endif()
+endif()
+
+if(PROMEKI_BUILD_UTILS)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/utils
+    )
+endif()
+
+add_custom_target(libclean
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${PROMEKI_CLEAN_DIRS}
+    COMMENT "Cleaning promeki objects (preserving third-party builds)"
+)
 
 # Documentation ################################################################
 
