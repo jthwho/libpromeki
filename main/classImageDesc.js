@@ -1,0 +1,27 @@
+var classImageDesc =
+[
+    [ "Ptr", "classImageDesc.html#ad783f089e7476a66b79dc80c73e0287a", null ],
+    [ "ImageDesc", "classImageDesc.html#a0c5fd17eb1dec3cbeddc823fc9284d34", null ],
+    [ "ImageDesc", "classImageDesc.html#ac051cec5ce07dd3da5ddc46e919e6f2d", null ],
+    [ "ImageDesc", "classImageDesc.html#a6ff0dc36a211b1b4fd03652a8c4e1a0c", null ],
+    [ "height", "classImageDesc.html#a595176f6845585e958af1812a93d21d1", null ],
+    [ "interlaced", "classImageDesc.html#a8a05ba8f3cc264981778ccd82e1804be", null ],
+    [ "isValid", "classImageDesc.html#a75c5e0d29a69ad572d23776a46345b21", null ],
+    [ "lineAlign", "classImageDesc.html#a6d2eb3160c87fda340202a5c964b344c", null ],
+    [ "linePad", "classImageDesc.html#ad95611a6f599daf285cbf4d5035e6495", null ],
+    [ "metadata", "classImageDesc.html#a153333d8168a97cb918a369633972451", null ],
+    [ "metadata", "classImageDesc.html#a805a901251772c07f2c9309d016e1e56", null ],
+    [ "operator String", "classImageDesc.html#a16d70daa9b940db09aa1f64bfc0a110e", null ],
+    [ "pixelFormat", "classImageDesc.html#adfc24ce38f50d6cc54bf8724df6ded75", null ],
+    [ "pixelFormatID", "classImageDesc.html#a8e3c7ee983b67a90cef2092a2f4f8223", null ],
+    [ "planeCount", "classImageDesc.html#a9c38bec67c83d4467de672784ecad88c", null ],
+    [ "setInterlaced", "classImageDesc.html#a481fca50d1e0f005ef8eb6342c796cdc", null ],
+    [ "setLineAlign", "classImageDesc.html#a3901aaefead0c0858a81bb922fd17056", null ],
+    [ "setLinePad", "classImageDesc.html#a9b2408bb4c93c4c2e1be90e97252af58", null ],
+    [ "setPixelFormat", "classImageDesc.html#a94a5dabbe1914f2cd31589eca60d1652", null ],
+    [ "setSize", "classImageDesc.html#a327993d776a866160b98f2a9430ceb03", null ],
+    [ "setSize", "classImageDesc.html#ab7c04a3d184312f65943bd07ee799cd8", null ],
+    [ "size", "classImageDesc.html#a78e15509ea55bad62fb403ed5ccffcf1", null ],
+    [ "toString", "classImageDesc.html#a0ebdb8f56904ceb7fbf0ab049f623e5c", null ],
+    [ "width", "classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd", null ]
+];

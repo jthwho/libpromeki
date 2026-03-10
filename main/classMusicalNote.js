@@ -1,0 +1,26 @@
+var classMusicalNote =
+[
+    [ "MusicalNote", "classMusicalNote.html#a1350b5e26ac99e673632ee0e1fe118a7", null ],
+    [ "amplitude", "classMusicalNote.html#aaa70d14878bf2440e1d7c19baea3c1b1", null ],
+    [ "duration", "classMusicalNote.html#a86ccc39ef69c46733098738de48a1413", null ],
+    [ "fullDuration", "classMusicalNote.html#af5747e54c7ed92e67b25bcab136097e5", null ],
+    [ "isRest", "classMusicalNote.html#af2fb8ee3f592c2c08f8ca198f7596ef2", null ],
+    [ "legato", "classMusicalNote.html#ab0ff13df14a34b547c701da029962d5e", null ],
+    [ "midiNote", "classMusicalNote.html#af7765dc8fb37fba7634c123560c98819", null ],
+    [ "setAmplitude", "classMusicalNote.html#a3f014abef3f12392af0a0c1a6e6a3a06", null ],
+    [ "setDuration", "classMusicalNote.html#ae9371d67ade276604f7dfeff8262a70c", null ],
+    [ "setFullDuration", "classMusicalNote.html#a9643ea409beda1377795f04fcb75bd69", null ],
+    [ "setLegato", "classMusicalNote.html#aaae1042c934ac2f1c3c496079979515f", null ],
+    [ "setMidiNote", "classMusicalNote.html#a53759566f76788aeb71ea8d9db7138e3", null ],
+    [ "setRest", "classMusicalNote.html#a44085891738648c570807f8fdd46625b", null ],
+    [ "setStartTime", "classMusicalNote.html#a8646ac10e4bddac93573e0a219a6c258", null ],
+    [ "setTremolo", "classMusicalNote.html#a5412d2918668a6b0aaf60adfb0ad718a", null ],
+    [ "setTremoloRate", "classMusicalNote.html#abb78f33bc417e9ad94ffd572e41668b2", null ],
+    [ "setVibrato", "classMusicalNote.html#a6d331e7e622a7580a87f3dff7c146490", null ],
+    [ "setVibratoRate", "classMusicalNote.html#aa2e207b5566f9f454e98fd864b4282fa", null ],
+    [ "startTime", "classMusicalNote.html#aabe7f61edf89779c2af119acaaab4409", null ],
+    [ "tremolo", "classMusicalNote.html#a8bb56002e10df5cda9edea4f9108b1d4", null ],
+    [ "tremoloRate", "classMusicalNote.html#a1ea91f45616a3d3aac0c7e367a584849", null ],
+    [ "vibrato", "classMusicalNote.html#a3fe9291cbafc5eb949c31d36755a0e97", null ],
+    [ "vibratoRate", "classMusicalNote.html#a6bfacc2d894969d74d2bdfde5c24884f", null ]
+];

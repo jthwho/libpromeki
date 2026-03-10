@@ -1,0 +1,11 @@
+<map id="PixelFormat" name="PixelFormat">
+<area shape="rect" id="Node000001" title="Describes a pixel packing format and provides format&#45;specific operations." alt="" coords="179,123,278,148"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="5,13,65,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,45,94,71,134,96,191,120,189,125,131,101,91,76,57,49"/>
+<area shape="rect" id="Node000003" href="$classList.html" title=" " alt="" coords="89,13,211,38"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,48,222,121,218,124,164,51"/>
+<area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="235,5,380,45"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="301,60,292,81,280,100,252,124,248,120,276,97,288,78,296,58"/>
+<area shape="rect" id="Node000005" href="$classList.html" title=" " alt="" coords="404,5,549,45"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="444,56,409,80,370,101,324,117,279,128,278,123,322,112,368,96,406,75,441,52"/>
+</map>

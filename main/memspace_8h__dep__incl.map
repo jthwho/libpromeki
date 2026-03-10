@@ -1,0 +1,18 @@
+<map id="include/promeki/memspace.h" name="include/promeki/memspace.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="315,5,529,31"/>
+<area shape="rect" id="Node000002" href="$buffer_8h.html" title=" " alt="" coords="332,79,512,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="425,44,425,79,419,79,419,44"/>
+<area shape="rect" id="Node000003" href="$audio_8h.html" title=" " alt="" coords="230,152,409,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="396,114,338,154,335,150,393,110"/>
+<area shape="rect" id="Node000006" href="$image_8h.html" title=" " alt="" coords="433,152,617,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="451,110,509,150,506,154,448,114"/>
+<area shape="rect" id="Node000004" href="$audiofile_8h.html" title=" " alt="" coords="5,225,204,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="273,184,140,228,139,223,271,179"/>
+<area shape="rect" id="Node000005" href="$frame_8h.html" title=" " alt="" coords="228,225,411,251"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="322,191,322,225,317,225,317,191"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="480,184,353,228,352,223,478,179"/>
+<area shape="rect" id="Node000007" href="$codec_8h.html" title=" " alt="" coords="435,225,617,251"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="528,191,528,225,523,225,522,191"/>
+<area shape="rect" id="Node000008" href="$imagefile_8h.html" title=" " alt="" coords="641,225,845,251"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="574,179,709,223,707,228,572,184"/>
+</map>

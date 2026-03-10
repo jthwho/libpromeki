@@ -1,0 +1,15 @@
+<map id="include/promeki/line.h" name="include/promeki/line.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="141,5,308,31"/>
+<area shape="rect" id="Node000002" href="$paintengine_8h.html" title=" " alt="" coords="115,79,335,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,44,227,79,222,79,222,44"/>
+<area shape="rect" id="Node000003" href="$fontpainter_8h.html" title=" " alt="" coords="5,152,220,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="196,114,132,154,130,150,193,109"/>
+<area shape="rect" id="Node000004" href="$image_8h.html" title=" " alt="" coords="245,152,429,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="256,109,320,150,317,154,253,114"/>
+<area shape="rect" id="Node000005" href="$codec_8h.html" title=" " alt="" coords="39,225,221,251"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="291,184,164,228,163,223,290,179"/>
+<area shape="rect" id="Node000006" href="$frame_8h.html" title=" " alt="" coords="245,225,428,251"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="339,191,339,225,334,225,334,191"/>
+<area shape="rect" id="Node000007" href="$imagefile_8h.html" title=" " alt="" coords="452,225,656,251"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="385,179,520,223,518,228,384,184"/>
+</map>

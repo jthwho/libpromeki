@@ -1,0 +1,47 @@
+<map id="include/promeki/rational.h" name="include/promeki/rational.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="135,5,329,31"/>
+<area shape="rect" id="Node000002" href="$framerate_8h.html" title=" " alt="" coords="17,79,225,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,40,141,81,138,76,201,36"/>
+<area shape="rect" id="Node000004" href="$variant_8h.html" title=" " alt="" coords="297,79,487,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="271,34,367,76,365,81,269,39"/>
+<area shape="rect" id="Node000003" href="$videodesc_8h.html" title=" " alt="" coords="393,372,602,397"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,118,88,161,70,216,65,244,66,273,73,299,87,322,122,332,200,345,395,369,395,375,199,350,121,337,84,326,68,301,61,273,60,244,64,215,83,159,104,115"/>
+<area shape="rect" id="Node000005" href="$json_8h.html" title=" " alt="" coords="559,152,729,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="447,105,604,149,602,154,445,110"/>
+<area shape="rect" id="Node000011" href="$metadata_8h.html" title=" " alt="" coords="499,225,706,251"/>
+<area shape="poly" id="edge21_Node000004_Node000011" title=" " alt="" coords="427,108,497,150,550,189,591,223,588,227,547,193,495,154,425,113"/>
+<area shape="rect" id="Node000016" href="$signal_8h.html" title=" " alt="" coords="301,152,483,177"/>
+<area shape="poly" id="edge22_Node000004_Node000016" title=" " alt="" coords="395,118,395,152,389,152,389,118"/>
+<area shape="rect" id="Node000019" href="$slot_8h.html" title=" " alt="" coords="110,152,277,177"/>
+<area shape="poly" id="edge25_Node000004_Node000019" title=" " alt="" coords="348,111,227,154,225,149,346,106"/>
+<area shape="rect" id="Node000006" href="$audiodesc_8h.html" title=" " alt="" coords="678,299,887,324"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="674,184,721,223,754,263,777,297,773,300,749,266,717,227,670,188"/>
+<area shape="poly" id="edge11_Node000005_Node000011" title=" " alt="" coords="633,191,612,227,607,224,628,188"/>
+<area shape="poly" id="edge10_Node000006_Node000003" title=" " alt="" coords="724,330,544,374,543,369,723,325"/>
+<area shape="rect" id="Node000007" href="$audio_8h.html" title=" " alt="" coords="685,372,864,397"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="782,338,779,372,773,372,777,337"/>
+<area shape="rect" id="Node000010" href="$audiogen_8h.html" title=" " alt="" coords="888,372,1091,397"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="830,326,957,369,955,374,828,331"/>
+<area shape="rect" id="Node000008" href="$audiofile_8h.html" title=" " alt="" coords="719,445,918,471"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="791,408,814,444,809,447,787,411"/>
+<area shape="rect" id="Node000009" href="$frame_8h.html" title=" " alt="" coords="513,445,695,471"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="736,405,633,448,631,443,733,400"/>
+<area shape="poly" id="edge20_Node000011_Node000003" title=" " alt="" coords="597,265,584,295,566,326,541,353,516,374,512,370,537,349,562,322,580,292,592,263"/>
+<area shape="poly" id="edge12_Node000011_Node000006" title=" " alt="" coords="645,253,754,296,752,301,643,258"/>
+<area shape="poly" id="edge13_Node000011_Node000009" title=" " alt="" coords="610,264,617,325,617,398,609,445,604,444,612,397,612,325,604,264"/>
+<area shape="rect" id="Node000012" href="$imagedesc_8h.html" title=" " alt="" coords="337,299,551,324"/>
+<area shape="poly" id="edge14_Node000011_Node000012" title=" " alt="" coords="566,259,471,301,469,296,564,254"/>
+<area shape="poly" id="edge19_Node000012_Node000003" title=" " alt="" coords="463,333,491,370,487,373,459,337"/>
+<area shape="rect" id="Node000013" href="$image_8h.html" title=" " alt="" coords="184,372,368,397"/>
+<area shape="poly" id="edge15_Node000012_Node000013" title=" " alt="" coords="406,332,305,374,302,369,403,327"/>
+<area shape="poly" id="edge17_Node000013_Node000009" title=" " alt="" coords="342,398,551,443,550,448,341,403"/>
+<area shape="rect" id="Node000014" href="$codec_8h.html" title=" " alt="" coords="5,445,187,471"/>
+<area shape="poly" id="edge16_Node000013_Node000014" title=" " alt="" coords="236,405,126,448,124,443,234,400"/>
+<area shape="rect" id="Node000015" href="$imagefile_8h.html" title=" " alt="" coords="211,445,415,471"/>
+<area shape="poly" id="edge18_Node000013_Node000015" title=" " alt="" coords="291,408,310,444,305,446,286,411"/>
+<area shape="rect" id="Node000017" href="$objectbase_8h.html" title=" " alt="" coords="98,225,313,251"/>
+<area shape="poly" id="edge23_Node000016_Node000017" title=" " alt="" coords="350,185,237,228,235,223,349,180"/>
+<area shape="rect" id="Node000018" href="$audioblock_8h.html" title=" " alt="" coords="98,299,313,324"/>
+<area shape="poly" id="edge24_Node000017_Node000018" title=" " alt="" coords="208,264,208,299,203,299,203,264"/>
+<area shape="poly" id="edge26_Node000019_Node000017" title=" " alt="" coords="200,191,206,225,201,226,195,192"/>
+</map>

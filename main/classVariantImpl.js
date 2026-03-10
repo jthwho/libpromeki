@@ -1,0 +1,32 @@
+var classVariantImpl =
+[
+    [ "Type", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be", [
+      [ "TypeInvalid", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaf524fab62e161e7335bccf2383499fec", null ],
+      [ "TypeBool", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea47abe43656eac6a583f468a98f47ddf8", null ],
+      [ "TypeU8", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beabccc3762f67a86bc9c4c0807c119ebe7", null ],
+      [ "TypeS8", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea0137f0321debba0ba63491187a5c6940", null ],
+      [ "TypeU16", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea038b84013b084b3686d1860024de133b", null ],
+      [ "TypeS16", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea735b566166d0e05663776b060742a32a", null ],
+      [ "TypeU32", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beac2fd34408433cb927dfe5c7f2bc4c1ad", null ],
+      [ "TypeS32", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea275a5ad45cbb864c6a4378252bcd2e07", null ],
+      [ "TypeU64", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea38492b622b036b9d331023e8c6013055", null ],
+      [ "TypeS64", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaf09a9d8affadb1f4c51f156c95245f63", null ],
+      [ "TypeFloat", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea87ad06304afd3b7bd7f9908330b85a90", null ],
+      [ "TypeDouble", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beada1f64fe57e03c7652ae358df07ca468", null ],
+      [ "TypeString", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea22d9cb4a53c8c6b105683acc4e5c5aea", null ],
+      [ "TypeDateTime", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaabaf3f09435e3cc45d958a234d63b767", null ],
+      [ "TypeTimeStamp", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea630bfb6d9d75a6c55de61481bbd281b5", null ],
+      [ "TypeSize2D", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaa2f79bee76029faa27358a61f5c25020", null ],
+      [ "TypeUUID", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea28e486294acbb9023a03d22919ae540c", null ],
+      [ "TypeTimecode", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea901ab3b059933f4f375d653c13dcd489", null ],
+      [ "TypeRational", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea52dadf56c37c138c8479db3329de5d77", null ]
+    ] ],
+    [ "VariantImpl", "classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868", null ],
+    [ "VariantImpl", "classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3", null ],
+    [ "get", "classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe", null ],
+    [ "isValid", "classVariantImpl.html#abf0f8c223588e7de807f53af87ea111b", null ],
+    [ "set", "classVariantImpl.html#a0ae83cd9c68c1fbe6381a52a0a3b4b8f", null ],
+    [ "toStandardType", "classVariantImpl.html#aae602ac42c83cbb3b1b7b4d5d2cbf95e", null ],
+    [ "type", "classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc", null ],
+    [ "typeName", "classVariantImpl.html#a84e464175ece32c791091b2e1e6bf379", null ]
+];

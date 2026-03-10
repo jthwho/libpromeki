@@ -1,0 +1,10 @@
+<map id="include/promeki/xyzcolor.h" name="include/promeki/xyzcolor.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="109,5,306,31"/>
+<area shape="rect" id="Node000002" href="$ciepoint_8h.html" title=" " alt="" coords="178,79,373,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,39,266,77,262,80,226,42"/>
+<area shape="rect" id="Node000003" href="$ciewavelengthtable_8h.html" title=" " alt="" coords="5,152,276,177"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="191,43,168,80,154,119,145,153,140,151,149,118,164,77,187,40"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="243,113,164,154,161,149,240,108"/>
+<area shape="rect" id="Node000004" href="$colorspace_8h.html" title=" " alt="" coords="301,152,514,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="310,108,387,149,384,154,307,113"/>
+</map>

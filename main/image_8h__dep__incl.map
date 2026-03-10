@@ -1,0 +1,9 @@
+<map id="include/promeki/image.h" name="include/promeki/image.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="211,5,395,31"/>
+<area shape="rect" id="Node000002" href="$codec_8h.html" title=" " alt="" coords="5,79,187,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="257,38,130,81,129,76,256,33"/>
+<area shape="rect" id="Node000003" href="$frame_8h.html" title=" " alt="" coords="211,79,394,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="305,44,305,79,300,79,300,44"/>
+<area shape="rect" id="Node000004" href="$imagefile_8h.html" title=" " alt="" coords="418,79,622,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="351,32,486,76,484,81,350,37"/>
+</map>
