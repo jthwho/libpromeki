@@ -33,16 +33,11 @@ jobs:
           echo "name=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Building docs for: $VERSION"
 
-      - name: Configure Doxyfile
-        run: |
-          sed \
-            -e "s|@CMAKE_CURRENT_SOURCE_DIR@|$GITHUB_WORKSPACE|g" \
-            -e "s|@PROMEKI_DOCS_OUTPUT_DIR@|$GITHUB_WORKSPACE/docs-output|g" \
-            Doxyfile.in > Doxyfile
-          sed -i "s|^PROJECT_NUMBER.*|PROJECT_NUMBER = ${{ steps.version.outputs.name }}|" Doxyfile
-
       - name: Build documentation
-        run: doxygen Doxyfile
+        run: |
+          cmake -B build -DPROMEKI_BUILD_DOCS=ON -DPROMEKI_BUILD_TESTS=OFF \
+            -DPROMEKI_DOCS_VERSION=${{ steps.version.outputs.name }}
+          cmake --build build --target docs
 
       - name: Checkout gh-pages
         id: checkout-pages
@@ -65,9 +60,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.name }}"
           rm -rf "gh-pages/$VERSION"
-          cp -r docs-output/html "gh-pages/$VERSION"
-          mkdir -p "gh-pages/$VERSION/docs"
-          cp docs/*.jpg "gh-pages/$VERSION/docs/"
+          cp -r build/doxygen/html "gh-pages/$VERSION"
           touch gh-pages/.nojekyll
 
       - name: Generate index page

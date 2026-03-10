@@ -683,11 +683,19 @@ set(PROMEKI_DOCS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen" CACHE PATH
 
 find_package(Doxygen QUIET)
 if(DOXYGEN_FOUND)
+    string(SUBSTRING "${BUILD_INFO_REPOIDENT}" 0 7 BUILD_INFO_REPOIDENT_SHORT)
+    set(PROMEKI_DOCS_VERSION "${BUILD_INFO_VERSION}" CACHE STRING
+        "Version string shown in generated documentation")
     set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/footer.html.in
+        ${CMAKE_CURRENT_BINARY_DIR}/doxygen_footer.html @ONLY)
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+    file(GLOB PROMEKI_DOCS_IMAGES ${CMAKE_CURRENT_SOURCE_DIR}/docs/*.jpg)
     add_custom_target(docs
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROMEKI_DOCS_OUTPUT_DIR}/html/docs
+        COMMAND ${CMAKE_COMMAND} -E copy ${PROMEKI_DOCS_IMAGES} ${PROMEKI_DOCS_OUTPUT_DIR}/html/docs/
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM)

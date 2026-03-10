@@ -1,8 +1,7 @@
-# libpromeki
+# PROfessional MEdia toolKIt
 <img src="docs/promeki_logo.jpg" alt="ProMEKI Logo" width="100">
 
-PROfessional MEdia toolKIt — A modern C++20 library that makes writing
-audio, video, and media applications in C++ easier.
+A modern C++20 library that makes writing audio, video, and media applications in C++ easier.
 
 libpromeki provides the foundational building blocks that professional
 media software needs: timecode, frame rates, image and audio descriptors,

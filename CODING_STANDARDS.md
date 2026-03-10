@@ -1,4 +1,4 @@
-# libpromeki Coding Standards
+# Coding Standards
 
 This document describes the coding conventions and design patterns used throughout libpromeki. All new code should follow these standards. Existing code that deviates should be updated when it is being modified for other reasons.
 
