@@ -144,10 +144,16 @@ CMake Build Options</h2>
 <p>To build only the core library without media or music components:</p>
 <div class="fragment"><div class="line">cmake -B build -DPROMEKI_BUILD_PROAV=OFF -DPROMEKI_BUILD_MUSIC=OFF</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md6"></a>
+Cleaning</h2>
+<p>The <code>libclean</code> target removes only the promeki library objects, test executables, and utilities while preserving third-party builds. This avoids rebuilding vendored dependencies (zlib, libpng, FreeType, etc.) which rarely change:</p>
+<div class="fragment"><div class="line">cmake --build build --target libclean</div>
+</div><!-- fragment --><p>To clean everything including third-party builds, use the standard CMake <code>clean</code> target:</p>
+<div class="fragment"><div class="line">cmake --build build --target clean</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md7"></a>
 Running Tests</h2>
 <div class="fragment"><div class="line">cd build</div>
 <div class="line">ctest --output-on-failure</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md7"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md8"></a>
 Installing</h2>
 <div class="fragment"><div class="line">cmake --install build</div>
 <div class="line"># or to a custom prefix:</div>
@@ -159,7 +165,7 @@ Installing</h2>
 <li><code>lib/cmake/promeki/</code> — CMake package config files</li>
 <li><code>share/doc/promeki/</code> — license and third-party notices</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md9"></a>
 Using libpromeki in Your Project</h1>
 <p>After installing, add this to your project's <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code>:</p>
 <div class="fragment"><div class="line">find_package(promeki REQUIRED)</div>
@@ -174,7 +180,7 @@ Using libpromeki in Your Project</h1>
 <div class="line">target_link_libraries(myapp PRIVATE promeki::music)</div>
 </div><!-- fragment --><p>If you installed to a non-standard prefix, tell CMake where to find it:</p>
 <div class="fragment"><div class="line">cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md9"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md10"></a>
 Include Conventions</h2>
 <p>All promeki headers live under the <code>promeki/</code> namespace:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
@@ -197,13 +203,13 @@ Include Conventions</h2>
 <div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:28</div></div>
 <div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID).</div><div class="ttdef"><b>Definition</b> uuid.h:25</div></div>
 <div class="ttc" id="aclassUUID_html_aa4b21b5eec74fc441124669adb10ed78"><div class="ttname"><a href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a></div><div class="ttdeci">static UUID generate(int version=4)</div><div class="ttdoc">Convenience generator that dispatches to the appropriate generateVn() function.</div></div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md11"></a>
 Documentation</h1>
 <p>Build the API documentation (requires Doxygen):</p>
 <div class="fragment"><div class="line">cmake -B build -DPROMEKI_BUILD_DOCS=ON</div>
 <div class="line">cmake --build build --target docs</div>
 </div><!-- fragment --><p>A hosted copy of the documentation is available at: <a href="https://jthwho.github.io/libpromeki/main/">API Documentation</a></p>
-<h1><a class="anchor" id="autotoc_md11"></a>
+<h1><a class="anchor" id="autotoc_md12"></a>
 Debugging</h1>
 <p>If you build the library in Debug mode (<code>-DCMAKE_BUILD_TYPE=Debug</code>), the <code>promekiDebug()</code> logging function is enabled. Each source file that wants to use it must register a debug channel:</p>
 <div class="fragment"><div class="line">PROMEKI_DEBUG(<a class="code hl_class" href="classList.html">MyChannel</a>)</div>
@@ -213,7 +219,7 @@ Debugging</h1>
 </div><!-- fragment --><p>Then enable channels at runtime via the <code>PROMEKI_DEBUG</code> environment variable (comma-separated):</p>
 <div class="fragment"><div class="line">export PROMEKI_DEBUG=MyChannel,AnotherChannel</div>
 <div class="line">./yourapp</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md12"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md13"></a>
 License</h1>
 <p>libpromeki is licensed under the [MIT License](LICENSE).</p>
 <p>Third-party library licenses and attribution notices are documented in [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES). </p>
@@ -224,7 +230,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-10 21:15:50 from commit b8709bb (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,25 +1,5 @@
 var searchData=
 [
-  ['_7eapplication_0',['~Application',['../classApplication.html#a748bca84fefb9c12661cfaa2f623748d',1,'Application']]],
-  ['_7earray_1',['~Array',['../classArray.html#a6b844b9e0f12d8dbff49f7a5228e8c53',1,'Array']]],
-  ['_7eaudioblock_2',['~AudioBlock',['../classAudioBlock.html#a333dbaf82409f9f8ad87e8e739ab6333',1,'AudioBlock']]],
-  ['_7eaudiofilefactory_3',['~AudioFileFactory',['../classAudioFileFactory.html#afefcd36ba80800926bced81b3cc808de',1,'AudioFileFactory']]],
-  ['_7ebuffer_4',['~Buffer',['../classBuffer.html#a59b8743e4a5f731bdd0c4185c9ef263b',1,'Buffer']]],
-  ['_7ebytearray_5',['~ByteArray',['../classByteArray.html#a906c7baa65f5fd5f90c387085f5eda17',1,'ByteArray']]],
-  ['_7ecodec_6',['~Codec',['../classCodec.html#a3fde092d5e1d1dd87e3d2aeb2ad08581',1,'Codec']]],
-  ['_7eerror_7',['~Error',['../classError.html#a1a45d42a3a035d510333cdfeb36a0e93',1,'Error']]],
-  ['_7efile_8',['~File',['../classFile.html#ac704ebdf5f57d7a1c5ddf409d797fb69',1,'File']]],
-  ['_7efontpainter_9',['~FontPainter',['../classFontPainter.html#afac54a7739266e93a3bae416a4dfa1c8',1,'FontPainter']]],
-  ['_7eimagefileio_10',['~ImageFileIO',['../classImageFileIO.html#a13f68429cdf6bcd7f54d1dcbd83d3ff2',1,'ImageFileIO']]],
-  ['_7eimpl_11',['~impl',['../classAudioFile_1_1Impl.html#ad4480eed21f50ad798e694e6ef0c6225',1,'AudioFile::Impl::~Impl()'],['../classPaintEngine_1_1Impl.html#ab06c8a09dcd1356ed1603322ba6a2aa0',1,'PaintEngine::Impl::~Impl()']]],
-  ['_7einstance_12',['~Instance',['../classCodec_1_1Instance.html#a054600a5ba6c6f5e7fa238adf92a5d2c',1,'Codec::Instance']]],
-  ['_7elist_13',['~List',['../classList.html#acaf46830c0f0656378ec3257c4f894bd',1,'List']]],
-  ['_7elogger_14',['~Logger',['../classLogger.html#acb668a9e186a25fbaad2e4af6d1ed00a',1,'Logger']]],
-  ['_7emap_15',['~Map',['../classMap.html#ae959938cda7fe0745ed29e6db7a5c38e',1,'Map']]],
-  ['_7eobjectbase_16',['~ObjectBase',['../classObjectBase.html#a7074bc9389069351c2d0eee6a47e5ee3',1,'ObjectBase']]],
-  ['_7eobjectbaseptr_17',['~ObjectBasePtr',['../classObjectBasePtr.html#a45b2a25d0f57fc10569529ff29252616',1,'ObjectBasePtr']]],
-  ['_7epixelformat_18',['~PixelFormat',['../classPixelFormat.html#a592df16bbaba51b152f5877b49f7195a',1,'PixelFormat']]],
-  ['_7epoint_19',['~Point',['../classPoint.html#a760ffe15eb8cccd93aa9dbf0bd68458d',1,'Point']]],
-  ['_7eset_20',['~Set',['../classSet.html#a3d2d834fc186ad6d80a84226e9c98c07',1,'Set']]],
-  ['_7esize2dtemplate_21',['~Size2DTemplate',['../classSize2DTemplate.html#a550b7b9942a902a09bce947f66a0b761',1,'Size2DTemplate']]]
+  ['z_0',['z',['../classXYZColor.html#a2d2c50cead16a962f1ec23a023eb4fb9',1,'XYZColor']]],
+  ['zero_1',['zero',['../classAudio.html#a07a3d3807c2d71f5ef1fa7be0c97d219',1,'Audio::zero()'],['../classMatrix3x3.html#af4b404c42fcd087d703d219e105c5c1d',1,'Matrix3x3::zero()']]]
 ];

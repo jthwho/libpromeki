@@ -103,8 +103,10 @@ $(document).ready(function(){initNavTree('functions_func_i.html',''); initResiza
 
 <h3><a id="index_i" name="index_i"></a>- i -</h3><ul>
 <li>id()&#160;:&#160;<a class="el" href="classColorSpace.html#a10e0abca2eca266eab589b24bca9caaa">ColorSpace</a>, <a class="el" href="classImageFileIO.html#a8cc24c93ba44b010c261c998189b48ad">ImageFileIO</a>, <a class="el" href="classPixelFormat.html#abd3ff308b4f9bf709f37a785e225c6ba">PixelFormat</a>, <a class="el" href="classSlot.html#a184af11c79669e47907bebadf0bb0c8e">Slot&lt; Args &gt;</a></li>
+<li>idealThreadCount()&#160;:&#160;<a class="el" href="classThread.html#aa6713c55fd3e612ff3770c0950e6140f">Thread</a></li>
 <li>identity()&#160;:&#160;<a class="el" href="classMatrix.html#a06997e8f281bbecd637d31d68f35c2cd">Matrix&lt; T, W, H &gt;</a></li>
 <li>idToString()&#160;:&#160;<a class="el" href="classMetadata.html#ae2db661c72235056e605d87e77055f97">Metadata</a></li>
+<li>ignore()&#160;:&#160;<a class="el" href="classEvent.html#a5881fa6d544bf96c5ba7abc9ce369d9b">Event</a></li>
 <li>Image()&#160;:&#160;<a class="el" href="classImage.html#a5502e928122744be1d3b89648298e162">Image</a></li>
 <li>image()&#160;:&#160;<a class="el" href="classImageFile.html#a7f37251fb8017e196aa37c50d67b260a">ImageFile</a></li>
 <li>ImageDesc()&#160;:&#160;<a class="el" href="classImageDesc.html#a0c5fd17eb1dec3cbeddc823fc9284d34">ImageDesc</a></li>
@@ -122,8 +124,11 @@ $(document).ready(function(){initNavTree('functions_func_i.html',''); initResiza
 <li>inverse()&#160;:&#160;<a class="el" href="classMatrix3x3.html#a182a2e7e7dc310ac0305d19c0b57bd57">Matrix3x3</a>, <a class="el" href="classMatrix.html#ac781733df3cde30a63defef65bc4b718">Matrix&lt; T, W, H &gt;</a></li>
 <li>inverseColorSpace()&#160;:&#160;<a class="el" href="classColorSpace.html#a3befab9669882471759a4a4cfeb2a973">ColorSpace</a></li>
 <li>invtTransferFunc()&#160;:&#160;<a class="el" href="classColorSpace.html#a092cb625612c51547952ce815b9e92dd">ColorSpace</a></li>
+<li>isAccepted()&#160;:&#160;<a class="el" href="classEvent.html#a0f7cd8bbac6db573b14d58f6a7e004e8">Event</a></li>
+<li>isAdopted()&#160;:&#160;<a class="el" href="classThread.html#a4c6769a3a97e0a2f12fa486e61a29683">Thread</a></li>
 <li>isBetween()&#160;:&#160;<a class="el" href="classArray.html#a84c690b0e38ae60265f76099536d65f1">Array&lt; T, NumValues &gt;</a></li>
 <li>isBigEndian()&#160;:&#160;<a class="el" href="classSystem.html#a1058075436db56f488a6422ff6fb62cd">System</a></li>
+<li>isCurrentThread()&#160;:&#160;<a class="el" href="classThread.html#a8b4a7c429abc589f7dfefcb7bec39de7">Thread</a></li>
 <li>isDirectIO()&#160;:&#160;<a class="el" href="classFile.html#a0d5e350abdbaba52b443929f0a974974">File</a></li>
 <li>isDirectory()&#160;:&#160;<a class="el" href="classFileInfo.html#afee1d5203b2d135c1c3cec0b1b7f0bb5">FileInfo</a></li>
 <li>isDropFrame()&#160;:&#160;<a class="el" href="classTimecode.html#ae23cff0a6ac0136ee9945ce847291ff1">Timecode</a>, <a class="el" href="classTimecode_1_1Mode.html#af3d0dcdec25c6993914ad07626c1f5a2">Timecode::Mode</a></li>
@@ -142,6 +147,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html',''); initResiza
 <li>isPadded()&#160;:&#160;<a class="el" href="classNumName.html#a66f6e0090f96281c79c2dd7af4a077e0">NumName</a></li>
 <li>isReadable()&#160;:&#160;<a class="el" href="classFile.html#a38ecd9649db614782536ca6ccb4ed62e">File</a>, <a class="el" href="classFileInfo.html#aa7bd4cf0e93293d4c3bf057b53f02063">FileInfo</a></li>
 <li>isRest()&#160;:&#160;<a class="el" href="classMusicalNote.html#af2fb8ee3f592c2c08f8ca198f7596ef2">MusicalNote</a></li>
+<li>isRunning()&#160;:&#160;<a class="el" href="classEventLoop.html#ae01813e87052fb613430e40d6c89da7d">EventLoop</a>, <a class="el" href="classThread.html#ae7936cef46c8f692bc9efe0be6285228">Thread</a></li>
 <li>isSink()&#160;:&#160;<a class="el" href="classAudioBlock.html#a72f11a9fce8cb8e7c13e15744e6d5dfc">AudioBlock</a></li>
 <li>isSinkValid()&#160;:&#160;<a class="el" href="classAudioBlock.html#adce54fa030c123ef0251c366fb13c6ef">AudioBlock</a></li>
 <li>isSource()&#160;:&#160;<a class="el" href="classAudioBlock.html#a3d3fca3dd654de9276dab0d2d8faf523">AudioBlock</a></li>
@@ -163,7 +169,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html',''); initResiza
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-10 21:15:50 from commit b8709bb (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -122,9 +122,11 @@ Inheritance diagram for ObjectBase:</div>
 <div class="dyncontent">
 <div class="center"><img src="classObjectBase__inherit__graph.png" border="0" usemap="#aObjectBase_inherit__map" alt="Inheritance graph"/></div>
 <map name="aObjectBase_inherit__map" id="aObjectBase_inherit__map">
-<area shape="rect" title="Base object for promeki." alt="" coords="5,5,101,31"/>
-<area shape="rect" href="classAudioBlock.html" title="Base class for an audio processing block This object defines an interface for composing an audio proc..." alt="" coords="6,79,101,104"/>
-<area shape="poly" title=" " alt="" coords="56,44,56,79,51,79,51,44"/>
+<area shape="rect" title="Base object for promeki." alt="" coords="57,5,153,31"/>
+<area shape="rect" href="classAudioBlock.html" title="Base class for an audio processing block This object defines an interface for composing an audio proc..." alt="" coords="5,79,100,104"/>
+<area shape="poly" title=" " alt="" coords="90,43,63,80,59,77,86,40"/>
+<area shape="rect" href="classThread.html" title="Wrapper around std::thread with a built&#45;in EventLoop." alt="" coords="125,79,191,104"/>
+<area shape="poly" title=" " alt="" coords="124,40,151,77,147,80,119,43"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -182,6 +184,22 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a64ca29baab8fa3918997fe1505393eac"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a64ca29baab8fa3918997fe1505393eac">registerSlot</a> (<a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
 <tr class="memdesc:a64ca29baab8fa3918997fe1505393eac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a slot with this object and assigns it an ID.  <br /></td></tr>
 <tr class="separator:a64ca29baab8fa3918997fe1505393eac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54164d8d143ef786cce570a2d897d7fb" id="r_a54164d8d143ef786cce570a2d897d7fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEventLoop.html">EventLoop</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb">eventLoop</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a54164d8d143ef786cce570a2d897d7fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> this object is affiliated with.  <br /></td></tr>
+<tr class="separator:a54164d8d143ef786cce570a2d897d7fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3" id="r_a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3">moveToThread</a> (<a class="el" href="classEventLoop.html">EventLoop</a> *<a class="el" href="classList.html">loop</a>)</td></tr>
+<tr class="memdesc:a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Changes the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> affinity of this object.  <br /></td></tr>
+<tr class="separator:a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fabc995337aed5634ed041bf7dcd989" id="r_a2fabc995337aed5634ed041bf7dcd989"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a2fabc995337aed5634ed041bf7dcd989">startTimer</a> (<a class="el" href="classList.html">unsigned</a> int intervalMs, <a class="el" href="classList.html">bool</a> singleShot=<a class="el" href="classList.html">false</a>)</td></tr>
+<tr class="memdesc:a2fabc995337aed5634ed041bf7dcd989"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts a timer on this object's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>.  <br /></td></tr>
+<tr class="separator:a2fabc995337aed5634ed041bf7dcd989"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b92022c1cad139382f3681a0e1c405a" id="r_a1b92022c1cad139382f3681a0e1c405a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a1b92022c1cad139382f3681a0e1c405a">stopTimer</a> (int timerId)</td></tr>
+<tr class="memdesc:a1b92022c1cad139382f3681a0e1c405a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops a timer previously started with <a class="el" href="classObjectBase.html#a2fabc995337aed5634ed041bf7dcd989" title="Starts a timer on this object&#39;s EventLoop.">startTimer()</a>.  <br /></td></tr>
+<tr class="separator:a1b92022c1cad139382f3681a0e1c405a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6534c4f0e360c2ec0a4fb87e8b28f2b" id="r_ad6534c4f0e360c2ec0a4fb87e8b28f2b"><td class="memTemplParams" colspan="2"><a id="ad6534c4f0e360c2ec0a4fb87e8b28f2b" name="ad6534c4f0e360c2ec0a4fb87e8b28f2b"></a>
+template&lt;typename... Args&gt; </td></tr>
+<tr class="memitem:ad6534c4f0e360c2ec0a4fb87e8b28f2b"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a> <a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
+<tr class="separator:ad6534c4f0e360c2ec0a4fb87e8b28f2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -215,12 +233,21 @@ Protected Member Functions</h2></td></tr>
 <a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>signalSender</b> ()</td></tr>
 <tr class="memdesc:ac12565258ee428cb8691cb6584e1d54e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> that emitted the signal currently being handled. <br /></td></tr>
 <tr class="separator:ac12565258ee428cb8691cb6584e1d54e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3d2ac9f3b27592045bfc0226d2a5e4f" id="r_aa3d2ac9f3b27592045bfc0226d2a5e4f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f">event</a> (<a class="el" href="classEvent.html">Event</a> *<a class="el" href="classList.html">e</a>)</td></tr>
+<tr class="memdesc:aa3d2ac9f3b27592045bfc0226d2a5e4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> to deliver events to this object.  <br /></td></tr>
+<tr class="separator:aa3d2ac9f3b27592045bfc0226d2a5e4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ee4d94ac818e49a506f7fa4be8cc2f7" id="r_a3ee4d94ac818e49a506f7fa4be8cc2f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a3ee4d94ac818e49a506f7fa4be8cc2f7">timerEvent</a> (<a class="el" href="classTimerEvent.html">TimerEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
+<tr class="memdesc:a3ee4d94ac818e49a506f7fa4be8cc2f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when a timer fires for this object.  <br /></td></tr>
+<tr class="separator:a3ee4d94ac818e49a506f7fa4be8cc2f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
 <tr class="memitem:a4031edc88f396bc2a83ca3d9d3d234a6" id="r_a4031edc88f396bc2a83ca3d9d3d234a6"><td class="memItemLeft" align="right" valign="top"><a id="a4031edc88f396bc2a83ca3d9d3d234a6" name="a4031edc88f396bc2a83ca3d9d3d234a6"></a>
 <a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ObjectBasePtr</b></td></tr>
 <tr class="separator:a4031edc88f396bc2a83ca3d9d3d234a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca25e36665670fcb6909dd8ab04b1d05" id="r_aca25e36665670fcb6909dd8ab04b1d05"><td class="memItemLeft" align="right" valign="top"><a id="aca25e36665670fcb6909dd8ab04b1d05" name="aca25e36665670fcb6909dd8ab04b1d05"></a>
+<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EventLoop</b></td></tr>
+<tr class="separator:aca25e36665670fcb6909dd8ab04b1d05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base object for promeki. </p>
@@ -236,9 +263,6 @@ Friends</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">ObjectBase::ObjectBase </td>
@@ -248,11 +272,6 @@ Friends</h2></td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Default <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> constructor. </p>
@@ -292,6 +311,96 @@ Friends</h2></td></tr>
 
 <p>Returns a list of children of this object. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of children </dd></dl>
+
+</div>
+</div>
+<a id="aa3d2ac9f3b27592045bfc0226d2a5e4f" name="aa3d2ac9f3b27592045bfc0226d2a5e4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3d2ac9f3b27592045bfc0226d2a5e4f">&#9670;&#160;</a></span>event()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a> ObjectBase::event </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEvent.html">Event</a> *&#160;</td>
+          <td class="paramname"><em>e</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Called by <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> to deliver events to this object. </p>
+<p>The default implementation dispatches <a class="el" href="classTimerEvent.html" title="Event delivered when a timer fires.">TimerEvent</a> to <a class="el" href="classObjectBase.html#a3ee4d94ac818e49a506f7fa4be8cc2f7" title="Called when a timer fires for this object.">timerEvent()</a> and accepts it.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">e</td><td>The event to handle. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a54164d8d143ef786cce570a2d897d7fb" name="a54164d8d143ef786cce570a2d897d7fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54164d8d143ef786cce570a2d897d7fb">&#9670;&#160;</a></span>eventLoop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEventLoop.html">EventLoop</a> * ObjectBase::eventLoop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> this object is affiliated with. </p>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> set at construction time, or nullptr. </dd></dl>
+
+</div>
+</div>
+<a id="a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3" name="a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3">&#9670;&#160;</a></span>moveToThread()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> ObjectBase::moveToThread </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEventLoop.html">EventLoop</a> *&#160;</td>
+          <td class="paramname"><em>loop</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Changes the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> affinity of this object. </p>
+<p>Must be called from the object's current thread. The object must have no parent. Children are moved recursively. Asserts on violation of either constraint.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">loop</td><td>The new <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> to affiliate with. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -366,6 +475,106 @@ template&lt;typename... Args&gt; </div>
 
 </div>
 </div>
+<a id="a2fabc995337aed5634ed041bf7dcd989" name="a2fabc995337aed5634ed041bf7dcd989"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2fabc995337aed5634ed041bf7dcd989">&#9670;&#160;</a></span>startTimer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ObjectBase::startTimer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramname"><em>intervalMs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>singleShot</em> = <code><a class="el" href="classList.html">false</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Starts a timer on this object's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>. </p>
+<p><a class="el" href="classTimerEvent.html" title="Event delivered when a timer fires.">TimerEvent</a> will be delivered to this object's <a class="el" href="classObjectBase.html#a3ee4d94ac818e49a506f7fa4be8cc2f7" title="Called when a timer fires for this object.">timerEvent()</a> method each time the timer fires.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">intervalMs</td><td>The timer interval in milliseconds. </td></tr>
+    <tr><td class="paramname">singleShot</td><td>If true, the timer fires once and is removed. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The timer ID, or -1 if no <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> is available. </dd></dl>
+
+</div>
+</div>
+<a id="a1b92022c1cad139382f3681a0e1c405a" name="a1b92022c1cad139382f3681a0e1c405a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b92022c1cad139382f3681a0e1c405a">&#9670;&#160;</a></span>stopTimer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> ObjectBase::stopTimer </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>timerId</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Stops a timer previously started with <a class="el" href="classObjectBase.html#a2fabc995337aed5634ed041bf7dcd989" title="Starts a timer on this object&#39;s EventLoop.">startTimer()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">timerId</td><td>The timer ID returned by <a class="el" href="classObjectBase.html#a2fabc995337aed5634ed041bf7dcd989" title="Starts a timer on this object&#39;s EventLoop.">startTimer()</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a3ee4d94ac818e49a506f7fa4be8cc2f7" name="a3ee4d94ac818e49a506f7fa4be8cc2f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ee4d94ac818e49a506f7fa4be8cc2f7">&#9670;&#160;</a></span>timerEvent()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a> ObjectBase::timerEvent </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTimerEvent.html">TimerEvent</a> *&#160;</td>
+          <td class="paramname"><em>e</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Called when a timer fires for this object. </p>
+<p>Override this in derived classes to handle timer events. The default implementation does nothing.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">e</td><td>The timer event. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="a680b86576aa0a9679bb74ce178b2b93e" name="a680b86576aa0a9679bb74ce178b2b93e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a680b86576aa0a9679bb74ce178b2b93e">&#9670;&#160;</a></span>aboutToDestroySignalName</h2>
@@ -403,7 +612,7 @@ template&lt;typename... Args&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classObjectBase.html">ObjectBase</a></li>
-    <li class="footer">Generated on 2026-03-10 21:15:50 from commit b8709bb (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
   </ul>
 </div>
 </body>

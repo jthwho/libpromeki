@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['list_0',['list',['../deprecated.html',1,'Deprecated List'],['../signal.html',1,'Signal List']]]
+  ['data_20object_20categories_0',['Data Object Categories',['../dataobjects.html',1,'']]],
+  ['deprecated_20list_1',['Deprecated List',['../deprecated.html',1,'']]]
 ];

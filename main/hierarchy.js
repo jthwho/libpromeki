@@ -29,6 +29,10 @@ var hierarchy =
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
     [ "DateTime", "classDateTime.html", null ],
     [ "Error", "classError.html", null ],
+    [ "Event", "classEvent.html", [
+      [ "TimerEvent", "classTimerEvent.html", null ]
+    ] ],
+    [ "EventLoop", "classEventLoop.html", null ],
     [ "std::false_type", null, [
       [ "IsSharedObject< T, typename >", "structIsSharedObject.html", null ]
     ] ],
@@ -68,6 +72,9 @@ var hierarchy =
     [ "List< String >", "classList.html", [
       [ "StringList", "classStringList.html", null ]
     ] ],
+    [ "List< TimerInfo >", "classList.html", null ],
+    [ "Logger::LogEntry", "structLogger_1_1LogEntry.html", null ],
+    [ "Logger::LogFormat", "structLogger_1_1LogFormat.html", null ],
     [ "Logger", "classLogger.html", null ],
     [ "Map< K, V >", "classMap.html", null ],
     [ "Map< ID, VariantImpl >", "classMap.html", null ],
@@ -90,7 +97,8 @@ var hierarchy =
     [ "NumName", "classNumName.html", null ],
     [ "NumNameSeq", "classNumNameSeq.html", null ],
     [ "ObjectBase", "classObjectBase.html", [
-      [ "AudioBlock", "classAudioBlock.html", null ]
+      [ "AudioBlock", "classAudioBlock.html", null ],
+      [ "Thread", "classThread.html", null ]
     ] ],
     [ "ObjectBasePtr", "classObjectBasePtr.html", null ],
     [ "MemSpace::Ops", "structMemSpace_1_1Ops.html", null ],
@@ -106,6 +114,7 @@ var hierarchy =
     [ "Point< T, N >", "classPoint.html", null ],
     [ "Queue< T >", "classQueue.html", null ],
     [ "Queue< Command >", "classQueue.html", null ],
+    [ "Queue< Item >", "classQueue.html", null ],
     [ "Rational< T >", "classRational.html", null ],
     [ "Rational< unsigned int >", "classRational.html", null ],
     [ "RefCount", "classRefCount.html", null ],

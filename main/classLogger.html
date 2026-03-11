@@ -114,6 +114,15 @@ $(document).ready(function(){initNavTree('classLogger.html',''); initResizable()
 
 <p><code>#include &lt;<a class="el" href="logger_8h_source.html">logger.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLogger_1_1LogEntry.html">LogEntry</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A single log entry.  <a href="structLogger_1_1LogEntry.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLogger_1_1LogFormat.html">LogFormat</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Context passed to formatters, combining entry data with resolved thread name.  <a href="structLogger_1_1LogFormat.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:ac744681e23720966b5f430ec2060da36" id="r_ac744681e23720966b5f430ec2060da36"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#ac744681e23720966b5f430ec2060da36">LogLevel</a> { <br />
@@ -127,9 +136,9 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ac744681e23720966b5f430ec2060da36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Severity levels for log messages.  <a href="classLogger.html#ac744681e23720966b5f430ec2060da36">More...</a><br /></td></tr>
 <tr class="separator:ac744681e23720966b5f430ec2060da36"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a065685e4ef268787fdd3d59dcdf1cac4" id="r_a065685e4ef268787fdd3d59dcdf1cac4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a> = std::function&lt; <a class="el" href="classString.html">String</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classDateTime.html">DateTime</a> &amp;ts, <a class="el" href="classLogger.html#ac744681e23720966b5f430ec2060da36">LogLevel</a> <a class="el" href="classLogger.html#a39e0f0acc067c89f56c970ec521651a2">level</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *file, int line, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg)&gt;</td></tr>
-<tr class="memdesc:a065685e4ef268787fdd3d59dcdf1cac4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for formatting log messages.  <br /></td></tr>
-<tr class="separator:a065685e4ef268787fdd3d59dcdf1cac4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee9ceae1afe64a42d02f7e3fd6278991" id="r_aee9ceae1afe64a42d02f7e3fd6278991"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a> = std::function&lt; <a class="el" href="classString.html">String</a>(<a class="el" href="classList.html">const</a> <a class="el" href="structLogger_1_1LogFormat.html">LogFormat</a> &amp;<a class="el" href="classList.html">fmt</a>)&gt;</td></tr>
+<tr class="memdesc:aee9ceae1afe64a42d02f7e3fd6278991"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for formatting log messages.  <br /></td></tr>
+<tr class="separator:aee9ceae1afe64a42d02f7e3fd6278991"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -160,17 +169,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a0d9f6da5808b93b0e218c04499438619"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables console (stderr) log output.  <br /></td></tr>
 <tr class="separator:a0d9f6da5808b93b0e218c04499438619"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6a59581ba14ec1d3a8129d3bc6581b1" id="r_ad6a59581ba14ec1d3a8129d3bc6581b1"><td class="memItemLeft" align="right" valign="top"><a id="ad6a59581ba14ec1d3a8129d3bc6581b1" name="ad6a59581ba14ec1d3a8129d3bc6581b1"></a>
-<a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fileFormatter</b> () <a class="el" href="classList.html">const</a></td></tr>
+<a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fileFormatter</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad6a59581ba14ec1d3a8129d3bc6581b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current file log formatter. <br /></td></tr>
 <tr class="separator:ad6a59581ba14ec1d3a8129d3bc6581b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afce10b7d1e38caa52bf569408968dfc8" id="r_afce10b7d1e38caa52bf569408968dfc8"><td class="memItemLeft" align="right" valign="top"><a id="afce10b7d1e38caa52bf569408968dfc8" name="afce10b7d1e38caa52bf569408968dfc8"></a>
-<a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>consoleFormatter</b> () <a class="el" href="classList.html">const</a></td></tr>
+<a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><b>consoleFormatter</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:afce10b7d1e38caa52bf569408968dfc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current console log formatter. <br /></td></tr>
 <tr class="separator:afce10b7d1e38caa52bf569408968dfc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e9b7e1a7ec96e3f4919e6509b5cf8a0" id="r_a7e9b7e1a7ec96e3f4919e6509b5cf8a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a7e9b7e1a7ec96e3f4919e6509b5cf8a0">setFileFormatter</a> (<a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a> formatter)</td></tr>
+<tr class="memitem:a7e9b7e1a7ec96e3f4919e6509b5cf8a0" id="r_a7e9b7e1a7ec96e3f4919e6509b5cf8a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a7e9b7e1a7ec96e3f4919e6509b5cf8a0">setFileFormatter</a> (<a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a> formatter)</td></tr>
 <tr class="memdesc:a7e9b7e1a7ec96e3f4919e6509b5cf8a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a custom formatter for file log output.  <br /></td></tr>
 <tr class="separator:a7e9b7e1a7ec96e3f4919e6509b5cf8a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8bdb095bc42de4845060b26282f2714" id="r_ab8bdb095bc42de4845060b26282f2714"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#ab8bdb095bc42de4845060b26282f2714">setConsoleFormatter</a> (<a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a> formatter)</td></tr>
+<tr class="memitem:ab8bdb095bc42de4845060b26282f2714" id="r_ab8bdb095bc42de4845060b26282f2714"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#ab8bdb095bc42de4845060b26282f2714">setConsoleFormatter</a> (<a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a> formatter)</td></tr>
 <tr class="memdesc:ab8bdb095bc42de4845060b26282f2714"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a custom formatter for console log output.  <br /></td></tr>
 <tr class="separator:ab8bdb095bc42de4845060b26282f2714"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa3991905406a0b29555ed0e9bebcbd3" id="r_aaa3991905406a0b29555ed0e9bebcbd3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#aaa3991905406a0b29555ed0e9bebcbd3">sync</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
@@ -182,13 +191,16 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a2915ff1fbb7e11fdc5258e534451398a" id="r_a2915ff1fbb7e11fdc5258e534451398a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html">Logger</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">defaultLogger</a> ()</td></tr>
 <tr class="memdesc:a2915ff1fbb7e11fdc5258e534451398a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the singleton default <a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a> instance.  <br /></td></tr>
 <tr class="separator:a2915ff1fbb7e11fdc5258e534451398a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af845837cc23651a6a2f8df277544a438" id="r_af845837cc23651a6a2f8df277544a438"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#af845837cc23651a6a2f8df277544a438">levelToString</a> (<a class="el" href="classLogger.html#ac744681e23720966b5f430ec2060da36">LogLevel</a> <a class="el" href="classLogger.html#a39e0f0acc067c89f56c970ec521651a2">level</a>)</td></tr>
-<tr class="memdesc:af845837cc23651a6a2f8df277544a438"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a LogLevel to its string representation.  <br /></td></tr>
-<tr class="separator:af845837cc23651a6a2f8df277544a438"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a620618fb3494f817a2df26c010190d74" id="r_a620618fb3494f817a2df26c010190d74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a620618fb3494f817a2df26c010190d74">defaultFileFormatter</a> ()</td></tr>
+<tr class="memitem:a75dfb8f416885a79a6e8790a7ad7033b" id="r_a75dfb8f416885a79a6e8790a7ad7033b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">char</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a75dfb8f416885a79a6e8790a7ad7033b">levelToChar</a> (<a class="el" href="classLogger.html#ac744681e23720966b5f430ec2060da36">LogLevel</a> <a class="el" href="classLogger.html#a39e0f0acc067c89f56c970ec521651a2">level</a>)</td></tr>
+<tr class="memdesc:a75dfb8f416885a79a6e8790a7ad7033b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a LogLevel to its single character representation.  <br /></td></tr>
+<tr class="separator:a75dfb8f416885a79a6e8790a7ad7033b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c47fa62baee4cfa76840636d486a8c8" id="r_a7c47fa62baee4cfa76840636d486a8c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a7c47fa62baee4cfa76840636d486a8c8">setThreadName</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name)</td></tr>
+<tr class="memdesc:a7c47fa62baee4cfa76840636d486a8c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates the cached thread name used in log output.  <br /></td></tr>
+<tr class="separator:a7c47fa62baee4cfa76840636d486a8c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a620618fb3494f817a2df26c010190d74" id="r_a620618fb3494f817a2df26c010190d74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#a620618fb3494f817a2df26c010190d74">defaultFileFormatter</a> ()</td></tr>
 <tr class="memdesc:a620618fb3494f817a2df26c010190d74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the default file log formatter.  <br /></td></tr>
 <tr class="separator:a620618fb3494f817a2df26c010190d74"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad443dbca4efaa74a4735a7028e1005a4" id="r_ad443dbca4efaa74a4735a7028e1005a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#ad443dbca4efaa74a4735a7028e1005a4">defaultConsoleFormatter</a> ()</td></tr>
+<tr class="memitem:ad443dbca4efaa74a4735a7028e1005a4" id="r_ad443dbca4efaa74a4735a7028e1005a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html#ad443dbca4efaa74a4735a7028e1005a4">defaultConsoleFormatter</a> ()</td></tr>
 <tr class="memdesc:ad443dbca4efaa74a4735a7028e1005a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the default console log formatter.  <br /></td></tr>
 <tr class="separator:ad443dbca4efaa74a4735a7028e1005a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -196,20 +208,20 @@ Static Public Member Functions</h2></td></tr>
 <div class="textblock"><p>Asynchronous thread-safe logging facility. </p>
 <p>All log messages are enqueued and written by a dedicated worker thread. Supports multiple log levels, optional console output, and file logging. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a065685e4ef268787fdd3d59dcdf1cac4" name="a065685e4ef268787fdd3d59dcdf1cac4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a065685e4ef268787fdd3d59dcdf1cac4">&#9670;&#160;</a></span>LogFormatter</h2>
+<a id="aee9ceae1afe64a42d02f7e3fd6278991" name="aee9ceae1afe64a42d02f7e3fd6278991"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee9ceae1afe64a42d02f7e3fd6278991">&#9670;&#160;</a></span>LogFormatter</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">Logger::LogFormatter</a> =  std::function&lt;<a class="el" href="classString.html">String</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classDateTime.html">DateTime</a> &amp;ts, <a class="el" href="classLogger.html#ac744681e23720966b5f430ec2060da36">LogLevel</a> <a class="el" href="classLogger.html#a39e0f0acc067c89f56c970ec521651a2">level</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *file, int line, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;msg)&gt;</td>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">Logger::LogFormatter</a> =  std::function&lt;<a class="el" href="classString.html">String</a>(<a class="el" href="classList.html">const</a> <a class="el" href="structLogger_1_1LogFormat.html">LogFormat</a> &amp;<a class="el" href="classList.html">fmt</a>)&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Function type for formatting log messages. </p>
-<p>A formatter receives the timestamp, log level, source file, source line, and message text, and returns a fully formatted string ready for output. </p>
+<p>A formatter receives a <a class="el" href="structLogger_1_1LogFormat.html" title="Context passed to formatters, combining entry data with resolved thread name.">LogFormat</a> and returns a fully formatted string ready for output. </p>
 
 </div>
 </div>
@@ -253,7 +265,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a> Logger::defaultConsoleFormatter </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a> Logger::defaultConsoleFormatter </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -281,7 +293,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a> Logger::defaultFileFormatter </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a> Logger::defaultFileFormatter </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -355,8 +367,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="af845837cc23651a6a2f8df277544a438" name="af845837cc23651a6a2f8df277544a438"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af845837cc23651a6a2f8df277544a438">&#9670;&#160;</a></span>levelToString()</h2>
+<a id="a75dfb8f416885a79a6e8790a7ad7033b" name="a75dfb8f416885a79a6e8790a7ad7033b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a75dfb8f416885a79a6e8790a7ad7033b">&#9670;&#160;</a></span>levelToChar()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -365,7 +377,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> * Logger::levelToString </td>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">char</a> Logger::levelToChar </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classLogger.html#ac744681e23720966b5f430ec2060da36">LogLevel</a>&#160;</td>
           <td class="paramname"><em>level</em></td><td>)</td>
@@ -379,14 +391,14 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Converts a LogLevel to its string representation. </p>
+<p>Converts a LogLevel to its single character representation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">level</td><td>The log level to convert. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A C string such as "DEBUG", "INFO", "WARN", or "ERR". </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A character such as D (debug), W (warning), I (info), etc </dd></dl>
 
 </div>
 </div>
@@ -395,9 +407,6 @@ Static Public Member Functions</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> Logger::log </td>
@@ -429,14 +438,10 @@ Static Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Enqueues a single log message. </p>
+<p>Captures the calling thread's native ID and name automatically.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">loglevel</td><td>The severity level of the message. </td></tr>
@@ -454,9 +459,6 @@ Static Public Member Functions</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> Logger::log </td>
@@ -488,14 +490,10 @@ Static Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Enqueues multiple log messages with the same timestamp. </p>
+<p>Captures the calling thread's native ID and name automatically.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">loglevel</td><td>The severity level of the messages. </td></tr>
@@ -520,7 +518,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> Logger::setConsoleFormatter </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a>&#160;</td>
           <td class="paramname"><em>formatter</em></td><td>)</td>
           <td></td>
         </tr>
@@ -588,7 +586,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">void</a> Logger::setFileFormatter </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4">LogFormatter</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991">LogFormatter</a>&#160;</td>
           <td class="paramname"><em>formatter</em></td><td>)</td>
           <td></td>
         </tr>
@@ -678,6 +676,41 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a7c47fa62baee4cfa76840636d486a8c8" name="a7c47fa62baee4cfa76840636d486a8c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c47fa62baee4cfa76840636d486a8c8">&#9670;&#160;</a></span>setThreadName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> Logger::setThreadName </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates the cached thread name used in log output. </p>
+<p>The logger caches the calling thread's name on first use. Call this to update the cached name if the thread is renamed after its first log message. <a class="el" href="classThread.html#af20756cccbcf948efd7ae2dce1804483" title="Sets the name of this thread.">Thread::setName()</a> calls this automatically.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The new thread name. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="aaa3991905406a0b29555ed0e9bebcbd3" name="aaa3991905406a0b29555ed0e9bebcbd3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aaa3991905406a0b29555ed0e9bebcbd3">&#9670;&#160;</a></span>sync()</h2>
 
@@ -723,7 +756,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLogger.html">Logger</a></li>
-    <li class="footer">Generated on 2026-03-10 21:15:50 from commit b8709bb (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
   </ul>
 </div>
 </body>

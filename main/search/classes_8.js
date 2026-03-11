@@ -18,5 +18,8 @@ var searchData=
   ['list_3c_20slotitem_20_3e_15',['List&lt; SlotItem &gt;',['../classList.html',1,'']]],
   ['list_3c_20slotmeta_20_2a_20_3e_16',['List&lt; SlotMeta * &gt;',['../classList.html',1,'']]],
   ['list_3c_20string_20_3e_17',['List&lt; String &gt;',['../classList.html',1,'']]],
-  ['logger_18',['Logger',['../classLogger.html',1,'']]]
+  ['list_3c_20timerinfo_20_3e_18',['List&lt; TimerInfo &gt;',['../classList.html',1,'']]],
+  ['logentry_19',['LogEntry',['../structLogger_1_1LogEntry.html',1,'Logger']]],
+  ['logformat_20',['LogFormat',['../structLogger_1_1LogFormat.html',1,'Logger']]],
+  ['logger_21',['Logger',['../classLogger.html',1,'']]]
 ];

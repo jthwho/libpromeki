@@ -1,7 +1,9 @@
 <map id="include/promeki/slot.h" name="include/promeki/slot.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="29,5,196,31"/>
-<area shape="rect" id="Node000002" href="$objectbase_8h.html" title=" " alt="" coords="5,79,220,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,44,115,79,110,79,110,44"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="141,5,308,31"/>
+<area shape="rect" id="Node000002" href="$objectbase_8h.html" title=" " alt="" coords="117,79,332,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="227,44,227,79,222,79,222,44"/>
 <area shape="rect" id="Node000003" href="$audioblock_8h.html" title=" " alt="" coords="5,152,220,177"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="115,118,115,152,110,152,110,118"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="196,114,132,154,130,150,193,109"/>
+<area shape="rect" id="Node000004" href="$thread_8h.html" title=" " alt="" coords="244,152,429,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="256,109,320,150,317,154,253,114"/>
 </map>

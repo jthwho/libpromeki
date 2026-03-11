@@ -1,0 +1,7 @@
+<map id="Logger::LogEntry" name="Logger::LogEntry">
+<area shape="rect" id="Node000001" title="A single log entry." alt="" coords="31,93,162,119"/>
+<area shape="rect" id="Node000002" href="$classDateTime.html" title="Wall&#45;clock date and time based on std::chrono::system_clock." alt="" coords="5,5,92,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="64,41,92,91,88,94,59,44"/>
+<area shape="rect" id="Node000003" href="$classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="116,5,176,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="135,44,106,94,101,91,130,41"/>
+</map>

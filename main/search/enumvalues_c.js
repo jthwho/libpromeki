@@ -8,5 +8,6 @@ var searchData=
   ['rec709_5',['Rec709',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfda1ddfca3f4f42af872d549b764794245a',1,'ColorSpace']]],
   ['rgb10_6',['RGB10',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaf41e5ae2f78903e0d50b4d1a06471dc7',1,'PixelFormat']]],
   ['rgb8_7',['RGB8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda212b83ddb6e0d8f52e44e607e6d909ed',1,'PixelFormat']]],
-  ['rgba8_8',['RGBA8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd',1,'PixelFormat']]]
+  ['rgba8_8',['RGBA8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd',1,'PixelFormat']]],
+  ['roundrobin_9',['RoundRobin',['../thread_8h.html#a5f6319f9bba46b51ebc61f9c0e4a896da91a63281bd2e647fe3b92d1d22cd3380',1,'thread.h']]]
 ];

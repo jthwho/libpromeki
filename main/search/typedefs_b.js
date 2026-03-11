@@ -1,11 +1,7 @@
 var searchData=
 [
-  ['sha1digest_0',['SHA1Digest',['../sha1_8h.html#a679f355e2338a31f1e6c60bf4e3c6f9a',1,'sha1.h']]],
-  ['size2d_1',['Size2D',['../size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0',1,'size2d.h']]],
-  ['size2dd_2',['Size2Dd',['../size2d_8h.html#a1b2b333088ab08fe0c9bf23c8635541c',1,'size2d.h']]],
-  ['size2df_3',['Size2Df',['../size2d_8h.html#a8660e7bef2d06082e79d7861b48f3aaa',1,'size2d.h']]],
-  ['sizefunc_4',['SizeFunc',['../classPixelFormat.html#ae2abaf247844abac2061014a191b0dee',1,'PixelFormat']]],
-  ['slotvariantfunc_5',['SlotVariantFunc',['../classObjectBase.html#aa5b71229762e66678aa59aaa21ecd7af',1,'ObjectBase']]],
-  ['status_6',['Status',['../classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684',1,'FileInfo']]],
-  ['stridefunc_7',['StrideFunc',['../classPixelFormat.html#ab6bf7331bfc125c11f3be56d3ad5ce39',1,'PixelFormat']]]
+  ['rationaltype_0',['RationalType',['../classFrameRate.html#ad06e0a3a69109ae17dde81e2a59afd8b',1,'FrameRate']]],
+  ['removeconstandref_1',['removeconstandref',['../classSignal.html#a4f4798f3ef8ca6b9e0c74831e2057250',1,'Signal::RemoveConstAndRef'],['../classSlot.html#a6f03f41ff89a99870b1561cdb7de2bb3',1,'Slot::RemoveConstAndRef']]],
+  ['reviterator_2',['reviterator',['../classList.html#a8ac55459deafa266691b371e7d078eb7',1,'List::RevIterator'],['../classMap.html#afff69f3db75321ee2b888a6f1b406546',1,'Map::RevIterator'],['../classSet.html#ac6b5c730e52fd960c8eb622dde83f1fc',1,'Set::RevIterator'],['../classString.html#ae43545b4e6cb48e06bed9cb56ed87ac4',1,'String::RevIterator']]],
+  ['rowdatatype_3',['RowDataType',['../classMatrix.html#ace4e79c0ada1dbad8a0673ba463b38f2',1,'Matrix']]]
 ];

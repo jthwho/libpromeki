@@ -5,7 +5,7 @@ var searchData=
   ['length_2',['length',['../classString.html#ad3b888edbfb3bab21d4bae4663d2211a',1,'String::length()'],['../classNumNameSeq.html#a7518a599980b9a6aae056cf90a076dd8',1,'NumNameSeq::length()']]],
   ['lerp_3',['lerp',['../classArray.html#aba9f9b3a4c6c5c1a9f6e022e13365d2a',1,'Array::lerp()'],['../classCIEPoint.html#adc2df790aa8c46ed8c7e38e48924c348',1,'CIEPoint::lerp()'],['../classXYZColor.html#a2aad808d2583054783fe8ae945354a23',1,'XYZColor::lerp()']]],
   ['level_4',['level',['../classLogger.html#a39e0f0acc067c89f56c970ec521651a2',1,'Logger']]],
-  ['leveltostring_5',['levelToString',['../classLogger.html#af845837cc23651a6a2f8df277544a438',1,'Logger']]],
+  ['leveltochar_5',['levelToChar',['../classLogger.html#a75dfb8f416885a79a6e8790a7ad7033b',1,'Logger']]],
   ['line_6',['line',['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()'],['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line(const Pt &amp;&amp;s, const Pt &amp;&amp;e)'],['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()=default']]],
   ['linealign_7',['lineAlign',['../classImageDesc.html#a6d2eb3160c87fda340202a5c964b344c',1,'ImageDesc']]],
   ['linepad_8',['linePad',['../classImageDesc.html#ad95611a6f599daf285cbf4d5035e6495',1,'ImageDesc']]],

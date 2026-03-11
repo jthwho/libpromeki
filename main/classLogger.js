@@ -1,6 +1,8 @@
 var classLogger =
 [
-    [ "LogFormatter", "classLogger.html#a065685e4ef268787fdd3d59dcdf1cac4", null ],
+    [ "LogEntry", "structLogger_1_1LogEntry.html", null ],
+    [ "LogFormat", "structLogger_1_1LogFormat.html", null ],
+    [ "LogFormatter", "classLogger.html#aee9ceae1afe64a42d02f7e3fd6278991", null ],
     [ "LogLevel", "classLogger.html#ac744681e23720966b5f430ec2060da36", [
       [ "Force", "classLogger.html#ac744681e23720966b5f430ec2060da36a1e8cecc45c0f0451b38807bf09181f57", null ],
       [ "Debug", "classLogger.html#ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1", null ],

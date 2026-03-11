@@ -1,15 +1,11 @@
 var searchData=
 [
-  ['value_0',['value',['../classFourCC.html#a6426d7629ae983c8775ed4896807ea12',1,'FourCC::value()'],['../classMap.html#a87d4e106ab7c114020cc43e1736b1429',1,'Map::value()'],['../classMidiNote.html#a8f2ff33c25f82ef3b61715db536fb051',1,'MidiNote::value()'],['../classRefCount.html#af1aa42505738cd8f8dc2ca1ec2674c97',1,'RefCount::value()'],['../classTimeStamp.html#addfbdefd6881c31b2b9974e46469921e',1,'TimeStamp::value()'],['../classDateTime.html#a449650d3e4e8b9897dbc4470d55f4c66',1,'DateTime::value()']]],
-  ['valueisarray_1',['valueisarray',['../classJsonObject.html#a6f39a01e06a7e9c7f2a4288d2df4860b',1,'JsonObject::valueIsArray()'],['../classJsonArray.html#acf8ef3383855b2f7f196a49dadead2bb',1,'JsonArray::valueIsArray()']]],
-  ['valueisnull_2',['valueisnull',['../classJsonObject.html#a6ad6874a99f1fd32f85b033ca3c77985',1,'JsonObject::valueIsNull()'],['../classJsonArray.html#a032e5c1c4c81bac224141391f596fe7a',1,'JsonArray::valueIsNull(int index) const']]],
-  ['valueisobject_3',['valueisobject',['../classJsonArray.html#a712cbff2f63e8b53c171c30c840efa6d',1,'JsonArray::valueIsObject()'],['../classJsonObject.html#a2b6632071ac1c6a024d209b3e2a88f7c',1,'JsonObject::valueIsObject()']]],
-  ['values_4',['values',['../classMap.html#a21cb43b9b242923d9c8c2b4f3d613760',1,'Map']]],
-  ['variantimpl_5',['variantimpl',['../classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868',1,'VariantImpl::VariantImpl()=default'],['../classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3',1,'VariantImpl::VariantImpl(const T &amp;value)']]],
-  ['vectortransform_6',['vectorTransform',['../classMatrix3x3.html#a1b5b4dd26786c6dc630a0051bcb13e0a',1,'Matrix3x3']]],
-  ['version_7',['version',['../classUUID.html#a07c51b3f1a0766c42a46bf73cbbb903f',1,'UUID']]],
-  ['vibrato_8',['vibrato',['../classMusicalNote.html#a3fe9291cbafc5eb949c31d36755a0e97',1,'MusicalNote']]],
-  ['vibratorate_9',['vibratoRate',['../classMusicalNote.html#a6bfacc2d894969d74d2bdfde5c24884f',1,'MusicalNote']]],
-  ['videodesc_10',['VideoDesc',['../classVideoDesc.html#ac333cd3d3138c736b09ca741062d1324',1,'VideoDesc']]],
-  ['vtcformat_11',['vtcformat',['../classTimecode_1_1Mode.html#aa0a65217591cda81646bca6edca2aacd',1,'Timecode::Mode::vtcFormat()'],['../classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b',1,'Timecode::vtcFormat()']]]
+  ['unique_0',['unique',['../classList.html#ab12e7189bb986c82f8e38074dd204687',1,'List']]],
+  ['update_1',['update',['../classTimeStamp.html#a783f8a3e871bff2006483045bbbbe702',1,'TimeStamp']]],
+  ['updatesetpoint_2',['updateSetPoint',['../classPIDController.html#a036a4a6bed5d47e7c38e1c876ebb4108',1,'PIDController']]],
+  ['updatestatus_3',['updateStatus',['../classFileInfo.html#a1715dc819cef7c02038d06682c8e9220',1,'FileInfo']]],
+  ['upperbound_4',['upperbound',['../classSet.html#aef6f31bea55e3e2fd6e4bf09ab17a7d5',1,'Set::upperBound(const T &amp;value)'],['../classSet.html#ab334a07f4af693ab65490b7e293dee45',1,'Set::upperBound(const T &amp;value) const']]],
+  ['usealternatescreenbuffer_5',['useAlternateScreenBuffer',['../classAnsiStream.html#aa3b450f9b8a9de01d8b56f4d9077b525',1,'AnsiStream']]],
+  ['usemainscreenbuffer_6',['useMainScreenBuffer',['../classAnsiStream.html#a891387d134fda19dc9a927bc2eef8f02',1,'AnsiStream']]],
+  ['uuid_7',['uuid',['../classUUID.html#a56b6dfa8d38418093502ad169a814dfb',1,'UUID::UUID()'],['../classUUID.html#aee004a2b1ee415b72cdb2845a09e43c4',1,'UUID::UUID(const UUID &amp;u)'],['../classUUID.html#aaafc53f2d2f31f85c078031b1a426121',1,'UUID::UUID(const UUID &amp;&amp;u)'],['../classUUID.html#a34bc4b44a96998f26ba21a74ca528033',1,'UUID::UUID(const DataFormat &amp;val)'],['../classUUID.html#af8be632b28e561206cbd8da97e73038e',1,'UUID::UUID(const DataFormat &amp;&amp;val)'],['../classUUID.html#a0d5065024feea1291fe5b492b39116f0',1,'UUID::UUID(const char *str)'],['../classUUID.html#a2edd75cfc5b7e59b3d8fe57cea508155',1,'UUID::UUID(const String &amp;str)']]]
 ];

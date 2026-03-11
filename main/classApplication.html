@@ -152,6 +152,12 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a9dc152f89baef986e9129e3efdf9f7db" id="r_a9dc152f89baef986e9129e3efdf9f7db"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">setAppName</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name)</td></tr>
 <tr class="memdesc:a9dc152f89baef986e9129e3efdf9f7db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the application name used for <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> v3/v5 generation.  <br /></td></tr>
 <tr class="separator:a9dc152f89baef986e9129e3efdf9f7db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af166e28a13ff8b21a6259cb406d5d596" id="r_af166e28a13ff8b21a6259cb406d5d596"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classThread.html">Thread</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#af166e28a13ff8b21a6259cb406d5d596">mainThread</a> ()</td></tr>
+<tr class="memdesc:af166e28a13ff8b21a6259cb406d5d596"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> object for the main (application) thread.  <br /></td></tr>
+<tr class="separator:af166e28a13ff8b21a6259cb406d5d596"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91441b3fc11ca0e6b342a11a247b60cd" id="r_a91441b3fc11ca0e6b342a11a247b60cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classEventLoop.html">EventLoop</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a91441b3fc11ca0e6b342a11a247b60cd">mainEventLoop</a> ()</td></tr>
+<tr class="memdesc:a91441b3fc11ca0e6b342a11a247b60cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> for the main thread.  <br /></td></tr>
+<tr class="separator:a91441b3fc11ca0e6b342a11a247b60cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-wide state for the promeki library. </p>
@@ -162,7 +168,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="line">        <a class="code hl_function" href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">Application::setAppName</a>(<span class="stringliteral">&quot;myapp&quot;</span>);</div>
 <div class="line">        <span class="comment">// ...</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:40</div></div>
+<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:45</div></div>
 <div class="ttc" id="aclassApplication_html_a9dc152f89baef986e9129e3efdf9f7db"><div class="ttname"><a href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">Application::setAppName</a></div><div class="ttdeci">static void setAppName(const String &amp;name)</div><div class="ttdoc">Sets the application name used for UUID v3/v5 generation.</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:28</div></div>
 </div><!-- fragment --><p>If no instance is created, the static accessors operate on default-constructed internal state. </p>
@@ -290,6 +296,62 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a91441b3fc11ca0e6b342a11a247b60cd" name="a91441b3fc11ca0e6b342a11a247b60cd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91441b3fc11ca0e6b342a11a247b60cd">&#9670;&#160;</a></span>mainEventLoop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classEventLoop.html">EventLoop</a> * Application::mainEventLoop </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> for the main thread. </p>
+<dl class="section return"><dt>Returns</dt><dd>The main thread's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a>, or nullptr if the user hasn't created one yet. </dd></dl>
+
+</div>
+</div>
+<a id="af166e28a13ff8b21a6259cb406d5d596" name="af166e28a13ff8b21a6259cb406d5d596"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af166e28a13ff8b21a6259cb406d5d596">&#9670;&#160;</a></span>mainThread()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classThread.html">Thread</a> * Application::mainThread </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> object for the main (application) thread. </p>
+<dl class="section return"><dt>Returns</dt><dd>The main thread, or nullptr if no <a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> was constructed. </dd></dl>
+
+</div>
+</div>
 <a id="a9dc152f89baef986e9129e3efdf9f7db" name="a9dc152f89baef986e9129e3efdf9f7db"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9dc152f89baef986e9129e3efdf9f7db">&#9670;&#160;</a></span>setAppName()</h2>
 
@@ -368,7 +430,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classApplication.html">Application</a></li>
-    <li class="footer">Generated on 2026-03-10 21:15:50 from commit b8709bb (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['ycbcr_5frec709_5fto_5frgb_0',['YCbCr_Rec709_to_RGB',['../colorspaceconverter_8h.html#af42fbc5811282d09c16151b8eed49c86',1,'colorspaceconverter.h']]]
+  ['xy_0',['xy',['../structCIEWavelength.html#a87a39ffa915e956b8d465ebcd8889ff3',1,'CIEWavelength']]],
+  ['xyz_1',['xyz',['../structCIEWavelength.html#aa6451561b56aa0b21f5dd7260df4587b',1,'CIEWavelength']]]
 ];

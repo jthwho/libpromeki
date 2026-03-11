@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sampling_0',['sampling',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b',1,'PixelFormat::Sampling'],['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b',1,'PixelFormat::Sampling']]]
+  ['processeventsflag_0',['ProcessEventsFlag',['../classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9e',1,'EventLoop']]]
 ];

@@ -19,7 +19,7 @@ var searchData=
   ['fourcclist_16',['fourccList',['../classPixelFormat.html#ae6835d0398ae1c35395086e1d2665c3d',1,'PixelFormat']]],
   ['fps_17',['fps',['../classTimecode_1_1Mode.html#aeb5de2750a78b32809f287b670b7f4f3',1,'Timecode::Mode::fps()'],['../classTimecode.html#ad2f25371bfd81d5eb9ad5c6f9fab079a',1,'Timecode::fps() const']]],
   ['frame_18',['frame',['../classTimecode.html#a81399e52bc4208ed12aaeb2cb5bd9341',1,'Timecode::frame()'],['../classFrame.html#af859480e7bdedf343c1ad7d941106f26',1,'Frame::Frame()']]],
-  ['framerate_19',['framerate',['../classFrameRate.html#a6c6c3729ca18931c58a6331f5b08c9cb',1,'FrameRate::FrameRate()=default'],['../classFrameRate.html#abf1342825d478fdf1f6b030052643112',1,'FrameRate::FrameRate(WellKnownRate rate)'],['../classFrameRate.html#ab9edebc2d00f76147153f070093e5f95',1,'FrameRate::FrameRate(const RationalType &amp;r)'],['../classVideoDesc.html#a59b3c7fcf5df7ee289a89e0d1a95b363',1,'VideoDesc::frameRate()']]],
+  ['framerate_19',['framerate',['../classVideoDesc.html#a59b3c7fcf5df7ee289a89e0d1a95b363',1,'VideoDesc::frameRate()'],['../classFrameRate.html#a6c6c3729ca18931c58a6331f5b08c9cb',1,'FrameRate::FrameRate()=default'],['../classFrameRate.html#abf1342825d478fdf1f6b030052643112',1,'FrameRate::FrameRate(WellKnownRate rate)'],['../classFrameRate.html#ab9edebc2d00f76147153f070093e5f95',1,'FrameRate::FrameRate(const RationalType &amp;r)']]],
   ['frames_20',['frames',['../classAudio.html#a88072bd5b083d9cd82e18dedfb2fd19c',1,'Audio']]],
   ['free_21',['free',['../classMemPool.html#a1cf029c5443a4ba4099091f4f4209dfd',1,'MemPool']]],
   ['frequency_22',['frequency',['../classMidiNote.html#afca24ddf6afb8c98fa85f5e78d6e7885',1,'MidiNote']]],
