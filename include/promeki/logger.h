@@ -102,10 +102,12 @@ class Logger {
                  * @brief Function type for formatting log messages.
                  *
                  * A formatter receives the timestamp, log level, source file, source line,
-                 * and message text, and returns a fully formatted string ready for output.
+                 * thread ID, thread name, and message text, and returns a fully formatted
+                 * string ready for output.
                  */
                 using LogFormatter = std::function<String(const DateTime &ts, LogLevel level,
-                        const char *file, int line, const String &msg)>;
+                        const char *file, int line, uint64_t threadId,
+                        const String &threadName, const String &msg)>;
 
                 /**
                  * @brief Returns the singleton default Logger instance.
@@ -119,6 +121,18 @@ class Logger {
                  * @return A C string such as "DEBUG", "INFO", "WARN", or "ERR".
                  */
                 static const char *levelToString(LogLevel level);
+
+                /**
+                 * @brief Updates the cached thread name used in log output.
+                 *
+                 * The logger caches the calling thread's name on first use.
+                 * Call this to update the cached name if the thread is
+                 * renamed after its first log message.  Thread::setName()
+                 * calls this automatically.
+                 *
+                 * @param name The new thread name.
+                 */
+                static void setThreadName(const String &name);
 
                 /**
                  * @brief Returns the default file log formatter.
@@ -158,30 +172,29 @@ class Logger {
 
                 /**
                  * @brief Enqueues a single log message.
+                 *
+                 * Captures the calling thread's native ID and name
+                 * automatically.
+                 *
                  * @param loglevel The severity level of the message.
                  * @param file     The source file name (typically __FILE__).
                  * @param line     The source line number (typically __LINE__).
                  * @param msg      The log message text.
                  */
-                void log(LogLevel loglevel, const char *file, int line, const String &msg) {
-                        _queue.emplace(CmdLog{loglevel, file, line, msg, DateTime::now()});
-                }
+                void log(LogLevel loglevel, const char *file, int line, const String &msg);
 
                 /**
                  * @brief Enqueues multiple log messages with the same timestamp.
+                 *
+                 * Captures the calling thread's native ID and name
+                 * automatically.
+                 *
                  * @param loglevel The severity level of the messages.
                  * @param file     The source file name (typically __FILE__).
                  * @param line     The source line number (typically __LINE__).
                  * @param lines    A StringList where each entry becomes a separate log line.
                  */
-                void log(LogLevel loglevel, const char *file, int line, const StringList &lines) {
-                        DateTime ts = DateTime::now();
-                        List<Command> cmdlist;
-                        for(const auto &item : lines) {
-                                cmdlist.pushToBack(CmdLog{loglevel, file, line, item, ts});
-                        }
-                        _queue.push(std::move(cmdlist));
-                }
+                void log(LogLevel loglevel, const char *file, int line, const StringList &lines);
 
                 /**
                  * @brief Sets the log output file.
@@ -280,6 +293,8 @@ class Logger {
                         int             line;
                         String          msg;
                         DateTime        ts;
+                        uint64_t        threadId;
+                        const String    *threadName;
                 };
 
                 struct CmdSetFile {

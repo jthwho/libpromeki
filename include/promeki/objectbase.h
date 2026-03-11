@@ -19,6 +19,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class EventLoop;
+class Event;
+class TimerEvent;
+
 #define PROMEKI_OBJECT(ObjectName, ParentObjectName) \
         public: \
                 static const MetaInfo &metaInfo() { \
@@ -113,6 +117,7 @@ class ObjectBasePtr {
  */
 class ObjectBase {
         friend class ObjectBasePtr;
+        friend class EventLoop;
         public:
                 class SignalMeta;
                 class SlotMeta;
@@ -209,27 +214,8 @@ class ObjectBase {
                  * @brief connects a signal and slot together.
                  * This function assumes both the signal and slot exist in a ObjectBase or derived object
                  */
-                template <typename... Args> static void connect(Signal<Args...> *signal, Slot<Args...> *slot) {
-                        if(signal == nullptr || slot == nullptr) return;
+                template <typename... Args> static void connect(Signal<Args...> *signal, Slot<Args...> *slot);
 
-                        // Connect the slot to the signal.
-                        signal->connect([signal, slot](Args... args) {
-                                ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
-                                ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
-                                ObjectBase *prevSender = slotObject->_signalSender;
-                                slotObject->_signalSender = signalObject;
-                                slot->exec(args...);
-                                slotObject->_signalSender = prevSender;
-                        }, slot->owner());
-
-                        // Register a cleanup
-                        ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
-                        ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
-                        slotObject->_cleanupList += Cleanup(
-                                signalObject, \
-                                [signal](ObjectBase *ptr){ signal->disconnectFromObject(ptr); }
-                        );
-                }
 
                 /** @brief Function type for invoking a slot with a list of Variants. */
                 using SlotVariantFunc = std::function<void(const VariantList &)>;
@@ -243,9 +229,8 @@ class ObjectBase {
                  * is meant to have a parent object, you should pass it in.  This will ensure
                  * that this object is destroyed if the parent is destroyed.
                  */
-                ObjectBase(ObjectBase *p = nullptr) : _parent(p) {
-                        if(_parent != nullptr) _parent->addChild(this);
-                }
+                ObjectBase(ObjectBase *p = nullptr);
+
 
                 /** @brief Destructor. Emits aboutToDestroy, detaches from parent, and destroys children. */
                 virtual ~ObjectBase() {
@@ -311,9 +296,65 @@ class ObjectBase {
                  */
                 PROMEKI_SIGNAL(aboutToDestroy, ObjectBase *);
 
+                /**
+                 * @brief Returns the EventLoop this object is affiliated with.
+                 * @return The EventLoop set at construction time, or nullptr.
+                 */
+                EventLoop *eventLoop() const { return _eventLoop; }
+
+                /**
+                 * @brief Changes the EventLoop affinity of this object.
+                 *
+                 * Must be called from the object's current thread.  The object
+                 * must have no parent.  Children are moved recursively.
+                 * Asserts on violation of either constraint.
+                 *
+                 * @param loop The new EventLoop to affiliate with.
+                 */
+                void moveToThread(EventLoop *loop);
+
+                /**
+                 * @brief Starts a timer on this object's EventLoop.
+                 *
+                 * TimerEvent will be delivered to this object's timerEvent()
+                 * method each time the timer fires.
+                 *
+                 * @param intervalMs The timer interval in milliseconds.
+                 * @param singleShot If true, the timer fires once and is removed.
+                 * @return The timer ID, or -1 if no EventLoop is available.
+                 */
+                int startTimer(unsigned int intervalMs, bool singleShot = false);
+
+                /**
+                 * @brief Stops a timer previously started with startTimer().
+                 * @param timerId The timer ID returned by startTimer().
+                 */
+                void stopTimer(int timerId);
+
         protected:
                 /** @brief Returns the ObjectBase that emitted the signal currently being handled. */
                 ObjectBase *signalSender() { return _signalSender; }
+
+                /**
+                 * @brief Called by EventLoop to deliver events to this object.
+                 *
+                 * The default implementation dispatches TimerEvent to
+                 * timerEvent() and accepts it.
+                 *
+                 * @param e The event to handle.
+                 */
+                virtual void event(Event *e);
+
+                /**
+                 * @brief Called when a timer fires for this object.
+                 *
+                 * Override this in derived classes to handle timer events.
+                 * The default implementation does nothing.
+                 *
+                 * @param e The timer event.
+                 */
+                virtual void timerEvent(TimerEvent *e);
+
 
         private:
                 using CleanupFunc = std::function<void(ObjectBase *)>;
@@ -331,10 +372,13 @@ class ObjectBase {
 
                 ObjectBase                                      *_parent = nullptr;
                 ObjectBase                                      *_signalSender = nullptr;
+                EventLoop                                       *_eventLoop = nullptr;
                 ObjectBaseList                                  _childList;
                 List<SlotItem>                                  _slotList;
                 Map<ObjectBasePtr *, ObjectBasePtr *>           _pointerMap;
                 List<Cleanup>                                   _cleanupList;
+
+                void setEventLoopRecursive(EventLoop *loop);
 
                 void addChild(ObjectBase *c) {
                         _childList += c;
@@ -384,6 +428,57 @@ inline void ObjectBasePtr::unlink() {
         p = nullptr;
 }
 
+PROMEKI_NAMESPACE_END
+
+// connect() template requires EventLoop to be complete for cross-thread dispatch.
+#include <promeki/eventloop.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+template <typename... Args>
+void ObjectBase::connect(Signal<Args...> *signal, Slot<Args...> *slot) {
+        if(signal == nullptr || slot == nullptr) return;
+
+        signal->connect([signal, slot](Args... args) {
+                ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
+                ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
+
+                EventLoop *slotLoop = slotObject->_eventLoop;
+                EventLoop *currentLoop = EventLoop::current();
+
+                // Same thread or no event loop: direct call (zero overhead path)
+                if(slotLoop == nullptr || slotLoop == currentLoop) {
+                        ObjectBase *prevSender = slotObject->_signalSender;
+                        slotObject->_signalSender = signalObject;
+                        slot->exec(args...);
+                        slotObject->_signalSender = prevSender;
+                } else {
+                        // Cross-thread: marshal via VariantList and post
+                        VariantList packed = Signal<Args...>::pack(args...);
+                        ObjectBasePtr senderTracker(signalObject);
+                        slotLoop->postCallable(
+                                [slot, slotObject, packed = std::move(packed),
+                                 senderTracker = std::move(senderTracker)]() {
+                                        ObjectBase *prevSender = slotObject->_signalSender;
+                                        slotObject->_signalSender =
+                                                senderTracker.isValid()
+                                                ? const_cast<ObjectBase *>(senderTracker.data())
+                                                : nullptr;
+                                        slot->exec(packed);
+                                        slotObject->_signalSender = prevSender;
+                                }
+                        );
+                }
+        }, slot->owner());
+
+        // Register a cleanup
+        ObjectBase *signalObject = static_cast<ObjectBase *>(signal->owner());
+        ObjectBase *slotObject = static_cast<ObjectBase *>(slot->owner());
+        slotObject->_cleanupList += Cleanup(
+                signalObject,
+                [signal](ObjectBase *ptr){ signal->disconnectFromObject(ptr); }
+        );
+}
 
 PROMEKI_NAMESPACE_END
 

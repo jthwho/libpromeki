@@ -99,6 +99,8 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/cmdlineparser.h
     include/promeki/datetime.h
     include/promeki/error.h
+    include/promeki/event.h
+    include/promeki/eventloop.h
     include/promeki/file.h
     include/promeki/fileinfo.h
     include/promeki/fourcc.h
@@ -125,6 +127,8 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/sharedptr.h
     include/promeki/signal.h
     include/promeki/size2d.h
+    include/promeki/thread.h
+    include/promeki/timerevent.h
     include/promeki/slot.h
     include/promeki/streamstring.h
     include/promeki/string.h
@@ -156,6 +160,8 @@ set(PROMEKI_CORE_SOURCES
     src/stringlist.cpp
     src/set.cpp
     src/regex.cpp
+    src/event.cpp
+    src/eventloop.cpp
     src/error.cpp
     src/uuid.cpp
     src/md5.cpp
@@ -181,6 +187,7 @@ set(PROMEKI_CORE_SOURCES
     src/numnameseq.cpp
     src/signal.cpp
     src/slot.cpp
+    src/thread.cpp
     src/pidcontroller.cpp
     src/json.cpp
     src/framerate.cpp
@@ -624,6 +631,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/ansistream.cpp
         tests/fileinfo.cpp
         tests/signal.cpp
+        tests/event.cpp
+        tests/eventloop.cpp
+        tests/thread.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

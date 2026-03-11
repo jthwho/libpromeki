@@ -150,6 +150,27 @@ Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 - Enum class or nested enum within the owning class.
 - Well-known constant enums may use `PREFIX_Name` style for readability: `FPS_2997`, `FPS_Invalid`
 
+### Standard Library Type Aliases
+
+When a `std::` type appears in a class's **public API** — return types, parameter types, public members, or type aliases that users interact with — wrap it in a `using` alias inside the class so that library users never spell `std::` types directly:
+
+```cpp
+class Thread {
+        public:
+                using NativeHandle = std::thread::native_handle_type;
+
+                NativeHandle nativeHandle() const;
+                // ...
+        private:
+                // Private members may use std:: types directly since
+                // they are not visible to library users.
+                std::thread     _thread;
+                std::mutex      _mutex;
+};
+```
+
+Private members and implementation files may use `std::` types directly since they do not leak into the public interface.
+
 ### Macros
 
 - All caps with `PROMEKI_` prefix: `PROMEKI_SHARED`, `PROMEKI_OBJECT`, `PROMEKI_SIGNAL`

@@ -171,7 +171,8 @@ TEST_CASE("Logger_CustomFileFormatter") {
 
         // Set a custom file formatter that uses a different format
         logger.setFileFormatter([](const DateTime &ts, Logger::LogLevel level,
-                const char *file, int line, const String &msg) -> String {
+                const char *file, int line, uint64_t threadId,
+                const String &threadName, const String &msg) -> String {
                 return String::sprintf("CUSTOM|%s|%s", Logger::levelToString(level), msg.cstr());
         });
         logger.setLogFile(tmpPath);
@@ -203,7 +204,8 @@ TEST_CASE("Logger_CustomConsoleFormatter") {
 
         // Set a custom console formatter and verify no crash
         logger.setConsoleFormatter([](const DateTime &ts, Logger::LogLevel level,
-                const char *file, int line, const String &msg) -> String {
+                const char *file, int line, uint64_t threadId,
+                const String &threadName, const String &msg) -> String {
                 return String::sprintf("[CONSOLE] %s %s", Logger::levelToString(level), msg.cstr());
         });
 
@@ -223,8 +225,8 @@ TEST_CASE("Logger_DefaultFormatters") {
         auto consoleFmt = Logger::defaultConsoleFormatter();
 
         DateTime ts = DateTime::now();
-        String fileResult = fileFmt(ts, Logger::Info, "test.cpp", 42, "hello");
-        String consoleResult = consoleFmt(ts, Logger::Info, "test.cpp", 42, "hello");
+        String fileResult = fileFmt(ts, Logger::Info, "test.cpp", 42, 12345, String(), "hello");
+        String consoleResult = consoleFmt(ts, Logger::Info, "test.cpp", 42, 12345, String(), "hello");
 
         CHECK(fileResult.contains("[I]"));
         CHECK(fileResult.contains("hello"));

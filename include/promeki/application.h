@@ -14,6 +14,11 @@
 #include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
+class Thread;
+class EventLoop;
+PROMEKI_NAMESPACE_END
+
+PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Application-wide state for the promeki library.
@@ -89,11 +94,25 @@ class Application {
                  */
                 static void setAppName(const String &name);
 
+                /**
+                 * @brief Returns the Thread object for the main (application) thread.
+                 * @return The main thread, or nullptr if no Application was constructed.
+                 */
+                static Thread *mainThread();
+
+                /**
+                 * @brief Returns the EventLoop for the main thread.
+                 * @return The main thread's EventLoop, or nullptr if the user
+                 *         hasn't created one yet.
+                 */
+                static EventLoop *mainEventLoop();
+
         private:
                 struct Data {
                         StringList      arguments;
                         UUID            appUUID;
                         String          appName;
+                        Thread          *mainThread = nullptr;
                 };
                 static Data &data();
 };

@@ -7,6 +7,8 @@
  */
 
 #include <promeki/application.h>
+#include <promeki/thread.h>
+#include <promeki/eventloop.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -18,10 +20,13 @@ Application::Data &Application::data() {
 
 Application::Application(int argc, char **argv) {
         data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
+        data().mainThread = Thread::adoptCurrentThread();
         return;
 }
 
 Application::~Application() {
+        delete data().mainThread;
+        data().mainThread = nullptr;
         data().arguments.clear();
         return;
 }
@@ -46,6 +51,15 @@ const String &Application::appName() {
 void Application::setAppName(const String &name) {
         data().appName = name;
         return;
+}
+
+Thread *Application::mainThread() {
+        return data().mainThread;
+}
+
+EventLoop *Application::mainEventLoop() {
+        Thread *t = data().mainThread;
+        return t != nullptr ? t->threadEventLoop() : nullptr;
 }
 
 PROMEKI_NAMESPACE_END
