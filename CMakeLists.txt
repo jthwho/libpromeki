@@ -103,6 +103,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/eventloop.h
     include/promeki/file.h
     include/promeki/fileinfo.h
+    include/promeki/fnv1a.h
     include/promeki/fourcc.h
     include/promeki/framerate.h
     include/promeki/json.h
@@ -117,6 +118,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/metadata.h
     include/promeki/namespace.h
     include/promeki/numname.h
+    include/promeki/obfuscatedstring.h
     include/promeki/numnameseq.h
     include/promeki/objectbase.h
     include/promeki/pidcontroller.h
@@ -630,6 +632,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/cmdlineparser.cpp
         tests/ansistream.cpp
         tests/fileinfo.cpp
+        tests/fnv1a.cpp
+        tests/obfuscatedstring.cpp
         tests/signal.cpp
         tests/event.cpp
         tests/eventloop.cpp
