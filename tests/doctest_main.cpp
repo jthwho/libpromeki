@@ -21,9 +21,8 @@ int main(int argc, char **argv) {
 
         if(!useDefaultLogger) {
                 Logger::defaultLogger().setConsoleFormatter(
-                        [](const DateTime &, Logger::LogLevel, const char *, int,
-                           uint64_t, const String &, const String &msg) -> String {
-                                return msg;
+                        [](const Logger::LogFormat &fmt) -> String {
+                                return fmt.entry->msg;
                         }
                 );
         }

@@ -13,15 +13,15 @@
 using namespace promeki;
 
 // ============================================================================
-// levelToString
+// levelToChar
 // ============================================================================
 
-TEST_CASE("Logger_levelToString") {
-        CHECK(std::string(Logger::levelToString(Logger::Force)) == "[ ]");
-        CHECK(std::string(Logger::levelToString(Logger::Debug)) == "[D]");
-        CHECK(std::string(Logger::levelToString(Logger::Info))  == "[I]");
-        CHECK(std::string(Logger::levelToString(Logger::Warn))  == "[W]");
-        CHECK(std::string(Logger::levelToString(Logger::Err))   == "[E]");
+TEST_CASE("Logger_levelToChar") {
+        CHECK(Logger::levelToChar(Logger::Force) == ' ');
+        CHECK(Logger::levelToChar(Logger::Debug) == 'D');
+        CHECK(Logger::levelToChar(Logger::Info)  == 'I');
+        CHECK(Logger::levelToChar(Logger::Warn)  == 'W');
+        CHECK(Logger::levelToChar(Logger::Err)   == 'E');
 }
 
 // ============================================================================
@@ -56,7 +56,7 @@ TEST_CASE("Logger_Sync") {
 
         // Log several messages and verify sync returns without hanging
         for(int i = 0; i < 10; i++) {
-                logger.log(Logger::Info, __FILE__, __LINE__, String::sprintf("Sync test message %d", i));
+                logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, String::sprintf("Sync test message %d", i));
         }
         logger.sync();
 
@@ -73,11 +73,11 @@ TEST_CASE("Logger_ConsoleLoggingToggle") {
 
         // Disable console logging, log a message, re-enable
         logger.setConsoleLoggingEnabled(false);
-        logger.log(Logger::Info, __FILE__, __LINE__, "This should not appear on console");
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "This should not appear on console");
         logger.sync();
 
         logger.setConsoleLoggingEnabled(true);
-        logger.log(Logger::Info, __FILE__, __LINE__, "Console logging re-enabled");
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "Console logging re-enabled");
         logger.sync();
 
         // No crash or hang means it works
@@ -96,7 +96,7 @@ TEST_CASE("Logger_ForceLevel") {
         logger.sync();
 
         // Force should still be logged (not filtered)
-        logger.log(Logger::Force, __FILE__, __LINE__, "Forced message at Err level");
+        logger.log(Logger::Force, PROMEKI_SOURCE_FILE, __LINE__, "Forced message at Err level");
         logger.sync();
 
         // Restore
@@ -117,7 +117,7 @@ TEST_CASE("Logger_MultiLineLogging") {
         lines += "Line 2 of multi-line log";
         lines += "Line 3 of multi-line log";
 
-        logger.log(Logger::Info, __FILE__, __LINE__, lines);
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, lines);
         logger.sync();
 
         // No crash or hang means it works
@@ -141,7 +141,7 @@ TEST_CASE("Logger_LogFileOutput") {
 
         // Log a known message
         String testMsg = "Logger file output test message";
-        logger.log(Logger::Info, __FILE__, __LINE__, testMsg);
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, testMsg);
         logger.sync();
 
         // Read the file and verify it contains our message
@@ -153,7 +153,7 @@ TEST_CASE("Logger_LogFileOutput") {
         infile.close();
 
         CHECK(contents.find("Logger file output test message") != std::string::npos);
-        CHECK(contents.find("[I]") != std::string::npos);
+        CHECK(contents.find(" I [") != std::string::npos);
 
         // Clean up
         std::filesystem::remove(tmpPath);
@@ -170,15 +170,13 @@ TEST_CASE("Logger_CustomFileFormatter") {
         std::filesystem::remove(tmpPath);
 
         // Set a custom file formatter that uses a different format
-        logger.setFileFormatter([](const DateTime &ts, Logger::LogLevel level,
-                const char *file, int line, uint64_t threadId,
-                const String &threadName, const String &msg) -> String {
-                return String::sprintf("CUSTOM|%s|%s", Logger::levelToString(level), msg.cstr());
+        logger.setFileFormatter([](const Logger::LogFormat &fmt) -> String {
+                return String::sprintf("CUSTOM|%c|%s", Logger::levelToChar(fmt.entry->level), fmt.entry->msg.cstr());
         });
         logger.setLogFile(tmpPath);
         logger.sync();
 
-        logger.log(Logger::Warn, __FILE__, __LINE__, "custom formatter test");
+        logger.log(Logger::Warn, PROMEKI_SOURCE_FILE, __LINE__, "custom formatter test");
         logger.sync();
 
         std::ifstream infile(tmpPath);
@@ -187,7 +185,7 @@ TEST_CASE("Logger_CustomFileFormatter") {
                               std::istreambuf_iterator<char>());
         infile.close();
 
-        CHECK(contents.find("CUSTOM|[W]|custom formatter test") != std::string::npos);
+        CHECK(contents.find("CUSTOM|W|custom formatter test") != std::string::npos);
 
         // Restore default by passing empty function
         logger.setFileFormatter({});
@@ -203,13 +201,11 @@ TEST_CASE("Logger_CustomConsoleFormatter") {
         auto saved = logger.consoleFormatter();
 
         // Set a custom console formatter and verify no crash
-        logger.setConsoleFormatter([](const DateTime &ts, Logger::LogLevel level,
-                const char *file, int line, uint64_t threadId,
-                const String &threadName, const String &msg) -> String {
-                return String::sprintf("[CONSOLE] %s %s", Logger::levelToString(level), msg.cstr());
+        logger.setConsoleFormatter([](const Logger::LogFormat &fmt) -> String {
+                return String::sprintf("[CONSOLE] %c %s", Logger::levelToChar(fmt.entry->level), fmt.entry->msg.cstr());
         });
 
-        logger.log(Logger::Info, __FILE__, __LINE__, "custom console formatter test");
+        logger.log(Logger::Info, PROMEKI_SOURCE_FILE, __LINE__, "custom console formatter test");
         logger.sync();
 
         // Restore previous formatter
@@ -224,15 +220,16 @@ TEST_CASE("Logger_DefaultFormatters") {
         auto fileFmt = Logger::defaultFileFormatter();
         auto consoleFmt = Logger::defaultConsoleFormatter();
 
-        DateTime ts = DateTime::now();
-        String fileResult = fileFmt(ts, Logger::Info, "test.cpp", 42, 12345, String(), "hello");
-        String consoleResult = consoleFmt(ts, Logger::Info, "test.cpp", 42, 12345, String(), "hello");
+        Logger::LogEntry entry{DateTime::now(), Logger::Info, "test.cpp", 42, 12345, "hello"};
+        Logger::LogFormat fmt{&entry, nullptr};
+        String fileResult = fileFmt(fmt);
+        String consoleResult = consoleFmt(fmt);
 
-        CHECK(fileResult.contains("[I]"));
+        CHECK(fileResult.contains(" I ["));
         CHECK(fileResult.contains("hello"));
         CHECK(fileResult.contains("test.cpp:42"));
 
-        CHECK(consoleResult.contains("[I]"));
+        CHECK(consoleResult.contains('I'));
         CHECK(consoleResult.contains("hello"));
 }
 
@@ -243,12 +240,12 @@ TEST_CASE("Logger_DefaultFormatters") {
 TEST_CASE("Logger_DebugRegistration") {
         // Register a debug channel and verify it doesn't crash
         bool enabled = false;
-        bool ret = promekiRegisterDebug(&enabled, "TestChannel", __FILE__, __LINE__);
+        bool ret = promekiRegisterDebug(&enabled, "TestChannel", PROMEKI_SOURCE_FILE, __LINE__);
         // Without PROMEKI_DEBUG env var set to include "TestChannel", should be false
         CHECK(ret == false);
 
         SUBCASE("Null enabler returns false") {
-                bool nullRet = promekiRegisterDebug(nullptr, "NullTest", __FILE__, __LINE__);
+                bool nullRet = promekiRegisterDebug(nullptr, "NullTest", PROMEKI_SOURCE_FILE, __LINE__);
                 CHECK(nullRet == false);
         }
 }

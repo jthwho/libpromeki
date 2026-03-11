@@ -5,7 +5,6 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <map>
 #include <sstream>
 #include <cstdlib>
 #include <promeki/logger.h>
@@ -57,40 +56,26 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
         return ret;
 }
 
-struct ThreadLogInfo {
-        uint64_t        id = 0;
-        String          name;
-};
-
-static ThreadLogInfo &threadLogInfo() {
-        static thread_local ThreadLogInfo info;
-        if(info.id == 0) {
-                info.id = Thread::currentNativeId();
-                Thread *t = Thread::currentThread();
-                if(t != nullptr) info.name = t->name();
-        }
-        return info;
-}
-
-static const ThreadLogInfo &cachedThreadLogInfo() {
-        return threadLogInfo();
+static uint64_t cachedThreadId() {
+        static thread_local uint64_t id = 0;
+        if(id == 0) id = Thread::currentNativeId();
+        return id;
 }
 
 void Logger::setThreadName(const String &name) {
-        threadLogInfo().name = name;
+        defaultLogger()._queue.emplace(CmdSetThreadName{cachedThreadId(), name});
 }
 
 void Logger::log(LogLevel loglevel, const char *file, int line, const String &msg) {
-        const ThreadLogInfo &ti = cachedThreadLogInfo();
-        _queue.emplace(CmdLog{loglevel, file, line, msg, DateTime::now(), ti.id, &ti.name});
+        _queue.emplace(LogEntry{DateTime::now(), loglevel, file, line, cachedThreadId(), msg});
 }
 
 void Logger::log(LogLevel loglevel, const char *file, int line, const StringList &lines) {
-        const ThreadLogInfo &ti = cachedThreadLogInfo();
+        uint64_t id = cachedThreadId();
         DateTime ts = DateTime::now();
         List<Command> cmdlist;
         for(const auto &item : lines) {
-                cmdlist.pushToBack(CmdLog{loglevel, file, line, item, ts, ti.id, &ti.name});
+                cmdlist.pushToBack(LogEntry{ts, loglevel, file, line, id, item});
         }
         _queue.push(std::move(cmdlist));
 }
@@ -100,79 +85,80 @@ Logger &Logger::defaultLogger() {
         return ret;
 }
 
-const char *Logger::levelToString(LogLevel level) {
-        const char *ret;
+char Logger::levelToChar(LogLevel level) {
+        char ret = ' ';
         switch(level) {
-                case Force: ret = "[ ]"; break;
-                case Debug: ret = "[D]"; break;
-                case Info:  ret = "[I]"; break;
-                case Warn:  ret = "[W]"; break;
-                case Err:   ret = "[E]"; break;
-                default:    ret = "[?]"; break;
+                case Force: ret = ' '; break;
+                case Debug: ret = 'D'; break;
+                case Info:  ret = 'I'; break;
+                case Warn:  ret = 'W'; break;
+                case Err:   ret = 'E'; break;
+                default:    ret = '?'; break;
         }
         return ret;
 }
 
 Logger::LogFormatter Logger::defaultFileFormatter() {
-        return [](const DateTime &ts, LogLevel level, const char *file, int line,
-                  uint64_t threadId, const String &threadName, const String &msg) -> String {
-                const char *lvl = levelToString(level);
-                String result = ts.toString("%F %T.3");
-                if(file != nullptr) {
+        return [](const LogFormat &fmt) -> String {
+                const LogEntry &entry = *fmt.entry;
+                char lvl = levelToChar(entry.level);
+                String result = entry.ts.toString("%F %T.3");
+                if(entry.file != nullptr) {
                         result += ' ';
-                        result += file;
+                        result += entry.file;
                         result += ':';
-                        result += String::dec(line);
+                        result += String::dec(entry.line);
                 }
                 result += ' ';
                 result += lvl;
                 result += " [";
-                if(!threadName.isEmpty()) {
-                        result += threadName;
+                if(fmt.threadName != nullptr) {
+                        result += *fmt.threadName;
                 } else {
-                        result += String::dec(threadId);
+                        result += String::dec(entry.threadId);
                 }
                 result += "] ";
-                result += msg;
+                result += entry.msg;
                 return result;
         };
 }
 
 Logger::LogFormatter Logger::defaultConsoleFormatter() {
-        return [](const DateTime &ts, LogLevel level, const char *file, int line,
-                  uint64_t threadId, const String &threadName, const String &msg) -> String {
+        return [](const LogFormat &fmt) -> String {
+                const LogEntry &entry = *fmt.entry;
                 bool ansi = AnsiStream::stdoutSupportsANSI();
-                const char *lvl = levelToString(level);
+                char lvl = levelToChar(entry.level);
+
+                // Build source:line and pad to a fixed column width
+                String source;
+                if(entry.file != nullptr) {
+                        source = String::sprintf("%s:%d", entry.file, entry.line);
+                }
+
+                String thread = fmt.threadName != nullptr ?
+                        *fmt.threadName : String::dec(entry.threadId);
 
                 String result;
-                if(ansi) result += "\033[1;36m"; // Cyan
-                result += ts.toString("%F %T.3");
-                if(file != nullptr) {
-                        result += ' ';
-                        result += file;
-                        result += ':';
-                        result += String::dec(line);
-                }
                 if(ansi) {
-                        switch(level) {
-                                case Warn: result += "\033[1;33m"; break; // Yellow
-                                case Err:  result += "\033[1;31m"; break; // Red
-                                default:   result += "\033[1;32m"; break; // Green
-                        }
+                    switch(entry.level) {
+                        case Warn: result += "\033[1;33m"; break;
+                        case Err:  result += "\033[1;31m"; break;
+                        default:   result += "\033[1;32m"; break;
+                    }
                 }
-                result += ' ';
                 result += lvl;
-                if(ansi) result += "\033[0m"; // Reset
-                result += " [";
-                if(ansi) result += "\033[0;35m"; // Magenta
-                if(!threadName.isEmpty()) {
-                        result += threadName;
-                } else {
-                        result += String::dec(threadId);
-                }
-                if(ansi) result += "\033[0m"; // Reset
-                result += "] ";
-                result += msg;
+                result += ' ';
+                if(ansi) result += "\033[0;36m"; // Dim cyan
+                result += entry.ts.toString("%T.3");
+                if(ansi) result += "\033[0m";
+                result += ' ';
+                result += String::sprintf("%-20s", source.cstr());
+                result += ' ';
+                if(ansi) result += "\033[0;35m";
+                result += String::sprintf("%-10s", thread.cstr());
+                result += ' ';
+                if(ansi) result += "\033[0m";
+                result += entry.msg;
                 return result;
         };
 }
@@ -189,8 +175,10 @@ void Logger::worker() {
                 cmdct++;
                 std::visit([&](auto &&arg) {
                         using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, CmdLog>) {
+                        if constexpr (std::is_same_v<T, LogEntry>) {
                                 writeLog(arg);
+                        } else if constexpr (std::is_same_v<T, CmdSetThreadName>) {
+                                _threadNames[arg.threadId] = arg.name;
                         } else if constexpr (std::is_same_v<T, CmdSetFile>) {
                                 openLogFile(arg.filename);
                         } else if constexpr (std::is_same_v<T, CmdSetFormatter>) {
@@ -203,13 +191,11 @@ void Logger::worker() {
                                 arg.promise->set_value();
                         } else if constexpr (std::is_same_v<T, CmdTerminate>) {
                                 running = false;
-                                const ThreadLogInfo &ti = cachedThreadLogInfo();
-                                CmdLog logcmd{Debug, "LOGGER", 0,
+                                LogEntry logentry{DateTime::now(), Debug, "LOGGER", 0,
+                                        cachedThreadId(),
                                         String::sprintf("Logger %p terminated, %llu total commands",
-                                                this, (unsigned long long)cmdct),
-                                        DateTime::now(),
-                                        ti.id, &ti.name};
-                                writeLog(logcmd);
+                                                this, (unsigned long long)cmdct)};
+                                writeLog(logentry);
                         }
                 }, cmd);
         }
@@ -217,16 +203,14 @@ void Logger::worker() {
         delete self;
 }
 
-void Logger::writeLog(const CmdLog &cmd) {
-        static const String empty;
-        const String &tname = cmd.threadName != nullptr ? *cmd.threadName : empty;
+void Logger::writeLog(const LogEntry &entry) {
+        auto it = _threadNames.find(entry.threadId);
+        LogFormat fmt{&entry, it != _threadNames.end() ? &it->second : nullptr};
         if(_file.is_open()) {
-                _file << _fileFormatter(cmd.ts, cmd.level, cmd.file, cmd.line,
-                        cmd.threadId, tname, cmd.msg) << std::endl;
+                _file << _fileFormatter(fmt) << std::endl;
         }
         if(_consoleLogging) {
-                std::cout << _consoleFormatter(cmd.ts, cmd.level, cmd.file, cmd.line,
-                        cmd.threadId, tname, cmd.msg) << "\033[0m" << std::endl;
+                std::cout << _consoleFormatter(fmt) << "\033[0m" << std::endl;
         }
 }
 
@@ -234,12 +218,10 @@ void Logger::openLogFile(const String &filename) {
         if(_file.is_open()) _file.close();
         _file.open(filename.stds(), std::ios::out | std::ios::app);
         if(!_file.is_open()) {
-                const ThreadLogInfo &ti = cachedThreadLogInfo();
-                CmdLog cmd{Err, "LOGGER", 0,
-                        String::sprintf("Failed to open log file: %s", filename.cstr()),
-                        DateTime::now(),
-                        ti.id, &ti.name};
-                writeLog(cmd);
+                LogEntry entry{DateTime::now(), Err, "LOGGER", 0,
+                        cachedThreadId(),
+                        String::sprintf("Failed to open log file: %s", filename.cstr())};
+                writeLog(entry);
         }
 }
 

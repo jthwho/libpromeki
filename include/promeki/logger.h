@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <map>
 #include <mutex>
 #include <thread>
 #include <atomic>
@@ -98,16 +99,29 @@ class Logger {
                         Err     = 4       ///< @brief Error messages.
                 };
 
+                /** @brief A single log entry. */
+                struct LogEntry {
+                        DateTime        ts;
+                        LogLevel        level;
+                        const char *    file;
+                        int             line;
+                        uint64_t        threadId;
+                        String          msg;
+                };
+
+                /** @brief Context passed to formatters, combining entry data with resolved thread name. */
+                struct LogFormat {
+                        const LogEntry  *entry;
+                        const String    *threadName;
+                };
+
                 /**
                  * @brief Function type for formatting log messages.
                  *
-                 * A formatter receives the timestamp, log level, source file, source line,
-                 * thread ID, thread name, and message text, and returns a fully formatted
+                 * A formatter receives a LogFormat and returns a fully formatted
                  * string ready for output.
                  */
-                using LogFormatter = std::function<String(const DateTime &ts, LogLevel level,
-                        const char *file, int line, uint64_t threadId,
-                        const String &threadName, const String &msg)>;
+                using LogFormatter = std::function<String(const LogFormat &fmt)>;
 
                 /**
                  * @brief Returns the singleton default Logger instance.
@@ -116,11 +130,11 @@ class Logger {
                 static Logger &defaultLogger();
 
                 /**
-                 * @brief Converts a LogLevel to its string representation.
+                 * @brief Converts a LogLevel to its single character representation
                  * @param level The log level to convert.
-                 * @return A C string such as "DEBUG", "INFO", "WARN", or "ERR".
+                 * @return A character such as D (debug), W (warning), I (info), etc
                  */
-                static const char *levelToString(LogLevel level);
+                static char levelToChar(LogLevel level);
 
                 /**
                  * @brief Updates the cached thread name used in log output.
@@ -287,14 +301,10 @@ class Logger {
                 }
 
         private:
-                struct CmdLog {
-                        LogLevel        level;
-                        const char *    file;
-                        int             line;
-                        String          msg;
-                        DateTime        ts;
+
+                struct CmdSetThreadName {
                         uint64_t        threadId;
-                        const String    *threadName;
+                        String          name;
                 };
 
                 struct CmdSetFile {
@@ -312,7 +322,7 @@ class Logger {
 
                 struct CmdTerminate {};
 
-                using Command = std::variant<CmdLog, CmdSetFile, CmdSetFormatter, CmdSync, CmdTerminate>;
+                using Command = std::variant<LogEntry, CmdSetThreadName, CmdSetFile, CmdSetFormatter, CmdSync, CmdTerminate>;
 
                 std::thread             _thread;
                 std::atomic<int>        _level;
@@ -322,9 +332,10 @@ class Logger {
                 mutable std::mutex      _formatterMutex;
                 LogFormatter            _fileFormatter;
                 LogFormatter            _consoleFormatter;
+                std::map<uint64_t, String> _threadNames;
 
                 void worker();
-                void writeLog(const CmdLog &cmd);
+                void writeLog(const LogEntry &cmd);
                 void openLogFile(const String &filename);
 
 };
