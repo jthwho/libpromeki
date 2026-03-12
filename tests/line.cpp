@@ -10,26 +10,26 @@
 
 using namespace promeki;
 
-TEST_CASE("Line2D: default construction") {
-        Line2D l;
+TEST_CASE("Line2Di32: default construction") {
+        Line2Di32 l;
         CHECK(l.start().x() == 0);
         CHECK(l.start().y() == 0);
         CHECK(l.end().x() == 0);
         CHECK(l.end().y() == 0);
 }
 
-TEST_CASE("Line2D: construction with points") {
-        Point2D s(1, 2);
-        Point2D e(3, 4);
-        Line2D l(s, e);
+TEST_CASE("Line2Di32: construction with points") {
+        Point2Di32 s(1, 2);
+        Point2Di32 e(3, 4);
+        Line2Di32 l(s, e);
         CHECK(l.start().x() == 1);
         CHECK(l.start().y() == 2);
         CHECK(l.end().x() == 3);
         CHECK(l.end().y() == 4);
 }
 
-TEST_CASE("Line2D: move construction") {
-        Line2D l(Point2D(10, 20), Point2D(30, 40));
+TEST_CASE("Line2Di32: move construction") {
+        Line2Di32 l(Point2Di32(10, 20), Point2Di32(30, 40));
         CHECK(l.start().x() == 10);
         CHECK(l.start().y() == 20);
         CHECK(l.end().x() == 30);
@@ -42,10 +42,10 @@ TEST_CASE("Line2Df: float specialization") {
         CHECK(l.end().y() == doctest::Approx(4.5f));
 }
 
-TEST_CASE("Line3D: 3D line") {
-        Point3D s(1, 2, 3);
-        Point3D e(4, 5, 6);
-        Line3D l(s, e);
+TEST_CASE("Line3Di32: 3D line") {
+        Point3Di32 s(1, 2, 3);
+        Point3Di32 e(4, 5, 6);
+        Line3Di32 l(s, e);
         CHECK(l.start().x() == 1);
         CHECK(l.start().y() == 2);
         CHECK(l.start().z() == 3);
@@ -54,16 +54,16 @@ TEST_CASE("Line3D: 3D line") {
         CHECK(l.end().z() == 6);
 }
 
-TEST_CASE("Line2D: copy construction") {
-        Line2D a(Point2D(1, 2), Point2D(3, 4));
-        Line2D b(a);
+TEST_CASE("Line2Di32: copy construction") {
+        Line2Di32 a(Point2Di32(1, 2), Point2Di32(3, 4));
+        Line2Di32 b(a);
         CHECK(b.start().x() == 1);
         CHECK(b.end().x() == 3);
 }
 
-TEST_CASE("Line2D: assignment") {
-        Line2D a(Point2D(1, 2), Point2D(3, 4));
-        Line2D b;
+TEST_CASE("Line2Di32: assignment") {
+        Line2Di32 a(Point2Di32(1, 2), Point2Di32(3, 4));
+        Line2Di32 b;
         b = a;
         CHECK(b.start().x() == 1);
         CHECK(b.end().y() == 4);

@@ -20,3 +20,5 @@ if(NOT TARGET promeki::core)
 endif()
 
 add_subdirectory(promeki-info)
+add_subdirectory(tui-demo)
+add_subdirectory(tui-event-test)

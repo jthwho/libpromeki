@@ -17,7 +17,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
         PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_RGBA8)
         public:
                 Image           image;
-                Size2D          size;
+                Size2Du32          size;
                 uint8_t         *buf;
                 size_t          stride;
 
@@ -70,10 +70,10 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         return true;
                 }
 
-                size_t drawPoints(const PaintEngine::Pixel &pixel, const Point2D *points, size_t count) const override {
+                size_t drawPoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points, size_t count) const override {
                         size_t ret = 0;
                         for(size_t i = 0; i < count; i++) {
-                                const Point2D &p = points[i];
+                                const Point2Di32 &p = points[i];
                                 if(!size.pointIsInside(p)) continue;
                                 uint8_t *pix = buf + (stride * p.y()) + (p.x() * 4);
                                 std::memcpy(pix, pixel.data(), 4);
@@ -82,12 +82,12 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2D *points, 
+                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points, 
                                 const float *alphas, size_t count) const override {
                         size_t ret = 0;
                         const uint8_t *pdata = pixel.data();
                         for(size_t i = 0; i < count; i++) {
-                                const Point2D &p = points[i];
+                                const Point2Di32 &p = points[i];
                                 if(!size.pointIsInside(p)) continue;
                                 float alpha = alphas[i];
                                 float invAlpha = 1.0 - alpha;
@@ -101,7 +101,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                bool blit(const Point2D &dpt, const Image &src, const Point2D &spt, const Size2D &ssz) const override {
+                bool blit(const Point2Di32 &dpt, const Image &src, const Point2Di32 &spt, const Size2Du32 &ssz) const override {
                         static const int bytesPerPixel = 4;
                         const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t srcStride = src.lineStride(0);

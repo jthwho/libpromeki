@@ -34,7 +34,7 @@ class PaintEngine {
                 using Pixel = List<uint8_t>;
 
                 /** @brief List of 2D points used for batch drawing operations. */
-                using PointList = List<Point2D>;
+                using PointList = List<Point2Di32>;
 
                 /** @brief List of per-point alpha values used for compositing. */
                 using AlphaList = List<float>;
@@ -66,8 +66,8 @@ class PaintEngine {
                                  * @param srcSize     Size of the source region to copy.
                                  * @return true on success, false on failure.
                                  */
-                                virtual bool blit(const Point2D &destTopLeft, const Image &src,
-                                                const Point2D &srcTopLeft, const Size2D &srcSize) const;
+                                virtual bool blit(const Point2Di32 &destTopLeft, const Image &src,
+                                                const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const;
 
                                 /**
                                  * @brief Creates a Pixel value from component values.
@@ -90,7 +90,7 @@ class PaintEngine {
                                  * @param pointCount Number of points in the array.
                                  * @return The number of points actually drawn.
                                  */
-                                virtual size_t drawPoints(const Pixel &pixel, const Point2D *points, size_t pointCount) const;
+                                virtual size_t drawPoints(const Pixel &pixel, const Point2Di32 *points, size_t pointCount) const;
 
                                 /**
                                  * @brief Composites a set of points onto the surface with per-point alpha.
@@ -105,7 +105,7 @@ class PaintEngine {
                                  * @param pointCount Number of points in the arrays.
                                  * @return The number of points actually composited.
                                  */
-                                virtual size_t compositePoints(const Pixel &pixel, const Point2D *points,
+                                virtual size_t compositePoints(const Pixel &pixel, const Point2Di32 *points,
                                                 const float *alphas, size_t pointCount) const;
 
                                 /**
@@ -127,7 +127,7 @@ class PaintEngine {
                                  * @param count Number of line segments in the array.
                                  * @return The number of points drawn.
                                  */
-                                virtual size_t drawLines(const Pixel &pixel, const Line2D *lines, size_t count) const;
+                                virtual size_t drawLines(const Pixel &pixel, const Line2Di32 *lines, size_t count) const;
 
                                 //virtual void drawRect(const QRect &rect);
                                 //virtual void drawFilledRect(const QRect &rect);
@@ -230,7 +230,7 @@ class PaintEngine {
                  * @param pointCount Number of points in the array.
                  * @return The number of points actually drawn.
                  */
-                size_t drawPoints(const Pixel &pixel, const Point2D *points, size_t pointCount) const {
+                size_t drawPoints(const Pixel &pixel, const Point2Di32 *points, size_t pointCount) const {
                         return d->drawPoints(pixel, points, pointCount);
                 }
 
@@ -252,7 +252,7 @@ class PaintEngine {
                  * @param pointCount Number of points in the arrays.
                  * @return The number of points actually composited.
                  */
-                size_t compositePoints(const Pixel &pixel, const Point2D *points, const float *alphas, size_t pointCount) const {
+                size_t compositePoints(const Pixel &pixel, const Point2Di32 *points, const float *alphas, size_t pointCount) const {
                         return d->compositePoints(pixel, points, alphas, pointCount);
                 }
 
@@ -274,7 +274,7 @@ class PaintEngine {
                  * @param lineCount Number of line segments in the array.
                  * @return The number of points drawn.
                  */
-                size_t drawLines(const Pixel &pixel, const Line2D *lines, size_t lineCount) const {
+                size_t drawLines(const Pixel &pixel, const Line2Di32 *lines, size_t lineCount) const {
                         return d->drawLines(pixel, lines, lineCount);
                 }
 
@@ -284,7 +284,7 @@ class PaintEngine {
                  * @param line  The line segment to draw.
                  * @return The number of points drawn.
                  */
-                size_t drawLine(const Pixel &pixel, const Line2D &line) const {
+                size_t drawLine(const Pixel &pixel, const Line2Di32 &line) const {
                         return d->drawLines(pixel, &line, 1);
                 }
 
@@ -298,7 +298,7 @@ class PaintEngine {
                  * @return The number of points drawn.
                  */
                 size_t drawLine(const Pixel &pixel, int x1, int y1, int x2, int y2) const {
-                        Line2D line(Point2D(x1, y1), Point2D(x2, y2));
+                        Line2Di32 line(Point2Di32(x1, y1), Point2Di32(x2, y2));
                         return d->drawLines(pixel, &line, 1);
                 }
 
@@ -319,8 +319,8 @@ class PaintEngine {
                  * @param srcSize     Size of the source region (default: entire source).
                  * @return true on success, false on failure.
                  */
-                bool blit(const Point2D &destTopLeft, const Image &src,
-                          const Point2D &srcTopLeft = Point2D(0, 0), const Size2D &srcSize = Size2D()) const {
+                bool blit(const Point2Di32 &destTopLeft, const Image &src,
+                          const Point2Di32 &srcTopLeft = Point2Di32(0, 0), const Size2Du32 &srcSize = Size2Du32()) const {
                         return d->blit(destTopLeft, src, srcTopLeft, srcSize);
                 }
 

@@ -52,7 +52,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeString    | `String`            |
  * | TypeDateTime  | `DateTime`          |
  * | TypeTimeStamp | `TimeStamp`         |
- * | TypeSize2D    | `Size2D`            |
+ * | TypeSize2D    | `Size2Du32`            |
  * | TypeUUID      | `UUID`              |
  * | TypeTimecode  | `Timecode`          |
  * | TypeRational  | `Rational<int>`     |
@@ -73,7 +73,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeString, String)           \
         X(TypeDateTime, DateTime)       \
         X(TypeTimeStamp, TimeStamp)     \
-        X(TypeSize2D, Size2D)           \
+        X(TypeSize2D, Size2Du32)           \
         X(TypeUUID, UUID)               \
         X(TypeTimecode, Timecode)       \
         X(TypeRational, Rational<int>)
@@ -297,7 +297,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, double>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, DateTime>) return arg.toString();
                                         if constexpr (std::is_same_v<From, TimeStamp>) return arg.toString();
-                                        if constexpr (std::is_same_v<From, Size2D>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, Size2Du32>) return arg.toString();
                                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first;
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
@@ -321,7 +321,7 @@ template <typename... Types> class VariantImpl {
                 /**
                  * @brief Converts complex types to their String representation, leaving simple types unchanged.
                  *
-                 * Types such as String, DateTime, TimeStamp, Size2D, UUID, Timecode, and
+                 * Types such as String, DateTime, TimeStamp, Size2Du32, UUID, Timecode, and
                  * Rational are converted to String via `get<std::string>()`.  All other
                  * types (numeric, bool, invalid) are returned as-is.
                  *

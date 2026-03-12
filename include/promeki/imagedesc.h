@@ -18,7 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 /**
  * @brief Describes the format and layout of a single image.
  *
- * ImageDesc encapsulates image dimensions (Size2D), pixel format, line padding
+ * ImageDesc encapsulates image dimensions (Size2Du32), pixel format, line padding
  * and alignment, interlace mode, and associated metadata. It is used by Image
  * and VideoDesc to define the properties of image data.
  */
@@ -36,7 +36,7 @@ class ImageDesc {
                  * @param sz     The image dimensions.
                  * @param pixfmt The pixel format identifier (PixelFormat enum value).
                  */
-                ImageDesc(const Size2D &sz, int pixfmt) :
+                ImageDesc(const Size2Du32 &sz, int pixfmt) :
                         _size(sz), _pixelFormat(PixelFormat::lookup(pixfmt)) { }
 
                 /**
@@ -46,7 +46,7 @@ class ImageDesc {
                  * @param pixfmt The pixel format identifier (PixelFormat enum value).
                  */
                 ImageDesc(size_t w, size_t h, int pixfmt) :
-                        _size(Size2D(w, h)), _pixelFormat(PixelFormat::lookup(pixfmt)) { }
+                        _size(Size2Du32(w, h)), _pixelFormat(PixelFormat::lookup(pixfmt)) { }
 
                 /**
                  * @brief Returns the pixel format identifier.
@@ -66,9 +66,9 @@ class ImageDesc {
 
                 /**
                  * @brief Returns the image dimensions.
-                 * @return A const reference to the Size2D.
+                 * @return A const reference to the Size2Du32.
                  */
-                const Size2D &size() const {
+                const Size2Du32 &size() const {
                         return _size;
                 }
 
@@ -90,9 +90,9 @@ class ImageDesc {
 
                 /**
                  * @brief Sets the image dimensions.
-                 * @param val The new Size2D dimensions.
+                 * @param val The new Size2Du32 dimensions.
                  */
-                void setSize(const Size2D &val) {
+                void setSize(const Size2Du32 &val) {
                         _size = val;
                         return;
                 }
@@ -210,7 +210,7 @@ class ImageDesc {
                 }
 
         private:
-                Size2D                  _size;
+                Size2Du32                  _size;
                 size_t                  _linePad = 0;
                 size_t                  _lineAlign = 1;
                 bool                    _interlaced = false;

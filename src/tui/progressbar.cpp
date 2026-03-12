@@ -1,0 +1,77 @@
+/**
+ * @file      progressbar.cpp
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#include <promeki/tui/progressbar.h>
+#include <promeki/tui/painter.h>
+#include <promeki/tui/palette.h>
+#include <promeki/tui/application.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+TuiProgressBar::TuiProgressBar(ObjectBase *parent) : TuiWidget(parent) {
+        setFocusPolicy(NoFocus);
+}
+
+TuiProgressBar::~TuiProgressBar() = default;
+
+void TuiProgressBar::setValue(int value) {
+        if(value < _min) value = _min;
+        if(value > _max) value = _max;
+        if(_value == value) return;
+        _value = value;
+        update();
+}
+
+void TuiProgressBar::setRange(int min, int max) {
+        _min = min;
+        _max = max;
+        if(_value < _min) _value = _min;
+        if(_value > _max) _value = _max;
+        update();
+}
+
+Size2Di32 TuiProgressBar::sizeHint() const {
+        return Size2Di32(20, 1);
+}
+
+void TuiProgressBar::paintEvent(TuiPaintEvent *) {
+        TuiApplication *app = TuiApplication::instance();
+        if(!app) return;
+
+        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
+        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+        TuiPainter painter(app->screen(), clipRect);
+
+        int range = _max - _min;
+        double fraction = (range > 0) ? static_cast<double>(_value - _min) / range : 0.0;
+        int filledWidth = static_cast<int>(width() * fraction);
+
+        const TuiPalette &pal = app->palette();
+        bool focused = hasFocus();
+        bool enabled = isEnabled();
+
+        // Draw filled portion
+        painter.setForeground(Color::White);
+        painter.setBackground(pal.color(TuiPalette::ProgressFilled, focused, enabled));
+        painter.fillRect(Rect2Di32(0, 0, filledWidth, height()), U'\u2588');
+
+        // Draw empty portion
+        painter.setForeground(Color::DarkGray);
+        painter.setBackground(pal.color(TuiPalette::ProgressEmpty, focused, enabled));
+        painter.fillRect(Rect2Di32(filledWidth, 0, width() - filledWidth, height()), U'\u2591');
+
+        // Draw percentage text
+        if(width() >= 5) {
+                String pct = String::number(static_cast<int>(fraction * 100)) + "%";
+                int textX = (width() - static_cast<int>(pct.length())) / 2;
+                painter.setForeground(Color::White);
+                painter.setBackground(Color());  // transparent
+                painter.drawText(textX, 0, pct);
+        }
+}
+
+PROMEKI_NAMESPACE_END

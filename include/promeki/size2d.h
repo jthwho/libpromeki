@@ -24,7 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
  */
 template<typename T> class Size2DTemplate {
         public:
-                /** @brief Constructs a Size2D with the given width and height, defaulting to 0x0. */
+                /** @brief Constructs a 2D size with the given width and height, defaulting to 0x0. */
                 Size2DTemplate(const T & width = 0, const T & height = 0) : _width(width), _height(height) {}
 
                 /** @brief Destructor. */
@@ -112,8 +112,10 @@ template<typename T> class Size2DTemplate {
                 T _height = 0;
 };
 
-/** @brief 2D size with size_t components. */
-using Size2D = Size2DTemplate<size_t>;
+/** @brief 2D size with int32_t components. */
+using Size2Di32 = Size2DTemplate<int32_t>;
+/** @brief 2D size with uint32_t components. */
+using Size2Du32 = Size2DTemplate<uint32_t>;
 /** @brief 2D size with float components. */
 using Size2Df = Size2DTemplate<float>;
 /** @brief 2D size with double components. */

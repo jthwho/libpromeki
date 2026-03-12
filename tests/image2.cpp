@@ -100,11 +100,11 @@ TEST_CASE("Image_LineStride") {
 }
 
 // ============================================================================
-// Construction from Size2D
+// Construction from Size2Du32
 // ============================================================================
 
 TEST_CASE("Image_ConstructFromSize2D") {
-    Size2D sz(640, 480);
+    Size2Du32 sz(640, 480);
     Image img(sz, PixelFormat::RGBA8);
     CHECK(img.isValid());
     CHECK(img.width() == 640);

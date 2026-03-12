@@ -17,7 +17,8 @@
  * |-------|-------------|
  * | @ref Point | N-dimensional coordinate |
  * | @ref Rational | Exact fraction (num/den) |
- * | @ref Size2DTemplate "Size2D" | 2D width/height pair |
+ * | @ref Size2DTemplate "Size2Du32/Size2Di32" | 2D width/height pair |
+ * | @ref Rect "Rect2Di32" | 2D rectangle (position + size) |
  * | @ref UUID | 128-bit unique identifier |
  * | @ref Timecode | SMPTE timecode (H:M:S:F) |
  * | @ref TimeStamp | Steady-clock time point |

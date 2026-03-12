@@ -19,6 +19,7 @@ include(CMakePackageConfigHelpers)
 # Build options
 option(PROMEKI_BUILD_PROAV  "Build the promeki-proav library"  ON)
 option(PROMEKI_BUILD_MUSIC  "Build the promeki-music library"  ON)
+option(PROMEKI_BUILD_TUI    "Build the promeki-tui library"    ON)
 option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
 option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
 option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
@@ -143,6 +144,11 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/util.h
     include/promeki/uuid.h
     include/promeki/variant.h
+    include/promeki/rect.h
+    include/promeki/color.h
+    include/promeki/terminal.h
+    include/promeki/keyevent.h
+    include/promeki/mouseevent.h
 )
 
 set(PROMEKI_CORE_SOURCES
@@ -193,6 +199,11 @@ set(PROMEKI_CORE_SOURCES
     src/pidcontroller.cpp
     src/json.cpp
     src/framerate.cpp
+    src/rect.cpp
+    src/color.cpp
+    src/terminal.cpp
+    src/keyevent.cpp
+    src/mouseevent.cpp
 )
 
 add_library(promeki-core SHARED ${PROMEKI_CORE_SOURCES})
@@ -479,6 +490,69 @@ if(PROMEKI_BUILD_MUSIC)
     target_compile_definitions(promeki-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
+# TUI Library ##################################################################
+
+if(PROMEKI_BUILD_TUI)
+    set(PROMEKI_TUI_HEADERS
+        include/promeki/tui/screen.h
+        include/promeki/tui/widget.h
+        include/promeki/tui/painter.h
+        include/promeki/tui/layout.h
+        include/promeki/tui/application.h
+        include/promeki/tui/label.h
+        include/promeki/tui/button.h
+        include/promeki/tui/lineedit.h
+        include/promeki/tui/textarea.h
+        include/promeki/tui/listview.h
+        include/promeki/tui/frame.h
+        include/promeki/tui/scrollarea.h
+        include/promeki/tui/splitter.h
+        include/promeki/tui/tabwidget.h
+        include/promeki/tui/progressbar.h
+        include/promeki/tui/statusbar.h
+        include/promeki/tui/menu.h
+        include/promeki/tui/palette.h
+        include/promeki/tui/inputparser.h
+    )
+
+    set(PROMEKI_TUI_SOURCES
+        src/tui/palette.cpp
+        src/tui/screen.cpp
+        src/tui/widget.cpp
+        src/tui/painter.cpp
+        src/tui/layout.cpp
+        src/tui/application.cpp
+        src/tui/label.cpp
+        src/tui/button.cpp
+        src/tui/lineedit.cpp
+        src/tui/textarea.cpp
+        src/tui/listview.cpp
+        src/tui/frame.cpp
+        src/tui/scrollarea.cpp
+        src/tui/splitter.cpp
+        src/tui/tabwidget.cpp
+        src/tui/progressbar.cpp
+        src/tui/statusbar.cpp
+        src/tui/menu.cpp
+        src/tui/inputparser.cpp
+    )
+
+    add_library(promeki-tui SHARED ${PROMEKI_TUI_SOURCES})
+    add_library(promeki::tui ALIAS promeki-tui)
+    set_target_properties(promeki-tui PROPERTIES
+        VERSION ${APP_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME promeki-tui
+        EXPORT_NAME tui
+    )
+    target_include_directories(promeki-tui PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+    target_link_libraries(promeki-tui PUBLIC promeki-core)
+    target_compile_definitions(promeki-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+endif()
+
 # Utility Applications #########################################################
 
 if(PROMEKI_BUILD_UTILS)
@@ -539,6 +613,25 @@ if(PROMEKI_BUILD_PROAV)
     )
     install(EXPORT promeki-proav-targets
         FILE promeki-proav-targets.cmake
+        NAMESPACE promeki::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
+    )
+endif()
+
+# TUI library and headers
+if(PROMEKI_BUILD_TUI)
+    install(TARGETS promeki-tui
+        EXPORT promeki-tui-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+    install(FILES ${PROMEKI_TUI_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/tui
+    )
+    install(EXPORT promeki-tui-targets
+        FILE promeki-tui-targets.cmake
         NAMESPACE promeki::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
     )
@@ -639,6 +732,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/eventloop.cpp
         tests/thread.cpp
         tests/securebuffer.cpp
+        tests/rect.cpp
+        tests/color.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
@@ -676,6 +771,25 @@ if(PROMEKI_BUILD_TESTS)
         add_test(NAME unittest-proav COMMAND unittest-proav)
     endif()
 
+    if(PROMEKI_BUILD_TUI)
+        set(UNITTEST_TUI_SOURCES
+            tests/doctest_main.cpp
+            tests/tui/screen.cpp
+            tests/tui/widget.cpp
+            tests/tui/painter.cpp
+            tests/tui/layout.cpp
+            tests/tui/label.cpp
+            tests/tui/button.cpp
+            tests/tui/frame.cpp
+            tests/tui/inputparser.cpp
+        )
+        add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
+        target_compile_definitions(unittest-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_include_directories(unittest-tui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+        target_link_libraries(unittest-tui PRIVATE promeki-tui)
+        add_test(NAME unittest-tui COMMAND unittest-tui)
+    endif()
+
     if(PROMEKI_BUILD_MUSIC)
         set(UNITTEST_MUSIC_SOURCES
             tests/doctest_main.cpp
@@ -697,6 +811,7 @@ if(PROMEKI_BUILD_TESTS)
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS unittest-core
             $<$<BOOL:${PROMEKI_BUILD_PROAV}>:unittest-proav>
+            $<$<BOOL:${PROMEKI_BUILD_TUI}>:unittest-tui>
             $<$<BOOL:${PROMEKI_BUILD_MUSIC}>:unittest-music>
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running unit tests"
@@ -733,6 +848,19 @@ if(PROMEKI_BUILD_PROAV)
         list(APPEND PROMEKI_CLEAN_DIRS
             ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-proav.dir
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-proav
+        )
+    endif()
+endif()
+
+if(PROMEKI_BUILD_TUI)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-tui.dir
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-tui*
+    )
+    if(PROMEKI_BUILD_TESTS)
+        list(APPEND PROMEKI_CLEAN_DIRS
+            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-tui.dir
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-tui
         )
     endif()
 endif()

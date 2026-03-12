@@ -274,20 +274,20 @@ template <typename T, size_t NumValues> class Point {
                 Array<T, NumValues>     d;
 };
 
-/** @brief 2D point with integer components. */
-using Point2D = Point<int, 2>;
+/** @brief 2D point with int32_t components. */
+using Point2Di32 = Point<int32_t, 2>;
 /** @brief 2D point with float components. */
 using Point2Df = Point<float, 2>;
 /** @brief 2D point with double components. */
 using Point2Dd = Point<double, 2>;
-/** @brief 3D point with integer components. */
-using Point3D = Point<int, 3>;
+/** @brief 3D point with int32_t components. */
+using Point3Di32 = Point<int32_t, 3>;
 /** @brief 3D point with float components. */
 using Point3Df = Point<float, 3>;
 /** @brief 3D point with double components. */
 using Point3Dd = Point<double, 3>;
-/** @brief 4D point with integer components. */
-using Point4D = Point<int, 4>;
+/** @brief 4D point with int32_t components. */
+using Point4Di32 = Point<int32_t, 4>;
 /** @brief 4D point with float components. */
 using Point4Df = Point<float, 4>;
 /** @brief 4D point with double components. */

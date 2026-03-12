@@ -832,4 +832,9 @@ class String {
                 std::string _s;     ///< The underlying string storage.
 };
 
+/** @brief Concatenation with a C string on the left-hand side. */
+inline String operator+(const char *lhs, const String &rhs) {
+        return String(lhs) + rhs;
+}
+
 PROMEKI_NAMESPACE_END

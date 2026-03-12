@@ -1,0 +1,5 @@
+if(TARGET promeki::tui)
+    add_executable(tui-event-test main.cpp)
+    target_link_libraries(tui-event-test PRIVATE promeki::tui)
+    install(TARGETS tui-event-test RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

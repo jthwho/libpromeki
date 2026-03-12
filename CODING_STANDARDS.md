@@ -10,6 +10,7 @@ libpromeki provides Qt-inspired C++ core classes built on top of the C++ standar
 - **No raw ownership**: Memory is managed via `SharedPtr`, `Buffer`, or RAII. Raw pointers are only used for non-owning references (e.g., parent/child relationships in `ObjectBase`).
 - **Error codes over exceptions**: Use the `Error` class and return values rather than throwing. Constructors never throw.
 - **Minimal abstraction**: Wrap `std::` types to improve ergonomics, but don't add layers of indirection for their own sake.
+- **Fix the library, don't work around it**: When library types have missing operators, conversions, or other ergonomic gaps that force awkward usage at call sites, fix the library type rather than scattering workarounds through application code. For example, if `"literal" + MyType(...)` doesn't compile, add a free `operator+` overload — don't require callers to write `MyType("literal") + ...`.
 - **Blocking calls must support timeouts**: Any function that can block the calling thread should accept a `timeoutMs` parameter (type `unsigned int`, in milliseconds). The default value should be `0`, meaning "wait indefinitely." When a timeout expires, the function should return `Error::Timeout`. This convention applies unless the specific use case makes millisecond-granularity timeouts inappropriate (e.g., a frame-accurate deadline might use a different unit).
 
 ---
@@ -30,7 +31,7 @@ Data objects subdivide into two categories based on size, usage patterns, and sh
 
 | Category | Internal storage | SharedPtr support | Examples |
 |---|---|---|---|
-| **Simple** | Direct member variables | None — no `PROMEKI_SHARED_FINAL`, no `RefCount` overhead | `Point`, `Size2D`, `Rational`, `FourCC`, `UUID`, `Timecode`, `TimeStamp`, `XYZColor` |
+| **Simple** | Direct member variables | None — no `PROMEKI_SHARED_FINAL`, no `RefCount` overhead | `Point`, `Size2Du32`/`Size2Di32`, `Rect2Di32`, `Rational`, `FourCC`, `UUID`, `Timecode`, `TimeStamp`, `XYZColor` |
 | **Shareable** | Direct member variables | `PROMEKI_SHARED_FINAL` + `using Ptr = SharedPtr<ClassName>` | `String`, `Buffer`, `AudioDesc`, `ImageDesc`, `VideoDesc`, `Metadata`, `JsonObject`, `JsonArray`, `List<T>`, `Map<K,V>`, `Set<K>`, `Array<T,N>`, `Image`, `Audio`, `Frame` |
 
 **Simple** types are small and cheap to copy — no reference counting needed. **Shareable** types store data directly (no internal `SharedPtr<Data>`) but include `PROMEKI_SHARED_FINAL` so they *can* be managed by `SharedPtr` when shared ownership is needed. The layer above decides whether to use `MyClass::Ptr` for shared ownership. Media objects like `Image` and `Audio` hold buffers via `Buffer::Ptr` for zero-copy buffer sharing even when the object itself is copied.
@@ -127,7 +128,28 @@ Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 - **PascalCase**: `String`, `Timecode`, `FrameRate`, `AudioBlock`, `ObjectBase`
 - Type aliases: `using Iterator = ...;`, `using ConstIterator = ...;`
 - Type alias naming: PascalCase — `RevIterator`, `ConstRevIterator`, `RationalType`
-- Template type aliases at namespace level: `using Size2D = Size2DTemplate<size_t>;`
+- Template type aliases at namespace level: `using Size2Du32 = Size2DTemplate<uint32_t>;`
+
+### Convenience Type Aliases for Templates
+
+When a template class is commonly instantiated with specific types, provide `using` aliases at namespace scope so callers never spell the template arguments directly. Every alias must include an explicit type suffix — there are no unsuffixed "default" aliases.
+
+| Suffix | Underlying type | Example |
+|---|---|---|
+| `i8` | `int8_t` | `Point2Di8` |
+| `u8` | `uint8_t` | `Size2Du8` |
+| `i16` | `int16_t` | `Point2Di16` |
+| `u16` | `uint16_t` | `Size2Du16` |
+| `i32` | `int32_t` | `Point2Di32` = `Point<int32_t, 2>`, `Rect2Di32` = `Rect<int32_t>` |
+| `u32` | `uint32_t` | `Size2Du32` = `Size2DTemplate<uint32_t>` |
+| `i64` | `int64_t` | `Point2Di64` |
+| `u64` | `uint64_t` | `Size2Du64` |
+| `f` | `float` | `Size2Df` = `Size2DTemplate<float>` |
+| `d` | `double` | `Size2Dd` = `Size2DTemplate<double>` |
+
+Dimensionality is part of the base name; the type suffix always comes last (e.g. `Point3Di32`, `Line4Df`). Choose signed vs. unsigned based on the domain: coordinates and offsets are typically signed (`i32`), dimensions and sizes are typically unsigned (`u32`).
+
+Always use the convenience alias in code, never the raw template instantiation. When adding a new template class, define aliases for all commonly used instantiations in the same header.
 
 ### Methods
 

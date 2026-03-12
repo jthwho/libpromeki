@@ -64,20 +64,20 @@ template <typename T, size_t N> class Line {
                 Pt      _end;
 };
 
-/** @brief 2D line segment with integer components. */
-using Line2D = Line<int, 2>;
+/** @brief 2D line segment with int32_t components. */
+using Line2Di32 = Line<int32_t, 2>;
 /** @brief 2D line segment with float components. */
 using Line2Df = Line<float, 2>;
 /** @brief 2D line segment with double components. */
 using Line2Dd = Line<double, 2>;
-/** @brief 3D line segment with integer components. */
-using Line3D = Line<int, 3>;
+/** @brief 3D line segment with int32_t components. */
+using Line3Di32 = Line<int32_t, 3>;
 /** @brief 3D line segment with float components. */
 using Line3Df = Line<float, 3>;
 /** @brief 3D line segment with double components. */
 using Line3Dd = Line<double, 3>;
-/** @brief 4D line segment with integer components. */
-using Line4D = Line<int, 4>;
+/** @brief 4D line segment with int32_t components. */
+using Line4Di32 = Line<int32_t, 4>;
 /** @brief 4D line segment with float components. */
 using Line4Df = Line<float, 4>;
 /** @brief 4D line segment with double components. */

@@ -293,6 +293,52 @@ class AnsiStream : public std::ostream {
                 }
 
                 /**
+                 * @brief Sets the foreground to a 256-color palette index.
+                 * @param index Color index (0-255).
+                 */
+                AnsiStream &setForeground256(uint8_t index) {
+                        if(!_enabled) return *this;
+                        *this << "\033[38;5;" << static_cast<int>(index) << "m";
+                        return *this;
+                }
+
+                /**
+                 * @brief Sets the background to a 256-color palette index.
+                 * @param index Color index (0-255).
+                 */
+                AnsiStream &setBackground256(uint8_t index) {
+                        if(!_enabled) return *this;
+                        *this << "\033[48;5;" << static_cast<int>(index) << "m";
+                        return *this;
+                }
+
+                /**
+                 * @brief Sets the foreground to a 24-bit RGB color.
+                 * @param r Red component (0-255).
+                 * @param g Green component (0-255).
+                 * @param b Blue component (0-255).
+                 */
+                AnsiStream &setForegroundRGB(uint8_t r, uint8_t g, uint8_t b) {
+                        if(!_enabled) return *this;
+                        *this << "\033[38;2;" << static_cast<int>(r) << ";"
+                              << static_cast<int>(g) << ";" << static_cast<int>(b) << "m";
+                        return *this;
+                }
+
+                /**
+                 * @brief Sets the background to a 24-bit RGB color.
+                 * @param r Red component (0-255).
+                 * @param g Green component (0-255).
+                 * @param b Blue component (0-255).
+                 */
+                AnsiStream &setBackgroundRGB(uint8_t r, uint8_t g, uint8_t b) {
+                        if(!_enabled) return *this;
+                        *this << "\033[48;2;" << static_cast<int>(r) << ";"
+                              << static_cast<int>(g) << ";" << static_cast<int>(b) << "m";
+                        return *this;
+                }
+
+                /**
                  * @brief Enables strike-through mode if supported
                  * @param[in] enable True if strike-through should be enabled
                  */

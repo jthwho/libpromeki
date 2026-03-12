@@ -1,0 +1,90 @@
+/**
+ * @file      painter.h
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#pragma once
+
+#include <promeki/namespace.h>
+#include <promeki/rect.h>
+#include <promeki/color.h>
+#include <promeki/string.h>
+#include <promeki/tui/screen.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief Painting context for TUI widgets.
+ *
+ * Draws to a TuiScreen within a clipped region corresponding to the
+ * widget's visible area.  Coordinates are relative to the clip region
+ * origin (the widget's top-left corner in screen coordinates).
+ */
+class TuiPainter {
+        public:
+                /**
+                 * @brief Constructs a TuiPainter.
+                 * @param screen The screen to draw to.
+                 * @param clipRect The clipping rectangle in screen coordinates.
+                 */
+                TuiPainter(TuiScreen &screen, const Rect2Di32 &clipRect);
+
+                /** @brief Draws a single character at the given position. */
+                void drawChar(int x, int y, char32_t ch);
+
+                /** @brief Draws horizontal text at the given position. */
+                void drawText(int x, int y, const String &text);
+
+                /**
+                 * @brief Draws a rectangle outline using the given character.
+                 *
+                 * If ch is 0, uses Unicode box-drawing characters.
+                 */
+                void drawRect(const Rect2Di32 &rect, char32_t ch = 0);
+
+                /** @brief Fills a rectangle with the given character. */
+                void fillRect(const Rect2Di32 &rect, char32_t ch = U' ');
+
+                /** @brief Draws a horizontal line. */
+                void drawHLine(int x, int y, int len, char32_t ch = U'\u2500');
+
+                /** @brief Draws a vertical line. */
+                void drawVLine(int x, int y, int len, char32_t ch = U'\u2502');
+
+                /** @brief Sets the current foreground color. */
+                void setForeground(const Color &color) { _fg = color; }
+
+                /** @brief Sets the current background color. */
+                void setBackground(const Color &color) { _bg = color; }
+
+                /** @brief Sets the current style flags. */
+                void setStyle(uint8_t style) { _style = style; }
+
+                /** @brief Returns the current foreground color. */
+                const Color &foreground() const { return _fg; }
+
+                /** @brief Returns the current background color. */
+                const Color &background() const { return _bg; }
+
+                /** @brief Returns the current style flags. */
+                uint8_t style() const { return _style; }
+
+                /** @brief Sets the clipping rectangle. */
+                void setClipRect(const Rect2Di32 &rect) { _clipRect = rect; }
+
+                /** @brief Returns the current clipping rectangle. */
+                const Rect2Di32 &clipRect() const { return _clipRect; }
+
+        private:
+                TuiScreen       &_screen;
+                Rect2Di32          _clipRect;
+                Color           _fg = Color::White;
+                Color           _bg = Color::Black;
+                uint8_t         _style = TuiStyleNone;
+
+                void putCell(int x, int y, char32_t ch);
+};
+
+PROMEKI_NAMESPACE_END

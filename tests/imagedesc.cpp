@@ -34,7 +34,7 @@ TEST_CASE("ImageDesc_Construct") {
 }
 
 TEST_CASE("ImageDesc_ConstructSize2D") {
-    Size2D sz(3840, 2160);
+    Size2Du32 sz(3840, 2160);
     ImageDesc desc(sz, PixelFormat::RGB8);
     CHECK(desc.isValid());
     CHECK(desc.width() == 3840);
@@ -48,7 +48,7 @@ TEST_CASE("ImageDesc_ConstructSize2D") {
 
 TEST_CASE("ImageDesc_SetSize") {
     ImageDesc desc;
-    desc.setSize(Size2D(640, 480));
+    desc.setSize(Size2Du32(640, 480));
     CHECK(desc.width() == 640);
     CHECK(desc.height() == 480);
 

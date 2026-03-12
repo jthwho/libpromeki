@@ -40,7 +40,7 @@ bool FontPainter::drawText(const String &str, int x, int y, int pointSize) const
 
         int pen_x = x;
         int pen_y = y;
-        List<Point2D> points;
+        List<Point2Di32> points;
         List<float> alphas;
 
         for(char c : str) {
@@ -59,7 +59,7 @@ bool FontPainter::drawText(const String &str, int x, int y, int pointSize) const
                                 int y_pixel = pen_y - bitmap_top + row;
                                 uint8_t alpha = bitmap->buffer[row * bitmap->pitch + col];
                                 if(alpha > 0) {
-                                        points += Point2D(x_pixel, y_pixel);
+                                        points += Point2Di32(x_pixel, y_pixel);
                                         alphas += (float)alpha / 255.0;
                                 } 
                         }

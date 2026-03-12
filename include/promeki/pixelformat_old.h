@@ -87,14 +87,14 @@ class PixelFormat {
                  * @param size Image dimensions.
                  * @return Line stride in bytes.
                  */
-                typedef size_t (*StrideFunc)(const Size2D &size);
+                typedef size_t (*StrideFunc)(const Size2Du32 &size);
 
                 /**
                  * @brief Function that returns the total number of bytes for an image of the given size.
                  * @param size Image dimensions.
                  * @return Total image size in bytes.
                  */
-                typedef size_t (*SizeFunc)(const Size2D &size);
+                typedef size_t (*SizeFunc)(const Size2Du32 &size);
 
                 /**
                  * @brief Function that fills an image with a pixel value from a component array.
@@ -198,7 +198,7 @@ class PixelFormat {
                  * @param p Plane index (defaults to 0).
                  * @return Line stride in bytes, or 0 if no stride function is set.
                  */
-                size_t stride(const Size2D &s, int p = 0) const {
+                size_t stride(const Size2Du32 &s, int p = 0) const {
                         StrideFunc func = d->planeList[p].stride;
                         return func == nullptr ? 0 : func(s);
                 }
@@ -209,7 +209,7 @@ class PixelFormat {
                  * @param p Plane index (defaults to 0).
                  * @return Plane size in bytes, or 0 if no size function is set.
                  */
-                size_t size(const Size2D &s, int p = 0) const {
+                size_t size(const Size2Du32 &s, int p = 0) const {
                         SizeFunc func = d->planeList[p].size;
                         return func == nullptr ? 0 : func(s);
                 }

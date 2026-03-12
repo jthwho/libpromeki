@@ -17,16 +17,16 @@ PROMEKI_NAMESPACE_BEGIN
         .id = PixelFormat::fmt, \
         .name = PROMEKI_STRINGIFY(fmt)
 
-inline size_t stride_RGBA8(const Size2D &size) {
+inline size_t stride_RGBA8(const Size2Du32 &size) {
         return size.width() * 4;
 }
 
-inline size_t size_RGBA8(const Size2D &size) {
+inline size_t size_RGBA8(const Size2Du32 &size) {
         return stride_RGBA8(size) * size.height();
 }
 
 inline bool fill_RGBA8(const Image &img, const PixelFormat::Comp *comps) {
-        const Size2D &size = img.size();
+        const Size2Du32 &size = img.size();
         size_t stride = stride_RGBA8(size);
         uint8_t *line0 = static_cast<uint8_t *>(img.plane()->data());
         uint8_t *buf;
@@ -56,23 +56,23 @@ inline Pixel createPixel_RGBA8(const PixelFormat::Comp *comps) {
                        static_cast<uint8_t>(comps[3]) });
 }
  
-inline size_t stride_RGB8(const Size2D &size) {
+inline size_t stride_RGB8(const Size2Du32 &size) {
         return size.width() * 3;
 }
 
-inline size_t size_RGB8(const Size2D &size) {
+inline size_t size_RGB8(const Size2Du32 &size) {
         return stride_RGB8(size) * size.height();
 }
 
-inline size_t stride_RGB10(const Size2D &size) {
+inline size_t stride_RGB10(const Size2Du32 &size) {
         return size.width() * 4;
 }
 
-inline size_t size_RGB10(const Size2D &size) {
+inline size_t size_RGB10(const Size2Du32 &size) {
         return stride_RGB10(size) * size.height();
 }
 
-inline size_t stride_YUV8_422(const Size2D &size) {
+inline size_t stride_YUV8_422(const Size2Du32 &size) {
         // A YUV8 line should always be aligned to 4 bytes, since
         // each "block" contains 2 Y samples, 1 Cb, and 1 Cr.
         // This generally means in practice you'll never see odd
@@ -81,16 +81,16 @@ inline size_t stride_YUV8_422(const Size2D &size) {
         return PROMEKI_ALIGN_UP(size.width() * 2, 4);
 }
         
-inline size_t size_YUV8_422(const Size2D &size) {
+inline size_t size_YUV8_422(const Size2Du32 &size) {
         return stride_YUV8_422(size) * 2;
 }
 
-inline size_t stride_YUV10_422(const Size2D &size) {
+inline size_t stride_YUV10_422(const Size2Du32 &size) {
         size_t w = size.width();
         return (w % 6) ? (w / 6 + 1) * 16 : (w / 6) * 16;
 }
 
-inline size_t size_YUV10_422(const Size2D &size) {
+inline size_t size_YUV10_422(const Size2Du32 &size) {
         return stride_YUV10_422(size) * size.height();
 }
 

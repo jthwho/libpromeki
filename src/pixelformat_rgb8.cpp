@@ -15,7 +15,7 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
         PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_RGB8)
         public:
                 Image           image;
-                Size2D          size;
+                Size2Du32          size;
                 uint8_t         *buf;
                 size_t          stride;
 
@@ -61,10 +61,10 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         return true;
                 }
 
-                size_t drawPoints(const PaintEngine::Pixel &pixel, const Point2D *points, size_t count) const override {
+                size_t drawPoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points, size_t count) const override {
                         size_t ret = 0;
                         for(size_t i = 0; i < count; i++) {
-                                const Point2D &p = points[i];
+                                const Point2Di32 &p = points[i];
                                 if(!size.pointIsInside(p)) continue;
                                 uint8_t *pix = buf + (stride * p.y()) + (p.x() * 3);
                                 std::memcpy(pix, pixel.data(), 3);
@@ -73,12 +73,12 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2D *points, 
+                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points, 
                                 const float *alphas, size_t count) const override {
                         size_t ret = 0;
                         const uint8_t *pdata = pixel.data();
                         for(size_t i = 0; i < count; i++) {
-                                const Point2D &p = points[i];
+                                const Point2Di32 &p = points[i];
                                 if(!size.pointIsInside(p)) continue;
                                 float alpha = alphas[i];
                                 float invAlpha = 1.0 - alpha;

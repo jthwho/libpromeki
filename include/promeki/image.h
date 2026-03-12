@@ -52,7 +52,7 @@ class Image {
                  * @param pixfmt Pixel format identifier.
                  * @param ms     Memory space to allocate from.
                  */
-                Image(const Size2D &s, int pixfmt, const MemSpace &ms = MemSpace::Default) :
+                Image(const Size2Du32 &s, int pixfmt, const MemSpace &ms = MemSpace::Default) :
                         Image(ImageDesc(s, pixfmt), ms) { }
 
                 /**
@@ -99,9 +99,9 @@ class Image {
 
                 /**
                  * @brief Returns the image dimensions.
-                 * @return A const reference to the Size2D.
+                 * @return A const reference to the Size2Du32.
                  */
-                const Size2D &size() const {
+                const Size2Du32 &size() const {
                         return _desc.size();
                 }
 

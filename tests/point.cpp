@@ -11,19 +11,19 @@
 using namespace promeki;
 
 TEST_CASE("Point: default construction") {
-        Point2D p;
+        Point2Di32 p;
         CHECK(p.x() == 0);
         CHECK(p.y() == 0);
 }
 
 TEST_CASE("Point: construction with values") {
-        Point2D p(3, 7);
+        Point2Di32 p(3, 7);
         CHECK(p.x() == 3);
         CHECK(p.y() == 7);
 }
 
 TEST_CASE("Point: setX and setY") {
-        Point2D p;
+        Point2Di32 p;
         p.setX(10);
         p.setY(20);
         CHECK(p.x() == 10);
@@ -31,22 +31,22 @@ TEST_CASE("Point: setX and setY") {
 }
 
 TEST_CASE("Point: toString") {
-        Point2D p(1, 2);
+        Point2Di32 p(1, 2);
         CHECK(p.toString() == "1, 2");
 }
 
 TEST_CASE("Point: equality operators") {
-        Point2D a(1, 2);
-        Point2D b(1, 2);
-        Point2D c(3, 4);
+        Point2Di32 a(1, 2);
+        Point2Di32 b(1, 2);
+        Point2Di32 c(3, 4);
         CHECK(a == b);
         CHECK(a != c);
 }
 
 TEST_CASE("Point: multiplication") {
-        Point2D p1(1, 2);
-        Point2D p2(5, 4);
-        CHECK(p1 * p2 == Point2D(5, 8));
+        Point2Di32 p1(1, 2);
+        Point2Di32 p2(5, 4);
+        CHECK(p1 * p2 == Point2Di32(5, 8));
 }
 
 TEST_CASE("Point: distanceTo") {
@@ -73,32 +73,32 @@ TEST_CASE("Point: lerp endpoints") {
 }
 
 TEST_CASE("Point: clamp") {
-        Point2D p(15, -5);
-        Point2D minP(0, 0);
-        Point2D maxP(10, 10);
+        Point2Di32 p(15, -5);
+        Point2Di32 minP(0, 0);
+        Point2Di32 maxP(10, 10);
         auto clamped = p.clamp(minP, maxP);
         CHECK(clamped.x() == 10);
         CHECK(clamped.y() == 0);
 }
 
 TEST_CASE("Point: isWithinBounds") {
-        Point2D p(5, 5);
-        Point2D minP(0, 0);
-        Point2D maxP(10, 10);
+        Point2Di32 p(5, 5);
+        Point2Di32 minP(0, 0);
+        Point2Di32 maxP(10, 10);
         CHECK(p.isWithinBounds(minP, maxP));
-        Point2D outside(11, 5);
+        Point2Di32 outside(11, 5);
         CHECK_FALSE(outside.isWithinBounds(minP, maxP));
 }
 
-TEST_CASE("Point3D: construction and accessors") {
-        Point3D p(1, 2, 3);
+TEST_CASE("Point3Di32: construction and accessors") {
+        Point3Di32 p(1, 2, 3);
         CHECK(p.x() == 1);
         CHECK(p.y() == 2);
         CHECK(p.z() == 3);
 }
 
-TEST_CASE("Point3D: setZ") {
-        Point3D p;
+TEST_CASE("Point3Di32: setZ") {
+        Point3Di32 p;
         p.setZ(42);
         CHECK(p.z() == 42);
 }

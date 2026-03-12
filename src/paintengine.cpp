@@ -10,7 +10,7 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-List<Point2D> PaintEngine::plotLine(int x1, int y1, int x2, int y2) {
+List<Point2Di32> PaintEngine::plotLine(int x1, int y1, int x2, int y2) {
         bool y_longer = false;
         int incval, endval;
         int short_len = y2 - y1;
@@ -29,18 +29,18 @@ List<Point2D> PaintEngine::plotLine(int x1, int y1, int x2, int y2) {
                 long_len = -long_len;
         } else incval = 1;
 
-        List<Point2D> pts;
+        List<Point2Di32> pts;
         pts.reserve(abs(endval));
         double decinc = (long_len == 0) ? (double)short_len : (double)short_len / (double)long_len;
         double j = 0.0;
         if(y_longer) {
                 for(int i = 0; i != endval; i += incval) {
-                        pts += Point2D(x1 + (int)j, y1 + i);
+                        pts += Point2Di32(x1 + (int)j, y1 + i);
                         j += decinc;
                 }
         } else {
                 for (int i = 0; i != endval; i += incval) {
-                        pts += Point2D(x1 + i, y1 + (int)j);
+                        pts += Point2Di32(x1 + i, y1 + (int)j);
                         j += decinc;
                 }
         }
@@ -51,7 +51,7 @@ PaintEngine::Impl::~Impl() {
 
 }
 
-bool PaintEngine::Impl::blit(const Point2D &destTopLeft, const Image &src, const Point2D &srcTopLeft, const Size2D &srcSize) const {
+bool PaintEngine::Impl::blit(const Point2Di32 &destTopLeft, const Image &src, const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const {
         return false;
 }
 
@@ -59,12 +59,12 @@ PaintEngine::Pixel PaintEngine::Impl::createPixel(const uint16_t *comps, size_t 
         return PaintEngine::Pixel();
 }
 
-size_t PaintEngine::Impl::drawPoints(const Pixel &pixel, const Point2D *points, size_t pointCount) const {
+size_t PaintEngine::Impl::drawPoints(const Pixel &pixel, const Point2Di32 *points, size_t pointCount) const {
         promekiWarn("%p Failed to draw %d points", this, (int)pointCount);
         return 0;
 }
 
-size_t PaintEngine::Impl::compositePoints(const Pixel &pixel, const Point2D *points, const float *alphas, size_t pointCount) const {
+size_t PaintEngine::Impl::compositePoints(const Pixel &pixel, const Point2Di32 *points, const float *alphas, size_t pointCount) const {
         return drawPoints(pixel, points, pointCount);
 }
 
@@ -72,10 +72,10 @@ bool PaintEngine::Impl::fill(const Pixel &pixel) const {
         return false;
 }
 
-size_t PaintEngine::Impl::drawLines(const Pixel &pixel, const Line2D *lines, size_t lineCount) const {
-        List<Point2D> points;
+size_t PaintEngine::Impl::drawLines(const Pixel &pixel, const Line2Di32 *lines, size_t lineCount) const {
+        List<Point2Di32> points;
         for(size_t i = 0; i < lineCount; i++) {
-                const Line2D &line = lines[i];
+                const Line2Di32 &line = lines[i];
                 points += plotLine(line.start().x(), line.start().y(), line.end().x(), line.end().y());
         }
         size_t ptsdrawn = drawPoints(pixel, points.data(), points.size());
@@ -83,7 +83,7 @@ size_t PaintEngine::Impl::drawLines(const Pixel &pixel, const Line2D *lines, siz
         return ptsdrawn > 0 ? lineCount : 0;
 }
 
-//virtual void drawLines(const Pixel &pixel, const Line2D *lines, size_t count);
+//virtual void drawLines(const Pixel &pixel, const Line2Di32 *lines, size_t count);
 //virtual void drawRect(const QRect &rect);
 //virtual void drawFilledRect(const QRect &rect);
 //virtual void drawCircle(const QPoint &pt, int radius);

@@ -1,0 +1,55 @@
+/**
+ * @file      splitter.h
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#pragma once
+
+#include <promeki/namespace.h>
+#include <promeki/tui/widget.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief Resizable split between two child widgets.
+ */
+class TuiSplitter : public TuiWidget {
+        PROMEKI_OBJECT(TuiSplitter, TuiWidget)
+        public:
+                enum Orientation { Horizontal, Vertical };
+
+                TuiSplitter(Orientation orientation = Horizontal,
+                            ObjectBase *parent = nullptr);
+                ~TuiSplitter() override;
+
+                void setFirstWidget(TuiWidget *widget);
+                void setSecondWidget(TuiWidget *widget);
+
+                TuiWidget *firstWidget() const { return _first; }
+                TuiWidget *secondWidget() const { return _second; }
+
+                /** @brief Sets the split position (0.0 to 1.0). */
+                void setSplitRatio(double ratio);
+                double splitRatio() const { return _splitRatio; }
+
+                Orientation orientation() const { return _orientation; }
+
+                Size2Di32 sizeHint() const override;
+
+        protected:
+                void paintEvent(TuiPaintEvent *e) override;
+                void resizeEvent(TuiResizeEvent *e) override;
+                void keyEvent(KeyEvent *e) override;
+
+        private:
+                Orientation     _orientation;
+                TuiWidget       *_first = nullptr;
+                TuiWidget       *_second = nullptr;
+                double          _splitRatio = 0.5;
+
+                void updateChildGeometry();
+};
+
+PROMEKI_NAMESPACE_END
