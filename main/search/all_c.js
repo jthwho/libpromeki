@@ -1,7 +1,7 @@
 var searchData=
 [
   ['largestfreeblock_0',['largestFreeBlock',['../structMemPool_1_1Stats.html#a96e57f370b0638f1f00d0bd1dd340596',1,'MemPool::Stats']]],
-  ['layout_1',['layout',['../md_CODING__STANDARDS.html#autotoc_md63',1,'File Layout'],['../md_CODING__STANDARDS.html#autotoc_md21',1,'File Layout']]],
+  ['layout_1',['layout',['../md_CODING__STANDARDS.html#autotoc_md64',1,'File Layout'],['../md_CODING__STANDARDS.html#autotoc_md21',1,'File Layout']]],
   ['left_2',['left',['../classString.html#a75c2ab1ddb88a4e8acfb683b3fd3636f',1,'String']]],
   ['legato_3',['legato',['../classMusicalNote.html#ab0ff13df14a34b547c701da029962d5e',1,'MusicalNote']]],
   ['length_4',['length',['../classString.html#ad3b888edbfb3bab21d4bae4663d2211a',1,'String::length()'],['../classNumNameSeq.html#a7518a599980b9a6aae056cf90a076dd8',1,'NumNameSeq::length()']]],
@@ -31,7 +31,7 @@ var searchData=
   ['linepad_28',['linePad',['../classImageDesc.html#ad95611a6f599daf285cbf4d5035e6495',1,'ImageDesc']]],
   ['linestride_29',['linestride',['../classImage.html#abf9283ed3c232c709afcd5dd22bd60f1',1,'Image::lineStride()'],['../classPixelFormat.html#ac041db304ac63fee5905cb1ac680492f',1,'PixelFormat::lineStride()']]],
   ['list_30',['list',['../deprecated.html',1,'Deprecated List'],['../classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8',1,'Image::List'],['../classList.html#a7f4952ba0bc543f6a2000f5af8d88b49',1,'List::List()'],['../classStringList.html#a708769d50011e6bdadc6bed2a6468aec',1,'StringList::List()=default'],['../classStringList.html#ad6aca4c38c82cc5b5fd56ae77b73815f',1,'StringList::List(size_t size)'],['../classStringList.html#a091ca41992f35860c542c08655198f20',1,'StringList::List(size_t size, const T &amp;defaultValue)'],['../classStringList.html#a43ce719b9dcc8aa532bad580c44e99f6',1,'StringList::List(const List &amp;other)'],['../classStringList.html#a7c36a05be703467e4eeda9a45bf10921',1,'StringList::List(List &amp;&amp;other) noexcept'],['../classList.html#a7c36a05be703467e4eeda9a45bf10921',1,'List::List(List &amp;&amp;other) noexcept'],['../classList.html#a43ce719b9dcc8aa532bad580c44e99f6',1,'List::List(const List &amp;other)'],['../classList.html#a091ca41992f35860c542c08655198f20',1,'List::List(size_t size, const T &amp;defaultValue)'],['../classStringList.html#a7f4952ba0bc543f6a2000f5af8d88b49',1,'StringList::List()'],['../classList.html#ad6aca4c38c82cc5b5fd56ae77b73815f',1,'List::List()'],['../classNumNameSeq.html#a521e67371d0b821f58f4f4159d598363',1,'NumNameSeq::List'],['../classList.html',1,'List&lt; T &gt;'],['../classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2',1,'Audio::List'],['../classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808',1,'Frame::List'],['../classList.html#a708769d50011e6bdadc6bed2a6468aec',1,'List::List()'],['../classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc',1,'Buffer::List'],['../signal.html',1,'Signal List']]],
-  ['list_20t_31',['List&lt;T&gt;',['../md_CODING__STANDARDS.html#autotoc_md49',1,'']]],
+  ['list_20t_31',['List&lt;T&gt;',['../md_CODING__STANDARDS.html#autotoc_md50',1,'']]],
   ['list_2eh_32',['list.h',['../list_8h.html',1,'']]],
   ['list_3c_20audiodesc_20_3e_33',['List&lt; AudioDesc &gt;',['../classList.html',1,'']]],
   ['list_3c_20audiogen_3a_3aconfig_20_3e_34',['List&lt; AudioGen::Config &gt;',['../classList.html',1,'']]],

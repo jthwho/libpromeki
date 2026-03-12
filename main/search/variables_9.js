@@ -7,6 +7,7 @@ var searchData=
   ['invid_4',['invID',['../structColorSpace_1_1Data.html#ac9232a847499399a2fd75ff650f9f7c2',1,'ColorSpace::Data']]],
   ['invtransferfunc_5',['invTransferFunc',['../structColorSpace_1_1Data.html#a94a33a0edeff8ba39d2ded68b6be239c',1,'ColorSpace::Data']]],
   ['isbigendian_6',['isBigEndian',['../structAudioDesc_1_1Format.html#ab1cbf8a01efd7507da784998693b3acd',1,'AudioDesc::Format']]],
-  ['isplanar_7',['isPlanar',['../structAudioDesc_1_1Format.html#a14b8529ec8b94e934d260722cb8a33ac',1,'AudioDesc::Format']]],
-  ['issigned_8',['isSigned',['../structAudioDesc_1_1Format.html#aa2a20adf8c327c2a16f7fee8f1159530',1,'AudioDesc::Format']]]
+  ['ishostaccessible_7',['isHostAccessible',['../structMemSpace_1_1Ops.html#a9670bbc91982b48085224fc1d2d153a0',1,'MemSpace::Ops']]],
+  ['isplanar_8',['isPlanar',['../structAudioDesc_1_1Format.html#a14b8529ec8b94e934d260722cb8a33ac',1,'AudioDesc::Format']]],
+  ['issigned_9',['isSigned',['../structAudioDesc_1_1Format.html#aa2a20adf8c327c2a16f7fee8f1159530',1,'AudioDesc::Format']]]
 ];

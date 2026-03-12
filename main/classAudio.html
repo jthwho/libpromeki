@@ -133,7 +133,7 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Audio</b> ()=<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">default</a></td></tr>
 <tr class="memdesc:a9f1d2e932cda2f1c674adde6ec51e0fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an invalid <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object. <br /></td></tr>
 <tr class="separator:a9f1d2e932cda2f1c674adde6ec51e0fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26f61701629343d1dd5933ad80aad188" id="r_a26f61701629343d1dd5933ad80aad188"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a26f61701629343d1dd5933ad80aad188">Audio</a> (<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>, <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a> <a class="el" href="classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3">samples</a>, <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMemSpace.html">MemSpace</a> &amp;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">ms</a>=<a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe">MemSpace::Default</a>)</td></tr>
+<tr class="memitem:a26f61701629343d1dd5933ad80aad188" id="r_a26f61701629343d1dd5933ad80aad188"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a26f61701629343d1dd5933ad80aad188">Audio</a> (<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>, <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a> <a class="el" href="classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3">samples</a>, <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMemSpace.html">MemSpace</a> &amp;ms=<a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe">MemSpace::Default</a>)</td></tr>
 <tr class="memdesc:a26f61701629343d1dd5933ad80aad188"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object for the given descriptor and sample count.  <br /></td></tr>
 <tr class="separator:a26f61701629343d1dd5933ad80aad188"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af39f380ec7303f814f36d7f97cc48701" id="r_af39f380ec7303f814f36d7f97cc48701"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#af39f380ec7303f814f36d7f97cc48701">isValid</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
@@ -174,7 +174,7 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Object to hold some number of audio samples. </p>
-<p>This object is meant to hold some number of audio samples described by an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. The sample data is stored in a shared <a class="el" href="classBuffer.html" title="Managed memory buffer with alignment and memory space support.">Buffer</a>. When shared ownership is needed, use <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351" title="Shared pointer type for Audio.">Audio::Ptr</a>. </p>
+<p>This object is meant to hold some number of audio samples described by an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. The sample data is stored in a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. When shared ownership is needed, use <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351" title="Shared pointer type for Audio.">Audio::Ptr</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a26f61701629343d1dd5933ad80aad188" name="a26f61701629343d1dd5933ad80aad188"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a26f61701629343d1dd5933ad80aad188">&#9670;&#160;</a></span>Audio()</h2>
@@ -245,7 +245,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns a mutable reference to the buffer shared pointer. </p>
-<dl class="section return"><dt>Returns</dt><dd>A mutable reference to the <a class="el" href="classBuffer.html" title="Managed memory buffer with alignment and memory space support.">Buffer</a> shared pointer. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A mutable reference to the <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> shared pointer. </dd></dl>
 
 </div>
 </div>
@@ -273,7 +273,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns a const reference to the buffer that holds the audio data. </p>
-<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classBuffer.html" title="Managed memory buffer with alignment and memory space support.">Buffer</a> shared pointer. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> shared pointer. </dd></dl>
 
 </div>
 </div>
@@ -526,7 +526,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudio.html">Audio</a></li>
-    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
   </ul>
 </div>
 </body>

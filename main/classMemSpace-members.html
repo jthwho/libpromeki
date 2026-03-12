@@ -105,21 +105,25 @@ $(document).ready(function(){initNavTree('classMemSpace.html',''); initResizable
 
 <p>This is the complete list of members for <a class="el" href="classMemSpace.html">MemSpace</a>, including all inherited members.</p>
 <table class="directory">
-  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#adae3697ce873fb263bec7016df957f9d">alloc</a>(size_t bytes, size_t align) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#ac831a353cfdb1ab666dfc1303b787561">copy</a>(ID toSpace, void *to, const void *from, size_t bytes) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a363033938958a5949b5c3ca810bf0de2">alloc</a>(size_t bytes, size_t align) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a346bf4969fd220e3dbfb9cd12f26a0df">copy</a>(const MemAllocation &amp;src, const MemAllocation &amp;dst, size_t bytes) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda8347c9d1337bdc522fc56575c262cafe">Default</a> enum value</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">ID</a> enum name</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a0030134c2aa2200a1a2c7738e31702a5">MemSpace</a>(ID id=Default)</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a08a21885c522d84d50982acfb4574516">release</a>(void *ptr) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a1f2a98b752e432db6fa95af5f68220dc">set</a>(void *to, size_t bytes, char value) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c">System</a> enum value</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a742825feed6c893590239027937230bf">fill</a>(void *ptr, size_t bytes, char value) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed">ID</a> enum name</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a6e44a50f38983fa16c92513200408a7e">id</a>() const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a745e081ef6f35fa0fd8a299fee767de5">isHostAccessible</a>(const MemAllocation &amp;alloc) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a0030134c2aa2200a1a2c7738e31702a5">MemSpace</a>(ID id=Default)</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#aac029c9bc7249bc669f9bb3594d2ccb0">name</a>() const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#aafcdf73942620b49f958d892ada0c735">release</a>(MemAllocation &amp;alloc) const</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c">System</a> enum value</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da">SystemSecure</a> enum value</td><td class="entry"><a class="el" href="classMemSpace.html">MemSpace</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
   </ul>
 </div>
 </body>

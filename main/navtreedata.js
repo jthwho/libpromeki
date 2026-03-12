@@ -66,28 +66,29 @@ var NAVTREE =
       ] ],
       [ "Error Handling", "md_CODING__STANDARDS.html#autotoc_md43", [
         [ "The Error Class", "md_CODING__STANDARDS.html#autotoc_md44", null ],
-        [ "Return Patterns", "md_CODING__STANDARDS.html#autotoc_md45", null ]
+        [ "Return Patterns", "md_CODING__STANDARDS.html#autotoc_md45", null ],
+        [ "Avoid <tt>bool</tt> for Error Reporting", "md_CODING__STANDARDS.html#autotoc_md46", null ]
       ] ],
-      [ "Container and Wrapper Types", "md_CODING__STANDARDS.html#autotoc_md47", [
-        [ "String", "md_CODING__STANDARDS.html#autotoc_md48", null ],
-        [ "List<T>", "md_CODING__STANDARDS.html#autotoc_md49", null ],
-        [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md50", null ],
-        [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md51", null ]
+      [ "Container and Wrapper Types", "md_CODING__STANDARDS.html#autotoc_md48", [
+        [ "String", "md_CODING__STANDARDS.html#autotoc_md49", null ],
+        [ "List<T>", "md_CODING__STANDARDS.html#autotoc_md50", null ],
+        [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md51", null ],
+        [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md52", null ]
       ] ],
-      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md53", null ],
-      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md55", null ],
-      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md57", [
-        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md58", null ],
-        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md59", null ],
-        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md60", null ]
+      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md54", null ],
+      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md56", null ],
+      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md58", [
+        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md59", null ],
+        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md60", null ],
+        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md61", null ]
       ] ],
-      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md62", [
-        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md63", null ],
-        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md64", null ],
-        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md65", null ],
-        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md66", null ]
+      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md63", [
+        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md64", null ],
+        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md65", null ],
+        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md66", null ],
+        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md67", null ]
       ] ],
-      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md68", null ]
+      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md69", null ]
     ] ],
     [ "Signal List", "signal.html", null ],
     [ "Deprecated List", "deprecated.html", null ],
@@ -123,14 +124,14 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "classAudioFile_1_1Impl.html#afb469e88ea005cce7f301c72eac6d673",
-"classFile.html#ac704ebdf5f57d7a1c5ddf409d797fb69",
-"classList.html#a765eaa96ac6ab58df358b2733599b70d",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a1a71da6309ed38e3c19f437a258bfb52",
-"classMusicalNote.html#ab0ff13df14a34b547c701da029962d5e",
-"classPixelFormat.html#aa47cca27864c57b6e7b820564294390ba96dbc844b49b0cd09ba78b9d9795167f",
-"classString.html#ab5b0c43ae84247df8e5f9488a911587c",
-"dataobjects.html",
-"sha1_8h.html#a2ab3e2f22c4b265da6164251ff915b67"
+"classFile.html#aad4a83201b3528a66eab5ad4f9cf1513aec5978df95acfa85c97336da2190e2ac",
+"classList.html#a69840f8fe6b8e09c8f16cdc3cf75a157",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a10c7f65ff2a3039fd51a5b9a7f049f36",
+"classMusicalNote.html#a8646ac10e4bddac93573e0a219a6c258",
+"classPixelFormat.html#aa47cca27864c57b6e7b820564294390ba55c5ccd72751122d4ceb8425cebf5af3",
+"classString.html#a9abc8d836ab5f7ea054728d12bec038f",
+"classXYZColor.html#aeded8806f529df458c1eecb3c4555eb6",
+"platform_8h.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

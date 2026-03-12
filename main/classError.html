@@ -225,8 +225,11 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a16136e7ebc397d51bcb89566235a9467" id="r_a16136e7ebc397d51bcb89566235a9467"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classError.html#a16136e7ebc397d51bcb89566235a9467">syserr</a> ()</td></tr>
-<tr class="memdesc:a16136e7ebc397d51bcb89566235a9467"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from the current POSIX errno value.  <br /></td></tr>
+<tr class="memdesc:a16136e7ebc397d51bcb89566235a9467"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from the last system error.  <br /></td></tr>
 <tr class="separator:a16136e7ebc397d51bcb89566235a9467"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a672194928df04a852f4d2295abfa0c30" id="r_a672194928df04a852f4d2295abfa0c30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classError.html#a672194928df04a852f4d2295abfa0c30">syserr</a> (int <a class="el" href="classList.html">errnum</a>)</td></tr>
+<tr class="memdesc:a672194928df04a852f4d2295abfa0c30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from an explicit POSIX errno value.  <br /></td></tr>
+<tr class="separator:a672194928df04a852f4d2295abfa0c30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight error code wrapper for the promeki library. </p>
@@ -486,7 +489,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a16136e7ebc397d51bcb89566235a9467" name="a16136e7ebc397d51bcb89566235a9467"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a16136e7ebc397d51bcb89566235a9467">&#9670;&#160;</a></span>syserr()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a16136e7ebc397d51bcb89566235a9467">&#9670;&#160;</a></span>syserr() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -508,8 +511,43 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from the current POSIX errno value. </p>
-<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> whose code maps to the current errno. </dd></dl>
+<p>Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from the last system error. </p>
+<p>On POSIX, reads errno. On Windows, reads GetLastError(). </p><dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> whose code maps to the system error. </dd></dl>
+
+</div>
+</div>
+<a id="a672194928df04a852f4d2295abfa0c30" name="a672194928df04a852f4d2295abfa0c30"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a672194928df04a852f4d2295abfa0c30">&#9670;&#160;</a></span>syserr() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a> Error::syserr </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>errnum</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from an explicit POSIX errno value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">errnum</td><td>The errno value to translate. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> whose code maps to the given errno. </dd></dl>
 
 </div>
 </div>
@@ -563,7 +601,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
   </ul>
 </div>
 </body>

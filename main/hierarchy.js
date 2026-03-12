@@ -84,6 +84,7 @@ var hierarchy =
     [ "Map< uintptr_t, Block >", "classMap.html", null ],
     [ "Matrix< T, W, H >", "classMatrix.html", null ],
     [ "Matrix3x3", "classMatrix3x3.html", null ],
+    [ "MemAllocation", "structMemAllocation.html", null ],
     [ "MemPool", "classMemPool.html", null ],
     [ "MemSpace", "classMemSpace.html", null ],
     [ "Metadata", "classMetadata.html", null ],
@@ -96,6 +97,7 @@ var hierarchy =
     [ "NoteSequenceParser", "classNoteSequenceParser.html", null ],
     [ "NumName", "classNumName.html", null ],
     [ "NumNameSeq", "classNumNameSeq.html", null ],
+    [ "ObfuscatedString< N, Seed >", "classObfuscatedString.html", null ],
     [ "ObjectBase", "classObjectBase.html", [
       [ "AudioBlock", "classAudioBlock.html", null ],
       [ "Thread", "classThread.html", null ]

@@ -14,7 +14,7 @@ var searchData=
   ['registerpixelformat_11',['registerPixelFormat',['../classPixelFormat.html#aaf6579d915da3e3c93acb97fd5591d66',1,'PixelFormat']]],
   ['registerslot_12',['registerSlot',['../classObjectBase.html#a64ca29baab8fa3918997fe1505393eac',1,'ObjectBase']]],
   ['registertype_13',['registerType',['../classEvent.html#aa8611a9b3fd1b2d6cfdde50895313d6e',1,'Event']]],
-  ['release_14',['release',['../classMemSpace.html#a08a21885c522d84d50982acfb4574516',1,'MemSpace']]],
+  ['release_14',['release',['../classMemSpace.html#aafcdf73942620b49f958d892ada0c735',1,'MemSpace']]],
   ['remove_15',['remove',['../classSet.html#a2014f529adc9ce21a9df1cb8479e7fb2',1,'Set::remove(Iterator pos)'],['../classSet.html#a18aad98896a284337b4d35be3c78453d',1,'Set::remove(const T &amp;value)'],['../classMetadata.html#a2eec4aa5c79a3a0e13377daba9785bd8',1,'Metadata::remove()'],['../classMap.html#ae5f2f071c567b714113a94233fa9f5e6',1,'Map::remove()'],['../classList.html#a34f1d17ccc183fea7c335890df192d69',1,'List::remove(size_t index)'],['../classList.html#a368154328587fa22cc03d19b1889935e',1,'List::remove(ConstIterator pos)'],['../classMap.html#acf932b718ae9be20dfefee1b2417a3a4',1,'Map::remove()']]],
   ['removefirst_16',['removeFirst',['../classList.html#a7e3a38d5cacac7f2af7a5eb8444190bc',1,'List']]],
   ['removeif_17',['removeIf',['../classList.html#aed93ef2f62f18549b6420d7e5bd607e4',1,'List']]],

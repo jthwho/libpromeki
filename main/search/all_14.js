@@ -1,10 +1,10 @@
 var searchData=
 [
-  ['t_0',['List&lt;T&gt;',['../md_CODING__STANDARDS.html#autotoc_md49',1,'']]],
-  ['t_20n_1',['Array&lt;T, N&gt;',['../md_CODING__STANDARDS.html#autotoc_md50',1,'']]],
+  ['t_0',['List&lt;T&gt;',['../md_CODING__STANDARDS.html#autotoc_md50',1,'']]],
+  ['t_20n_1',['Array&lt;T, N&gt;',['../md_CODING__STANDARDS.html#autotoc_md51',1,'']]],
   ['tail_2',['tail',['../classNumNameSeq.html#ae93eb2139e816a83631f572ca0f63e96',1,'NumNameSeq']]],
   ['testfunc_3',['TestFunc',['../classList.html#a88aacfce8305ae6f0ce1991c9a490b94',1,'List']]],
-  ['testing_4',['Testing',['../md_CODING__STANDARDS.html#autotoc_md62',1,'']]],
+  ['testing_4',['Testing',['../md_CODING__STANDARDS.html#autotoc_md63',1,'']]],
   ['tests_5',['Running Tests',['../index.html#autotoc_md7',1,'']]],
   ['textstyle_6',['TextStyle',['../classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b',1,'AnsiStream']]],
   ['the_20error_20class_7',['The Error Class',['../md_CODING__STANDARDS.html#autotoc_md44',1,'']]],
@@ -26,7 +26,7 @@ var searchData=
   ['timestamp_23',['timestamp',['../classTimeStamp.html#ac79e77812a8a971147d397c24283d6d2',1,'TimeStamp::TimeStamp()'],['../classTimeStamp.html',1,'TimeStamp'],['../classTimeStamp.html#a130d6c5230be88ae97c3db1ca9362b97',1,'TimeStamp::TimeStamp()']]],
   ['timestamp_2eh_24',['timestamp.h',['../timestamp_8h.html',1,'']]],
   ['to_25',['to',['../classString.html#a79c24c20d83d955ad019606a9b042342',1,'String']]],
-  ['to_20document_26',['What Not to Document',['../md_CODING__STANDARDS.html#autotoc_md60',1,'']]],
+  ['to_20document_26',['What Not to Document',['../md_CODING__STANDARDS.html#autotoc_md61',1,'']]],
   ['to_20implement_20shareable_20classes_27',['How to Implement (Shareable Classes)',['../md_CODING__STANDARDS.html#autotoc_md41',1,'']]],
   ['tobool_28',['toBool',['../classString.html#a892c1ddf47d2dfa249cb729b59df38b4',1,'String']]],
   ['todouble_29',['todouble',['../classString.html#afc2a7dab6eec01a4881f5235192ff2dd',1,'String::toDouble()'],['../classDateTime.html#a981cb46a236c6c17a567fac35f42d71f',1,'DateTime::toDouble()'],['../classFrameRate.html#a0e7b792ebba72a9f71044c6c6274ad7e',1,'FrameRate::toDouble()'],['../classRational.html#ac12d1c7b85a72de1c42cda9f58417985',1,'Rational::toDouble()']]],
@@ -56,8 +56,9 @@ var searchData=
   ['trim_53',['trim',['../classString.html#a5ed648f71d99bb8aef15e8ba35422a30',1,'String']]],
   ['truncate_54',['truncate',['../classFile.html#a8e597055fcd374e04fd2dfa18d2981b1',1,'File::truncate(FileBytes offset) const'],['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a6e0c983dc71e31345fa3a7818ac285d8',1,'File::Truncate']]],
   ['tryagain_55',['TryAgain',['../classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b',1,'Error']]],
-  ['type_56',['type',['../classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be',1,'VariantImpl::Type'],['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type'],['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../structPixelFormat_1_1CompDesc.html#ad2a4aec42f568711cd7a3753e72f168e',1,'PixelFormat::CompDesc::type'],['../classEvent.html#a125c246d8ea0315dcf6d8e56cd414c1c',1,'Event::type()'],['../classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc',1,'VariantImpl::type()'],['../classEvent.html#aefa8b5aaf44c1868a1fe5febe3f1b1a3',1,'Event::Type'],['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7',1,'AudioGen::Type']]],
-  ['type_20aliases_57',['Standard Library Type Aliases',['../md_CODING__STANDARDS.html#autotoc_md32',1,'']]],
-  ['typename_58',['typename',['../classVariantImpl.html#a84e464175ece32c791091b2e1e6bf379',1,'VariantImpl::typeName() const'],['../classVariantImpl.html#a1d14d0933592c16d77425a86ae5e590f',1,'VariantImpl::typeName(Type id)']]],
-  ['types_59',['types',['../md_CODING__STANDARDS.html#autotoc_md28',1,'Classes and Types'],['../md_CODING__STANDARDS.html#autotoc_md47',1,'Container and Wrapper Types']]]
+  ['tt_20bool_20tt_20for_20error_20reporting_56',['Avoid &lt;tt&gt;bool&lt;/tt&gt; for Error Reporting',['../md_CODING__STANDARDS.html#autotoc_md46',1,'']]],
+  ['type_57',['type',['../classEvent.html#a125c246d8ea0315dcf6d8e56cd414c1c',1,'Event::type()'],['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7',1,'AudioGen::Type'],['../classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be',1,'VariantImpl::Type'],['../classEvent.html#aefa8b5aaf44c1868a1fe5febe3f1b1a3',1,'Event::Type'],['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type'],['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../classVariantImpl.html#a8aec564fe7f0aaca05ebc0e97698bbcc',1,'VariantImpl::type()'],['../structPixelFormat_1_1CompDesc.html#ad2a4aec42f568711cd7a3753e72f168e',1,'PixelFormat::CompDesc::type']]],
+  ['type_20aliases_58',['Standard Library Type Aliases',['../md_CODING__STANDARDS.html#autotoc_md32',1,'']]],
+  ['typename_59',['typename',['../classVariantImpl.html#a84e464175ece32c791091b2e1e6bf379',1,'VariantImpl::typeName() const'],['../classVariantImpl.html#a1d14d0933592c16d77425a86ae5e590f',1,'VariantImpl::typeName(Type id)']]],
+  ['types_60',['types',['../md_CODING__STANDARDS.html#autotoc_md28',1,'Classes and Types'],['../md_CODING__STANDARDS.html#autotoc_md48',1,'Container and Wrapper Types']]]
 ];

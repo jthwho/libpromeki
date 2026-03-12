@@ -6,5 +6,6 @@ var searchData=
   ['maxwavelength_3',['MaxWavelength',['../classCIEPoint.html#a1e09b6a4719f768b806aba60d0f93d7d',1,'CIEPoint']]],
   ['mins24_4',['MinS24',['../classAudioDesc.html#a39d719985ad1ec4416d6004d95e1ca68',1,'AudioDesc']]],
   ['minu24_5',['MinU24',['../classAudioDesc.html#a5ff57815cd9ea4e811e44fc55f153860',1,'AudioDesc']]],
-  ['minwavelength_6',['MinWavelength',['../classCIEPoint.html#a2cca9e2542d9cc31a250a4741131d6b1',1,'CIEPoint']]]
+  ['minwavelength_6',['MinWavelength',['../classCIEPoint.html#a2cca9e2542d9cc31a250a4741131d6b1',1,'CIEPoint']]],
+  ['ms_7',['ms',['../structMemAllocation.html#ad2abdbee479cc2508381be4eec92c598',1,'MemAllocation']]]
 ];

@@ -106,6 +106,8 @@ $(document).ready(function(){initNavTree('classBuffer.html',''); initResizable()
 <p>This is the complete list of members for <a class="el" href="classBuffer.html">Buffer</a>, including all inherited members.</p>
 <table class="directory">
   <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a75407799931ea8ff390fd7c7d9ea07f0">align</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#ac35c3c2aa73a651597b953f5ebdcb3e4">allocation</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#aa3b733a521a31a7db6060d3103624beb">allocSize</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#a92fd371409790ee64d2ca9bdaec2dd1a">Buffer</a>()=default</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a7f2b6f273859dae6d5e8f19e70957d11">Buffer</a>(size_t sz, size_t an=DefaultAlign, const MemSpace &amp;ms=MemSpace::Default)</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#a12fa2daf45e584c04551373b9d41ad94">Buffer</a>(void *p, size_t sz, size_t an=0, bool own=false, const MemSpace &amp;ms=MemSpace::Default)</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
@@ -113,11 +115,13 @@ $(document).ready(function(){initNavTree('classBuffer.html',''); initResizable()
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#a228ba5926ae92551576e5dc3c90b4f9a">Buffer</a>(Buffer &amp;&amp;o) noexcept</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69">data</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#a778803293f4a645e371b65868f45a300">DefaultAlign</a></td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#aa95e5ea1df7217dc4af6dface7f6a678">fill</a>(char value) const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a00491bb52896ef608b6b82ec2e6c1e08">fill</a>(char value) const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#a43a7a036b9303c5ee904087641f5cf91">getPageSize</a>()</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">static</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a46144112ecb2bd9593ba8767fb140145">isValid</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">List</a> typedef</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#aef914d1aa00e9c4da20240160e78fde7">memSpace</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#aa35d50373c38ff6420f077d9fb661a19">isHostAccessible</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#a46144112ecb2bd9593ba8767fb140145">isValid</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">List</a> typedef</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#aef914d1aa00e9c4da20240160e78fde7">memSpace</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a54e60683bb045b1d830e9152b4b482ef">odata</a>() const</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#af3786195925145a7b598cbea3f5e57d7">operator=</a>(const Buffer &amp;o)</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classBuffer.html#a44dea5535d00022d1e54bffb0b387606">operator=</a>(Buffer &amp;&amp;o) noexcept</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Ptr</a> typedef</td><td class="entry"><a class="el" href="classBuffer.html">Buffer</a></td><td class="entry"></td></tr>
@@ -132,7 +136,7 @@ $(document).ready(function(){initNavTree('classBuffer.html',''); initResizable()
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-11 03:13:02 from commit b5d64e6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
   </ul>
 </div>
 </body>
