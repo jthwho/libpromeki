@@ -72,10 +72,19 @@ class Error {
                 };
 
                 /**
-                 * @brief Creates an Error from the current POSIX errno value.
-                 * @return An Error whose code maps to the current errno.
+                 * @brief Creates an Error from the last system error.
+                 *
+                 * On POSIX, reads errno. On Windows, reads GetLastError().
+                 * @return An Error whose code maps to the system error.
                  */
                 static Error syserr();
+
+                /**
+                 * @brief Creates an Error from an explicit POSIX errno value.
+                 * @param errnum The errno value to translate.
+                 * @return An Error whose code maps to the given errno.
+                 */
+                static Error syserr(int errnum);
 
                 /**
                  * @brief Constructs an Error with the given code.

@@ -8,9 +8,14 @@
 #include <cerrno>
 #include <cstring>
 #include <promeki/error.h>
+#include <promeki/platform.h>
 #include <promeki/structdatabase.h>
 #include <promeki/logger.h>
 #include <promeki/util.h>
+
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+#       include <Windows.h>
+#endif
 
 #define DEFINE_ERROR(error, errno, description) \
 { \
@@ -76,24 +81,54 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(InvalidDimension, NONE, "Invalid dimension for operation")
 };
 
-Error Error::syserr() {
-        static bool init = false;
-        static StructDatabase<int, Code> sysdb;
-        if(!init) {
-                init = true;
+static StructDatabase<int, Error::Code> &posixErrorDb() {
+        static StructDatabase<int, Error::Code> sysdb = []() {
+                StructDatabase<int, Error::Code> tmp;
                 for(const auto &item : db.database()) {
                         int systemError = item.second.systemError;
                         if(systemError == NONE) continue;
-                        sysdb.database()[systemError] = item.second.id;
+                        tmp.database()[systemError] = item.second.id;
                 }
-        }
-        int e = errno;
-        const auto &val = sysdb.database().find(e);
+                return tmp;
+        }();
+        return sysdb;
+}
+
+Error Error::syserr(int errnum) {
+        auto &sysdb = posixErrorDb();
+        const auto &val = sysdb.database().find(errnum);
         if(val == sysdb.database().end()) {
-                promekiWarn("Error::syserr() can't translate error %d:%s", e, std::strerror(e));
+                promekiWarn("Error::syserr() can't translate error %d:%s", errnum, std::strerror(errnum));
                 return UnsupportedSystemError;
         }
         return val->second;
+}
+
+Error Error::syserr() {
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        DWORD e = GetLastError();
+        switch(e) {
+                case ERROR_SUCCESS:             return Ok;
+                case ERROR_ACCESS_DENIED:       return PermissionDenied;
+                case ERROR_NOT_ENOUGH_MEMORY:   return NoMem;
+                case ERROR_OUTOFMEMORY:         return NoMem;
+                case ERROR_INVALID_PARAMETER:   return Invalid;
+                case ERROR_INVALID_ADDRESS:     return BadAddress;
+                case ERROR_BUSY:                return Busy;
+                case ERROR_ALREADY_EXISTS:      return Exists;
+                case ERROR_FILE_NOT_FOUND:      return NotExist;
+                case ERROR_PATH_NOT_FOUND:      return NotExist;
+                case ERROR_DISK_FULL:           return NoSpace;
+                case ERROR_WRITE_PROTECT:       return ReadOnly;
+                case ERROR_TIMEOUT:             return Timeout;
+                case ERROR_WORKING_SET_QUOTA:   return NoMem;
+                default:
+                        promekiWarn("Error::syserr() can't translate Windows error %lu", (unsigned long)e);
+                        return UnsupportedSystemError;
+        }
+#else
+        return syserr(errno);
+#endif
 }
 
 const String &Error::name() const {

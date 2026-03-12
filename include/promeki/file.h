@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <promeki/namespace.h>
+#include <promeki/platform.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
 
@@ -39,7 +40,7 @@ class File {
                         ReadWrite       = (ReadOnly | WriteOnly) ///< @brief Open for both reading and writing.
                 };
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(PROMEKI_PLATFORM_WINDOWS)
                 /** @brief Platform-specific file handle type (Windows). */
                 using FileHandle = HANDLE;
                 /** @brief Sentinel value representing a closed file handle (Windows). */

@@ -638,6 +638,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/event.cpp
         tests/eventloop.cpp
         tests/thread.cpp
+        tests/securebuffer.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

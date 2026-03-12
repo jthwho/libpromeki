@@ -63,7 +63,7 @@ TEST_CASE("Buffer_External") {
 TEST_CASE("Buffer_Fill") {
     Buffer b(128);
     REQUIRE(b.isValid());
-    CHECK(b.fill(0xAB));
+    CHECK(b.fill(0xAB).isOk());
     const uint8_t *ptr = static_cast<const uint8_t *>(b.data());
     CHECK(ptr[0] == 0xAB);
     CHECK(ptr[63] == 0xAB);
@@ -72,7 +72,7 @@ TEST_CASE("Buffer_Fill") {
 
 TEST_CASE("Buffer_FillZero") {
     Buffer b(64);
-    CHECK(b.fill(0));
+    CHECK(b.fill(0).isOk());
     const uint8_t *ptr = static_cast<const uint8_t *>(b.data());
     for(size_t i = 0; i < 64; i++) {
         CHECK(ptr[i] == 0);
@@ -85,7 +85,7 @@ TEST_CASE("Buffer_FillZero") {
 
 TEST_CASE("Buffer_CopyIsIndependent") {
     Buffer b1(256);
-    CHECK(b1.fill(0x42));
+    CHECK(b1.fill(0x42).isOk());
 
     Buffer b2 = b1;
     // Deep copy — different memory, same content
@@ -110,7 +110,7 @@ TEST_CASE("Buffer_CopyIsIndependent") {
 
 TEST_CASE("Buffer_SharedPtr") {
     auto b1 = Buffer::Ptr::create(256);
-    CHECK(b1->fill(0x42));
+    CHECK(b1->fill(0x42).isOk());
     CHECK(b1.referenceCount() == 1);
 
     Buffer::Ptr b2 = b1;
@@ -126,13 +126,40 @@ TEST_CASE("Buffer_SharedPtr") {
 
 TEST_CASE("Buffer_ShiftData") {
     Buffer b(1024);
-    CHECK(b.fill(0));
+    CHECK(b.fill(0).isOk());
     void *orig = b.data();
 
     b.shiftData(64);
     uintptr_t shifted = reinterpret_cast<uintptr_t>(b.data());
     uintptr_t original = reinterpret_cast<uintptr_t>(orig);
     CHECK(shifted == original + 64);
+    CHECK(b.size() == 1024 - 64);
+    CHECK(b.allocSize() == 1024);
+}
+
+TEST_CASE("Buffer_ShiftDataFromBase") {
+    Buffer b(1024);
+    void *base = b.odata();
+
+    // First shift
+    b.shiftData(64);
+    CHECK(b.data() == static_cast<uint8_t *>(base) + 64);
+    CHECK(b.size() == 1024 - 64);
+
+    // Second shift replaces the first (not accumulating)
+    b.shiftData(128);
+    CHECK(b.data() == static_cast<uint8_t *>(base) + 128);
+    CHECK(b.size() == 1024 - 128);
+
+    // Shift back to zero
+    b.shiftData(0);
+    CHECK(b.data() == base);
+    CHECK(b.size() == 1024);
+}
+
+TEST_CASE("Buffer_IsHostAccessible") {
+    Buffer b(64);
+    CHECK(b.isHostAccessible());
 }
 
 // ============================================================================

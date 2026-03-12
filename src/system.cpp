@@ -14,7 +14,7 @@
  #include <array>
  #include <cstring>
  #include <cerrno>
- #ifdef PROMEKI_WINDOWS
+ #ifdef PROMEKI_PLATFORM_WINDOWS
      #include <winsock2.h>
      #pragma comment(lib, "ws2_32.lib")
  #else

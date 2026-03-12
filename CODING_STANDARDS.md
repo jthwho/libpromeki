@@ -302,12 +302,19 @@ Use one of these patterns consistently within a class. Preferred order:
    int toInt(Error *err = nullptr) const;
    ```
 
-4. **`bool *ok` output parameter** — For template/generic conversions:
-   ```cpp
-   template <typename T> T to(bool *ok = nullptr) const;
-   ```
-
 Avoid mixing patterns within the same class without good reason.
+
+### Avoid `bool` for Error Reporting
+
+Do not use `bool` return values or `bool *ok` output parameters to indicate success or failure. Use the `Error` class instead. `Error` provides specific, diagnosable failure reasons (`NoMem`, `NoPermission`, `Timeout`, etc.) whereas `bool` discards all context about *why* something failed, making debugging and error recovery harder. The only exception is pure predicates that answer a yes/no question (e.g., `isEmpty()`, `contains()`), which are not error reporting.
+
+When wrapping system calls that set `errno`, use `Error::syserr()` to capture the specific failure:
+```cpp
+if(mlock(ptr, size) != 0) {
+        Error err = Error::syserr();
+        promekiWarn("mlock failed: %s", err.desc().cstr());
+}
+```
 
 ---
 

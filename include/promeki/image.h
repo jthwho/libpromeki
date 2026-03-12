@@ -175,13 +175,15 @@ class Image {
                 /**
                  * @brief Fills all image planes with the given byte value.
                  * @param value The byte value to fill with.
-                 * @return true on success, false if no planes exist or a fill fails.
+                 * @return Error::Ok on success, or an error if no planes exist or a fill fails.
                  */
-                bool fill(char value) const {
+                Error fill(char value) const {
+                        if(_planeList.isEmpty()) return Error::Invalid;
                         for(auto &p : _planeList) {
-                                if(!p->fill(value)) return false;
+                                Error err = p->fill(value);
+                                if(err.isError()) return err;
                         }
-                        return !_planeList.isEmpty();
+                        return Error::Ok;
                 }
 
                 /**

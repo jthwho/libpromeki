@@ -6,12 +6,13 @@
  */
 
 #include <promeki/buildinfo.h>
+#include <promeki/platform.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 static const char *_buildType() {
-#ifdef _MSC_VER
+#ifdef PROMEKI_COMPILER_MSVC
 #   ifdef _DEBUG
     return "Debug";
 #   else

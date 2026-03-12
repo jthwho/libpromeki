@@ -5,16 +5,17 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#if defined(_WIN32) || defined(_WIN64)
+#include <cstdlib>
+#include <promeki/ansistream.h>
+#include <promeki/platform.h>
+#include <promeki/error.h>
+
+#if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <windows.h>
 #else
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
-
-#include <cstdlib>
-#include <promeki/ansistream.h>
-#include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -63,7 +64,7 @@ bool AnsiStream::stdoutSupportsANSI() {
 }
 
 bool AnsiStream::stdoutWindowSize(int &rows, int &cols) {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(PROMEKI_PLATFORM_WINDOWS)
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
                 cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;

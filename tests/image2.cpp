@@ -47,7 +47,7 @@ TEST_CASE("Image_ConstructFromDesc") {
 TEST_CASE("Image_Fill") {
     Image img(64, 64, PixelFormat::RGBA8);
     REQUIRE(img.isValid());
-    CHECK(img.fill(0xAB));
+    CHECK(img.fill(0xAB).isOk());
 
     const uint8_t *ptr = static_cast<const uint8_t *>(img.data());
     CHECK(ptr[0] == 0xAB);
@@ -171,7 +171,7 @@ TEST_CASE("Image_DataPointer") {
 TEST_CASE("Image_FillInvalid") {
     Image img;
     CHECK(!img.isValid());
-    CHECK(!img.fill(0));
+    CHECK(img.fill(0).isError());
 }
 
 // ============================================================================

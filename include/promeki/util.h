@@ -13,28 +13,12 @@
 #include <limits>
 #include <type_traits>
 #include <promeki/namespace.h>
+#include <promeki/platform.h>
 #include <promeki/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class StringList;
-
-#if defined(_WIN32)
-#define PROMEKI_PLATFORM_WINDOWS 32
-#define PROMEKI_PLATFORM "Win32"
-#elif defined(_WIN64)
-#define PROMEKI_PLATFORM_WINDOWS 64
-#define PROMEKI_PLATFORM "Win64"
-#elif defined(__APPLE__)
-#define PROMEKI_PLATFORM_APPLE 1
-#define PROMEKI_PLATFORM "MacOS"
-#elif defined(__linux__)
-#define PROMEKI_PLATFORM_LINUX 1
-#define PROMEKI_PLATFORM "Linux"
-#else
-#define PROMEKI_PLATFORM_UNKNOWN 1
-#define PROMEKI_PLATFORM "Unknown"
-#endif
 
 // Runtime time assert
 #define PROMEKI_ASSERT(x) if(!(x)) { \
@@ -69,9 +53,9 @@ class StringList;
 // The m argument should be the index that contains the format
 // The n argument should be the index of the start of the variadic
 // Index starts at 1
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(PROMEKI_COMPILER_GCC_COMPAT)
 #       define PROMEKI_PRINTF_FUNC(m, n) __attribute__((format(printf, m, n)))
-#elif defined(_MSC_VER)
+#elif defined(PROMEKI_COMPILER_MSVC)
 #       define PROMEKI_PRINTF_FUNC(m, n) _Printf_format_string_
 #else
 #       define PROMEKI_PRINTF_FUNC(m, n)
@@ -95,11 +79,11 @@ class StringList;
 // You can validate the packed-ness of the structure as it should
 // now show a sizeof(MyStruct) == to the exact size of all the data
 // in the structure.
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(PROMEKI_COMPILER_GCC_COMPAT)
 #       define PROMEKI_PACKED_STRUCT_BEGIN
 #       define PROMEKI_PACKED_STRUCT_END __attribute__((packed))
-#elif defined(_MSC_VER)
-#       define PROMEKI_PACKED_STRUCT_BEGIN __pragma(pack(push, 1)) 
+#elif defined(PROMEKI_COMPILER_MSVC)
+#       define PROMEKI_PACKED_STRUCT_BEGIN __pragma(pack(push, 1))
 #       define PROMEKI_PACKED_STRUCT_END __pragma(pack(pop))
 #else
 #       define PROMEKI_PACKED_STRUCT_BEGIN
