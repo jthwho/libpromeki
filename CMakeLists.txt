@@ -782,6 +782,16 @@ if(PROMEKI_BUILD_TESTS)
             tests/tui/button.cpp
             tests/tui/frame.cpp
             tests/tui/inputparser.cpp
+            tests/tui/palette.cpp
+            tests/tui/lineedit.cpp
+            tests/tui/textarea.cpp
+            tests/tui/listview.cpp
+            tests/tui/scrollarea.cpp
+            tests/tui/splitter.cpp
+            tests/tui/tabwidget.cpp
+            tests/tui/progressbar.cpp
+            tests/tui/statusbar.cpp
+            tests/tui/menu.cpp
         )
         add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
         target_compile_definitions(unittest-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
