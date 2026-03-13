@@ -71,8 +71,13 @@ Size2Di32 TuiListView::sizeHint() const {
 
 void TuiListView::scrollBy(int delta) {
         int itemCount = static_cast<int>(_items.size());
-        int newIndex = std::clamp(_currentIndex + delta, 0, std::max(0, itemCount - 1));
-        if(newIndex != _currentIndex) setCurrentIndex(newIndex);
+        int h = height();
+        int maxOffset = std::max(0, itemCount - h);
+        int newOffset = std::clamp(_scrollOffset + delta, 0, maxOffset);
+        if(newOffset != _scrollOffset) {
+                _scrollOffset = newOffset;
+                update();
+        }
 }
 
 int TuiListView::contentWidth() const {
@@ -104,8 +109,10 @@ int TuiListView::thumbPos() const {
 }
 
 void TuiListView::ensureVisible(int index) {
+        int oldOffset = _scrollOffset;
         if(index < _scrollOffset) _scrollOffset = index;
         if(index >= _scrollOffset + height()) _scrollOffset = index - height() + 1;
+        if(_scrollOffset != oldOffset) update();
 }
 
 void TuiListView::paintEvent(TuiPaintEvent *) {
@@ -257,11 +264,6 @@ void TuiListView::mouseEvent(MouseEvent *e) {
                         int newOffset = std::clamp(trackPos * maxOffset / maxThumbPos, 0, maxOffset);
                         if(newOffset != _scrollOffset) {
                                 _scrollOffset = newOffset;
-                                // Keep current index visible
-                                if(_currentIndex < _scrollOffset) _currentIndex = _scrollOffset;
-                                if(_currentIndex >= _scrollOffset + h) _currentIndex = _scrollOffset + h - 1;
-                                _currentIndex = std::clamp(_currentIndex, 0, std::max(0, itemCount - 1));
-                                currentItemChangedSignal.emit(_currentIndex);
                                 update();
                         }
                 }
@@ -269,7 +271,7 @@ void TuiListView::mouseEvent(MouseEvent *e) {
                 return;
         }
 
-        if(e->action() == MouseEvent::Press) {
+        if(e->action() == MouseEvent::Press || e->action() == MouseEvent::DoubleClick) {
                 if(local.x() == sbx) {
                         if(local.y() == 0) {
                                 // Up arrow
@@ -300,6 +302,9 @@ void TuiListView::mouseEvent(MouseEvent *e) {
                         int idx = _scrollOffset + local.y();
                         if(idx >= 0 && idx < itemCount) {
                                 setCurrentIndex(idx);
+                                if(e->action() == MouseEvent::DoubleClick) {
+                                        itemActivatedSignal.emit(idx);
+                                }
                         }
                         e->accept();
                 }

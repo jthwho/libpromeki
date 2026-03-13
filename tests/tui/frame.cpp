@@ -27,16 +27,25 @@ TEST_CASE("TuiFrame: layout propagation on resize") {
         // and propagate layout to children via contentRect()
         frame.setGeometry(Rect2Di32(5, 10, 40, 10));
 
-        // Content rect is (5+1, 10+1, 40-2, 10-2) = (6, 11, 38, 8)
-        // Children should be positioned within the content area
-        CHECK(child1.width() > 0);
-        CHECK(child1.height() > 0);
-        CHECK(child2.width() > 0);
-        CHECK(child2.height() > 0);
+        // Content rect is (1, 1, 38, 8) in frame-local (parent-relative) coordinates.
+        // Children are positioned relative to the frame, not the screen.
+        Rect2Di32 content = frame.contentRect();
+        CHECK(content.x() == 1);
+        CHECK(content.y() == 1);
+        CHECK(content.width() == 38);
+        CHECK(content.height() == 8);
 
-        // Children should be positioned within the frame's content area
-        CHECK(child1.x() >= frame.x() + 1);
-        CHECK(child1.y() >= frame.y() + 1);
+        // Children should be positioned within the content area
+        CHECK(child1.x() == content.x());
+        CHECK(child1.y() == content.y());
+        CHECK(child1.width() == content.width());
+        CHECK(child1.height() > 0);
+        CHECK(child2.x() == content.x());
+        CHECK(child2.y() == child1.y() + child1.height());
+        CHECK(child2.width() == content.width());
+        CHECK(child2.height() > 0);
+        // Children stay within the content area bounds
+        CHECK(child2.y() + child2.height() <= content.y() + content.height());
 }
 
 TEST_CASE("TuiFrame: sizeHint reflects layout content") {

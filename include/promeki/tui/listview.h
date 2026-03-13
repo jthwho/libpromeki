@@ -19,6 +19,11 @@ class TuiPalette;
 
 /**
  * @brief Scrollable list of items with keyboard and mouse navigation.
+ *
+ * Supports single selection via keyboard (Up/Down/PageUp/PageDown/Home/End)
+ * and mouse (click to select, double-click to activate). Mouse wheel and
+ * scrollbar interaction scroll the viewport independently of the selection.
+ * The Enter key activates the current item via the itemActivated signal.
  */
 class TuiListView : public TuiWidget {
         PROMEKI_OBJECT(TuiListView, TuiWidget)
@@ -40,8 +45,23 @@ class TuiListView : public TuiWidget {
                 /** @brief Returns the current scroll offset. */
                 int scrollOffset() const { return _scrollOffset; }
 
-                /** @brief Scrolls by the given number of items (positive = down). */
+                /**
+                 * @brief Scrolls the viewport by the given number of items.
+                 *
+                 * Moves only the viewport scroll offset without changing the current
+                 * selection (following Qt convention). The current index may end up
+                 * off-screen after scrolling; use ensureVisible() to bring it back
+                 * into view if needed.
+                 *
+                 * @param delta Number of items to scroll (positive = down, negative = up).
+                 */
                 void scrollBy(int delta);
+
+                /**
+                 * @brief Adjusts the scroll offset so that the given index is visible.
+                 * @param index The item index to make visible.
+                 */
+                void ensureVisible(int index);
 
                 Size2Di32 sizeHint() const override;
 
@@ -61,7 +81,6 @@ class TuiListView : public TuiWidget {
                 int             _dragOffset = 0;        ///< Offset within thumb when drag started.
 
                 int contentWidth() const;
-                void ensureVisible(int index);
                 void paintScrollbar(TuiPainter &painter, const TuiPalette &pal);
                 int thumbPos() const;
                 int thumbSize() const;

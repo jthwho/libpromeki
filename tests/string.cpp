@@ -518,3 +518,33 @@ TEST_CASE("String_BoolNumber") {
         CHECK(String::number(true) == "true");
         CHECK(String::number(false) == "false");
 }
+
+// ============================================================================
+// UTF-8 length
+// ============================================================================
+
+TEST_CASE("String_Utf8Length") {
+        // Pure ASCII: utf8Length == length
+        String ascii("hello");
+        CHECK(ascii.length() == 5);
+        CHECK(ascii.utf8Length() == 5);
+
+        // Empty string
+        String empty;
+        CHECK(empty.utf8Length() == 0);
+
+        // 2-byte codepoints: "café" (é = 0xC3 0xA9)
+        String cafe("caf\xc3\xa9");
+        CHECK(cafe.length() == 5);
+        CHECK(cafe.utf8Length() == 4);
+
+        // 3-byte codepoints: "日本" (each char is 3 bytes)
+        String jp("\xe6\x97\xa5\xe6\x9c\xac");
+        CHECK(jp.length() == 6);
+        CHECK(jp.utf8Length() == 2);
+
+        // 4-byte codepoint: emoji 😀 (U+1F600 = 0xF0 0x9F 0x98 0x80)
+        String emoji("\xf0\x9f\x98\x80");
+        CHECK(emoji.length() == 4);
+        CHECK(emoji.utf8Length() == 1);
+}

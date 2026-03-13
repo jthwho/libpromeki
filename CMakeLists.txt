@@ -501,6 +501,7 @@ if(PROMEKI_BUILD_TUI)
         include/promeki/tui/application.h
         include/promeki/tui/label.h
         include/promeki/tui/button.h
+        include/promeki/tui/checkbox.h
         include/promeki/tui/lineedit.h
         include/promeki/tui/textarea.h
         include/promeki/tui/listview.h
@@ -524,6 +525,7 @@ if(PROMEKI_BUILD_TUI)
         src/tui/application.cpp
         src/tui/label.cpp
         src/tui/button.cpp
+        src/tui/checkbox.cpp
         src/tui/lineedit.cpp
         src/tui/textarea.cpp
         src/tui/listview.cpp
@@ -780,6 +782,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/tui/layout.cpp
             tests/tui/label.cpp
             tests/tui/button.cpp
+            tests/tui/checkbox.cpp
             tests/tui/frame.cpp
             tests/tui/inputparser.cpp
             tests/tui/palette.cpp

@@ -337,11 +337,31 @@ class String {
                 }
 
                 /**
-                 * @brief Returns the length of the string.
+                 * @brief Returns the length of the string in bytes.
                  * @return The string length in bytes (same as size()).
+                 * @see utf8Length() for the number of UTF-8 codepoints.
                  */
                 size_t length() const {
                         return _s.length();
+                }
+
+                /**
+                 * @brief Returns the number of UTF-8 codepoints in the string.
+                 *
+                 * Counts codepoints by skipping UTF-8 continuation bytes (0x80..0xBF).
+                 * For pure ASCII text this equals length(). For multi-byte UTF-8 text
+                 * this returns the character count rather than the byte count.
+                 *
+                 * @note This counts codepoints, not display columns. Fullwidth characters
+                 *       (e.g. CJK) occupy two terminal columns but count as one codepoint.
+                 * @return The number of UTF-8 codepoints.
+                 */
+                size_t utf8Length() const {
+                        size_t count = 0;
+                        for(unsigned char c : _s) {
+                                if((c & 0xC0) != 0x80) ++count;
+                        }
+                        return count;
                 }
 
                 /**

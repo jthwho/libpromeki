@@ -14,6 +14,7 @@
 #include <promeki/tui/frame.h>
 #include <promeki/tui/listview.h>
 #include <promeki/tui/statusbar.h>
+#include <promeki/tui/checkbox.h>
 #include <promeki/keyevent.h>
 #include <promeki/mouseevent.h>
 #include <promeki/datetime.h>
@@ -38,19 +39,19 @@ class EventTestWidget : public TuiWidget {
 
                         // Keyboard info frame
                         _keyFrame = new TuiFrame("Keyboard", this);
-                        auto *keyLayout = new TuiVBoxLayout(this);
+                        auto *keyLayout = new TuiVBoxLayout(_keyFrame);
                         keyLayout->setSpacing(0);
 
-                        _keyNameLabel = new TuiLabel("Key: --", this);
+                        _keyNameLabel = new TuiLabel("Key: --", _keyFrame);
                         keyLayout->addWidget(_keyNameLabel);
 
-                        _keyModLabel = new TuiLabel("Modifiers: None", this);
+                        _keyModLabel = new TuiLabel("Modifiers: None", _keyFrame);
                         keyLayout->addWidget(_keyModLabel);
 
-                        _keyTextLabel = new TuiLabel("Text: --", this);
+                        _keyTextLabel = new TuiLabel("Text: --", _keyFrame);
                         keyLayout->addWidget(_keyTextLabel);
 
-                        _keyCodeLabel = new TuiLabel("Code: --", this);
+                        _keyCodeLabel = new TuiLabel("Code: --", _keyFrame);
                         keyLayout->addWidget(_keyCodeLabel);
 
                         _keyFrame->setLayout(keyLayout);
@@ -59,22 +60,22 @@ class EventTestWidget : public TuiWidget {
 
                         // Mouse info frame
                         _mouseFrame = new TuiFrame("Mouse", this);
-                        auto *mouseLayout = new TuiVBoxLayout(this);
+                        auto *mouseLayout = new TuiVBoxLayout(_mouseFrame);
                         mouseLayout->setSpacing(0);
 
-                        _mousePosLabel = new TuiLabel("Position: --, --", this);
+                        _mousePosLabel = new TuiLabel("Position: --, --", _mouseFrame);
                         mouseLayout->addWidget(_mousePosLabel);
 
-                        _mouseButtonLabel = new TuiLabel("Button: None", this);
+                        _mouseButtonLabel = new TuiLabel("Button: None", _mouseFrame);
                         mouseLayout->addWidget(_mouseButtonLabel);
 
-                        _mouseActionLabel = new TuiLabel("Action: --", this);
+                        _mouseActionLabel = new TuiLabel("Action: --", _mouseFrame);
                         mouseLayout->addWidget(_mouseActionLabel);
 
-                        _mouseModLabel = new TuiLabel("Modifiers: None", this);
+                        _mouseModLabel = new TuiLabel("Modifiers: None", _mouseFrame);
                         mouseLayout->addWidget(_mouseModLabel);
 
-                        _mouseButtonsLabel = new TuiLabel("Buttons: None", this);
+                        _mouseButtonsLabel = new TuiLabel("Buttons: None", _mouseFrame);
                         mouseLayout->addWidget(_mouseButtonsLabel);
 
                         _mouseFrame->setLayout(mouseLayout);
@@ -88,12 +89,24 @@ class EventTestWidget : public TuiWidget {
                         _infoContainer->setLayout(_infoRow);
                         _layout->addWidget(_infoContainer);
 
+                        // Logging filter checkboxes
+                        _filterContainer = new TuiWidget(this);
+                        _filterRow = new TuiHBoxLayout(_filterContainer);
+                        _filterRow->setSpacing(1);
+                        _logKeysCb = new TuiCheckBox("Log Keyboard", _filterContainer);
+                        _logKeysCb->setChecked(true);
+                        _filterRow->addWidget(_logKeysCb);
+                        _logMouseCb = new TuiCheckBox("Log Mouse", _filterContainer);
+                        _logMouseCb->setChecked(true);
+                        _filterRow->addWidget(_logMouseCb);
+                        _filterContainer->setLayout(_filterRow);
+                        _layout->addWidget(_filterContainer);
+
                         // Event log frame with scrollable list
                         _logFrame = new TuiFrame("Event Log", this);
-                        _logList = new TuiListView(this);
-                        _logList->setFocusPolicy(NoFocus);
+                        _logList = new TuiListView(_logFrame);
                         _logList->setSizePolicy(SizeExpanding);
-                        auto *logLayout = new TuiVBoxLayout(this);
+                        auto *logLayout = new TuiVBoxLayout(_logFrame);
                         logLayout->addWidget(_logList);
                         _logFrame->setLayout(logLayout);
                         _logFrame->setSizePolicy(SizeExpanding);
@@ -128,26 +141,19 @@ class EventTestWidget : public TuiWidget {
                 }
 
                 void keyEvent(KeyEvent *e) override {
-                        // Let scroll keys navigate the log list
-                        if(e->key() == KeyEvent::Key_PageUp) {
-                                _logList->scrollBy(-_logList->height());
-                                _autoScroll = (_logList->currentIndex() == 0);
-                        } else if(e->key() == KeyEvent::Key_PageDown) {
-                                _logList->scrollBy(_logList->height());
-                                _autoScroll = (_logList->currentIndex() == 0);
-                        }
-
                         _keyNameLabel->setText(String("Key: ") + KeyEvent::keyName(e->key()));
                         String mods = KeyEvent::modifierString(e->modifiers());
                         _keyModLabel->setText(String("Modifiers: ") + (mods.isEmpty() ? "None" : mods));
                         _keyTextLabel->setText(String("Text: \"") + e->text() + "\"");
                         _keyCodeLabel->setText(String("Code: ") + String::number(static_cast<int>(e->key())));
 
-                        String logEntry = "KEY " + KeyEvent::modifierString(e->modifiers()) + KeyEvent::keyName(e->key());
-                        if(!e->text().isEmpty()) {
-                                logEntry += " (\"" + e->text() + "\")";
+                        if(_logKeysCb->isChecked()) {
+                                String logEntry = "KEY " + KeyEvent::modifierString(e->modifiers()) + KeyEvent::keyName(e->key());
+                                if(!e->text().isEmpty()) {
+                                        logEntry += " (\"" + e->text() + "\")";
+                                }
+                                addLog(logEntry);
                         }
-                        addLog(logEntry);
 
                         TuiWidget::keyEvent(e);
                 }
@@ -167,17 +173,8 @@ class EventTestWidget : public TuiWidget {
                         _mouseButtonsLabel->setText(
                                 String("Buttons: ") + MouseEvent::buttonsString(e->buttons()));
 
-                        // Let scroll events navigate the log list
-                        if(e->action() == MouseEvent::ScrollUp) {
-                                _logList->scrollBy(-1);
-                                _autoScroll = (_logList->currentIndex() == 0);
-                        } else if(e->action() == MouseEvent::ScrollDown) {
-                                _logList->scrollBy(1);
-                                _autoScroll = (_logList->currentIndex() == 0);
-                        }
-
                         // Only log presses, releases, and scrolls (not every move)
-                        if(e->action() != MouseEvent::Move) {
+                        if(_logMouseCb->isChecked() && e->action() != MouseEvent::Move) {
                                 String logEntry = "MOUSE " +
                                         MouseEvent::actionName(e->action()) + " " +
                                         MouseEvent::buttonName(e->button()) +
@@ -221,6 +218,11 @@ class EventTestWidget : public TuiWidget {
                 TuiLabel        *_mouseModLabel = nullptr;
                 TuiLabel        *_mouseButtonsLabel = nullptr;
 
+                TuiHBoxLayout   *_filterRow = nullptr;
+                TuiWidget       *_filterContainer = nullptr;
+                TuiCheckBox     *_logKeysCb = nullptr;
+                TuiCheckBox     *_logMouseCb = nullptr;
+
                 TuiFrame        *_logFrame = nullptr;
                 TuiListView     *_logList = nullptr;
 
@@ -234,7 +236,7 @@ class EventTestWidget : public TuiWidget {
                         String timestamped = DateTime::now().toString("%T.3") + " " + entry;
                         _logList->insertItem(0, timestamped);
                         if(_autoScroll) {
-                                _logList->setCurrentIndex(0);
+                                _logList->ensureVisible(0);
                         }
                 }
 };

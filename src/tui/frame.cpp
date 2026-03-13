@@ -26,7 +26,7 @@ void TuiFrame::setTitle(const String &title) {
 }
 
 Rect2Di32 TuiFrame::contentRect() const {
-        return Rect2Di32(x() + 1, y() + 1,
+        return Rect2Di32(1, 1,
                       std::max(0, width() - 2), std::max(0, height() - 2));
 }
 
