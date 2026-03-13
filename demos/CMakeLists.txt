@@ -1,7 +1,9 @@
-# Promeki Utilities
+# Promeki Demos
 #
-# This directory contains utility applications that serve as both functional
-# demonstrations of the promeki library and tools for testing.
+# This directory contains demonstration applications that showcase specific
+# aspects of the promeki library.  Unlike the utilities (which provide
+# functional use beyond the library), demos exist to help users learn and
+# understand the library's APIs.
 #
 # When built standalone (outside the promeki source tree), this project
 # uses find_package(promeki) to locate an installed copy of the library,
@@ -9,7 +11,7 @@
 # the main promeki project, the library targets are already available.
 
 cmake_minimum_required(VERSION 3.22)
-project(promeki-utils LANGUAGES CXX)
+project(promeki-demos LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -19,4 +21,5 @@ if(NOT TARGET promeki::core)
     find_package(promeki REQUIRED)
 endif()
 
-add_subdirectory(promeki-info)
+add_subdirectory(tui-demo)
+add_subdirectory(tui-event-test)

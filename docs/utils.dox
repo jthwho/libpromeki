@@ -1,15 +1,15 @@
 /**
  * @page utils Utility Applications
  *
- * @brief Utility applications that demonstrate library usage and provide
- * functional testing.
+ * @brief Utility applications that provide functional use beyond the library.
  *
  * The @c utils/ directory contains a suite of standalone utility applications
- * that use the promeki library.  They serve two purposes:
+ * that use the promeki library.  Unlike the @ref demos "demonstration
+ * applications" (which exist to showcase library APIs), utilities are meant
+ * to have functional use beyond the library itself.  They serve two purposes:
  *
- * - **Demonstration** — Each utility is a self-contained example of how to
- *   set up a CMake project that consumes libpromeki via @c find_package(promeki).
- *   They show real-world usage patterns for the library's APIs.
+ * - **Practical tooling** — Each utility provides a useful function built on
+ *   top of the promeki library, such as querying build information.
  *
  * - **Functional testing** — While the unit tests (in @c tests/) exercise
  *   individual classes in isolation, the utilities exercise the library as a

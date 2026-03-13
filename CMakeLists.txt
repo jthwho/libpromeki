@@ -21,6 +21,7 @@ option(PROMEKI_BUILD_PROAV  "Build the promeki-proav library"  ON)
 option(PROMEKI_BUILD_MUSIC  "Build the promeki-music library"  ON)
 option(PROMEKI_BUILD_TUI    "Build the promeki-tui library"    ON)
 option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
+option(PROMEKI_BUILD_DEMOS  "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
 option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
 
@@ -565,6 +566,12 @@ if(PROMEKI_BUILD_UTILS)
     add_subdirectory(utils)
 endif()
 
+# Demonstration Applications ###################################################
+
+if(PROMEKI_BUILD_DEMOS)
+    add_subdirectory(demos)
+endif()
+
 # Install ######################################################################
 
 # License and attribution notices
@@ -836,7 +843,7 @@ if(PROMEKI_BUILD_TESTS)
 endif()
 
 # Custom Clean Targets #########################################################
-# libclean:  removes only promeki library objects, tests, and utils
+# libclean:  removes only promeki library objects, tests, utils, and demos
 #            (preserves third-party builds so they don't need to be rebuilt)
 # clean:     built-in CMake target that removes everything including third-party
 
@@ -898,6 +905,12 @@ endif()
 if(PROMEKI_BUILD_UTILS)
     list(APPEND PROMEKI_CLEAN_DIRS
         ${CMAKE_BINARY_DIR}/utils
+    )
+endif()
+
+if(PROMEKI_BUILD_DEMOS)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/demos
     )
 endif()
 
