@@ -98,7 +98,7 @@ class RegEx {
                  */
                 bool match(const String &str) const {
                         std::smatch m;
-                        return std::regex_match(str.stds(), m, d);
+                        return std::regex_match(str.str(), m, d);
                 }
 
                 /**
@@ -107,7 +107,7 @@ class RegEx {
                  * @return True if any substring matches the regular expression.
                  */
                 bool search(const String &str) const {
-                        return std::regex_search(str.stds(), d);
+                        return std::regex_search(str.str(), d);
                 }
 
                 /**
@@ -118,8 +118,9 @@ class RegEx {
                 StringList matches(const String& str) const {
                         StringList matches;
                         std::smatch match;
-                        auto pos = str.cbegin();
-                        while(std::regex_search(pos, str.cend(), match, d)) {
+                        const std::string &s = str.str();
+                        auto pos = s.cbegin();
+                        while(std::regex_search(pos, s.cend(), match, d)) {
                                 matches += match.str();
                                 pos = match.suffix().first;
                         }

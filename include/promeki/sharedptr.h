@@ -99,6 +99,9 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class RefCount {
     public:
+        /** @brief Threshold at or above which the refcount is considered immortal. */
+        static constexpr int Immortal = 0x40000000;
+
         /** @brief Constructs a reference count initialized to 1. */
         RefCount() : v(1) {}
 
@@ -111,12 +114,11 @@ class RefCount {
         /**
          * @brief Atomically increments the reference count.
          *
-         * Uses relaxed memory ordering since only the atomic increment itself
-         * needs to be consistent.
+         * No-op for immortal objects. Uses relaxed memory ordering since only
+         * the atomic increment itself needs to be consistent.
          */
         void inc() {
-            // relaxed, because we don't care about the order of the underlying memory operations
-            // just that the overall +1 happens atomically
+            if(v.load(std::memory_order_relaxed) >= Immortal) return;
             v.fetch_add(1, std::memory_order_relaxed);
             return;
         }
@@ -124,19 +126,27 @@ class RefCount {
         /**
          * @brief Atomically decrements the reference count.
          * @return True if the count has reached zero (caller should delete the object).
+         *
+         * Returns false for immortal objects (never deleted).
          */
         bool dec() {
-            // acq_rel ensures that:
-            // - release: all memory operations before the dec are visible to the thread
-            //   that will eventually delete the object.
-            // - acquire: when the count reaches zero, the deleting thread sees all
-            //   memory operations from threads that previously released their references.
+            if(v.load(std::memory_order_relaxed) >= Immortal) return false;
             return v.fetch_sub(1, std::memory_order_acq_rel) == 1;
         }
 
         /** @brief Returns the current reference count value. */
         int value() const {
             return v.load(std::memory_order_relaxed);
+        }
+
+        /** @brief Returns true if this refcount is immortal (will never reach zero). */
+        bool isImmortal() const {
+            return v.load(std::memory_order_relaxed) >= Immortal;
+        }
+
+        /** @brief Marks this refcount as immortal. inc/dec become no-ops. */
+        void setImmortal() {
+            v.store(Immortal, std::memory_order_relaxed);
         }
 
     private:

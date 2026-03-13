@@ -31,7 +31,7 @@ void TuiPainter::drawChar(int x, int y, char32_t ch) {
 }
 
 void TuiPainter::drawText(int x, int y, const String &text) {
-        const std::string &s = text.stds();
+        const std::string &s = text.str();
         int col = x;
         size_t i = 0;
         while(i < s.size()) {

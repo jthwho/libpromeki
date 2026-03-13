@@ -40,7 +40,7 @@ void TuiCheckBox::toggle() {
 
 Size2Di32 TuiCheckBox::sizeHint() const {
         // [x] Text
-        return Size2Di32(static_cast<int>(_text.utf8Length()) + 4, 1);
+        return Size2Di32(static_cast<int>(_text.length()) + 4, 1);
 }
 
 void TuiCheckBox::paintEvent(TuiPaintEvent *) {

@@ -145,7 +145,7 @@ List<TuiInputParser::ParsedEvent> TuiInputParser::feed(const char *data, int len
 void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         if(seq.isEmpty()) return;
 
-        char final = seq.stds().back();
+        char final = seq.str().back();
         String params = seq.substr(0, seq.length() - 1);
 
         // Parse semicolon-separated parameters
@@ -153,7 +153,7 @@ void TuiInputParser::parseCSI(const String &seq, List<ParsedEvent> &events) {
         if(!params.isEmpty()) {
                 size_t pos = 0;
                 while(pos < params.length()) {
-                        size_t semi = params.stds().find(';', pos);
+                        size_t semi = params.str().find(';', pos);
                         if(semi == std::string::npos) semi = params.length();
                         String part = params.substr(pos, semi - pos);
                         Error err;
@@ -239,13 +239,13 @@ void TuiInputParser::parseMouseSGR(const String &seq, List<ParsedEvent> &events)
         // Format: <button;col;row[Mm]
         if(seq.isEmpty()) return;
 
-        char final = seq.stds().back();
+        char final = seq.str().back();
         String params = seq.substr(0, seq.length() - 1);
 
         List<int> nums;
         size_t pos = 0;
         while(pos < params.length()) {
-                size_t semi = params.stds().find(';', pos);
+                size_t semi = params.str().find(';', pos);
                 if(semi == std::string::npos) semi = params.length();
                 String part = params.substr(pos, semi - pos);
                 Error err;

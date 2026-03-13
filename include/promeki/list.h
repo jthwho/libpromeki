@@ -392,6 +392,16 @@ class List {
                 }
 
                 /**
+                 * @brief Removes elements in the range [first, last).
+                 * @param first Iterator to the first element to remove.
+                 * @param last  Iterator past the last element to remove.
+                 * @return Iterator to the element following the last removed one.
+                 */
+                Iterator erase(ConstIterator first, ConstIterator last) {
+                        return d.erase(first, last);
+                }
+
+                /**
                  * @brief Removes the element at the given index.
                  * @param index Zero-based index of the element to remove.
                  * @return Iterator to the element following the removed one.

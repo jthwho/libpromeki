@@ -69,7 +69,7 @@ void TuiLineEdit::paintEvent(TuiPaintEvent *) {
                 int cursorScreenPos = _cursorPos - _scrollOffset;
                 if(cursorScreenPos >= 0 && cursorScreenPos < width()) {
                         char32_t ch = (static_cast<size_t>(_cursorPos) < _text.length())
-                                      ? _text.stds()[_cursorPos] : U' ';
+                                      ? _text.charAt(_cursorPos).codepoint() : U' ';
                         painter.setStyle(TuiStyleInverse);
                         painter.drawChar(cursorScreenPos, 0, ch);
                         painter.setStyle(TuiStyleNone);
@@ -101,8 +101,7 @@ void TuiLineEdit::keyEvent(KeyEvent *e) {
                         break;
                 case KeyEvent::Key_Backspace:
                         if(_cursorPos > 0) {
-                                std::string &s = _text.stds();
-                                s.erase(_cursorPos - 1, 1);
+                                _text.erase(_cursorPos - 1, 1);
                                 _cursorPos--;
                                 textChangedSignal.emit(_text);
                                 update();
@@ -111,8 +110,7 @@ void TuiLineEdit::keyEvent(KeyEvent *e) {
                         break;
                 case KeyEvent::Key_Delete:
                         if(static_cast<size_t>(_cursorPos) < _text.length()) {
-                                std::string &s = _text.stds();
-                                s.erase(_cursorPos, 1);
+                                _text.erase(_cursorPos, 1);
                                 textChangedSignal.emit(_text);
                                 update();
                         }
@@ -124,8 +122,7 @@ void TuiLineEdit::keyEvent(KeyEvent *e) {
                         break;
                 default:
                         if(!e->text().isEmpty()) {
-                                std::string &s = _text.stds();
-                                s.insert(_cursorPos, e->text().stds());
+                                _text.insert(_cursorPos, e->text());
                                 _cursorPos += static_cast<int>(e->text().length());
                                 textChangedSignal.emit(_text);
                                 update();

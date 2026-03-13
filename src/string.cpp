@@ -1,7 +1,7 @@
 /**
  * @file      string.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -17,9 +17,13 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+// ============================================================================
+// Number formatting helpers
+// ============================================================================
+
 static const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-template <typename T> 
+template <typename T>
 std::string floatToString(T value, int precision, std::ios_base::fmtflags encodingStyle = std::ios_base::fixed) {
         std::stringstream ss;
         ss.setf(encodingStyle);
@@ -28,15 +32,12 @@ std::string floatToString(T value, int precision, std::ios_base::fmtflags encodi
 }
 
 template <typename T>
-static String num(T val, 
-              int base = 10, 
-              int padding = 0, 
+static String num(T val,
+              int base = 10,
+              int padding = 0,
               char padchar = ' ',
               bool addPrefix = false) {
-        if(base < 2 || base > 36) {
-                // FIXME: Report an error the base is out of bounds
-                return String();
-        }
+        if(base < 2 || base > 36) return String();
 
         std::string ret;
         ret.resize(128);
@@ -70,10 +71,8 @@ static String num(T val,
                         case 2:  buf[index++] = 'b'; buf[index++] = '0'; break;
                         case 8:  buf[index++] = 'o'; buf[index++] = '0'; break;
                         case 16: buf[index++] = 'x'; buf[index++] = '0'; break;
-                        case 10: /* base 10 has no prefix */; break;
-                        // There doesn't seem to be any common prefix notation for arbitary number
-                        // bases, so inventing one here.
-                        default: 
+                        case 10: break;
+                        default:
                                 buf[index++] = ':';
                                 buf[index++] = digits[base % 10];
                                 if(base / 10) buf[index++] = digits[base / 10];
@@ -87,49 +86,40 @@ static String num(T val,
                 padding = 0;
                 isPaddingNegative = false;
         }
-        if(padding > remaining) {
-                // FIXME: Report a warning that we've run out of space for the requested padding.
-                padding = remaining;
-        }
+        if(padding > remaining) padding = remaining;
         for(int i = 0; i < padding; i++) buf[index++] = padchar;
-        buf[index] = 0; // And the null terminator like the candle on the C string cake.
-        
-        // In the case the padding was negative, it comes after the number so we leave it
-        // where it is in the string reverse.
+        buf[index] = 0;
+
         int lastPos = index - 1;
         if(isPaddingNegative) lastPos -= padding;
 
-        // Now reverse the whole damn thing because it's easier to build a number in reverse.
-        for (int i = 0, j = lastPos; i < j; i++, j--) {
+        for(int i = 0, j = lastPos; i < j; i++, j--) {
                 char temp = buf[i];
                 buf[i] = buf[j];
                 buf[j] = temp;
         }
         ret.resize(index);
-        //promekiInfo("str: %d, base %d, pad %d, pc '%c', %s, index %d, ret '%s'",
-        //        (int)val, (int)base, (int)padding, (int)padchar, addPrefix ? "prefix" : "noprefix", 
-        //        (int)index, ret.c_str());
         return String(ret);
 }
 
+// ============================================================================
+// Static factory methods
+// ============================================================================
+
 String String::sprintf(const char *fmt, ...) {
         std::string ret;
-        ret.resize(256); // Pick a good first guess at the size.
-        // Attempt to format the string into the reserved buffer
+        ret.resize(256);
         va_list args;
         va_start(args, fmt);
         int length = std::vsnprintf(ret.data(), ret.size() + 1, fmt, args);
         va_end(args);
         if(length < 0) return String();
-        // Check if the string was longer than our initial guess.  If not,
-        // do it again with the actual length.
         if(static_cast<size_t>(length) > ret.size()) {
                 ret.resize(length);
                 va_start(args, fmt);
                 std::vsnprintf(ret.data(), ret.size() + 1, fmt, args);
                 va_end(args);
         } else {
-                // The reserved size was sufficient; update the string size
                 ret.resize(length);
         }
         return ret;
@@ -175,16 +165,20 @@ String String::number(double val, int precision) {
         return floatToString(val, precision);
 }
 
+// ============================================================================
+// Arg replacement
+// ============================================================================
+
 String &String::arg(const String &str) {
-        // Find the lowest numbered unreplaced placeholder.
+        const std::string &s = d->str();
         int minValue = std::numeric_limits<int>::max();
         size_t minPos = std::string::npos;
         std::string placeholderToReplace;
-        for(size_t i = 0; i < _s.size(); ++i) {
-            if(_s[i] == '%' && i + 1 < _s.size() && std::isdigit(_s[i + 1])) {
+        for(size_t i = 0; i < s.size(); ++i) {
+            if(s[i] == '%' && i + 1 < s.size() && std::isdigit(s[i + 1])) {
                 size_t j = i + 1;
-                while (j < _s.size() && std::isdigit(_s[j])) ++j;
-                std::string placeholder = _s.substr(i, j - i);
+                while(j < s.size() && std::isdigit(s[j])) ++j;
+                std::string placeholder = s.substr(i, j - i);
                 int value = std::stoi(placeholder.substr(1));
                 if(value < minValue) {
                     minValue = value;
@@ -193,26 +187,31 @@ String &String::arg(const String &str) {
                 }
             }
         }
-
-        // Replace the found placeholder with the argument value.
         if(minPos != std::string::npos) {
-                _s.replace(minPos, placeholderToReplace.length(), str._s);
+                std::string result = s;
+                result.replace(minPos, placeholderToReplace.length(), str.d->str());
+                *this = std::move(result);
         }
         return *this;
 }
 
+// ============================================================================
+// Conversion
+// ============================================================================
+
 bool String::toBool(Error *e) const {
         Error err;
         bool ret = false;
-        if(_s == "1") {
+        const std::string &s = d->str();
+        if(s == "1") {
                 ret = true;
-        } else if(_s == "0") {
+        } else if(s == "0") {
                 ret = false;
         } else {
-                String s = toLower();
-                if(s == "true") {
+                String lower = toLower();
+                if(lower == "true") {
                         ret = true;
-                } else if(s == "false") {
+                } else if(lower == "false") {
                         ret = false;
                 } else {
                         err = Error::Invalid;
@@ -224,12 +223,12 @@ bool String::toBool(Error *e) const {
 
 int String::toInt(Error *e) const {
         Error err;
-        int ret;
+        int ret = 0;
         try {
-                ret = std::stoi(_s);
+                ret = std::stoi(d->str());
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
-        } catch (const std::out_of_range &) {
+        } catch(const std::out_of_range &) {
                 err = Error::OutOfRange;
         }
         if(e != nullptr) *e = err;
@@ -238,12 +237,12 @@ int String::toInt(Error *e) const {
 
 unsigned int String::toUInt(Error *e) const {
         Error err;
-        unsigned long ret;
+        unsigned long ret = 0;
         try {
-                ret = std::stoul(_s);
+                ret = std::stoul(d->str());
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
-        } catch (const std::out_of_range &) {
+        } catch(const std::out_of_range &) {
                 err = Error::OutOfRange;
         }
         if(ret > static_cast<unsigned long>(std::numeric_limits<unsigned int>::max())) err = Error::OutOfRange;
@@ -253,12 +252,12 @@ unsigned int String::toUInt(Error *e) const {
 
 double String::toDouble(Error *e) const {
         Error err;
-        double ret;
+        double ret = 0.0;
         try {
-                ret = std::stod(_s);
+                ret = std::stod(d->str());
         } catch(const std::invalid_argument &) {
                 err = Error::Invalid;
-        } catch (const std::out_of_range &) {
+        } catch(const std::out_of_range &) {
                 err = Error::OutOfRange;
         }
         if(e != nullptr) *e = err;
@@ -277,7 +276,7 @@ int64_t String::parseNumberWords(Error *err) const {
                 {"million", 1000000}, {"billion", 1000000000}
         };
 
-        std::string copy = _s;
+        std::string copy = d->str();
         for(char &c : copy) if(!std::isalpha(c)) c = ' ';
         std::istringstream iss(copy);
         std::string token;
@@ -285,7 +284,7 @@ int64_t String::parseNumberWords(Error *err) const {
         int64_t current = 0;
         bool found = false;
 
-        while (iss >> token) {
+        while(iss >> token) {
                 for(char &c : token) c = std::tolower(static_cast<unsigned char>(c));
                 auto it = numberWords.find(token);
                 if(it != numberWords.end()) {
@@ -301,8 +300,7 @@ int64_t String::parseNumberWords(Error *err) const {
                         } else {
                                 current += wordval;
                         }
-                        //promekiInfo("%s %lld %lld", token.c_str(), (long long)current, (long long)value);
-                } else if (token == "and") {
+                } else if(token == "and") {
                         continue;
                 } else {
                         break;
@@ -313,20 +311,42 @@ int64_t String::parseNumberWords(Error *err) const {
         return value;
 }
 
+// ============================================================================
+// Replace
+// ============================================================================
+
+String String::replace(const String &find, const String &replacement) const {
+        if(find.isEmpty()) return *this;
+        String result;
+        size_t start = 0;
+        size_t pos;
+        while((pos = this->find(find, start)) != npos) {
+                if(pos > start) result += substr(start, pos - start);
+                result += replacement;
+                start = pos + find.length();
+        }
+        if(start == 0) return *this;
+        if(start < length()) result += substr(start);
+        return result;
+}
+
+// ============================================================================
+// Split
+// ============================================================================
+
 StringList String::split(const std::string& delimiter) const {
         StringList result;
-        size_t pos = 0;
-        std::string str = _s;
-        while((pos = str.find(delimiter)) != std::string::npos) {
-                String token = str.substr(0, pos);
-                if (!token.isEmpty()) {
-                        result += token;
-                }
-                str.erase(0, pos + delimiter.length());
+        const std::string &s = d->str();
+        size_t start = 0;
+        size_t pos;
+        while((pos = s.find(delimiter, start)) != std::string::npos) {
+                std::string token = s.substr(start, pos - start);
+                if(!token.empty()) result += String(token);
+                start = pos + delimiter.length();
         }
-        if(!str.empty()) result += str;
+        std::string last = s.substr(start);
+        if(!last.empty()) result += String(last);
         return result;
 }
 
 PROMEKI_NAMESPACE_END
-

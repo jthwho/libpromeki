@@ -41,7 +41,7 @@ class JsonObject {
         static JsonObject parse(const String &str, Error *err = nullptr) {
             JsonObject ret;
             try {
-                ret._j = nlohmann::json::parse(str.stds());
+                ret._j = nlohmann::json::parse(str.str());
                 if(!ret._j.is_object()) throw std::runtime_error("not an object");
                 if(err) *err = Error::Ok;
             } catch(...) {
@@ -66,7 +66,7 @@ class JsonObject {
          * @return true if the key exists and its value is null.
          */
         bool valueIsNull(const String &key) const {
-            auto it = _j.find(key.stds());
+            auto it = _j.find(key.str());
             return it != _j.end() && it->is_null();
         }
 
@@ -76,7 +76,7 @@ class JsonObject {
          * @return true if the key exists and its value is an object.
          */
         bool valueIsObject(const String &key) const {
-            auto it = _j.find(key.stds());
+            auto it = _j.find(key.str());
             return it != _j.end() && it->is_object();
         }
 
@@ -86,7 +86,7 @@ class JsonObject {
          * @return true if the key exists and its value is an array.
          */
         bool valueIsArray(const String &key) const {
-            auto it = _j.find(key.stds());
+            auto it = _j.find(key.str());
             return it != _j.end() && it->is_array();
         }
 
@@ -95,7 +95,7 @@ class JsonObject {
          * @param key The key to look up.
          * @return true if the key exists in the object.
          */
-        bool contains(const String &key) const { return _j.contains(key.stds()); }
+        bool contains(const String &key) const { return _j.contains(key.str()); }
 
         /**
          * @brief Returns the boolean value for the given key.
@@ -144,7 +144,7 @@ class JsonObject {
          * @return The nested JsonObject, or an empty object on failure.
          */
         JsonObject getObject(const String &key, Error *err = nullptr) const {
-            auto it = _j.find(key.stds());
+            auto it = _j.find(key.str());
             if(it == _j.end() || !it->is_object()) {
                 if(err) *err = Error::Invalid;
                 return JsonObject();
@@ -180,14 +180,14 @@ class JsonObject {
          * @brief Sets the value for the given key to null.
          * @param key The key to set.
          */
-        void setNull(const String &key) { _j[key.stds()] = nullptr; }
+        void setNull(const String &key) { _j[key.str()] = nullptr; }
 
         /**
          * @brief Sets a nested JsonObject value for the given key.
          * @param key The key to set.
          * @param val The JsonObject value.
          */
-        void set(const String &key, const JsonObject &val) { _j[key.stds()] = val._j; }
+        void set(const String &key, const JsonObject &val) { _j[key.str()] = val._j; }
 
         /**
          * @brief Sets a nested JsonArray value for the given key.
@@ -197,25 +197,25 @@ class JsonObject {
         inline void set(const String &key, const JsonArray &val);
 
         /** @brief Sets a boolean value for the given key. */
-        void set(const String &key, bool val) { _j[key.stds()] = val; }
+        void set(const String &key, bool val) { _j[key.str()] = val; }
         /** @brief Sets an int value for the given key. */
-        void set(const String &key, int val) { _j[key.stds()] = val; }
+        void set(const String &key, int val) { _j[key.str()] = val; }
         /** @brief Sets an unsigned int value for the given key. */
-        void set(const String &key, unsigned int val) { _j[key.stds()] = val; }
+        void set(const String &key, unsigned int val) { _j[key.str()] = val; }
         /** @brief Sets a signed 64-bit integer value for the given key. */
-        void set(const String &key, int64_t val) { _j[key.stds()] = val; }
+        void set(const String &key, int64_t val) { _j[key.str()] = val; }
         /** @brief Sets an unsigned 64-bit integer value for the given key. */
-        void set(const String &key, uint64_t val) { _j[key.stds()] = val; }
+        void set(const String &key, uint64_t val) { _j[key.str()] = val; }
         /** @brief Sets a float value for the given key. */
-        void set(const String &key, float val) { _j[key.stds()] = val; }
+        void set(const String &key, float val) { _j[key.str()] = val; }
         /** @brief Sets a double value for the given key. */
-        void set(const String &key, double val) { _j[key.stds()] = val; }
+        void set(const String &key, double val) { _j[key.str()] = val; }
         /** @brief Sets a C-string value for the given key. */
-        void set(const String &key, const char *val) { _j[key.stds()] = std::string(val); }
+        void set(const String &key, const char *val) { _j[key.str()] = std::string(val); }
         /** @brief Sets a String value for the given key. */
-        void set(const String &key, const String &val) { _j[key.stds()] = val.stds(); }
+        void set(const String &key, const String &val) { _j[key.str()] = val.str(); }
         /** @brief Sets a UUID value (stored as its string representation) for the given key. */
-        void set(const String &key, const UUID &val) { _j[key.stds()] = val.toString().stds(); }
+        void set(const String &key, const UUID &val) { _j[key.str()] = val.toString().str(); }
 
         /**
          * @brief Sets a value from a Variant, automatically selecting the JSON type.
@@ -223,7 +223,7 @@ class JsonObject {
          * @param val The Variant whose value and type determine the stored JSON value.
          */
         void setFromVariant(const String &key, const Variant &val) {
-            const auto &k = key.stds();
+            const auto &k = key.str();
             switch(val.type()) {
                 case Variant::TypeInvalid: _j[k] = nullptr; break;
                 case Variant::TypeBool:    _j[k] = val.get<bool>(); break;
@@ -237,7 +237,7 @@ class JsonObject {
                 case Variant::TypeS64:     _j[k] = val.get<int64_t>(); break;
                 case Variant::TypeFloat:   _j[k] = val.get<float>(); break;
                 case Variant::TypeDouble:  _j[k] = val.get<double>(); break;
-                default:                   _j[k] = val.get<String>().stds(); break;
+                default:                   _j[k] = val.get<String>().str(); break;
             }
         }
 
@@ -261,7 +261,7 @@ class JsonObject {
 
         template <typename T>
         T get(const String &key, Error *err = nullptr) const {
-            auto it = _j.find(key.stds());
+            auto it = _j.find(key.str());
             if(it == _j.end()) {
                 if(err) *err = Error::Invalid;
                 return T{};
@@ -314,7 +314,7 @@ class JsonArray {
         static JsonArray parse(const String &str, Error *err = nullptr) {
             JsonArray ret;
             try {
-                ret._j = nlohmann::json::parse(str.stds());
+                ret._j = nlohmann::json::parse(str.str());
                 if(!ret._j.is_array()) throw std::runtime_error("not an array");
                 if(err) *err = Error::Ok;
             } catch(...) {
@@ -461,9 +461,9 @@ class JsonArray {
         /** @brief Appends a C-string value to the array. */
         void add(const char *val) { _j.push_back(std::string(val)); }
         /** @brief Appends a String value to the array. */
-        void add(const String &val) { _j.push_back(val.stds()); }
+        void add(const String &val) { _j.push_back(val.str()); }
         /** @brief Appends a UUID (stored as its string representation) to the array. */
-        void add(const UUID &val) { _j.push_back(val.toString().stds()); }
+        void add(const UUID &val) { _j.push_back(val.toString().str()); }
 
         /**
          * @brief Appends a value from a Variant, automatically selecting the JSON type.
@@ -483,7 +483,7 @@ class JsonArray {
                 case Variant::TypeS64:     _j.push_back(val.get<int64_t>()); break;
                 case Variant::TypeFloat:   _j.push_back(val.get<float>()); break;
                 case Variant::TypeDouble:  _j.push_back(val.get<double>()); break;
-                default:                   _j.push_back(val.get<String>().stds()); break;
+                default:                   _j.push_back(val.get<String>().str()); break;
             }
         }
 
@@ -516,7 +516,7 @@ class JsonArray {
 
 // Inline definitions that depend on JsonArray being complete
 inline JsonArray JsonObject::getArray(const String &key, Error *err) const {
-    auto it = _j.find(key.stds());
+    auto it = _j.find(key.str());
     if(it == _j.end() || !it->is_array()) {
         if(err) *err = Error::Invalid;
         return JsonArray();
@@ -528,7 +528,7 @@ inline JsonArray JsonObject::getArray(const String &key, Error *err) const {
 }
 
 inline void JsonObject::set(const String &key, const JsonArray &val) {
-    _j[key.stds()] = val._j;
+    _j[key.str()] = val._j;
 }
 
 PROMEKI_NAMESPACE_END

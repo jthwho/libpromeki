@@ -69,7 +69,7 @@ String MidiNote::nameFromMidiNote(int midiNote) {
 }
 
 MidiNote MidiNote::fromName(const String &name) {
-        const std::string &s = name.stds();
+        const std::string &s = name.str();
         if(s.size() < 2) return MidiNote();
 
         int pc      = -1;

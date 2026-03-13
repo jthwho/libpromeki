@@ -43,9 +43,9 @@ bool FontPainter::drawText(const String &str, int x, int y, int pointSize) const
         List<Point2Di32> points;
         List<float> alphas;
 
-        for(char c : str) {
-                if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-                        promekiWarn("Could not load character 0x%X in '%s'", (unsigned int)c, _fontFilename.cstr());
+        for(Char c : str) {
+                if (FT_Load_Char(face, c.codepoint(), FT_LOAD_RENDER)) {
+                        promekiWarn("Could not load character 0x%X in '%s'", (unsigned int)c.codepoint(), _fontFilename.cstr());
                         continue;
                 }
 

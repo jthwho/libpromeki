@@ -97,6 +97,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/array.h
     include/promeki/buildinfo.h
     include/promeki/buffer.h
+    include/promeki/char.h
     include/promeki/cmdlineparser.h
     include/promeki/datetime.h
     include/promeki/error.h
@@ -135,6 +136,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/slot.h
     include/promeki/streamstring.h
     include/promeki/string.h
+    include/promeki/stringdata.h
     include/promeki/stringlist.h
     include/promeki/structdatabase.h
     include/promeki/system.h
@@ -164,7 +166,9 @@ set(PROMEKI_CORE_SOURCES
     src/map.cpp
     src/matrix3x3.cpp
     src/list.cpp
+    src/char.cpp
     src/string.cpp
+    src/stringdata.cpp
     src/stringlist.cpp
     src/set.cpp
     src/regex.cpp

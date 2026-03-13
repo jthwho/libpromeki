@@ -38,7 +38,7 @@ MusicalScale::MusicalScale(int rootPitchClass, Mode mode)
 std::pair<MusicalScale, Error> MusicalScale::fromName(const String &name) {
         if(name.isEmpty()) return {MusicalScale(), Error::Invalid};
 
-        const std::string &s = name.stds();
+        const std::string &s = name.str();
 
         // Find where the root note ends and the mode name begins.
         // Root can be 1 char (C) or 2 chars (C#, Db, Ab).
@@ -125,7 +125,7 @@ float MusicalScale::constrainNote(float midiNote, float strength) const {
 int MusicalScale::pitchClassFromName(const String &name) {
         if(name.isEmpty()) return -1;
 
-        const std::string &s = name.stds();
+        const std::string &s = name.str();
 
         int base = -1;
         switch(s[0]) {
@@ -157,7 +157,7 @@ const char *MusicalScale::pitchClassName(int pitchClass) {
 }
 
 std::pair<MusicalScale::Mode, Error> MusicalScale::modeFromName(const String &name) {
-        std::string lower = name.stds();
+        std::string lower = name.str();
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
         if(lower == "chromatic")                                           return {Chromatic, Error::Ok};

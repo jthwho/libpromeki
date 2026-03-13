@@ -30,7 +30,7 @@ class FileInfo {
                  * @brief Constructs a FileInfo for the given file path.
                  * @param filePath The path to the file or directory.
                  */
-                FileInfo(const String &filePath) : _path(filePath.stds()) {
+                FileInfo(const String &filePath) : _path(filePath.str()) {
 
                 }
 

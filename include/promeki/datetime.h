@@ -46,7 +46,7 @@ class DateTime {
                  */
                 static DateTime fromString(const String &str, const char *fmt = DefaultFormat, Error *err = nullptr) {
                         std::tm tm = {};
-                        std::istringstream ss(str.stds());
+                        std::istringstream ss(str.str());
                         ss >> std::get_time(&tm, fmt);
                         if(ss.fail()) {
                                 if(err != nullptr) *err = Error::Invalid;

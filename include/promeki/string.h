@@ -9,7 +9,6 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
@@ -18,111 +17,128 @@
 #include <promeki/util.h>
 #include <promeki/error.h>
 #include <promeki/sharedptr.h>
+#include <promeki/char.h>
+#include <promeki/stringdata.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class StringList;
 
 /**
- * @brief A versatile string class inspired by Qt's QString.
+ * @brief Encoding-aware string class with copy-on-write semantics.
  *
- * Internally wraps std::string but provides a less verbose interface with
- * additional convenience methods. Implicit conversion operators allow passing
- * a String directly to functions expecting std::string or const char*.
- * For std::string member functions not directly exposed, use stds() to obtain
- * a reference to the underlying std::string.
+ * String is a lightweight handle wrapping a SharedPtr<StringData>.
+ * Copy is a refcount increment; mutation triggers COW. Latin1 is
+ * the fast path (byte == character). Unicode strings store decoded
+ * codepoints for O(1) indexed access.
  */
 class String {
-        PROMEKI_SHARED_FINAL(String)
         public:
-                /** @brief Shared pointer type for String. */
-                using Ptr = SharedPtr<String>;
+                /** @brief List of Strings. */
+                using List = promeki::List<String>;
 
-                /** @brief Mutable forward iterator. */
-                using Iterator = std::string::iterator;
+                /**
+                 * @brief Random-access iterator over characters (Char values).
+                 *
+                 * Wraps a StringData pointer and an index. Both Latin1 and
+                 * Unicode backends provide O(1) charAt(), so this is efficient.
+                 */
+                class CharIterator {
+                        public:
+                                using iterator_category = std::random_access_iterator_tag;
+                                using value_type        = Char;
+                                using difference_type   = std::ptrdiff_t;
+                                using pointer           = void;
+                                using reference         = Char;
 
-                /** @brief Const forward iterator. */
-                using ConstIterator = std::string::const_iterator;
+                                CharIterator() : _data(nullptr), _idx(0) {}
+                                CharIterator(const StringData *data, size_t idx) : _data(data), _idx(idx) {}
 
-                /** @brief Mutable reverse iterator. */
-                using RevIterator = std::string::reverse_iterator;
+                                Char operator*() const { return _data->charAt(_idx); }
+                                Char operator[](difference_type n) const { return _data->charAt(_idx + n); }
 
-                /** @brief Const reverse iterator. */
-                using ConstRevIterator = std::string::const_reverse_iterator;
+                                CharIterator &operator++() { ++_idx; return *this; }
+                                CharIterator operator++(int) { auto tmp = *this; ++_idx; return tmp; }
+                                CharIterator &operator--() { --_idx; return *this; }
+                                CharIterator operator--(int) { auto tmp = *this; --_idx; return tmp; }
+                                CharIterator &operator+=(difference_type n) { _idx += n; return *this; }
+                                CharIterator &operator-=(difference_type n) { _idx -= n; return *this; }
+                                CharIterator operator+(difference_type n) const { return {_data, _idx + n}; }
+                                CharIterator operator-(difference_type n) const { return {_data, _idx - n}; }
+                                difference_type operator-(const CharIterator &o) const {
+                                        return static_cast<difference_type>(_idx) - static_cast<difference_type>(o._idx);
+                                }
+                                friend CharIterator operator+(difference_type n, const CharIterator &it) {
+                                        return it + n;
+                                }
 
-                /** @brief Sentinel value indicating "not found", equivalent to std::string::npos. */
-                static constexpr size_t npos = std::string::npos;
+                                bool operator==(const CharIterator &o) const { return _idx == o._idx; }
+                                bool operator!=(const CharIterator &o) const { return _idx != o._idx; }
+                                bool operator<(const CharIterator &o) const { return _idx < o._idx; }
+                                bool operator<=(const CharIterator &o) const { return _idx <= o._idx; }
+                                bool operator>(const CharIterator &o) const { return _idx > o._idx; }
+                                bool operator>=(const CharIterator &o) const { return _idx >= o._idx; }
+
+                        private:
+                                const StringData *_data;
+                                size_t _idx;
+                };
+
+                /** @brief Const character iterator. */
+                using ConstIterator = CharIterator;
+
+                /** @brief Sentinel value indicating "not found". */
+                static constexpr size_t npos = StringData::npos;
 
                 /** @brief Characters considered whitespace by trim(). */
                 static constexpr const char *WhitespaceChars = " \t\n\r\f\v";
 
+                /** @brief String encoding. */
+                enum Encoding {
+                        Latin1,  ///< One byte per character, ISO-8859-1.
+                        Unicode  ///< Decoded codepoints, O(1) indexed access.
+                };
+
+                // ============================================================
+                // Static factory methods (implemented in string.cpp)
+                // ============================================================
+
                 /**
-                 * @brief Converts an integer to its string representation.
+                 * @brief Converts a numeric value to its String representation.
                  * @param value     The value to convert.
-                 * @param base      Numeric base (e.g. 10 for decimal, 16 for hex).
-                 * @param padding   Minimum width of the output, padded if needed.
-                 * @param padchar   Character used for padding.
+                 * @param base      Numeric base (2-36, default 10).
+                 * @param padding   Minimum width; padded with @p padchar.
+                 * @param padchar   Padding character (default: space).
                  * @param addPrefix If true, adds a base prefix (e.g. "0x" for hex).
-                 * @return The string representation of the value.
+                 * @return The formatted number string.
                  */
-                static String number(int8_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(uint8_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(int16_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(uint16_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(int32_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(uint32_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(int64_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
-
-                /// @copydoc number(int8_t, int, int, char, bool)
-                static String number(uint64_t value,
-                                int base = 10,
-                                int padding = 0,
-                                char padchar = ' ',
-                                bool addPrefix = false);
+                static String number(int8_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(uint8_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(int16_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(uint16_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(int32_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(uint32_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(int64_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
+                /// @copydoc number(int8_t,int,int,char,bool)
+                static String number(uint64_t value, int base = 10, int padding = 0,
+                                char padchar = ' ', bool addPrefix = false);
 
                 /**
-                 * @brief Converts a boolean to "true" or "false".
-                 * @param value The boolean value.
+                 * @brief Returns "true" or "false" for a boolean value.
+                 * @param value The boolean to convert.
                  * @return "true" or "false".
                  */
                 static String number(bool value) {
@@ -131,27 +147,21 @@ class String {
 
                 /**
                  * @brief Converts a float to its string representation.
-                 * @param value     The value to convert.
-                 * @param precision Number of significant digits.
-                 * @return The string representation.
+                 * @param value     The float to convert.
+                 * @param precision Number of decimal digits (default 9).
+                 * @return The formatted number string.
                  */
                 static String number(float value, int precision = 9);
-
-                /**
-                 * @brief Converts a double to its string representation.
-                 * @param value     The value to convert.
-                 * @param precision Number of significant digits.
-                 * @return The string representation.
-                 */
+                /// @copydoc number(float,int)
                 static String number(double value, int precision = 9);
 
                 /**
-                 * @brief Converts a value to a padded decimal string.
-                 * @tparam T       The type of value to convert.
-                 * @param val      The value to convert.
+                 * @brief Formats a value as a decimal string with optional padding.
+                 * @tparam T       Value type (must support operator<< to std::ostream).
+                 * @param val      The value to format.
                  * @param padding  Minimum field width.
-                 * @param padchar  Character used for padding.
-                 * @return The formatted decimal string.
+                 * @param padchar  Padding character (default: space).
+                 * @return The formatted string.
                  */
                 template <typename T>
                 static String dec(const T &val, int padding = 0, char padchar = ' ') {
@@ -161,12 +171,12 @@ class String {
                 }
 
                 /**
-                 * @brief Converts a value to a hexadecimal string.
-                 * @tparam T        The type of value to convert.
-                 * @param val       The value to convert.
-                 * @param padding   Minimum field width, zero-padded.
+                 * @brief Formats a value as a hexadecimal string.
+                 * @tparam T        Value type (must support operator<< with std::hex).
+                 * @param val       The value to format.
+                 * @param padding   Minimum digit width (zero-padded).
                  * @param addPrefix If true, prepends "0x".
-                 * @return The formatted hexadecimal string.
+                 * @return The formatted hex string.
                  */
                 template <typename T>
                 static String hex(const T &val, int padding = 0, bool addPrefix = true) {
@@ -177,10 +187,10 @@ class String {
                 }
 
                 /**
-                 * @brief Converts a value to a binary string.
-                 * @tparam T        The type of value to convert.
-                 * @param val       The value to convert.
-                 * @param digits    Number of binary digits to output.
+                 * @brief Formats a value as a binary string.
+                 * @tparam T        Value type (must support bitwise operations).
+                 * @param val       The value to format.
+                 * @param digits    Number of binary digits to emit (default 32).
                  * @param addPrefix If true, prepends "0b".
                  * @return The formatted binary string.
                  */
@@ -197,609 +207,657 @@ class String {
                 }
 
                 /**
-                 * @brief Creates a formatted string using printf-style format specifiers.
-                 * @param fmt The printf-style format string.
-                 * @param ... Variable arguments matching the format specifiers.
+                 * @brief Creates a formatted string using printf-style syntax.
+                 * @param fmt The printf format string.
                  * @return The formatted string.
                  */
                 PROMEKI_PRINTF_FUNC(1, 2) static String sprintf(const char *fmt, ...);
 
-                /** @brief Constructs an empty string. */
-                String() = default;
-
                 /**
-                 * @brief Constructs a string from a C string.
-                 * @param str The C string, or nullptr for an empty string.
+                 * @brief Creates a String by decoding UTF-8 data.
+                 * @param data Pointer to UTF-8 bytes.
+                 * @param len  Number of bytes.
+                 * @return A Unicode-encoded String.
                  */
-                String(const char *str) : _s(str == nullptr ? std::string() : std::string(str)) { }
+                static String fromUtf8(const char *data, size_t len) {
+                        return String(StringUnicodeData::fromUtf8(data, len));
+                }
 
                 /**
-                 * @brief Constructs a string from a C string with explicit length.
-                 * @param str The C string.
-                 * @param len Number of characters to copy.
+                 * @brief Wraps a static literal StringData without copying.
+                 *
+                 * Used by PROMEKI_STRING. The literal data has an immortal
+                 * refcount so it is never freed. Works with both
+                 * StringLiteralData (Latin1) and StringUnicodeLiteralData.
                  */
-                String(const char *str, size_t len) : _s(str, len) { }
+                static String fromLiteralData(StringData *data) {
+                        return String(data);
+                }
+
+                // ============================================================
+                // Constructors
+                // ============================================================
+
+                /** @brief Default constructor. Creates an empty Latin1 string. */
+                String()
+                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data())) {}
+
+                /** @brief Constructs an empty string (null pointer overload). */
+                String(std::nullptr_t) : String() {}
 
                 /**
-                 * @brief Constructs a string by repeating a character.
-                 * @param ct Number of repetitions.
-                 * @param c  The character to repeat.
+                 * @brief Constructs from a null-terminated C string.
+                 * @param str The C string (null treated as empty).
                  */
-                String(size_t ct, char c) : _s(ct, c) { }
+                String(const char *str)
+                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str ? str : ""))) {}
 
                 /**
-                 * @brief Constructs a string from a std::string.
+                 * @brief Constructs from a character buffer with explicit length.
+                 * @param str Pointer to character data.
+                 * @param len Number of bytes.
+                 */
+                String(const char *str, size_t len)
+                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str, len))) {}
+
+                /**
+                 * @brief Constructs a string of repeated characters.
+                 * @param ct Number of characters.
+                 * @param c  Character to repeat.
+                 */
+                String(size_t ct, char c)
+                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(ct, c))) {}
+
+                /**
+                 * @brief Constructs from a std::string (copy).
                  * @param str The source string.
                  */
-                String(const std::string &str) : _s(str) { }
+                String(const std::string &str)
+                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str))) {}
 
                 /**
-                 * @brief Move-constructs a string from a std::string.
-                 * @param str The source string (moved from).
+                 * @brief Constructs from a std::string (move).
+                 * @param str The source string to move from.
                  */
-                String(std::string &&str) : _s(std::move(str)) { }
+                String(std::string &&str)
+                        : d(SharedPtr<StringData>::takeOwnership(new StringLatin1Data(std::move(str)))) {}
+
+                // ============================================================
+                // Const access (pure delegation)
+                // ============================================================
+
+                /** @brief Returns a const reference to the underlying std::string. */
+                const std::string &str() const { return d->str(); }
+
+                /** @brief Returns a null-terminated C string pointer. */
+                const char *cstr() const { return d->cstr(); }
+
+                /** @brief Returns the number of characters in the string. */
+                size_t size() const { return d->length(); }
+
+                /** @brief Returns the number of characters in the string. */
+                size_t length() const { return d->length(); }
+
+                /** @brief Returns the number of bytes in the encoded representation. */
+                size_t byteCount() const { return d->byteCount(); }
 
                 /**
-                 * @brief Returns a mutable reference to the underlying std::string.
-                 * @return Reference to the internal std::string.
+                 * @brief Returns the byte at the given index.
+                 * @param idx Zero-based byte index.
+                 * @return The byte value.
                  */
-                std::string &stds() {
-                        return _s;
-                }
+                uint8_t byteAt(size_t idx) const { return d->byteAt(idx); }
 
                 /**
-                 * @brief Returns a const reference to the underlying std::string.
-                 * @return Const reference to the internal std::string.
+                 * @brief Returns the character at the given index.
+                 * @param idx Zero-based character index.
+                 * @return The character.
                  */
-                const std::string &stds() const {
-                        return _s;
+                Char charAt(size_t idx) const { return d->charAt(idx); }
+
+                /** @brief Returns true if the string has zero length. */
+                bool isEmpty() const { return d->isEmpty(); }
+
+                /** @brief Returns the current shared reference count. */
+                int referenceCount() const { return d.referenceCount(); }
+
+                /** @brief Returns true if this string wraps an immutable literal. */
+                bool isLiteral() const { return d->isLiteral(); }
+
+                /** @brief Returns the encoding of this string (Latin1 or Unicode). */
+                Encoding encoding() const {
+                        return d->isLatin1() ? Latin1 : Unicode;
                 }
 
-                /** @brief Returns a mutable iterator to the beginning. */
-                Iterator begin() noexcept {
-                        return _s.begin();
-                }
+                // ============================================================
+                // Character iterators
+                // ============================================================
 
-                /** @brief Returns a const iterator to the beginning. */
-                ConstIterator begin() const noexcept {
-                        return _s.begin();
-                }
+                /** @brief Returns a const character iterator to the first character. */
+                ConstIterator begin() const noexcept { return {d.ptr(), 0}; }
+                /// @copydoc begin()
+                ConstIterator cbegin() const noexcept { return {d.ptr(), 0}; }
+                /** @brief Returns a const character iterator past the last character. */
+                ConstIterator end() const noexcept { return {d.ptr(), d->length()}; }
+                /// @copydoc end()
+                ConstIterator cend() const noexcept { return {d.ptr(), d->length()}; }
 
-                /** @brief Returns a const iterator to the beginning. */
-                ConstIterator cbegin() const noexcept {
-                        return _s.cbegin();
-                }
+                // ============================================================
+                // Implicit conversions
+                // ============================================================
 
-                /** @brief Returns a mutable reverse iterator to the beginning. */
-                RevIterator rbegin() noexcept {
-                        return _s.rbegin();
-                }
+                /** @brief Implicit conversion to const std::string reference. */
+                operator const std::string &() const { return d->str(); }
 
-                /** @brief Returns a const reverse iterator to the beginning. */
-                ConstRevIterator rbegin() const noexcept {
-                        return _s.rbegin();
-                }
+                /** @brief Implicit conversion to const char pointer. */
+                operator const char *() const { return d->cstr(); }
 
-                /** @brief Returns a mutable iterator to the end. */
-                Iterator end() noexcept {
-                        return _s.end();
-                }
-
-                /** @brief Returns a const iterator to the end. */
-                ConstIterator end() const noexcept {
-                        return _s.end();
-                }
-
-                /** @brief Returns a const iterator to the end. */
-                ConstIterator cend() const noexcept {
-                        return _s.end();
-                }
-
-                /** @brief Returns a mutable reverse iterator to the end. */
-                RevIterator rend() noexcept {
-                        return _s.rend();
-                }
-
-                /** @brief Returns a const reverse iterator to the end. */
-                ConstRevIterator rend() const noexcept {
-                        return _s.rend();
-                }
-
-                /**
-                 * @brief Returns a pointer to the null-terminated C string.
-                 * @return Pointer to the internal character data.
-                 */
-                const char *cstr() const {
-                        return _s.c_str();
-                }
-
-                /**
-                 * @brief Returns the number of characters in the string.
-                 * @return The string size in bytes.
-                 */
-                size_t size() const {
-                        return _s.size();
-                }
-
-                /** @brief Clears the string contents, making it empty. */
-                void clear() {
-                        _s.clear();
-                        return;
-                }
-
-                /**
-                 * @brief Resizes the string to the given length.
-                 * @param val The new size. If larger, new characters are zero-initialized.
-                 */
-                void resize(size_t val) {
-                        _s.resize(val);
-                        return;
-                }
-
-                /**
-                 * @brief Returns the length of the string in bytes.
-                 * @return The string length in bytes (same as size()).
-                 * @see utf8Length() for the number of UTF-8 codepoints.
-                 */
-                size_t length() const {
-                        return _s.length();
-                }
-
-                /**
-                 * @brief Returns the number of UTF-8 codepoints in the string.
-                 *
-                 * Counts codepoints by skipping UTF-8 continuation bytes (0x80..0xBF).
-                 * For pure ASCII text this equals length(). For multi-byte UTF-8 text
-                 * this returns the character count rather than the byte count.
-                 *
-                 * @note This counts codepoints, not display columns. Fullwidth characters
-                 *       (e.g. CJK) occupy two terminal columns but count as one codepoint.
-                 * @return The number of UTF-8 codepoints.
-                 */
-                size_t utf8Length() const {
-                        size_t count = 0;
-                        for(unsigned char c : _s) {
-                                if((c & 0xC0) != 0x80) ++count;
-                        }
-                        return count;
-                }
-
-                /**
-                 * @brief Checks whether the string is empty.
-                 * @return True if the string has no characters.
-                 */
-                bool isEmpty() const {
-                        return _s.empty();
-                }
+                // ============================================================
+                // Find / contains
+                // ============================================================
 
                 /**
                  * @brief Finds the first occurrence of a character.
-                 * @param val The character to search for.
-                 * @return The position of the character, or npos if not found.
+                 * @param val  The character to find.
+                 * @param from Starting character index (default 0).
+                 * @return Character index of the match, or npos if not found.
                  */
-                size_t find(char val) const {
-                        return _s.find(val);
-                }
+                size_t find(char val, size_t from = 0) const { return d->find(Char(val), from); }
+                /// @copydoc find(char,size_t) const
+                size_t find(Char val, size_t from = 0) const { return d->find(val, from); }
+                /// @copydoc find(char,size_t) const
+                size_t find(const char *val, size_t from = 0) const { return d->find(*String(val).d, from); }
+                /// @copydoc find(char,size_t) const
+                size_t find(const String &val, size_t from = 0) const { return d->find(*val.d, from); }
 
                 /**
-                 * @brief Finds the first occurrence of a substring.
-                 * @param val The substring to search for.
-                 * @return The position of the substring, or npos if not found.
+                 * @brief Finds the last occurrence of a character.
+                 * @param val  The character to find.
+                 * @param from Maximum character index to consider (npos = end).
+                 * @return Character index of the match, or npos if not found.
                  */
-                size_t find(const String &val) const {
-                        return _s.find(val._s);
-                }
+                size_t rfind(char val, size_t from = npos) const { return d->rfind(Char(val), from); }
+                /// @copydoc rfind(char,size_t) const
+                size_t rfind(Char val, size_t from = npos) const { return d->rfind(val, from); }
+                /// @copydoc rfind(char,size_t) const
+                size_t rfind(const char *val, size_t from = npos) const { return d->rfind(*String(val).d, from); }
+                /// @copydoc rfind(char,size_t) const
+                size_t rfind(const String &val, size_t from = npos) const { return d->rfind(*val.d, from); }
 
                 /**
-                 * @brief Checks if the string contains the given character.
-                 * @param val The character to search for.
-                 * @return True if the character is found.
+                 * @brief Returns true if the string contains the given value.
+                 * @param val The value to search for.
+                 * @return True if found.
                  */
-                bool contains(char val) const {
-                        return _s.find(val) != std::string::npos;
-                }
-
-                /**
-                 * @brief Checks if the string contains the given substring.
-                 * @param val The substring to search for.
-                 * @return True if the substring is found.
-                 */
-                bool contains(const String &val) const {
-                        return _s.find(val._s) != std::string::npos;
-                }
-
-                /**
-                 * @brief Checks if the string contains the given C string.
-                 * @param val The C string to search for.
-                 * @return True if the substring is found.
-                 */
-                bool contains(const char *val) const {
-                        return _s.find(val) != std::string::npos;
-                }
-
-                /**
-                 * @brief Returns a substring.
-                 * @param pos Starting position.
-                 * @param len Maximum number of characters (default: to end of string).
-                 * @return The substring.
-                 */
-                String substr(size_t pos = 0, size_t len = npos) const {
-                        return _s.substr(pos, len);
-                }
-
-                /**
-                 * @brief Returns a substring starting at a given position.
-                 * @param pos   Starting position.
-                 * @param count Maximum number of characters (default: to end of string).
-                 * @return The substring.
-                 */
-                String mid(size_t pos, size_t count = npos) const {
-                        return _s.substr(pos, count);
-                }
-
-                /**
-                 * @brief Returns the leftmost characters of the string.
-                 * @param count Number of characters to return.
-                 * @return The leftmost @p count characters.
-                 */
-                String left(size_t count) const {
-                        return _s.substr(0, count);
-                }
-
-                /**
-                 * @brief Returns the rightmost characters of the string.
-                 * @param count Number of characters to return.
-                 * @return The rightmost @p count characters.
-                 */
-                String right(std::size_t count) const {
-                        return _s.substr(_s.length() - count, count);
-                }
-
-                /** @brief Implicit conversion to a mutable std::string reference. */
-                operator std::string&() {
-                        return _s;
-                }
-
-                /** @brief Implicit conversion to a const std::string reference. */
-                operator const std::string &() const {
-                        return _s;
-                }
-
-                /** @brief Implicit conversion to a C string pointer. */
-                operator const char *() const {
-                        return _s.c_str();
-                }
-
-                /** @brief Assignment from a std::string. */
-                String &operator=(const std::string &str) {
-                        _s = str;
-                        return *this;
-                }
-
-                /** @brief Move assignment from a std::string. */
-                String &operator=(std::string &&str) {
-                        _s = std::move(str);
-                        return *this;
-                }
-
-                /** @brief Assignment from a C string. */
-                String &operator=(const char *str) {
-                        _s = str;
-                        return *this;
-                }
-
-                /** @brief Concatenation with another String. */
-                String operator+(const String &val) const {
-                        return String(_s + val._s);
-                }
-
-                /** @brief Concatenation with a std::string. */
-                String operator+(const std::string &val) const {
-                        return String(_s + val);
-                }
-
-                /** @brief Concatenation with a C string. */
-                String operator+(const char *val) const {
-                        return String(_s + val);
-                }
-
-                /** @brief Concatenation with a single character. */
-                String operator+(char val) const {
-                        return String(_s + val);
-                }
-
-                /** @brief Appends another String. */
-                String &operator+=(const String &val) {
-                        _s += val._s;
-                        return *this;
-                }
-
-                /** @brief Appends a std::string. */
-                String &operator+=(const std::string &val) {
-                        _s += val;
-                        return *this;
-                }
-
-                /** @brief Appends a C string. */
-                String &operator+=(const char *val) {
-                        _s += val;
-                        return *this;
-                }
-
-                /** @brief Appends a single character. */
-                String &operator+=(char val) {
-                        _s += val;
-                        return *this;
-                }
-
-                /**
-                 * @brief Accesses a character by index.
-                 * @param index The zero-based character position.
-                 * @return Mutable reference to the character.
-                 */
-                char &operator[](int index) {
-                        return _s[index];
-                }
-
-                /**
-                 * @brief Accesses a character by index (const).
-                 * @param index The zero-based character position.
-                 * @return Const reference to the character.
-                 */
-                const char &operator[](int index) const {
-                        return _s[index];
-                }
-
-                /** @brief Equality comparison with another String. */
-                bool operator==(const String &val) const {
-                        return _s == val._s;
-                }
-
-                /** @brief Equality comparison with a C string. */
-                bool operator==(const char *val) const {
-                        return _s == val;
-                }
-
-                /** @brief Equality comparison with a single character. */
-                bool operator==(char val) const {
-                        return _s.size() == 1 && _s[0] == val;
-                }
-
-                /** @brief Inequality comparison with another String. */
-                bool operator!=(const String &val) const {
-                        return _s != val._s;
-                }
-
-                /** @brief Inequality comparison with a C string. */
-                bool operator!=(const char *val) const {
-                        return _s != val;
-                }
-
-                /** @brief Inequality comparison with a single character. */
-                bool operator!=(char val) const {
-                        return _s.size() != 1 || _s[0] != val;
-                }
-
-                /** @brief Lexicographic less-than comparison. */
-                friend bool operator<(const String &lhs, const String &rhs) {
-                        return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
-                }
-
-                /** @brief Stream insertion operator. */
-                friend std::ostream &operator<<(std::ostream &os, const String &val) {
-                        os << val._s;
-                        return os;
-                }
-
-                /** @brief Stream extraction operator. */
-                friend std::istream &operator>>(std::istream &in, String &val) {
-                        in >> val._s;
-                        return in;
-                }
-
-                /**
-                 * @brief Returns an uppercase copy of the string.
-                 * @return A new String with all characters converted to uppercase.
-                 */
-                String toUpper() const {
-                        std::string result(_s);
-                        std::transform(result.begin(), result.end(), result.begin(), ::toupper);
-                        return result;
-                }
-
-                /**
-                 * @brief Returns a lowercase copy of the string.
-                 * @return A new String with all characters converted to lowercase.
-                 */
-                String toLower() const {
-                        std::string result(_s);
-                        std::transform(result.begin(), result.end(), result.begin(), ::tolower);
-                        return result;
-                }
-
-                /**
-                 * @brief Returns a copy with leading and trailing whitespace removed.
-                 * @return The trimmed string, or an empty string if entirely whitespace.
-                 */
-                String trim() const {
-                        std::string result;
-                        size_t first = _s.find_first_not_of(WhitespaceChars);
-                        if(first != std::string::npos) {
-                                size_t last = _s.find_last_not_of(WhitespaceChars);
-                                result = _s.substr(first, last - first + 1);
-                        }
-                        return result;
-                }
-
-                /**
-                 * @brief Splits the string by a delimiter.
-                 * @param delimiter The delimiter string to split on.
-                 * @return A StringList containing the split parts.
-                 */
-                StringList split(const std::string& delimiter) const;
-
-                /**
-                 * @brief Checks if the string starts with the given prefix.
-                 * @param prefix The prefix to check.
-                 * @return True if the string begins with @p prefix.
-                 */
-                bool startsWith(const String &prefix) const {
-                        return _s.compare(0, prefix.size(), prefix._s) == 0;
-                }
-
-                /**
-                 * @brief Checks if the string starts with the given character.
-                 * @param c The character to check.
-                 * @return True if the first character matches @p c.
-                 */
-                bool startsWith(char c) const {
-                        return !isEmpty() && _s[0] == c;
-                }
-
-                /**
-                 * @brief Checks if the string ends with the given suffix.
-                 * @param suffix The suffix to check.
-                 * @return True if the string ends with @p suffix.
-                 */
-                bool endsWith(const String &suffix) const {
-                        if(suffix.size() > size()) return false;
-                        return std::equal(suffix._s.rbegin(), suffix._s.rend(), _s.rbegin());
-                }
+                bool contains(char val) const { return d->find(Char(val)) != npos; }
+                /// @copydoc contains(char) const
+                bool contains(Char val) const { return d->find(val) != npos; }
+                /// @copydoc contains(char) const
+                bool contains(const String &val) const { return d->find(*val.d) != npos; }
+                /// @copydoc contains(char) const
+                bool contains(const char *val) const { return contains(String(val)); }
 
                 /**
                  * @brief Counts non-overlapping occurrences of a substring.
-                 * @param substr The substring to search for.
-                 * @return The number of non-overlapping occurrences.
+                 * @param substr The substring to count.
+                 * @return Number of occurrences.
                  */
-                size_t count(const String &substr) const {
-                        size_t count = 0;
-                        size_t pos = 0;
-                        while((pos = _s.find(substr._s, pos)) != std::string::npos) {
-                                ++count;
-                                pos += substr.length();
-                        }
-                        return count;
+                size_t count(const String &substr) const { return d->count(*substr.d); }
+
+                // ============================================================
+                // Substring
+                // ============================================================
+
+                /**
+                 * @brief Returns a substring.
+                 * @param pos Starting character index (default 0).
+                 * @param len Maximum number of characters (npos = rest of string).
+                 * @return The substring.
+                 */
+                String substr(size_t pos = 0, size_t len = npos) const {
+                        if(pos >= d->length()) return String();
+                        if(len == npos) len = d->length() - pos;
+                        return String(d->createSubstr(pos, len));
                 }
 
                 /**
-                 * @brief Returns a reversed copy of the string.
-                 * @return A new String with characters in reverse order.
+                 * @brief Returns a substring starting at @p pos (alias for substr).
+                 * @param pos   Starting character index.
+                 * @param count Maximum number of characters.
+                 * @return The substring.
                  */
-                String reverse() const {
-                        std::string result(_s);
-                        std::reverse(result.begin(), result.end());
+                String mid(size_t pos, size_t count = npos) const { return substr(pos, count); }
+
+                /**
+                 * @brief Returns the first @p count characters.
+                 * @param count Number of characters to return.
+                 * @return The left substring.
+                 */
+                String left(size_t count) const { return substr(0, count); }
+
+                /**
+                 * @brief Returns the last @p count characters.
+                 * @param count Number of characters to return.
+                 * @return The right substring.
+                 */
+                String right(std::size_t count) const {
+                        if(count >= length()) return *this;
+                        return substr(length() - count, count);
+                }
+
+                // ============================================================
+                // Mutation (COW)
+                // ============================================================
+
+                /** @brief Removes all characters from the string. */
+                void clear() { d.modify()->clear(); }
+
+                /**
+                 * @brief Resizes the string to the given character count.
+                 * @param val New character count.
+                 */
+                void resize(size_t val) { d.modify()->resize(val); }
+
+                /**
+                 * @brief Erases characters from the string.
+                 * @param pos   Starting character index.
+                 * @param count Number of characters to erase (default 1).
+                 */
+                void erase(size_t pos, size_t count = 1) { d.modify()->erase(pos, count); }
+
+                /**
+                 * @brief Sets the character at the given index (promotes to Unicode if needed).
+                 * @param idx Zero-based character index.
+                 * @param ch  The replacement character.
+                 */
+                void setCharAt(size_t idx, Char ch) {
+                        if(d->isLatin1() && ch.codepoint() > 0xFF) {
+                                auto *ud = StringUnicodeData::fromLatin1(d->str());
+                                d = SharedPtr<StringData>::takeOwnership(ud);
+                        }
+                        d.modify()->setCharAt(idx, ch);
+                }
+
+                /**
+                 * @brief Inserts a string at the given position (promotes to Unicode if needed).
+                 * @param pos Zero-based character index.
+                 * @param s   The string to insert.
+                 */
+                void insert(size_t pos, const String &s) {
+                        if(d->isLatin1() && !s.d->isLatin1()) {
+                                auto *ud = StringUnicodeData::fromLatin1(d->str());
+                                d = SharedPtr<StringData>::takeOwnership(ud);
+                        }
+                        d.modify()->insert(pos, *s.d);
+                }
+
+                // ============================================================
+                // Assignment
+                // ============================================================
+
+                /** @brief Assigns from a std::string (copy). */
+                String &operator=(const std::string &str) {
+                        d = SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str));
+                        return *this;
+                }
+
+                /** @brief Assigns from a std::string (move). */
+                String &operator=(std::string &&str) {
+                        d = SharedPtr<StringData>::takeOwnership(new StringLatin1Data(std::move(str)));
+                        return *this;
+                }
+
+                /** @brief Assigns from a C string. */
+                String &operator=(const char *str) {
+                        d = SharedPtr<StringData>::takeOwnership(new StringLatin1Data(str ? str : ""));
+                        return *this;
+                }
+
+                // ============================================================
+                // Concatenation
+                // ============================================================
+
+                /**
+                 * @brief Appends a String to this string (promotes to Unicode if needed).
+                 * @param val The string to append.
+                 * @return Reference to this string.
+                 */
+                String &operator+=(const String &val) {
+                        if(val.isEmpty()) return *this;
+                        if(d->isLatin1() && !val.d->isLatin1()) {
+                                auto *ud = StringUnicodeData::fromLatin1(d->str());
+                                d = SharedPtr<StringData>::takeOwnership(ud);
+                        }
+                        d.modify()->append(*val.d);
+                        return *this;
+                }
+
+                /// @copydoc operator+=(const String &)
+                String &operator+=(const std::string &val) { return *this += String(val); }
+                /// @copydoc operator+=(const String &)
+                String &operator+=(const char *val) { return *this += String(val); }
+                /// @copydoc operator+=(const String &)
+                String &operator+=(char val) { return *this += String(1, val); }
+
+                /**
+                 * @brief Returns the concatenation of this string and @p val.
+                 * @param val The string to concatenate.
+                 * @return A new String containing both parts.
+                 */
+                String operator+(const String &val) const {
+                        String result = *this;
+                        result += val;
                         return result;
                 }
 
+                /// @copydoc operator+(const String &) const
+                String operator+(const std::string &val) const { return *this + String(val); }
+                /// @copydoc operator+(const String &) const
+                String operator+(const char *val) const { return *this + String(val); }
+                /// @copydoc operator+(const String &) const
+                String operator+(char val) const { return *this + String(1, val); }
+
+                // ============================================================
+                // Comparison
+                // ============================================================
+
                 /**
-                 * @brief Checks if the string contains only digit characters.
-                 * @return True if non-empty and all characters satisfy std::isdigit.
+                 * @brief Equality comparison with another String.
+                 * @param val The string to compare with.
+                 * @return True if both strings have identical characters.
                  */
-                bool isNumeric() const {
-                        return !isEmpty() && std::all_of(_s.begin(), _s.end(), ::isdigit);
+                bool operator==(const String &val) const {
+                        if(d->length() != val.d->length()) return false;
+                        if(d->isLatin1() && val.d->isLatin1()) return d->str() == val.d->str();
+                        for(size_t i = 0; i < d->length(); ++i) {
+                                if(d->charAt(i) != val.d->charAt(i)) return false;
+                        }
+                        return true;
+                }
+
+                /// @copydoc operator==(const String &) const
+                bool operator==(const char *val) const { return d->str() == val; }
+                /// @copydoc operator==(const String &) const
+                bool operator==(char val) const { return d->length() == 1 && d->charAt(0) == val; }
+
+                /** @brief Inequality comparison. */
+                bool operator!=(const String &val) const { return !(*this == val); }
+                /// @copydoc operator!=(const String &) const
+                bool operator!=(const char *val) const { return !(*this == val); }
+                /// @copydoc operator!=(const String &) const
+                bool operator!=(char val) const { return !(*this == val); }
+
+                /** @brief Less-than comparison (lexicographic on the encoded bytes). */
+                friend bool operator<(const String &lhs, const String &rhs) {
+                        return lhs.str() < rhs.str();
+                }
+
+                /** @brief Less-than-or-equal comparison. */
+                friend bool operator<=(const String &lhs, const String &rhs) {
+                        return !(rhs < lhs);
+                }
+
+                /** @brief Greater-than comparison. */
+                friend bool operator>(const String &lhs, const String &rhs) {
+                        return rhs < lhs;
+                }
+
+                /** @brief Greater-than-or-equal comparison. */
+                friend bool operator>=(const String &lhs, const String &rhs) {
+                        return !(lhs < rhs);
+                }
+
+                // ============================================================
+                // Stream operators
+                // ============================================================
+
+                /** @brief Writes the string to an output stream. */
+                friend std::ostream &operator<<(std::ostream &os, const String &val) {
+                        os << val.str();
+                        return os;
+                }
+
+                /** @brief Reads a word from an input stream into the string. */
+                friend std::istream &operator>>(std::istream &in, String &val) {
+                        std::string tmp;
+                        in >> tmp;
+                        val = std::move(tmp);
+                        return in;
+                }
+
+                // ============================================================
+                // Case / whitespace
+                // ============================================================
+
+                /** @brief Returns an uppercase copy of this string. */
+                String toUpper() const {
+                        if(d->isLatin1()) {
+                                std::string s = d->str();
+                                std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+                                return String(std::move(s));
+                        }
+                        promeki::List<Char> chars;
+                        for(size_t i = 0; i < d->length(); ++i)
+                                chars.pushToBack(d->charAt(i).toUpper());
+                        return String(new StringUnicodeData(std::move(chars)));
+                }
+
+                /** @brief Returns a lowercase copy of this string. */
+                String toLower() const {
+                        if(d->isLatin1()) {
+                                std::string s = d->str();
+                                std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+                                return String(std::move(s));
+                        }
+                        promeki::List<Char> chars;
+                        for(size_t i = 0; i < d->length(); ++i)
+                                chars.pushToBack(d->charAt(i).toLower());
+                        return String(new StringUnicodeData(std::move(chars)));
+                }
+
+                /** @brief Returns a copy with leading and trailing whitespace removed. */
+                String trim() const {
+                        size_t len = length();
+                        if(len == 0) return String();
+                        size_t first = 0;
+                        while(first < len && d->charAt(first).isSpace()) ++first;
+                        if(first == len) return String();
+                        size_t last = len - 1;
+                        while(last > first && d->charAt(last).isSpace()) --last;
+                        return substr(first, last - first + 1);
+                }
+
+                // ============================================================
+                // Starts / ends / reverse / numeric
+                // ============================================================
+
+                /**
+                 * @brief Returns true if the string starts with the given prefix.
+                 * @param prefix The prefix to test.
+                 * @return True if this string begins with @p prefix.
+                 */
+                bool startsWith(const String &prefix) const {
+                        if(prefix.length() > length()) return false;
+                        for(size_t i = 0; i < prefix.length(); ++i) {
+                                if(d->charAt(i) != prefix.d->charAt(i)) return false;
+                        }
+                        return true;
                 }
 
                 /**
-                 * @brief Replaces the lowest-numbered placeholder with a string.
+                 * @brief Returns true if the string starts with the given character.
+                 * @param c The character to test.
+                 */
+                bool startsWith(char c) const {
+                        return !isEmpty() && d->charAt(0) == c;
+                }
+
+                /**
+                 * @brief Returns true if the string ends with the given suffix.
+                 * @param suffix The suffix to test.
+                 * @return True if this string ends with @p suffix.
+                 */
+                bool endsWith(const String &suffix) const {
+                        if(suffix.length() > length()) return false;
+                        size_t offset = length() - suffix.length();
+                        for(size_t i = 0; i < suffix.length(); ++i) {
+                                if(d->charAt(offset + i) != suffix.d->charAt(i)) return false;
+                        }
+                        return true;
+                }
+
+                /** @brief Returns a copy with characters in reverse order. */
+                String reverse() const {
+                        String result = *this;
+                        result.d.modify()->reverseInPlace();
+                        return result;
+                }
+
+                /** @brief Returns true if every character is a decimal digit. */
+                bool isNumeric() const {
+                        if(isEmpty()) return false;
+                        for(size_t i = 0; i < d->length(); ++i) {
+                                if(!d->charAt(i).isDigit()) return false;
+                        }
+                        return true;
+                }
+
+                /**
+                 * @brief Returns a copy with all occurrences of @p find replaced
+                 *        by @p replacement.
+                 */
+                String replace(const String &find, const String &replacement) const;
+
+                /**
+                 * @brief Case-insensitive comparison.
+                 * @return Negative if *this < other, 0 if equal, positive if *this > other.
+                 */
+                int compareIgnoreCase(const String &other) const {
+                        size_t len = std::min(length(), other.length());
+                        for(size_t i = 0; i < len; ++i) {
+                                char32_t a = d->charAt(i).toLower().codepoint();
+                                char32_t b = other.d->charAt(i).toLower().codepoint();
+                                if(a != b) return a < b ? -1 : 1;
+                        }
+                        if(length() < other.length()) return -1;
+                        if(length() > other.length()) return 1;
+                        return 0;
+                }
+
+                /**
+                 * @brief Returns a 64-bit FNV-1a hash of this string's native data.
                  *
-                 * Placeholders use the format `%1`, `%2`, etc. Each call replaces
-                 * the lowest-numbered placeholder found in the string and returns
-                 * a reference to this String, allowing chained calls.
+                 * Each StringData backend hashes its native storage directly,
+                 * avoiding unnecessary encoding conversions.
+                 */
+                uint64_t hash() const {
+                        return d->hash();
+                }
+
+                // ============================================================
+                // Encoding conversion
+                // ============================================================
+
+                /**
+                 * @brief Returns a Latin1 version of this string.
                  *
-                 * @param str The replacement string.
-                 * @return Reference to this String.
+                 * If already Latin1, returns a shallow copy (refcount increment).
+                 * Otherwise converts, clamping codepoints above 0xFF to '?'.
+                 */
+                String toLatin1() const {
+                        if(d->isLatin1()) return *this;
+                        std::string s;
+                        s.reserve(d->length());
+                        for(size_t i = 0; i < d->length(); ++i) {
+                                char32_t cp = d->charAt(i).codepoint();
+                                s += static_cast<char>(cp <= 0xFF ? cp : '?');
+                        }
+                        return String(std::move(s));
+                }
+
+                /**
+                 * @brief Returns a Unicode version of this string.
+                 *
+                 * If already Unicode, returns a shallow copy (refcount increment).
+                 * Otherwise promotes Latin1 data to decoded codepoints.
+                 */
+                String toUnicode() const {
+                        if(!d->isLatin1()) return *this;
+                        return String(StringUnicodeData::fromLatin1(d->str()));
+                }
+
+                // ============================================================
+                // Arg replacement (implemented in string.cpp)
+                // ============================================================
+
+                /**
+                 * @brief Replaces the lowest-numbered %N placeholder with the given string.
+                 * @param str The replacement text.
+                 * @return Reference to this string.
                  */
                 String &arg(const String &str);
 
-                /**
-                 * @brief Replaces the lowest-numbered placeholder with a formatted integer.
-                 * @param value     The value to insert.
-                 * @param base      Numeric base for conversion.
-                 * @param padding   Minimum field width.
-                 * @param padchar   Padding character.
-                 * @param addPrefix If true, adds a base prefix.
-                 * @return Reference to this String.
-                 */
-                String &arg(int8_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(int8_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(uint8_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(uint8_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(int16_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(int16_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(uint16_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(uint16_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(int32_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(int32_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(uint32_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(uint32_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(int64_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(int64_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
 
-                /// @copydoc arg(int8_t, int, int, char, bool)
-                String &arg(uint64_t value,
-                            int base = 10,
-                            int padding = 0,
-                            char padchar = ' ',
-                            bool addPrefix = false) {
+                /// @copydoc arg(const String &)
+                String &arg(uint64_t value, int base = 10, int padding = 0,
+                            char padchar = ' ', bool addPrefix = false) {
                         return arg(number(value, base, padding, padchar, addPrefix));
                 }
+
+                // ============================================================
+                // Conversion (implemented in string.cpp)
+                // ============================================================
 
                 /**
-                 * @brief Converts the string to a value of the given type.
-                 * @tparam OutputType The target type (must support operator>>).
-                 * @param err Optional error output. Set to Error::Invalid on failure.
+                 * @brief Converts the string to a value of type @p OutputType via std::istringstream.
+                 * @tparam OutputType The target type.
+                 * @param err Optional error output.
                  * @return The converted value, or a default-constructed value on failure.
                  */
                 template <typename OutputType> OutputType to(Error *err = nullptr) const {
                         OutputType ret;
-                        std::istringstream iss(_s);
+                        std::istringstream iss(str());
                         iss >> ret;
                         if(iss.fail() || !iss.eof()) {
                                 if(err != nullptr) *err = Error::Invalid;
@@ -812,44 +870,50 @@ class String {
                 /**
                  * @brief Converts the string to a boolean.
                  * @param err Optional error output.
-                 * @return The boolean value.
+                 * @return The boolean value (recognizes "true"/"false" and "1"/"0").
                  */
                 bool toBool(Error *err = nullptr) const;
 
                 /**
                  * @brief Converts the string to an integer.
                  * @param err Optional error output.
-                 * @return The integer value.
+                 * @return The integer value, or 0 on failure.
                  */
                 int toInt(Error *err = nullptr) const;
 
                 /**
                  * @brief Converts the string to an unsigned integer.
                  * @param err Optional error output.
-                 * @return The unsigned integer value.
+                 * @return The unsigned integer value, or 0 on failure.
                  */
                 unsigned int toUInt(Error *err = nullptr) const;
 
                 /**
                  * @brief Converts the string to a double.
                  * @param err Optional error output.
-                 * @return The double value.
+                 * @return The double value, or 0.0 on failure.
                  */
                 double toDouble(Error *err = nullptr) const;
 
                 /**
                  * @brief Parses English number words into an integer value.
-                 *
-                 * Interprets strings like "twenty three" or "one hundred" as their
-                 * numeric equivalents.
-                 *
                  * @param err Optional error output.
-                 * @return The parsed integer value.
+                 * @return The parsed value (e.g. "twenty three" returns 23).
                  */
                 int64_t parseNumberWords(Error *err = nullptr) const;
 
+                /**
+                 * @brief Splits the string by a delimiter.
+                 * @param delimiter The delimiter string to split on.
+                 * @return A StringList containing the split parts.
+                 */
+                StringList split(const std::string& delimiter) const;
+
         private:
-                std::string _s;     ///< The underlying string storage.
+                SharedPtr<StringData> d;
+
+                explicit String(StringData *data)
+                        : d(SharedPtr<StringData>::takeOwnership(data)) {}
 };
 
 /** @brief Concatenation with a C string on the left-hand side. */
@@ -858,3 +922,148 @@ inline String operator+(const char *lhs, const String &rhs) {
 }
 
 PROMEKI_NAMESPACE_END
+
+/** @brief std::hash specialization for promeki::String using FNV-1a. */
+template<>
+struct std::hash<promeki::String> {
+        size_t operator()(const promeki::String &s) const noexcept {
+                return static_cast<size_t>(s.hash());
+        }
+};
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief Compile-time string literal with encoding detection and UTF-8 decode.
+ *
+ * The consteval constructor copies the literal bytes and, if any byte is
+ * above 0x7F, decodes the entire string as UTF-8 into a char32_t array.
+ * All work happens at compile time — no runtime encoding scan or UTF-8
+ * parsing.  Used by the PROMEKI_STRING macro.
+ *
+ * @tparam N Size of the string literal including the null terminator.
+ */
+template<size_t N>
+class CompiledString {
+        public:
+                consteval CompiledString(const char (&str)[N])
+                        : _bytes{}, _codepoints{}, _charCount(0), _isAscii(true) {
+                        for(size_t i = 0; i < N; ++i) _bytes[i] = str[i];
+                        size_t pos = 0;
+                        while(pos < N - 1) {
+                                unsigned char b = static_cast<unsigned char>(str[pos]);
+                                if(b > 0x7F) _isAscii = false;
+                                char32_t cp;
+                                size_t seqLen;
+                                if(b < 0x80)      { cp = b; seqLen = 1; }
+                                else if(b < 0xE0) { cp = b & 0x1F; seqLen = 2; }
+                                else if(b < 0xF0) { cp = b & 0x0F; seqLen = 3; }
+                                else              { cp = b & 0x07; seqLen = 4; }
+                                for(size_t j = 1; j < seqLen && pos + j < N - 1; ++j)
+                                        cp = (cp << 6) | (static_cast<unsigned char>(str[pos + j]) & 0x3F);
+                                _codepoints[_charCount++] = cp;
+                                pos += seqLen;
+                        }
+                }
+
+                constexpr bool isAscii() const { return _isAscii; }
+                constexpr size_t charCount() const { return _charCount; }
+                constexpr size_t byteCount() const { return N - 1; }
+                constexpr const char *bytes() const { return _bytes; }
+                constexpr const char32_t *codepoints() const { return _codepoints; }
+
+                /** @brief Compile-time FNV-1a hash of the native storage. */
+                constexpr uint64_t hash() const {
+                        if(_isAscii) return fnv1aData(_bytes, N - 1);
+                        return fnv1aData(_codepoints, _charCount * sizeof(char32_t));
+                }
+
+        private:
+                char     _bytes[N];
+                char32_t _codepoints[N];  // worst case: N-1 codepoints
+                size_t   _charCount;
+                bool     _isAscii;
+};
+
+/**
+ * @brief Right-sized codepoint array extracted from a CompiledString.
+ *
+ * CompiledString<N> allocates N codepoints (worst case), but a UTF-8
+ * string with N bytes has at most N-1 codepoints and usually far fewer.
+ * This class copies only the actual codepoints into a correctly-sized
+ * constexpr array, so the oversized CompiledString can be optimized away.
+ *
+ * @tparam Count The exact number of decoded codepoints.
+ */
+template<size_t Count>
+class CompiledCodepoints {
+        public:
+                template<size_t N>
+                consteval CompiledCodepoints(const CompiledString<N> &cs) : _data{} {
+                        for(size_t i = 0; i < Count; ++i) _data[i] = cs.codepoints()[i];
+                }
+                constexpr const char32_t *data() const { return _data; }
+                constexpr size_t size() const { return Count; }
+        private:
+                char32_t _data[Count];
+};
+
+/**
+ * @brief User-defined literal for convenient String construction.
+ *
+ * Auto-detects encoding: if any byte is > 0x7F the literal is
+ * decoded as UTF-8, otherwise it is treated as Latin1.
+ *
+ * @code
+ *   using namespace promeki::literals;
+ *   String s = "Hello"_ps;          // Latin1
+ *   String u = "café"_ps;           // auto-detected as UTF-8
+ * @endcode
+ */
+namespace literals {
+        inline String operator""_ps(const char *str, size_t len) {
+                for(size_t i = 0; i < len; ++i) {
+                        if(static_cast<unsigned char>(str[i]) > 0x7F)
+                                return String::fromUtf8(str, len);
+                }
+                return String(str, len);
+        }
+} // namespace literals
+
+PROMEKI_NAMESPACE_END
+
+/**
+ * @def PROMEKI_STRING(str)
+ * @brief Compile-time optimized String from any string literal.
+ *
+ * Encoding detection and UTF-8 decoding happen entirely at compile
+ * time via consteval.  At runtime both paths are zero-copy:
+ * - ASCII/Latin1: StringLiteralData wrapping the literal bytes
+ * - UTF-8: StringUnicodeLiteralData wrapping pre-decoded codepoints
+ *   and the original UTF-8 bytes
+ *
+ * No heap allocation, no memcpy, no runtime decode for either path.
+ *
+ * @code
+ *   String a = PROMEKI_STRING("Hello");     // Latin1 zero-copy
+ *   String b = PROMEKI_STRING("café");      // compile-time UTF-8 decode
+ * @endcode
+ */
+// NOLINTNEXTLINE(bugprone-macro-parentheses)
+#define PROMEKI_STRING(str)                                                     \
+    ([]() -> ::promeki::String {                                                \
+        constexpr auto _cs =                                                    \
+            ::promeki::CompiledString<sizeof(str)>(str);                        \
+        if constexpr (_cs.isAscii()) {                                          \
+            static ::promeki::StringLiteralData _lit(                           \
+                str, _cs.byteCount(), _cs.hash());                              \
+            return ::promeki::String::fromLiteralData(&_lit);                   \
+        } else {                                                                \
+            static constexpr auto _cp =                                         \
+                ::promeki::CompiledCodepoints<_cs.charCount()>(_cs);            \
+            static ::promeki::StringUnicodeLiteralData _lit(                    \
+                _cp.data(), _cp.size(),                                          \
+                str, _cs.byteCount(), _cs.hash());                              \
+            return ::promeki::String::fromLiteralData(&_lit);                   \
+        }                                                                       \
+    }())

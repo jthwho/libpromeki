@@ -94,7 +94,7 @@ class ObfuscatedString {
                                 // Undo round 1: XOR.
                                 c ^= k0;
 
-                                out[i] = static_cast<char>(c);
+                                out.setCharAt(i, Char(static_cast<char>(c)));
                                 state = advanceState(state, static_cast<unsigned char>(_data[i]), key);
                         }
                         return out;

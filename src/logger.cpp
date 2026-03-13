@@ -216,7 +216,7 @@ void Logger::writeLog(const LogEntry &entry) {
 
 void Logger::openLogFile(const String &filename) {
         if(_file.is_open()) _file.close();
-        _file.open(filename.stds(), std::ios::out | std::ios::app);
+        _file.open(filename.str(), std::ios::out | std::ios::app);
         if(!_file.is_open()) {
                 LogEntry entry{DateTime::now(), Err, "LOGGER", 0,
                         cachedThreadId(),

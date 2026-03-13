@@ -21,7 +21,7 @@ MusicalNote::List NoteSequenceParser::parse(const String &input) {
         _notes.clear();
         _errors.clear();
 
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         while(_pos < s.size()) {
                 skipWhitespace();
                 if(atEnd()) break;
@@ -217,7 +217,7 @@ void NoteSequenceParser::parseRecallParams() {
 // --- Notes ---
 
 void NoteSequenceParser::parseLetterNote() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         char noteName = s[_pos++];
 
         // Map letter to pitch class.
@@ -262,7 +262,7 @@ void NoteSequenceParser::parseLetterNote() {
 }
 
 void NoteSequenceParser::parseNumericNote() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         size_t start = _pos;
         if(!atEnd() && s[_pos] == '-') _pos++; // allow leading minus
         while(!atEnd() && std::isdigit(static_cast<unsigned char>(s[_pos]))) _pos++;
@@ -306,7 +306,7 @@ void NoteSequenceParser::parseNumericNote() {
 }
 
 void NoteSequenceParser::parseRest() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         _pos++; // skip '_'
 
         int dots = 0;
@@ -387,34 +387,34 @@ void NoteSequenceParser::emitRest(int dots, double lengthMod) {
 }
 
 void NoteSequenceParser::skipComment() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         while(!atEnd() && s[_pos] != '\n') _pos++;
         return;
 }
 
 void NoteSequenceParser::skipWhitespace() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         while(!atEnd() && std::isspace(static_cast<unsigned char>(s[_pos]))) _pos++;
         return;
 }
 
 char NoteSequenceParser::current() const {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         return _pos < s.size() ? s[_pos] : '\0';
 }
 
 char NoteSequenceParser::peek(int offset) const {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         size_t idx = _pos + static_cast<size_t>(offset);
         return idx < s.size() ? s[idx] : '\0';
 }
 
 bool NoteSequenceParser::atEnd() const {
-        return _pos >= _input.stds().size();
+        return _pos >= _input.str().size();
 }
 
 String NoteSequenceParser::readParenArg() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         if(current() != '(') {
                 addError("Expected '('");
                 return "";
@@ -428,7 +428,7 @@ String NoteSequenceParser::readParenArg() {
 }
 
 double NoteSequenceParser::parseDurationModifier() {
-        const std::string &s = _input.stds();
+        const std::string &s = _input.str();
         if(atEnd()) return 1.0;
         if(s[_pos] == '/' || s[_pos] == '*') {
                 bool isDivide = (s[_pos] == '/');

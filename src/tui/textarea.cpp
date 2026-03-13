@@ -85,7 +85,7 @@ void TuiTextArea::paintEvent(TuiPaintEvent *) {
                         char32_t ch = U' ';
                         if(static_cast<size_t>(_cursorRow) < _lines.size() &&
                            static_cast<size_t>(_cursorCol) < _lines[_cursorRow].length()) {
-                                ch = _lines[_cursorRow].stds()[_cursorCol];
+                                ch = _lines[_cursorRow].charAt(_cursorCol).codepoint();
                         }
                         painter.drawChar(screenCol, screenRow, ch);
                         painter.setStyle(TuiStyleNone);
@@ -151,8 +151,7 @@ void TuiTextArea::keyEvent(KeyEvent *e) {
                 }
                 case KeyEvent::Key_Backspace:
                         if(_cursorCol > 0) {
-                                std::string &s = _lines[_cursorRow].stds();
-                                s.erase(_cursorCol - 1, 1);
+                                _lines[_cursorRow].erase(_cursorCol - 1, 1);
                                 _cursorCol--;
                                 textChangedSignal.emit();
                         } else if(_cursorRow > 0) {
@@ -167,8 +166,7 @@ void TuiTextArea::keyEvent(KeyEvent *e) {
                         break;
                 default:
                         if(!e->text().isEmpty()) {
-                                std::string &s = _lines[_cursorRow].stds();
-                                s.insert(_cursorCol, e->text().stds());
+                                _lines[_cursorRow].insert(_cursorCol, e->text());
                                 _cursorCol += static_cast<int>(e->text().length());
                                 textChangedSignal.emit();
                                 update();
