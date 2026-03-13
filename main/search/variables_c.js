@@ -1,9 +1,13 @@
 var searchData=
 [
-  ['name_0',['name',['../structAudioDesc_1_1Format.html#a0ed91e78e0a3b71d8d23f59bcaf18afd',1,'AudioDesc::Format::name'],['../structBuildInfo.html#a032e44826010930bb2526aa5ecd24b48',1,'BuildInfo::name'],['../structColorSpace_1_1Data.html#aad12f1f9c64ad53ec7a6f3ce6ff63d05',1,'ColorSpace::Data::name'],['../structMemSpace_1_1Ops.html#a423f4e8c5747eef4dc30df14437dfe82',1,'MemSpace::Ops::name'],['../structPixelFormat_1_1PlaneDesc.html#a728bb0fb9515c28f2bf333b070b98c77',1,'PixelFormat::PlaneDesc::name'],['../structPixelFormat_1_1Data.html#a7497eeacdf82ce3356ef7b48fc47bd2a',1,'PixelFormat::Data::name']]],
-  ['nativetype_1',['NativeType',['../classAudioDesc.html#a4a8484fa1d21e315bcb0105b977d8c37',1,'AudioDesc']]],
-  ['nosubs_2',['NoSubs',['../classRegEx.html#ac92add13b81de26f5a2e1d3a6f160f5d',1,'RegEx']]],
-  ['npos_3',['npos',['../classString.html#a8dee0a0536c5efaebda975315b380b80',1,'String']]],
-  ['numallocatedblocks_4',['numAllocatedBlocks',['../structMemPool_1_1Stats.html#af59c9d6d3f8beca69dcf90149ee857a0',1,'MemPool::Stats']]],
-  ['numfreeblocks_5',['numFreeBlocks',['../structMemPool_1_1Stats.html#a49907afc1308b5d746be81bc4486654d',1,'MemPool::Stats']]]
+  ['matrix_0',['matrix',['../structCSC.html#ad1cea7d728417f74f96e337417ac1c16',1,'CSC']]],
+  ['maxs24_1',['MaxS24',['../classAudioDesc.html#af195b376da48d2d2ca152d7e0e0e2013',1,'AudioDesc']]],
+  ['maxu24_2',['MaxU24',['../classAudioDesc.html#ae7a8153dc6502a6ba5182060d1b3b975',1,'AudioDesc']]],
+  ['maxwavelength_3',['MaxWavelength',['../classCIEPoint.html#a1e09b6a4719f768b806aba60d0f93d7d',1,'CIEPoint']]],
+  ['mins24_4',['MinS24',['../classAudioDesc.html#a39d719985ad1ec4416d6004d95e1ca68',1,'AudioDesc']]],
+  ['minu24_5',['MinU24',['../classAudioDesc.html#a5ff57815cd9ea4e811e44fc55f153860',1,'AudioDesc']]],
+  ['minwavelength_6',['MinWavelength',['../classCIEPoint.html#a2cca9e2542d9cc31a250a4741131d6b1',1,'CIEPoint']]],
+  ['mouse_7',['Mouse',['../classMouseEvent.html#a4781aba664b816a6c43cba0fb0576d2b',1,'MouseEvent']]],
+  ['mousebuttons_8',['mouseButtons',['../structTuiInputParser_1_1ParsedEvent.html#a7cd715ca42a080de7ee2bef24bc53e35',1,'TuiInputParser::ParsedEvent']]],
+  ['ms_9',['ms',['../structMemAllocation.html#ad2abdbee479cc2508381be4eec92c598',1,'MemAllocation']]]
 ];

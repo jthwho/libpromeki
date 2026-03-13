@@ -123,7 +123,7 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa1466f01fcd57f585edbc468656029b4" id="r_aa1466f01fcd57f585edbc468656029b4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#aa1466f01fcd57f585edbc468656029b4">RegEx</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classRegEx.html#a5aa4e210e4222b8d0f388bdc966a6247">pattern</a>, <a class="el" href="classRegEx.html#a08569338c61b389c5d30c90da155bb3d">Flag</a> flags=<a class="el" href="classRegEx.html#af6de80a95e95b5766e3a3c81c2ebaf50">DefaultFlags</a>)</td></tr>
-<tr class="memdesc:aa1466f01fcd57f585edbc468656029b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classRegEx.html" title="Regular expression wrapper around std::regex.">RegEx</a> from a <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> pattern.  <br /></td></tr>
+<tr class="memdesc:aa1466f01fcd57f585edbc468656029b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classRegEx.html" title="Regular expression wrapper around std::regex.">RegEx</a> from a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> pattern.  <br /></td></tr>
 <tr class="separator:aa1466f01fcd57f585edbc468656029b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54ccc19bbc07ed47ad9df3a028b1d153" id="r_a54ccc19bbc07ed47ad9df3a028b1d153"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a54ccc19bbc07ed47ad9df3a028b1d153">RegEx</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classRegEx.html#a5aa4e210e4222b8d0f388bdc966a6247">pattern</a>, <a class="el" href="classRegEx.html#a08569338c61b389c5d30c90da155bb3d">Flag</a> flags=<a class="el" href="classRegEx.html#af6de80a95e95b5766e3a3c81c2ebaf50">DefaultFlags</a>)</td></tr>
 <tr class="memdesc:a54ccc19bbc07ed47ad9df3a028b1d153"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classRegEx.html" title="Regular expression wrapper around std::regex.">RegEx</a> from a C string pattern.  <br /></td></tr>
@@ -134,13 +134,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5aa4e210e4222b8d0f388bdc966a6247" id="r_a5aa4e210e4222b8d0f388bdc966a6247"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a5aa4e210e4222b8d0f388bdc966a6247">pattern</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a5aa4e210e4222b8d0f388bdc966a6247"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current pattern string.  <br /></td></tr>
 <tr class="separator:a5aa4e210e4222b8d0f388bdc966a6247"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6376ee1c77cefc61cbbb0b94e0abc90f" id="r_a6376ee1c77cefc61cbbb0b94e0abc90f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a6376ee1c77cefc61cbbb0b94e0abc90f">match</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a6376ee1c77cefc61cbbb0b94e0abc90f" id="r_a6376ee1c77cefc61cbbb0b94e0abc90f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a6376ee1c77cefc61cbbb0b94e0abc90f">match</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a6376ee1c77cefc61cbbb0b94e0abc90f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tests whether the entire string matches the pattern.  <br /></td></tr>
 <tr class="separator:a6376ee1c77cefc61cbbb0b94e0abc90f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a230ea9f54bc50a544c4d9da0d6fcb479" id="r_a230ea9f54bc50a544c4d9da0d6fcb479"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a230ea9f54bc50a544c4d9da0d6fcb479">search</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a230ea9f54bc50a544c4d9da0d6fcb479" id="r_a230ea9f54bc50a544c4d9da0d6fcb479"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a230ea9f54bc50a544c4d9da0d6fcb479">search</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a230ea9f54bc50a544c4d9da0d6fcb479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for the first occurrence of the pattern within the string.  <br /></td></tr>
 <tr class="separator:a230ea9f54bc50a544c4d9da0d6fcb479"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a894f7743df308cbd0ebaa7883d3a3ae5" id="r_a894f7743df308cbd0ebaa7883d3a3ae5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a894f7743df308cbd0ebaa7883d3a3ae5">matches</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a894f7743df308cbd0ebaa7883d3a3ae5" id="r_a894f7743df308cbd0ebaa7883d3a3ae5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRegEx.html#a894f7743df308cbd0ebaa7883d3a3ae5">matches</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a894f7743df308cbd0ebaa7883d3a3ae5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns all non-overlapping matches of the pattern in the string.  <br /></td></tr>
 <tr class="separator:a894f7743df308cbd0ebaa7883d3a3ae5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -229,7 +229,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a <a class="el" href="classRegEx.html" title="Regular expression wrapper around std::regex.">RegEx</a> from a <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> pattern. </p>
+<p>Constructs a <a class="el" href="classRegEx.html" title="Regular expression wrapper around std::regex.">RegEx</a> from a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> pattern. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pattern</td><td>The regular expression pattern. </td></tr>
@@ -464,7 +464,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRegEx.html">RegEx</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

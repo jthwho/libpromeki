@@ -113,14 +113,14 @@ $(document).ready(function(){initNavTree('classObfuscatedString.html',''); initR
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aa997df22d1d890582fb514d43b7b57cb" id="r_aa997df22d1d890582fb514d43b7b57cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">consteval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObfuscatedString.html#aa997df22d1d890582fb514d43b7b57cb">ObfuscatedString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a>(&amp;<a class="el" href="classList.html">str</a>)[<a class="el" href="classList.html">N</a>])</td></tr>
+<tr class="memitem:aa997df22d1d890582fb514d43b7b57cb" id="r_aa997df22d1d890582fb514d43b7b57cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">consteval</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObfuscatedString.html#aa997df22d1d890582fb514d43b7b57cb">ObfuscatedString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a>(&amp;str)[<a class="el" href="classList.html">N</a>])</td></tr>
 <tr class="memdesc:aa997df22d1d890582fb514d43b7b57cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encodes a string literal at compile time.  <br /></td></tr>
 <tr class="separator:aa997df22d1d890582fb514d43b7b57cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a267ce030993eff2742ffb7c4b3b875df" id="r_a267ce030993eff2742ffb7c4b3b875df"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObfuscatedString.html#a267ce030993eff2742ffb7c4b3b875df">decode</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a267ce030993eff2742ffb7c4b3b875df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decodes the obfuscated data back to the original string.  <br /></td></tr>
 <tr class="separator:a267ce030993eff2742ffb7c4b3b875df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8486c8c8675e458e5752cb4ba3cdc371" id="r_a8486c8c8675e458e5752cb4ba3cdc371"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObfuscatedString.html#a8486c8c8675e458e5752cb4ba3cdc371">operator String</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a8486c8c8675e458e5752cb4ba3cdc371"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> via <a class="el" href="classObfuscatedString.html#a267ce030993eff2742ffb7c4b3b875df" title="Decodes the obfuscated data back to the original string.">decode()</a>.  <br /></td></tr>
+<tr class="memdesc:a8486c8c8675e458e5752cb4ba3cdc371"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <a class="el" href="classObfuscatedString.html#a267ce030993eff2742ffb7c4b3b875df" title="Decodes the obfuscated data back to the original string.">decode()</a>.  <br /></td></tr>
 <tr class="separator:a8486c8c8675e458e5752cb4ba3cdc371"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -129,7 +129,7 @@ class ObfuscatedString&lt; N, Seed &gt;</div><p>Compile-time string obfuscation.
 <p>Strings wrapped with the PROMEKI_OBFUSCATE macro are encoded at compile time so the plaintext never appears in the binary. Each call site gets a unique key derived from the file name, line number, and build timestamp.</p>
 <p>The encoding applies four operations per byte (XOR, modular add, bit-rotate, XOR) with 64-bit cipher-block-chaining so each output byte depends on the full history of all previous bytes. The per-byte key stream is derived from a splitmix64 finalizer, and the 64-bit CBC state is advanced with a multiply-xorshift step after each byte.</p>
 <p>Usage: </p><div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> value = <a class="code hl_define" href="obfuscatedstring_8h.html#acb89f83426760c47908ee175221bb79d">PROMEKI_OBFUSCATE</a>(<span class="stringliteral">&quot;my_secret&quot;</span>);</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">A versatile string class inspired by Qt's QString.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 <div class="ttc" id="aobfuscatedstring_8h_html_acb89f83426760c47908ee175221bb79d"><div class="ttname"><a href="obfuscatedstring_8h.html#acb89f83426760c47908ee175221bb79d">PROMEKI_OBFUSCATE</a></div><div class="ttdeci">#define PROMEKI_OBFUSCATE(str)</div><div class="ttdoc">Obfuscates a string literal at compile time.</div><div class="ttdef"><b>Definition</b> obfuscatedstring.h:161</div></div>
 </div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -203,7 +203,7 @@ template&lt;<a class="el" href="classList.html">size_t</a> N, <a class="el" href
 </div><div class="memdoc">
 
 <p>Decodes the obfuscated data back to the original string. </p>
-<dl class="section return"><dt>Returns</dt><dd>The decoded plaintext as a <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The decoded plaintext as a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </dd></dl>
 
 </div>
 </div>
@@ -232,8 +232,8 @@ template&lt;<a class="el" href="classList.html">size_t</a> N, <a class="el" href
 </table>
 </div><div class="memdoc">
 
-<p>Implicit conversion to <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> via <a class="el" href="classObfuscatedString.html#a267ce030993eff2742ffb7c4b3b875df" title="Decodes the obfuscated data back to the original string.">decode()</a>. </p>
-<dl class="section return"><dt>Returns</dt><dd>The decoded plaintext as a <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>. </dd></dl>
+<p>Implicit conversion to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <a class="el" href="classObfuscatedString.html#a267ce030993eff2742ffb7c4b3b875df" title="Decodes the obfuscated data back to the original string.">decode()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The decoded plaintext as a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </dd></dl>
 
 </div>
 </div>
@@ -247,7 +247,7 @@ template&lt;<a class="el" href="classList.html">size_t</a> N, <a class="el" href
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classObfuscatedString.html">ObfuscatedString</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['xyzcolor_0',['XYZColor',['../classXYZColor.html',1,'']]]
+  ['uuid_0',['UUID',['../classUUID.html',1,'']]]
 ];

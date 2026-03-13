@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['value_0',['Value',['../classMidiNote.html#ae35b95311738089287eaa0e86d959ac3',1,'MidiNote']]]
+  ['processeventsflag_0',['ProcessEventsFlag',['../classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9e',1,'EventLoop']]]
 ];

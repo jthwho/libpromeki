@@ -13,7 +13,7 @@ var searchData=
   ['_7efile_10',['~File',['../classFile.html#ac704ebdf5f57d7a1c5ddf409d797fb69',1,'File']]],
   ['_7efontpainter_11',['~FontPainter',['../classFontPainter.html#afac54a7739266e93a3bae416a4dfa1c8',1,'FontPainter']]],
   ['_7eimagefileio_12',['~ImageFileIO',['../classImageFileIO.html#a13f68429cdf6bcd7f54d1dcbd83d3ff2',1,'ImageFileIO']]],
-  ['_7eimpl_13',['~impl',['../classAudioFile_1_1Impl.html#ad4480eed21f50ad798e694e6ef0c6225',1,'AudioFile::Impl::~Impl()'],['../classPaintEngine_1_1Impl.html#ab06c8a09dcd1356ed1603322ba6a2aa0',1,'PaintEngine::Impl::~Impl()']]],
+  ['_7eimpl_13',['~impl',['../classPaintEngine_1_1Impl.html#ab06c8a09dcd1356ed1603322ba6a2aa0',1,'PaintEngine::Impl::~Impl()'],['../classAudioFile_1_1Impl.html#ad4480eed21f50ad798e694e6ef0c6225',1,'AudioFile::Impl::~Impl()']]],
   ['_7einstance_14',['~Instance',['../classCodec_1_1Instance.html#a054600a5ba6c6f5e7fa238adf92a5d2c',1,'Codec::Instance']]],
   ['_7elist_15',['~List',['../classList.html#acaf46830c0f0656378ec3257c4f894bd',1,'List']]],
   ['_7elogger_16',['~Logger',['../classLogger.html#acb668a9e186a25fbaad2e4af6d1ed00a',1,'Logger']]],
@@ -24,5 +24,8 @@ var searchData=
   ['_7epoint_21',['~Point',['../classPoint.html#a760ffe15eb8cccd93aa9dbf0bd68458d',1,'Point']]],
   ['_7eset_22',['~Set',['../classSet.html#a3d2d834fc186ad6d80a84226e9c98c07',1,'Set']]],
   ['_7esize2dtemplate_23',['~Size2DTemplate',['../classSize2DTemplate.html#a550b7b9942a902a09bce947f66a0b761',1,'Size2DTemplate']]],
-  ['_7ethread_24',['~Thread',['../classThread.html#a026b23628e1727050e864e00489c0baf',1,'Thread']]]
+  ['_7estringdata_24',['~StringData',['../classStringData.html#abb5511228bac97ed1b5d43ce04299aa5',1,'StringData']]],
+  ['_7ethread_25',['~Thread',['../classThread.html#a026b23628e1727050e864e00489c0baf',1,'Thread']]],
+  ['_7etuiapplication_26',['~TuiApplication',['../classTuiApplication.html#a45daa8fba9fe885851ee6505519b4705',1,'TuiApplication']]],
+  ['_7etuiwidget_27',['~TuiWidget',['../classTuiWidget.html#a34d7c1e5d148cb600eb17c60161b8d35',1,'TuiWidget']]]
 ];

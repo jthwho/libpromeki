@@ -1,4 +1,23 @@
 var searchData=
 [
-  ['unsupportedsystemerror_0',['UnsupportedSystemError',['../classError.html#ab5980e13b879db253df802b0950d1708a244c26b91104769c834f407065598c4c',1,'Error']]]
+  ['sampling411_0',['Sampling411',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612bae3cbce8f2a3517c857700f715c2e83ab',1,'PixelFormat']]],
+  ['sampling420_1',['Sampling420',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612babc1bf1d53f1ef7b06960e2020dbab716',1,'PixelFormat']]],
+  ['sampling422_2',['Sampling422',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612ba77dfec1826bcbb811e10334557dcc8f0',1,'PixelFormat']]],
+  ['sampling444_3',['Sampling444',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612ba25f50e942aae010d3089b26aff182b9c',1,'PixelFormat']]],
+  ['samplingundefined_4',['SamplingUndefined',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612baff1aadbf6f8c366cbbd90273ea989cd2',1,'PixelFormat']]],
+  ['silence_5',['Silence',['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7a3c5216277881a89112156a08405ae49d',1,'AudioGen']]],
+  ['sine_6',['Sine',['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7ad9b0fd1832605fd86a5a0e7581f8019a',1,'AudioGen']]],
+  ['singularmatrix_7',['SingularMatrix',['../classError.html#ab5980e13b879db253df802b0950d1708ac76268be59a6e0d65a29ea56eb8cb38b',1,'Error']]],
+  ['sizeexpanding_8',['SizeExpanding',['../widget_8h.html#a08168ac30b294447211e677c51697137af2bcf12518309e23a1d81474c2913355',1,'widget.h']]],
+  ['sizefixed_9',['SizeFixed',['../widget_8h.html#a08168ac30b294447211e677c51697137ae5d6e5f9d941cc892c1759db5ecf8227',1,'widget.h']]],
+  ['sizemaximum_10',['SizeMaximum',['../widget_8h.html#a08168ac30b294447211e677c51697137a6c029524ceddafa39e9091a0f5683146',1,'widget.h']]],
+  ['sizeminimum_11',['SizeMinimum',['../widget_8h.html#a08168ac30b294447211e677c51697137a4e164127d74102a31d160c6bc1e14005',1,'widget.h']]],
+  ['sizeminimumexpanding_12',['SizeMinimumExpanding',['../widget_8h.html#a08168ac30b294447211e677c51697137ae4998dd2c042d9783a6abcf10e34626e',1,'widget.h']]],
+  ['sizepreferred_13',['SizePreferred',['../widget_8h.html#a08168ac30b294447211e677c51697137a2035f5ce2976cd90b9d4d48b320f1ffb',1,'widget.h']]],
+  ['statusbar_14',['StatusBar',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0adabdf889dc2f1fd143ea0891599b9b21',1,'TuiPalette']]],
+  ['statusbartext_15',['StatusBarText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a02ff7c90a175be1e1639f666ab8cf363',1,'TuiPalette']]],
+  ['strongfocus_16',['StrongFocus',['../widget_8h.html#a6b22f8df23411420df9f05b6698743ccacd803f669da6ea95150385d1d17b166c',1,'widget.h']]],
+  ['sync_17',['Sync',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513aec5978df95acfa85c97336da2190e2ac',1,'File']]],
+  ['system_18',['System',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c',1,'MemSpace']]],
+  ['systemsecure_19',['SystemSecure',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da',1,'MemSpace']]]
 ];

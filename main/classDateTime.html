@@ -193,7 +193,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aebc1bbf747d2439f0323b3e684584938"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ff78238ea811e3f50995c27518f3dcd" id="r_a2ff78238ea811e3f50995c27518f3dcd"><td class="memItemLeft" align="right" valign="top"><a id="a2ff78238ea811e3f50995c27518f3dcd" name="a2ff78238ea811e3f50995c27518f3dcd"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a2ff78238ea811e3f50995c27518f3dcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> via <a class="el" href="classDateTime.html#aebc1bbf747d2439f0323b3e684584938" title="Formats the DateTime as a string.">toString()</a>. <br /></td></tr>
+<tr class="memdesc:a2ff78238ea811e3f50995c27518f3dcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <a class="el" href="classDateTime.html#aebc1bbf747d2439f0323b3e684584938" title="Formats the DateTime as a string.">toString()</a>. <br /></td></tr>
 <tr class="separator:a2ff78238ea811e3f50995c27518f3dcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d0907e68aaf37dc935684e0799ac108" id="r_a7d0907e68aaf37dc935684e0799ac108"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">time_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#a7d0907e68aaf37dc935684e0799ac108">toTimeT</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a7d0907e68aaf37dc935684e0799ac108"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> to a POSIX time_t value.  <br /></td></tr>
@@ -211,7 +211,7 @@ Static Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><b>now</b> ()</td></tr>
 <tr class="memdesc:a5709c05071bafa055ec8f927aef765af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> representing the current wall-clock time. <br /></td></tr>
 <tr class="separator:a5709c05071bafa055ec8f927aef765af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6651c9ea2501773b8d66e6e6c4321a1" id="r_ae6651c9ea2501773b8d66e6e6c4321a1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#ae6651c9ea2501773b8d66e6e6c4321a1">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">fmt</a>=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:ae6651c9ea2501773b8d66e6e6c4321a1" id="r_ae6651c9ea2501773b8d66e6e6c4321a1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#ae6651c9ea2501773b8d66e6e6c4321a1">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">fmt</a>=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:ae6651c9ea2501773b8d66e6e6c4321a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> from a formatted string.  <br /></td></tr>
 <tr class="separator:ae6651c9ea2501773b8d66e6e6c4321a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4624b8fdcc656bce5093ed99355541cd" id="r_a4624b8fdcc656bce5093ed99355541cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#a4624b8fdcc656bce5093ed99355541cd">fromNow</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">description</a>)</td></tr>
@@ -362,7 +362,7 @@ Static Public Attributes</h2></td></tr>
 <p>Creates a <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> relative to the current time from a natural-language description. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">description</td><td>A human-readable offset description (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. "2 hours ago"). </td></tr>
+    <tr><td class="paramname">description</td><td>A human-readable offset description (e.g. "2 hours ago"). </td></tr>
   </table>
   </dd>
 </dl>
@@ -730,7 +730,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDateTime.html">DateTime</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

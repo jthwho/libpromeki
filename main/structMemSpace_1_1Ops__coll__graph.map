@@ -1,6 +1,6 @@
 <map id="MemSpace::Ops" name="MemSpace::Ops">
 <area shape="rect" id="Node000001" title="Function table for memory space operations." alt="" coords="12,93,139,119"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="5,5,65,31"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="41,44,48,68,66,92,61,95,44,71,36,45"/>
 <area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="90,5,143,31"/>
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="108,44,83,94,79,92,103,42"/>

@@ -130,7 +130,7 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memdesc:a9b8894599306d57d7b4e44f0d7a815d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a> from individual component values. <br /></td></tr>
 <tr class="separator:a9b8894599306d57d7b4e44f0d7a815d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a739199e521006bd5eae4d021d33aff18" id="r_a739199e521006bd5eae4d021d33aff18"><td class="memItemLeft" align="right" valign="top"><a id="a739199e521006bd5eae4d021d33aff18" name="a739199e521006bd5eae4d021d33aff18"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>)</td></tr>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Point</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str)</td></tr>
 <tr class="memdesc:a739199e521006bd5eae4d021d33aff18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a> by parsing a comma-separated string. <br /></td></tr>
 <tr class="separator:a739199e521006bd5eae4d021d33aff18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a760ffe15eb8cccd93aa9dbf0bd68458d" id="r_a760ffe15eb8cccd93aa9dbf0bd68458d"><td class="memItemLeft" align="right" valign="top"><a id="a760ffe15eb8cccd93aa9dbf0bd68458d" name="a760ffe15eb8cccd93aa9dbf0bd68458d"></a>
@@ -139,7 +139,7 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="separator:a760ffe15eb8cccd93aa9dbf0bd68458d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9106042b170a95c741084f008d1b15d" id="r_aa9106042b170a95c741084f008d1b15d"><td class="memItemLeft" align="right" valign="top"><a id="aa9106042b170a95c741084f008d1b15d" name="aa9106042b170a95c741084f008d1b15d"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aa9106042b170a95c741084f008d1b15d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a> to a comma-separated <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>. <br /></td></tr>
+<tr class="memdesc:aa9106042b170a95c741084f008d1b15d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a> to a comma-separated <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. <br /></td></tr>
 <tr class="separator:aa9106042b170a95c741084f008d1b15d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f32a4e4edc7db7645f85dc9a1e0f71e" id="r_a8f32a4e4edc7db7645f85dc9a1e0f71e"><td class="memItemLeft" align="right" valign="top"><a id="a8f32a4e4edc7db7645f85dc9a1e0f71e" name="a8f32a4e4edc7db7645f85dc9a1e0f71e"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator const Array&lt; T, NumValues &gt; &amp;</b> () <a class="el" href="classList.html">const</a></td></tr>
@@ -185,7 +185,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a15cb1c4502b9d5cafde9c23a1d54fbd9" id="r_a15cb1c4502b9d5cafde9c23a1d54fbd9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPoint.html#a15cb1c4502b9d5cafde9c23a1d54fbd9">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">val</a>, <a class="el" href="classPoint.html">Point</a> &amp;d)</td></tr>
 <tr class="memdesc:a15cb1c4502b9d5cafde9c23a1d54fbd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a comma-separated string into a <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a>.  <br /></td></tr>
 <tr class="separator:a15cb1c4502b9d5cafde9c23a1d54fbd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a14555dca712ea739ad5137b43e7fcd2f" id="r_a14555dca712ea739ad5137b43e7fcd2f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classPoint.html">Point</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPoint.html#a14555dca712ea739ad5137b43e7fcd2f">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:a14555dca712ea739ad5137b43e7fcd2f" id="r_a14555dca712ea739ad5137b43e7fcd2f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classPoint.html">Point</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPoint.html#a14555dca712ea739ad5137b43e7fcd2f">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a14555dca712ea739ad5137b43e7fcd2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a comma-separated string into a <a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a>.  <br /></td></tr>
 <tr class="separator:a14555dca712ea739ad5137b43e7fcd2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -227,7 +227,7 @@ class Point&lt; T, NumValues &gt;</div><p>N-dimensional point with arithmetic, i
 <p>A generic point class that stores NumValues components of type T, backed by an <a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a>. Named accessors (x, y, z) are conditionally available depending on the number of dimensions. Supports parsing from and formatting to comma-separated strings.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>The component value type (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. int, float, double). </td></tr>
+    <tr><td class="paramname">T</td><td>The component value type (e.g. int, float, double). </td></tr>
     <tr><td class="paramname">NumValues</td><td>The number of dimensions. </td></tr>
   </table>
   </dd>
@@ -461,7 +461,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPoint.html">Point</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

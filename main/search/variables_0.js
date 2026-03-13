@@ -14,5 +14,6 @@ var searchData=
   ['_5fpixelformat_11',['_pixelFormat',['../classPaintEngine_1_1Impl.html#a748922ddea4a668016197cd64a926043',1,'PaintEngine::Impl']]],
   ['_5fpixelsperblock_12',['_pixelsPerBlock',['../classPixelFormat.html#aeb9539f5630acf1aefffb925a7107c05',1,'PixelFormat']]],
   ['_5fplanelist_13',['_planeList',['../classPixelFormat.html#a92e906fe95885fa0399417d770184ecd',1,'PixelFormat']]],
-  ['_5fsampling_14',['_sampling',['../classPixelFormat.html#a4e3a33caec372795f56992f1f0e44c2f',1,'PixelFormat']]]
+  ['_5fpromeki_5frefct_14',['_promeki_refct',['../classStringData.html#af0d7c519e6b4bbcdea45d8a832362764',1,'StringData']]],
+  ['_5fsampling_15',['_sampling',['../classPixelFormat.html#a4e3a33caec372795f56992f1f0e44c2f',1,'PixelFormat']]]
 ];

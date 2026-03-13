@@ -235,9 +235,9 @@ $(document).ready(function(){initNavTree('buffer_8h_source.html',''); initResiza
 <div class="line"><a id="l00235" name="l00235"></a><span class="lineno"><a class="line" href="classBuffer.html#ac35c3c2aa73a651597b953f5ebdcb3e4">  235</a></span>                <span class="keyword">const</span> <a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_function" href="classBuffer.html#ac35c3c2aa73a651597b953f5ebdcb3e4">allocation</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _alloc; }</div>
 <div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span> </div>
 <div class="foldopen" id="foldopen00245" data-start="{" data-end="}">
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno"><a class="line" href="classBuffer.html#a291031935b303e8bed545efd755c3574">  245</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classBuffer.html#a291031935b303e8bed545efd755c3574">shiftData</a>(<span class="keywordtype">size_t</span> <a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">bytes</a>) {</div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                        <a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">assert</a>(<a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">bytes</a> &lt;= _alloc.<a class="code hl_variable" href="structMemAllocation.html#a8ae99c16b3d333fc422acc0c1acc9609">size</a>);</div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>                        _data = <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">uint8_t</a> *<span class="keyword">&gt;</span>(_alloc.<a class="code hl_variable" href="structMemAllocation.html#af346ffca62a43c29a7bfcdcc5f36f38c">ptr</a>) + <a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">bytes</a>;</div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno"><a class="line" href="classBuffer.html#a291031935b303e8bed545efd755c3574">  245</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classBuffer.html#a291031935b303e8bed545efd755c3574">shiftData</a>(<span class="keywordtype">size_t</span> bytes) {</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>                        <a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">assert</a>(bytes &lt;= _alloc.<a class="code hl_variable" href="structMemAllocation.html#a8ae99c16b3d333fc422acc0c1acc9609">size</a>);</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>                        _data = <span class="keyword">static_cast&lt;</span><a class="code hl_typedef" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">uint8_t</a> *<span class="keyword">&gt;</span>(_alloc.<a class="code hl_variable" href="structMemAllocation.html#af346ffca62a43c29a7bfcdcc5f36f38c">ptr</a>) + bytes;</div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>                        <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>                }</div>
 </div>
@@ -321,7 +321,7 @@ $(document).ready(function(){initNavTree('buffer_8h_source.html',''); initResiza
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="buffer_8h.html">buffer.h</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

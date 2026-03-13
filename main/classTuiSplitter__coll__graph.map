@@ -1,0 +1,11 @@
+<map id="TuiSplitter" name="TuiSplitter">
+<area shape="rect" id="Node000001" title="Resizable split between two child widgets." alt="" coords="156,243,243,268"/>
+<area shape="rect" id="Node000002" href="$classTuiWidget.html" title="Base class for all TUI widgets." alt="" coords="156,168,243,193"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,208,202,242,197,242,197,208"/>
+<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="202,133,202,168,197,168,197,133"/>
+<area shape="rect" id="Node000004" href="$classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="92,44,93,57,98,68,108,79,122,87,152,98,150,103,119,92,105,83,93,71,88,58,86,45"/>
+<area shape="rect" id="Node000005" href="$classSignal.html" title=" " alt="" coords="216,5,393,31"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="297,45,277,71,258,85,236,96,234,91,255,81,273,67,292,42"/>
+</map>

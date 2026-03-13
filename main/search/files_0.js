@@ -1,7 +1,7 @@
 var searchData=
 [
   ['ansistream_2eh_0',['ansistream.h',['../ansistream_8h.html',1,'']]],
-  ['application_2eh_1',['application.h',['../application_8h.html',1,'']]],
+  ['application_2eh_1',['application.h',['../application_8h.html',1,'(Global Namespace)'],['../tui_2application_8h.html',1,'(Global Namespace)']]],
   ['array_2eh_2',['array.h',['../array_8h.html',1,'']]],
   ['audio_2eh_3',['audio.h',['../audio_8h.html',1,'']]],
   ['audioblock_2eh_4',['audioblock.h',['../audioblock_8h.html',1,'']]],

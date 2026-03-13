@@ -115,14 +115,16 @@ Simple</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classRational.html">Rational</a>   </td><td class="markdownTableBodyNone">Exact fraction (num/den)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classSize2DTemplate.html">Size2D</a>   </td><td class="markdownTableBodyNone">2D width/height pair    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classSize2DTemplate.html">Size2Du32/Size2Di32</a>   </td><td class="markdownTableBodyNone">2D width/height pair    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a class="el" href="classRect.html">Rect2Di32</a>   </td><td class="markdownTableBodyNone">2D rectangle (position + size)    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a class="el" href="classUUID.html">UUID</a>   </td><td class="markdownTableBodyNone">128-bit unique identifier    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classTimecode.html">Timecode</a>   </td><td class="markdownTableBodyNone">SMPTE timecode (H:M:S:F)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classTimeStamp.html">TimeStamp</a>   </td><td class="markdownTableBodyNone">Steady-clock time point    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classTimecode.html">Timecode</a>   </td><td class="markdownTableBodyNone">SMPTE timecode (H:M:S:F)    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a class="el" href="classTimeStamp.html">TimeStamp</a>   </td><td class="markdownTableBodyNone">Steady-clock time point    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classXYZColor.html">XYZColor</a>   </td><td class="markdownTableBodyNone">CIE XYZ color triple   </td></tr>
 </table>
 <h1><a class="anchor" id="shareable"></a>
@@ -132,12 +134,12 @@ Shareable</h1>
 <div class="line"><a class="code hl_class" href="classList.html">Metadata::Ptr</a> <a class="code hl_class" href="classList.html">meta</a> = Metadata::Ptr::create();</div>
 <div class="line"><a class="code hl_class" href="classList.html">meta</a>.modify()-&gt;<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(Metadata::Title, <a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;Hello&quot;</span>));</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:28</div></div>
-<div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:519</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">A versatile string class inspired by Qt's QString.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:529</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 </div><!-- fragment --><p>When used as a local variable or as a member of another class, no heap allocation or reference counting occurs — the object is a plain value.</p>
 <p>Shareable classes also provide convenience type aliases for collections:</p><ul>
-<li><code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code> — a <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">promeki::List</a> of plain objects (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. <code><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8" title="List of Image values.">Image::List</a></code>)</li>
-<li><code>PtrList</code> — a <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">promeki::List</a> of <code>Ptr</code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. <code><a class="el" href="classBuffer.html#a97dab4fcadca3cea1e8f874bde3c1380" title="List of shared Buffer pointers.">Buffer::PtrList</a></code>)</li>
+<li><code><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a></code> — a <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">promeki::List</a> of plain objects (e.g. <code><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8" title="List of Image values.">Image::List</a></code>)</li>
+<li><code>PtrList</code> — a <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">promeki::List</a> of <code>Ptr</code> (e.g. <code><a class="el" href="classBuffer.html#a97dab4fcadca3cea1e8f874bde3c1380" title="List of shared Buffer pointers.">Buffer::PtrList</a></code>)</li>
 </ul>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -180,7 +182,7 @@ Shareable</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

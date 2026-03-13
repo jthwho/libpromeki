@@ -118,7 +118,7 @@ Collaboration diagram for ImageFileIO:</div>
 <div class="center"><img src="classImageFileIO__coll__graph.png" border="0" usemap="#aImageFileIO_coll__map" alt="Collaboration graph"/></div>
 <map name="aImageFileIO_coll__map" id="aImageFileIO_coll__map">
 <area shape="rect" title="Abstract backend for image file format I/O." alt="" coords="5,93,105,119"/>
-<area shape="rect" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="25,5,85,31"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="25,5,85,31"/>
 <area shape="poly" title=" " alt="" coords="58,45,58,93,53,93,53,45"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
@@ -185,7 +185,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract backend for image file format I/O. </p>
-<p>Subclasses implement format-specific loading and saving of images (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. PNG). Backends register themselves via PROMEKI_REGISTER_IMAGEFILEIO and are looked up by their format ID. </p>
+<p>Subclasses implement format-specific loading and saving of images (e.g. PNG). Backends register themselves via PROMEKI_REGISTER_IMAGEFILEIO and are looked up by their format ID. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="ab38333e67880d7ac5e1bbcc40b169c44" name="ab38333e67880d7ac5e1bbcc40b169c44"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab38333e67880d7ac5e1bbcc40b169c44">&#9670;&#160;</a></span>canLoad()</h2>
@@ -361,7 +361,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 <p>Looks up a registered backend by format ID. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">id</td><td>The format identifier (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627" title="PNG image format.">ImageFile::PNG</a>). </td></tr>
+    <tr><td class="paramname">id</td><td>The format identifier (e.g. <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627" title="PNG image format.">ImageFile::PNG</a>). </td></tr>
   </table>
   </dd>
 </dl>
@@ -393,7 +393,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 </div><div class="memdoc">
 
 <p>Returns the human-readable name of this backend. </p>
-<dl class="section return"><dt>Returns</dt><dd>The backend name as a <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The backend name as a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </dd></dl>
 
 </div>
 </div>
@@ -477,7 +477,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = 0</td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageFileIO.html">ImageFileIO</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

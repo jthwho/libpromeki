@@ -1,0 +1,7 @@
+<map id="TuiTextArea" name="TuiTextArea">
+<area shape="rect" id="Node000001" title="Multi&#45;line text editing/display widget." alt="" coords="5,152,103,177"/>
+<area shape="rect" id="Node000002" href="$classTuiWidget.html" title="Base class for all TUI widgets." alt="" coords="11,79,97,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="57,118,57,152,51,152,51,118"/>
+<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="6,5,102,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="57,44,57,79,51,79,51,44"/>
+</map>

@@ -175,7 +175,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a84e464175ece32c791091b2e1e6bf379"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the human-readable type name of the currently held value. <br /></td></tr>
 <tr class="separator:a84e464175ece32c791091b2e1e6bf379"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae602ac42c83cbb3b1b7b4d5d2cbf95e" id="r_aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVariantImpl.html">VariantImpl</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#aae602ac42c83cbb3b1b7b4d5d2cbf95e">toStandardType</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts complex types to their <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> representation, leaving simple types unchanged.  <br /></td></tr>
+<tr class="memdesc:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts complex types to their <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation, leaving simple types unchanged.  <br /></td></tr>
 <tr class="separator:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
@@ -296,8 +296,8 @@ template&lt;typename... Types&gt; </div>
 <li>unsigned integer -&gt; <code>uint64_t</code></li>
 <li>signed integer -&gt; <code>int64_t</code></li>
 <li>floating-point -&gt; <code>double</code></li>
-<li>string -&gt; <code><a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a></code></li>
-<li>anything else -&gt; <code><a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a></code> (via <code>json::dump()</code>)</li>
+<li>string -&gt; <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code></li>
+<li>anything else -&gt; <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code> (via <code>json::dump()</code>)</li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -424,9 +424,9 @@ template&lt;typename... Types&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Converts complex types to their <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> representation, leaving simple types unchanged. </p>
-<p>Types such as <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>, <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a>, <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, Size2D, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, and <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> are converted to <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> via <code>get&lt;std::string&gt;()</code>. All other types (numeric, bool, invalid) are returned as-is.</p>
-<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> containing either the original value or its <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> representation. </dd></dl>
+<p>Converts complex types to their <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation, leaving simple types unchanged. </p>
+<p>Types such as <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a>, <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, Size2Du32, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, and <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> are converted to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <code>get&lt;std::string&gt;()</code>. All other types (numeric, bool, invalid) are returned as-is.</p>
+<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> containing either the original value or its <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation. </dd></dl>
 
 </div>
 </div>
@@ -477,7 +477,7 @@ template&lt;typename... Types&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantImpl.html">VariantImpl</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

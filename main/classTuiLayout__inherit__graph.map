@@ -1,0 +1,13 @@
+<map id="TuiLayout" name="TuiLayout">
+<area shape="rect" id="Node000001" title="Abstract base class for TUI layout managers." alt="" coords="160,79,244,104"/>
+<area shape="rect" id="Node000003" href="$classTuiBoxLayout.html" title="Layout that arranges widgets in a horizontal or vertical line." alt="" coords="81,152,190,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="183,116,148,154,144,150,180,113"/>
+<area shape="rect" id="Node000006" href="$classTuiGridLayout.html" title="Grid layout with rows and columns." alt="" coords="215,152,325,177"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="224,112,261,150,257,154,221,116"/>
+<area shape="rect" id="Node000002" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="154,5,250,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,44,205,79,199,79,199,44"/>
+<area shape="rect" id="Node000004" href="$classTuiHBoxLayout.html" title="Horizontal box layout (left to right)." alt="" coords="5,225,124,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="116,189,78,227,74,223,112,185"/>
+<area shape="rect" id="Node000005" href="$classTuiVBoxLayout.html" title="Vertical box layout (top to bottom)." alt="" coords="148,225,267,251"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="159,185,198,223,194,227,155,189"/>
+</map>

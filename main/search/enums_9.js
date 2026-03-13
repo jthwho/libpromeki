@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['sampling_0',['sampling',['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b',1,'PixelFormat::Sampling'],['../classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b',1,'PixelFormat::Sampling']]],
-  ['schedulepolicy_1',['SchedulePolicy',['../thread_8h.html#a5f6319f9bba46b51ebc61f9c0e4a896d',1,'thread.h']]]
+  ['mode_0',['Mode',['../classMusicalScale.html#a85784f051a121579e2ef8b24220cff0d',1,'MusicalScale']]],
+  ['modifier_1',['modifier',['../classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0e',1,'KeyEvent::Modifier'],['../classMouseEvent.html#aa9b2714ff234dd86fc0a0036befa9a31',1,'MouseEvent::Modifier']]]
 ];

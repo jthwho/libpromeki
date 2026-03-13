@@ -38,6 +38,7 @@ var classList =
     [ "emplaceToBack", "classList.html#af2ba8c159e7bf420dfe12bf00ba105bf", null ],
     [ "end", "classList.html#a158e9e6ae4b40429cd326d5514fb46b4", null ],
     [ "end", "classList.html#a9a420583a98d4b640a8b8cd6df873164", null ],
+    [ "erase", "classList.html#a1ecd72ce6c9942fbbc892031bb8f7ff0", null ],
     [ "front", "classList.html#ad07fb4dd1af3e2b5335476d931417631", null ],
     [ "front", "classList.html#aa5bf7f14af586315a91bf7055f3cc75a", null ],
     [ "insert", "classList.html#ac635c6d1bc5d2a4141010cdf66b82254", null ],

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['processeventsflag_0',['ProcessEventsFlag',['../classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9e',1,'EventLoop']]]
+  ['loglevel_0',['LogLevel',['../classLogger.html#ac744681e23720966b5f430ec2060da36',1,'Logger']]]
 ];

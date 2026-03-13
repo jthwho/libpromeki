@@ -1,0 +1,48 @@
+var classKeyEvent =
+[
+    [ "Key", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6", [
+      [ "Key_Unknown", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a7206b08b43616e9c7be23d6efadec163", null ],
+      [ "Key_Space", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a44d0ec5fbc07c755067d050671a56739", null ],
+      [ "Key_Escape", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6aa754185ea62b3aa5b81f8a27c021b9e2", null ],
+      [ "Key_Enter", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6ac90f292e12f44c5245f3b117088f7fc4", null ],
+      [ "Key_Tab", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6aa4850d6287076ad176757113413b88cd", null ],
+      [ "Key_Backspace", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6afd65f0d4bd61cfa591c27fb5d13744db", null ],
+      [ "Key_Insert", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a751d8ec449f02d6641a06db3e856f564", null ],
+      [ "Key_Delete", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6aa5fa7e363a896c5376873e3ae8ae737c", null ],
+      [ "Key_Home", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a57ac2ae55b4141ac7a51e3c74437420d", null ],
+      [ "Key_End", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6aa47aca7757d8f0f98a4b01efee8ff5a1", null ],
+      [ "Key_PageUp", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a79d5a23a80c14596dd60d83885b4b0d7", null ],
+      [ "Key_PageDown", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a48cde1db9e625957d427b81db0a0d333", null ],
+      [ "Key_Up", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a203970dea4d1f777e8e6cb71bd3044c7", null ],
+      [ "Key_Down", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a7e2f1c63b6e145c6f627e7d744a29e2f", null ],
+      [ "Key_Left", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a36b984f802e32db616c466f396484f47", null ],
+      [ "Key_Right", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6ab16da14471a87372e32c0c87840146d9", null ],
+      [ "Key_F1", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a41ad5b18382215c12a38d44d798ca9fe", null ],
+      [ "Key_F2", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6ae926256574c19c725d513963ac9d1932", null ],
+      [ "Key_F3", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a3f3250c7ada2bd77fe5ace5f43a6819f", null ],
+      [ "Key_F4", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a50558eb6498213c792fa01da4546272a", null ],
+      [ "Key_F5", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a1ee1aa9a4566959a90a4fe4f168611bb", null ],
+      [ "Key_F6", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a337b9529689f041993a555c176c75c8d", null ],
+      [ "Key_F7", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a7021da9bf68324b5f040b1bb754bb807", null ],
+      [ "Key_F8", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6abd2272370ddd0ac2575874fa39d88fdf", null ],
+      [ "Key_F9", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6ac1a35f7063899e627288f3acc2745eef", null ],
+      [ "Key_F10", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a2bcd91a179f4d2aaacf07c6c8618c342", null ],
+      [ "Key_F11", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a6273cdd290c3da6fac2ae21c21e3974e", null ],
+      [ "Key_F12", "classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a537127d719567ae7be46771874fe4c2e", null ]
+    ] ],
+    [ "Modifier", "classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0e", [
+      [ "NoModifier", "classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0ea9eadf79006fb78a87634c9801b64b0cf", null ],
+      [ "ShiftModifier", "classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0ea0195a2b30f50ebc432fcfcf799316482", null ],
+      [ "CtrlModifier", "classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0eac91f21a854fb18db2c5a820f8e199c0d", null ],
+      [ "AltModifier", "classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0eae87d98644c4739d10f7664e10b0d777e", null ],
+      [ "MetaModifier", "classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0ead36fff71529f8f49db76534e20d856e2", null ]
+    ] ],
+    [ "KeyEvent", "classKeyEvent.html#af8068d280b05e9e8241f54aa4d2f1ba3", null ],
+    [ "isAlt", "classKeyEvent.html#aea17ae80c0afb5ce8bf309e63815fd9b", null ],
+    [ "isCtrl", "classKeyEvent.html#a7c25591b43fc9cecb46c5ff35349389f", null ],
+    [ "isMeta", "classKeyEvent.html#ac18f09f0823b11ca74372eff03dbb055", null ],
+    [ "isShift", "classKeyEvent.html#ad17fa2a9311a7c6b955f01219ec10a07", null ],
+    [ "key", "classKeyEvent.html#a02eeabfb5ec14131d10a857438dbfeb4", null ],
+    [ "modifiers", "classKeyEvent.html#a2c3416f1af65a1861f537cc08ade0bc9", null ],
+    [ "text", "classKeyEvent.html#af036d487a5d7e7b7c0ecfa357166ac6c", null ]
+];

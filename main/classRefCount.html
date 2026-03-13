@@ -101,6 +101,7 @@ $(document).ready(function(){initNavTree('classRefCount.html',''); initResizable
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classRefCount-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">RefCount Class Reference</div></div>
 </div><!--header-->
@@ -135,6 +136,21 @@ Public Member Functions</h2></td></tr>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>value</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:af1aa42505738cd8f8dc2ca1ec2674c97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current reference count value. <br /></td></tr>
 <tr class="separator:af1aa42505738cd8f8dc2ca1ec2674c97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad92a02404b4bd638b1609ab7060981f8" id="r_ad92a02404b4bd638b1609ab7060981f8"><td class="memItemLeft" align="right" valign="top"><a id="ad92a02404b4bd638b1609ab7060981f8" name="ad92a02404b4bd638b1609ab7060981f8"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isImmortal</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad92a02404b4bd638b1609ab7060981f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this refcount is immortal (will never reach zero). <br /></td></tr>
+<tr class="separator:ad92a02404b4bd638b1609ab7060981f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bb127ff2da0cf1d73ae0da6688fb235" id="r_a9bb127ff2da0cf1d73ae0da6688fb235"><td class="memItemLeft" align="right" valign="top"><a id="a9bb127ff2da0cf1d73ae0da6688fb235" name="a9bb127ff2da0cf1d73ae0da6688fb235"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setImmortal</b> ()</td></tr>
+<tr class="memdesc:a9bb127ff2da0cf1d73ae0da6688fb235"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks this refcount as immortal. inc/dec become no-ops. <br /></td></tr>
+<tr class="separator:a9bb127ff2da0cf1d73ae0da6688fb235"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:afd7613e556915ae757e649ced31c4d52" id="r_afd7613e556915ae757e649ced31c4d52"><td class="memItemLeft" align="right" valign="top"><a id="afd7613e556915ae757e649ced31c4d52" name="afd7613e556915ae757e649ced31c4d52"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> int&#160;</td><td class="memItemRight" valign="bottom"><b>Immortal</b> = 0x40000000</td></tr>
+<tr class="memdesc:afd7613e556915ae757e649ced31c4d52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Threshold at or above which the refcount is considered immortal. <br /></td></tr>
+<tr class="separator:afd7613e556915ae757e649ced31c4d52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>An atomic reference count object. </p>
@@ -164,7 +180,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>value</b> () <a class=
 </div><div class="memdoc">
 
 <p>Atomically decrements the reference count. </p>
-<dl class="section return"><dt>Returns</dt><dd>True if the count has reached zero (caller should delete the object). </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the count has reached zero (caller should delete the object).</dd></dl>
+<p>Returns false for immortal objects (never deleted). </p>
 
 </div>
 </div>
@@ -192,7 +209,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>value</b> () <a class=
 </div><div class="memdoc">
 
 <p>Atomically increments the reference count. </p>
-<p>Uses relaxed memory ordering since only the atomic increment itself needs to be consistent. </p>
+<p>No-op for immortal objects. Uses relaxed memory ordering since only the atomic increment itself needs to be consistent. </p>
 
 </div>
 </div>
@@ -206,7 +223,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>value</b> () <a class=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRefCount.html">RefCount</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

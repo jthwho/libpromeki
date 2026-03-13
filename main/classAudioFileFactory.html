@@ -118,7 +118,7 @@ Collaboration diagram for AudioFileFactory:</div>
 <div class="center"><img src="classAudioFileFactory__coll__graph.png" border="0" usemap="#aAudioFileFactory_coll__map" alt="Collaboration graph"/></div>
 <map name="aAudioFileFactory_coll__map" id="aAudioFileFactory_coll__map">
 <area shape="rect" title="Factory for creating AudioFile instances based on file format." alt="" coords="11,168,140,193"/>
-<area shape="rect" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="5,80,65,105"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,80,65,105"/>
 <area shape="poly" title=" " alt="" coords="40,118,47,143,64,166,60,169,42,145,35,120"/>
 <area shape="rect" href="classStringList.html" title="Manages a list of strings." alt="" coords="90,80,173,105"/>
 <area shape="poly" title=" " alt="" coords="119,118,85,169,81,166,114,115"/>
@@ -172,7 +172,7 @@ Protected Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Factory for creating <a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format. </p>
-<p>Subclasses register themselves via PROMEKI_REGISTER_AUDIOFILE_FACTORY to handle specific audio file formats (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. WAV, FLAC). The factory system selects the appropriate backend based on the filename extension and the requested operation (read or write). </p>
+<p>Subclasses register themselves via PROMEKI_REGISTER_AUDIOFILE_FACTORY to handle specific audio file formats (e.g. WAV, FLAC). The factory system selects the appropriate backend based on the filename extension and the requested operation (read or write). </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="ab0c32af0f622ba75c6d7d7ebaa430962" name="ab0c32af0f622ba75c6d7d7ebaa430962"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab0c32af0f622ba75c6d7d7ebaa430962">&#9670;&#160;</a></span>canDoOperation()</h2>
@@ -352,7 +352,7 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the human-readable name of this factory. </p>
-<dl class="section return"><dt>Returns</dt><dd>The factory name as a <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The factory name as a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </dd></dl>
 
 </div>
 </div>
@@ -401,7 +401,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioFileFactory.html">AudioFileFactory</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

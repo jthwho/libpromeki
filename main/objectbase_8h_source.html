@@ -467,7 +467,7 @@ $(document).ready(function(){initNavTree('objectbase_8h_source.html',''); initRe
 <div class="ttc" id="aclassEvent_html"><div class="ttname"><a href="classEvent.html">Event</a></div><div class="ttdoc">Base class for the event system.</div><div class="ttdef"><b>Definition</b> event.h:28</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List&lt; ObjectBase * &gt;</a></div></div>
 <div class="ttc" id="aclassList_html_a7b46313fcbf10064276c8d0447a73691"><div class="ttname"><a href="classList.html#a7b46313fcbf10064276c8d0447a73691">List::size</a></div><div class="ttdeci">size_t size() const noexcept</div><div class="ttdoc">Returns the number of elements in the list.</div><div class="ttdef"><b>Definition</b> list.h:289</div></div>
-<div class="ttc" id="aclassList_html_a7e3a38d5cacac7f2af7a5eb8444190bc"><div class="ttname"><a href="classList.html#a7e3a38d5cacac7f2af7a5eb8444190bc">List::removeFirst</a></div><div class="ttdeci">bool removeFirst(const T &amp;value)</div><div class="ttdoc">Removes the first instance of value from the list.</div><div class="ttdef"><b>Definition</b> list.h:417</div></div>
+<div class="ttc" id="aclassList_html_a7e3a38d5cacac7f2af7a5eb8444190bc"><div class="ttname"><a href="classList.html#a7e3a38d5cacac7f2af7a5eb8444190bc">List::removeFirst</a></div><div class="ttdeci">bool removeFirst(const T &amp;value)</div><div class="ttdoc">Removes the first instance of value from the list.</div><div class="ttdef"><b>Definition</b> list.h:427</div></div>
 <div class="ttc" id="aclassList_html_a8e2151a9bd72641fe14db4f23f9d18e2"><div class="ttname"><a href="classList.html#a8e2151a9bd72641fe14db4f23f9d18e2">List::clear</a></div><div class="ttdeci">void clear() noexcept</div><div class="ttdoc">Removes all elements from the list.</div><div class="ttdef"><b>Definition</b> list.h:318</div></div>
 <div class="ttc" id="aclassMap_html_a073b5990ec2abdf5ebda21e0a8d4f443"><div class="ttname"><a href="classMap.html#a073b5990ec2abdf5ebda21e0a8d4f443">Map::find</a></div><div class="ttdeci">Iterator find(const K &amp;key)</div><div class="ttdoc">Finds the entry for key.</div><div class="ttdef"><b>Definition</b> map.h:167</div></div>
 <div class="ttc" id="aclassMap_html_ae5f2f071c567b714113a94233fa9f5e6"><div class="ttname"><a href="classMap.html#ae5f2f071c567b714113a94233fa9f5e6">Map::remove</a></div><div class="ttdeci">bool remove(const K &amp;key)</div><div class="ttdoc">Removes the entry for key.</div><div class="ttdef"><b>Definition</b> map.h:199</div></div>
@@ -510,7 +510,7 @@ $(document).ready(function(){initNavTree('objectbase_8h_source.html',''); initRe
 <div class="ttc" id="aclassObjectBase_html_ad1f655ffb3998bc290c2407bcb895586"><div class="ttname"><a href="classObjectBase.html#ad1f655ffb3998bc290c2407bcb895586">ObjectBase::ObjectBase</a></div><div class="ttdeci">ObjectBase(ObjectBase *p=nullptr)</div><div class="ttdoc">Default ObjectBase constructor.</div></div>
 <div class="ttc" id="aclassObjectBase_html_ad8a11dd19f4510f3ce38c779fc7911a8"><div class="ttname"><a href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">ObjectBase::parent</a></div><div class="ttdeci">ObjectBase * parent() const</div><div class="ttdoc">Returns the parent object, if one. nullptr if none.</div><div class="ttdef"><b>Definition</b> objectbase.h:247</div></div>
 <div class="ttc" id="aclassSignal_html_a8ba07de6dddd079761143dc9095127ac"><div class="ttname"><a href="classSignal.html#a8ba07de6dddd079761143dc9095127ac">Signal::emit</a></div><div class="ttdeci">void emit(Args... args) const</div><div class="ttdoc">Emits this signal.</div><div class="ttdef"><b>Definition</b> signal.h:169</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">A versatile string class inspired by Qt's QString.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 <div class="ttc" id="aclassTimerEvent_html"><div class="ttname"><a href="classTimerEvent.html">TimerEvent</a></div><div class="ttdoc">Event delivered when a timer fires.</div><div class="ttdef"><b>Definition</b> timerevent.h:21</div></div>
 <div class="ttc" id="aeventloop_8h_html"><div class="ttname"><a href="eventloop_8h.html">eventloop.h</a></div></div>
 <div class="ttc" id="alist_8h_html"><div class="ttname"><a href="list_8h.html">list.h</a></div></div>
@@ -529,7 +529,7 @@ $(document).ready(function(){initNavTree('objectbase_8h_source.html',''); initRe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="objectbase_8h.html">objectbase.h</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

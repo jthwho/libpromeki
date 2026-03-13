@@ -121,7 +121,7 @@ Collaboration diagram for PixelFormat:</div>
 <div class="center"><img src="classPixelFormat__coll__graph.png" border="0" usemap="#aPixelFormat_coll__map" alt="Collaboration graph"/></div>
 <map name="aPixelFormat_coll__map" id="aPixelFormat_coll__map">
 <area shape="rect" title="Describes a pixel packing format and provides format&#45;specific operations." alt="" coords="179,123,278,148"/>
-<area shape="rect" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="5,13,65,38"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,13,65,38"/>
 <area shape="poly" title=" " alt="" coords="61,45,94,71,134,96,191,120,189,125,131,101,91,76,57,49"/>
 <area shape="rect" href="classList.html" title=" " alt="" coords="89,13,211,38"/>
 <area shape="poly" title=" " alt="" coords="169,48,222,121,218,124,164,51"/>
@@ -282,12 +282,12 @@ Public Types</h2></td></tr>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>CompList</b> = std::vector&lt; <a class="el" href="classPixelFormat.html#a09db23c155a493b62b14396476d54e55">Comp</a> &gt;</td></tr>
 <tr class="memdesc:a1c62706b88c08b804e679290c88543ff"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of component values. <br /></td></tr>
 <tr class="separator:a1c62706b88c08b804e679290c88543ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6bf7331bfc125c11f3be56d3ad5ce39" id="r_ab6bf7331bfc125c11f3be56d3ad5ce39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#ab6bf7331bfc125c11f3be56d3ad5ce39">StrideFunc</a>) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;<a class="el" href="classPixelFormat.html#ac4ec78e5181aac22716bb417815bc570">size</a>)</td></tr>
-<tr class="memdesc:ab6bf7331bfc125c11f3be56d3ad5ce39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that returns the number of bytes per line.  <br /></td></tr>
-<tr class="separator:ab6bf7331bfc125c11f3be56d3ad5ce39"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2abaf247844abac2061014a191b0dee" id="r_ae2abaf247844abac2061014a191b0dee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#ae2abaf247844abac2061014a191b0dee">SizeFunc</a>) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;<a class="el" href="classPixelFormat.html#ac4ec78e5181aac22716bb417815bc570">size</a>)</td></tr>
-<tr class="memdesc:ae2abaf247844abac2061014a191b0dee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that returns the total number of bytes for an image of the given size.  <br /></td></tr>
-<tr class="separator:ae2abaf247844abac2061014a191b0dee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0635f49b5e8f0f5eae0857311ea9dcb0" id="r_a0635f49b5e8f0f5eae0857311ea9dcb0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#a0635f49b5e8f0f5eae0857311ea9dcb0">StrideFunc</a>) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classPixelFormat.html#a4463dbbc5c83b44073ef4e181ee2192c">size</a>)</td></tr>
+<tr class="memdesc:a0635f49b5e8f0f5eae0857311ea9dcb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that returns the number of bytes per line.  <br /></td></tr>
+<tr class="separator:a0635f49b5e8f0f5eae0857311ea9dcb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad101fd70fe849c53f3f93497a1493351" id="r_ad101fd70fe849c53f3f93497a1493351"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#ad101fd70fe849c53f3f93497a1493351">SizeFunc</a>) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classPixelFormat.html#a4463dbbc5c83b44073ef4e181ee2192c">size</a>)</td></tr>
+<tr class="memdesc:ad101fd70fe849c53f3f93497a1493351"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that returns the total number of bytes for an image of the given size.  <br /></td></tr>
+<tr class="separator:ad101fd70fe849c53f3f93497a1493351"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8feb7801cb663564579ad01fa5c5fc09" id="r_a8feb7801cb663564579ad01fa5c5fc09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">bool</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#a8feb7801cb663564579ad01fa5c5fc09">FillFunc</a>) (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">img</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html#a09db23c155a493b62b14396476d54e55">Comp</a> *<a class="el" href="classPixelFormat.html#aed21382058bccf1e0e85e323f0b2c287">comps</a>)</td></tr>
 <tr class="memdesc:a8feb7801cb663564579ad01fa5c5fc09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function that fills an image with a pixel value from a component array.  <br /></td></tr>
 <tr class="separator:a8feb7801cb663564579ad01fa5c5fc09"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -421,12 +421,12 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> () <a class="el
 <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>planes</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a602192c480e3c44d7f2fd2df4d2ae0e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of planes in this format. <br /></td></tr>
 <tr class="separator:a602192c480e3c44d7f2fd2df4d2ae0e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0aefc514a750a1fc3dd5a0fc6647db84" id="r_a0aefc514a750a1fc3dd5a0fc6647db84"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#a0aefc514a750a1fc3dd5a0fc6647db84">stride</a> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;<a class="el" href="classList.html">s</a>, int p=0) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a0aefc514a750a1fc3dd5a0fc6647db84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the line stride in bytes for the given image size and plane.  <br /></td></tr>
-<tr class="separator:a0aefc514a750a1fc3dd5a0fc6647db84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac4ec78e5181aac22716bb417815bc570" id="r_ac4ec78e5181aac22716bb417815bc570"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#ac4ec78e5181aac22716bb417815bc570">size</a> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;<a class="el" href="classList.html">s</a>, int p=0) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ac4ec78e5181aac22716bb417815bc570"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total byte size for the given image size and plane.  <br /></td></tr>
-<tr class="separator:ac4ec78e5181aac22716bb417815bc570"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe415ef1f312c6cba4329af4579972e6" id="r_afe415ef1f312c6cba4329af4579972e6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#afe415ef1f312c6cba4329af4579972e6">stride</a> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">s</a>, int p=0) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:afe415ef1f312c6cba4329af4579972e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the line stride in bytes for the given image size and plane.  <br /></td></tr>
+<tr class="separator:afe415ef1f312c6cba4329af4579972e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4463dbbc5c83b44073ef4e181ee2192c" id="r_a4463dbbc5c83b44073ef4e181ee2192c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#a4463dbbc5c83b44073ef4e181ee2192c">size</a> (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">s</a>, int p=0) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a4463dbbc5c83b44073ef4e181ee2192c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total byte size for the given image size and plane.  <br /></td></tr>
+<tr class="separator:a4463dbbc5c83b44073ef4e181ee2192c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87fc1219ac6221a5d5f6c4acc33c6a72" id="r_a87fc1219ac6221a5d5f6c4acc33c6a72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#a87fc1219ac6221a5d5f6c4acc33c6a72">fill</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">img</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html#a1c62706b88c08b804e679290c88543ff">CompList</a> &amp;<a class="el" href="classPixelFormat.html#aed21382058bccf1e0e85e323f0b2c287">comps</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a87fc1219ac6221a5d5f6c4acc33c6a72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills an image with the pixel value defined by a component list.  <br /></td></tr>
 <tr class="separator:a87fc1219ac6221a5d5f6c4acc33c6a72"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -562,14 +562,14 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 
 </div>
 </div>
-<a id="ae2abaf247844abac2061014a191b0dee" name="ae2abaf247844abac2061014a191b0dee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae2abaf247844abac2061014a191b0dee">&#9670;&#160;</a></span>SizeFunc</h2>
+<a id="ad101fd70fe849c53f3f93497a1493351" name="ad101fd70fe849c53f3f93497a1493351"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad101fd70fe849c53f3f93497a1493351">&#9670;&#160;</a></span>SizeFunc</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(* PixelFormat::SizeFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;<a class="el" href="classPixelFormat.html#ac4ec78e5181aac22716bb417815bc570">size</a>)</td>
+          <td class="memname"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(* PixelFormat::SizeFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classPixelFormat.html#a4463dbbc5c83b44073ef4e181ee2192c">size</a>)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -585,14 +585,14 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 
 </div>
 </div>
-<a id="ab6bf7331bfc125c11f3be56d3ad5ce39" name="ab6bf7331bfc125c11f3be56d3ad5ce39"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab6bf7331bfc125c11f3be56d3ad5ce39">&#9670;&#160;</a></span>StrideFunc</h2>
+<a id="a0635f49b5e8f0f5eae0857311ea9dcb0" name="a0635f49b5e8f0f5eae0857311ea9dcb0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0635f49b5e8f0f5eae0857311ea9dcb0">&#9670;&#160;</a></span>StrideFunc</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(* PixelFormat::StrideFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;<a class="el" href="classPixelFormat.html#ac4ec78e5181aac22716bb417815bc570">size</a>)</td>
+          <td class="memname"><a class="el" href="classList.html">typedef</a> <a class="el" href="classList.html">size_t</a>(* PixelFormat::StrideFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classPixelFormat.html#a4463dbbc5c83b44073ef4e181ee2192c">size</a>)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1521,8 +1521,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 
 </div>
 </div>
-<a id="ac4ec78e5181aac22716bb417815bc570" name="ac4ec78e5181aac22716bb417815bc570"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac4ec78e5181aac22716bb417815bc570">&#9670;&#160;</a></span>size()</h2>
+<a id="a4463dbbc5c83b44073ef4e181ee2192c" name="a4463dbbc5c83b44073ef4e181ee2192c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4463dbbc5c83b44073ef4e181ee2192c">&#9670;&#160;</a></span>size()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1533,7 +1533,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
         <tr>
           <td class="memname"><a class="el" href="classList.html">size_t</a> PixelFormat::size </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td>
           <td class="paramname"><em>s</em>, </td>
         </tr>
         <tr>
@@ -1567,8 +1567,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 
 </div>
 </div>
-<a id="a0aefc514a750a1fc3dd5a0fc6647db84" name="a0aefc514a750a1fc3dd5a0fc6647db84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0aefc514a750a1fc3dd5a0fc6647db84">&#9670;&#160;</a></span>stride()</h2>
+<a id="afe415ef1f312c6cba4329af4579972e6" name="afe415ef1f312c6cba4329af4579972e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe415ef1f312c6cba4329af4579972e6">&#9670;&#160;</a></span>stride()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1579,7 +1579,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
         <tr>
           <td class="memname"><a class="el" href="classList.html">size_t</a> PixelFormat::stride </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a3e68edeeaed7ba9a4e53ea07f6e48fb0">Size2D</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;&#160;</td>
           <td class="paramname"><em>s</em>, </td>
         </tr>
         <tr>
@@ -1624,7 +1624,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPixelFormat.html">PixelFormat</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

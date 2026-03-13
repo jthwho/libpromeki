@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['yuv10_5f422_0',['YUV10_422',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda7388a1aee6a881509fe2ead40e57bbde',1,'PixelFormat']]],
-  ['yuv8_5f422_1',['YUV8_422',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1185a739664ed9245fb9044deed0f9c6',1,'PixelFormat']]]
+  ['unicode_0',['Unicode',['../classString.html#a9c3c4c0e2ff486a3f2c6c7f92540d310af75090c14d39a011351f9ecdd2eca22b',1,'String']]],
+  ['unsupportedsystemerror_1',['UnsupportedSystemError',['../classError.html#ab5980e13b879db253df802b0950d1708a244c26b91104769c834f407065598c4c',1,'Error']]]
 ];

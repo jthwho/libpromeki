@@ -160,10 +160,10 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AudioDesc</b> ()</td></tr>
 <tr class="memdesc:a5275f5d780370d864e4e7b0b230e2aa5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an invalid (default) audio description. <br /></td></tr>
 <tr class="separator:a5275f5d780370d864e4e7b0b230e2aa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47187fb3d1bc7b520f6012e27d512ecc" id="r_a47187fb3d1bc7b520f6012e27d512ecc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc">AudioDesc</a> (<a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">ch</a>)</td></tr>
+<tr class="memitem:a47187fb3d1bc7b520f6012e27d512ecc" id="r_a47187fb3d1bc7b520f6012e27d512ecc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc">AudioDesc</a> (<a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int ch)</td></tr>
 <tr class="memdesc:a47187fb3d1bc7b520f6012e27d512ecc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio description with the native float format.  <br /></td></tr>
 <tr class="separator:a47187fb3d1bc7b520f6012e27d512ecc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f82693f1d149cd4cdff716b898ee0f0" id="r_a0f82693f1d149cd4cdff716b898ee0f0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0">AudioDesc</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classList.html">dt</a>, <a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">ch</a>)</td></tr>
+<tr class="memitem:a0f82693f1d149cd4cdff716b898ee0f0" id="r_a0f82693f1d149cd4cdff716b898ee0f0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0">AudioDesc</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classList.html">dt</a>, <a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int ch)</td></tr>
 <tr class="memdesc:a0f82693f1d149cd4cdff716b898ee0f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio description with the specified data type, sample rate, and channels.  <br /></td></tr>
 <tr class="separator:a0f82693f1d149cd4cdff716b898ee0f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4748613d1123df20087b6a9b0e44b25f" id="r_a4748613d1123df20087b6a9b0e44b25f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4748613d1123df20087b6a9b0e44b25f">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
@@ -290,7 +290,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes an audio format including sample type, rate, and channel count. </p>
-<p><a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> encapsulates the complete description of an audio format: the sample data type (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. PCM signed 16-bit little-endian), sample rate, and number of channels. It also provides static utility methods for converting between integer sample representations and normalized floating-point values in the range [-1, 1]. </p>
+<p><a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> encapsulates the complete description of an audio format: the sample data type (e.g. PCM signed 16-bit little-endian), sample rate, and number of channels. It also provides static utility methods for converting between integer sample representations and normalized floating-point values in the range [-1, 1]. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="aa6d81606b4d829f7579af9f6803750b4" name="aa6d81606b4d829f7579af9f6803750b4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa6d81606b4d829f7579af9f6803750b4">&#9670;&#160;</a></span>DataType</h2>
@@ -1376,7 +1376,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <p>Converts a string name to its corresponding DataType enum value. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">val</td><td>The format name string (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. "PCMI_S16LE"). </td></tr>
+    <tr><td class="paramname">val</td><td>The format name string (e.g. "PCMI_S16LE"). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1436,7 +1436,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Returns a human-readable string representation of this audio description. </p>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> in the format "[FormatName SampleRateHz Channelsc]". </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> in the format "[FormatName SampleRateHz Channelsc]". </dd></dl>
 
 </div>
 </div>
@@ -1478,7 +1478,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDesc.html">AudioDesc</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

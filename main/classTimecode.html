@@ -162,7 +162,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad2cc70c8f35ca22fac32e0851dd608b0" id="r_ad2cc70c8f35ca22fac32e0851dd608b0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#ad2cc70c8f35ca22fac32e0851dd608b0">Timecode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode_1_1Mode.html">Mode</a> &amp;<a class="el" href="classList.html">md</a>, <a class="el" href="classTimecode.html#acb246914c6e0334c2a524e303a971f64">DigitType</a> <a class="el" href="classList.html">h</a>, <a class="el" href="classTimecode.html#acb246914c6e0334c2a524e303a971f64">DigitType</a> <a class="el" href="classList.html">m</a>, <a class="el" href="classTimecode.html#acb246914c6e0334c2a524e303a971f64">DigitType</a> <a class="el" href="classList.html">s</a>, <a class="el" href="classTimecode.html#acb246914c6e0334c2a524e303a971f64">DigitType</a> <a class="el" href="classList.html">f</a>)</td></tr>
 <tr class="memdesc:ad2cc70c8f35ca22fac32e0851dd608b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a timecode with a mode and explicit digit values.  <br /></td></tr>
 <tr class="separator:ad2cc70c8f35ca22fac32e0851dd608b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ea5462a1490e40f0ad60862ff0cdf04" id="r_a3ea5462a1490e40f0ad60862ff0cdf04"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a3ea5462a1490e40f0ad60862ff0cdf04">Timecode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>)</td></tr>
+<tr class="memitem:a3ea5462a1490e40f0ad60862ff0cdf04" id="r_a3ea5462a1490e40f0ad60862ff0cdf04"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a3ea5462a1490e40f0ad60862ff0cdf04">Timecode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str)</td></tr>
 <tr class="memdesc:a3ea5462a1490e40f0ad60862ff0cdf04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a timecode by parsing a string representation.  <br /></td></tr>
 <tr class="separator:a3ea5462a1490e40f0ad60862ff0cdf04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14f3a21233a416bcb2d71e2e25895e1c" id="r_a14f3a21233a416bcb2d71e2e25895e1c"><td class="memItemLeft" align="right" valign="top"><a id="a14f3a21233a416bcb2d71e2e25895e1c" name="a14f3a21233a416bcb2d71e2e25895e1c"></a>
@@ -244,7 +244,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a8b7cb5b642f7f2d0696b3315785f221b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f0c4964ddfec5c01297015bb8493965" id="r_a4f0c4964ddfec5c01297015bb8493965"><td class="memItemLeft" align="right" valign="top"><a id="a4f0c4964ddfec5c01297015bb8493965" name="a4f0c4964ddfec5c01297015bb8493965"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a4f0c4964ddfec5c01297015bb8493965"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> using SMPTE format. <br /></td></tr>
+<tr class="memdesc:a4f0c4964ddfec5c01297015bb8493965"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> using SMPTE format. <br /></td></tr>
 <tr class="separator:a4f0c4964ddfec5c01297015bb8493965"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad100adf06bfaf56aadebfd1013e1047e" id="r_ad100adf06bfaf56aadebfd1013e1047e"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="classError.html">Error</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#ad100adf06bfaf56aadebfd1013e1047e">toString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">VtcStringFormat</a> *<a class="el" href="classList.html">fmt</a>=&amp;<a class="el" href="classList.html">VTC_STR_FMT_SMPTE</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad100adf06bfaf56aadebfd1013e1047e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the timecode to a string.  <br /></td></tr>
@@ -258,7 +258,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a3ee26bacefa096ade620149e0f0b035b" id="r_a3ee26bacefa096ade620149e0f0b035b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classTimecode.html">Timecode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a3ee26bacefa096ade620149e0f0b035b">fromFrameNumber</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classTimecode_1_1Mode.html">Mode</a> &amp;<a class="el" href="classTimecode.html#a1826a8723d0dce00f0d0a81d86ea97bb">mode</a>, <a class="el" href="classTimecode.html#a1eaa827f9244f0d4f00c6fd69878c496">FrameNumber</a> <a class="el" href="classList.html">frameNumber</a>)</td></tr>
 <tr class="memdesc:a3ee26bacefa096ade620149e0f0b035b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> from a mode and absolute frame number.  <br /></td></tr>
 <tr class="separator:a3ee26bacefa096ade620149e0f0b035b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06ece82524de2b64bc544ed85c716f14" id="r_a06ece82524de2b64bc544ed85c716f14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> std::pair&lt; <a class="el" href="classTimecode.html">Timecode</a>, <a class="el" href="classError.html">Error</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a06ece82524de2b64bc544ed85c716f14">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>)</td></tr>
+<tr class="memitem:a06ece82524de2b64bc544ed85c716f14" id="r_a06ece82524de2b64bc544ed85c716f14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> std::pair&lt; <a class="el" href="classTimecode.html">Timecode</a>, <a class="el" href="classError.html">Error</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a06ece82524de2b64bc544ed85c716f14">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str)</td></tr>
 <tr class="memdesc:a06ece82524de2b64bc544ed85c716f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> from its string representation.  <br /></td></tr>
 <tr class="separator:a06ece82524de2b64bc544ed85c716f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -583,7 +583,7 @@ Static Public Member Functions</h2></td></tr>
 <p>Parses a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> from its string representation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">str</td><td>The string to parse (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. "01:00:00:00"). </td></tr>
+    <tr><td class="paramname">str</td><td>The string to parse (e.g. "01:00:00:00"). </td></tr>
   </table>
   </dd>
 </dl>
@@ -707,7 +707,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTimecode.html">Timecode</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

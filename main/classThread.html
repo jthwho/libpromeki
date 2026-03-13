@@ -318,7 +318,7 @@ Additional Inherited Members</h2></td></tr>
 <p>Derives from <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> so it participates in parent/child tree and signal/slot. Operates in two modes:</p>
 <ol type="1">
 <li><b>Spawned thread</b> — <a class="el" href="classThread.html#a12f0953e174e5713b988badf88b8bf86" title="Starts the thread.">start()</a> creates a std::thread, builds an <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> on it, and calls <a class="el" href="classThread.html#a7574ff300357f9d3193db03b83937eac" title="Override for custom thread behavior.">run()</a>. The <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> object itself lives on the creating thread.</li>
-<li><b>Adopted thread</b> — wraps an already-running thread (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. main). No std::thread is owned. <a class="el" href="classThread.html#a12f0953e174e5713b988badf88b8bf86" title="Starts the thread.">start()</a> is a no-op. Created by <a class="el" href="classThread.html#a1ea51de4aebf6f480834a423780eee71" title="Adopts the calling thread as a Thread object.">adoptCurrentThread()</a>. </li>
+<li><b>Adopted thread</b> — wraps an already-running thread (e.g. main). No std::thread is owned. <a class="el" href="classThread.html#a12f0953e174e5713b988badf88b8bf86" title="Starts the thread.">start()</a> is a no-op. Created by <a class="el" href="classThread.html#a1ea51de4aebf6f480834a423780eee71" title="Adopts the calling thread as a Thread object.">adoptCurrentThread()</a>. </li>
 </ol>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9edeabb43675b68abf2f504c86f00e99" name="a9edeabb43675b68abf2f504c86f00e99"></a>
@@ -916,7 +916,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the name of this thread. </p>
-<p>The name is always stored locally. On supported platforms the OS-level thread name is also updated so that the name appears in debuggers and system tools (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">e.g</a>. <code>top -H</code>, <code>htop</code>, <code>ps -L</code>).</p>
+<p>The name is always stored locally. On supported platforms the OS-level thread name is also updated so that the name appears in debuggers and system tools (e.g. <code>top -H</code>, <code>htop</code>, <code>ps -L</code>).</p>
 <p>If called before <a class="el" href="classThread.html#a12f0953e174e5713b988badf88b8bf86" title="Starts the thread.">start()</a>, the name is applied when the thread starts. The OS name is silently truncated to the platform limit (typically 15 characters on Linux/macOS).</p>
 <p>On macOS the OS name can only be set from the thread itself, so cross-thread <a class="el" href="classThread.html#af20756cccbcf948efd7ae2dce1804483" title="Sets the name of this thread.">setName()</a> updates the local name but not the OS name.</p>
 <p>The logger's cached thread name is automatically updated when <a class="el" href="classThread.html#af20756cccbcf948efd7ae2dce1804483" title="Sets the name of this thread.">setName()</a> is called from the thread itself.</p>
@@ -1054,7 +1054,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classThread.html">Thread</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

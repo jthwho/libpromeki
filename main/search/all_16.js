@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['value_0',['value',['../classTimeStamp.html#a7445f25e18096db8f5f03fcf51e1dac3',1,'TimeStamp::Value'],['../classDateTime.html#afee458b9af0e73e2144831a0c97a9ea0',1,'DateTime::Value'],['../classDateTime.html#a449650d3e4e8b9897dbc4470d55f4c66',1,'DateTime::value() const'],['../classFourCC.html#a6426d7629ae983c8775ed4896807ea12',1,'FourCC::value()'],['../classMap.html#a87d4e106ab7c114020cc43e1736b1429',1,'Map::value()'],['../classMidiNote.html#a8f2ff33c25f82ef3b61715db536fb051',1,'MidiNote::value()'],['../classRefCount.html#af1aa42505738cd8f8dc2ca1ec2674c97',1,'RefCount::value()'],['../classTimeStamp.html#addfbdefd6881c31b2b9974e46469921e',1,'TimeStamp::value()'],['../classMidiNote.html#ae35b95311738089287eaa0e86d959ac3',1,'MidiNote::Value']]],
+  ['value_0',['value',['../classTimeStamp.html#addfbdefd6881c31b2b9974e46469921e',1,'TimeStamp::value()'],['../classRefCount.html#af1aa42505738cd8f8dc2ca1ec2674c97',1,'RefCount::value()'],['../classMidiNote.html#ae35b95311738089287eaa0e86d959ac3',1,'MidiNote::Value'],['../classDateTime.html#afee458b9af0e73e2144831a0c97a9ea0',1,'DateTime::Value'],['../classTimeStamp.html#a7445f25e18096db8f5f03fcf51e1dac3',1,'TimeStamp::Value'],['../classDateTime.html#a449650d3e4e8b9897dbc4470d55f4c66',1,'DateTime::value()'],['../classFourCC.html#a6426d7629ae983c8775ed4896807ea12',1,'FourCC::value()'],['../classMap.html#a87d4e106ab7c114020cc43e1736b1429',1,'Map::value()'],['../classMidiNote.html#a8f2ff33c25f82ef3b61715db536fb051',1,'MidiNote::value()']]],
   ['valueisarray_1',['valueisarray',['../classJsonArray.html#acf8ef3383855b2f7f196a49dadead2bb',1,'JsonArray::valueIsArray()'],['../classJsonObject.html#a6f39a01e06a7e9c7f2a4288d2df4860b',1,'JsonObject::valueIsArray(const String &amp;key) const']]],
   ['valueisnull_2',['valueisnull',['../classJsonObject.html#a6ad6874a99f1fd32f85b033ca3c77985',1,'JsonObject::valueIsNull()'],['../classJsonArray.html#a032e5c1c4c81bac224141391f596fe7a',1,'JsonArray::valueIsNull()']]],
   ['valueisobject_3',['valueisobject',['../classJsonObject.html#a2b6632071ac1c6a024d209b3e2a88f7c',1,'JsonObject::valueIsObject()'],['../classJsonArray.html#a712cbff2f63e8b53c171c30c840efa6d',1,'JsonArray::valueIsObject()']]],
   ['values_4',['values',['../classMap.html#a21cb43b9b242923d9c8c2b4f3d613760',1,'Map']]],
-  ['variables_5',['Member Variables',['../md_CODING__STANDARDS.html#autotoc_md30',1,'']]],
-  ['variant_6',['Variant',['../variant_8h.html#a4e45464e61400fa9d7eb084a1420b931',1,'variant.h']]],
+  ['variables_5',['Member Variables',['../md_CODING__STANDARDS.html#autotoc_md31',1,'']]],
+  ['variant_6',['Variant',['../variant_8h.html#a118b9567ec361d6700448dc86095f7e7',1,'variant.h']]],
   ['variant_2eh_7',['variant.h',['../variant_8h.html',1,'']]],
   ['variantend_8',['VariantEnd',['../structdetail_1_1VariantEnd.html',1,'detail']]],
   ['variantimpl_9',['variantimpl',['../classVariantImpl.html',1,'VariantImpl&lt; Types &gt;'],['../classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868',1,'VariantImpl::VariantImpl()=default'],['../classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3',1,'VariantImpl::VariantImpl(const T &amp;value)']]],

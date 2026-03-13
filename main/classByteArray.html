@@ -175,11 +175,11 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ac18438885916163c6cb11f5d825fec49" id="r_ac18438885916163c6cb11f5d825fec49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classByteArray.html">ByteArray</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classByteArray.html#ac18438885916163c6cb11f5d825fec49">fromHexString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">str</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:ac18438885916163c6cb11f5d825fec49" id="r_ac18438885916163c6cb11f5d825fec49"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classByteArray.html">ByteArray</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classByteArray.html#ac18438885916163c6cb11f5d825fec49">fromHexString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *str, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:ac18438885916163c6cb11f5d825fec49"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classByteArray.html" title="Fixed-size byte array with hex string conversion.">ByteArray</a> from a hexadecimal C string.  <br /></td></tr>
 <tr class="separator:ac18438885916163c6cb11f5d825fec49"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada95a0abee526ab271571d3a5ead94d6" id="r_ada95a0abee526ab271571d3a5ead94d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classByteArray.html">ByteArray</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classByteArray.html#ada95a0abee526ab271571d3a5ead94d6">fromHexString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">str</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:ada95a0abee526ab271571d3a5ead94d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classByteArray.html" title="Fixed-size byte array with hex string conversion.">ByteArray</a> from a hexadecimal <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>.  <br /></td></tr>
+<tr class="memitem:ada95a0abee526ab271571d3a5ead94d6" id="r_ada95a0abee526ab271571d3a5ead94d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classByteArray.html">ByteArray</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classByteArray.html#ada95a0abee526ab271571d3a5ead94d6">fromHexString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memdesc:ada95a0abee526ab271571d3a5ead94d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classByteArray.html" title="Fixed-size byte array with hex string conversion.">ByteArray</a> from a hexadecimal <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>.  <br /></td></tr>
 <tr class="separator:ada95a0abee526ab271571d3a5ead94d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
@@ -288,7 +288,7 @@ template&lt;<a class="el" href="classList.html">size_t</a> NumBytes&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a <a class="el" href="classByteArray.html" title="Fixed-size byte array with hex string conversion.">ByteArray</a> from a hexadecimal <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a>. </p>
+<p>Constructs a <a class="el" href="classByteArray.html" title="Fixed-size byte array with hex string conversion.">ByteArray</a> from a hexadecimal <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">str</td><td>The hex string (must be exactly NumBytes * 2 characters). </td></tr>
@@ -326,7 +326,7 @@ template&lt;<a class="el" href="classList.html">size_t</a> NumBytes&gt; </div>
 </div><div class="memdoc">
 
 <p>Converts the byte array to a lowercase hexadecimal string. </p>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classString.html" title="A versatile string class inspired by Qt&#39;s QString.">String</a> of length NumBytes * 2. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> of length NumBytes * 2. </dd></dl>
 
 </div>
 </div>
@@ -340,7 +340,7 @@ template&lt;<a class="el" href="classList.html">size_t</a> NumBytes&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classByteArray.html">ByteArray</a></li>
-    <li class="footer">Generated on 2026-03-12 05:36:59 from commit a0aa4a0 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
   </ul>
 </div>
 </body>

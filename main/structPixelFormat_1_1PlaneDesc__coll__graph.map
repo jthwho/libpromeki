@@ -1,7 +1,7 @@
 <map id="PixelFormat::PlaneDesc" name="PixelFormat::PlaneDesc">
-<area shape="rect" id="Node000001" title="Describes a single image plane." alt="" coords="24,108,199,133"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="A versatile string class inspired by Qt&#39;s QString." alt="" coords="5,5,65,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="54,40,105,106,101,110,50,43"/>
-<area shape="rect" id="Node000003" href="$classSize2DTemplate.html" title=" " alt="" coords="90,5,285,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="172,43,122,110,118,106,168,40"/>
+<area shape="rect" id="Node000001" title="Describes a single image plane." alt="" coords="27,108,201,133"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="55,40,107,106,103,110,51,43"/>
+<area shape="rect" id="Node000003" href="$classSize2DTemplate.html" title=" " alt="" coords="89,5,299,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,43,125,110,121,106,174,40"/>
 </map>

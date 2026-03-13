@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['id_0',['id',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfd',1,'ColorSpace::ID'],['../classImageFile.html#ae0e1dfa29f57da6aa4665566347722da',1,'ImageFile::ID'],['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed',1,'MemSpace::ID'],['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded',1,'PixelFormat::ID'],['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded',1,'PixelFormat::ID']]]
+  ['encoding_0',['Encoding',['../classString.html#a9c3c4c0e2ff486a3f2c6c7f92540d310',1,'String']]]
 ];

@@ -17,5 +17,7 @@ var searchData=
   ['_5fpixelformat_14',['_pixelFormat',['../classPaintEngine_1_1Impl.html#a748922ddea4a668016197cd64a926043',1,'PaintEngine::Impl']]],
   ['_5fpixelsperblock_15',['_pixelsPerBlock',['../classPixelFormat.html#aeb9539f5630acf1aefffb925a7107c05',1,'PixelFormat']]],
   ['_5fplanelist_16',['_planeList',['../classPixelFormat.html#a92e906fe95885fa0399417d770184ecd',1,'PixelFormat']]],
-  ['_5fsampling_17',['_sampling',['../classPixelFormat.html#a4e3a33caec372795f56992f1f0e44c2f',1,'PixelFormat']]]
+  ['_5fpromeki_5fclone_17',['_promeki_clone',['../classStringData.html#a76fa2a8e3e850f348f9b780e1daab9d8',1,'StringData::_promeki_clone()'],['../classStringLiteralData.html#a0412393de5a8f4f5ab4a0e7322b4f74d',1,'StringLiteralData::_promeki_clone()'],['../classStringUnicodeLiteralData.html#abf0b1a383f0a833c783158db9d0d73c4',1,'StringUnicodeLiteralData::_promeki_clone()']]],
+  ['_5fpromeki_5frefct_18',['_promeki_refct',['../classStringData.html#af0d7c519e6b4bbcdea45d8a832362764',1,'StringData']]],
+  ['_5fsampling_19',['_sampling',['../classPixelFormat.html#a4e3a33caec372795f56992f1f0e44c2f',1,'PixelFormat']]]
 ];

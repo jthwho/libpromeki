@@ -5,7 +5,7 @@ var classImage =
     [ "PtrList", "classImage.html#a198b089768debdf038e39b6be082184f", null ],
     [ "Image", "classImage.html#a5502e928122744be1d3b89648298e162", null ],
     [ "Image", "classImage.html#a96b8f9e7236e49a70f8e487be611e9b4", null ],
-    [ "Image", "classImage.html#a5aee95a92f447a56ffb592d1ff5823af", null ],
+    [ "Image", "classImage.html#a32606dbf2d97b59296e6cc38da7cffde", null ],
     [ "Image", "classImage.html#a6132fdb752df3a7cf67e991b7afd736f", null ],
     [ "convert", "classImage.html#a409a3540b213e2135e345cdcdda81ba2", null ],
     [ "createPaintEngine", "classImage.html#a2ea6053a9be42b4b21b59a0944e5d564", null ],
@@ -21,6 +21,6 @@ var classImage =
     [ "pixelFormatID", "classImage.html#a6589d919a773ad024a1228bf7060ec26", null ],
     [ "plane", "classImage.html#a45f3cb17cda1d4247bff5cbaf7c84105", null ],
     [ "planes", "classImage.html#adc70674604363e20832ad93fd71f37cd", null ],
-    [ "size", "classImage.html#a9ffa3c69e0ef052f63cc5713244821ee", null ],
+    [ "size", "classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f", null ],
     [ "width", "classImage.html#aa3c6a86a6e5f35499ae781710154cb33", null ]
 ];
