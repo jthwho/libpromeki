@@ -1,6 +1,7 @@
 <map id="TuiCell" name="TuiCell">
-<area shape="rect" id="Node000001" title="A single cell in the TUI screen buffer." alt="" coords="5,244,71,269"/>
-<area shape="rect" id="Node000002" href="$classColor.html" title="General&#45;purpose RGBA color." alt="" coords="10,73,66,99"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="41,113,41,244,35,244,35,113"/>
-<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="60,63,72,61,82,64,90,73,93,86,88,102,77,110,62,109,47,101,50,97,63,104,75,105,84,99,87,86,85,75,79,69,71,67,61,69"/>
+<area shape="rect" id="Node000001" title="A single cell in the TUI screen buffer." alt="" coords="41,93,107,119"/>
+<area shape="rect" id="Node000002" href="$classChar.html" title="Unicode&#45;aware character class wrapping a single codepoint." alt="" coords="5,5,57,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="46,42,70,92,66,94,41,44"/>
+<area shape="rect" id="Node000003" href="$classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character)." alt="" coords="81,5,155,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="108,44,82,94,78,92,103,42"/>
 </map>

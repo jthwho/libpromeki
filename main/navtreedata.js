@@ -30,6 +30,12 @@ var NAVTREE =
       [ "Simple", "dataobjects.html#simple", null ],
       [ "Shareable", "dataobjects.html#shareable", null ]
     ] ],
+    [ "Demonstration Applications", "demos.html", [
+      [ "Building", "demos.html#demos_building", null ],
+      [ "Standalone Build", "demos.html#demos_standalone", null ],
+      [ "Adding a New Demo", "demos.html#demos_adding", null ],
+      [ "Current Demos", "demos.html#demos_list", null ]
+    ] ],
     [ "Utility Applications", "utils.html", [
       [ "Building", "utils.html#utils_building", null ],
       [ "Standalone Build", "utils.html#utils_standalone", null ],
@@ -129,17 +135,17 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "classAudioFile_1_1Impl.html#a82a1d7bd0ab27275b399ea5c73396656",
-"classEventLoop.html#a0b602a0f8f64b33f9adcdcfd119ea0b0",
-"classJsonObject.html#abbaa04357a55dc1811a2ed0917b66894",
-"classMatrix3x3.html#a239479cc4f0705f48b85bc2b5245c9ad",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3abaaa9defb15f703c4bee383f04e1deff",
-"classPaintEngine.html#ae28d83d1366150a6a7b6df117b509950",
-"classRefCount.html#af1aa42505738cd8f8dc2ca1ec2674c97",
-"classStringLatin1Data.html#a6982b54bba5f54c781ec367521b98538",
-"classTuiApplication.html#aad7d357e349c28a6da643502f4bc5dc1",
-"classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea0137f0321debba0ba63491187a5c6940",
-"md_CODING__STANDARDS.html#autotoc_md25",
-"structPixelFormat_1_1PlaneDesc.html"
+"classEvent.html#a5881fa6d544bf96c5ba7abc9ce369d9b",
+"classJsonObject.html#aa5649b786ce841b945a9418abce302d1",
+"classMatrix3x3.html#a182a2e7e7dc310ac0305d19c0b57bd57",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3ab498bfe6b189dad3b9cab5f98c2d4b76",
+"classPaintEngine.html#a8afb12d3e1e316113d28dd4053215d3f",
+"classRefCount.html#a8bfac9a79d288ed4dbc93292cdbfae4a",
+"classStringLatin1Data.html#a412d69373d7be831cf9aea8c47da676b",
+"classTuiApplication.html#a278194102b9bfca8713efbd0f3c76147",
+"classTuiWidget.html#ac8335c87362fc1828a12384b0a8ecbb1",
+"label_8h.html",
+"structIsSharedObject.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

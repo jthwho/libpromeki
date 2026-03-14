@@ -21,5 +21,7 @@ var searchData=
   ['placeholdertext_18',['PlaceholderText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0ad178770719d270de1e2765baac0a7d3c',1,'TuiPalette']]],
   ['png_19',['PNG',['../classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627',1,'ImageFile']]],
   ['progressempty_20',['ProgressEmpty',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0aa9ffb9f5ea4277466020b65933a83c6d',1,'TuiPalette']]],
-  ['progressfilled_21',['ProgressFilled',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0ad35593749588ded7b28230de8a31d940',1,'TuiPalette']]]
+  ['progressemptytext_21',['ProgressEmptyText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0aff2f9695bf4509942d3a7767d2b1d14b',1,'TuiPalette']]],
+  ['progressfilled_22',['ProgressFilled',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0ad35593749588ded7b28230de8a31d940',1,'TuiPalette']]],
+  ['progressfilledtext_23',['ProgressFilledText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0abe8583bb546f132e1852a66e69baf4cb',1,'TuiPalette']]]
 ];

@@ -107,7 +107,7 @@ $(document).ready(function(){initNavTree('classTuiPalette.html',''); initResizab
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> palette for TUI widgets.  
+<p>Style palette for TUI widgets.  
  <a href="classTuiPalette.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="palette_8h_source.html">palette.h</a>&gt;</code></p>
@@ -129,6 +129,11 @@ Public Types</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0adaa2f9a7f39fc2890dc82821e5d94869">Button</a>
 , <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0af68bdf9d82a7c37f07622f108f4648a8">ButtonText</a>
+, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a77e4dafed4262e88973ec84d8a350519">ButtonBorder</a>
+, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a210f95686725eb4ff43cd1c88d2bd244">ButtonLight</a>
+, <br />
+&#160;&#160;<a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a882da644ac20be4f5e917967a5ee1c51">ButtonDark</a>
+, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a54eaa4fa26b1cd197a3fd25abf16ade5">FocusText</a>
 , <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a924b6e749b939ac18d0e0418a808a2ae">Highlight</a>
 , <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a956d04058ca2479c872bafec138fd664">HighlightedText</a>
 , <br />
@@ -138,34 +143,41 @@ Public Types</h2></td></tr>
 , <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a02ff7c90a175be1e1639f666ab8cf363">StatusBarText</a>
 , <br />
 &#160;&#160;<a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0ad35593749588ded7b28230de8a31d940">ProgressFilled</a>
+, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0abe8583bb546f132e1852a66e69baf4cb">ProgressFilledText</a>
 , <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0aa9ffb9f5ea4277466020b65933a83c6d">ProgressEmpty</a>
-, <b>RoleCount</b>
+, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0aff2f9695bf4509942d3a7767d2b1d14b">ProgressEmptyText</a>
+, <br />
+&#160;&#160;<b>RoleCount</b>
 <br />
  }</td></tr>
-<tr class="memdesc:a956117cb0e6b79dbf0e39af067bad2e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Semantic color role.  <a href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">More...</a><br /></td></tr>
+<tr class="memdesc:a956117cb0e6b79dbf0e39af067bad2e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Semantic style role.  <a href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">More...</a><br /></td></tr>
 <tr class="separator:a956117cb0e6b79dbf0e39af067bad2e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ad76eb7767e3e055ca98cfc663f4e46a3" id="r_ad76eb7767e3e055ca98cfc663f4e46a3"><td class="memItemLeft" align="right" valign="top"><a id="ad76eb7767e3e055ca98cfc663f4e46a3" name="ad76eb7767e3e055ca98cfc663f4e46a3"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>TuiPalette</b> ()</td></tr>
-<tr class="memdesc:ad76eb7767e3e055ca98cfc663f4e46a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a palette with default colors. <br /></td></tr>
+<tr class="memdesc:ad76eb7767e3e055ca98cfc663f4e46a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a palette with default styles. <br /></td></tr>
 <tr class="separator:ad76eb7767e3e055ca98cfc663f4e46a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3b2cf0168ee2ef9565a4b878f148399" id="r_ad3b2cf0168ee2ef9565a4b878f148399"><td class="memItemLeft" align="right" valign="top"><a id="ad3b2cf0168ee2ef9565a4b878f148399" name="ad3b2cf0168ee2ef9565a4b878f148399"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setColor</b> (<a class="el" href="classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2">ColorGroup</a> <a class="el" href="classList.html">group</a>, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classTuiPalette.html#a60a7d14926582081eb7af0d8de545587">color</a>)</td></tr>
-<tr class="memdesc:ad3b2cf0168ee2ef9565a4b878f148399"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a color for a specific group and role. <br /></td></tr>
-<tr class="separator:ad3b2cf0168ee2ef9565a4b878f148399"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a60a7d14926582081eb7af0d8de545587" id="r_a60a7d14926582081eb7af0d8de545587"><td class="memItemLeft" align="right" valign="top"><a id="a60a7d14926582081eb7af0d8de545587" name="a60a7d14926582081eb7af0d8de545587"></a>
-<a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><b>color</b> (<a class="el" href="classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2">ColorGroup</a> <a class="el" href="classList.html">group</a>, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a60a7d14926582081eb7af0d8de545587"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the color for a specific group and role. <br /></td></tr>
-<tr class="separator:a60a7d14926582081eb7af0d8de545587"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1c86beb73c14d50e150146845ccb94e3" id="r_a1c86beb73c14d50e150146845ccb94e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiPalette.html#a1c86beb73c14d50e150146845ccb94e3">color</a> (<a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">focused</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">enabled</a>=<a class="el" href="classList.html">true</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a1c86beb73c14d50e150146845ccb94e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: picks the group from widget state.  <br /></td></tr>
-<tr class="separator:a1c86beb73c14d50e150146845ccb94e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53eb12725cb8cc84d4d784cc687b24b5" id="r_a53eb12725cb8cc84d4d784cc687b24b5"><td class="memItemLeft" align="right" valign="top"><a id="a53eb12725cb8cc84d4d784cc687b24b5" name="a53eb12725cb8cc84d4d784cc687b24b5"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setStyle</b> (<a class="el" href="classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2">ColorGroup</a> <a class="el" href="classList.html">group</a>, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classTuiStyle.html">TuiStyle</a> &amp;<a class="el" href="classTuiPalette.html#a4479f2408978538f9b93e4565f27aaa7">style</a>)</td></tr>
+<tr class="memdesc:a53eb12725cb8cc84d4d784cc687b24b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a style for a specific group and role. <br /></td></tr>
+<tr class="separator:a53eb12725cb8cc84d4d784cc687b24b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4479f2408978538f9b93e4565f27aaa7" id="r_a4479f2408978538f9b93e4565f27aaa7"><td class="memItemLeft" align="right" valign="top"><a id="a4479f2408978538f9b93e4565f27aaa7" name="a4479f2408978538f9b93e4565f27aaa7"></a>
+<a class="el" href="classTuiStyle.html">TuiStyle</a>&#160;</td><td class="memItemRight" valign="bottom"><b>style</b> (<a class="el" href="classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2">ColorGroup</a> <a class="el" href="classList.html">group</a>, <a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a4479f2408978538f9b93e4565f27aaa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the style for a specific group and role. <br /></td></tr>
+<tr class="separator:a4479f2408978538f9b93e4565f27aaa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe40fc7564e2d438e38ab2d18ccebb54" id="r_afe40fc7564e2d438e38ab2d18ccebb54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTuiStyle.html">TuiStyle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiPalette.html#afe40fc7564e2d438e38ab2d18ccebb54">style</a> (<a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classTuiStyleState.html">TuiStyleState</a> &amp;<a class="el" href="classList.html">state</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:afe40fc7564e2d438e38ab2d18ccebb54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the style for a role given widget state.  <br /></td></tr>
+<tr class="separator:afe40fc7564e2d438e38ab2d18ccebb54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5b0b1e5ae7425e60b651f780877ca04" id="r_ae5b0b1e5ae7425e60b651f780877ca04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTuiStyle.html">TuiStyle</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiPalette.html#ae5b0b1e5ae7425e60b651f780877ca04">style</a> (<a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a> <a class="el" href="classList.html">role</a>, <a class="el" href="classList.html">bool</a> focused, <a class="el" href="classList.html">bool</a> enabled=<a class="el" href="classList.html">true</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae5b0b1e5ae7425e60b651f780877ca04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience: picks the group from widget state flags.  <br /></td></tr>
+<tr class="separator:ae5b0b1e5ae7425e60b651f780877ca04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> palette for TUI widgets. </p>
-<p>Provides a centralized set of colors organized by role and state group, similar to Qt's QPalette. Widgets query the palette for their colors instead of hardcoding them, giving a consistent look and making focus state clearly visible through background color changes. </p>
+<div class="textblock"><p>Style palette for TUI widgets. </p>
+<p>Provides a centralized set of <a class="el" href="classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character).">TuiStyle</a> values organized by role and state group. Widgets query the palette for their styles instead of hardcoding colors, giving a consistent look.</p>
+<p>Each role stores a <a class="el" href="classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character).">TuiStyle</a> whose foreground, background, and attributes may individually be set or left ignored. Widgets typically merge several roles together (e.g. a text role on top of a background role) using <a class="el" href="classTuiStyle.html#a8c8b60285b30f2f79d7c87396c578d7b" title="Merges this style on top of another.">TuiStyle::merged()</a>. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a063db3c8298633dabc97b80078c0a6d2" name="a063db3c8298633dabc97b80078c0a6d2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a063db3c8298633dabc97b80078c0a6d2">&#9670;&#160;</a></span>ColorGroup</h2>
@@ -203,7 +215,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Semantic color role. </p>
+<p>Semantic style role. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0acce2c80a40066873f90088d85f5ead28" name="a956117cb0e6b79dbf0e39af067bad2e0acce2c80a40066873f90088d85f5ead28"></a>Window&#160;</td><td class="fielddoc"><p>Container/frame background. </p>
 </td></tr>
@@ -213,9 +225,17 @@ Public Member Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0ac1e6823c60b67fef80648dcf7be6d49b" name="a956117cb0e6b79dbf0e39af067bad2e0ac1e6823c60b67fef80648dcf7be6d49b"></a>Text&#160;</td><td class="fielddoc"><p>Text on Base background. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0adaa2f9a7f39fc2890dc82821e5d94869" name="a956117cb0e6b79dbf0e39af067bad2e0adaa2f9a7f39fc2890dc82821e5d94869"></a>Button&#160;</td><td class="fielddoc"><p>Button background. </p>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0adaa2f9a7f39fc2890dc82821e5d94869" name="a956117cb0e6b79dbf0e39af067bad2e0adaa2f9a7f39fc2890dc82821e5d94869"></a>Button&#160;</td><td class="fielddoc"><p>Button background (legacy). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0af68bdf9d82a7c37f07622f108f4648a8" name="a956117cb0e6b79dbf0e39af067bad2e0af68bdf9d82a7c37f07622f108f4648a8"></a>ButtonText&#160;</td><td class="fielddoc"><p>Text on Button background. </p>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0af68bdf9d82a7c37f07622f108f4648a8" name="a956117cb0e6b79dbf0e39af067bad2e0af68bdf9d82a7c37f07622f108f4648a8"></a>ButtonText&#160;</td><td class="fielddoc"><p>Text on button backgrounds. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0a77e4dafed4262e88973ec84d8a350519" name="a956117cb0e6b79dbf0e39af067bad2e0a77e4dafed4262e88973ec84d8a350519"></a>ButtonBorder&#160;</td><td class="fielddoc"><p>Single-character border around buttons. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0a210f95686725eb4ff43cd1c88d2bd244" name="a956117cb0e6b79dbf0e39af067bad2e0a210f95686725eb4ff43cd1c88d2bd244"></a>ButtonLight&#160;</td><td class="fielddoc"><p>Button background in unpressed / active-tab state. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0a882da644ac20be4f5e917967a5ee1c51" name="a956117cb0e6b79dbf0e39af067bad2e0a882da644ac20be4f5e917967a5ee1c51"></a>ButtonDark&#160;</td><td class="fielddoc"><p>Button background in pressed / inactive-tab state. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0a54eaa4fa26b1cd197a3fd25abf16ade5" name="a956117cb0e6b79dbf0e39af067bad2e0a54eaa4fa26b1cd197a3fd25abf16ade5"></a>FocusText&#160;</td><td class="fielddoc"><p>Bright foreground for focused widgets. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0a924b6e749b939ac18d0e0418a808a2ae" name="a956117cb0e6b79dbf0e39af067bad2e0a924b6e749b939ac18d0e0418a808a2ae"></a>Highlight&#160;</td><td class="fielddoc"><p>Selected item / accent background. </p>
 </td></tr>
@@ -231,21 +251,25 @@ Public Member Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0ad35593749588ded7b28230de8a31d940" name="a956117cb0e6b79dbf0e39af067bad2e0ad35593749588ded7b28230de8a31d940"></a>ProgressFilled&#160;</td><td class="fielddoc"><p>Filled portion of progress bar. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0abe8583bb546f132e1852a66e69baf4cb" name="a956117cb0e6b79dbf0e39af067bad2e0abe8583bb546f132e1852a66e69baf4cb"></a>ProgressFilledText&#160;</td><td class="fielddoc"><p>Text on filled portion of progress bar. </p>
+</td></tr>
 <tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0aa9ffb9f5ea4277466020b65933a83c6d" name="a956117cb0e6b79dbf0e39af067bad2e0aa9ffb9f5ea4277466020b65933a83c6d"></a>ProgressEmpty&#160;</td><td class="fielddoc"><p>Empty portion of progress bar. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a956117cb0e6b79dbf0e39af067bad2e0aff2f9695bf4509942d3a7767d2b1d14b" name="a956117cb0e6b79dbf0e39af067bad2e0aff2f9695bf4509942d3a7767d2b1d14b"></a>ProgressEmptyText&#160;</td><td class="fielddoc"><p>Text on empty portion of progress bar. </p>
 </td></tr>
 </table>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a1c86beb73c14d50e150146845ccb94e3" name="a1c86beb73c14d50e150146845ccb94e3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1c86beb73c14d50e150146845ccb94e3">&#9670;&#160;</a></span>color()</h2>
+<a id="ae5b0b1e5ae7425e60b651f780877ca04" name="ae5b0b1e5ae7425e60b651f780877ca04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5b0b1e5ae7425e60b651f780877ca04">&#9670;&#160;</a></span>style() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classColor.html">Color</a> TuiPalette::color </td>
+          <td class="memname"><a class="el" href="classTuiStyle.html">TuiStyle</a> TuiPalette::style </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a>&#160;</td>
           <td class="paramname"><em>role</em>, </td>
@@ -270,7 +294,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Convenience: picks the group from widget state. </p>
+<p>Convenience: picks the group from widget state flags. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">role</td><td>The semantic color role. </td></tr>
@@ -279,6 +303,37 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="afe40fc7564e2d438e38ab2d18ccebb54" name="afe40fc7564e2d438e38ab2d18ccebb54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe40fc7564e2d438e38ab2d18ccebb54">&#9670;&#160;</a></span>style() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTuiStyle.html">TuiStyle</a> TuiPalette::style </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0">ColorRole</a>&#160;</td>
+          <td class="paramname"><em>role</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classTuiStyleState.html">TuiStyleState</a> &amp;&#160;</td>
+          <td class="paramname"><em>state</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the style for a role given widget state. </p>
+<p>Selects the appropriate color group from the state and returns the stored <a class="el" href="classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character).">TuiStyle</a>. </p>
 
 </div>
 </div>
@@ -292,7 +347,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiPalette.html">TuiPalette</a></li>
-    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-14 00:33:59 from commit f4eb68d (1.0.0).</li>
   </ul>
 </div>
 </body>

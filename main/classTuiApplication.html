@@ -197,6 +197,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a278194102b9bfca8713efbd0f3c76147" id="r_a278194102b9bfca8713efbd0f3c76147"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a278194102b9bfca8713efbd0f3c76147">markNeedsRepaint</a> ()</td></tr>
 <tr class="memdesc:a278194102b9bfca8713efbd0f3c76147"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks the screen as needing a repaint.  <br /></td></tr>
 <tr class="separator:a278194102b9bfca8713efbd0f3c76147"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07b6736b52630f2870d5bd4006957d8c" id="r_a07b6736b52630f2870d5bd4006957d8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a07b6736b52630f2870d5bd4006957d8c">grabMouse</a> (<a class="el" href="classTuiWidget.html">TuiWidget</a> *widget)</td></tr>
+<tr class="memdesc:a07b6736b52630f2870d5bd4006957d8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Grabs mouse events for a widget.  <br /></td></tr>
+<tr class="separator:a07b6736b52630f2870d5bd4006957d8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2325b78dee2225524a73d970d047b0c5" id="r_a2325b78dee2225524a73d970d047b0c5"><td class="memItemLeft" align="right" valign="top"><a id="a2325b78dee2225524a73d970d047b0c5" name="a2325b78dee2225524a73d970d047b0c5"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>releaseMouse</b> ()</td></tr>
+<tr class="memdesc:a2325b78dee2225524a73d970d047b0c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Releases the mouse grab. <br /></td></tr>
+<tr class="separator:a2325b78dee2225524a73d970d047b0c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classApplication"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classApplication')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classApplication.html">Application</a></td></tr>
 <tr class="memitem:a758ec0591237b4b7204ee8d87a26f834 inherit pub_methods_classApplication" id="r_a758ec0591237b4b7204ee8d87a26f834"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a758ec0591237b4b7204ee8d87a26f834">Application</a> (int <a class="el" href="classList.html">argc</a>, <a class="el" href="classList.html">char</a> **<a class="el" href="classList.html">argv</a>)</td></tr>
 <tr class="memdesc:a758ec0591237b4b7204ee8d87a26f834 inherit pub_methods_classApplication"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs and registers an <a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> instance.  <br /></td></tr>
@@ -335,6 +342,35 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a07b6736b52630f2870d5bd4006957d8c" name="a07b6736b52630f2870d5bd4006957d8c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07b6736b52630f2870d5bd4006957d8c">&#9670;&#160;</a></span>grabMouse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> TuiApplication::grabMouse </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTuiWidget.html">TuiWidget</a> *&#160;</td>
+          <td class="paramname"><em>widget</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Grabs mouse events for a widget. </p>
+<p>While grabbed, all mouse events are sent to the grabbing widget regardless of cursor position. </p>
+
+</div>
+</div>
 <a id="a278194102b9bfca8713efbd0f3c76147" name="a278194102b9bfca8713efbd0f3c76147"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a278194102b9bfca8713efbd0f3c76147">&#9670;&#160;</a></span>markNeedsRepaint()</h2>
 
@@ -443,7 +479,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiApplication.html">TuiApplication</a></li>
-    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-14 00:33:59 from commit f4eb68d (1.0.0).</li>
   </ul>
 </div>
 </body>

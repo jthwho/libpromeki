@@ -123,6 +123,8 @@ var annotated_dup =
     [ "TuiScrollArea", "classTuiScrollArea.html", "classTuiScrollArea" ],
     [ "TuiSplitter", "classTuiSplitter.html", "classTuiSplitter" ],
     [ "TuiStatusBar", "classTuiStatusBar.html", "classTuiStatusBar" ],
+    [ "TuiStyle", "classTuiStyle.html", "classTuiStyle" ],
+    [ "TuiStyleState", "classTuiStyleState.html", null ],
     [ "TuiTabWidget", "classTuiTabWidget.html", "classTuiTabWidget" ],
     [ "TuiTextArea", "classTuiTextArea.html", "classTuiTextArea" ],
     [ "TuiVBoxLayout", "classTuiVBoxLayout.html", null ],

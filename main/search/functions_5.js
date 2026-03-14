@@ -22,8 +22,8 @@ var searchData=
   ['erasecharacters_19',['eraseCharacters',['../classAnsiStream.html#a7f84c5eec7ae423fb94d25f93cb1f77f',1,'AnsiStream']]],
   ['error_20',['Error',['../classError.html#a83eaa8db2a6c22d6aff5758eea236a6e',1,'Error']]],
   ['errors_21',['errors',['../classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d',1,'NoteSequenceParser']]],
-  ['event_22',['event',['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()'],['../classTuiWidget.html#ac7d6c348a93b0ca687eb2c3644593ce5',1,'TuiWidget::event()'],['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()']]],
-  ['eventloop_23',['eventloop',['../classEventLoop.html#a33fa78d25c8dc23ece149c805e0f2d17',1,'EventLoop::EventLoop()'],['../classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb',1,'ObjectBase::eventLoop()']]],
+  ['event_22',['event',['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()'],['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()'],['../classTuiWidget.html#ac7d6c348a93b0ca687eb2c3644593ce5',1,'TuiWidget::event()']]],
+  ['eventloop_23',['eventloop',['../classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb',1,'ObjectBase::eventLoop()'],['../classEventLoop.html#a33fa78d25c8dc23ece149c805e0f2d17',1,'EventLoop::EventLoop()']]],
   ['exec_24',['exec',['../classEventLoop.html#aff91014422ad30a80aa3a2fcc96b423e',1,'EventLoop::exec()'],['../classSlot.html#aef6761b6b6fd10fe2af0ae7d557ad0ba',1,'Slot::exec(Args... args)'],['../classSlot.html#a70493bcca1dd8707157457ae6776869c',1,'Slot::exec(const VariantList &amp;variantList)'],['../classTuiApplication.html#a7915497f82dacecc1840afdb565effd3',1,'TuiApplication::exec()']]],
   ['exists_25',['exists',['../classFileInfo.html#a47d49db8cb8797153885c4d5b7b0911f',1,'FileInfo']]],
   ['exitcode_26',['exitcode',['../classEventLoop.html#abeae412fd6862c66cf2d891492460511',1,'EventLoop::exitCode()'],['../classThread.html#af86ca218c028ff9c56541ef350d480cf',1,'Thread::exitCode()']]]

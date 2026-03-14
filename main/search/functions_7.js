@@ -24,5 +24,6 @@ var searchData=
   ['getstring_21',['getstring',['../classJsonObject.html#a07732009e7c2f19bbdf8274dfbf544d7',1,'JsonObject::getString()'],['../classJsonArray.html#a7ddbe7a6e44bbb354f664543a8cef7d5',1,'JsonArray::getString()']]],
   ['getuint_22',['getuint',['../classJsonObject.html#a5f78bc5474faf0d95e01eeec568605a1',1,'JsonObject::getUInt()'],['../classJsonArray.html#a914056fcc53e42925e66a149cf47d0d8',1,'JsonArray::getUInt()']]],
   ['gmpercussion_23',['gmPercussion',['../classMidiNoteNames.html#a8733a11bd004d68fd532a47812ebfe7f',1,'MidiNoteNames']]],
-  ['green_24',['green',['../classColorSpace.html#ad6e5d752fef560cea329a70595839ea1',1,'ColorSpace']]]
+  ['grabmouse_24',['grabMouse',['../classTuiApplication.html#a07b6736b52630f2870d5bd4006957d8c',1,'TuiApplication']]],
+  ['green_25',['green',['../classColorSpace.html#ad6e5d752fef560cea329a70595839ea1',1,'ColorSpace']]]
 ];

@@ -2,7 +2,7 @@ var searchData=
 [
   ['b_0',['b',['../classColor.html#a23c54aa871aadaa35e8e6e59b30432f8',1,'Color']]],
   ['back_1',['back',['../classList.html#adcf79239b840f8600ea74e526120e69b',1,'List::back()'],['../classList.html#ae4132dbe1058e4d6a536dc0b8ea1ad1d',1,'List::back() const']]],
-  ['background_2',['background',['../classTuiPainter.html#ab47ff1c99ec4afe60542091f1c6266b9',1,'TuiPainter']]],
+  ['background_2',['background',['../classTuiPainter.html#a140ad41ee15e09d6c40ac3cecf60ffb7',1,'TuiPainter::background()'],['../classTuiStyle.html#ad0d98552212850248ea8519655233341',1,'TuiStyle::background()']]],
   ['basename_3',['baseName',['../classFileInfo.html#ab06896fc789df3a963f872cd2a1472f9',1,'FileInfo']]],
   ['begin_4',['begin',['../classSet.html#a7f84d121c0bac776e5c434936c38ab5b',1,'Set::begin()'],['../classString.html#aa3a86ae78fe926992a550b40f0696b5d',1,'String::begin()'],['../classSet.html#acb30d228f441fdce96946e084fed9297',1,'Set::begin()'],['../classMap.html#af0c7224101ba415afc0641000180c26a',1,'Map::begin() const noexcept'],['../classMap.html#a92d131b2cb5fc2e00974e37c0396bd31',1,'Map::begin() noexcept'],['../classList.html#a898ea79e784677a2e90abdfd26895a4b',1,'List::begin() const noexcept'],['../classList.html#a670d9e4683a2e76d3e6d437d90ba8563',1,'List::begin() noexcept']]],
   ['bin_5',['bin',['../classString.html#ad4d1f49c1a7cc0983126be7b12e870a2',1,'String']]],

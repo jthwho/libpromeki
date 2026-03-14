@@ -116,10 +116,11 @@ Collaboration diagram for TuiCell:</div>
 <div class="dyncontent">
 <div class="center"><img src="structTuiCell__coll__graph.png" border="0" usemap="#aTuiCell_coll__map" alt="Collaboration graph"/></div>
 <map name="aTuiCell_coll__map" id="aTuiCell_coll__map">
-<area shape="rect" title="A single cell in the TUI screen buffer." alt="" coords="5,244,71,269"/>
-<area shape="rect" href="classColor.html" title="General&#45;purpose RGBA color." alt="" coords="10,73,66,99"/>
-<area shape="poly" title=" " alt="" coords="41,113,41,244,35,244,35,113"/>
-<area shape="poly" title=" " alt="" coords="60,63,72,61,82,64,90,73,93,86,88,102,77,110,62,109,47,101,50,97,63,104,75,105,84,99,87,86,85,75,79,69,71,67,61,69"/>
+<area shape="rect" title="A single cell in the TUI screen buffer." alt="" coords="41,93,107,119"/>
+<area shape="rect" href="classChar.html" title="Unicode&#45;aware character class wrapping a single codepoint." alt="" coords="5,5,57,31"/>
+<area shape="poly" title=" " alt="" coords="46,42,70,92,66,94,41,44"/>
+<area shape="rect" href="classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character)." alt="" coords="81,5,155,31"/>
+<area shape="poly" title=" " alt="" coords="108,44,82,94,78,92,103,42"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -134,22 +135,16 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a1628ce77fcfcabb0cb47a20079c6da83" id="r_a1628ce77fcfcabb0cb47a20079c6da83"><td class="memItemLeft" align="right" valign="top"><a id="a1628ce77fcfcabb0cb47a20079c6da83" name="a1628ce77fcfcabb0cb47a20079c6da83"></a>
-<a class="el" href="classList.html">char32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ch</b> = <a class="el" href="classList.html">U</a>' '</td></tr>
-<tr class="separator:a1628ce77fcfcabb0cb47a20079c6da83"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab039a945fe65de303e99c6447193bfb5" id="r_ab039a945fe65de303e99c6447193bfb5"><td class="memItemLeft" align="right" valign="top"><a id="ab039a945fe65de303e99c6447193bfb5" name="ab039a945fe65de303e99c6447193bfb5"></a>
-<a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fg</b> = Color::White</td></tr>
-<tr class="separator:ab039a945fe65de303e99c6447193bfb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c4809878324bf8a8c6a2c84c62aeb41" id="r_a5c4809878324bf8a8c6a2c84c62aeb41"><td class="memItemLeft" align="right" valign="top"><a id="a5c4809878324bf8a8c6a2c84c62aeb41" name="a5c4809878324bf8a8c6a2c84c62aeb41"></a>
-<a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bg</b> = Color::Black</td></tr>
-<tr class="separator:a5c4809878324bf8a8c6a2c84c62aeb41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a11466f74ddd1bc2f79f6a6e58666bf30" id="r_a11466f74ddd1bc2f79f6a6e58666bf30"><td class="memItemLeft" align="right" valign="top"><a id="a11466f74ddd1bc2f79f6a6e58666bf30" name="a11466f74ddd1bc2f79f6a6e58666bf30"></a>
-<a class="el" href="classList.html">uint8_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>style</b> = TuiStyleNone</td></tr>
-<tr class="separator:a11466f74ddd1bc2f79f6a6e58666bf30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e82015cc83b4d80c78af4dd1e04e251" id="r_a2e82015cc83b4d80c78af4dd1e04e251"><td class="memItemLeft" align="right" valign="top"><a id="a2e82015cc83b4d80c78af4dd1e04e251" name="a2e82015cc83b4d80c78af4dd1e04e251"></a>
+<a class="el" href="classChar.html">Char</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ch</b> = <a class="el" href="classChar.html">Char</a>(<a class="el" href="classList.html">U</a>' ')</td></tr>
+<tr class="separator:a2e82015cc83b4d80c78af4dd1e04e251"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e99f081e0f8db7c86143e96a4cce5b1" id="r_a6e99f081e0f8db7c86143e96a4cce5b1"><td class="memItemLeft" align="right" valign="top"><a id="a6e99f081e0f8db7c86143e96a4cce5b1" name="a6e99f081e0f8db7c86143e96a4cce5b1"></a>
+<a class="el" href="classTuiStyle.html">TuiStyle</a>&#160;</td><td class="memItemRight" valign="bottom"><b>style</b> = <a class="el" href="classTuiStyle.html">TuiStyle</a>(Color::White, Color::Black)</td></tr>
+<tr class="separator:a6e99f081e0f8db7c86143e96a4cce5b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A single cell in the TUI screen buffer. </p>
-<p>Each cell holds a Unicode codepoint, foreground and background colors, and style flags. </p>
+<p>Each cell holds a character and a <a class="el" href="classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character).">TuiStyle</a> describing its visual properties (foreground, background, text attributes). </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/tui/<a class="el" href="screen_8h_source.html">screen.h</a></li>
 </ul>
@@ -160,7 +155,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structTuiCell.html">TuiCell</a></li>
-    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-14 00:33:59 from commit f4eb68d (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -174,6 +174,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5f1f86d0426a2e888b0213b9122cebd9" id="r_a5f1f86d0426a2e888b0213b9122cebd9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColor.html#a5f1f86d0426a2e888b0213b9122cebd9">lerp</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">other</a>, <a class="el" href="classList.html">double</a> <a class="el" href="classList.html">t</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a5f1f86d0426a2e888b0213b9122cebd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Linearly interpolates between this color and another.  <br /></td></tr>
 <tr class="separator:a5f1f86d0426a2e888b0213b9122cebd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acecaea8245223671d73f45ca4762087a" id="r_acecaea8245223671d73f45ca4762087a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColor.html#acecaea8245223671d73f45ca4762087a">inverted</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:acecaea8245223671d73f45ca4762087a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the RGB-inverted color (255 - each channel).  <br /></td></tr>
+<tr class="separator:acecaea8245223671d73f45ca4762087a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a719b87353985f115af7392fdc2bd6086" id="r_a719b87353985f115af7392fdc2bd6086"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColor.html#a719b87353985f115af7392fdc2bd6086">luminance</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a719b87353985f115af7392fdc2bd6086"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the perceptual luminance (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>).  <br /></td></tr>
+<tr class="separator:a719b87353985f115af7392fdc2bd6086"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2786290589c432778b0dc656a80b1068" id="r_a2786290589c432778b0dc656a80b1068"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColor.html#a2786290589c432778b0dc656a80b1068">contrastingBW</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a2786290589c432778b0dc656a80b1068"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns black or white, whichever contrasts best.  <br /></td></tr>
+<tr class="separator:a2786290589c432778b0dc656a80b1068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f582be2e18ba3ce840d77583e7b4287" id="r_a5f582be2e18ba3ce840d77583e7b4287"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classColor.html#a5f582be2e18ba3ce840d77583e7b4287">complementary</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5f582be2e18ba3ce840d77583e7b4287"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the complementary color (hue rotated 180 degrees).  <br /></td></tr>
+<tr class="separator:a5f582be2e18ba3ce840d77583e7b4287"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4b5d5500c2ee028e3f7d92a4d098ee0" id="r_ae4b5d5500c2ee028e3f7d92a4d098ee0"><td class="memItemLeft" align="right" valign="top"><a id="ae4b5d5500c2ee028e3f7d92a4d098ee0" name="ae4b5d5500c2ee028e3f7d92a4d098ee0"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ae4b5d5500c2ee028e3f7d92a4d098ee0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Equality operator. <br /></td></tr>
@@ -227,11 +239,62 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:ab0826c48816176cd42b5226becebf69d" id="r_ab0826c48816176cd42b5226becebf69d"><td class="memItemLeft" align="right" valign="top"><a id="ab0826c48816176cd42b5226becebf69d" name="ab0826c48816176cd42b5226becebf69d"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Transparent</b></td></tr>
 <tr class="separator:ab0826c48816176cd42b5226becebf69d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6254012fff6f277c0ee9644c503d07a4" id="r_a6254012fff6f277c0ee9644c503d07a4"><td class="memItemLeft" align="right" valign="top"><a id="a6254012fff6f277c0ee9644c503d07a4" name="a6254012fff6f277c0ee9644c503d07a4"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Ignored</b></td></tr>
+<tr class="separator:a6254012fff6f277c0ee9644c503d07a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>General-purpose RGBA color. </p>
 <p>A simple value type storing red, green, blue, and alpha channels as uint8_t values. Provides named color constants, hex conversion, and linear interpolation. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a5f582be2e18ba3ce840d77583e7b4287" name="a5f582be2e18ba3ce840d77583e7b4287"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f582be2e18ba3ce840d77583e7b4287">&#9670;&#160;</a></span>complementary()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classColor.html">Color</a> Color::complementary </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the complementary color (hue rotated 180 degrees). </p>
+<p>Converts to HSL, rotates hue by 180 degrees, and converts back. Saturation, lightness, and alpha are preserved. </p>
+
+</div>
+</div>
+<a id="a2786290589c432778b0dc656a80b1068" name="a2786290589c432778b0dc656a80b1068"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2786290589c432778b0dc656a80b1068">&#9670;&#160;</a></span>contrastingBW()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classColor.html">Color</a> Color::contrastingBW </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns black or white, whichever contrasts best. </p>
+<p>Uses perceptual luminance to decide. Alpha is preserved. </p>
+
+</div>
+</div>
 <a id="a26b6429e2106a1ad501a222820372679" name="a26b6429e2106a1ad501a222820372679"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a26b6429e2106a1ad501a222820372679">&#9670;&#160;</a></span>fromHex()</h2>
 
@@ -265,6 +328,34 @@ Static Public Attributes</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The parsed <a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a>, or an invalid <a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> on failure. </dd></dl>
+
+</div>
+</div>
+<a id="acecaea8245223671d73f45ca4762087a" name="acecaea8245223671d73f45ca4762087a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acecaea8245223671d73f45ca4762087a">&#9670;&#160;</a></span>inverted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classColor.html">Color</a> Color::inverted </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the RGB-inverted color (255 - each channel). </p>
+<p>Alpha is preserved. </p>
 
 </div>
 </div>
@@ -306,6 +397,34 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a719b87353985f115af7392fdc2bd6086" name="a719b87353985f115af7392fdc2bd6086"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a719b87353985f115af7392fdc2bd6086">&#9670;&#160;</a></span>luminance()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">double</a> Color::luminance </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the perceptual luminance (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>). </p>
+<p>Uses the Rec. 709 luminance coefficients. </p>
+
+</div>
+</div>
 <a id="a3db84c8126c05ed1ee6514f1fd675540" name="a3db84c8126c05ed1ee6514f1fd675540"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3db84c8126c05ed1ee6514f1fd675540">&#9670;&#160;</a></span>toHex()</h2>
 
@@ -343,7 +462,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classColor.html">Color</a></li>
-    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-14 00:33:59 from commit f4eb68d (1.0.0).</li>
   </ul>
 </div>
 </body>

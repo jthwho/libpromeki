@@ -30,8 +30,10 @@ var searchData=
   ['tuiscrollarea_27',['TuiScrollArea',['../classTuiScrollArea.html',1,'']]],
   ['tuisplitter_28',['TuiSplitter',['../classTuiSplitter.html',1,'']]],
   ['tuistatusbar_29',['TuiStatusBar',['../classTuiStatusBar.html',1,'']]],
-  ['tuitabwidget_30',['TuiTabWidget',['../classTuiTabWidget.html',1,'']]],
-  ['tuitextarea_31',['TuiTextArea',['../classTuiTextArea.html',1,'']]],
-  ['tuivboxlayout_32',['TuiVBoxLayout',['../classTuiVBoxLayout.html',1,'']]],
-  ['tuiwidget_33',['TuiWidget',['../classTuiWidget.html',1,'']]]
+  ['tuistyle_30',['TuiStyle',['../classTuiStyle.html',1,'']]],
+  ['tuistylestate_31',['TuiStyleState',['../classTuiStyleState.html',1,'']]],
+  ['tuitabwidget_32',['TuiTabWidget',['../classTuiTabWidget.html',1,'']]],
+  ['tuitextarea_33',['TuiTextArea',['../classTuiTextArea.html',1,'']]],
+  ['tuivboxlayout_34',['TuiVBoxLayout',['../classTuiVBoxLayout.html',1,'']]],
+  ['tuiwidget_35',['TuiWidget',['../classTuiWidget.html',1,'']]]
 ];

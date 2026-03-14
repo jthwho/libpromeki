@@ -1,7 +1,7 @@
 var classTuiLayout =
 [
-    [ "addLayout", "classTuiLayout.html#addf4aa8f35e2982de089b7520f4ea09e", null ],
-    [ "addWidget", "classTuiLayout.html#a9814c2de88f12011ba90f3b0c670247f", null ],
+    [ "addLayout", "classTuiLayout.html#a905717d57e8e036e434e9c15a644bd76", null ],
+    [ "addWidget", "classTuiLayout.html#a4b2536158bb67869d13f6956404cd97e", null ],
     [ "calculateLayout", "classTuiLayout.html#a392a0091a07f834ad05eb499584c3859", null ],
     [ "contentRect", "classTuiLayout.html#a2936fee159033298902c22b4c7aa5d90", null ],
     [ "layouts", "classTuiLayout.html#af47f82cadb692b9e4d2fbd3084b3e707", null ],

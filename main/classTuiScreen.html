@@ -130,7 +130,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
 <tr class="memitem:a399265f994a249f5089d206f05dc816b" id="r_a399265f994a249f5089d206f05dc816b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structTuiCell.html">TuiCell</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#a399265f994a249f5089d206f05dc816b">cell</a> (int x, int y) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a399265f994a249f5089d206f05dc816b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cell at the given position in the back buffer.  <br /></td></tr>
 <tr class="separator:a399265f994a249f5089d206f05dc816b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54dc157237effb791cf6adca7e015b59" id="r_a54dc157237effb791cf6adca7e015b59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#a54dc157237effb791cf6adca7e015b59">clear</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;fg=Color::White, <a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;bg=Color::Black)</td></tr>
+<tr class="memitem:a54dc157237effb791cf6adca7e015b59" id="r_a54dc157237effb791cf6adca7e015b59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#a54dc157237effb791cf6adca7e015b59">clear</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">fg</a>=Color::White, <a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">bg</a>=Color::Black)</td></tr>
 <tr class="memdesc:a54dc157237effb791cf6adca7e015b59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the back buffer with blank cells.  <br /></td></tr>
 <tr class="separator:a54dc157237effb791cf6adca7e015b59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee2413e684c951d8a1a5e8e8e4e0c2b6" id="r_aee2413e684c951d8a1a5e8e8e4e0c2b6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6">flush</a> (<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;stream)</td></tr>
@@ -144,7 +144,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Double-buffered character cell grid for TUI rendering. </p>
 <p>Maintains front and back buffers. Widgets draw to the back buffer via <a class="el" href="classTuiScreen.html#a451741751e309afa0faa848cac7dd282" title="Sets a cell in the back buffer.">setCell()</a>. <a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6" title="Diffs front vs back buffer and emits minimal ANSI updates.">flush()</a> diffs front vs back and emits minimal ANSI escape sequences for changed cells, then swaps buffers.</p>
-<p>NOT an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> — this is infrastructure. </p>
+<p>NOT an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> &ndash; this is infrastructure. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a399265f994a249f5089d206f05dc816b" name="a399265f994a249f5089d206f05dc816b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a399265f994a249f5089d206f05dc816b">&#9670;&#160;</a></span>cell()</h2>
@@ -338,7 +338,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiScreen.html">TuiScreen</a></li>
-    <li class="footer">Generated on 2026-03-13 06:59:45 from commit 938d4e3 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-14 00:33:59 from commit f4eb68d (1.0.0).</li>
   </ul>
 </div>
 </body>

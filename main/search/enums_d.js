@@ -6,6 +6,5 @@ var searchData=
   ['tuiboxdirection_3',['TuiBoxDirection',['../layout_8h.html#ae598e724867c2514553bd8aaff99a42e',1,'layout.h']]],
   ['tuifocuspolicy_4',['TuiFocusPolicy',['../widget_8h.html#a6b22f8df23411420df9f05b6698743cc',1,'widget.h']]],
   ['tuisizepolicy_5',['TuiSizePolicy',['../widget_8h.html#a08168ac30b294447211e677c51697137',1,'widget.h']]],
-  ['tuistyle_6',['TuiStyle',['../screen_8h.html#ab1ccfcea622c4e63b56fac04cb76afa1',1,'screen.h']]],
-  ['type_7',['type',['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7',1,'AudioGen::Type'],['../classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be',1,'VariantImpl::Type']]]
+  ['type_6',['type',['../classAudioGen.html#a27dfd03217284508c21dc418d1b93dc7',1,'AudioGen::Type'],['../classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be',1,'VariantImpl::Type']]]
 ];

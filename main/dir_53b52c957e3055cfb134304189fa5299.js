@@ -17,6 +17,7 @@ var dir_53b52c957e3055cfb134304189fa5299 =
     [ "scrollarea.h", "scrollarea_8h.html", "scrollarea_8h" ],
     [ "splitter.h", "splitter_8h.html", "splitter_8h" ],
     [ "statusbar.h", "statusbar_8h.html", "statusbar_8h" ],
+    [ "style.h", "style_8h.html", "style_8h" ],
     [ "tabwidget.h", "tabwidget_8h.html", "tabwidget_8h" ],
     [ "textarea.h", "textarea_8h.html", "textarea_8h" ],
     [ "widget.h", "widget_8h.html", "widget_8h" ]
