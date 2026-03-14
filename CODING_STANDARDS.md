@@ -25,7 +25,7 @@ Data objects represent values or containers of values. They are the vast majorit
 
 - **Copyable by value.** They can be freely copied, assigned, passed by value, and stored in containers.
 - **No identity.** Two data objects with the same contents are interchangeable. They have no inherent notion of "this specific instance."
-- **Thread-safe when shared.** When managed by `SharedPtr`, the reference counting is atomic. Individual instances are not internally synchronized unless the class documents otherwise (e.g., `Queue`).
+- **Not internally thread-safe.** Individual instances are not synchronized unless the class documents otherwise (e.g., `Queue`). See the thread safety patterns below for how to safely share data across threads.
 
 Data objects subdivide into two categories based on size, usage patterns, and sharing semantics. See also the @ref dataobjects "Data Object Categories" page.
 
@@ -56,6 +56,59 @@ Ask: "Does this class represent a *value* or a *thing*?"
 - An audio processing node, a file watcher, a UI widget — these are things with identity. Derive from `ObjectBase`.
 
 When in doubt, prefer a data object. Most classes in a library like this are data.
+
+### Sharing Data Objects Across Threads
+
+Data objects are not internally thread-safe — concurrent reads and writes to the same instance require external synchronization. The standard pattern for sharing data between threads is to use `::Ptr` (`SharedPtr`). The reference counting in `SharedPtr` is atomic, so passing a `Ptr` to another thread is safe. The pointed-to object itself is not synchronized, so the pattern relies on ownership handoff: once you pass a `Ptr` to another thread, you should not mutate the underlying object from the original thread.
+
+**Pattern 1: Share a single data object via Ptr.**
+
+When you need to pass one data object to another thread (e.g., pushing a `Frame::Ptr` through a `MediaLink`, or emitting a signal with an `Image::Ptr`), wrap it in its `Ptr` type:
+
+```cpp
+// Producer thread
+Frame::Ptr frame = Frame::Ptr::create(desc);
+// ... fill frame data ...
+link.pushFrame(frame);  // Ptr safely crosses thread boundary
+
+// Consumer thread
+auto [frame, err] = link.pullFrame();
+// frame is now exclusively accessed by this thread
+```
+
+**Pattern 2: Build a composite structure and share via Ptr.**
+
+When you need to share multiple related values across threads, compose them into a shareable data object and share that object via `Ptr`:
+
+```cpp
+class RenderJob {
+        PROMEKI_SHARED_FINAL(RenderJob)
+        public:
+                using Ptr = SharedPtr<RenderJob>;
+                // ... fields ...
+        private:
+                ImageDesc       _desc;
+                Timecode        _startTC;
+                List<String>    _layers;
+};
+
+// Submit to thread pool
+RenderJob::Ptr job = RenderJob::Ptr::create(desc, tc, layers);
+pool.submit([job]() {
+        // job->desc(), job->startTC(), etc. — safe, no concurrent mutation
+});
+```
+
+**Do not** protect data objects with a `Mutex` as a general practice — if you find yourself wrapping a data object in a mutex, you should instead restructure so that each thread works on its own copy or uses the `Ptr` handoff pattern. The exception is explicitly thread-safe classes like `Queue` that manage their own synchronization.
+
+Simple data objects (no `PROMEKI_SHARED_FINAL`) are cheap to copy. When sharing simple types across threads, just copy them — no `Ptr` needed:
+
+```cpp
+Timecode tc = currentTimecode();
+pool.submit([tc]() {
+        // tc is a copy, safe to use
+});
+```
 
 ---
 
@@ -441,6 +494,28 @@ Every public method should have at minimum a `@brief` line. Document parameters,
  *         timeout) and Error::Ok or Error::Timeout.
  */
 std::pair<T, Error> pop(unsigned int timeoutMs = 0);
+```
+
+### Thread Safety Documentation
+
+Every class must document its thread safety guarantees in the class-level Doxygen comment. Use one of these standard statements:
+
+- **Thread-safe**: "All public methods are safe to call concurrently from multiple threads." — The class handles its own synchronization internally. Example: `Queue`.
+- **Not thread-safe**: "This class is not thread-safe. External synchronization is required for concurrent access." — The default for most data objects and simple types.
+- **Conditionally thread-safe**: "Distinct instances may be used concurrently. Concurrent access to a single instance requires external synchronization." — The common case for value types that are safe to copy across threads but not to mutate concurrently. Example: `List`, `Map`.
+- **Thread-affine**: "This class must only be used from the thread that created it (or the thread it was moved to via `moveToThread()`)." — For ObjectBase-derived classes bound to an EventLoop.
+
+When individual methods have different thread safety from the class default, document them at the method level. For example, a class that is generally not thread-safe but has a specific atomic query method should note that on the method.
+
+```cpp
+/**
+ * @brief Manages multicast group membership.
+ *
+ * This class is thread-affine: all methods must be called from
+ * the EventLoop thread this object belongs to.  Signals may be
+ * connected from any thread.
+ */
+class MulticastManager : public ObjectBase { ... };
 ```
 
 ### What Not to Document

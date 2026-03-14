@@ -1,0 +1,126 @@
+/**
+ * @page threading Threading and Concurrency
+ *
+ * @brief How to safely use promeki classes across threads.
+ *
+ * This page describes the threading model, thread safety guarantees, and
+ * recommended patterns for concurrent programming with promeki.
+ *
+ * @section thread_model Threading Model
+ *
+ * promeki uses a thread-affine model for functional objects (ObjectBase)
+ * and a value-handoff model for data objects.  The key concepts:
+ *
+ * - **Data objects** are plain values.  They are not internally
+ *   synchronized.  Share them across threads via @c Ptr (SharedPtr)
+ *   with ownership handoff, or by copying simple types.
+ * - **Functional objects** (ObjectBase) are bound to a specific thread's
+ *   @ref EventLoop.  Call their methods only from that thread.  Use
+ *   signals/slots for cross-thread communication -- the signal system
+ *   automatically marshals calls to the receiver's EventLoop.
+ * - **Thread-safe classes** like @ref Queue, @ref Mutex, and
+ *   @ref Atomic are explicitly documented as such and can be used from
+ *   any thread.
+ *
+ * @section thread_categories Thread Safety Categories
+ *
+ * Every class documents its thread safety guarantee using one of these
+ * categories:
+ *
+ * | Category | Meaning | Examples |
+ * |----------|---------|---------|
+ * | **Thread-safe** | All public methods may be called concurrently from any thread. Internally synchronized. | Queue, Mutex, Atomic |
+ * | **Not thread-safe** | External synchronization required for concurrent access to the same instance. | Most data objects when accessed directly |
+ * | **Conditionally thread-safe** | Distinct instances may be used concurrently. Concurrent access to a single instance requires external synchronization. | List, Map, Set, String |
+ * | **Thread-affine** | Must be used from the thread that created it (or the thread it was moved to via moveToThread()). | ObjectBase and all subclasses |
+ *
+ * @section thread_data Sharing Data Objects
+ *
+ * See the @ref dataobjects "Data Object Categories" page for detailed
+ * patterns and code examples.  Summary:
+ *
+ * - **Shareable types**: wrap in @c Ptr and hand off.  Do not mutate
+ *   from the original thread after handoff.
+ * - **Simple types**: copy by value -- they are small and cheap.
+ * - **Composite data**: build a shareable struct, share via @c Ptr.
+ * - **Do not** use Mutex to protect data objects.  Restructure to use
+ *   copy or Ptr handoff instead.
+ *
+ * @section thread_objectbase ObjectBase and Thread Affinity
+ *
+ * Every ObjectBase instance is associated with the @ref EventLoop of
+ * the thread that created it.  This is its thread affinity.
+ *
+ * - Call methods on an ObjectBase only from its affiliated thread.
+ * - Use @c moveToThread() to change affinity.  The object must not be
+ *   in use on the old thread when you move it.
+ * - Timers started with @c startTimer() fire on the object's EventLoop.
+ *
+ * @subsection thread_signals Cross-Thread Signals
+ *
+ * When a signal is connected to a slot on a different thread's
+ * EventLoop, the signal system automatically queues the call and
+ * delivers it on the receiver's thread.  This is the primary mechanism
+ * for safe cross-thread communication between functional objects.
+ *
+ * @code
+ * // producer runs on thread A
+ * // consumer runs on thread B
+ * ObjectBase::connect(&producer.dataReadySignal, &consumer.onDataReadySlot);
+ *
+ * // When producer emits dataReady, the slot is invoked on thread B's
+ * // EventLoop -- not on thread A.  No manual synchronization needed.
+ * @endcode
+ *
+ * Signal arguments are marshaled via VariantList for cross-thread
+ * dispatch, so all argument types must be representable as Variant.
+ *
+ * @section thread_eventloop EventLoop
+ *
+ * Each thread can have at most one @ref EventLoop.  The EventLoop
+ * processes events, timers, deferred calls, and cross-thread signal
+ * deliveries.
+ *
+ * - @c exec() runs the loop, blocking until @c quit() is called.
+ * - @c processEvents() runs one iteration without blocking -- suitable
+ *   for integration with external loops or WASM environments.
+ * - @ref Thread provides a built-in EventLoop.  The main thread's
+ *   EventLoop is set up by @ref Application.
+ *
+ * @section thread_pool ThreadPool
+ *
+ * @ref ThreadPool provides a pool of worker threads for running tasks
+ * concurrently.  Submit work with @c submit(), which returns a
+ * @ref Future for the result.
+ *
+ * @code
+ * ThreadPool pool;
+ * Future<int> result = pool.submit([]() {
+ *         return expensiveComputation();
+ * });
+ *
+ * // Later...
+ * auto [value, err] = result.result();
+ * @endcode
+ *
+ * Tasks submitted to the pool should be self-contained.  Pass data in
+ * by copy (for simple types) or by @c Ptr (for shareable types).  Do
+ * not capture raw pointers to ObjectBase instances -- use signals
+ * instead to communicate results back.
+ *
+ * @section thread_pipeline Pipeline Threading
+ *
+ * The @ref MediaPipeline schedules @ref MediaNode::process() calls
+ * across a thread pool.  Each node can specify its threading policy:
+ *
+ * - **UseGraphPool** (default): scheduled on the pipeline's shared
+ *   ThreadPool.
+ * - **DedicatedThread**: gets its own thread for deterministic
+ *   scheduling (e.g., real-time audio nodes).
+ * - **CustomPool**: uses a separate ThreadPool instance.
+ *
+ * Data flows between nodes through @ref MediaLink, which uses a
+ * thread-safe @ref Queue internally.  Nodes receive data via
+ * @c pullFrame() and produce data via @c pushFrame() -- both are
+ * safe to call from the node's processing thread.
+ */

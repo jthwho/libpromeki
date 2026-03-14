@@ -61,4 +61,76 @@
  * | @ref Image | Image descriptor + pixel buffer planes |
  * | @ref Audio | Audio descriptor + sample buffer |
  * | @ref Frame | Container of images, audio, and metadata |
+ *
+ * @section threading Thread Safety and Cross-Thread Sharing
+ *
+ * Data objects are not internally thread-safe.  Concurrent reads and writes
+ * to the same instance require external synchronization.  The recommended
+ * pattern for sharing data between threads is to use @c Ptr (@ref SharedPtr)
+ * with ownership handoff: once you pass a @c Ptr to another thread, do not
+ * mutate the underlying object from the original thread.
+ *
+ * @subsection thread_ptr Pattern 1: Share a single object via Ptr
+ *
+ * When you need to pass a data object to another thread (e.g., pushing a
+ * frame through a pipeline or emitting a signal), wrap it in its @c Ptr
+ * type.  The atomic reference counting in @ref SharedPtr makes the pointer
+ * itself safe to copy across threads.
+ *
+ * @code
+ * // Producer thread
+ * Frame::Ptr frame = Frame::Ptr::create(desc);
+ * // ... fill frame data ...
+ * link.pushFrame(frame);  // Ptr safely crosses thread boundary
+ *
+ * // Consumer thread
+ * auto [frame, err] = link.pullFrame();
+ * // frame is now exclusively accessed by this thread
+ * @endcode
+ *
+ * @subsection thread_composite Pattern 2: Composite structure via Ptr
+ *
+ * When you need to share multiple related values across threads, compose
+ * them into a shareable data object and share that object via @c Ptr:
+ *
+ * @code
+ * class RenderJob {
+ *         PROMEKI_SHARED_FINAL(RenderJob)
+ *         public:
+ *                 using Ptr = SharedPtr<RenderJob>;
+ *                 using List = promeki::List<RenderJob>;
+ *                 using PtrList = promeki::List<Ptr>;
+ *                 // ... accessors ...
+ *         private:
+ *                 ImageDesc       _desc;
+ *                 Timecode        _startTC;
+ *                 List<String>    _layers;
+ * };
+ *
+ * // Submit to thread pool
+ * RenderJob::Ptr job = RenderJob::Ptr::create(desc, tc, layers);
+ * pool.submit([job]() {
+ *         // job->desc(), job->startTC() -- safe, no concurrent mutation
+ * });
+ * @endcode
+ *
+ * @subsection thread_simple Simple types: just copy
+ *
+ * Simple data objects are small and cheap to copy.  When sharing them
+ * across threads, just capture or pass by value -- no @c Ptr needed:
+ *
+ * @code
+ * Timecode tc = currentTimecode();
+ * pool.submit([tc]() {
+ *         // tc is a copy, safe to use
+ * });
+ * @endcode
+ *
+ * @subsection thread_antipattern Avoid: Mutex around data objects
+ *
+ * Do not protect data objects with a @ref Mutex as a general practice.
+ * If you find yourself wrapping a data object in a mutex, restructure
+ * so that each thread works on its own copy or uses the @c Ptr handoff
+ * pattern.  The exception is explicitly thread-safe classes like
+ * @ref Queue that manage their own internal synchronization.
  */
