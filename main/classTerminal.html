@@ -102,6 +102,7 @@ $(document).ready(function(){initNavTree('classTerminal.html',''); initResizable
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classTerminal-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Terminal Class Reference</div></div>
 </div><!--header-->
@@ -114,6 +115,13 @@ $(document).ready(function(){initNavTree('classTerminal.html',''); initResizable
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:a3b725bcffc87ab4f96885009ca7aded6" id="r_a3b725bcffc87ab4f96885009ca7aded6"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">ColorSupport</a> { <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224">NoColor</a>
+, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893">Basic</a>
+, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8">Color256</a>
+, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a">TrueColor</a>
+ }</td></tr>
+<tr class="memdesc:a3b725bcffc87ab4f96885009ca7aded6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the color capability level of the terminal.  <a href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">More...</a><br /></td></tr>
+<tr class="separator:a3b725bcffc87ab4f96885009ca7aded6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a70127ef97279a2409d28edb6932bf6" id="r_a9a70127ef97279a2409d28edb6932bf6"><td class="memItemLeft" align="right" valign="top"><a id="a9a70127ef97279a2409d28edb6932bf6" name="a9a70127ef97279a2409d28edb6932bf6"></a>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ResizeCallback</b> = std::function&lt; <a class="el" href="classList.html">void</a>(int cols, int rows)&gt;</td></tr>
 <tr class="memdesc:a9a70127ef97279a2409d28edb6932bf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback type for window resize notifications. <br /></td></tr>
@@ -178,11 +186,73 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3be4d28c1a72ac1df50866bf8055c485" id="r_a3be4d28c1a72ac1df50866bf8055c485"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a3be4d28c1a72ac1df50866bf8055c485">writeOutput</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *data, int <a class="el" href="classList.html">len</a>)</td></tr>
 <tr class="memdesc:a3be4d28c1a72ac1df50866bf8055c485"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes raw bytes to stdout.  <br /></td></tr>
 <tr class="separator:a3be4d28c1a72ac1df50866bf8055c485"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a8ed768dcff34784d6bb9ae38f8af9726" id="r_a8ed768dcff34784d6bb9ae38f8af9726"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">ColorSupport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a8ed768dcff34784d6bb9ae38f8af9726">colorSupport</a> ()</td></tr>
+<tr class="memdesc:a8ed768dcff34784d6bb9ae38f8af9726"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detects the color support level of the terminal.  <br /></td></tr>
+<tr class="separator:a8ed768dcff34784d6bb9ae38f8af9726"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Low-level terminal I/O abstraction. </p>
-<p>Provides raw terminal mode, non-blocking input, window size queries, mouse tracking, and alternate screen buffer management. Platform-specific implementations use termios on POSIX and Console API on Windows. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+<p>Provides raw terminal mode, non-blocking input, window size queries, mouse tracking, alternate screen buffer management, and color capability detection. Platform-specific implementations use termios on POSIX and Console API on Windows. </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="a3b725bcffc87ab4f96885009ca7aded6" name="a3b725bcffc87ab4f96885009ca7aded6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b725bcffc87ab4f96885009ca7aded6">&#9670;&#160;</a></span>ColorSupport</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Describes the color capability level of the terminal. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224" name="a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224"></a>NoColor&#160;</td><td class="fielddoc"><p>No color support (e.g. dumb terminal, NO_COLOR set). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893" name="a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893"></a>Basic&#160;</td><td class="fielddoc"><p>Basic 8/16 color support (standard ANSI). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8" name="a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8"></a>Color256&#160;</td><td class="fielddoc"><p>256 color support (xterm-256color and similar). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a" name="a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a"></a>TrueColor&#160;</td><td class="fielddoc"><p>24-bit true color support. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a8ed768dcff34784d6bb9ae38f8af9726" name="a8ed768dcff34784d6bb9ae38f8af9726"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ed768dcff34784d6bb9ae38f8af9726">&#9670;&#160;</a></span>colorSupport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">ColorSupport</a> Terminal::colorSupport </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Detects the color support level of the terminal. </p>
+<p>Examines environment variables (NO_COLOR, COLORTERM, TERM, etc.) and platform capabilities to determine the level of color support. The result is cached after the first call.</p>
+<dl class="section return"><dt>Returns</dt><dd>The detected ColorSupport level. </dd></dl>
+
+</div>
+</div>
 <a id="a1dcb9ffbe927628d5a07e0a7ed4b219a" name="a1dcb9ffbe927628d5a07e0a7ed4b219a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1dcb9ffbe927628d5a07e0a7ed4b219a">&#9670;&#160;</a></span>disableAlternateScreen()</h2>
 
@@ -513,7 +583,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTerminal.html">Terminal</a></li>
-    <li class="footer">Generated on 2026-03-14 00:33:59 from commit f4eb68d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-14 00:50:31 from commit 63c287a (1.0.0).</li>
   </ul>
 </div>
 </body>

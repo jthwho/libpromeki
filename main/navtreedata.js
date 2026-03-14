@@ -135,17 +135,17 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "classAudioFile_1_1Impl.html#a82a1d7bd0ab27275b399ea5c73396656",
-"classEvent.html#a5881fa6d544bf96c5ba7abc9ce369d9b",
-"classJsonObject.html#aa5649b786ce841b945a9418abce302d1",
-"classMatrix3x3.html#a182a2e7e7dc310ac0305d19c0b57bd57",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3ab498bfe6b189dad3b9cab5f98c2d4b76",
-"classPaintEngine.html#a8afb12d3e1e316113d28dd4053215d3f",
-"classRefCount.html#a8bfac9a79d288ed4dbc93292cdbfae4a",
-"classStringLatin1Data.html#a412d69373d7be831cf9aea8c47da676b",
-"classTuiApplication.html#a278194102b9bfca8713efbd0f3c76147",
-"classTuiWidget.html#ac8335c87362fc1828a12384b0a8ecbb1",
-"label_8h.html",
-"structIsSharedObject.html"
+"classEvent.html#a125c246d8ea0315dcf6d8e56cd414c1c",
+"classJsonObject.html#aa41d053fc27e4fcf4f1c6f55ef28f4a9",
+"classMatrix3x3.html",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3ab2f4960fe742b0f9499b84d09fbc5b54",
+"classPaintEngine.html#a8a5c11dd17dd3d3d1ef10a087dad5d9e",
+"classRefCount.html#a871f21de0112bc4ca80b47d81e1be6e4",
+"classStringLatin1Data.html#a2d3e8ed9ce0042d3198489e71004a1f4",
+"classTuiApplication.html",
+"classTuiWidget.html#a9d728fc9be701fcb79199b7875571a41",
+"index.html#autotoc_md8",
+"structColorSpace_1_1Data.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

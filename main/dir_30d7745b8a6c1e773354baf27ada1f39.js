@@ -22,6 +22,7 @@ var dir_30d7745b8a6c1e773354baf27ada1f39 =
     [ "colorspace.h", "colorspace_8h.html", "colorspace_8h" ],
     [ "colorspaceconverter.h", "colorspaceconverter_8h.html", "colorspaceconverter_8h" ],
     [ "datetime.h", "datetime_8h.html", "datetime_8h" ],
+    [ "env.h", "env_8h.html", "env_8h" ],
     [ "error.h", "error_8h.html", "error_8h" ],
     [ "event.h", "event_8h.html", "event_8h" ],
     [ "eventloop.h", "eventloop_8h.html", "eventloop_8h" ],

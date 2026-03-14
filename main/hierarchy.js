@@ -36,6 +36,7 @@ var hierarchy =
     [ "ColorSpace::Data", "structColorSpace_1_1Data.html", null ],
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
     [ "DateTime", "classDateTime.html", null ],
+    [ "Env", "classEnv.html", null ],
     [ "Error", "classError.html", null ],
     [ "Event", "classEvent.html", [
       [ "KeyEvent", "classKeyEvent.html", null ],

@@ -6,6 +6,7 @@ var searchData=
   ['toolarge_3',['TooLarge',['../classError.html#ab5980e13b879db253df802b0950d1708aedd29d605deffb7b02d42d7ee3f586c7',1,'Error']]],
   ['toomanyopenfiles_4',['TooManyOpenFiles',['../classError.html#ab5980e13b879db253df802b0950d1708a985aaf4c33dfcbb502994dfb87bc024b',1,'Error']]],
   ['toomanyopensysfiles_5',['TooManyOpenSysFiles',['../classError.html#ab5980e13b879db253df802b0950d1708a1c30ea5641648c7319478796bc4d8438',1,'Error']]],
-  ['truncate_6',['Truncate',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a6e0c983dc71e31345fa3a7818ac285d8',1,'File']]],
-  ['tryagain_7',['TryAgain',['../classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b',1,'Error']]]
+  ['truecolor_6',['TrueColor',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a',1,'Terminal']]],
+  ['truncate_7',['Truncate',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a6e0c983dc71e31345fa3a7818ac285d8',1,'File']]],
+  ['tryagain_8',['TryAgain',['../classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b',1,'Error']]]
 ];

@@ -29,6 +29,7 @@ var annotated_dup =
     [ "CompiledString", "classCompiledString.html", "classCompiledString" ],
     [ "CSC", "structCSC.html", "structCSC" ],
     [ "DateTime", "classDateTime.html", "classDateTime" ],
+    [ "Env", "classEnv.html", null ],
     [ "Error", "classError.html", "classError" ],
     [ "Event", "classEvent.html", "classEvent" ],
     [ "EventLoop", "classEventLoop.html", "classEventLoop" ],

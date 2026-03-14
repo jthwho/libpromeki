@@ -1,6 +1,12 @@
 var classTerminal =
 [
     [ "ResizeCallback", "classTerminal.html#a9a70127ef97279a2409d28edb6932bf6", null ],
+    [ "ColorSupport", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6", [
+      [ "NoColor", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224", null ],
+      [ "Basic", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893", null ],
+      [ "Color256", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8", null ],
+      [ "TrueColor", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a", null ]
+    ] ],
     [ "disableAlternateScreen", "classTerminal.html#a1dcb9ffbe927628d5a07e0a7ed4b219a", null ],
     [ "disableBracketedPaste", "classTerminal.html#ab5a9bb5c5eca6e03bbaea057689e34e6", null ],
     [ "disableMouseTracking", "classTerminal.html#a0bcab3d4f89f1d4824b1fd500190618b", null ],
