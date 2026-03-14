@@ -9,6 +9,7 @@
 #include <promeki/tui/widget.h>
 #include <promeki/tui/label.h>
 #include <promeki/tui/button.h>
+#include <promeki/tui/checkbox.h>
 #include <promeki/tui/layout.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
@@ -20,6 +21,7 @@
 #include <promeki/tui/progressbar.h>
 #include <promeki/tui/tabwidget.h>
 #include <promeki/tui/splitter.h>
+#include <promeki/timerevent.h>
 
 using namespace promeki;
 
@@ -38,30 +40,45 @@ class BasicWidgetsTab : public TuiWidget {
                         _titleLabel->setAlignment(AlignCenter);
                         _layout->addWidget(_titleLabel);
 
-                        // Labels with different alignments
-                        _leftLabel = new TuiLabel("Left-aligned label", this);
+                        // Labels in a frame
+                        _labelFrame = new TuiFrame("Labels", this);
+                        auto *labelLayout = new TuiVBoxLayout(_labelFrame);
+                        _leftLabel = new TuiLabel("Left-aligned label", _labelFrame);
                         _leftLabel->setAlignment(AlignLeft);
-                        _layout->addWidget(_leftLabel);
-
-                        _centerLabel = new TuiLabel("Center-aligned label", this);
+                        labelLayout->addWidget(_leftLabel);
+                        _centerLabel = new TuiLabel("Center-aligned label", _labelFrame);
                         _centerLabel->setAlignment(AlignCenter);
-                        _layout->addWidget(_centerLabel);
-
-                        _rightLabel = new TuiLabel("Right-aligned label", this);
+                        labelLayout->addWidget(_centerLabel);
+                        _rightLabel = new TuiLabel("Right-aligned label", _labelFrame);
                         _rightLabel->setAlignment(AlignRight);
-                        _layout->addWidget(_rightLabel);
+                        labelLayout->addWidget(_rightLabel);
+                        _labelFrame->setLayout(labelLayout);
+                        _layout->addWidget(_labelFrame);
 
                         // Buttons
                         auto *buttonRow = new TuiHBoxLayout(this);
                         buttonRow->setSpacing(2);
-                        _helloButton = new TuiButton("[ Hello ]", this);
+                        _helloButton = new TuiButton("Hello", this);
                         buttonRow->addWidget(_helloButton);
-                        _worldButton = new TuiButton("[ World ]", this);
+                        _worldButton = new TuiButton("World", this);
                         buttonRow->addWidget(_worldButton);
-                        _quitButton = new TuiButton("[ Quit ]", this);
+                        _quitButton = new TuiButton("Quit", this);
                         buttonRow->addWidget(_quitButton);
                         buttonRow->addStretch();
                         _layout->addLayout(buttonRow);
+
+                        // Checkboxes
+                        auto *checkRow = new TuiHBoxLayout(this);
+                        checkRow->setSpacing(2);
+                        _optionA = new TuiCheckBox("Option A", this);
+                        checkRow->addWidget(_optionA);
+                        _optionB = new TuiCheckBox("Option B", this);
+                        _optionB->setChecked(true);
+                        checkRow->addWidget(_optionB);
+                        _optionC = new TuiCheckBox("Option C", this);
+                        checkRow->addWidget(_optionC);
+                        checkRow->addStretch();
+                        _layout->addLayout(checkRow);
 
                         // Progress bar
                         _progressLabel = new TuiLabel("Progress: 0%", this);
@@ -70,6 +87,8 @@ class BasicWidgetsTab : public TuiWidget {
                         _progressBar->setRange(0, 100);
                         _progressBar->setValue(0);
                         _layout->addWidget(_progressBar);
+
+                        _layout->addStretch();
 
                         setLayout(_layout);
 
@@ -85,13 +104,33 @@ class BasicWidgetsTab : public TuiWidget {
                                 &_quitButton->clickedSignal,
                                 &quitSlot
                         );
+                        ObjectBase::connect(
+                                &_optionA->toggledSignal,
+                                &checkboxToggledSlot
+                        );
+                        ObjectBase::connect(
+                                &_optionB->toggledSignal,
+                                &checkboxToggledSlot
+                        );
+                        ObjectBase::connect(
+                                &_optionC->toggledSignal,
+                                &checkboxToggledSlot
+                        );
+
+                        // Auto-advance progress bar on a timer
+                        _timerId = startTimer(200);
                 }
 
                 PROMEKI_SLOT(hello);
                 PROMEKI_SLOT(world);
                 PROMEKI_SLOT(quit);
+                PROMEKI_SLOT(checkboxToggled, bool);
 
         protected:
+                void timerEvent(TimerEvent *) override {
+                        advanceProgress();
+                }
+
                 void paintEvent(TuiPaintEvent *) override {
                         TuiApplication *app = TuiApplication::instance();
                         if(!app) return;
@@ -99,8 +138,8 @@ class BasicWidgetsTab : public TuiWidget {
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                        painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
+                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -112,18 +151,23 @@ class BasicWidgetsTab : public TuiWidget {
                 TuiStatusBar    *_statusBar;
                 TuiVBoxLayout   *_layout;
                 TuiLabel        *_titleLabel;
+                TuiFrame        *_labelFrame;
                 TuiLabel        *_leftLabel;
                 TuiLabel        *_centerLabel;
                 TuiLabel        *_rightLabel;
                 TuiButton       *_helloButton;
                 TuiButton       *_worldButton;
                 TuiButton       *_quitButton;
+                TuiCheckBox     *_optionA;
+                TuiCheckBox     *_optionB;
+                TuiCheckBox     *_optionC;
                 TuiLabel        *_progressLabel;
                 TuiProgressBar  *_progressBar;
                 int             _progressValue = 0;
+                int             _timerId = -1;
 
                 void advanceProgress() {
-                        _progressValue = (_progressValue + 10) % 110;
+                        _progressValue = (_progressValue + 1) % 101;
                         _progressBar->setValue(_progressValue);
                         _progressLabel->setText(
                                 String("Progress: ") + String::number(_progressValue) + "%");
@@ -132,17 +176,20 @@ class BasicWidgetsTab : public TuiWidget {
 
 void BasicWidgetsTab::hello() {
         _statusBar->showMessage("Hello button clicked!", 3000);
-        advanceProgress();
 }
 
 void BasicWidgetsTab::world() {
         _statusBar->showMessage("World button clicked!", 3000);
-        advanceProgress();
 }
 
 void BasicWidgetsTab::quit() {
         TuiApplication *app = TuiApplication::instance();
         if(app) app->quit(0);
+}
+
+void BasicWidgetsTab::checkboxToggled(bool checked) {
+        String msg = String("Checkbox toggled: ") + (checked ? "checked" : "unchecked");
+        _statusBar->showMessage(msg, 3000);
 }
 
 // ── Tab 2: Text Input ────────────────────────────────────────────────
@@ -206,8 +253,8 @@ class TextInputTab : public TuiWidget {
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                        painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
+                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -308,8 +355,8 @@ class ListViewTab : public TuiWidget {
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                        painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
+                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -374,8 +421,8 @@ class SplitterTab : public TuiWidget {
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                        painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
+                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 
@@ -402,7 +449,7 @@ class DemoWidget : public TuiWidget {
                         // Status bar at the bottom
                         _statusBar = new TuiStatusBar(this);
                         _statusBar->setPermanentMessage(
-                                "Tab: navigate | Alt+Left/Right: switch tabs | Ctrl+Q: quit");
+                                "Tab: navigate | Ctrl+Left/Right: switch tabs | Ctrl+Q: quit");
 
                         // Tab widget fills most of the screen
                         _tabWidget = new TuiTabWidget(this);
@@ -433,8 +480,8 @@ class DemoWidget : public TuiWidget {
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                        painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
+                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 

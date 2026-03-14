@@ -29,6 +29,7 @@ class TuiButton : public TuiWidget {
                 const String &text() const { return _text; }
 
                 Size2Di32 sizeHint() const override;
+                Size2Di32 minimumSizeHint() const override;
 
                 /** @brief Emitted when the button is activated. */
                 PROMEKI_SIGNAL(clicked)
@@ -42,6 +43,7 @@ class TuiButton : public TuiWidget {
 
         private:
                 String _text;
+                bool   _pressed = false;
 };
 
 PROMEKI_NAMESPACE_END

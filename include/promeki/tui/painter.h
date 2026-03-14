@@ -54,22 +54,28 @@ class TuiPainter {
                 void drawVLine(int x, int y, int len, char32_t ch = U'\u2502');
 
                 /** @brief Sets the current foreground color. */
-                void setForeground(const Color &color) { _fg = color; }
+                void setForeground(const Color &color) { _style.setForeground(color); }
 
                 /** @brief Sets the current background color. */
-                void setBackground(const Color &color) { _bg = color; }
+                void setBackground(const Color &color) { _style.setBackground(color); }
 
-                /** @brief Sets the current style flags. */
-                void setStyle(uint8_t style) { _style = style; }
+                /** @brief Sets the current attribute flags. */
+                void setAttrs(uint8_t attrs) { _style.setAttrs(attrs); }
+
+                /** @brief Sets all visual properties from a TuiStyle. */
+                void setStyle(const TuiStyle &style) { _style = style; }
 
                 /** @brief Returns the current foreground color. */
-                const Color &foreground() const { return _fg; }
+                Color foreground() const { return _style.foreground(); }
 
                 /** @brief Returns the current background color. */
-                const Color &background() const { return _bg; }
+                Color background() const { return _style.background(); }
 
-                /** @brief Returns the current style flags. */
-                uint8_t style() const { return _style; }
+                /** @brief Returns the current attribute flags. */
+                uint8_t attrs() const { return _style.attrs(); }
+
+                /** @brief Returns the current style. */
+                const TuiStyle &style() const { return _style; }
 
                 /** @brief Sets the clipping rectangle. */
                 void setClipRect(const Rect2Di32 &rect) { _clipRect = rect; }
@@ -79,10 +85,8 @@ class TuiPainter {
 
         private:
                 TuiScreen       &_screen;
-                Rect2Di32          _clipRect;
-                Color           _fg = Color::White;
-                Color           _bg = Color::Black;
-                uint8_t         _style = TuiStyleNone;
+                Rect2Di32       _clipRect;
+                TuiStyle        _style = TuiStyle(Color::White, Color::Black);
 
                 void putCell(int x, int y, char32_t ch);
 };

@@ -29,13 +29,13 @@ class TuiLayout : public ObjectBase {
                 virtual ~TuiLayout();
 
                 /** @brief Adds a widget to this layout. */
-                void addWidget(TuiWidget *widget);
+                virtual void addWidget(TuiWidget *widget);
 
                 /** @brief Removes a widget from this layout. */
                 void removeWidget(TuiWidget *widget);
 
                 /** @brief Adds a nested layout. */
-                void addLayout(TuiLayout *layout);
+                virtual void addLayout(TuiLayout *layout);
 
                 /** @brief Sets the margins (top, right, bottom, left). */
                 void setMargins(int top, int right, int bottom, int left);
@@ -103,6 +103,10 @@ enum TuiBoxDirection {
 
 /**
  * @brief Layout that arranges widgets in a horizontal or vertical line.
+ *
+ * Items are added in order via addWidget(), addLayout(), or addStretch().
+ * All three are placed into a single ordered list so that sub-layouts
+ * participate in size negotiation and positioning just like widgets.
  */
 class TuiBoxLayout : public TuiLayout {
         PROMEKI_OBJECT(TuiBoxLayout, TuiLayout)
@@ -117,6 +121,12 @@ class TuiBoxLayout : public TuiLayout {
                 /** @brief Returns the direction. */
                 TuiBoxDirection direction() const { return _direction; }
 
+                /** @brief Adds a widget to the ordered item list. */
+                void addWidget(TuiWidget *widget) override;
+
+                /** @brief Adds a sub-layout to the ordered item list. */
+                void addLayout(TuiLayout *layout) override;
+
                 /** @brief Adds a stretch item with the given factor. */
                 void addStretch(int factor = 1);
 
@@ -130,8 +140,17 @@ class TuiBoxLayout : public TuiLayout {
                 Size2Di32 sizeHint() const override;
 
         private:
+                /** @brief A single item in the box layout's ordered list. */
+                struct Item {
+                        enum Type { WidgetItem, LayoutItem, StretchItem };
+                        Type            type;
+                        TuiWidget       *widget = nullptr;
+                        TuiLayout       *layout = nullptr;
+                        int             stretchFactor = 0;
+                };
+
                 TuiBoxDirection         _direction;
-                List<int>               _stretchFactors;
+                List<Item>              _items;
 };
 
 /**

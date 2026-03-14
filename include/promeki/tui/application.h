@@ -12,6 +12,7 @@
 #include <promeki/application.h>
 #include <promeki/terminal.h>
 #include <promeki/point.h>
+#include <promeki/eventloop.h>
 #include <promeki/tui/screen.h>
 #include <promeki/tui/palette.h>
 #include <promeki/tui/inputparser.h>
@@ -113,9 +114,23 @@ class TuiApplication : public Application {
                  */
                 void markNeedsRepaint();
 
+                /**
+                 * @brief Grabs mouse events for a widget.
+                 *
+                 * While grabbed, all mouse events are sent to the grabbing
+                 * widget regardless of cursor position.
+                 */
+                void grabMouse(TuiWidget *widget) { _mouseGrab = widget; }
+
+                /**
+                 * @brief Releases the mouse grab.
+                 */
+                void releaseMouse() { _mouseGrab = nullptr; }
+
         private:
                 static TuiApplication  *_instance;
 
+                EventLoop               _eventLoop;
                 Terminal                _terminal;
                 TuiScreen               _screen;
                 TuiPalette              _palette;
@@ -123,6 +138,7 @@ class TuiApplication : public Application {
                 AnsiStream              _ansiStream;
                 TuiWidget               *_rootWidget = nullptr;
                 TuiWidget               *_focusWidget = nullptr;
+                TuiWidget               *_mouseGrab = nullptr;
                 int                     _exitCode = 0;
                 bool                    _running = false;
                 bool                    _needsRepaint = true;

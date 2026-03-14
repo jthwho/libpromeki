@@ -81,6 +81,43 @@ class Color {
                  */
                 Color lerp(const Color &other, double t) const;
 
+                /**
+                 * @brief Returns the RGB-inverted color (255 - each channel).
+                 *
+                 * Alpha is preserved.
+                 */
+                Color inverted() const {
+                        return Color(255 - _r, 255 - _g, 255 - _b, _a);
+                }
+
+                /**
+                 * @brief Returns the perceptual luminance (0.0 to 1.0).
+                 *
+                 * Uses the Rec. 709 luminance coefficients.
+                 */
+                double luminance() const {
+                        return (0.2126 * _r + 0.7152 * _g + 0.0722 * _b) / 255.0;
+                }
+
+                /**
+                 * @brief Returns black or white, whichever contrasts best.
+                 *
+                 * Uses perceptual luminance to decide.  Alpha is preserved.
+                 */
+                Color contrastingBW() const {
+                        return luminance() > 0.5
+                                ? Color(0, 0, 0, _a)
+                                : Color(255, 255, 255, _a);
+                }
+
+                /**
+                 * @brief Returns the complementary color (hue rotated 180 degrees).
+                 *
+                 * Converts to HSL, rotates hue by 180 degrees, and converts
+                 * back.  Saturation, lightness, and alpha are preserved.
+                 */
+                Color complementary() const;
+
                 /** @brief Equality operator. */
                 bool operator==(const Color &other) const {
                         return _r == other._r && _g == other._g &&
@@ -105,6 +142,7 @@ class Color {
                 static const Color LightGray;
                 static const Color Orange;
                 static const Color Transparent;
+                static const Color Ignored;
 
         private:
                 uint8_t _r = 0;

@@ -54,23 +54,34 @@ void TuiProgressBar::paintEvent(TuiPaintEvent *) {
         bool focused = hasFocus();
         bool enabled = isEnabled();
 
-        // Draw filled portion
-        painter.setForeground(Color::White);
-        painter.setBackground(pal.color(TuiPalette::ProgressFilled, focused, enabled));
-        painter.fillRect(Rect2Di32(0, 0, filledWidth, height()), U'\u2588');
+        TuiStyle filledBg = pal.style(TuiPalette::ProgressFilled, focused, enabled);
+        TuiStyle emptyBg = pal.style(TuiPalette::ProgressEmpty, focused, enabled);
+
+        // Draw filled portion (use the bg color as both fg and bg for a solid block)
+        Color filledColor = filledBg.background();
+        painter.setStyle(TuiStyle(filledColor, filledColor));
+        painter.fillRect(Rect2Di32(0, 0, filledWidth, height()));
 
         // Draw empty portion
-        painter.setForeground(Color::DarkGray);
-        painter.setBackground(pal.color(TuiPalette::ProgressEmpty, focused, enabled));
-        painter.fillRect(Rect2Di32(filledWidth, 0, width() - filledWidth, height()), U'\u2591');
+        Color emptyColor = emptyBg.background();
+        painter.setStyle(TuiStyle(emptyColor, emptyColor));
+        painter.fillRect(Rect2Di32(filledWidth, 0, width() - filledWidth, height()));
 
-        // Draw percentage text
+        // Draw percentage text with palette-driven colors at the fill boundary
         if(width() >= 5) {
                 String pct = String::number(static_cast<int>(fraction * 100)) + "%";
                 int textX = (width() - static_cast<int>(pct.length())) / 2;
-                painter.setForeground(Color::White);
-                painter.setBackground(Color());  // transparent
-                painter.drawText(textX, 0, pct);
+                TuiStyle filledText = pal.style(TuiPalette::ProgressFilledText, focused, enabled);
+                TuiStyle emptyText = pal.style(TuiPalette::ProgressEmptyText, focused, enabled);
+                for(size_t ci = 0; ci < pct.length(); ++ci) {
+                        int cx = textX + static_cast<int>(ci);
+                        if(cx < filledWidth) {
+                                painter.setStyle(filledText.merged(TuiStyle::fromBackground(filledColor)));
+                        } else {
+                                painter.setStyle(emptyText.merged(TuiStyle::fromBackground(emptyColor)));
+                        }
+                        painter.drawChar(cx, 0, static_cast<char32_t>(pct.str()[ci]));
+                }
         }
 }
 

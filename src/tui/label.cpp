@@ -38,8 +38,9 @@ void TuiLabel::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::WindowText, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, hasFocus(), isEnabled()));
+        TuiStyle s = pal.style(TuiPalette::WindowText, hasFocus(), isEnabled())
+                        .merged(pal.style(TuiPalette::Window, hasFocus(), isEnabled()));
+        painter.setStyle(s);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
         // Draw text

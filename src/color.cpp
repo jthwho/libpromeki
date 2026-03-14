@@ -24,6 +24,7 @@ const Color Color::DarkGray(64, 64, 64);
 const Color Color::LightGray(192, 192, 192);
 const Color Color::Orange(255, 165, 0);
 const Color Color::Transparent(0, 0, 0, 0);
+const Color Color::Ignored;
 
 Color Color::fromHex(const String &hex) {
         const char *str = hex.cstr();
@@ -57,6 +58,60 @@ Color Color::lerp(const Color &other, double t) const {
         };
         return Color(mix(_r, other._r), mix(_g, other._g),
                      mix(_b, other._b), mix(_a, other._a));
+}
+
+Color Color::complementary() const {
+        // Convert RGB to HSL
+        double rf = _r / 255.0;
+        double gf = _g / 255.0;
+        double bf = _b / 255.0;
+        double maxC = std::fmax(rf, std::fmax(gf, bf));
+        double minC = std::fmin(rf, std::fmin(gf, bf));
+        double delta = maxC - minC;
+        double l = (maxC + minC) / 2.0;
+        double h = 0.0;
+        double s = 0.0;
+
+        if(delta > 0.0) {
+                s = (l < 0.5) ? delta / (maxC + minC) : delta / (2.0 - maxC - minC);
+                if(maxC == rf)      h = std::fmod((gf - bf) / delta, 6.0);
+                else if(maxC == gf) h = (bf - rf) / delta + 2.0;
+                else                h = (rf - gf) / delta + 4.0;
+                h *= 60.0;
+                if(h < 0.0) h += 360.0;
+        }
+
+        // Rotate hue 180 degrees
+        h = std::fmod(h + 180.0, 360.0);
+
+        // Convert HSL back to RGB
+        auto hueToRgb = [](double p, double q, double t) -> double {
+                if(t < 0.0) t += 1.0;
+                if(t > 1.0) t -= 1.0;
+                if(t < 1.0 / 6.0) return p + (q - p) * 6.0 * t;
+                if(t < 1.0 / 2.0) return q;
+                if(t < 2.0 / 3.0) return p + (q - p) * (2.0 / 3.0 - t) * 6.0;
+                return p;
+        };
+
+        double ro, go, bo;
+        if(s == 0.0) {
+                ro = go = bo = l;
+        } else {
+                double q = (l < 0.5) ? l * (1.0 + s) : l + s - l * s;
+                double p = 2.0 * l - q;
+                double hn = h / 360.0;
+                ro = hueToRgb(p, q, hn + 1.0 / 3.0);
+                go = hueToRgb(p, q, hn);
+                bo = hueToRgb(p, q, hn - 1.0 / 3.0);
+        }
+
+        return Color(
+                static_cast<uint8_t>(std::round(ro * 255.0)),
+                static_cast<uint8_t>(std::round(go * 255.0)),
+                static_cast<uint8_t>(std::round(bo * 255.0)),
+                _a
+        );
 }
 
 PROMEKI_NAMESPACE_END

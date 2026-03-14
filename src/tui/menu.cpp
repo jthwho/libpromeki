@@ -81,32 +81,41 @@ void TuiMenu::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::Mid, true, isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, true, isEnabled()));
+        bool enabled = isEnabled();
+
+        TuiStyle bgStyle = pal.style(TuiPalette::Mid, true, enabled)
+                                .merged(pal.style(TuiPalette::Window, true, enabled));
+        painter.setStyle(bgStyle);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
         painter.drawRect(Rect2Di32(0, 0, width(), height()));
+
+        TuiStyle normalStyle = pal.style(TuiPalette::WindowText, true, enabled)
+                                .merged(pal.style(TuiPalette::Window, true, enabled));
+        TuiStyle hlStyle = pal.style(TuiPalette::HighlightedText, true, enabled)
+                                .merged(pal.style(TuiPalette::Highlight, true, enabled));
 
         for(size_t i = 0; i < _actions.size(); ++i) {
                 int row = static_cast<int>(i) + 1;
                 if(_separators[i]) {
+                        painter.setStyle(bgStyle);
                         painter.drawHLine(1, row, width() - 2, U'\u2500');
                         continue;
                 }
                 if(!_actions[i]) continue;
 
                 if(static_cast<int>(i) == _currentIndex) {
-                        painter.setForeground(pal.color(TuiPalette::HighlightedText, true, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Highlight, true, isEnabled()));
+                        painter.setStyle(hlStyle);
                         painter.fillRect(Rect2Di32(1, row, width() - 2, 1));
                 } else {
-                        painter.setForeground(pal.color(TuiPalette::WindowText, true, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, true, isEnabled()));
+                        painter.setStyle(normalStyle);
                 }
                 painter.drawText(2, row, _actions[i]->text());
         }
 }
 
 void TuiMenu::keyEvent(KeyEvent *e) {
+        // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
+        if(e->isCtrl()) return;
         switch(e->key()) {
                 case KeyEvent::Key_Up:
                         if(_currentIndex > 0) {
@@ -169,19 +178,23 @@ void TuiMenuBar::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::StatusBarText, false, isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::StatusBar, false, isEnabled()));
+        bool enabled = isEnabled();
+
+        TuiStyle barStyle = pal.style(TuiPalette::StatusBarText, false, enabled)
+                                .merged(pal.style(TuiPalette::StatusBar, false, enabled));
+        painter.setStyle(barStyle);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
+
+        TuiStyle hlStyle = pal.style(TuiPalette::HighlightedText, true, enabled)
+                                .merged(pal.style(TuiPalette::Highlight, true, enabled));
 
         int xpos = 0;
         for(size_t i = 0; i < _menus.size(); ++i) {
                 String label = String(" ") + _menus[i]->title() + " ";
                 if(static_cast<int>(i) == _currentIndex && _active) {
-                        painter.setForeground(pal.color(TuiPalette::HighlightedText, true, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Highlight, true, isEnabled()));
+                        painter.setStyle(hlStyle);
                 } else {
-                        painter.setForeground(pal.color(TuiPalette::StatusBarText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::StatusBar, false, isEnabled()));
+                        painter.setStyle(barStyle);
                 }
                 painter.drawText(xpos, 0, label);
                 xpos += static_cast<int>(label.length());

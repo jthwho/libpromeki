@@ -12,53 +12,57 @@ using namespace promeki;
 
 TEST_CASE("TuiPalette: default construction") {
         TuiPalette pal;
-        // Default palette should have non-default colors for common roles
-        Color win = pal.color(TuiPalette::Active, TuiPalette::Window);
-        Color text = pal.color(TuiPalette::Active, TuiPalette::WindowText);
-        // Just verify we can query without crashing and get valid colors
-        CHECK(win.isValid());
-        CHECK(text.isValid());
+        // Default palette should have styles with valid colors for common roles
+        TuiStyle win = pal.style(TuiPalette::Active, TuiPalette::Window);
+        TuiStyle text = pal.style(TuiPalette::Active, TuiPalette::WindowText);
+        // Window is a background role, WindowText is a foreground role
+        CHECK(win.hasBackground());
+        CHECK(text.hasForeground());
 }
 
-TEST_CASE("TuiPalette: setColor and color") {
+TEST_CASE("TuiPalette: setStyle and style") {
         TuiPalette pal;
-        pal.setColor(TuiPalette::Active, TuiPalette::Window, Color::Red);
-        CHECK(pal.color(TuiPalette::Active, TuiPalette::Window) == Color::Red);
+        TuiStyle red = TuiStyle::fromBackground(Color::Red);
+        TuiStyle blue = TuiStyle::fromBackground(Color::Blue);
 
-        pal.setColor(TuiPalette::Inactive, TuiPalette::Window, Color::Blue);
-        CHECK(pal.color(TuiPalette::Inactive, TuiPalette::Window) == Color::Blue);
+        pal.setStyle(TuiPalette::Active, TuiPalette::Window, red);
+        CHECK(pal.style(TuiPalette::Active, TuiPalette::Window).background() == Color::Red);
+
+        pal.setStyle(TuiPalette::Inactive, TuiPalette::Window, blue);
+        CHECK(pal.style(TuiPalette::Inactive, TuiPalette::Window).background() == Color::Blue);
 
         // Active should still be red
-        CHECK(pal.color(TuiPalette::Active, TuiPalette::Window) == Color::Red);
+        CHECK(pal.style(TuiPalette::Active, TuiPalette::Window).background() == Color::Red);
 }
 
-TEST_CASE("TuiPalette: color groups are independent") {
+TEST_CASE("TuiPalette: style groups are independent") {
         TuiPalette pal;
-        pal.setColor(TuiPalette::Active, TuiPalette::Text, Color::White);
-        pal.setColor(TuiPalette::Inactive, TuiPalette::Text, Color::LightGray);
-        pal.setColor(TuiPalette::Disabled, TuiPalette::Text, Color::DarkGray);
+        pal.setStyle(TuiPalette::Active, TuiPalette::Text, TuiStyle::fromForeground(Color::White));
+        pal.setStyle(TuiPalette::Inactive, TuiPalette::Text, TuiStyle::fromForeground(Color::LightGray));
+        pal.setStyle(TuiPalette::Disabled, TuiPalette::Text, TuiStyle::fromForeground(Color::DarkGray));
 
-        CHECK(pal.color(TuiPalette::Active, TuiPalette::Text) == Color::White);
-        CHECK(pal.color(TuiPalette::Inactive, TuiPalette::Text) == Color::LightGray);
-        CHECK(pal.color(TuiPalette::Disabled, TuiPalette::Text) == Color::DarkGray);
+        CHECK(pal.style(TuiPalette::Active, TuiPalette::Text).foreground() == Color::White);
+        CHECK(pal.style(TuiPalette::Inactive, TuiPalette::Text).foreground() == Color::LightGray);
+        CHECK(pal.style(TuiPalette::Disabled, TuiPalette::Text).foreground() == Color::DarkGray);
 }
 
-TEST_CASE("TuiPalette: convenience color method") {
+TEST_CASE("TuiPalette: convenience style method") {
         TuiPalette pal;
-        pal.setColor(TuiPalette::Active, TuiPalette::Base, Color::White);
-        pal.setColor(TuiPalette::Inactive, TuiPalette::Base, Color::LightGray);
-        pal.setColor(TuiPalette::Disabled, TuiPalette::Base, Color::DarkGray);
+        pal.setStyle(TuiPalette::Active, TuiPalette::Base, TuiStyle::fromBackground(Color::White));
+        pal.setStyle(TuiPalette::Inactive, TuiPalette::Base, TuiStyle::fromBackground(Color::LightGray));
+        pal.setStyle(TuiPalette::Disabled, TuiPalette::Base, TuiStyle::fromBackground(Color::DarkGray));
 
-        CHECK(pal.color(TuiPalette::Base, true, true) == Color::White);     // focused + enabled = Active
-        CHECK(pal.color(TuiPalette::Base, false, true) == Color::LightGray); // !focused + enabled = Inactive
-        CHECK(pal.color(TuiPalette::Base, false, false) == Color::DarkGray); // disabled
-        CHECK(pal.color(TuiPalette::Base, true, false) == Color::DarkGray);  // disabled overrides focus
+        CHECK(pal.style(TuiPalette::Base, true, true).background() == Color::White);      // focused + enabled = Active
+        CHECK(pal.style(TuiPalette::Base, false, true).background() == Color::LightGray);  // !focused + enabled = Inactive
+        CHECK(pal.style(TuiPalette::Base, false, false).background() == Color::DarkGray);  // disabled
+        CHECK(pal.style(TuiPalette::Base, true, false).background() == Color::DarkGray);   // disabled overrides focus
 }
 
-TEST_CASE("TuiPalette: all color roles queryable") {
+TEST_CASE("TuiPalette: all roles queryable") {
         TuiPalette pal;
         for(int role = 0; role < TuiPalette::RoleCount; ++role) {
-                Color c = pal.color(TuiPalette::Active, static_cast<TuiPalette::ColorRole>(role));
-                CHECK(c.isValid());
+                TuiStyle s = pal.style(TuiPalette::Active, static_cast<TuiPalette::ColorRole>(role));
+                // Every role should have at least a foreground or background defined
+                CHECK((s.hasForeground() || s.hasBackground()));
         }
 }

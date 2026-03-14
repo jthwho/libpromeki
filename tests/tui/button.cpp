@@ -26,5 +26,5 @@ TEST_CASE("TuiButton: sizeHint") {
         TuiButton button("OK");
         Size2Di32 hint = button.sizeHint();
         CHECK(hint.width() == 6); // "OK" + 4 padding
-        CHECK(hint.height() == 3);
+        CHECK(hint.height() == 1);
 }

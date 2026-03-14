@@ -98,3 +98,67 @@ TEST_CASE("Color: setters") {
         CHECK(c.b() == 30);
         CHECK(c.a() == 40);
 }
+
+TEST_CASE("Color: inverted") {
+        Color c(100, 200, 50, 128);
+        Color inv = c.inverted();
+        CHECK(inv.r() == 155);
+        CHECK(inv.g() == 55);
+        CHECK(inv.b() == 205);
+        CHECK(inv.a() == 128); // alpha preserved
+}
+
+TEST_CASE("Color: inverted black to white") {
+        Color inv = Color::Black.inverted();
+        CHECK(inv.r() == 255);
+        CHECK(inv.g() == 255);
+        CHECK(inv.b() == 255);
+}
+
+TEST_CASE("Color: inverted white to black") {
+        Color inv = Color::White.inverted();
+        CHECK(inv.r() == 0);
+        CHECK(inv.g() == 0);
+        CHECK(inv.b() == 0);
+}
+
+TEST_CASE("Color: complementary red to cyan") {
+        Color comp = Color::Red.complementary();
+        CHECK(comp.r() == 0);
+        CHECK(comp.g() == 255);
+        CHECK(comp.b() == 255);
+}
+
+TEST_CASE("Color: complementary preserves alpha") {
+        Color c(255, 0, 0, 128);
+        Color comp = c.complementary();
+        CHECK(comp.a() == 128);
+}
+
+TEST_CASE("Color: luminance black is zero") {
+        CHECK(Color::Black.luminance() == doctest::Approx(0.0));
+}
+
+TEST_CASE("Color: luminance white is one") {
+        CHECK(Color::White.luminance() == doctest::Approx(1.0));
+}
+
+TEST_CASE("Color: contrastingBW on dark color returns white") {
+        Color dark(32, 160, 64); // ProgressFilled green
+        Color contrast = dark.contrastingBW();
+        CHECK(contrast == Color(255, 255, 255, 255));
+}
+
+TEST_CASE("Color: contrastingBW on light color returns black") {
+        Color light(200, 220, 240);
+        Color contrast = light.contrastingBW();
+        CHECK(contrast == Color(0, 0, 0, 255));
+}
+
+TEST_CASE("Color: complementary gray is gray") {
+        Color c(128, 128, 128);
+        Color comp = c.complementary();
+        CHECK(comp.r() == 128);
+        CHECK(comp.g() == 128);
+        CHECK(comp.b() == 128);
+}

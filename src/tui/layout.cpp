@@ -65,54 +65,78 @@ TuiBoxLayout::TuiBoxLayout(TuiBoxDirection direction, ObjectBase *parent)
         : TuiLayout(parent), _direction(direction) {
 }
 
+void TuiBoxLayout::addWidget(TuiWidget *widget) {
+        TuiLayout::addWidget(widget);
+        Item item;
+        item.type = Item::WidgetItem;
+        item.widget = widget;
+        _items += item;
+}
+
+void TuiBoxLayout::addLayout(TuiLayout *layout) {
+        TuiLayout::addLayout(layout);
+        Item item;
+        item.type = Item::LayoutItem;
+        item.layout = layout;
+        _items += item;
+}
+
 void TuiBoxLayout::addStretch(int factor) {
-        _stretchFactors += factor;
-        // Add a null widget placeholder
-        _widgets += nullptr;
+        Item item;
+        item.type = Item::StretchItem;
+        item.stretchFactor = factor;
+        _items += item;
 }
 
 void TuiBoxLayout::setStretch(int index, int factor) {
-        while(_stretchFactors.size() <= static_cast<size_t>(index)) {
-                _stretchFactors += 0;
+        if(index >= 0 && static_cast<size_t>(index) < _items.size()) {
+                _items[index].stretchFactor = factor;
         }
-        _stretchFactors[index] = factor;
 }
 
 void TuiBoxLayout::calculateLayout(const Rect2Di32 &available) {
         Rect2Di32 content = contentRect(available);
-        if(content.isEmpty() || _widgets.isEmpty()) return;
+        if(content.isEmpty() || _items.isEmpty()) return;
 
         bool horizontal = (_direction == LeftToRight || _direction == RightToLeft);
         int totalSpace = horizontal ? content.width() : content.height();
         int crossSpace = horizontal ? content.height() : content.width();
-        int itemCount = _widgets.size();
+        int itemCount = static_cast<int>(_items.size());
         int totalSpacing = spacing() * (itemCount - 1);
         int availableForItems = std::max(0, totalSpace - totalSpacing);
-
-        // Ensure stretch factors list matches widget count
-        while(_stretchFactors.size() < _widgets.size()) {
-                _stretchFactors += 0;
-        }
 
         // First pass: calculate minimum sizes and total stretch
         List<int> minSizes;
         int totalMin = 0;
         int totalStretch = 0;
-        for(size_t i = 0; i < _widgets.size(); ++i) {
+        for(size_t i = 0; i < _items.size(); ++i) {
+                const Item &item = _items[i];
                 int minSize = 0;
-                if(_widgets[i] != nullptr) {
-                        Size2Di32 hint = _widgets[i]->sizeHint();
-                        Size2Di32 minHint = _widgets[i]->minimumSizeHint();
-                        minSize = horizontal ? std::max(minHint.width(), 1)
-                                             : std::max(minHint.height(), 1);
-                        // For non-expanding widgets, prefer their hint
-                        if(_stretchFactors[i] == 0 && _widgets[i]->sizePolicy() != SizeExpanding) {
+                bool expanding = false;
+
+                if(item.type == Item::WidgetItem && item.widget) {
+                        Size2Di32 hint = item.widget->sizeHint();
+                        Size2Di32 minHint = item.widget->minimumSizeHint();
+                        expanding = (item.widget->sizePolicy() == SizeExpanding);
+                        if(expanding) {
+                                minSize = horizontal ? std::max(minHint.width(), 1)
+                                                     : std::max(minHint.height(), 1);
+                        } else {
                                 minSize = horizontal ? hint.width() : hint.height();
                         }
+                } else if(item.type == Item::LayoutItem && item.layout) {
+                        Size2Di32 hint = item.layout->sizeHint();
+                        minSize = horizontal ? std::max(hint.width(), 1)
+                                             : std::max(hint.height(), 1);
+                        expanding = (item.stretchFactor > 0);
                 }
+
                 minSizes += minSize;
                 totalMin += minSize;
-                totalStretch += _stretchFactors[i];
+
+                int sf = item.stretchFactor;
+                if(sf == 0 && expanding) sf = 1;
+                totalStretch += sf;
         }
 
         // Second pass: distribute remaining space
@@ -120,40 +144,33 @@ void TuiBoxLayout::calculateLayout(const Rect2Di32 &available) {
         List<int> sizes = minSizes;
 
         if(remaining > 0 && totalStretch > 0) {
-                for(size_t i = 0; i < _widgets.size(); ++i) {
-                        if(_stretchFactors[i] > 0) {
-                                int extra = remaining * _stretchFactors[i] / totalStretch;
+                for(size_t i = 0; i < _items.size(); ++i) {
+                        const Item &item = _items[i];
+                        int sf = item.stretchFactor;
+                        bool expanding = false;
+                        if(item.type == Item::WidgetItem && item.widget)
+                                expanding = (item.widget->sizePolicy() == SizeExpanding);
+                        else if(item.type == Item::LayoutItem)
+                                expanding = (item.stretchFactor > 0);
+                        if(sf == 0 && expanding) sf = 1;
+                        if(sf > 0) {
+                                int extra = remaining * sf / totalStretch;
                                 sizes[i] += extra;
-                        }
-                }
-        } else if(remaining > 0 && totalStretch == 0) {
-                // Distribute evenly among expanding widgets
-                int expandCount = 0;
-                for(size_t i = 0; i < _widgets.size(); ++i) {
-                        if(_widgets[i] && _widgets[i]->sizePolicy() == SizeExpanding) {
-                                expandCount++;
-                        }
-                }
-                if(expandCount > 0) {
-                        int extra = remaining / expandCount;
-                        for(size_t i = 0; i < _widgets.size(); ++i) {
-                                if(_widgets[i] && _widgets[i]->sizePolicy() == SizeExpanding) {
-                                        sizes[i] += extra;
-                                }
                         }
                 }
         }
 
-        // Third pass: position widgets
+        // Third pass: position items
         int pos = horizontal ? content.x() : content.y();
         bool reverse = (_direction == RightToLeft || _direction == BottomToTop);
         if(reverse) {
                 pos = horizontal ? content.x() + content.width() : content.y() + content.height();
         }
 
-        for(size_t i = 0; i < _widgets.size(); ++i) {
-                if(_widgets[i] == nullptr) {
-                        // Stretch spacer
+        for(size_t i = 0; i < _items.size(); ++i) {
+                const Item &item = _items[i];
+
+                if(item.type == Item::StretchItem) {
                         if(reverse) pos -= sizes[i];
                         else pos += sizes[i];
                         if(!reverse) pos += spacing();
@@ -161,25 +178,25 @@ void TuiBoxLayout::calculateLayout(const Rect2Di32 &available) {
                         continue;
                 }
 
-                Rect2Di32 widgetRect;
+                Rect2Di32 itemRect;
                 if(horizontal) {
                         int wx = reverse ? pos - sizes[i] : pos;
-                        widgetRect = Rect2Di32(wx, content.y(), sizes[i], crossSpace);
+                        itemRect = Rect2Di32(wx, content.y(), sizes[i], crossSpace);
                 } else {
                         int wy = reverse ? pos - sizes[i] : pos;
-                        widgetRect = Rect2Di32(content.x(), wy, crossSpace, sizes[i]);
+                        itemRect = Rect2Di32(content.x(), wy, crossSpace, sizes[i]);
                 }
 
-                // Clamp to max size
-                Size2Di32 maxSize = _widgets[i]->maximumSize();
-                if(widgetRect.width() > maxSize.width()) {
-                        widgetRect.setWidth(maxSize.width());
+                if(item.type == Item::WidgetItem && item.widget) {
+                        Size2Di32 maxSize = item.widget->maximumSize();
+                        if(itemRect.width() > maxSize.width())
+                                itemRect.setWidth(maxSize.width());
+                        if(itemRect.height() > maxSize.height())
+                                itemRect.setHeight(maxSize.height());
+                        item.widget->setGeometry(itemRect);
+                } else if(item.type == Item::LayoutItem && item.layout) {
+                        item.layout->calculateLayout(itemRect);
                 }
-                if(widgetRect.height() > maxSize.height()) {
-                        widgetRect.setHeight(maxSize.height());
-                }
-
-                _widgets[i]->setGeometry(widgetRect);
 
                 if(reverse) {
                         pos -= sizes[i] + spacing();
@@ -196,9 +213,16 @@ Size2Di32 TuiBoxLayout::sizeHint() const {
         int mainAxis = 0;
         int crossAxis = 0;
         int count = 0;
-        for(size_t i = 0; i < _widgets.size(); ++i) {
-                if(!_widgets[i]) continue;
-                auto hint = _widgets[i]->sizeHint();
+        for(size_t i = 0; i < _items.size(); ++i) {
+                const Item &item = _items[i];
+                Size2Di32 hint;
+                if(item.type == Item::WidgetItem && item.widget) {
+                        hint = item.widget->sizeHint();
+                } else if(item.type == Item::LayoutItem && item.layout) {
+                        hint = item.layout->sizeHint();
+                } else {
+                        continue;
+                }
                 int main = horizontal ? hint.width() : hint.height();
                 int cross = horizontal ? hint.height() : hint.width();
                 mainAxis += main;

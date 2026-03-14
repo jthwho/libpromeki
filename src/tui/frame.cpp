@@ -63,11 +63,18 @@ void TuiFrame::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::Mid, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, hasFocus(), isEnabled()));
+        bool focused = hasFocus();
+        bool enabled = isEnabled();
+
+        TuiStyle borderStyle = pal.style(TuiPalette::Mid, focused, enabled)
+                                .merged(pal.style(TuiPalette::Window, focused, enabled));
+        painter.setStyle(borderStyle);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
         painter.drawRect(Rect2Di32(0, 0, width(), height()));
-        painter.setForeground(pal.color(TuiPalette::WindowText, hasFocus(), isEnabled()));
+
+        TuiStyle titleStyle = pal.style(TuiPalette::WindowText, focused, enabled)
+                                .merged(borderStyle);
+        painter.setStyle(titleStyle);
 
         // Draw title
         if(!_title.isEmpty() && width() > 4) {

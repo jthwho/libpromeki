@@ -42,12 +42,14 @@ class TuiSplitter : public TuiWidget {
                 void paintEvent(TuiPaintEvent *e) override;
                 void resizeEvent(TuiResizeEvent *e) override;
                 void keyEvent(KeyEvent *e) override;
+                void mouseEvent(MouseEvent *e) override;
 
         private:
                 Orientation     _orientation;
                 TuiWidget       *_first = nullptr;
                 TuiWidget       *_second = nullptr;
                 double          _splitRatio = 0.5;
+                bool            _dragging = false;
 
                 void updateChildGeometry();
 };

@@ -18,9 +18,9 @@ TEST_CASE("TuiScreen: resize and clear") {
 
         screen.clear(Color::White, Color::Black);
         TuiCell cell = screen.cell(0, 0);
-        CHECK(cell.ch == U' ');
-        CHECK(cell.fg == Color::White);
-        CHECK(cell.bg == Color::Black);
+        CHECK(cell.ch == Char(U' '));
+        CHECK(cell.style.foreground() == Color::White);
+        CHECK(cell.style.background() == Color::Black);
 }
 
 TEST_CASE("TuiScreen: setCell and cell") {
@@ -28,17 +28,15 @@ TEST_CASE("TuiScreen: setCell and cell") {
         screen.resize(10, 5);
 
         TuiCell cell;
-        cell.ch = U'A';
-        cell.fg = Color::Red;
-        cell.bg = Color::Blue;
-        cell.style = TuiStyleBold;
+        cell.ch = Char(U'A');
+        cell.style = TuiStyle(Color::Red, Color::Blue, TuiStyle::Bold);
 
         screen.setCell(3, 2, cell);
         TuiCell result = screen.cell(3, 2);
-        CHECK(result.ch == U'A');
-        CHECK(result.fg == Color::Red);
-        CHECK(result.bg == Color::Blue);
-        CHECK(result.style == TuiStyleBold);
+        CHECK(result.ch == Char(U'A'));
+        CHECK(result.style.foreground() == Color::Red);
+        CHECK(result.style.background() == Color::Blue);
+        CHECK(result.style.attrs() == TuiStyle::Bold);
 }
 
 TEST_CASE("TuiScreen: out-of-bounds access") {
@@ -46,7 +44,7 @@ TEST_CASE("TuiScreen: out-of-bounds access") {
         screen.resize(10, 5);
 
         TuiCell cell;
-        cell.ch = U'X';
+        cell.ch = Char(U'X');
 
         // Should not crash
         screen.setCell(-1, 0, cell);
@@ -56,7 +54,7 @@ TEST_CASE("TuiScreen: out-of-bounds access") {
 
         // Out-of-bounds cell should return default
         TuiCell result = screen.cell(-1, 0);
-        CHECK(result.ch == U' ');
+        CHECK(result.ch == Char(U' '));
 }
 
 TEST_CASE("TuiScreen: flush to stream") {
@@ -64,9 +62,8 @@ TEST_CASE("TuiScreen: flush to stream") {
         screen.resize(5, 3);
 
         TuiCell cell;
-        cell.ch = U'H';
-        cell.fg = Color::White;
-        cell.bg = Color::Black;
+        cell.ch = Char(U'H');
+        cell.style = TuiStyle(Color::White, Color::Black);
         screen.setCell(0, 0, cell);
 
         std::ostringstream oss;

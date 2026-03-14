@@ -10,40 +10,24 @@
 #include <cstdint>
 #include <promeki/namespace.h>
 #include <promeki/list.h>
-#include <promeki/color.h>
+#include <promeki/char.h>
+#include <promeki/tui/style.h>
 #include <promeki/ansistream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Style flags for TUI cells.
- */
-enum TuiStyle : uint8_t {
-        TuiStyleNone          = 0x00,
-        TuiStyleBold          = 0x01,
-        TuiStyleDim           = 0x02,
-        TuiStyleItalic        = 0x04,
-        TuiStyleUnderline     = 0x08,
-        TuiStyleBlink         = 0x10,
-        TuiStyleInverse       = 0x20,
-        TuiStyleStrikethrough = 0x40
-};
-
-/**
  * @brief A single cell in the TUI screen buffer.
  *
- * Each cell holds a Unicode codepoint, foreground and background colors,
- * and style flags.
+ * Each cell holds a character and a TuiStyle describing its visual
+ * properties (foreground, background, text attributes).
  */
 struct TuiCell {
-        char32_t        ch = U' ';
-        Color           fg = Color::White;
-        Color           bg = Color::Black;
-        uint8_t         style = TuiStyleNone;
+        Char            ch = Char(U' ');
+        TuiStyle        style = TuiStyle(Color::White, Color::Black);
 
         bool operator==(const TuiCell &other) const {
-                return ch == other.ch && fg == other.fg &&
-                       bg == other.bg && style == other.style;
+                return ch == other.ch && style == other.style;
         }
         bool operator!=(const TuiCell &other) const {
                 return !(*this == other);
@@ -57,7 +41,7 @@ struct TuiCell {
  * via setCell().  flush() diffs front vs back and emits minimal ANSI
  * escape sequences for changed cells, then swaps buffers.
  *
- * NOT an ObjectBase — this is infrastructure.
+ * NOT an ObjectBase -- this is infrastructure.
  */
 class TuiScreen {
         public:

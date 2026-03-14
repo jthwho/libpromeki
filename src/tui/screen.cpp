@@ -37,8 +37,7 @@ TuiCell TuiScreen::cell(int x, int y) const {
 
 void TuiScreen::clear(const Color &fg, const Color &bg) {
         TuiCell blank;
-        blank.fg = fg;
-        blank.bg = bg;
+        blank.style = TuiStyle(fg, bg);
         for(int i = 0; i < _cols * _rows; ++i) {
                 _back[i] = blank;
         }
@@ -58,51 +57,44 @@ void TuiScreen::emitCell(AnsiStream &stream, const TuiCell &cell,
                 cursorY = y;
         }
 
+        uint8_t cellAttrs = cell.style.attrs();
+        Color cellFg = cell.style.foreground();
+        Color cellBg = cell.style.background();
+
         // Update style if changed
-        if(cell.style != lastStyle) {
+        if(cellAttrs != lastStyle) {
                 stream.reset();
                 lastFg = Color();
                 lastBg = Color();
-                lastStyle = TuiStyleNone;
+                lastStyle = TuiStyle::None;
 
-                if(cell.style & TuiStyleBold) stream << "\033[1m";
-                if(cell.style & TuiStyleDim) stream << "\033[2m";
-                if(cell.style & TuiStyleItalic) stream << "\033[3m";
-                if(cell.style & TuiStyleUnderline) stream << "\033[4m";
-                if(cell.style & TuiStyleBlink) stream << "\033[5m";
-                if(cell.style & TuiStyleInverse) stream << "\033[7m";
-                if(cell.style & TuiStyleStrikethrough) stream << "\033[9m";
-                lastStyle = cell.style;
+                if(cellAttrs & TuiStyle::Bold) stream << "\033[1m";
+                if(cellAttrs & TuiStyle::Dim) stream << "\033[2m";
+                if(cellAttrs & TuiStyle::Italic) stream << "\033[3m";
+                if(cellAttrs & TuiStyle::Underline) stream << "\033[4m";
+                if(cellAttrs & TuiStyle::Blink) stream << "\033[5m";
+                if(cellAttrs & TuiStyle::Inverse) stream << "\033[7m";
+                if(cellAttrs & TuiStyle::Strikethrough) stream << "\033[9m";
+                lastStyle = cellAttrs;
         }
 
         // Update foreground if changed
-        if(cell.fg != lastFg) {
-                stream.setForegroundRGB(cell.fg.r(), cell.fg.g(), cell.fg.b());
-                lastFg = cell.fg;
+        if(cellFg != lastFg) {
+                stream.setForegroundRGB(cellFg.r(), cellFg.g(), cellFg.b());
+                lastFg = cellFg;
         }
 
         // Update background if changed
-        if(cell.bg != lastBg) {
-                stream.setBackgroundRGB(cell.bg.r(), cell.bg.g(), cell.bg.b());
-                lastBg = cell.bg;
+        if(cellBg != lastBg) {
+                stream.setBackgroundRGB(cellBg.r(), cellBg.g(), cellBg.b());
+                lastBg = cellBg;
         }
 
         // Output character as UTF-8
-        char32_t ch = cell.ch;
-        if(ch < 0x80) {
-                stream << static_cast<char>(ch);
-        } else if(ch < 0x800) {
-                stream << static_cast<char>(0xC0 | (ch >> 6));
-                stream << static_cast<char>(0x80 | (ch & 0x3F));
-        } else if(ch < 0x10000) {
-                stream << static_cast<char>(0xE0 | (ch >> 12));
-                stream << static_cast<char>(0x80 | ((ch >> 6) & 0x3F));
-                stream << static_cast<char>(0x80 | (ch & 0x3F));
-        } else {
-                stream << static_cast<char>(0xF0 | (ch >> 18));
-                stream << static_cast<char>(0x80 | ((ch >> 12) & 0x3F));
-                stream << static_cast<char>(0x80 | ((ch >> 6) & 0x3F));
-                stream << static_cast<char>(0x80 | (ch & 0x3F));
+        char buf[4];
+        size_t len = cell.ch.toUtf8(buf);
+        for(size_t i = 0; i < len; ++i) {
+                stream << buf[i];
         }
 
         cursorX++;
@@ -113,7 +105,7 @@ void TuiScreen::flush(AnsiStream &stream) {
 
         int cursorX = -1, cursorY = -1;
         Color lastFg, lastBg;
-        uint8_t lastStyle = TuiStyleNone;
+        uint8_t lastStyle = TuiStyle::None;
         bool emittedAny = false;
 
         for(int y = 0; y < _rows; ++y) {

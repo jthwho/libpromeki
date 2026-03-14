@@ -19,9 +19,7 @@ void TuiPainter::putCell(int x, int y, char32_t ch) {
         int screenY = _clipRect.y() + y;
         if(!_clipRect.contains(Point2Di32(screenX, screenY))) return;
         TuiCell cell;
-        cell.ch = ch;
-        cell.fg = _fg;
-        cell.bg = _bg;
+        cell.ch = Char(ch);
         cell.style = _style;
         _screen.setCell(screenX, screenY, cell);
 }

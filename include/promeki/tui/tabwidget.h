@@ -39,14 +39,22 @@ class TuiTabWidget : public TuiWidget {
         protected:
                 void paintEvent(TuiPaintEvent *e) override;
                 void keyEvent(KeyEvent *e) override;
+                void mouseEvent(MouseEvent *e) override;
                 void resizeEvent(TuiResizeEvent *e) override;
+                void focusInEvent(Event *e) override;
+                void focusOutEvent(Event *e) override;
 
         private:
                 struct Tab {
                         TuiWidget       *widget;
                         String          title;
                 };
+                struct TabPos {
+                        int startX;
+                        int endX;
+                };
                 List<Tab>       _tabs;
+                List<TabPos>    _tabPositions;
                 int             _currentIndex = -1;
 
                 void updateTabGeometry();

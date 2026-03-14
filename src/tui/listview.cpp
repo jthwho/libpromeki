@@ -124,12 +124,20 @@ void TuiListView::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
+        bool focused = hasFocus();
+        bool enabled = isEnabled();
         int cw = contentWidth();
         int itemCount = static_cast<int>(_items.size());
 
+        // Normal item style
+        TuiStyle normalStyle = pal.style(TuiPalette::Text, focused, enabled)
+                                .merged(pal.style(TuiPalette::Base, focused, enabled));
+        // Highlighted item style
+        TuiStyle hlStyle = pal.style(TuiPalette::HighlightedText, focused, enabled)
+                                .merged(pal.style(TuiPalette::Highlight, focused, enabled));
+
         // Draw list content
-        painter.setForeground(pal.color(TuiPalette::Text, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Base, hasFocus(), isEnabled()));
+        painter.setStyle(normalStyle);
         painter.fillRect(Rect2Di32(0, 0, cw, height()));
 
         for(int row = 0; row < height(); ++row) {
@@ -137,12 +145,10 @@ void TuiListView::paintEvent(TuiPaintEvent *) {
                 if(idx < 0 || idx >= itemCount) continue;
 
                 if(idx == _currentIndex) {
-                        painter.setForeground(pal.color(TuiPalette::HighlightedText, hasFocus(), isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Highlight, hasFocus(), isEnabled()));
+                        painter.setStyle(hlStyle);
                         painter.fillRect(Rect2Di32(0, row, cw, 1));
                 } else {
-                        painter.setForeground(pal.color(TuiPalette::Text, hasFocus(), isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Base, hasFocus(), isEnabled()));
+                        painter.setStyle(normalStyle);
                 }
 
                 String display = _items[idx];
@@ -161,39 +167,44 @@ void TuiListView::paintScrollbar(TuiPainter &painter, const TuiPalette &pal) {
         int h = height();
         if(h < 3 || sbx < 0) return;
 
+        bool focused = hasFocus();
+        bool enabled = isEnabled();
         int itemCount = static_cast<int>(_items.size());
 
-        // Scrollbar track background
-        painter.setForeground(pal.color(TuiPalette::Mid, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, hasFocus(), isEnabled()));
+        // Scrollbar track
+        TuiStyle trackStyle = pal.style(TuiPalette::Mid, focused, enabled)
+                                .merged(pal.style(TuiPalette::Window, focused, enabled));
+        painter.setStyle(trackStyle);
 
         // Up arrow
-        painter.drawChar(sbx, 0, U'\u25B2'); // ▲
-
+        painter.drawChar(sbx, 0, U'\u25B2'); // up triangle
         // Down arrow
-        painter.drawChar(sbx, h - 1, U'\u25BC'); // ▼
+        painter.drawChar(sbx, h - 1, U'\u25BC'); // down triangle
 
         // Track area
         int trackH = h - 2;
         if(trackH <= 0) return;
 
         for(int i = 0; i < trackH; ++i) {
-                painter.drawChar(sbx, 1 + i, U'\u2502'); // │
+                painter.drawChar(sbx, 1 + i, U'\u2502'); // vertical line
         }
 
         // Thumb
         if(itemCount > 0) {
                 int ts = thumbSize();
                 int tp = thumbPos();
-                painter.setForeground(pal.color(TuiPalette::WindowText, hasFocus(), isEnabled()));
-                painter.setBackground(pal.color(TuiPalette::Mid, hasFocus(), isEnabled()));
+                TuiStyle thumbStyle = pal.style(TuiPalette::WindowText, focused, enabled)
+                                        .merged(pal.style(TuiPalette::Mid, focused, enabled));
+                painter.setStyle(thumbStyle);
                 for(int i = 0; i < ts; ++i) {
-                        painter.drawChar(sbx, 1 + tp + i, U'\u2588'); // █
+                        painter.drawChar(sbx, 1 + tp + i, U'\u2588'); // full block
                 }
         }
 }
 
 void TuiListView::keyEvent(KeyEvent *e) {
+        // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
+        if(e->isCtrl()) return;
         switch(e->key()) {
                 case KeyEvent::Key_Up:
                         if(_currentIndex > 0) setCurrentIndex(_currentIndex - 1);

@@ -8,17 +8,21 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/color.h>
+#include <promeki/tui/style.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Color palette for TUI widgets.
+ * @brief Style palette for TUI widgets.
  *
- * Provides a centralized set of colors organized by role and state group,
- * similar to Qt's QPalette.  Widgets query the palette for their colors
- * instead of hardcoding them, giving a consistent look and making focus
- * state clearly visible through background color changes.
+ * Provides a centralized set of TuiStyle values organized by role and
+ * state group.  Widgets query the palette for their styles instead of
+ * hardcoding colors, giving a consistent look.
+ *
+ * Each role stores a TuiStyle whose foreground, background, and
+ * attributes may individually be set or left ignored.  Widgets
+ * typically merge several roles together (e.g. a text role on top of
+ * a background role) using TuiStyle::merged().
  */
 class TuiPalette {
         public:
@@ -33,49 +37,63 @@ class TuiPalette {
                 };
 
                 /**
-                 * @brief Semantic color role.
+                 * @brief Semantic style role.
                  */
                 enum ColorRole {
                         Window,           ///< Container/frame background.
                         WindowText,       ///< Text on Window background.
                         Base,             ///< Input/editable widget background.
                         Text,             ///< Text on Base background.
-                        Button,           ///< Button background.
-                        ButtonText,       ///< Text on Button background.
+                        Button,           ///< Button background (legacy).
+                        ButtonText,       ///< Text on button backgrounds.
+                        ButtonBorder,     ///< Single-character border around buttons.
+                        ButtonLight,      ///< Button background in unpressed / active-tab state.
+                        ButtonDark,       ///< Button background in pressed / inactive-tab state.
+                        FocusText,        ///< Bright foreground for focused widgets.
                         Highlight,        ///< Selected item / accent background.
                         HighlightedText,  ///< Text on Highlight background.
                         PlaceholderText,  ///< Placeholder/hint text.
                         Mid,              ///< Borders, separators, frames.
                         StatusBar,        ///< Status bar background.
                         StatusBarText,    ///< Status bar text.
-                        ProgressFilled,   ///< Filled portion of progress bar.
-                        ProgressEmpty,    ///< Empty portion of progress bar.
+                        ProgressFilled,       ///< Filled portion of progress bar.
+                        ProgressFilledText,   ///< Text on filled portion of progress bar.
+                        ProgressEmpty,        ///< Empty portion of progress bar.
+                        ProgressEmptyText,    ///< Text on empty portion of progress bar.
                         RoleCount
                 };
 
-                /** @brief Constructs a palette with default colors. */
+                /** @brief Constructs a palette with default styles. */
                 TuiPalette();
 
                 /**
-                 * @brief Sets a color for a specific group and role.
+                 * @brief Sets a style for a specific group and role.
                  */
-                void setColor(ColorGroup group, ColorRole role, const Color &color);
+                void setStyle(ColorGroup group, ColorRole role, const TuiStyle &style);
 
                 /**
-                 * @brief Returns the color for a specific group and role.
+                 * @brief Returns the style for a specific group and role.
                  */
-                Color color(ColorGroup group, ColorRole role) const;
+                TuiStyle style(ColorGroup group, ColorRole role) const;
 
                 /**
-                 * @brief Convenience: picks the group from widget state.
+                 * @brief Returns the style for a role given widget state.
+                 *
+                 * Selects the appropriate color group from the state and
+                 * returns the stored TuiStyle.
+                 */
+                TuiStyle style(ColorRole role, const TuiStyleState &state) const;
+
+                /**
+                 * @brief Convenience: picks the group from widget state flags.
                  * @param role    The semantic color role.
                  * @param focused True if the widget has focus.
                  * @param enabled True if the widget is enabled.
                  */
-                Color color(ColorRole role, bool focused, bool enabled = true) const;
+                TuiStyle style(ColorRole role, bool focused, bool enabled = true) const;
 
         private:
-                Color _colors[GroupCount][RoleCount];
+                TuiStyle _styles[GroupCount][RoleCount];
 };
 
 PROMEKI_NAMESPACE_END

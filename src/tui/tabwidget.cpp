@@ -10,11 +10,12 @@
 #include <promeki/tui/palette.h>
 #include <promeki/tui/application.h>
 #include <promeki/keyevent.h>
+#include <promeki/mouseevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 TuiTabWidget::TuiTabWidget(ObjectBase *parent) : TuiWidget(parent) {
-        setFocusPolicy(NoFocus);
+        setFocusPolicy(StrongFocus);
 }
 
 TuiTabWidget::~TuiTabWidget() = default;
@@ -77,45 +78,80 @@ void TuiTabWidget::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+        bool enabled = isEnabled();
+
+        // Clear tab bar background
+        TuiStyle barBg = pal.style(TuiPalette::WindowText, false, enabled)
+                                .merged(pal.style(TuiPalette::Window, false, enabled));
+        painter.setStyle(barBg);
         painter.fillRect(Rect2Di32(0, 0, width(), 1));
 
-        // Draw tab headers
+        // Draw tab headers and record positions for mouse hit-testing
+        bool focused = hasFocus();
+        _tabPositions.clear();
         int xpos = 0;
         for(size_t i = 0; i < _tabs.size(); ++i) {
+                bool isCurrent = (static_cast<int>(i) == _currentIndex);
                 String label = String(" ") + _tabs[i].title + " ";
-                if(static_cast<int>(i) == _currentIndex) {
-                        painter.setForeground(pal.color(TuiPalette::HighlightedText, true, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Highlight, true, isEnabled()));
+                int labelLen = static_cast<int>(label.length());
+                _tabPositions += TabPos{xpos, xpos + labelLen};
+
+                if(isCurrent && focused) {
+                        // Focused active tab: FocusText fg + ButtonLight bg + Bold
+                        TuiStyle s = pal.style(TuiPalette::FocusText, false, enabled)
+                                        .merged(pal.style(TuiPalette::ButtonLight, false, enabled));
+                        s.setAttrs(TuiStyle::Bold);
+                        painter.setStyle(s);
+                } else if(isCurrent) {
+                        // Unfocused active tab: ButtonText fg + ButtonLight bg + Bold
+                        TuiStyle s = pal.style(TuiPalette::ButtonText, false, enabled)
+                                        .merged(pal.style(TuiPalette::ButtonLight, false, enabled));
+                        s.setAttrs(TuiStyle::Bold);
+                        painter.setStyle(s);
                 } else {
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Mid, false, isEnabled()));
+                        // Inactive tab: ButtonText fg + ButtonDark bg
+                        TuiStyle s = pal.style(TuiPalette::ButtonText, false, enabled)
+                                        .merged(pal.style(TuiPalette::ButtonDark, false, enabled));
+                        s.setAttrs(TuiStyle::None);
+                        painter.setStyle(s);
                 }
                 painter.drawText(xpos, 0, label);
-                xpos += static_cast<int>(label.length());
+                xpos += labelLen;
 
-                painter.setForeground(pal.color(TuiPalette::Mid, false, isEnabled()));
-                painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                // Separator space
+                painter.setStyle(barBg);
                 if(xpos < width()) {
-                        painter.drawChar(xpos, 0, U'\u2502');
+                        painter.drawChar(xpos, 0, U' ');
                         xpos++;
                 }
         }
 }
 
 void TuiTabWidget::keyEvent(KeyEvent *e) {
-        if(e->isAlt()) {
-                // Alt+number to switch tabs
-                if(e->key() >= '1' && e->key() <= '9') {
-                        int idx = e->key() - '1';
-                        if(idx < static_cast<int>(_tabs.size())) {
-                                setCurrentIndex(idx);
-                                e->accept();
-                                return;
-                        }
+        // When focused, Left/Right/Enter/Space select tabs directly
+        if(hasFocus()) {
+                if(e->key() == KeyEvent::Key_Left && _tabs.size() > 1) {
+                        setCurrentIndex((_currentIndex - 1 + static_cast<int>(_tabs.size())) %
+                                        static_cast<int>(_tabs.size()));
+                        e->accept();
+                        return;
                 }
-                // Alt+Left / Alt+Right to switch tabs
+                if(e->key() == KeyEvent::Key_Right && _tabs.size() > 1) {
+                        setCurrentIndex((_currentIndex + 1) % static_cast<int>(_tabs.size()));
+                        e->accept();
+                        return;
+                }
+                if(e->key() == KeyEvent::Key_Enter || e->key() == KeyEvent::Key_Space) {
+                        // Activate the current tab (move focus into it)
+                        TuiApplication *app = TuiApplication::instance();
+                        if(app) app->focusNext(false);
+                        e->accept();
+                        return;
+                }
+        }
+
+        // Ctrl+Left / Ctrl+Right to switch tabs from anywhere
+        if(e->isCtrl()) {
                 if(e->key() == KeyEvent::Key_Left && _tabs.size() > 1) {
                         setCurrentIndex((_currentIndex - 1 + static_cast<int>(_tabs.size())) %
                                         static_cast<int>(_tabs.size()));
@@ -130,8 +166,32 @@ void TuiTabWidget::keyEvent(KeyEvent *e) {
         }
 }
 
+void TuiTabWidget::mouseEvent(MouseEvent *e) {
+        if(e->action() != MouseEvent::Press || e->button() != MouseEvent::LeftButton) return;
+
+        // Convert global mouse position to local coordinates
+        Point2Di32 local = mapFromGlobal(e->pos());
+        if(local.y() != 0) return; // Only tab bar row
+
+        for(size_t i = 0; i < _tabPositions.size(); ++i) {
+                if(local.x() >= _tabPositions[i].startX && local.x() < _tabPositions[i].endX) {
+                        setCurrentIndex(static_cast<int>(i));
+                        e->accept();
+                        return;
+                }
+        }
+}
+
 void TuiTabWidget::resizeEvent(TuiResizeEvent *) {
         updateTabGeometry();
+}
+
+void TuiTabWidget::focusInEvent(Event *) {
+        update();
+}
+
+void TuiTabWidget::focusOutEvent(Event *) {
+        update();
 }
 
 PROMEKI_NAMESPACE_END

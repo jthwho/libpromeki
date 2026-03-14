@@ -499,6 +499,7 @@ endif()
 
 if(PROMEKI_BUILD_TUI)
     set(PROMEKI_TUI_HEADERS
+        include/promeki/tui/style.h
         include/promeki/tui/screen.h
         include/promeki/tui/widget.h
         include/promeki/tui/painter.h
@@ -522,6 +523,7 @@ if(PROMEKI_BUILD_TUI)
     )
 
     set(PROMEKI_TUI_SOURCES
+        src/tui/style.cpp
         src/tui/palette.cpp
         src/tui/screen.cpp
         src/tui/widget.cpp

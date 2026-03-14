@@ -10,11 +10,13 @@
 #include <promeki/tui/palette.h>
 #include <promeki/tui/application.h>
 #include <promeki/keyevent.h>
+#include <promeki/mouseevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 TuiSplitter::TuiSplitter(Orientation orientation, ObjectBase *parent)
         : TuiWidget(parent), _orientation(orientation) {
+        setFocusPolicy(StrongFocus);
 }
 
 TuiSplitter::~TuiSplitter() = default;
@@ -66,8 +68,13 @@ void TuiSplitter::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::Mid, false, isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+        bool focused = hasFocus();
+
+        // Foreground: FocusText when focused, Mid otherwise
+        TuiPalette::ColorRole fgRole = focused ? TuiPalette::FocusText : TuiPalette::Mid;
+        TuiStyle s = pal.style(fgRole, false, isEnabled())
+                        .merged(pal.style(TuiPalette::Window, false, isEnabled()));
+        painter.setStyle(s);
 
         // Draw separator
         if(_orientation == Horizontal) {
@@ -84,25 +91,67 @@ void TuiSplitter::resizeEvent(TuiResizeEvent *) {
 }
 
 void TuiSplitter::keyEvent(KeyEvent *e) {
-        // Allow adjusting split with Ctrl+arrows when focused
-        if(e->isCtrl()) {
-                if(_orientation == Horizontal) {
-                        if(e->key() == KeyEvent::Key_Left) {
-                                setSplitRatio(_splitRatio - 0.05);
-                                e->accept();
-                        } else if(e->key() == KeyEvent::Key_Right) {
-                                setSplitRatio(_splitRatio + 0.05);
-                                e->accept();
-                        }
-                } else {
-                        if(e->key() == KeyEvent::Key_Up) {
-                                setSplitRatio(_splitRatio - 0.05);
-                                e->accept();
-                        } else if(e->key() == KeyEvent::Key_Down) {
-                                setSplitRatio(_splitRatio + 0.05);
-                                e->accept();
-                        }
+        if(!hasFocus()) return;
+        // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
+        if(e->isCtrl()) return;
+
+        // Arrow keys move the splitter by one line
+        if(_orientation == Horizontal) {
+                int total = width();
+                if(total <= 0) return;
+                double step = 1.0 / total;
+                if(e->key() == KeyEvent::Key_Left) {
+                        setSplitRatio(_splitRatio - step);
+                        e->accept();
+                } else if(e->key() == KeyEvent::Key_Right) {
+                        setSplitRatio(_splitRatio + step);
+                        e->accept();
                 }
+        } else {
+                int total = height();
+                if(total <= 0) return;
+                double step = 1.0 / total;
+                if(e->key() == KeyEvent::Key_Up) {
+                        setSplitRatio(_splitRatio - step);
+                        e->accept();
+                } else if(e->key() == KeyEvent::Key_Down) {
+                        setSplitRatio(_splitRatio + step);
+                        e->accept();
+                }
+        }
+}
+
+void TuiSplitter::mouseEvent(MouseEvent *e) {
+        Point2Di32 local = mapFromGlobal(e->pos());
+
+        if(e->action() == MouseEvent::Press && e->button() == MouseEvent::LeftButton) {
+                // Check if click is on the separator
+                bool onSep = false;
+                if(_orientation == Horizontal) {
+                        int splitPos = static_cast<int>(width() * _splitRatio);
+                        onSep = (local.x() >= splitPos - 1 && local.x() <= splitPos + 1);
+                } else {
+                        int splitPos = static_cast<int>(height() * _splitRatio);
+                        onSep = (local.y() >= splitPos - 1 && local.y() <= splitPos + 1);
+                }
+                if(onSep) {
+                        _dragging = true;
+                        TuiApplication *app = TuiApplication::instance();
+                        if(app) app->grabMouse(this);
+                        e->accept();
+                }
+        } else if(e->action() == MouseEvent::Move && _dragging) {
+                if(_orientation == Horizontal && width() > 0) {
+                        setSplitRatio(static_cast<double>(local.x()) / width());
+                } else if(_orientation == Vertical && height() > 0) {
+                        setSplitRatio(static_cast<double>(local.y()) / height());
+                }
+                e->accept();
+        } else if(e->action() == MouseEvent::Release && _dragging) {
+                _dragging = false;
+                TuiApplication *app = TuiApplication::instance();
+                if(app) app->releaseMouse();
+                e->accept();
         }
 }
 

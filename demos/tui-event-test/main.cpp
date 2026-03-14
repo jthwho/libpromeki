@@ -131,8 +131,9 @@ class EventTestWidget : public TuiWidget {
                         Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
                         TuiPainter painter(app->screen(), clipRect);
                         const TuiPalette &pal = app->palette();
-                        painter.setForeground(pal.color(TuiPalette::WindowText, false, isEnabled()));
-                        painter.setBackground(pal.color(TuiPalette::Window, false, isEnabled()));
+                        TuiStyle s = pal.style(TuiPalette::WindowText, false, isEnabled())
+                                        .merged(pal.style(TuiPalette::Window, false, isEnabled()));
+                        painter.setStyle(s);
                         painter.fillRect(Rect2Di32(0, 0, width(), height()));
                 }
 

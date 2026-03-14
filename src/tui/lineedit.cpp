@@ -41,8 +41,9 @@ void TuiLineEdit::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::Text, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Base, hasFocus(), isEnabled()));
+        TuiStyle s = pal.style(TuiPalette::Text, hasFocus(), isEnabled())
+                        .merged(pal.style(TuiPalette::Base, hasFocus(), isEnabled()));
+        painter.setStyle(s);
 
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
@@ -59,7 +60,8 @@ void TuiLineEdit::paintEvent(TuiPaintEvent *) {
                 String visible = display.substr(_scrollOffset,
                         std::min(static_cast<size_t>(width()), display.length() - _scrollOffset));
                 if(_text.isEmpty() && !hasFocus()) {
-                        painter.setForeground(pal.color(TuiPalette::PlaceholderText, false, isEnabled()));
+                        TuiStyle ph = pal.style(TuiPalette::PlaceholderText, false, isEnabled()).merged(s);
+                        painter.setStyle(ph);
                 }
                 painter.drawText(0, 0, visible);
         }
@@ -70,14 +72,16 @@ void TuiLineEdit::paintEvent(TuiPaintEvent *) {
                 if(cursorScreenPos >= 0 && cursorScreenPos < width()) {
                         char32_t ch = (static_cast<size_t>(_cursorPos) < _text.length())
                                       ? _text.charAt(_cursorPos).codepoint() : U' ';
-                        painter.setStyle(TuiStyleInverse);
+                        painter.setAttrs(TuiStyle::Inverse);
                         painter.drawChar(cursorScreenPos, 0, ch);
-                        painter.setStyle(TuiStyleNone);
+                        painter.setAttrs(TuiStyle::None);
                 }
         }
 }
 
 void TuiLineEdit::keyEvent(KeyEvent *e) {
+        // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
+        if(e->isCtrl()) return;
         switch(e->key()) {
                 case KeyEvent::Key_Left:
                         if(_cursorPos > 0) _cursorPos--;

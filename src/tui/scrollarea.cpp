@@ -71,8 +71,9 @@ void TuiScrollArea::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::WindowText, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Window, hasFocus(), isEnabled()));
+        TuiStyle s = pal.style(TuiPalette::WindowText, hasFocus(), isEnabled())
+                        .merged(pal.style(TuiPalette::Window, hasFocus(), isEnabled()));
+        painter.setStyle(s);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
         // Content widget is positioned by offset
@@ -83,6 +84,8 @@ void TuiScrollArea::paintEvent(TuiPaintEvent *) {
 }
 
 void TuiScrollArea::keyEvent(KeyEvent *e) {
+        // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
+        if(e->isCtrl()) return;
         switch(e->key()) {
                 case KeyEvent::Key_Up: setScrollY(_scrollY - 1); e->accept(); break;
                 case KeyEvent::Key_Down: setScrollY(_scrollY + 1); e->accept(); break;

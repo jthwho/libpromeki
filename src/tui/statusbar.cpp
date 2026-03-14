@@ -58,8 +58,9 @@ void TuiStatusBar::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::StatusBarText, false, isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::StatusBar, false, isEnabled()));
+        TuiStyle s = pal.style(TuiPalette::StatusBarText, false, isEnabled())
+                        .merged(pal.style(TuiPalette::StatusBar, false, isEnabled()));
+        painter.setStyle(s);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
         // Display temporary message if set, otherwise permanent

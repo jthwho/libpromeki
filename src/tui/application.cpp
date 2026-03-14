@@ -88,6 +88,12 @@ int TuiApplication::exec() {
                 // Check for resize
                 handleResize();
 
+                // Process EventLoop events (timers, posted callables, etc.)
+                _eventLoop.processEvents();
+
+                // Process any available input
+                processInput();
+
                 // Paint if anything is dirty
                 if(_needsRepaint) {
                         paintWidgets();
@@ -102,9 +108,6 @@ int TuiApplication::exec() {
                 pfd.events = POLLIN;
                 poll(&pfd, 1, 16); // ~60fps max
 #endif
-
-                // Process any available input
-                processInput();
         }
 
         return _exitCode;
@@ -267,6 +270,13 @@ void TuiApplication::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
         }
 
         MouseEvent mouseEv(ev.mousePos, ev.mouseButton, action, ev.modifiers, ev.mouseButtons);
+
+        // If a widget has the mouse grab, send all events directly to it
+        if(_mouseGrab) {
+                _mouseGrab->mouseEvent(&mouseEv);
+                markNeedsRepaint();
+                return;
+        }
 
         // Find the widget under the mouse
         TuiWidget *target = widgetAt(_rootWidget, ev.mousePos);

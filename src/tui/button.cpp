@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 TuiButton::TuiButton(const String &text, ObjectBase *parent)
         : TuiWidget(parent), _text(text) {
         setFocusPolicy(StrongFocus);
+        setMaximumSize(Size2Di32(9999, 1));
 }
 
 TuiButton::~TuiButton() = default;
@@ -29,7 +30,12 @@ void TuiButton::setText(const String &text) {
 }
 
 Size2Di32 TuiButton::sizeHint() const {
-        return Size2Di32(static_cast<int>(_text.length()) + 4, 3);
+        // border + space + text + space + border
+        return Size2Di32(static_cast<int>(_text.length()) + 4, 1);
+}
+
+Size2Di32 TuiButton::minimumSizeHint() const {
+        return sizeHint();
 }
 
 void TuiButton::paintEvent(TuiPaintEvent *) {
@@ -41,25 +47,41 @@ void TuiButton::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::ButtonText, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Button, hasFocus(), isEnabled()));
+        bool focused = hasFocus();
+        bool enabled = isEnabled();
 
-        // Fill background
-        painter.fillRect(Rect2Di32(0, 0, width(), height()));
+        // Background: ButtonDark when pressed, ButtonLight otherwise
+        TuiPalette::ColorRole bgRole = _pressed ? TuiPalette::ButtonDark : TuiPalette::ButtonLight;
+        TuiStyle bgStyle = pal.style(bgRole, false, enabled);
 
-        // Draw border
-        if(height() >= 3 && width() >= 2) {
-                painter.drawRect(Rect2Di32(0, 0, width(), height()));
-        }
+        // Foreground: FocusText when focused, ButtonText otherwise
+        TuiPalette::ColorRole fgRole = focused ? TuiPalette::FocusText : TuiPalette::ButtonText;
+        TuiStyle fgStyle = pal.style(fgRole, false, enabled);
 
-        // Draw text centered
+        TuiStyle textStyle = fgStyle.merged(bgStyle);
+
+        // Border
+        TuiStyle borderStyle = pal.style(TuiPalette::ButtonBorder, false, enabled).merged(bgStyle);
+
+        // Draw left border
+        painter.setStyle(borderStyle);
+        painter.drawChar(0, 0, U' ');
+
+        // Draw text area
+        painter.setStyle(textStyle);
         if(!_text.isEmpty()) {
                 int textLen = static_cast<int>(_text.length());
-                int xoff = (width() - textLen) / 2;
-                int yoff = height() / 2;
-                if(xoff < 0) xoff = 0;
-                painter.drawText(xoff, yoff, _text);
+                int innerWidth = std::max(0, width() - 2);
+                int xoff = 1 + (innerWidth - textLen) / 2;
+                if(xoff < 1) xoff = 1;
+                // Fill inner area
+                painter.fillRect(Rect2Di32(1, 0, innerWidth, 1));
+                painter.drawText(xoff, 0, _text);
         }
+
+        // Draw right border
+        painter.setStyle(borderStyle);
+        if(width() > 1) painter.drawChar(width() - 1, 0, U' ');
 }
 
 void TuiButton::keyEvent(KeyEvent *e) {
@@ -71,6 +93,12 @@ void TuiButton::keyEvent(KeyEvent *e) {
 
 void TuiButton::mouseEvent(MouseEvent *e) {
         if(e->action() == MouseEvent::Press && e->button() == MouseEvent::LeftButton) {
+                _pressed = true;
+                update();
+                e->accept();
+        } else if(e->action() == MouseEvent::Release && _pressed) {
+                _pressed = false;
+                update();
                 clickedSignal.emit();
                 e->accept();
         }

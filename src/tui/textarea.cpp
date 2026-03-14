@@ -62,8 +62,9 @@ void TuiTextArea::paintEvent(TuiPaintEvent *) {
         TuiPainter painter(app->screen(), clipRect);
 
         const TuiPalette &pal = app->palette();
-        painter.setForeground(pal.color(TuiPalette::Text, hasFocus(), isEnabled()));
-        painter.setBackground(pal.color(TuiPalette::Base, hasFocus(), isEnabled()));
+        TuiStyle s = pal.style(TuiPalette::Text, hasFocus(), isEnabled())
+                        .merged(pal.style(TuiPalette::Base, hasFocus(), isEnabled()));
+        painter.setStyle(s);
         painter.fillRect(Rect2Di32(0, 0, width(), height()));
 
         for(int row = 0; row < height(); ++row) {
@@ -81,20 +82,23 @@ void TuiTextArea::paintEvent(TuiPaintEvent *) {
                 int screenCol = _cursorCol - _scrollCol;
                 if(screenRow >= 0 && screenRow < height() &&
                    screenCol >= 0 && screenCol < width()) {
-                        painter.setStyle(TuiStyleInverse);
+                        painter.setAttrs(TuiStyle::Inverse);
                         char32_t ch = U' ';
                         if(static_cast<size_t>(_cursorRow) < _lines.size() &&
                            static_cast<size_t>(_cursorCol) < _lines[_cursorRow].length()) {
                                 ch = _lines[_cursorRow].charAt(_cursorCol).codepoint();
                         }
                         painter.drawChar(screenCol, screenRow, ch);
-                        painter.setStyle(TuiStyleNone);
+                        painter.setAttrs(TuiStyle::None);
                 }
         }
 }
 
 void TuiTextArea::keyEvent(KeyEvent *e) {
         if(_readOnly) return;
+
+        // Let Ctrl-modified keys propagate (e.g. Ctrl+Left/Right for tab switching)
+        if(e->isCtrl()) return;
 
         switch(e->key()) {
                 case KeyEvent::Key_Up:
