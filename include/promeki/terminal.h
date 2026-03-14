@@ -18,13 +18,24 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Low-level terminal I/O abstraction.
  *
  * Provides raw terminal mode, non-blocking input, window size queries,
- * mouse tracking, and alternate screen buffer management.  Platform-specific
- * implementations use termios on POSIX and Console API on Windows.
+ * mouse tracking, alternate screen buffer management, and color capability
+ * detection.  Platform-specific implementations use termios on POSIX and
+ * Console API on Windows.
  */
 class Terminal {
         public:
                 /** @brief Callback type for window resize notifications. */
                 using ResizeCallback = std::function<void(int cols, int rows)>;
+
+                /**
+                 * @brief Describes the color capability level of the terminal.
+                 */
+                enum ColorSupport {
+                        NoColor,        ///< No color support (e.g. dumb terminal, NO_COLOR set).
+                        Basic,          ///< Basic 8/16 color support (standard ANSI).
+                        Color256,       ///< 256 color support (xterm-256color and similar).
+                        TrueColor       ///< 24-bit true color support.
+                };
 
                 Terminal();
                 ~Terminal();
@@ -120,6 +131,17 @@ class Terminal {
                  * SIGINT, and other termination signals.
                  */
                 void installSignalHandlers();
+
+                /**
+                 * @brief Detects the color support level of the terminal.
+                 *
+                 * Examines environment variables (NO_COLOR, COLORTERM, TERM, etc.)
+                 * and platform capabilities to determine the level of color support.
+                 * The result is cached after the first call.
+                 *
+                 * @return The detected ColorSupport level.
+                 */
+                static ColorSupport colorSupport();
 
                 /**
                  * @brief Writes raw bytes to stdout.

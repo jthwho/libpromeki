@@ -21,9 +21,20 @@
 #include <promeki/tui/progressbar.h>
 #include <promeki/tui/tabwidget.h>
 #include <promeki/tui/splitter.h>
+#include <promeki/terminal.h>
 #include <promeki/timerevent.h>
 
 using namespace promeki;
+
+static const char *colorSupportName(Terminal::ColorSupport cs) {
+        switch(cs) {
+                case Terminal::NoColor:   return "NoColor";
+                case Terminal::Basic:     return "Basic";
+                case Terminal::Color256:  return "256";
+                case Terminal::TrueColor: return "TrueColor";
+        }
+        return "Unknown";
+}
 
 // ── Tab 1: Basic Widgets ─────────────────────────────────────────────
 
@@ -448,8 +459,7 @@ class DemoWidget : public TuiWidget {
 
                         // Status bar at the bottom
                         _statusBar = new TuiStatusBar(this);
-                        _statusBar->setPermanentMessage(
-                                "Tab: navigate | Ctrl+Left/Right: switch tabs | Ctrl+Q: quit");
+                        updateStatusInfo();
 
                         // Tab widget fills most of the screen
                         _tabWidget = new TuiTabWidget(this);
@@ -487,6 +497,7 @@ class DemoWidget : public TuiWidget {
 
                 void resizeEvent(TuiResizeEvent *) override {
                         if(_layout) _layout->calculateLayout(Rect2Di32(0, 0, width(), height()));
+                        updateStatusInfo();
                 }
 
         private:
@@ -497,6 +508,15 @@ class DemoWidget : public TuiWidget {
                 TextInputTab            *_textTab;
                 ListViewTab             *_listTab;
                 SplitterTab             *_splitterTab;
+
+                void updateStatusInfo() {
+                        String msg = String("Color: ") +
+                                colorSupportName(Terminal::colorSupport()) +
+                                " | " + String::number(width()) + "x" +
+                                String::number(height()) +
+                                " | Ctrl+Q: quit";
+                        _statusBar->setPermanentMessage(msg);
+                }
 };
 
 int main(int argc, char **argv) {

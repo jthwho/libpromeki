@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <promeki/terminal.h>
+#include <promeki/env.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <termios.h>
@@ -233,6 +234,91 @@ void Terminal::installSignalHandlers() {
         signal(SIGQUIT, signalHandler);
         signal(SIGHUP, signalHandler);
 #endif
+}
+
+Terminal::ColorSupport Terminal::colorSupport() {
+        static bool detected = false;
+        static ColorSupport level = NoColor;
+        if(detected) return level;
+        detected = true;
+
+        // NO_COLOR convention: https://no-color.org/
+        if(Env::isSet("NO_COLOR")) return level;
+
+        // PROMEKI_COLOR override: allow forcing a specific level.
+        String force = Env::get("PROMEKI_COLOR");
+        if(!force.isEmpty()) {
+                if(force == "truecolor" || force == "24bit") { level = TrueColor; return level; }
+                if(force == "256")                           { level = Color256;   return level; }
+                if(force == "basic" || force == "ansi")      { level = Basic;      return level; }
+                if(force == "none")                          return level;
+        }
+
+        // COLORTERM is set to "truecolor" or "24bit" by many modern terminals.
+        String colorTerm = Env::get("COLORTERM");
+        if(colorTerm == "truecolor" || colorTerm == "24bit") {
+                level = TrueColor;
+                return level;
+        }
+
+        // Check TERM for 256-color or known terminals.
+        String term = Env::get("TERM");
+        if(!term.isEmpty()) {
+                if(term.contains("256color")) {
+                        level = Color256;
+                        return level;
+                }
+                if(term.contains("truecolor")) {
+                        level = TrueColor;
+                        return level;
+                }
+                // "dumb" terminals have no color.
+                if(term == "dumb") return level;
+        }
+
+        // If COLORTERM is set at all, at least basic color is supported.
+        if(!colorTerm.isEmpty()) {
+                level = Basic;
+                return level;
+        }
+
+        // Check for TERM_PROGRAM known to support color.
+        String termProg = Env::get("TERM_PROGRAM");
+        if(!termProg.isEmpty()) {
+                if(termProg == "iTerm.app" || termProg == "Hyper") {
+                        level = TrueColor;
+                        return level;
+                }
+                if(termProg == "Apple_Terminal") {
+                        level = Color256;
+                        return level;
+                }
+                // Other known terminal programs generally support basic color.
+                level = Basic;
+                return level;
+        }
+
+        // Known ANSI-capable TERM values that didn't match above patterns.
+        if(!term.isEmpty()) {
+                static const char *basicTerminals[] = {
+                        "xterm", "vt100", "screen", "tmux",
+                        "rxvt", "rxvt-unicode", "ansi", "linux",
+                        "cygwin"
+                };
+                for(const char *t : basicTerminals) {
+                        if(term == t) {
+                                level = Basic;
+                                return level;
+                        }
+                }
+        }
+
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        // Windows 10+ with VT support provides truecolor.
+        level = TrueColor;
+#endif
+
+        return level;
 }
 
 int Terminal::writeOutput(const char *data, int len) {

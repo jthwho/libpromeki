@@ -101,6 +101,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/char.h
     include/promeki/cmdlineparser.h
     include/promeki/datetime.h
+    include/promeki/env.h
     include/promeki/error.h
     include/promeki/event.h
     include/promeki/eventloop.h
@@ -175,6 +176,7 @@ set(PROMEKI_CORE_SOURCES
     src/regex.cpp
     src/event.cpp
     src/eventloop.cpp
+    src/env.cpp
     src/error.cpp
     src/uuid.cpp
     src/md5.cpp
@@ -749,6 +751,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/securebuffer.cpp
         tests/rect.cpp
         tests/color.cpp
+        tests/env.cpp
+        tests/terminal.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
