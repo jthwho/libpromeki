@@ -11,6 +11,7 @@
 #include <optional>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
+#include <promeki/core/filepath.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -32,6 +33,30 @@ class FileInfo {
                  */
                 FileInfo(const String &filePath) : _path(filePath.str()) {
 
+                }
+
+                /**
+                 * @brief Constructs a FileInfo from a C string.
+                 * @param filePath The path string.
+                 */
+                FileInfo(const char *filePath) : _path(filePath) {
+
+                }
+
+                /**
+                 * @brief Constructs a FileInfo from a FilePath.
+                 * @param fp The file path.
+                 */
+                FileInfo(const FilePath &fp) : _path(fp.toStdPath()) {
+
+                }
+
+                /**
+                 * @brief Returns the path as a FilePath.
+                 * @return The file path.
+                 */
+                FilePath filePath() const {
+                        return FilePath(_path);
                 }
 
                 /**

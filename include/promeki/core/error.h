@@ -68,7 +68,8 @@ class Error {
                         NotOpen,                 ///< Resource is not open.
                         EndOfFile,               ///< End of file reached.
                         InvalidArgument,         ///< Invalid argument supplied.
-                        InvalidDimension         ///< Invalid dimension value.
+                        InvalidDimension,        ///< Invalid dimension value.
+                        NotHostAccessible        ///< Memory is not host-accessible.
                 };
 
                 /**

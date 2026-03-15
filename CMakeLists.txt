@@ -98,10 +98,12 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/array.h
     include/promeki/core/buildinfo.h
     include/promeki/core/buffer.h
+    include/promeki/core/bufferediodevice.h
     include/promeki/core/bytearray.h
     include/promeki/core/char.h
     include/promeki/core/cmdlineparser.h
     include/promeki/core/datetime.h
+    include/promeki/core/dir.h
     include/promeki/core/duration.h
     include/promeki/core/elapsedtimer.h
     include/promeki/core/env.h
@@ -208,10 +210,12 @@ set(PROMEKI_CORE_SOURCES
     src/mempool.cpp
     src/memspace.cpp
     src/buffer.cpp
+    src/bufferediodevice.cpp
     src/logger.cpp
     src/ansistream.cpp
     src/fileinfo.cpp
     src/datetime.cpp
+    src/dir.cpp
     src/timestamp.cpp
     src/timecode.cpp
     src/variant.cpp
@@ -795,6 +799,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/algorithm.cpp
         tests/filepath.cpp
         tests/iodevice.cpp
+        tests/bufferediodevice.cpp
+        tests/dir.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

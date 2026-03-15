@@ -98,56 +98,74 @@ Wraps `std::filesystem::path`. Header-only simple value type.
 
 ---
 
-## BufferedIODevice
+## BufferedIODevice — COMPLETE
 
-Adds read buffering on top of IODevice.
+Adds read buffering on top of IODevice. Uses an internal `Buffer` (default 8192 bytes, lazily allocated). Subclasses implement `readFromDevice()` for raw I/O; remaining pure virtuals (open, close, isOpen, write) stay pure for concrete subclasses like File.
 
 **Files:**
-- [ ] `include/promeki/core/bufferediodevice.h`
-- [ ] `src/bufferediodevice.cpp`
-- [ ] `tests/bufferediodevice.cpp`
+- [x] `include/promeki/core/bufferediodevice.h`
+- [x] `src/bufferediodevice.cpp`
+- [x] `tests/bufferediodevice.cpp`
 
 **Implementation checklist:**
-- [ ] Derive from `IODevice`
-- [ ] Private: internal read buffer (`Buffer` or `Deque<uint8_t>`)
-- [ ] `readLine(size_t maxLength = 0)` — returns `Buffer` up to newline. 0 = no limit.
-- [ ] `readAll()` — reads all available data, returns `Buffer`
-- [ ] `readBuffer(size_t maxBytes)` — reads up to N bytes, returns `Buffer`
-- [ ] `canReadLine()` — returns true if buffer contains a complete line
-- [ ] `peek(void *buf, size_t maxBytes)` — read without consuming
-- [ ] `peek(size_t maxBytes)` — returns `Buffer` without consuming
-- [ ] `setReadBufferSize(size_t size)` — limit internal buffer size (0 = unlimited)
-- [ ] Override `bytesAvailable()` to include buffered data
-- [ ] Doctest: readLine, readAll, peek, canReadLine, buffer size limits
+- [x] Derive from `IODevice`, use `PROMEKI_OBJECT`
+- [x] Private: internal read buffer (`Buffer`), lazy allocation via `ensureReadBuffer()`
+- [x] `readLine(size_t maxLength = 0)` — returns `Buffer` up to newline. 0 = no limit.
+- [x] `readAll()` — reads all available data, returns `Buffer`
+- [x] `readBytes(size_t maxBytes)` — reads up to N bytes, returns `Buffer`
+- [x] `canReadLine()` — returns true if buffer contains a complete line
+- [x] `peek(void *buf, size_t maxBytes)` — read without consuming
+- [x] `peek(size_t maxBytes)` — returns `Buffer` without consuming
+- [x] `setReadBuffer(Buffer &&buf)` — replace internal buffer (must be host-accessible, device must be closed)
+- [x] `readBuffer()` / `readBufferSize()` — inspect current buffer
+- [x] Override `read()` — serves from buffer, large reads bypass buffer, fills/compacts automatically
+- [x] Override `bytesAvailable()` to include buffered data + `deviceBytesAvailable()`
+- [x] Protected `readFromDevice()` pure virtual for subclass raw I/O
+- [x] Protected `deviceBytesAvailable()` virtual (default 0)
+- [x] Protected `ensureReadBuffer()` / `resetReadBuffer()` for subclass open/close hooks
+
+### Doctest
+- [x] Buffered read, readLine (with/without newline, maxLength), readAll, readBytes
+- [x] canReadLine, peek (void* and Buffer overloads), bytesAvailable
+- [x] Large read bypass, setReadBuffer (before open, while open, secure memory)
+- [x] Buffer reuse across close/reopen, stale data leak prevention
+- [x] Write then read across reopen, readLine/peek reset across sessions
+- [x] Edge cases: empty device, non-open device, write-only mode, readBytes(0)
 
 ---
 
-## Dir
+## Dir — COMPLETE
 
-Directory operations. Utility class.
+Directory operations. Simple utility class (not ObjectBase). Uses `std::filesystem` with `fnmatch()` for glob filtering.
 
 **Files:**
-- [ ] `include/promeki/core/dir.h`
-- [ ] `src/dir.cpp`
-- [ ] `tests/dir.cpp`
+- [x] `include/promeki/core/dir.h`
+- [x] `src/dir.cpp`
+- [x] `tests/dir.cpp`
 
 **Implementation checklist:**
-- [ ] Header guard, includes, namespace
-- [ ] Constructor from `FilePath` or `String`
-- [ ] `path()` — returns `FilePath`
-- [ ] `exists()` — returns bool
-- [ ] `entryList()` — returns `List<FilePath>` of contents
-- [ ] `entryList(const String &filter)` — glob-filtered entries
-- [ ] `Error mkdir()` — create directory
-- [ ] `Error mkpath()` — create directory and all parents
-- [ ] `Error remove()` — remove empty directory
-- [ ] `Error removeRecursively()` — remove directory and all contents
-- [ ] `isEmpty()` — returns true if directory is empty
-- [ ] Static `current()` — returns Dir for current working directory
-- [ ] Static `home()` — returns Dir for user home
-- [ ] Static `temp()` — returns Dir for temp directory
-- [ ] Static `setCurrent(const FilePath &)` — change working directory
-- [ ] Doctest: mkdir/mkpath, entryList, exists, remove, static accessors
+- [x] Header guard, includes, namespace
+- [x] Constructor from `FilePath`, `String`, or `const char *`
+- [x] Default constructor
+- [x] `path()` — returns `FilePath`
+- [x] `exists()` — returns bool
+- [x] `entryList()` — returns `List<FilePath>` of contents
+- [x] `entryList(const String &filter)` — glob-filtered entries via `fnmatch()`
+- [x] `Error mkdir()` — create directory
+- [x] `Error mkpath()` — create directory and all parents
+- [x] `Error remove()` — remove empty directory
+- [x] `Error removeRecursively()` — remove directory and all contents
+- [x] `isEmpty()` — returns true if directory is empty (non-existent = empty)
+- [x] Static `current()` — returns Dir for current working directory
+- [x] Static `home()` — returns Dir for user home (`$HOME`)
+- [x] Static `temp()` — returns Dir for temp directory
+- [x] Static `setCurrent(const FilePath &)` — change working directory
+
+### Doctest
+- [x] Static accessors: current, home, temp
+- [x] mkdir/remove, mkpath/removeRecursively
+- [x] entryList (unfiltered and glob-filtered)
+- [x] isEmpty, non-existent directory, setCurrent, construction from String/FilePath
 
 ---
 
@@ -201,12 +219,13 @@ The existing `File` class (`include/promeki/core/file.h`, `src/file.cpp`) is a l
 
 ---
 
-## Update FileInfo
+## Update FileInfo — COMPLETE
 
-- [ ] Add `FileInfo(const FilePath &)` constructor
-- [ ] Add `filePath()` — returns `FilePath`
-- [ ] Ensure existing `String`-based constructor still works
-- [ ] Update tests
+- [x] Add `FileInfo(const FilePath &)` constructor
+- [x] Add `FileInfo(const char *)` constructor
+- [x] Add `filePath()` — returns `FilePath`
+- [x] Ensure existing `String`-based constructor still works
+- [x] Update tests (FilePath constructor, filePath accessor, round-trip)
 
 ---
 

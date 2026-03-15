@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/core/fileinfo.h>
+#include <promeki/core/filepath.h>
 #include <promeki/core/string.h>
 
 using namespace promeki;
@@ -54,4 +55,25 @@ TEST_CASE("FileInfo: fileName with no extension") {
 TEST_CASE("FileInfo: size of non-existent file") {
         FileInfo fi("/nonexistent/file.txt");
         CHECK(fi.size() == 0);
+}
+
+TEST_CASE("FileInfo: FilePath constructor") {
+        FilePath fp("/home/user/document.pdf");
+        FileInfo fi(fp);
+        CHECK(fi.fileName() == "document.pdf");
+        CHECK(fi.baseName() == "document");
+}
+
+TEST_CASE("FileInfo: filePath accessor") {
+        FileInfo fi("/tmp/test.txt");
+        FilePath fp = fi.filePath();
+        CHECK(fp.toString() == "/tmp/test.txt");
+        CHECK(fp.fileName() == "test.txt");
+}
+
+TEST_CASE("FileInfo: FilePath round-trip") {
+        FilePath original("/home/user/image.png");
+        FileInfo fi(original);
+        FilePath result = fi.filePath();
+        CHECK(result.toString() == original.toString());
 }

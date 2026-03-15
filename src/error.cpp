@@ -78,7 +78,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(CrossDeviceLink, EXDEV, "Cross-device link"),
 
         DEFINE_ERROR(InvalidArgument, NONE, "Invalid argument passed to function"),
-        DEFINE_ERROR(InvalidDimension, NONE, "Invalid dimension for operation")
+        DEFINE_ERROR(InvalidDimension, NONE, "Invalid dimension for operation"),
+        DEFINE_ERROR(NotHostAccessible, NONE, "Memory is not host-accessible")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
