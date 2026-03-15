@@ -46,11 +46,13 @@ Phase 7 (Cross-Cutting) -- ongoing throughout
 
 Phase 1A (containers), 1B (concurrency), 1C (API consistency), and 1D (utilities) are all done. Delivered: List, Map, Set, HashMap, HashSet, Deque, Stack, PriorityQueue, Span, Mutex, ReadWriteLock, WaitCondition, Atomic, Future, Promise, ThreadPool, Queue, Random, ElapsedTimer, Duration, Algorithm, Result, Pair. `Result<T>` adoption across the codebase is tracked in each phase's document where the classes are defined.
 
-### Phase 2: IO Abstractions, Filesystem, and Streams
+### Phase 2: IO Abstractions, Filesystem, and Streams — IN PROGRESS
 **Prerequisites:** Phase 1 (complete)
 **Documents:** `core_io.md`, `core_streams.md`
 
 Establish a uniform byte-oriented IO interface that network sockets, files, and pipes can all implement. Add filesystem utilities. Add DataStream (binary serialization) and TextStream (formatted text I/O) — both operate over IODevice or in-memory buffers. DataStream is the foundation for ObjectBase saveState/loadState (Phase 7). IODevice is the base class for Phase 3 sockets and Phase 4 pipeline file I/O.
+
+**Phase 2A (COMPLETE):** IODevice base class with runtime option system, FilePath value type.
 
 ### Phase 3: Network Library
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)

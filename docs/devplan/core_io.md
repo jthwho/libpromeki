@@ -6,80 +6,95 @@
 
 ---
 
-## IODevice Base Class
+## IODevice Base Class — COMPLETE
 
 Abstract ObjectBase-derived class — the common interface for files, sockets, pipes, serial ports. All methods are virtual so WASM backends can provide alternative implementations. Every blocking `waitFor*()` has a signal-based async path.
 
 **Files:**
-- [ ] `include/promeki/core/iodevice.h`
-- [ ] `src/iodevice.cpp`
-- [ ] `tests/iodevice.cpp`
+- [x] `include/promeki/core/iodevice.h`
+- [x] `src/iodevice.cpp`
+- [x] `tests/iodevice.cpp`
 
 **Implementation checklist:**
-- [ ] Header guard, includes, namespace
-- [ ] Derive from `ObjectBase`, use `PROMEKI_OBJECT`
-- [ ] `enum OpenMode { NotOpen, ReadOnly, WriteOnly, ReadWrite }`
-- [ ] `virtual Error open(OpenMode mode) = 0`
-- [ ] `virtual void close() = 0`
-- [ ] `virtual bool isOpen() const = 0`
-- [ ] `OpenMode openMode() const` — returns current mode
-- [ ] `virtual ssize_t read(void *buf, size_t maxBytes) = 0`
-- [ ] `virtual ssize_t write(const void *buf, size_t bytes) = 0`
-- [ ] `ssize_t write(const Buffer &buf)` — convenience overload
-- [ ] `virtual ssize_t bytesAvailable() const` — default returns 0
-- [ ] `virtual Error waitForReadyRead(unsigned int timeoutMs = 0)` — blocking wait, 0 = indefinite. Returns `Error::Ok` or `Error::Timeout`.
-- [ ] `virtual Error waitForBytesWritten(unsigned int timeoutMs = 0)` — blocking wait. Returns `Error::Ok` or `Error::Timeout`.
-- [ ] `virtual bool isSequential() const` — true for pipes/sockets, false for files
-- [ ] `virtual Error seek(int64_t pos)` — default returns error (sequential devices don't support seeking)
-- [ ] `virtual int64_t pos() const` — default returns -1
-- [ ] `virtual int64_t size() const` — default returns -1
-- [ ] `virtual bool atEnd() const`
-- [ ] `PROMEKI_SIGNAL(readyRead)` — emitted when data available
-- [ ] `PROMEKI_SIGNAL(bytesWritten, ssize_t)` — emitted after write completes
-- [ ] `PROMEKI_SIGNAL(errorOccurred, Error)` — emitted on error
-- [ ] `PROMEKI_SIGNAL(aboutToClose)` — emitted before close
-- [ ] Error state: `error()` returns last Error, `clearError()`
+- [x] Header guard, includes, namespace
+- [x] Derive from `ObjectBase`, use `PROMEKI_OBJECT`
+- [x] `enum OpenMode { NotOpen, ReadOnly, WriteOnly, ReadWrite }`
+- [x] `virtual Error open(OpenMode mode) = 0`
+- [x] `virtual void close() = 0`
+- [x] `virtual bool isOpen() const = 0`
+- [x] `OpenMode openMode() const` — returns current mode
+- [x] `bool isReadable() const`, `bool isWritable() const`
+- [x] `virtual int64_t read(void *data, int64_t maxSize) = 0`
+- [x] `virtual int64_t write(const void *data, int64_t maxSize) = 0`
+- [x] `virtual int64_t bytesAvailable() const` — default returns 0
+- [x] `virtual bool waitForReadyRead(unsigned int timeoutMs = 0)` — default returns false
+- [x] `virtual bool waitForBytesWritten(unsigned int timeoutMs = 0)` — default returns false
+- [x] `virtual bool isSequential() const` — default returns false
+- [x] `virtual bool seek(int64_t pos)` — default returns false
+- [x] `virtual int64_t pos() const` — default returns 0
+- [x] `virtual int64_t size() const` — default returns 0
+- [x] `virtual bool atEnd() const` — default returns `pos() >= size()`
+- [x] `PROMEKI_SIGNAL(readyRead)` — emitted when data available
+- [x] `PROMEKI_SIGNAL(bytesWritten, int64_t)` — emitted after write completes
+- [x] `PROMEKI_SIGNAL(errorOccurred, Error)` — emitted on error
+- [x] `PROMEKI_SIGNAL(aboutToClose)` — emitted before close
+- [x] Error state: `error()` returns last Error, `clearError()`, protected `setError()`
 
-### Hint System
+### Option System
 
-A generic key-value hint mechanism for passing device-specific configuration through the abstract interface. Hints are advisory — a device that doesn't understand a hint ignores it silently. This keeps device-specific concerns (Direct I/O, TCP_NODELAY, read-ahead, write-through, memory mapping, buffer sizing, etc.) out of the base class API while letting callers configure any device uniformly.
+Runtime-registered key-value option mechanism for device-specific configuration. Options use `Variant` values and runtime-allocated type IDs (lock-free atomic counter, same pattern as `Event`). Devices declare supported options by registering them; unsupported options return `Error::NotSupported`.
 
-- [ ] `enum Hint` — extensible set of well-known hint keys. Subclasses can define additional keys starting from `UserHint`.
-  ```
-  enum Hint {
-      // File hints
-      DirectIO,           // bool: bypass OS page cache (O_DIRECT)
-      SyncIO,             // bool: synchronous writes (O_SYNC)
-      ReadAhead,          // size_t: OS read-ahead size in bytes
-      WriteThrough,       // bool: write-through (no write buffering in OS)
+- [x] `using Option = uint32_t` — runtime-assigned option type ID
+- [x] `static constexpr Option InvalidOption = 0`
+- [x] `static Option registerOptionType()` — allocates unique ID, thread-safe
+- [x] Built-in option types: `DirectIO`, `Synchronous`, `NonBlocking`, `Unbuffered`
+- [x] `Error setOption(Option opt, const Variant &value)` — set option value. Returns `NotSupported` if device doesn't support it. Calls `onOptionChanged()`.
+- [x] `Result<Variant> option(Option opt) const` — query current value. Returns `NotSupported` error if unsupported.
+- [x] `bool optionSupported(Option opt) const` — returns true if device supports this option
+- [x] `using OptionList = std::initializer_list<std::pair<const Option, Variant>>`
+- [x] Constructor `IODevice(OptionList opts, ObjectBase *parent = nullptr)` — declare supported options via initializer list
+- [x] Protected `registerOption(Option, Variant)` — for dynamic registration in subclass constructors
+- [x] Protected `virtual void onOptionChanged(Option, const Variant &)` — override to react to option changes (e.g., toggle `O_DIRECT`). Default does nothing.
 
-      // Socket hints
-      NoDelay,            // bool: TCP_NODELAY (disable Nagle)
-      KeepAlive,          // bool: SO_KEEPALIVE
-      ReuseAddress,       // bool: SO_REUSEADDR
-      SendBufferSize,     // size_t: SO_SNDBUF
-      RecvBufferSize,     // size_t: SO_RCVBUF
-      MulticastTTL,       // int: IP_MULTICAST_TTL
-      DSCP,               // uint8_t: IP_TOS / DSCP field
-
-      // General hints
-      NonBlocking,        // bool: non-blocking I/O mode
-      BufferSize,         // size_t: preferred internal buffer size
-
-      // Extension point
-      UserHint = 0x10000  // subclasses define hints from here
-  };
-  ```
-- [ ] `virtual Error setHint(Hint hint, const Variant &value)` — apply a hint. Returns `Error::Ok` if applied, or a descriptive error (e.g., unsupported hint, invalid value, wrong device state, insufficient permissions). Default implementation returns an error for all hints.
-- [ ] `virtual Variant hint(Hint hint) const` — query current hint value. Returns invalid Variant if unsupported.
-- [ ] `bool hasHint(Hint hint) const` — returns true if the device supports this hint (shorthand for `hint(h).isValid()`)
-- [ ] `virtual List<Hint> supportedHints() const` — returns list of hints this device understands. Default returns empty list.
-- [ ] Hints can be set before or after `open()`. Devices document which hints must be set before open (e.g., DirectIO) vs. can be changed at runtime (e.g., NoDelay).
-- [ ] `PROMEKI_SIGNAL(hintChanged, Hint)` — emitted when a hint value changes (optional, for reactive configuration)
+**Design note:** The original plan specified an enum-based hint system. The implemented option system is superior: runtime type registration allows subclasses and new libraries to define options without modifying the base enum. Socket-specific options (NoDelay, KeepAlive, etc.) will be registered by the socket classes in Phase 3.
 
 ### Doctest
-- [ ] Test via concrete subclass (e.g., a simple memory buffer IODevice for testing)
-- [ ] Test hint system: set/get known hints, verify unknown hints return false/invalid, supportedHints()
+- [x] Test via concrete subclass (MemoryIODevice: in-memory buffer IODevice)
+- [x] Test option system: set/get, unsupported returns NotSupported, onOptionChanged callback, initializer list constructor, overwrite
+- [x] Test signals: aboutToClose, bytesWritten
+- [x] Test all open modes, seek, position, bytesAvailable, atEnd, partial read, read/write mode restrictions
+
+---
+
+## FilePath — COMPLETE
+
+Wraps `std::filesystem::path`. Header-only simple value type.
+
+**Files:**
+- [x] `include/promeki/core/filepath.h`
+- [x] `tests/filepath.cpp`
+
+**Implementation checklist:**
+- [x] Header guard, includes (`<filesystem>`), namespace
+- [x] Wrap `std::filesystem::path` as private member
+- [x] Constructors: from `String`, from `const char *`, from `std::filesystem::path`
+- [x] `toString()` — full path as String
+- [x] `fileName()` — file name with extension
+- [x] `baseName()` — file name without extension
+- [x] `suffix()` — extension (without dot)
+- [x] `completeSuffix()` — all extensions (e.g., "tar.gz")
+- [x] `absolutePath()` — resolved absolute path
+- [x] `parent()` — parent directory as FilePath
+- [x] `join(const FilePath &)` — append path component
+- [x] `operator/(const FilePath &)` — alias for join
+- [x] `operator/(const String &)` — join with String
+- [x] `operator/(const char *)` — join with C string
+- [x] `isEmpty()` — returns bool
+- [x] `exists()` — returns bool (checks filesystem)
+- [x] `isAbsolute()`, `isRelative()` — returns bool
+- [x] `operator==`, `operator!=`, `operator<` (for sorting/maps)
+- [x] `toStdPath()` — returns `const std::filesystem::path &`
+- [x] Doctest: construction, decomposition, join, exists, absolute/relative, edge cases (dotfiles, empty, root parent)
 
 ---
 
@@ -104,37 +119,6 @@ Adds read buffering on top of IODevice.
 - [ ] `setReadBufferSize(size_t size)` — limit internal buffer size (0 = unlimited)
 - [ ] Override `bytesAvailable()` to include buffered data
 - [ ] Doctest: readLine, readAll, peek, canReadLine, buffer size limits
-
----
-
-## FilePath
-
-Wraps `std::filesystem::path`. Simple value type.
-
-**Files:**
-- [ ] `include/promeki/core/filepath.h`
-- [ ] `tests/filepath.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes (`<filesystem>`), namespace
-- [ ] Wrap `std::filesystem::path` as private member
-- [ ] Constructors: from `String`, from `const char *`, from `std::filesystem::path`
-- [ ] `toString()` — full path as String
-- [ ] `fileName()` — file name with extension
-- [ ] `baseName()` — file name without extension
-- [ ] `suffix()` — extension (without dot)
-- [ ] `completeSuffix()` — all extensions (e.g., "tar.gz")
-- [ ] `absolutePath()` — resolved absolute path
-- [ ] `parent()` — parent directory as FilePath
-- [ ] `join(const String &)` — append path component
-- [ ] `operator/(const String &)` — alias for join
-- [ ] `operator/(const FilePath &)` — alias for join
-- [ ] `isEmpty()` — returns bool
-- [ ] `exists()` — returns bool (checks filesystem)
-- [ ] `isAbsolute()`, `isRelative()` — returns bool
-- [ ] `operator==`, `operator!=`, `operator<` (for sorting/maps)
-- [ ] `toStdPath()` — returns `const std::filesystem::path &`
-- [ ] Doctest: construction, decomposition (fileName, baseName, suffix), join, exists, absolute/relative
 
 ---
 
@@ -169,17 +153,18 @@ Directory operations. Utility class.
 
 ## Refactor File to Derive from BufferedIODevice
 
-The existing `File` class (`include/promeki/core/core/file.h`, `src/file.cpp`) is a low-level file I/O wrapper with its own `open()`, `read()`, `write()`, `seek()`, `close()`. Refactor it to derive from `BufferedIODevice`, making it a full IODevice citizen. This enables File to be used anywhere an IODevice is expected (DataStream, TextStream, socket-like APIs).
+The existing `File` class (`include/promeki/core/file.h`, `src/file.cpp`) is a low-level file I/O wrapper with its own `open()`, `read()`, `write()`, `seek()`, `close()`. Refactor it to derive from `BufferedIODevice`, making it a full IODevice citizen. This enables File to be used anywhere an IODevice is expected (DataStream, TextStream, socket-like APIs).
 
 **Files:**
-- [ ] Modify `include/promeki/core/core/file.h`
+- [ ] Modify `include/promeki/core/file.h`
 - [ ] Modify `src/file.cpp`
 - [ ] Update `tests/file.cpp`
 
 **Implementation checklist:**
 - [ ] Change `File` to derive from `BufferedIODevice` instead of being standalone
 - [ ] Map existing `File::Flags` to `IODevice::OpenMode` (ReadOnly, WriteOnly, ReadWrite)
-- [ ] Retain `File`-specific flags as extensions: `Create`, `Append`, `Truncate`, `Exclusive`, `DirectIO`, `Sync`, `NonBlocking`
+- [ ] Retain `File`-specific flags as extensions: `Create`, `Append`, `Truncate`, `Exclusive`
+- [ ] Register options via initializer list: `DirectIO`, `Synchronous`, `NonBlocking`
 - [ ] Override `open(OpenMode)` — delegate to existing POSIX `::open()` logic
 - [ ] Add `open(OpenMode, Flags)` overload for file-specific flags (Create, Append, Truncate, Exclusive)
 - [ ] Override `read()` — delegate to existing `::read()` logic
@@ -188,13 +173,10 @@ The existing `File` class (`include/promeki/core/core/file.h`, `src/file.cpp`) i
 - [ ] Override `seek()`, `pos()`, `size()`, `atEnd()` — delegate to existing implementations
 - [ ] Override `isSequential()` — return `false`
 - [ ] Emit `readyRead`, `bytesWritten`, `errorOccurred` signals at appropriate points
-- [ ] Migrate Direct I/O, Sync, NonBlocking to hint system:
-  - [ ] Override `setHint()` to handle `DirectIO`, `SyncIO`, `NonBlocking`, `ReadAhead`, `WriteThrough`
-  - [ ] Override `hint()` to return current values
-  - [ ] Override `supportedHints()` to advertise supported hints
-  - [ ] Remove `isDirectIO()` / `setDirectIOEnabled()` — replaced by `setHint(DirectIO, true)` / `hint(DirectIO)`
-- [ ] Preserve `truncate()` as File-specific API (not a hint — it's an operation)
-- [ ] Preserve existing `FileBytes` return type or migrate to `ssize_t` (match IODevice convention)
+- [ ] Override `onOptionChanged()` to apply DirectIO/Sync/NonBlocking via fcntl
+- [ ] Remove `isDirectIO()` / `setDirectIOEnabled()` — replaced by option system
+- [ ] Preserve `truncate()` as File-specific API (not an option — it's an operation)
+- [ ] Migrate `FileBytes` return type to `int64_t` (match IODevice convention)
 - [ ] Ensure all existing call sites still compile
 - [ ] Doctest: verify File works as IODevice (pass to DataStream, TextStream), existing File tests still pass
 
@@ -205,7 +187,7 @@ The existing `File` class (`include/promeki/core/core/file.h`, `src/file.cpp`) i
 `AudioFile` currently manages its own file I/O through the `Impl` pimpl pattern. Refactor so the `Impl` backends use `IODevice` (specifically `File`) for their underlying I/O, enabling future backends that read from network streams or memory buffers.
 
 **Files:**
-- [ ] Modify `include/promeki/core/proav/audiofile.h`
+- [ ] Modify `include/promeki/proav/audiofile.h`
 - [ ] Modify `src/audiofile.cpp`
 - [ ] Modify `src/audiofile_libsndfile.cpp`
 - [ ] Update `tests/audiofile.cpp`

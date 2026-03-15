@@ -110,6 +110,8 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/eventloop.h
     include/promeki/core/file.h
     include/promeki/core/fileinfo.h
+    include/promeki/core/filepath.h
+    include/promeki/core/iodevice.h
     include/promeki/core/fnv1a.h
     include/promeki/core/fourcc.h
     include/promeki/core/framerate.h
@@ -216,6 +218,7 @@ set(PROMEKI_CORE_SOURCES
     src/metadata.cpp
     src/cmdlineparser.cpp
     src/file.cpp
+    src/iodevice.cpp
     src/numname.cpp
     src/numnameseq.cpp
     src/signal.cpp
@@ -790,6 +793,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/elapsedtimer.cpp
         tests/duration.cpp
         tests/algorithm.cpp
+        tests/filepath.cpp
+        tests/iodevice.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
