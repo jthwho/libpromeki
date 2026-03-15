@@ -48,28 +48,28 @@ List<FilePath> Dir::entryList(const String &filter) const {
 Error Dir::mkdir() const {
         std::error_code ec;
         if(std::filesystem::create_directory(_path.toStdPath(), ec)) return Error();
-        if(ec) return Error::syserr(ec.value());
+        if(ec) return Error::syserr(ec);
         return Error();
 }
 
 Error Dir::mkpath() const {
         std::error_code ec;
         std::filesystem::create_directories(_path.toStdPath(), ec);
-        if(ec) return Error::syserr(ec.value());
+        if(ec) return Error::syserr(ec);
         return Error();
 }
 
 Error Dir::remove() const {
         std::error_code ec;
         if(std::filesystem::remove(_path.toStdPath(), ec)) return Error();
-        if(ec) return Error::syserr(ec.value());
+        if(ec) return Error::syserr(ec);
         return Error();
 }
 
 Error Dir::removeRecursively() const {
         std::error_code ec;
         std::filesystem::remove_all(_path.toStdPath(), ec);
-        if(ec) return Error::syserr(ec.value());
+        if(ec) return Error::syserr(ec);
         return Error();
 }
 
@@ -92,7 +92,7 @@ Dir Dir::temp() {
 Error Dir::setCurrent(const FilePath &path) {
         std::error_code ec;
         std::filesystem::current_path(path.toStdPath(), ec);
-        if(ec) return Error::syserr(ec.value());
+        if(ec) return Error::syserr(ec);
         return Error();
 }
 

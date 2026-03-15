@@ -1,7 +1,7 @@
 /**
  * @file      core/file.h
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -11,33 +11,44 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/platform.h>
 #include <promeki/core/string.h>
+#include <promeki/core/filepath.h>
 #include <promeki/core/error.h>
+#include <promeki/core/result.h>
+#include <promeki/core/bufferediodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Low-level file I/O wrapper.
+ * @brief File I/O device with buffered reading.
  *
- * Provides a platform-independent interface for opening, reading, writing,
- * and seeking within files. Supports flags for controlling access mode,
- * direct I/O, synchronous writes, and other behaviors. This class is
- * non-copyable.
+ * Derives from BufferedIODevice, providing a full IODevice interface
+ * for file I/O. Supports direct I/O, synchronous writes, and
+ * non-blocking mode via setDirectIO(), setSynchronous(), and
+ * setNonBlocking().
+ *
+ * File-specific open flags (Create, Append, Truncate, Exclusive) are
+ * passed via the open(OpenMode, int) overload. The IODevice open(OpenMode)
+ * overload opens with no extra flags.
+ *
+ * When direct I/O is enabled, unbuffered mode is automatically forced.
+ * The previous unbuffered state is saved and restored when direct I/O
+ * is disabled.
  */
-class File {
-	public:
-                /** @brief Flags controlling how a file is opened and accessed. */
+class File : public BufferedIODevice {
+        PROMEKI_OBJECT(File, BufferedIODevice)
+        public:
+                /**
+                 * @brief File-specific open flags.
+                 *
+                 * These extend the IODevice OpenMode and are passed to
+                 * open(OpenMode, int).
+                 */
                 enum Flags {
-                        NoFlags         = 0x00000000, ///< @brief No flags set.
-                        ReadOnly        = 0x00000001, ///< @brief Open for reading only.
-                        WriteOnly       = 0x00000002, ///< @brief Open for writing only.
-                        Create          = 0x00000004, ///< @brief Create the file if it does not exist.
-                        Append          = 0x00000008, ///< @brief Append writes to the end of the file.
-                        NonBlocking     = 0x00000010, ///< @brief Open in non-blocking mode.
-                        DirectIO        = 0x00000020, ///< @brief Use direct I/O, bypassing OS page cache.
-                        Sync            = 0x00000040, ///< @brief Synchronous write mode.
-                        Truncate        = 0x00000080, ///< @brief Truncate the file to zero length on open.
-                        Exclusive       = 0x00000100, ///< @brief Fail if the file already exists (with Create).
-                        ReadWrite       = (ReadOnly | WriteOnly) ///< @brief Open for both reading and writing.
+                        NoFlags         = 0x00,  ///< @brief No extra flags.
+                        Create          = 0x01,  ///< @brief Create the file if it does not exist.
+                        Append          = 0x02,  ///< @brief Append writes to the end of the file.
+                        Truncate        = 0x04,  ///< @brief Truncate the file to zero length on open.
+                        Exclusive       = 0x08   ///< @brief Fail if the file already exists (with Create).
                 };
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
@@ -51,22 +62,38 @@ class File {
                 /** @brief Sentinel value representing a closed file handle (POSIX). */
                 static constexpr FileHandle FileHandleClosedValue = -1;
 #endif
-                /** @brief Signed type used for byte counts and file offsets. */
-                using FileBytes = int64_t;
 
                 /** @brief Deleted copy constructor (non-copyable). */
                 File(const File &) = delete;
                 /** @brief Deleted copy assignment operator (non-copyable). */
                 File &operator=(const File &) = delete;
 
-                /** @brief Default constructor. Creates a File with no filename. */
-		File() = default;
+                /**
+                 * @brief Default constructor. Creates a File with no filename.
+                 * @param parent The parent object, or nullptr.
+                 */
+                File(ObjectBase *parent = nullptr);
 
                 /**
                  * @brief Constructs a File with the given filename.
                  * @param fn The path to the file.
+                 * @param parent The parent object, or nullptr.
                  */
-		File(const String &fn) : _filename(fn) { }
+                File(const String &fn, ObjectBase *parent = nullptr);
+
+                /**
+                 * @brief Constructs a File with the given C string filename.
+                 * @param fn The path to the file.
+                 * @param parent The parent object, or nullptr.
+                 */
+                File(const char *fn, ObjectBase *parent = nullptr);
+
+                /**
+                 * @brief Constructs a File with the given file path.
+                 * @param fp The path to the file.
+                 * @param parent The parent object, or nullptr.
+                 */
+                File(const FilePath &fp, ObjectBase *parent = nullptr);
 
                 /** @brief Destructor. Closes the file if it is open. */
                 ~File();
@@ -75,123 +102,241 @@ class File {
                  * @brief Returns the filename associated with this File.
                  * @return A const reference to the filename string.
                  */
-                const String &filename() const {
-                        return _filename;
-                }
+                const String &filename() const { return _filename; }
 
                 /**
-                 * @brief Returns the flags the file was opened with.
-                 * @return The current flags bitmask.
+                 * @brief Sets the filename.
+                 *
+                 * Only allowed when the file is not open.
+                 * @param fn The new filename.
                  */
-                int flags() const {
-                        return _flags;
-                }
+                void setFilename(const String &fn) { _filename = fn; }
 
                 /**
-                 * @brief Returns true if the file was opened for reading.
-                 * @return true if the ReadOnly flag is set.
+                 * @brief Returns the file-specific flags used at open time.
+                 * @return The Flags bitmask.
                  */
-                bool isReadable() const {
-                        return _flags & ReadOnly;
-                }
+                int flags() const { return _fileFlags; }
 
                 /**
-                 * @brief Returns true if the file was opened for writing.
-                 * @return true if the WriteOnly flag is set.
+                 * @brief Returns the native file handle.
+                 * @return The platform-specific file handle.
                  */
-                bool isWritable() const {
-                        return _flags & WriteOnly;
-                }
+                FileHandle handle() const { return _handle; }
 
                 /**
-                 * @brief Returns true if direct I/O is enabled.
-                 * @return true if the DirectIO flag is set.
-                 */
-                bool isDirectIO() const {
-                        return _flags & DirectIO;
-                }
-
-                /**
-                 * @brief Returns true if the file is currently open.
-                 * @return true if the file handle is valid.
-                 */
-                bool isOpen() const {
-                        return _handle != FileHandleClosedValue;
-                }
-
-                /**
-                 * @brief Enables or disables direct I/O on an open file.
-                 * @param val true to enable direct I/O, false to disable.
+                 * @brief Opens the file with the given mode and no extra flags.
+                 * @param mode The open mode (ReadOnly, WriteOnly, or ReadWrite).
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error setDirectIOEnabled(bool val);
+                Error open(OpenMode mode) override;
 
                 /**
-                 * @brief Opens the file with the specified flags.
-                 * @param flags A bitmask of Flags values controlling the open mode.
+                 * @brief Opens the file with the given mode and file-specific flags.
+                 * @param mode The open mode (ReadOnly, WriteOnly, or ReadWrite).
+                 * @param fileFlags A bitmask of Flags (Create, Append, Truncate, Exclusive).
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error open(int flags);
+                Error open(OpenMode mode, int fileFlags);
 
-                /** @brief Closes the file if it is open. */
-                void close();
+                /**
+                 * @brief Closes the file if it is open.
+                 * @return Error::Ok on success, or an error if the close syscall fails.
+                 */
+                Error close() override;
+
+                /** @brief Returns true if the file is currently open. */
+                bool isOpen() const override;
 
                 /**
                  * @brief Writes data to the file at the current position.
-                 * @param buf Pointer to the data to write.
-                 * @param bytes Number of bytes to write.
-                 * @return The number of bytes written, or a negative value on error.
+                 * @param data Pointer to the data to write.
+                 * @param maxSize Number of bytes to write.
+                 * @return The number of bytes written, or -1 on error.
                  */
-                FileBytes write(const void *buf, size_t bytes) const;
+                int64_t write(const void *data, int64_t maxSize) override;
+
+                /** @brief Returns false (files are seekable). */
+                bool isSequential() const override;
 
                 /**
-                 * @brief Reads data from the file at the current position.
-                 * @param buf Pointer to the buffer to read into.
-                 * @param bytes Maximum number of bytes to read.
-                 * @return The number of bytes read, or a negative value on error.
-                 */
-                FileBytes read(void *buf, size_t bytes) const;
-
-                /**
-                 * @brief Returns the current read/write position in the file.
-                 * @return The current position in bytes from the beginning of the file.
-                 */
-                FileBytes position() const;
-
-                /**
-                 * @brief Seeks to an absolute byte offset from the beginning of the file.
+                 * @brief Seeks to an absolute byte offset.
                  * @param offset The byte offset to seek to.
-                 * @return The resulting position, or a negative value on error.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                FileBytes seek(FileBytes offset) const;
+                Error seek(int64_t offset) override;
+
+                /**
+                 * @brief Returns the current read/write position.
+                 * @return The current position in bytes.
+                 */
+                int64_t pos() const override;
+
+                /**
+                 * @brief Returns the total file size in bytes.
+                 * @return A Result containing the file size, or an error
+                 *         if fstat fails.
+                 */
+                Result<int64_t> size() const override;
+
+                /**
+                 * @brief Returns true if the position is at or past the end.
+                 * @return true if at end of file.
+                 */
+                bool atEnd() const override;
 
                 /**
                  * @brief Seeks relative to the current file position.
                  * @param offset The byte offset relative to the current position.
-                 * @return The resulting position, or a negative value on error.
+                 * @return A Result containing the new position, or an error.
                  */
-                FileBytes seekFromCurrent(FileBytes offset) const;
+                Result<int64_t> seekFromCurrent(int64_t offset) const;
 
                 /**
                  * @brief Seeks relative to the end of the file.
-                 * @param offset The byte offset relative to the end (typically negative).
-                 * @return The resulting position, or a negative value on error.
+                 * @param offset The byte offset relative to the end (typically negative or 0).
+                 * @return A Result containing the new position, or an error.
                  */
-                FileBytes seekFromEnd(FileBytes offset) const;
+                Result<int64_t> seekFromEnd(int64_t offset) const;
 
                 /**
                  * @brief Truncates the file to the specified length.
                  * @param offset The new file size in bytes.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error truncate(FileBytes offset) const;
+                Error truncate(int64_t offset) const;
+
+                /**
+                 * @brief Returns the direct I/O alignment requirement for this file.
+                 *
+                 * When the file is open, returns the filesystem block size via fstat.
+                 * This is the alignment required for file offsets, buffer addresses,
+                 * and transfer sizes when direct I/O is enabled.
+                 *
+                 * @return A Result containing the alignment in bytes, or an error
+                 *         if the file is not open or fstat fails.
+                 */
+                Result<size_t> directIOAlignment() const;
+
+                /**
+                 * @brief Reads bulk data from the current file position using direct I/O.
+                 *
+                 * Reads @p size bytes from the current file position into @p buf,
+                 * using direct I/O for the aligned interior of the region and
+                 * normal I/O for any unaligned head and tail bytes. This is the
+                 * optimal strategy for reading large media payloads (image data,
+                 * audio samples) from container files, bypassing the OS page
+                 * cache for the bulk transfer while handling misaligned
+                 * boundaries gracefully.
+                 *
+                 * This method calls shiftData() on @p buf so that the direct
+                 * I/O portion lands on an aligned destination address. After a
+                 * successful call, buf.data() points to the first byte of the
+                 * requested payload. The caller only needs to ensure the buffer
+                 * is allocated with at least directIOAlignment() alignment and
+                 * that allocSize() is at least @p size + directIOAlignment():
+                 *
+                 * @code
+                 * size_t align = file.directIOAlignment();
+                 * Buffer buf(payloadSize + align, align);
+                 * Error err = file.readBulk(buf, payloadSize);
+                 * // buf.data() now points to the start of the payload
+                 * @endcode
+                 *
+                 * The buffer must be host-accessible and allocSize() must be
+                 * large enough to accommodate the shift plus @p size bytes.
+                 *
+                 * If the region is smaller than one alignment block, or if the
+                 * alignment cannot be determined, a normal (non-DIO) read is
+                 * used for the entire region. If direct I/O fails at runtime
+                 * (e.g. the filesystem does not support O_DIRECT), the method
+                 * falls back to normal I/O for that portion automatically.
+                 *
+                 * If fewer than @p size bytes remain in the file, the read
+                 * succeeds and buf.size() reflects the actual number of bytes
+                 * read (which will be less than @p size).
+                 *
+                 * @note This method is not safe for use with non-blocking file
+                 * descriptors. The underlying read loop treats EAGAIN as a
+                 * hard error, which means a non-blocking fd that would block
+                 * will cause readBulk to fail — and may lose already-read data
+                 * from earlier portions of the transfer. If non-blocking bulk
+                 * reads are needed, this will require a rework of the internal
+                 * read loop.
+                 *
+                 * @param buf  Destination buffer (must be host-accessible).
+                 * @param size Number of bytes to read.
+                 * @return Error::Ok on success (check buf.size() for actual
+                 *         bytes read), or an appropriate error code.
+                 */
+                Error readBulk(Buffer &buf, int64_t size);
+
+                /**
+                 * @brief Enables or disables direct I/O (bypass OS page cache).
+                 *
+                 * When enabled, unbuffered mode is automatically forced on.
+                 * When disabled, the previous unbuffered state is restored.
+                 * If the file is open, the O_DIRECT flag is toggled via fcntl.
+                 *
+                 * @param enable true to enable direct I/O.
+                 * @return Error::Ok on success, or an error if the fcntl call fails.
+                 */
+                Error setDirectIO(bool enable);
+
+                /**
+                 * @brief Returns true if direct I/O is enabled.
+                 * @return true if direct I/O is active.
+                 */
+                bool isDirectIO() const { return _directIO; }
+
+                /**
+                 * @brief Enables or disables synchronous writes.
+                 *
+                 * If the file is open, the O_SYNC flag is toggled via fcntl.
+                 *
+                 * @param enable true to enable synchronous writes.
+                 * @return Error::Ok on success, or an error if the fcntl call fails.
+                 */
+                Error setSynchronous(bool enable);
+
+                /**
+                 * @brief Returns true if synchronous writes are enabled.
+                 * @return true if synchronous mode is active.
+                 */
+                bool isSynchronous() const { return _synchronous; }
+
+                /**
+                 * @brief Enables or disables non-blocking mode.
+                 *
+                 * If the file is open, the O_NONBLOCK flag is toggled via fcntl.
+                 *
+                 * @param enable true to enable non-blocking operations.
+                 * @return Error::Ok on success, or an error if the fcntl call fails.
+                 */
+                Error setNonBlocking(bool enable);
+
+                /**
+                 * @brief Returns true if non-blocking mode is enabled.
+                 * @return true if non-blocking mode is active.
+                 */
+                bool isNonBlocking() const { return _nonBlocking; }
+
+        protected:
+
+                /** @brief Reads raw data from the file descriptor. */
+                int64_t readFromDevice(void *data, int64_t maxSize) override;
+
+                /** @brief Returns bytes available from the device (file). */
+                int64_t deviceBytesAvailable() const override;
 
         private:
+                bool            _directIO = false;         ///< Direct I/O mode.
+                bool            _synchronous = false;      ///< Synchronous write mode.
+                bool            _nonBlocking = false;      ///< Non-blocking mode.
                 String          _filename;
-                int             _flags = NoFlags;
+                int             _fileFlags = NoFlags;
                 FileHandle      _handle = FileHandleClosedValue;
-
+                bool            _savedUnbuffered = false;  ///< Unbuffered state saved before DirectIO forced it.
 };
 
 PROMEKI_NAMESPACE_END
-

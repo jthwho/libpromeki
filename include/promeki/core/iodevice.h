@@ -11,10 +11,7 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/objectbase.h>
 #include <promeki/core/error.h>
-#include <promeki/core/variant.h>
 #include <promeki/core/result.h>
-#include <promeki/core/map.h>
-#include <promeki/core/atomic.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,50 +22,12 @@ PROMEKI_NAMESPACE_BEGIN
  * to devices such as files, sockets, pipes, and in-memory buffers.
  * All I/O device classes in promeki derive from this class.
  *
- * @par Options
- * Device capabilities are expressed through options that subclasses
- * register via registerOption(). Each option has a runtime-assigned
- * type ID (allocated by registerOptionType()) and a Variant value.
- * Client code queries and sets options by type ID:
- * @code
- * if(dev.optionSupported(IODevice::DirectIO)) {
- *         dev.setOption(IODevice::DirectIO, true);
- * }
- * auto [val, err] = dev.option(IODevice::DirectIO);
- * @endcode
- *
  * This class must only be used from the thread that created it
  * (or moved to via moveToThread()).
  */
 class IODevice : public ObjectBase {
         PROMEKI_OBJECT(IODevice, ObjectBase)
         public:
-                /** @brief Integer type used to identify option kinds. */
-                using Option = uint32_t;
-
-                /** @brief Sentinel value representing an invalid or unset option type. */
-                static constexpr Option InvalidOption = 0;
-
-                /**
-                 * @brief Allocates and returns a unique option type ID.
-                 *
-                 * Each call returns a new, never-before-used ID. Thread-safe.
-                 * @return A unique Option value.
-                 */
-                static Option registerOptionType();
-
-                /** @brief Option for direct I/O (bypass OS page cache). */
-                static const Option DirectIO;
-
-                /** @brief Option for synchronous writes. */
-                static const Option Synchronous;
-
-                /** @brief Option for non-blocking operations. */
-                static const Option NonBlocking;
-
-                /** @brief Option for unbuffered I/O. */
-                static const Option Unbuffered;
-
                 /** @brief Mode flags controlling how a device is opened. */
                 enum OpenMode {
                         NotOpen   = 0x00, ///< @brief Device is not open.
@@ -77,22 +36,11 @@ class IODevice : public ObjectBase {
                         ReadWrite = ReadOnly | WriteOnly ///< @brief Open for reading and writing.
                 };
 
-                /** @brief Initializer list type for declaring supported options. */
-                using OptionList = std::initializer_list<std::pair<const Option, Variant>>;
-
                 /**
                  * @brief Constructs an IODevice.
                  * @param parent The parent object, or nullptr.
                  */
                 IODevice(ObjectBase *parent = nullptr) : ObjectBase(parent) { }
-
-                /**
-                 * @brief Constructs an IODevice with supported options.
-                 * @param opts Initializer list of {Option, defaultValue} pairs.
-                 * @param parent The parent object, or nullptr.
-                 */
-                IODevice(OptionList opts, ObjectBase *parent = nullptr) :
-                        ObjectBase(parent), _options(opts) { }
 
                 /** @brief Destructor. */
                 virtual ~IODevice();
@@ -106,8 +54,9 @@ class IODevice : public ObjectBase {
 
                 /**
                  * @brief Closes the device.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                virtual void close() = 0;
+                virtual Error close() = 0;
 
                 /**
                  * @brief Returns true if the device is open.
@@ -165,9 +114,9 @@ class IODevice : public ObjectBase {
                 /**
                  * @brief Seeks to the given byte offset from the beginning.
                  * @param pos The byte offset to seek to.
-                 * @return true on success, false on failure or if not seekable.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                virtual bool seek(int64_t pos);
+                virtual Error seek(int64_t pos);
 
                 /**
                  * @brief Returns the current read/write position.
@@ -181,9 +130,9 @@ class IODevice : public ObjectBase {
                  * @brief Returns the total size of the device in bytes.
                  *
                  * The default implementation returns 0.
-                 * @return The device size, or 0 if unknown.
+                 * @return A Result containing the device size, or an error.
                  */
-                virtual int64_t size() const;
+                virtual Result<int64_t> size() const;
 
                 /**
                  * @brief Returns true if the current position is at the end.
@@ -233,35 +182,6 @@ class IODevice : public ObjectBase {
                         return;
                 }
 
-                /**
-                 * @brief Sets an option value by type ID.
-                 *
-                 * Returns NotSupported if the device does not support this option.
-                 * On success, calls onOptionChanged().
-                 *
-                 * @param opt The option type identifier.
-                 * @param value The value to set.
-                 * @return Error::Ok on success, or an error on failure.
-                 */
-                Error setOption(Option opt, const Variant &value);
-
-                /**
-                 * @brief Returns the current value of an option.
-                 *
-                 * Returns NotSupported error if the option is not registered.
-                 *
-                 * @param opt The option type identifier.
-                 * @return A Result containing the Variant value or an error.
-                 */
-                Result<Variant> option(Option opt) const;
-
-                /**
-                 * @brief Returns true if the device supports the given option.
-                 * @param opt The option type identifier.
-                 * @return true if the option is registered on this device.
-                 */
-                bool optionSupported(Option opt) const;
-
                 /** @brief Emitted when data is available for reading. @signal */
                 PROMEKI_SIGNAL(readyRead);
 
@@ -296,33 +216,9 @@ class IODevice : public ObjectBase {
                         return;
                 }
 
-                /**
-                 * @brief Registers an option with a default value.
-                 *
-                 * Call this from subclass constructors to declare
-                 * supported options.
-                 *
-                 * @param opt The option type identifier.
-                 * @param defaultValue The initial value for this option.
-                 */
-                void registerOption(Option opt, const Variant &defaultValue = Variant());
-
-                /**
-                 * @brief Called when an option value changes via setOption().
-                 *
-                 * Override this in subclasses to react to option changes
-                 * (e.g., toggle O_DIRECT on the file descriptor). The
-                 * default implementation does nothing.
-                 *
-                 * @param opt The option that changed.
-                 * @param value The new value.
-                 */
-                virtual void onOptionChanged(Option opt, const Variant &value);
-
         private:
                 OpenMode                        _openMode = NotOpen;
                 Error                           _error;
-                Map<Option, Variant>            _options;
 };
 
 PROMEKI_NAMESPACE_END

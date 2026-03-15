@@ -42,7 +42,7 @@ void TuiApplication::setRootWidget(TuiWidget *widget) {
         _rootWidget = widget;
         if(_rootWidget) {
                 int cols, rows;
-                if(_terminal.windowSize(cols, rows)) {
+                if(_terminal.windowSize(cols, rows).isOk()) {
                         _rootWidget->setGeometry(Rect2Di32(0, 0, cols, rows));
                 }
         }
@@ -67,7 +67,7 @@ int TuiApplication::exec() {
 
         // Initial size
         int cols, rows;
-        if(_terminal.windowSize(cols, rows)) {
+        if(_terminal.windowSize(cols, rows).isOk()) {
                 _lastCols = cols;
                 _lastRows = rows;
                 _screen.resize(cols, rows);
@@ -182,8 +182,8 @@ void TuiApplication::collectFocusable(TuiWidget *widget, List<TuiWidget *> &list
 
 void TuiApplication::processInput() {
         char buf[256];
-        int n = _terminal.readInput(buf, sizeof(buf));
-        if(n <= 0) return;
+        auto [n, readErr] = _terminal.readInput(buf, sizeof(buf));
+        if(readErr.isError() || n <= 0) return;
 
         List<TuiInputParser::ParsedEvent> events = _inputParser.feed(buf, n);
         for(size_t i = 0; i < events.size(); ++i) {
@@ -301,7 +301,7 @@ void TuiApplication::dispatchMouseEvent(const TuiInputParser::ParsedEvent &ev) {
 
 void TuiApplication::handleResize() {
         int cols, rows;
-        if(!_terminal.windowSize(cols, rows)) return;
+        if(_terminal.windowSize(cols, rows).isError()) return;
         if(cols == _lastCols && rows == _lastRows) return;
 
         _lastCols = cols;

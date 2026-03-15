@@ -30,12 +30,12 @@ class BufferedMemoryDevice : public BufferedIODevice {
                         return Error();
                 }
 
-                void close() override {
+                Error close() override {
                         aboutToCloseSignal.emit();
                         setOpenMode(NotOpen);
                         _pos = 0;
                         resetReadBuffer();
-                        return;
+                        return Error();
                 }
 
                 bool isOpen() const override {
@@ -63,8 +63,15 @@ class BufferedMemoryDevice : public BufferedIODevice {
 
                 const std::vector<uint8_t> &storage() const { return _storage; }
 
+                /** @brief Returns the number of readFromDevice calls (for testing). */
+                int readFromDeviceCount() const { return _readFromDeviceCount; }
+
+                /** @brief Resets the readFromDevice call counter. */
+                void resetReadFromDeviceCount() { _readFromDeviceCount = 0; }
+
         protected:
                 int64_t readFromDevice(void *data, int64_t maxSize) override {
+                        ++_readFromDeviceCount;
                         int64_t avail = static_cast<int64_t>(_storage.size()) - _pos;
                         if(avail <= 0) return 0;
                         int64_t toRead = std::min(maxSize, avail);
@@ -81,6 +88,7 @@ class BufferedMemoryDevice : public BufferedIODevice {
         private:
                 std::vector<uint8_t> _storage;
                 int64_t _pos = 0;
+                int _readFromDeviceCount = 0;
 };
 
 TEST_CASE("BufferedIODevice: default state") {
@@ -603,6 +611,299 @@ TEST_CASE("BufferedIODevice: custom buffer with specific size") {
         CHECK(all.isValid());
         CHECK(all.size() == std::strlen(data));
         CHECK(std::memcmp(all.data(), data, std::strlen(data)) == 0);
+
+        dev.close();
+}
+
+// ---- Unbuffered bypass mode tests ----
+
+TEST_CASE("BufferedIODevice: unbuffered defaults to false") {
+        BufferedMemoryDevice dev;
+        CHECK_FALSE(dev.isUnbuffered());
+}
+
+TEST_CASE("BufferedIODevice: unbuffered read goes directly to device") {
+        BufferedMemoryDevice dev;
+        const char *data = "direct read test";
+        dev.setData(data, std::strlen(data));
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        dev.resetReadFromDeviceCount();
+        char buf[17] = {};
+        int64_t n = dev.read(buf, 16);
+        CHECK(n == 16);
+        CHECK(std::strcmp(buf, "direct read test") == 0);
+
+        // Each read() call should map to exactly one readFromDevice() call
+        CHECK(dev.readFromDeviceCount() == 1);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered readLine") {
+        BufferedMemoryDevice dev;
+        const char *data = "line1\nline2\nline3";
+        dev.setData(data, std::strlen(data));
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        Buffer line1 = dev.readLine();
+        CHECK(line1.isValid());
+        CHECK(line1.size() == 6);
+        CHECK(std::memcmp(line1.data(), "line1\n", 6) == 0);
+
+        Buffer line2 = dev.readLine();
+        CHECK(line2.isValid());
+        CHECK(line2.size() == 6);
+        CHECK(std::memcmp(line2.data(), "line2\n", 6) == 0);
+
+        // Last line has no newline
+        Buffer line3 = dev.readLine();
+        CHECK(line3.isValid());
+        CHECK(line3.size() == 5);
+        CHECK(std::memcmp(line3.data(), "line3", 5) == 0);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered readLine maxLength") {
+        BufferedMemoryDevice dev;
+        const char *data = "a very long line\n";
+        dev.setData(data, std::strlen(data));
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        Buffer line = dev.readLine(5);
+        CHECK(line.isValid());
+        CHECK(line.size() == 5);
+        CHECK(std::memcmp(line.data(), "a ver", 5) == 0);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered readAll") {
+        BufferedMemoryDevice dev;
+        const char *data = "all the unbuffered data";
+        dev.setData(data, std::strlen(data));
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        Buffer all = dev.readAll();
+        CHECK(all.isValid());
+        CHECK(all.size() == std::strlen(data));
+        CHECK(std::memcmp(all.data(), data, std::strlen(data)) == 0);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered readBytes") {
+        BufferedMemoryDevice dev;
+        const char *data = "0123456789";
+        dev.setData(data, 10);
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        Buffer result = dev.readBytes(5);
+        CHECK(result.isValid());
+        CHECK(result.size() == 5);
+        CHECK(std::memcmp(result.data(), "01234", 5) == 0);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered canReadLine returns false") {
+        BufferedMemoryDevice dev;
+        const char *data = "hello\nworld";
+        dev.setData(data, std::strlen(data));
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        // Even though device has data with newlines, canReadLine returns
+        // false because there is no buffer to inspect
+        CHECK_FALSE(dev.canReadLine());
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered peek returns empty") {
+        BufferedMemoryDevice dev;
+        const char *data = "peek test";
+        dev.setData(data, 9);
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        char peekBuf[4] = {};
+        int64_t n = dev.peek(peekBuf, 4);
+        CHECK(n == 0);
+
+        Buffer peeked = dev.peek(4);
+        CHECK_FALSE(peeked.isValid());
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered bytesAvailable returns only device bytes") {
+        BufferedMemoryDevice dev;
+        const char *data = "bytesavail";
+        dev.setData(data, 10);
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        CHECK(dev.bytesAvailable() == 10);
+
+        // Read some bytes — bytesAvailable should decrease by device amount only
+        char tmp[3];
+        dev.read(tmp, 3);
+        CHECK(dev.bytesAvailable() == 7);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: switch to unbuffered while open drains buffer") {
+        BufferedMemoryDevice dev;
+        const char *data = "ABCDEFGHIJKLMNOP";
+        dev.setData(data, 16);
+        dev.open(IODevice::ReadOnly);
+
+        // Read 2 bytes to populate the internal buffer.
+        // The buffer fill reads all 16 bytes from device into the buffer,
+        // so the device position advances to the end.
+        char tmp[2];
+        dev.read(tmp, 2);
+        CHECK(tmp[0] == 'A');
+        CHECK(tmp[1] == 'B');
+
+        // Buffer should have remaining data from the fill (14 bytes buffered)
+        CHECK(dev.bytesAvailable() == 14);
+
+        // Switch to unbuffered — buffer is reset, losing those 14 bytes.
+        // This is the expected trade-off: buffered data is discarded.
+        dev.setUnbuffered(true);
+
+        // canReadLine should now return false (no buffer)
+        CHECK_FALSE(dev.canReadLine());
+
+        // peek should return 0 (no buffer)
+        char peekBuf[4];
+        CHECK(dev.peek(peekBuf, 4) == 0);
+
+        // bytesAvailable returns only deviceBytesAvailable, which is 0
+        // because the device already read everything into the (now discarded) buffer
+        CHECK(dev.bytesAvailable() == 0);
+
+        // Subsequent reads go directly to device (which is at end)
+        dev.resetReadFromDeviceCount();
+        char buf[4] = {};
+        int64_t n = dev.read(buf, 4);
+        CHECK(n == 0);
+        CHECK(dev.readFromDeviceCount() == 1);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: switch from unbuffered back to buffered") {
+        BufferedMemoryDevice dev;
+        const char *data = "ABCDEFGHIJ";
+        dev.setData(data, 10);
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        // Read 2 bytes unbuffered
+        char tmp[2];
+        dev.read(tmp, 2);
+        CHECK(tmp[0] == 'A');
+        CHECK(tmp[1] == 'B');
+
+        // Switch back to buffered
+        dev.setUnbuffered(false);
+
+        // Buffer should be re-enabled. Read remaining data.
+        char buf[9] = {};
+        int64_t n = dev.read(buf, 8);
+        CHECK(n == 8);
+        CHECK(std::memcmp(buf, "CDEFGHIJ", 8) == 0);
+
+        // canReadLine should work normally now (buffer is active)
+        // No data left, so false
+        CHECK_FALSE(dev.canReadLine());
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: multiple unbuffered/buffered switches") {
+        BufferedMemoryDevice dev;
+        // Use data large enough that the buffer fill doesn't consume it all.
+        // Default buffer is 8192, so use 20000 bytes.
+        std::vector<uint8_t> bigData(20000);
+        for(size_t i = 0; i < bigData.size(); i++) {
+                bigData[i] = static_cast<uint8_t>(i & 0xFF);
+        }
+        dev.setData(bigData.data(), bigData.size());
+        dev.open(IODevice::ReadOnly);
+
+        // Start buffered: read 2 bytes (fills 8192 into buffer, device at 8192)
+        char buf[5] = {};
+        dev.read(buf, 2);
+        CHECK(buf[0] == static_cast<char>(0));
+        CHECK(buf[1] == static_cast<char>(1));
+
+        // Switch to unbuffered (discards ~8190 buffered bytes, device at 8192)
+        dev.setUnbuffered(true);
+
+        // Read 2 more bytes directly from device (pos 8192+)
+        dev.resetReadFromDeviceCount();
+        dev.read(buf, 2);
+        CHECK(dev.readFromDeviceCount() == 1);
+
+        // Switch back to buffered
+        dev.setUnbuffered(false);
+
+        // Read remaining data buffered — device still has data left
+        Buffer all = dev.readAll();
+        CHECK(all.isValid());
+        CHECK(all.size() > 0);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered set before open") {
+        BufferedMemoryDevice dev;
+        const char *data = "pre-set unbuffered";
+        dev.setData(data, std::strlen(data));
+
+        // Set unbuffered before opening
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        dev.resetReadFromDeviceCount();
+        char buf[19] = {};
+        int64_t n = dev.read(buf, 18);
+        CHECK(n == 18);
+        CHECK(std::strcmp(buf, "pre-set unbuffered") == 0);
+        CHECK(dev.readFromDeviceCount() == 1);
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered readLine on empty device") {
+        BufferedMemoryDevice dev;
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        Buffer line = dev.readLine();
+        CHECK_FALSE(line.isValid());
+
+        dev.close();
+}
+
+TEST_CASE("BufferedIODevice: unbuffered readAll on empty device") {
+        BufferedMemoryDevice dev;
+        dev.setUnbuffered(true);
+        dev.open(IODevice::ReadOnly);
+
+        Buffer all = dev.readAll();
+        CHECK_FALSE(all.isValid());
 
         dev.close();
 }

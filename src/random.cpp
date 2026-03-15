@@ -75,6 +75,7 @@ Buffer Random::randomBytes(size_t count) {
         for(size_t i = 0; i < count; i++) {
                 p[i] = static_cast<uint8_t>(dist(_engine));
         }
+        buf.setSize(count);
         return buf;
 }
 

@@ -11,7 +11,22 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+BufferedIODevice::BufferedIODevice(ObjectBase *parent) :
+        IODevice(parent) { }
+
 BufferedIODevice::~BufferedIODevice() = default;
+
+void BufferedIODevice::setUnbuffered(bool enable) {
+        _unbuffered = enable;
+        if(isOpen()) {
+                if(_unbuffered) {
+                        resetReadBuffer();
+                } else {
+                        ensureReadBuffer();
+                }
+        }
+        return;
+}
 
 int64_t BufferedIODevice::deviceBytesAvailable() const {
         return 0;
@@ -44,6 +59,7 @@ Error BufferedIODevice::setReadBuffer(Buffer &&buf) {
 }
 
 int64_t BufferedIODevice::bytesAvailable() const {
+        if(_unbuffered) return deviceBytesAvailable();
         int64_t buffered = static_cast<int64_t>(_readBufFill - _readBufPos);
         return buffered + deviceBytesAvailable();
 }
@@ -51,7 +67,7 @@ int64_t BufferedIODevice::bytesAvailable() const {
 int64_t BufferedIODevice::fillBuffer() {
         if(!_readBuf.isValid()) return -1;
         compactBuffer();
-        size_t capacity = _readBuf.size();
+        size_t capacity = _readBuf.availSize();
         size_t space = capacity - _readBufFill;
         if(space == 0) return 0;
         uint8_t *bufData = static_cast<uint8_t *>(_readBuf.data());
@@ -77,10 +93,12 @@ int64_t BufferedIODevice::read(void *data, int64_t maxSize) {
         if(!isOpen() || !isReadable()) return -1;
         if(maxSize <= 0) return 0;
 
+        if(_unbuffered) return readFromDevice(data, maxSize);
+
         ensureReadBuffer();
 
         // Large reads bypass the buffer entirely
-        size_t capacity = _readBuf.size();
+        size_t capacity = _readBuf.availSize();
         if(static_cast<size_t>(maxSize) >= capacity) {
                 // First drain any buffered data
                 size_t buffered = _readBufFill - _readBufPos;
@@ -127,6 +145,22 @@ int64_t BufferedIODevice::read(void *data, int64_t maxSize) {
 Buffer BufferedIODevice::readLine(size_t maxLength) {
         if(!isOpen() || !isReadable()) return Buffer();
 
+        if(_unbuffered) {
+                std::vector<uint8_t> result;
+                uint8_t c;
+                while(maxLength == 0 || result.size() < maxLength) {
+                        int64_t n = readFromDevice(&c, 1);
+                        if(n <= 0) break;
+                        result.push_back(c);
+                        if(c == '\n') break;
+                }
+                if(result.empty()) return Buffer();
+                Buffer buf(result.size());
+                std::memcpy(buf.data(), result.data(), result.size());
+                buf.setSize(result.size());
+                return buf;
+        }
+
         ensureReadBuffer();
 
         // Collect bytes into a temporary vector until newline or maxLength
@@ -166,11 +200,27 @@ Buffer BufferedIODevice::readLine(size_t maxLength) {
         if(result.empty()) return Buffer();
         Buffer buf(result.size());
         std::memcpy(buf.data(), result.data(), result.size());
+        buf.setSize(result.size());
         return buf;
 }
 
 Buffer BufferedIODevice::readAll() {
         if(!isOpen() || !isReadable()) return Buffer();
+
+        if(_unbuffered) {
+                std::vector<uint8_t> result;
+                uint8_t tmp[4096];
+                for(;;) {
+                        int64_t n = readFromDevice(tmp, sizeof(tmp));
+                        if(n <= 0) break;
+                        result.insert(result.end(), tmp, tmp + n);
+                }
+                if(result.empty()) return Buffer();
+                Buffer buf(result.size());
+                std::memcpy(buf.data(), result.data(), result.size());
+                buf.setSize(result.size());
+                return buf;
+        }
 
         ensureReadBuffer();
 
@@ -186,7 +236,7 @@ Buffer BufferedIODevice::readAll() {
         }
 
         // Read remaining data from device
-        size_t capacity = _readBuf.size();
+        size_t capacity = _readBuf.availSize();
         std::vector<uint8_t> tmp(capacity);
         for(;;) {
                 int64_t n = readFromDevice(tmp.data(), static_cast<int64_t>(capacity));
@@ -197,6 +247,7 @@ Buffer BufferedIODevice::readAll() {
         if(result.empty()) return Buffer();
         Buffer buf(result.size());
         std::memcpy(buf.data(), result.data(), result.size());
+        buf.setSize(result.size());
         return buf;
 }
 
@@ -209,13 +260,15 @@ Buffer BufferedIODevice::readBytes(size_t maxBytes) {
                 // Return a correctly-sized buffer
                 Buffer result(static_cast<size_t>(n));
                 std::memcpy(result.data(), buf.data(), static_cast<size_t>(n));
+                result.setSize(static_cast<size_t>(n));
                 return result;
         }
+        buf.setSize(maxBytes);
         return buf;
 }
 
 bool BufferedIODevice::canReadLine() const {
-        if(!isOpen() || !isReadable()) return false;
+        if(!isOpen() || !isReadable() || _unbuffered) return false;
         size_t buffered = _readBufFill - _readBufPos;
         if(buffered == 0) return false;
         const uint8_t *bufData = static_cast<const uint8_t *>(_readBuf.data());
@@ -224,6 +277,7 @@ bool BufferedIODevice::canReadLine() const {
 
 int64_t BufferedIODevice::peek(void *buf, size_t maxBytes) const {
         if(!isOpen() || !isReadable()) return -1;
+        if(_unbuffered) return 0;
         size_t buffered = _readBufFill - _readBufPos;
         size_t toPeek = std::min(buffered, maxBytes);
         if(toPeek == 0) return 0;
@@ -233,13 +287,14 @@ int64_t BufferedIODevice::peek(void *buf, size_t maxBytes) const {
 }
 
 Buffer BufferedIODevice::peek(size_t maxBytes) const {
-        if(!isOpen() || !isReadable()) return Buffer();
+        if(!isOpen() || !isReadable() || _unbuffered) return Buffer();
         size_t buffered = _readBufFill - _readBufPos;
         size_t toPeek = std::min(buffered, maxBytes);
         if(toPeek == 0) return Buffer();
         Buffer result(toPeek);
         const uint8_t *bufData = static_cast<const uint8_t *>(_readBuf.data());
         std::memcpy(result.data(), bufData + _readBufPos, toPeek);
+        result.setSize(toPeek);
         return result;
 }
 

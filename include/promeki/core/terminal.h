@@ -11,6 +11,8 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/size2d.h>
 #include <promeki/core/platform.h>
+#include <promeki/core/error.h>
+#include <promeki/core/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -45,15 +47,15 @@ class Terminal {
 
                 /**
                  * @brief Enables raw terminal mode (disables line buffering, echo, etc).
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool enableRawMode();
+                Error enableRawMode();
 
                 /**
                  * @brief Restores the terminal to its original mode.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool disableRawMode();
+                Error disableRawMode();
 
                 /** @brief Returns true if raw mode is currently enabled. */
                 bool isRawMode() const { return _rawMode; }
@@ -62,17 +64,18 @@ class Terminal {
                  * @brief Reads available input bytes without blocking.
                  * @param buf    Buffer to read into.
                  * @param maxLen Maximum bytes to read.
-                 * @return Number of bytes read, or 0 if nothing available, or -1 on error.
+                 * @return A Result containing the number of bytes read (0 if
+                 *         nothing available), or an error.
                  */
-                int readInput(char *buf, int maxLen);
+                Result<int> readInput(char *buf, int maxLen);
 
                 /**
                  * @brief Queries the current terminal window size.
                  * @param cols Output: number of columns.
                  * @param rows Output: number of rows.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool windowSize(int &cols, int &rows) const;
+                Error windowSize(int &cols, int &rows) const;
 
                 /**
                  * @brief Returns the terminal size as a Size2Du32 (width x height).
@@ -81,42 +84,42 @@ class Terminal {
 
                 /**
                  * @brief Enables xterm SGR mouse tracking.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool enableMouseTracking();
+                Error enableMouseTracking();
 
                 /**
                  * @brief Disables mouse tracking.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool disableMouseTracking();
+                Error disableMouseTracking();
 
                 /** @brief Returns true if mouse tracking is enabled. */
                 bool isMouseTrackingEnabled() const { return _mouseTracking; }
 
                 /**
                  * @brief Enables bracketed paste mode.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool enableBracketedPaste();
+                Error enableBracketedPaste();
 
                 /**
                  * @brief Disables bracketed paste mode.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool disableBracketedPaste();
+                Error disableBracketedPaste();
 
                 /**
                  * @brief Switches to the alternate screen buffer.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool enableAlternateScreen();
+                Error enableAlternateScreen();
 
                 /**
                  * @brief Switches back to the main screen buffer.
-                 * @return True on success.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                bool disableAlternateScreen();
+                Error disableAlternateScreen();
 
                 /**
                  * @brief Sets a callback for window resize events (SIGWINCH on POSIX).
@@ -147,9 +150,10 @@ class Terminal {
                  * @brief Writes raw bytes to stdout.
                  * @param data The data to write.
                  * @param len  Number of bytes to write.
-                 * @return Number of bytes written.
+                 * @return A Result containing the number of bytes written,
+                 *         or an error.
                  */
-                int writeOutput(const char *data, int len);
+                Result<int> writeOutput(const char *data, int len);
 
         private:
                 bool            _rawMode = false;

@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include <system_error>
 #include <promeki/core/namespace.h>
+#include <promeki/core/platform.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -69,7 +71,8 @@ class Error {
                         EndOfFile,               ///< End of file reached.
                         InvalidArgument,         ///< Invalid argument supplied.
                         InvalidDimension,        ///< Invalid dimension value.
-                        NotHostAccessible        ///< Memory is not host-accessible.
+                        NotHostAccessible,       ///< Memory is not host-accessible.
+                        BufferTooSmall           ///< Buffer is too small for the operation.
                 };
 
                 /**
@@ -86,6 +89,27 @@ class Error {
                  * @return An Error whose code maps to the given errno.
                  */
                 static Error syserr(int errnum);
+
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+                /**
+                 * @brief Creates an Error from a Windows error code.
+                 * @param winErr The GetLastError() value to translate.
+                 * @return An Error whose code maps to the given Windows error.
+                 */
+                static Error syserr(DWORD winErr);
+#endif
+
+                /**
+                 * @brief Creates an Error from a std::error_code.
+                 *
+                 * Handles both POSIX (generic_category / system_category on POSIX)
+                 * and Windows (system_category on Windows) error codes correctly.
+                 * Returns Ok when the error_code has no error.
+                 *
+                 * @param ec The std::error_code to translate.
+                 * @return An Error whose code maps to the given error_code.
+                 */
+                static Error syserr(const std::error_code &ec);
 
                 /**
                  * @brief Constructs an Error with the given code.

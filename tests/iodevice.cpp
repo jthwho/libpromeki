@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <doctest/doctest.h>
 #include <promeki/core/iodevice.h>
+#include <promeki/core/result.h>
 
 using namespace promeki;
 
@@ -27,11 +28,11 @@ class MemoryIODevice : public IODevice {
                         return Error();
                 }
 
-                void close() override {
+                Error close() override {
                         aboutToCloseSignal.emit();
                         setOpenMode(NotOpen);
                         _pos = 0;
-                        return;
+                        return Error();
                 }
 
                 bool isOpen() const override {
@@ -70,22 +71,23 @@ class MemoryIODevice : public IODevice {
                         return false;
                 }
 
-                bool seek(int64_t pos) override {
-                        if(pos < 0 || pos > static_cast<int64_t>(_buf.size())) return false;
+                Error seek(int64_t pos) override {
+                        if(pos < 0 || pos > static_cast<int64_t>(_buf.size())) return Error(Error::OutOfRange);
                         _pos = pos;
-                        return true;
+                        return Error();
                 }
 
                 int64_t pos() const override {
                         return _pos;
                 }
 
-                int64_t size() const override {
-                        return static_cast<int64_t>(_buf.size());
+                Result<int64_t> size() const override {
+                        return makeResult(static_cast<int64_t>(_buf.size()));
                 }
 
                 bool atEnd() const override {
-                        return _pos >= static_cast<int64_t>(_buf.size());
+                        auto [s, err] = size();
+                        return err.isError() || _pos >= s;
                 }
 
                 const std::vector<uint8_t> &buffer() const { return _buf; }
@@ -101,38 +103,6 @@ class MemoryIODevice : public IODevice {
                 int64_t _pos = 0;
 };
 
-/**
- * @brief MemoryIODevice with options for testing the option system.
- */
-class OptionTestDevice : public IODevice {
-        PROMEKI_OBJECT(OptionTestDevice, IODevice)
-        public:
-                OptionTestDevice(ObjectBase *parent = nullptr) :
-                        IODevice({
-                                {DirectIO, false},
-                                {Synchronous, false}
-                        }, parent) { }
-
-                Error open(OpenMode mode) override {
-                        if(isOpen()) return Error(Error::AlreadyOpen);
-                        setOpenMode(mode);
-                        return Error();
-                }
-                void close() override { setOpenMode(NotOpen); return; }
-                bool isOpen() const override { return openMode() != NotOpen; }
-                int64_t read(void *, int64_t) override { return -1; }
-                int64_t write(const void *, int64_t) override { return -1; }
-
-                IODevice::Option lastChangedOption = IODevice::InvalidOption;
-                Variant lastChangedValue;
-
-        protected:
-                void onOptionChanged(Option opt, const Variant &value) override {
-                        lastChangedOption = opt;
-                        lastChangedValue = value;
-                        return;
-                }
-};
 
 TEST_CASE("IODevice: MemoryIODevice default state") {
         MemoryIODevice dev;
@@ -208,16 +178,16 @@ TEST_CASE("IODevice: seek and position") {
         dev.write(data, 10);
 
         CHECK(dev.pos() == 10);
-        CHECK(dev.size() == 10);
+        CHECK(value(dev.size()) == 10);
 
-        CHECK(dev.seek(5));
+        CHECK(dev.seek(5).isOk());
         CHECK(dev.pos() == 5);
 
-        CHECK(dev.seek(0));
+        CHECK(dev.seek(0).isOk());
         CHECK(dev.pos() == 0);
 
-        CHECK_FALSE(dev.seek(-1));
-        CHECK_FALSE(dev.seek(11));
+        CHECK(dev.seek(-1).isError());
+        CHECK(dev.seek(11).isError());
 
         dev.close();
 }
@@ -338,7 +308,7 @@ TEST_CASE("IODevice: setData and read") {
         dev.setData(data, 9);
         dev.open(IODevice::ReadOnly);
 
-        CHECK(dev.size() == 9);
+        CHECK(value(dev.size()) == 9);
         CHECK(dev.bytesAvailable() == 9);
 
         char buf[10] = {};
@@ -370,16 +340,12 @@ TEST_CASE("IODevice: bytesWritten signal") {
         dev.close();
 }
 
-TEST_CASE("IODevice: errorOccurred signal via setError") {
-        // OptionTestDevice exposes setError indirectly; test the signal
-        // by connecting before triggering an error path.
-        OptionTestDevice dev;
+TEST_CASE("IODevice: errorOccurred signal wiring") {
+        MemoryIODevice dev;
         Error lastError;
         dev.errorOccurredSignal.connect(
                 [&lastError](Error e) { lastError = e; });
-        // setOption on unsupported type calls setError internally? No.
-        // setError is protected. We verify the signal wiring is correct
-        // by checking it compiles and the default error state is Ok.
+        // Verify signal wiring compiles and default error state is Ok.
         CHECK(dev.error().isOk());
 }
 
@@ -394,7 +360,7 @@ TEST_CASE("IODevice: multiple writes then full read") {
         dev.write("abc", 3);
         dev.write("def", 3);
         dev.write("ghi", 3);
-        CHECK(dev.size() == 9);
+        CHECK(value(dev.size()) == 9);
         CHECK(dev.pos() == 9);
 
         dev.seek(0);
@@ -429,84 +395,3 @@ TEST_CASE("IODevice: overwrite in middle") {
         dev.close();
 }
 
-TEST_CASE("IODevice: setOption overwrite") {
-        OptionTestDevice dev;
-        dev.setOption(IODevice::DirectIO, true);
-        auto [val1, err1] = dev.option(IODevice::DirectIO);
-        CHECK(val1.get<bool>() == true);
-
-        dev.setOption(IODevice::DirectIO, false);
-        auto [val2, err2] = dev.option(IODevice::DirectIO);
-        CHECK(val2.get<bool>() == false);
-}
-
-// --- Option system tests ---
-
-TEST_CASE("IODevice: registerOptionType returns unique IDs") {
-        IODevice::Option a = IODevice::registerOptionType();
-        IODevice::Option b = IODevice::registerOptionType();
-        CHECK(a != b);
-        CHECK(a != IODevice::InvalidOption);
-        CHECK(b != IODevice::InvalidOption);
-}
-
-TEST_CASE("IODevice: built-in option types are distinct") {
-        CHECK(IODevice::DirectIO != IODevice::Synchronous);
-        CHECK(IODevice::Synchronous != IODevice::NonBlocking);
-        CHECK(IODevice::NonBlocking != IODevice::Unbuffered);
-        CHECK(IODevice::DirectIO != IODevice::InvalidOption);
-}
-
-TEST_CASE("IODevice: optionSupported") {
-        OptionTestDevice dev;
-        CHECK(dev.optionSupported(IODevice::DirectIO));
-        CHECK(dev.optionSupported(IODevice::Synchronous));
-        CHECK_FALSE(dev.optionSupported(IODevice::NonBlocking));
-        CHECK_FALSE(dev.optionSupported(IODevice::Unbuffered));
-}
-
-TEST_CASE("IODevice: option returns default value") {
-        OptionTestDevice dev;
-        auto [val, err] = dev.option(IODevice::DirectIO);
-        CHECK(err.isOk());
-        CHECK(val.get<bool>() == false);
-}
-
-TEST_CASE("IODevice: setOption and read back") {
-        OptionTestDevice dev;
-        Error err = dev.setOption(IODevice::DirectIO, true);
-        CHECK(err.isOk());
-
-        auto [val, err2] = dev.option(IODevice::DirectIO);
-        CHECK(err2.isOk());
-        CHECK(val.get<bool>() == true);
-}
-
-TEST_CASE("IODevice: setOption on unsupported returns NotSupported") {
-        OptionTestDevice dev;
-        Error err = dev.setOption(IODevice::NonBlocking, true);
-        CHECK(err.code() == Error::NotSupported);
-}
-
-TEST_CASE("IODevice: option on unsupported returns NotSupported") {
-        OptionTestDevice dev;
-        auto [val, err] = dev.option(IODevice::NonBlocking);
-        CHECK(err.code() == Error::NotSupported);
-}
-
-TEST_CASE("IODevice: onOptionChanged callback") {
-        OptionTestDevice dev;
-        dev.setOption(IODevice::DirectIO, true);
-        CHECK(dev.lastChangedOption == IODevice::DirectIO);
-        CHECK(dev.lastChangedValue.get<bool>() == true);
-
-        dev.setOption(IODevice::Synchronous, true);
-        CHECK(dev.lastChangedOption == IODevice::Synchronous);
-}
-
-TEST_CASE("IODevice: device without options") {
-        MemoryIODevice dev;
-        CHECK_FALSE(dev.optionSupported(IODevice::DirectIO));
-        Error err = dev.setOption(IODevice::DirectIO, true);
-        CHECK(err.code() == Error::NotSupported);
-}

@@ -20,7 +20,7 @@ Abstract ObjectBase-derived class — the common interface for files, sockets, p
 - [x] Derive from `ObjectBase`, use `PROMEKI_OBJECT`
 - [x] `enum OpenMode { NotOpen, ReadOnly, WriteOnly, ReadWrite }`
 - [x] `virtual Error open(OpenMode mode) = 0`
-- [x] `virtual void close() = 0`
+- [x] `virtual Error close() = 0` — returns Error (not void)
 - [x] `virtual bool isOpen() const = 0`
 - [x] `OpenMode openMode() const` — returns current mode
 - [x] `bool isReadable() const`, `bool isWritable() const`
@@ -30,37 +30,20 @@ Abstract ObjectBase-derived class — the common interface for files, sockets, p
 - [x] `virtual bool waitForReadyRead(unsigned int timeoutMs = 0)` — default returns false
 - [x] `virtual bool waitForBytesWritten(unsigned int timeoutMs = 0)` — default returns false
 - [x] `virtual bool isSequential() const` — default returns false
-- [x] `virtual bool seek(int64_t pos)` — default returns false
+- [x] `virtual Error seek(int64_t pos)` — default returns `Error::NotSupported`
 - [x] `virtual int64_t pos() const` — default returns 0
-- [x] `virtual int64_t size() const` — default returns 0
-- [x] `virtual bool atEnd() const` — default returns `pos() >= size()`
+- [x] `virtual Result<int64_t> size() const` — default returns `makeResult<int64_t>(0)`
+- [x] `virtual bool atEnd() const` — default checks `pos() >= size()` (handles Result)
 - [x] `PROMEKI_SIGNAL(readyRead)` — emitted when data available
 - [x] `PROMEKI_SIGNAL(bytesWritten, int64_t)` — emitted after write completes
 - [x] `PROMEKI_SIGNAL(errorOccurred, Error)` — emitted on error
 - [x] `PROMEKI_SIGNAL(aboutToClose)` — emitted before close
 - [x] Error state: `error()` returns last Error, `clearError()`, protected `setError()`
 
-### Option System
-
-Runtime-registered key-value option mechanism for device-specific configuration. Options use `Variant` values and runtime-allocated type IDs (lock-free atomic counter, same pattern as `Event`). Devices declare supported options by registering them; unsupported options return `Error::NotSupported`.
-
-- [x] `using Option = uint32_t` — runtime-assigned option type ID
-- [x] `static constexpr Option InvalidOption = 0`
-- [x] `static Option registerOptionType()` — allocates unique ID, thread-safe
-- [x] Built-in option types: `DirectIO`, `Synchronous`, `NonBlocking`, `Unbuffered`
-- [x] `Error setOption(Option opt, const Variant &value)` — set option value. Returns `NotSupported` if device doesn't support it. Calls `onOptionChanged()`.
-- [x] `Result<Variant> option(Option opt) const` — query current value. Returns `NotSupported` error if unsupported.
-- [x] `bool optionSupported(Option opt) const` — returns true if device supports this option
-- [x] `using OptionList = std::initializer_list<std::pair<const Option, Variant>>`
-- [x] Constructor `IODevice(OptionList opts, ObjectBase *parent = nullptr)` — declare supported options via initializer list
-- [x] Protected `registerOption(Option, Variant)` — for dynamic registration in subclass constructors
-- [x] Protected `virtual void onOptionChanged(Option, const Variant &)` — override to react to option changes (e.g., toggle `O_DIRECT`). Default does nothing.
-
-**Design note:** The original plan specified an enum-based hint system. The implemented option system is superior: runtime type registration allows subclasses and new libraries to define options without modifying the base enum. Socket-specific options (NoDelay, KeepAlive, etc.) will be registered by the socket classes in Phase 3.
+**Design note:** The original plan included a runtime option system (registerOptionType, setOption, option, onOptionChanged) on IODevice. This was removed in favor of direct setter/getter methods on concrete subclasses (e.g., `File::setDirectIO()`, `BufferedIODevice::setUnbuffered()`). Direct methods are simpler, type-safe, and avoid the Variant boxing overhead. Device-specific configuration belongs on the device class, not a generic key-value store.
 
 ### Doctest
 - [x] Test via concrete subclass (MemoryIODevice: in-memory buffer IODevice)
-- [x] Test option system: set/get, unsupported returns NotSupported, onOptionChanged callback, initializer list constructor, overwrite
 - [x] Test signals: aboutToClose, bytesWritten
 - [x] Test all open modes, seek, position, bytesAvailable, atEnd, partial read, read/write mode restrictions
 
@@ -113,16 +96,21 @@ Adds read buffering on top of IODevice. Uses an internal `Buffer` (default 8192 
 - [x] `readLine(size_t maxLength = 0)` — returns `Buffer` up to newline. 0 = no limit.
 - [x] `readAll()` — reads all available data, returns `Buffer`
 - [x] `readBytes(size_t maxBytes)` — reads up to N bytes, returns `Buffer`
-- [x] `canReadLine()` — returns true if buffer contains a complete line
-- [x] `peek(void *buf, size_t maxBytes)` — read without consuming
-- [x] `peek(size_t maxBytes)` — returns `Buffer` without consuming
+- [x] `canReadLine()` — returns true if buffer contains a complete line (false when unbuffered)
+- [x] `peek(void *buf, size_t maxBytes)` — read without consuming (returns 0 when unbuffered)
+- [x] `peek(size_t maxBytes)` — returns `Buffer` without consuming (empty when unbuffered)
 - [x] `setReadBuffer(Buffer &&buf)` — replace internal buffer (must be host-accessible, device must be closed)
-- [x] `readBuffer()` / `readBufferSize()` — inspect current buffer
-- [x] Override `read()` — serves from buffer, large reads bypass buffer, fills/compacts automatically
-- [x] Override `bytesAvailable()` to include buffered data + `deviceBytesAvailable()`
+- [x] `readBuffer()` / `readBufferSize()` — inspect current buffer (`readBufferSize()` uses `availSize()`)
+- [x] Override `read()` — serves from buffer, large reads bypass buffer, fills/compacts automatically. When unbuffered, all reads go directly to `readFromDevice()`.
+- [x] Override `bytesAvailable()` to include buffered data + `deviceBytesAvailable()` (only `deviceBytesAvailable()` when unbuffered)
 - [x] Protected `readFromDevice()` pure virtual for subclass raw I/O
 - [x] Protected `deviceBytesAvailable()` virtual (default 0)
 - [x] Protected `ensureReadBuffer()` / `resetReadBuffer()` for subclass open/close hooks
+
+### Unbuffered Mode
+- [x] `setUnbuffered(bool enable)` — enables/disables unbuffered mode. When switching to unbuffered while open, drains/resets the read buffer. When switching back to buffered while open, re-ensures the read buffer.
+- [x] `bool isUnbuffered() const` — returns unbuffered state
+- [x] `bool _unbuffered = false` private member
 
 ### Doctest
 - [x] Buffered read, readLine (with/without newline, maxLength), readAll, readBytes
@@ -131,6 +119,7 @@ Adds read buffering on top of IODevice. Uses an internal `Buffer` (default 8192 
 - [x] Buffer reuse across close/reopen, stale data leak prevention
 - [x] Write then read across reopen, readLine/peek reset across sessions
 - [x] Edge cases: empty device, non-open device, write-only mode, readBytes(0)
+- [x] Unbuffered mode: verify reads go directly to device, verify buffer is not used, verify switching unbuffered while open drains buffer, verify switching back to buffered re-enables buffer
 
 ---
 
@@ -169,34 +158,123 @@ Directory operations. Simple utility class (not ObjectBase). Uses `std::filesyst
 
 ---
 
-## Refactor File to Derive from BufferedIODevice
+## Refactor File to Derive from BufferedIODevice — COMPLETE
 
-The existing `File` class (`include/promeki/core/file.h`, `src/file.cpp`) is a low-level file I/O wrapper with its own `open()`, `read()`, `write()`, `seek()`, `close()`. Refactor it to derive from `BufferedIODevice`, making it a full IODevice citizen. This enables File to be used anywhere an IODevice is expected (DataStream, TextStream, socket-like APIs).
+The existing `File` class (`include/promeki/core/file.h`, `src/file.cpp`) was a low-level file I/O wrapper. Refactored to derive from `BufferedIODevice`, making it a full IODevice citizen usable anywhere an IODevice is expected (DataStream, TextStream, socket-like APIs).
 
 **Files:**
-- [ ] Modify `include/promeki/core/file.h`
-- [ ] Modify `src/file.cpp`
-- [ ] Update `tests/file.cpp`
+- [x] Modify `include/promeki/core/file.h`
+- [x] Modify `src/file.cpp`
+- [x] Update `tests/file.cpp`
+
+### Direct I/O and Buffering
+
+Direct I/O (`O_DIRECT`) bypasses the OS page cache and requires properly aligned buffers. BufferedIODevice's internal read buffer is incompatible with Direct I/O because (a) it defeats the purpose of bypassing the cache, and (b) the buffer may not satisfy alignment requirements. When direct I/O is enabled via `setDirectIO(true)`, it implicitly forces unbuffered mode so that BufferedIODevice's `read()` delegates directly to `readFromDevice()` (which calls POSIX `::read()`). The caller is responsible for providing properly aligned buffers to `read()` and `write()`.
+
+When direct I/O is disabled, the previous unbuffered state is restored (saved before DirectIO forced it on). This means if the user independently called `setUnbuffered(true)` before enabling direct I/O, disabling direct I/O preserves that setting.
+
+### Implementation checklist
+- [x] Change `File` to derive from `BufferedIODevice` instead of being standalone
+- [x] Map existing `File::Flags` to `IODevice::OpenMode` (ReadOnly, WriteOnly, ReadWrite)
+- [x] Retain `File`-specific flags as extensions: `Create`, `Append`, `Truncate`, `Exclusive`
+- [x] Override `open(OpenMode)` — delegates to `open(OpenMode, NoFlags)`
+- [x] Add `open(OpenMode, int)` overload for file-specific flags (Create, Append, Truncate, Exclusive)
+- [x] Implement `readFromDevice()` — delegates to POSIX `::read()`
+- [x] Override `write()` — delegates to POSIX `::write()`, emits `bytesWritten`
+- [x] Override `close()` — emits `aboutToClose`, calls `::close()`, resets state, returns Error
+- [x] Override `seek()` (returns `Error`), `pos()`, `size()` (returns `Result<int64_t>`), `atEnd()` — delegate to POSIX implementations
+- [x] Implement `deviceBytesAvailable()` — uses lseek64 to compute remaining bytes
+- [x] Override `isSequential()` — returns `false`
+- [x] Emit `bytesWritten`, `aboutToClose`, `errorOccurred` signals at appropriate points
+- [x] `setDirectIO(bool)` / `isDirectIO()` — apply/remove `O_DIRECT` via `fcntl()`. On enable: save unbuffered state, force `setUnbuffered(true)`. On disable: restore saved unbuffered state.
+- [x] `setSynchronous(bool)` / `isSynchronous()` — apply/remove `O_SYNC` via `fcntl()`
+- [x] `setNonBlocking(bool)` / `isNonBlocking()` — apply/remove `O_NONBLOCK` via `fcntl()`
+- [x] Add `bool _savedUnbuffered = false` — stores unbuffered state prior to DirectIO forcing it on
+- [x] Preserve `truncate()` as File-specific API
+- [x] Preserve `seekFromCurrent()` (returns `Result<int64_t>`) and `seekFromEnd()` (returns `Result<int64_t>`) as File-specific API
+- [x] Remove `FileBytes` typedef — use `int64_t` directly (IODevice convention)
+- [x] Add `const char *` constructor to resolve ambiguity with String/FilePath
+- [x] Add `FilePath` constructor, `setFilename()`, `handle()` accessors
+- [x] No existing call sites to break (File only used in its own tests)
+
+### Direct I/O Bulk Read
+- [x] `Result<size_t> directIOAlignment() const` — returns filesystem block size via fstat (alignment requirement for DIO buffers, offsets, and transfer sizes)
+- [x] `Error readBulk(Buffer &buf, int64_t size)` — reads bulk data using direct I/O for the aligned interior and normal I/O for unaligned head/tail bytes. Calls `shiftData()` on the buffer so the DIO portion lands on an aligned address. Caller allocates with `directIOAlignment()` alignment and `size + directIOAlignment()` capacity. Falls back to normal read if region is smaller than one alignment block or DIO is unsupported. Sets `buf.size()` to actual bytes read (may be less than requested at EOF).
+
+### Doctest
+- [x] Verify File works as IODevice (polymorphic use via IODevice pointer)
+- [x] Existing File tests updated and pass (open, read, write, seek, truncate)
+- [x] DirectIO forces Unbuffered on, restores on disable
+- [x] DirectIO save/restore: set Unbuffered=true, enable DirectIO, disable DirectIO → Unbuffered still true
+- [x] DirectIO, Synchronous, NonBlocking: setter/getter with correct defaults
+- [x] NonBlocking toggle on open file
+- [x] Signals: bytesWritten emitted on write, aboutToClose emitted on close
+- [x] Buffered readLine and readAll work correctly
+- [x] size(), atEnd(), isSequential()
+- [x] Open already-open file returns AlreadyOpen error
+- [x] Close on non-open file is safe
+- [x] Read on write-only / write on read-only returns -1
+- [x] pos/seek/size on closed file
+- [x] Truncate on closed file returns error
+
+### Known Issues
+
+- **FIXME: readBulk and non-blocking file descriptors.** The `readFull()` helper used by `readBulk()` loops on partial reads but treats EAGAIN as a fatal error (returns -1). On a non-blocking fd, this means: (1) the read fails instead of indicating "try again", and (2) if EAGAIN occurs after some bytes have already been read in a multi-portion transfer (head/DIO/tail), those bytes are lost. The `readFromDevice()` and `write()` paths handle this correctly (they report the real errno via `Error::syserr()`), so callers can detect `TryAgain` and retry. A fix for `readBulk` would require `readFull()` to distinguish EAGAIN from real errors and to track partial progress across portions so nothing is lost on retry.
+
+---
+
+## Buffer Size Model Update — COMPLETE
+
+Buffer now tracks three distinct sizes: `allocSize()` (total allocation, constant), `availSize()` (usable space from `data()` to end of allocation, reduced by `shiftData()`), and `size()` (logical content size, user-set via `setSize()`). Previously `size()` returned what is now `availSize()`.
+
+**Files:**
+- [x] Modify `include/promeki/core/buffer.h`
+- [x] Update `tests/buffer.cpp`
 
 **Implementation checklist:**
-- [ ] Change `File` to derive from `BufferedIODevice` instead of being standalone
-- [ ] Map existing `File::Flags` to `IODevice::OpenMode` (ReadOnly, WriteOnly, ReadWrite)
-- [ ] Retain `File`-specific flags as extensions: `Create`, `Append`, `Truncate`, `Exclusive`
-- [ ] Register options via initializer list: `DirectIO`, `Synchronous`, `NonBlocking`
-- [ ] Override `open(OpenMode)` — delegate to existing POSIX `::open()` logic
-- [ ] Add `open(OpenMode, Flags)` overload for file-specific flags (Create, Append, Truncate, Exclusive)
-- [ ] Override `read()` — delegate to existing `::read()` logic
-- [ ] Override `write()` — delegate to existing `::write()` logic
-- [ ] Override `close()` — delegate to existing `::close()` logic
-- [ ] Override `seek()`, `pos()`, `size()`, `atEnd()` — delegate to existing implementations
-- [ ] Override `isSequential()` — return `false`
-- [ ] Emit `readyRead`, `bytesWritten`, `errorOccurred` signals at appropriate points
-- [ ] Override `onOptionChanged()` to apply DirectIO/Sync/NonBlocking via fcntl
-- [ ] Remove `isDirectIO()` / `setDirectIOEnabled()` — replaced by option system
-- [ ] Preserve `truncate()` as File-specific API (not an option — it's an operation)
-- [ ] Migrate `FileBytes` return type to `int64_t` (match IODevice convention)
-- [ ] Ensure all existing call sites still compile
-- [ ] Doctest: verify File works as IODevice (pass to DataStream, TextStream), existing File tests still pass
+- [x] Add `mutable size_t _size = 0` private member
+- [x] `size_t size() const` — returns logical content size (defaults to 0 after allocation)
+- [x] `void setSize(size_t s) const` — sets logical content size (asserts `s <= availSize()`)
+- [x] `size_t availSize() const` — returns usable space (was previously `size()`)
+- [x] `shiftData()` resets `_size` to 0
+- [x] Copy constructor/assignment copies `_size`
+- [x] Move constructor/assignment transfers `_size`, zeroes source
+- [x] `fill()` uses `availSize()` (fills entire available space, not just logical content)
+
+---
+
+## Error Enhancements — COMPLETE
+
+Extended `Error` with new error codes and system error translation overloads.
+
+**Files:**
+- [x] Modify `include/promeki/core/error.h`
+- [x] Modify `src/error.cpp`
+
+**Implementation checklist:**
+- [x] Add `BufferTooSmall` error code
+- [x] Add `static Error syserr(const std::error_code &ec)` — translates `std::error_code` (handles both POSIX and Windows categories)
+- [x] Add `static Error syserr(DWORD winErr)` (Windows only) — translates Windows `GetLastError()` codes
+- [x] Expand Windows error mappings: `ERROR_HANDLE_DISK_FULL`, `ERROR_SEM_TIMEOUT`, `ERROR_INVALID_HANDLE`, `ERROR_TOO_MANY_OPEN_FILES`, `ERROR_NOT_SUPPORTED`, `ERROR_SHARING_VIOLATION`, `ERROR_LOCK_VIOLATION`, `ERROR_DIR_NOT_EMPTY`, `ERROR_DIRECTORY`, `ERROR_FILE_TOO_LARGE`, `ERROR_BROKEN_PIPE`, `ERROR_NO_DATA`, `ERROR_OPERATION_ABORTED`
+
+---
+
+## Terminal Error Reporting Update — COMPLETE
+
+Terminal methods now return `Error` or `Result<int>` instead of `bool`/`int` for consistent error reporting.
+
+**Files:**
+- [x] Modify `include/promeki/core/terminal.h`
+- [x] Modify `src/terminal.cpp`
+
+**Changes:**
+- [x] `enableRawMode()` / `disableRawMode()` — return `Error` instead of `bool`
+- [x] `readInput()` — returns `Result<int>` instead of `int`
+- [x] `windowSize()` — returns `Error` instead of `bool`
+- [x] `enableMouseTracking()` / `disableMouseTracking()` — return `Error` instead of `bool`
+- [x] `enableBracketedPaste()` / `disableBracketedPaste()` — return `Error` instead of `bool`
+- [x] `enableAlternateScreen()` / `disableAlternateScreen()` — return `Error` instead of `bool`
+- [x] `writeOutput()` — returns `Result<int>` instead of `int`
 
 ---
 

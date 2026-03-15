@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cstdio>
 #include <doctest/doctest.h>
 #include <promeki/proav/audio.h>
 #include <promeki/proav/audiofile.h>
@@ -53,6 +54,8 @@ TEST_CASE("Audio") {
                 CHECK(err.isOk());
         }
 
+        file.close();
+        std::remove("test.wav");
 }
 
 TEST_CASE("Audio: Default construction is invalid") {

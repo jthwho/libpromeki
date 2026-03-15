@@ -62,11 +62,11 @@ Terminal::~Terminal() {
 #endif
 }
 
-bool Terminal::enableRawMode() {
-        if(_rawMode) return true;
+Error Terminal::enableRawMode() {
+        if(_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
         ::termios *orig = static_cast<::termios *>(_origState);
-        if(tcgetattr(STDIN_FILENO, orig) == -1) return false;
+        if(tcgetattr(STDIN_FILENO, orig) == -1) return Error::syserr();
         ::termios raw = *orig;
         raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
         raw.c_oflag &= ~(OPOST);
@@ -74,89 +74,83 @@ bool Terminal::enableRawMode() {
         raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
         raw.c_cc[VMIN] = 0;
         raw.c_cc[VTIME] = 0;
-        if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) return false;
+        if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) return Error::syserr();
         _rawMode = true;
-        return true;
+        return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
         DWORD mode;
-        GetConsoleMode(hStdin, &mode);
+        if(!GetConsoleMode(hStdin, &mode)) return Error::syserr();
         mode &= ~(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
         mode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
-        SetConsoleMode(hStdin, mode);
+        if(!SetConsoleMode(hStdin, mode)) return Error::syserr();
         HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
         DWORD outMode;
-        GetConsoleMode(hStdout, &outMode);
+        if(!GetConsoleMode(hStdout, &outMode)) return Error::syserr();
         outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-        SetConsoleMode(hStdout, outMode);
+        if(!SetConsoleMode(hStdout, outMode)) return Error::syserr();
         _rawMode = true;
-        return true;
+        return Error();
 #else
-        return false;
+        return Error(Error::NotSupported);
 #endif
 }
 
-bool Terminal::disableRawMode() {
-        if(!_rawMode) return true;
+Error Terminal::disableRawMode() {
+        if(!_rawMode) return Error();
 #if defined(PROMEKI_PLATFORM_POSIX)
-        if(tcsetattr(STDIN_FILENO, TCSAFLUSH, static_cast<::termios *>(_origState)) == -1) return false;
+        if(tcsetattr(STDIN_FILENO, TCSAFLUSH, static_cast<::termios *>(_origState)) == -1) return Error::syserr();
         _rawMode = false;
-        return true;
+        return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         _rawMode = false;
-        return true;
+        return Error();
 #else
-        return false;
+        return Error(Error::NotSupported);
 #endif
 }
 
-int Terminal::readInput(char *buf, int maxLen) {
+Result<int> Terminal::readInput(char *buf, int maxLen) {
 #if defined(PROMEKI_PLATFORM_POSIX)
         // Check for resize
         if(_resizeCallback) {
                 int cols, rows;
-                if(windowSize(cols, rows)) {
-                        // We'll let the caller handle resize detection
-                }
+                windowSize(cols, rows);
         }
         ssize_t n = read(STDIN_FILENO, buf, maxLen);
         if(n == -1) {
-                if(errno == EAGAIN || errno == EWOULDBLOCK) return 0;
-                return -1;
+                if(errno == EAGAIN || errno == EWOULDBLOCK) return makeResult(0);
+                return makeError<int>(Error::syserr());
         }
-        return static_cast<int>(n);
+        return makeResult(static_cast<int>(n));
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
         DWORD available = 0;
-        if(!PeekConsoleInput(hStdin, nullptr, 0, &available)) return -1;
-        if(available == 0) return 0;
+        if(!PeekConsoleInput(hStdin, nullptr, 0, &available)) return makeError<int>(Error::syserr());
+        if(available == 0) return makeResult(0);
         DWORD bytesRead = 0;
-        if(!ReadFile(hStdin, buf, maxLen, &bytesRead, nullptr)) return -1;
-        return static_cast<int>(bytesRead);
+        if(!ReadFile(hStdin, buf, maxLen, &bytesRead, nullptr)) return makeError<int>(Error::syserr());
+        return makeResult(static_cast<int>(bytesRead));
 #else
-        return -1;
+        return makeError<int>(Error::NotSupported);
 #endif
 }
 
-bool Terminal::windowSize(int &cols, int &rows) const {
+Error Terminal::windowSize(int &cols, int &rows) const {
 #if defined(PROMEKI_PLATFORM_POSIX)
         struct winsize ws;
-        if(ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
-                cols = ws.ws_col;
-                rows = ws.ws_row;
-                return true;
-        }
-        return false;
+        if(ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != 0) return Error::syserr();
+        cols = ws.ws_col;
+        rows = ws.ws_row;
+        return Error();
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         CONSOLE_SCREEN_BUFFER_INFO csbi;
-        if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
-                cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-                rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
-                return true;
-        }
-        return false;
+        if(!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) return Error::syserr();
+        cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+        rows = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+        return Error();
 #else
-        return false;
+        return Error(Error::NotSupported);
 #endif
 }
 
@@ -166,53 +160,58 @@ Size2Di32 Terminal::size() const {
         return Size2Di32(cols, rows);
 }
 
-bool Terminal::enableMouseTracking() {
-        if(_mouseTracking) return true;
-        // Enable SGR mouse mode with any-event tracking (xterm)
+Error Terminal::enableMouseTracking() {
+        if(_mouseTracking) return Error();
         const char *seq = "\033[?1000h\033[?1003h\033[?1006h";
-        writeOutput(seq, std::strlen(seq));
+        auto [n, err] = writeOutput(seq, std::strlen(seq));
+        if(err.isError()) return err;
         _mouseTracking = true;
-        return true;
+        return Error();
 }
 
-bool Terminal::disableMouseTracking() {
-        if(!_mouseTracking) return true;
+Error Terminal::disableMouseTracking() {
+        if(!_mouseTracking) return Error();
         const char *seq = "\033[?1006l\033[?1003l\033[?1000l";
-        writeOutput(seq, std::strlen(seq));
+        auto [n, err] = writeOutput(seq, std::strlen(seq));
+        if(err.isError()) return err;
         _mouseTracking = false;
-        return true;
+        return Error();
 }
 
-bool Terminal::enableBracketedPaste() {
-        if(_bracketedPaste) return true;
+Error Terminal::enableBracketedPaste() {
+        if(_bracketedPaste) return Error();
         const char *seq = "\033[?2004h";
-        writeOutput(seq, std::strlen(seq));
+        auto [n, err] = writeOutput(seq, std::strlen(seq));
+        if(err.isError()) return err;
         _bracketedPaste = true;
-        return true;
+        return Error();
 }
 
-bool Terminal::disableBracketedPaste() {
-        if(!_bracketedPaste) return true;
+Error Terminal::disableBracketedPaste() {
+        if(!_bracketedPaste) return Error();
         const char *seq = "\033[?2004l";
-        writeOutput(seq, std::strlen(seq));
+        auto [n, err] = writeOutput(seq, std::strlen(seq));
+        if(err.isError()) return err;
         _bracketedPaste = false;
-        return true;
+        return Error();
 }
 
-bool Terminal::enableAlternateScreen() {
-        if(_alternateScreen) return true;
+Error Terminal::enableAlternateScreen() {
+        if(_alternateScreen) return Error();
         const char *seq = "\033[?1049h";
-        writeOutput(seq, std::strlen(seq));
+        auto [n, err] = writeOutput(seq, std::strlen(seq));
+        if(err.isError()) return err;
         _alternateScreen = true;
-        return true;
+        return Error();
 }
 
-bool Terminal::disableAlternateScreen() {
-        if(!_alternateScreen) return true;
+Error Terminal::disableAlternateScreen() {
+        if(!_alternateScreen) return Error();
         const char *seq = "\033[?1049l";
-        writeOutput(seq, std::strlen(seq));
+        auto [n, err] = writeOutput(seq, std::strlen(seq));
+        if(err.isError()) return err;
         _alternateScreen = false;
-        return true;
+        return Error();
 }
 
 void Terminal::setResizeCallback(ResizeCallback cb) {
@@ -321,16 +320,19 @@ Terminal::ColorSupport Terminal::colorSupport() {
         return level;
 }
 
-int Terminal::writeOutput(const char *data, int len) {
+Result<int> Terminal::writeOutput(const char *data, int len) {
 #if defined(PROMEKI_PLATFORM_POSIX)
         ssize_t n = write(STDOUT_FILENO, data, len);
-        return n >= 0 ? static_cast<int>(n) : -1;
+        if(n < 0) return makeError<int>(Error::syserr());
+        return makeResult(static_cast<int>(n));
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
         DWORD written = 0;
-        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), data, len, &written, nullptr);
-        return static_cast<int>(written);
+        if(!WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), data, len, &written, nullptr)) {
+                return makeError<int>(Error::syserr());
+        }
+        return makeResult(static_cast<int>(written));
 #else
-        return -1;
+        return makeError<int>(Error::NotSupported);
 #endif
 }
 

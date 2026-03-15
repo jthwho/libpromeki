@@ -34,14 +34,24 @@ PROMEKI_NAMESPACE_BEGIN
  * handles any space-specific cleanup (e.g. SystemSecure performs secure
  * zeroing and page unlocking before freeing).
  *
+ * @par Buffer sizes
+ * Buffer tracks three distinct sizes:
+ * - allocSize() — the total allocation size, always constant.
+ * - availSize() — the usable space from data() to the end of the
+ *   allocation (allocSize minus any data shift). This is the maximum
+ *   amount of content the buffer can hold at the current shift.
+ * - size() — the logical content size, tracking how many bytes of
+ *   meaningful data are in the buffer. Defaults to 0 after allocation
+ *   (the buffer has capacity but no content yet). Set via setSize().
+ *
  * @par Data shifting
  * The shiftData() method offsets the user-visible data pointer from the
  * allocation base. This is primarily used for O_DIRECT I/O, where the
  * underlying allocation must be page-aligned but the actual content starts
  * at some offset within that allocation. The shift is always relative to
- * the allocation base (not accumulating). After a shift, size() returns
- * the remaining usable bytes, while allocSize() always returns the full
- * allocation size. Calling shiftData(0) resets the view to the base.
+ * the allocation base (not accumulating). After a shift, availSize()
+ * returns the remaining usable bytes and size() is reset to 0.
+ * Calling shiftData(0) resets the view to the base.
  *
  * @par Copy semantics
  * Copying a buffer performs a deep copy through the MemSpace's copy
@@ -112,12 +122,13 @@ class Buffer {
                 /**
                  * @brief Copy constructor.
                  *
-                 * Performs a deep copy of the buffer data, including any data shift offset.
+                 * Performs a deep copy of the buffer data, including any data shift
+                 * offset and the logical size.
                  */
-                Buffer(const Buffer &o) : _owned(true) {
+                Buffer(const Buffer &o) : _owned(true), _size(o._size) {
                         if(o._data != nullptr) {
                                 _alloc = o._alloc.ms.alloc(o._alloc.size, o._alloc.align);
-                                if(_alloc.ptr == nullptr) return;
+                                if(_alloc.ptr == nullptr) { _size = 0; return; }
                                 o._alloc.ms.copy(o._alloc, _alloc, _alloc.size);
                                 size_t shift = static_cast<uint8_t *>(o._data) - static_cast<uint8_t *>(o._alloc.ptr);
                                 _data = static_cast<uint8_t *>(_alloc.ptr) + shift;
@@ -130,6 +141,7 @@ class Buffer {
                         if(_owned) _alloc.ms.release(_alloc);
                         _data = nullptr;
                         _owned = true;
+                        _size = 0;
                         _alloc = {};
                         if(o._data != nullptr) {
                                 _alloc = o._alloc.ms.alloc(o._alloc.size, o._alloc.align);
@@ -137,6 +149,7 @@ class Buffer {
                                         o._alloc.ms.copy(o._alloc, _alloc, _alloc.size);
                                         size_t shift = static_cast<uint8_t *>(o._data) - static_cast<uint8_t *>(o._alloc.ptr);
                                         _data = static_cast<uint8_t *>(_alloc.ptr) + shift;
+                                        _size = o._size;
                                 }
                         }
                         return *this;
@@ -144,11 +157,12 @@ class Buffer {
 
                 /** @brief Move constructor. Transfers ownership from the source buffer. */
                 Buffer(Buffer &&o) noexcept :
-                        _alloc(o._alloc), _data(o._data), _owned(o._owned)
+                        _alloc(o._alloc), _data(o._data), _owned(o._owned), _size(o._size)
                 {
                         o._alloc = {};
                         o._data = nullptr;
                         o._owned = false;
+                        o._size = 0;
                 }
 
                 /** @brief Move assignment operator. Transfers ownership from the source buffer. */
@@ -158,9 +172,11 @@ class Buffer {
                         _alloc = o._alloc;
                         _data = o._data;
                         _owned = o._owned;
+                        _size = o._size;
                         o._alloc = {};
                         o._data = nullptr;
                         o._owned = false;
+                        o._size = 0;
                         return *this;
                 }
 
@@ -193,13 +209,40 @@ class Buffer {
                 void *odata() const { return _alloc.ptr; }
 
                 /**
-                 * @brief Returns the usable size of the buffer in bytes.
+                 * @brief Returns the logical content size in bytes.
                  *
-                 * If shiftData() has been called, this returns the remaining
-                 * size from the current data pointer to the end of the allocation.
-                 * @return The usable buffer size.
+                 * This is the user-set content size, tracking how many bytes
+                 * of meaningful data are in the buffer. Defaults to 0 after
+                 * allocation (the buffer has capacity but no content yet).
+                 * Set via setSize().
+                 *
+                 * @return The logical content size.
                  */
-                size_t size() const {
+                size_t size() const { return _size; }
+
+                /**
+                 * @brief Sets the logical content size.
+                 *
+                 * Indicates how many bytes of meaningful data are in the buffer,
+                 * starting from data(). The value must not exceed availSize().
+                 *
+                 * @param s The new logical content size.
+                 */
+                void setSize(size_t s) const {
+                        assert(s <= availSize());
+                        _size = s;
+                        return;
+                }
+
+                /**
+                 * @brief Returns the available space from data() to the end of the allocation.
+                 *
+                 * This is the maximum number of bytes that can be stored starting
+                 * from data(). Equal to allocSize() minus any data shift.
+                 *
+                 * @return The available buffer space in bytes.
+                 */
+                size_t availSize() const {
                         if(_data == nullptr) return 0;
                         return _alloc.size - static_cast<size_t>(
                                 static_cast<uint8_t *>(_data) -
@@ -210,8 +253,8 @@ class Buffer {
                 /**
                  * @brief Returns the total allocation size in bytes.
                  *
-                 * Unlike size(), this always returns the full allocation size
-                 * regardless of any shiftData() calls.
+                 * This always returns the full allocation size regardless of
+                 * any shiftData() calls or the logical content size.
                  * @return The allocation size.
                  */
                 size_t allocSize() const { return _alloc.size; }
@@ -245,6 +288,7 @@ class Buffer {
                 void shiftData(size_t bytes) {
                         assert(bytes <= _alloc.size);
                         _data = static_cast<uint8_t *>(_alloc.ptr) + bytes;
+                        _size = 0;
                         return;
                 }
 
@@ -269,13 +313,14 @@ class Buffer {
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error fill(char value) const {
-                        return _alloc.ms.fill(_data, size(), value);
+                        return _alloc.ms.fill(_data, availSize(), value);
                 }
 
         private:
                 MemAllocation   _alloc;
                 void            *_data          = nullptr;
                 bool            _owned          = true;
+                mutable size_t  _size           = 0;
 };
 
 PROMEKI_NAMESPACE_END

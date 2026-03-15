@@ -25,6 +25,7 @@ bool Audio::allocate(const MemSpace &ms) {
                         _desc.toString().cstr(), (int)_samples, (int)size);
                 return false;
         }
+        _buffer->setSize(size);
         return true;
 }
 

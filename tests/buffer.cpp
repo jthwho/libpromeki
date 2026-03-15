@@ -31,13 +31,16 @@ TEST_CASE("Buffer_Allocate") {
     Buffer b(1024);
     CHECK(b.isValid());
     CHECK(b.data() != nullptr);
-    CHECK(b.size() == 1024);
+    CHECK(b.size() == 0);
+    CHECK(b.availSize() == 1024);
+    CHECK(b.allocSize() == 1024);
 }
 
 TEST_CASE("Buffer_AllocateWithAlign") {
     Buffer b(4096, 64);
     CHECK(b.isValid());
-    CHECK(b.size() == 4096);
+    CHECK(b.size() == 0);
+    CHECK(b.availSize() == 4096);
     CHECK(b.align() == 64);
     // Verify alignment
     uintptr_t addr = reinterpret_cast<uintptr_t>(b.data());
@@ -53,7 +56,8 @@ TEST_CASE("Buffer_External") {
     Buffer b(mem, sizeof(mem), 1, false);
     CHECK(b.isValid());
     CHECK(b.data() == mem);
-    CHECK(b.size() == sizeof(mem));
+    CHECK(b.size() == 0);
+    CHECK(b.availSize() == sizeof(mem));
 }
 
 // ============================================================================
@@ -85,12 +89,14 @@ TEST_CASE("Buffer_FillZero") {
 
 TEST_CASE("Buffer_CopyIsIndependent") {
     Buffer b1(256);
+    b1.setSize(256);
     CHECK(b1.fill(0x42).isOk());
 
     Buffer b2 = b1;
-    // Deep copy — different memory, same content
+    // Deep copy — different memory, same content and size
     CHECK(b2.isValid());
     CHECK(b2.size() == b1.size());
+    CHECK(b2.availSize() == b1.availSize());
     CHECK(b2.data() != b1.data());
 
     const uint8_t *p1 = static_cast<const uint8_t *>(b1.data());
@@ -133,7 +139,8 @@ TEST_CASE("Buffer_ShiftData") {
     uintptr_t shifted = reinterpret_cast<uintptr_t>(b.data());
     uintptr_t original = reinterpret_cast<uintptr_t>(orig);
     CHECK(shifted == original + 64);
-    CHECK(b.size() == 1024 - 64);
+    CHECK(b.size() == 0);
+    CHECK(b.availSize() == 1024 - 64);
     CHECK(b.allocSize() == 1024);
 }
 
@@ -144,17 +151,66 @@ TEST_CASE("Buffer_ShiftDataFromBase") {
     // First shift
     b.shiftData(64);
     CHECK(b.data() == static_cast<uint8_t *>(base) + 64);
-    CHECK(b.size() == 1024 - 64);
+    CHECK(b.availSize() == 1024 - 64);
+    CHECK(b.size() == 0);
 
     // Second shift replaces the first (not accumulating)
     b.shiftData(128);
     CHECK(b.data() == static_cast<uint8_t *>(base) + 128);
-    CHECK(b.size() == 1024 - 128);
+    CHECK(b.availSize() == 1024 - 128);
 
     // Shift back to zero
     b.shiftData(0);
     CHECK(b.data() == base);
+    CHECK(b.availSize() == 1024);
+}
+
+TEST_CASE("Buffer_SetSize") {
+    Buffer b(1024);
+    CHECK(b.size() == 0);
+    CHECK(b.availSize() == 1024);
+
+    b.setSize(500);
+    CHECK(b.size() == 500);
+
+    b.setSize(1024);
     CHECK(b.size() == 1024);
+
+    b.setSize(0);
+    CHECK(b.size() == 0);
+}
+
+TEST_CASE("Buffer_SetSizeAfterShift") {
+    Buffer b(1024);
+    b.shiftData(100);
+    CHECK(b.availSize() == 924);
+    CHECK(b.size() == 0);
+
+    b.setSize(924);
+    CHECK(b.size() == 924);
+
+    // Shifting again resets size to 0
+    b.shiftData(200);
+    CHECK(b.size() == 0);
+    CHECK(b.availSize() == 824);
+}
+
+TEST_CASE("Buffer_SizePreservedOnCopy") {
+    Buffer b1(256);
+    b1.setSize(100);
+
+    Buffer b2 = b1;
+    CHECK(b2.size() == 100);
+    CHECK(b2.availSize() == 256);
+}
+
+TEST_CASE("Buffer_SizePreservedOnMove") {
+    Buffer b1(256);
+    b1.setSize(100);
+
+    Buffer b2 = std::move(b1);
+    CHECK(b2.size() == 100);
+    CHECK(b1.size() == 0);
 }
 
 TEST_CASE("Buffer_IsHostAccessible") {
@@ -218,7 +274,7 @@ TEST_CASE("Buffer_PtrList") {
     list.pushToBack(Buffer::Ptr::create(128));
     list.pushToBack(Buffer::Ptr::create(256));
     CHECK(list.size() == 3);
-    CHECK(list[0]->size() == 64);
-    CHECK(list[1]->size() == 128);
-    CHECK(list[2]->size() == 256);
+    CHECK(list[0]->availSize() == 64);
+    CHECK(list[1]->availSize() == 128);
+    CHECK(list[2]->availSize() == 256);
 }

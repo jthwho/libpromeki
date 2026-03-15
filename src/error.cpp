@@ -7,6 +7,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <system_error>
 #include <promeki/core/error.h>
 #include <promeki/core/platform.h>
 #include <promeki/core/structdatabase.h>
@@ -79,7 +80,8 @@ static StructDatabase<Error::Code, ErrorData> db = {
 
         DEFINE_ERROR(InvalidArgument, NONE, "Invalid argument passed to function"),
         DEFINE_ERROR(InvalidDimension, NONE, "Invalid dimension for operation"),
-        DEFINE_ERROR(NotHostAccessible, NONE, "Memory is not host-accessible")
+        DEFINE_ERROR(NotHostAccessible, NONE, "Memory is not host-accessible"),
+        DEFINE_ERROR(BufferTooSmall, NONE, "Buffer is too small for the operation")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {
@@ -107,7 +109,14 @@ Error Error::syserr(int errnum) {
 
 Error Error::syserr() {
 #if defined(PROMEKI_PLATFORM_WINDOWS)
-        DWORD e = GetLastError();
+        return syserr(GetLastError());
+#else
+        return syserr(errno);
+#endif
+}
+
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+Error Error::syserr(DWORD e) {
         switch(e) {
                 case ERROR_SUCCESS:             return Ok;
                 case ERROR_ACCESS_DENIED:       return PermissionDenied;
@@ -120,17 +129,28 @@ Error Error::syserr() {
                 case ERROR_FILE_NOT_FOUND:      return NotExist;
                 case ERROR_PATH_NOT_FOUND:      return NotExist;
                 case ERROR_DISK_FULL:           return NoSpace;
+                case ERROR_HANDLE_DISK_FULL:    return NoSpace;
                 case ERROR_WRITE_PROTECT:       return ReadOnly;
                 case ERROR_TIMEOUT:             return Timeout;
+                case ERROR_SEM_TIMEOUT:         return Timeout;
                 case ERROR_WORKING_SET_QUOTA:   return NoMem;
+                case ERROR_INVALID_HANDLE:      return BadFileDesc;
+                case ERROR_TOO_MANY_OPEN_FILES: return TooManyOpenFiles;
+                case ERROR_NOT_SUPPORTED:       return NotSupported;
+                case ERROR_SHARING_VIOLATION:   return Busy;
+                case ERROR_LOCK_VIOLATION:      return Busy;
+                case ERROR_DIR_NOT_EMPTY:       return Exists;
+                case ERROR_DIRECTORY:           return NotDir;
+                case ERROR_FILE_TOO_LARGE:      return TooLarge;
+                case ERROR_BROKEN_PIPE:         return IOError;
+                case ERROR_NO_DATA:             return IOError;
+                case ERROR_OPERATION_ABORTED:   return Interrupt;
                 default:
                         promekiWarn("Error::syserr() can't translate Windows error %lu", (unsigned long)e);
                         return UnsupportedSystemError;
         }
-#else
-        return syserr(errno);
-#endif
 }
+#endif
 
 const String &Error::name() const {
         return db.get(_code).name;
@@ -146,6 +166,20 @@ const String &Error::systemErrorName() const {
 
 int Error::systemError() const {
         return db.get(_code).systemError;
+}
+
+Error Error::syserr(const std::error_code &ec) {
+        if(!ec) return Ok;
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+        // On Windows, system_category uses Windows error codes.
+        // generic_category uses POSIX errno values.
+        if(ec.category() == std::system_category()) {
+                return syserr(static_cast<DWORD>(ec.value()));
+        }
+#endif
+        // On POSIX, both system_category and generic_category use errno values.
+        // On Windows with generic_category, values are also POSIX errno.
+        return syserr(ec.value());
 }
 
 PROMEKI_NAMESPACE_END

@@ -26,6 +26,7 @@ bool Image::allocate(const MemSpace &ms) {
                         promekiErr("Image(%s) plane %d allocate failed", _desc.toString().cstr(), i);
                         return false;
                 }
+                buf->setSize(size);
                 list.pushToBack(buf);
         }
         _planeList = list;

@@ -22,6 +22,9 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * The read buffer is allocated lazily on first open (default 8192 bytes)
  * or can be replaced via setReadBuffer() before opening.
+ *
+ * When unbuffered mode is enabled via setUnbuffered(), all reads
+ * bypass the internal buffer and go directly to readFromDevice().
  */
 class BufferedIODevice : public IODevice {
         PROMEKI_OBJECT(BufferedIODevice, IODevice)
@@ -30,15 +33,7 @@ class BufferedIODevice : public IODevice {
                  * @brief Constructs a BufferedIODevice.
                  * @param parent The parent object, or nullptr.
                  */
-                BufferedIODevice(ObjectBase *parent = nullptr) : IODevice(parent) { }
-
-                /**
-                 * @brief Constructs a BufferedIODevice with supported options.
-                 * @param opts Initializer list of {Option, defaultValue} pairs.
-                 * @param parent The parent object, or nullptr.
-                 */
-                BufferedIODevice(OptionList opts, ObjectBase *parent = nullptr) :
-                        IODevice(opts, parent) { }
+                BufferedIODevice(ObjectBase *parent = nullptr);
 
                 /** @brief Destructor. */
                 virtual ~BufferedIODevice();
@@ -48,7 +43,8 @@ class BufferedIODevice : public IODevice {
                  *
                  * Serves data from the internal read buffer when possible.
                  * Large reads (>= buffer capacity) bypass the buffer and
-                 * go directly to readFromDevice().
+                 * go directly to readFromDevice(). When unbuffered mode is enabled,
+                 * all reads bypass the buffer.
                  *
                  * @param data Pointer to the buffer to read into.
                  * @param maxSize Maximum number of bytes to read.
@@ -60,6 +56,7 @@ class BufferedIODevice : public IODevice {
                  * @brief Returns the number of bytes available for reading.
                  *
                  * Returns buffered bytes plus deviceBytesAvailable().
+                 * When unbuffered mode is enabled, returns only deviceBytesAvailable().
                  * @return The number of bytes available.
                  */
                 int64_t bytesAvailable() const override;
@@ -87,7 +84,7 @@ class BufferedIODevice : public IODevice {
                  * @brief Returns the capacity of the read buffer.
                  * @return The buffer size in bytes, or 0 if not yet allocated.
                  */
-                size_t readBufferSize() const { return _readBuf.size(); }
+                size_t readBufferSize() const { return _readBuf.availSize(); }
 
                 /**
                  * @brief Reads a line of text up to a newline character.
@@ -117,12 +114,15 @@ class BufferedIODevice : public IODevice {
                  * @brief Returns true if a complete line is available for reading.
                  *
                  * Checks whether a newline character exists in the buffered data.
+                 * Returns false when Unbuffered is true.
                  * @return true if a newline is present in the buffer.
                  */
                 bool canReadLine() const;
 
                 /**
                  * @brief Reads up to maxBytes without consuming them.
+                 *
+                 * Returns 0 when Unbuffered is true.
                  * @param buf Pointer to the destination buffer.
                  * @param maxBytes Maximum number of bytes to peek.
                  * @return The number of bytes peeked.
@@ -131,12 +131,33 @@ class BufferedIODevice : public IODevice {
 
                 /**
                  * @brief Reads up to maxBytes without consuming them.
+                 *
+                 * Returns empty Buffer when Unbuffered is true.
                  * @param maxBytes Maximum number of bytes to peek.
                  * @return A Buffer containing the peeked data.
                  */
                 Buffer peek(size_t maxBytes) const;
 
+                /**
+                 * @brief Enables or disables unbuffered mode.
+                 *
+                 * When switching to unbuffered while the device is open,
+                 * the internal read buffer is drained and reset. When
+                 * switching back to buffered while open, the read buffer
+                 * is re-ensured.
+                 *
+                 * @param enable true to bypass the internal buffer.
+                 */
+                void setUnbuffered(bool enable);
+
+                /**
+                 * @brief Returns true if unbuffered mode is enabled.
+                 * @return true if reads bypass the internal buffer.
+                 */
+                bool isUnbuffered() const { return _unbuffered; }
+
         protected:
+
                 /**
                  * @brief Reads raw data from the underlying device.
                  *
@@ -178,10 +199,11 @@ class BufferedIODevice : public IODevice {
                 /** @brief Default read buffer size in bytes. */
                 static constexpr size_t DefaultReadBufSize = 8192;
 
-                Buffer  _readBuf;                       ///< The read buffer (replaceable).
-                size_t  _readBufPos = 0;                ///< Read cursor within buffer.
-                size_t  _readBufFill = 0;               ///< Bytes of valid data in buffer.
-                bool    _bufferAllocated = false;       ///< True after buffer is ready.
+                bool    _unbuffered = false;              ///< Unbuffered option storage.
+                Buffer  _readBuf;                        ///< The read buffer (replaceable).
+                size_t  _readBufPos = 0;                 ///< Read cursor within buffer.
+                size_t  _readBufFill = 0;                ///< Bytes of valid data in buffer.
+                bool    _bufferAllocated = false;        ///< True after buffer is ready.
 
                 /**
                  * @brief Fills the internal read buffer from the device.
