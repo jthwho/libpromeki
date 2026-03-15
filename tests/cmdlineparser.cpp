@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/cmdlineparser.h>
+#include <promeki/core/cmdlineparser.h>
 
 using namespace promeki;
 

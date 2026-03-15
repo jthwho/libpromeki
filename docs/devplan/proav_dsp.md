@@ -12,7 +12,7 @@
 Base for audio filters. Derives from MediaNode.
 
 **Files:**
-- [ ] `include/promeki/audiofilter.h`
+- [ ] `include/promeki/proav/audiofilter.h`
 - [ ] `src/audiofilter.cpp`
 - [ ] `tests/audiofilter.cpp`
 
@@ -45,7 +45,7 @@ Base for audio filters. Derives from MediaNode.
 Sample rate conversion.
 
 **Files:**
-- [ ] `include/promeki/audioresampler.h`
+- [ ] `include/promeki/proav/audioresampler.h`
 - [ ] `src/audioresampler.cpp`
 - [ ] `tests/audioresampler.cpp`
 
@@ -80,7 +80,7 @@ Sample rate conversion.
 Sample format conversion (int16 <-> float32, etc.).
 
 **Files:**
-- [ ] `include/promeki/audioformatconverter.h`
+- [ ] `include/promeki/proav/audioformatconverter.h`
 - [ ] `src/audioformatconverter.cpp`
 - [ ] `tests/audioformatconverter.cpp`
 

@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/color.h>
+#include <promeki/core/color.h>
 
 using namespace promeki;
 

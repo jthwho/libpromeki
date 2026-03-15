@@ -34,7 +34,7 @@ The fix described in the FIXME: `adoptCurrentThread()` should snapshot the Event
 
 ## AudioDesc Metadata Comparison
 
-**File:** `include/promeki/audiodesc.h:277`
+**File:** `include/promeki/proav/audiodesc.h:277`
 **FIXME:** "We don't currently compare metadata" in `operator==`.
 
 - [ ] Include metadata in `operator==` comparison

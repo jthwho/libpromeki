@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/slot.h>
+#include <promeki/core/slot.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

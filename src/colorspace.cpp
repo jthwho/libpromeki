@@ -6,9 +6,9 @@
  */
 
 #include <cmath>
-#include <promeki/colorspace.h>
-#include <promeki/structdatabase.h>
-#include <promeki/util.h>
+#include <promeki/proav/colorspace.h>
+#include <promeki/core/structdatabase.h>
+#include <promeki/core/util.h>
 
 #define DEFINE_SPACE(value) \
         .id = ColorSpace::value, \

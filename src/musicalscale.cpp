@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <promeki/musicalscale.h>
+#include <promeki/music/musicalscale.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

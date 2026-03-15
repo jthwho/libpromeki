@@ -6,7 +6,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/frame.h>
+#include <promeki/proav/frame.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

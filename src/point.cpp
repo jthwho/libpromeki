@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/point.h>
+#include <promeki/core/point.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

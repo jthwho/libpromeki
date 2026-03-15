@@ -5,10 +5,10 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/objectbase.h>
-#include <promeki/eventloop.h>
-#include <promeki/timerevent.h>
-#include <promeki/system.h>
+#include <promeki/core/objectbase.h>
+#include <promeki/core/eventloop.h>
+#include <promeki/core/timerevent.h>
+#include <promeki/core/system.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

@@ -15,7 +15,7 @@ Generalizes the existing source/sink pattern in AudioBlock. Default threading mo
 Data object describing a node's input or output connection point.
 
 **Files:**
-- [ ] `include/promeki/mediaport.h`
+- [ ] `include/promeki/proav/mediaport.h`
 - [ ] `src/mediaport.cpp`
 - [ ] `tests/mediaport.cpp`
 
@@ -43,7 +43,7 @@ Data object describing a node's input or output connection point.
 ObjectBase-derived base class for all pipeline processing nodes.
 
 **Files:**
-- [ ] `include/promeki/medianode.h`
+- [ ] `include/promeki/proav/medianode.h`
 - [ ] `src/medianode.cpp`
 - [ ] `tests/medianode.cpp`
 
@@ -83,7 +83,7 @@ ObjectBase-derived base class for all pipeline processing nodes.
 Connects output port to input port. Manages buffered data flow.
 
 **Files:**
-- [ ] `include/promeki/medialink.h`
+- [ ] `include/promeki/proav/medialink.h`
 - [ ] `src/medialink.cpp`
 - [ ] `tests/medialink.cpp`
 
@@ -114,7 +114,7 @@ Connects output port to input port. Manages buffered data flow.
 DAG of MediaNodes connected by MediaLinks. Validates topology.
 
 **Files:**
-- [ ] `include/promeki/mediagraph.h`
+- [ ] `include/promeki/proav/mediagraph.h`
 - [ ] `src/mediagraph.cpp`
 - [ ] `tests/mediagraph.cpp`
 
@@ -149,7 +149,7 @@ DAG of MediaNodes connected by MediaLinks. Validates topology.
 Owns MediaGraph + default thread pool. Orchestrates processing.
 
 **Files:**
-- [ ] `include/promeki/mediapipeline.h`
+- [ ] `include/promeki/proav/mediapipeline.h`
 - [ ] `src/mediapipeline.cpp`
 - [ ] `tests/mediapipeline.cpp`
 

@@ -7,7 +7,7 @@
 
 #include <cctype>
 #include <cmath>
-#include <promeki/notesequenceparser.h>
+#include <promeki/music/notesequenceparser.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

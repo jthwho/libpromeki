@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/stringlist.h>
+#include <promeki/core/stringlist.h>
 
 using namespace promeki;
 

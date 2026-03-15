@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/fourcc.h>
+#include <promeki/core/fourcc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

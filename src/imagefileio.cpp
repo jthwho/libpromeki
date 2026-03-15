@@ -6,9 +6,9 @@
  */
 
 #include <map>
-#include <promeki/imagefileio.h>
-#include <promeki/error.h>
-#include <promeki/logger.h>
+#include <promeki/proav/imagefileio.h>
+#include <promeki/core/error.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

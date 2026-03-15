@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <cstring>
-#include <promeki/sha1.h>
+#include <promeki/core/sha1.h>
 
 using namespace promeki;
 

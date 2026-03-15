@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/matrix3x3.h>
+#include <promeki/core/matrix3x3.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

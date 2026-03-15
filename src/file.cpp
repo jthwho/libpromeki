@@ -5,8 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/file.h>
-#include <promeki/util.h>
+#include <promeki/core/file.h>
+#include <promeki/core/util.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <Windows.h>

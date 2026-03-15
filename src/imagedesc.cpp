@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/imagedesc.h>
+#include <promeki/proav/imagedesc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

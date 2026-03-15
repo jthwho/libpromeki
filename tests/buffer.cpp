@@ -8,7 +8,7 @@
 
 #include <cstring>
 #include <doctest/doctest.h>
-#include <promeki/buffer.h>
+#include <promeki/core/buffer.h>
 
 using namespace promeki;
 

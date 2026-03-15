@@ -6,10 +6,10 @@
  */
 
 #include <map>
-#include <promeki/pixelformat.h>
-#include <promeki/paintengine.h>
-#include <promeki/image.h>
-#include <promeki/logger.h>
+#include <promeki/proav/pixelformat.h>
+#include <promeki/proav/paintengine.h>
+#include <promeki/proav/image.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

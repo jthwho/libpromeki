@@ -5,8 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/env.h>
-#include <promeki/platform.h>
+#include <promeki/core/env.h>
+#include <promeki/core/platform.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <cstdlib>

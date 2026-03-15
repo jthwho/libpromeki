@@ -6,8 +6,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/namespace.h>
-#include <promeki/codec.h>
+#include <promeki/core/namespace.h>
+#include <promeki/proav/codec.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

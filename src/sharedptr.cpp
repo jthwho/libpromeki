@@ -6,7 +6,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/sharedptr.h>
+#include <promeki/core/sharedptr.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

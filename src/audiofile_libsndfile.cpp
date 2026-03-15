@@ -7,11 +7,11 @@
 
 #include <cstring>
 #include <promeki/thirdparty/sndfile.h>
-#include <promeki/audiofilefactory.h>
-#include <promeki/audiofile.h>
-#include <promeki/logger.h>
-#include <promeki/fileinfo.h>
-#include <promeki/util.h>
+#include <promeki/proav/audiofilefactory.h>
+#include <promeki/proav/audiofile.h>
+#include <promeki/core/logger.h>
+#include <promeki/core/fileinfo.h>
+#include <promeki/core/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

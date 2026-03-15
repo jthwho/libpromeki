@@ -8,7 +8,7 @@
  */
 
 #include <cstring>
-#include <promeki/md5.h>
+#include <promeki/core/md5.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

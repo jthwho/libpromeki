@@ -7,7 +7,7 @@
 
 #include <cstdio>
 #include <doctest/doctest.h>
-#include <promeki/file.h>
+#include <promeki/core/file.h>
 
 using namespace promeki;
 

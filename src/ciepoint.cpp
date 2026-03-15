@@ -6,9 +6,9 @@
  */
 
 #include <cmath>
-#include <promeki/ciepoint.h>
-#include <promeki/ciewavelengthtable.h>
-#include <promeki/util.h>
+#include <promeki/proav/ciepoint.h>
+#include <promeki/proav/ciewavelengthtable.h>
+#include <promeki/core/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

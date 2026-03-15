@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/streamstring.h>
-#include <promeki/stringlist.h>
+#include <promeki/core/streamstring.h>
+#include <promeki/core/stringlist.h>
 
 using namespace promeki;
 

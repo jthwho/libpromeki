@@ -9,8 +9,8 @@
 #include <atomic>
 #include <string>
 #include <doctest/doctest.h>
-#include <promeki/queue.h>
-#include <promeki/error.h>
+#include <promeki/core/queue.h>
+#include <promeki/core/error.h>
 
 using namespace promeki;
 

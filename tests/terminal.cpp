@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/terminal.h>
-#include <promeki/env.h>
+#include <promeki/core/terminal.h>
+#include <promeki/core/env.h>
 
 using namespace promeki;
 

@@ -5,9 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/image.h>
-#include <promeki/logger.h>
-#include <promeki/util.h>
+#include <promeki/proav/image.h>
+#include <promeki/core/logger.h>
+#include <promeki/core/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

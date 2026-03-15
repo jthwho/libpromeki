@@ -159,9 +159,9 @@ cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki
 All promeki headers live under the `promeki/` namespace:
 
 ```cpp
-#include <promeki/string.h>
-#include <promeki/timecode.h>
-#include <promeki/imagedesc.h>
+#include <promeki/core/string.h>
+#include <promeki/core/timecode.h>
+#include <promeki/proav/imagedesc.h>
 ```
 
 Bundled third-party headers are under `promeki/thirdparty/`:

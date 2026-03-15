@@ -12,7 +12,7 @@
 Data object: method, URL, headers, body. Shareable.
 
 **Files:**
-- [ ] `include/promeki/net/httprequest.h`
+- [ ] `include/promeki/network/httprequest.h`
 - [ ] `src/net/httprequest.cpp`
 
 **Implementation checklist:**
@@ -34,7 +34,7 @@ Data object: method, URL, headers, body. Shareable.
 Data object: status code, headers, body. Shareable.
 
 **Files:**
-- [ ] `include/promeki/net/httpresponse.h`
+- [ ] `include/promeki/network/httpresponse.h`
 - [ ] `src/net/httpresponse.cpp`
 
 **Implementation checklist:**
@@ -57,7 +57,7 @@ Data object: status code, headers, body. Shareable.
 Async HTTP client. Returns `Future<HttpResponse>`.
 
 **Files:**
-- [ ] `include/promeki/net/httpclient.h`
+- [ ] `include/promeki/network/httpclient.h`
 - [ ] `src/net/httpclient.cpp`
 - [ ] `tests/httpclient.cpp`
 
@@ -89,7 +89,7 @@ Async HTTP client. Returns `Future<HttpResponse>`.
 TLS/SSL configuration via vendored mbedTLS.
 
 **Files:**
-- [ ] `include/promeki/net/sslcontext.h`
+- [ ] `include/promeki/network/sslcontext.h`
 - [ ] `src/net/sslcontext.cpp`
 
 **Implementation checklist:**
@@ -113,7 +113,7 @@ TLS/SSL configuration via vendored mbedTLS.
 TcpSocket with TLS encryption via mbedTLS.
 
 **Files:**
-- [ ] `include/promeki/net/sslsocket.h`
+- [ ] `include/promeki/network/sslsocket.h`
 - [ ] `src/net/sslsocket.cpp`
 - [ ] `tests/sslsocket.cpp`
 
@@ -140,7 +140,7 @@ TcpSocket with TLS encryption via mbedTLS.
 Message-oriented WebSocket protocol. Not IODevice-derived (message-oriented, not byte-stream).
 
 **Files:**
-- [ ] `include/promeki/net/websocket.h`
+- [ ] `include/promeki/network/websocket.h`
 - [ ] `src/net/websocket.cpp`
 - [ ] `tests/websocket.cpp`
 

@@ -6,9 +6,9 @@
  */
 
 #include <cmath>
-#include <promeki/audiogen.h>
-#include <promeki/audio.h>
-#include <promeki/logger.h>
+#include <promeki/proav/audiogen.h>
+#include <promeki/proav/audio.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

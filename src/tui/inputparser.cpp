@@ -6,7 +6,7 @@
  */
 
 #include <promeki/tui/inputparser.h>
-#include <promeki/error.h>
+#include <promeki/core/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

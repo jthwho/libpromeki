@@ -7,7 +7,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <promeki/stringdata.h>
+#include <promeki/core/stringdata.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

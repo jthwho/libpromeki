@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/notesequenceparser.h>
+#include <promeki/music/notesequenceparser.h>
 
 using namespace promeki;
 

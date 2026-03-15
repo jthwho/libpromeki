@@ -6,13 +6,13 @@
  */
 
 #include <chrono>
-#include <promeki/uuid.h>
-#include <promeki/list.h>
-#include <promeki/util.h>
-#include <promeki/md5.h>
-#include <promeki/sha1.h>
-#include <promeki/application.h>
-#include <promeki/logger.h>
+#include <promeki/core/uuid.h>
+#include <promeki/core/list.h>
+#include <promeki/core/util.h>
+#include <promeki/core/md5.h>
+#include <promeki/core/sha1.h>
+#include <promeki/core/application.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

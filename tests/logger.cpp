@@ -8,7 +8,7 @@
 #include <fstream>
 #include <filesystem>
 #include <doctest/doctest.h>
-#include <promeki/logger.h>
+#include <promeki/core/logger.h>
 
 using namespace promeki;
 

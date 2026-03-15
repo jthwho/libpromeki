@@ -10,8 +10,8 @@
 #include FT_GLYPH_H
 #include FT_BITMAP_H
 
-#include <promeki/fontpainter.h>
-#include <promeki/logger.h>
+#include <promeki/proav/fontpainter.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

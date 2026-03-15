@@ -62,7 +62,7 @@
  * | @ref Audio | Audio descriptor + sample buffer |
  * | @ref Frame | Container of images, audio, and metadata |
  *
- * @section threading Thread Safety and Cross-Thread Sharing
+ * @section dataobj_threading Thread Safety and Cross-Thread Sharing
  *
  * Data objects are not internally thread-safe.  Concurrent reads and writes
  * to the same instance require external synchronization.  The recommended
@@ -128,7 +128,7 @@
  *
  * @subsection thread_antipattern Avoid: Mutex around data objects
  *
- * Do not protect data objects with a @ref Mutex as a general practice.
+ * Do not protect data objects with a Mutex as a general practice.
  * If you find yourself wrapping a data object in a mutex, restructure
  * so that each thread works on its own copy or uses the @c Ptr handoff
  * pattern.  The exception is explicitly thread-safe classes like

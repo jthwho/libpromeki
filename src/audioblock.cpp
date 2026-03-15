@@ -5,9 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/audioblock.h>
-#include <promeki/audiodesc.h>
-#include <promeki/audio.h>
+#include <promeki/proav/audioblock.h>
+#include <promeki/proav/audiodesc.h>
+#include <promeki/proav/audio.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

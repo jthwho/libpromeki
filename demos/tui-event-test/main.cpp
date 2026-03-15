@@ -15,9 +15,9 @@
 #include <promeki/tui/listview.h>
 #include <promeki/tui/statusbar.h>
 #include <promeki/tui/checkbox.h>
-#include <promeki/keyevent.h>
-#include <promeki/mouseevent.h>
-#include <promeki/datetime.h>
+#include <promeki/core/keyevent.h>
+#include <promeki/core/mouseevent.h>
+#include <promeki/core/datetime.h>
 
 using namespace promeki;
 

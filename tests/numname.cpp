@@ -6,10 +6,10 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/numname.h>
-#include <promeki/numnameseq.h>
-#include <promeki/stringlist.h>
-#include <promeki/logger.h>
+#include <promeki/core/numname.h>
+#include <promeki/core/numnameseq.h>
+#include <promeki/core/stringlist.h>
+#include <promeki/core/logger.h>
 
 using namespace promeki;
 

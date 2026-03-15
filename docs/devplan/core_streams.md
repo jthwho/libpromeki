@@ -14,7 +14,7 @@ Provides promeki-native stream classes for binary and text I/O. These present a 
 Binary stream for structured, portable serialization. Primary use case: `ObjectBase::saveState()`/`loadState()`, file format I/O, network protocol encoding.
 
 **Files:**
-- [ ] `include/promeki/datastream.h`
+- [ ] `include/promeki/core/datastream.h`
 - [ ] `src/datastream.cpp`
 - [ ] `tests/datastream.cpp`
 
@@ -109,7 +109,7 @@ Add `DataStream` operators for existing promeki types. These can live in each ty
 Formatted text I/O with encoding awareness. For human-readable output, config files, log formatting, and structured text parsing.
 
 **Files:**
-- [ ] `include/promeki/textstream.h`
+- [ ] `include/promeki/core/textstream.h`
 - [ ] `src/textstream.cpp`
 - [ ] `tests/textstream.cpp`
 
@@ -199,7 +199,7 @@ Formatted text I/O with encoding awareness. For human-readable output, config fi
 Add binary state serialization to ObjectBase. Each subclass can override to save/restore its own state. Uses DataStream for portable, versioned binary format.
 
 **Files:**
-- [ ] Modify `include/promeki/objectbase.h`
+- [ ] Modify `include/promeki/core/core/objectbase.h`
 - [ ] Modify `src/objectbase.cpp`
 - [ ] `tests/objectbase_serialization.cpp`
 
@@ -242,7 +242,7 @@ Once DataStream and TextStream are implemented, migrate all existing `std::` str
 Currently extends `std::ostream` directly. Refactor to use `TextStream` as its backend.
 
 **Files:**
-- [ ] Modify `include/promeki/ansistream.h`
+- [ ] Modify `include/promeki/core/core/ansistream.h`
 - [ ] Modify `src/ansistream.cpp`
 - [ ] Update `tests/ansistream.cpp`
 
@@ -261,7 +261,7 @@ Currently extends `std::ostream` directly. Refactor to use `TextStream` as its b
 Currently extends `std::streambuf`. Refactor to work with `TextStream`.
 
 **Files:**
-- [ ] Modify `include/promeki/streamstring.h`
+- [ ] Modify `include/promeki/core/core/streamstring.h`
 - [ ] Update `tests/streamstring.cpp`
 
 **Checklist:**
@@ -278,7 +278,7 @@ Currently extends `std::streambuf`. Refactor to work with `TextStream`.
 Currently uses `std::ofstream` for file output and `std::cout` for console output.
 
 **Files:**
-- [ ] Modify `include/promeki/logger.h`
+- [ ] Modify `include/promeki/core/core/logger.h`
 - [ ] Modify `src/logger.cpp`
 - [ ] Update `tests/logger.cpp`
 
@@ -297,35 +297,35 @@ Replace all `std::ostream`/`std::istream` stream operators with `TextStream` equ
 
 **Files to modify:**
 
-String (`include/promeki/string.h`, `src/string.cpp`):
+String (`include/promeki/core/core/string.h`, `src/string.cpp`):
 - [ ] Replace `friend std::ostream &operator<<(std::ostream &, const String &)` with `TextStream &operator<<(TextStream &, const String &)`
 - [ ] Replace `friend std::istream &operator>>(std::istream &, String &)` with `TextStream &operator>>(TextStream &, String &)`
 - [ ] Replace internal `std::ostringstream` usage in `fromNumber()` methods with TextStream or `String::number()`
 - [ ] Replace `std::istringstream` usage in `split()` and other parsing methods
 - [ ] Remove `#include <iostream>` and `#include <sstream>`
 
-Point (`include/promeki/point.h`):
+Point (`include/promeki/core/core/point.h`):
 - [ ] Replace `friend std::ostream &operator<<(std::ostream &, const Point &)` with TextStream variant
 - [ ] Replace `friend std::istream &operator>>(std::istream &, Point &)` with TextStream variant
 - [ ] Replace `std::stringstream` usage in `fromString()` and `toString()`
 
-Size2D (`include/promeki/size2d.h`):
+Size2D (`include/promeki/core/core/size2d.h`):
 - [ ] Replace `friend std::ostream &operator<<` with TextStream variant
 - [ ] Replace `friend std::istream &operator>>` with TextStream variant
 
-Rect (`include/promeki/rect.h`):
+Rect (`include/promeki/core/core/rect.h`):
 - [ ] Replace `friend std::ostream &operator<<` with TextStream variant
 
-Matrix3x3 (`include/promeki/matrix3x3.h`):
+Matrix3x3 (`include/promeki/core/core/matrix3x3.h`):
 - [ ] Replace `friend std::ostream &operator<<` with TextStream variant
 - [ ] Remove `#include <ostream>`
 
-Rational (`include/promeki/rational.h`):
+Rational (`include/promeki/core/core/rational.h`):
 - [ ] Replace `friend std::ostream &operator<<` with TextStream variant
 - [ ] Replace `std::stringstream` in `toString()` with TextStream over String
 - [ ] Remove `#include <sstream>`
 
-FourCC (`include/promeki/fourcc.h`):
+FourCC (`include/promeki/core/core/fourcc.h`):
 - [ ] Remove `#include <iostream>` (audit if actually needed)
 
 ---
@@ -336,15 +336,15 @@ Replace all internal `std::stringstream`/`std::istringstream`/`std::ostringstrea
 
 **Files:**
 
-XYZColor (`include/promeki/xyzcolor.h`):
+XYZColor (`include/promeki/core/proav/xyzcolor.h`):
 - [ ] Replace `std::stringstream` in `toString()` with TextStream over String
 - [ ] Remove `#include <sstream>`
 
-DateTime (`include/promeki/datetime.h`, `src/datetime.cpp`):
+DateTime (`include/promeki/core/core/datetime.h`, `src/datetime.cpp`):
 - [ ] Replace `std::istringstream` in `fromString()` with TextStream parsing
 - [ ] Remove `#include <sstream>` from header
 
-JSON (`include/promeki/json.h`):
+JSON (`include/promeki/core/core/json.h`):
 - [ ] Replace `#include <sstream>` usage — audit and migrate to String operations or TextStream
 
 System (`src/system.cpp`):

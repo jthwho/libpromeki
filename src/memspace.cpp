@@ -7,12 +7,12 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <promeki/memspace.h>
-#include <promeki/securemem.h>
-#include <promeki/error.h>
-#include <promeki/logger.h>
-#include <promeki/structdatabase.h>
-#include <promeki/util.h>
+#include <promeki/core/memspace.h>
+#include <promeki/core/securemem.h>
+#include <promeki/core/error.h>
+#include <promeki/core/logger.h>
+#include <promeki/core/structdatabase.h>
+#include <promeki/core/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

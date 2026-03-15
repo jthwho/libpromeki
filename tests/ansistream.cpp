@@ -7,7 +7,7 @@
 
 #include <sstream>
 #include <doctest/doctest.h>
-#include <promeki/ansistream.h>
+#include <promeki/core/ansistream.h>
 
 using namespace promeki;
 

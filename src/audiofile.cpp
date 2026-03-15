@@ -5,9 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/audiofile.h>
-#include <promeki/audiofilefactory.h>
-#include <promeki/logger.h>
+#include <promeki/proav/audiofile.h>
+#include <promeki/proav/audiofilefactory.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

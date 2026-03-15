@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <cstring>
-#include <promeki/fnv1a.h>
+#include <promeki/core/fnv1a.h>
 
 using namespace promeki;
 

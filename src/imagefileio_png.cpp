@@ -8,9 +8,9 @@
 #include <promeki/thirdparty/png.h>
 #include <csetjmp>
 #include <cstdio>
-#include <promeki/logger.h>
-#include <promeki/imagefileio.h>
-#include <promeki/imagefile.h>
+#include <promeki/core/logger.h>
+#include <promeki/proav/imagefileio.h>
+#include <promeki/proav/imagefile.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

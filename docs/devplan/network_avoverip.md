@@ -15,7 +15,7 @@ General-purpose primitives for building AV-over-IP implementations (ST 2110, AES
 Extends UdpSocket with DSCP/TOS QoS field setting. Essential for AV traffic prioritization.
 
 **Files:**
-- [ ] `include/promeki/net/prioritysocket.h`
+- [ ] `include/promeki/network/prioritysocket.h`
 - [ ] `src/net/prioritysocket.cpp`
 - [ ] `tests/prioritysocket.cpp`
 
@@ -41,7 +41,7 @@ Extends UdpSocket with DSCP/TOS QoS field setting. Essential for AV traffic prio
 IEEE 1588 PTP clock synchronization. Building block for AES67/ST 2110 sync.
 
 **Files:**
-- [ ] `include/promeki/net/ptpclock.h`
+- [ ] `include/promeki/network/ptpclock.h`
 - [ ] `src/net/ptpclock.cpp`
 - [ ] `tests/ptpclock.cpp`
 
@@ -81,7 +81,7 @@ IEEE 1588 PTP clock synchronization. Building block for AES67/ST 2110 sync.
 Real-time Transport Protocol (RFC 3550). Payload-type agnostic.
 
 **Files:**
-- [ ] `include/promeki/net/rtpsession.h`
+- [ ] `include/promeki/network/rtpsession.h`
 - [ ] `src/net/rtpsession.cpp`
 - [ ] `tests/rtpsession.cpp`
 
@@ -118,7 +118,7 @@ Real-time Transport Protocol (RFC 3550). Payload-type agnostic.
 Base class for RTP payload type handlers.
 
 **Files:**
-- [ ] `include/promeki/net/rtppayload.h`
+- [ ] `include/promeki/network/rtppayload.h`
 - [ ] `src/net/rtppayload.cpp`
 
 **Implementation checklist:**
@@ -141,7 +141,7 @@ Base class for RTP payload type handlers.
 SDP (Session Description Protocol, RFC 4566) parser/generator. Used by ST 2110 and AES67 for stream advertisement.
 
 **Files:**
-- [ ] `include/promeki/net/sdpsession.h`
+- [ ] `include/promeki/network/sdpsession.h`
 - [ ] `src/net/sdpsession.cpp`
 - [ ] `tests/sdpsession.cpp`
 
@@ -176,7 +176,7 @@ SDP (Session Description Protocol, RFC 4566) parser/generator. Used by ST 2110 a
 Manages multicast group membership for multi-stream scenarios.
 
 **Files:**
-- [ ] `include/promeki/net/multicastmanager.h`
+- [ ] `include/promeki/network/multicastmanager.h`
 - [ ] `src/net/multicastmanager.cpp`
 - [ ] `tests/multicastmanager.cpp`
 

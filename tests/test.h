@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <promeki/objectbase.h>
+#include <promeki/core/objectbase.h>
 
 using namespace promeki;
 

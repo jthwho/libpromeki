@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/rect.h>
+#include <promeki/core/rect.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

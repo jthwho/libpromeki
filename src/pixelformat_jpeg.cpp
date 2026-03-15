@@ -5,8 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 #include <cstring>
-#include <promeki/pixelformat.h>
-#include <promeki/image.h>
+#include <promeki/proav/pixelformat.h>
+#include <promeki/proav/image.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

@@ -21,8 +21,8 @@
 #include <promeki/tui/progressbar.h>
 #include <promeki/tui/tabwidget.h>
 #include <promeki/tui/splitter.h>
-#include <promeki/terminal.h>
-#include <promeki/timerevent.h>
+#include <promeki/core/terminal.h>
+#include <promeki/core/timerevent.h>
 
 using namespace promeki;
 

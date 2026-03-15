@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 #include <cstring>
 #include <set>
-#include <promeki/obfuscatedstring.h>
+#include <promeki/core/obfuscatedstring.h>
 
 using namespace promeki;
 

@@ -6,8 +6,8 @@
  */
 
 #include <iostream>
-#include <promeki/mempool.h>
-#include <promeki/logger.h>
+#include <promeki/core/mempool.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

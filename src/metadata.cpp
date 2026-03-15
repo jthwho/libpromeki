@@ -5,10 +5,10 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/metadata.h>
-#include <promeki/string.h>
-#include <promeki/stringlist.h>
-#include <promeki/logger.h>
+#include <promeki/core/metadata.h>
+#include <promeki/core/string.h>
+#include <promeki/core/stringlist.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

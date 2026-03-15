@@ -6,8 +6,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/framerate.h>
-#include <promeki/structdatabase.h>
+#include <promeki/core/framerate.h>
+#include <promeki/core/structdatabase.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

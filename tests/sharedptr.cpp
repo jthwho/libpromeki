@@ -9,8 +9,8 @@
 #include <thread>
 #include <vector>
 #include <doctest/doctest.h>
-#include <promeki/sharedptr.h>
-#include <promeki/logger.h>
+#include <promeki/core/sharedptr.h>
+#include <promeki/core/logger.h>
 
 using namespace promeki;
 

@@ -6,19 +6,19 @@
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-Headers under `include/promeki/net/`. Uses raw POSIX sockets (no libuv/asio). Socket interfaces are virtual/abstract so WASM can later provide Emscripten-based backends without API changes. Must not preclude a future `SrtSocket` subclass.
+Headers under `include/promeki/network/`. Uses raw POSIX sockets (no libuv/asio). Socket interfaces are virtual/abstract so WASM can later provide Emscripten-based backends without API changes. Must not preclude a future `SrtSocket` subclass.
 
 ---
 
 ## CMake Setup
 
 - [ ] Add `PROMEKI_BUILD_NETWORK` option (default ON)
-- [ ] Create `include/promeki/net/` directory
+- [ ] Create `include/promeki/network/` directory
 - [ ] Create `promeki-network` shared library target (SHARED, with VERSION/SOVERSION matching other libraries)
 - [ ] Link against `promeki-core`
 - [ ] Create `unittest-network` test executable, register with CTest
 - [ ] Install targets (follow existing pattern from promeki-core/promeki-proav):
-  - [ ] Headers installed to `include/promeki/net/`
+  - [ ] Headers installed to `include/promeki/network/`
   - [ ] Shared library installed to standard lib location
   - [ ] CMake package config for `find_package(promeki-network)`
   - [ ] Export target so downstream projects can `target_link_libraries(... promeki-network)`
@@ -31,7 +31,7 @@ Headers under `include/promeki/net/`. Uses raw POSIX sockets (no libuv/asio). So
 Simple data object: IP address + port. No PROMEKI_SHARED_FINAL (simple value type).
 
 **Files:**
-- [ ] `include/promeki/net/socketaddress.h`
+- [ ] `include/promeki/network/socketaddress.h`
 - [ ] `src/net/socketaddress.cpp`
 - [ ] `tests/socketaddress.cpp`
 
@@ -60,7 +60,7 @@ Simple data object: IP address + port. No PROMEKI_SHARED_FINAL (simple value typ
 Derives from IODevice. Base for TCP, UDP, raw sockets.
 
 **Files:**
-- [ ] `include/promeki/net/abstractsocket.h`
+- [ ] `include/promeki/network/abstractsocket.h`
 - [ ] `src/net/abstractsocket.cpp`
 - [ ] `tests/abstractsocket.cpp`
 
@@ -100,7 +100,7 @@ Derives from IODevice. Base for TCP, UDP, raw sockets.
 Stream-oriented TCP socket. Uses IODevice read/write.
 
 **Files:**
-- [ ] `include/promeki/net/tcpsocket.h`
+- [ ] `include/promeki/network/tcpsocket.h`
 - [ ] `src/net/tcpsocket.cpp`
 - [ ] `tests/tcpsocket.cpp`
 
@@ -124,7 +124,7 @@ Stream-oriented TCP socket. Uses IODevice read/write.
 Listens for incoming TCP connections.
 
 **Files:**
-- [ ] `include/promeki/net/tcpserver.h`
+- [ ] `include/promeki/network/tcpserver.h`
 - [ ] `src/net/tcpserver.cpp`
 - [ ] `tests/tcpserver.cpp`
 
@@ -149,7 +149,7 @@ Listens for incoming TCP connections.
 Datagram-oriented UDP socket. Must support multicast for AV-over-IP use. Must not preclude future SrtSocket subclass.
 
 **Files:**
-- [ ] `include/promeki/net/udpsocket.h`
+- [ ] `include/promeki/network/udpsocket.h`
 - [ ] `src/net/udpsocket.cpp`
 - [ ] `tests/udpsocket.cpp`
 
@@ -181,7 +181,7 @@ Datagram-oriented UDP socket. Must support multicast for AV-over-IP use. Must no
 Raw Ethernet frame send/receive. For AV-over-IP raw packet work.
 
 **Files:**
-- [ ] `include/promeki/net/rawsocket.h`
+- [ ] `include/promeki/network/rawsocket.h`
 - [ ] `src/net/rawsocket.cpp`
 - [ ] `tests/rawsocket.cpp`
 

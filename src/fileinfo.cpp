@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/fileinfo.h>
+#include <promeki/core/fileinfo.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

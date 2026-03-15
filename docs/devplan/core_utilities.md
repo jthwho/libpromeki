@@ -11,7 +11,7 @@
 Wraps `<random>`. Utility class, not a data object.
 
 **Files:**
-- [ ] `include/promeki/random.h`
+- [ ] `include/promeki/core/random.h`
 - [ ] `src/random.cpp`
 - [ ] `tests/random.cpp`
 
@@ -35,7 +35,7 @@ Wraps `<random>`. Utility class, not a data object.
 Wraps `std::chrono::steady_clock`. Utility class.
 
 **Files:**
-- [ ] `include/promeki/elapsedtimer.h`
+- [ ] `include/promeki/core/elapsedtimer.h`
 - [ ] `tests/elapsedtimer.cpp`
 
 **Implementation checklist:**
@@ -59,7 +59,7 @@ Wraps `std::chrono::steady_clock`. Utility class.
 Wraps `std::chrono::duration`. Simple value type — no PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/duration.h`
+- [ ] `include/promeki/core/duration.h`
 - [ ] `tests/duration.cpp`
 
 **Implementation checklist:**
@@ -87,7 +87,7 @@ Wraps `std::chrono::duration`. Simple value type — no PROMEKI_SHARED_FINAL.
 Header-only free functions operating on promeki containers.
 
 **Files:**
-- [ ] `include/promeki/algorithm.h`
+- [ ] `include/promeki/core/algorithm.h`
 - [ ] `tests/algorithm.cpp`
 
 **Implementation checklist:**

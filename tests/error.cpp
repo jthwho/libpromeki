@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/error.h>
-#include <promeki/string.h>
+#include <promeki/core/error.h>
+#include <promeki/core/string.h>
 
 using namespace promeki;
 

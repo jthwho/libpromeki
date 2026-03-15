@@ -1,5 +1,5 @@
 /**
- * @file      screen.h
+ * @file      tui/screen.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -8,11 +8,11 @@
 #pragma once
 
 #include <cstdint>
-#include <promeki/namespace.h>
-#include <promeki/list.h>
-#include <promeki/char.h>
+#include <promeki/core/namespace.h>
+#include <promeki/core/list.h>
+#include <promeki/core/char.h>
 #include <promeki/tui/style.h>
-#include <promeki/ansistream.h>
+#include <promeki/core/ansistream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/colorspace.h>
+#include <promeki/proav/colorspace.h>
 
 using namespace promeki;
 

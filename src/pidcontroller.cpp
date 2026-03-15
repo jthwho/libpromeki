@@ -6,7 +6,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/pidcontroller.h>
+#include <promeki/core/pidcontroller.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

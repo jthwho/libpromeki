@@ -234,7 +234,7 @@ There are 8 FIXME comments in the current codebase. These are tracked in [fixme.
 |---|---|---|
 | `src/file.cpp:44` | Windows File implementation is a stub | Phase 2 (File -> IODevice) |
 | `src/thread.cpp:178` | `threadEventLoop()` fails for cross-thread calls on adopted threads | Phase 1B |
-| `include/promeki/audiodesc.h:277` | `operator==` doesn't compare metadata | Phase 7 |
+| `include/promeki/proav/audiodesc.h:277` | `operator==` doesn't compare metadata | Phase 7 |
 | `src/audiofile_libsndfile.cpp:312` | `fileIsReadable()` doesn't inspect SF_INFO | Phase 2 (AudioFile IODevice) |
 | `src/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |
 | `src/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `std::istringstream` | Phase 2 (stream migration) |

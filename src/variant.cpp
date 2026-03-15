@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/variant.h>
+#include <promeki/core/variant.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

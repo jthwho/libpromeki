@@ -5,8 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/audiodesc.h>
-#include <promeki/structdatabase.h>
+#include <promeki/proav/audiodesc.h>
+#include <promeki/core/structdatabase.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

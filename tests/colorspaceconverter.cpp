@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/colorspaceconverter.h>
+#include <promeki/proav/colorspaceconverter.h>
 
 using namespace promeki;
 

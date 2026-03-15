@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/rational.h>
+#include <promeki/core/rational.h>
 
 using namespace promeki;
 

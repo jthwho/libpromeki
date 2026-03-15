@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/midinotenames.h>
+#include <promeki/music/midinotenames.h>
 
 using namespace promeki;
 

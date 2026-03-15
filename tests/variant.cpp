@@ -7,7 +7,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/variant.h>
+#include <promeki/core/variant.h>
 
 using namespace promeki;
 

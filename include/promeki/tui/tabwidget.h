@@ -1,5 +1,5 @@
 /**
- * @file      tabwidget.h
+ * @file      tui/tabwidget.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
-#include <promeki/string.h>
-#include <promeki/list.h>
+#include <promeki/core/namespace.h>
+#include <promeki/core/string.h>
+#include <promeki/core/list.h>
 #include <promeki/tui/widget.h>
 
 PROMEKI_NAMESPACE_BEGIN

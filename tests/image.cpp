@@ -6,10 +6,10 @@
  */
 
 #include <promeki/unittest.h>
-#include <promeki/image.h>
-#include <promeki/imagefile.h>
-#include <promeki/paintengine.h>
-#include <promeki/fontpainter.h>
+#include <promeki/proav/image.h>
+#include <promeki/proav/imagefile.h>
+#include <promeki/proav/paintengine.h>
+#include <promeki/proav/fontpainter.h>
 
 using namespace promeki;
 

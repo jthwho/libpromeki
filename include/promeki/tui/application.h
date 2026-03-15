@@ -1,5 +1,5 @@
 /**
- * @file      application.h
+ * @file      tui/application.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -8,11 +8,11 @@
 #pragma once
 
 #include <chrono>
-#include <promeki/namespace.h>
-#include <promeki/application.h>
-#include <promeki/terminal.h>
-#include <promeki/point.h>
-#include <promeki/eventloop.h>
+#include <promeki/core/namespace.h>
+#include <promeki/core/application.h>
+#include <promeki/core/terminal.h>
+#include <promeki/core/point.h>
+#include <promeki/core/eventloop.h>
 #include <promeki/tui/screen.h>
 #include <promeki/tui/palette.h>
 #include <promeki/tui/inputparser.h>

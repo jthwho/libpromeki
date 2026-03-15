@@ -9,9 +9,9 @@
 #include <promeki/tui/widget.h>
 #include <promeki/tui/painter.h>
 #include <promeki/tui/layout.h>
-#include <promeki/keyevent.h>
-#include <promeki/mouseevent.h>
-#include <promeki/eventloop.h>
+#include <promeki/core/keyevent.h>
+#include <promeki/core/mouseevent.h>
+#include <promeki/core/eventloop.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
 #include <unistd.h>

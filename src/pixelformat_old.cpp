@@ -6,9 +6,9 @@
  */
 
 #include <cstring>
-#include <promeki/pixelformat.h>
-#include <promeki/structdatabase.h>
-#include <promeki/image.h>
+#include <promeki/proav/pixelformat.h>
+#include <promeki/core/structdatabase.h>
+#include <promeki/proav/image.h>
 #include <promeki/pixel.h>
 
 PROMEKI_NAMESPACE_BEGIN

@@ -11,7 +11,7 @@
 Abstract ObjectBase-derived class — the common interface for files, sockets, pipes, serial ports. All methods are virtual so WASM backends can provide alternative implementations. Every blocking `waitFor*()` has a signal-based async path.
 
 **Files:**
-- [ ] `include/promeki/iodevice.h`
+- [ ] `include/promeki/core/iodevice.h`
 - [ ] `src/iodevice.cpp`
 - [ ] `tests/iodevice.cpp`
 
@@ -88,7 +88,7 @@ A generic key-value hint mechanism for passing device-specific configuration thr
 Adds read buffering on top of IODevice.
 
 **Files:**
-- [ ] `include/promeki/bufferediodevice.h`
+- [ ] `include/promeki/core/bufferediodevice.h`
 - [ ] `src/bufferediodevice.cpp`
 - [ ] `tests/bufferediodevice.cpp`
 
@@ -112,7 +112,7 @@ Adds read buffering on top of IODevice.
 Wraps `std::filesystem::path`. Simple value type.
 
 **Files:**
-- [ ] `include/promeki/filepath.h`
+- [ ] `include/promeki/core/filepath.h`
 - [ ] `tests/filepath.cpp`
 
 **Implementation checklist:**
@@ -143,7 +143,7 @@ Wraps `std::filesystem::path`. Simple value type.
 Directory operations. Utility class.
 
 **Files:**
-- [ ] `include/promeki/dir.h`
+- [ ] `include/promeki/core/dir.h`
 - [ ] `src/dir.cpp`
 - [ ] `tests/dir.cpp`
 
@@ -169,10 +169,10 @@ Directory operations. Utility class.
 
 ## Refactor File to Derive from BufferedIODevice
 
-The existing `File` class (`include/promeki/file.h`, `src/file.cpp`) is a low-level file I/O wrapper with its own `open()`, `read()`, `write()`, `seek()`, `close()`. Refactor it to derive from `BufferedIODevice`, making it a full IODevice citizen. This enables File to be used anywhere an IODevice is expected (DataStream, TextStream, socket-like APIs).
+The existing `File` class (`include/promeki/core/core/file.h`, `src/file.cpp`) is a low-level file I/O wrapper with its own `open()`, `read()`, `write()`, `seek()`, `close()`. Refactor it to derive from `BufferedIODevice`, making it a full IODevice citizen. This enables File to be used anywhere an IODevice is expected (DataStream, TextStream, socket-like APIs).
 
 **Files:**
-- [ ] Modify `include/promeki/file.h`
+- [ ] Modify `include/promeki/core/core/file.h`
 - [ ] Modify `src/file.cpp`
 - [ ] Update `tests/file.cpp`
 
@@ -205,7 +205,7 @@ The existing `File` class (`include/promeki/file.h`, `src/file.cpp`) is a low-le
 `AudioFile` currently manages its own file I/O through the `Impl` pimpl pattern. Refactor so the `Impl` backends use `IODevice` (specifically `File`) for their underlying I/O, enabling future backends that read from network streams or memory buffers.
 
 **Files:**
-- [ ] Modify `include/promeki/audiofile.h`
+- [ ] Modify `include/promeki/core/proav/audiofile.h`
 - [ ] Modify `src/audiofile.cpp`
 - [ ] Modify `src/audiofile_libsndfile.cpp`
 - [ ] Update `tests/audiofile.cpp`
@@ -233,7 +233,7 @@ The existing `File` class (`include/promeki/file.h`, `src/file.cpp`) is a low-le
 Wraps subprocess execution. Won't be available on WASM — use `#ifdef` platform guards, `start()` returns error on unsupported platforms.
 
 **Files:**
-- [ ] `include/promeki/process.h`
+- [ ] `include/promeki/core/process.h`
 - [ ] `src/process.cpp`
 - [ ] `tests/process.cpp`
 

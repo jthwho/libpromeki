@@ -18,8 +18,8 @@
  *   @ref EventLoop.  Call their methods only from that thread.  Use
  *   signals/slots for cross-thread communication -- the signal system
  *   automatically marshals calls to the receiver's EventLoop.
- * - **Thread-safe classes** like @ref Queue, @ref Mutex, and
- *   @ref Atomic are explicitly documented as such and can be used from
+ * - **Thread-safe classes** like @ref Queue, Mutex, and
+ *   Atomic are explicitly documented as such and can be used from
  *   any thread.
  *
  * @section thread_categories Thread Safety Categories
@@ -89,9 +89,9 @@
  *
  * @section thread_pool ThreadPool
  *
- * @ref ThreadPool provides a pool of worker threads for running tasks
+ * ThreadPool provides a pool of worker threads for running tasks
  * concurrently.  Submit work with @c submit(), which returns a
- * @ref Future for the result.
+ * Future for the result.
  *
  * @code
  * ThreadPool pool;
@@ -110,7 +110,7 @@
  *
  * @section thread_pipeline Pipeline Threading
  *
- * The @ref MediaPipeline schedules @ref MediaNode::process() calls
+ * The MediaPipeline schedules MediaNode::process() calls
  * across a thread pool.  Each node can specify its threading policy:
  *
  * - **UseGraphPool** (default): scheduled on the pipeline's shared
@@ -119,7 +119,7 @@
  *   scheduling (e.g., real-time audio nodes).
  * - **CustomPool**: uses a separate ThreadPool instance.
  *
- * Data flows between nodes through @ref MediaLink, which uses a
+ * Data flows between nodes through MediaLink, which uses a
  * thread-safe @ref Queue internally.  Nodes receive data via
  * @c pullFrame() and produce data via @c pushFrame() -- both are
  * safe to call from the node's processing thread.

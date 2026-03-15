@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/regex.h>
+#include <promeki/core/regex.h>
 
 using namespace promeki;
 

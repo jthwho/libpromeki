@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/midinotenames.h>
+#include <promeki/music/midinotenames.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

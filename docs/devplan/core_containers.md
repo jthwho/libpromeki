@@ -2,7 +2,7 @@
 
 **Phase:** 1A, 1C
 **Dependencies:** None
-**Pattern reference:** `include/promeki/list.h`, `include/promeki/map.h`, `include/promeki/set.h`
+**Pattern reference:** `include/promeki/core/core/list.h`, `include/promeki/core/core/map.h`, `include/promeki/core/core/set.h`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 ---
@@ -18,7 +18,7 @@ Each follows the `List<T>` pattern: header-only template in `include/promeki/`, 
 Wraps `std::pair<A,B>`. Simple value type — no PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/pair.h`
+- [ ] `include/promeki/core/pair.h`
 - [ ] `tests/pair.cpp`
 
 **Implementation checklist:**
@@ -44,11 +44,11 @@ Wraps `std::pair<A,B>`. Simple value type — no PROMEKI_SHARED_FINAL.
 Convenience alias for the `Pair<T, Error>` pattern used throughout the library for fallible factory methods and parse operations. Not a separate class — just a `using` alias with helper methods.
 
 **Files:**
-- [ ] `include/promeki/result.h`
+- [ ] `include/promeki/core/result.h`
 - [ ] `tests/result.cpp`
 
 **Implementation checklist:**
-- [ ] Header guard, includes (`<promeki/pair.h>`, `<promeki/error.h>`), namespace
+- [ ] Header guard, includes (`<promeki/pair.h>`, `<promeki/core/error.h>`), namespace
 - [ ] `template <typename T> using Result = Pair<T, Error>;`
 - [ ] Free function `Result<T> makeResult(T value)` — wraps value with `Error::Ok`
 - [ ] Free function `Result<T> makeError(Error err)` — wraps default-constructed T with error
@@ -91,7 +91,7 @@ Once `Result<T>` exists, all `std::pair<T, Error>` return types throughout the p
 Wraps `std::unordered_map<K,V>`.
 
 **Files:**
-- [ ] `include/promeki/hashmap.h`
+- [ ] `include/promeki/core/hashmap.h`
 - [ ] `tests/hashmap.cpp`
 
 **Implementation checklist:**
@@ -122,7 +122,7 @@ Wraps `std::unordered_map<K,V>`.
 Wraps `std::unordered_set<T>`.
 
 **Files:**
-- [ ] `include/promeki/hashset.h`
+- [ ] `include/promeki/core/hashset.h`
 - [ ] `tests/hashset.cpp`
 
 **Implementation checklist:**
@@ -151,7 +151,7 @@ Wraps `std::unordered_set<T>`.
 Wraps `std::deque<T>`.
 
 **Files:**
-- [ ] `include/promeki/deque.h`
+- [ ] `include/promeki/core/deque.h`
 - [ ] `tests/deque.cpp`
 
 **Implementation checklist:**
@@ -181,7 +181,7 @@ Wraps `std::deque<T>`.
 Wraps `std::stack<T>` (or `std::deque<T>` directly for iterator access).
 
 **Files:**
-- [ ] `include/promeki/stack.h`
+- [ ] `include/promeki/core/stack.h`
 - [ ] `tests/stack.cpp`
 
 **Implementation checklist:**
@@ -203,7 +203,7 @@ Wraps `std::stack<T>` (or `std::deque<T>` directly for iterator access).
 Wraps `std::priority_queue<T>`. Not thread-safe; for use inside synchronized contexts.
 
 **Files:**
-- [ ] `include/promeki/priorityqueue.h`
+- [ ] `include/promeki/core/priorityqueue.h`
 - [ ] `tests/priorityqueue.cpp`
 
 **Implementation checklist:**
@@ -224,7 +224,7 @@ Wraps `std::priority_queue<T>`. Not thread-safe; for use inside synchronized con
 Wraps `std::span<T>`. Non-owning view — no PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/span.h`
+- [ ] `include/promeki/core/span.h`
 - [ ] `tests/span.cpp`
 
 **Implementation checklist:**

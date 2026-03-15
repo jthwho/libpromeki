@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/map.h>
+#include <promeki/core/map.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

@@ -27,30 +27,30 @@ Refactor all `#include` directives to use the `<promeki/[lib]/header.h>` convent
 
 ### Step 1: Directory restructure
 
-- [ ] Create subdirectories under `include/promeki/`: `core/`, `proav/`, `tui/`, `music/`
-- [ ] Move each header into the appropriate subdirectory based on which library it belongs to
-- [ ] Update CMakeLists.txt to reflect the new header locations
+- [x] Create subdirectories under `include/promeki/`: `core/`, `proav/`, `tui/`, `music/`
+- [x] Move each header into the appropriate subdirectory based on which library it belongs to
+- [x] Update CMakeLists.txt to reflect the new header locations
 
 ### Step 2: Update all internal includes
 
-- [ ] Update every `#include` in the codebase (headers and sources) to use the new paths
-- [ ] Update every `#include` in test files
-- [ ] Update every `#include` in demos and utilities
+- [x] Update every `#include` in the codebase (headers and sources) to use the new paths
+- [x] Update every `#include` in test files
+- [x] Update every `#include` in demos and utilities
 
 ### Step 3: Update Doxygen `@file` paths
 
-- [ ] Audit and fix `@file` directives in moved headers to reflect new paths
+- [x] Audit and fix `@file` directives in moved headers to reflect new paths
 
 ### Step 4: CMake install rules
 
-- [ ] Ensure `install(DIRECTORY ...)` rules preserve the `promeki/[lib]/` structure so downstream consumers get the correct layout
+- [x] Ensure `install(DIRECTORY ...)` rules preserve the `promeki/[lib]/` structure so downstream consumers get the correct layout
 
 ### Step 5: Verify
 
-- [ ] Full build passes (`build`)
-- [ ] All test executables pass
-- [ ] Demos compile and run
-- [ ] Doxygen generates without warnings on moved files
+- [x] Full build passes (`build`)
+- [x] All test executables pass
+- [x] Demos compile and run
+- [x] Doxygen generates without warnings on moved files
 
 ## Compatibility shims (optional, time-limited)
 

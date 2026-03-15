@@ -7,8 +7,8 @@
 
 #include <memory>
 #include <cxxabi.h>
-#include <promeki/system.h>
-#include <promeki/string.h>
+#include <promeki/core/system.h>
+#include <promeki/core/string.h>
 
 #include <iostream>
  #include <array>

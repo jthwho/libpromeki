@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/colorspaceconverter.h>
+#include <promeki/proav/colorspaceconverter.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

@@ -5,9 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/cmdlineparser.h>
-#include <promeki/error.h>
-#include <promeki/logger.h>
+#include <promeki/core/cmdlineparser.h>
+#include <promeki/core/error.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

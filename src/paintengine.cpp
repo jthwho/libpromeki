@@ -5,8 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/paintengine.h>
-#include <promeki/logger.h>
+#include <promeki/proav/paintengine.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

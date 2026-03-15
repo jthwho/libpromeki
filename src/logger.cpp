@@ -7,10 +7,10 @@
 
 #include <sstream>
 #include <cstdlib>
-#include <promeki/logger.h>
-#include <promeki/thread.h>
-#include <promeki/ansistream.h>
-#include <promeki/list.h>
+#include <promeki/core/logger.h>
+#include <promeki/core/thread.h>
+#include <promeki/core/ansistream.h>
+#include <promeki/core/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

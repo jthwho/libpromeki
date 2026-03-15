@@ -6,12 +6,12 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/audio.h>
-#include <promeki/audiofile.h>
-#include <promeki/audiogen.h>
-#include <promeki/rational.h>
-#include <promeki/uuid.h>
-#include <promeki/logger.h>
+#include <promeki/proav/audio.h>
+#include <promeki/proav/audiofile.h>
+#include <promeki/proav/audiogen.h>
+#include <promeki/core/rational.h>
+#include <promeki/core/uuid.h>
+#include <promeki/core/logger.h>
 
 using namespace promeki;
 

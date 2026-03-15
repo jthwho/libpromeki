@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/keyevent.h>
+#include <promeki/core/keyevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

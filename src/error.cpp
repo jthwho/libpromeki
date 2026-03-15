@@ -7,11 +7,11 @@
 
 #include <cerrno>
 #include <cstring>
-#include <promeki/error.h>
-#include <promeki/platform.h>
-#include <promeki/structdatabase.h>
-#include <promeki/logger.h>
-#include <promeki/util.h>
+#include <promeki/core/error.h>
+#include <promeki/core/platform.h>
+#include <promeki/core/structdatabase.h>
+#include <promeki/core/logger.h>
+#include <promeki/core/util.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #       include <Windows.h>

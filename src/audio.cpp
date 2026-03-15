@@ -7,8 +7,8 @@
 
 #include <cstdint>
 #include <limits>
-#include <promeki/audio.h>
-#include <promeki/logger.h>
+#include <promeki/proav/audio.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

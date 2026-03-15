@@ -7,7 +7,7 @@
  *****************************************************************************/
 
 #include <iostream>
-#include <promeki/buildinfo.h>
+#include <promeki/core/buildinfo.h>
 
 using namespace promeki;
 

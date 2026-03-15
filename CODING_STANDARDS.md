@@ -59,7 +59,7 @@ When in doubt, prefer a data object. Most classes in a library like this are dat
 
 ### Sharing Data Objects Across Threads
 
-Data objects are not internally thread-safe — concurrent reads and writes to the same instance require external synchronization. The standard pattern for sharing data between threads is to use `::Ptr` (`SharedPtr`). The reference counting in `SharedPtr` is atomic, so passing a `Ptr` to another thread is safe. The pointed-to object itself is not synchronized, so the pattern relies on ownership handoff: once you pass a `Ptr` to another thread, you should not mutate the underlying object from the original thread.
+Data objects are not internally thread-safe — concurrent reads and writes to the same instance require external synchronization. The standard pattern for sharing data between threads is to use the `Ptr` typedef (`SharedPtr`). The reference counting in `SharedPtr` is atomic, so passing a `Ptr` to another thread is safe. The pointed-to object itself is not synchronized, so the pattern relies on ownership handoff: once you pass a `Ptr` to another thread, you should not mutate the underlying object from the original thread.
 
 **Pattern 1: Share a single data object via Ptr.**
 
@@ -127,7 +127,7 @@ pool.submit([tc]() {
 #pragma once
 
 #include <std-headers>
-#include <promeki/dependency.h>
+#include <promeki/core/dependency.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -168,9 +168,9 @@ Always use `#pragma once`. No `#ifndef` guards.
 Order:
 1. C++ standard library headers (`<cstdint>`, `<vector>`, etc.)
 2. Third-party headers (nlohmann/json, libvtc, etc.)
-3. promeki headers (`<promeki/foo.h>`)
+3. promeki headers (`<promeki/core/foo.h>`)
 
-Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
+Use angle brackets for all includes: `<promeki/core/foo.h>`, not `"promeki/foo.h"`.
 
 ---
 
@@ -542,7 +542,7 @@ Use `TEST_CASE` for each class or logical grouping, and `SUBCASE` for individual
 
 ```cpp
 #include <doctest/doctest.h>
-#include <promeki/myclass.h>
+#include <promeki/core/myclass.h>
 
 using namespace promeki;
 

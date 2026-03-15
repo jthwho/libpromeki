@@ -7,7 +7,7 @@
 
 #include <cmath>
 #include <doctest/doctest.h>
-#include <promeki/musicalscale.h>
+#include <promeki/music/musicalscale.h>
 
 using namespace promeki;
 

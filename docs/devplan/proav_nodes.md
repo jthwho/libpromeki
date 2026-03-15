@@ -15,7 +15,7 @@ All nodes derive from `MediaNode`, implement `process()`, and declare their inpu
 Reads audio from AudioFile and outputs frames.
 
 **Files:**
-- [ ] `include/promeki/audiosourcenode.h`
+- [ ] `include/promeki/proav/proav/audiosourcenode.h`
 - [ ] `src/audiosourcenode.cpp`
 - [ ] `tests/audiosourcenode.cpp`
 
@@ -45,7 +45,7 @@ Reads audio from AudioFile and outputs frames.
 Writes audio frames to AudioFile.
 
 **Files:**
-- [ ] `include/promeki/audiosinknode.h`
+- [ ] `include/promeki/proav/proav/audiosinknode.h`
 - [ ] `src/audiosinknode.cpp`
 - [ ] `tests/audiosinknode.cpp`
 
@@ -71,7 +71,7 @@ Writes audio frames to AudioFile.
 Reads image sequences and outputs video frames.
 
 **Files:**
-- [ ] `include/promeki/imagesourcenode.h`
+- [ ] `include/promeki/proav/proav/imagesourcenode.h`
 - [ ] `src/imagesourcenode.cpp`
 - [ ] `tests/imagesourcenode.cpp`
 
@@ -100,7 +100,7 @@ Reads image sequences and outputs video frames.
 Writes video frames as image sequences.
 
 **Files:**
-- [ ] `include/promeki/imagesinknode.h`
+- [ ] `include/promeki/proav/proav/imagesinknode.h`
 - [ ] `src/imagesinknode.cpp`
 - [ ] `tests/imagesinknode.cpp`
 
@@ -124,7 +124,7 @@ Writes video frames as image sequences.
 N-input audio mixer with per-input gain.
 
 **Files:**
-- [ ] `include/promeki/audiomixernode.h`
+- [ ] `include/promeki/proav/proav/audiomixernode.h`
 - [ ] `src/audiomixernode.cpp`
 - [ ] `tests/audiomixernode.cpp`
 
@@ -152,7 +152,7 @@ N-input audio mixer with per-input gain.
 Simple gain adjustment node.
 
 **Files:**
-- [ ] `include/promeki/audiogainnode.h`
+- [ ] `include/promeki/proav/audiogainnode.h`
 - [ ] `src/audiogainnode.cpp`
 - [ ] `tests/audiogainnode.cpp`
 
@@ -177,7 +177,7 @@ Simple gain adjustment node.
 Image color space conversion.
 
 **Files:**
-- [ ] `include/promeki/colorspaceconvertnode.h`
+- [ ] `include/promeki/proav/colorspaceconvertnode.h`
 - [ ] `src/colorspaceconvertnode.cpp`
 - [ ] `tests/colorspaceconvertnode.cpp`
 
@@ -204,7 +204,7 @@ Image color space conversion.
 Audio/video synchronization using Timecode.
 
 **Files:**
-- [ ] `include/promeki/framesyncnode.h`
+- [ ] `include/promeki/proav/framesyncnode.h`
 - [ ] `src/framesyncnode.cpp`
 - [ ] `tests/framesyncnode.cpp`
 

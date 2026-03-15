@@ -6,9 +6,9 @@
  */
 
 #include <cstdlib>
-#include <promeki/ansistream.h>
-#include <promeki/platform.h>
-#include <promeki/error.h>
+#include <promeki/core/ansistream.h>
+#include <promeki/core/platform.h>
+#include <promeki/core/error.h>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <windows.h>

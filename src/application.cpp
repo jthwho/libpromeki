@@ -6,10 +6,10 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/application.h>
-#include <promeki/thread.h>
-#include <promeki/eventloop.h>
-#include <promeki/logger.h>
+#include <promeki/core/application.h>
+#include <promeki/core/thread.h>
+#include <promeki/core/eventloop.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

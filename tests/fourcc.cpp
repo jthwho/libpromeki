@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/fourcc.h>
+#include <promeki/core/fourcc.h>
 
 using namespace promeki;
 

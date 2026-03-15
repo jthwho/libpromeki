@@ -1,5 +1,5 @@
 /**
- * @file      layout.h
+ * @file      tui/layout.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
-#include <promeki/objectbase.h>
-#include <promeki/rect.h>
-#include <promeki/list.h>
+#include <promeki/core/namespace.h>
+#include <promeki/core/objectbase.h>
+#include <promeki/core/rect.h>
+#include <promeki/core/list.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

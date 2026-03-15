@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/paintengine.h>
+#include <promeki/proav/paintengine.h>
 
 using namespace promeki;
 

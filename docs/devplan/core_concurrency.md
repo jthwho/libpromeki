@@ -2,7 +2,7 @@
 
 **Phase:** 1B
 **Dependencies:** None
-**Pattern reference:** `include/promeki/queue.h` (existing mutex/CV/timeout conventions)
+**Pattern reference:** `include/promeki/core/queue.h` (existing mutex/CV/timeout conventions)
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
@@ -15,7 +15,7 @@ All classes are utility classes — not data objects. No PROMEKI_SHARED_FINAL.
 Wraps `std::mutex` with a nested RAII `Locker` type.
 
 **Files:**
-- [ ] `include/promeki/mutex.h`
+- [ ] `include/promeki/core/mutex.h`
 - [ ] `tests/mutex.cpp`
 
 **Implementation checklist:**
@@ -38,7 +38,7 @@ Wraps `std::mutex` with a nested RAII `Locker` type.
 Wraps `std::shared_mutex` for reader-writer locking.
 
 **Files:**
-- [ ] `include/promeki/readwritelock.h`
+- [ ] `include/promeki/core/readwritelock.h`
 - [ ] `tests/readwritelock.cpp`
 
 **Implementation checklist:**
@@ -65,7 +65,7 @@ Wraps `std::shared_mutex` for reader-writer locking.
 Wraps `std::condition_variable`.
 
 **Files:**
-- [ ] `include/promeki/waitcondition.h`
+- [ ] `include/promeki/core/waitcondition.h`
 - [ ] `tests/waitcondition.cpp`
 
 **Implementation checklist:**
@@ -85,7 +85,7 @@ Wraps `std::condition_variable`.
 Wraps `std::atomic<T>`.
 
 **Files:**
-- [ ] `include/promeki/atomic.h`
+- [ ] `include/promeki/core/atomic.h`
 - [ ] `tests/atomic.cpp`
 
 **Implementation checklist:**
@@ -105,10 +105,10 @@ Wraps `std::atomic<T>`.
 
 ## Migrate Queue to Use New Primitives
 
-The existing `Queue<T>` (`include/promeki/queue.h`) uses raw `std::mutex` and `std::condition_variable` internally. Once `Mutex` and `WaitCondition` are implemented, migrate Queue to use them — same principle as the std:: stream migration.
+The existing `Queue<T>` (`include/promeki/core/queue.h`) uses raw `std::mutex` and `std::condition_variable` internally. Once `Mutex` and `WaitCondition` are implemented, migrate Queue to use them — same principle as the std:: stream migration.
 
 **Files:**
-- [ ] Modify `include/promeki/queue.h`
+- [ ] Modify `include/promeki/core/queue.h`
 
 **Implementation checklist:**
 - [ ] Replace `std::mutex _mutex` with `Mutex _mutex`
@@ -125,7 +125,7 @@ The existing `Queue<T>` (`include/promeki/queue.h`) uses raw `std::mutex` and `s
 Wraps `std::promise<T>`. Used with `Future<T>`.
 
 **Files:**
-- [ ] `include/promeki/promise.h` (may be combined with `future.h`)
+- [ ] `include/promeki/core/promise.h` (may be combined with `future.h`)
 
 **Implementation checklist:**
 - [ ] Header guard, includes (`<future>`), namespace
@@ -143,7 +143,7 @@ Wraps `std::promise<T>`. Used with `Future<T>`.
 Wraps `std::future<T>`. Returned by `Promise<T>::future()` and `ThreadPool::submit()`.
 
 **Files:**
-- [ ] `include/promeki/future.h`
+- [ ] `include/promeki/core/future.h`
 - [ ] `tests/future.cpp`
 
 **Implementation checklist:**
@@ -164,7 +164,7 @@ Wraps `std::future<T>`. Returned by `Promise<T>::future()` and `ThreadPool::subm
 General-purpose thread pool. Lives in core library, used by MediaPipeline and available for general use.
 
 **Files:**
-- [ ] `include/promeki/threadpool.h`
+- [ ] `include/promeki/core/threadpool.h`
 - [ ] `src/threadpool.cpp`
 - [ ] `tests/threadpool.cpp`
 

@@ -9,10 +9,10 @@
 #include <algorithm>
 #include <execinfo.h>
 #include <cxxabi.h>
-#include <promeki/util.h>
-#include <promeki/error.h>
-#include <promeki/stringlist.h>
-#include <promeki/logger.h>
+#include <promeki/core/util.h>
+#include <promeki/core/error.h>
+#include <promeki/core/stringlist.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

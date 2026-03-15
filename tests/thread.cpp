@@ -7,10 +7,10 @@
 
 #include <doctest/doctest.h>
 #include <atomic>
-#include <promeki/thread.h>
-#include <promeki/eventloop.h>
-#include <promeki/objectbase.h>
-#include <promeki/logger.h>
+#include <promeki/core/thread.h>
+#include <promeki/core/eventloop.h>
+#include <promeki/core/objectbase.h>
+#include <promeki/core/logger.h>
 #include "test.h"
 
 using namespace promeki;

@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/regex.h>
+#include <promeki/core/regex.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

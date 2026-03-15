@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/buffer.h>
-#include <promeki/memspace.h>
+#include <promeki/core/buffer.h>
+#include <promeki/core/memspace.h>
 
 using namespace promeki;
 

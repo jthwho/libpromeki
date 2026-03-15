@@ -6,7 +6,7 @@
  */
 
 #include <cmath>
-#include <promeki/midinote.h>
+#include <promeki/music/midinote.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

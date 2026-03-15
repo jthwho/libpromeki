@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cmath>
-#include <promeki/color.h>
+#include <promeki/core/color.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

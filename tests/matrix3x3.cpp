@@ -8,7 +8,7 @@
 #include <cmath>
 #include <sstream>
 #include <doctest/doctest.h>
-#include <promeki/matrix3x3.h>
+#include <promeki/core/matrix3x3.h>
 
 using namespace promeki;
 

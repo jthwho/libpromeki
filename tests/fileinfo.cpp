@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/fileinfo.h>
-#include <promeki/string.h>
+#include <promeki/core/fileinfo.h>
+#include <promeki/core/string.h>
 
 using namespace promeki;
 

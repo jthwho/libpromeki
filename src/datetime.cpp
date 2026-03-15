@@ -8,8 +8,8 @@
 #include <cmath>
 #include <iomanip>
 #include <map>
-#include <promeki/datetime.h>
-#include <promeki/logger.h>
+#include <promeki/core/datetime.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

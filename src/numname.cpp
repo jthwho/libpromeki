@@ -6,7 +6,7 @@
  */
 
 #include <cctype>
-#include <promeki/numname.h>
+#include <promeki/core/numname.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

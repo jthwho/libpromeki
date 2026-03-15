@@ -8,8 +8,8 @@
 #include <promeki/tui/widget.h>
 #include <promeki/tui/application.h>
 #include <promeki/tui/layout.h>
-#include <promeki/keyevent.h>
-#include <promeki/mouseevent.h>
+#include <promeki/core/keyevent.h>
+#include <promeki/core/mouseevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

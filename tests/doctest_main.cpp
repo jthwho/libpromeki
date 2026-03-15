@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
-#include <promeki/logger.h>
-#include <promeki/streamstring.h>
+#include <promeki/core/logger.h>
+#include <promeki/core/streamstring.h>
 
 using namespace promeki;
 

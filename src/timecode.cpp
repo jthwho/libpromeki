@@ -5,8 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/timecode.h>
-#include <promeki/logger.h>
+#include <promeki/core/timecode.h>
+#include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

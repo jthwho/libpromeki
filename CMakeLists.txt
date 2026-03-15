@@ -93,66 +93,71 @@ add_subdirectory(thirdparty/libvtc EXCLUDE_FROM_ALL)
 # Core Library #################################################################
 
 set(PROMEKI_CORE_HEADERS
-    include/promeki/ansistream.h
-    include/promeki/application.h
-    include/promeki/array.h
-    include/promeki/buildinfo.h
-    include/promeki/buffer.h
-    include/promeki/char.h
-    include/promeki/cmdlineparser.h
-    include/promeki/datetime.h
-    include/promeki/env.h
-    include/promeki/error.h
-    include/promeki/event.h
-    include/promeki/eventloop.h
-    include/promeki/file.h
-    include/promeki/fileinfo.h
-    include/promeki/fnv1a.h
-    include/promeki/fourcc.h
-    include/promeki/framerate.h
-    include/promeki/json.h
-    include/promeki/line.h
-    include/promeki/list.h
-    include/promeki/logger.h
-    include/promeki/map.h
-    include/promeki/matrix.h
-    include/promeki/matrix3x3.h
-    include/promeki/mempool.h
-    include/promeki/memspace.h
-    include/promeki/metadata.h
-    include/promeki/namespace.h
-    include/promeki/numname.h
-    include/promeki/obfuscatedstring.h
-    include/promeki/numnameseq.h
-    include/promeki/objectbase.h
-    include/promeki/pidcontroller.h
-    include/promeki/point.h
-    include/promeki/rational.h
-    include/promeki/regex.h
-    include/promeki/set.h
-    include/promeki/sharedptr.h
-    include/promeki/signal.h
-    include/promeki/size2d.h
-    include/promeki/thread.h
-    include/promeki/timerevent.h
-    include/promeki/slot.h
-    include/promeki/streamstring.h
-    include/promeki/string.h
-    include/promeki/stringdata.h
-    include/promeki/stringlist.h
-    include/promeki/structdatabase.h
-    include/promeki/system.h
-    include/promeki/timecode.h
-    include/promeki/timestamp.h
-    include/promeki/queue.h
-    include/promeki/util.h
-    include/promeki/uuid.h
-    include/promeki/variant.h
-    include/promeki/rect.h
-    include/promeki/color.h
-    include/promeki/terminal.h
-    include/promeki/keyevent.h
-    include/promeki/mouseevent.h
+    include/promeki/core/ansistream.h
+    include/promeki/core/application.h
+    include/promeki/core/array.h
+    include/promeki/core/buildinfo.h
+    include/promeki/core/buffer.h
+    include/promeki/core/bytearray.h
+    include/promeki/core/char.h
+    include/promeki/core/cmdlineparser.h
+    include/promeki/core/datetime.h
+    include/promeki/core/env.h
+    include/promeki/core/error.h
+    include/promeki/core/event.h
+    include/promeki/core/eventloop.h
+    include/promeki/core/file.h
+    include/promeki/core/fileinfo.h
+    include/promeki/core/fnv1a.h
+    include/promeki/core/fourcc.h
+    include/promeki/core/framerate.h
+    include/promeki/core/json.h
+    include/promeki/core/line.h
+    include/promeki/core/list.h
+    include/promeki/core/logger.h
+    include/promeki/core/map.h
+    include/promeki/core/matrix.h
+    include/promeki/core/matrix3x3.h
+    include/promeki/core/md5.h
+    include/promeki/core/mempool.h
+    include/promeki/core/memspace.h
+    include/promeki/core/metadata.h
+    include/promeki/core/namespace.h
+    include/promeki/core/numname.h
+    include/promeki/core/obfuscatedstring.h
+    include/promeki/core/numnameseq.h
+    include/promeki/core/objectbase.h
+    include/promeki/core/pidcontroller.h
+    include/promeki/core/platform.h
+    include/promeki/core/point.h
+    include/promeki/core/rational.h
+    include/promeki/core/regex.h
+    include/promeki/core/securemem.h
+    include/promeki/core/set.h
+    include/promeki/core/sha1.h
+    include/promeki/core/sharedptr.h
+    include/promeki/core/signal.h
+    include/promeki/core/size2d.h
+    include/promeki/core/thread.h
+    include/promeki/core/timerevent.h
+    include/promeki/core/slot.h
+    include/promeki/core/streamstring.h
+    include/promeki/core/string.h
+    include/promeki/core/stringdata.h
+    include/promeki/core/stringlist.h
+    include/promeki/core/structdatabase.h
+    include/promeki/core/system.h
+    include/promeki/core/timecode.h
+    include/promeki/core/timestamp.h
+    include/promeki/core/queue.h
+    include/promeki/core/util.h
+    include/promeki/core/uuid.h
+    include/promeki/core/variant.h
+    include/promeki/core/rect.h
+    include/promeki/core/color.h
+    include/promeki/core/terminal.h
+    include/promeki/core/keyevent.h
+    include/promeki/core/mouseevent.h
 )
 
 set(PROMEKI_CORE_SOURCES
@@ -357,28 +362,28 @@ if(PROMEKI_BUILD_PROAV)
     )
 
     set(PROMEKI_PROAV_HEADERS
-        include/promeki/audio.h
-        include/promeki/audioblock.h
-        include/promeki/audiodesc.h
-        include/promeki/audiofile.h
-        include/promeki/audiofilefactory.h
-        include/promeki/audiogen.h
-        include/promeki/ciepoint.h
-        include/promeki/ciewavelengthtable.h
-        include/promeki/codec.h
-        include/promeki/colorspace.h
-        include/promeki/colorspaceconverter.h
-        include/promeki/fontpainter.h
-        include/promeki/frame.h
-        include/promeki/image.h
-        include/promeki/imagedesc.h
-        include/promeki/imagefile.h
-        include/promeki/imagefileio.h
-        include/promeki/paintengine.h
-        include/promeki/pixelformat.h
-        include/promeki/pixelformat_old.h
-        include/promeki/videodesc.h
-        include/promeki/xyzcolor.h
+        include/promeki/proav/audio.h
+        include/promeki/proav/audioblock.h
+        include/promeki/proav/audiodesc.h
+        include/promeki/proav/audiofile.h
+        include/promeki/proav/audiofilefactory.h
+        include/promeki/proav/audiogen.h
+        include/promeki/proav/ciepoint.h
+        include/promeki/proav/ciewavelengthtable.h
+        include/promeki/proav/codec.h
+        include/promeki/proav/colorspace.h
+        include/promeki/proav/colorspaceconverter.h
+        include/promeki/proav/fontpainter.h
+        include/promeki/proav/frame.h
+        include/promeki/proav/image.h
+        include/promeki/proav/imagedesc.h
+        include/promeki/proav/imagefile.h
+        include/promeki/proav/imagefileio.h
+        include/promeki/proav/paintengine.h
+        include/promeki/proav/pixelformat.h
+        include/promeki/proav/pixelformat_old.h
+        include/promeki/proav/videodesc.h
+        include/promeki/proav/xyzcolor.h
     )
 
     set(PROMEKI_PROAV_SOURCES
@@ -467,11 +472,11 @@ if(PROMEKI_BUILD_MUSIC)
     endif()
 
     set(PROMEKI_MUSIC_HEADERS
-        include/promeki/musicalnote.h
-        include/promeki/musicalscale.h
-        include/promeki/midinote.h
-        include/promeki/midinotenames.h
-        include/promeki/notesequenceparser.h
+        include/promeki/music/musicalnote.h
+        include/promeki/music/musicalscale.h
+        include/promeki/music/midinote.h
+        include/promeki/music/midinotenames.h
+        include/promeki/music/notesequenceparser.h
     )
 
     set(PROMEKI_MUSIC_SOURCES
@@ -594,7 +599,7 @@ install(TARGETS promeki-core
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 install(FILES ${PROMEKI_CORE_HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/core
 )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include/nlohmann
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
@@ -620,7 +625,7 @@ if(PROMEKI_BUILD_PROAV)
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
     install(FILES ${PROMEKI_PROAV_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/proav
     )
     # Ship bundled thirdparty headers under promeki/thirdparty/ so they
     # never collide with system versions.  The actual libraries are
@@ -664,7 +669,7 @@ if(PROMEKI_BUILD_MUSIC)
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
     install(FILES ${PROMEKI_MUSIC_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/music
     )
     install(EXPORT promeki-music-targets
         FILE promeki-music-targets.cmake

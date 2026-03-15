@@ -1,5 +1,5 @@
 /**
- * @file      widget.h
+ * @file      tui/widget.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
-#include <promeki/objectbase.h>
-#include <promeki/rect.h>
-#include <promeki/size2d.h>
-#include <promeki/color.h>
+#include <promeki/core/namespace.h>
+#include <promeki/core/objectbase.h>
+#include <promeki/core/rect.h>
+#include <promeki/core/size2d.h>
+#include <promeki/core/color.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

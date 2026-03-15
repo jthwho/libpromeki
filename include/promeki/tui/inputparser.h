@@ -1,5 +1,5 @@
 /**
- * @file      inputparser.h
+ * @file      tui/inputparser.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <promeki/namespace.h>
-#include <promeki/list.h>
-#include <promeki/keyevent.h>
-#include <promeki/mouseevent.h>
+#include <promeki/core/namespace.h>
+#include <promeki/core/list.h>
+#include <promeki/core/keyevent.h>
+#include <promeki/core/mouseevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <promeki/xyzcolor.h>
+#include <promeki/proav/xyzcolor.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
