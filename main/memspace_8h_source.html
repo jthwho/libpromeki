@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/memspace.h Source File</title>
+<title>libpromeki: include/promeki/core/memspace.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -105,9 +105,9 @@ $(document).ready(function(){initNavTree('memspace_8h_source.html',''); initResi
 <a href="memspace_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="error_8h.html">promeki/error.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/core/string.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="error_8h.html">promeki/core/error.h</a>&gt;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
@@ -132,7 +132,7 @@ $(document).ready(function(){initNavTree('memspace_8h_source.html',''); initResi
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b">   43</a></span>                        <a class="code hl_class" href="classList.html">void</a> (*<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b">alloc</a>)(<a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b">alloc</a>);                                             </div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d">   44</a></span>                        <a class="code hl_class" href="classList.html">void</a> (*<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d">release</a>)(<a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b">alloc</a>);                                          </div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="structMemSpace_1_1Ops.html#a1d4ccdc87d78f4913341121f3f2e5adc">   45</a></span>                        <a class="code hl_class" href="classList.html">bool</a> (*<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a1d4ccdc87d78f4913341121f3f2e5adc">copy</a>)(<span class="keyword">const</span> <a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_class" href="classList.html">src</a>, <span class="keyword">const</span> <a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_class" href="classList.html">dst</a>, <span class="keywordtype">size_t</span> bytes); </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="structMemSpace_1_1Ops.html#a6a57ec936c0c7ccecb2b34802d1d6aaa">   46</a></span>                        <a class="code hl_class" href="classError.html">Error</a> (*<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a6a57ec936c0c7ccecb2b34802d1d6aaa">fill</a>)(<span class="keywordtype">void</span> *ptr, <span class="keywordtype">size_t</span> bytes, <span class="keywordtype">char</span> value);                              </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="structMemSpace_1_1Ops.html#a6a57ec936c0c7ccecb2b34802d1d6aaa">   46</a></span>                        <a class="code hl_class" href="classError.html">Error</a> (*<a class="code hl_variable" href="structMemSpace_1_1Ops.html#a6a57ec936c0c7ccecb2b34802d1d6aaa">fill</a>)(<span class="keywordtype">void</span> *ptr, <span class="keywordtype">size_t</span> bytes, <span class="keywordtype">char</span> <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>);                              </div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                };</div>
 </div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
@@ -155,9 +155,9 @@ $(document).ready(function(){initNavTree('memspace_8h_source.html',''); initResi
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                <span class="keyword">inline</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="classMemSpace.html#a346bf4969fd220e3dbfb9cd12f26a0df">copy</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_class" href="classList.html">src</a>, <span class="keyword">const</span> <a class="code hl_struct" href="structMemAllocation.html">MemAllocation</a> &amp;<a class="code hl_class" href="classList.html">dst</a>, <span class="keywordtype">size_t</span> bytes) <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
 <div class="foldopen" id="foldopen00109" data-start="{" data-end="}">
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno"><a class="line" href="classMemSpace.html#a742825feed6c893590239027937230bf">  109</a></span>                <a class="code hl_class" href="classError.html">Error</a> <a class="code hl_function" href="classMemSpace.html#a742825feed6c893590239027937230bf">fill</a>(<span class="keywordtype">void</span> *ptr, <span class="keywordtype">size_t</span> bytes, <span class="keywordtype">char</span> value)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno"><a class="line" href="classMemSpace.html#a742825feed6c893590239027937230bf">  109</a></span>                <a class="code hl_class" href="classError.html">Error</a> <a class="code hl_function" href="classMemSpace.html#a742825feed6c893590239027937230bf">fill</a>(<span class="keywordtype">void</span> *ptr, <span class="keywordtype">size_t</span> bytes, <span class="keywordtype">char</span> <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)<span class="keyword"> const </span>{</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                        <span class="keywordflow">if</span>(ptr == <span class="keyword">nullptr</span>) <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85">Error::Invalid</a>;</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                        <span class="keywordflow">return</span> d-&gt;fill(ptr, bytes, value);</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                        <span class="keywordflow">return</span> d-&gt;fill(ptr, bytes, <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>);</div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                }</div>
 </div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
@@ -228,6 +228,7 @@ $(document).ready(function(){initNavTree('memspace_8h_source.html',''); initResi
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:13</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:18</div></div>
+<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:55</div></div>
 <div class="ttc" id="astring_8h_html"><div class="ttname"><a href="string_8h.html">string.h</a></div></div>
 <div class="ttc" id="astructMemAllocation_html"><div class="ttname"><a href="structMemAllocation.html">MemAllocation</a></div><div class="ttdoc">Describes a memory allocation from a MemSpace.</div><div class="ttdef"><b>Definition</b> memspace.h:126</div></div>
 <div class="ttc" id="astructMemAllocation_html_a8ae99c16b3d333fc422acc0c1acc9609"><div class="ttname"><a href="structMemAllocation.html#a8ae99c16b3d333fc422acc0c1acc9609">MemAllocation::size</a></div><div class="ttdeci">size_t size</div><div class="ttdoc">Size of the allocation in bytes.</div><div class="ttdef"><b>Definition</b> memspace.h:128</div></div>
@@ -250,8 +251,8 @@ $(document).ready(function(){initNavTree('memspace_8h_source.html',''); initResi
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="memspace_8h.html">memspace.h</a></li>
-    <li class="footer">Generated on 2026-03-14 00:50:31 from commit 63c287a (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="memspace_8h.html">memspace.h</a></li>
+    <li class="footer">Generated on 2026-03-15 01:57:14 from commit 4184f22 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/array.h Source File</title>
+<title>libpromeki: include/promeki/core/array.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -107,8 +107,8 @@ $(document).ready(function(){initNavTree('array_8h_source.html',''); initResizab
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;array&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="sharedptr_8h.html">promeki/sharedptr.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="sharedptr_8h.html">promeki/core/sharedptr.h</a>&gt;</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
@@ -164,10 +164,10 @@ $(document).ready(function(){initNavTree('array_8h_source.html',''); initResizab
 </div>
 <div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
 <div class="foldopen" id="foldopen00135" data-start="{" data-end="}">
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno"><a class="line" href="classArray.html#a8f8ffecae5bc54028e18be27c768e936">  135</a></span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt; <a class="code hl_class" href="classArray.html">Array&lt;T, NumValues&gt;</a>&amp; <a class="code hl_function" href="classArray.html#a8f8ffecae5bc54028e18be27c768e936">operator=</a>(U value) {</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno"><a class="line" href="classArray.html#a8f8ffecae5bc54028e18be27c768e936">  135</a></span>                <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt; <a class="code hl_class" href="classArray.html">Array&lt;T, NumValues&gt;</a>&amp; <a class="code hl_function" href="classArray.html#a8f8ffecae5bc54028e18be27c768e936">operator=</a>(U <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>) {</div>
 <div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>                        <span class="keyword">static_assert</span>(std::is_assignable_v&lt;T&amp;, U&gt;, <span class="stringliteral">&quot;Incompatible types&quot;</span>);</div>
 <div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>                        <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; NumValues; ++i) {</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>                                d[i] = <span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(value);</div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>                                d[i] = <span class="keyword">static_cast&lt;</span>T<span class="keyword">&gt;</span>(<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>);</div>
 <div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>                        }</div>
 <div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span>                        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
 <div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>                }</div>
@@ -429,6 +429,7 @@ $(document).ready(function(){initNavTree('array_8h_source.html',''); initResizab
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:13</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:18</div></div>
+<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:55</div></div>
 <div class="ttc" id="asharedptr_8h_html"><div class="ttname"><a href="sharedptr_8h.html">sharedptr.h</a></div></div>
 <div class="ttc" id="asharedptr_8h_html_a19c77a1148cf694c53a7d0d6608c0cd9"><div class="ttname"><a href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">PROMEKI_SHARED_FINAL</a></div><div class="ttdeci">#define PROMEKI_SHARED_FINAL(TYPE)</div><div class="ttdoc">Macro for non-polymorphic native shared objects.</div><div class="ttdef"><b>Definition</b> sharedptr.h:87</div></div>
 </div><!-- fragment --></div><!-- contents -->
@@ -437,8 +438,8 @@ $(document).ready(function(){initNavTree('array_8h_source.html',''); initResizab
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="array_8h.html">array.h</a></li>
-    <li class="footer">Generated on 2026-03-14 00:50:31 from commit 63c287a (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="array_8h.html">array.h</a></li>
+    <li class="footer">Generated on 2026-03-15 01:57:14 from commit 4184f22 (1.0.0).</li>
   </ul>
 </div>
 </body>

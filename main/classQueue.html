@@ -100,7 +100,6 @@ $(document).ready(function(){initNavTree('classQueue.html',''); initResizable();
 
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classQueue-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Queue&lt; T &gt; Class Template Reference</div></div>
@@ -112,12 +111,6 @@ $(document).ready(function(){initNavTree('classQueue.html',''); initResizable();
 
 <p><code>#include &lt;<a class="el" href="queue_8h_source.html">queue.h</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:a72f033d4d10782233da2e28043ad8270" id="r_a72f033d4d10782233da2e28043ad8270"><td class="memItemLeft" align="right" valign="top"><a id="a72f033d4d10782233da2e28043ad8270" name="a72f033d4d10782233da2e28043ad8270"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Locker</b> = std::unique_lock&lt; std::mutex &gt;</td></tr>
-<tr class="separator:a72f033d4d10782233da2e28043ad8270"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ab8c85cd81024863014752d48c1883e95" id="r_ab8c85cd81024863014752d48c1883e95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#ab8c85cd81024863014752d48c1883e95">push</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
@@ -148,6 +141,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab18970a73283f0fafbf05978ae2f121c" id="r_ab18970a73283f0fafbf05978ae2f121c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c">waitForEmpty</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
 <tr class="memdesc:ab18970a73283f0fafbf05978ae2f121c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until the queue is empty.  <br /></td></tr>
 <tr class="separator:ab18970a73283f0fafbf05978ae2f121c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a225f5d08888ea72a4dfe73f235761e5d" id="r_a225f5d08888ea72a4dfe73f235761e5d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#a225f5d08888ea72a4dfe73f235761e5d">isEmpty</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a225f5d08888ea72a4dfe73f235761e5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the queue has no elements.  <br /></td></tr>
+<tr class="separator:a225f5d08888ea72a4dfe73f235761e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91cbd71c4aeb13c6c7b6a9c8939636e3" id="r_a91cbd71c4aeb13c6c7b6a9c8939636e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#a91cbd71c4aeb13c6c7b6a9c8939636e3">size</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a91cbd71c4aeb13c6c7b6a9c8939636e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of elements currently in the queue.  <br /></td></tr>
 <tr class="separator:a91cbd71c4aeb13c6c7b6a9c8939636e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -159,7 +155,7 @@ Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>&gt;<br />
 class Queue&lt; T &gt;</div><p>Thread-safe FIFO queue. </p>
-<p>All public methods are safe to call concurrently from multiple threads. Internally synchronized with a mutex and condition variable. Blocking methods (<a class="el" href="classQueue.html#a04d0e515fe32fcbb0a923e7edd070c9d" title="Removes and returns the front element, blocking until one is available or the timeout expires.">pop()</a>, <a class="el" href="classQueue.html#adf6877bb933fe1ac957a69b2b31a8d26" title="Returns a copy of the front element without removing it, blocking until one is available or the timeo...">peek()</a>, <a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a>) will sleep until their condition is met rather than spinning or polling.</p>
+<p>All public methods are safe to call concurrently from multiple threads. Internally synchronized with a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a> and <a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a>. Blocking methods (<a class="el" href="classQueue.html#a04d0e515fe32fcbb0a923e7edd070c9d" title="Removes and returns the front element, blocking until one is available or the timeout expires.">pop()</a>, <a class="el" href="classQueue.html#adf6877bb933fe1ac957a69b2b31a8d26" title="Returns a copy of the front element without removing it, blocking until one is available or the timeo...">peek()</a>, <a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a>) will sleep until their condition is met rather than spinning or polling.</p>
 <dl class="section note"><dt>Note</dt><dd><a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a> indicates that all items have been removed from the queue, not that they have been fully processed by the consumer. If you need a "processing complete" guarantee, use an out-of-band mechanism such as a promise/future handshake.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -209,6 +205,36 @@ template&lt;typename... Args&gt; </div>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a225f5d08888ea72a4dfe73f235761e5d" name="a225f5d08888ea72a4dfe73f235761e5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a225f5d08888ea72a4dfe73f235761e5d">&#9670;&#160;</a></span>isEmpty()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> <a class="el" href="classQueue.html">Queue</a>&lt; <a class="el" href="classList.html">T</a> &gt;::isEmpty </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if the queue has no elements. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if empty. </dd></dl>
 
 </div>
 </div>
@@ -537,7 +563,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/<a class="el" href="queue_8h_source.html">queue.h</a></li>
+<li>include/promeki/core/<a class="el" href="queue_8h_source.html">queue.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -546,7 +572,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classQueue.html">Queue</a></li>
-    <li class="footer">Generated on 2026-03-14 00:50:31 from commit 63c287a (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 01:57:14 from commit 4184f22 (1.0.0).</li>
   </ul>
 </div>
 </body>

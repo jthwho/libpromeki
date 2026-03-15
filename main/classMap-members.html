@@ -113,6 +113,8 @@ $(document).ready(function(){initNavTree('classMap.html',''); initResizable(); }
   <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a557495d4a31db61d5c1fc71828075446">constBegin</a>() const noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classMap.html#a168b6a42398b2dfe02ed87e9c52ccec3">constEnd</a>() const noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classMap.html#aa308d59e28663520c9f8e2793da36fe9">ConstIterator</a> typedef</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMap.html#ad5fa19d682210dcd32d313e266d72422">constRevBegin</a>() const noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a7d071e79c2b503dd9445f485989d8507">constRevEnd</a>() const noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classMap.html#ac78b7e8d6c4b77b76033e4b089794a7c">ConstRevIterator</a> typedef</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a21817f63324636803318e47c2a88b02e">contains</a>(const K &amp;key) const</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classMap.html#ac869139ecb4ba0e73b4266cb34dfd705">crbegin</a>() const noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
@@ -143,18 +145,21 @@ $(document).ready(function(){initNavTree('classMap.html',''); initResizable(); }
   <tr class="odd"><td class="entry"><a class="el" href="classMap.html#ae5f2f071c567b714113a94233fa9f5e6">remove</a>(const K &amp;key)</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classMap.html#acf932b718ae9be20dfefee1b2417a3a4">remove</a>(Iterator pos)</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a80c96aab6dad7d4b9e69d18ad599d458">rend</a>() noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMap.html#ae41012d0f3f9447c26acc57a51ce9275">revBegin</a>() noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMap.html#aca035777d60b7e6f74335312a1c88641">revEnd</a>() noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classMap.html#afff69f3db75321ee2b888a6f1b406546">RevIterator</a> typedef</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a9bb51ea33792d25300ec6d1ae42fcfa5">size</a>() const noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classMap.html#a87d4e106ab7c114020cc43e1736b1429">value</a>(const K &amp;key, const V &amp;defaultValue=V{}) const</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a21cb43b9b242923d9c8c2b4f3d613760">values</a>() const</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classMap.html#ae959938cda7fe0745ed29e6db7a5c38e">~Map</a>()=default</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMap.html#ae1f63ebdedfdd9da47cc0cb99869b8cb">swap</a>(Map &amp;other) noexcept</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMap.html#a87d4e106ab7c114020cc43e1736b1429">value</a>(const K &amp;key, const V &amp;defaultValue=V{}) const</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classMap.html#a21cb43b9b242923d9c8c2b4f3d613760">values</a>() const</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classMap.html#ae959938cda7fe0745ed29e6db7a5c38e">~Map</a>()=default</td><td class="entry"><a class="el" href="classMap.html">Map&lt; K, V &gt;</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-14 00:50:31 from commit 63c287a (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 01:57:14 from commit 4184f22 (1.0.0).</li>
   </ul>
 </div>
 </body>

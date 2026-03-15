@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['xyzcolor_0',['XYZColor',['../classXYZColor.html',1,'']]]
+  ['waitcondition_0',['WaitCondition',['../classWaitCondition.html',1,'']]],
+  ['writelocker_1',['WriteLocker',['../classReadWriteLock_1_1WriteLocker.html',1,'ReadWriteLock']]]
 ];

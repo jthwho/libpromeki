@@ -1,0 +1,24 @@
+var classDuration =
+[
+    [ "Duration", "classDuration.html#a688948a87d69e8982cf7e292c7fe4b0a", null ],
+    [ "hours", "classDuration.html#addae89bcd0898e01051b7650e79d2a7f", null ],
+    [ "isNegative", "classDuration.html#aaf08fc0c2906460ac581440f9b91f74e", null ],
+    [ "isZero", "classDuration.html#a9d6bf9f53f9e1a6549081ab21427c50f", null ],
+    [ "microseconds", "classDuration.html#a9d4b4702340f97a66739bd9782c306ee", null ],
+    [ "milliseconds", "classDuration.html#abda943daba0338be34135f795c66b098", null ],
+    [ "minutes", "classDuration.html#a3e88816564e9bb1439b7d8d6aa920d4e", null ],
+    [ "nanoseconds", "classDuration.html#a3dc4df9974b55c19a249c8641de8820b", null ],
+    [ "operator!=", "classDuration.html#ad67adf2af4286e337de1dd3e5e63d437", null ],
+    [ "operator*", "classDuration.html#a4a284f8c5d5e8e77afab572c4314e9dd", null ],
+    [ "operator+", "classDuration.html#a4cbe43c367448e489480d155d1737762", null ],
+    [ "operator-", "classDuration.html#a9f7d0246af4a5b48a852de1ed699fc04", null ],
+    [ "operator/", "classDuration.html#aed1ae71258bdfe666bef77bf9f2f16fd", null ],
+    [ "operator<", "classDuration.html#a43a996467438747237e2265274b94608", null ],
+    [ "operator<=", "classDuration.html#a8f45395d6732293fd622c0ba6e573168", null ],
+    [ "operator==", "classDuration.html#a23c3c7a5f5d8b4de7d7e514e3ce2d955", null ],
+    [ "operator>", "classDuration.html#a67090580803b30491729219c4389496e", null ],
+    [ "operator>=", "classDuration.html#afbff1bf552696e939a761cf91952fcf9", null ],
+    [ "seconds", "classDuration.html#a74278e86c7c69f5c108d1b2abc8fd9d1", null ],
+    [ "toSecondsDouble", "classDuration.html#a699d181d13ddfb8df73a0a4e44dcb7ce", null ],
+    [ "toString", "classDuration.html#a5ca89c434fd4ff90e2446daa2765ee27", null ]
+];

@@ -1,7 +1,7 @@
-<map id="include/promeki/bytearray.h" name="include/promeki/bytearray.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="88,5,292,31"/>
-<area shape="rect" id="Node000002" href="$md5_8h.html" title=" " alt="" coords="5,79,177,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,41,109,81,106,76,162,36"/>
-<area shape="rect" id="Node000003" href="$sha1_8h.html" title=" " alt="" coords="201,79,376,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="218,36,274,76,271,81,215,41"/>
+<map id="include/promeki/core/bytearray.h" name="include/promeki/core/bytearray.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="96,5,255,45"/>
+<area shape="rect" id="Node000002" href="$md5_8h.html" title=" " alt="" coords="5,93,164,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="147,57,107,95,103,91,144,53"/>
+<area shape="rect" id="Node000003" href="$sha1_8h.html" title=" " alt="" coords="188,93,347,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="207,53,249,91,245,95,204,57"/>
 </map>

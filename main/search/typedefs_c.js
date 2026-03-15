@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['sha1digest_0',['SHA1Digest',['../sha1_8h.html#a679f355e2338a31f1e6c60bf4e3c6f9a',1,'sha1.h']]],
-  ['size2dd_1',['Size2Dd',['../size2d_8h.html#a1b2b333088ab08fe0c9bf23c8635541c',1,'size2d.h']]],
-  ['size2df_2',['Size2Df',['../size2d_8h.html#a8660e7bef2d06082e79d7861b48f3aaa',1,'size2d.h']]],
-  ['size2di32_3',['Size2Di32',['../size2d_8h.html#afd30331c873f6ef9c0ee4d8d2671aa22',1,'size2d.h']]],
-  ['size2du32_4',['Size2Du32',['../size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a',1,'size2d.h']]],
-  ['sizefunc_5',['SizeFunc',['../classPixelFormat.html#ad101fd70fe849c53f3f93497a1493351',1,'PixelFormat']]],
-  ['slotvariantfunc_6',['SlotVariantFunc',['../classObjectBase.html#aa5b71229762e66678aa59aaa21ecd7af',1,'ObjectBase']]],
-  ['status_7',['Status',['../classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684',1,'FileInfo']]],
-  ['stridefunc_8',['StrideFunc',['../classPixelFormat.html#a0635f49b5e8f0f5eae0857311ea9dcb0',1,'PixelFormat']]]
+  ['rationaltype_0',['RationalType',['../classFrameRate.html#ad06e0a3a69109ae17dde81e2a59afd8b',1,'FrameRate']]],
+  ['rect2dd_1',['Rect2Dd',['../rect_8h.html#a6bdbb9c64906646f86c369acce1ba6af',1,'rect.h']]],
+  ['rect2df_2',['Rect2Df',['../rect_8h.html#ac81e4458ab79a40d780aca2964f30e24',1,'rect.h']]],
+  ['rect2di32_3',['Rect2Di32',['../rect_8h.html#a7dede79eb3166585c8fbab1f89ea959e',1,'rect.h']]],
+  ['removeconstandref_4',['removeconstandref',['../classSignal.html#a4f4798f3ef8ca6b9e0c74831e2057250',1,'Signal::RemoveConstAndRef'],['../classSlot.html#a6f03f41ff89a99870b1561cdb7de2bb3',1,'Slot::RemoveConstAndRef']]],
+  ['resizecallback_5',['ResizeCallback',['../classTerminal.html#a9a70127ef97279a2409d28edb6932bf6',1,'Terminal']]],
+  ['result_6',['Result',['../result_8h.html#a72213850e8f39e4956d4ce23dd5238f7',1,'result.h']]],
+  ['reviterator_7',['reviterator',['../classDeque.html#a4ea8ddfd8087f2685404421c96e7472d',1,'Deque::RevIterator'],['../classList.html#a8ac55459deafa266691b371e7d078eb7',1,'List::RevIterator'],['../classMap.html#afff69f3db75321ee2b888a6f1b406546',1,'Map::RevIterator'],['../classSet.html#ac6b5c730e52fd960c8eb622dde83f1fc',1,'Set::RevIterator'],['../classSpan.html#a5aeb9e293c7b48c015a90ccbe15a8b81',1,'Span::RevIterator']]],
+  ['rowdatatype_8',['RowDataType',['../classMatrix.html#ace4e79c0ada1dbad8a0673ba463b38f2',1,'Matrix']]]
 ];

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/eventloop.h Source File</title>
+<title>libpromeki: include/promeki/core/eventloop.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -105,14 +105,14 @@ $(document).ready(function(){initNavTree('eventloop_8h_source.html',''); initRes
 <a href="eventloop_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;atomic&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;variant&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="queue_8h.html">promeki/queue.h</a>&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/list.h</a>&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="timestamp_8h.html">promeki/timestamp.h</a>&gt;</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;<a class="code" href="event_8h.html">promeki/event.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;variant&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="atomic_8h.html">promeki/core/atomic.h</a>&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="queue_8h.html">promeki/core/queue.h</a>&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/core/list.h</a>&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="timestamp_8h.html">promeki/core/timestamp.h</a>&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;<a class="code" href="event_8h.html">promeki/core/event.h</a>&gt;</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
@@ -157,9 +157,9 @@ $(document).ready(function(){initNavTree('eventloop_8h_source.html',''); initRes
 <div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span> </div>
 <div class="line"><a id="l00158" name="l00158"></a><span class="lineno"><a class="line" href="classEventLoop.html#a0b602a0f8f64b33f9adcdcfd119ea0b0">  158</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classEventLoop.html#a0b602a0f8f64b33f9adcdcfd119ea0b0">stopTimer</a>(<span class="keywordtype">int</span> timerId);</div>
 <div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span> </div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="classEventLoop.html#ae01813e87052fb613430e40d6c89da7d">  164</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classEventLoop.html#ae01813e87052fb613430e40d6c89da7d">isRunning</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _running.load(std::memory_order_relaxed); }</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="classEventLoop.html#ae01813e87052fb613430e40d6c89da7d">  164</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classEventLoop.html#ae01813e87052fb613430e40d6c89da7d">isRunning</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _running.<a class="code hl_function" href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">value</a>(); }</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">  170</a></span>                <span class="keywordtype">int</span> <a class="code hl_function" href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">exitCode</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _exitCode.load(std::memory_order_relaxed); }</div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno"><a class="line" href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">  170</a></span>                <span class="keywordtype">int</span> <a class="code hl_function" href="classEventLoop.html#abeae412fd6862c66cf2d891492460511">exitCode</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _exitCode.<a class="code hl_function" href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">value</a>(); }</div>
 <div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span> </div>
 <div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <span class="keyword">private</span>:</div>
 <div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>                <span class="keyword">struct </span>CallableItem { std::function&lt;<a class="code hl_class" href="classList.html">void</a>()&gt; func; };</div>
@@ -179,10 +179,10 @@ $(document).ready(function(){initNavTree('eventloop_8h_source.html',''); initRes
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                <span class="keyword">static</span> <span class="keyword">thread_local</span> <a class="code hl_class" href="classEventLoop.html">EventLoop</a>   *_current;</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>                <a class="code hl_class" href="classList.html">Queue&lt;Item&gt;</a>                     _queue;</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                std::atomic&lt;bool&gt;               _running{<span class="keyword">false</span>};</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                std::atomic&lt;int&gt;                _exitCode{0};</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                <a class="code hl_class" href="classList.html">Atomic&lt;bool&gt;</a>                    _running;</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                <a class="code hl_class" href="classList.html">Atomic&lt;int&gt;</a>                     _exitCode;</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>                <a class="code hl_class" href="classList.html">List&lt;TimerInfo&gt;</a>                 _timers;</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>                std::atomic&lt;int&gt;                _nextTimerId{1};</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>                <a class="code hl_class" href="classList.html">Atomic&lt;int&gt;</a>                     _nextTimerId{1};</div>
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>                <span class="keywordtype">bool</span> dispatchItem(Item &amp;<a class="code hl_class" href="classList.html">item</a>);</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>                <span class="keywordtype">void</span> processTimers();</div>
@@ -191,6 +191,8 @@ $(document).ready(function(){initNavTree('eventloop_8h_source.html',''); initRes
 </div>
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="ttc" id="aatomic_8h_html"><div class="ttname"><a href="atomic_8h.html">atomic.h</a></div></div>
+<div class="ttc" id="aclassAtomic_html_af2ca398429bd935ca7912a1d14513cd0"><div class="ttname"><a href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">Atomic::value</a></div><div class="ttdeci">T value() const</div><div class="ttdoc">Loads the current value with acquire semantics.</div><div class="ttdef"><b>Definition</b> atomic.h:45</div></div>
 <div class="ttc" id="aclassEventLoop_html"><div class="ttname"><a href="classEventLoop.html">EventLoop</a></div><div class="ttdoc">Per-thread event loop providing event dispatch, timers, and posted callables.</div><div class="ttdef"><b>Definition</b> eventloop.h:39</div></div>
 <div class="ttc" id="aclassEventLoop_html_a0b602a0f8f64b33f9adcdcfd119ea0b0"><div class="ttname"><a href="classEventLoop.html#a0b602a0f8f64b33f9adcdcfd119ea0b0">EventLoop::stopTimer</a></div><div class="ttdeci">void stopTimer(int timerId)</div><div class="ttdoc">Stops and removes a timer.</div></div>
 <div class="ttc" id="aclassEventLoop_html_a18e4672007c4c1c025a5ed07243cbd9e"><div class="ttname"><a href="classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9e">EventLoop::ProcessEventsFlag</a></div><div class="ttdeci">ProcessEventsFlag</div><div class="ttdoc">Flags controlling processEvents() behavior.</div><div class="ttdef"><b>Definition</b> eventloop.h:42</div></div>
@@ -226,8 +228,8 @@ $(document).ready(function(){initNavTree('eventloop_8h_source.html',''); initRes
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="eventloop_8h.html">eventloop.h</a></li>
-    <li class="footer">Generated on 2026-03-14 00:50:31 from commit 63c287a (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="eventloop_8h.html">eventloop.h</a></li>
+    <li class="footer">Generated on 2026-03-15 01:57:14 from commit 4184f22 (1.0.0).</li>
   </ul>
 </div>
 </body>

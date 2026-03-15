@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['xyzcolor_2eh_0',['xyzcolor.h',['../xyzcolor_8h.html',1,'']]]
+  ['waitcondition_2eh_0',['waitcondition.h',['../waitcondition_8h.html',1,'']]],
+  ['widget_2eh_1',['widget.h',['../widget_8h.html',1,'']]]
 ];

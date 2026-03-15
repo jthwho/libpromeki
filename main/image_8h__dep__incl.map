@@ -1,9 +1,9 @@
-<map id="include/promeki/image.h" name="include/promeki/image.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="211,5,395,31"/>
-<area shape="rect" id="Node000002" href="$codec_8h.html" title=" " alt="" coords="5,79,187,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="257,38,130,81,129,76,256,33"/>
-<area shape="rect" id="Node000003" href="$frame_8h.html" title=" " alt="" coords="211,79,394,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="305,44,305,79,300,79,300,44"/>
-<area shape="rect" id="Node000004" href="$imagefile_8h.html" title=" " alt="" coords="418,79,622,104"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="351,32,486,76,484,81,350,37"/>
+<map id="include/promeki/proav/image.h" name="include/promeki/proav/image.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="197,5,365,45"/>
+<area shape="rect" id="Node000002" href="$codec_8h.html" title=" " alt="" coords="5,93,173,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,53,132,96,130,91,226,49"/>
+<area shape="rect" id="Node000003" href="$proav_2frame_8h.html" title=" " alt="" coords="197,93,365,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,59,284,93,279,93,279,59"/>
+<area shape="rect" id="Node000004" href="$imagefile_8h.html" title=" " alt="" coords="389,93,557,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="337,49,432,91,430,96,335,53"/>
 </map>

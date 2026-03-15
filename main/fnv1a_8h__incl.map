@@ -1,9 +1,9 @@
-<map id="include/promeki/fnv1a.h" name="include/promeki/fnv1a.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="42,5,222,31"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,72,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,33,66,72,63,68,115,29"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="97,79,167,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="135,31,135,65,129,65,129,31"/>
-<area shape="rect" id="Node000004" href="$namespace_8h.html" title=" " alt="" coords="191,79,358,104"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="156,28,240,70,238,75,154,33"/>
+<map id="include/promeki/core/fnv1a.h" name="include/promeki/core/fnv1a.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="53,5,211,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,72,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,48,65,86,62,82,108,44"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="97,93,167,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="135,46,135,79,129,79,129,46"/>
+<area shape="rect" id="Node000004" href="$namespace_8h.html" title=" " alt="" coords="191,93,390,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="171,43,256,85,254,90,169,48"/>
 </map>

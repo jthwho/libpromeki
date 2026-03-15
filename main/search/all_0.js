@@ -1,23 +1,4 @@
 var searchData=
 [
-  ['_5f_5fcreatepaintengine_0',['__createPaintEngine',['../classPixelFormat.html#ae563761a528f1f75ac366ebdfa28bde9',1,'PixelFormat']]],
-  ['_5f_5flinestride_1',['__lineStride',['../classPixelFormat.html#a1d26859ac3e1ada2a1c929ea345d0248',1,'PixelFormat']]],
-  ['_5f_5fplanesize_2',['__planeSize',['../classPixelFormat.html#ad74bf793171f82e8fa5b64e9caa9cbe1',1,'PixelFormat']]],
-  ['_5fbytesperblock_3',['_bytesPerBlock',['../classPixelFormat.html#a04c501048fa7055522fa2a3acdbeed9b',1,'PixelFormat']]],
-  ['_5fcanload_4',['_canLoad',['../classImageFileIO.html#ac37566193a116bee2380851ae7427e3f',1,'ImageFileIO']]],
-  ['_5fcansave_5',['_canSave',['../classImageFileIO.html#a2022b19f4893a5f7f451b3611b7dad82',1,'ImageFileIO']]],
-  ['_5fcomplist_6',['_compList',['../classPixelFormat.html#a8802086eb29afe19175c6b66174cea26',1,'PixelFormat']]],
-  ['_5fcompressed_7',['_compressed',['../classPixelFormat.html#a74671a1a46a8fce03a81fa8d243cef25',1,'PixelFormat']]],
-  ['_5fdesc_8',['_desc',['../classPixelFormat.html#afbb83437fa494a1e0d3477e24af9c3cb',1,'PixelFormat']]],
-  ['_5fexts_9',['_exts',['../classAudioFileFactory.html#ad752952f57e7adc2113b1bba2d5b08db',1,'AudioFileFactory']]],
-  ['_5ffourcclist_10',['_fourccList',['../classPixelFormat.html#a3dd9164395e647691d71b731149fdebc',1,'PixelFormat']]],
-  ['_5fhasalpha_11',['_hasAlpha',['../classPixelFormat.html#a62b67dbd3b64acc6ee12c7c5fe81d383',1,'PixelFormat']]],
-  ['_5fid_12',['_id',['../classImageFileIO.html#a23f2c7e7adda7b515f219951fa92a70f',1,'ImageFileIO::_id'],['../classPixelFormat.html#a98b1f69b9c4b6936c64425d499314a97',1,'PixelFormat::_id']]],
-  ['_5fname_13',['_name',['../classAudioFileFactory.html#afa280cc33ca22f3d6e430e4ed231a366',1,'AudioFileFactory::_name'],['../classImageFileIO.html#ae92ccf6c98b57e38d66878b71f9fd36a',1,'ImageFileIO::_name'],['../classPixelFormat.html#ac63144dbe60d4b6b34bef0c6fa1f75c7',1,'PixelFormat::_name']]],
-  ['_5fpixelformat_14',['_pixelFormat',['../classPaintEngine_1_1Impl.html#a748922ddea4a668016197cd64a926043',1,'PaintEngine::Impl']]],
-  ['_5fpixelsperblock_15',['_pixelsPerBlock',['../classPixelFormat.html#aeb9539f5630acf1aefffb925a7107c05',1,'PixelFormat']]],
-  ['_5fplanelist_16',['_planeList',['../classPixelFormat.html#a92e906fe95885fa0399417d770184ecd',1,'PixelFormat']]],
-  ['_5fpromeki_5fclone_17',['_promeki_clone',['../classStringData.html#a76fa2a8e3e850f348f9b780e1daab9d8',1,'StringData::_promeki_clone()'],['../classStringLiteralData.html#a0412393de5a8f4f5ab4a0e7322b4f74d',1,'StringLiteralData::_promeki_clone()'],['../classStringUnicodeLiteralData.html#abf0b1a383f0a833c783158db9d0d73c4',1,'StringUnicodeLiteralData::_promeki_clone()']]],
-  ['_5fpromeki_5frefct_18',['_promeki_refct',['../classStringData.html#af0d7c519e6b4bbcdea45d8a832362764',1,'StringData']]],
-  ['_5fsampling_19',['_sampling',['../classPixelFormat.html#a4e3a33caec372795f56992f1f0e44c2f',1,'PixelFormat']]]
+  ['1_3a_20share_20a_20single_20object_20via_20ptr_0',['Pattern 1: Share a single object via Ptr',['../dataobjects.html#thread_ptr',1,'']]]
 ];

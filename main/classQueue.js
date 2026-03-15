@@ -2,6 +2,7 @@ var classQueue =
 [
     [ "clear", "classQueue.html#acb12e3d108397a77e412d43cdd0b2836", null ],
     [ "emplace", "classQueue.html#a9464f8cad98c45469ef47299752be868", null ],
+    [ "isEmpty", "classQueue.html#a225f5d08888ea72a4dfe73f235761e5d", null ],
     [ "peek", "classQueue.html#adf6877bb933fe1ac957a69b2b31a8d26", null ],
     [ "peekOrFail", "classQueue.html#adfbc15beb04668b47a56ed67e3ec3807", null ],
     [ "pop", "classQueue.html#a04d0e515fe32fcbb0a923e7edd070c9d", null ],
