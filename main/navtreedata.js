@@ -162,20 +162,20 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "algorithm_8h.html",
-"classAudioFile.html#a6ecc25cdb64984463a8c61512dc2bf1e",
-"classDeque.html#acc8dce9054b00cf61a2365c715dfbad9",
-"classFuture_3_01void_01_4.html#ae3b74778242b9a605a7dc6644b6da4a6",
-"classKeyEvent.html#a5c5ea24a9891ce8537993de6b0915c0e",
-"classMemPool.html#af587287fa0f3ac3bea8941490c48616a",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3ad9fec6bdb37f1f75601e05dfa9c9d2e2",
-"classPair.html#a4626834e07ea06f7fff3647f3a55b063",
-"classRational.html#ae07bc7381ac37639b55eb757f95c2684",
-"classString.html#a236448b02a1ea6f7a1e61a5fbe702797",
-"classStructDatabase.html#ad2db0178f19c7836a582efecf55390af",
-"classTuiPainter.html#ac233808b18a9112d6a825661fb119d91",
-"colorspace_8h.html",
-"md_CODING__STANDARDS.html#autotoc_md65",
-"structTuiInputParser_1_1ParsedEvent.html#a7cd715ca42a080de7ee2bef24bc53e35"
+"classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153abd15022b388033c23afa0f690b6f4232",
+"classDeque.html#a5a24d69c927e0eb994b75d1b29a9ff2a",
+"classFourCC.html",
+"classImageFileIO.html#aafbba433258eef36cd6ceecce6912b76",
+"classMap.html#a76c845895fe143702d86f0bcb7745cc2",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a6fd74de6b400cde5c1c83ffb6999fc1c",
+"classNumName.html#af21cf7d53c4fdbea249bb929cdd6238f",
+"classPixelFormat.html#acb42bf267ca6da3eb10edc6591081cc7",
+"classSize2DTemplate.html#ad5c740383f223272239578d452ed5592",
+"classStringList.html#a091ca41992f35860c542c08655198f20",
+"classTuiApplication.html#aec485838ac3d4115d42a36969d307efe",
+"classTuiWidget.html#af2571b5113126610fbd8b486741dbe84",
+"imagefileio_8h.html",
+"span_8h_source.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

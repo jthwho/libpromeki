@@ -123,9 +123,9 @@ $(document).ready(function(){initNavTree('logger_8h_source.html',''); initResiza
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">static</span> <span class="keyword">consteval</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *sourceFileName(<span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code hl_class" href="classList.html">path</a>) {</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        <span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code hl_class" href="classList.html">ret</a> = <a class="code hl_class" href="classList.html">path</a>;</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="keywordflow">for</span>(<span class="keyword">const</span> <span class="keywordtype">char</span> *p = <a class="code hl_class" href="classList.html">path</a>; *p; ++p) {</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">static</span> <span class="keyword">consteval</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *sourceFileName(<span class="keyword">const</span> <span class="keywordtype">char</span> *path) {</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>        <span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code hl_class" href="classList.html">ret</a> = path;</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>        <span class="keywordflow">for</span>(<span class="keyword">const</span> <span class="keywordtype">char</span> *p = path; *p; ++p) {</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>                <span class="keywordflow">if</span>(*p == <span class="charliteral">&#39;/&#39;</span> || *p == <span class="charliteral">&#39;\\&#39;</span>) <a class="code hl_class" href="classList.html">ret</a> = p + 1;</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        }</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">ret</a>;</div>
@@ -417,7 +417,7 @@ $(document).ready(function(){initNavTree('logger_8h_source.html',''); initResiza
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="logger_8h.html">logger.h</a></li>
-    <li class="footer">Generated on 2026-03-15 01:57:14 from commit 4184f22 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 04:32:32 from commit 08203a1 (1.0.0).</li>
   </ul>
 </div>
 </body>

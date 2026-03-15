@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['version_0',['version',['../structBuildInfo.html#a1459032e90a12ded0a3b2877f923367c',1,'BuildInfo']]]
+  ['unbuffered_0',['Unbuffered',['../classIODevice.html#a52353e2d8b90cda4c444afa87e7183ca',1,'IODevice']]]
 ];

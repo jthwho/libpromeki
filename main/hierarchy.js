@@ -41,6 +41,7 @@ var hierarchy =
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
     [ "DateTime", "classDateTime.html", null ],
     [ "Deque< T >", "classDeque.html", null ],
+    [ "Dir", "classDir.html", null ],
     [ "Duration", "classDuration.html", null ],
     [ "ElapsedTimer", "classElapsedTimer.html", null ],
     [ "Env", "classEnv.html", null ],
@@ -58,6 +59,7 @@ var hierarchy =
     ] ],
     [ "File", "classFile.html", null ],
     [ "FileInfo", "classFileInfo.html", null ],
+    [ "FilePath", "classFilePath.html", null ],
     [ "FontPainter", "classFontPainter.html", null ],
     [ "AudioDesc::Format", "structAudioDesc_1_1Format.html", null ],
     [ "FourCC", "classFourCC.html", null ],
@@ -117,6 +119,7 @@ var hierarchy =
     [ "Map< ID, VariantImpl >", "classMap.html", null ],
     [ "Map< int, int >", "classMap.html", null ],
     [ "Map< ObjectBasePtr *, ObjectBasePtr * >", "classMap.html", null ],
+    [ "Map< Option, VariantImpl >", "classMap.html", null ],
     [ "Map< String, CmdLineParser::Option >", "classMap.html", null ],
     [ "Map< String, Params >", "classMap.html", null ],
     [ "Map< uint64_t, String >", "classMap.html", null ],
@@ -140,6 +143,9 @@ var hierarchy =
     [ "ObfuscatedString< N, Seed >", "classObfuscatedString.html", null ],
     [ "ObjectBase", "classObjectBase.html", [
       [ "AudioBlock", "classAudioBlock.html", null ],
+      [ "IODevice", "classIODevice.html", [
+        [ "BufferedIODevice", "classBufferedIODevice.html", null ]
+      ] ],
       [ "Thread", "classThread.html", null ],
       [ "TuiAction", "classTuiAction.html", null ],
       [ "TuiLayout", "classTuiLayout.html", [
