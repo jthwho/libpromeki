@@ -320,3 +320,12 @@ TEST_CASE("Queue_MoveOnPopOrFail") {
     CHECK(val != nullptr);
     CHECK(*val == 99);
 }
+
+TEST_CASE("Queue_IsEmpty") {
+    Queue<int> q;
+    CHECK(q.isEmpty());
+    q.push(1);
+    CHECK_FALSE(q.isEmpty());
+    auto [val, err] = q.pop();
+    CHECK(q.isEmpty());
+}

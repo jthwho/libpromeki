@@ -152,3 +152,60 @@ TEST_CASE("Set: reverse iterators") {
         CHECK(rev[1] == 2);
         CHECK(rev[2] == 1);
 }
+
+TEST_CASE("Set: revBegin/revEnd aliases") {
+        Set<int> s = {1, 2, 3};
+        List<int> rev;
+        for(auto it = s.revBegin(); it != s.revEnd(); ++it) {
+                rev.pushToBack(*it);
+        }
+        CHECK(rev[0] == 3);
+        CHECK(rev[2] == 1);
+}
+
+TEST_CASE("Set: constRevBegin/constRevEnd") {
+        const Set<int> s = {1, 2, 3};
+        List<int> rev;
+        for(auto it = s.constRevBegin(); it != s.constRevEnd(); ++it) {
+                rev.pushToBack(*it);
+        }
+        CHECK(rev[0] == 3);
+        CHECK(rev[2] == 1);
+}
+
+TEST_CASE("Set: swap") {
+        Set<int> a = {1, 2};
+        Set<int> b = {3, 4, 5};
+        a.swap(b);
+        CHECK(a.size() == 3);
+        CHECK(b.size() == 2);
+        CHECK(a.contains(3));
+        CHECK(b.contains(1));
+}
+
+TEST_CASE("Set: unite") {
+        Set<int> a = {1, 2, 3};
+        Set<int> b = {3, 4, 5};
+        auto u = a.unite(b);
+        CHECK(u.size() == 5);
+        CHECK(u.contains(1));
+        CHECK(u.contains(5));
+}
+
+TEST_CASE("Set: intersect") {
+        Set<int> a = {1, 2, 3};
+        Set<int> b = {2, 3, 4};
+        auto i = a.intersect(b);
+        CHECK(i.size() == 2);
+        CHECK(i.contains(2));
+        CHECK(i.contains(3));
+        CHECK_FALSE(i.contains(1));
+}
+
+TEST_CASE("Set: subtract") {
+        Set<int> a = {1, 2, 3};
+        Set<int> b = {2, 3, 4};
+        auto s = a.subtract(b);
+        CHECK(s.size() == 1);
+        CHECK(s.contains(1));
+}

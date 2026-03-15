@@ -563,3 +563,49 @@ TEST_CASE("List_WithStrings") {
         CHECK(sorted[1] == "test");
         CHECK(sorted[2] == "world");
 }
+
+TEST_CASE("List: forEach") {
+        List<int> l = {1, 2, 3};
+        int sum = 0;
+        l.forEach([&](int v) { sum += v; });
+        CHECK(sum == 6);
+}
+
+TEST_CASE("List: indexOf") {
+        List<int> l = {10, 20, 30, 20, 40};
+        CHECK(l.indexOf(20) == 1);
+        CHECK(l.indexOf(40) == 4);
+        CHECK(l.indexOf(99) == -1);
+}
+
+TEST_CASE("List: lastIndexOf") {
+        List<int> l = {10, 20, 30, 20, 40};
+        CHECK(l.lastIndexOf(20) == 3);
+        CHECK(l.lastIndexOf(10) == 0);
+        CHECK(l.lastIndexOf(99) == -1);
+}
+
+TEST_CASE("List: count") {
+        List<int> l = {1, 2, 3, 2, 1, 2};
+        CHECK(l.count(2) == 3);
+        CHECK(l.count(1) == 2);
+        CHECK(l.count(3) == 1);
+        CHECK(l.count(99) == 0);
+}
+
+TEST_CASE("List: mid") {
+        List<int> l = {10, 20, 30, 40, 50};
+        auto m = l.mid(1, 3);
+        CHECK(m.size() == 3);
+        CHECK(m[0] == 20);
+        CHECK(m[1] == 30);
+        CHECK(m[2] == 40);
+}
+
+TEST_CASE("List: mid edge cases") {
+        List<int> l = {1, 2, 3};
+        auto m1 = l.mid(0, 10);
+        CHECK(m1.size() == 3);
+        auto m2 = l.mid(5, 2);
+        CHECK(m2.isEmpty());
+}

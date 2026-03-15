@@ -22,7 +22,6 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
-| [include_refactor.md](include_refactor.md) | early / cross-cutting | Refactor includes to `<promeki/[lib]/header.h>` convention |
 | [fixme.md](fixme.md) | ongoing | Existing FIXME comments to address during related phase work |
 
 ## Dependency Graph
@@ -150,12 +149,6 @@ Every new class must have complete unit tests. Every modification to an existing
 - TUI widgets verified via `tui-demo` (add new tabs for new widgets)
 - Pipeline framework verified via a simple audio-passthrough demo
 - Network verified via loopback echo tests (UDP + TCP)
-
-## Include Path Refactor (Cross-Cutting, Early)
-
-**Document:** `include_refactor.md`
-
-All includes are being refactored from `<promeki/header.h>` to `<promeki/[lib]/header.h>` (e.g., `<promeki/core/string.h>`, `<promeki/tui/widget.h>`). This makes library membership explicit at the include site, preventing accidental dependencies on unlinked libraries. It's more typing, but it eliminates a class of confusing link errors and makes dependencies self-documenting. Best done early before other phases add many new files.
 
 ## Key Decisions
 

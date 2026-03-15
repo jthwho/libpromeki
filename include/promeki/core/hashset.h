@@ -1,5 +1,5 @@
 /**
- * @file      core/set.h
+ * @file      core/hashset.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <set>
+#include <unordered_set>
 #include <initializer_list>
 #include <promeki/core/namespace.h>
 #include <promeki/core/sharedptr.h>
@@ -16,22 +16,25 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Ordered unique-element container wrapping std::set.
+ * @brief Unordered unique-element container wrapping std::unordered_set.
  *
- * Provides a Qt-inspired API over std::set with consistent naming
+ * Provides a Qt-inspired API over std::unordered_set with consistent naming
  * conventions matching the rest of libpromeki.
  *
- * @tparam T Element type (must support operator<).
+ * @tparam T Element type (must be hashable).
  */
 template <typename T>
-class Set {
-        PROMEKI_SHARED_FINAL(Set)
+class HashSet {
+        PROMEKI_SHARED_FINAL(HashSet)
         public:
-                /** @brief Shared pointer type for Set. */
-                using Ptr = SharedPtr<Set>;
+                /** @brief Shared pointer type for HashSet. */
+                using Ptr = SharedPtr<HashSet>;
 
-                /** @brief Underlying std::set storage type. */
-                using Data = std::set<T>;
+                /** @brief Underlying std::unordered_set storage type. */
+                using Data = std::unordered_set<T>;
+
+                /** @brief Value type. */
+                using Value = T;
 
                 /** @brief Mutable forward iterator. */
                 using Iterator = typename Data::iterator;
@@ -39,38 +42,32 @@ class Set {
                 /** @brief Const forward iterator. */
                 using ConstIterator = typename Data::const_iterator;
 
-                /** @brief Mutable reverse iterator. */
-                using RevIterator = typename Data::reverse_iterator;
-
-                /** @brief Const reverse iterator. */
-                using ConstRevIterator = typename Data::const_reverse_iterator;
-
-                /** @brief Default constructor. Creates an empty set. */
-                Set() = default;
+                /** @brief Default constructor. Creates an empty hash set. */
+                HashSet() = default;
 
                 /** @brief Copy constructor. */
-                Set(const Set &other) : d(other.d) {}
+                HashSet(const HashSet &other) : d(other.d) {}
 
                 /** @brief Move constructor. */
-                Set(Set &&other) noexcept : d(std::move(other.d)) {}
+                HashSet(HashSet &&other) noexcept : d(std::move(other.d)) {}
 
                 /**
-                 * @brief Constructs a set from an initializer list.
+                 * @brief Constructs a hash set from an initializer list.
                  * @param initList Brace-enclosed list of values.
                  */
-                Set(std::initializer_list<T> initList) : d(initList) {}
+                HashSet(std::initializer_list<T> initList) : d(initList) {}
 
                 /** @brief Destructor. */
-                ~Set() = default;
+                ~HashSet() = default;
 
                 /** @brief Copy assignment operator. */
-                Set &operator=(const Set &other) {
+                HashSet &operator=(const HashSet &other) {
                         d = other.d;
                         return *this;
                 }
 
                 /** @brief Move assignment operator. */
-                Set &operator=(Set &&other) noexcept {
+                HashSet &operator=(HashSet &&other) noexcept {
                         d = std::move(other.d);
                         return *this;
                 }
@@ -101,33 +98,9 @@ class Set {
                 /// @copydoc cend()
                 ConstIterator constEnd() const noexcept { return d.cend(); }
 
-                /** @brief Returns a mutable reverse iterator to the last element. */
-                RevIterator rbegin() noexcept { return d.rbegin(); }
-
-                /// @copydoc rbegin()
-                RevIterator revBegin() noexcept { return d.rbegin(); }
-
-                /** @brief Returns a const reverse iterator to the last element. */
-                ConstRevIterator crbegin() const noexcept { return d.crbegin(); }
-
-                /// @copydoc crbegin()
-                ConstRevIterator constRevBegin() const noexcept { return d.crbegin(); }
-
-                /** @brief Returns a mutable reverse iterator to one before the first element. */
-                RevIterator rend() noexcept { return d.rend(); }
-
-                /// @copydoc rend()
-                RevIterator revEnd() noexcept { return d.rend(); }
-
-                /** @brief Returns a const reverse iterator to one before the first element. */
-                ConstRevIterator crend() const noexcept { return d.crend(); }
-
-                /// @copydoc crend()
-                ConstRevIterator constRevEnd() const noexcept { return d.crend(); }
-
                 // -- Capacity --
 
-                /** @brief Returns true if the set has no elements. */
+                /** @brief Returns true if the hash set has no elements. */
                 bool isEmpty() const noexcept { return d.empty(); }
 
                 /** @brief Returns the number of elements. */
@@ -135,62 +108,31 @@ class Set {
 
                 // -- Lookup --
 
-                /** @brief Returns true if @p value exists in the set. */
+                /** @brief Returns true if @p value exists in the hash set. */
                 bool contains(const T &value) const { return d.find(value) != d.end(); }
-
-                /**
-                 * @brief Finds @p value in the set.
-                 * @param value The value to search for.
-                 * @return Iterator to the element, or end() if not found.
-                 */
-                Iterator find(const T &value) { return d.find(value); }
-
-                /** @brief Const overload of find(). */
-                ConstIterator find(const T &value) const { return d.find(value); }
-
-                /**
-                 * @brief Returns an iterator to the first element not less than @p value.
-                 * @param value The value to search for.
-                 * @return Iterator to the lower bound.
-                 */
-                Iterator lowerBound(const T &value) { return d.lower_bound(value); }
-
-                /** @brief Const overload of lowerBound(). */
-                ConstIterator lowerBound(const T &value) const { return d.lower_bound(value); }
-
-                /**
-                 * @brief Returns an iterator to the first element greater than @p value.
-                 * @param value The value to search for.
-                 * @return Iterator to the upper bound.
-                 */
-                Iterator upperBound(const T &value) { return d.upper_bound(value); }
-
-                /** @brief Const overload of upperBound(). */
-                ConstIterator upperBound(const T &value) const { return d.upper_bound(value); }
 
                 // -- Modifiers --
 
                 /**
-                 * @brief Inserts a value into the set.
+                 * @brief Inserts a value into the hash set.
                  * @param value The value to insert.
-                 * @return A pair of iterator and bool. The bool is true if insertion
-                 *         took place, false if the element already existed.
+                 * @return True if the value was inserted, false if it already existed.
                  */
-                std::pair<Iterator, bool> insert(const T &value) {
-                        return d.insert(value);
+                bool insert(const T &value) {
+                        return d.insert(value).second;
                 }
 
                 /**
-                 * @brief Inserts a value into the set (move overload).
+                 * @brief Inserts a value into the hash set (move overload).
                  * @param value The value to insert (moved).
-                 * @return A pair of iterator and bool.
+                 * @return True if the value was inserted, false if it already existed.
                  */
-                std::pair<Iterator, bool> insert(T &&value) {
-                        return d.insert(std::move(value));
+                bool insert(T &&value) {
+                        return d.insert(std::move(value)).second;
                 }
 
                 /**
-                 * @brief Removes @p value from the set.
+                 * @brief Removes @p value from the hash set.
                  * @param value The value to remove.
                  * @return True if the element was removed, false if not found.
                  */
@@ -214,10 +156,10 @@ class Set {
                 }
 
                 /**
-                 * @brief Swaps contents with another set.
-                 * @param other The set to swap with.
+                 * @brief Swaps contents with another hash set.
+                 * @param other The hash set to swap with.
                  */
-                void swap(Set &other) noexcept {
+                void swap(HashSet &other) noexcept {
                         d.swap(other.d);
                         return;
                 }
@@ -227,10 +169,10 @@ class Set {
                 /**
                  * @brief Returns the union of this set and @p other.
                  * @param other The set to unite with.
-                 * @return A new Set containing all elements from both sets.
+                 * @return A new HashSet containing all elements from both sets.
                  */
-                Set unite(const Set &other) const {
-                        Set ret = *this;
+                HashSet unite(const HashSet &other) const {
+                        HashSet ret = *this;
                         for(const auto &v : other.d) ret.d.insert(v);
                         return ret;
                 }
@@ -238,10 +180,10 @@ class Set {
                 /**
                  * @brief Returns the intersection of this set and @p other.
                  * @param other The set to intersect with.
-                 * @return A new Set containing only elements present in both sets.
+                 * @return A new HashSet containing only elements present in both sets.
                  */
-                Set intersect(const Set &other) const {
-                        Set ret;
+                HashSet intersect(const HashSet &other) const {
+                        HashSet ret;
                         for(const auto &v : d) {
                                 if(other.contains(v)) ret.d.insert(v);
                         }
@@ -251,10 +193,10 @@ class Set {
                 /**
                  * @brief Returns this set minus @p other.
                  * @param other The set to subtract.
-                 * @return A new Set containing elements in this set but not in @p other.
+                 * @return A new HashSet containing elements in this set but not in @p other.
                  */
-                Set subtract(const Set &other) const {
-                        Set ret;
+                HashSet subtract(const HashSet &other) const {
+                        HashSet ret;
                         for(const auto &v : d) {
                                 if(!other.contains(v)) ret.d.insert(v);
                         }
@@ -264,8 +206,8 @@ class Set {
                 // -- Convenience --
 
                 /**
-                 * @brief Converts the set to a List.
-                 * @return A List containing all elements in sorted order.
+                 * @brief Converts the hash set to a List.
+                 * @return A List containing all elements (order is unspecified).
                  */
                 List<T> toList() const {
                         List<T> ret;
@@ -287,11 +229,11 @@ class Set {
 
                 // -- Comparison --
 
-                /** @brief Returns true if both sets have identical contents. */
-                friend bool operator==(const Set &lhs, const Set &rhs) { return lhs.d == rhs.d; }
+                /** @brief Returns true if both hash sets have identical contents. */
+                friend bool operator==(const HashSet &lhs, const HashSet &rhs) { return lhs.d == rhs.d; }
 
-                /** @brief Returns true if the sets differ. */
-                friend bool operator!=(const Set &lhs, const Set &rhs) { return lhs.d != rhs.d; }
+                /** @brief Returns true if the hash sets differ. */
+                friend bool operator!=(const HashSet &lhs, const HashSet &rhs) { return lhs.d != rhs.d; }
 
         private:
                 Data d;

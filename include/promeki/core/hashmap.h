@@ -1,5 +1,5 @@
 /**
- * @file      core/map.h
+ * @file      core/hashmap.h
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <initializer_list>
 #include <promeki/core/namespace.h>
 #include <promeki/core/sharedptr.h>
@@ -16,23 +16,29 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Ordered associative container wrapping std::map.
+ * @brief Unordered associative container wrapping std::unordered_map.
  *
- * Provides a Qt-inspired API over std::map with consistent naming
+ * Provides a Qt-inspired API over std::unordered_map with consistent naming
  * conventions matching the rest of libpromeki.
  *
- * @tparam K Key type.
+ * @tparam K Key type (must be hashable).
  * @tparam V Value type.
  */
 template <typename K, typename V>
-class Map {
-        PROMEKI_SHARED_FINAL(Map)
+class HashMap {
+        PROMEKI_SHARED_FINAL(HashMap)
         public:
-                /** @brief Shared pointer type for Map. */
-                using Ptr = SharedPtr<Map>;
+                /** @brief Shared pointer type for HashMap. */
+                using Ptr = SharedPtr<HashMap>;
 
-                /** @brief Underlying std::map storage type. */
-                using Data = std::map<K, V>;
+                /** @brief Underlying std::unordered_map storage type. */
+                using Data = std::unordered_map<K, V>;
+
+                /** @brief Key type. */
+                using Key = K;
+
+                /** @brief Value type. */
+                using Value = V;
 
                 /** @brief Mutable forward iterator. */
                 using Iterator = typename Data::iterator;
@@ -40,38 +46,32 @@ class Map {
                 /** @brief Const forward iterator. */
                 using ConstIterator = typename Data::const_iterator;
 
-                /** @brief Mutable reverse iterator. */
-                using RevIterator = typename Data::reverse_iterator;
-
-                /** @brief Const reverse iterator. */
-                using ConstRevIterator = typename Data::const_reverse_iterator;
-
-                /** @brief Default constructor. Creates an empty map. */
-                Map() = default;
+                /** @brief Default constructor. Creates an empty hash map. */
+                HashMap() = default;
 
                 /** @brief Copy constructor. */
-                Map(const Map &other) : d(other.d) {}
+                HashMap(const HashMap &other) : d(other.d) {}
 
                 /** @brief Move constructor. */
-                Map(Map &&other) noexcept : d(std::move(other.d)) {}
+                HashMap(HashMap &&other) noexcept : d(std::move(other.d)) {}
 
                 /**
-                 * @brief Constructs a map from an initializer list of key-value pairs.
+                 * @brief Constructs a hash map from an initializer list of key-value pairs.
                  * @param initList Brace-enclosed list of {key, value} pairs.
                  */
-                Map(std::initializer_list<std::pair<const K, V>> initList) : d(initList) {}
+                HashMap(std::initializer_list<std::pair<const K, V>> initList) : d(initList) {}
 
                 /** @brief Destructor. */
-                ~Map() = default;
+                ~HashMap() = default;
 
                 /** @brief Copy assignment operator. */
-                Map &operator=(const Map &other) {
+                HashMap &operator=(const HashMap &other) {
                         d = other.d;
                         return *this;
                 }
 
                 /** @brief Move assignment operator. */
-                Map &operator=(Map &&other) noexcept {
+                HashMap &operator=(HashMap &&other) noexcept {
                         d = std::move(other.d);
                         return *this;
                 }
@@ -102,33 +102,9 @@ class Map {
                 /// @copydoc cend()
                 ConstIterator constEnd() const noexcept { return d.cend(); }
 
-                /** @brief Returns a mutable reverse iterator to the last entry. */
-                RevIterator rbegin() noexcept { return d.rbegin(); }
-
-                /// @copydoc rbegin()
-                RevIterator revBegin() noexcept { return d.rbegin(); }
-
-                /** @brief Returns a const reverse iterator to the last entry. */
-                ConstRevIterator crbegin() const noexcept { return d.crbegin(); }
-
-                /// @copydoc crbegin()
-                ConstRevIterator constRevBegin() const noexcept { return d.crbegin(); }
-
-                /** @brief Returns a mutable reverse iterator to one before the first entry. */
-                RevIterator rend() noexcept { return d.rend(); }
-
-                /// @copydoc rend()
-                RevIterator revEnd() noexcept { return d.rend(); }
-
-                /** @brief Returns a const reverse iterator to one before the first entry. */
-                ConstRevIterator crend() const noexcept { return d.crend(); }
-
-                /// @copydoc crend()
-                ConstRevIterator constRevEnd() const noexcept { return d.crend(); }
-
                 // -- Capacity --
 
-                /** @brief Returns true if the map has no entries. */
+                /** @brief Returns true if the hash map has no entries. */
                 bool isEmpty() const noexcept { return d.empty(); }
 
                 /** @brief Returns the number of key-value pairs. */
@@ -168,7 +144,7 @@ class Map {
                         return defaultValue;
                 }
 
-                /** @brief Returns true if @p key exists in the map. */
+                /** @brief Returns true if @p key exists in the hash map. */
                 bool contains(const K &key) const { return d.find(key) != d.end(); }
 
                 /**
@@ -228,10 +204,10 @@ class Map {
                 }
 
                 /**
-                 * @brief Swaps contents with another map.
-                 * @param other The map to swap with.
+                 * @brief Swaps contents with another hash map.
+                 * @param other The hash map to swap with.
                  */
-                void swap(Map &other) noexcept {
+                void swap(HashMap &other) noexcept {
                         d.swap(other.d);
                         return;
                 }
@@ -267,11 +243,11 @@ class Map {
 
                 // -- Comparison --
 
-                /** @brief Returns true if both maps have identical contents. */
-                friend bool operator==(const Map &lhs, const Map &rhs) { return lhs.d == rhs.d; }
+                /** @brief Returns true if both hash maps have identical contents. */
+                friend bool operator==(const HashMap &lhs, const HashMap &rhs) { return lhs.d == rhs.d; }
 
-                /** @brief Returns true if the maps differ. */
-                friend bool operator!=(const Map &lhs, const Map &rhs) { return lhs.d != rhs.d; }
+                /** @brief Returns true if the hash maps differ. */
+                friend bool operator!=(const HashMap &lhs, const HashMap &rhs) { return lhs.d != rhs.d; }
 
         private:
                 Data d;

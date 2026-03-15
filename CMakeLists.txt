@@ -758,6 +758,14 @@ if(PROMEKI_BUILD_TESTS)
         tests/color.cpp
         tests/env.cpp
         tests/terminal.cpp
+        tests/pair.cpp
+        tests/result.cpp
+        tests/hashmap.cpp
+        tests/hashset.cpp
+        tests/deque.cpp
+        tests/stack.cpp
+        tests/priorityqueue.cpp
+        tests/span.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

@@ -563,6 +563,17 @@ class List {
                 }
 
                 /**
+                 * @brief Calls @p func for every element.
+                 * @tparam Func Callable with signature void(const T &).
+                 * @param func The function to invoke.
+                 */
+                template <typename Func>
+                void forEach(Func &&func) const {
+                        for(const auto &item : d) func(item);
+                        return;
+                }
+
+                /**
                  * @brief Returns true if the list contains the given value.
                  * @param val The value to search for.
                  * @return True if found, false otherwise.
@@ -572,6 +583,59 @@ class List {
                                 if(item == val) return true;
                         }
                         return false;
+                }
+
+                /**
+                 * @brief Returns the index of the first occurrence of @p value.
+                 * @param value The value to search for.
+                 * @return The index, or -1 if not found.
+                 */
+                ssize_t indexOf(const T &value) const {
+                        for(size_t i = 0; i < d.size(); ++i) {
+                                if(d[i] == value) return static_cast<ssize_t>(i);
+                        }
+                        return -1;
+                }
+
+                /**
+                 * @brief Returns the index of the last occurrence of @p value.
+                 * @param value The value to search for.
+                 * @return The index, or -1 if not found.
+                 */
+                ssize_t lastIndexOf(const T &value) const {
+                        for(ssize_t i = static_cast<ssize_t>(d.size()) - 1; i >= 0; --i) {
+                                if(d[static_cast<size_t>(i)] == value) return i;
+                        }
+                        return -1;
+                }
+
+                /**
+                 * @brief Returns the number of occurrences of @p value.
+                 * @param value The value to count.
+                 * @return The count of matching elements.
+                 */
+                size_t count(const T &value) const {
+                        size_t n = 0;
+                        for(const auto &item : d) {
+                                if(item == value) ++n;
+                        }
+                        return n;
+                }
+
+                /**
+                 * @brief Returns a sublist starting at @p pos with @p length elements.
+                 * @param pos Starting index.
+                 * @param length Number of elements to include.
+                 * @return A new List containing the extracted elements.
+                 */
+                List<T> mid(size_t pos, size_t length) const {
+                        List<T> ret;
+                        size_t end = pos + length;
+                        if(end > d.size()) end = d.size();
+                        if(pos >= d.size()) return ret;
+                        ret.reserve(end - pos);
+                        for(size_t i = pos; i < end; ++i) ret.pushToBack(d[i]);
+                        return ret;
                 }
 
                 /** @brief Returns true if both lists have identical contents. */

@@ -185,6 +185,15 @@ class Queue {
                 }
 
                 /**
+                 * @brief Returns true if the queue has no elements.
+                 * @return True if empty.
+                 */
+                bool isEmpty() const {
+                        Locker locker(_mutex);
+                        return _queue.empty();
+                }
+
+                /**
                  * @brief Returns the number of elements currently in the queue.
                  * @return Current queue depth.
                  */

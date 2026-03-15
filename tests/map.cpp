@@ -152,3 +152,32 @@ TEST_CASE("Map: range-based for") {
         }
         CHECK(count == 2);
 }
+
+TEST_CASE("Map: revBegin/revEnd") {
+        Map<int, int> m = {{1, 10}, {2, 20}, {3, 30}};
+        List<int> rev;
+        for(auto it = m.revBegin(); it != m.revEnd(); ++it) {
+                rev.pushToBack(it->first);
+        }
+        CHECK(rev[0] == 3);
+        CHECK(rev[1] == 2);
+        CHECK(rev[2] == 1);
+}
+
+TEST_CASE("Map: constRevBegin/constRevEnd") {
+        const Map<int, int> m = {{1, 10}, {2, 20}};
+        List<int> rev;
+        for(auto it = m.constRevBegin(); it != m.constRevEnd(); ++it) {
+                rev.pushToBack(it->first);
+        }
+        CHECK(rev[0] == 2);
+        CHECK(rev[1] == 1);
+}
+
+TEST_CASE("Map: swap") {
+        Map<int, int> a = {{1, 10}};
+        Map<int, int> b = {{2, 20}};
+        a.swap(b);
+        CHECK(a.contains(2));
+        CHECK(b.contains(1));
+}

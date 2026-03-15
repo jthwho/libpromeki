@@ -23,6 +23,11 @@
  * | @ref Timecode | SMPTE timecode (H:M:S:F) |
  * | @ref TimeStamp | Steady-clock time point |
  * | @ref XYZColor | CIE XYZ color triple |
+ * | @ref Pair | Typed pair of two values |
+ * | @ref Result | Pair\<T, Error\> for fallible operations |
+ * | @ref Span | Non-owning view over contiguous storage |
+ * | @ref Stack | LIFO stack (std::stack wrapper) |
+ * | @ref PriorityQueue | Priority queue (std::priority_queue wrapper) |
  *
  * @section shareable Shareable
  *
@@ -57,6 +62,9 @@
  * | @ref List | Generic list (std::vector wrapper) |
  * | @ref Map | Ordered map (std::map wrapper) |
  * | @ref Set | Ordered set (std::set wrapper) |
+ * | @ref HashMap | Unordered map (std::unordered_map wrapper) |
+ * | @ref HashSet | Unordered set (std::unordered_set wrapper) |
+ * | @ref Deque | Double-ended queue (std::deque wrapper) |
  * | @ref Array | Fixed-size array (std::array wrapper) |
  * | @ref Image | Image descriptor + pixel buffer planes |
  * | @ref Audio | Audio descriptor + sample buffer |
