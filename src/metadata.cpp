@@ -8,16 +8,17 @@
 #include <promeki/core/metadata.h>
 #include <promeki/core/string.h>
 #include <promeki/core/stringlist.h>
+#include <promeki/core/map.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 #define X(name, type) { Metadata::name, PROMEKI_STRINGIFY(name) },
-static std::map<Metadata::ID, String> metadataIDToString = { PROMEKI_ENUM_METADATA_ID };
+static Map<Metadata::ID, String> metadataIDToString = { PROMEKI_ENUM_METADATA_ID };
 #undef X
 
 #define X(name, type) { PROMEKI_STRINGIFY(name), Metadata::name },
-static std::map<String, Metadata::ID> metadataStringToID = { PROMEKI_ENUM_METADATA_ID };
+static Map<String, Metadata::ID> metadataStringToID = { PROMEKI_ENUM_METADATA_ID };
 #undef X
 
 const String &Metadata::idToString(ID id) {

@@ -6,13 +6,14 @@
  */
 
 #include <promeki/core/event.h>
+#include <promeki/core/atomic.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-static std::atomic<Event::Type> _nextType{1};
+static Atomic<Event::Type> _nextType{1};
 
 Event::Type Event::registerType() {
-        return _nextType.fetch_add(1, std::memory_order_relaxed);
+        return _nextType.fetchAndAdd(1);
 }
 
 const Event::Type Event::Timer       = Event::registerType();

@@ -5,15 +5,15 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <map>
 #include <promeki/proav/pixelformat.h>
 #include <promeki/proav/paintengine.h>
 #include <promeki/proav/image.h>
+#include <promeki/core/map.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-using PixelFormatMap = std::map<int, PixelFormat *>;
+using PixelFormatMap = Map<int, PixelFormat *>;
 
 static PixelFormatMap &pixelFormatMap() {
         static PixelFormatMap ret;

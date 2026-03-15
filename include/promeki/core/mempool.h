@@ -8,9 +8,9 @@
 #pragma once
 
 #include <cstddef>
-#include <mutex>
 #include <algorithm>
 #include <promeki/core/namespace.h>
+#include <promeki/core/mutex.h>
 #include <promeki/core/string.h>
 #include <promeki/core/map.h>
 #include <promeki/core/set.h>
@@ -178,7 +178,7 @@ class MemPool {
 
        private:
                 String                  _name;
-                mutable std::mutex      _mutex;
+                mutable Mutex           _mutex;
                 BlockSet                _freeBlocks;
                 BlockMap                _allocatedBlocks;
 };

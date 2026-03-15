@@ -149,6 +149,13 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/system.h
     include/promeki/core/timecode.h
     include/promeki/core/timestamp.h
+    include/promeki/core/mutex.h
+    include/promeki/core/readwritelock.h
+    include/promeki/core/waitcondition.h
+    include/promeki/core/atomic.h
+    include/promeki/core/future.h
+    include/promeki/core/promise.h
+    include/promeki/core/threadpool.h
     include/promeki/core/queue.h
     include/promeki/core/util.h
     include/promeki/core/uuid.h
@@ -208,6 +215,7 @@ set(PROMEKI_CORE_SOURCES
     src/signal.cpp
     src/slot.cpp
     src/thread.cpp
+    src/threadpool.cpp
     src/pidcontroller.cpp
     src/json.cpp
     src/framerate.cpp
@@ -766,6 +774,12 @@ if(PROMEKI_BUILD_TESTS)
         tests/stack.cpp
         tests/priorityqueue.cpp
         tests/span.cpp
+        tests/mutex.cpp
+        tests/readwritelock.cpp
+        tests/waitcondition.cpp
+        tests/atomic.cpp
+        tests/future.cpp
+        tests/threadpool.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

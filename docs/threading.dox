@@ -29,7 +29,7 @@
  *
  * | Category | Meaning | Examples |
  * |----------|---------|---------|
- * | **Thread-safe** | All public methods may be called concurrently from any thread. Internally synchronized. | Queue, Mutex, Atomic |
+ * | **Thread-safe** | All public methods may be called concurrently from any thread. Internally synchronized. | Queue, Mutex, ReadWriteLock, WaitCondition, Atomic, ThreadPool, Future |
  * | **Not thread-safe** | External synchronization required for concurrent access to the same instance. | Most data objects when accessed directly |
  * | **Conditionally thread-safe** | Distinct instances may be used concurrently. Concurrent access to a single instance requires external synchronization. | List, Map, Set, String |
  * | **Thread-affine** | Must be used from the thread that created it (or the thread it was moved to via moveToThread()). | ObjectBase and all subclasses |
@@ -87,6 +87,116 @@
  * - @ref Thread provides a built-in EventLoop.  The main thread's
  *   EventLoop is set up by @ref Application.
  *
+ * @section thread_primitives Concurrency Primitives
+ *
+ * promeki provides wrapper classes for standard C++ synchronization
+ * primitives.  These wrappers offer Qt-inspired naming and integrate
+ * with each other (e.g., @ref WaitCondition works with @ref Mutex).
+ * Always use the library wrappers instead of raw @c std:: types.
+ *
+ * @subsection thread_mutex Mutex
+ *
+ * @ref Mutex wraps @c std::mutex with @c lock(), @c unlock(), and
+ * @c tryLock().  Use the nested @c Mutex::Locker for RAII scoped
+ * locking:
+ *
+ * @code
+ * Mutex mutex;
+ *
+ * // RAII locking -- preferred
+ * {
+ *         Mutex::Locker locker(mutex);
+ *         // critical section
+ * }
+ *
+ * // Manual locking -- when RAII scope doesn't fit
+ * mutex.lock();
+ * // critical section
+ * mutex.unlock();
+ * @endcode
+ *
+ * @subsection thread_rwlock ReadWriteLock
+ *
+ * @ref ReadWriteLock wraps @c std::shared_mutex for reader-writer
+ * patterns where multiple concurrent readers are safe but writers
+ * need exclusive access.
+ *
+ * @code
+ * ReadWriteLock rwl;
+ *
+ * // Multiple readers can hold this simultaneously
+ * {
+ *         ReadWriteLock::ReadLocker locker(rwl);
+ *         // read-only access
+ * }
+ *
+ * // Writer gets exclusive access
+ * {
+ *         ReadWriteLock::WriteLocker locker(rwl);
+ *         // read-write access
+ * }
+ * @endcode
+ *
+ * @subsection thread_waitcondition WaitCondition
+ *
+ * @ref WaitCondition wraps @c std::condition_variable for thread
+ * signaling.  It works with @ref Mutex and supports both predicate
+ * and non-predicate waits with optional timeouts.
+ *
+ * @code
+ * Mutex mutex;
+ * WaitCondition cv;
+ * bool ready = false;
+ *
+ * // Waiting thread
+ * mutex.lock();
+ * cv.wait(mutex, [&] { return ready; });
+ * // ready is now true
+ * mutex.unlock();
+ *
+ * // Signaling thread
+ * {
+ *         Mutex::Locker locker(mutex);
+ *         ready = true;
+ * }
+ * cv.wakeOne();  // or cv.wakeAll()
+ * @endcode
+ *
+ * @subsection thread_atomic Atomic
+ *
+ * @ref Atomic wraps @c std::atomic with acquire/release semantics.
+ * Use @c value() to load and @c setValue() to store.  Read-modify-write
+ * operations (@c fetchAndAdd(), @c compareAndSwap(), @c exchange()) use
+ * @c memory_order_acq_rel.
+ *
+ * @code
+ * Atomic<int> counter(0);
+ * counter.setValue(42);
+ * int old = counter.fetchAndAdd(1);  // old == 42, counter == 43
+ * @endcode
+ *
+ * @subsection thread_future Future and Promise
+ *
+ * @ref Future and @ref Promise provide asynchronous result passing.
+ * A @ref Promise produces a value (or error) that a @ref Future
+ * consumes.  Both are move-only.
+ *
+ * @code
+ * Promise<int> p;
+ * Future<int> f = p.future();
+ *
+ * // Producer (e.g., on another thread)
+ * p.setValue(42);
+ *
+ * // Consumer
+ * auto [value, err] = f.result();  // blocks until ready
+ * @endcode
+ *
+ * @c Future<void> is specialized: @c result() returns an @ref Error
+ * instead of a @c Result pair.  Both @c Future<T>::result() and
+ * @c Future<T>::waitForFinished() accept an optional @c timeoutMs
+ * parameter.
+ *
  * @section thread_pool ThreadPool
  *
  * ThreadPool provides a pool of worker threads for running tasks
@@ -102,6 +212,13 @@
  * // Later...
  * auto [value, err] = result.result();
  * @endcode
+ *
+ * Key features:
+ * - Default thread count is @c std::thread::hardware_concurrency().
+ * - @c setThreadCount(0) switches to inline mode where tasks run on
+ *   the calling thread -- useful for WASM or single-threaded contexts.
+ * - @c waitForDone() blocks until all submitted tasks complete.
+ * - @c clear() discards pending (not running) tasks.
  *
  * Tasks submitted to the pool should be self-contained.  Pass data in
  * by copy (for simple types) or by @c Ptr (for shareable types).  Do

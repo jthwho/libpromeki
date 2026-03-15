@@ -96,8 +96,8 @@ int Thread::priorityMax(SchedulePolicy policy) {
 Thread *Thread::adoptCurrentThread() {
         Thread *t = new Thread();
         t->_adopted = true;
-        t->_running.store(true, std::memory_order_relaxed);
-        t->_nativeId.store(currentNativeId(), std::memory_order_relaxed);
+        t->_running.setValue(true);
+        t->_nativeId.setValue(currentNativeId());
         _currentThread = t;
         return t;
 }
@@ -121,7 +121,7 @@ Thread::~Thread() {
 
 void Thread::start(size_t stackSize) {
         if(_adopted) return;
-        if(_running.load(std::memory_order_relaxed)) return;
+        if(_running.value()) return;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         if(stackSize > 0) {
                 pthread_attr_t attr;
@@ -145,8 +145,9 @@ void Thread::start(size_t stackSize) {
         _thread = std::thread(&Thread::threadEntry, this);
 #endif
         // Wait until the thread has set up its EventLoop
-        std::unique_lock<std::mutex> lock(_mutex);
-        _startedCv.wait(lock, [this] { return _started; });
+        _mutex.lock();
+        _startedCv.wait(_mutex, [this] { return _started; });
+        _mutex.unlock();
         return;
 }
 
@@ -156,12 +157,11 @@ Error Thread::wait(unsigned int timeoutMs) {
         if(timeoutMs == 0) {
                 joinThread();
         } else {
-                std::unique_lock<std::mutex> lock(_mutex);
-                if(!_finishedCv.wait_for(lock,
-                        std::chrono::milliseconds(timeoutMs),
-                        [this] { return _finished; })) {
-                        return Error::Timeout;
-                }
+                _mutex.lock();
+                Error err = _finishedCv.wait(_mutex,
+                        [this] { return _finished; }, timeoutMs);
+                _mutex.unlock();
+                if(err != Error::Ok) return Error::Timeout;
                 joinThread();
         }
         // Reset state so the Thread object could be started again
@@ -172,22 +172,22 @@ Error Thread::wait(unsigned int timeoutMs) {
 }
 
 EventLoop *Thread::threadEventLoop() const {
-        // For adopted threads, look up the EventLoop lazily.
-        // The adopted thread doesn't own its EventLoop, so we
-        // return whatever is currently active on that thread.
-        // FIXME: This only works when called from the adopted
-        // thread itself.  Cross-thread callers will get the wrong
-        // EventLoop (or nullptr) because EventLoop::current() is
-        // thread-local.  To fix this properly, adoptCurrentThread()
-        // would need to re-snapshot after the EventLoop is created,
-        // or the adopted thread would need to register its loop with
-        // the Thread object.
-        if(_adopted) return EventLoop::current();
+        if(_adopted) {
+                // Cache the EventLoop when called from the adopted thread
+                // so that cross-thread callers see the correct pointer.
+                if(_currentThread == this) {
+                        EventLoop *loop = EventLoop::current();
+                        if(loop != nullptr) {
+                                const_cast<Thread *>(this)->_threadLoop = loop;
+                        }
+                }
+                return _threadLoop;
+        }
         return _threadLoop;
 }
 
 void Thread::quit(int returnCode) {
-        EventLoop *loop = _adopted ? EventLoop::current() : _threadLoop;
+        EventLoop *loop = threadEventLoop();
         if(loop != nullptr) {
                 loop->quit(returnCode);
         }
@@ -206,7 +206,7 @@ unsigned int Thread::idealThreadCount() {
 }
 
 bool Thread::isJoinable() const {
-        if(_usesPthread) return _running.load(std::memory_order_relaxed) || _finished;
+        if(_usesPthread) return _running.value() || _finished;
         return _thread.joinable();
 }
 
@@ -234,7 +234,7 @@ Thread::NativeHandle Thread::nativeHandle() const {
 }
 
 SchedulePolicy Thread::schedulePolicy() const {
-        if(!_running.load(std::memory_order_relaxed)) return SchedulePolicy::Default;
+        if(!_running.value()) return SchedulePolicy::Default;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         int policy = 0;
         struct sched_param param;
@@ -248,7 +248,7 @@ SchedulePolicy Thread::schedulePolicy() const {
 }
 
 int Thread::priority() const {
-        if(!_running.load(std::memory_order_relaxed)) return 0;
+        if(!_running.value()) return 0;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         int policy = 0;
         struct sched_param param;
@@ -264,16 +264,16 @@ int Thread::priority() const {
 }
 
 String Thread::name() const {
-        std::lock_guard<std::mutex> lock(const_cast<std::mutex &>(_mutex));
+        Mutex::Locker locker(_mutex);
         return _name;
 }
 
 void Thread::setName(const String &n) {
         {
-                std::lock_guard<std::mutex> lock(_mutex);
+                Mutex::Locker locker(_mutex);
                 _name = n;
         }
-        if(_running.load(std::memory_order_relaxed)) {
+        if(_running.value()) {
                 applyOsName();
         }
         if(_currentThread == this) {
@@ -283,7 +283,7 @@ void Thread::setName(const String &n) {
 }
 
 void Thread::applyOsName() {
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker locker(_mutex);
         if(_name.isEmpty()) return;
 #if defined(PROMEKI_PLATFORM_LINUX)
         pthread_setname_np(nativeHandle(), _name.cstr());
@@ -306,7 +306,7 @@ void Thread::applyOsName() {
 
 Set<int> Thread::affinity() const {
         Set<int> result;
-        if(!_running.load(std::memory_order_relaxed)) return result;
+        if(!_running.value()) return result;
 #if defined(PROMEKI_PLATFORM_LINUX)
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -324,7 +324,7 @@ Set<int> Thread::affinity() const {
 }
 
 Error Thread::setAffinity(const Set<int> &cpus) {
-        if(!_running.load(std::memory_order_relaxed)) return Error::Invalid;
+        if(!_running.value()) return Error::Invalid;
 #if defined(PROMEKI_PLATFORM_LINUX)
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -353,7 +353,7 @@ Error Thread::setAffinity(const Set<int> &cpus) {
 }
 
 Error Thread::setPriority(int prio, SchedulePolicy policy) {
-        if(!_running.load(std::memory_order_relaxed)) return Error::Invalid;
+        if(!_running.value()) return Error::Invalid;
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         struct sched_param param;
         param.sched_priority = prio;
@@ -376,36 +376,36 @@ Error Thread::setPriority(int prio, SchedulePolicy policy) {
 
 void Thread::threadEntry() {
         _currentThread = this;
-        _nativeId.store(currentNativeId(), std::memory_order_relaxed);
+        _nativeId.setValue(currentNativeId());
         EventLoop loop;
         _threadLoop = &loop;
-        _running.store(true, std::memory_order_relaxed);
+        _running.setValue(true);
         applyOsName();
 
         // Signal the creating thread that we're ready
         {
-                std::lock_guard<std::mutex> lock(_mutex);
+                Mutex::Locker locker(_mutex);
                 _started = true;
         }
-        _startedCv.notify_one();
+        _startedCv.wakeOne();
 
         startedSignal.emit();
         run();
-        _exitCode.store(loop.exitCode(), std::memory_order_relaxed);
+        _exitCode.setValue(loop.exitCode());
 
         // Emit finished while the EventLoop is still alive so that
         // cross-thread signal dispatch from this thread still works.
-        finishedSignal.emit(_exitCode.load(std::memory_order_relaxed));
+        finishedSignal.emit(_exitCode.value());
 
-        _running.store(false, std::memory_order_relaxed);
+        _running.setValue(false);
         _threadLoop = nullptr;
 
         // Notify any thread blocked in wait()
         {
-                std::lock_guard<std::mutex> lock(_mutex);
+                Mutex::Locker locker(_mutex);
                 _finished = true;
         }
-        _finishedCv.notify_all();
+        _finishedCv.wakeAll();
         return;
 }
 

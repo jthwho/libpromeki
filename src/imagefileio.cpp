@@ -5,14 +5,14 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <map>
 #include <promeki/proav/imagefileio.h>
 #include <promeki/core/error.h>
+#include <promeki/core/map.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-using ImageFileIOMap = std::map<int, ImageFileIO *>;
+using ImageFileIOMap = Map<int, ImageFileIO *>;
 
 static ImageFileIOMap &imageFileIOMap() {
         static ImageFileIOMap ret;

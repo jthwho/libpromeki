@@ -48,12 +48,32 @@ Functional objects represent active entities with identity, behavior, and relati
 
 Examples: `AudioBlock`, custom processing nodes, application-level objects.
 
+### Utility Classes
+
+Utility classes provide infrastructure services (synchronization, threading, async coordination) without being data objects or functional objects. They do not use `PROMEKI_SHARED_FINAL` and do not derive from `ObjectBase`. Key traits:
+
+- **Not copyable, not movable.** They manage OS resources (mutexes, threads, condition variables) that cannot be meaningfully copied.
+- **Often thread-safe.** Most utility classes are designed for concurrent access and document this in their Doxygen.
+- **RAII lockers.** Synchronization utilities provide nested RAII locker classes (`Mutex::Locker`, `ReadWriteLock::ReadLocker`, `ReadWriteLock::WriteLocker`) that acquire on construction and release on destruction.
+
+| Class | Wraps | Purpose |
+|---|---|---|
+| `Mutex` | `std::mutex` | Mutual exclusion with nested `Locker` |
+| `ReadWriteLock` | `std::shared_mutex` | Reader-writer locking with `ReadLocker`/`WriteLocker` |
+| `WaitCondition` | `std::condition_variable` | Thread signaling (works with `Mutex`) |
+| `Atomic<T>` | `std::atomic<T>` | Lock-free atomic operations |
+| `Future<T>` | `std::future<T>` | Asynchronous result retrieval |
+| `Promise<T>` | `std::promise<T>` | Asynchronous result fulfillment |
+| `ThreadPool` | — | Worker thread pool with task submission |
+| `Queue<T>` | — | Thread-safe FIFO queue |
+
 ### Choosing the Right Category
 
-Ask: "Does this class represent a *value* or a *thing*?"
+Ask: "Does this class represent a *value*, a *thing*, or *infrastructure*?"
 
 - A timecode, an image description, a list of strings — these are values. Use a data object.
 - An audio processing node, a file watcher, a UI widget — these are things with identity. Derive from `ObjectBase`.
+- A mutex, a thread pool, an atomic counter — these are infrastructure. Use a utility class (no `PROMEKI_SHARED_FINAL`, no `ObjectBase`).
 
 When in doubt, prefer a data object. Most classes in a library like this are data.
 
@@ -237,14 +257,33 @@ class Thread {
                 NativeHandle nativeHandle() const;
                 // ...
         private:
-                // Private members may use std:: types directly since
-                // they are not visible to library users.
+                // Private members may use std:: types directly when no
+                // library wrapper exists (e.g., std::thread).
                 std::thread     _thread;
-                std::mutex      _mutex;
 };
 ```
 
-Private members and implementation files may use `std::` types directly since they do not leak into the public interface.
+Private members and implementation files may use `std::` types directly when no library wrapper exists, since they do not leak into the public interface.
+
+### Prefer Library Wrappers Over Raw std:: Types
+
+When a promeki wrapper exists for a `std::` type, always use the wrapper — even in private members and implementation files. This "eat your own dogfood" principle ensures consistency, exercises the library's own APIs, and catches usability gaps early.
+
+| std:: type | promeki wrapper |
+|---|---|
+| `std::mutex` | `Mutex` |
+| `std::shared_mutex` | `ReadWriteLock` |
+| `std::condition_variable` | `WaitCondition` |
+| `std::atomic<T>` | `Atomic<T>` |
+| `std::future<T>` | `Future<T>` |
+| `std::promise<T>` | `Promise<T>` |
+| `std::pair<T, Error>` | `Result<T>` |
+| `std::vector<T>` | `List<T>` |
+| `std::map<K,V>` | `Map<K,V>` |
+| `std::set<K>` | `Set<K>` |
+| `std::string` | `String` |
+
+Use the raw `std::` type only when no wrapper exists (e.g., `std::thread`, `std::packaged_task`) or when interfacing with third-party code that requires it.
 
 ### Macros
 
@@ -361,11 +400,12 @@ No internal `SharedPtr<Data>`, no `d->field` / `d.modify()->field` pattern. Just
 
 Use one of these patterns consistently within a class. Preferred order:
 
-1. **`std::pair<T, Error>`** — Best for factory/parse methods where both a value and error status are needed:
+1. **`Result<T>`** — Best for factory/parse methods where both a value and error status are needed. `Result<T>` is defined in `result.h` as `Pair<T, Error>` and supports structured bindings:
    ```cpp
-   static std::pair<Timecode, Error> fromString(const String &str);
+   static Result<Timecode> fromString(const String &str);
    auto [tc, err] = Timecode::fromString(str);
    ```
+   Use `Result<T>` (not `std::pair<T, Error>`) in all public APIs. The helper functions `makeResult(value)` and `makeError<T>(err)` simplify construction.
 
 2. **Direct `Error` return** — For operations that don't produce a value:
    ```cpp
@@ -490,10 +530,10 @@ Every public method should have at minimum a `@brief` line. Document parameters,
  *        one is available or the timeout expires.
  * @param timeoutMs Maximum time to wait in milliseconds.  A value
  *        of zero (the default) waits indefinitely.
- * @return A pair of the dequeued element (default-constructed on
- *         timeout) and Error::Ok or Error::Timeout.
+ * @return A Result containing the dequeued element and Error::Ok,
+ *         or a default-constructed element and Error::Timeout.
  */
-std::pair<T, Error> pop(unsigned int timeoutMs = 0);
+Result<T> pop(unsigned int timeoutMs = 0);
 ```
 
 ### Thread Safety Documentation

@@ -9,7 +9,6 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 | Document | Phase | Description |
 |---|---|---|
 | [core_containers.md](core_containers.md) | 1A, 1C | Container wrappers and API consistency audit |
-| [core_concurrency.md](core_concurrency.md) | 1B | Threading primitives, Future/Promise, ThreadPool |
 | [core_utilities.md](core_utilities.md) | 1D, 7 | Random, ElapsedTimer, Duration, Algorithm, enhanced existing classes |
 | [core_io.md](core_io.md) | 2 | IODevice, BufferedIODevice, FilePath, Dir, Process |
 | [core_streams.md](core_streams.md) | 2, 7 | DataStream, TextStream, ObjectBase saveState/loadState, std:: stream migration |
@@ -48,7 +47,8 @@ Phase 7 (Cross-Cutting) -- ongoing throughout
 
 ### Phase 1: Core Containers, Concurrency, and Utilities
 **Prerequisites:** None
-**Documents:** `core_containers.md`, `core_concurrency.md`, `core_utilities.md`
+**Documents:** `core_containers.md`, `core_utilities.md`
+**Completed:** Phase 1A (containers), Phase 1B (concurrency — Mutex, ReadWriteLock, WaitCondition, Atomic, Future/Promise, ThreadPool, Queue migration), Phase 1C (API consistency)
 
 Complete the container wrapper suite, add threading primitives, audit existing classes for API consistency, and add general-purpose utility classes. Everything else depends on this phase.
 
@@ -102,7 +102,7 @@ Every new class and every modification to an existing class must follow:
 - **Naming**: PascalCase classes, camelCase methods, `_underscore` private members, `set*()` setters, bare noun getters, `is*()` predicates, `to*()` conversions, `from*()` factories.
 - **Indentation**: 8-space-wide tabs. `.clang-format` enforces formatting.
 - **Object categories**: Simple data objects (no `PROMEKI_SHARED_FINAL`), Shareable data objects (`PROMEKI_SHARED_FINAL` + `::Ptr` + `::List` + `::PtrList`), Functional objects (derive from `ObjectBase`, use `PROMEKI_OBJECT`). No internal `SharedPtr<Data>` — ever.
-- **Error handling**: Use `Error` class, never `bool` returns for error reporting. Preferred patterns: `std::pair<T, Error>`, direct `Error` return, or `Error *err = nullptr` output parameter.
+- **Error handling**: Use `Error` class, never `bool` returns for error reporting. Preferred patterns: `Result<T>` (alias for `Pair<T, Error>`), direct `Error` return, or `Error *err = nullptr` output parameter.
 - **Blocking calls**: Must accept `unsigned int timeoutMs = 0` (0 = wait indefinitely). Return `Error::Timeout` on expiry.
 - **Public API**: No naked `std::` types in public interfaces — wrap in `using` aliases inside the class.
 - **Doxygen**: All public classes and methods documented with `/** ... */` style. `@brief` required. `@param`, `@return`, `@tparam` as applicable.
@@ -226,7 +226,7 @@ There are 8 FIXME comments in the current codebase. These are tracked in [fixme.
 | File | Issue | Natural Phase |
 |---|---|---|
 | `src/file.cpp:44` | Windows File implementation is a stub | Phase 2 (File -> IODevice) |
-| `src/thread.cpp:178` | `threadEventLoop()` fails for cross-thread calls on adopted threads | Phase 1B |
+| `src/thread.cpp:178` | `threadEventLoop()` fails for cross-thread calls on adopted threads | ~~Phase 1B~~ **Done** |
 | `include/promeki/proav/audiodesc.h:277` | `operator==` doesn't compare metadata | Phase 7 |
 | `src/audiofile_libsndfile.cpp:312` | `fileIsReadable()` doesn't inspect SF_INFO | Phase 2 (AudioFile IODevice) |
 | `src/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |

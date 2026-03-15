@@ -23,7 +23,7 @@ struct DebugDatabaseItem {
 
 using DebugDatabaseItemList = List<DebugDatabaseItem>;
 
-using DebugDatabase = std::map<String, DebugDatabaseItemList>;
+using DebugDatabase = Map<String, DebugDatabaseItemList>;
 
 static DebugDatabase &debugDatabase() {
         static DebugDatabase ret;
@@ -188,7 +188,7 @@ void Logger::worker() {
                                         _fileFormatter = arg.formatter ? arg.formatter : defaultFileFormatter();
                                 }
                         } else if constexpr (std::is_same_v<T, CmdSync>) {
-                                arg.promise->set_value();
+                                arg.promise->setValue();
                         } else if constexpr (std::is_same_v<T, CmdTerminate>) {
                                 running = false;
                                 LogEntry logentry{DateTime::now(), Debug, "LOGGER", 0,
@@ -209,7 +209,7 @@ void Logger::writeLog(const LogEntry &entry) {
         if(_file.is_open()) {
                 _file << _fileFormatter(fmt) << std::endl;
         }
-        if(_consoleLogging) {
+        if(_consoleLogging.value()) {
                 std::cout << _consoleFormatter(fmt) << "\033[0m" << std::endl;
         }
 }

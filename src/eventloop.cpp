@@ -35,12 +35,12 @@ EventLoop::~EventLoop() {
 }
 
 int EventLoop::exec() {
-        _running.store(true, std::memory_order_relaxed);
-        _exitCode.store(0, std::memory_order_relaxed);
-        while(_running.load(std::memory_order_relaxed)) {
+        _running.setValue(true);
+        _exitCode.setValue(0);
+        while(_running.value()) {
                 processEvents(WaitForMore);
         }
-        return _exitCode.load(std::memory_order_relaxed);
+        return _exitCode.value();
 }
 
 // Returns true if a QuitItem was processed.
@@ -52,9 +52,8 @@ bool EventLoop::dispatchItem(Item &item) {
                 ei.receiver->event(ei.event);
                 delete ei.event;
         } else if(std::holds_alternative<QuitItem>(item)) {
-                _exitCode.store(std::get<QuitItem>(item).code,
-                                std::memory_order_relaxed);
-                _running.store(false, std::memory_order_relaxed);
+                _exitCode.setValue(std::get<QuitItem>(item).code);
+                _running.setValue(false);
                 return true;
         }
         return false;
@@ -113,7 +112,7 @@ void EventLoop::postEvent(ObjectBase *receiver, Event *event) {
 
 int EventLoop::startTimer(ObjectBase *receiver, unsigned int intervalMs,
                            bool singleShot) {
-        int id = _nextTimerId.fetch_add(1, std::memory_order_relaxed);
+        int id = _nextTimerId.fetchAndAdd(1);
         TimerInfo info;
         info.id = id;
         info.receiver = receiver;
@@ -129,7 +128,7 @@ int EventLoop::startTimer(ObjectBase *receiver, unsigned int intervalMs,
 int EventLoop::startTimer(unsigned int intervalMs,
                            std::function<void()> func,
                            bool singleShot) {
-        int id = _nextTimerId.fetch_add(1, std::memory_order_relaxed);
+        int id = _nextTimerId.fetchAndAdd(1);
         TimerInfo info;
         info.id = id;
         info.receiver = nullptr;

@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <atomic>
 #include <variant>
 #include <functional>
 #include <promeki/core/namespace.h>
+#include <promeki/core/atomic.h>
 #include <promeki/core/queue.h>
 #include <promeki/core/list.h>
 #include <promeki/core/timestamp.h>
@@ -161,13 +161,13 @@ class EventLoop {
                  * @brief Returns whether the event loop is currently running.
                  * @return @c true if exec() is active.
                  */
-                bool isRunning() const { return _running.load(std::memory_order_relaxed); }
+                bool isRunning() const { return _running.value(); }
 
                 /**
                  * @brief Returns the exit code set by the most recent quit().
                  * @return The exit code, or 0 if quit() was never called.
                  */
-                int exitCode() const { return _exitCode.load(std::memory_order_relaxed); }
+                int exitCode() const { return _exitCode.value(); }
 
         private:
                 struct CallableItem { std::function<void()> func; };
@@ -187,10 +187,10 @@ class EventLoop {
                 static thread_local EventLoop   *_current;
 
                 Queue<Item>                     _queue;
-                std::atomic<bool>               _running{false};
-                std::atomic<int>                _exitCode{0};
+                Atomic<bool>                    _running;
+                Atomic<int>                     _exitCode;
                 List<TimerInfo>                 _timers;
-                std::atomic<int>                _nextTimerId{1};
+                Atomic<int>                     _nextTimerId{1};
 
                 bool dispatchItem(Item &item);
                 void processTimers();

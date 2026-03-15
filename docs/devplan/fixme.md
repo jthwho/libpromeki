@@ -24,11 +24,11 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 **File:** `src/thread.cpp:178`
 **FIXME:** "This only works when called from the adopted thread itself. Cross-thread callers will get the wrong EventLoop (or nullptr) because EventLoop::current() is thread-local."
 
-The fix described in the FIXME: `adoptCurrentThread()` should snapshot the EventLoop into the Thread object, or the adopted thread should register its loop with the Thread object.
+**Fixed in Phase 1B.** `threadEventLoop()` now caches the EventLoop pointer in `_threadLoop` when called from the adopted thread itself. Cross-thread callers see the cached value. `quit()` also uses `threadEventLoop()` for consistency.
 
-- [ ] Have `adoptCurrentThread()` store the EventLoop pointer in the Thread object after creation
-- [ ] `threadEventLoop()` returns stored pointer for adopted threads instead of relying on thread-local
-- [ ] Test cross-thread `threadEventLoop()` access
+- [x] Have `threadEventLoop()` lazily cache the EventLoop pointer for adopted threads
+- [x] `threadEventLoop()` returns cached pointer for cross-thread callers
+- [x] `quit()` uses `threadEventLoop()` instead of duplicating adopted-thread logic
 
 ---
 

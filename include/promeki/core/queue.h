@@ -7,13 +7,12 @@
 
 #pragma once
 
-#include <mutex>
 #include <queue>
-#include <chrono>
-#include <condition_variable>
 #include <promeki/core/namespace.h>
 #include <promeki/core/error.h>
 #include <promeki/core/list.h>
+#include <promeki/core/mutex.h>
+#include <promeki/core/waitcondition.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -21,7 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Thread-safe FIFO queue.
  *
  * All public methods are safe to call concurrently from multiple threads.
- * Internally synchronized with a mutex and condition variable.  Blocking
+ * Internally synchronized with a Mutex and WaitCondition.  Blocking
  * methods (pop(), peek(), waitForEmpty()) will sleep until their condition
  * is met rather than spinning or polling.
  *
@@ -35,8 +34,6 @@ PROMEKI_NAMESPACE_BEGIN
 template <typename T>
 class Queue {
         public:
-                using Locker = std::unique_lock<std::mutex>;
-
                 Queue() { };
                 ~Queue() { };
 
@@ -45,9 +42,9 @@ class Queue {
                  * @param val Value to enqueue.
                  */
                 void push(const T &val) {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         _queue.push(val);
-                        _cv.notify_one();
+                        _cv.wakeOne();
                         return;
                 }
 
@@ -56,9 +53,9 @@ class Queue {
                  * @param val Rvalue reference to enqueue.
                  */
                 void push(T &&val) {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         _queue.push(std::move(val));
-                        _cv.notify_one();
+                        _cv.wakeOne();
                         return;
                 }
 
@@ -69,9 +66,9 @@ class Queue {
                  */
                 template <typename... Args>
                 void emplace(Args&&... args) {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         _queue.emplace(std::forward<Args>(args)...);
-                        _cv.notify_one();
+                        _cv.wakeOne();
                         return;
                 }
 
@@ -80,9 +77,9 @@ class Queue {
                  * @param list List of values to enqueue.
                  */
                 void push(const List<T> &list) {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         for(const auto &item : list) _queue.push(item);
-                        _cv.notify_all();
+                        _cv.wakeAll();
                         return;
                 }
 
@@ -95,18 +92,13 @@ class Queue {
                  *         timeout) and Error::Ok or Error::Timeout.
                  */
                 std::pair<T, Error> pop(unsigned int timeoutMs = 0) {
-                        Locker locker(_mutex);
-                        if(timeoutMs == 0) {
-                                _cv.wait(locker, [this] { return !_queue.empty(); });
-                        } else {
-                                if(!_cv.wait_for(locker, std::chrono::milliseconds(timeoutMs),
-                                        [this] { return !_queue.empty(); })) {
-                                        return {T{}, Error::Timeout};
-                                }
-                        }
+                        Mutex::Locker locker(_mutex);
+                        Error err = _cv.wait(_mutex,
+                                [this] { return !_queue.empty(); }, timeoutMs);
+                        if(err != Error::Ok) return {T{}, err};
                         T ret = std::move(_queue.front());
                         _queue.pop();
-                        if(_queue.empty()) _cv.notify_all();
+                        if(_queue.empty()) _cv.wakeAll();
                         return {std::move(ret), Error::Ok};
                 }
 
@@ -116,11 +108,11 @@ class Queue {
                  * @return @c true if an element was dequeued, @c false if the queue was empty.
                  */
                 bool popOrFail(T &val) {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         if(_queue.empty()) return false;
                         val = std::move(_queue.front());
                         _queue.pop();
-                        if(_queue.empty()) _cv.notify_all();
+                        if(_queue.empty()) _cv.wakeAll();
                         return true;
                 }
 
@@ -133,15 +125,10 @@ class Queue {
                  *         timeout) and Error::Ok or Error::Timeout.
                  */
                 std::pair<T, Error> peek(unsigned int timeoutMs = 0) {
-                        Locker locker(_mutex);
-                        if(timeoutMs == 0) {
-                                _cv.wait(locker, [this] { return !_queue.empty(); });
-                        } else {
-                                if(!_cv.wait_for(locker, std::chrono::milliseconds(timeoutMs),
-                                        [this] { return !_queue.empty(); })) {
-                                        return {T{}, Error::Timeout};
-                                }
-                        }
+                        Mutex::Locker locker(_mutex);
+                        Error err = _cv.wait(_mutex,
+                                [this] { return !_queue.empty(); }, timeoutMs);
+                        if(err != Error::Ok) return {T{}, err};
                         T ret = _queue.front();
                         return {std::move(ret), Error::Ok};
                 }
@@ -152,7 +139,7 @@ class Queue {
                  * @return @c true if an element was available, @c false if the queue was empty.
                  */
                 bool peekOrFail(T &val) {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         if(_queue.empty()) return false;
                         val = _queue.front();
                         return true;
@@ -172,16 +159,9 @@ class Queue {
                  *         timeout elapsed first.
                  */
                 Error waitForEmpty(unsigned int timeoutMs = 0) {
-                        Locker locker(_mutex);
-                        if(timeoutMs == 0) {
-                                _cv.wait(locker, [this] { return _queue.empty(); });
-                                return Error::Ok;
-                        }
-                        if(_cv.wait_for(locker, std::chrono::milliseconds(timeoutMs),
-                                [this] { return _queue.empty(); })) {
-                                return Error::Ok;
-                        }
-                        return Error::Timeout;
+                        Mutex::Locker locker(_mutex);
+                        return _cv.wait(_mutex,
+                                [this] { return _queue.empty(); }, timeoutMs);
                 }
 
                 /**
@@ -189,7 +169,7 @@ class Queue {
                  * @return True if empty.
                  */
                 bool isEmpty() const {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         return _queue.empty();
                 }
 
@@ -198,7 +178,7 @@ class Queue {
                  * @return Current queue depth.
                  */
                 size_t size() const {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         return _queue.size();
                 }
 
@@ -206,16 +186,16 @@ class Queue {
                  * @brief Removes all elements from the queue.
                  */
                 void clear() {
-                        Locker locker(_mutex);
+                        Mutex::Locker locker(_mutex);
                         std::queue<T> empty;
                         std::swap(_queue, empty);
                         return;
                 }
 
         private:
-                mutable std::mutex              _mutex;
-                std::condition_variable         _cv;
-                std::queue<T>                   _queue;
+                mutable Mutex           _mutex;
+                WaitCondition           _cv;
+                std::queue<T>           _queue;
 };
 
 PROMEKI_NAMESPACE_END

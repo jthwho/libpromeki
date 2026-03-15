@@ -8,11 +8,11 @@
 #pragma once
 
 #include <thread>
-#include <mutex>
-#include <atomic>
-#include <condition_variable>
 #include <promeki/core/objectbase.h>
 #include <promeki/core/set.h>
+#include <promeki/core/mutex.h>
+#include <promeki/core/waitcondition.h>
+#include <promeki/core/atomic.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -163,13 +163,13 @@ class Thread : public ObjectBase {
                  *
                  * @return The exit code, or 0 if not yet available.
                  */
-                int exitCode() const { return _exitCode.load(std::memory_order_relaxed); }
+                int exitCode() const { return _exitCode.value(); }
 
                 /**
                  * @brief Returns whether the thread is currently running.
                  * @return @c true if the thread is running.
                  */
-                bool isRunning() const { return _running.load(std::memory_order_relaxed); }
+                bool isRunning() const { return _running.value(); }
 
                 /**
                  * @brief Returns whether this is an adopted thread.
@@ -192,7 +192,7 @@ class Thread : public ObjectBase {
                  *
                  * @return The native thread ID as a 64-bit unsigned integer.
                  */
-                uint64_t nativeId() const { return _nativeId.load(std::memory_order_relaxed); }
+                uint64_t nativeId() const { return _nativeId.value(); }
 
                 /**
                  * @brief Returns the current scheduling policy of this thread.
@@ -310,14 +310,14 @@ class Thread : public ObjectBase {
                 static thread_local Thread      *_currentThread;
 
                 std::thread             _thread;
-                std::atomic<bool>       _running{false};
-                std::atomic<int>        _exitCode{0};
-                std::atomic<uint64_t>   _nativeId{0};
+                Atomic<bool>            _running;
+                Atomic<int>             _exitCode;
+                Atomic<uint64_t>        _nativeId;
                 String                  _name;
                 EventLoop               *_threadLoop = nullptr;
-                std::mutex              _mutex;
-                std::condition_variable _startedCv;
-                std::condition_variable _finishedCv;
+                mutable Mutex           _mutex;
+                WaitCondition           _startedCv;
+                WaitCondition           _finishedCv;
                 bool                    _started = false;
                 bool                    _finished = false;
                 bool                    _adopted = false;

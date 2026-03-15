@@ -7,11 +7,7 @@
 
 #pragma once
 
-#include <map>
-#include <mutex>
 #include <thread>
-#include <atomic>
-#include <future>
 #include <variant>
 #include <iostream>
 #include <fstream>
@@ -20,6 +16,10 @@
 #include <promeki/core/string.h>
 #include <promeki/core/stringlist.h>
 #include <promeki/core/queue.h>
+#include <promeki/core/map.h>
+#include <promeki/core/mutex.h>
+#include <promeki/core/atomic.h>
+#include <promeki/core/promise.h>
 #include <promeki/core/datetime.h>
 #include <promeki/core/timestamp.h>
 
@@ -181,7 +181,7 @@ class Logger {
                  * @return The log level as an integer.
                  */
                 int level() const {
-                        return _level;
+                        return _level.value();
                 }
 
                 /**
@@ -223,7 +223,7 @@ class Logger {
                  * @param level The new minimum log level. Messages below this are discarded.
                  */
                 void setLogLevel(LogLevel level) {
-                        _level = level;
+                        _level.setValue(level);
                         log(Force, "LOGGER", 0, String::sprintf("Logging Level Changed to %d", level));
                         return;
                 }
@@ -233,7 +233,7 @@ class Logger {
                  * @param val true to enable console logging, false to disable.
                  */
                 void setConsoleLoggingEnabled(bool val) {
-                        _consoleLogging = val;
+                        _consoleLogging.setValue(val);
                         return;
                 }
 
@@ -241,7 +241,7 @@ class Logger {
                  * @brief Returns the current file log formatter.
                  */
                 LogFormatter fileFormatter() const {
-                        std::lock_guard<std::mutex> lock(_formatterMutex);
+                        Mutex::Locker lock(_formatterMutex);
                         return _fileFormatter;
                 }
 
@@ -249,7 +249,7 @@ class Logger {
                  * @brief Returns the current console log formatter.
                  */
                 LogFormatter consoleFormatter() const {
-                        std::lock_guard<std::mutex> lock(_formatterMutex);
+                        Mutex::Locker lock(_formatterMutex);
                         return _consoleFormatter;
                 }
 
@@ -260,7 +260,7 @@ class Logger {
                  */
                 void setFileFormatter(LogFormatter formatter) {
                         {
-                                std::lock_guard<std::mutex> lock(_formatterMutex);
+                                Mutex::Locker lock(_formatterMutex);
                                 _fileFormatter = formatter ? formatter : defaultFileFormatter();
                         }
                         _queue.emplace(CmdSetFormatter{std::move(formatter), false});
@@ -273,7 +273,7 @@ class Logger {
                  */
                 void setConsoleFormatter(LogFormatter formatter) {
                         {
-                                std::lock_guard<std::mutex> lock(_formatterMutex);
+                                Mutex::Locker lock(_formatterMutex);
                                 _consoleFormatter = formatter ? formatter : defaultConsoleFormatter();
                         }
                         _queue.emplace(CmdSetFormatter{std::move(formatter), true});
@@ -287,17 +287,14 @@ class Logger {
                  *         timeout elapsed first.
                  */
                 Error sync(unsigned int timeoutMs = 0) {
-                        auto p = std::make_shared<std::promise<void>>();
-                        auto f = p->get_future();
+                        auto p = std::make_shared<Promise<void>>();
+                        Future<void> f = p->future();
                         _queue.emplace(CmdSync{std::move(p)});
                         if(timeoutMs == 0) {
-                                f.wait();
+                                f.waitForFinished();
                                 return Error::Ok;
                         }
-                        if(f.wait_for(std::chrono::milliseconds(timeoutMs)) == std::future_status::ready) {
-                                return Error::Ok;
-                        }
-                        return Error::Timeout;
+                        return f.waitForFinished(timeoutMs);
                 }
 
         private:
@@ -317,7 +314,7 @@ class Logger {
                 };
 
                 struct CmdSync {
-                        std::shared_ptr<std::promise<void>> promise;
+                        std::shared_ptr<Promise<void>> promise;
                 };
 
                 struct CmdTerminate {};
@@ -325,14 +322,14 @@ class Logger {
                 using Command = std::variant<LogEntry, CmdSetThreadName, CmdSetFile, CmdSetFormatter, CmdSync, CmdTerminate>;
 
                 std::thread             _thread;
-                std::atomic<int>        _level;
-                std::atomic<bool>       _consoleLogging;
+                Atomic<int>             _level;
+                Atomic<bool>            _consoleLogging;
                 std::ofstream           _file;
                 Queue<Command>          _queue;
-                mutable std::mutex      _formatterMutex;
+                mutable Mutex           _formatterMutex;
                 LogFormatter            _fileFormatter;
                 LogFormatter            _consoleFormatter;
-                std::map<uint64_t, String> _threadNames;
+                Map<uint64_t, String>   _threadNames;
 
                 void worker();
                 void writeLog(const LogEntry &cmd);

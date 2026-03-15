@@ -25,7 +25,7 @@ void MemPool::addRegion(uintptr_t startingAddress, size_t size) {
 }
 
 MemPool::Stats MemPool::stats() const {
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
         Stats stats = {0, 0, 0, 0, 0};
 
         // Calculate statistics for free blocks
@@ -47,7 +47,7 @@ MemPool::Stats MemPool::stats() const {
 }
 
 MemPool::BlockSet MemPool::memoryMap() const {
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
         // Start with all the free blocks then insert all the allocated ones.
         BlockSet ret = _freeBlocks;
         for(const auto &val : _allocatedBlocks) ret.insert(val.second);
@@ -75,7 +75,7 @@ void *MemPool::allocate(size_t size, size_t alignment) {
                                 _name.cstr(), (int)size, (int)alignment);
                 return nullptr;
         }
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
 
         // Walk through the blocks until we find one that's big enough
         for(auto it = _freeBlocks.begin(); it != _freeBlocks.end(); ++it) {
@@ -114,7 +114,7 @@ void *MemPool::allocate(size_t size, size_t alignment) {
 
 void MemPool::free(void* ptr) {
         if(!ptr) return;
-        std::lock_guard<std::mutex> lock(_mutex);
+        Mutex::Locker lock(_mutex);
         auto it = _allocatedBlocks.find(reinterpret_cast<uintptr_t>(ptr));
         if(it == _allocatedBlocks.end()) return; // Invalid pointer, not found in allocations
         
