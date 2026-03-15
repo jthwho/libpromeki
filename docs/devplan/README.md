@@ -4,6 +4,8 @@
 
 This plan builds out all four existing libraries (core, proav, music, tui) toward completeness and adds a new network library (`promeki-network`). Work is organized into 7 phases ordered by dependency.
 
+**Maintenance note:** Completed items are removed from individual phase documents once merged, unless they provide context needed by a future phase in the same document. The code and git history are the source of truth for completed work. Phase summaries in this README note what's complete at a high level.
+
 ## Documents
 
 | Document | Phase | Description |
@@ -25,7 +27,7 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 ## Dependency Graph
 
 ```
-Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS mostly complete, Streams not started)
+Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, DataStream complete, TextStream + migration remaining)
                        |       |
                        |       +---> Phase 3 (Network Library)
                        |       |
@@ -52,9 +54,11 @@ Phase 1A (containers), 1B (concurrency), 1C (API consistency), and 1D (utilities
 
 Establish a uniform byte-oriented IO interface that network sockets, files, and pipes can all implement. Add filesystem utilities. Add DataStream (binary serialization) and TextStream (formatted text I/O) — both operate over IODevice or in-memory buffers. DataStream is the foundation for ObjectBase saveState/loadState (Phase 7). IODevice is the base class for Phase 3 sockets and Phase 4 pipeline file I/O.
 
-**IO and Filesystem (COMPLETE):** IODevice, BufferedIODevice, FilePath, Dir, File (refactored to BufferedIODevice), FileInfo, Process, Buffer size model, Error enhancements, Terminal error reporting. Remaining: AudioFile IODevice refactor.
+**IO and Filesystem (COMPLETE):** IODevice, BufferedIODevice, BufferIODevice, FilePath, Dir, File (refactored to BufferedIODevice), FileInfo, Process, Buffer size model, Error enhancements, Terminal error reporting. Remaining: AudioFile IODevice refactor.
 
-**Streams (NOT STARTED):** DataStream, TextStream, std:: stream migration.
+**DataStream (COMPLETE):** Binary serialization stream over IODevice with wire format versioning, per-value type tags, and byte-order control. BufferIODevice provides in-memory backing.
+
+**Remaining:** TextStream, std:: stream migration, AudioFile IODevice refactor.
 
 ### Phase 3: Network Library
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)

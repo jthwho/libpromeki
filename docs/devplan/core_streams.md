@@ -5,102 +5,16 @@
 **Depends-on-this:** Phase 4 (pipeline frame serialization), Phase 7 (ObjectBase saveState/loadState)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
+**Maintenance note:** Completed items are removed from this document once merged. Only retain completed items when they provide context needed by a future phase in this same document. If something is done, trust the code and git history as the source of truth.
+
 Provides promeki-native stream classes for binary and text I/O. These present a Qt-style API and integrate with IODevice and promeki types. Once DataStream and TextStream are in place, all existing naked `std::` stream usage is migrated to use promeki streams.
 
 ---
 
-## DataStream
+## Completed
 
-Binary stream for structured, portable serialization. Primary use case: `ObjectBase::saveState()`/`loadState()`, file format I/O, network protocol encoding.
-
-**Files:**
-- [ ] `include/promeki/core/datastream.h`
-- [ ] `src/datastream.cpp`
-- [ ] `tests/datastream.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes, namespace
-- [ ] Constructor from `IODevice *` — reads/writes to any IODevice
-- [ ] Constructor from `Buffer *` — reads/writes to in-memory buffer
-- [ ] Constructor from `Buffer &, OpenMode` — convenience for read-from or write-to buffer
-
-### Versioning and byte order
-- [ ] `enum ByteOrder { BigEndian, LittleEndian }`
-- [ ] `void setByteOrder(ByteOrder)` — default: BigEndian (network byte order)
-- [ ] `ByteOrder byteOrder() const`
-- [ ] `void setVersion(int version)` — stream protocol version for forward/backward compat
-- [ ] `int version() const`
-
-### Status and error handling
-- [ ] `enum Status { Ok, ReadPastEnd, ReadCorruptData, WriteFailed }`
-- [ ] `Status status() const`
-- [ ] `void resetStatus()`
-- [ ] `bool atEnd() const`
-
-### Write operators (operator<<)
-- [ ] `DataStream &operator<<(int8_t)`
-- [ ] `DataStream &operator<<(uint8_t)`
-- [ ] `DataStream &operator<<(int16_t)`
-- [ ] `DataStream &operator<<(uint16_t)`
-- [ ] `DataStream &operator<<(int32_t)`
-- [ ] `DataStream &operator<<(uint32_t)`
-- [ ] `DataStream &operator<<(int64_t)`
-- [ ] `DataStream &operator<<(uint64_t)`
-- [ ] `DataStream &operator<<(float)`
-- [ ] `DataStream &operator<<(double)`
-- [ ] `DataStream &operator<<(bool)`
-- [ ] `DataStream &operator<<(const String &)` — length-prefixed UTF-8
-- [ ] `DataStream &operator<<(const Buffer &)` — length-prefixed raw bytes
-- [ ] `DataStream &operator<<(const Variant &)` — type tag + value
-
-### Read operators (operator>>)
-- [ ] `DataStream &operator>>(int8_t &)`
-- [ ] `DataStream &operator>>(uint8_t &)`
-- [ ] `DataStream &operator>>(int16_t &)`
-- [ ] `DataStream &operator>>(uint16_t &)`
-- [ ] `DataStream &operator>>(int32_t &)`
-- [ ] `DataStream &operator>>(uint32_t &)`
-- [ ] `DataStream &operator>>(int64_t &)`
-- [ ] `DataStream &operator>>(uint64_t &)`
-- [ ] `DataStream &operator>>(float &)`
-- [ ] `DataStream &operator>>(double &)`
-- [ ] `DataStream &operator>>(bool &)`
-- [ ] `DataStream &operator>>(String &)`
-- [ ] `DataStream &operator>>(Buffer &)`
-- [ ] `DataStream &operator>>(Variant &)`
-
-### Raw byte access
-- [ ] `ssize_t readRawData(void *buf, size_t len)`
-- [ ] `ssize_t writeRawData(const void *buf, size_t len)`
-- [ ] `ssize_t skipRawData(size_t len)`
-
-### Promeki type serialization (operator<< and operator>>)
-
-Add `DataStream` operators for existing promeki types. These can live in each type's header or in `datastream.h` — whichever avoids circular includes. Each type writes a deterministic binary representation.
-
-- [ ] `Point<T, N>` — N values of type T
-- [ ] `Size2DTemplate<T>` — width, height
-- [ ] `Rect<T>` — x, y, width, height
-- [ ] `Rational<T>` — numerator, denominator
-- [ ] `UUID` — 16 bytes (DataFormat)
-- [ ] `Timecode` — frame number + mode identifier
-- [ ] `TimeStamp` — internal representation
-- [ ] `DateTime` — epoch + timezone info
-- [ ] `Color` — RGBA components
-- [ ] `XYZColor` — X, Y, Z components
-- [ ] `AudioDesc` — sample rate, format, channels, etc.
-- [ ] `ImageDesc` — width, height, pixel format, etc.
-- [ ] `VideoDesc` — image desc + frame rate
-- [ ] `Metadata` — serialize as key-value pairs
-- [ ] `List<T>` — count + elements (where T is streamable)
-- [ ] `Map<K,V>` — count + key-value pairs
-- [ ] `Set<T>` — count + elements
-- [ ] `HashMap<K,V>` — count + key-value pairs
-- [ ] `HashSet<T>` — count + elements
-
-### Extensibility
-- [ ] Document pattern for user types: implement `operator<<(DataStream &, const MyType &)` and `operator>>(DataStream &, MyType &)`
-- [ ] Doctest: round-trip all primitive types, round-trip String/Buffer, round-trip promeki types, byte order switching, version field, error status on truncated data
+- **DataStream** — Binary stream for structured, portable serialization over IODevice. Wire format: 4-byte magic ("PMDS") + uint16_t version header; per-value TypeId tags; byte-order-aware encoding. Supports all primitives, String (UTF-8), Buffer, Variant (including DateTime, UUID, Timecode via string representation). Factory methods: `createWriter()`, `createReader()`. Raw byte access via `readRawData`/`writeRawData`/`skipRawData`. (`datastream.h/cpp`, `tests/datastream.cpp`)
+- **BufferIODevice** — IODevice subclass backed by a `Buffer*`. Seekable, supports read/write, grows `size()` on writes up to `availSize()`. Does not own the buffer. (`bufferiodevice.h/cpp`, `tests/bufferiodevice.cpp`)
 
 ---
 
@@ -191,10 +105,39 @@ Formatted text I/O with encoding awareness. For human-readable output, config fi
 
 ---
 
+## DataStream: Promeki Type Serialization Extensions
+
+Once more promeki types need binary serialization (e.g. for pipeline frame serialization in Phase 4 or ObjectBase saveState in Phase 7), add `DataStream` operators. These can live in each type's header or in `datastream.h` — whichever avoids circular includes.
+
+- [ ] `Point<T, N>` — N values of type T
+- [ ] `Size2DTemplate<T>` — width, height
+- [ ] `Rect<T>` — x, y, width, height
+- [ ] `Rational<T>` — numerator, denominator
+- [ ] `UUID` — 16 bytes (DataFormat)
+- [ ] `Timecode` — frame number + mode identifier
+- [ ] `TimeStamp` — internal representation
+- [ ] `DateTime` — epoch + timezone info
+- [ ] `Color` — RGBA components
+- [ ] `XYZColor` — X, Y, Z components
+- [ ] `AudioDesc` — sample rate, format, channels, etc.
+- [ ] `ImageDesc` — width, height, pixel format, etc.
+- [ ] `VideoDesc` — image desc + frame rate
+- [ ] `Metadata` — serialize as key-value pairs
+- [ ] `List<T>` — count + elements (where T is streamable)
+- [ ] `Map<K,V>` — count + key-value pairs
+- [ ] `Set<T>` — count + elements
+- [ ] `HashMap<K,V>` — count + key-value pairs
+- [ ] `HashSet<T>` — count + elements
+
+### Extensibility
+- [ ] Document pattern for user types: implement `operator<<(DataStream &, const MyType &)` and `operator>>(DataStream &, MyType &)`
+
+---
+
 ## ObjectBase Serialization (saveState / loadState)
 
 **Phase:** 7 (enhanced existing classes) — depends on DataStream
-**Dependencies:** DataStream
+**Dependencies:** DataStream (complete)
 
 Add binary state serialization to ObjectBase. Each subclass can override to save/restore its own state. Uses DataStream for portable, versioned binary format.
 
@@ -206,8 +149,8 @@ Add binary state serialization to ObjectBase. Each subclass can override to save
 **Implementation checklist:**
 - [ ] `virtual Error saveState(DataStream &stream) const` — default: saves nothing, returns Ok
 - [ ] `virtual Error loadState(DataStream &stream)` — default: reads nothing, returns Ok
-- [ ] `Error saveState(Buffer &buffer) const` — convenience: creates DataStream over buffer
-- [ ] `Error loadState(const Buffer &buffer)` — convenience: creates DataStream over buffer
+- [ ] `Error saveState(Buffer &buffer) const` — convenience: creates DataStream over BufferIODevice
+- [ ] `Error loadState(const Buffer &buffer)` — convenience: creates DataStream over BufferIODevice
 - [ ] Convention: each class writes a version tag first, then its data
   - [ ] `stream << (uint16_t)1; // version`
   - [ ] On load: read version, handle backward compat
@@ -233,7 +176,7 @@ Add binary state serialization to ObjectBase. Each subclass can override to save
 
 ## Migration: Remove Naked std:: Stream Usage
 
-Once DataStream and TextStream are implemented, migrate all existing `std::` stream usage to promeki streams. This eliminates direct `std::` stream dependencies from the public API and internal implementation.
+Once TextStream is implemented, migrate all existing `std::` stream usage to promeki streams. This eliminates direct `std::` stream dependencies from the public API and internal implementation.
 
 ---
 
@@ -396,11 +339,15 @@ After all library code is migrated, update tests that use `std::ostringstream` /
 ## Design Notes
 
 ### DataStream wire format
-- All multi-byte integers: byte-order controlled by `setByteOrder()`, default big-endian
-- Strings: `uint32_t` length prefix (byte count) + UTF-8 bytes (no null terminator)
-- Buffers: `uint32_t` length prefix + raw bytes
-- Lists/Maps/Sets: `uint32_t` count prefix + elements
-- Floats/doubles: IEEE 754, byte-order swapped if needed
+- Stream header: 4-byte magic (`0x50 0x4D 0x44 0x53` / "PMDS") + uint16_t version (big-endian). Current version: 1.
+- Each value preceded by a one-byte TypeId tag (0x01–0x0E) for type validation on read.
+- All multi-byte integers: byte-order controlled by `setByteOrder()`, default big-endian.
+- Strings: `uint32_t` length prefix (byte count) + UTF-8 bytes (no null terminator). Latin1 with non-ASCII auto-converted to UTF-8.
+- Buffers: `uint32_t` length prefix + raw bytes.
+- Variants: TypeVariant tag + Variant::Type byte + untagged value. Complex types (DateTime, UUID, Timecode, etc.) serialized as String representation.
+- Floats/doubles: IEEE 754, byte-swapped if needed.
+- 256 MB sanity limit on String/Buffer reads.
+- Raw byte methods (readRawData, writeRawData, skipRawData) are untagged.
 
 ### TextStream design
 TextStream is an independent class (does not inherit from `std::ostream`). The formatting controls and encoding-awareness are different enough from `std::ostream` that inheritance creates more friction than value. This means all `operator<<`/`operator>>` overloads must be provided for TextStream explicitly — which is exactly what the migration section above tracks.

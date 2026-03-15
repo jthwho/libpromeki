@@ -4,22 +4,13 @@
 **Dependencies:** Phase 1 (Mutex, Future for async patterns)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
+**Maintenance note:** Completed items are removed from this document once merged. Only retain completed items when they provide context needed by a future phase in this same document. If something is done, trust the code and git history as the source of truth.
+
 ---
 
 ## Completed
 
-The following classes are implemented, tested, and merged:
-
-- **IODevice** — Abstract base class for byte-oriented I/O (`iodevice.h/cpp`)
-- **FilePath** — `std::filesystem::path` wrapper, header-only (`filepath.h`)
-- **BufferedIODevice** — Read buffering + unbuffered mode over IODevice (`bufferediodevice.h/cpp`)
-- **Dir** — Directory operations via `std::filesystem` + `fnmatch()` (`dir.h/cpp`)
-- **File** — Refactored from standalone to BufferedIODevice subclass. Supports DirectIO, Synchronous, NonBlocking modes (`file.h/cpp`)
-- **FileInfo** — Extended with `FilePath` and `const char *` constructors (`fileinfo.h/cpp`)
-- **Process** — Subprocess execution via `fork()`/`exec()` with pipe-based I/O, signal safety, and deadlock-free large-output handling (`process.h/cpp`)
-- **Buffer size model** — Three-tier: `allocSize()`, `availSize()`, `size()` (logical content). Added `copyFrom()`.
-- **Error enhancements** — `BufferTooSmall` code, `syserr(std::error_code)` and Windows error translation
-- **Terminal error reporting** — Methods return `Error`/`Result<int>` instead of `bool`/`int`
+IO abstractions, filesystem utilities, and in-memory IO are all implemented, tested, and merged: IODevice, BufferedIODevice, FilePath, Dir, File (BufferedIODevice subclass), FileInfo, Process, BufferIODevice, Buffer size model, Error enhancements, Terminal error reporting.
 
 ### Known Issues
 

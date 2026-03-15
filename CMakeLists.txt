@@ -239,6 +239,8 @@ set(PROMEKI_CORE_SOURCES
     src/terminal.cpp
     src/keyevent.cpp
     src/mouseevent.cpp
+    src/datastream.cpp
+    src/bufferiodevice.cpp
 )
 
 add_library(promeki-core SHARED ${PROMEKI_CORE_SOURCES})
@@ -804,6 +806,8 @@ if(PROMEKI_BUILD_TESTS)
         tests/bufferediodevice.cpp
         tests/dir.cpp
         tests/process.cpp
+        tests/datastream.cpp
+        tests/bufferiodevice.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
