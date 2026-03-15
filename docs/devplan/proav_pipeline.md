@@ -100,9 +100,9 @@ Connects output port to input port. Manages buffered data flow.
 - [ ] `bool isFull() const`
 - [ ] `bool isEmpty() const`
 - [ ] `Error pushFrame(Frame::Ptr frame, unsigned int timeoutMs = 0)` — blocks if full. Returns `Error::Ok` or `Error::Timeout`.
-- [ ] `std::pair<Frame::Ptr, Error> pullFrame(unsigned int timeoutMs = 0)` — blocks if empty. Returns frame + `Error::Ok`, or null + `Error::Timeout`.
+- [ ] `Result<Frame::Ptr> pullFrame(unsigned int timeoutMs = 0)` — blocks if empty. Returns frame + `Error::Ok`, or null + `Error::Timeout`.
 - [ ] `Error tryPushFrame(Frame::Ptr frame)` — non-blocking. Returns `Error::Ok` or error if full.
-- [ ] `std::pair<Frame::Ptr, Error> tryPullFrame()` — non-blocking. Returns frame + `Error::Ok`, or null + error if empty.
+- [ ] `Result<Frame::Ptr> tryPullFrame()` — non-blocking. Returns frame + `Error::Ok`, or null + error if empty.
 - [ ] Format negotiation: validate source/sink compatibility on connection
 - [ ] PROMEKI_SHARED_FINAL, `::Ptr`, `::List`, `::PtrList`
 - [ ] Doctest: push/pull frames, queue depth backpressure, format compatibility check

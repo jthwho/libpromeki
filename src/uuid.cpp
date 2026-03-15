@@ -8,7 +8,7 @@
 #include <chrono>
 #include <promeki/core/uuid.h>
 #include <promeki/core/list.h>
-#include <promeki/core/util.h>
+#include <promeki/core/random.h>
 #include <promeki/core/md5.h>
 #include <promeki/core/sha1.h>
 #include <promeki/core/application.h>
@@ -89,7 +89,7 @@ UUID UUID::generateV3(const UUID &ns, const String &name) {
 
 UUID UUID::generateV4() {
         DataFormat d;
-        Error err = promekiRand(d.data(), d.size());
+        Error err = Random::trueRandom(d.data(), d.size());
         if(err.isOk()) {
                 d[6] = (d[6] & 0x0F) | 0x40; // Version 4
                 d[8] = (d[8] & 0x3F) | 0x80; // Variant 2
@@ -127,7 +127,7 @@ UUID UUID::generateV7(int64_t timestampMs) {
         uint64_t timestamp = static_cast<uint64_t>(timestampMs);
 
         DataFormat d;
-        Error err = promekiRand(d.data(), d.size());
+        Error err = Random::trueRandom(d.data(), d.size());
         if(!err.isOk()) return UUID();
 
         // Bytes 0-5: 48-bit timestamp (big-endian)

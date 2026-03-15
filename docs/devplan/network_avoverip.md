@@ -147,7 +147,7 @@ SDP (Session Description Protocol, RFC 4566) parser/generator. Used by ST 2110 a
 
 **Implementation checklist:**
 - [ ] Data object with PROMEKI_SHARED_FINAL
-- [ ] `static std::pair<SdpSession, Error> fromString(const String &sdp)` — parse SDP text
+- [ ] `static Result<SdpSession> fromString(const String &sdp)` — parse SDP text
 - [ ] `String toString() const` — generate SDP text
 - [ ] Session-level fields:
   - [ ] `String sessionName() const`, `setSessionName(const String &)` — s= line

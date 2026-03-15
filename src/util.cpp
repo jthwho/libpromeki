@@ -5,29 +5,14 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <random>
 #include <algorithm>
 #include <execinfo.h>
 #include <cxxabi.h>
 #include <promeki/core/util.h>
-#include <promeki/core/error.h>
 #include <promeki/core/stringlist.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-static Error fallbackRand(uint8_t *data, size_t bytes) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, 255);
-        for(int i = 0; i < bytes; i++) data[i] = dis(gen);
-        return Error();
-}
-
-Error promekiRand(uint8_t *data, size_t bytes) {
-        // FIXME: Move over platform specific RNG stuff
-        return fallbackRand(data, bytes);
-}
 
 StringList promekiStackTrace(bool demangle) {
         StringList ret;

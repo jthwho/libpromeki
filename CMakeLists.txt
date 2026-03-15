@@ -102,6 +102,8 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/char.h
     include/promeki/core/cmdlineparser.h
     include/promeki/core/datetime.h
+    include/promeki/core/duration.h
+    include/promeki/core/elapsedtimer.h
     include/promeki/core/env.h
     include/promeki/core/error.h
     include/promeki/core/event.h
@@ -157,6 +159,8 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/promise.h
     include/promeki/core/threadpool.h
     include/promeki/core/queue.h
+    include/promeki/core/random.h
+    include/promeki/core/algorithm.h
     include/promeki/core/util.h
     include/promeki/core/uuid.h
     include/promeki/core/variant.h
@@ -188,8 +192,10 @@ set(PROMEKI_CORE_SOURCES
     src/regex.cpp
     src/event.cpp
     src/eventloop.cpp
+    src/duration.cpp
     src/env.cpp
     src/error.cpp
+    src/random.cpp
     src/uuid.cpp
     src/md5.cpp
     src/sha1.cpp
@@ -780,6 +786,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/atomic.cpp
         tests/future.cpp
         tests/threadpool.cpp
+        tests/random.cpp
+        tests/elapsedtimer.cpp
+        tests/duration.cpp
+        tests/algorithm.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

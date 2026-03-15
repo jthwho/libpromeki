@@ -8,8 +8,7 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 
 | Document | Phase | Description |
 |---|---|---|
-| [core_containers.md](core_containers.md) | 1A, 1C | Container wrappers and API consistency audit |
-| [core_utilities.md](core_utilities.md) | 1D, 7 | Random, ElapsedTimer, Duration, Algorithm, enhanced existing classes |
+| [core_utilities.md](core_utilities.md) | 7 | Enhanced existing classes (Variant, String, RegEx, Result adoption) |
 | [core_io.md](core_io.md) | 2 | IODevice, BufferedIODevice, FilePath, Dir, Process |
 | [core_streams.md](core_streams.md) | 2, 7 | DataStream, TextStream, ObjectBase saveState/loadState, std:: stream migration |
 | [network_sockets.md](network_sockets.md) | 3A | Socket layer (Abstract, TCP, UDP, Raw, TLS) |
@@ -26,46 +25,41 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 ## Dependency Graph
 
 ```
-Phase 1 (Containers + Concurrency + Utilities)
-  |
-  +---> Phase 2 (IO + Filesystem + Streams)
-  |       |
-  |       +---> Phase 3 (Network Library)
-  |       |
-  |       +---> Phase 4 (ProAV Pipeline)
-  |       |
-  |       +---> Phase 7 (ObjectBase saveState/loadState via DataStream)
-  |
-  +---> Phase 5 (TUI Widgets) [mostly independent]
-  |
-  +---> Phase 6 (Music Library) [mostly independent]
+Phase 1 (COMPLETE) ----+---> Phase 2 (IO + Filesystem + Streams)
+                       |       |
+                       |       +---> Phase 3 (Network Library)
+                       |       |
+                       |       +---> Phase 4 (ProAV Pipeline)
+                       |       |
+                       |       +---> Phase 7 (ObjectBase saveState/loadState via DataStream)
+                       |
+                       +---> Phase 5 (TUI Widgets) [mostly independent]
+                       |
+                       +---> Phase 6 (Music Library) [mostly independent]
 
 Phase 7 (Cross-Cutting) -- ongoing throughout
 ```
 
 ## Phasing
 
-### Phase 1: Core Containers, Concurrency, and Utilities
-**Prerequisites:** None
-**Documents:** `core_containers.md`, `core_utilities.md`
-**Completed:** Phase 1A (containers), Phase 1B (concurrency — Mutex, ReadWriteLock, WaitCondition, Atomic, Future/Promise, ThreadPool, Queue migration), Phase 1C (API consistency)
+### Phase 1: Core Containers, Concurrency, and Utilities — COMPLETE
 
-Complete the container wrapper suite, add threading primitives, audit existing classes for API consistency, and add general-purpose utility classes. Everything else depends on this phase.
+Phase 1A (containers), 1B (concurrency), 1C (API consistency), and 1D (utilities) are all done. Delivered: List, Map, Set, HashMap, HashSet, Deque, Stack, PriorityQueue, Span, Mutex, ReadWriteLock, WaitCondition, Atomic, Future, Promise, ThreadPool, Queue, Random, ElapsedTimer, Duration, Algorithm, Result, Pair. `Result<T>` adoption across the codebase is tracked in each phase's document where the classes are defined.
 
 ### Phase 2: IO Abstractions, Filesystem, and Streams
-**Prerequisites:** Phase 1
+**Prerequisites:** Phase 1 (complete)
 **Documents:** `core_io.md`, `core_streams.md`
 
 Establish a uniform byte-oriented IO interface that network sockets, files, and pipes can all implement. Add filesystem utilities. Add DataStream (binary serialization) and TextStream (formatted text I/O) — both operate over IODevice or in-memory buffers. DataStream is the foundation for ObjectBase saveState/loadState (Phase 7). IODevice is the base class for Phase 3 sockets and Phase 4 pipeline file I/O.
 
 ### Phase 3: Network Library
-**Prerequisites:** Phase 1 (HashMap, Mutex, WaitCondition, Future), Phase 2 (IODevice)
+**Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
 **Documents:** `network_sockets.md`, `network_protocols.md`, `network_avoverip.md`
 
 New shared library `promeki-network` with CMake option `PROMEKI_BUILD_NETWORK`. Raw POSIX sockets, vendored mbedTLS for TLS. Work through documents in order: sockets first, then protocols, then AV-over-IP.
 
 ### Phase 4: ProAV Pipeline Framework
-**Prerequisites:** Phase 1 (Mutex, WaitCondition, Future, PriorityQueue, ThreadPool), Phase 2 (IODevice)
+**Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
 **Documents:** `proav_pipeline.md`, `proav_nodes.md`, `proav_dsp.md`
 
 Generalizes the existing source/sink pattern. Work through documents in order: pipeline core, then concrete nodes, then DSP.
@@ -221,15 +215,13 @@ Adding many new classes and a new library (`promeki-network`) requires Doxygen g
 
 ## Existing FIXMEs
 
-There are 8 FIXME comments in the current codebase. These are tracked in [fixme.md](fixme.md) and should be addressed as they become relevant to ongoing phase work. Summary:
+There are 6 remaining FIXME comments in the codebase. These are tracked in [fixme.md](fixme.md) and should be addressed as they become relevant to ongoing phase work. Summary:
 
 | File | Issue | Natural Phase |
 |---|---|---|
 | `src/file.cpp:44` | Windows File implementation is a stub | Phase 2 (File -> IODevice) |
-| `src/thread.cpp:178` | `threadEventLoop()` fails for cross-thread calls on adopted threads | ~~Phase 1B~~ **Done** |
 | `include/promeki/proav/audiodesc.h:277` | `operator==` doesn't compare metadata | Phase 7 |
 | `src/audiofile_libsndfile.cpp:312` | `fileIsReadable()` doesn't inspect SF_INFO | Phase 2 (AudioFile IODevice) |
 | `src/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |
 | `src/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `std::istringstream` | Phase 2 (stream migration) |
 | `src/pixelformat_old.cpp:217` | No memory space validation in `fill()` | Phase 4 |
-| `src/util.cpp:28` | `promekiRand()` uses fallback instead of platform RNG | Phase 1D (Random class) |

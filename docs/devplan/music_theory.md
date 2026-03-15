@@ -26,7 +26,7 @@ Musical interval. Simple value type — no PROMEKI_SHARED_FINAL.
 - [ ] `enum Number { Unison = 1, Second, Third, Fourth, Fifth, Sixth, Seventh, Octave }`
 - [ ] Constructor from `Quality` + `Number`
 - [ ] Constructor from semitone count
-- [ ] `static std::pair<Interval, Error> fromName(const String &name)` — e.g., "P5", "m3", "M7", "A4", "d5"
+- [ ] `static Result<Interval> fromName(const String &name)` — e.g., "P5", "m3", "M7", "A4", "d5"
 - [ ] `int semitones() const`
 - [ ] `Quality quality() const`
 - [ ] `Number number() const`
@@ -57,7 +57,7 @@ Chord defined by root note and intervals. Data object with PROMEKI_SHARED_FINAL.
 - [ ] `enum Type { Major, Minor, Diminished, Augmented, Major7, Minor7, Dominant7, Diminished7, HalfDiminished7, Augmented7, Sus2, Sus4, Add9, Power }`
 - [ ] Constructor from `MusicalNote` root + `Type`
 - [ ] Constructor from `MusicalNote` root + `List<Interval>` (custom voicing)
-- [ ] `static std::pair<Chord, Error> fromName(const String &name)` — e.g., "Cmaj7", "Am", "F#dim"
+- [ ] `static Result<Chord> fromName(const String &name)` — e.g., "Cmaj7", "Am", "F#dim"
 - [ ] `MusicalNote root() const`
 - [ ] `Type type() const`
 - [ ] `String name() const` — e.g., "Cmaj7"
@@ -95,7 +95,7 @@ Sequence of chords with durations. Data object with PROMEKI_SHARED_FINAL.
 - [ ] `Chord chordAt(int index) const`
 - [ ] `Chord chordAtBeat(double beat) const` — find chord at given beat position
 - [ ] `double totalDuration() const` — total beats
-- [ ] `static std::pair<ChordProgression, Error> fromRomanNumerals(const String &numerals, const Scale &scale)` — e.g., "I IV V I"
+- [ ] `static Result<ChordProgression> fromRomanNumerals(const String &numerals, const Scale &scale)` — e.g., "I IV V I"
 - [ ] `String toRomanNumerals(const Scale &scale) const`
 - [ ] `ChordProgression transpose(int semitones) const`
 - [ ] `ChordProgression transpose(const Interval &interval) const`
@@ -117,7 +117,7 @@ Root note + mode. Simple value type.
 **Implementation checklist:**
 - [ ] Header guard, includes, namespace
 - [ ] Constructor from `MusicalNote` root + `Scale::Mode` (or enum: Major, Minor, etc.)
-- [ ] `static std::pair<Key, Error> fromName(const String &name)` — e.g., "C major", "A minor", "F# dorian"
+- [ ] `static Result<Key> fromName(const String &name)` — e.g., "C major", "A minor", "F# dorian"
 - [ ] `MusicalNote root() const`
 - [ ] `Scale::Mode mode() const`
 - [ ] `Scale scale() const` — returns the full scale for this key
@@ -154,7 +154,7 @@ Simple value type.
 - [ ] `bool isTriple() const` — 3 or 9
 - [ ] `bool isQuadruple() const` — 4 or 12
 - [ ] `String toString() const` — e.g., "4/4"
-- [ ] `static std::pair<TimeSignature, Error> fromString(const String &str)` — e.g., "3/4"
+- [ ] `static Result<TimeSignature> fromString(const String &str)` — e.g., "3/4"
 - [ ] Common constants: `Common` (4/4), `CutTime` (2/2), `Waltz` (3/4)
 - [ ] `operator==`, `operator!=`
 - [ ] Doctest: construction, compound detection, toString/fromString
@@ -180,7 +180,7 @@ Simple value type.
 - [ ] `double beatsPerSecond() const`
 - [ ] `double secondsPerBeat() const`
 - [ ] `String marking() const` — Italian tempo marking (e.g., "Allegro")
-- [ ] `static std::pair<Tempo, Error> fromMarking(const String &marking)` — e.g., "Andante" -> ~76-108 bpm (midpoint)
+- [ ] `static Result<Tempo> fromMarking(const String &marking)` — e.g., "Andante" -> ~76-108 bpm (midpoint)
 - [ ] Common constants: `Largo` (50), `Adagio` (70), `Andante` (92), `Moderato` (108), `Allegro` (132), `Presto` (168)
 - [ ] `operator==`, `operator!=`, `operator<`
 - [ ] Doctest: construction, durations, markings
@@ -269,7 +269,7 @@ Enum-based dynamic markings with velocity mapping.
 - [ ] `static Dynamics fromVelocity(uint8_t velocity)` — maps velocity range to Level
 - [ ] `String name() const` — e.g., "pp", "mf"
 - [ ] `String longName() const` — e.g., "pianissimo", "mezzo-forte"
-- [ ] `static std::pair<Dynamics, Error> fromName(const String &name)`
+- [ ] `static Result<Dynamics> fromName(const String &name)`
 - [ ] `double linearGain() const` — 0.0 to 1.0 for audio processing
 - [ ] `operator==`, `operator!=`, `operator<`
 - [ ] Velocity mappings: ppp=16, pp=33, p=49, mp=64, mf=80, f=96, ff=112, fff=127

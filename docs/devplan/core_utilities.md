@@ -1,117 +1,16 @@
-# Core Utilities and Enhanced Existing Classes
+# Enhanced Existing Classes
 
-**Phase:** 1D (utilities), 7 (enhanced existing classes)
-**Dependencies:** Phase 1A containers for Algorithm
+**Phase:** 7 (ongoing)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 ---
 
-## Random
+### Result\<T\> Adoption
 
-Wraps `<random>`. Utility class, not a data object.
+Migrate existing `std::pair<T, Error>` returns to `Result<T>` as classes are touched:
 
-**Files:**
-- [ ] `include/promeki/core/random.h`
-- [ ] `src/random.cpp`
-- [ ] `tests/random.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes (`<random>`), namespace
-- [ ] Private: `std::mt19937` engine, seeded from `std::random_device` by default
-- [ ] `randomInt(int min, int max)` — uniform integer distribution, inclusive
-- [ ] `randomInt64(int64_t min, int64_t max)` — 64-bit variant
-- [ ] `randomDouble(double min, double max)` — uniform real distribution
-- [ ] `randomFloat(float min, float max)` — float variant
-- [ ] `randomBytes(size_t count)` — returns `Buffer` of random bytes
-- [ ] `randomBool()` — 50/50 true/false
-- [ ] `seed(uint64_t seed)` — manual seed for reproducibility
-- [ ] Static `global()` — returns thread-local global instance
-- [ ] Doctest: range checks, reproducibility with same seed, randomBytes length
-
----
-
-## ElapsedTimer
-
-Wraps `std::chrono::steady_clock`. Utility class.
-
-**Files:**
-- [ ] `include/promeki/core/elapsedtimer.h`
-- [ ] `tests/elapsedtimer.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes (`<chrono>`), namespace
-- [ ] Private: `std::chrono::steady_clock::time_point _start`
-- [ ] Constructor: starts automatically
-- [ ] `start()` — records start time
-- [ ] `restart()` — records start time, returns elapsed since previous start (in ms)
-- [ ] `elapsed()` — returns milliseconds since start as `int64_t`
-- [ ] `elapsedUs()` — returns microseconds since start
-- [ ] `elapsedNs()` — returns nanoseconds since start
-- [ ] `hasExpired(int64_t ms)` — returns true if elapsed >= ms
-- [ ] `isValid()` — returns true if `start()` has been called
-- [ ] `invalidate()` — resets to invalid state
-- [ ] Doctest: basic timing, restart returns elapsed, hasExpired, invalid state
-
----
-
-## Duration
-
-Wraps `std::chrono::duration`. Simple value type — no PROMEKI_SHARED_FINAL.
-
-**Files:**
-- [ ] `include/promeki/core/duration.h`
-- [ ] `tests/duration.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes (`<chrono>`), namespace
-- [ ] Internal storage: `std::chrono::nanoseconds`
-- [ ] Static factories: `fromHours()`, `fromMinutes()`, `fromSeconds()`, `fromMilliseconds()`, `fromMicroseconds()`, `fromNanoseconds()`
-- [ ] `hours()` — returns `int64_t`
-- [ ] `minutes()` — returns `int64_t` (total, not remainder)
-- [ ] `seconds()` — returns `int64_t`
-- [ ] `milliseconds()` — returns `int64_t`
-- [ ] `microseconds()` — returns `int64_t`
-- [ ] `nanoseconds()` — returns `int64_t`
-- [ ] `toSecondsDouble()` — returns `double`
-- [ ] Arithmetic: `operator+`, `operator-`, `operator*` (scalar), `operator/` (scalar)
-- [ ] Comparison: `operator==`, `operator!=`, `operator<`, `operator>`, `operator<=`, `operator>=`
-- [ ] `isZero()` — returns bool
-- [ ] `isNegative()` — returns bool
-- [ ] `toString()` — human-readable (e.g., "1h 23m 45s")
-- [ ] Doctest: construction, arithmetic, conversions, comparison, toString
-
----
-
-## Algorithm
-
-Header-only free functions operating on promeki containers.
-
-**Files:**
-- [ ] `include/promeki/core/algorithm.h`
-- [ ] `tests/algorithm.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes, namespace
-- [ ] `sorted(Container)` — returns sorted copy
-- [ ] `sorted(Container, Compare)` — returns sorted copy with custom comparator
-- [ ] `filtered(Container, Predicate)` — returns copy with only matching elements
-- [ ] `mapped(Container, Transform)` — returns container of transformed elements (deduced return type)
-- [ ] `allOf(Container, Predicate)` — returns bool
-- [ ] `anyOf(Container, Predicate)` — returns bool
-- [ ] `noneOf(Container, Predicate)` — returns bool
-- [ ] `forEach(Container, Callable)` — applies callable to each element
-- [ ] `accumulate(Container, Init, BinaryOp)` — fold/reduce
-- [ ] `minElement(Container)` — returns iterator to minimum
-- [ ] `maxElement(Container)` — returns iterator to maximum
-- [ ] `contains(Container, Value)` — generic contains
-- [ ] Works with `List`, `Set`, `Map`, `Deque`, and new containers via iterators
-- [ ] Doctest: each function with List and at least one other container type
-
----
-
-## Enhanced Existing Classes (Phase 7)
-
-These enhancements are ongoing throughout other phases.
+- [ ] `Queue<T>::pop()` — `Result<T>`
+- [ ] Existing codebase: migrate `std::pair<T, Error>` returns (e.g., `Timecode::fromString()`) to `Result<T>`
 
 ---
 

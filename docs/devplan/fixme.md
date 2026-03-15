@@ -19,19 +19,6 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 
 ---
 
-## Thread::threadEventLoop() Cross-Thread Bug
-
-**File:** `src/thread.cpp:178`
-**FIXME:** "This only works when called from the adopted thread itself. Cross-thread callers will get the wrong EventLoop (or nullptr) because EventLoop::current() is thread-local."
-
-**Fixed in Phase 1B.** `threadEventLoop()` now caches the EventLoop pointer in `_threadLoop` when called from the adopted thread itself. Cross-thread callers see the cached value. `quit()` also uses `threadEventLoop()` for consistency.
-
-- [x] Have `threadEventLoop()` lazily cache the EventLoop pointer for adopted threads
-- [x] `threadEventLoop()` returns cached pointer for cross-thread callers
-- [x] `quit()` uses `threadEventLoop()` instead of duplicating adopted-thread logic
-
----
-
 ## AudioDesc Metadata Comparison
 
 **File:** `include/promeki/proav/audiodesc.h:277`
@@ -94,15 +81,3 @@ Currently uses `std::istringstream` to parse integer tokens. Should use `String:
 - [ ] Consider if this ties into the pipeline framework's buffer handling (Phase 4)
 - [ ] Update tests
 
----
-
-## Platform-Specific RNG
-
-**File:** `src/util.cpp:28`
-**FIXME:** "Move over platform specific RNG stuff"
-
-`promekiRand()` uses `fallbackRand()` instead of platform-specific cryptographic RNG (`/dev/urandom`, `CryptGenRandom`, `getrandom()`).
-
-- [ ] Natural time to fix: Phase 1D when implementing the `Random` class
-- [ ] `Random` class should use platform RNG for seeding; `promekiRand()` can delegate to `Random::randomBytes()` or use the same platform backend
-- [ ] Update tests

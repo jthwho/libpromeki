@@ -158,8 +158,5 @@ T promekiCubic(const std::array<T, 4>& points, T t) {
     return a * t * t * t + b * t * t + c * t + d;
 }
 
-// Writes bytes worth of random data to buf
-Error promekiRand(uint8_t *buf, size_t bytes);
-
 PROMEKI_NAMESPACE_END
 

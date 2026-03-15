@@ -107,12 +107,12 @@ Read/write Standard MIDI Files (SMF). Data object with PROMEKI_SHARED_FINAL.
 **Implementation checklist:**
 - [ ] Header guard, includes, namespace
 - [ ] `enum Format { SingleTrack = 0, MultiTrack = 1, MultiSong = 2 }`
-- [ ] `static std::pair<MidiFile, Error> readFromFile(const String &path)`
-- [ ] `static std::pair<MidiFile, Error> readFromFile(const FilePath &path)`
+- [ ] `static Result<MidiFile> readFromFile(const String &path)`
+- [ ] `static Result<MidiFile> readFromFile(const FilePath &path)`
 - [ ] `Error writeToFile(const String &path) const`
 - [ ] `Error writeToFile(const FilePath &path) const`
-- [ ] `static std::pair<MidiFile, Error> readFromBuffer(const Buffer &data)`
-- [ ] `std::pair<Buffer, Error> writeToBuffer() const`
+- [ ] `static Result<MidiFile> readFromBuffer(const Buffer &data)`
+- [ ] `Result<Buffer> writeToBuffer() const`
 - [ ] `Format format() const`, `void setFormat(Format)`
 - [ ] `uint16_t ticksPerBeat() const`, `void setTicksPerBeat(uint16_t)` — resolution (typical: 480)
 - [ ] `List<MidiTrack> tracks() const`
@@ -155,8 +155,8 @@ Name and MIDI mapping. Simple value type.
 - [ ] `bool isDrumKit() const` — true if channel 9
 - [ ] `String family() const` — e.g., "Strings", "Brass", "Woodwinds"
 - [ ] General MIDI instrument lookup:
-  - [ ] `static std::pair<Instrument, Error> fromGMProgram(uint8_t program)` — name from GM spec
-  - [ ] `static std::pair<Instrument, Error> fromName(const String &name)` — lookup by name
+  - [ ] `static Result<Instrument> fromGMProgram(uint8_t program)` — name from GM spec
+  - [ ] `static Result<Instrument> fromName(const String &name)` — lookup by name
 - [ ] Common instruments:
   - [ ] `static Instrument piano()`, `static Instrument acousticGuitar()`, `static Instrument electricGuitar()`
   - [ ] `static Instrument bass()`, `static Instrument drums()`
@@ -190,7 +190,7 @@ Instrument + sequence of musical notes. Data object with PROMEKI_SHARED_FINAL.
 - [ ] `void transpose(const Interval &interval)`
 - [ ] `void setDynamics(const Dynamics &dynamics)` — apply to all notes
 - [ ] `MidiTrack toMidiTrack(uint16_t ticksPerBeat) const` — convert to MIDI
-- [ ] `static std::pair<Track, Error> fromMidiTrack(const MidiTrack &midi, uint16_t ticksPerBeat)` — convert from MIDI
+- [ ] `static Result<Track> fromMidiTrack(const MidiTrack &midi, uint16_t ticksPerBeat)` — convert from MIDI
 - [ ] `bool isEmpty() const`
 - [ ] `void clear()`
 - [ ] PROMEKI_SHARED_FINAL, `::Ptr`, `::List`, `::PtrList`
@@ -230,7 +230,7 @@ Full score: list of tracks + TempoMap + Key. Data object with PROMEKI_SHARED_FIN
   - [ ] `void transpose(const Interval &interval)`
 - [ ] MIDI conversion:
   - [ ] `MidiFile toMidiFile(uint16_t ticksPerBeat = 480) const`
-  - [ ] `static std::pair<Arrangement, Error> fromMidiFile(const MidiFile &midi)`
+  - [ ] `static Result<Arrangement> fromMidiFile(const MidiFile &midi)`
 - [ ] `bool isEmpty() const`
 - [ ] PROMEKI_SHARED_FINAL, `::Ptr`, `::List`, `::PtrList`
 - [ ] Doctest: build arrangement, toMidiFile round-trip, transpose, duration calculation

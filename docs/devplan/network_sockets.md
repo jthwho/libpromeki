@@ -39,7 +39,7 @@ Simple data object: IP address + port. No PROMEKI_SHARED_FINAL (simple value typ
 - [ ] Header guard, includes, namespace (promeki or promeki::net)
 - [ ] Internal storage: `struct sockaddr_storage` or separate IP + port
 - [ ] Constructors: default, from `String` host + `uint16_t` port, from `struct sockaddr *`
-- [ ] `static std::pair<SocketAddress, Error> fromString(const String &hostPort)` — parse "host:port"
+- [ ] `static Result<SocketAddress> fromString(const String &hostPort)` — parse "host:port"
 - [ ] `toString()` — returns "host:port" string
 - [ ] `host()` — returns `String` (IP address or hostname)
 - [ ] `port()` — returns `uint16_t`
