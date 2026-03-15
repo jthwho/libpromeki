@@ -163,19 +163,19 @@ var NAVTREEINDEX =
 [
 "algorithm_8h.html",
 "classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153abd15022b388033c23afa0f690b6f4232",
-"classDeque.html#a5a24d69c927e0eb994b75d1b29a9ff2a",
-"classFourCC.html",
-"classImageFileIO.html#aafbba433258eef36cd6ceecce6912b76",
-"classMap.html#a76c845895fe143702d86f0bcb7745cc2",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a6fd74de6b400cde5c1c83ffb6999fc1c",
-"classNumName.html#af21cf7d53c4fdbea249bb929cdd6238f",
-"classPixelFormat.html#acb42bf267ca6da3eb10edc6591081cc7",
-"classSize2DTemplate.html#ad5c740383f223272239578d452ed5592",
-"classStringList.html#a091ca41992f35860c542c08655198f20",
-"classTuiApplication.html#aec485838ac3d4115d42a36969d307efe",
-"classTuiWidget.html#af2571b5113126610fbd8b486741dbe84",
-"imagefileio_8h.html",
-"span_8h_source.html"
+"classDeque.html#a5102e0568852b7a7a34c323753c92cfd",
+"classFilePath.html#ad8171f3b333f03cc03a03547e8102fe0",
+"classImageFileIO.html#a8cc24c93ba44b010c261c998189b48ad",
+"classMap.html#a6278babcb3d0ffb4d8a445b30020e1b6",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a6f569aa64c9066f33aae5c4ab757d6fe",
+"classNumName.html#ae7658cdbf32a1970b7ef4ee5393b5b90",
+"classPixelFormat.html#ac041db304ac63fee5905cb1ac680492f",
+"classSize2DTemplate.html#aaec305c9337c460d079ffc84bfbd5254",
+"classStringLatin1Data.html#afc158a10e7a407ff742f33bc3058e1a3",
+"classTuiApplication.html#ab7a5b40047eb4de037daf07dd4e71dd6",
+"classTuiWidget.html#ae8947a0f72d348169e3b69bd1f5f56e9",
+"imagefile_8h.html",
+"slot_8h_source.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

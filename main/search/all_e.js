@@ -20,7 +20,7 @@ var searchData=
   ['library_20wrappers_20over_20raw_20std_3a_3a_20types_17',['Prefer Library Wrappers Over Raw std:: Types',['../md_CODING__STANDARDS.html#autotoc_md36',1,'']]],
   ['libraryfailure_18',['LibraryFailure',['../classError.html#ab5980e13b879db253df802b0950d1708ad7cf29e5c28336196d31c8b72407a4b2',1,'Error']]],
   ['license_19',['License',['../index.html#autotoc_md13',1,'']]],
-  ['line_20',['line',['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()'],['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()=default'],['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html',1,'Line&lt; T, N &gt;'],['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line()']]],
+  ['line_20',['line',['../classLine.html#a493c0497567183e1d59acb2e98f80668',1,'Line::Line()=default'],['../classLine.html#aeeb2e57307e3326a598ba57dc971a1cb',1,'Line::Line(const Pt &amp;s, const Pt &amp;e)'],['../classLine.html#a8298c4bc8666f398dc44741a549538cb',1,'Line::Line(const Pt &amp;&amp;s, const Pt &amp;&amp;e)'],['../classLine.html',1,'Line&lt; T, N &gt;'],['../classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3',1,'StreamString::line()']]],
   ['line_2eh_21',['line.h',['../line_8h.html',1,'']]],
   ['line2dd_22',['Line2Dd',['../line_8h.html#ae5ad9518743ae3ebe745addb8878427f',1,'line.h']]],
   ['line2df_23',['Line2Df',['../line_8h.html#a4bef7e63736314275742e7b880acff10',1,'line.h']]],

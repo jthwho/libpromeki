@@ -170,8 +170,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a54e60683bb045b1d830e9152b4b482ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the original allocation pointer.  <br /></td></tr>
 <tr class="separator:a54e60683bb045b1d830e9152b4b482ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18db71f5a21c3c39b6e0a531e9d0f7fa" id="r_a18db71f5a21c3c39b6e0a531e9d0f7fa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBuffer.html#a18db71f5a21c3c39b6e0a531e9d0f7fa">size</a> () <a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">const</a></td></tr>
-<tr class="memdesc:a18db71f5a21c3c39b6e0a531e9d0f7fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the usable size of the buffer in bytes.  <br /></td></tr>
+<tr class="memdesc:a18db71f5a21c3c39b6e0a531e9d0f7fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the logical content size in bytes.  <br /></td></tr>
 <tr class="separator:a18db71f5a21c3c39b6e0a531e9d0f7fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7bc63b903b153ea93fc87e7c4e66345c" id="r_a7bc63b903b153ea93fc87e7c4e66345c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBuffer.html#a7bc63b903b153ea93fc87e7c4e66345c">setSize</a> (<a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">size_t</a> <a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">s</a>) <a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">const</a></td></tr>
+<tr class="memdesc:a7bc63b903b153ea93fc87e7c4e66345c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the logical content size.  <br /></td></tr>
+<tr class="separator:a7bc63b903b153ea93fc87e7c4e66345c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7aeccf7cb839af72d4cc429cd2e031fd" id="r_a7aeccf7cb839af72d4cc429cd2e031fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd">availSize</a> () <a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">const</a></td></tr>
+<tr class="memdesc:a7aeccf7cb839af72d4cc429cd2e031fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the available space from <a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69" title="Returns a pointer to the buffer data.">data()</a> to the end of the allocation.  <br /></td></tr>
+<tr class="separator:a7aeccf7cb839af72d4cc429cd2e031fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa3b733a521a31a7db6060d3103624beb" id="r_aa3b733a521a31a7db6060d3103624beb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBuffer.html#aa3b733a521a31a7db6060d3103624beb">allocSize</a> () <a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">const</a></td></tr>
 <tr class="memdesc:aa3b733a521a31a7db6060d3103624beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total allocation size in bytes.  <br /></td></tr>
 <tr class="separator:aa3b733a521a31a7db6060d3103624beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,7 +220,13 @@ Static Public Attributes</h2></td></tr>
 <div class="textblock"><p>Generic memory buffer descriptor with alignment and memory space support. </p>
 <p><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is a uniform tracking object for contiguous memory regions that may reside in different address spaces: local system RAM, GPU device memory, or even remote memory on another machine (e.g. RDMA). It does not assume the memory is host-accessible — use <a class="el" href="classBuffer.html#aa35d50373c38ff6420f077d9fb661a19" title="Returns true if the buffer memory is directly accessible from the host CPU.">isHostAccessible()</a> before dereferencing <a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69" title="Returns a pointer to the buffer data.">data()</a>. All memory operations (allocation, release, copy, fill) are delegated through the buffer's <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, allowing each memory space to provide appropriate implementations.</p>
 <dl class="section user"><dt>Allocation and ownership</dt><dd>Buffers can be allocated from any <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, or can wrap existing memory pointers without taking ownership. Owned buffers are released through their <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a> on destruction. The <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>'s release implementation handles any space-specific cleanup (e.g. SystemSecure performs secure zeroing and page unlocking before freeing).</dd></dl>
-<dl class="section user"><dt>Data shifting</dt><dd>The <a class="el" href="classBuffer.html#a291031935b303e8bed545efd755c3574" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> method offsets the user-visible data pointer from the allocation base. This is primarily used for O_DIRECT I/O, where the underlying allocation must be page-aligned but the actual content starts at some offset within that allocation. The shift is always relative to the allocation base (not accumulating). After a shift, <a class="el" href="classBuffer.html#a18db71f5a21c3c39b6e0a531e9d0f7fa" title="Returns the usable size of the buffer in bytes.">size()</a> returns the remaining usable bytes, while <a class="el" href="classBuffer.html#aa3b733a521a31a7db6060d3103624beb" title="Returns the total allocation size in bytes.">allocSize()</a> always returns the full allocation size. Calling shiftData(0) resets the view to the base.</dd></dl>
+<dl class="section user"><dt>Buffer sizes</dt><dd><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> tracks three distinct sizes:<ul>
+<li><a class="el" href="classBuffer.html#aa3b733a521a31a7db6060d3103624beb" title="Returns the total allocation size in bytes.">allocSize()</a> — the total allocation size, always constant.</li>
+<li><a class="el" href="classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd" title="Returns the available space from data() to the end of the allocation.">availSize()</a> — the usable space from <a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69" title="Returns a pointer to the buffer data.">data()</a> to the end of the allocation (allocSize minus any data shift). This is the maximum amount of content the buffer can hold at the current shift.</li>
+<li><a class="el" href="classBuffer.html#a18db71f5a21c3c39b6e0a531e9d0f7fa" title="Returns the logical content size in bytes.">size()</a> — the logical content size, tracking how many bytes of meaningful data are in the buffer. Defaults to 0 after allocation (the buffer has capacity but no content yet). <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <a class="el" href="classBuffer.html#a7bc63b903b153ea93fc87e7c4e66345c" title="Sets the logical content size.">setSize()</a>.</li>
+</ul>
+</dd></dl>
+<dl class="section user"><dt>Data shifting</dt><dd>The <a class="el" href="classBuffer.html#a291031935b303e8bed545efd755c3574" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> method offsets the user-visible data pointer from the allocation base. This is primarily used for O_DIRECT I/O, where the underlying allocation must be page-aligned but the actual content starts at some offset within that allocation. The shift is always relative to the allocation base (not accumulating). After a shift, <a class="el" href="classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd" title="Returns the available space from data() to the end of the allocation.">availSize()</a> returns the remaining usable bytes and <a class="el" href="classBuffer.html#a18db71f5a21c3c39b6e0a531e9d0f7fa" title="Returns the logical content size in bytes.">size()</a> is reset to 0. Calling shiftData(0) resets the view to the base.</dd></dl>
 <dl class="section user"><dt>Copy semantics</dt><dd>Copying a buffer performs a deep copy through the <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>'s copy operation, preserving any data shift offset. The copy inherits the source's <a class="el" href="classMemSpace.html" title="Abstraction for memory allocation in different address spaces.">MemSpace</a>, so copies of a SystemSecure buffer remain secure. For memory spaces where deep copy is expensive or impossible (large GPU framebuffers, remote RDMA regions), use <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a> for shared ownership instead.</dd></dl>
 <dl class="section user"><dt>Shared ownership</dt><dd>When shared ownership is needed, use <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a> (<a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a>&lt;<a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>&gt;). This is the recommended approach for large buffers or buffers in non-host-accessible memory spaces, as it avoids deep copies. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -361,7 +373,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Copy constructor. </p>
-<p>Performs a deep copy of the buffer data, including any data shift offset. </p>
+<p>Performs a deep copy of the buffer data, including any data shift offset and the logical size. </p>
 
 </div>
 </div>
@@ -446,7 +458,36 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the total allocation size in bytes. </p>
-<p>Unlike <a class="el" href="classBuffer.html#a18db71f5a21c3c39b6e0a531e9d0f7fa" title="Returns the usable size of the buffer in bytes.">size()</a>, this always returns the full allocation size regardless of any <a class="el" href="classBuffer.html#a291031935b303e8bed545efd755c3574" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> calls. </p><dl class="section return"><dt>Returns</dt><dd>The allocation size. </dd></dl>
+<p>This always returns the full allocation size regardless of any <a class="el" href="classBuffer.html#a291031935b303e8bed545efd755c3574" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> calls or the logical content size. </p><dl class="section return"><dt>Returns</dt><dd>The allocation size. </dd></dl>
+
+</div>
+</div>
+<a id="a7aeccf7cb839af72d4cc429cd2e031fd" name="a7aeccf7cb839af72d4cc429cd2e031fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7aeccf7cb839af72d4cc429cd2e031fd">&#9670;&#160;</a></span>availSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">size_t</a> Buffer::availSize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the available space from <a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69" title="Returns a pointer to the buffer data.">data()</a> to the end of the allocation. </p>
+<p>This is the maximum number of bytes that can be stored starting from <a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69" title="Returns a pointer to the buffer data.">data()</a>. Equal to <a class="el" href="classBuffer.html#aa3b733a521a31a7db6060d3103624beb" title="Returns the total allocation size in bytes.">allocSize()</a> minus any data shift.</p>
+<dl class="section return"><dt>Returns</dt><dd>The available buffer space in bytes. </dd></dl>
 
 </div>
 </div>
@@ -688,6 +729,41 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a7bc63b903b153ea93fc87e7c4e66345c" name="a7bc63b903b153ea93fc87e7c4e66345c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7bc63b903b153ea93fc87e7c4e66345c">&#9670;&#160;</a></span>setSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">void</a> Buffer::setSize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classBuffer.html#aef81cafb0851e3a9e9772eaa6384fdcc">size_t</a>&#160;</td>
+          <td class="paramname"><em>s</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the logical content size. </p>
+<p>Indicates how many bytes of meaningful data are in the buffer, starting from <a class="el" href="classBuffer.html#a59d9432844bceaefd50a787f2804eb69" title="Returns a pointer to the buffer data.">data()</a>. The value must not exceed <a class="el" href="classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd" title="Returns the available space from data() to the end of the allocation.">availSize()</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">s</td><td>The new logical content size. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a291031935b303e8bed545efd755c3574" name="a291031935b303e8bed545efd755c3574"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a291031935b303e8bed545efd755c3574">&#9670;&#160;</a></span>shiftData()</h2>
 
@@ -745,8 +821,9 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the usable size of the buffer in bytes. </p>
-<p>If <a class="el" href="classBuffer.html#a291031935b303e8bed545efd755c3574" title="Shifts the data pointer forward from the allocation base.">shiftData()</a> has been called, this returns the remaining size from the current data pointer to the end of the allocation. </p><dl class="section return"><dt>Returns</dt><dd>The usable buffer size. </dd></dl>
+<p>Returns the logical content size in bytes. </p>
+<p>This is the user-set content size, tracking how many bytes of meaningful data are in the buffer. Defaults to 0 after allocation (the buffer has capacity but no content yet). <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> via <a class="el" href="classBuffer.html#a7bc63b903b153ea93fc87e7c4e66345c" title="Sets the logical content size.">setSize()</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>The logical content size. </dd></dl>
 
 </div>
 </div>
@@ -760,7 +837,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classBuffer.html">Buffer</a></li>
-    <li class="footer">Generated on 2026-03-15 04:32:32 from commit 08203a1 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
   </ul>
 </div>
 </body>

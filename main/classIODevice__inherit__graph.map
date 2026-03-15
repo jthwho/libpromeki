@@ -4,4 +4,6 @@
 <area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="76,118,76,152,71,152,71,118"/>
 <area shape="rect" id="Node000002" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="25,5,121,31"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="76,44,76,79,71,79,71,44"/>
+<area shape="rect" id="Node000004" href="$classFile.html" title="File I/O device with buffered reading." alt="" coords="51,225,96,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="76,191,76,225,71,225,71,191"/>
 </map>

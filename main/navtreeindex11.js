@@ -1,5 +1,7 @@
 var NAVTREEINDEX11 =
 {
+"classTuiApplication.html#ab7a5b40047eb4de037daf07dd4e71dd6":[9,0,117,12],
+"classTuiApplication.html#ae7c2cdb04ba56870109e6a2509ec98e2":[9,0,117,13],
 "classTuiApplication.html#aec485838ac3d4115d42a36969d307efe":[9,0,117,8],
 "classTuiApplication.html#af335eb32601d98fadb775a1dac3bc15a":[9,0,117,7],
 "classTuiApplication.html#af41de22895b35efcdc4e55f20bb6064e":[9,0,117,11],
@@ -247,7 +249,5 @@ var NAVTREEINDEX11 =
 "classTuiWidget.html#ae3c1295574aedc36e36cba48a8551661":[9,0,146,12],
 "classTuiWidget.html#ae4a7697a67a0e02e5b3bc9180ec43386":[9,0,146,21],
 "classTuiWidget.html#ae752ed4790106e61352cc1106e9ff336":[9,0,146,11],
-"classTuiWidget.html#ae7ecc9c9e248f27e92ecab021bfe6a3b":[9,0,146,35],
-"classTuiWidget.html#ae8947a0f72d348169e3b69bd1f5f56e9":[9,0,146,43],
-"classTuiWidget.html#aeb11c0801141f5905b77c078f74eb7d1":[9,0,146,24]
+"classTuiWidget.html#ae7ecc9c9e248f27e92ecab021bfe6a3b":[9,0,146,35]
 };

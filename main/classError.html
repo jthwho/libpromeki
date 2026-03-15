@@ -163,6 +163,7 @@ Public Types</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c">InvalidDimension</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9">NotHostAccessible</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df">BufferTooSmall</a>
 <br />
  }</td></tr>
 <tr class="memdesc:ab5980e13b879db253df802b0950d1708"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> codes for the promeki library.  <a href="classError.html#ab5980e13b879db253df802b0950d1708">More...</a><br /></td></tr>
@@ -231,6 +232,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a672194928df04a852f4d2295abfa0c30" id="r_a672194928df04a852f4d2295abfa0c30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classError.html#a672194928df04a852f4d2295abfa0c30">syserr</a> (int <a class="el" href="classList.html">errnum</a>)</td></tr>
 <tr class="memdesc:a672194928df04a852f4d2295abfa0c30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from an explicit POSIX errno value.  <br /></td></tr>
 <tr class="separator:a672194928df04a852f4d2295abfa0c30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3c41c0a2f899e4f1f94a3a378c2c1c2" id="r_aa3c41c0a2f899e4f1f94a3a378c2c1c2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classError.html#aa3c41c0a2f899e4f1f94a3a378c2c1c2">syserr</a> (<a class="el" href="classList.html">const</a> std::error_code &amp;<a class="el" href="classList.html">ec</a>)</td></tr>
+<tr class="memdesc:aa3c41c0a2f899e4f1f94a3a378c2c1c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from a std::error_code.  <br /></td></tr>
+<tr class="separator:aa3c41c0a2f899e4f1f94a3a378c2c1c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight error code wrapper for the promeki library. </p>
@@ -273,11 +277,11 @@ Static Public Member Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2" name="ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2"></a>Busy&#160;</td><td class="fielddoc"><p>Resource is busy (EBUSY). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7" name="ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7"></a>Exists&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="Low-level file I/O wrapper.">File</a> or resource already exists (EEXIST). </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7" name="ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7"></a>Exists&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> or resource already exists (EEXIST). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a0c27b5349a76f6aae9d01fccfa829d3c" name="ab5980e13b879db253df802b0950d1708a0c27b5349a76f6aae9d01fccfa829d3c"></a>BadAddress&#160;</td><td class="fielddoc"><p>Bad memory address (EFAULT). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aedd29d605deffb7b02d42d7ee3f586c7" name="ab5980e13b879db253df802b0950d1708aedd29d605deffb7b02d42d7ee3f586c7"></a>TooLarge&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="Low-level file I/O wrapper.">File</a> too large (EFBIG). </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aedd29d605deffb7b02d42d7ee3f586c7" name="ab5980e13b879db253df802b0950d1708aedd29d605deffb7b02d42d7ee3f586c7"></a>TooLarge&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> too large (EFBIG). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a9644131717a8ecd6a190b96262d9e595" name="ab5980e13b879db253df802b0950d1708a9644131717a8ecd6a190b96262d9e595"></a>Interrupt&#160;</td><td class="fielddoc"><p>Interrupted system call (EINTR). </p>
 </td></tr>
@@ -291,7 +295,7 @@ Static Public Member Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a1c30ea5641648c7319478796bc4d8438" name="ab5980e13b879db253df802b0950d1708a1c30ea5641648c7319478796bc4d8438"></a>TooManyOpenSysFiles&#160;</td><td class="fielddoc"><p>Too many open files system-wide (ENFILE). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3" name="ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3"></a>NotExist&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="Low-level file I/O wrapper.">File</a> or resource does not exist (ENOENT). </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3" name="ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3"></a>NotExist&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> or resource does not exist (ENOENT). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a6281ee333607973d160cf87638760753" name="ab5980e13b879db253df802b0950d1708a6281ee333607973d160cf87638760753"></a>NoMem&#160;</td><td class="fielddoc"><p>Out of memory (ENOMEM). </p>
 </td></tr>
@@ -326,6 +330,8 @@ Static Public Member Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c" name="ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c"></a>InvalidDimension&#160;</td><td class="fielddoc"><p>Invalid dimension value. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9" name="ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9"></a>NotHostAccessible&#160;</td><td class="fielddoc"><p>Memory is not host-accessible. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df" name="ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df"></a>BufferTooSmall&#160;</td><td class="fielddoc"><p><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is too small for the operation. </p>
 </td></tr>
 </table>
 
@@ -492,7 +498,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a id="a16136e7ebc397d51bcb89566235a9467" name="a16136e7ebc397d51bcb89566235a9467"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a16136e7ebc397d51bcb89566235a9467">&#9670;&#160;</a></span>syserr() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a16136e7ebc397d51bcb89566235a9467">&#9670;&#160;</a></span>syserr() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -519,8 +525,44 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="aa3c41c0a2f899e4f1f94a3a378c2c1c2" name="aa3c41c0a2f899e4f1f94a3a378c2c1c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3c41c0a2f899e4f1f94a3a378c2c1c2">&#9670;&#160;</a></span>syserr() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classError.html">Error</a> Error::syserr </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> std::error_code &amp;&#160;</td>
+          <td class="paramname"><em>ec</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> from a std::error_code. </p>
+<p>Handles both POSIX (generic_category / system_category on POSIX) and Windows (system_category on Windows) error codes correctly. Returns Ok when the error_code has no error.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ec</td><td>The std::error_code to translate. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>An <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> whose code maps to the given error_code. </dd></dl>
+
+</div>
+</div>
 <a id="a672194928df04a852f4d2295abfa0c30" name="a672194928df04a852f4d2295abfa0c30"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a672194928df04a852f4d2295abfa0c30">&#9670;&#160;</a></span>syserr() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a672194928df04a852f4d2295abfa0c30">&#9670;&#160;</a></span>syserr() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -604,7 +646,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-03-15 04:32:32 from commit 08203a1 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
   </ul>
 </div>
 </body>

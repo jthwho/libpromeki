@@ -1,20 +1,22 @@
 <map id="include/promeki/core/memspace.h" name="include/promeki/core/memspace.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="202,5,361,45"/>
-<area shape="rect" id="Node000002" href="$buffer_8h.html" title=" " alt="" coords="202,93,361,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="284,59,284,93,279,93,279,59"/>
-<area shape="rect" id="Node000003" href="$bufferediodevice_8h.html" title=" " alt="" coords="14,181,173,221"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="229,141,136,184,133,179,227,137"/>
-<area shape="rect" id="Node000004" href="$audio_8h.html" title=" " alt="" coords="197,181,365,221"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="284,147,284,181,279,181,279,147"/>
-<area shape="rect" id="Node000007" href="$image_8h.html" title=" " alt="" coords="389,181,557,221"/>
-<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="337,137,432,179,430,184,335,141"/>
-<area shape="rect" id="Node000005" href="$audiofile_8h.html" title=" " alt="" coords="5,269,173,309"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="228,229,132,272,130,267,226,225"/>
-<area shape="rect" id="Node000006" href="$proav_2frame_8h.html" title=" " alt="" coords="197,269,365,309"/>
-<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="284,235,284,269,279,269,279,235"/>
-<area shape="poly" id="edge8_Node000007_Node000006" title=" " alt="" coords="420,229,324,272,322,267,418,225"/>
-<area shape="rect" id="Node000008" href="$codec_8h.html" title=" " alt="" coords="389,269,557,309"/>
-<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="476,235,476,269,471,269,471,235"/>
-<area shape="rect" id="Node000009" href="$imagefile_8h.html" title=" " alt="" coords="581,269,749,309"/>
-<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="529,225,624,267,622,272,527,229"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="193,5,352,45"/>
+<area shape="rect" id="Node000002" href="$buffer_8h.html" title=" " alt="" coords="193,93,352,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,59,275,93,270,93,270,59"/>
+<area shape="rect" id="Node000003" href="$bufferediodevice_8h.html" title=" " alt="" coords="5,181,164,221"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="220,141,127,184,125,179,218,137"/>
+<area shape="rect" id="Node000005" href="$audio_8h.html" title=" " alt="" coords="189,181,357,221"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="275,147,275,181,270,181,270,147"/>
+<area shape="rect" id="Node000008" href="$image_8h.html" title=" " alt="" coords="477,181,645,221"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="350,135,498,179,497,184,348,140"/>
+<area shape="rect" id="Node000004" href="$file_8h.html" title=" " alt="" coords="5,269,164,309"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="87,235,87,269,82,269,82,235"/>
+<area shape="rect" id="Node000006" href="$audiofile_8h.html" title=" " alt="" coords="189,269,357,309"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="275,235,275,269,270,269,270,235"/>
+<area shape="rect" id="Node000007" href="$proav_2frame_8h.html" title=" " alt="" coords="381,269,549,309"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="328,225,424,267,422,272,326,229"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="531,233,488,271,484,267,527,229"/>
+<area shape="rect" id="Node000009" href="$codec_8h.html" title=" " alt="" coords="573,269,741,309"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="594,229,637,267,634,271,591,233"/>
+<area shape="rect" id="Node000010" href="$imagefile_8h.html" title=" " alt="" coords="765,269,933,309"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="638,223,786,267,785,272,636,228"/>
 </map>

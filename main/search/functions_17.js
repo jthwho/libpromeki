@@ -15,10 +15,10 @@ var searchData=
   ['whitepoint_12',['whitePoint',['../classColorSpace.html#aa1ed0c598671a9b239b2482f2592fb95',1,'ColorSpace']]],
   ['widgets_13',['widgets',['../classTuiLayout.html#abb82dc965289ec9d9c0a955d14a0f041',1,'TuiLayout']]],
   ['width_14',['width',['../classMatrix.html#a8e820a4bfffa2211a337a0edad681c1f',1,'Matrix::width()'],['../classRect.html#a6bd18dda4f7a4ad00fb80b6f186d9dcd',1,'Rect::width()'],['../classSize2DTemplate.html#a3aa50519f47c1651fbd4dba994d29a0e',1,'Size2DTemplate::width()'],['../classImage.html#aa3c6a86a6e5f35499ae781710154cb33',1,'Image::width()'],['../classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd',1,'ImageDesc::width()'],['../classTuiWidget.html#af363ab0151e02e4f471fdca67e587580',1,'TuiWidget::width()']]],
-  ['windowsize_15',['windowSize',['../classTerminal.html#ac033aa7a652a8b92dd4819bebe9e7a17',1,'Terminal']]],
+  ['windowsize_15',['windowSize',['../classTerminal.html#a5e3632ee2a32d9ed75f2d1b36c3d3754',1,'Terminal']]],
   ['wordwrap_16',['wordWrap',['../classTuiLabel.html#aa10e55a3210a4f2824d9a394dacccedd',1,'TuiLabel']]],
   ['workingdesc_17',['workingDesc',['../classAudioDesc.html#ad04bfe1f04c616f7bafc2071fa9ee5eb',1,'AudioDesc']]],
-  ['write_18',['write',['../classFile.html#abd3a14f116659739b31bf4779e0ce702',1,'File::write()'],['../classIODevice.html#ab8f95a3dc11ce55907e63d314ae2d402',1,'IODevice::write()'],['../classAudioFile_1_1Impl.html#ab06cfa1abf244663e3561a0da8f5fe7d',1,'AudioFile::Impl::write()'],['../classAudioFile.html#a37243d14e586092718e2c03cd75da35e',1,'AudioFile::write()']]],
+  ['write_18',['write',['../classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9',1,'File::write()'],['../classIODevice.html#ab8f95a3dc11ce55907e63d314ae2d402',1,'IODevice::write()'],['../classAudioFile_1_1Impl.html#ab06cfa1abf244663e3561a0da8f5fe7d',1,'AudioFile::Impl::write()'],['../classAudioFile.html#a37243d14e586092718e2c03cd75da35e',1,'AudioFile::write()']]],
   ['writelocker_19',['WriteLocker',['../classReadWriteLock_1_1WriteLocker.html#aaa98a97965e8d7741fc2247315abe362',1,'ReadWriteLock::WriteLocker']]],
-  ['writeoutput_20',['writeOutput',['../classTerminal.html#a3be4d28c1a72ac1df50866bf8055c485',1,'Terminal']]]
+  ['writeoutput_20',['writeOutput',['../classTerminal.html#a801ff22a36c0d8b6cc308d9571811c09',1,'Terminal']]]
 ];

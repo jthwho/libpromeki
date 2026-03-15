@@ -27,7 +27,7 @@ var searchData=
   ['clearname_24',['clearName',['../classMidiNoteNames.html#a7ad09172cd9c7dfd2431d9f301b87a5e',1,'MidiNoteNames']]],
   ['clearscreen_25',['clearScreen',['../classAnsiStream.html#a5713b4dca537250ace00ddfa37687223',1,'AnsiStream']]],
   ['cliprect_26',['clipRect',['../classTuiPainter.html#a1eed31268f662a943d17a8e90350427b',1,'TuiPainter']]],
-  ['close_27',['close',['../classFile.html#a83cbce54d6c3b8c2f417b51f6b3f488c',1,'File::close()'],['../classIODevice.html#aa0c6dab1909670e7af3ceace982dce77',1,'IODevice::close()'],['../classAudioFile_1_1Impl.html#ac6e678373d14e5cea89a2b8bb5951169',1,'AudioFile::Impl::close()'],['../classAudioFile.html#ac9c1a860490d5bdf9abc2b16a92ea96e',1,'AudioFile::close()']]],
+  ['close_27',['close',['../classFile.html#afc80c80342f4969ee42f6df4570589fb',1,'File::close()'],['../classIODevice.html#aa994b6c0eea6ed02c822ed0774a87b23',1,'IODevice::close()'],['../classAudioFile_1_1Impl.html#ac6e678373d14e5cea89a2b8bb5951169',1,'AudioFile::Impl::close()'],['../classAudioFile.html#ac9c1a860490d5bdf9abc2b16a92ea96e',1,'AudioFile::close()']]],
   ['cmdlineparser_28',['CmdLineParser',['../classCmdLineParser.html#a9a2fed5dc071f97170339eadef6f709b',1,'CmdLineParser']]],
   ['code_29',['code',['../classError.html#a60e324cad0f40f97cc857ebea9444167',1,'Error']]],
   ['codec_30',['Codec',['../classCodec.html#a5af50c0e815ccec26356cd0669009919',1,'Codec']]],

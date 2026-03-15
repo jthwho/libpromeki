@@ -17,7 +17,6 @@ var searchData=
   ['statusbar_14',['StatusBar',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0adabdf889dc2f1fd143ea0891599b9b21',1,'TuiPalette']]],
   ['statusbartext_15',['StatusBarText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a02ff7c90a175be1e1639f666ab8cf363',1,'TuiPalette']]],
   ['strongfocus_16',['StrongFocus',['../widget_8h.html#a6b22f8df23411420df9f05b6698743ccacd803f669da6ea95150385d1d17b166c',1,'widget.h']]],
-  ['sync_17',['Sync',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513aec5978df95acfa85c97336da2190e2ac',1,'File']]],
-  ['system_18',['System',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c',1,'MemSpace']]],
-  ['systemsecure_19',['SystemSecure',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da',1,'MemSpace']]]
+  ['system_17',['System',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c',1,'MemSpace']]],
+  ['systemsecure_18',['SystemSecure',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da',1,'MemSpace']]]
 ];

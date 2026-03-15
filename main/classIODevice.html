@@ -102,8 +102,6 @@ $(document).ready(function(){initNavTree('classIODevice.html',''); initResizable
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classIODevice-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">IODevice Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
@@ -124,6 +122,8 @@ Inheritance diagram for IODevice:</div>
 <area shape="poly" title=" " alt="" coords="76,118,76,152,71,152,71,118"/>
 <area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="25,5,121,31"/>
 <area shape="poly" title=" " alt="" coords="76,44,76,79,71,79,71,44"/>
+<area shape="rect" href="classFile.html" title="File I/O device with buffered reading." alt="" coords="51,225,96,251"/>
+<area shape="poly" title=" " alt="" coords="76,191,76,225,71,225,71,191"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -150,14 +150,6 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
 <tr class="separator:ac12c287cd37708c10d6618d667a3147a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a960a96aef75e754fa5f4713c676115b3" id="r_a960a96aef75e754fa5f4713c676115b3"><td class="memItemLeft" align="right" valign="top"><a id="a960a96aef75e754fa5f4713c676115b3" name="a960a96aef75e754fa5f4713c676115b3"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Option</b> = <a class="el" href="classList.html">uint32_t</a></td></tr>
-<tr class="memdesc:a960a96aef75e754fa5f4713c676115b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integer type used to identify option kinds. <br /></td></tr>
-<tr class="separator:a960a96aef75e754fa5f4713c676115b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf3d909e576f38139a0d3c6c59f27d07" id="r_adf3d909e576f38139a0d3c6c59f27d07"><td class="memItemLeft" align="right" valign="top"><a id="adf3d909e576f38139a0d3c6c59f27d07" name="adf3d909e576f38139a0d3c6c59f27d07"></a>
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OptionList</b> = std::initializer_list&lt; std::pair&lt; <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>, <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt; &gt;</td></tr>
-<tr class="memdesc:adf3d909e576f38139a0d3c6c59f27d07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializer list type for declaring supported options. <br /></td></tr>
-<tr class="separator:adf3d909e576f38139a0d3c6c59f27d07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
@@ -169,9 +161,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a09147c8e6d6b4dc7ec91f54db2fc46b9" id="r_a09147c8e6d6b4dc7ec91f54db2fc46b9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a09147c8e6d6b4dc7ec91f54db2fc46b9">IODevice</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a09147c8e6d6b4dc7ec91f54db2fc46b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>.  <br /></td></tr>
 <tr class="separator:a09147c8e6d6b4dc7ec91f54db2fc46b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4d1f05613e0cbabe3bca1ac897b95bd" id="r_ae4d1f05613e0cbabe3bca1ac897b95bd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ae4d1f05613e0cbabe3bca1ac897b95bd">IODevice</a> (<a class="el" href="classIODevice.html#adf3d909e576f38139a0d3c6c59f27d07">OptionList</a> <a class="el" href="classList.html">opts</a>, <a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:ae4d1f05613e0cbabe3bca1ac897b95bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> with supported options.  <br /></td></tr>
-<tr class="separator:ae4d1f05613e0cbabe3bca1ac897b95bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3615f78e1b4ae46ba84ce46c048a0dfb" id="r_a3615f78e1b4ae46ba84ce46c048a0dfb"><td class="memItemLeft" align="right" valign="top"><a id="a3615f78e1b4ae46ba84ce46c048a0dfb" name="a3615f78e1b4ae46ba84ce46c048a0dfb"></a>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~IODevice</b> ()</td></tr>
 <tr class="memdesc:a3615f78e1b4ae46ba84ce46c048a0dfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
@@ -179,10 +168,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7767856d8e9bbd32d105063abf3d4546" id="r_a7767856d8e9bbd32d105063abf3d4546"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a7767856d8e9bbd32d105063abf3d4546">open</a> (<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> mode)=0</td></tr>
 <tr class="memdesc:a7767856d8e9bbd32d105063abf3d4546"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens the device with the specified mode.  <br /></td></tr>
 <tr class="separator:a7767856d8e9bbd32d105063abf3d4546"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0c6dab1909670e7af3ceace982dce77" id="r_aa0c6dab1909670e7af3ceace982dce77"><td class="memItemLeft" align="right" valign="top"><a id="aa0c6dab1909670e7af3ceace982dce77" name="aa0c6dab1909670e7af3ceace982dce77"></a>
-<a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>close</b> ()=0</td></tr>
-<tr class="memdesc:aa0c6dab1909670e7af3ceace982dce77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the device. <br /></td></tr>
-<tr class="separator:aa0c6dab1909670e7af3ceace982dce77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa994b6c0eea6ed02c822ed0774a87b23" id="r_aa994b6c0eea6ed02c822ed0774a87b23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#aa994b6c0eea6ed02c822ed0774a87b23">close</a> ()=0</td></tr>
+<tr class="memdesc:aa994b6c0eea6ed02c822ed0774a87b23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the device.  <br /></td></tr>
+<tr class="separator:aa994b6c0eea6ed02c822ed0774a87b23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a529c23c0405bb913d0c9ceaee62e88d0" id="r_a529c23c0405bb913d0c9ceaee62e88d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a529c23c0405bb913d0c9ceaee62e88d0">isOpen</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
 <tr class="memdesc:a529c23c0405bb913d0c9ceaee62e88d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the device is open.  <br /></td></tr>
 <tr class="separator:a529c23c0405bb913d0c9ceaee62e88d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,15 +192,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a550445dfaabdade1af5ca48d23018df6" id="r_a550445dfaabdade1af5ca48d23018df6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a550445dfaabdade1af5ca48d23018df6">isSequential</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a550445dfaabdade1af5ca48d23018df6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the device is sequential (non-seekable).  <br /></td></tr>
 <tr class="separator:a550445dfaabdade1af5ca48d23018df6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18d1b42c28b602d1f0b3f582c855a579" id="r_a18d1b42c28b602d1f0b3f582c855a579"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a18d1b42c28b602d1f0b3f582c855a579">seek</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a>)</td></tr>
-<tr class="memdesc:a18d1b42c28b602d1f0b3f582c855a579"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks to the given byte offset from the beginning.  <br /></td></tr>
-<tr class="separator:a18d1b42c28b602d1f0b3f582c855a579"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c0fa852f94c8815d55c481c68f7abcb" id="r_a0c0fa852f94c8815d55c481c68f7abcb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a0c0fa852f94c8815d55c481c68f7abcb">seek</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a>)</td></tr>
+<tr class="memdesc:a0c0fa852f94c8815d55c481c68f7abcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks to the given byte offset from the beginning.  <br /></td></tr>
+<tr class="separator:a0c0fa852f94c8815d55c481c68f7abcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4341cd31b97646126ccc2d21175b7bcb" id="r_a4341cd31b97646126ccc2d21175b7bcb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a4341cd31b97646126ccc2d21175b7bcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current read/write position.  <br /></td></tr>
 <tr class="separator:a4341cd31b97646126ccc2d21175b7bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1aa3d4592fb133bdf78983a945ce5cde" id="r_a1aa3d4592fb133bdf78983a945ce5cde"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a1aa3d4592fb133bdf78983a945ce5cde">size</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a1aa3d4592fb133bdf78983a945ce5cde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total size of the device in bytes.  <br /></td></tr>
-<tr class="separator:a1aa3d4592fb133bdf78983a945ce5cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad750fab3127e006588812977cba6c3f1" id="r_ad750fab3127e006588812977cba6c3f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="result_8h.html#a72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">size</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad750fab3127e006588812977cba6c3f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total size of the device in bytes.  <br /></td></tr>
+<tr class="separator:ad750fab3127e006588812977cba6c3f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc" id="r_a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc">atEnd</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the current position is at the end.  <br /></td></tr>
 <tr class="separator:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -232,15 +220,6 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clearError</b> ()</td></tr>
 <tr class="memdesc:a52d6df4e1bdf2ac64090b5c7e37a717e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the error state to Ok. <br /></td></tr>
 <tr class="separator:a52d6df4e1bdf2ac64090b5c7e37a717e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8bd8b0dc52828a529232ca0968e51388" id="r_a8bd8b0dc52828a529232ca0968e51388"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8bd8b0dc52828a529232ca0968e51388">setOption</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a8bd8b0dc52828a529232ca0968e51388"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets an option value by type ID.  <br /></td></tr>
-<tr class="separator:a8bd8b0dc52828a529232ca0968e51388"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6096b789c897f29254c21575f02f1448" id="r_a6096b789c897f29254c21575f02f1448"><td class="memItemLeft" align="right" valign="top"><a class="el" href="result_8h.html#a72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a6096b789c897f29254c21575f02f1448">option</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a6096b789c897f29254c21575f02f1448"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current value of an option.  <br /></td></tr>
-<tr class="separator:a6096b789c897f29254c21575f02f1448"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94291d4dbe879b915519f5d1cea1a86a" id="r_a94291d4dbe879b915519f5d1cea1a86a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a94291d4dbe879b915519f5d1cea1a86a">optionSupported</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a94291d4dbe879b915519f5d1cea1a86a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the device supports the given option.  <br /></td></tr>
-<tr class="separator:a94291d4dbe879b915519f5d1cea1a86a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac988dc10a5b980be627d8556d3d7be0d" id="r_ac988dc10a5b980be627d8556d3d7be0d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac988dc10a5b980be627d8556d3d7be0d">PROMEKI_SIGNAL</a> (<a class="el" href="classList.html">readyRead</a>)</td></tr>
 <tr class="memdesc:ac988dc10a5b980be627d8556d3d7be0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emitted when data is available for reading.  <br /></td></tr>
 <tr class="separator:ac988dc10a5b980be627d8556d3d7be0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -292,51 +271,6 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
 <tr class="separator:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a5b9ea6a7f58f08e176365a6ff5d200fd" id="r_a5b9ea6a7f58f08e176365a6ff5d200fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a5b9ea6a7f58f08e176365a6ff5d200fd">registerOptionType</a> ()</td></tr>
-<tr class="memdesc:a5b9ea6a7f58f08e176365a6ff5d200fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates and returns a unique option type ID.  <br /></td></tr>
-<tr class="separator:a5b9ea6a7f58f08e176365a6ff5d200fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
-<tr class="memdesc:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase_1_1MetaInfo.html" title="Captures all the metadata about this object.">MetaInfo</a> for the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> class. <br /></td></tr>
-<tr class="separator:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase" id="r_a7d2e491c5289e22a84070551cc95aaa1"><td class="memTemplParams" colspan="2">
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
-<tr class="memdesc:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">connects a signal and slot together. This function assumes both the signal and slot exist in a <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> or derived object <br /></td></tr>
-<tr class="separator:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:a80078a4ad876b2af2f988496315bb34a" id="r_a80078a4ad876b2af2f988496315bb34a"><td class="memItemLeft" align="right" valign="top"><a id="a80078a4ad876b2af2f988496315bb34a" name="a80078a4ad876b2af2f988496315bb34a"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InvalidOption</b> = 0</td></tr>
-<tr class="memdesc:a80078a4ad876b2af2f988496315bb34a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sentinel value representing an invalid or unset option type. <br /></td></tr>
-<tr class="separator:a80078a4ad876b2af2f988496315bb34a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0d3261baaff1d08cdbcc10cc5b77733" id="r_af0d3261baaff1d08cdbcc10cc5b77733"><td class="memItemLeft" align="right" valign="top"><a id="af0d3261baaff1d08cdbcc10cc5b77733" name="af0d3261baaff1d08cdbcc10cc5b77733"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DirectIO</b></td></tr>
-<tr class="memdesc:af0d3261baaff1d08cdbcc10cc5b77733"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for direct I/O (bypass OS page cache). <br /></td></tr>
-<tr class="separator:af0d3261baaff1d08cdbcc10cc5b77733"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad93c60f3a20f49b87f68ea6a473a7e0" id="r_aad93c60f3a20f49b87f68ea6a473a7e0"><td class="memItemLeft" align="right" valign="top"><a id="aad93c60f3a20f49b87f68ea6a473a7e0" name="aad93c60f3a20f49b87f68ea6a473a7e0"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Synchronous</b></td></tr>
-<tr class="memdesc:aad93c60f3a20f49b87f68ea6a473a7e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for synchronous writes. <br /></td></tr>
-<tr class="separator:aad93c60f3a20f49b87f68ea6a473a7e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf8575423b646885d62f173b8bef7910" id="r_abf8575423b646885d62f173b8bef7910"><td class="memItemLeft" align="right" valign="top"><a id="abf8575423b646885d62f173b8bef7910" name="abf8575423b646885d62f173b8bef7910"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>NonBlocking</b></td></tr>
-<tr class="memdesc:abf8575423b646885d62f173b8bef7910"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for non-blocking operations. <br /></td></tr>
-<tr class="separator:abf8575423b646885d62f173b8bef7910"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52353e2d8b90cda4c444afa87e7183ca" id="r_a52353e2d8b90cda4c444afa87e7183ca"><td class="memItemLeft" align="right" valign="top"><a id="a52353e2d8b90cda4c444afa87e7183ca" name="a52353e2d8b90cda4c444afa87e7183ca"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Unbuffered</b></td></tr>
-<tr class="memdesc:a52353e2d8b90cda4c444afa87e7183ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for unbuffered I/O. <br /></td></tr>
-<tr class="separator:a52353e2d8b90cda4c444afa87e7183ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_static_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase" id="r_a680b86576aa0a9679bb74ce178b2b93e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a> = PROMEKI_STRINGIFY( <a class="el" href="classList.html">aboutToDestroy</a> ) &quot;(&quot; PROMEKI_STRINGIFY_ARGS( <a class="el" href="classObjectBase.html">ObjectBase</a> * ) &quot;)&quot;</td></tr>
-<tr class="separator:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase" id="r_ae2f4061ea36551655f6fd02fec4b2abd"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignalMeta</b> = <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>(<a class="el" href="classObjectBase.html#a6cf10683d2b9fa2dd0ab9a0722e925ad">metaInfo</a>(), <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
-<tr class="separator:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:aeca20c84dab7159dcfb9a091b0fb6796" id="r_aeca20c84dab7159dcfb9a091b0fb6796"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#aeca20c84dab7159dcfb9a091b0fb6796">setOpenMode</a> (<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> mode)</td></tr>
@@ -345,12 +279,6 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a56caff99c2b7741d4620e62a398e6640" id="r_a56caff99c2b7741d4620e62a398e6640"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a56caff99c2b7741d4620e62a398e6640">setError</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classError.html">Error</a> &amp;<a class="el" href="classList.html">err</a>)</td></tr>
 <tr class="memdesc:a56caff99c2b7741d4620e62a398e6640"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the error state and emits errorOccurred.  <br /></td></tr>
 <tr class="separator:a56caff99c2b7741d4620e62a398e6640"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07753d88a3a3a5522eae01cad2bc52d3" id="r_a07753d88a3a3a5522eae01cad2bc52d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a07753d88a3a3a5522eae01cad2bc52d3">registerOption</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="classList.html">defaultValue</a>=<a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a>())</td></tr>
-<tr class="memdesc:a07753d88a3a3a5522eae01cad2bc52d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers an option with a default value.  <br /></td></tr>
-<tr class="separator:a07753d88a3a3a5522eae01cad2bc52d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e8f5514903d46538c5a461edab512ab" id="r_a8e8f5514903d46538c5a461edab512ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8e8f5514903d46538c5a461edab512ab">onOptionChanged</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a8e8f5514903d46538c5a461edab512ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when an option value changes via <a class="el" href="classIODevice.html#a8bd8b0dc52828a529232ca0968e51388" title="Sets an option value by type ID.">setOption()</a>.  <br /></td></tr>
-<tr class="separator:a8e8f5514903d46538c5a461edab512ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase" id="r_ac12565258ee428cb8691cb6584e1d54e"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>signalSender</b> ()</td></tr>
@@ -365,21 +293,30 @@ Protected Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
+<tr class="memdesc:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase_1_1MetaInfo.html" title="Captures all the metadata about this object.">MetaInfo</a> for the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> class. <br /></td></tr>
+<tr class="separator:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase" id="r_a7d2e491c5289e22a84070551cc95aaa1"><td class="memTemplParams" colspan="2">
+template&lt;typename... Args&gt; </td></tr>
+<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
+<tr class="memdesc:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">connects a signal and slot together. This function assumes both the signal and slot exist in a <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> or derived object <br /></td></tr>
+<tr class="separator:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase" id="r_a4dd3a080906c3330b8168cbc354f83b0"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignal</b> = <a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;(<a class="el" href="classList.html">this</a>, <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
 <tr class="separator:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_static_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase" id="r_a680b86576aa0a9679bb74ce178b2b93e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a> = PROMEKI_STRINGIFY( <a class="el" href="classList.html">aboutToDestroy</a> ) &quot;(&quot; PROMEKI_STRINGIFY_ARGS( <a class="el" href="classObjectBase.html">ObjectBase</a> * ) &quot;)&quot;</td></tr>
+<tr class="separator:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase" id="r_ae2f4061ea36551655f6fd02fec4b2abd"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignalMeta</b> = <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>(<a class="el" href="classObjectBase.html#a6cf10683d2b9fa2dd0ab9a0722e925ad">metaInfo</a>(), <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
+<tr class="separator:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract base class for all I/O devices. </p>
 <p><a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> provides a uniform interface for reading and writing data to devices such as files, sockets, pipes, and in-memory buffers. All I/O device classes in promeki derive from this class.</p>
-<dl class="section user"><dt>Options</dt><dd>Device capabilities are expressed through options that subclasses register via <a class="el" href="classIODevice.html#a07753d88a3a3a5522eae01cad2bc52d3" title="Registers an option with a default value.">registerOption()</a>. Each option has a runtime-assigned type ID (allocated by <a class="el" href="classIODevice.html#a5b9ea6a7f58f08e176365a6ff5d200fd" title="Allocates and returns a unique option type ID.">registerOptionType()</a>) and a Variant value. Client code queries and sets options by type ID: <div class="fragment"><div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">dev</a>.optionSupported(<a class="code hl_variable" href="classIODevice.html#af0d3261baaff1d08cdbcc10cc5b77733">IODevice::DirectIO</a>)) {</div>
-<div class="line">        <a class="code hl_class" href="classList.html">dev</a>.setOption(<a class="code hl_variable" href="classIODevice.html#af0d3261baaff1d08cdbcc10cc5b77733">IODevice::DirectIO</a>, <span class="keyword">true</span>);</div>
-<div class="line">}</div>
-<div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">val</a>, <a class="code hl_class" href="classList.html">err</a>] = <a class="code hl_class" href="classList.html">dev</a>.option(<a class="code hl_variable" href="classIODevice.html#af0d3261baaff1d08cdbcc10cc5b77733">IODevice::DirectIO</a>);</div>
-<div class="ttc" id="aclassIODevice_html_af0d3261baaff1d08cdbcc10cc5b77733"><div class="ttname"><a href="classIODevice.html#af0d3261baaff1d08cdbcc10cc5b77733">IODevice::DirectIO</a></div><div class="ttdeci">static const Option DirectIO</div><div class="ttdoc">Option for direct I/O (bypass OS page cache).</div><div class="ttdef"><b>Definition</b> iodevice.h:61</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:28</div></div>
-</div><!-- fragment --></dd></dl>
 <p>This class must only be used from the thread that created it (or moved to via <a class="el" href="classObjectBase.html#a1d0e2fcbf217bf1cb3ca42a1a2a2c1b3" title="Changes the EventLoop affinity of this object.">moveToThread()</a>). </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ac12c287cd37708c10d6618d667a3147a" name="ac12c287cd37708c10d6618d667a3147a"></a>
@@ -410,7 +347,7 @@ Additional Inherited Members</h2></td></tr>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a09147c8e6d6b4dc7ec91f54db2fc46b9" name="a09147c8e6d6b4dc7ec91f54db2fc46b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a09147c8e6d6b4dc7ec91f54db2fc46b9">&#9670;&#160;</a></span>IODevice() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a09147c8e6d6b4dc7ec91f54db2fc46b9">&#9670;&#160;</a></span>IODevice()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -443,51 +380,6 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="ae4d1f05613e0cbabe3bca1ac897b95bd" name="ae4d1f05613e0cbabe3bca1ac897b95bd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae4d1f05613e0cbabe3bca1ac897b95bd">&#9670;&#160;</a></span>IODevice() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">IODevice::IODevice </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#adf3d909e576f38139a0d3c6c59f27d07">OptionList</a>&#160;</td>
-          <td class="paramname"><em>opts</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td>
-          <td class="paramname"><em>parent</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Constructs an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> with supported options. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opts</td><td>Initializer list of {Option, defaultValue} pairs. </td></tr>
-    <tr><td class="paramname">parent</td><td>The parent object, or nullptr. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc" name="a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc">&#9670;&#160;</a></span>atEnd()</h2>
@@ -513,7 +405,9 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns true if the current position is at the end. </p>
-<p>The default implementation returns true if <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb" title="Returns the current read/write position.">pos()</a> &gt;= <a class="el" href="classIODevice.html#a1aa3d4592fb133bdf78983a945ce5cde" title="Returns the total size of the device in bytes.">size()</a>. </p><dl class="section return"><dt>Returns</dt><dd>true if at end of device. </dd></dl>
+<p>The default implementation returns true if <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb" title="Returns the current read/write position.">pos()</a> &gt;= <a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1" title="Returns the total size of the device in bytes.">size()</a>. </p><dl class="section return"><dt>Returns</dt><dd>true if at end of device. </dd></dl>
+
+<p>Reimplemented in <a class="el" href="classFile.html#a292ce25f1dce6a6fa7b8ab7618cdee18">File</a>.</p>
 
 </div>
 </div>
@@ -544,6 +438,36 @@ Additional Inherited Members</h2></td></tr>
 <p>The default implementation returns 0. </p><dl class="section return"><dt>Returns</dt><dd>The number of bytes available. </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classBufferedIODevice.html#a8bb6f9d3c9852b1ef920fadf892f2319">BufferedIODevice</a>.</p>
+
+</div>
+</div>
+<a id="aa994b6c0eea6ed02c822ed0774a87b23" name="aa994b6c0eea6ed02c822ed0774a87b23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa994b6c0eea6ed02c822ed0774a87b23">&#9670;&#160;</a></span>close()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> IODevice::close </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Closes the device. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+<p>Implemented in <a class="el" href="classFile.html#afc80c80342f4969ee42f6df4570589fb">File</a>.</p>
 
 </div>
 </div>
@@ -601,6 +525,8 @@ Additional Inherited Members</h2></td></tr>
 <p>Returns true if the device is open. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if the device is currently open. </dd></dl>
 
+<p>Implemented in <a class="el" href="classFile.html#a0cd0ed9d8237337b35a52f9cfba26a3b">File</a>.</p>
+
 </div>
 </div>
 <a id="a0386a350997b4324eb8746095a365546" name="a0386a350997b4324eb8746095a365546"></a>
@@ -657,6 +583,8 @@ Additional Inherited Members</h2></td></tr>
 <p>Returns true if the device is sequential (non-seekable). </p>
 <p>Sequential devices (pipes, sockets) cannot be seeked. The default implementation returns false. </p><dl class="section return"><dt>Returns</dt><dd>true if the device is sequential. </dd></dl>
 
+<p>Reimplemented in <a class="el" href="classFile.html#a846bd0d945f6fa77ff925a8d7f0ed23a">File</a>.</p>
+
 </div>
 </div>
 <a id="a62d7e24fc74e672fe51f277d5b566dd6" name="a62d7e24fc74e672fe51f277d5b566dd6"></a>
@@ -684,52 +612,6 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Returns true if the device is writable. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if the WriteOnly bit is set in the open mode. </dd></dl>
-
-</div>
-</div>
-<a id="a8e8f5514903d46538c5a461edab512ab" name="a8e8f5514903d46538c5a461edab512ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8e8f5514903d46538c5a461edab512ab">&#9670;&#160;</a></span>onOptionChanged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a> IODevice::onOptionChanged </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td>
-          <td class="paramname"><em>opt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;&#160;</td>
-          <td class="paramname"><em>value</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Called when an option value changes via <a class="el" href="classIODevice.html#a8bd8b0dc52828a529232ca0968e51388" title="Sets an option value by type ID.">setOption()</a>. </p>
-<p>Override this in subclasses to react to option changes (e.g., toggle O_DIRECT on the file descriptor). The default implementation does nothing.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opt</td><td>The option that changed. </td></tr>
-    <tr><td class="paramname">value</td><td>The new value. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -766,6 +648,8 @@ Additional Inherited Members</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
+<p>Implemented in <a class="el" href="classFile.html#a2e1d4cb10c5270421ebc9143dcbfb5f7">File</a>.</p>
+
 </div>
 </div>
 <a id="a05e3322eeb63faccf434633ca88f94ae" name="a05e3322eeb63faccf434633ca88f94ae"></a>
@@ -796,61 +680,6 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a6096b789c897f29254c21575f02f1448" name="a6096b789c897f29254c21575f02f1448"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6096b789c897f29254c21575f02f1448">&#9670;&#160;</a></span>option()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="result_8h.html#a72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt; IODevice::option </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td>
-          <td class="paramname"><em>opt</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Returns the current value of an option. </p>
-<p>Returns NotSupported error if the option is not registered.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opt</td><td>The option type identifier. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A Result containing the Variant value or an error. </dd></dl>
-
-</div>
-</div>
-<a id="a94291d4dbe879b915519f5d1cea1a86a" name="a94291d4dbe879b915519f5d1cea1a86a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94291d4dbe879b915519f5d1cea1a86a">&#9670;&#160;</a></span>optionSupported()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> IODevice::optionSupported </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td>
-          <td class="paramname"><em>opt</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Returns true if the device supports the given option. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opt</td><td>The option type identifier. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>true if the option is registered on this device. </dd></dl>
-
-</div>
-</div>
 <a id="a4341cd31b97646126ccc2d21175b7bcb" name="a4341cd31b97646126ccc2d21175b7bcb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4341cd31b97646126ccc2d21175b7bcb">&#9670;&#160;</a></span>pos()</h2>
 
@@ -876,6 +705,8 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Returns the current read/write position. </p>
 <p>The default implementation returns 0. </p><dl class="section return"><dt>Returns</dt><dd>The current position in bytes. </dd></dl>
+
+<p>Reimplemented in <a class="el" href="classFile.html#a7b6b064db3ea4c8ca0bc1c1a74c8ad3f">File</a>.</p>
 
 </div>
 </div>
@@ -1031,8 +862,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a07753d88a3a3a5522eae01cad2bc52d3" name="a07753d88a3a3a5522eae01cad2bc52d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07753d88a3a3a5522eae01cad2bc52d3">&#9670;&#160;</a></span>registerOption()</h2>
+<a id="a0c0fa852f94c8815d55c481c68f7abcb" name="a0c0fa852f94c8815d55c481c68f7abcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c0fa852f94c8815d55c481c68f7abcb">&#9670;&#160;</a></span>seek()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1041,81 +872,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> IODevice::registerOption </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td>
-          <td class="paramname"><em>opt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;&#160;</td>
-          <td class="paramname"><em>defaultValue</em> = <code><a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a>()</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Registers an option with a default value. </p>
-<p>Call this from subclass constructors to declare supported options.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opt</td><td>The option type identifier. </td></tr>
-    <tr><td class="paramname">defaultValue</td><td>The initial value for this option. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a5b9ea6a7f58f08e176365a6ff5d200fd" name="a5b9ea6a7f58f08e176365a6ff5d200fd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b9ea6a7f58f08e176365a6ff5d200fd">&#9670;&#160;</a></span>registerOptionType()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> IODevice::registerOptionType </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Allocates and returns a unique option type ID. </p>
-<p>Each call returns a new, never-before-used ID. Thread-safe. </p><dl class="section return"><dt>Returns</dt><dd>A unique Option value. </dd></dl>
-
-</div>
-</div>
-<a id="a18d1b42c28b602d1f0b3f582c855a579" name="a18d1b42c28b602d1f0b3f582c855a579"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a18d1b42c28b602d1f0b3f582c855a579">&#9670;&#160;</a></span>seek()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a> IODevice::seek </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a> IODevice::seek </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
           <td class="paramname"><em>pos</em></td><td>)</td>
@@ -1136,7 +893,9 @@ Additional Inherited Members</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true on success, false on failure or if not seekable. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+<p>Reimplemented in <a class="el" href="classFile.html#a5977104e1cd474c660d284ce4e994db8">File</a>.</p>
 
 </div>
 </div>
@@ -1208,47 +967,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a8bd8b0dc52828a529232ca0968e51388" name="a8bd8b0dc52828a529232ca0968e51388"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8bd8b0dc52828a529232ca0968e51388">&#9670;&#160;</a></span>setOption()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classError.html">Error</a> IODevice::setOption </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td>
-          <td class="paramname"><em>opt</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;&#160;</td>
-          <td class="paramname"><em>value</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Sets an option value by type ID. </p>
-<p>Returns NotSupported if the device does not support this option. On success, calls <a class="el" href="classIODevice.html#a8e8f5514903d46538c5a461edab512ab" title="Called when an option value changes via setOption().">onOptionChanged()</a>.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opt</td><td>The option type identifier. </td></tr>
-    <tr><td class="paramname">value</td><td>The value to set. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
-
-</div>
-</div>
-<a id="a1aa3d4592fb133bdf78983a945ce5cde" name="a1aa3d4592fb133bdf78983a945ce5cde"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1aa3d4592fb133bdf78983a945ce5cde">&#9670;&#160;</a></span>size()</h2>
+<a id="ad750fab3127e006588812977cba6c3f1" name="ad750fab3127e006588812977cba6c3f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad750fab3127e006588812977cba6c3f1">&#9670;&#160;</a></span>size()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1257,7 +977,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a> IODevice::size </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="result_8h.html#a72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; IODevice::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1271,7 +991,9 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the total size of the device in bytes. </p>
-<p>The default implementation returns 0. </p><dl class="section return"><dt>Returns</dt><dd>The device size, or 0 if unknown. </dd></dl>
+<p>The default implementation returns 0. </p><dl class="section return"><dt>Returns</dt><dd>A Result containing the device size, or an error. </dd></dl>
+
+<p>Reimplemented in <a class="el" href="classFile.html#aeea4fc38b313b98d0689cef418e8e80e">File</a>.</p>
 
 </div>
 </div>
@@ -1389,6 +1111,8 @@ Additional Inherited Members</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of bytes written, or -1 on error. </dd></dl>
 
+<p>Implemented in <a class="el" href="classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9">File</a>.</p>
+
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
@@ -1401,7 +1125,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classIODevice.html">IODevice</a></li>
-    <li class="footer">Generated on 2026-03-15 04:32:32 from commit 08203a1 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
   </ul>
 </div>
 </body>

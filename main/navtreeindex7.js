@@ -1,5 +1,7 @@
 var NAVTREEINDEX7 =
 {
+"classNumName.html#ae7658cdbf32a1970b7ef4ee5393b5b90":[9,0,72,4],
+"classNumName.html#aeece64c08932a9be45dc9e41f9833b2a":[9,0,72,1],
 "classNumName.html#af21cf7d53c4fdbea249bb929cdd6238f":[9,0,72,3],
 "classNumNameSeq.html":[9,0,73],
 "classNumNameSeq.html#a4ea68aeccabffffcbf035b7f8ed027fb":[9,0,73,6],
@@ -247,7 +249,5 @@ var NAVTREEINDEX7 =
 "classPixelFormat.html#aae7d474000ecb0682be7d17f62c8fe68":[9,0,80,32],
 "classPixelFormat.html#ababd0f039dcc9b7e17bfec9ed51cd7c0":[9,0,80,30],
 "classPixelFormat.html#abd3ff308b4f9bf709f37a785e225c6ba":[9,0,80,37],
-"classPixelFormat.html#abf3ca707e9a87ddcf70ab95e6fa3b418":[9,0,80,16],
-"classPixelFormat.html#ac041db304ac63fee5905cb1ac680492f":[9,0,80,42],
-"classPixelFormat.html#ac63144dbe60d4b6b34bef0c6fa1f75c7":[9,0,80,63]
+"classPixelFormat.html#abf3ca707e9a87ddcf70ab95e6fa3b418":[9,0,80,16]
 };

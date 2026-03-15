@@ -38,7 +38,8 @@ var classError =
       [ "EndOfFile", "classError.html#ab5980e13b879db253df802b0950d1708a47ebde87a9587fbdf7b0d5a2c5a443d0", null ],
       [ "InvalidArgument", "classError.html#ab5980e13b879db253df802b0950d1708aa5b787b2e97c330870af29648d078cd7", null ],
       [ "InvalidDimension", "classError.html#ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c", null ],
-      [ "NotHostAccessible", "classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9", null ]
+      [ "NotHostAccessible", "classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9", null ],
+      [ "BufferTooSmall", "classError.html#ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df", null ]
     ] ],
     [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
     [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],

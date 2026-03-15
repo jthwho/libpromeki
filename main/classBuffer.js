@@ -12,6 +12,7 @@ var classBuffer =
     [ "align", "classBuffer.html#a75407799931ea8ff390fd7c7d9ea07f0", null ],
     [ "allocation", "classBuffer.html#ac35c3c2aa73a651597b953f5ebdcb3e4", null ],
     [ "allocSize", "classBuffer.html#aa3b733a521a31a7db6060d3103624beb", null ],
+    [ "availSize", "classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd", null ],
     [ "data", "classBuffer.html#a59d9432844bceaefd50a787f2804eb69", null ],
     [ "fill", "classBuffer.html#a00491bb52896ef608b6b82ec2e6c1e08", null ],
     [ "isHostAccessible", "classBuffer.html#aa35d50373c38ff6420f077d9fb661a19", null ],
@@ -21,6 +22,7 @@ var classBuffer =
     [ "operator=", "classBuffer.html#a44dea5535d00022d1e54bffb0b387606", null ],
     [ "operator=", "classBuffer.html#af3786195925145a7b598cbea3f5e57d7", null ],
     [ "setOwnershipEnabled", "classBuffer.html#a401b36f3343ef73a9dfa13b754dc81dc", null ],
+    [ "setSize", "classBuffer.html#a7bc63b903b153ea93fc87e7c4e66345c", null ],
     [ "shiftData", "classBuffer.html#a291031935b303e8bed545efd755c3574", null ],
     [ "size", "classBuffer.html#a18db71f5a21c3c39b6e0a531e9d0f7fa", null ]
 ];

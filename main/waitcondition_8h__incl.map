@@ -1,19 +1,23 @@
 <map id="include/promeki/core/waitcondition.h" name="include/promeki/core/waitcondition.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="259,5,418,45"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="291,5,450,45"/>
 <area shape="rect" id="Node000002" title=" " alt="" coords="5,93,72,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="267,48,86,95,85,90,266,43"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="291,47,86,96,85,90,290,42"/>
 <area shape="rect" id="Node000003" title=" " alt="" coords="97,93,189,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="293,48,185,91,183,86,291,43"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="317,48,190,91,188,86,315,43"/>
 <area shape="rect" id="Node000004" title=" " alt="" coords="213,93,355,119"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="328,47,302,84,298,80,323,44"/>
-<area shape="rect" id="Node000005" href="$namespace_8h.html" title=" " alt="" coords="409,167,607,192"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="355,44,384,79,420,117,477,157,474,162,417,121,380,83,351,47"/>
-<area shape="rect" id="Node000006" href="$error_8h.html" title=" " alt="" coords="431,93,585,119"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="380,43,472,85,469,90,378,48"/>
-<area shape="rect" id="Node000007" href="$mutex_8h.html" title=" " alt="" coords="610,93,777,119"/>
-<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="419,42,629,88,628,93,418,47"/>
-<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="511,119,511,153,505,153,505,119"/>
-<area shape="poly" id="edge9_Node000007_Node000005" title=" " alt="" coords="665,121,552,164,550,159,663,116"/>
-<area shape="rect" id="Node000008" title=" " alt="" coords="661,167,725,192"/>
-<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="696,119,696,153,691,153,691,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="351,48,309,86,305,82,348,44"/>
+<area shape="rect" id="Node000005" href="$namespace_8h.html" title=" " alt="" coords="522,167,721,192"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="444,43,497,63,548,91,582,122,608,154,604,157,579,125,545,96,495,68,443,48"/>
+<area shape="rect" id="Node000006" href="$error_8h.html" title=" " alt="" coords="380,93,535,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="393,44,436,82,432,86,390,48"/>
+<area shape="rect" id="Node000009" href="$mutex_8h.html" title=" " alt="" coords="610,93,777,119"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="449,43,634,88,632,93,447,48"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="485,116,583,159,581,164,483,121"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="186,167,294,192"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="423,121,289,165,287,160,422,116"/>
+<area shape="rect" id="Node000008" href="$platform_8h.html" title=" " alt="" coords="318,167,498,192"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="451,121,426,157,422,154,447,117"/>
+<area shape="poly" id="edge11_Node000009_Node000005" title=" " alt="" coords="683,121,645,159,641,155,680,117"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="744,167,808,192"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="708,117,754,155,750,160,705,121"/>
 </map>

@@ -117,6 +117,8 @@ Inheritance diagram for BufferedIODevice:</div>
 <div class="center"><img src="classBufferedIODevice__inherit__graph.png" border="0" usemap="#aBufferedIODevice_inherit__map" alt="Inheritance graph"/></div>
 <map name="aBufferedIODevice_inherit__map" id="aBufferedIODevice_inherit__map">
 <area shape="rect" title="Abstract IODevice with an internal read buffer." alt="" coords="5,152,141,177"/>
+<area shape="rect" href="classFile.html" title="File I/O device with buffered reading." alt="" coords="51,225,96,251"/>
+<area shape="poly" title=" " alt="" coords="76,191,76,225,71,225,71,191"/>
 <area shape="rect" href="classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="33,79,114,104"/>
 <area shape="poly" title=" " alt="" coords="76,118,76,152,71,152,71,118"/>
 <area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="25,5,121,31"/>
@@ -145,9 +147,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afe86020bcf21c62cb68cebf3f7105502" id="r_afe86020bcf21c62cb68cebf3f7105502"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#afe86020bcf21c62cb68cebf3f7105502">BufferedIODevice</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:afe86020bcf21c62cb68cebf3f7105502"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a>.  <br /></td></tr>
 <tr class="separator:afe86020bcf21c62cb68cebf3f7105502"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8176eb785dbaffd213cc77f39ab1330" id="r_af8176eb785dbaffd213cc77f39ab1330"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#af8176eb785dbaffd213cc77f39ab1330">BufferedIODevice</a> (<a class="el" href="classIODevice.html#adf3d909e576f38139a0d3c6c59f27d07">OptionList</a> <a class="el" href="classList.html">opts</a>, <a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:af8176eb785dbaffd213cc77f39ab1330"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a> with supported options.  <br /></td></tr>
-<tr class="separator:af8176eb785dbaffd213cc77f39ab1330"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14fab15cfcfa1242eb9c25da11399014" id="r_a14fab15cfcfa1242eb9c25da11399014"><td class="memItemLeft" align="right" valign="top"><a id="a14fab15cfcfa1242eb9c25da11399014" name="a14fab15cfcfa1242eb9c25da11399014"></a>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~BufferedIODevice</b> ()</td></tr>
 <tr class="memdesc:a14fab15cfcfa1242eb9c25da11399014"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
@@ -185,13 +184,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aba8ed1673ddc0ed2246ad8ecdf886976" id="r_aba8ed1673ddc0ed2246ad8ecdf886976"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBuffer.html">Buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#aba8ed1673ddc0ed2246ad8ecdf886976">peek</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">maxBytes</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aba8ed1673ddc0ed2246ad8ecdf886976"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads up to maxBytes without consuming them.  <br /></td></tr>
 <tr class="separator:aba8ed1673ddc0ed2246ad8ecdf886976"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a93d45421c2c955511847aafa4334d175" id="r_a93d45421c2c955511847aafa4334d175"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#a93d45421c2c955511847aafa4334d175">setUnbuffered</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">enable</a>)</td></tr>
+<tr class="memdesc:a93d45421c2c955511847aafa4334d175"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables unbuffered mode.  <br /></td></tr>
+<tr class="separator:a93d45421c2c955511847aafa4334d175"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5edcf9fe167916bf6ef960da06b22ddb" id="r_a5edcf9fe167916bf6ef960da06b22ddb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#a5edcf9fe167916bf6ef960da06b22ddb">isUnbuffered</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5edcf9fe167916bf6ef960da06b22ddb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if unbuffered mode is enabled.  <br /></td></tr>
+<tr class="separator:a5edcf9fe167916bf6ef960da06b22ddb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classIODevice')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
 <tr class="memitem:a09147c8e6d6b4dc7ec91f54db2fc46b9 inherit pub_methods_classIODevice" id="r_a09147c8e6d6b4dc7ec91f54db2fc46b9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a09147c8e6d6b4dc7ec91f54db2fc46b9">IODevice</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a09147c8e6d6b4dc7ec91f54db2fc46b9 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>.  <br /></td></tr>
 <tr class="separator:a09147c8e6d6b4dc7ec91f54db2fc46b9 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4d1f05613e0cbabe3bca1ac897b95bd inherit pub_methods_classIODevice" id="r_ae4d1f05613e0cbabe3bca1ac897b95bd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ae4d1f05613e0cbabe3bca1ac897b95bd">IODevice</a> (<a class="el" href="classIODevice.html#adf3d909e576f38139a0d3c6c59f27d07">OptionList</a> <a class="el" href="classList.html">opts</a>, <a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:ae4d1f05613e0cbabe3bca1ac897b95bd inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> with supported options.  <br /></td></tr>
-<tr class="separator:ae4d1f05613e0cbabe3bca1ac897b95bd inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3615f78e1b4ae46ba84ce46c048a0dfb inherit pub_methods_classIODevice" id="r_a3615f78e1b4ae46ba84ce46c048a0dfb"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~IODevice</b> ()</td></tr>
 <tr class="memdesc:a3615f78e1b4ae46ba84ce46c048a0dfb inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
@@ -199,10 +201,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7767856d8e9bbd32d105063abf3d4546 inherit pub_methods_classIODevice" id="r_a7767856d8e9bbd32d105063abf3d4546"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a7767856d8e9bbd32d105063abf3d4546">open</a> (<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> mode)=0</td></tr>
 <tr class="memdesc:a7767856d8e9bbd32d105063abf3d4546 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens the device with the specified mode.  <br /></td></tr>
 <tr class="separator:a7767856d8e9bbd32d105063abf3d4546 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa0c6dab1909670e7af3ceace982dce77 inherit pub_methods_classIODevice" id="r_aa0c6dab1909670e7af3ceace982dce77"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>close</b> ()=0</td></tr>
-<tr class="memdesc:aa0c6dab1909670e7af3ceace982dce77 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the device. <br /></td></tr>
-<tr class="separator:aa0c6dab1909670e7af3ceace982dce77 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa994b6c0eea6ed02c822ed0774a87b23 inherit pub_methods_classIODevice" id="r_aa994b6c0eea6ed02c822ed0774a87b23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#aa994b6c0eea6ed02c822ed0774a87b23">close</a> ()=0</td></tr>
+<tr class="memdesc:aa994b6c0eea6ed02c822ed0774a87b23 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Closes the device.  <br /></td></tr>
+<tr class="separator:aa994b6c0eea6ed02c822ed0774a87b23 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a529c23c0405bb913d0c9ceaee62e88d0 inherit pub_methods_classIODevice" id="r_a529c23c0405bb913d0c9ceaee62e88d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a529c23c0405bb913d0c9ceaee62e88d0">isOpen</a> () <a class="el" href="classList.html">const</a> =0</td></tr>
 <tr class="memdesc:a529c23c0405bb913d0c9ceaee62e88d0 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the device is open.  <br /></td></tr>
 <tr class="separator:a529c23c0405bb913d0c9ceaee62e88d0 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,15 +219,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a550445dfaabdade1af5ca48d23018df6 inherit pub_methods_classIODevice" id="r_a550445dfaabdade1af5ca48d23018df6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a550445dfaabdade1af5ca48d23018df6">isSequential</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a550445dfaabdade1af5ca48d23018df6 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the device is sequential (non-seekable).  <br /></td></tr>
 <tr class="separator:a550445dfaabdade1af5ca48d23018df6 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18d1b42c28b602d1f0b3f582c855a579 inherit pub_methods_classIODevice" id="r_a18d1b42c28b602d1f0b3f582c855a579"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a18d1b42c28b602d1f0b3f582c855a579">seek</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a>)</td></tr>
-<tr class="memdesc:a18d1b42c28b602d1f0b3f582c855a579 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks to the given byte offset from the beginning.  <br /></td></tr>
-<tr class="separator:a18d1b42c28b602d1f0b3f582c855a579 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c0fa852f94c8815d55c481c68f7abcb inherit pub_methods_classIODevice" id="r_a0c0fa852f94c8815d55c481c68f7abcb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a0c0fa852f94c8815d55c481c68f7abcb">seek</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a>)</td></tr>
+<tr class="memdesc:a0c0fa852f94c8815d55c481c68f7abcb inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks to the given byte offset from the beginning.  <br /></td></tr>
+<tr class="separator:a0c0fa852f94c8815d55c481c68f7abcb inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4341cd31b97646126ccc2d21175b7bcb inherit pub_methods_classIODevice" id="r_a4341cd31b97646126ccc2d21175b7bcb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a4341cd31b97646126ccc2d21175b7bcb inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current read/write position.  <br /></td></tr>
 <tr class="separator:a4341cd31b97646126ccc2d21175b7bcb inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1aa3d4592fb133bdf78983a945ce5cde inherit pub_methods_classIODevice" id="r_a1aa3d4592fb133bdf78983a945ce5cde"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a1aa3d4592fb133bdf78983a945ce5cde">size</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a1aa3d4592fb133bdf78983a945ce5cde inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total size of the device in bytes.  <br /></td></tr>
-<tr class="separator:a1aa3d4592fb133bdf78983a945ce5cde inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad750fab3127e006588812977cba6c3f1 inherit pub_methods_classIODevice" id="r_ad750fab3127e006588812977cba6c3f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="result_8h.html#a72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">size</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ad750fab3127e006588812977cba6c3f1 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total size of the device in bytes.  <br /></td></tr>
+<tr class="separator:ad750fab3127e006588812977cba6c3f1 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc inherit pub_methods_classIODevice" id="r_a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc">atEnd</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the current position is at the end.  <br /></td></tr>
 <tr class="separator:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -246,15 +247,6 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clearError</b> ()</td></tr>
 <tr class="memdesc:a52d6df4e1bdf2ac64090b5c7e37a717e inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the error state to Ok. <br /></td></tr>
 <tr class="separator:a52d6df4e1bdf2ac64090b5c7e37a717e inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8bd8b0dc52828a529232ca0968e51388 inherit pub_methods_classIODevice" id="r_a8bd8b0dc52828a529232ca0968e51388"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8bd8b0dc52828a529232ca0968e51388">setOption</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a8bd8b0dc52828a529232ca0968e51388 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets an option value by type ID.  <br /></td></tr>
-<tr class="separator:a8bd8b0dc52828a529232ca0968e51388 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6096b789c897f29254c21575f02f1448 inherit pub_methods_classIODevice" id="r_a6096b789c897f29254c21575f02f1448"><td class="memItemLeft" align="right" valign="top"><a class="el" href="result_8h.html#a72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a6096b789c897f29254c21575f02f1448">option</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a6096b789c897f29254c21575f02f1448 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current value of an option.  <br /></td></tr>
-<tr class="separator:a6096b789c897f29254c21575f02f1448 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94291d4dbe879b915519f5d1cea1a86a inherit pub_methods_classIODevice" id="r_a94291d4dbe879b915519f5d1cea1a86a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a94291d4dbe879b915519f5d1cea1a86a">optionSupported</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a94291d4dbe879b915519f5d1cea1a86a inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the device supports the given option.  <br /></td></tr>
-<tr class="separator:a94291d4dbe879b915519f5d1cea1a86a inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac988dc10a5b980be627d8556d3d7be0d inherit pub_methods_classIODevice" id="r_ac988dc10a5b980be627d8556d3d7be0d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac988dc10a5b980be627d8556d3d7be0d">PROMEKI_SIGNAL</a> (<a class="el" href="classList.html">readyRead</a>)</td></tr>
 <tr class="memdesc:ac988dc10a5b980be627d8556d3d7be0d inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emitted when data is available for reading.  <br /></td></tr>
 <tr class="separator:ac988dc10a5b980be627d8556d3d7be0d inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -327,12 +319,6 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a56caff99c2b7741d4620e62a398e6640 inherit pro_methods_classIODevice" id="r_a56caff99c2b7741d4620e62a398e6640"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a56caff99c2b7741d4620e62a398e6640">setError</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classError.html">Error</a> &amp;<a class="el" href="classList.html">err</a>)</td></tr>
 <tr class="memdesc:a56caff99c2b7741d4620e62a398e6640 inherit pro_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the error state and emits errorOccurred.  <br /></td></tr>
 <tr class="separator:a56caff99c2b7741d4620e62a398e6640 inherit pro_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07753d88a3a3a5522eae01cad2bc52d3 inherit pro_methods_classIODevice" id="r_a07753d88a3a3a5522eae01cad2bc52d3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a07753d88a3a3a5522eae01cad2bc52d3">registerOption</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="classList.html">defaultValue</a>=<a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a>())</td></tr>
-<tr class="memdesc:a07753d88a3a3a5522eae01cad2bc52d3 inherit pro_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers an option with a default value.  <br /></td></tr>
-<tr class="separator:a07753d88a3a3a5522eae01cad2bc52d3 inherit pro_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e8f5514903d46538c5a461edab512ab inherit pro_methods_classIODevice" id="r_a8e8f5514903d46538c5a461edab512ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8e8f5514903d46538c5a461edab512ab">onOptionChanged</a> (<a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a> <a class="el" href="classList.html">opt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a8e8f5514903d46538c5a461edab512ab inherit pro_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when an option value changes via <a class="el" href="classIODevice.html#a8bd8b0dc52828a529232ca0968e51388" title="Sets an option value by type ID.">setOption()</a>.  <br /></td></tr>
-<tr class="separator:a8e8f5514903d46538c5a461edab512ab inherit pro_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase" id="r_ac12565258ee428cb8691cb6584e1d54e"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>signalSender</b> ()</td></tr>
@@ -355,23 +341,11 @@ Additional Inherited Members</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
 <tr class="separator:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a960a96aef75e754fa5f4713c676115b3 inherit pub_types_classIODevice" id="r_a960a96aef75e754fa5f4713c676115b3"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Option</b> = <a class="el" href="classList.html">uint32_t</a></td></tr>
-<tr class="memdesc:a960a96aef75e754fa5f4713c676115b3 inherit pub_types_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Integer type used to identify option kinds. <br /></td></tr>
-<tr class="separator:a960a96aef75e754fa5f4713c676115b3 inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf3d909e576f38139a0d3c6c59f27d07 inherit pub_types_classIODevice" id="r_adf3d909e576f38139a0d3c6c59f27d07"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OptionList</b> = std::initializer_list&lt; std::pair&lt; <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>, <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt; &gt;</td></tr>
-<tr class="memdesc:adf3d909e576f38139a0d3c6c59f27d07 inherit pub_types_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializer list type for declaring supported options. <br /></td></tr>
-<tr class="separator:adf3d909e576f38139a0d3c6c59f27d07 inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
 <tr class="memdesc:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for invoking a slot with a list of Variants. <br /></td></tr>
 <tr class="separator:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_static_methods_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classIODevice')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
-<tr class="memitem:a5b9ea6a7f58f08e176365a6ff5d200fd inherit pub_static_methods_classIODevice" id="r_a5b9ea6a7f58f08e176365a6ff5d200fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a5b9ea6a7f58f08e176365a6ff5d200fd">registerOptionType</a> ()</td></tr>
-<tr class="memdesc:a5b9ea6a7f58f08e176365a6ff5d200fd inherit pub_static_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocates and returns a unique option type ID.  <br /></td></tr>
-<tr class="separator:a5b9ea6a7f58f08e176365a6ff5d200fd inherit pub_static_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
@@ -386,27 +360,6 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase" id="r_a4dd3a080906c3330b8168cbc354f83b0"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignal</b> = <a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;(<a class="el" href="classList.html">this</a>, <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
 <tr class="separator:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_static_attribs_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classIODevice')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
-<tr class="memitem:a80078a4ad876b2af2f988496315bb34a inherit pub_static_attribs_classIODevice" id="r_a80078a4ad876b2af2f988496315bb34a"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InvalidOption</b> = 0</td></tr>
-<tr class="memdesc:a80078a4ad876b2af2f988496315bb34a inherit pub_static_attribs_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sentinel value representing an invalid or unset option type. <br /></td></tr>
-<tr class="separator:a80078a4ad876b2af2f988496315bb34a inherit pub_static_attribs_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0d3261baaff1d08cdbcc10cc5b77733 inherit pub_static_attribs_classIODevice" id="r_af0d3261baaff1d08cdbcc10cc5b77733"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DirectIO</b></td></tr>
-<tr class="memdesc:af0d3261baaff1d08cdbcc10cc5b77733 inherit pub_static_attribs_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for direct I/O (bypass OS page cache). <br /></td></tr>
-<tr class="separator:af0d3261baaff1d08cdbcc10cc5b77733 inherit pub_static_attribs_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad93c60f3a20f49b87f68ea6a473a7e0 inherit pub_static_attribs_classIODevice" id="r_aad93c60f3a20f49b87f68ea6a473a7e0"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Synchronous</b></td></tr>
-<tr class="memdesc:aad93c60f3a20f49b87f68ea6a473a7e0 inherit pub_static_attribs_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for synchronous writes. <br /></td></tr>
-<tr class="separator:aad93c60f3a20f49b87f68ea6a473a7e0 inherit pub_static_attribs_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abf8575423b646885d62f173b8bef7910 inherit pub_static_attribs_classIODevice" id="r_abf8575423b646885d62f173b8bef7910"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>NonBlocking</b></td></tr>
-<tr class="memdesc:abf8575423b646885d62f173b8bef7910 inherit pub_static_attribs_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for non-blocking operations. <br /></td></tr>
-<tr class="separator:abf8575423b646885d62f173b8bef7910 inherit pub_static_attribs_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52353e2d8b90cda4c444afa87e7183ca inherit pub_static_attribs_classIODevice" id="r_a52353e2d8b90cda4c444afa87e7183ca"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classIODevice.html#a960a96aef75e754fa5f4713c676115b3">Option</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Unbuffered</b></td></tr>
-<tr class="memdesc:a52353e2d8b90cda4c444afa87e7183ca inherit pub_static_attribs_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Option for unbuffered I/O. <br /></td></tr>
-<tr class="separator:a52353e2d8b90cda4c444afa87e7183ca inherit pub_static_attribs_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase" id="r_a680b86576aa0a9679bb74ce178b2b93e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a> = PROMEKI_STRINGIFY( <a class="el" href="classList.html">aboutToDestroy</a> ) &quot;(&quot; PROMEKI_STRINGIFY_ARGS( <a class="el" href="classObjectBase.html">ObjectBase</a> * ) &quot;)&quot;</td></tr>
 <tr class="separator:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -416,17 +369,15 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> with an internal read buffer. </p>
-<p>Derives from <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> and overrides <a class="el" href="classBufferedIODevice.html#ac531795e1bad22600402280355c6ff27" title="Reads up to maxSize bytes into data.">read()</a> to serve data from an internal <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. Subclasses implement <a class="el" href="classBufferedIODevice.html#a34d34d95324ce53ec3fddb6244916f72" title="Reads raw data from the underlying device.">readFromDevice()</a> for raw I/O; the remaining pure virtuals (open, close, isOpen, write) stay pure for concrete subclasses like <a class="el" href="classFile.html" title="Low-level file I/O wrapper.">File</a> to provide.</p>
-<p>The read buffer is allocated lazily on first open (default 8192 bytes) or can be replaced via <a class="el" href="classBufferedIODevice.html#a2e0e712a4cea461f7a427489b9d14728" title="Replaces the internal read buffer.">setReadBuffer()</a> before opening. </p>
+<p>Derives from <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> and overrides <a class="el" href="classBufferedIODevice.html#ac531795e1bad22600402280355c6ff27" title="Reads up to maxSize bytes into data.">read()</a> to serve data from an internal <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. Subclasses implement <a class="el" href="classBufferedIODevice.html#a34d34d95324ce53ec3fddb6244916f72" title="Reads raw data from the underlying device.">readFromDevice()</a> for raw I/O; the remaining pure virtuals (open, close, isOpen, write) stay pure for concrete subclasses like <a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> to provide.</p>
+<p>The read buffer is allocated lazily on first open (default 8192 bytes) or can be replaced via <a class="el" href="classBufferedIODevice.html#a2e0e712a4cea461f7a427489b9d14728" title="Replaces the internal read buffer.">setReadBuffer()</a> before opening.</p>
+<p>When unbuffered mode is enabled via <a class="el" href="classBufferedIODevice.html#a93d45421c2c955511847aafa4334d175" title="Enables or disables unbuffered mode.">setUnbuffered()</a>, all reads bypass the internal buffer and go directly to <a class="el" href="classBufferedIODevice.html#a34d34d95324ce53ec3fddb6244916f72" title="Reads raw data from the underlying device.">readFromDevice()</a>. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="afe86020bcf21c62cb68cebf3f7105502" name="afe86020bcf21c62cb68cebf3f7105502"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afe86020bcf21c62cb68cebf3f7105502">&#9670;&#160;</a></span>BufferedIODevice() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#afe86020bcf21c62cb68cebf3f7105502">&#9670;&#160;</a></span>BufferedIODevice()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">BufferedIODevice::BufferedIODevice </td>
@@ -436,61 +387,11 @@ template&lt;typename... Args&gt; </td></tr>
           <td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Constructs a <a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">parent</td><td>The parent object, or nullptr. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="af8176eb785dbaffd213cc77f39ab1330" name="af8176eb785dbaffd213cc77f39ab1330"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af8176eb785dbaffd213cc77f39ab1330">&#9670;&#160;</a></span>BufferedIODevice() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">BufferedIODevice::BufferedIODevice </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classIODevice.html#adf3d909e576f38139a0d3c6c59f27d07">OptionList</a>&#160;</td>
-          <td class="paramname"><em>opts</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td>
-          <td class="paramname"><em>parent</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Constructs a <a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a> with supported options. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">opts</td><td>Initializer list of {Option, defaultValue} pairs. </td></tr>
     <tr><td class="paramname">parent</td><td>The parent object, or nullptr. </td></tr>
   </table>
   </dd>
@@ -523,7 +424,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Returns the number of bytes available for reading. </p>
-<p>Returns buffered bytes plus <a class="el" href="classBufferedIODevice.html#a530584a50ef7cbc296c15efefce6eac5" title="Returns the number of bytes available from the device.">deviceBytesAvailable()</a>. </p><dl class="section return"><dt>Returns</dt><dd>The number of bytes available. </dd></dl>
+<p>Returns buffered bytes plus <a class="el" href="classBufferedIODevice.html#a530584a50ef7cbc296c15efefce6eac5" title="Returns the number of bytes available from the device.">deviceBytesAvailable()</a>. When unbuffered mode is enabled, returns only <a class="el" href="classBufferedIODevice.html#a530584a50ef7cbc296c15efefce6eac5" title="Returns the number of bytes available from the device.">deviceBytesAvailable()</a>. </p><dl class="section return"><dt>Returns</dt><dd>The number of bytes available. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classIODevice.html#a7c0d344529ef3572fc0ebd4a9ecef83a">IODevice</a>.</p>
 
@@ -545,7 +446,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Returns true if a complete line is available for reading. </p>
-<p>Checks whether a newline character exists in the buffered data. </p><dl class="section return"><dt>Returns</dt><dd>true if a newline is present in the buffer. </dd></dl>
+<p>Checks whether a newline character exists in the buffered data. Returns false when Unbuffered is true. </p><dl class="section return"><dt>Returns</dt><dd>true if a newline is present in the buffer. </dd></dl>
 
 </div>
 </div>
@@ -575,6 +476,8 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Returns the number of bytes available from the device. </p>
 <p>The default implementation returns 0. Subclasses may override to report device-level availability.</p>
 <dl class="section return"><dt>Returns</dt><dd>The number of bytes available from the device. </dd></dl>
+
+<p>Reimplemented in <a class="el" href="classFile.html#afd2dea3c7b7078b7af7538fff97ba2d6">File</a>.</p>
 
 </div>
 </div>
@@ -606,6 +509,34 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="a5edcf9fe167916bf6ef960da06b22ddb" name="a5edcf9fe167916bf6ef960da06b22ddb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5edcf9fe167916bf6ef960da06b22ddb">&#9670;&#160;</a></span>isUnbuffered()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> BufferedIODevice::isUnbuffered </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if unbuffered mode is enabled. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if reads bypass the internal buffer. </dd></dl>
+
+</div>
+</div>
 <a id="aba8ed1673ddc0ed2246ad8ecdf886976" name="aba8ed1673ddc0ed2246ad8ecdf886976"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aba8ed1673ddc0ed2246ad8ecdf886976">&#9670;&#160;</a></span>peek() <span class="overload">[1/2]</span></h2>
 
@@ -623,7 +554,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Reads up to maxBytes without consuming them. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Returns empty <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> when Unbuffered is true. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">maxBytes</td><td>Maximum number of bytes to peek. </td></tr>
   </table>
@@ -660,7 +591,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Reads up to maxBytes without consuming them. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Returns 0 when Unbuffered is true. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">buf</td><td>Pointer to the destination buffer. </td></tr>
     <tr><td class="paramname">maxBytes</td><td>Maximum number of bytes to peek. </td></tr>
@@ -706,7 +637,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Reads up to maxSize bytes into data. </p>
-<p>Serves data from the internal read buffer when possible. Large reads (&gt;= buffer capacity) bypass the buffer and go directly to <a class="el" href="classBufferedIODevice.html#a34d34d95324ce53ec3fddb6244916f72" title="Reads raw data from the underlying device.">readFromDevice()</a>.</p>
+<p>Serves data from the internal read buffer when possible. Large reads (&gt;= buffer capacity) bypass the buffer and go directly to <a class="el" href="classBufferedIODevice.html#a34d34d95324ce53ec3fddb6244916f72" title="Reads raw data from the underlying device.">readFromDevice()</a>. When unbuffered mode is enabled, all reads bypass the buffer.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">data</td><td>Pointer to the buffer to read into. </td></tr>
@@ -868,6 +799,8 @@ template&lt;typename... Args&gt; </td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of bytes read, or -1 on error. </dd></dl>
 
+<p>Implemented in <a class="el" href="classFile.html#ae39311e1dad0e1d6f08ce8ae2585716f">File</a>.</p>
+
 </div>
 </div>
 <a id="a65e59f52bae3da2edce1cae657ca7288" name="a65e59f52bae3da2edce1cae657ca7288"></a>
@@ -922,7 +855,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Resets the read buffer cursors. </p>
-<p>Called during <a class="el" href="classIODevice.html#aa0c6dab1909670e7af3ceace982dce77" title="Closes the device.">close()</a> to reset the buffer state. The buffer itself is retained for reuse. </p>
+<p>Called during <a class="el" href="classIODevice.html#aa994b6c0eea6ed02c822ed0774a87b23" title="Closes the device.">close()</a> to reset the buffer state. The buffer itself is retained for reuse. </p>
 
 </div>
 </div>
@@ -954,6 +887,33 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="a93d45421c2c955511847aafa4334d175" name="a93d45421c2c955511847aafa4334d175"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a93d45421c2c955511847aafa4334d175">&#9670;&#160;</a></span>setUnbuffered()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> BufferedIODevice::setUnbuffered </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>enable</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enables or disables unbuffered mode. </p>
+<p>When switching to unbuffered while the device is open, the internal read buffer is drained and reset. When switching back to buffered while open, the read buffer is re-ensured.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enable</td><td>true to bypass the internal buffer. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/core/<a class="el" href="bufferediodevice_8h_source.html">bufferediodevice.h</a></li>
 </ul>
@@ -964,7 +924,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classBufferedIODevice.html">BufferedIODevice</a></li>
-    <li class="footer">Generated on 2026-03-15 04:32:32 from commit 08203a1 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
   </ul>
 </div>
 </body>

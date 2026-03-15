@@ -1,5 +1,7 @@
 var NAVTREEINDEX8 =
 {
+"classPixelFormat.html#ac041db304ac63fee5905cb1ac680492f":[9,0,80,42],
+"classPixelFormat.html#ac63144dbe60d4b6b34bef0c6fa1f75c7":[9,0,80,63],
 "classPixelFormat.html#acb42bf267ca6da3eb10edc6591081cc7":[9,0,80,43],
 "classPixelFormat.html#ad101fd70fe849c53f3f93497a1493351":[9,0,80,8],
 "classPixelFormat.html#ad74bf793171f82e8fa5b64e9caa9cbe1":[9,0,80,21],
@@ -247,7 +249,5 @@ var NAVTREEINDEX8 =
 "classSize2DTemplate.html#a40ee982e93561aeecb8b8a499567fa9e":[9,0,96,12],
 "classSize2DTemplate.html#a550b7b9942a902a09bce947f66a0b761":[9,0,96,1],
 "classSize2DTemplate.html#a5dfd54d7c19944185beaa26f449f6bdc":[9,0,96,10],
-"classSize2DTemplate.html#a60ffb533b40b311718c56c15fe7df536":[9,0,96,0],
-"classSize2DTemplate.html#aaec305c9337c460d079ffc84bfbd5254":[9,0,96,9],
-"classSize2DTemplate.html#ab2628c972403429e0a06a9b1c7870ea6":[9,0,96,6]
+"classSize2DTemplate.html#a60ffb533b40b311718c56c15fe7df536":[9,0,96,0]
 };

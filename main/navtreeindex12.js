@@ -1,5 +1,7 @@
 var NAVTREEINDEX12 =
 {
+"classTuiWidget.html#ae8947a0f72d348169e3b69bd1f5f56e9":[9,0,146,43],
+"classTuiWidget.html#aeb11c0801141f5905b77c078f74eb7d1":[9,0,146,24],
 "classTuiWidget.html#af2571b5113126610fbd8b486741dbe84":[9,0,146,14],
 "classTuiWidget.html#af27e3b68ed4cf6c6cb10da36b62b9654":[9,0,146,17],
 "classTuiWidget.html#af363ab0151e02e4f471fdca67e587580":[9,0,146,41],
@@ -247,7 +249,5 @@ var NAVTREEINDEX12 =
 "image_8h.html":[10,0,0,0,2,13],
 "image_8h_source.html":[10,0,0,0,2,13],
 "imagedesc_8h.html":[10,0,0,0,2,14],
-"imagedesc_8h_source.html":[10,0,0,0,2,14],
-"imagefile_8h.html":[10,0,0,0,2,15],
-"imagefile_8h_source.html":[10,0,0,0,2,15]
+"imagedesc_8h_source.html":[10,0,0,0,2,14]
 };
