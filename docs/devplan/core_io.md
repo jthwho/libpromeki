@@ -10,7 +10,7 @@
 
 ## Completed
 
-IO abstractions, filesystem utilities, and in-memory IO are all implemented, tested, and merged: IODevice, BufferedIODevice, FilePath, Dir, File (BufferedIODevice subclass), FileInfo, Process, BufferIODevice, Buffer size model, Error enhancements, Terminal error reporting.
+IO abstractions, filesystem utilities, and in-memory IO are all implemented, tested, and merged: IODevice, BufferedIODevice, FilePath, Dir, File (BufferedIODevice subclass), FileInfo, Process, BufferIODevice, Buffer size model, Error enhancements, Terminal error reporting, StringIODevice (seekable IODevice over String*), FileIODevice (stdio FILE* adapter with optional ownership via OwnsFile flag and takeFile()).
 
 ### Known Issues
 
