@@ -136,6 +136,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/pidcontroller.h
     include/promeki/core/platform.h
     include/promeki/core/point.h
+    include/promeki/core/process.h
     include/promeki/core/rational.h
     include/promeki/core/regex.h
     include/promeki/core/securemem.h
@@ -230,6 +231,7 @@ set(PROMEKI_CORE_SOURCES
     src/thread.cpp
     src/threadpool.cpp
     src/pidcontroller.cpp
+    src/process.cpp
     src/json.cpp
     src/framerate.cpp
     src/rect.cpp
@@ -801,6 +803,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/iodevice.cpp
         tests/bufferediodevice.cpp
         tests/dir.cpp
+        tests/process.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

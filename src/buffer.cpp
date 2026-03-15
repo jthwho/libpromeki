@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cstring>
 #include <promeki/core/buffer.h>
 #include <promeki/core/util.h>
 
@@ -30,6 +31,14 @@ size_t Buffer::getPageSize() {
 #endif
         }
         return ret;
+}
+
+Error Buffer::copyFrom(const void *src, size_t bytes, size_t offset) const {
+        if(!isValid()) return Error::Invalid;
+        if(!isHostAccessible()) return Error::NotHostAccessible;
+        if(offset + bytes > availSize()) return Error::BufferTooSmall;
+        std::memcpy(static_cast<uint8_t *>(_data) + offset, src, bytes);
+        return Error::Ok;
 }
 
 PROMEKI_NAMESPACE_END

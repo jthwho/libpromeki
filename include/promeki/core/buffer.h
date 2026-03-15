@@ -316,6 +316,21 @@ class Buffer {
                         return _alloc.ms.fill(_data, availSize(), value);
                 }
 
+                /**
+                 * @brief Copies data from an external source into the buffer.
+                 *
+                 * Copies @p bytes from @p src into the buffer starting at
+                 * @p offset bytes from data(). The buffer must be valid and
+                 * host-accessible, and @p offset + @p bytes must not exceed
+                 * availSize().
+                 *
+                 * @param src    Pointer to the source data.
+                 * @param bytes  Number of bytes to copy.
+                 * @param offset Destination offset from data() (default 0).
+                 * @return Error::Ok on success, or an appropriate error code.
+                 */
+                Error copyFrom(const void *src, size_t bytes, size_t offset = 0) const;
+
         private:
                 MemAllocation   _alloc;
                 void            *_data          = nullptr;

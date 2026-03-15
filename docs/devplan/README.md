@@ -25,7 +25,7 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 ## Dependency Graph
 
 ```
-Phase 1 (COMPLETE) ----+---> Phase 2 (IO + Filesystem + Streams)
+Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS mostly complete, Streams not started)
                        |       |
                        |       +---> Phase 3 (Network Library)
                        |       |
@@ -52,7 +52,9 @@ Phase 1A (containers), 1B (concurrency), 1C (API consistency), and 1D (utilities
 
 Establish a uniform byte-oriented IO interface that network sockets, files, and pipes can all implement. Add filesystem utilities. Add DataStream (binary serialization) and TextStream (formatted text I/O) — both operate over IODevice or in-memory buffers. DataStream is the foundation for ObjectBase saveState/loadState (Phase 7). IODevice is the base class for Phase 3 sockets and Phase 4 pipeline file I/O.
 
-**Phase 2A (COMPLETE):** IODevice base class with runtime option system, FilePath value type.
+**IO and Filesystem (COMPLETE):** IODevice, BufferedIODevice, FilePath, Dir, File (refactored to BufferedIODevice), FileInfo, Process, Buffer size model, Error enhancements, Terminal error reporting. Remaining: AudioFile IODevice refactor.
+
+**Streams (NOT STARTED):** DataStream, TextStream, std:: stream migration.
 
 ### Phase 3: Network Library
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)

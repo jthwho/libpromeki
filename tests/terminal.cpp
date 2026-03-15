@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <unistd.h>
 #include <doctest/doctest.h>
 #include <promeki/core/terminal.h>
 #include <promeki/core/env.h>
@@ -207,13 +208,18 @@ TEST_CASE("Terminal: installSignalHandlers does not crash") {
 }
 
 TEST_CASE("Terminal: readInput on non-TTY") {
+        // readInput performs a blocking read on stdin.  When stdin is a TTY
+        // (interactive run) this would hang waiting for user input, so we
+        // only exercise the call when stdin is a pipe or file.
         Terminal t;
-        char buf[16];
-        auto [n, err] = t.readInput(buf, sizeof(buf));
-        // On a non-TTY, readInput may return 0 (EOF) or an error.
-        // Either outcome is valid; it should not crash.
-        if(err.isOk()) {
-                CHECK(n >= 0);
+        if(!::isatty(STDIN_FILENO)) {
+                char buf[16];
+                auto [n, err] = t.readInput(buf, sizeof(buf));
+                // On a non-TTY, readInput may return 0 (EOF) or an error.
+                // Either outcome is valid; it should not crash.
+                if(err.isOk()) {
+                        CHECK(n >= 0);
+                }
         }
 }
 

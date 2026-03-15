@@ -278,3 +278,48 @@ TEST_CASE("Buffer_PtrList") {
     CHECK(list[1]->availSize() == 128);
     CHECK(list[2]->availSize() == 256);
 }
+
+// ============================================================================
+// copyFrom
+// ============================================================================
+
+TEST_CASE("Buffer_CopyFrom") {
+    SUBCASE("Basic copy") {
+        Buffer b(64);
+        const char *src = "Hello, Buffer!";
+        size_t len = std::strlen(src);
+        Error err = b.copyFrom(src, len);
+        CHECK(err.isOk());
+        CHECK(std::memcmp(b.data(), src, len) == 0);
+    }
+
+    SUBCASE("Copy with offset") {
+        Buffer b(64);
+        b.fill(0);
+        const char *src = "test";
+        Error err = b.copyFrom(src, 4, 10);
+        CHECK(err.isOk());
+        CHECK(std::memcmp(static_cast<uint8_t *>(b.data()) + 10, src, 4) == 0);
+    }
+
+    SUBCASE("Copy exceeding availSize returns BufferTooSmall") {
+        Buffer b(16);
+        char src[32] = {};
+        Error err = b.copyFrom(src, 32);
+        CHECK(err == Error::BufferTooSmall);
+    }
+
+    SUBCASE("Copy with offset exceeding availSize returns BufferTooSmall") {
+        Buffer b(16);
+        char src[4] = {};
+        Error err = b.copyFrom(src, 4, 14);
+        CHECK(err == Error::BufferTooSmall);
+    }
+
+    SUBCASE("Copy into invalid buffer returns Invalid") {
+        Buffer b;
+        char src[4] = {};
+        Error err = b.copyFrom(src, 4);
+        CHECK(err == Error::Invalid);
+    }
+}
