@@ -19,6 +19,7 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 | [proav_pipeline.md](proav_pipeline.md) | 4A | Pipeline framework core (MediaNode, MediaGraph, MediaPipeline) |
 | [proav_nodes.md](proav_nodes.md) | 4B | Concrete nodes (source/sink/mixer/gain/sync) |
 | [proav_dsp.md](proav_dsp.md) | 4C | DSP and effects (filters, resampler, format converter) |
+| [vidgen.md](vidgen.md) | 3-4 | vidgen utility: test pattern nodes, streaming nodes, CLI tool |
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
@@ -29,9 +30,11 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 ```
 Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, streams complete, StreamString refactor remaining)
                        |       |
-                       |       +---> Phase 3 (Network Library)
-                       |       |
-                       |       +---> Phase 4 (ProAV Pipeline)
+                       |       +---> Phase 3A (Sockets) ──→ Phase 3C (AV-over-IP) ──┐
+                       |       |                                                     |
+                       |       +---> Phase 4A (Pipeline) ──→ Phase 4B (Nodes) ───────+──→ vidgen
+                       |       |                                                     |
+                       |       |                             Phase 3B (HTTP/TLS) ────┘
                        |       |
                        |       +---> Phase 7 (ObjectBase saveState/loadState via DataStream)
                        |
@@ -41,6 +44,16 @@ Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, streams complete, StreamSt
 
 Phase 7 (Cross-Cutting) -- ongoing throughout
 ```
+
+### Current Focus: vidgen Utility
+
+The immediate priority is building the proav pipeline and network layers to support `vidgen` — a video/audio test pattern generator that streams over RTP. See [vidgen.md](vidgen.md) for the full plan. Work order:
+
+1. **Phase 4A** (pipeline framework) and **Phase 3A** (sockets) — in parallel
+2. **Phase 4B new nodes** — test pattern generators, TC overlay, JPEG encoder
+3. **Phase 3C** — RTP, SDP, payload types, multicast
+4. **Streaming sink nodes** — bridge pipeline to network (RtpVideoSinkNode, RtpAudioSinkNode)
+5. **vidgen utility** — CLI tool that wires it all together
 
 ## Phasing
 

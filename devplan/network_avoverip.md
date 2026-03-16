@@ -113,9 +113,30 @@ Real-time Transport Protocol (RFC 3550). Payload-type agnostic.
 
 ---
 
+## RtpPacket
+
+Lightweight view into a shared buffer representing a single RTP packet. Multiple RtpPackets can reference different regions of the same underlying `Buffer::Ptr`, avoiding per-packet allocation when fragmenting large frames (e.g., a 1080p frame produces ~4000 packets that all share one buffer).
+
+**Files:**
+- [ ] `include/promeki/network/rtppacket.h`
+- [ ] `tests/rtppacket.cpp`
+
+**Implementation checklist:**
+- [ ] Header guard, includes, namespace
+- [ ] Simple data object (no PROMEKI_SHARED_FINAL — lightweight value type)
+- [ ] `Buffer::Ptr buffer() const` — the shared backing buffer
+- [ ] `size_t offset() const` — byte offset into the buffer where this packet's data begins
+- [ ] `size_t size() const` — byte size of this packet's data
+- [ ] `const uint8_t *data() const` — convenience: `buffer()->data() + offset()`
+- [ ] Constructor: `RtpPacket(Buffer::Ptr buf, size_t offset, size_t size)`
+- [ ] `using List = promeki::List<RtpPacket>`
+- [ ] Doctest: construction, data access, multiple packets sharing one buffer
+
+---
+
 ## RtpPayload
 
-Base class for RTP payload type handlers.
+Base class for RTP payload type handlers. Packing produces a list of RtpPackets that share a single buffer allocation. Unpacking reassembles packets back into media data.
 
 **Files:**
 - [ ] `include/promeki/network/rtppayload.h`
@@ -125,13 +146,14 @@ Base class for RTP payload type handlers.
 - [ ] Abstract base class
 - [ ] `virtual uint8_t payloadType() const = 0`
 - [ ] `virtual uint32_t clockRate() const = 0`
-- [ ] `virtual Buffer pack(const void *mediaData, size_t size) = 0` — media -> RTP payload(s)
-- [ ] `virtual Buffer unpack(const Buffer &rtpPayload) = 0` — RTP payload -> media
+- [ ] `virtual RtpPacket::List pack(const void *mediaData, size_t size) = 0` — fragment media data into RTP payload packets. All returned RtpPackets share a single `Buffer::Ptr`.
+- [ ] `virtual Buffer unpack(const RtpPacket::List &packets) = 0` — reassemble packets into media data
 - [ ] `virtual size_t maxPayloadSize() const` — default MTU-safe (1200 bytes)
 - [ ] Concrete subclasses (implement as needed for AV-over-IP):
   - [ ] `RtpPayloadL24` — 24-bit linear audio (AES67 standard)
   - [ ] `RtpPayloadL16` — 16-bit linear audio
-  - [ ] `RtpPayloadRawVideo` — RFC 4175 raw video (ST 2110-20)
+  - [ ] `RtpPayloadRawVideo` — RFC 4175 raw video (ST 2110-20). Packs scan lines per packet as required by the spec.
+  - [ ] `RtpPayloadJpeg` — RFC 2435 JPEG (Motion JPEG)
 - [ ] Doctest: pack/unpack round-trip for each concrete payload type
 
 ---

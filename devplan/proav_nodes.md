@@ -8,6 +8,8 @@
 
 All nodes derive from `MediaNode`, implement `process()`, and declare their input/output ports.
 
+**Additional nodes for vidgen:** TestPatternNode (combined video+audio+metadata generator with motion), TimecodeOverlayNode, JpegEncoderNode, FrameRateControlNode, RtpVideoSinkNode, RtpAudioSinkNode are specified in [vidgen.md](vidgen.md).
+
 ---
 
 ## AudioSourceNode
@@ -15,7 +17,7 @@ All nodes derive from `MediaNode`, implement `process()`, and declare their inpu
 Reads audio from AudioFile and outputs frames.
 
 **Files:**
-- [ ] `include/promeki/proav/proav/audiosourcenode.h`
+- [ ] `include/promeki/proav/audiosourcenode.h`
 - [ ] `src/audiosourcenode.cpp`
 - [ ] `tests/audiosourcenode.cpp`
 
@@ -45,7 +47,7 @@ Reads audio from AudioFile and outputs frames.
 Writes audio frames to AudioFile.
 
 **Files:**
-- [ ] `include/promeki/proav/proav/audiosinknode.h`
+- [ ] `include/promeki/proav/audiosinknode.h`
 - [ ] `src/audiosinknode.cpp`
 - [ ] `tests/audiosinknode.cpp`
 
@@ -71,7 +73,7 @@ Writes audio frames to AudioFile.
 Reads image sequences and outputs video frames.
 
 **Files:**
-- [ ] `include/promeki/proav/proav/imagesourcenode.h`
+- [ ] `include/promeki/proav/imagesourcenode.h`
 - [ ] `src/imagesourcenode.cpp`
 - [ ] `tests/imagesourcenode.cpp`
 
@@ -100,7 +102,7 @@ Reads image sequences and outputs video frames.
 Writes video frames as image sequences.
 
 **Files:**
-- [ ] `include/promeki/proav/proav/imagesinknode.h`
+- [ ] `include/promeki/proav/imagesinknode.h`
 - [ ] `src/imagesinknode.cpp`
 - [ ] `tests/imagesinknode.cpp`
 
@@ -124,7 +126,7 @@ Writes video frames as image sequences.
 N-input audio mixer with per-input gain.
 
 **Files:**
-- [ ] `include/promeki/proav/proav/audiomixernode.h`
+- [ ] `include/promeki/proav/audiomixernode.h`
 - [ ] `src/audiomixernode.cpp`
 - [ ] `tests/audiomixernode.cpp`
 
@@ -139,10 +141,11 @@ N-input audio mixer with per-input gain.
   - [ ] Output AudioDesc matches input (or is configured explicitly)
 - [ ] Override `process()`:
   - [ ] Pull frames from all inputs
-  - [ ] Mix: sum samples with per-input gain
+  - [ ] Allocate output Audio buffer, mix into it: sum samples with per-input gain
   - [ ] Handle missing inputs gracefully (silence)
   - [ ] Clip/saturate output if needed
   - [ ] Push mixed frame to output
+  - [ ] Note: mixer always allocates a fresh output buffer (N→1 reduction, no single input to detach)
 - [ ] Doctest: mix 2 sine waves, verify output amplitude
 
 ---
@@ -166,7 +169,8 @@ Simple gain adjustment node.
 - [ ] Override `configure()`: output AudioDesc = input AudioDesc
 - [ ] Override `process()`:
   - [ ] Pull frame from input
-  - [ ] Apply gain to all samples
+  - [ ] Call `audio.modify()` then `audio->ensureExclusive()` (COW detach if shared, no-op in linear pipeline)
+  - [ ] Apply gain to all samples in place
   - [ ] Push to output
 - [ ] Doctest: apply gain, verify output levels
 
@@ -192,7 +196,8 @@ Image color space conversion.
   - [ ] Pre-compute conversion matrix/LUT
 - [ ] Override `process()`:
   - [ ] Pull frame from input
-  - [ ] Apply color space conversion (use existing `ColorSpaceConverter`)
+  - [ ] Call `img.modify()` then `img->ensureExclusive()` (COW detach if shared)
+  - [ ] Apply color space conversion in place (use existing `ColorSpaceConverter`)
   - [ ] Push to output
 - [ ] Leverage existing `ColorSpaceConverter` class
 - [ ] Doctest: convert between known color spaces, verify pixel values
