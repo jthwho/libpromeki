@@ -6,7 +6,7 @@ var searchData=
   ['rect2di32_3',['Rect2Di32',['../rect_8h.html#a7dede79eb3166585c8fbab1f89ea959e',1,'rect.h']]],
   ['removeconstandref_4',['removeconstandref',['../classSignal.html#a4f4798f3ef8ca6b9e0c74831e2057250',1,'Signal::RemoveConstAndRef'],['../classSlot.html#a6f03f41ff89a99870b1561cdb7de2bb3',1,'Slot::RemoveConstAndRef']]],
   ['resizecallback_5',['ResizeCallback',['../classTerminal.html#a9a70127ef97279a2409d28edb6932bf6',1,'Terminal']]],
-  ['result_6',['Result',['../result_8h.html#a72213850e8f39e4956d4ce23dd5238f7',1,'result.h']]],
+  ['result_6',['Result',['../group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7',1,'result.h']]],
   ['reviterator_7',['reviterator',['../classDeque.html#a4ea8ddfd8087f2685404421c96e7472d',1,'Deque::RevIterator'],['../classList.html#a8ac55459deafa266691b371e7d078eb7',1,'List::RevIterator'],['../classMap.html#afff69f3db75321ee2b888a6f1b406546',1,'Map::RevIterator'],['../classSet.html#ac6b5c730e52fd960c8eb622dde83f1fc',1,'Set::RevIterator'],['../classSpan.html#a5aeb9e293c7b48c015a90ccbe15a8b81',1,'Span::RevIterator']]],
   ['rowdatatype_8',['RowDataType',['../classMatrix.html#ace4e79c0ada1dbad8a0673ba463b38f2',1,'Matrix']]]
 ];

@@ -127,6 +127,7 @@ var NAVTREE =
     ] ],
     [ "Signal List", "signal.html", null ],
     [ "Deprecated List", "deprecated.html", null ],
+    [ "Topics", "topics.html", "topics" ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ]
     ] ],
@@ -162,20 +163,21 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "algorithm_8h.html",
-"classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153abd15022b388033c23afa0f690b6f4232",
-"classDeque.html#a5102e0568852b7a7a34c323753c92cfd",
-"classFilePath.html#ad8171f3b333f03cc03a03547e8102fe0",
-"classImageFileIO.html#a8cc24c93ba44b010c261c998189b48ad",
-"classMap.html#a6278babcb3d0ffb4d8a445b30020e1b6",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a6f569aa64c9066f33aae5c4ab757d6fe",
-"classNumName.html#ae7658cdbf32a1970b7ef4ee5393b5b90",
-"classPixelFormat.html#ac041db304ac63fee5905cb1ac680492f",
-"classSize2DTemplate.html#aaec305c9337c460d079ffc84bfbd5254",
-"classStringLatin1Data.html#afc158a10e7a407ff742f33bc3058e1a3",
-"classTuiApplication.html#ab7a5b40047eb4de037daf07dd4e71dd6",
-"classTuiWidget.html#ae8947a0f72d348169e3b69bd1f5f56e9",
-"imagefile_8h.html",
-"slot_8h_source.html"
+"classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153ad304585fb726c590f00dc69879764d97",
+"classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a5aa71e8e56902d0124304063085a64b4",
+"classFile.html#a042f525d4beac394675727bcd5cce274",
+"classHashSet.html#add11852d1d0ef359a41abe3f9340d94f",
+"classList.html#a409ddf197be7e27b12f09c528519d12c",
+"classMidiNote.html#a4f5ae63f34e2a142960620f7c9e49c7e",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3afbbfb54fadb9d0d0b371821dfeae9d63",
+"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded",
+"classReadWriteLock.html#a457c5720f5ed9d8632bba2822d7539e4",
+"classString.html#a35478c00c321dacf5124d44389ddfd9f",
+"classStringUnicodeLiteralData.html#ac561decefb7af22701549bf0bf002bf1",
+"classTuiFrame.html#ae09daea690bc4abd73c781f4872ca59b",
+"classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe",
+"image_8h_source.html",
+"streamstring_8h_source.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

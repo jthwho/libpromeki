@@ -9,14 +9,14 @@ var searchData=
   ['variant_6',['Variant',['../variant_8h.html#a118b9567ec361d6700448dc86095f7e7',1,'variant.h']]],
   ['variant_2eh_7',['variant.h',['../variant_8h.html',1,'']]],
   ['variantend_8',['VariantEnd',['../structdetail_1_1VariantEnd.html',1,'detail']]],
-  ['variantimpl_9',['variantimpl',['../classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868',1,'VariantImpl::VariantImpl()=default'],['../classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3',1,'VariantImpl::VariantImpl(const T &amp;value)'],['../classVariantImpl.html',1,'VariantImpl&lt; Types &gt;']]],
+  ['variantimpl_9',['variantimpl',['../classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3',1,'VariantImpl::VariantImpl(const T &amp;value)'],['../classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868',1,'VariantImpl::VariantImpl()=default'],['../classVariantImpl.html',1,'VariantImpl&lt; Types &gt;']]],
   ['variantlist_10',['VariantList',['../variant_8h.html#a237e2a78d81fec1b598585def4459f2a',1,'variant.h']]],
   ['vectortransform_11',['vectorTransform',['../classMatrix3x3.html#a1b5b4dd26786c6dc630a0051bcb13e0a',1,'Matrix3x3']]],
-  ['version_12',['version',['../structBuildInfo.html#a1459032e90a12ded0a3b2877f923367c',1,'BuildInfo::version'],['../classUUID.html#a07c51b3f1a0766c42a46bf73cbbb903f',1,'UUID::version()']]],
+  ['version_12',['version',['../structBuildInfo.html#a1459032e90a12ded0a3b2877f923367c',1,'BuildInfo::version'],['../classDataStream.html#a6abb988e0426422d76c4b2ef3264c0f2',1,'DataStream::version()'],['../classUUID.html#a07c51b3f1a0766c42a46bf73cbbb903f',1,'UUID::version()']]],
   ['via_20ptr_13',['via ptr',['../dataobjects.html#thread_ptr',1,'Pattern 1: Share a single object via Ptr'],['../dataobjects.html#thread_composite',1,'Pattern 2: Composite structure via Ptr']]],
   ['vibrato_14',['vibrato',['../classMusicalNote.html#a3fe9291cbafc5eb949c31d36755a0e97',1,'MusicalNote']]],
   ['vibratorate_15',['vibratoRate',['../classMusicalNote.html#a6bfacc2d894969d74d2bdfde5c24884f',1,'MusicalNote']]],
   ['videodesc_16',['videodesc',['../classVideoDesc.html#ac333cd3d3138c736b09ca741062d1324',1,'VideoDesc::VideoDesc()'],['../classVideoDesc.html',1,'VideoDesc']]],
   ['videodesc_2eh_17',['videodesc.h',['../videodesc_8h.html',1,'']]],
-  ['vtcformat_18',['vtcformat',['../classTimecode_1_1Mode.html#aa0a65217591cda81646bca6edca2aacd',1,'Timecode::Mode::vtcFormat()'],['../classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b',1,'Timecode::vtcFormat()']]]
+  ['vtcformat_18',['vtcformat',['../classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b',1,'Timecode::vtcFormat()'],['../classTimecode_1_1Mode.html#aa0a65217591cda81646bca6edca2aacd',1,'Timecode::Mode::vtcFormat()']]]
 ];

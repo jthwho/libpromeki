@@ -17,7 +17,7 @@ var searchData=
   ['using_20libpromeki_20in_20your_20project_14',['Using libpromeki in Your Project',['../index.html#autotoc_md9',1,'']]],
   ['utf8bytecount_15',['utf8ByteCount',['../classChar.html#ad6d482575c9386e3155c7660d485b29c',1,'Char']]],
   ['util_2eh_16',['util.h',['../util_8h.html',1,'']]],
-  ['utilities_17',['Current Utilities',['../utils.html#utils_list',1,'']]],
+  ['utilities_17',['utilities',['../group__core__crypto.html',1,'Core Cryptographic Utilities'],['../group__core__util.html',1,'Core Utilities'],['../utils.html#utils_list',1,'Current Utilities']]],
   ['utility_18',['Adding a New Utility',['../utils.html#utils_adding',1,'']]],
   ['utility_20applications_19',['Utility Applications',['../utils.html',1,'']]],
   ['utility_20classes_20',['Utility Classes',['../md_CODING__STANDARDS.html#autotoc_md19',1,'']]],

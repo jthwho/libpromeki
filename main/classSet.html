@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classSet.html',''); initResizable(); }
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classSet-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Set&lt; T &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">Set&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__containers.html">Core Containers</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -311,6 +311,17 @@ Friends</h2></td></tr>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>&gt;<br />
 class Set&lt; T &gt;</div><p>Ordered unique-element container wrapping std::set. </p>
 <p>Provides a Qt-inspired API over std::set with consistent naming conventions matching the rest of libpromeki.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Set&lt;String&gt;</a> <a class="code hl_class" href="classList.html">tags</a> = {<span class="stringliteral">&quot;alpha&quot;</span>, <span class="stringliteral">&quot;beta&quot;</span>};</div>
+<div class="line"><a class="code hl_class" href="classList.html">tags</a>.<a class="code hl_function" href="classList.html#ac635c6d1bc5d2a4141010cdf66b82254">insert</a>(<span class="stringliteral">&quot;gamma&quot;</span>);</div>
+<div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">has</a> = <a class="code hl_class" href="classList.html">tags</a>.<a class="code hl_function" href="classList.html#a005dfb8de3f6007d62777c6112a5271d">contains</a>(<span class="stringliteral">&quot;alpha&quot;</span>);  <span class="comment">// true</span></div>
+<div class="line"><a class="code hl_class" href="classList.html">tags</a>.<a class="code hl_function" href="classList.html#a368154328587fa22cc03d19b1889935e">remove</a>(<span class="stringliteral">&quot;beta&quot;</span>);</div>
+<div class="line"><a class="code hl_class" href="classList.html">List&lt;String&gt;</a> <a class="code hl_function" href="group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a> = <a class="code hl_class" href="classList.html">tags</a>.toList();</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassList_html_a005dfb8de3f6007d62777c6112a5271d"><div class="ttname"><a href="classList.html#a005dfb8de3f6007d62777c6112a5271d">List::contains</a></div><div class="ttdeci">bool contains(const T &amp;val) const</div><div class="ttdoc">Returns true if the list contains the given value.</div><div class="ttdef"><b>Definition</b> list.h:593</div></div>
+<div class="ttc" id="aclassList_html_a368154328587fa22cc03d19b1889935e"><div class="ttname"><a href="classList.html#a368154328587fa22cc03d19b1889935e">List::remove</a></div><div class="ttdeci">Iterator remove(ConstIterator pos)</div><div class="ttdoc">Removes the element at the given iterator position.</div><div class="ttdef"><b>Definition</b> list.h:402</div></div>
+<div class="ttc" id="aclassList_html_ac635c6d1bc5d2a4141010cdf66b82254"><div class="ttname"><a href="classList.html#ac635c6d1bc5d2a4141010cdf66b82254">List::insert</a></div><div class="ttdeci">Iterator insert(ConstIterator pos, const T &amp;value)</div><div class="ttdoc">Inserts a value before the position given by an iterator.</div><div class="ttdef"><b>Definition</b> list.h:341</div></div>
+<div class="ttc" id="agroup__core__util_html_gac27428ecfe86c08c467f57d7ab38308d"><div class="ttname"><a href="group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a></div><div class="ttdeci">PROMEKI_NAMESPACE_BEGIN Container sorted(Container c)</div><div class="ttdoc">Returns a sorted copy of the container.</div><div class="ttdef"><b>Definition</b> algorithm.h:27</div></div>
+</div><!-- fragment --> </dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>Element type (must support operator&lt;). </td></tr>
@@ -1019,7 +1030,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSet.html">Set</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -39,6 +39,7 @@ var hierarchy =
     [ "CSC", "structCSC.html", null ],
     [ "ColorSpace::Data", "structColorSpace_1_1Data.html", null ],
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
+    [ "DataStream", "classDataStream.html", null ],
     [ "DateTime", "classDateTime.html", null ],
     [ "Deque< T >", "classDeque.html", null ],
     [ "Dir", "classDir.html", null ],
@@ -81,6 +82,7 @@ var hierarchy =
     [ "List< T >", "classList.html", null ],
     [ "List< AudioDesc >", "classList.html", null ],
     [ "List< AudioGen::Config >", "classList.html", null ],
+    [ "List< Buffer >", "classList.html", null ],
     [ "List< Char >", "classList.html", null ],
     [ "List< Cleanup >", "classList.html", null ],
     [ "List< CmdLineParser::Option >", "classList.html", null ],
@@ -120,6 +122,7 @@ var hierarchy =
     [ "Map< ObjectBasePtr *, ObjectBasePtr * >", "classMap.html", null ],
     [ "Map< String, CmdLineParser::Option >", "classMap.html", null ],
     [ "Map< String, Params >", "classMap.html", null ],
+    [ "Map< String, String >", "classMap.html", null ],
     [ "Map< uint64_t, String >", "classMap.html", null ],
     [ "Map< uintptr_t, Block >", "classMap.html", null ],
     [ "Matrix< T, W, H >", "classMatrix.html", null ],
@@ -142,10 +145,14 @@ var hierarchy =
     [ "ObjectBase", "classObjectBase.html", [
       [ "AudioBlock", "classAudioBlock.html", null ],
       [ "IODevice", "classIODevice.html", [
+        [ "BufferIODevice", "classBufferIODevice.html", null ],
         [ "BufferedIODevice", "classBufferedIODevice.html", [
           [ "File", "classFile.html", null ]
-        ] ]
+        ] ],
+        [ "FileIODevice", "classFileIODevice.html", null ],
+        [ "StringIODevice", "classStringIODevice.html", null ]
       ] ],
+      [ "Process", "classProcess.html", null ],
       [ "Thread", "classThread.html", null ],
       [ "TuiAction", "classTuiAction.html", null ],
       [ "TuiLayout", "classTuiLayout.html", [
@@ -237,6 +244,7 @@ var hierarchy =
     [ "StructDatabase< KeyType, StructType >", "classStructDatabase.html", null ],
     [ "System", "classSystem.html", null ],
     [ "Terminal", "classTerminal.html", null ],
+    [ "TextStream", "classTextStream.html", null ],
     [ "ThreadPool", "classThreadPool.html", null ],
     [ "Timecode", "classTimecode.html", null ],
     [ "TimeStamp", "classTimeStamp.html", null ],

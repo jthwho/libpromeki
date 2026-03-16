@@ -4,7 +4,7 @@ var searchData=
   ['ndf25_1',['NDF25',['../classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623a06416b2774763242b590c458fd267a4f',1,'Timecode']]],
   ['ndf30_2',['NDF30',['../classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ac1c83207a69e1e4b00911635fbfdae55',1,'Timecode']]],
   ['nocolor_3',['NoColor',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224',1,'Terminal']]],
-  ['noflags_4',['NoFlags',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a24e88b69189d56af622c09f4b1c877a8',1,'File']]],
+  ['noflags_4',['noflags',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a24e88b69189d56af622c09f4b1c877a8',1,'File::NoFlags'],['../classFileIODevice.html#a400e865d46d840cafd00959bd3bf337ba2921ddefb8575f659ff9a60203b0ef1f',1,'FileIODevice::NoFlags']]],
   ['nofocus_5',['NoFocus',['../widget_8h.html#a6b22f8df23411420df9f05b6698743cca506647bdf445931594e9b2de731eeb88',1,'widget.h']]],
   ['noframerate_6',['NoFrameRate',['../classError.html#ab5980e13b879db253df802b0950d1708a2695d424a618d219be1876e3c9339de0',1,'Error']]],
   ['nomem_7',['NoMem',['../classError.html#ab5980e13b879db253df802b0950d1708a6281ee333607973d160cf87638760753',1,'Error']]],
@@ -15,5 +15,6 @@ var searchData=
   ['nothostaccessible_12',['NotHostAccessible',['../classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9',1,'Error']]],
   ['notimplemented_13',['NotImplemented',['../classError.html#ab5980e13b879db253df802b0950d1708a618c5c9abd6638a820400e9948e6e737',1,'Error']]],
   ['notopen_14',['notopen',['../classError.html#ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612',1,'Error::NotOpen'],['../classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926',1,'IODevice::NotOpen']]],
-  ['notsupported_15',['NotSupported',['../classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde',1,'Error']]]
+  ['notrunning_15',['NotRunning',['../classProcess.html#a29199d5fd3060da8da03649f06127847a70bbc400311496ddf01469785755f003',1,'Process']]],
+  ['notsupported_16',['NotSupported',['../classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde',1,'Error']]]
 ];

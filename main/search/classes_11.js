@@ -22,11 +22,12 @@ var searchData=
   ['streamstring_19',['StreamString',['../classStreamString.html',1,'']]],
   ['string_20',['String',['../classString.html',1,'']]],
   ['stringdata_21',['StringData',['../classStringData.html',1,'']]],
-  ['stringlatin1data_22',['StringLatin1Data',['../classStringLatin1Data.html',1,'']]],
-  ['stringlist_23',['StringList',['../classStringList.html',1,'']]],
-  ['stringliteraldata_24',['StringLiteralData',['../classStringLiteralData.html',1,'']]],
-  ['stringunicodedata_25',['StringUnicodeData',['../classStringUnicodeData.html',1,'']]],
-  ['stringunicodeliteraldata_26',['StringUnicodeLiteralData',['../classStringUnicodeLiteralData.html',1,'']]],
-  ['structdatabase_27',['StructDatabase',['../classStructDatabase.html',1,'']]],
-  ['system_28',['System',['../classSystem.html',1,'']]]
+  ['stringiodevice_22',['StringIODevice',['../classStringIODevice.html',1,'']]],
+  ['stringlatin1data_23',['StringLatin1Data',['../classStringLatin1Data.html',1,'']]],
+  ['stringlist_24',['StringList',['../classStringList.html',1,'']]],
+  ['stringliteraldata_25',['StringLiteralData',['../classStringLiteralData.html',1,'']]],
+  ['stringunicodedata_26',['StringUnicodeData',['../classStringUnicodeData.html',1,'']]],
+  ['stringunicodeliteraldata_27',['StringUnicodeLiteralData',['../classStringUnicodeLiteralData.html',1,'']]],
+  ['structdatabase_28',['StructDatabase',['../classStructDatabase.html',1,'']]],
+  ['system_29',['System',['../classSystem.html',1,'']]]
 ];

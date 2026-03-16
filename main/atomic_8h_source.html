@@ -110,74 +110,74 @@ $(document).ready(function(){initNavTree('atomic_8h_source.html',''); initResiza
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="foldopen" id="foldopen00025" data-start="{" data-end="};">
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="classAtomic.html">   25</a></span><span class="keyword">class </span><a class="code hl_class" href="classAtomic.html">Atomic</a> {</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classAtomic.html#a410758091fc0282498e56dd47544f9cc">   31</a></span>                <a class="code hl_function" href="classAtomic.html#a410758091fc0282498e56dd47544f9cc">Atomic</a>(T val = T{}) : _value(val) {}</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classAtomic.html#a44907e07c9b466d45f4aa3ff48279efb">   34</a></span>                <a class="code hl_function" href="classAtomic.html#a44907e07c9b466d45f4aa3ff48279efb">~Atomic</a>() = <span class="keywordflow">default</span>;</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a>(<span class="keyword">const</span> <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a>(<a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;operator=(<a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="foldopen" id="foldopen00045" data-start="{" data-end="}">
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">   45</a></span>                T <a class="code hl_function" href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">value</a>()<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>                        <span class="keywordflow">return</span> _value.load(std::memory_order_acquire);</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                }</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00026" data-start="{" data-end="};">
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classAtomic.html">   26</a></span><span class="keyword">class </span><a class="code hl_class" href="classAtomic.html">Atomic</a> {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classAtomic.html#a410758091fc0282498e56dd47544f9cc">   32</a></span>                <a class="code hl_function" href="classAtomic.html#a410758091fc0282498e56dd47544f9cc">Atomic</a>(T val = T{}) : _value(val) {}</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classAtomic.html#a44907e07c9b466d45f4aa3ff48279efb">   35</a></span>                <a class="code hl_function" href="classAtomic.html#a44907e07c9b466d45f4aa3ff48279efb">~Atomic</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a>(<span class="keyword">const</span> <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;operator=(<span class="keyword">const</span> <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a>(<a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>                <a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;operator=(<a class="code hl_class" href="classAtomic.html">Atomic</a> &amp;&amp;) = <span class="keyword">delete</span>;</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="foldopen" id="foldopen00046" data-start="{" data-end="}">
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">   46</a></span>                T <a class="code hl_function" href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">value</a>()<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>                        <span class="keywordflow">return</span> _value.load(std::memory_order_acquire);</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>                }</div>
 </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="foldopen" id="foldopen00053" data-start="{" data-end="}">
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="classAtomic.html#ae4a8ca94b3ac8186bf9d0127f281c313">   53</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classAtomic.html#ae4a8ca94b3ac8186bf9d0127f281c313">setValue</a>(T val) {</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>                        _value.store(val, std::memory_order_release);</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                }</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="foldopen" id="foldopen00054" data-start="{" data-end="}">
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="classAtomic.html#ae4a8ca94b3ac8186bf9d0127f281c313">   54</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classAtomic.html#ae4a8ca94b3ac8186bf9d0127f281c313">setValue</a>(T val) {</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>                        _value.store(val, std::memory_order_release);</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>                }</div>
 </div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="foldopen" id="foldopen00063" data-start="{" data-end="}">
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno"><a class="line" href="classAtomic.html#a771c53185b421eca794e30f6d4e33f7e">   63</a></span>                T <a class="code hl_function" href="classAtomic.html#a771c53185b421eca794e30f6d4e33f7e">fetchAndAdd</a>(T val) {</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                        <span class="keywordflow">return</span> _value.fetch_add(val, std::memory_order_acq_rel);</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                }</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="foldopen" id="foldopen00064" data-start="{" data-end="}">
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classAtomic.html#a771c53185b421eca794e30f6d4e33f7e">   64</a></span>                T <a class="code hl_function" href="classAtomic.html#a771c53185b421eca794e30f6d4e33f7e">fetchAndAdd</a>(T val) {</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>                        <span class="keywordflow">return</span> _value.fetch_add(val, std::memory_order_acq_rel);</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>                }</div>
 </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="foldopen" id="foldopen00073" data-start="{" data-end="}">
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="classAtomic.html#ae82eb193f5d0240c0209ec4cf2bddd51">   73</a></span>                T <a class="code hl_function" href="classAtomic.html#ae82eb193f5d0240c0209ec4cf2bddd51">fetchAndSub</a>(T val) {</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                        <span class="keywordflow">return</span> _value.fetch_sub(val, std::memory_order_acq_rel);</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                }</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="foldopen" id="foldopen00074" data-start="{" data-end="}">
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="classAtomic.html#ae82eb193f5d0240c0209ec4cf2bddd51">   74</a></span>                T <a class="code hl_function" href="classAtomic.html#ae82eb193f5d0240c0209ec4cf2bddd51">fetchAndSub</a>(T val) {</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                        <span class="keywordflow">return</span> _value.fetch_sub(val, std::memory_order_acq_rel);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                }</div>
 </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
-<div class="foldopen" id="foldopen00088" data-start="{" data-end="}">
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="classAtomic.html#a0fb8b79eaeab085b67b179c41f2bd40c">   88</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classAtomic.html#a0fb8b79eaeab085b67b179c41f2bd40c">compareAndSwap</a>(T &amp;expected, T desired) {</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>                        <span class="keywordflow">return</span> _value.compare_exchange_strong(expected, desired,</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                                std::memory_order_acq_rel, std::memory_order_acquire);</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                }</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="foldopen" id="foldopen00089" data-start="{" data-end="}">
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="classAtomic.html#a0fb8b79eaeab085b67b179c41f2bd40c">   89</a></span>                <span class="keywordtype">bool</span> <a class="code hl_function" href="classAtomic.html#a0fb8b79eaeab085b67b179c41f2bd40c">compareAndSwap</a>(T &amp;expected, T desired) {</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>                        <span class="keywordflow">return</span> _value.compare_exchange_strong(expected, desired,</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                                std::memory_order_acq_rel, std::memory_order_acquire);</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                }</div>
 </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="foldopen" id="foldopen00098" data-start="{" data-end="}">
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno"><a class="line" href="classAtomic.html#ad75480aef0b76963c56f8dc4d845683f">   98</a></span>                T <a class="code hl_function" href="classAtomic.html#ad75480aef0b76963c56f8dc4d845683f">exchange</a>(T desired) {</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                        <span class="keywordflow">return</span> _value.exchange(desired, std::memory_order_acq_rel);</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                }</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="foldopen" id="foldopen00099" data-start="{" data-end="}">
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno"><a class="line" href="classAtomic.html#ad75480aef0b76963c56f8dc4d845683f">   99</a></span>                T <a class="code hl_function" href="classAtomic.html#ad75480aef0b76963c56f8dc4d845683f">exchange</a>(T desired) {</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                        <span class="keywordflow">return</span> _value.exchange(desired, std::memory_order_acq_rel);</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                }</div>
 </div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                std::atomic&lt;T&gt; _value;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>};</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                std::atomic&lt;T&gt; _value;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>};</div>
 </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassAtomic_html"><div class="ttname"><a href="classAtomic.html">Atomic</a></div><div class="ttdoc">Atomic variable wrapping std::atomic&lt;T&gt;.</div><div class="ttdef"><b>Definition</b> atomic.h:25</div></div>
-<div class="ttc" id="aclassAtomic_html_a0fb8b79eaeab085b67b179c41f2bd40c"><div class="ttname"><a href="classAtomic.html#a0fb8b79eaeab085b67b179c41f2bd40c">Atomic::compareAndSwap</a></div><div class="ttdeci">bool compareAndSwap(T &amp;expected, T desired)</div><div class="ttdoc">Atomically compares and swaps.</div><div class="ttdef"><b>Definition</b> atomic.h:88</div></div>
-<div class="ttc" id="aclassAtomic_html_a410758091fc0282498e56dd47544f9cc"><div class="ttname"><a href="classAtomic.html#a410758091fc0282498e56dd47544f9cc">Atomic::Atomic</a></div><div class="ttdeci">Atomic(T val=T{})</div><div class="ttdoc">Constructs an Atomic with the given initial value.</div><div class="ttdef"><b>Definition</b> atomic.h:31</div></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="ttc" id="aclassAtomic_html"><div class="ttname"><a href="classAtomic.html">Atomic</a></div><div class="ttdoc">Atomic variable wrapping std::atomic&lt;T&gt;.</div><div class="ttdef"><b>Definition</b> atomic.h:26</div></div>
+<div class="ttc" id="aclassAtomic_html_a0fb8b79eaeab085b67b179c41f2bd40c"><div class="ttname"><a href="classAtomic.html#a0fb8b79eaeab085b67b179c41f2bd40c">Atomic::compareAndSwap</a></div><div class="ttdeci">bool compareAndSwap(T &amp;expected, T desired)</div><div class="ttdoc">Atomically compares and swaps.</div><div class="ttdef"><b>Definition</b> atomic.h:89</div></div>
+<div class="ttc" id="aclassAtomic_html_a410758091fc0282498e56dd47544f9cc"><div class="ttname"><a href="classAtomic.html#a410758091fc0282498e56dd47544f9cc">Atomic::Atomic</a></div><div class="ttdeci">Atomic(T val=T{})</div><div class="ttdoc">Constructs an Atomic with the given initial value.</div><div class="ttdef"><b>Definition</b> atomic.h:32</div></div>
 <div class="ttc" id="aclassAtomic_html_a44907e07c9b466d45f4aa3ff48279efb"><div class="ttname"><a href="classAtomic.html#a44907e07c9b466d45f4aa3ff48279efb">Atomic::~Atomic</a></div><div class="ttdeci">~Atomic()=default</div><div class="ttdoc">Destructor.</div></div>
-<div class="ttc" id="aclassAtomic_html_a771c53185b421eca794e30f6d4e33f7e"><div class="ttname"><a href="classAtomic.html#a771c53185b421eca794e30f6d4e33f7e">Atomic::fetchAndAdd</a></div><div class="ttdeci">T fetchAndAdd(T val)</div><div class="ttdoc">Atomically adds val and returns the previous value.</div><div class="ttdef"><b>Definition</b> atomic.h:63</div></div>
-<div class="ttc" id="aclassAtomic_html_ad75480aef0b76963c56f8dc4d845683f"><div class="ttname"><a href="classAtomic.html#ad75480aef0b76963c56f8dc4d845683f">Atomic::exchange</a></div><div class="ttdeci">T exchange(T desired)</div><div class="ttdoc">Atomically replaces the value and returns the previous one.</div><div class="ttdef"><b>Definition</b> atomic.h:98</div></div>
-<div class="ttc" id="aclassAtomic_html_ae4a8ca94b3ac8186bf9d0127f281c313"><div class="ttname"><a href="classAtomic.html#ae4a8ca94b3ac8186bf9d0127f281c313">Atomic::setValue</a></div><div class="ttdeci">void setValue(T val)</div><div class="ttdoc">Stores a new value with release semantics.</div><div class="ttdef"><b>Definition</b> atomic.h:53</div></div>
-<div class="ttc" id="aclassAtomic_html_ae82eb193f5d0240c0209ec4cf2bddd51"><div class="ttname"><a href="classAtomic.html#ae82eb193f5d0240c0209ec4cf2bddd51">Atomic::fetchAndSub</a></div><div class="ttdeci">T fetchAndSub(T val)</div><div class="ttdoc">Atomically subtracts val and returns the previous value.</div><div class="ttdef"><b>Definition</b> atomic.h:73</div></div>
-<div class="ttc" id="aclassAtomic_html_af2ca398429bd935ca7912a1d14513cd0"><div class="ttname"><a href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">Atomic::value</a></div><div class="ttdeci">T value() const</div><div class="ttdoc">Loads the current value with acquire semantics.</div><div class="ttdef"><b>Definition</b> atomic.h:45</div></div>
+<div class="ttc" id="aclassAtomic_html_a771c53185b421eca794e30f6d4e33f7e"><div class="ttname"><a href="classAtomic.html#a771c53185b421eca794e30f6d4e33f7e">Atomic::fetchAndAdd</a></div><div class="ttdeci">T fetchAndAdd(T val)</div><div class="ttdoc">Atomically adds val and returns the previous value.</div><div class="ttdef"><b>Definition</b> atomic.h:64</div></div>
+<div class="ttc" id="aclassAtomic_html_ad75480aef0b76963c56f8dc4d845683f"><div class="ttname"><a href="classAtomic.html#ad75480aef0b76963c56f8dc4d845683f">Atomic::exchange</a></div><div class="ttdeci">T exchange(T desired)</div><div class="ttdoc">Atomically replaces the value and returns the previous one.</div><div class="ttdef"><b>Definition</b> atomic.h:99</div></div>
+<div class="ttc" id="aclassAtomic_html_ae4a8ca94b3ac8186bf9d0127f281c313"><div class="ttname"><a href="classAtomic.html#ae4a8ca94b3ac8186bf9d0127f281c313">Atomic::setValue</a></div><div class="ttdeci">void setValue(T val)</div><div class="ttdoc">Stores a new value with release semantics.</div><div class="ttdef"><b>Definition</b> atomic.h:54</div></div>
+<div class="ttc" id="aclassAtomic_html_ae82eb193f5d0240c0209ec4cf2bddd51"><div class="ttname"><a href="classAtomic.html#ae82eb193f5d0240c0209ec4cf2bddd51">Atomic::fetchAndSub</a></div><div class="ttdeci">T fetchAndSub(T val)</div><div class="ttdoc">Atomically subtracts val and returns the previous value.</div><div class="ttdef"><b>Definition</b> atomic.h:74</div></div>
+<div class="ttc" id="aclassAtomic_html_af2ca398429bd935ca7912a1d14513cd0"><div class="ttname"><a href="classAtomic.html#af2ca398429bd935ca7912a1d14513cd0">Atomic::value</a></div><div class="ttdeci">T value() const</div><div class="ttdoc">Loads the current value with acquire semantics.</div><div class="ttdef"><b>Definition</b> atomic.h:46</div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
-<div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:13</div></div>
-<div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:18</div></div>
+<div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
+<div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
@@ -185,7 +185,7 @@ $(document).ready(function(){initNavTree('atomic_8h_source.html',''); initResiza
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="atomic_8h.html">atomic.h</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

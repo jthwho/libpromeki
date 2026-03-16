@@ -153,7 +153,7 @@ Cross-Thread Signals</h2>
 <div class="line"> </div>
 <div class="line"><span class="comment">// When producer emits dataReady, the slot is invoked on thread B&#39;s</span></div>
 <div class="line"><span class="comment">// EventLoop -- not on thread A.  No manual synchronization needed.</span></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:28</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassObjectBase_html_a7d2e491c5289e22a84070551cc95aaa1"><div class="ttname"><a href="classObjectBase.html#a7d2e491c5289e22a84070551cc95aaa1">ObjectBase::connect</a></div><div class="ttdeci">static void connect(Signal&lt; Args... &gt; *signal, Slot&lt; Args... &gt; *slot)</div><div class="ttdoc">connects a signal and slot together. This function assumes both the signal and slot exist in a Object...</div></div>
 </div><!-- fragment --><p><a class="el" href="classSignal.html" title="Type-safe signal/slot mechanism for decoupled event notification.">Signal</a> arguments are marshaled via VariantList for cross-thread dispatch, so all argument types must be representable as Variant.</p>
 <h1><a class="anchor" id="thread_eventloop"></a>
@@ -182,8 +182,8 @@ Mutex</h2>
 <div class="line"><a class="code hl_class" href="classList.html">mutex</a>.lock();</div>
 <div class="line"><span class="comment">// critical section</span></div>
 <div class="line"><a class="code hl_class" href="classList.html">mutex</a>.unlock();</div>
-<div class="ttc" id="aclassMutex_1_1Locker_html"><div class="ttname"><a href="classMutex_1_1Locker.html">Mutex::Locker</a></div><div class="ttdoc">RAII scoped locker for Mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:31</div></div>
-<div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:23</div></div>
+<div class="ttc" id="aclassMutex_1_1Locker_html"><div class="ttname"><a href="classMutex_1_1Locker.html">Mutex::Locker</a></div><div class="ttdoc">RAII scoped locker for Mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:41</div></div>
+<div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:33</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_rwlock"></a>
 ReadWriteLock</h2>
 <p><a class="el" href="classReadWriteLock.html">ReadWriteLock</a> wraps <code>std::shared_mutex</code> for reader-writer patterns where multiple concurrent readers are safe but writers need exclusive access.</p>
@@ -200,9 +200,9 @@ ReadWriteLock</h2>
 <div class="line">        <a class="code hl_class" href="classReadWriteLock_1_1WriteLocker.html">ReadWriteLock::WriteLocker</a> <a class="code hl_class" href="classList.html">locker</a>(<a class="code hl_class" href="classList.html">rwl</a>);</div>
 <div class="line">        <span class="comment">// read-write access</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassReadWriteLock_1_1ReadLocker_html"><div class="ttname"><a href="classReadWriteLock_1_1ReadLocker.html">ReadWriteLock::ReadLocker</a></div><div class="ttdoc">RAII scoped locker for shared (read) access.</div><div class="ttdef"><b>Definition</b> readwritelock.h:27</div></div>
-<div class="ttc" id="aclassReadWriteLock_1_1WriteLocker_html"><div class="ttname"><a href="classReadWriteLock_1_1WriteLocker.html">ReadWriteLock::WriteLocker</a></div><div class="ttdoc">RAII scoped locker for exclusive (write) access.</div><div class="ttdef"><b>Definition</b> readwritelock.h:54</div></div>
-<div class="ttc" id="aclassReadWriteLock_html"><div class="ttname"><a href="classReadWriteLock.html">ReadWriteLock</a></div><div class="ttdoc">Reader-writer lock wrapping std::shared_mutex.</div><div class="ttdef"><b>Definition</b> readwritelock.h:22</div></div>
+<div class="ttc" id="aclassReadWriteLock_1_1ReadLocker_html"><div class="ttname"><a href="classReadWriteLock_1_1ReadLocker.html">ReadWriteLock::ReadLocker</a></div><div class="ttdoc">RAII scoped locker for shared (read) access.</div><div class="ttdef"><b>Definition</b> readwritelock.h:28</div></div>
+<div class="ttc" id="aclassReadWriteLock_1_1WriteLocker_html"><div class="ttname"><a href="classReadWriteLock_1_1WriteLocker.html">ReadWriteLock::WriteLocker</a></div><div class="ttdoc">RAII scoped locker for exclusive (write) access.</div><div class="ttdef"><b>Definition</b> readwritelock.h:55</div></div>
+<div class="ttc" id="aclassReadWriteLock_html"><div class="ttname"><a href="classReadWriteLock.html">ReadWriteLock</a></div><div class="ttdoc">Reader-writer lock wrapping std::shared_mutex.</div><div class="ttdef"><b>Definition</b> readwritelock.h:23</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_waitcondition"></a>
 WaitCondition</h2>
 <p><a class="el" href="classWaitCondition.html">WaitCondition</a> wraps <code>std::condition_variable</code> for thread signaling. It works with <a class="el" href="classMutex.html">Mutex</a> and supports both predicate and non-predicate waits with optional timeouts.</p>
@@ -222,7 +222,7 @@ WaitCondition</h2>
 <div class="line">        <a class="code hl_class" href="classList.html">ready</a> = <span class="keyword">true</span>;</div>
 <div class="line">}</div>
 <div class="line"><a class="code hl_class" href="classList.html">cv</a>.wakeOne();  <span class="comment">// or cv.wakeAll()</span></div>
-<div class="ttc" id="aclassWaitCondition_html"><div class="ttname"><a href="classWaitCondition.html">WaitCondition</a></div><div class="ttdoc">Condition variable wrapping std::condition_variable.</div><div class="ttdef"><b>Definition</b> waitcondition.h:25</div></div>
+<div class="ttc" id="aclassWaitCondition_html"><div class="ttname"><a href="classWaitCondition.html">WaitCondition</a></div><div class="ttdoc">Condition variable wrapping std::condition_variable.</div><div class="ttdef"><b>Definition</b> waitcondition.h:26</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="thread_atomic"></a>
 Atomic</h2>
 <p><a class="el" href="classAtomic.html">Atomic</a> wraps <code>std::atomic</code> with acquire/release semantics. Use <code><a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f" title="Returns the value from a Result.">value()</a></code> to load and <code>setValue()</code> to store. Read-modify-write operations (<code>fetchAndAdd()</code>, <code>compareAndSwap()</code>, <code>exchange()</code>) use <code>memory_order_acq_rel</code>.</p>
@@ -240,7 +240,7 @@ Future and Promise</h2>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Consumer</span></div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>, <a class="code hl_class" href="classList.html">err</a>] = <a class="code hl_class" href="classList.html">f</a>.result();  <span class="comment">// blocks until ready</span></div>
-<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:55</div></div>
+<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:56</div></div>
 </div><!-- fragment --><p><code><a class="el" href="classFuture_3_01void_01_4.html" title="Specialization of Future for void results.">Future&lt;void&gt;</a></code> is specialized: <code>result()</code> returns an <a class="el" href="classError.html">Error</a> instead of a <code>Result</code> pair. Both <code><a class="el" href="classFuture.html#a285281887a6a0e54454afde5a1a798a6" title="Returns the result, blocking until available or timeout.">Future&lt;T&gt;::result()</a></code> and <code><a class="el" href="classFuture.html#a4f29f53bcc52e6a14b3c45576cac7a16" title="Blocks until the result is ready.">Future&lt;T&gt;::waitForFinished()</a></code> accept an optional <code>timeoutMs</code> parameter.</p>
 <h1><a class="anchor" id="thread_pool"></a>
 ThreadPool</h1>
@@ -252,7 +252,7 @@ ThreadPool</h1>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Later...</span></div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>, <a class="code hl_class" href="classList.html">err</a>] = result.result();</div>
-<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:34</div></div>
+<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:44</div></div>
 </div><!-- fragment --><p>Key features:</p><ul>
 <li>Default thread count is <code>std::thread::hardware_concurrency()</code>.</li>
 <li><code>setThreadCount(0)</code> switches to inline mode where tasks run on the calling thread &ndash; useful for WASM or single-threaded contexts.</li>
@@ -276,7 +276,7 @@ Pipeline Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

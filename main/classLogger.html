@@ -105,7 +105,7 @@ $(document).ready(function(){initNavTree('classLogger.html',''); initResizable()
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classLogger-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Logger Class Reference</div></div>
+  <div class="headertitle"><div class="title">Logger Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -206,7 +206,19 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Asynchronous thread-safe logging facility. </p>
-<p>All log messages are enqueued and written by a dedicated worker thread. Supports multiple log levels, optional console output, and file logging. </p>
+<p>All log messages are enqueued and written by a dedicated worker thread.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Use convenience macros (most common)</span></div>
+<div class="line">promekiInfo(<span class="stringliteral">&quot;Processing frame %d&quot;</span>, <a class="code hl_class" href="classList.html">frameNum</a>);</div>
+<div class="line">promekiWarn(<span class="stringliteral">&quot;Buffer underrun at %s&quot;</span>, <a class="code hl_class" href="classList.html">tc</a>.toString().first.cStr());</div>
+<div class="line">promekiErr(<span class="stringliteral">&quot;Failed to open %s&quot;</span>, path.cStr());</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Configure the logger</span></div>
+<div class="line"><a class="code hl_function" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a>().setLogFile(<span class="stringliteral">&quot;/tmp/app.log&quot;</span>);</div>
+<div class="line"><a class="code hl_function" href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a>().setLogLevel(<a class="code hl_enumvalue" href="classLogger.html#ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1">Logger::Debug</a>);</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassLogger_html_a2915ff1fbb7e11fdc5258e534451398a"><div class="ttname"><a href="classLogger.html#a2915ff1fbb7e11fdc5258e534451398a">Logger::defaultLogger</a></div><div class="ttdeci">static Logger &amp; defaultLogger()</div><div class="ttdoc">Returns the singleton default Logger instance.</div></div>
+<div class="ttc" id="aclassLogger_html_ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1"><div class="ttname"><a href="classLogger.html#ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1">Logger::Debug</a></div><div class="ttdeci">@ Debug</div><div class="ttdoc">Debug-level messages.</div><div class="ttdef"><b>Definition</b> logger.h:109</div></div>
+</div><!-- fragment --> Supports multiple log levels, optional console output, and file logging. </dd></dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="aee9ceae1afe64a42d02f7e3fd6278991" name="aee9ceae1afe64a42d02f7e3fd6278991"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aee9ceae1afe64a42d02f7e3fd6278991">&#9670;&#160;</a></span>LogFormatter</h2>
@@ -756,7 +768,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLogger.html">Logger</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

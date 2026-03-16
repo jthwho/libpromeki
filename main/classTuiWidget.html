@@ -418,7 +418,18 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base class for all TUI widgets. </p>
-<p>Derives from <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> to inherit signals/slots, parent/child relationships, event dispatch, and timer support. Provides geometry management, focus handling, visibility control, and virtual methods for paint/key/mouse/resize events. </p>
+<p>Derives from <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> to inherit signals/slots, parent/child relationships, event dispatch, and timer support. Provides geometry management, focus handling, visibility control, and virtual methods</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">class </span><a class="code hl_class" href="classList.html">MyWidget</a> : <span class="keyword">public</span> <a class="code hl_class" href="classTuiWidget.html">TuiWidget</a> {</div>
+<div class="line">    <span class="keyword">protected</span>:</div>
+<div class="line">        <span class="keywordtype">void</span> paintEvent(<a class="code hl_class" href="classTuiPaintEvent.html">TuiPaintEvent</a> *)<span class="keyword"> override </span>{</div>
+<div class="line">            <a class="code hl_class" href="classList.html">Painter</a> p(<span class="keyword">this</span>);</div>
+<div class="line">            p.drawText(0, 0, <span class="stringliteral">&quot;Hello, TUI!&quot;</span>);</div>
+<div class="line">        }</div>
+<div class="line">};</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassTuiPaintEvent_html"><div class="ttname"><a href="classTuiPaintEvent.html">TuiPaintEvent</a></div><div class="ttdoc">Event delivered when a TUI widget needs to repaint.</div><div class="ttdef"><b>Definition</b> widget.h:28</div></div>
+<div class="ttc" id="aclassTuiWidget_html"><div class="ttname"><a href="classTuiWidget.html">TuiWidget</a></div><div class="ttdoc">Base class for all TUI widgets.</div><div class="ttdef"><b>Definition</b> widget.h:88</div></div>
+</div><!-- fragment --> for paint/key/mouse/resize events. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a5e42aa0784a97894dce841beb12b5e8e" name="a5e42aa0784a97894dce841beb12b5e8e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5e42aa0784a97894dce841beb12b5e8e">&#9670;&#160;</a></span>TuiWidget()</h2>
@@ -745,7 +756,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiWidget.html">TuiWidget</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

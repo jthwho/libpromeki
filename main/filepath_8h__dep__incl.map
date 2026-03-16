@@ -1,9 +1,11 @@
 <map id="include/promeki/core/filepath.h" name="include/promeki/core/filepath.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="188,5,347,45"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="279,5,437,45"/>
 <area shape="rect" id="Node000002" href="$dir_8h.html" title=" " alt="" coords="5,93,164,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,54,126,96,124,91,214,49"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,52,145,96,144,91,284,47"/>
 <area shape="rect" id="Node000003" href="$file_8h.html" title=" " alt="" coords="188,93,347,133"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="270,59,270,93,265,93,265,59"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="330,57,289,95,286,91,326,53"/>
 <area shape="rect" id="Node000004" href="$fileinfo_8h.html" title=" " alt="" coords="371,93,529,133"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="321,49,411,91,409,96,319,54"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="390,53,431,91,428,95,386,57"/>
+<area shape="rect" id="Node000005" href="$process_8h.html" title=" " alt="" coords="553,93,712,133"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="432,47,573,91,572,96,431,52"/>
 </map>

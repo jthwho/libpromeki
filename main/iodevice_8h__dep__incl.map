@@ -1,7 +1,15 @@
 <map id="include/promeki/core/iodevice.h" name="include/promeki/core/iodevice.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,164,45"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="371,5,529,45"/>
 <area shape="rect" id="Node000002" href="$bufferediodevice_8h.html" title=" " alt="" coords="5,93,164,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,59,87,93,82,93,82,59"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="358,51,165,96,164,91,356,46"/>
+<area shape="rect" id="Node000004" href="$bufferiodevice_8h.html" title=" " alt="" coords="188,93,347,133"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="399,54,308,96,306,91,396,49"/>
+<area shape="rect" id="Node000005" href="$datastream_8h.html" title=" " alt="" coords="371,93,529,133"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="453,59,453,93,447,93,447,59"/>
+<area shape="rect" id="Node000006" href="$fileiodevice_8h.html" title=" " alt="" coords="553,93,712,133"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="504,49,594,91,592,96,501,54"/>
+<area shape="rect" id="Node000007" href="$stringiodevice_8h.html" title=" " alt="" coords="736,93,895,133"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="544,46,736,91,735,96,542,51"/>
 <area shape="rect" id="Node000003" href="$file_8h.html" title=" " alt="" coords="5,181,164,221"/>
 <area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="87,147,87,181,82,181,82,147"/>
 </map>

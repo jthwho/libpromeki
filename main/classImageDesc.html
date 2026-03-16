@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('classImageDesc.html',''); initResizabl
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classImageDesc-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">ImageDesc Class Reference</div></div>
+  <div class="headertitle"><div class="title">ImageDesc Class Reference<div class="ingroups"><a class="el" href="group__proav__media.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -197,7 +197,13 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes the format and layout of a single image. </p>
-<p><a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> encapsulates image dimensions (Size2Du32), pixel format, line padding and alignment, interlace mode, and associated metadata. It is used by <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> and <a class="el" href="classVideoDesc.html" title="Describes a video format including frame rate, image layers, audio channels, and metadata.">VideoDesc</a> to define the properties of image data. </p>
+<p><a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> encapsulates image dimensions (Size2Du32), pixel format, line padding and alignment, interlace mode, and associated metadata. It is used by <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a></p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classImageDesc.html">ImageDesc</a> desc(1920, 1080, <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd">PixelFormat::RGBA8</a>);</div>
+<div class="line"><span class="keywordtype">size_t</span> bytes = desc.imageSize();  <span class="comment">// total bytes for all planes</span></div>
+<div class="line"><span class="keywordtype">int</span> planes = desc.planeCount();</div>
+<div class="ttc" id="aclassImageDesc_html"><div class="ttname"><a href="classImageDesc.html">ImageDesc</a></div><div class="ttdoc">Describes the format and layout of a single image.</div><div class="ttdef"><b>Definition</b> imagedesc.h:33</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd">PixelFormat::RGBA8</a></div><div class="ttdeci">@ RGBA8</div><div class="ttdoc">8-bit RGBA (32 bits per pixel).</div><div class="ttdef"><b>Definition</b> pixelformat.h:48</div></div>
+</div><!-- fragment --> and <a class="el" href="classVideoDesc.html" title="Describes a video format including frame rate, image layers, audio channels, and metadata.">VideoDesc</a> to define the properties of image data. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad96c2eeb4fd18bcdd3d70064805e37f1" name="ad96c2eeb4fd18bcdd3d70064805e37f1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad96c2eeb4fd18bcdd3d70064805e37f1">&#9670;&#160;</a></span>ImageDesc() <span class="overload">[1/2]</span></h2>
@@ -830,7 +836,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageDesc.html">ImageDesc</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

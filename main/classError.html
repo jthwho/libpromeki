@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classError.html',''); initResizable();
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classError-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Error Class Reference</div></div>
+  <div class="headertitle"><div class="title">Error Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -238,7 +238,21 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Lightweight error code wrapper for the promeki library. </p>
-<p>Encapsulates an error code from the Code enumeration and provides comparison operators, human-readable names, descriptions, and a mapping to the corresponding POSIX errno value when applicable. </p>
+<p>Encapsulates an error code from the Code enumeration and provides comparison operators, human-readable names, descriptions, and</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a>;</div>
+<div class="line"><span class="comment">// Functions use Error* for fallible results:</span></div>
+<div class="line"><span class="keyword">auto</span> <a class="code hl_class" href="classList.html">val</a> = <a class="code hl_class" href="classList.html">someFunction</a>(&amp;<a class="code hl_class" href="classList.html">err</a>);</div>
+<div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a>.isError()) {</div>
+<div class="line">    <a class="code hl_class" href="classString.html">String</a> msg = <a class="code hl_class" href="classList.html">err</a>.description();</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Direct comparison</span></div>
+<div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a> == <a class="code hl_enumvalue" href="classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3">Error::NotExist</a>) { ... }</div>
+<div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
+<div class="ttc" id="aclassError_html_ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3"><div class="ttname"><a href="classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3">Error::NotExist</a></div><div class="ttdeci">@ NotExist</div><div class="ttdoc">File or resource does not exist (ENOENT).</div><div class="ttdef"><b>Definition</b> error.h:71</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+</div><!-- fragment --> a mapping to the corresponding POSIX errno value when applicable. </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ab5980e13b879db253df802b0950d1708" name="ab5980e13b879db253df802b0950d1708"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab5980e13b879db253df802b0950d1708">&#9670;&#160;</a></span>Code</h2>
@@ -646,7 +660,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

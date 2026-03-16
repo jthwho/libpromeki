@@ -1,0 +1,7 @@
+<map id="BufferIODevice" name="BufferIODevice">
+<area shape="rect" id="Node000001" title="IODevice backed by an in&#45;memory Buffer." alt="" coords="5,152,125,177"/>
+<area shape="rect" id="Node000002" href="$classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="25,79,106,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="68,118,68,152,63,152,63,118"/>
+<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="17,5,113,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="68,44,68,79,63,79,63,44"/>
+</map>

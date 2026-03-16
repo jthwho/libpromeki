@@ -1,6 +1,5 @@
 var point_8h =
 [
-    [ "Point< T, NumValues >", "classPoint.html", "classPoint" ],
     [ "Point2Dd", "point_8h.html#acc02f813dd5a8bb7c3e87e201c9bf80a", null ],
     [ "Point2Df", "point_8h.html#a780dcf4c32aa1956c46945b155739860", null ],
     [ "Point2Di32", "point_8h.html#a559444f073d8a5f68fdebd61c5663f56", null ],

@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classMutex.html',''); initResizable();
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classMutex-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Mutex Class Reference</div></div>
+  <div class="headertitle"><div class="title">Mutex Class Reference<div class="ingroups"><a class="el" href="group__core__concurrency.html">Core Concurrency</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -161,7 +161,17 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Mutual exclusion lock wrapping std::mutex. </p>
-<p>Provides a simple mutex with lock/unlock/tryLock and a nested RAII <a class="el" href="classMutex_1_1Locker.html" title="RAII scoped locker for Mutex.">Locker</a> type for scoped locking. Non-copyable and non-movable. </p>
+<p>Provides a simple mutex with lock/unlock/tryLock and a nested RAII</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classMutex.html">Mutex</a> <a class="code hl_class" href="classList.html">mtx</a>;</div>
+<div class="line">{</div>
+<div class="line">    <a class="code hl_class" href="classMutex_1_1Locker.html">Mutex::Locker</a> <a class="code hl_function" href="classMutex.html#ad91be808bf0a60a16f10b897ec246d3a">lock</a>(<a class="code hl_class" href="classList.html">mtx</a>);</div>
+<div class="line">    <span class="comment">// ... critical section ...</span></div>
+<div class="line">}</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassMutex_1_1Locker_html"><div class="ttname"><a href="classMutex_1_1Locker.html">Mutex::Locker</a></div><div class="ttdoc">RAII scoped locker for Mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:41</div></div>
+<div class="ttc" id="aclassMutex_html"><div class="ttname"><a href="classMutex.html">Mutex</a></div><div class="ttdoc">Mutual exclusion lock wrapping std::mutex.</div><div class="ttdef"><b>Definition</b> mutex.h:33</div></div>
+<div class="ttc" id="aclassMutex_html_ad91be808bf0a60a16f10b897ec246d3a"><div class="ttname"><a href="classMutex.html#ad91be808bf0a60a16f10b897ec246d3a">Mutex::lock</a></div><div class="ttdeci">void lock()</div><div class="ttdoc">Locks the mutex. Blocks if already locked by another thread.</div><div class="ttdef"><b>Definition</b> mutex.h:77</div></div>
+</div><!-- fragment --> <a class="el" href="classMutex_1_1Locker.html" title="RAII scoped locker for Mutex.">Locker</a> type for scoped locking. Non-copyable and non-movable. </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="ab2feff7363312debbdcd55d993935865" name="ab2feff7363312debbdcd55d993935865"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab2feff7363312debbdcd55d993935865">&#9670;&#160;</a></span>tryLock()</h2>
@@ -201,7 +211,7 @@ Friends</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMutex.html">Mutex</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

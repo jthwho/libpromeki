@@ -6,5 +6,6 @@ var searchData=
   ['keyname_3',['keyName',['../classKeyEvent.html#aa378e9ef1fe0f306fe60e43cf2602359',1,'KeyEvent']]],
   ['keypress_4',['KeyPress',['../classKeyEvent.html#a219478053d87c3c1c2c71d00fac6120f',1,'KeyEvent']]],
   ['keyrelease_5',['KeyRelease',['../classKeyEvent.html#a4dc5e9b314879c2ef2ae39efa527ac71',1,'KeyEvent']]],
-  ['keys_6',['keys',['../classHashMap.html#adfdbb7fe8eb114f05facb163953289d4',1,'HashMap::keys()'],['../classMap.html#a9c2431f70d28c82321654e5dc867b08b',1,'Map::keys()']]]
+  ['keys_6',['keys',['../classHashMap.html#adfdbb7fe8eb114f05facb163953289d4',1,'HashMap::keys()'],['../classMap.html#a9c2431f70d28c82321654e5dc867b08b',1,'Map::keys()']]],
+  ['kill_7',['kill',['../classProcess.html#a861c495dd2f3f1fbe17e73abef6651fc',1,'Process']]]
 ];

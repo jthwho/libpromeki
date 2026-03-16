@@ -1,6 +1,5 @@
 var layout_8h =
 [
-    [ "TuiLayout", "classTuiLayout.html", "classTuiLayout" ],
     [ "TuiBoxLayout", "classTuiBoxLayout.html", "classTuiBoxLayout" ],
     [ "TuiHBoxLayout", "classTuiHBoxLayout.html", null ],
     [ "TuiVBoxLayout", "classTuiVBoxLayout.html", null ],

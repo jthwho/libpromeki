@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('classMusicalNote.html',''); initResiza
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classMusicalNote-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">MusicalNote Class Reference</div></div>
+  <div class="headertitle"><div class="title">MusicalNote Class Reference<div class="ingroups"><a class="el" href="group__music__theory.html">Music Theory</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -215,7 +215,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setRest</b> (bool v)<
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents a single musical note with timing and expression data. </p>
-<p><a class="el" href="classMusicalNote.html" title="Represents a single musical note with timing and expression data.">MusicalNote</a> is a lightweight value type that describes a note (or rest) with its MIDI pitch, timing, dynamics, and expression parameters such as vibrato and tremolo. Fractional MIDI note numbers are supported for microtonal or pitch-bent notes. </p>
+<p><a class="el" href="classMusicalNote.html" title="Represents a single musical note with timing and expression data.">MusicalNote</a> is a lightweight value type that describes a note (or rest) with its MIDI pitch, timing, dynamics, and expression parameters such</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classMusicalNote.html">MusicalNote</a> note;</div>
+<div class="line">note.<a class="code hl_function" href="classMusicalNote.html#a53759566f76788aeb71ea8d9db7138e3">setMidiNote</a>(60);     <span class="comment">// Middle C</span></div>
+<div class="line">note.setDuration(1.0);    <span class="comment">// quarter note</span></div>
+<div class="line">note.setVelocity(0.8);    <span class="comment">// mezzo-forte</span></div>
+<div class="ttc" id="aclassMusicalNote_html"><div class="ttname"><a href="classMusicalNote.html">MusicalNote</a></div><div class="ttdoc">Represents a single musical note with timing and expression data.</div><div class="ttdef"><b>Definition</b> musicalnote.h:31</div></div>
+<div class="ttc" id="aclassMusicalNote_html_a53759566f76788aeb71ea8d9db7138e3"><div class="ttname"><a href="classMusicalNote.html#a53759566f76788aeb71ea8d9db7138e3">MusicalNote::setMidiNote</a></div><div class="ttdeci">void setMidiNote(float v)</div><div class="ttdoc">Sets the MIDI note number.</div><div class="ttdef"><b>Definition</b> musicalnote.h:41</div></div>
+</div><!-- fragment --> as vibrato and tremolo. Fractional MIDI note numbers are supported for microtonal or pitch-bent notes. </dd></dl>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/music/<a class="el" href="musicalnote_8h_source.html">musicalnote.h</a></li>
 </ul>
@@ -226,7 +233,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setRest</b> (bool v)<
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMusicalNote.html">MusicalNote</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

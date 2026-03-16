@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classUUID.html',''); initResizable(); 
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classUUID-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">UUID Class Reference</div></div>
+  <div class="headertitle"><div class="title">UUID Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -230,13 +230,23 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a6f61a1528f819fdd59d7b553f0e48333" id="r_a6f61a1528f819fdd59d7b553f0e48333"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classUUID.html">UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUID.html#a6f61a1528f819fdd59d7b553f0e48333">generateV7</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">timestampMs</a>=-1)</td></tr>
 <tr class="memdesc:a6f61a1528f819fdd59d7b553f0e48333"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates a version 7 (Unix timestamp + random) <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>.  <br /></td></tr>
 <tr class="separator:a6f61a1528f819fdd59d7b553f0e48333"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a459092b9f559bf18b6b254c4db9391b1" id="r_a459092b9f559bf18b6b254c4db9391b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classUUID.html">UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUID.html#a459092b9f559bf18b6b254c4db9391b1">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">string</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:a459092b9f559bf18b6b254c4db9391b1" id="r_a459092b9f559bf18b6b254c4db9391b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classUUID.html">UUID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUID.html#a459092b9f559bf18b6b254c4db9391b1">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *string, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a459092b9f559bf18b6b254c4db9391b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> from a string representation.  <br /></td></tr>
 <tr class="separator:a459092b9f559bf18b6b254c4db9391b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Universally Unique Identifier (<a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>). </p>
-<p>Generates and manipulates RFC 4122 / RFC 9562 UUIDs. Supports versions 1 (stub), 3, 4, 5, and 7. </p>
+<p>Generates and manipulates RFC 4122 / RFC 9562 UUIDs.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classUUID.html">UUID</a> <span class="keywordtype">id</span> = <a class="code hl_function" href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a>();          <span class="comment">// random v4</span></div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> str = <span class="keywordtype">id</span>.toString();          <span class="comment">// &quot;550e8400-e29b-...&quot;</span></div>
+<div class="line"><a class="code hl_class" href="classUUID.html">UUID</a> <a class="code hl_class" href="classList.html">parsed</a> = <a class="code hl_function" href="classUUID.html#a459092b9f559bf18b6b254c4db9391b1">UUID::fromString</a>(str); <span class="comment">// round-trip</span></div>
+<div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">valid</a> = <span class="keywordtype">id</span>.isValid();</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+<div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID).</div><div class="ttdef"><b>Definition</b> uuid.h:34</div></div>
+<div class="ttc" id="aclassUUID_html_a459092b9f559bf18b6b254c4db9391b1"><div class="ttname"><a href="classUUID.html#a459092b9f559bf18b6b254c4db9391b1">UUID::fromString</a></div><div class="ttdeci">static UUID fromString(const char *string, Error *err=nullptr)</div><div class="ttdoc">Parses a UUID from a string representation.</div></div>
+<div class="ttc" id="aclassUUID_html_aa4b21b5eec74fc441124669adb10ed78"><div class="ttname"><a href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a></div><div class="ttdeci">static UUID generate(int version=4)</div><div class="ttdoc">Convenience generator that dispatches to the appropriate generateVn() function.</div></div>
+</div><!-- fragment --> Supports versions 1 (stub), 3, 4, 5, and 7. </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a59991ba6cf89f6afed3c7c380ea9e6c7" name="a59991ba6cf89f6afed3c7c380ea9e6c7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a59991ba6cf89f6afed3c7c380ea9e6c7">&#9670;&#160;</a></span>data()</h2>
@@ -645,7 +655,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classUUID.html">UUID</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

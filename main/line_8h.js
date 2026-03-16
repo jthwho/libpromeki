@@ -1,6 +1,5 @@
 var line_8h =
 [
-    [ "Line< T, N >", "classLine.html", "classLine" ],
     [ "Line2Dd", "line_8h.html#ae5ad9518743ae3ebe745addb8878427f", null ],
     [ "Line2Df", "line_8h.html#a4bef7e63736314275742e7b880acff10", null ],
     [ "Line2Di32", "line_8h.html#a7a8fa44bfd41c89b35458c6ec1b2f5c1", null ],

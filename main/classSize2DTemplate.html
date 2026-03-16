@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('classSize2DTemplate.html',''); initRes
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classSize2DTemplate-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Size2DTemplate&lt; T &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">Size2DTemplate&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__math.html">Core Math</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -178,7 +178,15 @@ std::istream &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operato
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>&gt;<br />
 class Size2DTemplate&lt; T &gt;</div><p>Two-dimensional size (width and height). </p>
-<p>A simple value type representing a 2D extent. Supports validity checks, area computation, point containment tests, and string serialization in "WxH" format.</p>
+<p>A simple value type representing a 2D extent. Supports validity checks, area computation, point containment tests, and string serialization in</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classSize2DTemplate.html">Size2Du32</a> <a class="code hl_class" href="classList.html">hd</a>(1920, 1080);</div>
+<div class="line"><a class="code hl_class" href="classList.html">uint32_t</a> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">hd</a>.width();   <span class="comment">// 1920</span></div>
+<div class="line"><a class="code hl_class" href="classList.html">uint32_t</a> <a class="code hl_class" href="classList.html">h</a> = <a class="code hl_class" href="classList.html">hd</a>.height();  <span class="comment">// 1080</span></div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_class" href="classList.html">s</a> = <a class="code hl_class" href="classList.html">hd</a>.toString();  <span class="comment">// &quot;1920x1080&quot;</span></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassSize2DTemplate_html"><div class="ttname"><a href="classSize2DTemplate.html">Size2DTemplate&lt; uint32_t &gt;</a></div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+</div><!-- fragment --> "WxH" format.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>The component type (e.g. size_t, float, double). </td></tr>
@@ -195,7 +203,7 @@ class Size2DTemplate&lt; T &gt;</div><p>Two-dimensional size (width and height).
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSize2DTemplate.html">Size2DTemplate</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

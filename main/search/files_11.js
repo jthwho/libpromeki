@@ -16,8 +16,9 @@ var searchData=
   ['streamstring_2eh_13',['streamstring.h',['../streamstring_8h.html',1,'']]],
   ['string_2eh_14',['string.h',['../string_8h.html',1,'']]],
   ['stringdata_2eh_15',['stringdata.h',['../stringdata_8h.html',1,'']]],
-  ['stringlist_2eh_16',['stringlist.h',['../stringlist_8h.html',1,'']]],
-  ['structdatabase_2eh_17',['structdatabase.h',['../structdatabase_8h.html',1,'']]],
-  ['style_2eh_18',['style.h',['../style_8h.html',1,'']]],
-  ['system_2eh_19',['system.h',['../system_8h.html',1,'']]]
+  ['stringiodevice_2eh_16',['stringiodevice.h',['../stringiodevice_8h.html',1,'']]],
+  ['stringlist_2eh_17',['stringlist.h',['../stringlist_8h.html',1,'']]],
+  ['structdatabase_2eh_18',['structdatabase.h',['../structdatabase_8h.html',1,'']]],
+  ['style_2eh_19',['style.h',['../style_8h.html',1,'']]],
+  ['system_2eh_20',['system.h',['../system_8h.html',1,'']]]
 ];

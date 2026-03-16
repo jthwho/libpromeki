@@ -13,6 +13,7 @@ var classBuffer =
     [ "allocation", "classBuffer.html#ac35c3c2aa73a651597b953f5ebdcb3e4", null ],
     [ "allocSize", "classBuffer.html#aa3b733a521a31a7db6060d3103624beb", null ],
     [ "availSize", "classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd", null ],
+    [ "copyFrom", "classBuffer.html#aea93e438d4eaa73bab0cff40c6d5d03a", null ],
     [ "data", "classBuffer.html#a59d9432844bceaefd50a787f2804eb69", null ],
     [ "fill", "classBuffer.html#a00491bb52896ef608b6b82ec2e6c1e08", null ],
     [ "isHostAccessible", "classBuffer.html#aa35d50373c38ff6420f077d9fb661a19", null ],

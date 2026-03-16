@@ -1,6 +1,5 @@
 var widget_8h =
 [
-    [ "TuiPaintEvent", "classTuiPaintEvent.html", null ],
     [ "TuiResizeEvent", "classTuiResizeEvent.html", null ],
     [ "TuiWidget", "classTuiWidget.html", "classTuiWidget" ],
     [ "TuiFocusPolicy", "widget_8h.html#a6b22f8df23411420df9f05b6698743cc", [

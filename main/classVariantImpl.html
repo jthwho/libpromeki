@@ -190,7 +190,16 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename... Types&gt;<br />
 class VariantImpl&lt; Types &gt;</div><p>Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES. </p>
-<p><a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> is a thin wrapper around <code>std::variant</code> that adds a Type enum, human-readable type names, and automatic type-conversion logic via the templated <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">get()</a> method. It is not intended to be used directly; instead use the <code>Variant</code> type alias which is instantiated with the concrete type list.</p>
+<p><a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> is a thin wrapper around <code>std::variant</code> that adds a Type enum, human-readable type names, and automatic type-conversion logic via the templated <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">get()</a> method. It is not intended to be used directly; instead use</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Variant</a> v = 42;</div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_class" href="classList.html">s</a> = v.get&lt;<a class="code hl_class" href="classString.html">String</a>&gt;();  <span class="comment">// &quot;42&quot;</span></div>
+<div class="line">v.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;hello&quot;</span>));</div>
+<div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">valid</a> = v.isValid();    <span class="comment">// true</span></div>
+<div class="line">Variant::Type <a class="code hl_class" href="classList.html">t</a> = v.type();  <span class="comment">// Variant::TypeString</span></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+</div><!-- fragment --> the <code>Variant</code> type alias which is instantiated with the concrete type list.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Types</td><td>The set of types the variant can hold (generated from PROMEKI_VARIANT_TYPES). </td></tr>
@@ -477,7 +486,7 @@ template&lt;typename... Types&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantImpl.html">VariantImpl</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

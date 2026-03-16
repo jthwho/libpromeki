@@ -8,5 +8,19 @@ var searchData=
   ['toomanyopensysfiles_5',['TooManyOpenSysFiles',['../classError.html#ab5980e13b879db253df802b0950d1708a1c30ea5641648c7319478796bc4d8438',1,'Error']]],
   ['truecolor_6',['TrueColor',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a',1,'Terminal']]],
   ['truncate_7',['Truncate',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a6e0c983dc71e31345fa3a7818ac285d8',1,'File']]],
-  ['tryagain_8',['TryAgain',['../classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b',1,'Error']]]
+  ['tryagain_8',['TryAgain',['../classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b',1,'Error']]],
+  ['typebool_9',['TypeBool',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a98a39f38b507c298ab26ac4bcd0fcfee',1,'DataStream']]],
+  ['typebuffer_10',['TypeBuffer',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a8418b0f71f8a415ebb909da2a1dee360',1,'DataStream']]],
+  ['typedouble_11',['TypeDouble',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ac2d9368868a1ca5a48232e75f3cad25a',1,'DataStream']]],
+  ['typefloat_12',['TypeFloat',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ad84083be3a27d506444ae43e7564fb53',1,'DataStream']]],
+  ['typeint16_13',['TypeInt16',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369af7b7771fd0a89f83973138a3b1797fe7',1,'DataStream']]],
+  ['typeint32_14',['TypeInt32',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369acb9c316573af07cb23a43c981f5687a2',1,'DataStream']]],
+  ['typeint64_15',['TypeInt64',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a5d44f0ca8c0674e6e7ddeba5aa748e00',1,'DataStream']]],
+  ['typeint8_16',['TypeInt8',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a1082772a3bf90c1894ce7d06aad1c172',1,'DataStream']]],
+  ['typestring_17',['TypeString',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a5aa71e8e56902d0124304063085a64b4',1,'DataStream']]],
+  ['typeuint16_18',['TypeUInt16',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369af6aeb0131bcade41119667d4a4ee1d3e',1,'DataStream']]],
+  ['typeuint32_19',['TypeUInt32',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a4ab8dc957d266018160701d3346d3c07',1,'DataStream']]],
+  ['typeuint64_20',['TypeUInt64',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aee52fc8582e286a862c87593f4646dd5',1,'DataStream']]],
+  ['typeuint8_21',['TypeUInt8',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aa21c0faee33ff97e1f3573137e684dfa',1,'DataStream']]],
+  ['typevariant_22',['TypeVariant',['../classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a8184c8e51bf76f795b115905c4c8fe7f',1,'DataStream']]]
 ];

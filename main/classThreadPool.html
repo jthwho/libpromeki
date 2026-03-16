@@ -102,7 +102,7 @@ $(document).ready(function(){initNavTree('classThreadPool.html',''); initResizab
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classThreadPool-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">ThreadPool Class Reference</div></div>
+  <div class="headertitle"><div class="title">ThreadPool Class Reference<div class="ingroups"><a class="el" href="group__core__concurrency.html">Core Concurrency</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -159,7 +159,16 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>General-purpose thread pool for submitting callable tasks. </p>
-<p>Tasks are submitted via <a class="el" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47" title="Submits a callable for asynchronous execution.">submit()</a> which returns a <a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a> for the result. The pool manages a set of worker threads that pull tasks from an internal queue. When the thread count is set to 0, tasks run inline on the calling thread (useful for WASM graceful degradation).</p>
+<p>Tasks are submitted via <a class="el" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47" title="Submits a callable for asynchronous execution.">submit()</a> which returns a <a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a> for the result. The pool manages a set of worker threads that pull tasks from an internal</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classThreadPool.html">ThreadPool</a> <a class="code hl_class" href="classList.html">pool</a>(4);  <span class="comment">// 4 worker threads</span></div>
+<div class="line"><a class="code hl_class" href="classList.html">Future&lt;int&gt;</a> result = <a class="code hl_class" href="classList.html">pool</a>.submit([]() {</div>
+<div class="line">    <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">expensiveComputation</a>();</div>
+<div class="line">});</div>
+<div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a> = result.get();  <span class="comment">// blocks until ready</span></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:44</div></div>
+<div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:56</div></div>
+</div><!-- fragment --> queue. When the thread count is set to 0, tasks run inline on the calling thread (useful for WASM graceful degradation).</dd></dl>
 <p>All public methods are thread-safe.</p>
 <p>Non-copyable and non-movable. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -338,7 +347,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classThreadPool.html">ThreadPool</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

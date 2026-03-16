@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classHashMap.html',''); initResizable(
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classHashMap-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">HashMap&lt; K, V &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">HashMap&lt; K, V &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__containers.html">Core Containers</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -273,7 +273,14 @@ Friends</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">K</a>, <a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">V</a>&gt;<br />
 class HashMap&lt; K, V &gt;</div><p>Unordered associative container wrapping std::unordered_map. </p>
-<p>Provides a Qt-inspired API over std::unordered_map with consistent naming conventions matching the rest of libpromeki.</p>
+<p>Provides a Qt-inspired API over std::unordered_map with consistent naming</p><ul>
+<li><dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">HashMap&lt;String, int&gt;</a> <a class="code hl_class" href="classList.html">cache</a>;</div>
+<div class="line"><a class="code hl_class" href="classList.html">cache</a>.<a class="code hl_function" href="classList.html#ac635c6d1bc5d2a4141010cdf66b82254">insert</a>(<span class="stringliteral">&quot;width&quot;</span>, 1920);</div>
+<div class="line"><a class="code hl_class" href="classList.html">cache</a>.<a class="code hl_function" href="classList.html#ac635c6d1bc5d2a4141010cdf66b82254">insert</a>(<span class="stringliteral">&quot;height&quot;</span>, 1080);</div>
+<div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">cache</a>.value(<span class="stringliteral">&quot;width&quot;</span>, 0);  <span class="comment">// 1920</span></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassList_html_ac635c6d1bc5d2a4141010cdf66b82254"><div class="ttname"><a href="classList.html#ac635c6d1bc5d2a4141010cdf66b82254">List::insert</a></div><div class="ttdeci">Iterator insert(ConstIterator pos, const T &amp;value)</div><div class="ttdoc">Inserts a value before the position given by an iterator.</div><div class="ttdef"><b>Definition</b> list.h:341</div></div>
+</div><!-- fragment --> conventions matching the rest of libpromeki.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">K</td><td>Key type (must be hashable). </td></tr>
@@ -281,6 +288,8 @@ class HashMap&lt; K, V &gt;</div><p>Unordered associative container wrapping std
   </table>
   </dd>
 </dl>
+</li>
+</ul>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a63e7eccc934e44229f300be9bb63915d" name="a63e7eccc934e44229f300be9bb63915d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a63e7eccc934e44229f300be9bb63915d">&#9670;&#160;</a></span>HashMap()</h2>
@@ -795,7 +804,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classHashMap.html">HashMap</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

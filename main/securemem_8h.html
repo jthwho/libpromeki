@@ -133,9 +133,9 @@ Include dependency graph for securemem.h:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a67dcec7dbce274b3670485a4dc82d808" id="r_a67dcec7dbce274b3670485a4dc82d808"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="securemem_8h.html#a67dcec7dbce274b3670485a4dc82d808">secureZero</a> (<a class="el" href="classList.html">void</a> *ptr, <a class="el" href="classList.html">size_t</a> size)</td></tr>
-<tr class="memdesc:a67dcec7dbce274b3670485a4dc82d808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Securely zeros a memory region, guaranteed not to be optimized away.  <br /></td></tr>
-<tr class="separator:a67dcec7dbce274b3670485a4dc82d808"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga67dcec7dbce274b3670485a4dc82d808" id="r_ga67dcec7dbce274b3670485a4dc82d808"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__core__util.html#ga67dcec7dbce274b3670485a4dc82d808">secureZero</a> (<a class="el" href="classList.html">void</a> *ptr, <a class="el" href="classList.html">size_t</a> size)</td></tr>
+<tr class="memdesc:ga67dcec7dbce274b3670485a4dc82d808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Securely zeros a memory region, guaranteed not to be optimized away.  <br /></td></tr>
+<tr class="separator:ga67dcec7dbce274b3670485a4dc82d808"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad56419cfe1c16d68f1bd359e71c09fe0" id="r_ad56419cfe1c16d68f1bd359e71c09fe0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="securemem_8h.html#ad56419cfe1c16d68f1bd359e71c09fe0">secureLock</a> (<a class="el" href="classList.html">void</a> *ptr, <a class="el" href="classList.html">size_t</a> size)</td></tr>
 <tr class="memdesc:ad56419cfe1c16d68f1bd359e71c09fe0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Locks a memory region into physical RAM, preventing it from being swapped to disk.  <br /></td></tr>
 <tr class="separator:ad56419cfe1c16d68f1bd359e71c09fe0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -241,57 +241,6 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a67dcec7dbce274b3670485a4dc82d808" name="a67dcec7dbce274b3670485a4dc82d808"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a67dcec7dbce274b3670485a4dc82d808">&#9670;&#160;</a></span>secureZero()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a> secureZero </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">void</a> *&#160;</td>
-          <td class="paramname"><em>ptr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
-          <td class="paramname"><em>size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Securely zeros a memory region, guaranteed not to be optimized away. </p>
-<p>Uses platform-specific secure zeroing primitives when available:</p><ul>
-<li>Windows: SecureZeroMemory</li>
-<li>glibc <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">2.25</a>+/BSD: explicit_bzero</li>
-<li>Fallback: volatile pointer write loop</li>
-</ul>
-<p>This function cannot fail. If ptr is nullptr or size is 0, it is a no-op.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ptr</td><td>Pointer to the memory region to zero. </td></tr>
-    <tr><td class="paramname">size</td><td>Number of bytes to zero. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
@@ -299,7 +248,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="securemem_8h.html">securemem.h</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

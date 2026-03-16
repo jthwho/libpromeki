@@ -1,6 +1,5 @@
 var string_8h =
 [
-    [ "String", "classString.html", "classString" ],
     [ "String::CharIterator", "classString_1_1CharIterator.html", null ],
     [ "CompiledString< N >", "classCompiledString.html", "classCompiledString" ],
     [ "CompiledCodepoints< Count >", "classCompiledCodepoints.html", null ],

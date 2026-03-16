@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['idle_0',['Idle',['../thread_8h.html#a5f6319f9bba46b51ebc61f9c0e4a896dae599161956d626eda4cb0a5ffb85271c',1,'thread.h']]],
+  ['idle_0',['Idle',['../group__core__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896dae599161956d626eda4cb0a5ffb85271c',1,'thread.h']]],
   ['illegalseek_1',['IllegalSeek',['../classError.html#ab5980e13b879db253df802b0950d1708abd93c221cee554ff0ff80e38ff7b285f',1,'Error']]],
   ['inactive_2',['Inactive',['../classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2a00793d3334cfd45e1e925c73ed1d817f',1,'TuiPalette']]],
   ['info_3',['Info',['../classLogger.html#ac744681e23720966b5f430ec2060da36a9f3354efabc848dcb9ddf68279b7417b',1,'Logger']]],

@@ -105,7 +105,7 @@ $(document).ready(function(){initNavTree('classDateTime.html',''); initResizable
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classDateTime-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">DateTime Class Reference</div></div>
+  <div class="headertitle"><div class="title">DateTime Class Reference<div class="ingroups"><a class="el" href="group__core__time.html">Core Time</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -230,7 +230,21 @@ Static Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Wall-clock date and time based on std::chrono::system_clock. </p>
-<p>Wraps a system_clock time_point and provides construction from strings, time_t, and std::tm values. Supports arithmetic with other <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> instances and with floating-point second offsets. Output formatting uses strftime-style format strings. </p>
+<p>Wraps a system_clock time_point and provides construction from strings, time_t, and std::tm values. Supports arithmetic with other <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> instances and with floating-point second offsets. Output formatting</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classDateTime.html">DateTime</a> <a class="code hl_function" href="classDateTime.html#a5709c05071bafa055ec8f927aef765af">now</a> = <a class="code hl_function" href="classDateTime.html#a5709c05071bafa055ec8f927aef765af">DateTime::now</a>();</div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_class" href="classList.html">formatted</a> = <a class="code hl_function" href="classDateTime.html#a5709c05071bafa055ec8f927aef765af">now</a>.toString(<span class="stringliteral">&quot;%Y-%m-%d %H:%M:%S&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Parse from string</span></div>
+<div class="line"><a class="code hl_class" href="classDateTime.html">DateTime</a> <a class="code hl_class" href="classList.html">dt</a> = <a class="code hl_function" href="classDateTime.html#ae6651c9ea2501773b8d66e6e6c4321a1">DateTime::fromString</a>(<span class="stringliteral">&quot;2025-03-15 14:30:00&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Arithmetic with seconds</span></div>
+<div class="line"><a class="code hl_class" href="classDateTime.html">DateTime</a> <a class="code hl_class" href="classList.html">later</a> = <a class="code hl_function" href="classDateTime.html#a5709c05071bafa055ec8f927aef765af">now</a> + 3600.0;  <span class="comment">// one hour later</span></div>
+<div class="ttc" id="aclassDateTime_html"><div class="ttname"><a href="classDateTime.html">DateTime</a></div><div class="ttdoc">Wall-clock date and time based on std::chrono::system_clock.</div><div class="ttdef"><b>Definition</b> datetime.h:40</div></div>
+<div class="ttc" id="aclassDateTime_html_a5709c05071bafa055ec8f927aef765af"><div class="ttname"><a href="classDateTime.html#a5709c05071bafa055ec8f927aef765af">DateTime::now</a></div><div class="ttdeci">static DateTime now()</div><div class="ttdoc">Returns a DateTime representing the current wall-clock time.</div><div class="ttdef"><b>Definition</b> datetime.h:49</div></div>
+<div class="ttc" id="aclassDateTime_html_ae6651c9ea2501773b8d66e6e6c4321a1"><div class="ttname"><a href="classDateTime.html#ae6651c9ea2501773b8d66e6e6c4321a1">DateTime::fromString</a></div><div class="ttdeci">static DateTime fromString(const String &amp;str, const char *fmt=DefaultFormat, Error *err=nullptr)</div><div class="ttdoc">Parses a DateTime from a formatted string.</div><div class="ttdef"><b>Definition</b> datetime.h:60</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+</div><!-- fragment --> uses strftime-style format strings. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="abd75d049678e2edf4d8f67f388bb578c" name="abd75d049678e2edf4d8f67f388bb578c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abd75d049678e2edf4d8f67f388bb578c">&#9670;&#160;</a></span>DateTime() <span class="overload">[1/3]</span></h2>
@@ -730,7 +744,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDateTime.html">DateTime</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

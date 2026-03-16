@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classTimeStamp.html',''); initResizabl
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classTimeStamp-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">TimeStamp Class Reference</div></div>
+  <div class="headertitle"><div class="title">TimeStamp Class Reference<div class="ingroups"><a class="el" href="group__core__time.html">Core Time</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -210,7 +210,14 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A monotonic timestamp based on std::chrono::steady_clock. </p>
-<p>Provides high-resolution time measurement, elapsed time queries, and thread sleep utilities. Uses steady_clock to guarantee monotonic progression regardless of system clock adjustments. </p>
+<p>Provides high-resolution time measurement, elapsed time queries, and thread sleep utilities. Uses steady_clock to guarantee monotonic</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classTimeStamp.html">TimeStamp</a> start = <a class="code hl_function" href="classTimeStamp.html#a64641a640d8bfeaee16bc4d38137d6c3">TimeStamp::now</a>();</div>
+<div class="line"><span class="comment">// ... do work ...</span></div>
+<div class="line"><span class="keywordtype">double</span> elapsed = start.<a class="code hl_function" href="classTimeStamp.html#afb0cb6f62f4a347104b939f46c7c9847">elapsedSeconds</a>();</div>
+<div class="ttc" id="aclassTimeStamp_html"><div class="ttname"><a href="classTimeStamp.html">TimeStamp</a></div><div class="ttdoc">A monotonic timestamp based on std::chrono::steady_clock.</div><div class="ttdef"><b>Definition</b> timestamp.h:32</div></div>
+<div class="ttc" id="aclassTimeStamp_html_a64641a640d8bfeaee16bc4d38137d6c3"><div class="ttname"><a href="classTimeStamp.html#a64641a640d8bfeaee16bc4d38137d6c3">TimeStamp::now</a></div><div class="ttdeci">static TimeStamp now()</div><div class="ttdoc">Returns a TimeStamp representing the current time.</div><div class="ttdef"><b>Definition</b> timestamp.h:64</div></div>
+<div class="ttc" id="aclassTimeStamp_html_afb0cb6f62f4a347104b939f46c7c9847"><div class="ttname"><a href="classTimeStamp.html#afb0cb6f62f4a347104b939f46c7c9847">TimeStamp::elapsedSeconds</a></div><div class="ttdeci">double elapsedSeconds() const</div><div class="ttdoc">Returns the elapsed time since this timestamp in seconds.</div><div class="ttdef"><b>Definition</b> timestamp.h:173</div></div>
+</div><!-- fragment --> progression regardless of system clock adjustments. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ac79e77812a8a971147d397c24283d6d2" name="ac79e77812a8a971147d397c24283d6d2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac79e77812a8a971147d397c24283d6d2">&#9670;&#160;</a></span>TimeStamp()</h2>
@@ -766,7 +773,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTimeStamp.html">TimeStamp</a></li>
-    <li class="footer">Generated on 2026-03-15 20:03:52 from commit 1240c43 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
   </ul>
 </div>
 </body>

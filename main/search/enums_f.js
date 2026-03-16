@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['wellknownrate_0',['WellKnownRate',['../classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c',1,'FrameRate']]]
+  ['value_0',['Value',['../classMidiNote.html#ae35b95311738089287eaa0e86d959ac3',1,'MidiNote']]]
 ];
