@@ -142,6 +142,39 @@ TEST_CASE("AudioDesc_Metadata") {
 }
 
 // ============================================================================
+// Equality includes metadata
+// ============================================================================
+
+TEST_CASE("AudioDesc_EqualityWithoutMetadata") {
+    AudioDesc d1(48000.0f, 2);
+    AudioDesc d2(48000.0f, 2);
+    CHECK(d1 == d2);
+}
+
+TEST_CASE("AudioDesc_EqualityDiffersWithMetadata") {
+    AudioDesc d1(48000.0f, 2);
+    AudioDesc d2(48000.0f, 2);
+    d1.metadata().set(Metadata::Artist, String("Test"));
+    CHECK_FALSE(d1 == d2);
+}
+
+TEST_CASE("AudioDesc_EqualityMatchingMetadata") {
+    AudioDesc d1(48000.0f, 2);
+    AudioDesc d2(48000.0f, 2);
+    d1.metadata().set(Metadata::Artist, String("Test"));
+    d2.metadata().set(Metadata::Artist, String("Test"));
+    CHECK(d1 == d2);
+}
+
+TEST_CASE("AudioDesc_FormatEqualsIgnoresMetadata") {
+    AudioDesc d1(48000.0f, 2);
+    AudioDesc d2(48000.0f, 2);
+    d1.metadata().set(Metadata::Artist, String("Test"));
+    CHECK(d1.formatEquals(d2));
+    CHECK_FALSE(d1 == d2);
+}
+
+// ============================================================================
 // JSON round-trip
 // ============================================================================
 

@@ -19,27 +19,25 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 
 ---
 
-## AudioDesc Metadata Comparison
+## ~~AudioDesc Metadata Comparison~~ (DONE)
 
-**File:** `include/promeki/proav/audiodesc.h:277`
-**FIXME:** "We don't currently compare metadata" in `operator==`.
+**File:** `include/promeki/proav/audiodesc.h`
 
-- [ ] Include metadata in `operator==` comparison
-- [ ] Decide if metadata equality should be strict or optional (separate `equals()` with flags?)
-- [ ] Update tests
+- [x] `operator==` now includes metadata comparison
+- [x] Added `formatEquals()` for format-only comparison (type, rate, channels)
+- [x] Added `operator==` to `Metadata` (via `toJson()`) and `JsonObject`
+- [x] AudioFile write check uses `formatEquals()` since audio buffers don't carry file-level metadata
+- [x] Tests added for `Metadata::operator==`, `JsonObject::operator==`, and `AudioDesc` equality variants
 
 ---
 
-## AudioFile libsndfile Readability Check
+## ~~AudioFile libsndfile Readability Check~~ (DONE)
 
-**File:** `src/audiofile_libsndfile.cpp:312`
-**FIXME:** "Have a look at the info struct and decide if we actually can read it."
+**File:** `src/audiofile_libsndfile.cpp`
 
-`fileIsReadable()` opens the file and immediately returns true without inspecting the `SF_INFO` struct (channels, sample rate, format).
-
-- [ ] Check `info.channels > 0`, `info.samplerate > 0`, and supported format
-- [ ] Return false for files with unsupported configurations
-- [ ] Update tests
+- [x] `fileIsReadable()` now validates `info.channels > 0`, `info.samplerate > 0`, and `info.format != 0`
+- [x] Added `memset` initialization of `SF_INFO` before `sf_open`
+- [x] Returns false for files with unsupported configurations
 
 ---
 
@@ -71,14 +69,12 @@ Currently uses `std::istringstream` to parse integer tokens. Should use `String:
 
 ---
 
-## FileInfo::suffix() Crashes on Extensionless Files
+## ~~FileInfo::suffix() Crashes on Extensionless Files~~ (DONE)
 
-**File:** `include/promeki/core/fileinfo.h` (or wherever `suffix()` is defined)
-**Bug:** `suffix()` calls `_path.extension().string().substr(1)` which throws `std::out_of_range` when the file has no extension (the extension string is empty, and `substr(1)` on an empty string is undefined).
+**File:** `include/promeki/core/fileinfo.h`
 
-- [ ] Guard against empty extension before calling `substr(1)`
-- [ ] Add test for extensionless filenames (e.g., `FileInfo("Makefile").suffix()`)
-- [ ] Natural time to fix: any phase touching FileInfo
+- [x] Guard against empty extension before calling `substr(1)`
+- [x] Tests added for extensionless files, dotfiles, and compound extensions
 
 ---
 

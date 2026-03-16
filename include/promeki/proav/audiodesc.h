@@ -270,15 +270,24 @@ class AudioDesc {
                 }
 
                 /**
-                 * @brief Returns true if both audio descriptions have equal type, rate, and channels.
+                 * @brief Returns true if both audio descriptions have equal format (type, rate, channels).
+                 * @param other The AudioDesc to compare against.
+                 * @return true if the audio format matches, ignoring metadata.
+                 */
+                bool formatEquals(const AudioDesc &other) const {
+                        return _dataType == other._dataType &&
+                               _sampleRate == other._sampleRate &&
+                               _channels == other._channels;
+                }
+
+                /**
+                 * @brief Returns true if both audio descriptions are fully equal, including metadata.
                  * @param other The AudioDesc to compare against.
                  * @return true if equal.
                  */
                 bool operator==(const AudioDesc &other) const {
-                        // FIXME: We don't currently compare metadata
-                        return _dataType == other._dataType &&
-                               _sampleRate == other._sampleRate &&
-                               _channels == other._channels;
+                        return formatEquals(other) &&
+                               _metadata == other._metadata;
                 }
 
                 /**

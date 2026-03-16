@@ -376,7 +376,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                 promekiWarn("write: Attempt to write but not open");
                                 return Error::NotOpen;
                         }
-                        if(audio.desc() != _desc) {
+                        if(!audio.desc().formatEquals(_desc)) {
                                 promekiWarn("write: Attempt to write with '%s', but set to '%s'",
                                         audio.desc().toString().cstr(),
                                         _desc.toString().cstr());
@@ -488,11 +488,14 @@ class AudioFileFactory_LibSndFile : public AudioFileFactory {
 
                 bool fileIsReadable(const String &fn) const {
                         SF_INFO info;
+                        std::memset(&info, 0, sizeof(info));
                         SNDFILE *file = sf_open(fn.cstr(), SFM_READ, &info);
                         if(file == nullptr) return false;
-                        // FIXME: Have a look at the info struct and decide if we actually can read it.
+                        bool readable = info.channels > 0 &&
+                                        info.samplerate > 0 &&
+                                        info.format != 0;
                         sf_close(file);
-                        return true;
+                        return readable;
                 }
 
                 bool probeDevice(IODevice *dev) const {

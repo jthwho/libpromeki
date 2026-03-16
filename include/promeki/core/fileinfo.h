@@ -98,7 +98,9 @@ class FileInfo {
                  * @return The file suffix as a String (e.g. "png", "wav").
                  */
                 String suffix() const {
-                        return _path.extension().string().substr(1); // Remove leading '.'
+                        auto ext = _path.extension().string();
+                        if(ext.empty()) return String();
+                        return ext.substr(1); // Remove leading '.'
                 }
 
                 /**

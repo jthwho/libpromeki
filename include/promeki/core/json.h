@@ -270,6 +270,9 @@ class JsonObject {
             }
         }
 
+        /** @brief Returns true if both JSON objects have identical contents. */
+        bool operator==(const JsonObject &other) const { return _j == other._j; }
+
     private:
         friend class JsonArray;
 

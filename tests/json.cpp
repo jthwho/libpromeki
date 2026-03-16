@@ -104,6 +104,51 @@ TEST_CASE("JsonObject_CopyAddKeyIndependent") {
 }
 
 // ============================================================================
+// JsonObject equality
+// ============================================================================
+
+TEST_CASE("JsonObject_EqualityEmpty") {
+    JsonObject a;
+    JsonObject b;
+    CHECK(a == b);
+}
+
+TEST_CASE("JsonObject_EqualityMatching") {
+    JsonObject a;
+    a.set("key", 42);
+    a.set("name", "test");
+    JsonObject b;
+    b.set("key", 42);
+    b.set("name", "test");
+    CHECK(a == b);
+}
+
+TEST_CASE("JsonObject_EqualityDifferentValues") {
+    JsonObject a;
+    a.set("key", 42);
+    JsonObject b;
+    b.set("key", 99);
+    CHECK_FALSE(a == b);
+}
+
+TEST_CASE("JsonObject_EqualityDifferentKeys") {
+    JsonObject a;
+    a.set("key", 42);
+    JsonObject b;
+    b.set("other", 42);
+    CHECK_FALSE(a == b);
+}
+
+TEST_CASE("JsonObject_EqualityDifferentSize") {
+    JsonObject a;
+    a.set("key", 42);
+    JsonObject b;
+    a.set("key", 42);
+    b.set("extra", 1);
+    CHECK_FALSE(a == b);
+}
+
+// ============================================================================
 // JsonObject toString
 // ============================================================================
 

@@ -146,6 +146,51 @@ TEST_CASE("Metadata_JsonRoundTrip") {
 }
 
 // ============================================================================
+// Equality
+// ============================================================================
+
+TEST_CASE("Metadata_EqualityEmpty") {
+    Metadata a;
+    Metadata b;
+    CHECK(a == b);
+}
+
+TEST_CASE("Metadata_EqualityMatching") {
+    Metadata a;
+    a.set(Metadata::Title, String("Test"));
+    a.set(Metadata::Gamma, 2.2);
+    Metadata b;
+    b.set(Metadata::Title, String("Test"));
+    b.set(Metadata::Gamma, 2.2);
+    CHECK(a == b);
+}
+
+TEST_CASE("Metadata_EqualityDifferentValues") {
+    Metadata a;
+    a.set(Metadata::Title, String("Foo"));
+    Metadata b;
+    b.set(Metadata::Title, String("Bar"));
+    CHECK_FALSE(a == b);
+}
+
+TEST_CASE("Metadata_EqualityDifferentKeys") {
+    Metadata a;
+    a.set(Metadata::Title, String("Test"));
+    Metadata b;
+    b.set(Metadata::Artist, String("Test"));
+    CHECK_FALSE(a == b);
+}
+
+TEST_CASE("Metadata_EqualityDifferentSize") {
+    Metadata a;
+    a.set(Metadata::Title, String("Test"));
+    Metadata b;
+    a.set(Metadata::Title, String("Test"));
+    b.set(Metadata::Artist, String("Extra"));
+    CHECK_FALSE(a == b);
+}
+
+// ============================================================================
 // Dump
 // ============================================================================
 

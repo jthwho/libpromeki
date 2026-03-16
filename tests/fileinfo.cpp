@@ -50,6 +50,17 @@ TEST_CASE("FileInfo: fileName with no extension") {
         FileInfo fi("/home/user/Makefile");
         CHECK(fi.fileName() == "Makefile");
         CHECK(fi.baseName() == "Makefile");
+        CHECK(fi.suffix() == "");
+}
+
+TEST_CASE("FileInfo: suffix on dotfile") {
+        FileInfo fi("/home/user/.gitignore");
+        CHECK(fi.suffix() == "");
+}
+
+TEST_CASE("FileInfo: suffix on compound extension") {
+        FileInfo fi("/home/user/archive.tar.gz");
+        CHECK(fi.suffix() == "gz");
 }
 
 TEST_CASE("FileInfo: size of non-existent file") {

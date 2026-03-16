@@ -165,6 +165,16 @@ class Metadata {
                 StringList dump() const;
 
                 /**
+                 * @brief Returns true if both Metadata objects contain the same entries.
+                 * @param other The Metadata to compare against.
+                 * @return true if equal.
+                 */
+                bool operator==(const Metadata &other) const {
+                        if(_map.size() != other._map.size()) return false;
+                        return toJson() == other.toJson();
+                }
+
+                /**
                  * @brief Serializes this Metadata to a JSON object.
                  * @return A JsonObject containing all metadata entries.
                  */
