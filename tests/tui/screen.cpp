@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/tui/screen.h>
+#include <promeki/core/stringiodevice.h>
 
 using namespace promeki;
 
@@ -66,10 +67,12 @@ TEST_CASE("TuiScreen: flush to stream") {
         cell.style = TuiStyle(Color::White, Color::Black);
         screen.setCell(0, 0, cell);
 
-        std::ostringstream oss;
-        AnsiStream stream(oss);
+        String str;
+        StringIODevice dev(&str);
+        dev.open(IODevice::WriteOnly);
+        AnsiStream stream(&dev);
         screen.flush(stream);
 
         // Should have produced some output
-        CHECK(!oss.str().empty());
+        CHECK_FALSE(str.isEmpty());
 }

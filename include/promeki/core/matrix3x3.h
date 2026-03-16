@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <ostream>
 #include <cmath>
 #include <immintrin.h>
 #include <promeki/core/namespace.h>
@@ -24,17 +23,6 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Matrix3x3 {
         public:
-                /** @brief Stream insertion operator for formatted output. */
-                friend std::ostream& operator<<(std::ostream& os, const Matrix3x3& matrix) {
-                        for (int i = 0; i < 3; ++i) {
-                                for (int j = 0; j < 3; ++j) {
-                                        os << matrix.data[i][j] << ' ';
-                                }
-                                os << '\n';
-                        }
-                        return os;
-                }
-
                 /** @brief The 3x3 identity matrix constant. */
                 static constexpr float IdentityMatrix[3][3] = {
                         {1.0f, 0.0f, 0.0f},

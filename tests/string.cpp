@@ -5,7 +5,6 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <iostream>
 #include <thread>
 #include <vector>
 #include <unordered_map>
@@ -532,6 +531,38 @@ TEST_CASE("String_NumericConversions") {
         CHECK(String("0").toBool() == false);
         CHECK(String("TRUE").toBool() == true);
         CHECK(String("FALSE").toBool() == false);
+}
+
+TEST_CASE("String_NumericConversions_EdgeCases") {
+        // Negative integers
+        CHECK(String("-7").toInt() == -7);
+
+        // Unsigned integers
+        CHECK(String("4294967295").toUInt() == 4294967295u);
+
+        // Float via to<float>
+        Error err;
+        float f = String("2.5").to<float>(&err);
+        CHECK(err.isOk());
+        CHECK(f == doctest::Approx(2.5f));
+
+        // Bad input returns error
+        Error err2;
+        int v = String("abc").to<int>(&err2);
+        CHECK(err2.isError());
+        CHECK(v == 0);
+
+        // Trailing garbage returns error
+        Error err3;
+        int v2 = String("42abc").to<int>(&err3);
+        CHECK(err3.isError());
+        CHECK(v2 == 0);
+
+        // Empty string returns error
+        Error err4;
+        double d = String("").to<double>(&err4);
+        CHECK(err4.isError());
+        CHECK(d == 0.0);
 }
 
 // ============================================================================

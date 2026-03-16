@@ -6,9 +6,10 @@
  */
 
 #include <cmath>
-#include <iomanip>
+#include <cstdlib>
 #include <map>
 #include <promeki/core/datetime.h>
+#include <promeki/core/stringlist.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -82,16 +83,14 @@ DateTime DateTime::fromNow(const String &description) {
                 {"week", hours(24 * 7)}
         };
 
-        std::istringstream iss(description.str());
+        StringList tokens = description.split(" ");
         int64_t count = 0;
-        std::string token;
         system_clock::duration total_duration = seconds(0);
         int months = 0;
         int years = 0;
 
-        while(iss >> token) {
-                // Make the token string lowercase for case-insensitive comparison
-                for(char& c : token) c = std::tolower(c);
+        for(size_t ti = 0; ti < tokens.size(); ++ti) {
+                std::string token = tokens[ti].toLower().str();
 
                 // Handle "next" and "previous" tokens
                 if(token == "next") {
@@ -103,7 +102,12 @@ DateTime DateTime::fromNow(const String &description) {
                 }
 
                 // Try to parse the token as an integer count
-                if(std::istringstream(token) >> count) continue;
+                char *endp = nullptr;
+                long long parsed = std::strtoll(token.c_str(), &endp, 10);
+                if(endp != token.c_str() && *endp == '\0') {
+                        count = parsed;
+                        continue;
+                }
 
                 // FIXME: Need to use the String::parseNumberWords()
                 //if(parse_number_word(token, count)) continue;

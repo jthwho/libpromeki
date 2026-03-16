@@ -16,6 +16,7 @@
 PROMEKI_NAMESPACE_BEGIN
 class Thread;
 class EventLoop;
+class IODevice;
 PROMEKI_NAMESPACE_END
 
 PROMEKI_NAMESPACE_BEGIN
@@ -107,6 +108,39 @@ class Application {
                  *         hasn't created one yet.
                  */
                 static EventLoop *mainEventLoop();
+
+                /**
+                 * @brief Returns an IODevice wrapping C stdin.
+                 *
+                 * The returned device is a lazy-initialized static local
+                 * FileIODevice opened for ReadOnly.  It does not own the
+                 * FILE pointer.
+                 *
+                 * @return A non-owning IODevice for stdin.
+                 */
+                static IODevice *stdinDevice();
+
+                /**
+                 * @brief Returns an IODevice wrapping C stdout.
+                 *
+                 * The returned device is a lazy-initialized static local
+                 * FileIODevice opened for WriteOnly.  It does not own the
+                 * FILE pointer.
+                 *
+                 * @return A non-owning IODevice for stdout.
+                 */
+                static IODevice *stdoutDevice();
+
+                /**
+                 * @brief Returns an IODevice wrapping C stderr.
+                 *
+                 * The returned device is a lazy-initialized static local
+                 * FileIODevice opened for WriteOnly.  It does not own the
+                 * FILE pointer.
+                 *
+                 * @return A non-owning IODevice for stderr.
+                 */
+                static IODevice *stderrDevice();
 
         private:
                 struct Data {

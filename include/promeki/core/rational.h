@@ -8,7 +8,6 @@
 #pragma once
 
 #include <numeric>
-#include <sstream>
 #include <algorithm>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
@@ -109,17 +108,6 @@ template <typename T = int> class Rational {
                         return !(*this == rhs);
                 }
 
-                /**
-                 * @brief Writes the rational as "num/den" to a stream.
-                 * @param os Output stream.
-                 * @param r  Rational to format.
-                 * @return Reference to \p os.
-                 */
-                friend std::ostream& operator<<(std::ostream& os, const Rational& r) {
-                        os << r._num << "/" << r._den;
-                        return os;
-                }
-
                 /** @brief Returns the numerator. */
                 T numerator() const { return _num; }
 
@@ -137,9 +125,7 @@ template <typename T = int> class Rational {
 
                 /** @brief Converts to a String in "num/den" format. */
                 String toString() const {
-                        std::stringstream s;
-                        s << *this;
-                        return s.str();
+                        return String::dec(_num) + "/" + String::dec(_den);
                 }
 
                 /** @brief Implicit conversion to String. */

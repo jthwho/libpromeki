@@ -121,7 +121,7 @@ void TuiScreen::flush(AnsiStream &stream) {
 
         if(emittedAny) {
                 stream.reset();
-                stream << std::flush;
+                stream.flush();
         }
 
         // Swap: copy back to front

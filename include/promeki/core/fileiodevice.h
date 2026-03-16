@@ -54,6 +54,39 @@ class FileIODevice : public IODevice {
                 };
 
                 /**
+                 * @brief Returns a singleton FileIODevice wrapping C stdin.
+                 *
+                 * The device is a lazy-initialized static local, guaranteed
+                 * to outlive any other static object that calls this function.
+                 * The FILE pointer is not owned (not fclose'd).
+                 *
+                 * @return A non-owning FileIODevice for stdin.
+                 */
+                static FileIODevice *stdinDevice();
+
+                /**
+                 * @brief Returns a singleton FileIODevice wrapping C stdout.
+                 *
+                 * The device is a lazy-initialized static local, guaranteed
+                 * to outlive any other static object that calls this function.
+                 * The FILE pointer is not owned (not fclose'd).
+                 *
+                 * @return A non-owning FileIODevice for stdout.
+                 */
+                static FileIODevice *stdoutDevice();
+
+                /**
+                 * @brief Returns a singleton FileIODevice wrapping C stderr.
+                 *
+                 * The device is a lazy-initialized static local, guaranteed
+                 * to outlive any other static object that calls this function.
+                 * The FILE pointer is not owned (not fclose'd).
+                 *
+                 * @return A non-owning FileIODevice for stderr.
+                 */
+                static FileIODevice *stderrDevice();
+
+                /**
                  * @brief Constructs a FileIODevice wrapping an external FILE.
                  *
                  * The device is immediately open with the given mode. If
@@ -148,6 +181,7 @@ class FileIODevice : public IODevice {
                 Error open(OpenMode mode) override;
 
                 Error close() override;
+                void flush() override;
                 bool isOpen() const override;
                 int64_t read(void *data, int64_t maxSize) override;
                 int64_t write(const void *data, int64_t maxSize) override;

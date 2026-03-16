@@ -27,7 +27,7 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 ## Dependency Graph
 
 ```
-Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, DataStream complete, TextStream + migration remaining)
+Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, streams complete, StreamString refactor remaining)
                        |       |
                        |       +---> Phase 3 (Network Library)
                        |       |
@@ -60,7 +60,7 @@ Establish a uniform byte-oriented IO interface that network sockets, files, and 
 
 **TextStream (COMPLETE):** Formatted text I/O with encoding awareness, manipulators, and multiple backing stores.
 
-**Remaining:** std:: stream migration.
+**Remaining:** StreamString refactor (last std:: stream usage — still uses `std::streambuf`/`std::ostream`).
 
 ### Phase 3: Network Library
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
@@ -225,14 +225,11 @@ Adding many new classes and a new library (`promeki-network`) requires Doxygen g
 
 ## Existing FIXMEs
 
-There are 7 remaining FIXME comments in the codebase. These are tracked in [fixme.md](fixme.md) and should be addressed as they become relevant to ongoing phase work. Summary:
+There are 4 remaining FIXME comments in the codebase. These are tracked in [fixme.md](fixme.md) and should be addressed as they become relevant to ongoing phase work. Summary:
 
 | File | Issue | Natural Phase |
 |---|---|---|
 | `src/file.cpp:44` | Windows File implementation is a stub | Phase 2 (File -> IODevice) |
-| `include/promeki/proav/audiodesc.h:277` | `operator==` doesn't compare metadata | Phase 7 |
-| `src/audiofile_libsndfile.cpp:312` | `fileIsReadable()` doesn't inspect SF_INFO | Phase 2 (AudioFile IODevice) |
 | `src/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |
-| `src/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `std::istringstream` | Phase 2 (stream migration) |
-| `include/promeki/core/fileinfo.h` | `suffix()` crashes on extensionless files (`substr(1)` on empty string) | Any phase touching FileInfo |
+| `src/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `strtoll` | Phase 7 (String enhancements) |
 | `src/pixelformat_old.cpp:217` | No memory space validation in `fill()` | Phase 4 |

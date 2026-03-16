@@ -6,20 +6,20 @@
  * promeki project root folder.
  *****************************************************************************/
 
-#include <iostream>
+#include <cstdio>
 #include <promeki/core/buildinfo.h>
 
 using namespace promeki;
 
 int main(int argc, char *argv[]) {
         const BuildInfo *info = getBuildInfo();
-        std::cout << "promeki library info" << std::endl;
-        std::cout << "  Name:       " << info->name << std::endl;
-        std::cout << "  Version:    " << info->version << std::endl;
-        std::cout << "  Build Date: " << info->date << std::endl;
-        std::cout << "  Build Time: " << info->time << std::endl;
-        std::cout << "  Build Type: " << info->type << std::endl;
-        std::cout << "  Build Host: " << info->hostname << std::endl;
-        std::cout << "  Repo Ident: " << info->repoident << std::endl;
+        std::printf("promeki library info\n");
+        std::printf("  Name:       %s\n", info->name);
+        std::printf("  Version:    %s\n", info->version);
+        std::printf("  Build Date: %s\n", info->date);
+        std::printf("  Build Time: %s\n", info->time);
+        std::printf("  Build Type: %s\n", info->type);
+        std::printf("  Build Host: %s\n", info->hostname);
+        std::printf("  Repo Ident: %s\n", info->repoident);
         return 0;
 }

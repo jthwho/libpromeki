@@ -1,12 +1,14 @@
 /**
  * @file      ansistream.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
 #include <cstdlib>
+#include <cstdio>
 #include <promeki/core/ansistream.h>
+#include <promeki/core/iodevice.h>
 #include <promeki/core/platform.h>
 #include <promeki/core/error.h>
 
@@ -82,7 +84,35 @@ bool AnsiStream::stdoutWindowSize(int &rows, int &cols) {
         return false;
 }
 
-bool AnsiStream::getCursorPosition(std::istream &input, int &row, int &col) {
+AnsiStream &AnsiStream::write(const String &text) {
+        const std::string &s = text.str();
+        _device->write(s.data(), static_cast<int64_t>(s.size()));
+        return *this;
+}
+
+AnsiStream &AnsiStream::write(const char *text) {
+        size_t len = std::strlen(text);
+        _device->write(text, static_cast<int64_t>(len));
+        return *this;
+}
+
+AnsiStream &AnsiStream::write(char ch) {
+        _device->write(&ch, 1);
+        return *this;
+}
+
+AnsiStream &AnsiStream::write(int val) {
+        char buf[32];
+        int len = std::snprintf(buf, sizeof(buf), "%d", val);
+        if(len > 0) _device->write(buf, len);
+        return *this;
+}
+
+void AnsiStream::flush() {
+        _device->flush();
+}
+
+bool AnsiStream::getCursorPosition(IODevice *input, int &row, int &col) {
         if(!_enabled) return false;
         // Request position
         *this << "\033[6n";
@@ -91,10 +121,9 @@ bool AnsiStream::getCursorPosition(std::istream &input, int &row, int &col) {
         char ch;
         bool success = false;
 
-        // Read the response from the specified input stream
+        // Read the response from the specified input device
         for(int i = 0; i < 20; i++) {
-                if(input.fail()) return false;
-                input.get(ch);
+                if(input->read(&ch, 1) != 1) return false;
                 if(ch == 'R') {
                         success = true;
                         break;
@@ -117,4 +146,3 @@ bool AnsiStream::getCursorPosition(std::istream &input, int &row, int &col) {
 }
 
 PROMEKI_NAMESPACE_END
-

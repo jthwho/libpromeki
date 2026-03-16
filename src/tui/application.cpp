@@ -23,7 +23,7 @@ PROMEKI_NAMESPACE_BEGIN
 TuiApplication *TuiApplication::_instance = nullptr;
 
 TuiApplication::TuiApplication(int argc, char **argv)
-        : Application(argc, argv), _ansiStream(std::cout) {
+        : Application(argc, argv), _ansiStream(Application::stdoutDevice()) {
         _instance = this;
 }
 
@@ -34,7 +34,7 @@ TuiApplication::~TuiApplication() {
         _terminal.disableRawMode();
         _ansiStream.reset();
         _ansiStream.showCursor();
-        _ansiStream << std::flush;
+        _ansiStream.flush();
         if(_instance == this) _instance = nullptr;
 }
 
@@ -63,7 +63,7 @@ int TuiApplication::exec() {
 
         _ansiStream.hideCursor();
         _ansiStream.clearScreen();
-        _ansiStream << std::flush;
+        _ansiStream.flush();
 
         // Initial size
         int cols, rows;

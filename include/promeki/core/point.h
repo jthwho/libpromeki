@@ -8,8 +8,10 @@
 #pragma once
 
 #include <cmath>
+#include <type_traits>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
+#include <promeki/core/stringlist.h>
 #include <promeki/core/error.h>
 #include <promeki/core/logger.h>
 #include <promeki/core/array.h>
@@ -45,15 +47,12 @@ template <typename T, size_t NumValues> class Point {
                 * @return Error::Ok on success, Error::Invalid on failure.
                 */
                static Error fromString(const String &val, Point &d) {
-                        std::stringstream ss(val);
-                        ss >> std::ws;
+                        StringList parts = val.split(",");
+                        if(parts.size() != NumValues) return Error::Invalid;
                         for(size_t i = 0; i < NumValues; ++i) {
-                                if(!(ss >> d[i])) return Error::Invalid;
-                                ss >> std::ws;
-                                if(i < NumValues - 1) {
-                                        char c;
-                                        if(!(ss >> c) || c != ',') return Error::Invalid;
-                                }
+                                Error err;
+                                d[i] = static_cast<T>(parts[i].trim().toDouble(&err));
+                                if(err.isError()) return Error::Invalid;
                         }
                         return Error::Ok;
                 }
@@ -180,10 +179,16 @@ template <typename T, size_t NumValues> class Point {
 
                 /** @brief Returns a comma-separated string representation of the Point. */
                 String toString() const {
-                        std::stringstream ss;
-                        ss << d[0];
-                        for(size_t i = 1; i < NumValues; ++i) ss << ", " << d[i];
-                        return ss.str();
+                        String result;
+                        for(size_t i = 0; i < NumValues; ++i) {
+                                if(i > 0) result += ", ";
+                                if constexpr (std::is_floating_point_v<T>) {
+                                        result += String::number(static_cast<double>(d[i]));
+                                } else {
+                                        result += String::dec(static_cast<int64_t>(d[i]));
+                                }
+                        }
+                        return result;
                 }
                
                 /**
@@ -260,23 +265,6 @@ template <typename T, size_t NumValues> class Point {
                 /** @brief Returns the component-wise quotient of two Arrays as a Point. */
                 friend Point operator/(const Array<T, NumValues> &lh, const Array<T, NumValues> &rh) {
                         return Point(lh / rh);
-                }
-
-                /** @brief Writes the Point to an output stream as a comma-separated string. */
-                friend std::ostream &operator<<(std::ostream &os, const Point<T, NumValues>& p) {
-                        os << p.toString();
-                        return os;
-                }
-
-                /** @brief Reads a Point from an input stream by parsing a comma-separated string. */
-                friend std::istream &operator>>(std::istream &is, Point<T, NumValues> &p) {
-                        std::string str;
-                        if(std::getline(is, str)) {
-                                Error err;
-                                p = Point<T, NumValues>::fromString(str, &err);
-                                if(err.isError()) is.setstate(std::ios_base::failbit);
-                        }
-                        return is;
                 }
 
         private:

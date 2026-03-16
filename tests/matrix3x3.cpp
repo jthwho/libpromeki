@@ -6,7 +6,6 @@
  */
 
 #include <cmath>
-#include <sstream>
 #include <doctest/doctest.h>
 #include <promeki/core/matrix3x3.h>
 
@@ -178,10 +177,10 @@ TEST_CASE("Matrix3x3: rotation matrix z-axis") {
         CHECK(v[1] == doctest::Approx(1.0f).epsilon(0.001f));
 }
 
-TEST_CASE("Matrix3x3: ostream operator") {
+TEST_CASE("Matrix3x3: get returns values after set") {
         Matrix3x3 m;
         m.set(0, 0, 1.0f);
-        std::ostringstream os;
-        os << m;
-        CHECK_FALSE(os.str().empty());
+        m.set(1, 2, 3.5f);
+        CHECK(m.get(0, 0) == doctest::Approx(1.0f));
+        CHECK(m.get(1, 2) == doctest::Approx(3.5f));
 }

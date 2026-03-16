@@ -5,10 +5,11 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <fstream>
 #include <filesystem>
 #include <doctest/doctest.h>
 #include <promeki/core/logger.h>
+#include <promeki/core/file.h>
+#include <promeki/core/textstream.h>
 
 using namespace promeki;
 
@@ -145,15 +146,16 @@ TEST_CASE("Logger_LogFileOutput") {
         logger.sync();
 
         // Read the file and verify it contains our message
-        std::ifstream infile(tmpPath);
-        REQUIRE(infile.is_open());
+        File infile(tmpPath);
+        Error err = infile.open(IODevice::ReadOnly);
+        REQUIRE(err.isOk());
 
-        std::string contents((std::istreambuf_iterator<char>(infile)),
-                              std::istreambuf_iterator<char>());
+        TextStream ts(&infile);
+        String contents = ts.readAll();
         infile.close();
 
-        CHECK(contents.find("Logger file output test message") != std::string::npos);
-        CHECK(contents.find(" I [") != std::string::npos);
+        CHECK(contents.find("Logger file output test message") != String::npos);
+        CHECK(contents.find(" I [") != String::npos);
 
         // Clean up
         std::filesystem::remove(tmpPath);
@@ -179,13 +181,14 @@ TEST_CASE("Logger_CustomFileFormatter") {
         logger.log(Logger::Warn, PROMEKI_SOURCE_FILE, __LINE__, "custom formatter test");
         logger.sync();
 
-        std::ifstream infile(tmpPath);
-        REQUIRE(infile.is_open());
-        std::string contents((std::istreambuf_iterator<char>(infile)),
-                              std::istreambuf_iterator<char>());
+        File infile(tmpPath);
+        Error err = infile.open(IODevice::ReadOnly);
+        REQUIRE(err.isOk());
+        TextStream ts(&infile);
+        String contents = ts.readAll();
         infile.close();
 
-        CHECK(contents.find("CUSTOM|W|custom formatter test") != std::string::npos);
+        CHECK(contents.find("CUSTOM|W|custom formatter test") != String::npos);
 
         // Restore default by passing empty function
         logger.setFileFormatter({});

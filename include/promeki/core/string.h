@@ -7,12 +7,11 @@
 
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <algorithm>
-#include <sstream>
-#include <iomanip>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <promeki/core/namespace.h>
 #include <promeki/core/util.h>
 #include <promeki/core/error.h>
@@ -158,7 +157,7 @@ class String {
 
                 /**
                  * @brief Formats a value as a decimal string with optional padding.
-                 * @tparam T       Value type (must support operator<< to std::ostream).
+                 * @tparam T       Integer or arithmetic type.
                  * @param val      The value to format.
                  * @param padding  Minimum field width.
                  * @param padchar  Padding character (default: space).
@@ -166,14 +165,12 @@ class String {
                  */
                 template <typename T>
                 static String dec(const T &val, int padding = 0, char padchar = ' ') {
-                        std::ostringstream oss;
-                        oss << std::setw(padding) << std::setfill(padchar) << val;
-                        return oss.str();
+                        return number(static_cast<int64_t>(val), 10, padding, padchar);
                 }
 
                 /**
                  * @brief Formats a value as a hexadecimal string.
-                 * @tparam T        Value type (must support operator<< with std::hex).
+                 * @tparam T        Integer type.
                  * @param val       The value to format.
                  * @param padding   Minimum digit width (zero-padded).
                  * @param addPrefix If true, prepends "0x".
@@ -181,10 +178,8 @@ class String {
                  */
                 template <typename T>
                 static String hex(const T &val, int padding = 0, bool addPrefix = true) {
-                        std::ostringstream oss;
-                        if(addPrefix) oss << "0x";
-                        oss << std::setw(padding) << std::setfill('0') << std::hex << val;
-                        return oss.str();
+                        int totalWidth = (addPrefix && padding > 0) ? padding + 2 : padding;
+                        return number(static_cast<uint64_t>(val), 16, totalWidth, '0', addPrefix);
                 }
 
                 /**
@@ -851,16 +846,29 @@ class String {
                 // ============================================================
 
                 /**
-                 * @brief Converts the string to a value of type @p OutputType via std::istringstream.
-                 * @tparam OutputType The target type.
+                 * @brief Converts the string to a value of type @p OutputType.
+                 * @tparam OutputType The target type (int, long, double, float, etc).
                  * @param err Optional error output.
                  * @return The converted value, or a default-constructed value on failure.
                  */
                 template <typename OutputType> OutputType to(Error *err = nullptr) const {
-                        OutputType ret;
-                        std::istringstream iss(str());
-                        iss >> ret;
-                        if(iss.fail() || !iss.eof()) {
+                        const char *s = cstr();
+                        char *end = nullptr;
+                        OutputType ret{};
+                        if constexpr (std::is_integral_v<OutputType> && std::is_signed_v<OutputType>) {
+                                long long v = std::strtoll(s, &end, 10);
+                                ret = static_cast<OutputType>(v);
+                        } else if constexpr (std::is_integral_v<OutputType> && std::is_unsigned_v<OutputType>) {
+                                unsigned long long v = std::strtoull(s, &end, 10);
+                                ret = static_cast<OutputType>(v);
+                        } else if constexpr (std::is_floating_point_v<OutputType>) {
+                                double v = std::strtod(s, &end);
+                                ret = static_cast<OutputType>(v);
+                        } else {
+                                if(err != nullptr) *err = Error::Invalid;
+                                return ret;
+                        }
+                        if(end == s || *end != '\0') {
                                 if(err != nullptr) *err = Error::Invalid;
                                 return OutputType{};
                         }

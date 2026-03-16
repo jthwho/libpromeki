@@ -60,11 +60,10 @@ Currently increments `data++` per channel, which only works for interleaved form
 **File:** `src/datetime.cpp:108`
 **FIXME:** "Need to use the String::parseNumberWords()"
 
-Currently uses `std::istringstream` to parse integer tokens. Should use `String::parseNumberWords()` for natural language number parsing (e.g., "three days ago").
+The `std::istringstream` was replaced with `strtoll` as part of the stream migration, but the FIXME still stands: the code should use `String::parseNumberWords()` for natural language number parsing (e.g., "three days ago") instead of bare `strtoll`.
 
 - [ ] Implement or verify `String::parseNumberWords()` exists
-- [ ] Replace `std::istringstream(token) >> count` with `String::parseNumberWords()`
-- [ ] This also eliminates one `std::istringstream` usage (see `core_streams.md` migration)
+- [ ] Replace `strtoll` token parsing with `String::parseNumberWords()`
 - [ ] Update tests
 
 ---

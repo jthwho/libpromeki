@@ -10,7 +10,6 @@
 #include <promeki/core/system.h>
 #include <promeki/core/string.h>
 
-#include <iostream>
  #include <array>
  #include <cstring>
  #include <cerrno>

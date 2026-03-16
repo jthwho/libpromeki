@@ -7,23 +7,22 @@
 
 #pragma once
 
-#include <functional>
-#include <streambuf>
 #include <ostream>
+#include <streambuf>
+#include <functional>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Stream buffer that collects output into a String, splitting on newlines.
+ * @brief Collects text output into a String, splitting on newlines.
  * @ingroup core_streams
  *
- * StreamString is a std::streambuf subclass that accumulates characters
- * written to its associated std::ostream.  When a newline or EOF is
- * encountered, it invokes the onNewLine callback with the accumulated
- * line.  The callback returns true to clear the line buffer, or false
- * to keep accumulating.
+ * StreamString accumulates characters written to it. When a newline
+ * or EOF is encountered, it invokes the onNewLine callback with the
+ * accumulated line.  The callback returns true to clear the line
+ * buffer, or false to keep accumulating.
  *
  * Example usage (routing stream output to the logger):
  * @code

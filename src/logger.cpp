@@ -1,16 +1,16 @@
 /**
  * @file      logger.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <sstream>
-#include <cstdlib>
 #include <promeki/core/logger.h>
 #include <promeki/core/thread.h>
 #include <promeki/core/ansistream.h>
 #include <promeki/core/list.h>
+#include <promeki/core/fileiodevice.h>
+#include <promeki/core/env.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -35,9 +35,9 @@ static bool checkForEnvDebugEnable(const String &name) {
         static StringList list;
         if(!done) {
                 done = true;
-                const char *enval = std::getenv("PROMEKI_DEBUG");
-                if(enval == nullptr) return false;
-                list = String(enval).split(",");
+                String enval = Env::get("PROMEKI_DEBUG");
+                if(enval.isEmpty()) return false;
+                list = enval.split(",");
                 if(!list.isEmpty()) {
                         promekiInfo("Env PROMEKI_DEBUG: %s", list.join(", ").cstr());
                 }
@@ -60,6 +60,15 @@ static uint64_t cachedThreadId() {
         static thread_local uint64_t id = 0;
         if(id == 0) id = Thread::currentNativeId();
         return id;
+}
+
+Logger::Logger() : _level(Info), _consoleLogging(true),
+        _fileFormatter(defaultFileFormatter()),
+        _consoleFormatter(defaultConsoleFormatter()) {
+        // Force stdio singletons to initialize before this Logger,
+        // ensuring they outlive the Logger at static destruction time.
+        FileIODevice::stdoutDevice();
+        _thread = std::thread(&Logger::worker, this);
 }
 
 void Logger::setThreadName(const String &name) {
@@ -167,6 +176,7 @@ void Logger::worker() {
         Thread *self = Thread::adoptCurrentThread();
         self->setName("logger");
 
+        FileIODevice *logFile = nullptr;
         bool running = true;
         size_t cmdct = 0;
 
@@ -176,11 +186,11 @@ void Logger::worker() {
                 std::visit([&](auto &&arg) {
                         using T = std::decay_t<decltype(arg)>;
                         if constexpr (std::is_same_v<T, LogEntry>) {
-                                writeLog(arg);
+                                writeLog(arg, logFile);
                         } else if constexpr (std::is_same_v<T, CmdSetThreadName>) {
                                 _threadNames[arg.threadId] = arg.name;
                         } else if constexpr (std::is_same_v<T, CmdSetFile>) {
-                                openLogFile(arg.filename);
+                                logFile = openLogFile(arg.filename, logFile);
                         } else if constexpr (std::is_same_v<T, CmdSetFormatter>) {
                                 if(arg.console) {
                                         _consoleFormatter = arg.formatter ? arg.formatter : defaultConsoleFormatter();
@@ -195,35 +205,46 @@ void Logger::worker() {
                                         cachedThreadId(),
                                         String::sprintf("Logger %p terminated, %llu total commands",
                                                 this, (unsigned long long)cmdct)};
-                                writeLog(logentry);
+                                writeLog(logentry, logFile);
                         }
                 }, cmd);
         }
-        _file.close();
+        delete logFile;
         delete self;
 }
 
-void Logger::writeLog(const LogEntry &entry) {
+void Logger::writeLog(const LogEntry &entry, FileIODevice *logFile) {
         auto it = _threadNames.find(entry.threadId);
         LogFormat fmt{&entry, it != _threadNames.end() ? &it->second : nullptr};
-        if(_file.is_open()) {
-                _file << _fileFormatter(fmt) << std::endl;
+        if(logFile != nullptr && logFile->isOpen()) {
+                String line = _fileFormatter(fmt) + "\n";
+                logFile->write(line.cstr(), static_cast<int64_t>(line.length()));
+                logFile->flush();
         }
         if(_consoleLogging.value()) {
-                std::cout << _consoleFormatter(fmt) << "\033[0m" << std::endl;
+                FileIODevice *out = FileIODevice::stdoutDevice();
+                String line = _consoleFormatter(fmt) + "\033[0m\n";
+                out->write(line.cstr(), static_cast<int64_t>(line.length()));
+                out->flush();
         }
 }
 
-void Logger::openLogFile(const String &filename) {
-        if(_file.is_open()) _file.close();
-        _file.open(filename.str(), std::ios::out | std::ios::app);
-        if(!_file.is_open()) {
+FileIODevice *Logger::openLogFile(const String &filename, FileIODevice *existing) {
+        if(existing != nullptr) {
+                existing->close();
+                delete existing;
+        }
+        auto *dev = new FileIODevice(filename);
+        Error err = dev->open(IODevice::Append);
+        if(err.isError()) {
                 LogEntry entry{DateTime::now(), Err, "LOGGER", 0,
                         cachedThreadId(),
                         String::sprintf("Failed to open log file: %s", filename.cstr())};
-                writeLog(entry);
+                writeLog(entry, nullptr);
+                delete dev;
+                return nullptr;
         }
+        return dev;
 }
 
 PROMEKI_NAMESPACE_END
-

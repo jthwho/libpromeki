@@ -302,6 +302,18 @@ TEST_CASE("IODevice: default virtual implementations") {
         CHECK_FALSE(dev.waitForBytesWritten(100));
 }
 
+TEST_CASE("IODevice: flush base is no-op") {
+        MemoryIODevice dev;
+        dev.open(IODevice::WriteOnly);
+        dev.write("test", 4);
+        dev.flush(); // Should not crash (no-op for unbuffered)
+        CHECK(true);
+}
+
+TEST_CASE("IODevice: Append mode implies WriteOnly") {
+        CHECK((IODevice::Append & IODevice::WriteOnly) == IODevice::WriteOnly);
+}
+
 TEST_CASE("IODevice: setData and read") {
         MemoryIODevice dev;
         const char *data = "preloaded";

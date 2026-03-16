@@ -10,7 +10,7 @@
 
 ## Completed
 
-IO abstractions, filesystem utilities, and in-memory IO are all implemented, tested, and merged: IODevice, BufferedIODevice, FilePath, Dir, File (BufferedIODevice subclass), FileInfo, Process, BufferIODevice, Buffer size model, Error enhancements, Terminal error reporting, StringIODevice (seekable IODevice over String*), FileIODevice (stdio FILE* adapter with optional ownership via OwnsFile flag and takeFile()).
+IO abstractions, filesystem utilities, and in-memory IO are all implemented, tested, and merged: IODevice, BufferedIODevice, FilePath, Dir, File (BufferedIODevice subclass), FileInfo, Process, BufferIODevice, Buffer size model, Error enhancements, Terminal error reporting, StringIODevice (seekable IODevice over String*), FileIODevice (stdio FILE* adapter with optional ownership via OwnsFile flag and takeFile()). IODevice extended with `Append` open mode and `virtual flush()`. FileIODevice extended with `flush()` override, Append mode support, and static stdio singletons: `stdinDevice()`, `stdoutDevice()`, `stderrDevice()`. Application provides matching static accessors.
 
 FileFormatFactory\<Product\> generic factory template, AudioFileFactory migration to FileFormatFactory\<AudioFile\>, and AudioFile IODevice refactor (sf_open_virtual + factory migration) are all implemented, tested, and merged. computeDesc() now properly translates SF_INFO format/subtype/endian into AudioDesc::DataType for reading. File::pos() correctly accounts for BufferedIODevice read-ahead so that sf_open_virtual callbacks (and all other users of File) see accurate logical positions.
 

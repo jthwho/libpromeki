@@ -92,30 +92,22 @@ Add binary state serialization to ObjectBase. Each subclass can override to save
 
 Once TextStream is implemented, migrate all existing `std::` stream usage to promeki streams. This eliminates direct `std::` stream dependencies from the public API and internal implementation.
 
----
+### Completed
 
-### AnsiStream Refactor
-
-Currently extends `std::ostream` directly. Refactor to use `TextStream` as its backend.
-
-**Files:**
-- [ ] Modify `include/promeki/core/core/ansistream.h`
-- [ ] Modify `src/ansistream.cpp`
-- [ ] Update `tests/ansistream.cpp`
-
-**Checklist:**
-- [ ] Change base class from `std::ostream` to `TextStream` (or compose a `TextStream` internally)
-- [ ] Constructor: take `TextStream &` or `IODevice *` instead of `std::ostream &`
-- [ ] Preserve all existing ANSI escape methods (colors, cursor, screen control)
-- [ ] `getCursorPosition()`: change `std::istream &input` parameter to use promeki stream or IODevice
-- [ ] Remove `#include <iostream>` and `#include <ostream>`
-- [ ] Update `tests/ansistream.cpp`: replace `std::ostringstream` with `TextStream` over `Buffer`
+- **AnsiStream Refactor** — Removed `std::ostream` inheritance; now composes `IODevice*` internally. Constructor takes `IODevice*`. `getCursorPosition()` takes `IODevice*`. All std:: stream includes removed. Tests use `StringIODevice`. (`ansistream.h/cpp`, `tests/ansistream.cpp`)
+- **Logger Refactor** — Replaced `std::ofstream` with `FileIODevice*`, `std::cout` with `FileIODevice::stdoutDevice()`, `std::endl` with `"\n"` + `flush()`. Removed `<iostream>` and `<fstream>`. Tests use `File` + `TextStream`. (`logger.h/cpp`, `tests/logger.cpp`)
+- **operator<< / operator>> Removal** — Removed `std::ostream`/`std::istream` stream operators and replaced internal std:: stream usage across: Point (operators removed, `fromString()`/`toString()` use `StringList::split()` + `String::dec()`), Size2D (operators removed), Rect (operator removed), Matrix3x3 (operator + `<ostream>` removed), Rational (operator removed, `toString()` uses `String::dec()`), FourCC (`<iostream>` removed).
+- **String Internal Migration** — `dec()`/`hex()` use `String::number()`, `to<>()` uses `strtoll`/`strtoull`/`strtod`, `parseNumberWords()` uses `StringList::split()`, `floatToString()` uses `snprintf`. Removed `<iostream>` and `<sstream>`.
+- **Internal std::stringstream Replacement** — XYZColor `toString()` uses `String::sprintf()` (`<sstream>` removed). DateTime `fromString()` uses `strptime()`, `fromNow()` uses `StringList::split()` + `strtoll` (`<sstream>` removed). JSON `<sstream>` removed. System `<iostream>` removed. MemPool `<iostream>` removed.
+- **TUI Stream Migration** — `tui/application.cpp` uses `Application::stdoutDevice()` for AnsiStream. `tui/screen.cpp` uses `stream.flush()`. `tests/tui/screen.cpp` uses `StringIODevice`.
+- **Utils Migration** — `promeki-info/main.cpp` uses `std::printf()` instead of `std::cout`/`std::endl`.
+- **Test File Migration** — `tests/size2d.cpp`, `tests/matrix3x3.cpp`, `tests/ansistream.cpp`, `tests/logger.cpp`, `tests/string.cpp`, `tests/tui/screen.cpp`, `tests/dir.cpp` all migrated from std:: streams.
 
 ---
 
 ### StreamString Refactor
 
-Currently extends `std::streambuf`. Refactor to work with `TextStream`.
+Currently extends `std::streambuf`. Refactor to work with `TextStream`. This is the last remaining std:: stream usage.
 
 **Files:**
 - [ ] Modify `include/promeki/core/core/streamstring.h`
@@ -127,118 +119,6 @@ Currently extends `std::streambuf`. Refactor to work with `TextStream`.
 - [ ] `stream()` method: return `TextStream &` instead of `std::ostream &`
 - [ ] Remove `#include <streambuf>` and `#include <ostream>`
 - [ ] Update tests: replace `std::flush` / `std::endl` with TextStream equivalents
-
----
-
-### Logger Refactor
-
-Currently uses `std::ofstream` for file output and `std::cout` for console output.
-
-**Files:**
-- [ ] Modify `include/promeki/core/core/logger.h`
-- [ ] Modify `src/logger.cpp`
-- [ ] Update `tests/logger.cpp`
-
-**Checklist:**
-- [ ] Replace `std::ofstream _file` member with file-backed `TextStream` (over a File IODevice)
-- [ ] Replace `std::cout` usage with `TextStream` over stdout (via `FILE *` constructor)
-- [ ] Replace `std::endl` with TextStream `endl`
-- [ ] Remove `#include <iostream>` and `#include <fstream>`
-- [ ] Update `tests/logger.cpp`: replace `std::ifstream` reads with promeki File or TextStream
-
----
-
-### operator<< / operator>> Migration
-
-Replace all `std::ostream`/`std::istream` stream operators with `TextStream` equivalents.
-
-**Files to modify:**
-
-String (`include/promeki/core/core/string.h`, `src/string.cpp`):
-- [ ] Replace `friend std::ostream &operator<<(std::ostream &, const String &)` with `TextStream &operator<<(TextStream &, const String &)`
-- [ ] Replace `friend std::istream &operator>>(std::istream &, String &)` with `TextStream &operator>>(TextStream &, String &)`
-- [ ] Replace internal `std::ostringstream` usage in `fromNumber()` methods with TextStream or `String::number()`
-- [ ] Replace `std::istringstream` usage in `split()` and other parsing methods
-- [ ] Remove `#include <iostream>` and `#include <sstream>`
-
-Point (`include/promeki/core/core/point.h`):
-- [ ] Replace `friend std::ostream &operator<<(std::ostream &, const Point &)` with TextStream variant
-- [ ] Replace `friend std::istream &operator>>(std::istream &, Point &)` with TextStream variant
-- [ ] Replace `std::stringstream` usage in `fromString()` and `toString()`
-
-Size2D (`include/promeki/core/core/size2d.h`):
-- [ ] Replace `friend std::ostream &operator<<` with TextStream variant
-- [ ] Replace `friend std::istream &operator>>` with TextStream variant
-
-Rect (`include/promeki/core/core/rect.h`):
-- [ ] Replace `friend std::ostream &operator<<` with TextStream variant
-
-Matrix3x3 (`include/promeki/core/core/matrix3x3.h`):
-- [ ] Replace `friend std::ostream &operator<<` with TextStream variant
-- [ ] Remove `#include <ostream>`
-
-Rational (`include/promeki/core/core/rational.h`):
-- [ ] Replace `friend std::ostream &operator<<` with TextStream variant
-- [ ] Replace `std::stringstream` in `toString()` with TextStream over String
-- [ ] Remove `#include <sstream>`
-
-FourCC (`include/promeki/core/core/fourcc.h`):
-- [ ] Remove `#include <iostream>` (audit if actually needed)
-
----
-
-### Internal std::stringstream Replacement
-
-Replace all internal `std::stringstream`/`std::istringstream`/`std::ostringstream` usage with TextStream over String/Buffer.
-
-**Files:**
-
-XYZColor (`include/promeki/core/proav/xyzcolor.h`):
-- [ ] Replace `std::stringstream` in `toString()` with TextStream over String
-- [ ] Remove `#include <sstream>`
-
-DateTime (`include/promeki/core/core/datetime.h`, `src/datetime.cpp`):
-- [ ] Replace `std::istringstream` in `fromString()` with TextStream parsing
-- [ ] Remove `#include <sstream>` from header
-
-JSON (`include/promeki/core/core/json.h`):
-- [ ] Replace `#include <sstream>` usage — audit and migrate to String operations or TextStream
-
-System (`src/system.cpp`):
-- [ ] Replace `#include <iostream>` — audit usage and migrate
-
-MemPool (`src/mempool.cpp`):
-- [ ] Replace `#include <iostream>` — audit usage and migrate
-
----
-
-### TUI Stream Migration
-
-**Files:**
-- [ ] `src/tui/application.cpp`: replace `std::cout` in AnsiStream construction with TextStream/IODevice
-- [ ] `src/tui/screen.cpp`: replace `std::flush` with TextStream flush
-- [ ] `tests/tui/screen.cpp`: replace `std::ostringstream` with TextStream over Buffer
-
----
-
-### Utils Migration
-
-**Files:**
-- [ ] `utils/promeki-info/main.cpp`: replace `std::cout` / `std::endl` with TextStream over stdout
-
----
-
-### Test File Migration
-
-After all library code is migrated, update tests that use `std::ostringstream` / `std::istringstream` as test harnesses:
-
-- [ ] `tests/size2d.cpp` — replace `std::ostringstream`/`std::istringstream`
-- [ ] `tests/matrix3x3.cpp` — replace `std::ostringstream`
-- [ ] `tests/ansistream.cpp` — replace 9 instances of `std::ostringstream`
-- [ ] `tests/logger.cpp` — replace `std::ifstream`
-- [ ] `tests/string.cpp` — remove `#include <iostream>`
-- [ ] `tests/streamstring.cpp` — replace `std::flush`/`std::endl`
-- [ ] `tests/tui/screen.cpp` — replace `std::ostringstream`
 
 ---
 

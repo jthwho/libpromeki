@@ -34,7 +34,8 @@ class IODevice : public ObjectBase {
                         NotOpen   = 0x00, ///< @brief Device is not open.
                         ReadOnly  = 0x01, ///< @brief Open for reading only.
                         WriteOnly = 0x02, ///< @brief Open for writing only.
-                        ReadWrite = ReadOnly | WriteOnly ///< @brief Open for reading and writing.
+                        ReadWrite = ReadOnly | WriteOnly, ///< @brief Open for reading and writing.
+                        Append    = 0x04 | WriteOnly ///< @brief Open for appending (implies WriteOnly).
                 };
 
                 /**
@@ -48,7 +49,7 @@ class IODevice : public ObjectBase {
 
                 /**
                  * @brief Opens the device with the specified mode.
-                 * @param mode The open mode (ReadOnly, WriteOnly, or ReadWrite).
+                 * @param mode The open mode (ReadOnly, WriteOnly, ReadWrite, or Append).
                  * @return Error::Ok on success, or an error on failure.
                  */
                 virtual Error open(OpenMode mode) = 0;
@@ -80,6 +81,15 @@ class IODevice : public ObjectBase {
                  * @return The number of bytes written, or -1 on error.
                  */
                 virtual int64_t write(const void *data, int64_t maxSize) = 0;
+
+                /**
+                 * @brief Flushes any buffered output data to the underlying device.
+                 *
+                 * The default implementation is a no-op, suitable for unbuffered
+                 * devices such as in-memory buffers. Subclasses that wrap buffered
+                 * I/O (e.g. stdio FILE*) should override this.
+                 */
+                virtual void flush();
 
                 /**
                  * @brief Returns the number of bytes available for reading.

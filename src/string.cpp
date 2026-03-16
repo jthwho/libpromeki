@@ -24,11 +24,11 @@ PROMEKI_NAMESPACE_BEGIN
 static const char *digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 template <typename T>
-std::string floatToString(T value, int precision, std::ios_base::fmtflags encodingStyle = std::ios_base::fixed) {
-        std::stringstream ss;
-        ss.setf(encodingStyle);
-        ss << std::setprecision(precision) << value;
-        return ss.str();
+std::string floatToString(T value, int precision) {
+        char buf[64];
+        int len = std::snprintf(buf, sizeof(buf), "%.*f", precision, static_cast<double>(value));
+        if(len < 0) return "0";
+        return std::string(buf, static_cast<size_t>(len));
 }
 
 template <typename T>
@@ -66,6 +66,8 @@ static String num(T val,
                         val /= base;
                 }
         }
+        int digitEnd = index;
+
         if(addPrefix) {
                 switch(base) {
                         case 2:  buf[index++] = 'b'; buf[index++] = '0'; break;
@@ -87,7 +89,20 @@ static String num(T val,
                 isPaddingNegative = false;
         }
         if(padding > remaining) padding = remaining;
-        for(int i = 0; i < padding; i++) buf[index++] = padchar;
+
+        if(addPrefix && padchar == '0') {
+                // Insert zero-padding between digits and prefix (so it appears
+                // between prefix and digits after reversal, e.g. 0x0042)
+                int prefixLen = index - digitEnd;
+                // Shift prefix chars right by padding amount
+                for(int i = index - 1; i >= digitEnd; i--) {
+                        buf[i + padding] = buf[i];
+                }
+                for(int i = 0; i < padding; i++) buf[digitEnd + i] = padchar;
+                index += padding;
+        } else {
+                for(int i = 0; i < padding; i++) buf[index++] = padchar;
+        }
         buf[index] = 0;
 
         int lastPos = index - 1;
@@ -278,13 +293,14 @@ int64_t String::parseNumberWords(Error *err) const {
 
         std::string copy = d->str();
         for(char &c : copy) if(!std::isalpha(c)) c = ' ';
-        std::istringstream iss(copy);
-        std::string token;
+        // Tokenize by whitespace
+        StringList tokens = String(copy).split(" ");
         int64_t value = 0;
         int64_t current = 0;
         bool found = false;
 
-        while(iss >> token) {
+        for(size_t ti = 0; ti < tokens.size(); ++ti) {
+                std::string token = tokens[ti].str();
                 for(char &c : token) c = std::tolower(static_cast<unsigned char>(c));
                 auto it = numberWords.find(token);
                 if(it != numberWords.end()) {

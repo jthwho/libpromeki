@@ -12,6 +12,10 @@ PROMEKI_NAMESPACE_BEGIN
 
 IODevice::~IODevice() = default;
 
+void IODevice::flush() {
+        // No-op for unbuffered devices
+}
+
 int64_t IODevice::bytesAvailable() const {
         return 0;
 }

@@ -10,6 +10,7 @@
 #include <promeki/core/thread.h>
 #include <promeki/core/eventloop.h>
 #include <promeki/core/logger.h>
+#include <promeki/core/fileiodevice.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -60,6 +61,18 @@ Thread *Application::mainThread() {
 EventLoop *Application::mainEventLoop() {
         Thread *t = data().mainThread;
         return t != nullptr ? t->threadEventLoop() : nullptr;
+}
+
+IODevice *Application::stdinDevice() {
+        return FileIODevice::stdinDevice();
+}
+
+IODevice *Application::stdoutDevice() {
+        return FileIODevice::stdoutDevice();
+}
+
+IODevice *Application::stderrDevice() {
+        return FileIODevice::stderrDevice();
 }
 
 PROMEKI_NAMESPACE_END

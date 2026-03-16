@@ -5,7 +5,6 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <sstream>
 #include <doctest/doctest.h>
 #include <promeki/core/size2d.h>
 
@@ -63,26 +62,9 @@ TEST_CASE("Size2Du32: String conversion operator") {
         CHECK(str == "640x480");
 }
 
-TEST_CASE("Size2Du32: ostream operator") {
+TEST_CASE("Size2Du32: toString output") {
         Size2Du32 s(3840, 2160);
-        std::ostringstream os;
-        os << s;
-        CHECK(os.str() == "3840x2160");
-}
-
-TEST_CASE("Size2Du32: istream operator") {
-        std::istringstream is("1920x1080");
-        Size2Du32 s;
-        is >> s;
-        CHECK(s.width() == 1920);
-        CHECK(s.height() == 1080);
-}
-
-TEST_CASE("Size2Du32: istream operator with bad input") {
-        std::istringstream is("bad");
-        Size2Du32 s(100, 100);
-        is >> s;
-        CHECK(is.fail());
+        CHECK(s.toString() == "3840x2160");
 }
 
 TEST_CASE("Size2Du32: pointIsInside") {

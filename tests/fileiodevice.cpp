@@ -354,6 +354,151 @@ TEST_CASE("FileIODevice: atEnd when not open returns true") {
         CHECK(dev.atEnd());
 }
 
+// ============================================================================
+// Flush
+// ============================================================================
+
+TEST_CASE("FileIODevice: flush makes data visible to other readers") {
+        const char *path = "/tmp/promeki_test_fileiodevice_flush.txt";
+        String fn(path);
+        std::remove(path);
+
+        FileIODevice writer(fn);
+        Error err = writer.open(IODevice::WriteOnly);
+        REQUIRE(err.isOk());
+
+        const char *msg = "flush test data";
+        writer.write(msg, 15);
+
+        // Before flush: open a second descriptor and try to read.
+        // stdio buffers haven't been flushed so the file may be empty.
+        FILE *reader = std::fopen(path, "rb");
+        REQUIRE(reader != nullptr);
+        char buf[15] = {};
+        size_t n = std::fread(buf, 1, 15, reader);
+        std::fclose(reader);
+        // The kernel page cache might or might not have the data yet,
+        // but we haven't flushed, so n could be 0 or 15 depending on
+        // the platform.  We don't assert on pre-flush state because
+        // it's non-deterministic; we just care that post-flush is
+        // always correct.
+
+        // After flush: data must be visible.
+        writer.flush();
+
+        reader = std::fopen(path, "rb");
+        REQUIRE(reader != nullptr);
+        std::memset(buf, 0, 15);
+        n = std::fread(buf, 1, 15, reader);
+        std::fclose(reader);
+        CHECK(n == 15);
+        CHECK(std::memcmp(buf, msg, 15) == 0);
+
+        writer.close();
+        std::remove(path);
+}
+
+TEST_CASE("FileIODevice: flush on closed device is safe") {
+        FileIODevice dev;
+        dev.flush(); // Should not crash
+        CHECK(true);
+}
+
+TEST_CASE("FileIODevice: flush on FILE* constructor") {
+        FILE *f = std::tmpfile();
+        REQUIRE(f != nullptr);
+        FileIODevice dev(f, IODevice::ReadWrite);
+        dev.write("data", 4);
+        dev.flush();
+        // Verify the data was flushed by reading via the raw FILE*
+        std::rewind(f);
+        char buf[4] = {};
+        size_t n = std::fread(buf, 1, 4, f);
+        CHECK(n == 4);
+        CHECK(std::memcmp(buf, "data", 4) == 0);
+        dev.close();
+        std::fclose(f);
+}
+
+// ============================================================================
+// Append mode
+// ============================================================================
+
+TEST_CASE("FileIODevice: open with Append mode") {
+        const char *path = "/tmp/promeki_test_fileiodevice_append.txt";
+        std::remove(path);
+
+        // Write initial data
+        {
+                String fn(path);
+                FileIODevice dev(fn);
+                Error err = dev.open(IODevice::WriteOnly);
+                REQUIRE(err.isOk());
+                dev.write("hello", 5);
+                dev.close();
+        }
+
+        // Append more data
+        {
+                String fn(path);
+                FileIODevice dev(fn);
+                Error err = dev.open(IODevice::Append);
+                REQUIRE(err.isOk());
+                CHECK(dev.isWritable());
+                dev.write(" world", 6);
+                dev.close();
+        }
+
+        // Read back and verify concatenation
+        {
+                String fn(path);
+                FileIODevice dev(fn);
+                Error err = dev.open(IODevice::ReadOnly);
+                REQUIRE(err.isOk());
+                char buf[11] = {};
+                int64_t n = dev.read(buf, 11);
+                CHECK(n == 11);
+                CHECK(std::memcmp(buf, "hello world", 11) == 0);
+                dev.close();
+        }
+
+        std::remove(path);
+}
+
+// ============================================================================
+// Misc edge cases
+// ============================================================================
+
+TEST_CASE("FileIODevice: stdinDevice returns valid device") {
+        FileIODevice *dev = FileIODevice::stdinDevice();
+        REQUIRE(dev != nullptr);
+        CHECK(dev->isOpen());
+        CHECK(dev->isReadable());
+        CHECK_FALSE(dev->isWritable());
+}
+
+TEST_CASE("FileIODevice: stdoutDevice returns valid device") {
+        FileIODevice *dev = FileIODevice::stdoutDevice();
+        REQUIRE(dev != nullptr);
+        CHECK(dev->isOpen());
+        CHECK(dev->isWritable());
+        CHECK_FALSE(dev->isReadable());
+}
+
+TEST_CASE("FileIODevice: stderrDevice returns valid device") {
+        FileIODevice *dev = FileIODevice::stderrDevice();
+        REQUIRE(dev != nullptr);
+        CHECK(dev->isOpen());
+        CHECK(dev->isWritable());
+        CHECK_FALSE(dev->isReadable());
+}
+
+TEST_CASE("FileIODevice: stdio singletons are stable") {
+        CHECK(FileIODevice::stdinDevice() == FileIODevice::stdinDevice());
+        CHECK(FileIODevice::stdoutDevice() == FileIODevice::stdoutDevice());
+        CHECK(FileIODevice::stderrDevice() == FileIODevice::stderrDevice());
+}
+
 TEST_CASE("FileIODevice: open with NotOpen mode returns Invalid") {
         const char *path = "/tmp/promeki_test_fileiodevice_notopen.txt";
         String fn(path);

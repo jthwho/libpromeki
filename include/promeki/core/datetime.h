@@ -9,7 +9,6 @@
 
 #include <chrono>
 #include <ctime>
-#include <sstream>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
 #include <promeki/core/error.h>
@@ -59,9 +58,9 @@ class DateTime {
                  */
                 static DateTime fromString(const String &str, const char *fmt = DefaultFormat, Error *err = nullptr) {
                         std::tm tm = {};
-                        std::istringstream ss(str.str());
-                        ss >> std::get_time(&tm, fmt);
-                        if(ss.fail()) {
+                        tm.tm_isdst = -1;
+                        const char *result = strptime(str.cstr(), fmt, &tm);
+                        if(result == nullptr) {
                                 if(err != nullptr) *err = Error::Invalid;
                                 return DateTime();
                         }

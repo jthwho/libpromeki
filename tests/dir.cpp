@@ -6,12 +6,19 @@
  */
 
 #include <cstdlib>
-#include <fstream>
 #include <filesystem>
 #include <doctest/doctest.h>
 #include <promeki/core/dir.h>
+#include <promeki/core/file.h>
 
 using namespace promeki;
+
+static void createTestFile(const std::filesystem::path &path, char ch) {
+        File f(path.string());
+        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        f.write(&ch, 1);
+        f.close();
+}
 
 TEST_CASE("Dir: current directory") {
         Dir cur = Dir::current();
@@ -76,9 +83,9 @@ TEST_CASE("Dir: entryList") {
         d.mkdir();
 
         // Create some files
-        std::ofstream(testDir.toStdPath() / "file1.txt").put('a');
-        std::ofstream(testDir.toStdPath() / "file2.txt").put('b');
-        std::ofstream(testDir.toStdPath() / "file3.dat").put('c');
+        createTestFile(testDir.toStdPath() / "file1.txt", 'a');
+        createTestFile(testDir.toStdPath() / "file2.txt", 'b');
+        createTestFile(testDir.toStdPath() / "file3.dat", 'c');
 
         List<FilePath> entries = d.entryList();
         CHECK(entries.size() == 3);
@@ -94,9 +101,9 @@ TEST_CASE("Dir: entryList with filter") {
         if(d.exists()) d.removeRecursively();
         d.mkdir();
 
-        std::ofstream(testDir.toStdPath() / "alpha.txt").put('a');
-        std::ofstream(testDir.toStdPath() / "beta.txt").put('b');
-        std::ofstream(testDir.toStdPath() / "gamma.dat").put('c');
+        createTestFile(testDir.toStdPath() / "alpha.txt", 'a');
+        createTestFile(testDir.toStdPath() / "beta.txt", 'b');
+        createTestFile(testDir.toStdPath() / "gamma.dat", 'c');
 
         List<FilePath> txtFiles = d.entryList("*.txt");
         CHECK(txtFiles.size() == 2);
@@ -116,7 +123,7 @@ TEST_CASE("Dir: isEmpty") {
         d.mkdir();
         CHECK(d.isEmpty());
 
-        std::ofstream(testDir.toStdPath() / "file.txt").put('x');
+        createTestFile(testDir.toStdPath() / "file.txt", 'x');
         CHECK_FALSE(d.isEmpty());
 
         d.removeRecursively();

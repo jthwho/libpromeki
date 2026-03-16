@@ -96,26 +96,6 @@ template<typename T> class Size2DTemplate {
                                p.y() < _height;
                 }
 
-                /** @brief Stream output operator. */
-                friend std::ostream & operator<<(std::ostream & os, const Size2DTemplate<T> & size) {
-                        os << size.toString();
-                        return os;
-                }
-
-                /** @brief Stream input operator, parses "WxH" format. */
-                friend std::istream & operator>>(std::istream & input, Size2DTemplate<T> &s) {
-                        char x;
-                        T    w, h;
-                        input >> std::ws >> w >> x >> h;
-                        if(input.fail() || x != 'x') {
-                                input.setstate(std::ios::failbit);
-                        } else {
-                                s._width  = w;
-                                s._height = h;
-                        }
-                        return input;
-                }
-
         private:
                 T _width  = 0;
                 T _height = 0;

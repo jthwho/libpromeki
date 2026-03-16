@@ -9,8 +9,6 @@
 
 #include <thread>
 #include <variant>
-#include <iostream>
-#include <fstream>
 #include <functional>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
@@ -177,11 +175,7 @@ class Logger {
                 static LogFormatter defaultConsoleFormatter();
 
                 /** @brief Constructs a Logger and starts the worker thread. */
-                Logger() : _level(Info), _consoleLogging(true),
-                        _fileFormatter(defaultFileFormatter()),
-                        _consoleFormatter(defaultConsoleFormatter()) {
-                        _thread = std::thread(&Logger::worker, this);
-                }
+                Logger();
 
                 /** @brief Destructor. Signals the worker thread to terminate and waits for it to finish. */
                 ~Logger() {
@@ -337,7 +331,6 @@ class Logger {
                 std::thread             _thread;
                 Atomic<int>             _level;
                 Atomic<bool>            _consoleLogging;
-                std::ofstream           _file;
                 Queue<Command>          _queue;
                 mutable Mutex           _formatterMutex;
                 LogFormatter            _fileFormatter;
@@ -345,8 +338,8 @@ class Logger {
                 Map<uint64_t, String>   _threadNames;
 
                 void worker();
-                void writeLog(const LogEntry &cmd);
-                void openLogFile(const String &filename);
+                void writeLog(const LogEntry &cmd, class FileIODevice *logFile);
+                class FileIODevice *openLogFile(const String &filename, class FileIODevice *existing);
 
 };
 

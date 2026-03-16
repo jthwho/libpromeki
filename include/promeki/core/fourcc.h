@@ -7,7 +7,6 @@
 
 #pragma once
 #include <cstdint>
-#include <iostream>
 #include <string>
 #include <promeki/core/namespace.h>
 #include <promeki/core/list.h>

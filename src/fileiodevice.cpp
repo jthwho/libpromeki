@@ -10,6 +10,25 @@
 PROMEKI_NAMESPACE_BEGIN
 
 // ============================================================================
+// Static stdio singletons
+// ============================================================================
+
+FileIODevice *FileIODevice::stdinDevice() {
+        static FileIODevice dev(stdin, IODevice::ReadOnly);
+        return &dev;
+}
+
+FileIODevice *FileIODevice::stdoutDevice() {
+        static FileIODevice dev(stdout, IODevice::WriteOnly);
+        return &dev;
+}
+
+FileIODevice *FileIODevice::stderrDevice() {
+        static FileIODevice dev(stderr, IODevice::WriteOnly);
+        return &dev;
+}
+
+// ============================================================================
 // Constructors / Destructor
 // ============================================================================
 
@@ -67,6 +86,7 @@ Error FileIODevice::open(OpenMode mode) {
                 case ReadOnly:  fmode = "rb";  break;
                 case WriteOnly: fmode = "wb";  break;
                 case ReadWrite: fmode = "w+b"; break;
+                case Append:    fmode = "ab";  break;
                 default: return Error(Error::Invalid);
         }
 
@@ -88,6 +108,14 @@ Error FileIODevice::close() {
         _file = nullptr;
         _ownsFile = false;
         return ret;
+}
+
+// ============================================================================
+// Flush
+// ============================================================================
+
+void FileIODevice::flush() {
+        if(_file != nullptr) std::fflush(_file);
 }
 
 // ============================================================================

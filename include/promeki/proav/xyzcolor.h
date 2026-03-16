@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <sstream>
 #include <promeki/core/namespace.h>
 #include <promeki/core/array.h>
 #include <promeki/core/string.h>
@@ -83,9 +82,7 @@ class XYZColor {
 
                 /** @brief Returns a string representation of the XYZ color. */
                 String toString() const {
-                        std::stringstream ss;
-                        ss << "XYZ(" << d[0] << ", " << d[1] << ", " << d[2] << ")";
-                        return ss.str();
+                        return String::sprintf("XYZ(%g, %g, %g)", d[0], d[1], d[2]);
                 }
  
         private:

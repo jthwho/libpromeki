@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <sstream>
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
 #include <promeki/core/variant.h>

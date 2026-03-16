@@ -162,12 +162,6 @@ template <typename T> class Rect {
                         return !(*this == other);
                 }
 
-                /** @brief Stream output operator. */
-                friend std::ostream &operator<<(std::ostream &os, const Rect &r) {
-                        os << r.x() << "," << r.y() << " " << r.width() << "x" << r.height();
-                        return os;
-                }
-
         private:
                 Point<T, 2>            _pos;
                 Size2DTemplate<T>      _size;

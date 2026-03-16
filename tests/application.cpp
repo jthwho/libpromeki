@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/core/application.h>
+#include <promeki/core/iodevice.h>
 
 using namespace promeki;
 
@@ -50,6 +51,27 @@ TEST_CASE("Application: setAppUUID and appUUID roundtrip") {
         CHECK(Application::appUUID() == id);
         CHECK(Application::appUUID().isValid());
         Application::setAppUUID(UUID());
+}
+
+TEST_CASE("Application: stdinDevice returns readable device") {
+        IODevice *dev = Application::stdinDevice();
+        REQUIRE(dev != nullptr);
+        CHECK(dev->isOpen());
+        CHECK(dev->isReadable());
+}
+
+TEST_CASE("Application: stdoutDevice returns writable device") {
+        IODevice *dev = Application::stdoutDevice();
+        REQUIRE(dev != nullptr);
+        CHECK(dev->isOpen());
+        CHECK(dev->isWritable());
+}
+
+TEST_CASE("Application: stderrDevice returns writable device") {
+        IODevice *dev = Application::stderrDevice();
+        REQUIRE(dev != nullptr);
+        CHECK(dev->isOpen());
+        CHECK(dev->isWritable());
 }
 
 TEST_CASE("Application: not copyable or movable") {
