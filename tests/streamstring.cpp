@@ -86,7 +86,7 @@ TEST_CASE("StreamString_PartialLineSync") {
         CHECK(captured.size() == 0);
         CHECK(ss.line() == "No newline here");
 
-        ss.stream() << std::flush;
+        ss.stream() << promeki::flush;
         REQUIRE(captured.size() == 1);
         CHECK(captured[0] == "No newline here");
         CHECK(ss.line().isEmpty());
@@ -118,7 +118,7 @@ TEST_CASE("StreamString_MixedOutput") {
                 return true;
         });
 
-        ss.stream() << "Value: " << 42 << " and " << 3.14 << std::endl;
+        ss.stream() << "Value: " << 42 << " and " << 3.14 << promeki::endl;
         REQUIRE(captured.size() == 1);
         CHECK(captured[0].startsWith("Value: 42 and 3.14"));
 }

@@ -1,9 +1,43 @@
 #define DOCTEST_CONFIG_IMPLEMENT
+#include <ostream>
+#include <streambuf>
 #include <doctest/doctest.h>
 #include <promeki/core/logger.h>
-#include <promeki/core/streamstring.h>
+#include <promeki/core/string.h>
 
 using namespace promeki;
+
+/**
+ * @brief Minimal std::streambuf adapter for routing doctest output to the logger.
+ *
+ * This is the only std:: stream usage remaining — isolated to test infrastructure
+ * because doctest::Context::setCout() requires a std::ostream*.
+ */
+class LogStreambuf : public std::streambuf {
+        protected:
+                int overflow(int ch) override {
+                        if(ch == '\n' || ch == EOF) {
+                                if(!_line.isEmpty()) {
+                                        promekiInfo("%s", _line.cstr());
+                                        _line.clear();
+                                }
+                        } else {
+                                _line += static_cast<char>(ch);
+                        }
+                        return ch;
+                }
+
+                int sync() override {
+                        if(!_line.isEmpty()) {
+                                promekiInfo("%s", _line.cstr());
+                                _line.clear();
+                        }
+                        return 0;
+                }
+
+        private:
+                String _line;
+};
 
 int main(int argc, char **argv) {
         // Check for --logger flag before passing args to doctest.
@@ -28,14 +62,12 @@ int main(int argc, char **argv) {
         }
         promekiLogSync();
 
-        StreamString logbuf([](String &line) {
-                promekiInfo("%s", line.cstr());
-                return true;
-        });
+        LogStreambuf logbuf;
+        std::ostream logstream(&logbuf);
 
         doctest::Context context;
         context.applyCommandLine(filteredArgc, filteredArgv);
-        context.setCout(&logbuf.stream());
+        context.setCout(&logstream);
         int res = context.run();
 
         promekiLogSync();

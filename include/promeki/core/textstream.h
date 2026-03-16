@@ -142,8 +142,9 @@ class TextStream {
                 /**
                  * @brief Flushes any buffered output to the underlying device.
                  *
-                 * @note Currently a no-op. TextStream does not buffer data
-                 * internally; writes are forwarded immediately to the device.
+                 * Calls IODevice::flush() on the underlying device. This
+                 * allows devices that intercept writes (such as
+                 * StreamStringIODevice) to act on incomplete data.
                  */
                 void flush();
 

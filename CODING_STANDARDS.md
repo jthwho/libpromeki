@@ -490,6 +490,46 @@ Do not use `using namespace promeki;` in headers.
 
 ---
 
+## Stream Operator Support (TextStream / DataStream)
+
+New data classes should provide free `operator<<` and `operator>>` overloads for `TextStream` and, where binary serialization makes sense, `DataStream`. These overloads live in the class's own header (not in `textstream.h` or `datastream.h`), following the same pattern Qt uses for placing `QTextStream`/`QDataStream` operators alongside each type.
+
+### TextStream
+
+Every data class that has a meaningful text representation should provide:
+
+```cpp
+// In myclass.h — forward-declare TextStream to avoid circular includes
+class TextStream;
+
+TextStream &operator<<(TextStream &stream, const MyClass &val);
+TextStream &operator>>(TextStream &stream, MyClass &val);
+```
+
+The `operator<<` should produce a human-readable representation consistent with `toString()`. The `operator>>` should parse the same format when round-tripping makes sense; omit it when it doesn't (e.g., complex summary formats).
+
+### DataStream
+
+Data classes that participate in binary serialization (pipeline frames, object state, network protocols) should provide:
+
+```cpp
+// In myclass.h — forward-declare DataStream to avoid circular includes
+class DataStream;
+
+DataStream &operator<<(DataStream &stream, const MyClass &val);
+DataStream &operator>>(DataStream &stream, MyClass &val);
+```
+
+These write/read the class fields in a well-defined order. See `devplan/core_streams.md` for the wire format conventions.
+
+### When to Omit
+
+- Utility classes (Mutex, Queue, etc.) do not need stream operators.
+- ObjectBase-derived functional objects do not need stream operators (use saveState/loadState instead).
+- Simple wrapper types where the underlying primitive's operator already suffices (e.g., `Atomic<T>`) do not need their own operators.
+
+---
+
 ## Documentation (Doxygen)
 
 All public API surfaces should be documented with Doxygen comments using the `/** ... */` style.

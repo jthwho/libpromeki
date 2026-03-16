@@ -604,24 +604,6 @@ class String {
                 }
 
                 // ============================================================
-                // Stream operators
-                // ============================================================
-
-                /** @brief Writes the string to an output stream. */
-                friend std::ostream &operator<<(std::ostream &os, const String &val) {
-                        os << val.str();
-                        return os;
-                }
-
-                /** @brief Reads a word from an input stream into the string. */
-                friend std::istream &operator>>(std::istream &in, String &val) {
-                        std::string tmp;
-                        in >> tmp;
-                        val = std::move(tmp);
-                        return in;
-                }
-
-                // ============================================================
                 // Case / whitespace
                 // ============================================================
 

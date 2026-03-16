@@ -56,8 +56,7 @@ bool TextStream::atEnd() const {
 }
 
 void TextStream::flush() {
-        // No-op for most IODevices; FILE-based devices flush via fflush
-        // in FileIODevice. Nothing to do at this level.
+        if(_device) _device->flush();
 }
 
 // ============================================================================

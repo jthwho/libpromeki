@@ -1,27 +1,53 @@
 # Core Streams and Serialization
 
-**Phase:** 2 (alongside IO abstractions)
+**Phase:** 2 (alongside IO abstractions) — **Core phase complete.**
 **Dependencies:** Phase 1 (containers), Phase 2A (IODevice)
 **Depends-on-this:** Phase 4 (pipeline frame serialization), Phase 7 (ObjectBase saveState/loadState)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 **Maintenance note:** Completed items are removed from this document once merged. Only retain completed items when they provide context needed by a future phase in this same document. If something is done, trust the code and git history as the source of truth.
 
-Provides promeki-native stream classes for binary and text I/O. These present a Qt-style API and integrate with IODevice and promeki types. Once DataStream and TextStream are in place, all existing naked `std::` stream usage is migrated to use promeki streams.
+Provides promeki-native stream classes for binary and text I/O. These present a Qt-style API and integrate with IODevice and promeki types. DataStream and TextStream are implemented, and all std:: stream usage has been migrated out of the library (only `tests/doctest_main.cpp` retains std:: streams, required by the doctest API).
 
 ---
 
-## Completed
+## Phase 2K: TextStream Promeki Type Operator Extensions
 
-- **DataStream** — Binary stream for structured, portable serialization over IODevice. Wire format: 4-byte magic ("PMDS") + uint16_t version header; per-value TypeId tags; byte-order-aware encoding. Supports all primitives, String (UTF-8), Buffer, Variant (including DateTime, UUID, Timecode via string representation). Factory methods: `createWriter()`, `createReader()`. Raw byte access via `readRawData`/`writeRawData`/`skipRawData`. (`datastream.h/cpp`, `tests/datastream.cpp`)
-- **BufferIODevice** — IODevice subclass backed by a `Buffer*`. Seekable, supports read/write, grows `size()` on writes up to `availSize()`. Does not own the buffer. (`bufferiodevice.h/cpp`, `tests/bufferiodevice.cpp`)
-- **TextStream** — Formatted text I/O with encoding awareness (UTF-8, Latin-1). Constructors from `IODevice*`, `Buffer*`, `String*`, `FILE*`. Full set of `operator<<`/`operator>>` for primitives, String, Variant. Formatting controls: field width/alignment/pad char, integer base (dec/hex/oct/bin), float notation (fixed/scientific/smart), precision. Manipulator functions: endl, flush, hex, dec, oct, bin, fixed, scientific, left, right, center. Status tracking (Ok, ReadPastEnd, WriteFailed). readLine(), readAll(), read(maxLength), atEnd(). (`textstream.h/cpp`, `tests/textstream.cpp`)
+**Dependencies:** TextStream (complete)
+
+Add free `operator<<(TextStream &, const T &)` and `operator>>(TextStream &, T &)` overloads so promeki types can be written/read with TextStream directly (e.g., `stream << myPoint << myTimecode`). Each overload lives in the type's own header, forward-declaring `TextStream` to avoid circular includes (similar to how Qt places `QTextStream` operators alongside each type). See `CODING_STANDARDS.md` for the full convention.
+
+- [ ] `Point<T, N>` — e.g. `"(1, 2, 3)"`
+- [ ] `Size2DTemplate<T>` — e.g. `"1920x1080"`
+- [ ] `Rect<T>` — e.g. `"(x, y, w, h)"`
+- [ ] `Rational<T>` — e.g. `"24000/1001"`
+- [ ] `UUID` — string representation
+- [ ] `Timecode` — SMPTE string
+- [ ] `TimeStamp` — formatted representation
+- [ ] `DateTime` — ISO 8601 or similar
+- [ ] `FourCC` — four-character string
+- [ ] `Color` — RGBA components
+- [ ] `XYZColor` — X, Y, Z components
+- [ ] `AudioDesc` — human-readable summary
+- [ ] `ImageDesc` — human-readable summary
+- [ ] `VideoDesc` — human-readable summary
+- [ ] `Metadata` — key-value dump
+- [ ] `Error` — name and description
+- [ ] `Duration` — formatted representation
+- [ ] `FrameRate` — string representation
+- [ ] `StringList` — delimited output
+- [ ] `List<T>` — bracketed, comma-separated (where T is streamable)
+- [ ] `Map<K,V>` — bracketed key-value pairs
+- [ ] `Set<T>` — bracketed, comma-separated
 
 ---
 
-## DataStream: Promeki Type Serialization Extensions
+## Phase 2L: DataStream Promeki Type Serialization Extensions
 
-Once more promeki types need binary serialization (e.g. for pipeline frame serialization in Phase 4 or ObjectBase saveState in Phase 7), add `DataStream` operators. These can live in each type's header or in `datastream.h` — whichever avoids circular includes.
+**Dependencies:** DataStream (complete)
+**Depends-on-this:** Phase 4 (pipeline frame serialization), Phase 7 (ObjectBase saveState/loadState)
+
+Add `DataStream` operators for binary serialization of promeki types. Each overload lives in the type's own header, forward-declaring `DataStream` to avoid circular includes (same pattern as TextStream operators).
 
 - [ ] `Point<T, N>` — N values of type T
 - [ ] `Size2DTemplate<T>` — width, height
@@ -88,48 +114,6 @@ Add binary state serialization to ObjectBase. Each subclass can override to save
 
 ---
 
-## Migration: Remove Naked std:: Stream Usage
-
-Once TextStream is implemented, migrate all existing `std::` stream usage to promeki streams. This eliminates direct `std::` stream dependencies from the public API and internal implementation.
-
-### Completed
-
-- **AnsiStream Refactor** — Removed `std::ostream` inheritance; now composes `IODevice*` internally. Constructor takes `IODevice*`. `getCursorPosition()` takes `IODevice*`. All std:: stream includes removed. Tests use `StringIODevice`. (`ansistream.h/cpp`, `tests/ansistream.cpp`)
-- **Logger Refactor** — Replaced `std::ofstream` with `FileIODevice*`, `std::cout` with `FileIODevice::stdoutDevice()`, `std::endl` with `"\n"` + `flush()`. Removed `<iostream>` and `<fstream>`. Tests use `File` + `TextStream`. (`logger.h/cpp`, `tests/logger.cpp`)
-- **operator<< / operator>> Removal** — Removed `std::ostream`/`std::istream` stream operators and replaced internal std:: stream usage across: Point (operators removed, `fromString()`/`toString()` use `StringList::split()` + `String::dec()`), Size2D (operators removed), Rect (operator removed), Matrix3x3 (operator + `<ostream>` removed), Rational (operator removed, `toString()` uses `String::dec()`), FourCC (`<iostream>` removed).
-- **String Internal Migration** — `dec()`/`hex()` use `String::number()`, `to<>()` uses `strtoll`/`strtoull`/`strtod`, `parseNumberWords()` uses `StringList::split()`, `floatToString()` uses `snprintf`. Removed `<iostream>` and `<sstream>`.
-- **Internal std::stringstream Replacement** — XYZColor `toString()` uses `String::sprintf()` (`<sstream>` removed). DateTime `fromString()` uses `strptime()`, `fromNow()` uses `StringList::split()` + `strtoll` (`<sstream>` removed). JSON `<sstream>` removed. System `<iostream>` removed. MemPool `<iostream>` removed.
-- **TUI Stream Migration** — `tui/application.cpp` uses `Application::stdoutDevice()` for AnsiStream. `tui/screen.cpp` uses `stream.flush()`. `tests/tui/screen.cpp` uses `StringIODevice`.
-- **Utils Migration** — `promeki-info/main.cpp` uses `std::printf()` instead of `std::cout`/`std::endl`.
-- **Test File Migration** — `tests/size2d.cpp`, `tests/matrix3x3.cpp`, `tests/ansistream.cpp`, `tests/logger.cpp`, `tests/string.cpp`, `tests/tui/screen.cpp`, `tests/dir.cpp` all migrated from std:: streams.
-
----
-
-### StreamString Refactor
-
-Currently extends `std::streambuf`. Refactor to work with `TextStream`. This is the last remaining std:: stream usage.
-
-**Files:**
-- [ ] Modify `include/promeki/core/core/streamstring.h`
-- [ ] Update `tests/streamstring.cpp`
-
-**Checklist:**
-- [ ] Remove `std::streambuf` inheritance
-- [ ] Internal: accumulate into `String` buffer directly (keep newline callback behavior)
-- [ ] `stream()` method: return `TextStream &` instead of `std::ostream &`
-- [ ] Remove `#include <streambuf>` and `#include <ostream>`
-- [ ] Update tests: replace `std::flush` / `std::endl` with TextStream equivalents
-
----
-
-### Verification
-
-- [ ] `grep -r 'std::ostream\|std::istream\|std::iostream\|std::streambuf\|std::stringstream\|std::istringstream\|std::ostringstream\|std::ifstream\|std::ofstream\|std::fstream\|std::cout\|std::cerr\|std::cin\|std::endl\|std::flush' include/ src/ tests/ utils/ demos/` returns zero hits (excluding thirdparty)
-- [ ] All tests pass after migration
-- [ ] No `#include <iostream>`, `<ostream>`, `<istream>`, `<sstream>`, `<fstream>`, `<streambuf>` in non-thirdparty code
-
----
-
 ## Design Notes
 
 ### DataStream wire format
@@ -144,4 +128,4 @@ Currently extends `std::streambuf`. Refactor to work with `TextStream`. This is 
 - Raw byte methods (readRawData, writeRawData, skipRawData) are untagged.
 
 ### TextStream design
-TextStream is an independent class (does not inherit from `std::ostream`). The formatting controls and encoding-awareness are different enough from `std::ostream` that inheritance creates more friction than value. This means all `operator<<`/`operator>>` overloads must be provided for TextStream explicitly — which is exactly what the migration section above tracks.
+TextStream is an independent class (does not inherit from `std::ostream`). The formatting controls and encoding-awareness are different enough from `std::ostream` that inheritance creates more friction than value. This means all `operator<<`/`operator>>` overloads must be provided for TextStream explicitly. These overloads live in each type's own header (forward-declaring `TextStream`), not in `textstream.h`, following the Qt convention. The same applies to DataStream operators. See `CODING_STANDARDS.md` for the full convention.
