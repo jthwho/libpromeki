@@ -13,6 +13,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Color Space Conversion matrix and offset.
+ * @ingroup proav_color
  *
  * Holds a 3x3 transformation matrix and a 3-element offset vector used
  * for converting pixel values between color spaces (e.g. RGB to YCbCr).

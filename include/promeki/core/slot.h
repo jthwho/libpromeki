@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Type-safe callback slot that wraps a callable with optional ownership tracking.
+ * @ingroup core_events
  *
  * Slot provides a mechanism for storing and invoking callbacks with a fixed
  * argument signature. It supports direct invocation with typed arguments as

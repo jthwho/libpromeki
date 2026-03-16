@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief IODevice backed by a promeki String.
+ * @ingroup core_io
  *
  * StringIODevice provides seekable, random-access I/O over a String
  * pointer. It is useful wherever an IODevice interface is expected but

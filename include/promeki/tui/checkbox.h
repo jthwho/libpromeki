@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Toggleable checkbox with text label.
+ * @ingroup tui_widgets
  *
  * Displays as `[x] Text` when checked or `[ ] Text` when unchecked.
  * Supports keyboard activation (Enter/Space) and mouse click to toggle.

@@ -17,9 +17,23 @@ class String;
 
 /**
  * @brief Lightweight error code wrapper for the promeki library.
+ * @ingroup core_util
  *
  * Encapsulates an error code from the Code enumeration and provides
  * comparison operators, human-readable names, descriptions, and
+ *
+ * @par Example
+ * @code
+ * Error err;
+ * // Functions use Error* for fallible results:
+ * auto val = someFunction(&err);
+ * if(err.isError()) {
+ *     String msg = err.description();
+ * }
+ *
+ * // Direct comparison
+ * if(err == Error::NotExist) { ... }
+ * @endcode
  * a mapping to the corresponding POSIX errno value when applicable.
  */
 class Error {

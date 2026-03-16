@@ -47,10 +47,21 @@ class StringList;
 
 /**
  * @brief Key-value metadata container using typed Variant values.
+ * @ingroup core_util
  *
  * Stores metadata entries keyed by a well-known ID enum. Each value
  * is stored as a Variant, supporting types such as String, int,
  * double, bool, Timecode, and Rational. Supports JSON serialization
+ *
+ * @par Example
+ * @code
+ * Metadata meta;
+ * meta.set(Metadata::Title, String("My Video"));
+ * meta.set(Metadata::FrameRate, Rational<int>(24, 1));
+ *
+ * String title = meta.value(Metadata::Title).get<String>();
+ * bool has = meta.isSet(Metadata::Copyright);  // false
+ * @endcode
  * and deserialization. When shared ownership is needed, use Metadata::Ptr.
  */
 class Metadata {

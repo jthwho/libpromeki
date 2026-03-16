@@ -19,6 +19,7 @@ template <typename T, size_t N> class Array;
 
 /**
  * @brief Non-owning view over contiguous storage, wrapping std::span.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::span with consistent naming
  * conventions matching the rest of libpromeki. Non-owning view —

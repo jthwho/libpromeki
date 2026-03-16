@@ -15,6 +15,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Bottom-of-screen status line.
+ * @ingroup tui_widgets
+ *
  */
 class TuiStatusBar : public TuiWidget {
         PROMEKI_OBJECT(TuiStatusBar, TuiWidget)

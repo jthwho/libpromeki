@@ -18,10 +18,22 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Dynamic array container wrapping std::vector.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::vector with consistent naming
  * conventions matching the rest of libpromeki.
  *
+ *
+ * @par Example
+ * @code
+ * List<int> nums = {3, 1, 4, 1, 5};
+ * nums.pushToBack(9);
+ * nums.removeIf([](int n) { return n < 3; });
+ * for(int n : nums) { ... }
+ *
+ * // Shared ownership
+ * List<String>::Ptr shared = List<String>::Ptr::create();
+ * @endcode
  * @tparam T Element type.
  */
 template <typename T>

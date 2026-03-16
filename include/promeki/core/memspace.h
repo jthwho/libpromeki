@@ -17,6 +17,7 @@ struct MemAllocation;
 
 /**
  * @brief Abstraction for memory allocation in different address spaces.
+ * @ingroup core_util
  *
  * Provides a uniform interface for allocating, releasing, copying, and setting
  * memory that may reside in different memory spaces (e.g. system RAM, GPU memory).

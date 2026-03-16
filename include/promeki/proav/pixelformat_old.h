@@ -29,6 +29,7 @@ class Pixel;
 
 /**
  * @brief Legacy pixel format descriptor (superseded by the new PixelFormat).
+ * @ingroup proav_media
  *
  * Provides an interface for interacting with data in a particular pixel
  * packing format.  This class does not concern itself with the concept of

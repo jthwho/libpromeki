@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Raster image with pixel format, planes, and metadata.
+ * @ingroup proav_media
  *
  * Holds image pixel data organized into one or more memory planes
  * according to the image's pixel format. Provides convenience

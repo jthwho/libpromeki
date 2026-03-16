@@ -19,6 +19,8 @@ using SHA1Digest = ByteArray<20>;
 
 /**
  * @brief Computes the SHA-1 hash of a block of data.
+ * @ingroup core_crypto
+ *
  * @param data Pointer to the input data.
  * @param len  Length of the input data in bytes.
  * @return The 20-byte SHA-1 digest.

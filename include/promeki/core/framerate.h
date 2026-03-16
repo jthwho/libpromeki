@@ -26,6 +26,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Represents a video frame rate as a rational number.
+ * @ingroup core_time
  *
  * FrameRate wraps a Rational value and provides an enumeration of
  * well-known industry-standard frame rates (24, 25, 29.97, 30, etc.).

@@ -84,8 +84,21 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
 
 /**
  * @brief Asynchronous thread-safe logging facility.
+ * @ingroup core_util
  *
  * All log messages are enqueued and written by a dedicated worker thread.
+ *
+ * @par Example
+ * @code
+ * // Use convenience macros (most common)
+ * promekiInfo("Processing frame %d", frameNum);
+ * promekiWarn("Buffer underrun at %s", tc.toString().first.cStr());
+ * promekiErr("Failed to open %s", path.cStr());
+ *
+ * // Configure the logger
+ * Logger::defaultLogger().setLogFile("/tmp/app.log");
+ * Logger::defaultLogger().setLogLevel(Logger::Debug);
+ * @endcode
  * Supports multiple log levels, optional console output, and file logging.
  */
 class Logger {

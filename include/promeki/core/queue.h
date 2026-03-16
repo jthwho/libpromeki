@@ -18,8 +18,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Thread-safe FIFO queue.
+ * @ingroup core_containers
  *
  * All public methods are safe to call concurrently from multiple threads.
+ *
+ * @par Example
+ * @code
+ * Queue<String> q;
+ * q.emplace("first");
+ * q.emplace("second");
+ * String val = q.dequeue();  // "first"
+ * bool empty = q.isEmpty();  // false
+ * @endcode
  * Internally synchronized with a Mutex and WaitCondition.  Blocking
  * methods (pop(), peek(), waitForEmpty()) will sleep until their condition
  * is met rather than spinning or polling.

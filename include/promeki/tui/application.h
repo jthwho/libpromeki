@@ -23,6 +23,7 @@ class TuiWidget;
 
 /**
  * @brief Application class for TUI programs.
+ * @ingroup tui_core
  *
  * Derives from Application and manages the Terminal, TuiScreen, and
  * input parsing.  Provides the main event loop integration for TUI

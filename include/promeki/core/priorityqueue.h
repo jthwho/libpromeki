@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Priority queue container wrapping std::priority_queue.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::priority_queue with consistent naming
  * conventions matching the rest of libpromeki. Not thread-safe; for use

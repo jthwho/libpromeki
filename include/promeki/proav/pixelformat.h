@@ -17,6 +17,8 @@
 
 /**
  * @brief Registers a PixelFormat subclass in the global pixel format registry.
+ * @ingroup proav_media
+ *
  * @param name The PixelFormat subclass type to instantiate and register.
  */
 #define PROMEKI_REGISTER_PIXELFORMAT(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_pixelformat_, PROMEKI_UNIQUE_ID) = \

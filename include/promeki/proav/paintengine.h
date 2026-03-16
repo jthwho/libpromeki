@@ -20,6 +20,7 @@ class Image;
 
 /**
  * @brief 2D drawing engine for rendering primitives onto images.
+ * @ingroup proav_paint
  *
  * PaintEngine provides a pixel-format-aware interface for drawing points,
  * lines, filling surfaces, and blitting images.  It delegates to a

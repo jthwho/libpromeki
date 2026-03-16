@@ -15,6 +15,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Clickable button with text label.
+ * @ingroup tui_widgets
+ *
  */
 class TuiButton : public TuiWidget {
         PROMEKI_OBJECT(TuiButton, TuiWidget)

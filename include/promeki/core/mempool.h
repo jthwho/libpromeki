@@ -19,6 +19,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Thread-safe memory pool allocator with external metadata.
+ * @ingroup core_util
  *
  * Manages a pool of memory that can be allocated from with alignment support.
  * It does not use the managed memory buffer for any metadata, so it can

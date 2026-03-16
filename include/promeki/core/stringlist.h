@@ -15,6 +15,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /** 
  * @brief Manages a list of strings
+ * @ingroup core_strings
+ *
  */
 class StringList : public List<String> {
         public:

@@ -21,8 +21,24 @@ class JsonArray;
 
 /**
  * @brief JSON object container wrapping nlohmann::json.
+ * @ingroup core_util
  *
  * Provides a type-safe interface for building and querying JSON objects.
+ *
+ * @par Example
+ * @code
+ * // Build a JSON object
+ * JsonObject obj;
+ * obj.set("name", "clip001");
+ * obj.set("width", 1920);
+ * obj.set("hdr", true);
+ * String json = obj.toString(2);  // pretty-printed
+ *
+ * // Parse and query
+ * auto parsed = JsonObject::parse(json);
+ * String name = parsed.getString("name");
+ * int w = parsed.getInt("width");
+ * @endcode
  * Values can be accessed by key with typed getters that perform safe
  * conversions.  Supports nesting via JsonObject and JsonArray values.
  */

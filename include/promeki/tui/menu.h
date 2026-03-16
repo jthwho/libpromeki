@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A menu action item.
+ * @ingroup tui_widgets
+ *
  */
 class TuiAction : public ObjectBase {
         PROMEKI_OBJECT(TuiAction, ObjectBase)

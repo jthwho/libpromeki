@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Represents a MIDI note number (0–127) with utility methods.
+ * @ingroup music_theory
  *
  * MidiNote is a lightweight value type that wraps a single MIDI note
  * number.  It provides both instance methods and static methods for

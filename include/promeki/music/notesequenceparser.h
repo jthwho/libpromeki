@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Parses a domain-specific text notation into a sequence of MusicalNote objects.
+ * @ingroup music_theory
  *
  * NoteSequenceParser interprets a compact text language for describing
  * musical sequences.  The language supports:

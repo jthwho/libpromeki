@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Multi-line text editing/display widget.
+ * @ingroup tui_widgets
+ *
  */
 class TuiTextArea : public TuiWidget {
         PROMEKI_OBJECT(TuiTextArea, TuiWidget)

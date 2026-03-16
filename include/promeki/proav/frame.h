@@ -19,9 +19,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A media frame containing images, audio, and metadata.
+ * @ingroup proav_media
  *
  * Aggregates one or more image planes, one or more audio tracks, and
  * a metadata container into a single unit that represents a frame of
+ *
+ * @par Example
+ * @code
+ * VideoDesc vdesc;
+ * Frame::Ptr frame = Frame::Ptr::create(vdesc);
+ * frame->setTimecode(Timecode(Timecode::NDF24, 1, 0, 0, 0));
+ * Image img = frame->image(0);
+ * @endcode
  * media content.
  */
 class Frame {

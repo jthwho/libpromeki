@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Promise wrapping std::promise\<T\>.
+ * @ingroup core_concurrency
  *
  * Used to set a result that will be retrieved via the associated
  * Future\<T\>.  Move-only (non-copyable).

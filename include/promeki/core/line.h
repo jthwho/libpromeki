@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief N-dimensional line segment defined by a start and end point.
+ * @ingroup core_math
  *
  * A simple value type representing a line segment between two Points of the
  * same dimensionality and component type.

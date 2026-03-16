@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Convenience alias for fallible return types.
+ * @ingroup core_util
  *
  * Wraps a value and an Error in a Pair. Structured bindings work
  * naturally: `auto [val, err] = someFactory();`

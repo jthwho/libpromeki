@@ -16,7 +16,16 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Fixed-size array container wrapping std::array.
+ * @ingroup core_containers
  *
+ *
+ * @par Example
+ * @code
+ * Array<float, 3> rgb = {0.5f, 0.8f, 1.0f};
+ * float r = rgb[0];        // 0.5
+ * size_t n = rgb.size();   // 3
+ * rgb.fill(0.0f);          // all zeros
+ * @endcode
  * Extends std::array with element-wise arithmetic, interpolation,
  * clamping, and range-checking utilities.
  *

@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief LIFO stack container wrapping std::stack.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::stack with consistent naming
  * conventions matching the rest of libpromeki. Simple value type —

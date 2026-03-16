@@ -13,6 +13,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Event delivered when a timer fires.
+ * @ingroup core_events
  *
  * Carries the timer ID so that the receiver can identify which timer
  * triggered the event.  Delivered to ObjectBase::timerEvent() by the

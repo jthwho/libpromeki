@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Represents a color space with chromaticity coordinates and transfer functions.
+ * @ingroup proav_color
  *
  * Wraps a static lookup table of known color spaces (e.g. Rec. 709, Rec. 601)
  * with their CIE chromaticity primaries, white point, and electro-optical /

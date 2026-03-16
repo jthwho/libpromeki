@@ -16,12 +16,13 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Typed pair container wrapping std::pair.
+ * @ingroup core_util
  *
  * Provides a Qt-inspired API over std::pair with consistent naming
  * conventions matching the rest of libpromeki. Simple value type —
  * no PROMEKI_SHARED_FINAL.
  *
- * Supports structured bindings via std::tuple_size/std::tuple_element
+ * Supports structured bindings via std::tuple_size/std::%tuple_element
  * specializations.
  *
  * @tparam A First element type.

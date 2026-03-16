@@ -15,6 +15,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Container widget with a border and optional title.
+ * @ingroup tui_widgets
+ *
  */
 class TuiFrame : public TuiWidget {
         PROMEKI_OBJECT(TuiFrame, TuiWidget)

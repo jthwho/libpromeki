@@ -18,6 +18,7 @@ class ImageFileIO;
 
 /**
  * @brief Image file loader and saver.
+ * @ingroup proav_media
  *
  * Provides a simple interface for loading and saving image files.
  * The file format is determined by the ID passed at construction,

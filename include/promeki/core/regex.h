@@ -16,8 +16,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Regular expression wrapper around std::regex.
+ * @ingroup core_strings
  *
  * Provides a simplified interface for pattern matching, searching, and
+ *
+ * @par Example
+ * @code
+ * RegEx re("(\\d+)x(\\d+)");
+ * auto match = re.match("1920x1080");
+ * if(match.hasMatch()) {
+ *     String w = match.captured(1);  // "1920"
+ *     String h = match.captured(2);  // "1080"
+ * }
+ * @endcode
  * extracting matches from strings using standard C++ regular expressions.
  */
 class RegEx {

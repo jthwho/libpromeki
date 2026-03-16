@@ -21,9 +21,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief General-purpose thread pool for submitting callable tasks.
+ * @ingroup core_concurrency
  *
  * Tasks are submitted via submit() which returns a Future for the result.
  * The pool manages a set of worker threads that pull tasks from an internal
+ *
+ * @par Example
+ * @code
+ * ThreadPool pool(4);  // 4 worker threads
+ * Future<int> result = pool.submit([]() {
+ *     return expensiveComputation();
+ * });
+ * int value = result.get();  // blocks until ready
+ * @endcode
  * queue.  When the thread count is set to 0, tasks run inline on the
  * calling thread (useful for WASM graceful degradation).
  *

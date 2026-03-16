@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Atomic variable wrapping std::atomic\<T\>.
+ * @ingroup core_concurrency
  *
  * Provides load/store with acquire/release semantics, atomic
  * arithmetic for integral types, and compare-and-swap.

@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Generic memory buffer descriptor with alignment and memory space support.
+ * @ingroup core_media
  *
  * Buffer is a uniform tracking object for contiguous memory regions that may
  * reside in different address spaces: local system RAM, GPU device memory,
@@ -64,6 +65,21 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Shared ownership
  * When shared ownership is needed, use Buffer::Ptr (SharedPtr\<Buffer\>).
  * This is the recommended approach for large buffers or buffers in
+ *
+ * @par Example
+ * @code
+ * // Allocate a 4 KB page-aligned buffer
+ * Buffer buf(4096);
+ * buf.fill(0);
+ * buf.setSize(128);  // 128 bytes of content written
+ *
+ * // Shared ownership for zero-copy passing
+ * Buffer::Ptr shared = Buffer::Ptr::create(1920 * 1080 * 4);
+ *
+ * // Copy external data into the buffer
+ * const char *src = "hello";
+ * buf.copyFrom(src, 5);
+ * @endcode
  * non-host-accessible memory spaces, as it avoids deep copies.
  */
 class Buffer {

@@ -66,6 +66,8 @@ class ObjectBasePtr {
         public:
                 /**
                  * @brief Constructs a pointer tracking the given ObjectBase.
+ * @ingroup core_events
+ *
                  * @param object The ObjectBase to track, or nullptr.
                  */
                 ObjectBasePtr(ObjectBase *object = nullptr) : p(object) { link(); }

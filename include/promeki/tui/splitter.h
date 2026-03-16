@@ -14,6 +14,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Resizable split between two child widgets.
+ * @ingroup tui_widgets
+ *
  */
 class TuiSplitter : public TuiWidget {
         PROMEKI_OBJECT(TuiSplitter, TuiWidget)

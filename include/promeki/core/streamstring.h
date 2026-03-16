@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Stream buffer that collects output into a String, splitting on newlines.
+ * @ingroup core_streams
  *
  * StreamString is a std::streambuf subclass that accumulates characters
  * written to its associated std::ostream.  When a newline or EOF is

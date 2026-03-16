@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Painting context for TUI widgets.
+ * @ingroup tui_core
  *
  * Draws to a TuiScreen within a clipped region corresponding to the
  * widget's visible area.  Coordinates are relative to the clip region

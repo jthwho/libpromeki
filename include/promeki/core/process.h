@@ -23,6 +23,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Subprocess execution with pipe-based I/O.
+ * @ingroup core_io
  *
  * Wraps subprocess creation and management using pipe() + fork() + exec()
  * on POSIX platforms. Provides access to the child process's stdin, stdout,

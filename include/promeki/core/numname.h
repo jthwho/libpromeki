@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Deconstructs a numbered name into its prefix, number, and suffix components.
+ * @ingroup core_util
  *
  * Parses strings like "fred-0001", "007 Bond", or "test.098.dpx" into a prefix,
  * a numeric field (with optional zero-padding), and a suffix. Useful for working

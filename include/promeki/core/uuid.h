@@ -18,8 +18,17 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Universally Unique Identifier (UUID).
+ * @ingroup core_util
  *
  * Generates and manipulates RFC 4122 / RFC 9562 UUIDs.
+ *
+ * @par Example
+ * @code
+ * UUID id = UUID::generate();          // random v4
+ * String str = id.toString();          // "550e8400-e29b-..."
+ * UUID parsed = UUID::fromString(str); // round-trip
+ * bool valid = id.isValid();
+ * @endcode
  * Supports versions 1 (stub), 3, 4, 5, and 7.
  */
 class UUID {

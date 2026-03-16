@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief State machine for parsing terminal escape sequences into events.
+ * @ingroup tui_core
  *
  * Handles CSI sequences (arrows, function keys, mouse), SS3 sequences,
  * UTF-8 multi-byte input, and ambiguous Escape timing.

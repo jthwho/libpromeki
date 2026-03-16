@@ -15,7 +15,10 @@ PROMEKI_NAMESPACE_BEGIN
 
 class Audio;
 
-/** @brief Audio signal generator for producing test tones and silence. */
+/**
+ * @brief Audio signal generator for producing test tones and silence.
+ * @ingroup proav_media
+ */
 class AudioGen {
 	public:
                 /** @brief Type of audio signal to generate. */

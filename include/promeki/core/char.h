@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Unicode-aware character class wrapping a single codepoint.
+ * @ingroup core_strings
  *
  * Stores a char32_t codepoint and provides character classification,
  * case conversion, and UTF-8 encoding/decoding.

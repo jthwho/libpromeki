@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Scheduling policy for thread priority control.
+ * @ingroup core_events
  *
  * Wraps the OS-level scheduling policies.  Not all policies are
  * available on every platform — unsupported values map to Default.

@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A database that maps keys to struct entries, initialized from an initializer list.
+ * @ingroup core_util
  *
  * Provides a structure database that can be initialized from an initializer list, allowing
  * you to initialize a structure database on startup.  The struct must contain members named

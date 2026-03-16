@@ -17,6 +17,7 @@ class String;
 
 /**
  * @brief Time duration with nanosecond precision.
+ * @ingroup core_time
  *
  * Simple value type wrapping std::chrono::nanoseconds. Provides
  * static factories for construction and accessors for various

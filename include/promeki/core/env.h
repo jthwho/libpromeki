@@ -15,9 +15,17 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Provides access to process environment variables.
+ * @ingroup core_util
  *
  * Static utility class wrapping standard environment variable operations.
  * All methods return promeki::String for consistent integration with the
+ *
+ * @par Example
+ * @code
+ * String home = Env::get("HOME");
+ * Env::set("MY_APP_DEBUG", "1");
+ * bool exists = Env::contains("PATH");
+ * @endcode
  * rest of the library.
  */
 class Env {

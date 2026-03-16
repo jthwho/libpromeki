@@ -22,6 +22,8 @@ class MouseEvent;
 
 /**
  * @brief Event delivered when a TUI widget needs to repaint.
+ * @ingroup tui_core
+ *
  */
 class TuiPaintEvent : public Event {
         public:
@@ -70,6 +72,17 @@ enum TuiSizePolicy {
  * Derives from ObjectBase to inherit signals/slots, parent/child
  * relationships, event dispatch, and timer support.  Provides geometry
  * management, focus handling, visibility control, and virtual methods
+ *
+ * @par Example
+ * @code
+ * class MyWidget : public TuiWidget {
+ *     protected:
+ *         void paintEvent(TuiPaintEvent *) override {
+ *             Painter p(this);
+ *             p.drawText(0, 0, "Hello, TUI!");
+ *         }
+ * };
+ * @endcode
  * for paint/key/mouse/resize events.
  */
 class TuiWidget : public ObjectBase {

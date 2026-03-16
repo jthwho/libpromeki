@@ -17,9 +17,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Unordered associative container wrapping std::unordered_map.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::unordered_map with consistent naming
- * conventions matching the rest of libpromeki.
+ *  *
+ * @par Example
+ * @code
+ * HashMap<String, int> cache;
+ * cache.insert("width", 1920);
+ * cache.insert("height", 1080);
+ * int w = cache.value("width", 0);  // 1920
+ * @endcode
+conventions matching the rest of libpromeki.
  *
  * @tparam K Key type (must be hashable).
  * @tparam V Value type.

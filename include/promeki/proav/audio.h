@@ -17,10 +17,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Object to hold some number of audio samples.
- * @ingroup DataObject
+ * @ingroup proav_media
  *
  * This object is meant to hold some number of audio samples
  * described by an AudioDesc. The sample data is stored in a
+ *
+ * @par Example
+ * @code
+ * AudioDesc desc(48000, 2, AudioDesc::Float32);
+ * Audio audio(desc, 1024);  // 1024 samples
+ *
+ * // Shared ownership for pipeline passing
+ * Audio::Ptr shared = Audio::Ptr::create(desc, 1024);
+ * @endcode
  * shared Buffer. When shared ownership is needed, use Audio::Ptr.
  */
 class Audio {

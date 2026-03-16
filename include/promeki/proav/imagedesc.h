@@ -17,9 +17,17 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Describes the format and layout of a single image.
+ * @ingroup proav_media
  *
  * ImageDesc encapsulates image dimensions (Size2Du32), pixel format, line padding
  * and alignment, interlace mode, and associated metadata. It is used by Image
+ *
+ * @par Example
+ * @code
+ * ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
+ * size_t bytes = desc.imageSize();  // total bytes for all planes
+ * int planes = desc.planeCount();
+ * @endcode
  * and VideoDesc to define the properties of image data.
  */
 class ImageDesc {

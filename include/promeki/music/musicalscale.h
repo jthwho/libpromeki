@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Represents a musical scale with a root pitch class and mode.
+ * @ingroup music_theory
  *
  * MusicalScale combines a root note (0–11 pitch class) with a mode
  * (Major, NaturalMinor, etc.) and provides operations for mapping

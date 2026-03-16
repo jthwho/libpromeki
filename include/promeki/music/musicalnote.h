@@ -13,9 +13,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Represents a single musical note with timing and expression data.
+ * @ingroup music_theory
  *
  * MusicalNote is a lightweight value type that describes a note (or rest)
  * with its MIDI pitch, timing, dynamics, and expression parameters such
+ *
+ * @par Example
+ * @code
+ * MusicalNote note;
+ * note.setMidiNote(60);     // Middle C
+ * note.setDuration(1.0);    // quarter note
+ * note.setVelocity(0.8);    // mezzo-forte
+ * @endcode
  * as vibrato and tremolo.  Fractional MIDI note numbers are supported
  * for microtonal or pitch-bent notes.
  */

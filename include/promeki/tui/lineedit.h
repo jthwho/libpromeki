@@ -15,6 +15,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Single-line text input widget.
+ * @ingroup tui_widgets
+ *
  */
 class TuiLineEdit : public TuiWidget {
         PROMEKI_OBJECT(TuiLineEdit, TuiWidget)

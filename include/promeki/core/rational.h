@@ -17,9 +17,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Rational number with numerator and denominator.
+ * @ingroup core_math
  *
  * Represents an exact fraction.  Automatically simplifies on
  * construction.  A zero denominator produces an invalid Rational
+ *
+ * @par Example
+ * @code
+ * Rational<int> fps(24000, 1001);  // 23.976 fps
+ * double val = fps.toDouble();     // 23.976...
+ * String s = fps.toString();       // "24000/1001"
+ * Rational<int> half(1, 2);
+ * auto sum = fps + half;
+ * @endcode
  * that can be detected with isValid().
  *
  * @tparam T Underlying integer type (default: int).

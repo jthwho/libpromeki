@@ -19,6 +19,8 @@ using MD5Digest = ByteArray<16>;
 
 /**
  * @brief Computes the MD5 hash of a block of data.
+ * @ingroup core_crypto
+ *
  * @param data Pointer to the input data.
  * @param len  Length of the input data in bytes.
  * @return The 16-byte MD5 digest.

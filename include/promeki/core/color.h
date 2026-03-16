@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief General-purpose RGBA color.
+ * @ingroup core_util
  *
  * A simple value type storing red, green, blue, and alpha channels as
  * uint8_t values.  Provides named color constants, hex conversion, and

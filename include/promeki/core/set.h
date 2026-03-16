@@ -17,10 +17,20 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Ordered unique-element container wrapping std::set.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::set with consistent naming
  * conventions matching the rest of libpromeki.
  *
+ *
+ * @par Example
+ * @code
+ * Set<String> tags = {"alpha", "beta"};
+ * tags.insert("gamma");
+ * bool has = tags.contains("alpha");  // true
+ * tags.remove("beta");
+ * List<String> sorted = tags.toList();
+ * @endcode
  * @tparam T Element type (must support operator<).
  */
 template <typename T>

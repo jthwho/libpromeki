@@ -20,6 +20,8 @@ class AudioDesc;
 /**
  * @brief Base class for an audio processing block
  * This object defines an interface for composing an audio processing chain.
+ * @ingroup proav_media
+ *
  */
 class AudioBlock : public ObjectBase {
         PROMEKI_OBJECT(AudioBlock, ObjectBase);

@@ -20,6 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Fixed-size byte array with hex string conversion.
+ * @ingroup core_strings
  *
  * A specialization of fixed-size array for uint8_t data, providing
  * conversion to and from hexadecimal strings.

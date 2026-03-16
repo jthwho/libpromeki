@@ -15,9 +15,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Two-dimensional size (width and height).
+ * @ingroup core_math
  *
  * A simple value type representing a 2D extent. Supports validity checks,
  * area computation, point containment tests, and string serialization in
+ *
+ * @par Example
+ * @code
+ * Size2Du32 hd(1920, 1080);
+ * uint32_t w = hd.width();   // 1920
+ * uint32_t h = hd.height();  // 1080
+ * String s = hd.toString();  // "1920x1080"
+ * @endcode
  * "WxH" format.
  *
  * @tparam T The component type (e.g. size_t, float, double).

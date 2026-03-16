@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Macro to simplify making a base object into a native shared object.
+ * @ingroup core_util
  *
  * You may use this in your class definition to quickly implement the functionality
  * required to make an object into a native shared object.  Note, this macro assumes

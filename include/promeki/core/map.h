@@ -17,10 +17,20 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Ordered associative container wrapping std::map.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::map with consistent naming
  * conventions matching the rest of libpromeki.
  *
+ *
+ * @par Example
+ * @code
+ * Map<String, int> ages = {{"Alice", 30}, {"Bob", 25}};
+ * ages.insert("Carol", 28);
+ * int a = ages.value("Alice", -1);     // 30
+ * bool found = ages.contains("Dave");  // false
+ * ages.forEach([](const String &k, int v) { ... });
+ * @endcode
  * @tparam K Key type.
  * @tparam V Value type.
  */

@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A point in the CIE 1931 xy chromaticity diagram.
+ * @ingroup proav_color
  *
  * Represents a two-dimensional chromaticity coordinate (x, y) and provides
  * conversions between wavelengths, correlated color temperatures, and

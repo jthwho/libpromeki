@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Abstract base class for image codecs.
+ * @ingroup proav_media
  *
  * Provides an interface for querying conversion capabilities and creating
  * codec instances that perform image format conversions. Subclasses implement

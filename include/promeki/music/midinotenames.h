@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Provides a customizable name overlay for MIDI notes.
+ * @ingroup music_theory
  *
  * MidiNoteNames holds an optional name for each of the 128 MIDI note
  * values.  When a name is set for a note, name() returns it; otherwise

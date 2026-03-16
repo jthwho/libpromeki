@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Reader-writer lock wrapping std::shared_mutex.
+ * @ingroup core_concurrency
  *
  * Allows multiple concurrent readers or a single exclusive writer.
  * Provides nested RAII ReadLocker and WriteLocker types.

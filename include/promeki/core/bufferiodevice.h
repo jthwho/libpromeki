@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief IODevice backed by an in-memory Buffer.
+ * @ingroup core_io
  *
  * BufferIODevice provides seekable, random-access I/O over a promeki
  * Buffer. It is useful wherever an IODevice interface is expected but

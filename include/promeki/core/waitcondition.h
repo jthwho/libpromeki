@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Condition variable wrapping std::condition_variable.
+ * @ingroup core_concurrency
  *
  * Used with Mutex to allow threads to wait for a condition to become
  * true.  Non-copyable and non-movable.

@@ -1,0 +1,151 @@
+/**
+ * @defgroup core_containers Core Containers
+ * @brief Container classes wrapping the C++ Standard Library containers.
+ *
+ * Provides consistent, Qt-inspired APIs over standard containers such as
+ * std::vector, std::map, std::set, std::deque, and std::array.  Every
+ * container follows libpromeki naming conventions and integrates with
+ * SharedPtr for optional shared ownership.
+ */
+
+/**
+ * @defgroup core_concurrency Core Concurrency
+ * @brief Threading primitives and synchronization utilities.
+ *
+ * Wraps standard concurrency types (std::mutex, std::future, etc.) with
+ * libpromeki naming conventions.  Includes higher-level constructs such as
+ * ThreadPool for task parallelism and Promise/Future for asynchronous
+ * results.
+ */
+
+/**
+ * @defgroup core_io Core I/O
+ * @brief File system access and device-oriented I/O.
+ *
+ * Layered I/O device hierarchy (IODevice, BufferedIODevice, File) plus
+ * file-system helpers (FilePath, Dir, FileInfo) and child-process
+ * management (Process).
+ */
+
+/**
+ * @defgroup core_streams Core Streams
+ * @brief Typed serialization streams for binary and text data.
+ *
+ * DataStream provides portable binary serialization; TextStream provides
+ * formatted text output.  StreamString is a convenience adapter that
+ * writes to an in-memory String.
+ */
+
+/**
+ * @defgroup core_strings Core Strings
+ * @brief String handling, regular expressions, and character utilities.
+ *
+ * Encoding-aware String class, StringList, RegEx, ANSI escape-code
+ * stream, single-character Char type, and raw ByteArray.
+ */
+
+/**
+ * @defgroup core_events Core Events
+ * @brief Event loop, signals/slots, and object lifecycle management.
+ *
+ * Per-thread EventLoop with timer support, Signal/Slot connections
+ * (including cross-thread dispatch), Thread wrapper with built-in event
+ * loop, ObjectBase with thread-affinity, and Application entry point.
+ */
+
+/**
+ * @defgroup core_media Core Media
+ * @brief Aligned memory buffers for media data.
+ *
+ * The Buffer class provides page-aligned, reference-counted memory
+ * suitable for image planes, audio sample blocks, and other bulk media
+ * data.
+ */
+
+/**
+ * @defgroup core_math Core Math
+ * @brief Mathematical primitives: points, sizes, rectangles, matrices.
+ *
+ * N-dimensional Point, 2D Size and Rect, Rational fractions, 4x4 and
+ * 3x3 Matrix classes, Line segments, and a PID controller.
+ */
+
+/**
+ * @defgroup core_time Core Time
+ * @brief Timecode, timestamps, durations, and frame rates.
+ *
+ * SMPTE Timecode (backed by libvtc), steady-clock TimeStamp,
+ * calendar-aware DateTime, Duration, ElapsedTimer for benchmarking,
+ * and FrameRate descriptors.
+ */
+
+/**
+ * @defgroup core_util Core Utilities
+ * @brief General-purpose utilities, error handling, and diagnostics.
+ *
+ * Variant type, Error reporting, UUID generation, FourCC codes,
+ * Metadata key-value store, environment access, command-line parsing,
+ * logging, memory pools, platform detection, terminal I/O, and more.
+ */
+
+/**
+ * @defgroup core_crypto Core Cryptographic Utilities
+ * @brief Hash functions for data integrity.
+ *
+ * MD5 and SHA-1 implementations for checksums and content addressing.
+ * Not intended for security-critical use.
+ */
+
+/**
+ * @defgroup proav_media ProAV Media
+ * @brief Professional audio/video media objects and codecs.
+ *
+ * Audio and image containers with format descriptors, file I/O
+ * factories, pixel format definitions, codec abstractions, and
+ * frame-level media handling for broadcast and post-production
+ * workflows.
+ */
+
+/**
+ * @defgroup proav_color ProAV Color
+ * @brief Color science: CIE color spaces, conversions, and XYZ colors.
+ *
+ * CIE chromaticity points, spectral wavelength tables, color space
+ * definitions (sRGB, Rec. 709, DCI-P3, etc.), and color space
+ * conversion utilities.
+ */
+
+/**
+ * @defgroup proav_paint ProAV Paint
+ * @brief 2D rendering: font painting and paint engines.
+ *
+ * FontPainter for glyph rendering via FreeType and PaintEngine for
+ * basic 2D drawing operations on Image buffers.
+ */
+
+/**
+ * @defgroup music_theory Music Theory
+ * @brief Musical note representation, scales, and MIDI utilities.
+ *
+ * MusicalNote and MusicalScale for Western music theory, MIDI note
+ * numbers and names, and NoteSequenceParser for string-based note
+ * input.
+ */
+
+/**
+ * @defgroup tui_widgets TUI Widgets
+ * @brief Terminal UI widget library.
+ *
+ * Interactive terminal widgets: buttons, checkboxes, labels, text
+ * areas, list views, menus, progress bars, scroll areas, splitters,
+ * status bars, and tab widgets.
+ */
+
+/**
+ * @defgroup tui_core TUI Core
+ * @brief Terminal UI framework core: screen, input, layout, painting.
+ *
+ * Application entry point for TUI programs, Widget base class, Screen
+ * abstraction, input event parsing, Painter for cell-based rendering,
+ * Palette and Style theming, and Layout management.
+ */

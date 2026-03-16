@@ -17,6 +17,7 @@ class StringList;
 
 /**
  * @brief Describes a NumName sequence with a head and tail range.
+ * @ingroup core_util
  *
  * Represents a named, numbered file sequence (e.g. "image.0001.exr" through
  * "image.0100.exr") by storing the NumName pattern along with the first

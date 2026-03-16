@@ -17,9 +17,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Provides directory operations using std::filesystem.
+ * @ingroup core_io
  *
  * Dir is a simple utility class (not ObjectBase) that wraps
  * std::filesystem directory operations with the promeki API
+ *
+ * @par Example
+ * @code
+ * Dir dir("/tmp/output");
+ * if(!dir.exists()) dir.mkpath();
+ * StringList files = dir.entryList();
+ * for(const String &f : files) { ... }
+ * @endcode
  * conventions.
  */
 class Dir {

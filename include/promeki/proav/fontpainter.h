@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Renders text into an image using a TrueType font.
+ * @ingroup proav_paint
  *
  * Uses a PaintEngine to draw glyphs loaded from a TrueType font file.
  * Set the paint engine and font filename before calling drawText().

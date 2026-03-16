@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Audio file reader and writer.
+ * @ingroup proav_media
  *
  * Provides a high-level interface for reading and writing audio files.
  * The actual file format handling is delegated to an Impl subclass,

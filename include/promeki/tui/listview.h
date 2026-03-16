@@ -19,6 +19,7 @@ class TuiPalette;
 
 /**
  * @brief Scrollable list of items with keyboard and mouse navigation.
+ * @ingroup tui_widgets
  *
  * Supports single selection via keyboard (Up/Down/PageUp/PageDown/Home/End)
  * and mouse (click to select, double-click to activate). Mouse wheel and

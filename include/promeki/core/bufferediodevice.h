@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Abstract IODevice with an internal read buffer.
+ * @ingroup core_io
  *
  * Derives from IODevice and overrides read() to serve data from an
  * internal Buffer. Subclasses implement readFromDevice() for raw I/O;

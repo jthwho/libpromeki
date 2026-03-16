@@ -22,6 +22,7 @@ class ObjectBase;
 
 /**
  * @brief Per-thread event loop providing event dispatch, timers, and posted callables.
+ * @ingroup core_events
  *
  * EventLoop is not an ObjectBase — it is infrastructure that ObjectBase
  * instances attach to.  Each thread may have at most one active EventLoop,
@@ -34,6 +35,24 @@ class ObjectBase;
  *
  * exec() is simply a loop calling processEvents(WaitForMore).
  *
+ *
+ * @par Example
+ * @code
+ * EventLoop loop;
+ *
+ * // Post work to this thread's event loop
+ * loop.postCallable([]() {
+ *     promekiInfo("Running on event loop thread");
+ * });
+ *
+ * // Start a repeating 100ms timer
+ * int timerId = loop.startTimer(100, []() {
+ *     promekiInfo("Timer fired");
+ * });
+ *
+ * // Run the event loop (blocks until quit)
+ * int exitCode = loop.exec();
+ * @endcode
  * @note Timer precision is millisecond-level, based on steady_clock polling.
  */
 class EventLoop {

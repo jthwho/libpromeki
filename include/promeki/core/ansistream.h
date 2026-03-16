@@ -20,6 +20,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Output stream for ANSI codes
  * You can use this class to make it easier to send 
  * ANSI escape codes to an output stream
+ * @ingroup core_strings
+ *
  */
 class AnsiStream : public std::ostream {
         public:

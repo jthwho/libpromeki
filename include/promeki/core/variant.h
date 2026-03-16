@@ -25,6 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief X-macro that defines all supported Variant types.
+ * @ingroup core_util
  *
  * Each entry has the form `X(EnumName, CppType)`.  The macro is expanded in
  * several contexts inside VariantImpl:
@@ -89,6 +90,15 @@ namespace detail {
  * VariantImpl is a thin wrapper around `std::variant` that adds a Type enum,
  * human-readable type names, and automatic type-conversion logic via the
  * templated get() method.  It is not intended to be used directly; instead use
+ *
+ * @par Example
+ * @code
+ * Variant v = 42;
+ * String s = v.get<String>();  // "42"
+ * v.set(String("hello"));
+ * bool valid = v.isValid();    // true
+ * Variant::Type t = v.type();  // Variant::TypeString
+ * @endcode
  * the `Variant` type alias which is instantiated with the concrete type list.
  *
  * @tparam Types  The set of types the variant can hold (generated from PROMEKI_VARIANT_TYPES).

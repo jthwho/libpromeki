@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Style palette for TUI widgets.
+ * @ingroup tui_core
  *
  * Provides a centralized set of TuiStyle values organized by role and
  * state group.  Widgets query the palette for their styles instead of

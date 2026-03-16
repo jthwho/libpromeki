@@ -21,6 +21,7 @@ class String;
 
 /**
  * @brief Provides system-level utility functions.
+ * @ingroup core_util
  *
  * Static utility class for querying host information, byte-order helpers,
  * and C++ symbol demangling.

@@ -14,6 +14,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Container that scrolls content larger than its viewport.
+ * @ingroup tui_widgets
+ *
  */
 class TuiScrollArea : public TuiWidget {
         PROMEKI_OBJECT(TuiScrollArea, TuiWidget)

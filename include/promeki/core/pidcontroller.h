@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Discrete Proportional-Integral-Derivative (PID) controller.
+ * @ingroup core_math
  *
  * Implements a standard PID control loop parameterized on value and time types.
  * The controller requires two callbacks: one that returns the current measured

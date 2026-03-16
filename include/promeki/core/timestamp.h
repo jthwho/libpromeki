@@ -16,9 +16,17 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A monotonic timestamp based on std::chrono::steady_clock.
+ * @ingroup core_time
  *
  * Provides high-resolution time measurement, elapsed time queries, and
  * thread sleep utilities. Uses steady_clock to guarantee monotonic
+ *
+ * @par Example
+ * @code
+ * TimeStamp start = TimeStamp::now();
+ * // ... do work ...
+ * double elapsed = start.elapsedSeconds();
+ * @endcode
  * progression regardless of system clock adjustments.
  */
 class TimeStamp {

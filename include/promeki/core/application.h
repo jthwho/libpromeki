@@ -22,6 +22,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Application-wide state for the promeki library.
+ * @ingroup core_events
  *
  * Provides global application identity (name, UUID, command-line arguments)
  * used by other parts of the library such as UUID v3/v5 generation.

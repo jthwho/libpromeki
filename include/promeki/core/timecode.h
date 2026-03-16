@@ -17,12 +17,29 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Class for holding and manipulating timecode.
+ * @ingroup core_time
  *
  * While this class supports all the capabilities of SMPTE timecode, it exceeds
  * it in many ways.  It makes no restrictions on hour counts above 23, or frame
  * rates above 30.  It will, of course, attempt to do the best it can when asked
  * to output a SMPTE timecode (i.e. the hours will be modulo 24).
  *
+ *
+ * @par Example
+ * @code
+ * // Create a 24fps timecode at 01:00:00:00
+ * Timecode tc(Timecode::NDF24, 1, 0, 0, 0);
+ * ++tc;  // advance to 01:00:00:01
+ *
+ * // Convert to string
+ * auto [str, err] = tc.toString();  // "01:00:00:01"
+ *
+ * // From absolute frame number
+ * Timecode tc2 = Timecode::fromFrameNumber(Timecode::NDF24, 86400);
+ *
+ * // Parse from string
+ * auto [tc3, err2] = Timecode::fromString("10:30:00:00");
+ * @endcode
  * Internally delegates all timecode logic to libvtc.
  */
 class Timecode {

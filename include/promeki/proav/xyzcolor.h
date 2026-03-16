@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief CIE XYZ color value.
+ * @ingroup proav_color
  *
  * Represents a color in the CIE 1931 XYZ color space as three double-precision
  * components. Valid component values are in the [0.0, 1.0] range. A

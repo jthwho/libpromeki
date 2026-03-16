@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Abstract base class for all I/O devices.
+ * @ingroup core_io
  *
  * IODevice provides a uniform interface for reading and writing data
  * to devices such as files, sockets, pipes, and in-memory buffers.

@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Base class for the event system.
+ * @ingroup core_events
  *
  * Events carry a type identifier and an accepted/ignored state.  Type IDs
  * are allocated at runtime by registerType(), which uses a lock-free atomic

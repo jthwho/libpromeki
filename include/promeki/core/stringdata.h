@@ -20,6 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Pure virtual interface for String storage backends.
+ * @ingroup core_strings
  *
  * StringData defines the contract that both Latin1 and Unicode storage
  * implementations must satisfy. It manually provides RefCount and

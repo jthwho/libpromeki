@@ -16,7 +16,15 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Generic fixed-size matrix with compile-time dimensions.
+ * @ingroup core_math
  *
+ *
+ * @par Example
+ * @code
+ * Matrix<float, 4> m = Matrix<float, 4>::identity();
+ * m.translate(1.0f, 2.0f, 3.0f);
+ * auto inv = m.inverted();
+ * @endcode
  * Provides standard matrix operations including arithmetic, transposition,
  * determinant, inverse, LU decomposition, and element-wise operations.
  *

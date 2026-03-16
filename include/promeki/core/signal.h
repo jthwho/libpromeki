@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Type-safe signal/slot mechanism for decoupled event notification.
+ * @ingroup core_events
  *
  * Allows connecting callable slots (lambdas or member functions) that are
  * invoked when the signal is emitted. Template parameters define the

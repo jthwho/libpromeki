@@ -17,9 +17,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Double-ended queue container wrapping std::deque.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::deque with consistent naming
- * conventions matching the rest of libpromeki.
+ *  *
+ * @par Example
+ * @code
+ * Deque<int> dq;
+ * dq.pushToBack(1);
+ * dq.pushToFront(0);
+ * int first = dq.front();  // 0
+ * dq.popFromFront();
+ * @endcode
+conventions matching the rest of libpromeki.
  *
  * @tparam T Element type.
  */

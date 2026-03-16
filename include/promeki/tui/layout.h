@@ -18,6 +18,7 @@ class TuiWidget;
 
 /**
  * @brief Abstract base class for TUI layout managers.
+ * @ingroup tui_core
  *
  * A layout positions child widgets within the available rectangle.
  * Layouts can be nested by adding sub-layouts.

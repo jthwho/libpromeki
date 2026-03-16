@@ -17,9 +17,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Provides information about a file system entry.
+ * @ingroup core_io
  *
  * Wraps std::filesystem to query file metadata such as existence, type,
  * size, permissions, and path components. The file status is lazily
+ *
+ * @par Example
+ * @code
+ * FileInfo info("/path/to/video.mxf");
+ * bool exists = info.exists();
+ * size_t bytes = info.size();
+ * String name = info.fileName();   // "video.mxf"
+ * String ext = info.extension();   // "mxf"
+ * @endcode
  * cached and can be force-refreshed.
  */
 class FileInfo {

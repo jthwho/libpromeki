@@ -18,10 +18,23 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Wall-clock date and time based on std::chrono::system_clock.
+ * @ingroup core_time
  *
  * Wraps a system_clock time_point and provides construction from strings,
  * time_t, and std::tm values.  Supports arithmetic with other DateTime
  * instances and with floating-point second offsets.  Output formatting
+ *
+ * @par Example
+ * @code
+ * DateTime now = DateTime::now();
+ * String formatted = now.toString("%Y-%m-%d %H:%M:%S");
+ *
+ * // Parse from string
+ * DateTime dt = DateTime::fromString("2025-03-15 14:30:00");
+ *
+ * // Arithmetic with seconds
+ * DateTime later = now + 3600.0;  // one hour later
+ * @endcode
  * uses strftime-style format strings.
  */
 class DateTime {

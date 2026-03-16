@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Computes the FNV-1a hash of a null-terminated string at compile time.
+ * @ingroup core_util
  *
  * Uses the 64-bit FNV-1a algorithm to produce a hash from a C string.
  * The function is constexpr, so it can be evaluated at compile time when

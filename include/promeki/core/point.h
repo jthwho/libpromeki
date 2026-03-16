@@ -18,9 +18,18 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief N-dimensional point with arithmetic, interpolation, and serialization.
+ * @ingroup core_math
  *
  * A generic point class that stores NumValues components of type T, backed by
  * an Array. Named accessors (x, y, z) are conditionally available depending
+ *
+ * @par Example
+ * @code
+ * Point<float, 2> a(1.0f, 2.0f);
+ * Point<float, 2> b(3.0f, 4.0f);
+ * auto c = a + b;          // (4.0, 6.0)
+ * float dist = a.dist(b);  // distance between a and b
+ * @endcode
  * on the number of dimensions. Supports parsing from and formatting to
  * comma-separated strings.
  *

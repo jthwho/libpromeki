@@ -12,6 +12,8 @@
 
 /**
  * @brief Macro to register an ImageFileIO subclass at static initialization time.
+ * @ingroup proav_media
+ *
  * @param name The ImageFileIO subclass to instantiate and register.
  */
 #define PROMEKI_REGISTER_IMAGEFILEIO(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_imagefileio_, PROMEKI_UNIQUE_ID) = \

@@ -11,7 +11,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** @brief Holds compile-time build information for the library. */
+/**
+ * @brief Holds compile-time build information for the library.
+ * @ingroup core_util
+ */
 typedef struct {
     const char * name;        ///< Project name.
     const char * version;     ///< Version string (e.g. "1.2.3").

@@ -19,6 +19,7 @@ class Error;
 
 /**
  * @brief Pseudo-random number generator wrapping std::mt19937_64.
+ * @ingroup core_util
  *
  * Random provides two distinct categories of random data:
  *

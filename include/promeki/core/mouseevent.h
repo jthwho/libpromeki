@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Event delivered for mouse input.
+ * @ingroup core_util
  *
  * Carries the mouse position, button, action type, and modifier flags.
  * Registered via Event::registerType().

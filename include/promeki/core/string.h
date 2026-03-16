@@ -26,6 +26,7 @@ class StringList;
 
 /**
  * @brief Encoding-aware string class with copy-on-write semantics.
+ * @ingroup core_strings
  *
  * String is a lightweight handle wrapping a SharedPtr<StringData>.
  * Copy is a refcount increment; mutation triggers COW. Latin1 is

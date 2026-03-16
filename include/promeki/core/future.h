@@ -16,8 +16,21 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Asynchronous result wrapping std::future\<T\>.
+ * @ingroup core_concurrency
  *
- * Returned by Promise\<T\>::future() and ThreadPool::submit().
+ * Returned by Promise\<T\>::%future() and ThreadPool::submit().
+ *
+ * @par Example
+ * @code
+ * Promise<int> promise;
+ * Future<int> future = promise.%future();
+ *
+ * // In another thread:
+ * promise.setValue(42);
+ *
+ * // In the waiting thread:
+ * int result = future.get();  // 42
+ * @endcode
  * Move-only (non-copyable).
  *
  * @tparam T The result type.

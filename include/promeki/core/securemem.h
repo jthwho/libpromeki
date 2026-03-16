@@ -23,6 +23,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Securely zeros a memory region, guaranteed not to be optimized away.
+ * @ingroup core_util
  *
  * Uses platform-specific secure zeroing primitives when available:
  * - Windows: SecureZeroMemory

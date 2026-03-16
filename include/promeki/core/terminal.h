@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Low-level terminal I/O abstraction.
+ * @ingroup core_util
  *
  * Provides raw terminal mode, non-blocking input, window size queries,
  * mouse tracking, alternate screen buffer management, and color capability

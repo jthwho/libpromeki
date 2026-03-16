@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Visual properties of a TUI cell (everything except the character).
+ * @ingroup tui_core
  *
  * A TuiStyle bundles foreground color, background color, and text
  * attributes into a single value.  Any property can be flagged as

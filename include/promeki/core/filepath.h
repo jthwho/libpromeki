@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Simple value type wrapping std::filesystem::path.
+ * @ingroup core_io
  *
  * Provides a convenient interface for path decomposition, joining,
  * and filesystem queries. This is a simple data object — always

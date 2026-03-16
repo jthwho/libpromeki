@@ -1,6 +1,7 @@
 /**
  * @file      proav/ciewavelengthtable.h
  * @copyright Howard Logic. All rights reserved.
+ * @ingroup   proav_color
  *
  * See LICENSE file in the project root folder for license information.
  */

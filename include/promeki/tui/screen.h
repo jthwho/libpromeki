@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A single cell in the TUI screen buffer.
+ * @ingroup tui_core
  *
  * Each cell holds a character and a TuiStyle describing its visual
  * properties (foreground, background, text attributes).

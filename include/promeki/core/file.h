@@ -20,6 +20,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief File I/O device with buffered reading.
+ * @ingroup core_io
  *
  * Derives from BufferedIODevice, providing a full IODevice interface
  * for file I/O. Supports direct I/O, synchronous writes, and

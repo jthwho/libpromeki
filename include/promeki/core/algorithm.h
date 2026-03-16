@@ -17,6 +17,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Returns a sorted copy of the container.
+ * @ingroup core_util
+ *
  * @tparam Container A container with begin()/end() and a copy constructor.
  * @param c The source container.
  * @return A sorted copy.

@@ -14,6 +14,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Event delivered when a key is pressed or released.
+ * @ingroup core_util
  *
  * Carries a key code, modifier flags, and the printable text
  * for the key press.  Registered via Event::registerType().

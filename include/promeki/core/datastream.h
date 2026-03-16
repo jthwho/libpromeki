@@ -19,6 +19,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Binary stream for structured, portable serialization.
+ * @ingroup core_streams
  *
  * DataStream provides a Qt-style interface for reading and writing binary
  * data in a portable, byte-order-aware format. It operates exclusively
@@ -52,6 +53,21 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Extensibility
  * User types can be serialized by implementing free-standing
  * `operator<<(DataStream &, const MyType &)` and
+ *
+ * @par Example
+ * @code
+ * // Write to a buffer
+ * BufferIODevice device;
+ * device.open(IODevice::WriteOnly);
+ * DataStream writer = DataStream::createWriter(&device);
+ * writer << int32_t(42) << String("hello") << true;
+ *
+ * // Read it back
+ * device.seek(0);
+ * DataStream reader = DataStream::createReader(&device);
+ * int32_t num; String str; bool flag;
+ * reader >> num >> str >> flag;
+ * @endcode
  * `operator>>(DataStream &, MyType &)`.
  */
 class DataStream {

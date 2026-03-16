@@ -18,7 +18,10 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** @brief Describes a video format including frame rate, image layers, audio channels, and metadata. */
+/**
+ * @brief Describes a video format including frame rate, image layers, audio channels, and metadata.
+ * @ingroup proav_media
+ */
 class VideoDesc {
     PROMEKI_SHARED_FINAL(VideoDesc)
     public:

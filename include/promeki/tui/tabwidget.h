@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Tabbed container with keyboard-switchable tabs.
+ * @ingroup tui_widgets
+ *
  */
 class TuiTabWidget : public TuiWidget {
         PROMEKI_OBJECT(TuiTabWidget, TuiWidget)

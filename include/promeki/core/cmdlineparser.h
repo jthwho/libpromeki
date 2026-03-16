@@ -19,9 +19,25 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Command-line argument parser with callback-driven option handling.
+ * @ingroup core_util
  *
  * Supports short (-x) and long (--name) options with typed arguments.
  * Each option is associated with a callback that is invoked when the option
+ *
+ * @par Example
+ * @code
+ * CmdLineParser parser;
+ * bool verbose = false;
+ * String output;
+ * parser.registerOptions({
+ *     {'v', "verbose", "Enable verbose output",
+ *      CmdLineParser::OptionCallback([&]() { verbose = true; return 0; })},
+ *     {'o', "output", "Output file path",
+ *      CmdLineParser::OptionStringCallback([&](const String &s) { output = s; return 0; })},
+ * });
+ * parser.parseMain(argc, argv);
+ * // Non-option args: parser.arg(0), parser.arg(1), ...
+ * @endcode
  * is encountered during parsing. Non-option arguments are collected and
  * accessible after parsing completes.
  */

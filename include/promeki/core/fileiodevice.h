@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief IODevice wrapping a C stdio FILE pointer.
+ * @ingroup core_io
  *
  * FileIODevice adapts a FILE* to the IODevice interface. It supports
  * two usage patterns:

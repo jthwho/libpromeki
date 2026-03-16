@@ -16,6 +16,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Macro to register an AudioFileFactory subclass at static initialization time.
+ * @ingroup proav_media
+ *
  * @param name The AudioFileFactory subclass to instantiate and register.
  */
 #define PROMEKI_REGISTER_AUDIOFILE_FACTORY(name) [[maybe_unused]] static int \

@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A 3x3 floating-point matrix with SSE-accelerated operations.
+ * @ingroup core_math
  *
  * Provides standard linear algebra operations including addition, subtraction,
  * multiplication, transpose, inverse, and determinant. Element-wise operations

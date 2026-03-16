@@ -18,6 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Describes an audio format including sample type, rate, and channel count.
+ * @ingroup proav_media
  *
  * AudioDesc encapsulates the complete description of an audio format: the sample
  * data type (e.g. PCM signed 16-bit little-endian), sample rate, and number of

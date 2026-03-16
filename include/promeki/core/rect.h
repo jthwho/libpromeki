@@ -16,9 +16,17 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief 2D rectangle defined by position and size.
+ * @ingroup core_math
  *
  * A simple value type combining a Point<T,2> origin (top-left corner)
  * with a Size2DTemplate<T> extent.  Provides intersection, union,
+ *
+ * @par Example
+ * @code
+ * Rect2Di32 r(10, 20, 100, 50);  // x, y, width, height
+ * bool hit = r.contains(15, 25); // true
+ * auto moved = r.translated(5, 5);
+ * @endcode
  * containment, and coordinate transformation operations.
  *
  * @tparam T The component type (e.g. int, float, double).

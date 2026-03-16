@@ -15,6 +15,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Monotonic elapsed-time measurement using std::chrono::steady_clock.
+ * @ingroup core_time
  *
  * The timer starts automatically on construction. Call start() or restart()
  * to reset. The timer can be invalidated to indicate "not running".

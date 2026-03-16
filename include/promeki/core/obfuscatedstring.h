@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Compile-time string obfuscation.
+ * @ingroup core_util
  *
  * Strings wrapped with the PROMEKI_OBFUSCATE macro are encoded at compile
  * time so the plaintext never appears in the binary.  Each call site gets

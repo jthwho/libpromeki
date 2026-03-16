@@ -20,6 +20,7 @@ class Buffer;
 
 /**
  * @brief Formatted text I/O with encoding awareness.
+ * @ingroup core_streams
  *
  * TextStream provides a Qt-style interface for reading and writing
  * formatted text. It is used for human-readable output, config files,

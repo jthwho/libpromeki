@@ -15,6 +15,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Text alignment for TUI labels.
+ * @ingroup tui_widgets
+ *
  */
 enum TuiAlignment {
         AlignLeft,

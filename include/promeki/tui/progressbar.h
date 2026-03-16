@@ -14,6 +14,8 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Horizontal progress indicator.
+ * @ingroup tui_widgets
+ *
  */
 class TuiProgressBar : public TuiWidget {
         PROMEKI_OBJECT(TuiProgressBar, TuiWidget)

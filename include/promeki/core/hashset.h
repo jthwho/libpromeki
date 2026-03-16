@@ -17,6 +17,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief Unordered unique-element container wrapping std::unordered_set.
+ * @ingroup core_containers
  *
  * Provides a Qt-inspired API over std::unordered_set with consistent naming
  * conventions matching the rest of libpromeki.

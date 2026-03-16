@@ -16,6 +16,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 /**
  * @brief A four-character code (FourCC) identifier.
+ * @ingroup core_util
  *
  * Stores four ASCII characters packed into a 32-bit integer in
  * big-endian order. Commonly used to identify codecs, pixel formats,
