@@ -25,6 +25,7 @@ TuiApplication *TuiApplication::_instance = nullptr;
 TuiApplication::TuiApplication(int argc, char **argv)
         : Application(argc, argv), _ansiStream(Application::stdoutDevice()) {
         _instance = this;
+        _screen.setColorMode(Terminal::colorSupport());
 }
 
 TuiApplication::~TuiApplication() {

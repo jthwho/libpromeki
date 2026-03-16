@@ -37,9 +37,12 @@ struct EnvGuard {
 };
 
 TEST_CASE("Terminal: ColorSupport enum values are ordered") {
-        CHECK(Terminal::NoColor   < Terminal::Basic);
-        CHECK(Terminal::Basic     < Terminal::Color256);
-        CHECK(Terminal::Color256  < Terminal::TrueColor);
+        CHECK(Terminal::NoColor       < Terminal::Grayscale16);
+        CHECK(Terminal::Grayscale16   < Terminal::Grayscale256);
+        CHECK(Terminal::Grayscale256  < Terminal::GrayscaleTrue);
+        CHECK(Terminal::GrayscaleTrue < Terminal::Basic);
+        CHECK(Terminal::Basic         < Terminal::Color256);
+        CHECK(Terminal::Color256      < Terminal::TrueColor);
 }
 
 TEST_CASE("Terminal: colorSupport returns a valid enum value") {

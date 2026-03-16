@@ -11,6 +11,7 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/list.h>
 #include <promeki/core/char.h>
+#include <promeki/core/terminal.h>
 #include <promeki/tui/style.h>
 #include <promeki/core/ansistream.h>
 
@@ -24,12 +25,14 @@ PROMEKI_NAMESPACE_BEGIN
  * properties (foreground, background, text attributes).
  */
 struct TuiCell {
-        Char            ch = Char(U' ');
-        TuiStyle        style = TuiStyle(Color::White, Color::Black);
+        Char            ch = Char(U' ');        ///< The Unicode character in this cell.
+        TuiStyle        style = TuiStyle(Color::White, Color::Black); ///< Visual style (colors and attributes).
 
+        /** @brief Returns true if both character and style match. */
         bool operator==(const TuiCell &other) const {
                 return ch == other.ch && style == other.style;
         }
+        /** @brief Returns true if character or style differ. */
         bool operator!=(const TuiCell &other) const {
                 return !(*this == other);
         }
@@ -42,11 +45,24 @@ struct TuiCell {
  * via setCell().  flush() diffs front vs back and emits minimal ANSI
  * escape sequences for changed cells, then swaps buffers.
  *
+ * Colors are stored as full RGB values in each TuiCell.  During
+ * flush(), the active colorMode() determines how those colors are
+ * emitted: TrueColor uses 24-bit RGB sequences, Color256 maps to the
+ * closest ANSI 256-color palette entry, Basic restricts to 16 system
+ * colors, and the Grayscale variants convert colors to perceptual
+ * luminance before emitting.  NoColor suppresses all color output.
+ * The TUI will do its best to gracefully degrade color, but for
+ * optimal results, use a TuiPalette whose colors are tuned for the
+ * active color mode.
+ *
  * NOT an ObjectBase -- this is infrastructure.
  */
 class TuiScreen {
         public:
+                /** @brief Constructs an empty screen with no buffers. */
                 TuiScreen();
+
+                /** @brief Destructor. */
                 ~TuiScreen();
 
                 /**
@@ -96,12 +112,31 @@ class TuiScreen {
                  */
                 void invalidate();
 
+                /**
+                 * @brief Sets the color mode used when emitting colors during flush.
+                 *
+                 * All RGB colors in the cell buffer are converted to the nearest
+                 * representable value for this mode.  For best results, pair
+                 * with a TuiPalette designed for the chosen mode.
+                 *
+                 * @param mode The color support level to use.
+                 * @see Terminal::colorSupport()
+                 */
+                void setColorMode(Terminal::ColorSupport mode) { _colorMode = mode; }
+
+                /**
+                 * @brief Returns the current color mode.
+                 * @return The color support level in use.
+                 */
+                Terminal::ColorSupport colorMode() const { return _colorMode; }
+
         private:
                 int                     _cols = 0;
                 int                     _rows = 0;
                 List<TuiCell>           _front;
                 List<TuiCell>           _back;
                 bool                    _fullRedraw = true;
+                Terminal::ColorSupport  _colorMode = Terminal::TrueColor;
 
                 int index(int x, int y) const { return y * _cols + x; }
                 bool inBounds(int x, int y) const {

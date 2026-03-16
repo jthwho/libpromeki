@@ -28,10 +28,13 @@ using namespace promeki;
 
 static const char *colorSupportName(Terminal::ColorSupport cs) {
         switch(cs) {
-                case Terminal::NoColor:   return "NoColor";
-                case Terminal::Basic:     return "Basic";
-                case Terminal::Color256:  return "256";
-                case Terminal::TrueColor: return "TrueColor";
+                case Terminal::NoColor:        return "NoColor";
+                case Terminal::Grayscale16:    return "Grayscale16";
+                case Terminal::Grayscale256:   return "Grayscale256";
+                case Terminal::GrayscaleTrue:  return "GrayscaleTrue";
+                case Terminal::Basic:          return "Basic";
+                case Terminal::Color256:       return "256";
+                case Terminal::TrueColor:      return "TrueColor";
         }
         return "Unknown";
 }
@@ -449,6 +452,158 @@ class SplitterTab : public TuiWidget {
                 TuiTextArea     *_bottomArea;
 };
 
+// ── Tab 5: Colors ───────────────────────────────────────────────────
+
+class ColorsTab : public TuiWidget {
+        PROMEKI_OBJECT(ColorsTab, TuiWidget)
+        public:
+                ColorsTab(ObjectBase *parent = nullptr) : TuiWidget(parent) {}
+
+        protected:
+                void paintEvent(TuiPaintEvent *) override {
+                        TuiApplication *app = TuiApplication::instance();
+                        if(!app) return;
+                        Point2Di32 screenPos = mapToGlobal(Point2Di32(0, 0));
+                        Rect2Di32 clipRect(screenPos.x(), screenPos.y(), width(), height());
+                        TuiPainter painter(app->screen(), clipRect);
+
+                        const TuiPalette &pal = app->palette();
+                        painter.setStyle(pal.style(TuiPalette::WindowText, false, isEnabled())
+                                .merged(pal.style(TuiPalette::Window, false, isEnabled())));
+                        painter.fillRect(Rect2Di32(0, 0, width(), height()));
+
+                        int y = 0;
+
+                        // Header: current color mode
+                        painter.setForeground(Color::White);
+                        painter.setBackground(Color::Black);
+                        String modeStr = String("Color mode: ") +
+                                colorSupportName(app->colorMode());
+                        painter.drawText(1, y, modeStr);
+                        y += 2;
+
+                        // ── 16 System Colors ──
+                        painter.setForeground(Color::White);
+                        painter.setBackground(Color::Black);
+                        painter.drawText(1, y, "System colors (0-15):");
+                        y++;
+                        for(int i = 0; i < 16; ++i) {
+                                Color c = AnsiStream::ansiColor(i);
+                                painter.setBackground(c);
+                                painter.setForeground(c);
+                                int x = 1 + i * 3;
+                                if(x + 2 >= width()) break;
+                                painter.fillRect(Rect2Di32(x, y, 2, 1));
+                        }
+                        y++;
+                        // Index labels
+                        painter.setBackground(Color::Black);
+                        painter.setForeground(Color::White);
+                        for(int i = 0; i < 16; ++i) {
+                                int x = 1 + i * 3;
+                                if(x + 2 >= width()) break;
+                                String idx = String::number(i);
+                                painter.drawText(x, y, idx);
+                        }
+                        y += 2;
+
+                        // ── 6x6x6 Color Cube (indices 16-231) ──
+                        painter.setForeground(Color::White);
+                        painter.setBackground(Color::Black);
+                        painter.drawText(1, y, "Color cube (16-231):");
+                        y++;
+                        // Draw as 6 rows of 36 colors each
+                        for(int row = 0; row < 6; ++row) {
+                                if(y >= height()) break;
+                                for(int col = 0; col < 36; ++col) {
+                                        int idx = 16 + row * 36 + col;
+                                        Color c = AnsiStream::ansiColor(idx);
+                                        painter.setBackground(c);
+                                        painter.setForeground(c);
+                                        int x = 1 + col * 2;
+                                        if(x + 1 >= width()) break;
+                                        painter.fillRect(Rect2Di32(x, y, 2, 1));
+                                }
+                                y++;
+                        }
+                        y++;
+
+                        // ── Grayscale Ramp (indices 232-255) ──
+                        if(y < height()) {
+                                painter.setForeground(Color::White);
+                                painter.setBackground(Color::Black);
+                                painter.drawText(1, y, "Grayscale (232-255):");
+                                y++;
+                        }
+                        if(y < height()) {
+                                for(int i = 0; i < 24; ++i) {
+                                        Color c = AnsiStream::ansiColor(232 + i);
+                                        painter.setBackground(c);
+                                        painter.setForeground(c);
+                                        int x = 1 + i * 3;
+                                        if(x + 2 >= width()) break;
+                                        painter.fillRect(Rect2Di32(x, y, 2, 1));
+                                }
+                                y += 2;
+                        }
+
+                        // ── RGB Gradients (truecolor test) ──
+                        if(y < height()) {
+                                painter.setForeground(Color::White);
+                                painter.setBackground(Color::Black);
+                                painter.drawText(1, y, "RGB gradients:");
+                                y++;
+                        }
+                        int barWidth = width() - 2;
+                        if(barWidth < 1) barWidth = 1;
+                        // Red gradient
+                        if(y < height()) {
+                                for(int x = 0; x < barWidth; ++x) {
+                                        uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
+                                        Color c(v, 0, 0);
+                                        painter.setBackground(c);
+                                        painter.setForeground(c);
+                                        painter.drawChar(1 + x, y, U' ');
+                                }
+                                y++;
+                        }
+                        // Green gradient
+                        if(y < height()) {
+                                for(int x = 0; x < barWidth; ++x) {
+                                        uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
+                                        Color c(0, v, 0);
+                                        painter.setBackground(c);
+                                        painter.setForeground(c);
+                                        painter.drawChar(1 + x, y, U' ');
+                                }
+                                y++;
+                        }
+                        // Blue gradient
+                        if(y < height()) {
+                                for(int x = 0; x < barWidth; ++x) {
+                                        uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
+                                        Color c(0, 0, v);
+                                        painter.setBackground(c);
+                                        painter.setForeground(c);
+                                        painter.drawChar(1 + x, y, U' ');
+                                }
+                                y++;
+                        }
+                        // White gradient
+                        if(y < height()) {
+                                for(int x = 0; x < barWidth; ++x) {
+                                        uint8_t v = static_cast<uint8_t>(x * 255 / (barWidth - 1));
+                                        Color c(v, v, v);
+                                        painter.setBackground(c);
+                                        painter.setForeground(c);
+                                        painter.drawChar(1 + x, y, U' ');
+                                }
+                                y++;
+                        }
+                        y++;
+                }
+};
+
 // ── Root Widget ──────────────────────────────────────────────────────
 
 class DemoWidget : public TuiWidget {
@@ -476,6 +631,9 @@ class DemoWidget : public TuiWidget {
 
                         _splitterTab = new SplitterTab(this);
                         _tabWidget->addTab(_splitterTab, "Splitter");
+
+                        _colorsTab = new ColorsTab(this);
+                        _tabWidget->addTab(_colorsTab, "Colors");
 
                         _layout->addWidget(_tabWidget);
                         _layout->addWidget(_statusBar);
@@ -508,6 +666,7 @@ class DemoWidget : public TuiWidget {
                 TextInputTab            *_textTab;
                 ListViewTab             *_listTab;
                 SplitterTab             *_splitterTab;
+                ColorsTab               *_colorsTab;
 
                 void updateStatusInfo() {
                         String msg = String("Color: ") +

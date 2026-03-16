@@ -24,6 +24,13 @@ PROMEKI_NAMESPACE_BEGIN
  * attributes may individually be set or left ignored.  Widgets
  * typically merge several roles together (e.g. a text role on top of
  * a background role) using TuiStyle::merged().
+ *
+ * The TUI rendering pipeline gracefully degrades palette colors to
+ * match the terminal's color capability (see Terminal::ColorSupport).
+ * While any palette will render at any color level, choosing colors
+ * that are distinct under the target mode (e.g. high-contrast values
+ * for Basic 16-color, or well-separated grays for grayscale modes)
+ * produces significantly better results.
  */
 class TuiPalette {
         public:
@@ -69,11 +76,17 @@ class TuiPalette {
 
                 /**
                  * @brief Sets a style for a specific group and role.
+                 * @param group The state group.
+                 * @param role  The semantic color role.
+                 * @param style The style to set.
                  */
                 void setStyle(ColorGroup group, ColorRole role, const TuiStyle &style);
 
                 /**
                  * @brief Returns the style for a specific group and role.
+                 * @param group The state group.
+                 * @param role  The semantic color role.
+                 * @return The stored TuiStyle.
                  */
                 TuiStyle style(ColorGroup group, ColorRole role) const;
 
@@ -82,6 +95,10 @@ class TuiPalette {
                  *
                  * Selects the appropriate color group from the state and
                  * returns the stored TuiStyle.
+                 *
+                 * @param role  The semantic color role.
+                 * @param state The widget state to derive the group from.
+                 * @return The stored TuiStyle for the derived group.
                  */
                 TuiStyle style(ColorRole role, const TuiStyleState &state) const;
 

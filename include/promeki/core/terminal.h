@@ -32,15 +32,39 @@ class Terminal {
 
                 /**
                  * @brief Describes the color capability level of the terminal.
+                 *
+                 * The TUI rendering pipeline always works with full RGB Color
+                 * values internally.  During TuiScreen::flush(), each cell's
+                 * foreground and background are converted to the nearest
+                 * representable color for the active ColorSupport level.
+                 * This means the UI degrades gracefully to any color mode,
+                 * but for the best visual results, applications should
+                 * provide a TuiPalette whose colors are chosen with the
+                 * target color mode in mind.
+                 *
+                 * When the @c NO_COLOR environment variable is set, the
+                 * detected color capability is mapped to its grayscale
+                 * equivalent (e.g. TrueColor becomes GrayscaleTrue).
+                 * Grayscale modes convert each color to its perceptual
+                 * luminance (Rec. 709) before emitting it.
+                 *
+                 * @see TuiScreen::setColorMode()
+                 * @see TuiPalette
                  */
                 enum ColorSupport {
-                        NoColor,        ///< No color support (e.g. dumb terminal, NO_COLOR set).
+                        NoColor,        ///< No color support (e.g. dumb terminal).
+                        Grayscale16,    ///< Grayscale via the 4 gray entries in the 16-color palette (NO_COLOR + Basic).
+                        Grayscale256,   ///< Grayscale via the 24-entry grayscale ramp in the 256-color palette (NO_COLOR + 256).
+                        GrayscaleTrue,  ///< Grayscale via 24-bit RGB with equal R=G=B (NO_COLOR + TrueColor).
                         Basic,          ///< Basic 8/16 color support (standard ANSI).
                         Color256,       ///< 256 color support (xterm-256color and similar).
                         TrueColor       ///< 24-bit true color support.
                 };
 
+                /** @brief Constructs a Terminal and saves the current terminal state. */
                 Terminal();
+
+                /** @brief Destructor. Restores terminal state and cleans up. */
                 ~Terminal();
 
                 Terminal(const Terminal &) = delete;
@@ -139,9 +163,16 @@ class Terminal {
                 /**
                  * @brief Detects the color support level of the terminal.
                  *
-                 * Examines environment variables (NO_COLOR, COLORTERM, TERM, etc.)
-                 * and platform capabilities to determine the level of color support.
-                 * The result is cached after the first call.
+                 * Examines environment variables to determine the level of
+                 * color support.  The @c PROMEKI_COLOR variable, if set,
+                 * overrides auto-detection (accepted values: "truecolor",
+                 * "24bit", "256", "basic", "ansi", "16", "none").
+                 * Otherwise, @c COLORTERM, @c TERM, and @c TERM_PROGRAM
+                 * are examined.
+                 *
+                 * When @c NO_COLOR is set (see https://no-color.org/),
+                 * the detected capability is mapped to its grayscale
+                 * equivalent.  The result is cached after the first call.
                  *
                  * @return The detected ColorSupport level.
                  */

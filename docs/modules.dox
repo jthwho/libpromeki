@@ -146,6 +146,8 @@
  * @brief Terminal UI framework core: screen, input, layout, painting.
  *
  * Application entry point for TUI programs, Widget base class, Screen
- * abstraction, input event parsing, Painter for cell-based rendering,
- * Palette and Style theming, and Layout management.
+ * abstraction with color-mode-aware rendering (graceful degradation
+ * from TrueColor down to NoColor), input event parsing, Painter for
+ * cell-based rendering, Palette and Style theming, and Layout
+ * management.
  */

@@ -87,6 +87,28 @@ class TuiApplication : public Application {
                 void quit(int exitCode = 0);
 
                 /**
+                 * @brief Sets the color mode for the TUI screen.
+                 *
+                 * Changes how RGB colors are converted to ANSI output.
+                 * The screen will do its best to gracefully degrade colors
+                 * to the requested mode, but for optimal appearance,
+                 * provide a TuiPalette whose colors suit the target mode.
+                 *
+                 * @param mode The color support level to use.
+                 * @see TuiPalette
+                 */
+                void setColorMode(Terminal::ColorSupport mode) {
+                        _screen.setColorMode(mode);
+                        updateAll();
+                }
+
+                /**
+                 * @brief Returns the current color mode.
+                 * @return The color support level in use.
+                 */
+                Terminal::ColorSupport colorMode() const { return _screen.colorMode(); }
+
+                /**
                  * @brief Forces a full screen repaint.
                  */
                 void updateAll();

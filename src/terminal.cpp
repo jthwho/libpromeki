@@ -242,80 +242,75 @@ Terminal::ColorSupport Terminal::colorSupport() {
         detected = true;
 
         // NO_COLOR convention: https://no-color.org/
-        if(Env::isSet("NO_COLOR")) return level;
+        bool noColor = Env::isSet("NO_COLOR");
 
         // PROMEKI_COLOR override: allow forcing a specific level.
         String force = Env::get("PROMEKI_COLOR");
         if(!force.isEmpty()) {
-                if(force == "truecolor" || force == "24bit") { level = TrueColor; return level; }
-                if(force == "256")                           { level = Color256;   return level; }
-                if(force == "basic" || force == "ansi")      { level = Basic;      return level; }
+                if(force == "truecolor" || force == "24bit") { level = noColor ? GrayscaleTrue : TrueColor; return level; }
+                if(force == "256")                           { level = noColor ? Grayscale256  : Color256;   return level; }
+                if(force == "basic" || force == "ansi" || force == "16") { level = noColor ? Grayscale16 : Basic; return level; }
                 if(force == "none")                          return level;
         }
 
         // COLORTERM is set to "truecolor" or "24bit" by many modern terminals.
         String colorTerm = Env::get("COLORTERM");
+        String term = Env::get("TERM");
+
         if(colorTerm == "truecolor" || colorTerm == "24bit") {
                 level = TrueColor;
-                return level;
-        }
-
-        // Check TERM for 256-color or known terminals.
-        String term = Env::get("TERM");
-        if(!term.isEmpty()) {
-                if(term.contains("256color")) {
-                        level = Color256;
-                        return level;
-                }
-                if(term.contains("truecolor")) {
-                        level = TrueColor;
-                        return level;
-                }
+        } else if(!term.isEmpty() && term.contains("256color")) {
+                level = Color256;
+        } else if(!term.isEmpty() && term.contains("truecolor")) {
+                level = TrueColor;
+        } else if(!term.isEmpty() && term == "dumb") {
                 // "dumb" terminals have no color.
-                if(term == "dumb") return level;
-        }
-
-        // If COLORTERM is set at all, at least basic color is supported.
-        if(!colorTerm.isEmpty()) {
+        } else if(!colorTerm.isEmpty()) {
+                // If COLORTERM is set at all, at least basic color is supported.
                 level = Basic;
-                return level;
-        }
-
-        // Check for TERM_PROGRAM known to support color.
-        String termProg = Env::get("TERM_PROGRAM");
-        if(!termProg.isEmpty()) {
-                if(termProg == "iTerm.app" || termProg == "Hyper") {
-                        level = TrueColor;
-                        return level;
-                }
-                if(termProg == "Apple_Terminal") {
-                        level = Color256;
-                        return level;
-                }
-                // Other known terminal programs generally support basic color.
-                level = Basic;
-                return level;
-        }
-
-        // Known ANSI-capable TERM values that didn't match above patterns.
-        if(!term.isEmpty()) {
-                static const char *basicTerminals[] = {
-                        "xterm", "vt100", "screen", "tmux",
-                        "rxvt", "rxvt-unicode", "ansi", "linux",
-                        "cygwin"
-                };
-                for(const char *t : basicTerminals) {
-                        if(term == t) {
+        } else {
+                // Check for TERM_PROGRAM known to support color.
+                String termProg = Env::get("TERM_PROGRAM");
+                if(!termProg.isEmpty()) {
+                        if(termProg == "iTerm.app" || termProg == "Hyper") {
+                                level = TrueColor;
+                        } else if(termProg == "Apple_Terminal") {
+                                level = Color256;
+                        } else {
+                                // Other known terminal programs generally support basic color.
                                 level = Basic;
-                                return level;
+                        }
+                } else if(!term.isEmpty()) {
+                        // Known ANSI-capable TERM values that didn't match above patterns.
+                        static const char *basicTerminals[] = {
+                                "xterm", "vt100", "screen", "tmux",
+                                "rxvt", "rxvt-unicode", "ansi", "linux",
+                                "cygwin"
+                        };
+                        for(const char *t : basicTerminals) {
+                                if(term == t) {
+                                        level = Basic;
+                                        break;
+                                }
                         }
                 }
+#if defined(PROMEKI_PLATFORM_WINDOWS)
+                else {
+                        // Windows 10+ with VT support provides truecolor.
+                        level = TrueColor;
+                }
+#endif
         }
 
-#if defined(PROMEKI_PLATFORM_WINDOWS)
-        // Windows 10+ with VT support provides truecolor.
-        level = TrueColor;
-#endif
+        // If NO_COLOR is set, map detected capability to grayscale equivalent.
+        if(noColor) {
+                switch(level) {
+                        case Basic:     level = Grayscale16;   break;
+                        case Color256:  level = Grayscale256;  break;
+                        case TrueColor: level = GrayscaleTrue; break;
+                        default: break;
+                }
+        }
 
         return level;
 }
