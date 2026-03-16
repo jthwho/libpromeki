@@ -20,6 +20,5 @@ var classMatrix3x3 =
     [ "trace", "classMatrix3x3.html#ab4ff871829cc183fda845275b7d8a00f", null ],
     [ "transpose", "classMatrix3x3.html#a39ac1458a10ccb5d112a5f767f988593", null ],
     [ "vectorTransform", "classMatrix3x3.html#a1b5b4dd26786c6dc630a0051bcb13e0a", null ],
-    [ "zero", "classMatrix3x3.html#af4b404c42fcd087d703d219e105c5c1d", null ],
-    [ "operator<<", "classMatrix3x3.html#a2737c131867b6fd8956cc822967fc7c9", null ]
+    [ "zero", "classMatrix3x3.html#af4b404c42fcd087d703d219e105c5c1d", null ]
 ];

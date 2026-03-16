@@ -1,7 +1,20 @@
 var searchData=
 [
-  ['ok_0',['ok',['../classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc',1,'DataStream::Ok'],['../classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34',1,'Error::Ok'],['../classTextStream.html#aee6bd443063febf69ecaffd4e6c8eab0ad45ac3e924843071678dd3af95a0eff0',1,'TextStream::Ok']]],
-  ['openfailed_1',['OpenFailed',['../classError.html#ab5980e13b879db253df802b0950d1708a67e1f2f9dd20f6721897f4eca0aaed8b',1,'Error']]],
-  ['outofrange_2',['OutOfRange',['../classError.html#ab5980e13b879db253df802b0950d1708a560476d0164709045f7c6186df9f0437',1,'Error']]],
-  ['ownsfile_3',['OwnsFile',['../classFileIODevice.html#a400e865d46d840cafd00959bd3bf337ba963bf915059bf3e3c19ff778fdcc130a',1,'FileIODevice']]]
+  ['ndf24_0',['NDF24',['../classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207',1,'Timecode']]],
+  ['ndf25_1',['NDF25',['../classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623a06416b2774763242b590c458fd267a4f',1,'Timecode']]],
+  ['ndf30_2',['NDF30',['../classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ac1c83207a69e1e4b00911635fbfdae55',1,'Timecode']]],
+  ['nocolor_3',['NoColor',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224',1,'Terminal']]],
+  ['noflags_4',['noflags',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a24e88b69189d56af622c09f4b1c877a8',1,'File::NoFlags'],['../classFileIODevice.html#a400e865d46d840cafd00959bd3bf337ba2921ddefb8575f659ff9a60203b0ef1f',1,'FileIODevice::NoFlags']]],
+  ['nofocus_5',['NoFocus',['../widget_8h.html#a6b22f8df23411420df9f05b6698743cca506647bdf445931594e9b2de731eeb88',1,'widget.h']]],
+  ['noframerate_6',['NoFrameRate',['../classError.html#ab5980e13b879db253df802b0950d1708a2695d424a618d219be1876e3c9339de0',1,'Error']]],
+  ['nomem_7',['NoMem',['../classError.html#ab5980e13b879db253df802b0950d1708a6281ee333607973d160cf87638760753',1,'Error']]],
+  ['nopermission_8',['NoPermission',['../classError.html#ab5980e13b879db253df802b0950d1708ac48367ea433f3803331e95dd3641f5a4',1,'Error']]],
+  ['nospace_9',['NoSpace',['../classError.html#ab5980e13b879db253df802b0950d1708a4b6f521d95a2728ad46bcec5c751ad07',1,'Error']]],
+  ['notdir_10',['NotDir',['../classError.html#ab5980e13b879db253df802b0950d1708afc03161dcb792e3e7e6dd39efcb32438',1,'Error']]],
+  ['notexist_11',['NotExist',['../classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3',1,'Error']]],
+  ['nothostaccessible_12',['NotHostAccessible',['../classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9',1,'Error']]],
+  ['notimplemented_13',['NotImplemented',['../classError.html#ab5980e13b879db253df802b0950d1708a618c5c9abd6638a820400e9948e6e737',1,'Error']]],
+  ['notopen_14',['notopen',['../classError.html#ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612',1,'Error::NotOpen'],['../classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926',1,'IODevice::NotOpen']]],
+  ['notrunning_15',['NotRunning',['../classProcess.html#a29199d5fd3060da8da03649f06127847a70bbc400311496ddf01469785755f003',1,'Process']]],
+  ['notsupported_16',['NotSupported',['../classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde',1,'Error']]]
 ];

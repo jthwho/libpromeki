@@ -1,3 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classArray.html" title=" " alt="" coords="5,5,152,31"/>
+<area shape="rect" id="Node000000" href="$classApplication.html" title="Application&#45;wide state for the promeki library." alt="" coords="5,5,100,31"/>
+<area shape="rect" id="Node000001" href="$classTuiApplication.html" title="Application class for TUI programs." alt="" coords="148,5,261,31"/>
+<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="113,15,148,15,148,21,113,21"/>
 </map>

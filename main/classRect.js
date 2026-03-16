@@ -30,6 +30,5 @@ var classRect =
     [ "united", "classRect.html#ae9662132cb3123eb7b232dd87d8d19de", null ],
     [ "width", "classRect.html#a6bd18dda4f7a4ad00fb80b6f186d9dcd", null ],
     [ "x", "classRect.html#a99ae91d77498ec5e60dedf9abb945c21", null ],
-    [ "y", "classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0", null ],
-    [ "operator<<", "classRect.html#ab5dea21c51585c2f22dfb6dfed7e6676", null ]
+    [ "y", "classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0", null ]
 ];

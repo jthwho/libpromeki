@@ -87,6 +87,7 @@ var group__proav__media =
       [ "channels", "classAudioDesc.html#a28ace60e735420592c1cc45eede92700", null ],
       [ "dataType", "classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76", null ],
       [ "floatToSamples", "classAudioDesc.html#a4d906fdd0d437c1310d196c18a143bc1", null ],
+      [ "formatEquals", "classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2", null ],
       [ "isNative", "classAudioDesc.html#ac9768a6e021bda041de148a1add6ddf3", null ],
       [ "isValid", "classAudioDesc.html#ac0f5aeaef11ed389c117b0c174ecc905", null ],
       [ "metadata", "classAudioDesc.html#afe5d5fdda9cf22642631123d392f9f6d", null ],
@@ -107,7 +108,9 @@ var group__proav__media =
         [ "~Impl", "classAudioFile_1_1Impl.html#ad4480eed21f50ad798e694e6ef0c6225", null ],
         [ "close", "classAudioFile_1_1Impl.html#ac6e678373d14e5cea89a2b8bb5951169", null ],
         [ "desc", "classAudioFile_1_1Impl.html#a82a1d7bd0ab27275b399ea5c73396656", null ],
+        [ "device", "classAudioFile_1_1Impl.html#af0c447e9cd6aca0859a800de0145164f", null ],
         [ "filename", "classAudioFile_1_1Impl.html#ae133d899893e8bd2f4e8015a93d897bc", null ],
+        [ "formatHint", "classAudioFile_1_1Impl.html#ab05211b40590dbe7edccfb3d6023ea0d", null ],
         [ "isValid", "classAudioFile_1_1Impl.html#afb469e88ea005cce7f301c72eac6d673", null ],
         [ "open", "classAudioFile_1_1Impl.html#abbe81845a0d20b354420e6c170f1d992", null ],
         [ "operation", "classAudioFile_1_1Impl.html#abf8837570fd97ba61d0724f16a086294", null ],
@@ -115,7 +118,9 @@ var group__proav__media =
         [ "sampleCount", "classAudioFile_1_1Impl.html#a7d7c02e628ec592bc8b11b291da642eb", null ],
         [ "seekToSample", "classAudioFile_1_1Impl.html#a799660f8588294dccef2479af6ec9739", null ],
         [ "setDesc", "classAudioFile_1_1Impl.html#a0af6eb989edea992cd721d6320ffd0d0", null ],
+        [ "setDevice", "classAudioFile_1_1Impl.html#aed1b56b58812ea0b6815d42566d00ae3", null ],
         [ "setFilename", "classAudioFile_1_1Impl.html#adba24c2883ece259bf8efbde1e44926d", null ],
+        [ "setFormatHint", "classAudioFile_1_1Impl.html#a5296c50c848428ccbbda69407811f885", null ],
         [ "write", "classAudioFile_1_1Impl.html#ab06cfa1abf244663e3561a0da8f5fe7d", null ]
       ] ],
       [ "Ptr", "classAudioFile.html#a794f70d63a3db456635a12e50dc2c356", null ],
@@ -128,6 +133,7 @@ var group__proav__media =
       [ "AudioFile", "classAudioFile.html#a6f6f1a4109ea1f2620892100673219d9", null ],
       [ "close", "classAudioFile.html#ac9c1a860490d5bdf9abc2b16a92ea96e", null ],
       [ "desc", "classAudioFile.html#a6ecc25cdb64984463a8c61512dc2bf1e", null ],
+      [ "device", "classAudioFile.html#aadea9aa22804785177f9c9dd6dd2e71f", null ],
       [ "filename", "classAudioFile.html#ad7f46e9413b2b290cfcc91928d8eef30", null ],
       [ "isValid", "classAudioFile.html#acd71f0604715738bdcdd0035151d0d06", null ],
       [ "open", "classAudioFile.html#a1c684bfb2373b6f84cb0aab81c416c5c", null ],
@@ -438,5 +444,6 @@ var group__proav__media =
     ] ],
     [ "PROMEKI_REGISTER_AUDIOFILE_FACTORY", "group__proav__media.html#ga2b6ed5141897e675cf1843076213ac62", null ],
     [ "PROMEKI_REGISTER_IMAGEFILEIO", "group__proav__media.html#gaeb7193d3b1d2058212f4c97c3f24b271", null ],
-    [ "PROMEKI_REGISTER_PIXELFORMAT", "group__proav__media.html#ga26d0778acf6902f0f7302a4242555ac0", null ]
+    [ "PROMEKI_REGISTER_PIXELFORMAT", "group__proav__media.html#ga26d0778acf6902f0f7302a4242555ac0", null ],
+    [ "AudioFileFactory", "group__proav__media.html#gaef169420b11ea439bb24ed35fb04237d", null ]
 ];

@@ -1,0 +1,9 @@
+<map id="FileFormatFactory&lt; Product &gt;" name="FileFormatFactory&lt; Product &gt;">
+<area shape="rect" id="Node000001" title="Generic factory template for file&#45;format&#45;specific product creation." alt="" coords="5,168,155,208"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="10,80,70,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="45,118,52,143,66,166,61,169,47,145,40,120"/>
+<area shape="rect" id="Node000003" href="$classStringList.html" title="Manages a list of strings." alt="" coords="95,80,177,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="124,119,94,169,89,166,120,116"/>
+<area shape="rect" id="Node000004" href="$classList.html" title=" " alt="" coords="79,5,193,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="139,45,139,80,133,80,133,45"/>
+</map>

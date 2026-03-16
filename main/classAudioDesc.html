@@ -166,8 +166,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0f82693f1d149cd4cdff716b898ee0f0" id="r_a0f82693f1d149cd4cdff716b898ee0f0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0">AudioDesc</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classList.html">dt</a>, <a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int ch)</td></tr>
 <tr class="memdesc:a0f82693f1d149cd4cdff716b898ee0f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio description with the specified data type, sample rate, and channels.  <br /></td></tr>
 <tr class="separator:a0f82693f1d149cd4cdff716b898ee0f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f30788b4198573e07bbe7cb50e63aa2" id="r_a6f30788b4198573e07bbe7cb50e63aa2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2">formatEquals</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a6f30788b4198573e07bbe7cb50e63aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions have equal format (type, rate, channels).  <br /></td></tr>
+<tr class="separator:a6f30788b4198573e07bbe7cb50e63aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4748613d1123df20087b6a9b0e44b25f" id="r_a4748613d1123df20087b6a9b0e44b25f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a4748613d1123df20087b6a9b0e44b25f">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a4748613d1123df20087b6a9b0e44b25f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions have equal type, rate, and channels.  <br /></td></tr>
+<tr class="memdesc:a4748613d1123df20087b6a9b0e44b25f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions are fully equal, including metadata.  <br /></td></tr>
 <tr class="separator:a4748613d1123df20087b6a9b0e44b25f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0f5aeaef11ed389c117b0c174ecc905" id="r_ac0f5aeaef11ed389c117b0c174ecc905"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac0f5aeaef11ed389c117b0c174ecc905">isValid</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ac0f5aeaef11ed389c117b0c174ecc905"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this audio description has a valid data type, sample rate, and channel count.  <br /></td></tr>
@@ -844,6 +847,41 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="a6f30788b4198573e07bbe7cb50e63aa2" name="a6f30788b4198573e07bbe7cb50e63aa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f30788b4198573e07bbe7cb50e63aa2">&#9670;&#160;</a></span>formatEquals()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::formatEquals </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if both audio descriptions have equal format (type, rate, channels). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> to compare against. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the audio format matches, ignoring metadata. </dd></dl>
+
+</div>
+</div>
 <a id="a0d33275750109af335ca4bc2de006b75" name="a0d33275750109af335ca4bc2de006b75"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0d33275750109af335ca4bc2de006b75">&#9670;&#160;</a></span>fromJson()</h2>
 
@@ -1094,7 +1132,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </table>
 </div><div class="memdoc">
 
-<p>Returns true if both audio descriptions have equal type, rate, and channels. </p>
+<p>Returns true if both audio descriptions are fully equal, including metadata. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">other</td><td>The <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> to compare against. </td></tr>
@@ -1478,7 +1516,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDesc.html">AudioDesc</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

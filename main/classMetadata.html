@@ -191,6 +191,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0439b960456c3aeb5e295e0be54eebc9" id="r_a0439b960456c3aeb5e295e0be54eebc9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9">dump</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a0439b960456c3aeb5e295e0be54eebc9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a human-readable dump of all metadata entries.  <br /></td></tr>
 <tr class="separator:a0439b960456c3aeb5e295e0be54eebc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17d3006eef0f19ab5216981e7932f8ee" id="r_a17d3006eef0f19ab5216981e7932f8ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a17d3006eef0f19ab5216981e7932f8ee">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a17d3006eef0f19ab5216981e7932f8ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> objects contain the same entries.  <br /></td></tr>
+<tr class="separator:a17d3006eef0f19ab5216981e7932f8ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02ae20922f9a55c2e47ed1c5986e13c9" id="r_a02ae20922f9a55c2e47ed1c5986e13c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classJsonObject.html">JsonObject</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a02ae20922f9a55c2e47ed1c5986e13c9">toJson</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a02ae20922f9a55c2e47ed1c5986e13c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Serializes this <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> to a JSON object.  <br /></td></tr>
 <tr class="separator:a02ae20922f9a55c2e47ed1c5986e13c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -219,7 +222,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 <div class="ttc" id="aclassMetadata_html"><div class="ttname"><a href="classMetadata.html">Metadata</a></div><div class="ttdoc">Key-value metadata container using typed Variant values.</div><div class="ttdef"><b>Definition</b> metadata.h:67</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 </div><!-- fragment --> and deserialization. When shared ownership is needed, use <a class="el" href="classMetadata.html#a5385a0d2ae648d73ce72f419508aa84a" title="Shared pointer type for Metadata.">Metadata::Ptr</a>. </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="acda1db156e5cbad1630f5dba91f3c78e" name="acda1db156e5cbad1630f5dba91f3c78e"></a>
@@ -463,6 +466,41 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="a17d3006eef0f19ab5216981e7932f8ee" name="a17d3006eef0f19ab5216981e7932f8ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17d3006eef0f19ab5216981e7932f8ee">&#9670;&#160;</a></span>operator==()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> Metadata::operator== </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if both <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> objects contain the same entries. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> to compare against. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if equal. </dd></dl>
+
+</div>
+</div>
 <a id="a2eec4aa5c79a3a0e13377daba9785bd8" name="a2eec4aa5c79a3a0e13377daba9785bd8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2eec4aa5c79a3a0e13377daba9785bd8">&#9670;&#160;</a></span>remove()</h2>
 
@@ -651,7 +689,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMetadata.html">Metadata</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

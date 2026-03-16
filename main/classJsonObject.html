@@ -231,6 +231,10 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>size</b> () <a class="
 <tr class="memitem:aa2c4933eb86a2efed7048c42175d96c2"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classJsonObject.html#aa2c4933eb86a2efed7048c42175d96c2">forEach</a> (<a class="el" href="classList.html">Func</a> &amp;&amp;func) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa2c4933eb86a2efed7048c42175d96c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates over all key-value pairs in the object.  <br /></td></tr>
 <tr class="separator:aa2c4933eb86a2efed7048c42175d96c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3775d22e4d561d6c5a1567e8310565f" id="r_aa3775d22e4d561d6c5a1567e8310565f"><td class="memItemLeft" align="right" valign="top"><a id="aa3775d22e4d561d6c5a1567e8310565f" name="aa3775d22e4d561d6c5a1567e8310565f"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa3775d22e4d561d6c5a1567e8310565f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both JSON objects have identical contents. <br /></td></tr>
+<tr class="separator:aa3775d22e4d561d6c5a1567e8310565f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -258,11 +262,11 @@ Friends</h2></td></tr>
 <div class="line"><span class="keyword">auto</span> <a class="code hl_class" href="classList.html">parsed</a> = <a class="code hl_function" href="classJsonObject.html#ae4ae0f07fea1164014ab95671c6e6239">JsonObject::parse</a>(<a class="code hl_class" href="classList.html">json</a>);</div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> name = <a class="code hl_class" href="classList.html">parsed</a>.getString(<span class="stringliteral">&quot;name&quot;</span>);</div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">parsed</a>.getInt(<span class="stringliteral">&quot;width&quot;</span>);</div>
-<div class="ttc" id="aclassJsonObject_html"><div class="ttname"><a href="classJsonObject.html">JsonObject</a></div><div class="ttdoc">JSON object container wrapping nlohmann::json.</div><div class="ttdef"><b>Definition</b> json.h:45</div></div>
-<div class="ttc" id="aclassJsonObject_html_ae4ae0f07fea1164014ab95671c6e6239"><div class="ttname"><a href="classJsonObject.html#ae4ae0f07fea1164014ab95671c6e6239">JsonObject::parse</a></div><div class="ttdeci">static JsonObject parse(const String &amp;str, Error *err=nullptr)</div><div class="ttdoc">Parses a JSON object from a string.</div><div class="ttdef"><b>Definition</b> json.h:57</div></div>
+<div class="ttc" id="aclassJsonObject_html"><div class="ttname"><a href="classJsonObject.html">JsonObject</a></div><div class="ttdoc">JSON object container wrapping nlohmann::json.</div><div class="ttdef"><b>Definition</b> json.h:44</div></div>
+<div class="ttc" id="aclassJsonObject_html_ae4ae0f07fea1164014ab95671c6e6239"><div class="ttname"><a href="classJsonObject.html#ae4ae0f07fea1164014ab95671c6e6239">JsonObject::parse</a></div><div class="ttdeci">static JsonObject parse(const String &amp;str, Error *err=nullptr)</div><div class="ttdoc">Parses a JSON object from a string.</div><div class="ttdef"><b>Definition</b> json.h:56</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 </div><!-- fragment --> Values can be accessed by key with typed getters that perform safe conversions. Supports nesting via <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a> and <a class="el" href="classJsonArray.html" title="JSON array container wrapping nlohmann::json.">JsonArray</a> values. </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="aab776385ab0a78c80a7a294eee0358c2" name="aab776385ab0a78c80a7a294eee0358c2"></a>
@@ -1029,7 +1033,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJsonObject.html">JsonObject</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

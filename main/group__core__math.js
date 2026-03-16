@@ -65,8 +65,7 @@ var group__core__math =
       [ "trace", "classMatrix3x3.html#ab4ff871829cc183fda845275b7d8a00f", null ],
       [ "transpose", "classMatrix3x3.html#a39ac1458a10ccb5d112a5f767f988593", null ],
       [ "vectorTransform", "classMatrix3x3.html#a1b5b4dd26786c6dc630a0051bcb13e0a", null ],
-      [ "zero", "classMatrix3x3.html#af4b404c42fcd087d703d219e105c5c1d", null ],
-      [ "operator<<", "classMatrix3x3.html#a2737c131867b6fd8956cc822967fc7c9", null ]
+      [ "zero", "classMatrix3x3.html#af4b404c42fcd087d703d219e105c5c1d", null ]
     ] ],
     [ "PIDController< ValueType, TimeType >", "classPIDController.html", [
       [ "CurrentTimeFunc", "classPIDController.html#ab1722add884c94cd64ea8bf9b0d0e962", null ],
@@ -101,9 +100,7 @@ var group__core__math =
       [ "operator*", "classPoint.html#a943813c29defd2b83ea91a2a6cf66882", null ],
       [ "operator+", "classPoint.html#aec5a9dcd068b9b01d58b48ede0b069c6", null ],
       [ "operator-", "classPoint.html#a0135b3428c135d65e285e8f20017f3d3", null ],
-      [ "operator/", "classPoint.html#a1d6567cfed979a2f1b14e963ed8072c3", null ],
-      [ "operator<<", "classPoint.html#a0491e52bf1adfca2dbf08f825fcea426", null ],
-      [ "operator>>", "classPoint.html#a3a889ca144f00f626d550d095c7e643e", null ]
+      [ "operator/", "classPoint.html#a1d6567cfed979a2f1b14e963ed8072c3", null ]
     ] ],
     [ "Rational< T >", "classRational.html", [
       [ "Rational", "classRational.html#a7f8469593a56252639a394ad45a3c184", null ],
@@ -118,8 +115,7 @@ var group__core__math =
       [ "operator/", "classRational.html#a2477b67c99a9039823f3a9546fd54f99", null ],
       [ "operator==", "classRational.html#a0a0d7fecedde6c81f17e27b7eefc6ed8", null ],
       [ "toDouble", "classRational.html#ac12d1c7b85a72de1c42cda9f58417985", null ],
-      [ "toString", "classRational.html#aea227f74de01ec8933514b15fce509e6", null ],
-      [ "operator<<", "classRational.html#a6dd39550656ffb34e1185337f9b41459", null ]
+      [ "toString", "classRational.html#aea227f74de01ec8933514b15fce509e6", null ]
     ] ],
     [ "Rect< T >", "classRect.html", [
       [ "Rect", "classRect.html#af73fb06d55751f7b13346a159f5e8944", null ],
@@ -152,8 +148,7 @@ var group__core__math =
       [ "united", "classRect.html#ae9662132cb3123eb7b232dd87d8d19de", null ],
       [ "width", "classRect.html#a6bd18dda4f7a4ad00fb80b6f186d9dcd", null ],
       [ "x", "classRect.html#a99ae91d77498ec5e60dedf9abb945c21", null ],
-      [ "y", "classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0", null ],
-      [ "operator<<", "classRect.html#ab5dea21c51585c2f22dfb6dfed7e6676", null ]
+      [ "y", "classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0", null ]
     ] ],
     [ "Size2DTemplate< T >", "classSize2DTemplate.html", [
       [ "Size2DTemplate", "classSize2DTemplate.html#a60ffb533b40b311718c56c15fe7df536", null ],
@@ -167,8 +162,6 @@ var group__core__math =
       [ "setHeight", "classSize2DTemplate.html#a1258357cb4c5d46ffdb5217e9393250f", null ],
       [ "setWidth", "classSize2DTemplate.html#aaec305c9337c460d079ffc84bfbd5254", null ],
       [ "toString", "classSize2DTemplate.html#a5dfd54d7c19944185beaa26f449f6bdc", null ],
-      [ "width", "classSize2DTemplate.html#a3aa50519f47c1651fbd4dba994d29a0e", null ],
-      [ "operator<<", "classSize2DTemplate.html#a40ee982e93561aeecb8b8a499567fa9e", null ],
-      [ "operator>>", "classSize2DTemplate.html#ade0568fcda7f7ec364a63d366805e7d1", null ]
+      [ "width", "classSize2DTemplate.html#a3aa50519f47c1651fbd4dba994d29a0e", null ]
     ] ]
 ];

@@ -27,7 +27,7 @@ var searchData=
   ['allocsize_24',['allocSize',['../classBuffer.html#aa3b733a521a31a7db6060d3103624beb',1,'Buffer']]],
   ['allof_25',['allOf',['../algorithm_8h.html#a8c81829978921fc8e5d1071857429826',1,'algorithm.h']]],
   ['amplitude_26',['amplitude',['../classMusicalNote.html#aaa70d14878bf2440e1d7c19baea3c1b1',1,'MusicalNote']]],
-  ['ansistream_27',['AnsiStream',['../classAnsiStream.html#ad907b6d611b484ebb38f3adf87a8619b',1,'AnsiStream']]],
+  ['ansistream_27',['AnsiStream',['../classAnsiStream.html#ade7d7c55dca6b309d1691f58371f74b8',1,'AnsiStream']]],
   ['anyof_28',['anyOf',['../algorithm_8h.html#a5bba0dcbcf547f1574cd021cce980f14',1,'algorithm.h']]],
   ['append_29',['append',['../classStringUnicodeData.html#a3c300ad5cb5324c1673bcb71f061ed47',1,'StringUnicodeData::append()'],['../classStringData.html#aeccdd680ad42d7707a73c4972a2e58e8',1,'StringData::append(const StringData &amp;other)=0'],['../classStringData.html#a41a97dfd8bf89e856d858bbb720cd2cd',1,'StringData::append(Char ch)=0'],['../classStringLatin1Data.html#a8440da7b33f654acdce9d5d38c6a276c',1,'StringLatin1Data::append()'],['../classStringUnicodeLiteralData.html#aa0864385d8780de8150b1bf7554a4d16',1,'StringUnicodeLiteralData::append()'],['../classStringLiteralData.html#a66eb4ce5f78393a8a456e9a8c2848401',1,'StringLiteralData::append()'],['../classStringLatin1Data.html#afb9f2fcc1488dcf157e21baffbdcc888',1,'StringLatin1Data::append()'],['../classStringUnicodeData.html#a8ec90eb93c2ba81422194ba80e424fb7',1,'StringUnicodeData::append()'],['../classStringLiteralData.html#ab8f0dcd23e24657c207d0d6c109a1a83',1,'StringLiteralData::append()'],['../classStringUnicodeLiteralData.html#a8955a423ada040af9f52507b3ec36af0',1,'StringUnicodeLiteralData::append()']]],
   ['application_30',['Application',['../classApplication.html#a758ec0591237b4b7204ee8d87a26f834',1,'Application']]],
@@ -49,8 +49,7 @@ var searchData=
   ['audioblock_46',['AudioBlock',['../classAudioBlock.html#a876449e0fca988205e08ab188019e8a4',1,'AudioBlock']]],
   ['audiodesc_47',['audiodesc',['../classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc',1,'AudioDesc::AudioDesc(float sr, unsigned int ch)'],['../classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0',1,'AudioDesc::AudioDesc(DataType dt, float sr, unsigned int ch)'],['../classAudioDesc.html#a5275f5d780370d864e4e7b0b230e2aa5',1,'AudioDesc::AudioDesc()']]],
   ['audiofile_48',['audiofile',['../classAudioFile.html#a3e31e753035e560800d3888e4476f3d3',1,'AudioFile::AudioFile()'],['../classAudioFile.html#a6f6f1a4109ea1f2620892100673219d9',1,'AudioFile::AudioFile(Impl *impl)']]],
-  ['audiofilefactory_49',['AudioFileFactory',['../classAudioFileFactory.html#a6dc1609df2456fab694ead646bed54a8',1,'AudioFileFactory']]],
-  ['audiogen_50',['AudioGen',['../classAudioGen.html#abb159984d30249584eede9ef9ccb6a5f',1,'AudioGen']]],
-  ['audiolist_51',['audiolist',['../classFrame.html#acd463c7e5ee785d13334c3e079cb23a3',1,'Frame::audioList() const'],['../classFrame.html#a467f242201a17814c868b403ae7c421f',1,'Frame::audioList()'],['../classVideoDesc.html#a5db4308fc570e3e342676dfc62e7272b',1,'VideoDesc::audioList() const'],['../classVideoDesc.html#a2fb2c7a7758e3bfbd4c75f11733b5ccf',1,'VideoDesc::audioList()']]],
-  ['availsize_52',['availSize',['../classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd',1,'Buffer']]]
+  ['audiogen_49',['AudioGen',['../classAudioGen.html#abb159984d30249584eede9ef9ccb6a5f',1,'AudioGen']]],
+  ['audiolist_50',['audiolist',['../classFrame.html#acd463c7e5ee785d13334c3e079cb23a3',1,'Frame::audioList() const'],['../classFrame.html#a467f242201a17814c868b403ae7c421f',1,'Frame::audioList()'],['../classVideoDesc.html#a5db4308fc570e3e342676dfc62e7272b',1,'VideoDesc::audioList() const'],['../classVideoDesc.html#a2fb2c7a7758e3bfbd4c75f11733b5ccf',1,'VideoDesc::audioList()']]],
+  ['availsize_51',['availSize',['../classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd',1,'Buffer']]]
 ];

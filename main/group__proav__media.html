@@ -101,7 +101,8 @@ $(document).ready(function(){initNavTree('group__proav__media.html',''); initRes
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle"><div class="title">ProAV Media</div></div>
 </div><!--header-->
 <div class="contents">
@@ -150,8 +151,8 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ga2b6ed5141897e675cf1843076213ac62" id="r_ga2b6ed5141897e675cf1843076213ac62"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav__media.html#ga2b6ed5141897e675cf1843076213ac62">PROMEKI_REGISTER_AUDIOFILE_FACTORY</a>(name)</td></tr>
-<tr class="memdesc:ga2b6ed5141897e675cf1843076213ac62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register an <a class="el" href="classAudioFileFactory.html" title="Factory for creating AudioFile instances based on file format.">AudioFileFactory</a> subclass at static initialization time.  <br /></td></tr>
+<tr class="memitem:ga2b6ed5141897e675cf1843076213ac62" id="r_ga2b6ed5141897e675cf1843076213ac62"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav__media.html#ga2b6ed5141897e675cf1843076213ac62">PROMEKI_REGISTER_AUDIOFILE_FACTORY</a>(name)&#160;&#160;&#160;        <a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">PROMEKI_REGISTER_FILE_FORMAT_FACTORY</a>(<a class="el" href="classAudioFile.html">AudioFile</a>, name)</td></tr>
+<tr class="memdesc:ga2b6ed5141897e675cf1843076213ac62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register an AudioFileFactory subclass at static initialization time.  <br /></td></tr>
 <tr class="separator:ga2b6ed5141897e675cf1843076213ac62"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaeb7193d3b1d2058212f4c97c3f24b271" id="r_gaeb7193d3b1d2058212f4c97c3f24b271"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav__media.html#gaeb7193d3b1d2058212f4c97c3f24b271">PROMEKI_REGISTER_IMAGEFILEIO</a>(name)</td></tr>
 <tr class="memdesc:gaeb7193d3b1d2058212f4c97c3f24b271"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to register an <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> subclass at static initialization time.  <br /></td></tr>
@@ -159,6 +160,12 @@ Macros</h2></td></tr>
 <tr class="memitem:ga26d0778acf6902f0f7302a4242555ac0" id="r_ga26d0778acf6902f0f7302a4242555ac0"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav__media.html#ga26d0778acf6902f0f7302a4242555ac0">PROMEKI_REGISTER_PIXELFORMAT</a>(name)</td></tr>
 <tr class="memdesc:ga26d0778acf6902f0f7302a4242555ac0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a <a class="el" href="classPixelFormat.html" title="Describes a pixel packing format and provides format-specific operations.">PixelFormat</a> subclass in the global pixel format registry.  <br /></td></tr>
 <tr class="separator:ga26d0778acf6902f0f7302a4242555ac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:gaef169420b11ea439bb24ed35fb04237d" id="r_gaef169420b11ea439bb24ed35fb04237d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__proav__media.html#gaef169420b11ea439bb24ed35fb04237d">AudioFileFactory</a> = <a class="el" href="classFileFormatFactory.html">FileFormatFactory</a>&lt; <a class="el" href="classAudioFile.html">AudioFile</a> &gt;</td></tr>
+<tr class="memdesc:gaef169420b11ea439bb24ed35fb04237d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory type for creating <a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format.  <br /></td></tr>
+<tr class="separator:gaef169420b11ea439bb24ed35fb04237d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Professional audio/video media objects and codecs. </p>
@@ -175,19 +182,15 @@ Macros</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">name</td><td>)</td>
-          <td></td>
+          <td>&#160;&#160;&#160;        <a class="el" href="fileformatfactory_8h.html#a7167593218f3b93312196326121f7a87">PROMEKI_REGISTER_FILE_FORMAT_FACTORY</a>(<a class="el" href="classAudioFile.html">AudioFile</a>, name)</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <a class="code hl_class" href="classList.html">int \</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        PROMEKI_CONCAT</a>(<a class="code hl_class" href="classList.html">__promeki_audiofilefactory_</a>, PROMEKI_UNIQUE_ID) = \</div>
-<div class="line">        AudioFileFactory::registerFactory(<span class="keyword">new</span> name);</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-</div><!-- fragment -->
-<p>Macro to register an <a class="el" href="classAudioFileFactory.html" title="Factory for creating AudioFile instances based on file format.">AudioFileFactory</a> subclass at static initialization time. </p>
+
+<p>Macro to register an AudioFileFactory subclass at static initialization time. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>The <a class="el" href="classAudioFileFactory.html" title="Factory for creating AudioFile instances based on file format.">AudioFileFactory</a> subclass to instantiate and register. </td></tr>
+    <tr><td class="paramname">name</td><td>The AudioFileFactory subclass to instantiate and register. </td></tr>
   </table>
   </dd>
 </dl>
@@ -211,6 +214,7 @@ Macros</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keywordtype">int</span> PROMEKI_CONCAT(<a class="code hl_class" href="classList.html">__promeki_imagefileio_</a>, PROMEKI_UNIQUE_ID) = \</div>
 <div class="line">        ImageFileIO::registerImageFileIO(<span class="keyword">new</span> name);</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment -->
 <p>Macro to register an <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> subclass at static initialization time. </p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -250,13 +254,31 @@ Macros</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a id="gaef169420b11ea439bb24ed35fb04237d" name="gaef169420b11ea439bb24ed35fb04237d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaef169420b11ea439bb24ed35fb04237d">&#9670;&#160;</a></span>AudioFileFactory</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__proav__media.html#gaef169420b11ea439bb24ed35fb04237d">AudioFileFactory</a> =  <a class="el" href="classFileFormatFactory.html">FileFormatFactory</a>&lt;<a class="el" href="classAudioFile.html">AudioFile</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Factory type for creating <a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a> instances based on file format. </p>
+<p>AudioFileFactory is a typedef for FileFormatFactory&lt;AudioFile&gt;. Subclasses register themselves via PROMEKI_REGISTER_AUDIOFILE_FACTORY to handle specific audio file formats (e.g. WAV, FLAC). </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

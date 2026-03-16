@@ -108,80 +108,91 @@ $(document).ready(function(){initNavTree('classAnsiStream.html',''); initResizab
 </div><!--header-->
 <div class="contents">
 
-<p>Output stream for ANSI codes You can use this class to make it easier to send ANSI escape codes to an output stream.  
+<p>ANSI escape code writer backed by an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Writes ANSI escape sequences and raw text to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>.  
  <a href="classAnsiStream.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="ansistream_8h_source.html">ansistream.h</a>&gt;</code></p>
-<div class="dynheader">
-Inheritance diagram for AnsiStream:</div>
-<div class="dyncontent">
-<div class="center"><img src="classAnsiStream__inherit__graph.png" border="0" usemap="#aAnsiStream_inherit__map" alt="Inheritance graph"/></div>
-<map name="aAnsiStream_inherit__map" id="aAnsiStream_inherit__map">
-<area shape="rect" title="Output stream for ANSI codes You can use this class to make it easier to send ANSI escape codes to an..." alt="" coords="9,79,106,104"/>
-<area shape="rect" title=" " alt="" coords="5,5,109,31"/>
-<area shape="poly" title=" " alt="" coords="60,44,60,79,55,79,55,44"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
-<div class="dynheader">
-Collaboration diagram for AnsiStream:</div>
-<div class="dyncontent">
-<div class="center"><img src="classAnsiStream__coll__graph.png" border="0" usemap="#aAnsiStream_coll__map" alt="Collaboration graph"/></div>
-<map name="aAnsiStream_coll__map" id="aAnsiStream_coll__map">
-<area shape="rect" title="Output stream for ANSI codes You can use this class to make it easier to send ANSI escape codes to an..." alt="" coords="9,79,106,104"/>
-<area shape="rect" title=" " alt="" coords="5,5,109,31"/>
-<area shape="poly" title=" " alt="" coords="60,44,60,79,55,79,55,44"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a7e20231eb70e71674e8522796a2b784b" id="r_a7e20231eb70e71674e8522796a2b784b"><td class="memItemLeft" align="right" valign="top"><a id="a7e20231eb70e71674e8522796a2b784b" name="a7e20231eb70e71674e8522796a2b784b"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> { <br />
-&#160;&#160;<b>Bold</b> = 1
-, <b>Dim</b> = 2
-, <b>Italic</b> = 3
-, <b>Underlined</b> = 4
+<tr class="memitem:a7e20231eb70e71674e8522796a2b784b" id="r_a7e20231eb70e71674e8522796a2b784b"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> { <br />
+&#160;&#160;<a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a> = 1
+, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba5e05cddde3be2ed0bdce9ee4664fd632">Dim</a> = 2
+, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba728a395a0bf0214ba6aa568e9707f778">Italic</a> = 3
+, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784bab386b2f6b7ccffc5623c4a694feb0d08">Underlined</a> = 4
 , <br />
-&#160;&#160;<b>Blink</b> = 5
-, <b>Inverted</b> = 7
-, <b>Hidden</b> = 8
+&#160;&#160;<a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784bad97d0a4c0b8cd9b2e853b6611ad8f83b">Blink</a> = 5
+, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba099b6ae682152f33d6a5953c9e735b0a">Inverted</a> = 7
+, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784bac6576bd3bf9616b783e03c9f893f32e9">Hidden</a> = 8
 <br />
  }</td></tr>
-<tr class="memdesc:a7e20231eb70e71674e8522796a2b784b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI text styles. <br /></td></tr>
+<tr class="memdesc:a7e20231eb70e71674e8522796a2b784b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI text styles.  <a href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">More...</a><br /></td></tr>
 <tr class="separator:a7e20231eb70e71674e8522796a2b784b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68a76cfb86493db710deaebb0148c671" id="r_a68a76cfb86493db710deaebb0148c671"><td class="memItemLeft" align="right" valign="top"><a id="a68a76cfb86493db710deaebb0148c671" name="a68a76cfb86493db710deaebb0148c671"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> { <br />
-&#160;&#160;<b>Black</b> = 30
-, <b>Red</b> = 31
-, <b>Green</b> = 32
-, <b>Yellow</b> = 33
+<tr class="memitem:a68a76cfb86493db710deaebb0148c671" id="r_a68a76cfb86493db710deaebb0148c671"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> { <br />
+&#160;&#160;<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671af07edbcb2887244940c7fa2bc1d1c2cd">Black</a> = 30
+, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058">Red</a> = 31
+, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ae386e4afa09a7419ac4c8a4e20faefd2">Green</a> = 32
+, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671a2d2720209632189a0dd0c45f65648af0">Yellow</a> = 33
 , <br />
-&#160;&#160;<b>Blue</b> = 34
-, <b>Magenta</b> = 35
-, <b>Cyan</b> = 36
-, <b>White</b> = 37
+&#160;&#160;<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671a607be2cabb7e141623bf8890e00fc695">Blue</a> = 34
+, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671aeb72018378f8b3a1f08def159c22deab">Magenta</a> = 35
+, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac">Cyan</a> = 36
+, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ad751f074dceecb95f5c180b99ddfcd21">White</a> = 37
 , <br />
-&#160;&#160;<b>Default</b> = 39
+&#160;&#160;<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671aab59ecc633c154e7f403d5f59765a7a4">Default</a> = 39
 <br />
  }</td></tr>
-<tr class="memdesc:a68a76cfb86493db710deaebb0148c671"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI colors. <br /></td></tr>
+<tr class="memdesc:a68a76cfb86493db710deaebb0148c671"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI colors.  <a href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">More...</a><br /></td></tr>
 <tr class="separator:a68a76cfb86493db710deaebb0148c671"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad907b6d611b484ebb38f3adf87a8619b" id="r_ad907b6d611b484ebb38f3adf87a8619b"><td class="memItemLeft" align="right" valign="top"><a id="ad907b6d611b484ebb38f3adf87a8619b" name="ad907b6d611b484ebb38f3adf87a8619b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>AnsiStream</b> (std::ostream &amp;<a class="el" href="classList.html">output</a>)</td></tr>
-<tr class="memdesc:ad907b6d611b484ebb38f3adf87a8619b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default Constructor You should pass the output stream object you would like to begin sending ANSI codes to. <br /></td></tr>
-<tr class="separator:ad907b6d611b484ebb38f3adf87a8619b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b42267cc01cedf85d046432c2c768a7" id="r_a6b42267cc01cedf85d046432c2c768a7"><td class="memItemLeft" align="right" valign="top"><a id="a6b42267cc01cedf85d046432c2c768a7" name="a6b42267cc01cedf85d046432c2c768a7"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setAnsiEnabled</b> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">val</a>)</td></tr>
-<tr class="memdesc:a6b42267cc01cedf85d046432c2c768a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ANSI output enabled. If not enabled, no ANSI codes will be output but non ANSI content will pass-thru. <br /></td></tr>
+<tr class="memitem:ade7d7c55dca6b309d1691f58371f74b8" id="r_ade7d7c55dca6b309d1691f58371f74b8"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#ade7d7c55dca6b309d1691f58371f74b8">AnsiStream</a> (<a class="el" href="classIODevice.html">IODevice</a> *<a class="el" href="classAnsiStream.html#a7ed10b66fb05204517126838a8aaa32a">device</a>)</td></tr>
+<tr class="memdesc:ade7d7c55dca6b309d1691f58371f74b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAnsiStream.html" title="ANSI escape code writer backed by an IODevice. Writes ANSI escape sequences and raw text to an IODevi...">AnsiStream</a> writing to the given device.  <br /></td></tr>
+<tr class="separator:ade7d7c55dca6b309d1691f58371f74b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b42267cc01cedf85d046432c2c768a7" id="r_a6b42267cc01cedf85d046432c2c768a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a6b42267cc01cedf85d046432c2c768a7">setAnsiEnabled</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:a6b42267cc01cedf85d046432c2c768a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ANSI output enabled. If not enabled, no ANSI codes will be output but non-ANSI content will pass-thru.  <br /></td></tr>
 <tr class="separator:a6b42267cc01cedf85d046432c2c768a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1d0803cf7413e99f3f9477cdd888eae" id="r_ac1d0803cf7413e99f3f9477cdd888eae"><td class="memItemLeft" align="right" valign="top"><a id="ac1d0803cf7413e99f3f9477cdd888eae" name="ac1d0803cf7413e99f3f9477cdd888eae"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>setForeground</b> (<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> <a class="el" href="classList.html">color</a>, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> style=Bold)</td></tr>
-<tr class="memdesc:ac1d0803cf7413e99f3f9477cdd888eae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the text foreground color. <br /></td></tr>
+<tr class="memitem:a7ed10b66fb05204517126838a8aaa32a" id="r_a7ed10b66fb05204517126838a8aaa32a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a7ed10b66fb05204517126838a8aaa32a">device</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7ed10b66fb05204517126838a8aaa32a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>.  <br /></td></tr>
+<tr class="separator:a7ed10b66fb05204517126838a8aaa32a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a264bfa2d315ce213897ba842d0ce32" id="r_a3a264bfa2d315ce213897ba842d0ce32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a3a264bfa2d315ce213897ba842d0ce32">write</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;text)</td></tr>
+<tr class="memdesc:a3a264bfa2d315ce213897ba842d0ce32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes raw text to the underlying device.  <br /></td></tr>
+<tr class="separator:a3a264bfa2d315ce213897ba842d0ce32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ca680d79a81632e31602ab99ee48495" id="r_a1ca680d79a81632e31602ab99ee48495"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a1ca680d79a81632e31602ab99ee48495">write</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *text)</td></tr>
+<tr class="memdesc:a1ca680d79a81632e31602ab99ee48495"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a C string to the underlying device.  <br /></td></tr>
+<tr class="separator:a1ca680d79a81632e31602ab99ee48495"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2224d1a2f0904874b55833b3039b4764" id="r_a2224d1a2f0904874b55833b3039b4764"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a2224d1a2f0904874b55833b3039b4764">write</a> (<a class="el" href="classList.html">char</a> ch)</td></tr>
+<tr class="memdesc:a2224d1a2f0904874b55833b3039b4764"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a single character to the underlying device.  <br /></td></tr>
+<tr class="separator:a2224d1a2f0904874b55833b3039b4764"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7a064b7cb2d8133c23520e4463f24c6" id="r_ab7a064b7cb2d8133c23520e4463f24c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#ab7a064b7cb2d8133c23520e4463f24c6">write</a> (int <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:ab7a064b7cb2d8133c23520e4463f24c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes an integer to the underlying device.  <br /></td></tr>
+<tr class="separator:ab7a064b7cb2d8133c23520e4463f24c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3348bb0c86e6f8359d5e39722206e36" id="r_aa3348bb0c86e6f8359d5e39722206e36"><td class="memItemLeft" align="right" valign="top"><a id="aa3348bb0c86e6f8359d5e39722206e36" name="aa3348bb0c86e6f8359d5e39722206e36"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>flush</b> ()</td></tr>
+<tr class="memdesc:aa3348bb0c86e6f8359d5e39722206e36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flushes the underlying device. <br /></td></tr>
+<tr class="separator:aa3348bb0c86e6f8359d5e39722206e36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07be40d62df7ed469c9533b0102d77e4" id="r_a07be40d62df7ed469c9533b0102d77e4"><td class="memItemLeft" align="right" valign="top"><a id="a07be40d62df7ed469c9533b0102d77e4" name="a07be40d62df7ed469c9533b0102d77e4"></a>
+<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;text)</td></tr>
+<tr class="memdesc:a07be40d62df7ed469c9533b0102d77e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via operator&lt;&lt;. <br /></td></tr>
+<tr class="separator:a07be40d62df7ed469c9533b0102d77e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8fdda3e06ef631216040ed890295d28" id="r_ad8fdda3e06ef631216040ed890295d28"><td class="memItemLeft" align="right" valign="top"><a id="ad8fdda3e06ef631216040ed890295d28" name="ad8fdda3e06ef631216040ed890295d28"></a>
+<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *text)</td></tr>
+<tr class="memdesc:ad8fdda3e06ef631216040ed890295d28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a C string via operator&lt;&lt;. <br /></td></tr>
+<tr class="separator:ad8fdda3e06ef631216040ed890295d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb55d6f7d8fb962a4ef892e67be562a6" id="r_aeb55d6f7d8fb962a4ef892e67be562a6"><td class="memItemLeft" align="right" valign="top"><a id="aeb55d6f7d8fb962a4ef892e67be562a6" name="aeb55d6f7d8fb962a4ef892e67be562a6"></a>
+<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (<a class="el" href="classList.html">char</a> ch)</td></tr>
+<tr class="memdesc:aeb55d6f7d8fb962a4ef892e67be562a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a single character via operator&lt;&lt;. <br /></td></tr>
+<tr class="separator:aeb55d6f7d8fb962a4ef892e67be562a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6271e93a1c978f8441c39d8260540f6" id="r_aa6271e93a1c978f8441c39d8260540f6"><td class="memItemLeft" align="right" valign="top"><a id="aa6271e93a1c978f8441c39d8260540f6" name="aa6271e93a1c978f8441c39d8260540f6"></a>
+<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (int <a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:aa6271e93a1c978f8441c39d8260540f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes an integer via operator&lt;&lt;. <br /></td></tr>
+<tr class="separator:aa6271e93a1c978f8441c39d8260540f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac1d0803cf7413e99f3f9477cdd888eae" id="r_ac1d0803cf7413e99f3f9477cdd888eae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#ac1d0803cf7413e99f3f9477cdd888eae">setForeground</a> (<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> <a class="el" href="classList.html">color</a>, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> style=<a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a>)</td></tr>
+<tr class="memdesc:ac1d0803cf7413e99f3f9477cdd888eae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the text foreground color.  <br /></td></tr>
 <tr class="separator:ac1d0803cf7413e99f3f9477cdd888eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0be61114522ab4283a58d24f392a010" id="r_af0be61114522ab4283a58d24f392a010"><td class="memItemLeft" align="right" valign="top"><a id="af0be61114522ab4283a58d24f392a010" name="af0be61114522ab4283a58d24f392a010"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>setBackground</b> (<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> <a class="el" href="classList.html">color</a>, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> style=Bold)</td></tr>
-<tr class="memdesc:af0be61114522ab4283a58d24f392a010"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the text background color. <br /></td></tr>
+<tr class="memitem:af0be61114522ab4283a58d24f392a010" id="r_af0be61114522ab4283a58d24f392a010"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#af0be61114522ab4283a58d24f392a010">setBackground</a> (<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> <a class="el" href="classList.html">color</a>, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> style=<a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a>)</td></tr>
+<tr class="memdesc:af0be61114522ab4283a58d24f392a010"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the text background color.  <br /></td></tr>
 <tr class="separator:af0be61114522ab4283a58d24f392a010"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c2f57c3275a9c43d7046184bf215e6d" id="r_a1c2f57c3275a9c43d7046184bf215e6d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a1c2f57c3275a9c43d7046184bf215e6d">cursorUp</a> (int <a class="el" href="classList.html">n</a>)</td></tr>
 <tr class="memdesc:a1c2f57c3275a9c43d7046184bf215e6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the cursor up N rows.  <br /></td></tr>
@@ -198,52 +209,41 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a57a8f2af5103762cb254c22813829fe5" id="r_a57a8f2af5103762cb254c22813829fe5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a57a8f2af5103762cb254c22813829fe5">setCursorPosition</a> (int r, int <a class="el" href="classList.html">c</a>)</td></tr>
 <tr class="memdesc:a57a8f2af5103762cb254c22813829fe5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the absolute cursor position.  <br /></td></tr>
 <tr class="separator:a57a8f2af5103762cb254c22813829fe5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5713b4dca537250ace00ddfa37687223" id="r_a5713b4dca537250ace00ddfa37687223"><td class="memItemLeft" align="right" valign="top"><a id="a5713b4dca537250ace00ddfa37687223" name="a5713b4dca537250ace00ddfa37687223"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>clearScreen</b> ()</td></tr>
-<tr class="memdesc:a5713b4dca537250ace00ddfa37687223"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the screen. <br /></td></tr>
+<tr class="memitem:a5713b4dca537250ace00ddfa37687223" id="r_a5713b4dca537250ace00ddfa37687223"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a5713b4dca537250ace00ddfa37687223">clearScreen</a> ()</td></tr>
+<tr class="memdesc:a5713b4dca537250ace00ddfa37687223"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the screen.  <br /></td></tr>
 <tr class="separator:a5713b4dca537250ace00ddfa37687223"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f57f578caba6d9ab8acedd235c12339" id="r_a6f57f578caba6d9ab8acedd235c12339"><td class="memItemLeft" align="right" valign="top"><a id="a6f57f578caba6d9ab8acedd235c12339" name="a6f57f578caba6d9ab8acedd235c12339"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>moveToStartOfLine</b> ()</td></tr>
-<tr class="memdesc:a6f57f578caba6d9ab8acedd235c12339"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the cursor to the start of the current line. <br /></td></tr>
+<tr class="memitem:a6f57f578caba6d9ab8acedd235c12339" id="r_a6f57f578caba6d9ab8acedd235c12339"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a6f57f578caba6d9ab8acedd235c12339">moveToStartOfLine</a> ()</td></tr>
+<tr class="memdesc:a6f57f578caba6d9ab8acedd235c12339"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the cursor to the start of the current line.  <br /></td></tr>
 <tr class="separator:a6f57f578caba6d9ab8acedd235c12339"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a64f05adc4ecbbfdc764ff80f3981bdb8" id="r_a64f05adc4ecbbfdc764ff80f3981bdb8"><td class="memItemLeft" align="right" valign="top"><a id="a64f05adc4ecbbfdc764ff80f3981bdb8" name="a64f05adc4ecbbfdc764ff80f3981bdb8"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>moveToEndOfLine</b> ()</td></tr>
-<tr class="memdesc:a64f05adc4ecbbfdc764ff80f3981bdb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the cursor to the end of the current line. <br /></td></tr>
+<tr class="memitem:a64f05adc4ecbbfdc764ff80f3981bdb8" id="r_a64f05adc4ecbbfdc764ff80f3981bdb8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a64f05adc4ecbbfdc764ff80f3981bdb8">moveToEndOfLine</a> ()</td></tr>
+<tr class="memdesc:a64f05adc4ecbbfdc764ff80f3981bdb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the cursor to the end of the current line.  <br /></td></tr>
 <tr class="separator:a64f05adc4ecbbfdc764ff80f3981bdb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a811c6e56cb28e5f65d108f865b27bd7a" id="r_a811c6e56cb28e5f65d108f865b27bd7a"><td class="memItemLeft" align="right" valign="top"><a id="a811c6e56cb28e5f65d108f865b27bd7a" name="a811c6e56cb28e5f65d108f865b27bd7a"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>clearLine</b> ()</td></tr>
-<tr class="memdesc:a811c6e56cb28e5f65d108f865b27bd7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the current line. <br /></td></tr>
+<tr class="memitem:a811c6e56cb28e5f65d108f865b27bd7a" id="r_a811c6e56cb28e5f65d108f865b27bd7a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a811c6e56cb28e5f65d108f865b27bd7a">clearLine</a> ()</td></tr>
+<tr class="memdesc:a811c6e56cb28e5f65d108f865b27bd7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the current line.  <br /></td></tr>
 <tr class="separator:a811c6e56cb28e5f65d108f865b27bd7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeb5b038710b1508269af1da6fe8c2bb2" id="r_aeb5b038710b1508269af1da6fe8c2bb2"><td class="memItemLeft" align="right" valign="top"><a id="aeb5b038710b1508269af1da6fe8c2bb2" name="aeb5b038710b1508269af1da6fe8c2bb2"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>clearLineBeforeCursor</b> ()</td></tr>
-<tr class="memdesc:aeb5b038710b1508269af1da6fe8c2bb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears between the cursor and the start of the current line. <br /></td></tr>
+<tr class="memitem:aeb5b038710b1508269af1da6fe8c2bb2" id="r_aeb5b038710b1508269af1da6fe8c2bb2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aeb5b038710b1508269af1da6fe8c2bb2">clearLineBeforeCursor</a> ()</td></tr>
+<tr class="memdesc:aeb5b038710b1508269af1da6fe8c2bb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears between the cursor and the start of the current line.  <br /></td></tr>
 <tr class="separator:aeb5b038710b1508269af1da6fe8c2bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88745134ad0e88a6e66c837aad014750" id="r_a88745134ad0e88a6e66c837aad014750"><td class="memItemLeft" align="right" valign="top"><a id="a88745134ad0e88a6e66c837aad014750" name="a88745134ad0e88a6e66c837aad014750"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>clearLineAfterCursor</b> ()</td></tr>
-<tr class="memdesc:a88745134ad0e88a6e66c837aad014750"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears between the cursor and the end of the current line. <br /></td></tr>
+<tr class="memitem:a88745134ad0e88a6e66c837aad014750" id="r_a88745134ad0e88a6e66c837aad014750"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a88745134ad0e88a6e66c837aad014750">clearLineAfterCursor</a> ()</td></tr>
+<tr class="memdesc:a88745134ad0e88a6e66c837aad014750"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears between the cursor and the end of the current line.  <br /></td></tr>
 <tr class="separator:a88745134ad0e88a6e66c837aad014750"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba854b8ea7ed6c00c7236eecde4a5817" id="r_aba854b8ea7ed6c00c7236eecde4a5817"><td class="memItemLeft" align="right" valign="top"><a id="aba854b8ea7ed6c00c7236eecde4a5817" name="aba854b8ea7ed6c00c7236eecde4a5817"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>reset</b> ()</td></tr>
-<tr class="memdesc:aba854b8ea7ed6c00c7236eecde4a5817"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the terminal to default configuration. <br /></td></tr>
+<tr class="memitem:aba854b8ea7ed6c00c7236eecde4a5817" id="r_aba854b8ea7ed6c00c7236eecde4a5817"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aba854b8ea7ed6c00c7236eecde4a5817">reset</a> ()</td></tr>
+<tr class="memdesc:aba854b8ea7ed6c00c7236eecde4a5817"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the terminal to default configuration.  <br /></td></tr>
 <tr class="separator:aba854b8ea7ed6c00c7236eecde4a5817"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af589e55cc899f00fc2e6174ba9cfc303" id="r_af589e55cc899f00fc2e6174ba9cfc303"><td class="memItemLeft" align="right" valign="top"><a id="af589e55cc899f00fc2e6174ba9cfc303" name="af589e55cc899f00fc2e6174ba9cfc303"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>showCursor</b> ()</td></tr>
-<tr class="memdesc:af589e55cc899f00fc2e6174ba9cfc303"><td class="mdescLeft">&#160;</td><td class="mdescRight">Makes the cursor visible. <br /></td></tr>
+<tr class="memitem:af589e55cc899f00fc2e6174ba9cfc303" id="r_af589e55cc899f00fc2e6174ba9cfc303"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#af589e55cc899f00fc2e6174ba9cfc303">showCursor</a> ()</td></tr>
+<tr class="memdesc:af589e55cc899f00fc2e6174ba9cfc303"><td class="mdescLeft">&#160;</td><td class="mdescRight">Makes the cursor visible.  <br /></td></tr>
 <tr class="separator:af589e55cc899f00fc2e6174ba9cfc303"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa45fe740a54993f0f304f45691d57684" id="r_aa45fe740a54993f0f304f45691d57684"><td class="memItemLeft" align="right" valign="top"><a id="aa45fe740a54993f0f304f45691d57684" name="aa45fe740a54993f0f304f45691d57684"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>hideCursor</b> ()</td></tr>
-<tr class="memdesc:aa45fe740a54993f0f304f45691d57684"><td class="mdescLeft">&#160;</td><td class="mdescRight">Makes the cursor invisible. <br /></td></tr>
+<tr class="memitem:aa45fe740a54993f0f304f45691d57684" id="r_aa45fe740a54993f0f304f45691d57684"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aa45fe740a54993f0f304f45691d57684">hideCursor</a> ()</td></tr>
+<tr class="memdesc:aa45fe740a54993f0f304f45691d57684"><td class="mdescLeft">&#160;</td><td class="mdescRight">Makes the cursor invisible.  <br /></td></tr>
 <tr class="separator:aa45fe740a54993f0f304f45691d57684"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95258756e61f0c86a8f581755d9f87f6" id="r_a95258756e61f0c86a8f581755d9f87f6"><td class="memItemLeft" align="right" valign="top"><a id="a95258756e61f0c86a8f581755d9f87f6" name="a95258756e61f0c86a8f581755d9f87f6"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>saveCursorPosition</b> ()</td></tr>
-<tr class="memdesc:a95258756e61f0c86a8f581755d9f87f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the cursor position for later recall. <br /></td></tr>
+<tr class="memitem:a95258756e61f0c86a8f581755d9f87f6" id="r_a95258756e61f0c86a8f581755d9f87f6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a95258756e61f0c86a8f581755d9f87f6">saveCursorPosition</a> ()</td></tr>
+<tr class="memdesc:a95258756e61f0c86a8f581755d9f87f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the cursor position for later recall.  <br /></td></tr>
 <tr class="separator:a95258756e61f0c86a8f581755d9f87f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a65d3fbf2eccb581482c3b27e52d367f5" id="r_a65d3fbf2eccb581482c3b27e52d367f5"><td class="memItemLeft" align="right" valign="top"><a id="a65d3fbf2eccb581482c3b27e52d367f5" name="a65d3fbf2eccb581482c3b27e52d367f5"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>restoreCursorPosition</b> ()</td></tr>
-<tr class="memdesc:a65d3fbf2eccb581482c3b27e52d367f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recalls a saved cursor position See: <a class="el" href="classAnsiStream.html#a95258756e61f0c86a8f581755d9f87f6" title="Saves the cursor position for later recall.">saveCursorPosition()</a> <br /></td></tr>
+<tr class="memitem:a65d3fbf2eccb581482c3b27e52d367f5" id="r_a65d3fbf2eccb581482c3b27e52d367f5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a65d3fbf2eccb581482c3b27e52d367f5">restoreCursorPosition</a> ()</td></tr>
+<tr class="memdesc:a65d3fbf2eccb581482c3b27e52d367f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recalls a saved cursor position.  <br /></td></tr>
 <tr class="separator:a65d3fbf2eccb581482c3b27e52d367f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e10b56b4e703e68cd0389c5183c4277" id="r_a7e10b56b4e703e68cd0389c5183c4277"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a7e10b56b4e703e68cd0389c5183c4277">enableScrollingRegion</a> (int <a class="el" href="classList.html">startRow</a>, int <a class="el" href="classList.html">endRow</a>)</td></tr>
-<tr class="memdesc:a7e10b56b4e703e68cd0389c5183c4277"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables a region of the screen scroll.  <br /></td></tr>
+<tr class="memdesc:a7e10b56b4e703e68cd0389c5183c4277"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables a region of the screen to scroll.  <br /></td></tr>
 <tr class="separator:a7e10b56b4e703e68cd0389c5183c4277"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40d3bb835508f92ea844d3a86b87d04a" id="r_a40d3bb835508f92ea844d3a86b87d04a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a40d3bb835508f92ea844d3a86b87d04a">scrollUp</a> (int <a class="el" href="classList.html">n</a>)</td></tr>
 <tr class="memdesc:a40d3bb835508f92ea844d3a86b87d04a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Causes the scrolling region to scroll up N rows.  <br /></td></tr>
@@ -269,31 +269,244 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa326817ae588ac4cde9e157f46c5e7b8" id="r_aa326817ae588ac4cde9e157f46c5e7b8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aa326817ae588ac4cde9e157f46c5e7b8">setStrikethrough</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">enable</a>)</td></tr>
 <tr class="memdesc:aa326817ae588ac4cde9e157f46c5e7b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables strike-through mode if supported.  <br /></td></tr>
 <tr class="separator:aa326817ae588ac4cde9e157f46c5e7b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3b450f9b8a9de01d8b56f4d9077b525" id="r_aa3b450f9b8a9de01d8b56f4d9077b525"><td class="memItemLeft" align="right" valign="top"><a id="aa3b450f9b8a9de01d8b56f4d9077b525" name="aa3b450f9b8a9de01d8b56f4d9077b525"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>useAlternateScreenBuffer</b> ()</td></tr>
-<tr class="memdesc:aa3b450f9b8a9de01d8b56f4d9077b525"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> should switch to an alternate buffer This can be useful for switching to an alternate screen buffer for your application while leaving the main buffer unaltered. This makes it easy to switch back to the main buffer on exiting your application. <br /></td></tr>
+<tr class="memitem:aa3b450f9b8a9de01d8b56f4d9077b525" id="r_aa3b450f9b8a9de01d8b56f4d9077b525"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aa3b450f9b8a9de01d8b56f4d9077b525">useAlternateScreenBuffer</a> ()</td></tr>
+<tr class="memdesc:aa3b450f9b8a9de01d8b56f4d9077b525"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> should switch to an alternate buffer.  <br /></td></tr>
 <tr class="separator:aa3b450f9b8a9de01d8b56f4d9077b525"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a891387d134fda19dc9a927bc2eef8f02" id="r_a891387d134fda19dc9a927bc2eef8f02"><td class="memItemLeft" align="right" valign="top"><a id="a891387d134fda19dc9a927bc2eef8f02" name="a891387d134fda19dc9a927bc2eef8f02"></a>
-<a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>useMainScreenBuffer</b> ()</td></tr>
-<tr class="memdesc:a891387d134fda19dc9a927bc2eef8f02"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> should switch to main screen buffer. <br /></td></tr>
+<tr class="memitem:a891387d134fda19dc9a927bc2eef8f02" id="r_a891387d134fda19dc9a927bc2eef8f02"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a891387d134fda19dc9a927bc2eef8f02">useMainScreenBuffer</a> ()</td></tr>
+<tr class="memdesc:a891387d134fda19dc9a927bc2eef8f02"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> should switch to main screen buffer.  <br /></td></tr>
 <tr class="separator:a891387d134fda19dc9a927bc2eef8f02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aceb96a2c6a2056dbbca901a7b0f59212" id="r_aceb96a2c6a2056dbbca901a7b0f59212"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aceb96a2c6a2056dbbca901a7b0f59212">getCursorPosition</a> (std::istream &amp;<a class="el" href="classList.html">input</a>, int &amp;row, int &amp;col)</td></tr>
-<tr class="memdesc:aceb96a2c6a2056dbbca901a7b0f59212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the current cursor position from the terminal.  <br /></td></tr>
-<tr class="separator:aceb96a2c6a2056dbbca901a7b0f59212"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65e4875b18cef8ddaeb4a84480f763b3" id="r_a65e4875b18cef8ddaeb4a84480f763b3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a65e4875b18cef8ddaeb4a84480f763b3">getCursorPosition</a> (<a class="el" href="classIODevice.html">IODevice</a> *<a class="el" href="classList.html">input</a>, int &amp;row, int &amp;col)</td></tr>
+<tr class="memdesc:a65e4875b18cef8ddaeb4a84480f763b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the current cursor position from the terminal.  <br /></td></tr>
+<tr class="separator:a65e4875b18cef8ddaeb4a84480f763b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a12a5837f39d199d272e0c10035d435c5" id="r_a12a5837f39d199d272e0c10035d435c5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a12a5837f39d199d272e0c10035d435c5">stdoutWindowSize</a> (int &amp;rows, int &amp;cols)</td></tr>
 <tr class="memdesc:a12a5837f39d199d272e0c10035d435c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the window size of the current STDOUT device.  <br /></td></tr>
 <tr class="separator:a12a5837f39d199d272e0c10035d435c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad15c7ef53247b9edcf20a48c906709bd" id="r_ad15c7ef53247b9edcf20a48c906709bd"><td class="memItemLeft" align="right" valign="top"><a id="ad15c7ef53247b9edcf20a48c906709bd" name="ad15c7ef53247b9edcf20a48c906709bd"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>stdoutSupportsANSI</b> ()</td></tr>
-<tr class="memdesc:ad15c7ef53247b9edcf20a48c906709bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the current STDOUT can support ANSI signaling. <br /></td></tr>
+<tr class="memitem:ad15c7ef53247b9edcf20a48c906709bd" id="r_ad15c7ef53247b9edcf20a48c906709bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#ad15c7ef53247b9edcf20a48c906709bd">stdoutSupportsANSI</a> ()</td></tr>
+<tr class="memdesc:ad15c7ef53247b9edcf20a48c906709bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the current STDOUT can support ANSI signaling.  <br /></td></tr>
 <tr class="separator:ad15c7ef53247b9edcf20a48c906709bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Output stream for ANSI codes You can use this class to make it easier to send ANSI escape codes to an output stream. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+<div class="textblock"><p>ANSI escape code writer backed by an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Writes ANSI escape sequences and raw text to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. </p>
+</div><h2 class="groupheader">Member Enumeration Documentation</h2>
+<a id="a68a76cfb86493db710deaebb0148c671" name="a68a76cfb86493db710deaebb0148c671"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68a76cfb86493db710deaebb0148c671">&#9670;&#160;</a></span>Color</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">AnsiStream::Color</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>ANSI colors. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671af07edbcb2887244940c7fa2bc1d1c2cd" name="a68a76cfb86493db710deaebb0148c671af07edbcb2887244940c7fa2bc1d1c2cd"></a>Black&#160;</td><td class="fielddoc"><p>Black. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058" name="a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058"></a>Red&#160;</td><td class="fielddoc"><p>Red. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ae386e4afa09a7419ac4c8a4e20faefd2" name="a68a76cfb86493db710deaebb0148c671ae386e4afa09a7419ac4c8a4e20faefd2"></a>Green&#160;</td><td class="fielddoc"><p>Green. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671a2d2720209632189a0dd0c45f65648af0" name="a68a76cfb86493db710deaebb0148c671a2d2720209632189a0dd0c45f65648af0"></a>Yellow&#160;</td><td class="fielddoc"><p>Yellow. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671a607be2cabb7e141623bf8890e00fc695" name="a68a76cfb86493db710deaebb0148c671a607be2cabb7e141623bf8890e00fc695"></a>Blue&#160;</td><td class="fielddoc"><p>Blue. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671aeb72018378f8b3a1f08def159c22deab" name="a68a76cfb86493db710deaebb0148c671aeb72018378f8b3a1f08def159c22deab"></a>Magenta&#160;</td><td class="fielddoc"><p>Magenta. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac" name="a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac"></a>Cyan&#160;</td><td class="fielddoc"><p>Cyan. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ad751f074dceecb95f5c180b99ddfcd21" name="a68a76cfb86493db710deaebb0148c671ad751f074dceecb95f5c180b99ddfcd21"></a>White&#160;</td><td class="fielddoc"><p>White. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671aab59ecc633c154e7f403d5f59765a7a4" name="a68a76cfb86493db710deaebb0148c671aab59ecc633c154e7f403d5f59765a7a4"></a>Default&#160;</td><td class="fielddoc"><p><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> default color. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="a7e20231eb70e71674e8522796a2b784b" name="a7e20231eb70e71674e8522796a2b784b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e20231eb70e71674e8522796a2b784b">&#9670;&#160;</a></span>TextStyle</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">AnsiStream::TextStyle</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>ANSI text styles. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c" name="a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c"></a>Bold&#160;</td><td class="fielddoc"><p>Bold or increased intensity. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784ba5e05cddde3be2ed0bdce9ee4664fd632" name="a7e20231eb70e71674e8522796a2b784ba5e05cddde3be2ed0bdce9ee4664fd632"></a>Dim&#160;</td><td class="fielddoc"><p>Faint or decreased intensity. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784ba728a395a0bf0214ba6aa568e9707f778" name="a7e20231eb70e71674e8522796a2b784ba728a395a0bf0214ba6aa568e9707f778"></a>Italic&#160;</td><td class="fielddoc"><p>Italic text. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784bab386b2f6b7ccffc5623c4a694feb0d08" name="a7e20231eb70e71674e8522796a2b784bab386b2f6b7ccffc5623c4a694feb0d08"></a>Underlined&#160;</td><td class="fielddoc"><p>Underlined text. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784bad97d0a4c0b8cd9b2e853b6611ad8f83b" name="a7e20231eb70e71674e8522796a2b784bad97d0a4c0b8cd9b2e853b6611ad8f83b"></a>Blink&#160;</td><td class="fielddoc"><p>Blinking text. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784ba099b6ae682152f33d6a5953c9e735b0a" name="a7e20231eb70e71674e8522796a2b784ba099b6ae682152f33d6a5953c9e735b0a"></a>Inverted&#160;</td><td class="fielddoc"><p>Swapped foreground and background colors. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a7e20231eb70e71674e8522796a2b784bac6576bd3bf9616b783e03c9f893f32e9" name="a7e20231eb70e71674e8522796a2b784bac6576bd3bf9616b783e03c9f893f32e9"></a>Hidden&#160;</td><td class="fielddoc"><p>Hidden (invisible) text. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="ade7d7c55dca6b309d1691f58371f74b8" name="ade7d7c55dca6b309d1691f58371f74b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade7d7c55dca6b309d1691f58371f74b8">&#9670;&#160;</a></span>AnsiStream()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">AnsiStream::AnsiStream </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classIODevice.html">IODevice</a> *&#160;</td>
+          <td class="paramname"><em>device</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs an <a class="el" href="classAnsiStream.html" title="ANSI escape code writer backed by an IODevice. Writes ANSI escape sequences and raw text to an IODevi...">AnsiStream</a> writing to the given device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">device</td><td>The <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> to write to. Must be open for writing. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a811c6e56cb28e5f65d108f865b27bd7a" name="a811c6e56cb28e5f65d108f865b27bd7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a811c6e56cb28e5f65d108f865b27bd7a">&#9670;&#160;</a></span>clearLine()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::clearLine </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clears the current line. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a88745134ad0e88a6e66c837aad014750" name="a88745134ad0e88a6e66c837aad014750"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88745134ad0e88a6e66c837aad014750">&#9670;&#160;</a></span>clearLineAfterCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::clearLineAfterCursor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clears between the cursor and the end of the current line. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="aeb5b038710b1508269af1da6fe8c2bb2" name="aeb5b038710b1508269af1da6fe8c2bb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb5b038710b1508269af1da6fe8c2bb2">&#9670;&#160;</a></span>clearLineBeforeCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::clearLineBeforeCursor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clears between the cursor and the start of the current line. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a5713b4dca537250ace00ddfa37687223" name="a5713b4dca537250ace00ddfa37687223"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5713b4dca537250ace00ddfa37687223">&#9670;&#160;</a></span>clearScreen()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::clearScreen </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Clears the screen. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
 <a id="a8240c98c0634143c31bbd0cd17a884bb" name="a8240c98c0634143c31bbd0cd17a884bb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8240c98c0634143c31bbd0cd17a884bb">&#9670;&#160;</a></span>cursorDown()</h2>
 
@@ -321,10 +534,11 @@ Static Public Member Functions</h2></td></tr>
 <p>Moves the cursor down N rows. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to move down </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to move down. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -355,10 +569,11 @@ Static Public Member Functions</h2></td></tr>
 <p>Moves the cursor left N columns. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of columns to move left </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of columns to move left. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -389,10 +604,11 @@ Static Public Member Functions</h2></td></tr>
 <p>Moves the cursor right N columns. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of columns to move right </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of columns to move right. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -423,10 +639,39 @@ Static Public Member Functions</h2></td></tr>
 <p>Moves the cursor up N rows. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to move up </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to move up. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a7ed10b66fb05204517126838a8aaa32a" name="a7ed10b66fb05204517126838a8aaa32a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ed10b66fb05204517126838a8aaa32a">&#9670;&#160;</a></span>device()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classIODevice.html">IODevice</a> * AnsiStream::device </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the underlying <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> this stream writes to. </dd></dl>
 
 </div>
 </div>
@@ -464,14 +709,15 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Enables a region of the screen scroll. </p>
+<p>Enables a region of the screen to scroll. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">startRow</td><td>Row where scrolling should start </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">endRow</td><td>Row where scrolling should end </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">startRow</td><td>Row where scrolling should start. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">endRow</td><td>Row where scrolling should end. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -502,15 +748,16 @@ Static Public Member Functions</h2></td></tr>
 <p>Erases N characters at cursor. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">n</td><td>Number of characters to erase </td></tr>
+    <tr><td class="paramname">n</td><td>Number of characters to erase. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
-<a id="aceb96a2c6a2056dbbca901a7b0f59212" name="aceb96a2c6a2056dbbca901a7b0f59212"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aceb96a2c6a2056dbbca901a7b0f59212">&#9670;&#160;</a></span>getCursorPosition()</h2>
+<a id="a65e4875b18cef8ddaeb4a84480f763b3" name="a65e4875b18cef8ddaeb4a84480f763b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65e4875b18cef8ddaeb4a84480f763b3">&#9670;&#160;</a></span>getCursorPosition()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -518,7 +765,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">bool</a> AnsiStream::getCursorPosition </td>
           <td>(</td>
-          <td class="paramtype">std::istream &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classIODevice.html">IODevice</a> *&#160;</td>
           <td class="paramname"><em>input</em>, </td>
         </tr>
         <tr>
@@ -544,14 +791,182 @@ Static Public Member Functions</h2></td></tr>
 <p>Requests the current cursor position from the terminal. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Input stream from terminal </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">input</td><td>Input <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> for the terminal (e.g. stdinDevice()) </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">row</td><td>Cursor Row </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">col</td><td>Cursor Column </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>True if successful.</dd></dl>
-<p>This sends a cursor position request code to the terminal and parses the response. You must pass an input stream for the terminal device for it to get the response. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if successful. </dd></dl>
+
+</div>
+</div>
+<a id="aa45fe740a54993f0f304f45691d57684" name="aa45fe740a54993f0f304f45691d57684"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa45fe740a54993f0f304f45691d57684">&#9670;&#160;</a></span>hideCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::hideCursor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Makes the cursor invisible. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a64f05adc4ecbbfdc764ff80f3981bdb8" name="a64f05adc4ecbbfdc764ff80f3981bdb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64f05adc4ecbbfdc764ff80f3981bdb8">&#9670;&#160;</a></span>moveToEndOfLine()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::moveToEndOfLine </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Moves the cursor to the end of the current line. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a6f57f578caba6d9ab8acedd235c12339" name="a6f57f578caba6d9ab8acedd235c12339"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f57f578caba6d9ab8acedd235c12339">&#9670;&#160;</a></span>moveToStartOfLine()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::moveToStartOfLine </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Moves the cursor to the start of the current line. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="aba854b8ea7ed6c00c7236eecde4a5817" name="aba854b8ea7ed6c00c7236eecde4a5817"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba854b8ea7ed6c00c7236eecde4a5817">&#9670;&#160;</a></span>reset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::reset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Resets the terminal to default configuration. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a65d3fbf2eccb581482c3b27e52d367f5" name="a65d3fbf2eccb581482c3b27e52d367f5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65d3fbf2eccb581482c3b27e52d367f5">&#9670;&#160;</a></span>restoreCursorPosition()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::restoreCursorPosition </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Recalls a saved cursor position. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classAnsiStream.html#a95258756e61f0c86a8f581755d9f87f6" title="Saves the cursor position for later recall.">saveCursorPosition()</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a95258756e61f0c86a8f581755d9f87f6" name="a95258756e61f0c86a8f581755d9f87f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95258756e61f0c86a8f581755d9f87f6">&#9670;&#160;</a></span>saveCursorPosition()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::saveCursorPosition </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Saves the cursor position for later recall. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -582,10 +997,11 @@ Static Public Member Functions</h2></td></tr>
 <p>Causes the scrolling region to scroll down N rows. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to scroll </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to scroll. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -616,10 +1032,91 @@ Static Public Member Functions</h2></td></tr>
 <p>Causes the scrolling region to scroll up N rows. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to scroll </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>Number of rows to scroll. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a6b42267cc01cedf85d046432c2c768a7" name="a6b42267cc01cedf85d046432c2c768a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b42267cc01cedf85d046432c2c768a7">&#9670;&#160;</a></span>setAnsiEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> AnsiStream::setAnsiEnabled </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>val</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the ANSI output enabled. If not enabled, no ANSI codes will be output but non-ANSI content will pass-thru. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">val</td><td>True to enable ANSI output, false to disable. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af0be61114522ab4283a58d24f392a010" name="af0be61114522ab4283a58d24f392a010"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0be61114522ab4283a58d24f392a010">&#9670;&#160;</a></span>setBackground()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::setBackground </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a>&#160;</td>
+          <td class="paramname"><em>color</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a>&#160;</td>
+          <td class="paramname"><em>style</em> = <code><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the text background color. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">color</td><td>The background color to set. </td></tr>
+    <tr><td class="paramname">style</td><td>The text style to apply (default: Bold). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -654,6 +1151,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -706,6 +1204,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -746,11 +1245,58 @@ Static Public Member Functions</h2></td></tr>
 <p>Sets the absolute cursor position. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">r</td><td>Row to move cursor </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">c</td><td>Column to move cursor </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">r</td><td>Row to move cursor. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">c</td><td>Column to move cursor. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="ac1d0803cf7413e99f3f9477cdd888eae" name="ac1d0803cf7413e99f3f9477cdd888eae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac1d0803cf7413e99f3f9477cdd888eae">&#9670;&#160;</a></span>setForeground()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::setForeground </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a>&#160;</td>
+          <td class="paramname"><em>color</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a>&#160;</td>
+          <td class="paramname"><em>style</em> = <code><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the text foreground color. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">color</td><td>The foreground color to set. </td></tr>
+    <tr><td class="paramname">style</td><td>The text style to apply (default: Bold). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -785,6 +1331,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -837,6 +1384,7 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -867,10 +1415,67 @@ Static Public Member Functions</h2></td></tr>
 <p>Enables strike-through mode if supported. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">enable</td><td>True if strike-through should be enabled </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">enable</td><td>True if strike-through should be enabled. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="af589e55cc899f00fc2e6174ba9cfc303" name="af589e55cc899f00fc2e6174ba9cfc303"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af589e55cc899f00fc2e6174ba9cfc303">&#9670;&#160;</a></span>showCursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::showCursor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Makes the cursor visible. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="ad15c7ef53247b9edcf20a48c906709bd" name="ad15c7ef53247b9edcf20a48c906709bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad15c7ef53247b9edcf20a48c906709bd">&#9670;&#160;</a></span>stdoutSupportsANSI()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a> AnsiStream::stdoutSupportsANSI </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if the current STDOUT can support ANSI signaling. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if STDOUT supports ANSI escape sequences. </dd></dl>
 
 </div>
 </div>
@@ -911,11 +1516,176 @@ Static Public Member Functions</h2></td></tr>
 <p>Returns the window size of the current STDOUT device. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">rows</td><td>Number of rows in window </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">cols</td><td>Number of columns in window </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">rows</td><td>Number of rows in window. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cols</td><td>Number of columns in window. </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the window size was retrieved successfully. </dd></dl>
+
+</div>
+</div>
+<a id="aa3b450f9b8a9de01d8b56f4d9077b525" name="aa3b450f9b8a9de01d8b56f4d9077b525"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3b450f9b8a9de01d8b56f4d9077b525">&#9670;&#160;</a></span>useAlternateScreenBuffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::useAlternateScreenBuffer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> should switch to an alternate buffer. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a891387d134fda19dc9a927bc2eef8f02" name="a891387d134fda19dc9a927bc2eef8f02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a891387d134fda19dc9a927bc2eef8f02">&#9670;&#160;</a></span>useMainScreenBuffer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::useMainScreenBuffer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> should switch to main screen buffer. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a2224d1a2f0904874b55833b3039b4764" name="a2224d1a2f0904874b55833b3039b4764"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2224d1a2f0904874b55833b3039b4764">&#9670;&#160;</a></span>write() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">char</a>&#160;</td>
+          <td class="paramname"><em>ch</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes a single character to the underlying device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ch</td><td>The character to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a1ca680d79a81632e31602ab99ee48495" name="a1ca680d79a81632e31602ab99ee48495"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ca680d79a81632e31602ab99ee48495">&#9670;&#160;</a></span>write() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td>
+          <td class="paramname"><em>text</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes a C string to the underlying device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">text</td><td>The null-terminated string to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a3a264bfa2d315ce213897ba842d0ce32" name="a3a264bfa2d315ce213897ba842d0ce32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a264bfa2d315ce213897ba842d0ce32">&#9670;&#160;</a></span>write() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>text</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes raw text to the underlying device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">text</td><td>The text to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="ab7a064b7cb2d8133c23520e4463f24c6" name="ab7a064b7cb2d8133c23520e4463f24c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7a064b7cb2d8133c23520e4463f24c6">&#9670;&#160;</a></span>write() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::write </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>val</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes an integer to the underlying device. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">val</td><td>The integer to write (formatted as decimal). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
 </div>
@@ -929,7 +1699,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAnsiStream.html">AnsiStream</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

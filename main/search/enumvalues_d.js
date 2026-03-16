@@ -1,27 +1,7 @@
 var searchData=
 [
-  ['pcmi_5ffloat32be_0',['PCMI_Float32BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a37fb049617f29ec96c2bc0ef5ba5cb16',1,'AudioDesc']]],
-  ['pcmi_5ffloat32le_1',['PCMI_Float32LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a7d72b1c5a1148b99f731cb58399d56e2',1,'AudioDesc']]],
-  ['pcmi_5fs16be_2',['PCMI_S16BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a47c6e05a1bf59e11ff068427534fd113',1,'AudioDesc']]],
-  ['pcmi_5fs16le_3',['PCMI_S16LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a80c0cb3918b290828c146e0d4da608d3',1,'AudioDesc']]],
-  ['pcmi_5fs24be_4',['PCMI_S24BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4ac1fd00818d28213c657c0a1f051352b7',1,'AudioDesc']]],
-  ['pcmi_5fs24le_5',['PCMI_S24LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4ac95668ff3ded92f511bf370f502d201f',1,'AudioDesc']]],
-  ['pcmi_5fs32be_6',['PCMI_S32BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a14880d88a8f266c906ec8b34ab1bf708',1,'AudioDesc']]],
-  ['pcmi_5fs32le_7',['PCMI_S32LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a1fae6d8a84591395751ac2be8721ca1c',1,'AudioDesc']]],
-  ['pcmi_5fs8_8',['PCMI_S8',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4ae2e2b5c221811c33ee58a4ba83dd9e38',1,'AudioDesc']]],
-  ['pcmi_5fu16be_9',['PCMI_U16BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4aef9ae22c3216ce137fc50b6056ce3ea8',1,'AudioDesc']]],
-  ['pcmi_5fu16le_10',['PCMI_U16LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4abe53cc6517f9beccaee64bfe83a0db39',1,'AudioDesc']]],
-  ['pcmi_5fu24be_11',['PCMI_U24BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a481747ed29eb894684466372db18161a',1,'AudioDesc']]],
-  ['pcmi_5fu24le_12',['PCMI_U24LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a42cf2a2a26eb4fc98753880d61a41ebb',1,'AudioDesc']]],
-  ['pcmi_5fu32be_13',['PCMI_U32BE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a3462c26e4a365443e1859436aad56af4',1,'AudioDesc']]],
-  ['pcmi_5fu32le_14',['PCMI_U32LE',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a594c487b66dfb92bf5e69d36127bb90c',1,'AudioDesc']]],
-  ['pcmi_5fu8_15',['PCMI_U8',['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a68ca8ff123b4b67f60fc3b922f93a74d',1,'AudioDesc']]],
-  ['permissiondenied_16',['PermissionDenied',['../classError.html#ab5980e13b879db253df802b0950d1708ad7ee0e319256158dc429b1e93648eab9',1,'Error']]],
-  ['pixelformatnotsupported_17',['PixelFormatNotSupported',['../classError.html#ab5980e13b879db253df802b0950d1708a172a07df35334b0fdc29afd3812beeee',1,'Error']]],
-  ['placeholdertext_18',['PlaceholderText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0ad178770719d270de1e2765baac0a7d3c',1,'TuiPalette']]],
-  ['png_19',['PNG',['../classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627',1,'ImageFile']]],
-  ['progressempty_20',['ProgressEmpty',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0aa9ffb9f5ea4277466020b65933a83c6d',1,'TuiPalette']]],
-  ['progressemptytext_21',['ProgressEmptyText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0aff2f9695bf4509942d3a7767d2b1d14b',1,'TuiPalette']]],
-  ['progressfilled_22',['ProgressFilled',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0ad35593749588ded7b28230de8a31d940',1,'TuiPalette']]],
-  ['progressfilledtext_23',['ProgressFilledText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0abe8583bb546f132e1852a66e69baf4cb',1,'TuiPalette']]]
+  ['ok_0',['ok',['../classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc',1,'DataStream::Ok'],['../classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34',1,'Error::Ok'],['../classTextStream.html#aee6bd443063febf69ecaffd4e6c8eab0ad45ac3e924843071678dd3af95a0eff0',1,'TextStream::Ok']]],
+  ['openfailed_1',['OpenFailed',['../classError.html#ab5980e13b879db253df802b0950d1708a67e1f2f9dd20f6721897f4eca0aaed8b',1,'Error']]],
+  ['outofrange_2',['OutOfRange',['../classError.html#ab5980e13b879db253df802b0950d1708a560476d0164709045f7c6186df9f0437',1,'Error']]],
+  ['ownsfile_3',['OwnsFile',['../classFileIODevice.html#a400e865d46d840cafd00959bd3bf337ba963bf915059bf3e3c19ff778fdcc130a',1,'FileIODevice']]]
 ];

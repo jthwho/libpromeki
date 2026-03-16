@@ -210,6 +210,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab8f95a3dc11ce55907e63d314ae2d402 inherit pub_methods_classIODevice" id="r_ab8f95a3dc11ce55907e63d314ae2d402"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ab8f95a3dc11ce55907e63d314ae2d402">write</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">int64_t</a> maxSize)=0</td></tr>
 <tr class="memdesc:ab8f95a3dc11ce55907e63d314ae2d402 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes up to maxSize bytes from data.  <br /></td></tr>
 <tr class="separator:ab8f95a3dc11ce55907e63d314ae2d402 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25f9109e78ebddcb411a0d82b6a3e348 inherit pub_methods_classIODevice" id="r_a25f9109e78ebddcb411a0d82b6a3e348"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a25f9109e78ebddcb411a0d82b6a3e348">flush</a> ()</td></tr>
+<tr class="memdesc:a25f9109e78ebddcb411a0d82b6a3e348 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flushes any buffered output data to the underlying device.  <br /></td></tr>
+<tr class="separator:a25f9109e78ebddcb411a0d82b6a3e348 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1c4db433359a6ce75d229549de54d91 inherit pub_methods_classIODevice" id="r_ae1c4db433359a6ce75d229549de54d91"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ae1c4db433359a6ce75d229549de54d91">waitForReadyRead</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
 <tr class="memdesc:ae1c4db433359a6ce75d229549de54d91 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits until data is available for reading or timeout.  <br /></td></tr>
 <tr class="separator:ae1c4db433359a6ce75d229549de54d91 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -306,6 +309,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a530584a50ef7cbc296c15efefce6eac5" id="r_a530584a50ef7cbc296c15efefce6eac5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#a530584a50ef7cbc296c15efefce6eac5">deviceBytesAvailable</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a530584a50ef7cbc296c15efefce6eac5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes available from the device.  <br /></td></tr>
 <tr class="separator:a530584a50ef7cbc296c15efefce6eac5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa56447fde7ca87299e4e7d4606a5a186" id="r_aa56447fde7ca87299e4e7d4606a5a186"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#aa56447fde7ca87299e4e7d4606a5a186">bufferedBytesUnconsumed</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa56447fde7ca87299e4e7d4606a5a186"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of buffered bytes not yet consumed.  <br /></td></tr>
+<tr class="separator:aa56447fde7ca87299e4e7d4606a5a186"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab072e8850a299ea0d2b9f2c3081e7a03" id="r_ab072e8850a299ea0d2b9f2c3081e7a03"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#ab072e8850a299ea0d2b9f2c3081e7a03">ensureReadBuffer</a> ()</td></tr>
 <tr class="memdesc:ab072e8850a299ea0d2b9f2c3081e7a03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ensures the read buffer is allocated.  <br /></td></tr>
 <tr class="separator:ab072e8850a299ea0d2b9f2c3081e7a03"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -334,10 +340,14 @@ Protected Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classIODevice')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
-<tr class="memitem:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
+<tr class="memitem:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a">ReadOnly</a> = 0x01
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> = 0x02
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b">ReadWrite</a> = ReadOnly | WriteOnly
+, <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930">Append</a> = 0x04 | WriteOnly
+<br />
  }</td></tr>
 <tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
 <tr class="separator:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -400,6 +410,35 @@ template&lt;typename... Args&gt; </td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="aa56447fde7ca87299e4e7d4606a5a186" name="aa56447fde7ca87299e4e7d4606a5a186"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa56447fde7ca87299e4e7d4606a5a186">&#9670;&#160;</a></span>bufferedBytesUnconsumed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">size_t</a> BufferedIODevice::bufferedBytesUnconsumed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the number of buffered bytes not yet consumed. </p>
+<p>Subclasses that override <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb" title="Returns the current read/write position.">pos()</a> should subtract this value from the raw device position so that <a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb" title="Returns the current read/write position.">pos()</a> reflects the logical read position rather than the device-level position (which may be ahead due to read-ahead buffering).</p>
+<dl class="section return"><dt>Returns</dt><dd>The number of unconsumed bytes in the read buffer. </dd></dl>
+
+</div>
+</div>
 <a id="a8bb6f9d3c9852b1ef920fadf892f2319" name="a8bb6f9d3c9852b1ef920fadf892f2319"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8bb6f9d3c9852b1ef920fadf892f2319">&#9670;&#160;</a></span>bytesAvailable()</h2>
 
@@ -924,7 +963,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classBufferedIODevice.html">BufferedIODevice</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

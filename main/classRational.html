@@ -101,7 +101,6 @@ $(document).ready(function(){initNavTree('classRational.html',''); initResizable
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#friends">Friends</a> &#124;
 <a href="classRational-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Rational&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__math.html">Core Math</a></div></div></div>
 </div><!--header-->
@@ -160,12 +159,6 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ae07bc7381ac37639b55eb757f95c2684"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implicit conversion to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>. <br /></td></tr>
 <tr class="separator:ae07bc7381ac37639b55eb757f95c2684"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
-Friends</h2></td></tr>
-<tr class="memitem:a6dd39550656ffb34e1185337f9b41459" id="r_a6dd39550656ffb34e1185337f9b41459"><td class="memItemLeft" align="right" valign="top">std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRational.html#a6dd39550656ffb34e1185337f9b41459">operator&lt;&lt;</a> (std::ostream &amp;<a class="el" href="classList.html">os</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classRational.html">Rational</a> &amp;r)</td></tr>
-<tr class="memdesc:a6dd39550656ffb34e1185337f9b41459"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes the rational as "num/den" to a stream.  <br /></td></tr>
-<tr class="separator:a6dd39550656ffb34e1185337f9b41459"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a> = int&gt;<br />
@@ -177,7 +170,7 @@ class Rational&lt; T &gt;</div><p><a class="el" href="classRational.html" title=
 <div class="line"><a class="code hl_class" href="classList.html">Rational&lt;int&gt;</a> <a class="code hl_class" href="classList.html">half</a>(1, 2);</div>
 <div class="line"><span class="keyword">auto</span> sum = fps + <a class="code hl_class" href="classList.html">half</a>;</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:36</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
 </div><!-- fragment --> that can be detected with <a class="el" href="classRational.html#a42b2b9229a2fff5b1eab1c591fbbad31" title="Returns true if the denominator is non-zero.">isValid()</a>.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -413,55 +406,6 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
-<h2 class="groupheader">Friends And Related Symbol Documentation</h2>
-<a id="a6dd39550656ffb34e1185337f9b41459" name="a6dd39550656ffb34e1185337f9b41459"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6dd39550656ffb34e1185337f9b41459">&#9670;&#160;</a></span>operator&lt;&lt;</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>  = int&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::ostream &amp; <a class="el" href="classList.html">operator</a>&lt;&lt; </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classRational.html">Rational</a>&lt; <a class="el" href="classList.html">T</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>r</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Writes the rational as "num/den" to a stream. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">os</td><td>Output stream. </td></tr>
-    <tr><td class="paramname">r</td><td><a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> to format. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Reference to <code>os</code>. </dd></dl>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/core/<a class="el" href="rational_8h_source.html">rational.h</a></li>
 </ul>
@@ -472,7 +416,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRational.html">Rational</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

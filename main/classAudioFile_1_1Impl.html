@@ -116,11 +116,19 @@ Collaboration diagram for AudioFile::Impl:</div>
 <div class="dyncontent">
 <div class="center"><img src="classAudioFile_1_1Impl__coll__graph.png" border="0" usemap="#aAudioFile_1_1Impl_coll__map" alt="Collaboration graph"/></div>
 <map name="aAudioFile_1_1Impl_coll__map" id="aAudioFile_1_1Impl_coll__map">
-<area shape="rect" title="Abstract implementation backend for AudioFile." alt="" coords="25,93,144,119"/>
-<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" title=" " alt="" coords="34,44,39,68,49,81,62,91,59,95,45,85,34,70,29,45"/>
-<area shape="rect" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count." alt="" coords="90,5,181,31"/>
-<area shape="poly" title=" " alt="" coords="124,44,108,71,94,94,90,92,104,68,119,41"/>
+<area shape="rect" title="Abstract implementation backend for AudioFile." alt="" coords="85,271,204,296"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,168,65,193"/>
+<area shape="poly" title=" " alt="" coords="43,206,50,226,63,245,80,258,101,268,99,273,78,263,59,248,45,229,38,207"/>
+<area shape="rect" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count." alt="" coords="99,168,190,193"/>
+<area shape="poly" title=" " alt="" coords="147,207,147,271,142,271,142,207"/>
+<area shape="rect" href="classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="215,168,296,193"/>
+<area shape="poly" title=" " alt="" coords="238,205,193,249,163,273,159,268,190,245,234,201"/>
+<area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="207,93,303,119"/>
+<area shape="poly" title=" " alt="" coords="258,133,258,168,253,168,253,133"/>
+<area shape="rect" href="classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="61,5,239,31"/>
+<area shape="poly" title=" " alt="" coords="148,44,149,57,154,68,164,79,178,87,208,98,206,103,175,92,161,83,149,71,144,58,142,45"/>
+<area shape="rect" href="classSignal.html" title=" " alt="" coords="272,5,449,31"/>
+<area shape="poly" title=" " alt="" coords="353,45,333,71,314,85,292,96,290,91,311,81,329,67,348,42"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -151,6 +159,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0af6eb989edea992cd721d6320ffd0d0" id="r_a0af6eb989edea992cd721d6320ffd0d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile_1_1Impl.html#a0af6eb989edea992cd721d6320ffd0d0">setDesc</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a0af6eb989edea992cd721d6320ffd0d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the audio description for writing.  <br /></td></tr>
 <tr class="separator:a0af6eb989edea992cd721d6320ffd0d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0c447e9cd6aca0859a800de0145164f" id="r_af0c447e9cd6aca0859a800de0145164f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile_1_1Impl.html#af0c447e9cd6aca0859a800de0145164f">device</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af0c447e9cd6aca0859a800de0145164f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> associated with this audio file.  <br /></td></tr>
+<tr class="separator:af0c447e9cd6aca0859a800de0145164f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed1b56b58812ea0b6815d42566d00ae3" id="r_aed1b56b58812ea0b6815d42566d00ae3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile_1_1Impl.html#aed1b56b58812ea0b6815d42566d00ae3">setDevice</a> (<a class="el" href="classIODevice.html">IODevice</a> *<a class="el" href="classList.html">dev</a>)</td></tr>
+<tr class="memdesc:aed1b56b58812ea0b6815d42566d00ae3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> for this audio file.  <br /></td></tr>
+<tr class="separator:aed1b56b58812ea0b6815d42566d00ae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab05211b40590dbe7edccfb3d6023ea0d" id="r_ab05211b40590dbe7edccfb3d6023ea0d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile_1_1Impl.html#ab05211b40590dbe7edccfb3d6023ea0d">formatHint</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab05211b40590dbe7edccfb3d6023ea0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the format hint (e.g. "wav"), no dot.  <br /></td></tr>
+<tr class="separator:ab05211b40590dbe7edccfb3d6023ea0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5296c50c848428ccbbda69407811f885" id="r_a5296c50c848428ccbbda69407811f885"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile_1_1Impl.html#a5296c50c848428ccbbda69407811f885">setFormatHint</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:a5296c50c848428ccbbda69407811f885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the format hint for device-based operation.  <br /></td></tr>
+<tr class="separator:a5296c50c848428ccbbda69407811f885"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbe81845a0d20b354420e6c170f1d992" id="r_abbe81845a0d20b354420e6c170f1d992"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioFile_1_1Impl.html#abbe81845a0d20b354420e6c170f1d992">open</a> ()</td></tr>
 <tr class="memdesc:abbe81845a0d20b354420e6c170f1d992"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens the audio file.  <br /></td></tr>
 <tr class="separator:abbe81845a0d20b354420e6c170f1d992"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -182,6 +202,15 @@ Protected Attributes</h2></td></tr>
 <tr class="memitem:ab4f5d70c0542fe7ecfa8c378edb54564" id="r_ab4f5d70c0542fe7ecfa8c378edb54564"><td class="memItemLeft" align="right" valign="top"><a id="ab4f5d70c0542fe7ecfa8c378edb54564" name="ab4f5d70c0542fe7ecfa8c378edb54564"></a>
 <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_desc</b></td></tr>
 <tr class="separator:ab4f5d70c0542fe7ecfa8c378edb54564"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d1d1d88070c86b96bf50936bb3657c2" id="r_a4d1d1d88070c86b96bf50936bb3657c2"><td class="memItemLeft" align="right" valign="top"><a id="a4d1d1d88070c86b96bf50936bb3657c2" name="a4d1d1d88070c86b96bf50936bb3657c2"></a>
+<a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>_device</b> = <a class="el" href="classList.html">nullptr</a></td></tr>
+<tr class="separator:a4d1d1d88070c86b96bf50936bb3657c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aceb2517d2acad874bcde6788ee08b99d" id="r_aceb2517d2acad874bcde6788ee08b99d"><td class="memItemLeft" align="right" valign="top"><a id="aceb2517d2acad874bcde6788ee08b99d" name="aceb2517d2acad874bcde6788ee08b99d"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_ownsDevice</b> = <a class="el" href="classList.html">false</a></td></tr>
+<tr class="separator:aceb2517d2acad874bcde6788ee08b99d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18b4afbe86d45d5e88e6a852a19b2979" id="r_a18b4afbe86d45d5e88e6a852a19b2979"><td class="memItemLeft" align="right" valign="top"><a id="a18b4afbe86d45d5e88e6a852a19b2979" name="a18b4afbe86d45d5e88e6a852a19b2979"></a>
+<a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>_formatHint</b></td></tr>
+<tr class="separator:a18b4afbe86d45d5e88e6a852a19b2979"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract implementation backend for <a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a>. </p>
@@ -250,6 +279,34 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="af0c447e9cd6aca0859a800de0145164f" name="af0c447e9cd6aca0859a800de0145164f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af0c447e9cd6aca0859a800de0145164f">&#9670;&#160;</a></span>device()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classIODevice.html">IODevice</a> * AudioFile::Impl::device </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> associated with this audio file. </p>
+<dl class="section return"><dt>Returns</dt><dd>The device pointer, or nullptr if none is set. </dd></dl>
+
+</div>
+</div>
 <a id="ae133d899893e8bd2f4e8015a93d897bc" name="ae133d899893e8bd2f4e8015a93d897bc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae133d899893e8bd2f4e8015a93d897bc">&#9670;&#160;</a></span>filename()</h2>
 
@@ -275,6 +332,34 @@ Protected Attributes</h2></td></tr>
 
 <p>Returns the filename associated with this audio file. </p>
 <dl class="section return"><dt>Returns</dt><dd>A const reference to the filename string. </dd></dl>
+
+</div>
+</div>
+<a id="ab05211b40590dbe7edccfb3d6023ea0d" name="ab05211b40590dbe7edccfb3d6023ea0d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab05211b40590dbe7edccfb3d6023ea0d">&#9670;&#160;</a></span>formatHint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp; AudioFile::Impl::formatHint </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the format hint (e.g. "wav"), no dot. </p>
+<dl class="section return"><dt>Returns</dt><dd>A const reference to the format hint string. </dd></dl>
 
 </div>
 </div>
@@ -505,6 +590,40 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="aed1b56b58812ea0b6815d42566d00ae3" name="aed1b56b58812ea0b6815d42566d00ae3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aed1b56b58812ea0b6815d42566d00ae3">&#9670;&#160;</a></span>setDevice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> AudioFile::Impl::setDevice </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classIODevice.html">IODevice</a> *&#160;</td>
+          <td class="paramname"><em>dev</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> for this audio file. </p>
+<p>The caller retains ownership of the device; it must outlive this <a class="el" href="classAudioFile_1_1Impl.html" title="Abstract implementation backend for AudioFile.">Impl</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dev</td><td>The <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> to use. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="adba24c2883ece259bf8efbde1e44926d" name="adba24c2883ece259bf8efbde1e44926d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#adba24c2883ece259bf8efbde1e44926d">&#9670;&#160;</a></span>setFilename()</h2>
 
@@ -533,6 +652,40 @@ Protected Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">val</td><td>The filename to set. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a5296c50c848428ccbbda69407811f885" name="a5296c50c848428ccbbda69407811f885"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5296c50c848428ccbbda69407811f885">&#9670;&#160;</a></span>setFormatHint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> AudioFile::Impl::setFormatHint </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>val</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the format hint for device-based operation. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">val</td><td>The format hint (e.g. "wav"), no dot. </td></tr>
   </table>
   </dd>
 </dl>
@@ -584,7 +737,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioFile.html">AudioFile</a></li><li class="navelem"><a class="el" href="classAudioFile_1_1Impl.html">Impl</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

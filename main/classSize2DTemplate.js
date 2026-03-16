@@ -11,7 +11,5 @@ var classSize2DTemplate =
     [ "setHeight", "classSize2DTemplate.html#a1258357cb4c5d46ffdb5217e9393250f", null ],
     [ "setWidth", "classSize2DTemplate.html#aaec305c9337c460d079ffc84bfbd5254", null ],
     [ "toString", "classSize2DTemplate.html#a5dfd54d7c19944185beaa26f449f6bdc", null ],
-    [ "width", "classSize2DTemplate.html#a3aa50519f47c1651fbd4dba994d29a0e", null ],
-    [ "operator<<", "classSize2DTemplate.html#a40ee982e93561aeecb8b8a499567fa9e", null ],
-    [ "operator>>", "classSize2DTemplate.html#ade0568fcda7f7ec364a63d366805e7d1", null ]
+    [ "width", "classSize2DTemplate.html#a3aa50519f47c1651fbd4dba994d29a0e", null ]
 ];

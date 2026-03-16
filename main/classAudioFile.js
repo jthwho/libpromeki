@@ -11,6 +11,7 @@ var classAudioFile =
     [ "AudioFile", "classAudioFile.html#a6f6f1a4109ea1f2620892100673219d9", null ],
     [ "close", "classAudioFile.html#ac9c1a860490d5bdf9abc2b16a92ea96e", null ],
     [ "desc", "classAudioFile.html#a6ecc25cdb64984463a8c61512dc2bf1e", null ],
+    [ "device", "classAudioFile.html#aadea9aa22804785177f9c9dd6dd2e71f", null ],
     [ "filename", "classAudioFile.html#ad7f46e9413b2b290cfcc91928d8eef30", null ],
     [ "isValid", "classAudioFile.html#acd71f0604715738bdcdd0035151d0d06", null ],
     [ "open", "classAudioFile.html#a1c684bfb2373b6f84cb0aab81c416c5c", null ],

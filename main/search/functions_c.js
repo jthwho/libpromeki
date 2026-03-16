@@ -23,7 +23,7 @@ var searchData=
   ['log_20',['log',['../classLogger.html#a1c6c4596c7c2144ceb686647080b0360',1,'Logger::log(LogLevel loglevel, const char *file, int line, const StringList &amp;lines)'],['../classLogger.html#ae8988f1dec98d7b268dff3a963c3e070',1,'Logger::log(LogLevel loglevel, const char *file, int line, const String &amp;msg)']]],
   ['logbuildinfo_21',['logBuildInfo',['../buildinfo_8h.html#a93193b4e98cd9929580879ff033420c8',1,'buildinfo.h']]],
   ['logger_22',['Logger',['../classLogger.html#abc41bfb031d896170c7675fa96a6b30c',1,'Logger']]],
-  ['lookup_23',['lookup',['../classAudioFileFactory.html#a08dee7159e9b87a94cb37c8d5522593a',1,'AudioFileFactory::lookup()'],['../classImageFileIO.html#af4118aa6733b199a3aff6e5fe837dd06',1,'ImageFileIO::lookup()'],['../classPixelFormat.html#a5309cd8124a2901c9abb168ce0c16806',1,'PixelFormat::lookup()']]],
+  ['lookup_23',['lookup',['../classFileFormatFactory.html#a1df13138e57a45a610b9489a444f00c9',1,'FileFormatFactory::lookup()'],['../classImageFileIO.html#af4118aa6733b199a3aff6e5fe837dd06',1,'ImageFileIO::lookup()'],['../classPixelFormat.html#a5309cd8124a2901c9abb168ce0c16806',1,'PixelFormat::lookup()']]],
   ['lookupformat_24',['lookupFormat',['../classAudioDesc.html#a80ce6dd2a4f39ed363c666eb4fd3750a',1,'AudioDesc']]],
   ['lookupkeybyname_25',['lookupKeyByName',['../classStructDatabase.html#a27ba0a3115bf8efa811bc7789afd982e',1,'StructDatabase']]],
   ['lowerbound_26',['lowerbound',['../classSet.html#af017706506d0224e682b4532cf54f12a',1,'Set::lowerBound(const T &amp;value)'],['../classSet.html#a6bef84f13a66f5ae272ef3c1fc745d61',1,'Set::lowerBound(const T &amp;value) const']]],

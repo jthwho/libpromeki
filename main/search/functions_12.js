@@ -34,7 +34,7 @@ var searchData=
   ['refcount_31',['refcount',['../classRefCount.html#a871f21de0112bc4ca80b47d81e1be6e4',1,'RefCount::RefCount()'],['../classRefCount.html#ab9af3bf7e781a16285a7eac7700d1b25',1,'RefCount::RefCount(const RefCount &amp;o)']]],
   ['referencecount_32',['referenceCount',['../classString.html#ad90e13ede23fa9e9304fe52f058feddb',1,'String']]],
   ['regex_33',['regex',['../classRegEx.html#aa1466f01fcd57f585edbc468656029b4',1,'RegEx::RegEx(const String &amp;pattern, Flag flags=DefaultFlags)'],['../classRegEx.html#a54ccc19bbc07ed47ad9df3a028b1d153',1,'RegEx::RegEx(const char *pattern, Flag flags=DefaultFlags)']]],
-  ['registerfactory_34',['registerFactory',['../classAudioFileFactory.html#ae5126678c78685f27d6f9264bd0d8882',1,'AudioFileFactory']]],
+  ['registerfactory_34',['registerFactory',['../classFileFormatFactory.html#a617e43f519cb276e9d8ff3f4158a79a5',1,'FileFormatFactory']]],
   ['registerimagefileio_35',['registerImageFileIO',['../classImageFileIO.html#ac4e0dbad4b87cbd8e32184543ed0ed63',1,'ImageFileIO']]],
   ['registeroptions_36',['registerOptions',['../classCmdLineParser.html#a7f734841ba0fa78c0cb05e3fc31b7ae4',1,'CmdLineParser']]],
   ['registerpixelformat_37',['registerPixelFormat',['../classPixelFormat.html#aaf6579d915da3e3c93acb97fd5591d66',1,'PixelFormat']]],

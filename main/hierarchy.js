@@ -1,5 +1,6 @@
 var hierarchy =
 [
+    [ "AnsiStream", "classAnsiStream.html", null ],
     [ "Application", "classApplication.html", [
       [ "TuiApplication", "classTuiApplication.html", null ]
     ] ],
@@ -17,7 +18,6 @@ var hierarchy =
     [ "Audio", "classAudio.html", null ],
     [ "AudioDesc", "classAudioDesc.html", null ],
     [ "AudioFile", "classAudioFile.html", null ],
-    [ "AudioFileFactory", "classAudioFileFactory.html", null ],
     [ "AudioGen", "classAudioGen.html", null ],
     [ "MemPool::Block", "classMemPool_1_1Block.html", null ],
     [ "Buffer", "classBuffer.html", null ],
@@ -36,6 +36,7 @@ var hierarchy =
     [ "CompiledString< N >", "classCompiledString.html", null ],
     [ "AudioBlock::Config", "classAudioBlock_1_1Config.html", null ],
     [ "AudioGen::Config", "structAudioGen_1_1Config.html", null ],
+    [ "FileFormatFactory< Product >::Context", "structFileFormatFactory_1_1Context.html", null ],
     [ "CSC", "structCSC.html", null ],
     [ "ColorSpace::Data", "structColorSpace_1_1Data.html", null ],
     [ "PixelFormat::Data", "structPixelFormat_1_1Data.html", null ],
@@ -58,6 +59,7 @@ var hierarchy =
     [ "std::false_type", null, [
       [ "IsSharedObject< T, typename >", "structIsSharedObject.html", null ]
     ] ],
+    [ "FileFormatFactory< Product >", "classFileFormatFactory.html", null ],
     [ "FileInfo", "classFileInfo.html", null ],
     [ "FilePath", "classFilePath.html", null ],
     [ "FontPainter", "classFontPainter.html", null ],
@@ -182,9 +184,6 @@ var hierarchy =
     [ "ObjectBasePtr", "classObjectBasePtr.html", null ],
     [ "MemSpace::Ops", "structMemSpace_1_1Ops.html", null ],
     [ "CmdLineParser::Option", "classCmdLineParser_1_1Option.html", null ],
-    [ "std::ostream", null, [
-      [ "AnsiStream", "classAnsiStream.html", null ]
-    ] ],
     [ "PaintEngine", "classPaintEngine.html", null ],
     [ "Pair< A, B >", "classPair.html", null ],
     [ "TuiInputParser::ParsedEvent", "structTuiInputParser_1_1ParsedEvent.html", null ],

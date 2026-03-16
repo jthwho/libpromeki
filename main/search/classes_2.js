@@ -12,5 +12,6 @@ var searchData=
   ['compiledcodepoints_9',['CompiledCodepoints',['../classCompiledCodepoints.html',1,'']]],
   ['compiledstring_10',['CompiledString',['../classCompiledString.html',1,'']]],
   ['config_11',['config',['../classAudioBlock_1_1Config.html',1,'AudioBlock::Config'],['../structAudioGen_1_1Config.html',1,'AudioGen::Config']]],
-  ['csc_12',['CSC',['../structCSC.html',1,'']]]
+  ['context_12',['Context',['../structFileFormatFactory_1_1Context.html',1,'FileFormatFactory']]],
+  ['csc_13',['CSC',['../structCSC.html',1,'']]]
 ];

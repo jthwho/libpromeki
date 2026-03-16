@@ -24,6 +24,7 @@ var dir_ad13c61ad61140e75ee33c3a0e8002db =
     [ "event.h", "event_8h.html", null ],
     [ "eventloop.h", "eventloop_8h.html", null ],
     [ "file.h", "file_8h.html", null ],
+    [ "fileformatfactory.h", "fileformatfactory_8h.html", "fileformatfactory_8h" ],
     [ "fileinfo.h", "fileinfo_8h.html", null ],
     [ "fileiodevice.h", "fileiodevice_8h.html", null ],
     [ "filepath.h", "filepath_8h.html", null ],

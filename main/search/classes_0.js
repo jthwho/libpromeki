@@ -17,6 +17,5 @@ var searchData=
   ['audioblock_14',['AudioBlock',['../classAudioBlock.html',1,'']]],
   ['audiodesc_15',['AudioDesc',['../classAudioDesc.html',1,'']]],
   ['audiofile_16',['AudioFile',['../classAudioFile.html',1,'']]],
-  ['audiofilefactory_17',['AudioFileFactory',['../classAudioFileFactory.html',1,'']]],
-  ['audiogen_18',['AudioGen',['../classAudioGen.html',1,'']]]
+  ['audiogen_17',['AudioGen',['../classAudioGen.html',1,'']]]
 ];

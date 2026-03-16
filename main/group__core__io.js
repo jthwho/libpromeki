@@ -3,6 +3,7 @@ var group__core__io =
     [ "BufferedIODevice", "classBufferedIODevice.html", [
       [ "BufferedIODevice", "classBufferedIODevice.html#afe86020bcf21c62cb68cebf3f7105502", null ],
       [ "~BufferedIODevice", "classBufferedIODevice.html#a14fab15cfcfa1242eb9c25da11399014", null ],
+      [ "bufferedBytesUnconsumed", "classBufferedIODevice.html#aa56447fde7ca87299e4e7d4606a5a186", null ],
       [ "bytesAvailable", "classBufferedIODevice.html#a8bb6f9d3c9852b1ef920fadf892f2319", null ],
       [ "canReadLine", "classBufferedIODevice.html#a3bca90abac4dd7edbc60bf976cb801c8", null ],
       [ "deviceBytesAvailable", "classBufferedIODevice.html#a530584a50ef7cbc296c15efefce6eac5", null ],
@@ -98,6 +99,24 @@ var group__core__io =
       [ "truncate", "classFile.html#a949d6bc0f4792b6dcc387d64510808df", null ],
       [ "write", "classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9", null ]
     ] ],
+    [ "FileFormatFactory< Product >", "classFileFormatFactory.html", [
+      [ "Context", "structFileFormatFactory_1_1Context.html", [
+        [ "device", "structFileFormatFactory_1_1Context.html#ab68b350168be1e72a420284a6e890042", null ],
+        [ "filename", "structFileFormatFactory_1_1Context.html#a4bb849827a4d56cbc33079ff983aacca", null ],
+        [ "formatHint", "structFileFormatFactory_1_1Context.html#a2a4a07bd0c3b96480b1abeb002d1891b", null ],
+        [ "operation", "structFileFormatFactory_1_1Context.html#a385a4df357897f7db6cd8739840a4466", null ]
+      ] ],
+      [ "FileFormatFactory", "classFileFormatFactory.html#ac549ab98df641af35d3facfad9e023d9", null ],
+      [ "~FileFormatFactory", "classFileFormatFactory.html#ad897610e551c2dbb6eda522aea2b095c", null ],
+      [ "canDoOperation", "classFileFormatFactory.html#a5a2e29825a4ca57d156ff09d4eebf60d", null ],
+      [ "createForOperation", "classFileFormatFactory.html#a864ccb38e14551bb70024bbcd6199da3", null ],
+      [ "extensions", "classFileFormatFactory.html#ae798a3d79473a1c466f7bd4e90062c0e", null ],
+      [ "isExtensionSupported", "classFileFormatFactory.html#a548f0edfa282b40b2a4da0b19f111e62", null ],
+      [ "isHintSupported", "classFileFormatFactory.html#abd4014b943f27da415535926ee882e67", null ],
+      [ "name", "classFileFormatFactory.html#ae3123c3b0b72fa3afbe96599ebbdb117", null ],
+      [ "_exts", "classFileFormatFactory.html#ae0bc58e4106eb62f856f6a8bca510a42", null ],
+      [ "_name", "classFileFormatFactory.html#a8dabd06c6ca8f9895403f17ae3fb148b", null ]
+    ] ],
     [ "FileInfo", "classFileInfo.html", [
       [ "Status", "classFileInfo.html#a96655a8e63c3237c295ba3e7b7ffb684", null ],
       [ "FileInfo", "classFileInfo.html#ae310fa182c721b5d0ee71bbd2699e6ef", null ],
@@ -133,6 +152,7 @@ var group__core__io =
       [ "close", "classFileIODevice.html#a3d807fc3cdd18454e17c62d5247ce173", null ],
       [ "file", "classFileIODevice.html#a2a151d97a5dcf7cf7a78fd2af9e00b55", null ],
       [ "filename", "classFileIODevice.html#a705b6e6d7ad3a97172906edb1935b03c", null ],
+      [ "flush", "classFileIODevice.html#a8a6961fa1518e9a9f957e082435daca2", null ],
       [ "isOpen", "classFileIODevice.html#a670ba51cbeb4322942fcc901988ac63b", null ],
       [ "isSequential", "classFileIODevice.html#a19d4acac40531030e2aa84118a113025", null ],
       [ "open", "classFileIODevice.html#a13d0069b4ddbdef91b33e7562254ccba", null ],
@@ -175,7 +195,8 @@ var group__core__io =
         [ "NotOpen", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926", null ],
         [ "ReadOnly", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a", null ],
         [ "WriteOnly", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe", null ],
-        [ "ReadWrite", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b", null ]
+        [ "ReadWrite", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b", null ],
+        [ "Append", "classIODevice.html#ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930", null ]
       ] ],
       [ "IODevice", "classIODevice.html#a09147c8e6d6b4dc7ec91f54db2fc46b9", null ],
       [ "~IODevice", "classIODevice.html#a3615f78e1b4ae46ba84ce46c048a0dfb", null ],
@@ -184,6 +205,7 @@ var group__core__io =
       [ "clearError", "classIODevice.html#a52d6df4e1bdf2ac64090b5c7e37a717e", null ],
       [ "close", "classIODevice.html#aa994b6c0eea6ed02c822ed0774a87b23", null ],
       [ "error", "classIODevice.html#aa732216397f1322ee0a7d2e1fe4b71e4", null ],
+      [ "flush", "classIODevice.html#a25f9109e78ebddcb411a0d82b6a3e348", null ],
       [ "isOpen", "classIODevice.html#a529c23c0405bb913d0c9ceaee62e88d0", null ],
       [ "isReadable", "classIODevice.html#a0386a350997b4324eb8746095a365546", null ],
       [ "isSequential", "classIODevice.html#a550445dfaabdade1af5ca48d23018df6", null ],

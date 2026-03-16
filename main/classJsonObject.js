@@ -13,6 +13,7 @@ var classJsonObject =
     [ "getString", "classJsonObject.html#a07732009e7c2f19bbdf8274dfbf544d7", null ],
     [ "getUInt", "classJsonObject.html#a5f78bc5474faf0d95e01eeec568605a1", null ],
     [ "isValid", "classJsonObject.html#a958bba9f51cd6fb8437fa31b12d82401", null ],
+    [ "operator==", "classJsonObject.html#aa3775d22e4d561d6c5a1567e8310565f", null ],
     [ "set", "classJsonObject.html#a6ad29e72155984ce4fa79dcd6004eb8c", null ],
     [ "set", "classJsonObject.html#a84a253e375dcdbefd04a4e91e828d16d", null ],
     [ "set", "classJsonObject.html#a641715e2e5058da6cc0056c6b521a4e3", null ],

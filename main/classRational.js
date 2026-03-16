@@ -12,6 +12,5 @@ var classRational =
     [ "operator/", "classRational.html#a2477b67c99a9039823f3a9546fd54f99", null ],
     [ "operator==", "classRational.html#a0a0d7fecedde6c81f17e27b7eefc6ed8", null ],
     [ "toDouble", "classRational.html#ac12d1c7b85a72de1c42cda9f58417985", null ],
-    [ "toString", "classRational.html#aea227f74de01ec8933514b15fce509e6", null ],
-    [ "operator<<", "classRational.html#a6dd39550656ffb34e1185337f9b41459", null ]
+    [ "toString", "classRational.html#aea227f74de01ec8933514b15fce509e6", null ]
 ];

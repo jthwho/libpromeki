@@ -13,6 +13,7 @@ var classFileIODevice =
     [ "close", "classFileIODevice.html#a3d807fc3cdd18454e17c62d5247ce173", null ],
     [ "file", "classFileIODevice.html#a2a151d97a5dcf7cf7a78fd2af9e00b55", null ],
     [ "filename", "classFileIODevice.html#a705b6e6d7ad3a97172906edb1935b03c", null ],
+    [ "flush", "classFileIODevice.html#a8a6961fa1518e9a9f957e082435daca2", null ],
     [ "isOpen", "classFileIODevice.html#a670ba51cbeb4322942fcc901988ac63b", null ],
     [ "isSequential", "classFileIODevice.html#a19d4acac40531030e2aa84118a113025", null ],
     [ "open", "classFileIODevice.html#a13d0069b4ddbdef91b33e7562254ccba", null ],

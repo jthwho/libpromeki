@@ -168,6 +168,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a91441b3fc11ca0e6b342a11a247b60cd" id="r_a91441b3fc11ca0e6b342a11a247b60cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classEventLoop.html">EventLoop</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a91441b3fc11ca0e6b342a11a247b60cd">mainEventLoop</a> ()</td></tr>
 <tr class="memdesc:a91441b3fc11ca0e6b342a11a247b60cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> for the main thread.  <br /></td></tr>
 <tr class="separator:a91441b3fc11ca0e6b342a11a247b60cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9965da6ccf792ba011d24f045758e90c" id="r_a9965da6ccf792ba011d24f045758e90c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a9965da6ccf792ba011d24f045758e90c">stdinDevice</a> ()</td></tr>
+<tr class="memdesc:a9965da6ccf792ba011d24f045758e90c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stdin.  <br /></td></tr>
+<tr class="separator:a9965da6ccf792ba011d24f045758e90c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad76dc02c5921ee6512e2e68c715ed2ec" id="r_ad76dc02c5921ee6512e2e68c715ed2ec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#ad76dc02c5921ee6512e2e68c715ed2ec">stdoutDevice</a> ()</td></tr>
+<tr class="memdesc:ad76dc02c5921ee6512e2e68c715ed2ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stdout.  <br /></td></tr>
+<tr class="separator:ad76dc02c5921ee6512e2e68c715ed2ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3842d4110749e27e2cd267c95f0b621c" id="r_a3842d4110749e27e2cd267c95f0b621c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a3842d4110749e27e2cd267c95f0b621c">stderrDevice</a> ()</td></tr>
+<tr class="memdesc:a3842d4110749e27e2cd267c95f0b621c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stderr.  <br /></td></tr>
+<tr class="separator:a3842d4110749e27e2cd267c95f0b621c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-wide state for the promeki library. </p>
@@ -178,7 +187,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="line">        <a class="code hl_function" href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">Application::setAppName</a>(<span class="stringliteral">&quot;myapp&quot;</span>);</div>
 <div class="line">        <span class="comment">// ...</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:46</div></div>
+<div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:47</div></div>
 <div class="ttc" id="aclassApplication_html_a9dc152f89baef986e9129e3efdf9f7db"><div class="ttname"><a href="classApplication.html#a9dc152f89baef986e9129e3efdf9f7db">Application::setAppName</a></div><div class="ttdeci">static void setAppName(const String &amp;name)</div><div class="ttdoc">Sets the application name used for UUID v3/v5 generation.</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><p>If no instance is created, the static accessors operate on default-constructed internal state. </p>
@@ -430,6 +439,93 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a3842d4110749e27e2cd267c95f0b621c" name="a3842d4110749e27e2cd267c95f0b621c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3842d4110749e27e2cd267c95f0b621c">&#9670;&#160;</a></span>stderrDevice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> * Application::stderrDevice </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stderr. </p>
+<p>The returned device is a lazy-initialized static local <a class="el" href="classFileIODevice.html" title="IODevice wrapping a C stdio FILE pointer.">FileIODevice</a> opened for WriteOnly. It does not own the FILE pointer.</p>
+<dl class="section return"><dt>Returns</dt><dd>A non-owning <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> for stderr. </dd></dl>
+
+</div>
+</div>
+<a id="a9965da6ccf792ba011d24f045758e90c" name="a9965da6ccf792ba011d24f045758e90c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9965da6ccf792ba011d24f045758e90c">&#9670;&#160;</a></span>stdinDevice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> * Application::stdinDevice </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stdin. </p>
+<p>The returned device is a lazy-initialized static local <a class="el" href="classFileIODevice.html" title="IODevice wrapping a C stdio FILE pointer.">FileIODevice</a> opened for ReadOnly. It does not own the FILE pointer.</p>
+<dl class="section return"><dt>Returns</dt><dd>A non-owning <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> for stdin. </dd></dl>
+
+</div>
+</div>
+<a id="ad76dc02c5921ee6512e2e68c715ed2ec" name="ad76dc02c5921ee6512e2e68c715ed2ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad76dc02c5921ee6512e2e68c715ed2ec">&#9670;&#160;</a></span>stdoutDevice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> * Application::stdoutDevice </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stdout. </p>
+<p>The returned device is a lazy-initialized static local <a class="el" href="classFileIODevice.html" title="IODevice wrapping a C stdio FILE pointer.">FileIODevice</a> opened for WriteOnly. It does not own the FILE pointer.</p>
+<dl class="section return"><dt>Returns</dt><dd>A non-owning <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> for stdout. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/core/<a class="el" href="core_2application_8h_source.html">application.h</a></li>
 </ul>
@@ -440,7 +536,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classApplication.html">Application</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

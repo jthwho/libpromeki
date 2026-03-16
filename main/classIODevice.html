@@ -149,10 +149,14 @@ Collaboration diagram for IODevice:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ac12c287cd37708c10d6618d667a3147a" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
+<tr class="memitem:ac12c287cd37708c10d6618d667a3147a" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a">ReadOnly</a> = 0x01
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> = 0x02
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b">ReadWrite</a> = ReadOnly | WriteOnly
+, <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930">Append</a> = 0x04 | WriteOnly
+<br />
  }</td></tr>
 <tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
 <tr class="separator:ac12c287cd37708c10d6618d667a3147a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -186,6 +190,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab8f95a3dc11ce55907e63d314ae2d402" id="r_ab8f95a3dc11ce55907e63d314ae2d402"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ab8f95a3dc11ce55907e63d314ae2d402">write</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">int64_t</a> maxSize)=0</td></tr>
 <tr class="memdesc:ab8f95a3dc11ce55907e63d314ae2d402"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes up to maxSize bytes from data.  <br /></td></tr>
 <tr class="separator:ab8f95a3dc11ce55907e63d314ae2d402"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25f9109e78ebddcb411a0d82b6a3e348" id="r_a25f9109e78ebddcb411a0d82b6a3e348"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a25f9109e78ebddcb411a0d82b6a3e348">flush</a> ()</td></tr>
+<tr class="memdesc:a25f9109e78ebddcb411a0d82b6a3e348"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flushes any buffered output data to the underlying device.  <br /></td></tr>
+<tr class="separator:a25f9109e78ebddcb411a0d82b6a3e348"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c0d344529ef3572fc0ebd4a9ecef83a" id="r_a7c0d344529ef3572fc0ebd4a9ecef83a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a7c0d344529ef3572fc0ebd4a9ecef83a">bytesAvailable</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a7c0d344529ef3572fc0ebd4a9ecef83a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes available for reading.  <br /></td></tr>
 <tr class="separator:a7c0d344529ef3572fc0ebd4a9ecef83a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -347,6 +354,8 @@ template&lt;typename... Args&gt; </td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b" name="ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b"></a>ReadWrite&#160;</td><td class="fielddoc"><p>Open for reading and writing. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930" name="ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930"></a>Append&#160;</td><td class="fielddoc"><p>Open for appending (implies WriteOnly). </p>
+</td></tr>
 </table>
 
 </div>
@@ -505,6 +514,36 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="a25f9109e78ebddcb411a0d82b6a3e348" name="a25f9109e78ebddcb411a0d82b6a3e348"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25f9109e78ebddcb411a0d82b6a3e348">&#9670;&#160;</a></span>flush()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a> IODevice::flush </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Flushes any buffered output data to the underlying device. </p>
+<p>The default implementation is a no-op, suitable for unbuffered devices such as in-memory buffers. Subclasses that wrap buffered I/O (e.g. stdio FILE*) should override this. </p>
+
+<p>Reimplemented in <a class="el" href="classFileIODevice.html#a8a6961fa1518e9a9f957e082435daca2">FileIODevice</a>.</p>
+
+</div>
+</div>
 <a id="a529c23c0405bb913d0c9ceaee62e88d0" name="a529c23c0405bb913d0c9ceaee62e88d0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a529c23c0405bb913d0c9ceaee62e88d0">&#9670;&#160;</a></span>isOpen()</h2>
 
@@ -648,7 +687,7 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Opens the device with the specified mode. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">mode</td><td>The open mode (ReadOnly, WriteOnly, or ReadWrite). </td></tr>
+    <tr><td class="paramname">mode</td><td>The open mode (ReadOnly, WriteOnly, ReadWrite, or Append). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1131,7 +1170,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classIODevice.html">IODevice</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

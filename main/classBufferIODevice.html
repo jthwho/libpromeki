@@ -198,6 +198,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~IODevice</b> ()</td></tr>
 <tr class="memdesc:a3615f78e1b4ae46ba84ce46c048a0dfb inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
 <tr class="separator:a3615f78e1b4ae46ba84ce46c048a0dfb inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25f9109e78ebddcb411a0d82b6a3e348 inherit pub_methods_classIODevice" id="r_a25f9109e78ebddcb411a0d82b6a3e348"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a25f9109e78ebddcb411a0d82b6a3e348">flush</a> ()</td></tr>
+<tr class="memdesc:a25f9109e78ebddcb411a0d82b6a3e348 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flushes any buffered output data to the underlying device.  <br /></td></tr>
+<tr class="separator:a25f9109e78ebddcb411a0d82b6a3e348 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1c4db433359a6ce75d229549de54d91 inherit pub_methods_classIODevice" id="r_ae1c4db433359a6ce75d229549de54d91"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ae1c4db433359a6ce75d229549de54d91">waitForReadyRead</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
 <tr class="memdesc:ae1c4db433359a6ce75d229549de54d91 inherit pub_methods_classIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits until data is available for reading or timeout.  <br /></td></tr>
 <tr class="separator:ae1c4db433359a6ce75d229549de54d91 inherit pub_methods_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -274,10 +277,14 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classIODevice')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
-<tr class="memitem:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
+<tr class="memitem:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a">ReadOnly</a> = 0x01
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> = 0x02
 , <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b">ReadWrite</a> = ReadOnly | WriteOnly
+, <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930">Append</a> = 0x04 | WriteOnly
+<br />
  }</td></tr>
 <tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
 <tr class="separator:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -616,7 +623,7 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Opens the device with the specified mode. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">mode</td><td>The open mode (ReadOnly, WriteOnly, or ReadWrite). </td></tr>
+    <tr><td class="paramname">mode</td><td>The open mode (ReadOnly, WriteOnly, ReadWrite, or Append). </td></tr>
   </table>
   </dd>
 </dl>
@@ -855,7 +862,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classBufferIODevice.html">BufferIODevice</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

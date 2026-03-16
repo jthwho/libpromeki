@@ -18,7 +18,5 @@ var classPoint =
     [ "operator*", "classPoint.html#a943813c29defd2b83ea91a2a6cf66882", null ],
     [ "operator+", "classPoint.html#aec5a9dcd068b9b01d58b48ede0b069c6", null ],
     [ "operator-", "classPoint.html#a0135b3428c135d65e285e8f20017f3d3", null ],
-    [ "operator/", "classPoint.html#a1d6567cfed979a2f1b14e963ed8072c3", null ],
-    [ "operator<<", "classPoint.html#a0491e52bf1adfca2dbf08f825fcea426", null ],
-    [ "operator>>", "classPoint.html#a3a889ca144f00f626d550d095c7e643e", null ]
+    [ "operator/", "classPoint.html#a1d6567cfed979a2f1b14e963ed8072c3", null ]
 ];

@@ -1,6 +1,16 @@
 var searchData=
 [
-  ['jpeg_5frgb8_0',['JPEG_RGB8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69',1,'PixelFormat']]],
-  ['jpeg_5frgba8_1',['JPEG_RGBA8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda2770d6c4f4376a240d76e8903450107c',1,'PixelFormat']]],
-  ['jpeg_5fyuv8_5f422_2',['JPEG_YUV8_422',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda8b65229cc236ec93bb3f2c8b7c6fd25e',1,'PixelFormat']]]
+  ['idle_0',['Idle',['../group__core__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896dae599161956d626eda4cb0a5ffb85271c',1,'thread.h']]],
+  ['illegalseek_1',['IllegalSeek',['../classError.html#ab5980e13b879db253df802b0950d1708abd93c221cee554ff0ff80e38ff7b285f',1,'Error']]],
+  ['inactive_2',['Inactive',['../classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2a00793d3334cfd45e1e925c73ed1d817f',1,'TuiPalette']]],
+  ['info_3',['Info',['../classLogger.html#ac744681e23720966b5f430ec2060da36a9f3354efabc848dcb9ddf68279b7417b',1,'Logger']]],
+  ['interrupt_4',['Interrupt',['../classError.html#ab5980e13b879db253df802b0950d1708a9644131717a8ecd6a190b96262d9e595',1,'Error']]],
+  ['invalid_5',['invalid',['../classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85',1,'Error::Invalid'],['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4abb1a07faad8eede4edad63bcef33d8ce',1,'AudioDesc::Invalid'],['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfda8d0d9c22ce7748f8a9b61b56aff72382',1,'ColorSpace::Invalid'],['../classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa703f09ce653aee51543ba313208e0621',1,'ImageFile::Invalid'],['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaaab4a502d1b9078a92329e3e5ea8d86b',1,'PixelFormat::Invalid']]],
+  ['invalidargument_6',['InvalidArgument',['../classError.html#ab5980e13b879db253df802b0950d1708aa5b787b2e97c330870af29648d078cd7',1,'Error']]],
+  ['invaliddimension_7',['InvalidDimension',['../classError.html#ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c',1,'Error']]],
+  ['invalidoperation_8',['InvalidOperation',['../classAudioFile.html#a4e2d052253dd3ed09a44127ee8ce9153abd15022b388033c23afa0f690b6f4232',1,'AudioFile']]],
+  ['inverted_9',['Inverted',['../classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba099b6ae682152f33d6a5953c9e735b0a',1,'AnsiStream']]],
+  ['ioerror_10',['IOError',['../classError.html#ab5980e13b879db253df802b0950d1708a5f2d9734718df7d0a1128baa3efba43d',1,'Error']]],
+  ['isdir_11',['IsDir',['../classError.html#ab5980e13b879db253df802b0950d1708adafcc6ccd50dcef215bb076fb7b7594a',1,'Error']]],
+  ['italic_12',['Italic',['../classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba728a395a0bf0214ba6aa568e9707f778',1,'AnsiStream']]]
 ];

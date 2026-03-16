@@ -88,7 +88,7 @@ var searchData=
   ['logger_2eh_85',['logger.h',['../logger_8h.html',1,'']]],
   ['loglevel_86',['LogLevel',['../classLogger.html#ac744681e23720966b5f430ec2060da36',1,'Logger']]],
   ['longname_87',['longName',['../classCmdLineParser_1_1Option.html#ab59a65731a2a1fec3b67d0e4b1258bc9',1,'CmdLineParser::Option']]],
-  ['lookup_88',['lookup',['../classPixelFormat.html#a5309cd8124a2901c9abb168ce0c16806',1,'PixelFormat::lookup()'],['../classImageFileIO.html#af4118aa6733b199a3aff6e5fe837dd06',1,'ImageFileIO::lookup()'],['../classAudioFileFactory.html#a08dee7159e9b87a94cb37c8d5522593a',1,'AudioFileFactory::lookup()']]],
+  ['lookup_88',['lookup',['../classPixelFormat.html#a5309cd8124a2901c9abb168ce0c16806',1,'PixelFormat::lookup()'],['../classImageFileIO.html#af4118aa6733b199a3aff6e5fe837dd06',1,'ImageFileIO::lookup()'],['../classFileFormatFactory.html#a1df13138e57a45a610b9489a444f00c9',1,'FileFormatFactory::lookup()']]],
   ['lookupformat_89',['lookupFormat',['../classAudioDesc.html#a80ce6dd2a4f39ed363c666eb4fd3750a',1,'AudioDesc']]],
   ['lookupkeybyname_90',['lookupKeyByName',['../classStructDatabase.html#a27ba0a3115bf8efa811bc7789afd982e',1,'StructDatabase']]],
   ['lowerbound_91',['lowerbound',['../classSet.html#a6bef84f13a66f5ae272ef3c1fc745d61',1,'Set::lowerBound(const T &amp;value) const'],['../classSet.html#af017706506d0224e682b4532cf54f12a',1,'Set::lowerBound(const T &amp;value)']]],

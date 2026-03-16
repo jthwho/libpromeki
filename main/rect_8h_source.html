@@ -235,24 +235,17 @@ $(document).ready(function(){initNavTree('rect_8h_source.html',''); initResizabl
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>                }</div>
 </div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span> </div>
-<div class="foldopen" id="foldopen00166" data-start="{" data-end="};">
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno"><a class="line" href="classRect.html#ab5dea21c51585c2f22dfb6dfed7e6676">  166</a></span>                <span class="keyword">friend</span> std::ostream &amp;<a class="code hl_friend" href="classRect.html#ab5dea21c51585c2f22dfb6dfed7e6676">operator&lt;&lt;</a>(std::ostream &amp;<a class="code hl_class" href="classList.html">os</a>, <span class="keyword">const</span> <a class="code hl_class" href="classRect.html">Rect</a> &amp;r) {</div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>                        <a class="code hl_class" href="classList.html">os</a> &lt;&lt; r.<a class="code hl_function" href="classRect.html#a99ae91d77498ec5e60dedf9abb945c21">x</a>() &lt;&lt; <span class="stringliteral">&quot;,&quot;</span> &lt;&lt; r.<a class="code hl_function" href="classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0">y</a>() &lt;&lt; <span class="stringliteral">&quot; &quot;</span> &lt;&lt; r.<a class="code hl_function" href="classRect.html#a6bd18dda4f7a4ad00fb80b6f186d9dcd">width</a>() &lt;&lt; <span class="stringliteral">&quot;x&quot;</span> &lt;&lt; r.<a class="code hl_function" href="classRect.html#a110f2e652eab3eaf96c226bedf2283cc">height</a>();</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>                        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">os</a>;</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>                }</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>                <a class="code hl_class" href="classList.html">Point&lt;T, 2&gt;</a>            _pos;</div>
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>                <a class="code hl_class" href="classList.html">Size2DTemplate&lt;T&gt;</a>      _size;</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>};</div>
 </div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span> </div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>        <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>                <a class="code hl_class" href="classList.html">Point&lt;T, 2&gt;</a>            _pos;</div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>                <a class="code hl_class" href="classList.html">Size2DTemplate&lt;T&gt;</a>      _size;</div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>};</div>
-</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno"><a class="line" href="rect_8h.html#a7dede79eb3166585c8fbab1f89ea959e">  177</a></span><span class="keyword">using </span><a class="code hl_class" href="classRect.html">Rect2Di32</a> = <a class="code hl_class" href="classList.html">Rect&lt;int32_t&gt;</a>;</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno"><a class="line" href="rect_8h.html#ac81e4458ab79a40d780aca2964f30e24">  179</a></span><span class="keyword">using </span><a class="code hl_class" href="classList.html">Rect2Df</a> = <a class="code hl_class" href="classList.html">Rect&lt;float&gt;</a>;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno"><a class="line" href="rect_8h.html#a6bdbb9c64906646f86c369acce1ba6af">  181</a></span><span class="keyword">using </span><a class="code hl_class" href="classList.html">Rect2Dd</a> = <a class="code hl_class" href="classList.html">Rect&lt;double&gt;</a>;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span> </div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno"><a class="line" href="rect_8h.html#a7dede79eb3166585c8fbab1f89ea959e">  171</a></span><span class="keyword">using </span><a class="code hl_class" href="classRect.html">Rect2Di32</a> = <a class="code hl_class" href="classList.html">Rect&lt;int32_t&gt;</a>;</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno"><a class="line" href="rect_8h.html#ac81e4458ab79a40d780aca2964f30e24">  173</a></span><span class="keyword">using </span><a class="code hl_class" href="classList.html">Rect2Df</a> = <a class="code hl_class" href="classList.html">Rect&lt;float&gt;</a>;</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="rect_8h.html#a6bdbb9c64906646f86c369acce1ba6af">  175</a></span><span class="keyword">using </span><a class="code hl_class" href="classList.html">Rect2Dd</a> = <a class="code hl_class" href="classList.html">Rect&lt;double&gt;</a>;</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassRect_html"><div class="ttname"><a href="classRect.html">Rect</a></div><div class="ttdoc">2D rectangle defined by position and size.</div><div class="ttdef"><b>Definition</b> rect.h:34</div></div>
 <div class="ttc" id="aclassRect_html_a040c267f4e7b8827d8da0221f94610a1"><div class="ttname"><a href="classRect.html#a040c267f4e7b8827d8da0221f94610a1">Rect::setWidth</a></div><div class="ttdeci">void setWidth(T val)</div><div class="ttdoc">Sets the width.</div><div class="ttdef"><b>Definition</b> rect.h:66</div></div>
@@ -276,7 +269,6 @@ $(document).ready(function(){initNavTree('rect_8h_source.html',''); initResizabl
 <div class="ttc" id="aclassRect_html_a9ec91c27caf7484f0628e5b6649c9c99"><div class="ttname"><a href="classRect.html#a9ec91c27caf7484f0628e5b6649c9c99">Rect::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if both width and height are greater than zero.</div><div class="ttdef"><b>Definition</b> rect.h:99</div></div>
 <div class="ttc" id="aclassRect_html_aad82df19b5d8f8d65fa9db962aa9f7e8"><div class="ttname"><a href="classRect.html#aad82df19b5d8f8d65fa9db962aa9f7e8">Rect::topLeft</a></div><div class="ttdeci">Point&lt; T, 2 &gt; topLeft() const</div><div class="ttdoc">Returns the top-left position.</div><div class="ttdef"><b>Definition</b> rect.h:72</div></div>
 <div class="ttc" id="aclassRect_html_ab4afb9a6e5c9d34d40743ee14f729232"><div class="ttname"><a href="classRect.html#ab4afb9a6e5c9d34d40743ee14f729232">Rect::intersected</a></div><div class="ttdeci">Rect intersected(const Rect &amp;r) const</div><div class="ttdoc">Returns the intersection of this rectangle with another.</div><div class="ttdef"><b>Definition</b> rect.h:123</div></div>
-<div class="ttc" id="aclassRect_html_ab5dea21c51585c2f22dfb6dfed7e6676"><div class="ttname"><a href="classRect.html#ab5dea21c51585c2f22dfb6dfed7e6676">Rect::operator&lt;&lt;</a></div><div class="ttdeci">friend std::ostream &amp; operator&lt;&lt;(std::ostream &amp;os, const Rect &amp;r)</div><div class="ttdoc">Stream output operator.</div><div class="ttdef"><b>Definition</b> rect.h:166</div></div>
 <div class="ttc" id="aclassRect_html_ab775e1c484fa39f733f77c6629dd655e"><div class="ttname"><a href="classRect.html#ab775e1c484fa39f733f77c6629dd655e">Rect::center</a></div><div class="ttdeci">Point&lt; T, 2 &gt; center() const</div><div class="ttdoc">Returns the center point.</div><div class="ttdef"><b>Definition</b> rect.h:84</div></div>
 <div class="ttc" id="aclassRect_html_abf904f7cbd31dfeb6e010d9e7777a457"><div class="ttname"><a href="classRect.html#abf904f7cbd31dfeb6e010d9e7777a457">Rect::topRight</a></div><div class="ttdeci">Point&lt; T, 2 &gt; topRight() const</div><div class="ttdoc">Returns the top-right position.</div><div class="ttdef"><b>Definition</b> rect.h:75</div></div>
 <div class="ttc" id="aclassRect_html_ac8f004d33ff1524d9bb08bc11f697cf0"><div class="ttname"><a href="classRect.html#ac8f004d33ff1524d9bb08bc11f697cf0">Rect::y</a></div><div class="ttdeci">T y() const</div><div class="ttdoc">Returns the Y coordinate of the top edge.</div><div class="ttdef"><b>Definition</b> rect.h:51</div></div>
@@ -299,7 +291,7 @@ $(document).ready(function(){initNavTree('rect_8h_source.html',''); initResizabl
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="rect_8h.html">rect.h</a></li>
-    <li class="footer">Generated on 2026-03-16 00:01:45 from commit d8372f9 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
   </ul>
 </div>
 </body>

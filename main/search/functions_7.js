@@ -13,7 +13,7 @@ var searchData=
   ['getarray_10',['getarray',['../classJsonObject.html#a217105ce1f5d4961a797826631d0286e',1,'JsonObject::getArray()'],['../classJsonArray.html#a307c1bb8083bd9279bac468ba743a4c1',1,'JsonArray::getArray()']]],
   ['getbool_11',['getbool',['../classJsonObject.html#ad0d6553d43d1a9e0dd21aa0d3c65ce0b',1,'JsonObject::getBool()'],['../classJsonArray.html#ae0d5a5d086cb397e320908f8b94c0e98',1,'JsonArray::getBool()']]],
   ['getbuildinfo_12',['getBuildInfo',['../buildinfo_8h.html#a8ec3a8904528a908f8fa91fc5385431a',1,'buildinfo.h']]],
-  ['getcursorposition_13',['getCursorPosition',['../classAnsiStream.html#aceb96a2c6a2056dbbca901a7b0f59212',1,'AnsiStream']]],
+  ['getcursorposition_13',['getCursorPosition',['../classAnsiStream.html#a65e4875b18cef8ddaeb4a84480f763b3',1,'AnsiStream']]],
   ['getdouble_14',['getdouble',['../classJsonArray.html#a93002fc6bee73f84969e0049d317f2fd',1,'JsonArray::getDouble()'],['../classJsonObject.html#ae176100371822f1bd643ccf840e6ed05',1,'JsonObject::getDouble()']]],
   ['getgaind_15',['getGainD',['../classPIDController.html#abdc44de6db10da2952452d8b74386140',1,'PIDController']]],
   ['getgaini_16',['getGainI',['../classPIDController.html#adb61f3a03a8b87cfc7016c4c3dfa277c',1,'PIDController']]],
