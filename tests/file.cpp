@@ -1142,6 +1142,57 @@ TEST_CASE("File: readBulk with invalid size returns error") {
         std::remove(path);
 }
 
+TEST_CASE("File: pos() accounts for buffered read-ahead") {
+        const char *path = testPath("pos_buf");
+        std::remove(path);
+
+        // Write 16K of pattern data (larger than the 8K default read buffer)
+        const size_t fileSize = 16384;
+        writePatternFile(path, fileSize);
+
+        File f(path);
+        f.open(IODevice::ReadOnly);
+        REQUIRE(f.isOpen());
+        CHECK(f.pos() == 0);
+
+        // Read 10 bytes — the buffer will read-ahead up to 8192 bytes from
+        // the device, but pos() must report the logical position (10).
+        char buf[10];
+        int64_t n = f.read(buf, 10);
+        REQUIRE(n == 10);
+        CHECK(f.pos() == 10);
+        CHECK(verifyPattern(buf, 10, 0));
+
+        // Read 100 more bytes — pos() should advance to 110
+        char buf2[100];
+        n = f.read(buf2, 100);
+        REQUIRE(n == 100);
+        CHECK(f.pos() == 110);
+        CHECK(verifyPattern(buf2, 100, 10));
+
+        // Seek to a new position and read — pos() must be correct after seek too
+        f.seek(5000);
+        CHECK(f.pos() == 5000);
+
+        char buf3[50];
+        n = f.read(buf3, 50);
+        REQUIRE(n == 50);
+        CHECK(f.pos() == 5050);
+        CHECK(verifyPattern(buf3, 50, 5000));
+
+        // Read across the buffer boundary (read more than remaining buffered data)
+        // to ensure pos() stays correct when the buffer is refilled
+        f.seek(0);
+        char bigbuf[12000];
+        n = f.read(bigbuf, 12000);
+        REQUIRE(n == 12000);
+        CHECK(f.pos() == 12000);
+        CHECK(verifyPattern(bigbuf, 12000, 0));
+
+        f.close();
+        std::remove(path);
+}
+
 TEST_CASE("File: construction with const char*") {
         const char *path = "/tmp/test_cstr_file";
         File f(path);

@@ -1,56 +1,16 @@
 /**
  * @file      audiofilefactory.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
+// AudioFileFactory is now a typedef for FileFormatFactory<AudioFile>.
+// All logic lives in the header-only template. This file is retained
+// for build-system compatibility and will be removed in a future
+// cleanup pass.
+
 #include <promeki/proav/audiofilefactory.h>
-#include <promeki/proav/audiofile.h>
-#include <promeki/core/list.h>
-#include <promeki/core/fileinfo.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-using FactoryList = List<AudioFileFactory *>;
-
-static FactoryList &audioFileFactoryList() {
-        static FactoryList ret;
-        return ret;
-}
-
-int AudioFileFactory::registerFactory(AudioFileFactory *object) {
-        if(object == nullptr) return -1;
-        auto &list = audioFileFactoryList();
-        int ret = list.size();
-        list += object;
-        promekiInfo("Registered AudioFileFactory %s", object->name().cstr());
-        return ret;
-}
-
-const AudioFileFactory *AudioFileFactory::lookup(int op, const String &filename) {
-        auto &list = audioFileFactoryList();
-        for(auto i : list) {
-                if(i->canDoOperation(op, filename)) return i;
-        }
-        return nullptr;
-}
-
-bool AudioFileFactory::canDoOperation(int op, const String &filename) const {
-        return false;
-}
-
-AudioFile AudioFileFactory::createForOperation(int op) const {
-        return AudioFile();
-}
-
-bool AudioFileFactory::isExtensionSupported(const String &fn) const {
-        String ext = FileInfo(fn).suffix().toLower();
-        for(const auto &item : _exts) {
-                if(ext == item) return true;
-        }
-        return false;
-}
-
 PROMEKI_NAMESPACE_END
-

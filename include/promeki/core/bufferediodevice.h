@@ -181,6 +181,20 @@ class BufferedIODevice : public IODevice {
                 virtual int64_t deviceBytesAvailable() const;
 
                 /**
+                 * @brief Returns the number of buffered bytes not yet consumed.
+                 *
+                 * Subclasses that override pos() should subtract this value
+                 * from the raw device position so that pos() reflects the
+                 * logical read position rather than the device-level position
+                 * (which may be ahead due to read-ahead buffering).
+                 *
+                 * @return The number of unconsumed bytes in the read buffer.
+                 */
+                size_t bufferedBytesUnconsumed() const {
+                        return _readBufFill - _readBufPos;
+                }
+
+                /**
                  * @brief Ensures the read buffer is allocated.
                  *
                  * Called during open(). If no custom buffer has been set,

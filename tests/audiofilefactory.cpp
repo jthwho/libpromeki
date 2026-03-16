@@ -12,16 +12,46 @@
 using namespace promeki;
 
 TEST_CASE("AudioFileFactory: lookup with invalid params returns nullptr") {
-        const AudioFileFactory *f = AudioFileFactory::lookup(-1, "nonexistent.xyz");
+        AudioFileFactory::Context ctx;
+        ctx.operation = -1;
+        ctx.filename = "nonexistent.xyz";
+        const AudioFileFactory *f = AudioFileFactory::lookup(ctx);
         CHECK(f == nullptr);
-}
-
-TEST_CASE("AudioFileFactory: default constructed has empty name") {
-        AudioFileFactory f;
-        CHECK(f.name().isEmpty());
 }
 
 TEST_CASE("AudioFileFactory: lookup unsupported extension returns nullptr") {
-        const AudioFileFactory *f = AudioFileFactory::lookup(0, "test.unsupported_format_xyz");
+        AudioFileFactory::Context ctx;
+        ctx.operation = 0;
+        ctx.filename = "test.unsupported_format_xyz";
+        const AudioFileFactory *f = AudioFileFactory::lookup(ctx);
         CHECK(f == nullptr);
+}
+
+TEST_CASE("AudioFileFactory: lookup finds factory for wav writer") {
+        AudioFileFactory::Context ctx;
+        ctx.operation = AudioFile::Writer;
+        ctx.filename = "test.wav";
+        const AudioFileFactory *f = AudioFileFactory::lookup(ctx);
+        REQUIRE(f != nullptr);
+        CHECK(f->name() == "libsndfile");
+}
+
+TEST_CASE("AudioFileFactory: createForOperation returns valid AudioFile") {
+        AudioFileFactory::Context ctx;
+        ctx.operation = AudioFile::Writer;
+        ctx.filename = "test.wav";
+        const AudioFileFactory *f = AudioFileFactory::lookup(ctx);
+        REQUIRE(f != nullptr);
+        auto [file, err] = f->createForOperation(ctx);
+        CHECK(err.isOk());
+        CHECK(file.isValid());
+}
+
+TEST_CASE("AudioFileFactory: lookup by format hint") {
+        AudioFileFactory::Context ctx;
+        ctx.operation = AudioFile::Writer;
+        ctx.formatHint = "wav";
+        const AudioFileFactory *f = AudioFileFactory::lookup(ctx);
+        REQUIRE(f != nullptr);
+        CHECK(f->name() == "libsndfile");
 }

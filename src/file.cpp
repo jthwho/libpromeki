@@ -221,7 +221,11 @@ Error File::seek(int64_t offset) {
 
 int64_t File::pos() const {
         if(!isOpen()) return 0;
-        return ::lseek64(_handle, 0, SEEK_CUR);
+        int64_t rawPos = ::lseek64(_handle, 0, SEEK_CUR);
+        // Subtract any bytes that the read buffer has consumed from
+        // the device but not yet delivered to the caller, so that
+        // pos() reflects the logical read position.
+        return rawPos - static_cast<int64_t>(bufferedBytesUnconsumed());
 }
 
 Result<int64_t> File::size() const {

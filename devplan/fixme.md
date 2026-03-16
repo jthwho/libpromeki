@@ -71,6 +71,17 @@ Currently uses `std::istringstream` to parse integer tokens. Should use `String:
 
 ---
 
+## FileInfo::suffix() Crashes on Extensionless Files
+
+**File:** `include/promeki/core/fileinfo.h` (or wherever `suffix()` is defined)
+**Bug:** `suffix()` calls `_path.extension().string().substr(1)` which throws `std::out_of_range` when the file has no extension (the extension string is empty, and `substr(1)` on an empty string is undefined).
+
+- [ ] Guard against empty extension before calling `substr(1)`
+- [ ] Add test for extensionless filenames (e.g., `FileInfo("Makefile").suffix()`)
+- [ ] Natural time to fix: any phase touching FileInfo
+
+---
+
 ## PixelFormat Memory Space Validation
 
 **File:** `src/pixelformat_old.cpp:217`

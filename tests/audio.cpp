@@ -13,6 +13,10 @@
 #include <promeki/core/rational.h>
 #include <promeki/core/uuid.h>
 #include <promeki/core/logger.h>
+#include <promeki/core/file.h>
+#include <promeki/core/buffer.h>
+#include <promeki/core/bufferiodevice.h>
+#include <promeki/core/fileiodevice.h>
 
 using namespace promeki;
 
@@ -332,4 +336,169 @@ TEST_CASE("AudioGen: generate() respects sample count") {
                 CHECK(audio.samples() == count);
                 CHECK(audio.frames() == count * 2);
         }
+}
+
+TEST_CASE("AudioFile: Filename roundtrip via sf_open_virtual") {
+        // Write and read back using filename path (internally creates File IODevice).
+        AudioDesc desc(48000, 2);
+        AudioGen gen(desc);
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, 0.5f, 0.0f, 0.5f });
+        gen.setConfig(1, { AudioGen::Sine, 500.0f, 0.3f, 0.0f, 0.5f });
+
+        const char *testFile = "test_virtual_roundtrip.wav";
+
+        // Write
+        AudioFile writer = AudioFile::createWriter(testFile);
+        REQUIRE(writer.isValid());
+        writer.setDesc(desc);
+        Error err = writer.open();
+        REQUIRE(err.isOk());
+        Audio writeAudio = gen.generate(4800);
+        REQUIRE(writeAudio.isValid());
+        err = writer.write(writeAudio);
+        CHECK(err.isOk());
+        writer.close();
+
+        // Read back using filename path
+        AudioFile reader = AudioFile::createReader(testFile);
+        REQUIRE(reader.isValid());
+        err = reader.open();
+        REQUIRE(err.isOk());
+        CHECK(reader.sampleCount() == 4800);
+        Audio readAudio;
+        err = reader.read(readAudio, 4800);
+        CHECK(err.isOk());
+        CHECK(readAudio.isValid());
+        CHECK(readAudio.samples() == 4800);
+        reader.close();
+
+        std::remove(testFile);
+}
+
+TEST_CASE("AudioFile: File IODevice roundtrip") {
+        // Write via filename, read back via explicit File IODevice.
+        AudioDesc desc(48000, 2);
+        AudioGen gen(desc);
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, 0.5f, 0.0f, 0.5f });
+        gen.setConfig(1, { AudioGen::Sine, 500.0f, 0.3f, 0.0f, 0.5f });
+
+        const char *testFile = "test_iodevice_roundtrip.wav";
+
+        // Write via filename
+        AudioFile writer = AudioFile::createWriter(testFile);
+        REQUIRE(writer.isValid());
+        writer.setDesc(desc);
+        Error err = writer.open();
+        REQUIRE(err.isOk());
+        Audio writeAudio = gen.generate(4800);
+        REQUIRE(writeAudio.isValid());
+        err = writer.write(writeAudio);
+        CHECK(err.isOk());
+        writer.close();
+
+        // Read back using explicit File IODevice
+        File readFile(testFile);
+        err = readFile.open(IODevice::ReadOnly);
+        REQUIRE(err.isOk());
+
+        auto [reader, readErr] = AudioFile::createForOperation(
+                AudioFile::Reader, &readFile, "wav");
+        REQUIRE(readErr.isOk());
+        REQUIRE(reader.isValid());
+        err = reader.open();
+        REQUIRE(err.isOk());
+        CHECK(reader.sampleCount() == 4800);
+        Audio readAudio;
+        err = reader.read(readAudio, 4800);
+        CHECK(err.isOk());
+        CHECK(readAudio.isValid());
+        CHECK(readAudio.samples() == 4800);
+        reader.close();
+        readFile.close();
+
+        std::remove(testFile);
+}
+
+TEST_CASE("AudioFile: BufferIODevice roundtrip") {
+        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
+
+        AudioGen gen(AudioDesc(48000, 1));
+        gen.setConfig(0, { AudioGen::Sine, 440.0f, 0.5f, 0.0f, 0.5f });
+        Audio srcAudio = gen.generate(480);
+        REQUIRE(srcAudio.isValid());
+
+        // Convert to S16LE for writing
+        AudioDesc writeDesc(AudioDesc::PCMI_S16LE, 48000, 1);
+
+        // Pre-allocate a generous buffer for in-memory WAV.
+        Buffer buf(1024 * 1024);
+        buf.setSize(0);
+        BufferIODevice bufDev(&buf);
+        Error err = bufDev.open(IODevice::ReadWrite);
+        REQUIRE(err.isOk());
+
+        // Write
+        auto [writer, wErr] = AudioFile::createForOperation(
+                AudioFile::Writer, &bufDev, "wav");
+        REQUIRE(wErr.isOk());
+        REQUIRE(writer.isValid());
+        writer.setDesc(writeDesc);
+        err = writer.open();
+        REQUIRE(err.isOk());
+
+        // Generate S16LE audio
+        Audio s16Audio(writeDesc, 480);
+        int16_t *s16Data = s16Audio.data<int16_t>();
+        const float *srcData = srcAudio.data<float>();
+        for(size_t i = 0; i < 480; i++) {
+                s16Data[i] = static_cast<int16_t>(srcData[i] * 32767.0f);
+        }
+
+        err = writer.write(s16Audio);
+        CHECK(err.isOk());
+        writer.close();
+
+        // Read back from the same buffer.
+        bufDev.seek(0);
+        auto [reader, rErr] = AudioFile::createForOperation(
+                AudioFile::Reader, &bufDev, "wav");
+        REQUIRE(rErr.isOk());
+        REQUIRE(reader.isValid());
+        err = reader.open();
+        REQUIRE(err.isOk());
+        CHECK(reader.sampleCount() == 480);
+
+        Audio readAudio;
+        err = reader.read(readAudio, 480);
+        CHECK(err.isOk());
+        CHECK(readAudio.isValid());
+        CHECK(readAudio.samples() == 480);
+        reader.close();
+        bufDev.close();
+}
+
+TEST_CASE("AudioFile: Sequential device rejection") {
+        FileIODevice seqDev(stdin, IODevice::ReadOnly);
+        auto [file, err] = AudioFile::createForOperation(
+                AudioFile::Reader, &seqDev, "wav");
+        CHECK(err == Error::NotSupported);
+}
+
+TEST_CASE("AudioFile: createForOperation with nullptr device returns error") {
+        auto [file, err] = AudioFile::createForOperation(
+                AudioFile::Writer, nullptr, "wav");
+        CHECK(err == Error::InvalidArgument);
+}
+
+TEST_CASE("AudioFile: createForOperation with no hint and no filename returns error") {
+        Buffer buf(1024);
+        buf.setSize(0);
+        BufferIODevice bufDev(&buf);
+        bufDev.open(IODevice::ReadWrite);
+
+        auto [file, err] = AudioFile::createForOperation(
+                AudioFile::Writer, &bufDev, "");
+        // No hint and no filename means no factory can match.
+        CHECK(err == Error::NotSupported);
+        bufDev.close();
 }

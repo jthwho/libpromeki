@@ -111,6 +111,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/event.h
     include/promeki/core/eventloop.h
     include/promeki/core/file.h
+    include/promeki/core/fileformatfactory.h
     include/promeki/core/fileinfo.h
     include/promeki/core/filepath.h
     include/promeki/core/iodevice.h
@@ -814,6 +815,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/stringiodevice.cpp
         tests/fileiodevice.cpp
         tests/textstream.cpp
+        tests/fileformatfactory.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

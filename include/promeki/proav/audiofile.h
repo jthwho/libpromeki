@@ -1,7 +1,7 @@
 /**
  * @file      proav/audiofile.h
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
@@ -15,6 +15,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class IODevice;
+
 /**
  * @brief Audio file reader and writer.
  * @ingroup proav_media
@@ -22,7 +24,17 @@ PROMEKI_NAMESPACE_BEGIN
  * Provides a high-level interface for reading and writing audio files.
  * The actual file format handling is delegated to an Impl subclass,
  * which is selected automatically via AudioFileFactory based on the
- * filename extension and requested operation.
+ * filename extension, format hint, or IODevice probe.
+ *
+ * All code paths use sf_open_virtual() internally. When a filename is
+ * provided without an explicit IODevice, the backend creates an internal
+ * File IODevice automatically. An external IODevice can be supplied for
+ * non-file backends (e.g. BufferIODevice for in-memory operation).
+ *
+ * @par IODevice lifetime
+ * When a caller provides an IODevice, that device must outlive the
+ * AudioFile. Caller-provided devices are non-owning (not deleted on
+ * close). Internally-created devices are owned and deleted on close.
  */
 class AudioFile {
         public:
@@ -105,6 +117,44 @@ class AudioFile {
                                 }
 
                                 /**
+                                 * @brief Returns the IODevice associated with this audio file.
+                                 * @return The device pointer, or nullptr if none is set.
+                                 */
+                                IODevice *device() const {
+                                        return _device;
+                                }
+
+                                /**
+                                 * @brief Sets the IODevice for this audio file.
+                                 *
+                                 * The caller retains ownership of the device; it must
+                                 * outlive this Impl.
+                                 * @param dev The IODevice to use.
+                                 */
+                                void setDevice(IODevice *dev) {
+                                        _device = dev;
+                                        _ownsDevice = false;
+                                        return;
+                                }
+
+                                /**
+                                 * @brief Returns the format hint (e.g. "wav"), no dot.
+                                 * @return A const reference to the format hint string.
+                                 */
+                                const String &formatHint() const {
+                                        return _formatHint;
+                                }
+
+                                /**
+                                 * @brief Sets the format hint for device-based operation.
+                                 * @param val The format hint (e.g. "wav"), no dot.
+                                 */
+                                void setFormatHint(const String &val) {
+                                        _formatHint = val;
+                                        return;
+                                }
+
+                                /**
                                  * @brief Opens the audio file.
                                  * @return Error::Ok on success, or an error on failure.
                                  */
@@ -145,6 +195,9 @@ class AudioFile {
                                 Operation       _operation;
                                 String          _filename;
                                 AudioDesc       _desc;
+                                IODevice       *_device = nullptr;
+                                bool            _ownsDevice = false;
+                                String          _formatHint;
                 };
 
                 /**
@@ -156,6 +209,18 @@ class AudioFile {
                  * @return An AudioFile configured for the requested operation.
                  */
                 static AudioFile createForOperation(Operation op, const String &filename);
+
+                /**
+                 * @brief Creates an AudioFile for the given operation using an IODevice.
+                 *
+                 * Uses AudioFileFactory to find an appropriate backend. The device
+                 * must be seekable (non-sequential) and must outlive the AudioFile.
+                 * @param op The operation (Reader or Writer).
+                 * @param device The IODevice to read from or write to.
+                 * @param formatHint Extension hint (e.g. "wav"), no dot.
+                 * @return A Result containing the AudioFile, or an error.
+                 */
+                static Result<AudioFile> createForOperation(Operation op, IODevice *device, const String &formatHint = "");
 
                 /**
                  * @brief Creates an AudioFile reader for the given filename.
@@ -217,6 +282,12 @@ class AudioFile {
                 void setDesc(const AudioDesc &val) { d.modify()->setDesc(val); return; }
 
                 /**
+                 * @brief Returns the IODevice associated with this audio file.
+                 * @return The device pointer, or nullptr.
+                 */
+                IODevice *device() const { return d->device(); }
+
+                /**
                  * @brief Opens the audio file.
                  * @return Error::Ok on success, or an error on failure.
                  */
@@ -258,4 +329,3 @@ class AudioFile {
 };
 
 PROMEKI_NAMESPACE_END
-

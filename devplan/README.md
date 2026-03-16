@@ -54,11 +54,13 @@ Phase 1A (containers), 1B (concurrency), 1C (API consistency), and 1D (utilities
 
 Establish a uniform byte-oriented IO interface that network sockets, files, and pipes can all implement. Add filesystem utilities. Add DataStream (binary serialization) and TextStream (formatted text I/O) — both operate over IODevice or in-memory buffers. DataStream is the foundation for ObjectBase saveState/loadState (Phase 7). IODevice is the base class for Phase 3 sockets and Phase 4 pipeline file I/O.
 
-**IO and Filesystem (COMPLETE):** IODevice, BufferedIODevice, BufferIODevice, FilePath, Dir, File (refactored to BufferedIODevice), FileInfo, Process, Buffer size model, Error enhancements, Terminal error reporting. Remaining: AudioFile IODevice refactor.
+**IO and Filesystem (COMPLETE):** IODevice, BufferedIODevice, BufferIODevice, FilePath, Dir, File (refactored to BufferedIODevice), FileInfo, Process, Buffer size model, Error enhancements, Terminal error reporting.
 
 **DataStream (COMPLETE):** Binary serialization stream over IODevice with wire format versioning, per-value type tags, and byte-order control. BufferIODevice provides in-memory backing.
 
-**Remaining:** TextStream, std:: stream migration, AudioFile IODevice refactor.
+**TextStream (COMPLETE):** Formatted text I/O with encoding awareness, manipulators, and multiple backing stores.
+
+**Remaining:** std:: stream migration.
 
 ### Phase 3: Network Library
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
@@ -223,7 +225,7 @@ Adding many new classes and a new library (`promeki-network`) requires Doxygen g
 
 ## Existing FIXMEs
 
-There are 6 remaining FIXME comments in the codebase. These are tracked in [fixme.md](fixme.md) and should be addressed as they become relevant to ongoing phase work. Summary:
+There are 7 remaining FIXME comments in the codebase. These are tracked in [fixme.md](fixme.md) and should be addressed as they become relevant to ongoing phase work. Summary:
 
 | File | Issue | Natural Phase |
 |---|---|---|
@@ -232,4 +234,5 @@ There are 6 remaining FIXME comments in the codebase. These are tracked in [fixm
 | `src/audiofile_libsndfile.cpp:312` | `fileIsReadable()` doesn't inspect SF_INFO | Phase 2 (AudioFile IODevice) |
 | `src/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |
 | `src/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `std::istringstream` | Phase 2 (stream migration) |
+| `include/promeki/core/fileinfo.h` | `suffix()` crashes on extensionless files (`substr(1)` on empty string) | Any phase touching FileInfo |
 | `src/pixelformat_old.cpp:217` | No memory space validation in `fill()` | Phase 4 |
