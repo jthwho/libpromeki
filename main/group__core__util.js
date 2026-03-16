@@ -433,10 +433,15 @@ var group__core__util =
       [ "ResizeCallback", "classTerminal.html#a9a70127ef97279a2409d28edb6932bf6", null ],
       [ "ColorSupport", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6", [
         [ "NoColor", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224", null ],
+        [ "Grayscale16", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6adf62871c321c6dad2a9aef1919e64385", null ],
+        [ "Grayscale256", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6ae5ee2bf91a497feadd9fb38e42d93e4c", null ],
+        [ "GrayscaleTrue", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be", null ],
         [ "Basic", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893", null ],
         [ "Color256", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8", null ],
         [ "TrueColor", "classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a", null ]
       ] ],
+      [ "Terminal", "classTerminal.html#aa448509b5aa1ece53c3d86385655be0e", null ],
+      [ "~Terminal", "classTerminal.html#add5a7d4dd45b68af9a0afb1cc845af2f", null ],
       [ "disableAlternateScreen", "classTerminal.html#a7da1f4a539b363bfcb61a10d71689cf4", null ],
       [ "disableBracketedPaste", "classTerminal.html#acfef2f6e5030baef7950df33d0bfb044", null ],
       [ "disableMouseTracking", "classTerminal.html#aa7895a1ca4737bf5f27683faccf5d8da", null ],

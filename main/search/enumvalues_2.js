@@ -13,5 +13,5 @@ var searchData=
   ['compy_10',['CompY',['../classPixelFormat.html#aa47cca27864c57b6e7b820564294390ba063c33785fb635fdf722480186a82cf3',1,'PixelFormat']]],
   ['create_11',['Create',['../classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a9f9012b13652cd115b7e41427531ca3d',1,'File']]],
   ['crossdevicelink_12',['CrossDeviceLink',['../classError.html#ab5980e13b879db253df802b0950d1708a768a6cc7bc05238da6b259ed14fcdebc',1,'Error']]],
-  ['cyan_13',['Cyan',['../classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac',1,'AnsiStream']]]
+  ['cyan_13',['Cyan',['../classAnsiStream.html#a338b08f6aae49641c1f62523260304dcab4d4b2c1dd491db5539a8c6a12df18ac',1,'AnsiStream']]]
 ];

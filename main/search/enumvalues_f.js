@@ -8,11 +8,10 @@ var searchData=
   ['rec601_5fntsc_5',['Rec601_NTSC',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfda31628eb5d47085ac3bf88eae8753700b',1,'ColorSpace']]],
   ['rec601_5fpal_6',['Rec601_PAL',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfdadb2510b51821b8bdec406f771fb7bd1e',1,'ColorSpace']]],
   ['rec709_7',['Rec709',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfda1ddfca3f4f42af872d549b764794245a',1,'ColorSpace']]],
-  ['red_8',['Red',['../classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058',1,'AnsiStream']]],
-  ['rgb10_9',['RGB10',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaf41e5ae2f78903e0d50b4d1a06471dc7',1,'PixelFormat']]],
-  ['rgb8_10',['RGB8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda212b83ddb6e0d8f52e44e607e6d909ed',1,'PixelFormat']]],
-  ['rgba8_11',['RGBA8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd',1,'PixelFormat']]],
-  ['right_12',['Right',['../classTextStream.html#a6bc874c130622f3c0c26808f33875853af053e9a7e0ba8285514f43125d8ca1f6',1,'TextStream']]],
-  ['roundrobin_13',['RoundRobin',['../group__core__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da91a63281bd2e647fe3b92d1d22cd3380',1,'thread.h']]],
-  ['running_14',['Running',['../classProcess.html#a29199d5fd3060da8da03649f06127847a6e3fad4880be8797cfce76d46cf8a0f7',1,'Process']]]
+  ['rgb10_8',['RGB10',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaf41e5ae2f78903e0d50b4d1a06471dc7',1,'PixelFormat']]],
+  ['rgb8_9',['RGB8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda212b83ddb6e0d8f52e44e607e6d909ed',1,'PixelFormat']]],
+  ['rgba8_10',['RGBA8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1948c102b0f67b480ce0d886369ff4dd',1,'PixelFormat']]],
+  ['right_11',['Right',['../classTextStream.html#a6bc874c130622f3c0c26808f33875853af053e9a7e0ba8285514f43125d8ca1f6',1,'TextStream']]],
+  ['roundrobin_12',['RoundRobin',['../group__core__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da91a63281bd2e647fe3b92d1d22cd3380',1,'thread.h']]],
+  ['running_13',['Running',['../classProcess.html#a29199d5fd3060da8da03649f06127847a6e3fad4880be8797cfce76d46cf8a0f7',1,'Process']]]
 ];

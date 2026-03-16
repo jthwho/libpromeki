@@ -45,11 +45,13 @@ var searchData=
   ['_7estack_42',['~Stack',['../classStack.html#a1addb0ac0f66fcb1f613a9a697019888',1,'Stack']]],
   ['_7estringdata_43',['~StringData',['../classStringData.html#abb5511228bac97ed1b5d43ce04299aa5',1,'StringData']]],
   ['_7estringiodevice_44',['~StringIODevice',['../classStringIODevice.html#aaa2e86902778558f0dd8eee40ae3297c',1,'StringIODevice']]],
-  ['_7etextstream_45',['~TextStream',['../classTextStream.html#aca4cd037475e8c6f85c2665fe16b7dfb',1,'TextStream']]],
-  ['_7ethread_46',['~Thread',['../classThread.html#a026b23628e1727050e864e00489c0baf',1,'Thread']]],
-  ['_7ethreadpool_47',['~ThreadPool',['../classThreadPool.html#a44d3d2ab618970605e684efc216655eb',1,'ThreadPool']]],
-  ['_7etuiapplication_48',['~TuiApplication',['../classTuiApplication.html#a45daa8fba9fe885851ee6505519b4705',1,'TuiApplication']]],
-  ['_7etuiwidget_49',['~TuiWidget',['../classTuiWidget.html#a34d7c1e5d148cb600eb17c60161b8d35',1,'TuiWidget']]],
-  ['_7ewaitcondition_50',['~WaitCondition',['../classWaitCondition.html#a595e23a4f4c5fad9a82ce6d07da6e53e',1,'WaitCondition']]],
-  ['_7ewritelocker_51',['~WriteLocker',['../classReadWriteLock_1_1WriteLocker.html#ad57db1024e4d1287882bd9a8d4be25f7',1,'ReadWriteLock::WriteLocker']]]
+  ['_7eterminal_45',['~Terminal',['../classTerminal.html#add5a7d4dd45b68af9a0afb1cc845af2f',1,'Terminal']]],
+  ['_7etextstream_46',['~TextStream',['../classTextStream.html#aca4cd037475e8c6f85c2665fe16b7dfb',1,'TextStream']]],
+  ['_7ethread_47',['~Thread',['../classThread.html#a026b23628e1727050e864e00489c0baf',1,'Thread']]],
+  ['_7ethreadpool_48',['~ThreadPool',['../classThreadPool.html#a44d3d2ab618970605e684efc216655eb',1,'ThreadPool']]],
+  ['_7etuiapplication_49',['~TuiApplication',['../classTuiApplication.html#a45daa8fba9fe885851ee6505519b4705',1,'TuiApplication']]],
+  ['_7etuiscreen_50',['~TuiScreen',['../classTuiScreen.html#a8749dddc3f0ac90a6cc13a6d4c72a7a6',1,'TuiScreen']]],
+  ['_7etuiwidget_51',['~TuiWidget',['../classTuiWidget.html#a34d7c1e5d148cb600eb17c60161b8d35',1,'TuiWidget']]],
+  ['_7ewaitcondition_52',['~WaitCondition',['../classWaitCondition.html#a595e23a4f4c5fad9a82ce6d07da6e53e',1,'WaitCondition']]],
+  ['_7ewritelocker_53',['~WriteLocker',['../classReadWriteLock_1_1WriteLocker.html#ad57db1024e4d1287882bd9a8d4be25f7',1,'ReadWriteLock::WriteLocker']]]
 ];

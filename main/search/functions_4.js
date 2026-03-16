@@ -40,5 +40,5 @@ var searchData=
   ['drawvline_37',['drawVLine',['../classTuiPainter.html#abb022f670b2ba5b2fbd1dc5853f17257',1,'TuiPainter']]],
   ['dump_38',['dump',['../classMemPool.html#a32cf00546985155cae9ad8cbed98d9f6',1,'MemPool::dump()'],['../classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9',1,'Metadata::dump()']]],
   ['dumptolog_39',['dumpToLog',['../classObjectBase_1_1MetaInfo.html#a2ef6f61cdad6e653758bfa13dfd874b5',1,'ObjectBase::MetaInfo']]],
-  ['duration_40',['duration',['../classDuration.html#a688948a87d69e8982cf7e292c7fe4b0a',1,'Duration::Duration()'],['../classMusicalNote.html#a86ccc39ef69c46733098738de48a1413',1,'MusicalNote::duration()']]]
+  ['duration_40',['duration',['../classMusicalNote.html#a86ccc39ef69c46733098738de48a1413',1,'MusicalNote::duration()'],['../classDuration.html#a688948a87d69e8982cf7e292c7fe4b0a',1,'Duration::Duration()']]]
 ];

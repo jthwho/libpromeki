@@ -128,7 +128,7 @@ var annotated_dup =
     [ "TuiApplication", "classTuiApplication.html", "classTuiApplication" ],
     [ "TuiBoxLayout", "classTuiBoxLayout.html", "classTuiBoxLayout" ],
     [ "TuiButton", "classTuiButton.html", "classTuiButton" ],
-    [ "TuiCell", "structTuiCell.html", null ],
+    [ "TuiCell", "structTuiCell.html", "structTuiCell" ],
     [ "TuiCheckBox", "classTuiCheckBox.html", "classTuiCheckBox" ],
     [ "TuiFrame", "classTuiFrame.html", "classTuiFrame" ],
     [ "TuiGridLayout", "classTuiGridLayout.html", "classTuiGridLayout" ],

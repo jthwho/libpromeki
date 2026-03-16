@@ -113,6 +113,14 @@ $(document).ready(function(){initNavTree('classTuiScreen.html',''); initResizabl
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a0fd8689904573b6927b19bbc70d1bdf5" id="r_a0fd8689904573b6927b19bbc70d1bdf5"><td class="memItemLeft" align="right" valign="top"><a id="a0fd8689904573b6927b19bbc70d1bdf5" name="a0fd8689904573b6927b19bbc70d1bdf5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>TuiScreen</b> ()</td></tr>
+<tr class="memdesc:a0fd8689904573b6927b19bbc70d1bdf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty screen with no buffers. <br /></td></tr>
+<tr class="separator:a0fd8689904573b6927b19bbc70d1bdf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8749dddc3f0ac90a6cc13a6d4c72a7a6" id="r_a8749dddc3f0ac90a6cc13a6d4c72a7a6"><td class="memItemLeft" align="right" valign="top"><a id="a8749dddc3f0ac90a6cc13a6d4c72a7a6" name="a8749dddc3f0ac90a6cc13a6d4c72a7a6"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>~TuiScreen</b> ()</td></tr>
+<tr class="memdesc:a8749dddc3f0ac90a6cc13a6d4c72a7a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
+<tr class="separator:a8749dddc3f0ac90a6cc13a6d4c72a7a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1865b019854c6c09938fb1a5c6125f04" id="r_a1865b019854c6c09938fb1a5c6125f04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#a1865b019854c6c09938fb1a5c6125f04">resize</a> (int <a class="el" href="classTuiScreen.html#a0c9ac931be9cecc1da3e4fcfee3be94c">cols</a>, int <a class="el" href="classTuiScreen.html#ae612faab2d980ed595eceda2ca57e58f">rows</a>)</td></tr>
 <tr class="memdesc:a1865b019854c6c09938fb1a5c6125f04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes both buffers to the given dimensions.  <br /></td></tr>
 <tr class="separator:a1865b019854c6c09938fb1a5c6125f04"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -140,10 +148,17 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>invalidate</b> ()</td></tr>
 <tr class="memdesc:a61da7255939b7e545a7fb2e52680b6ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forces a full redraw on the next flush. <br /></td></tr>
 <tr class="separator:a61da7255939b7e545a7fb2e52680b6ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad825c596bc2b23404663ee51b24940f1" id="r_ad825c596bc2b23404663ee51b24940f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#ad825c596bc2b23404663ee51b24940f1">setColorMode</a> (<a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a> mode)</td></tr>
+<tr class="memdesc:ad825c596bc2b23404663ee51b24940f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the color mode used when emitting colors during flush.  <br /></td></tr>
+<tr class="separator:ad825c596bc2b23404663ee51b24940f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a649f0224d52de4046f5448e079a84093" id="r_a649f0224d52de4046f5448e079a84093"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiScreen.html#a649f0224d52de4046f5448e079a84093">colorMode</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a649f0224d52de4046f5448e079a84093"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current color mode.  <br /></td></tr>
+<tr class="separator:a649f0224d52de4046f5448e079a84093"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Double-buffered character cell grid for TUI rendering. </p>
 <p>Maintains front and back buffers. Widgets draw to the back buffer via <a class="el" href="classTuiScreen.html#a451741751e309afa0faa848cac7dd282" title="Sets a cell in the back buffer.">setCell()</a>. <a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6" title="Diffs front vs back buffer and emits minimal ANSI updates.">flush()</a> diffs front vs back and emits minimal ANSI escape sequences for changed cells, then swaps buffers.</p>
+<p>Colors are stored as full RGB values in each <a class="el" href="structTuiCell.html" title="A single cell in the TUI screen buffer.">TuiCell</a>. During <a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6" title="Diffs front vs back buffer and emits minimal ANSI updates.">flush()</a>, the active <a class="el" href="classTuiScreen.html#a649f0224d52de4046f5448e079a84093" title="Returns the current color mode.">colorMode()</a> determines how those colors are emitted: TrueColor uses 24-bit RGB sequences, Color256 maps to the closest ANSI 256-color palette entry, Basic restricts to 16 system colors, and the Grayscale variants convert colors to perceptual luminance before emitting. NoColor suppresses all color output. The TUI will do its best to gracefully degrade color, but for optimal results, use a <a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> whose colors are tuned for the active color mode.</p>
 <p>NOT an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> &ndash; this is infrastructure. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a399265f994a249f5089d206f05dc816b" name="a399265f994a249f5089d206f05dc816b"></a>
@@ -218,6 +233,34 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a649f0224d52de4046f5448e079a84093" name="a649f0224d52de4046f5448e079a84093"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a649f0224d52de4046f5448e079a84093">&#9670;&#160;</a></span>colorMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a> TuiScreen::colorMode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the current color mode. </p>
+<dl class="section return"><dt>Returns</dt><dd>The color support level in use. </dd></dl>
 
 </div>
 </div>
@@ -328,6 +371,42 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
 
 </div>
 </div>
+<a id="ad825c596bc2b23404663ee51b24940f1" name="ad825c596bc2b23404663ee51b24940f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad825c596bc2b23404663ee51b24940f1">&#9670;&#160;</a></span>setColorMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> TuiScreen::setColorMode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a>&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the color mode used when emitting colors during flush. </p>
+<p>All RGB colors in the cell buffer are converted to the nearest representable value for this mode. For best results, pair with a <a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> designed for the chosen mode.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mode</td><td>The color support level to use. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTerminal.html#a8ed768dcff34784d6bb9ae38f8af9726" title="Detects the color support level of the terminal.">Terminal::colorSupport()</a> </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/tui/<a class="el" href="screen_8h_source.html">screen.h</a></li>
 </ul>
@@ -338,7 +417,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>rows</b> () <a class="
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiScreen.html">TuiScreen</a></li>
-    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
   </ul>
 </div>
 </body>

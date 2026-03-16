@@ -3,6 +3,7 @@ var group__tui__core =
     [ "TuiApplication", "classTuiApplication.html", [
       [ "TuiApplication", "classTuiApplication.html#a8b4e14e98e3504dd846ce8c7224099a4", null ],
       [ "~TuiApplication", "classTuiApplication.html#a45daa8fba9fe885851ee6505519b4705", null ],
+      [ "colorMode", "classTuiApplication.html#a28ed888b97d5222e6faa2bf99571f59a", null ],
       [ "exec", "classTuiApplication.html#a7915497f82dacecc1840afdb565effd3", null ],
       [ "focusNext", "classTuiApplication.html#a5861dc89e2c45ffcdff32c1024a4dce4", null ],
       [ "focusWidget", "classTuiApplication.html#a12b67f63dd40135c3133a352f3cbb957", null ],
@@ -14,6 +15,7 @@ var group__tui__core =
       [ "releaseMouse", "classTuiApplication.html#a2325b78dee2225524a73d970d047b0c5", null ],
       [ "rootWidget", "classTuiApplication.html#af41de22895b35efcdc4e55f20bb6064e", null ],
       [ "screen", "classTuiApplication.html#ab7a5b40047eb4de037daf07dd4e71dd6", null ],
+      [ "setColorMode", "classTuiApplication.html#aedd0e260f8a000795d19e05393930102", null ],
       [ "setFocusWidget", "classTuiApplication.html#ae7c2cdb04ba56870109e6a2509ec98e2", null ],
       [ "setPalette", "classTuiApplication.html#aad7d357e349c28a6da643502f4bc5dc1", null ],
       [ "setRootWidget", "classTuiApplication.html#a23d4c3b59e357530d28b8cb127cd46ef", null ],
@@ -96,7 +98,12 @@ var group__tui__core =
       [ "style", "classTuiPalette.html#ae5b0b1e5ae7425e60b651f780877ca04", null ],
       [ "style", "classTuiPalette.html#afe40fc7564e2d438e38ab2d18ccebb54", null ]
     ] ],
-    [ "TuiCell", "structTuiCell.html", null ],
+    [ "TuiCell", "structTuiCell.html", [
+      [ "operator!=", "structTuiCell.html#a98e5bca186dcfd4b377fa1c7c814b048", null ],
+      [ "operator==", "structTuiCell.html#a57f0f6e9e1e48fb4c24d3706156deaa8", null ],
+      [ "ch", "structTuiCell.html#a2e82015cc83b4d80c78af4dd1e04e251", null ],
+      [ "style", "structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1", null ]
+    ] ],
     [ "TuiStyle", "classTuiStyle.html", [
       [ "Attr", "classTuiStyle.html#af9c4c100889a31e4f49258ea61eb8e83", [
         [ "None", "classTuiStyle.html#af9c4c100889a31e4f49258ea61eb8e83abb9a461b1dd614faaa168899fd0fd786", null ],

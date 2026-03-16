@@ -115,10 +115,16 @@ $(document).ready(function(){initNavTree('classTerminal.html',''); initResizable
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a3b725bcffc87ab4f96885009ca7aded6" id="r_a3b725bcffc87ab4f96885009ca7aded6"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">ColorSupport</a> { <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224">NoColor</a>
-, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893">Basic</a>
+<tr class="memitem:a3b725bcffc87ab4f96885009ca7aded6" id="r_a3b725bcffc87ab4f96885009ca7aded6"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">ColorSupport</a> { <br />
+&#160;&#160;<a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224">NoColor</a>
+, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6adf62871c321c6dad2a9aef1919e64385">Grayscale16</a>
+, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6ae5ee2bf91a497feadd9fb38e42d93e4c">Grayscale256</a>
+, <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be">GrayscaleTrue</a>
+, <br />
+&#160;&#160;<a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893">Basic</a>
 , <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6aa71b9ba48782ffc36c230c670ae908e8">Color256</a>
 , <a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a57d7c1eef5abdafcf988f85e4087e53a">TrueColor</a>
+<br />
  }</td></tr>
 <tr class="memdesc:a3b725bcffc87ab4f96885009ca7aded6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the color capability level of the terminal.  <a href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">More...</a><br /></td></tr>
 <tr class="separator:a3b725bcffc87ab4f96885009ca7aded6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,6 +135,14 @@ Public Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:aa448509b5aa1ece53c3d86385655be0e" id="r_aa448509b5aa1ece53c3d86385655be0e"><td class="memItemLeft" align="right" valign="top"><a id="aa448509b5aa1ece53c3d86385655be0e" name="aa448509b5aa1ece53c3d86385655be0e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Terminal</b> ()</td></tr>
+<tr class="memdesc:aa448509b5aa1ece53c3d86385655be0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> and saves the current terminal state. <br /></td></tr>
+<tr class="separator:aa448509b5aa1ece53c3d86385655be0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add5a7d4dd45b68af9a0afb1cc845af2f" id="r_add5a7d4dd45b68af9a0afb1cc845af2f"><td class="memItemLeft" align="right" valign="top"><a id="add5a7d4dd45b68af9a0afb1cc845af2f" name="add5a7d4dd45b68af9a0afb1cc845af2f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>~Terminal</b> ()</td></tr>
+<tr class="memdesc:add5a7d4dd45b68af9a0afb1cc845af2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Restores terminal state and cleans up. <br /></td></tr>
+<tr class="separator:add5a7d4dd45b68af9a0afb1cc845af2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6ac83fa20a0268102ecefd5a30aaacf" id="r_ae6ac83fa20a0268102ecefd5a30aaacf"><td class="memItemLeft" align="right" valign="top"><a id="ae6ac83fa20a0268102ecefd5a30aaacf" name="ae6ac83fa20a0268102ecefd5a30aaacf"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Terminal</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classTerminal.html">Terminal</a> &amp;)=<a class="el" href="classList.html">delete</a></td></tr>
 <tr class="separator:ae6ac83fa20a0268102ecefd5a30aaacf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -210,8 +224,19 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Describes the color capability level of the terminal. </p>
+<p>The TUI rendering pipeline always works with full RGB <a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> values internally. During <a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6" title="Diffs front vs back buffer and emits minimal ANSI updates.">TuiScreen::flush()</a>, each cell's foreground and background are converted to the nearest representable color for the active ColorSupport level. This means the UI degrades gracefully to any color mode, but for the best visual results, applications should provide a <a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> whose colors are chosen with the target color mode in mind.</p>
+<p>When the <code>NO_COLOR</code> environment variable is set, the detected color capability is mapped to its grayscale equivalent (e.g. TrueColor becomes GrayscaleTrue). Grayscale modes convert each color to its perceptual luminance (Rec. 709) before emitting it.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTuiScreen.html#ad825c596bc2b23404663ee51b24940f1" title="Sets the color mode used when emitting colors during flush.">TuiScreen::setColorMode()</a> </dd>
+<dd>
+<a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> </dd></dl>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224" name="a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224"></a>NoColor&#160;</td><td class="fielddoc"><p>No color support (e.g. dumb terminal, NO_COLOR set). </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224" name="a3b725bcffc87ab4f96885009ca7aded6a78d30715c840717063ae0317cb17b224"></a>NoColor&#160;</td><td class="fielddoc"><p>No color support (e.g. dumb terminal). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6adf62871c321c6dad2a9aef1919e64385" name="a3b725bcffc87ab4f96885009ca7aded6adf62871c321c6dad2a9aef1919e64385"></a>Grayscale16&#160;</td><td class="fielddoc"><p>Grayscale via the 4 gray entries in the 16-color palette (NO_COLOR + Basic). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6ae5ee2bf91a497feadd9fb38e42d93e4c" name="a3b725bcffc87ab4f96885009ca7aded6ae5ee2bf91a497feadd9fb38e42d93e4c"></a>Grayscale256&#160;</td><td class="fielddoc"><p>Grayscale via the 24-entry grayscale ramp in the 256-color palette (NO_COLOR + 256). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be" name="a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be"></a>GrayscaleTrue&#160;</td><td class="fielddoc"><p>Grayscale via 24-bit RGB with equal R=G=B (NO_COLOR + TrueColor). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893" name="a3b725bcffc87ab4f96885009ca7aded6a377c1b983c7cb792ae63e91a06e80893"></a>Basic&#160;</td><td class="fielddoc"><p>Basic 8/16 color support (standard ANSI). </p>
 </td></tr>
@@ -248,7 +273,8 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Detects the color support level of the terminal. </p>
-<p>Examines environment variables (NO_COLOR, COLORTERM, TERM, etc.) and platform capabilities to determine the level of color support. The result is cached after the first call.</p>
+<p>Examines environment variables to determine the level of color support. The <code>PROMEKI_COLOR</code> variable, if set, overrides auto-detection (accepted values: "truecolor", "24bit", "256", "basic", "ansi", "16", "none"). Otherwise, <code>COLORTERM</code>, <code>TERM</code>, and <code>TERM_PROGRAM</code> are examined.</p>
+<p>When <code>NO_COLOR</code> is set (see <a href="https://no-color.org/">https://no-color.org/</a>), the detected capability is mapped to its grayscale equivalent. The result is cached after the first call.</p>
 <dl class="section return"><dt>Returns</dt><dd>The detected ColorSupport level. </dd></dl>
 
 </div>
@@ -583,7 +609,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTerminal.html">Terminal</a></li>
-    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
   </ul>
 </div>
 </body>

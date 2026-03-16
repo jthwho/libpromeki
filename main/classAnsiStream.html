@@ -108,7 +108,7 @@ $(document).ready(function(){initNavTree('classAnsiStream.html',''); initResizab
 </div><!--header-->
 <div class="contents">
 
-<p>ANSI escape code writer backed by an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Writes ANSI escape sequences and raw text to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>.  
+<p>ANSI escape code writer backed by an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Writes ANSI escape sequences and raw text to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Also serves as the source of truth for ANSI color palette data and color matching.  
  <a href="classAnsiStream.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="ansistream_8h_source.html">ansistream.h</a>&gt;</code></p>
@@ -128,22 +128,343 @@ Public Types</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a7e20231eb70e71674e8522796a2b784b"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI text styles.  <a href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">More...</a><br /></td></tr>
 <tr class="separator:a7e20231eb70e71674e8522796a2b784b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a68a76cfb86493db710deaebb0148c671" id="r_a68a76cfb86493db710deaebb0148c671"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> { <br />
-&#160;&#160;<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671af07edbcb2887244940c7fa2bc1d1c2cd">Black</a> = 30
-, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058">Red</a> = 31
-, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ae386e4afa09a7419ac4c8a4e20faefd2">Green</a> = 32
-, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671a2d2720209632189a0dd0c45f65648af0">Yellow</a> = 33
+<tr class="memitem:a338b08f6aae49641c1f62523260304dc" id="r_a338b08f6aae49641c1f62523260304dc"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a> : uint8_t { <br />
+&#160;&#160;<b>Black</b> = 0
+, <b>Maroon</b> = 1
+, <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dca7de7e50aee15442d7f4f1fb20acfb6ee">DarkRed</a> = 1
+, <b>Green</b> = 2
 , <br />
-&#160;&#160;<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671a607be2cabb7e141623bf8890e00fc695">Blue</a> = 34
-, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671aeb72018378f8b3a1f08def159c22deab">Magenta</a> = 35
-, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac">Cyan</a> = 36
-, <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671ad751f074dceecb95f5c180b99ddfcd21">White</a> = 37
+&#160;&#160;<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dcac2e73821e378a3dd985e89b34a8ab2b8">DarkGreen</a> = 2
+, <b>Olive</b> = 3
+, <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dcaa156ca8ece104c706a7d1d982d4aae7e">DarkYellow</a> = 3
+, <b>Navy</b> = 4
 , <br />
-&#160;&#160;<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671aab59ecc633c154e7f403d5f59765a7a4">Default</a> = 39
+&#160;&#160;<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dca3ec61769d1ecd2c6dd8ede4a6b9f9437">DarkBlue</a> = 4
+, <b>Purple</b> = 5
+, <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dcaf42f37bea354c23fb9d8f702027cf3fe">DarkMagenta</a> = 5
+, <b>Teal</b> = 6
+, <br />
+&#160;&#160;<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dca132b82f72f69ce1f16a4a32e9f34774a">DarkCyan</a> = 6
+, <b>Silver</b> = 7
+, <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dca4ea531d44426ae92412a3a5ef6f537b3">LightGray</a> = 7
+, <b>Grey</b> = 8
+, <br />
+&#160;&#160;<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dca553e39a4d1a7c67958471da5f0073386">DarkGray</a> = 8
+, <b>Red</b> = 9
+, <b>Lime</b> = 10
+, <b>Yellow</b> = 11
+, <br />
+&#160;&#160;<b>Blue</b> = 12
+, <b>Fuchsia</b> = 13
+, <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dcaeb72018378f8b3a1f08def159c22deab">Magenta</a> = 13
+, <b>Aqua</b> = 14
+, <br />
+&#160;&#160;<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dcab4d4b2c1dd491db5539a8c6a12df18ac">Cyan</a> = 14
+, <b>White</b> = 15
+, <b>Grey0</b> = 16
+, <b>NavyBlue</b> = 17
+, <br />
+&#160;&#160;<b>DarkBlue_18</b> = 18
+, <b>Blue3_19</b> = 19
+, <b>Blue3_20</b> = 20
+, <b>Blue1</b> = 21
+, <br />
+&#160;&#160;<b>DarkGreen_22</b> = 22
+, <b>DeepSkyBlue4_23</b> = 23
+, <b>DeepSkyBlue4_24</b> = 24
+, <b>DeepSkyBlue4_25</b> = 25
+, <br />
+&#160;&#160;<b>DodgerBlue3</b> = 26
+, <b>DodgerBlue2</b> = 27
+, <b>Green4</b> = 28
+, <b>SpringGreen4</b> = 29
+, <br />
+&#160;&#160;<b>Turquoise4</b> = 30
+, <b>DeepSkyBlue3_31</b> = 31
+, <b>DeepSkyBlue3_32</b> = 32
+, <b>DodgerBlue1</b> = 33
+, <br />
+&#160;&#160;<b>Green3_34</b> = 34
+, <b>SpringGreen3_35</b> = 35
+, <b>DarkCyan_36</b> = 36
+, <b>LightSeaGreen</b> = 37
+, <br />
+&#160;&#160;<b>DeepSkyBlue2</b> = 38
+, <b>DeepSkyBlue1</b> = 39
+, <b>Green3_40</b> = 40
+, <b>SpringGreen3_41</b> = 41
+, <br />
+&#160;&#160;<b>SpringGreen2_42</b> = 42
+, <b>Cyan3</b> = 43
+, <b>DarkTurquoise</b> = 44
+, <b>Turquoise2</b> = 45
+, <br />
+&#160;&#160;<b>Green1</b> = 46
+, <b>SpringGreen2_47</b> = 47
+, <b>SpringGreen1</b> = 48
+, <b>MediumSpringGreen</b> = 49
+, <br />
+&#160;&#160;<b>Cyan2</b> = 50
+, <b>Cyan1</b> = 51
+, <b>DarkRed_52</b> = 52
+, <b>DeepPink4_53</b> = 53
+, <br />
+&#160;&#160;<b>Purple4_54</b> = 54
+, <b>Purple4_55</b> = 55
+, <b>Purple3</b> = 56
+, <b>BlueViolet</b> = 57
+, <br />
+&#160;&#160;<b>Orange4_58</b> = 58
+, <b>Grey37</b> = 59
+, <b>MediumPurple4</b> = 60
+, <b>SlateBlue3_61</b> = 61
+, <br />
+&#160;&#160;<b>SlateBlue3_62</b> = 62
+, <b>RoyalBlue1</b> = 63
+, <b>Chartreuse4</b> = 64
+, <b>DarkSeaGreen4_65</b> = 65
+, <br />
+&#160;&#160;<b>PaleTurquoise4</b> = 66
+, <b>SteelBlue</b> = 67
+, <b>SteelBlue3</b> = 68
+, <b>CornflowerBlue</b> = 69
+, <br />
+&#160;&#160;<b>Chartreuse3_70</b> = 70
+, <b>DarkSeaGreen4_71</b> = 71
+, <b>CadetBlue_72</b> = 72
+, <b>CadetBlue_73</b> = 73
+, <br />
+&#160;&#160;<b>SkyBlue3</b> = 74
+, <b>SteelBlue1_75</b> = 75
+, <b>Chartreuse3_76</b> = 76
+, <b>PaleGreen3_77</b> = 77
+, <br />
+&#160;&#160;<b>SeaGreen3</b> = 78
+, <b>Aquamarine3</b> = 79
+, <b>MediumTurquoise</b> = 80
+, <b>SteelBlue1_81</b> = 81
+, <br />
+&#160;&#160;<b>Chartreuse2_82</b> = 82
+, <b>SeaGreen2</b> = 83
+, <b>SeaGreen1_84</b> = 84
+, <b>SeaGreen1_85</b> = 85
+, <br />
+&#160;&#160;<b>Aquamarine1_86</b> = 86
+, <b>DarkSlateGray2</b> = 87
+, <b>DarkRed_88</b> = 88
+, <b>DeepPink4_89</b> = 89
+, <br />
+&#160;&#160;<b>DarkMagenta_90</b> = 90
+, <b>DarkMagenta_91</b> = 91
+, <b>DarkViolet_92</b> = 92
+, <b>Purple_93</b> = 93
+, <br />
+&#160;&#160;<b>Orange4_94</b> = 94
+, <b>LightPink4</b> = 95
+, <b>Plum4</b> = 96
+, <b>MediumPurple3_97</b> = 97
+, <br />
+&#160;&#160;<b>MediumPurple3_98</b> = 98
+, <b>SlateBlue1</b> = 99
+, <b>Yellow4_100</b> = 100
+, <b>Wheat4</b> = 101
+, <br />
+&#160;&#160;<b>Grey53</b> = 102
+, <b>LightSlateGrey</b> = 103
+, <b>MediumPurple</b> = 104
+, <b>LightSlateBlue</b> = 105
+, <br />
+&#160;&#160;<b>Yellow4_106</b> = 106
+, <b>DarkOliveGreen3_107</b> = 107
+, <b>DarkSeaGreen</b> = 108
+, <b>LightSkyBlue3_109</b> = 109
+, <br />
+&#160;&#160;<b>LightSkyBlue3_110</b> = 110
+, <b>SkyBlue2</b> = 111
+, <b>Chartreuse2_112</b> = 112
+, <b>DarkOliveGreen3_113</b> = 113
+, <br />
+&#160;&#160;<b>PaleGreen3_114</b> = 114
+, <b>DarkSeaGreen3_115</b> = 115
+, <b>DarkSlateGray3</b> = 116
+, <b>SkyBlue1</b> = 117
+, <br />
+&#160;&#160;<b>Chartreuse1</b> = 118
+, <b>LightGreen_119</b> = 119
+, <b>LightGreen_120</b> = 120
+, <b>PaleGreen1_121</b> = 121
+, <br />
+&#160;&#160;<b>Aquamarine1_122</b> = 122
+, <b>DarkSlateGray1</b> = 123
+, <b>Red3_124</b> = 124
+, <b>DeepPink4_125</b> = 125
+, <br />
+&#160;&#160;<b>MediumVioletRed</b> = 126
+, <b>Magenta3_127</b> = 127
+, <b>DarkViolet_128</b> = 128
+, <b>Purple_129</b> = 129
+, <br />
+&#160;&#160;<b>DarkOrange3_130</b> = 130
+, <b>IndianRed_131</b> = 131
+, <b>HotPink3_132</b> = 132
+, <b>MediumOrchid3</b> = 133
+, <br />
+&#160;&#160;<b>MediumOrchid</b> = 134
+, <b>MediumPurple2_135</b> = 135
+, <b>DarkGoldenrod</b> = 136
+, <b>LightSalmon3_137</b> = 137
+, <br />
+&#160;&#160;<b>RosyBrown</b> = 138
+, <b>Grey63</b> = 139
+, <b>MediumPurple2_140</b> = 140
+, <b>MediumPurple1</b> = 141
+, <br />
+&#160;&#160;<b>Gold3_142</b> = 142
+, <b>DarkKhaki</b> = 143
+, <b>NavajoWhite3</b> = 144
+, <b>Grey69</b> = 145
+, <br />
+&#160;&#160;<b>LightSteelBlue3</b> = 146
+, <b>LightSteelBlue</b> = 147
+, <b>Yellow3_148</b> = 148
+, <b>DarkOliveGreen3_149</b> = 149
+, <br />
+&#160;&#160;<b>DarkSeaGreen3_150</b> = 150
+, <b>DarkSeaGreen2_151</b> = 151
+, <b>LightCyan3</b> = 152
+, <b>LightSkyBlue1</b> = 153
+, <br />
+&#160;&#160;<b>GreenYellow</b> = 154
+, <b>DarkOliveGreen2</b> = 155
+, <b>PaleGreen1_156</b> = 156
+, <b>DarkSeaGreen2_157</b> = 157
+, <br />
+&#160;&#160;<b>DarkSeaGreen1_158</b> = 158
+, <b>PaleTurquoise1</b> = 159
+, <b>Red3_160</b> = 160
+, <b>DeepPink3_161</b> = 161
+, <br />
+&#160;&#160;<b>DeepPink3_162</b> = 162
+, <b>Magenta3_163</b> = 163
+, <b>Magenta3_164</b> = 164
+, <b>Magenta2_165</b> = 165
+, <br />
+&#160;&#160;<b>DarkOrange3_166</b> = 166
+, <b>IndianRed_167</b> = 167
+, <b>HotPink3_168</b> = 168
+, <b>HotPink2</b> = 169
+, <br />
+&#160;&#160;<b>Orchid</b> = 170
+, <b>MediumOrchid1_171</b> = 171
+, <b>Orange3</b> = 172
+, <b>LightSalmon3_173</b> = 173
+, <br />
+&#160;&#160;<b>LightPink3</b> = 174
+, <b>Pink3</b> = 175
+, <b>Plum3</b> = 176
+, <b>Violet</b> = 177
+, <br />
+&#160;&#160;<b>Gold3_178</b> = 178
+, <b>LightGoldenrod3</b> = 179
+, <b>Tan</b> = 180
+, <b>MistyRose3</b> = 181
+, <br />
+&#160;&#160;<b>Thistle3</b> = 182
+, <b>Plum2</b> = 183
+, <b>Yellow3_184</b> = 184
+, <b>Khaki3</b> = 185
+, <br />
+&#160;&#160;<b>LightGoldenrod2_186</b> = 186
+, <b>LightYellow3</b> = 187
+, <b>Grey84</b> = 188
+, <b>LightSteelBlue1</b> = 189
+, <br />
+&#160;&#160;<b>Yellow2</b> = 190
+, <b>DarkOliveGreen1_191</b> = 191
+, <b>DarkOliveGreen1_192</b> = 192
+, <b>DarkSeaGreen1_193</b> = 193
+, <br />
+&#160;&#160;<b>Honeydew2</b> = 194
+, <b>LightCyan1</b> = 195
+, <b>Red1</b> = 196
+, <b>DeepPink2</b> = 197
+, <br />
+&#160;&#160;<b>DeepPink1_198</b> = 198
+, <b>DeepPink1_199</b> = 199
+, <b>Magenta2_200</b> = 200
+, <b>Magenta1</b> = 201
+, <br />
+&#160;&#160;<b>OrangeRed1</b> = 202
+, <b>IndianRed1_203</b> = 203
+, <b>IndianRed1_204</b> = 204
+, <b>HotPink_205</b> = 205
+, <br />
+&#160;&#160;<b>HotPink_206</b> = 206
+, <b>MediumOrchid1_207</b> = 207
+, <b>DarkOrange</b> = 208
+, <b>Salmon1</b> = 209
+, <br />
+&#160;&#160;<b>LightCoral</b> = 210
+, <b>PaleVioletRed1</b> = 211
+, <b>Orchid2</b> = 212
+, <b>Orchid1</b> = 213
+, <br />
+&#160;&#160;<b>Orange1</b> = 214
+, <b>SandyBrown</b> = 215
+, <b>LightSalmon1</b> = 216
+, <b>LightPink1</b> = 217
+, <br />
+&#160;&#160;<b>Pink1</b> = 218
+, <b>Plum1</b> = 219
+, <b>Gold1</b> = 220
+, <b>LightGoldenrod2_221</b> = 221
+, <br />
+&#160;&#160;<b>LightGoldenrod2_222</b> = 222
+, <b>NavajoWhite1</b> = 223
+, <b>MistyRose1</b> = 224
+, <b>Thistle1</b> = 225
+, <br />
+&#160;&#160;<b>Yellow1</b> = 226
+, <b>LightGoldenrod1</b> = 227
+, <b>Khaki1</b> = 228
+, <b>Wheat1</b> = 229
+, <br />
+&#160;&#160;<b>Cornsilk1</b> = 230
+, <b>Grey100</b> = 231
+, <b>Grey3</b> = 232
+, <b>Grey7</b> = 233
+, <br />
+&#160;&#160;<b>Grey11</b> = 234
+, <b>Grey15</b> = 235
+, <b>Grey19</b> = 236
+, <b>Grey23</b> = 237
+, <br />
+&#160;&#160;<b>Grey27</b> = 238
+, <b>Grey30</b> = 239
+, <b>Grey35</b> = 240
+, <b>Grey39</b> = 241
+, <br />
+&#160;&#160;<b>Grey42</b> = 242
+, <b>Grey46</b> = 243
+, <b>Grey50</b> = 244
+, <b>Grey54</b> = 245
+, <br />
+&#160;&#160;<b>Grey58</b> = 246
+, <b>Grey62</b> = 247
+, <b>Grey66</b> = 248
+, <b>Grey70</b> = 249
+, <br />
+&#160;&#160;<b>Grey74</b> = 250
+, <b>Grey78</b> = 251
+, <b>Grey82</b> = 252
+, <b>Grey85</b> = 253
+, <br />
+&#160;&#160;<b>Grey89</b> = 254
+, <b>Grey93</b> = 255
 <br />
  }</td></tr>
-<tr class="memdesc:a68a76cfb86493db710deaebb0148c671"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI colors.  <a href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">More...</a><br /></td></tr>
-<tr class="separator:a68a76cfb86493db710deaebb0148c671"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:a338b08f6aae49641c1f62523260304dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">ANSI 256-color palette indices.  <a href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">More...</a><br /></td></tr>
+<tr class="separator:a338b08f6aae49641c1f62523260304dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -188,12 +509,18 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (int <a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:aa6271e93a1c978f8441c39d8260540f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes an integer via operator&lt;&lt;. <br /></td></tr>
 <tr class="separator:aa6271e93a1c978f8441c39d8260540f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1d0803cf7413e99f3f9477cdd888eae" id="r_ac1d0803cf7413e99f3f9477cdd888eae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#ac1d0803cf7413e99f3f9477cdd888eae">setForeground</a> (<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> <a class="el" href="classList.html">color</a>, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> style=<a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a>)</td></tr>
-<tr class="memdesc:ac1d0803cf7413e99f3f9477cdd888eae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the text foreground color.  <br /></td></tr>
-<tr class="separator:ac1d0803cf7413e99f3f9477cdd888eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0be61114522ab4283a58d24f392a010" id="r_af0be61114522ab4283a58d24f392a010"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#af0be61114522ab4283a58d24f392a010">setBackground</a> (<a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a> <a class="el" href="classList.html">color</a>, <a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a> style=<a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a>)</td></tr>
-<tr class="memdesc:af0be61114522ab4283a58d24f392a010"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the text background color.  <br /></td></tr>
-<tr class="separator:af0be61114522ab4283a58d24f392a010"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e1a33fce1bc2e715ebe66cc1d8df533" id="r_a9e1a33fce1bc2e715ebe66cc1d8df533"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a9e1a33fce1bc2e715ebe66cc1d8df533">setForeground</a> (<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a> <a class="el" href="classList.html">color</a>)</td></tr>
+<tr class="memdesc:a9e1a33fce1bc2e715ebe66cc1d8df533"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the foreground to an ANSI palette color.  <br /></td></tr>
+<tr class="separator:a9e1a33fce1bc2e715ebe66cc1d8df533"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27d6b494b961f12b765da92923bb4305" id="r_a27d6b494b961f12b765da92923bb4305"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a27d6b494b961f12b765da92923bb4305">setBackground</a> (<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a> <a class="el" href="classList.html">color</a>)</td></tr>
+<tr class="memdesc:a27d6b494b961f12b765da92923bb4305"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the background to an ANSI palette color.  <br /></td></tr>
+<tr class="separator:a27d6b494b961f12b765da92923bb4305"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a293b0d9228aceff0efb1dd17bba750f6" id="r_a293b0d9228aceff0efb1dd17bba750f6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a293b0d9228aceff0efb1dd17bba750f6">setForeground</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">color</a>, int <a class="el" href="classList.html">maxIndex</a>=255)</td></tr>
+<tr class="memdesc:a293b0d9228aceff0efb1dd17bba750f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the foreground to the closest ANSI palette match.  <br /></td></tr>
+<tr class="separator:a293b0d9228aceff0efb1dd17bba750f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30da8d963742c6fd833801567e99f4e7" id="r_a30da8d963742c6fd833801567e99f4e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a30da8d963742c6fd833801567e99f4e7">setBackground</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">color</a>, int <a class="el" href="classList.html">maxIndex</a>=255)</td></tr>
+<tr class="memdesc:a30da8d963742c6fd833801567e99f4e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the background to the closest ANSI palette match.  <br /></td></tr>
+<tr class="separator:a30da8d963742c6fd833801567e99f4e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c2f57c3275a9c43d7046184bf215e6d" id="r_a1c2f57c3275a9c43d7046184bf215e6d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a1c2f57c3275a9c43d7046184bf215e6d">cursorUp</a> (int <a class="el" href="classList.html">n</a>)</td></tr>
 <tr class="memdesc:a1c2f57c3275a9c43d7046184bf215e6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Moves the cursor up N rows.  <br /></td></tr>
 <tr class="separator:a1c2f57c3275a9c43d7046184bf215e6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -230,6 +557,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aba854b8ea7ed6c00c7236eecde4a5817" id="r_aba854b8ea7ed6c00c7236eecde4a5817"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#aba854b8ea7ed6c00c7236eecde4a5817">reset</a> ()</td></tr>
 <tr class="memdesc:aba854b8ea7ed6c00c7236eecde4a5817"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the terminal to default configuration.  <br /></td></tr>
 <tr class="separator:aba854b8ea7ed6c00c7236eecde4a5817"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1befa4bfa289a9602969423db2224276" id="r_a1befa4bfa289a9602969423db2224276"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a1befa4bfa289a9602969423db2224276">resetForeground</a> ()</td></tr>
+<tr class="memdesc:a1befa4bfa289a9602969423db2224276"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the foreground to the terminal default.  <br /></td></tr>
+<tr class="separator:a1befa4bfa289a9602969423db2224276"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abed1976e1e2407bb75281a3758d84f4e" id="r_abed1976e1e2407bb75281a3758d84f4e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#abed1976e1e2407bb75281a3758d84f4e">resetBackground</a> ()</td></tr>
+<tr class="memdesc:abed1976e1e2407bb75281a3758d84f4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets the background to the terminal default.  <br /></td></tr>
+<tr class="separator:abed1976e1e2407bb75281a3758d84f4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af589e55cc899f00fc2e6174ba9cfc303" id="r_af589e55cc899f00fc2e6174ba9cfc303"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#af589e55cc899f00fc2e6174ba9cfc303">showCursor</a> ()</td></tr>
 <tr class="memdesc:af589e55cc899f00fc2e6174ba9cfc303"><td class="mdescLeft">&#160;</td><td class="mdescRight">Makes the cursor visible.  <br /></td></tr>
 <tr class="separator:af589e55cc899f00fc2e6174ba9cfc303"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -281,6 +614,15 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:ada0c32947ff91e874fa12378527ba673" id="r_ada0c32947ff91e874fa12378527ba673"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#ada0c32947ff91e874fa12378527ba673">ansiColor</a> (int index)</td></tr>
+<tr class="memdesc:ada0c32947ff91e874fa12378527ba673"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the RGB color for a 256-color palette entry.  <br /></td></tr>
+<tr class="separator:ada0c32947ff91e874fa12378527ba673"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09cfe775f5a603610724377103867e7f" id="r_a09cfe775f5a603610724377103867e7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classColor.html">Color</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a09cfe775f5a603610724377103867e7f">ansiColor</a> (<a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a> <a class="el" href="classList.html">color</a>)</td></tr>
+<tr class="memdesc:a09cfe775f5a603610724377103867e7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the RGB color for an AnsiColor palette entry.  <br /></td></tr>
+<tr class="separator:a09cfe775f5a603610724377103867e7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00e6f9c6441f6c878675ef9291772f26" id="r_a00e6f9c6441f6c878675ef9291772f26"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a00e6f9c6441f6c878675ef9291772f26">findClosestAnsiColor</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">color</a>, int <a class="el" href="classList.html">maxIndex</a>=255)</td></tr>
+<tr class="memdesc:a00e6f9c6441f6c878675ef9291772f26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the closest ANSI palette entry for an RGB color.  <br /></td></tr>
+<tr class="separator:a00e6f9c6441f6c878675ef9291772f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12a5837f39d199d272e0c10035d435c5" id="r_a12a5837f39d199d272e0c10035d435c5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAnsiStream.html#a12a5837f39d199d272e0c10035d435c5">stdoutWindowSize</a> (int &amp;rows, int &amp;cols)</td></tr>
 <tr class="memdesc:a12a5837f39d199d272e0c10035d435c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the window size of the current STDOUT device.  <br /></td></tr>
 <tr class="separator:a12a5837f39d199d272e0c10035d435c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -289,39 +631,44 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:ad15c7ef53247b9edcf20a48c906709bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>ANSI escape code writer backed by an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Writes ANSI escape sequences and raw text to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. </p>
+<div class="textblock"><p>ANSI escape code writer backed by an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Writes ANSI escape sequences and raw text to an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>. Also serves as the source of truth for ANSI color palette data and color matching. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
-<a id="a68a76cfb86493db710deaebb0148c671" name="a68a76cfb86493db710deaebb0148c671"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a68a76cfb86493db710deaebb0148c671">&#9670;&#160;</a></span>Color</h2>
+<a id="a338b08f6aae49641c1f62523260304dc" name="a338b08f6aae49641c1f62523260304dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a338b08f6aae49641c1f62523260304dc">&#9670;&#160;</a></span>AnsiColor</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">AnsiStream::Color</a></td>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiStream::AnsiColor</a> : <a class="el" href="classList.html">uint8_t</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>ANSI colors. </p>
+<p>ANSI 256-color palette indices. </p>
+<p>Values 0-15 are the 16 standard system colors. Values 16-231 are the 6x6x6 color cube. Values 232-255 are the grayscale ramp. Any uint8_t value is a valid AnsiColor.</p>
+<p>Xterm standard names are used throughout. Where the same xterm name appears at multiple palette indices, the index is appended as a suffix to disambiguate.</p>
+<dl class="section see"><dt>See also</dt><dd><a href="https://www.ditig.com/256-colors-cheat-sheet">https://www.ditig.com/256-colors-cheat-sheet</a> </dd></dl>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671af07edbcb2887244940c7fa2bc1d1c2cd" name="a68a76cfb86493db710deaebb0148c671af07edbcb2887244940c7fa2bc1d1c2cd"></a>Black&#160;</td><td class="fielddoc"><p>Black. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dca7de7e50aee15442d7f4f1fb20acfb6ee" name="a338b08f6aae49641c1f62523260304dca7de7e50aee15442d7f4f1fb20acfb6ee"></a>DarkRed&#160;</td><td class="fielddoc"><p>Alias for Maroon. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058" name="a68a76cfb86493db710deaebb0148c671ab02bf15c370015958385a69194a92058"></a>Red&#160;</td><td class="fielddoc"><p>Red. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dcac2e73821e378a3dd985e89b34a8ab2b8" name="a338b08f6aae49641c1f62523260304dcac2e73821e378a3dd985e89b34a8ab2b8"></a>DarkGreen&#160;</td><td class="fielddoc"><p>Alias for Green (system). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ae386e4afa09a7419ac4c8a4e20faefd2" name="a68a76cfb86493db710deaebb0148c671ae386e4afa09a7419ac4c8a4e20faefd2"></a>Green&#160;</td><td class="fielddoc"><p>Green. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dcaa156ca8ece104c706a7d1d982d4aae7e" name="a338b08f6aae49641c1f62523260304dcaa156ca8ece104c706a7d1d982d4aae7e"></a>DarkYellow&#160;</td><td class="fielddoc"><p>Alias for Olive. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671a2d2720209632189a0dd0c45f65648af0" name="a68a76cfb86493db710deaebb0148c671a2d2720209632189a0dd0c45f65648af0"></a>Yellow&#160;</td><td class="fielddoc"><p>Yellow. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dca3ec61769d1ecd2c6dd8ede4a6b9f9437" name="a338b08f6aae49641c1f62523260304dca3ec61769d1ecd2c6dd8ede4a6b9f9437"></a>DarkBlue&#160;</td><td class="fielddoc"><p>Alias for Navy. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671a607be2cabb7e141623bf8890e00fc695" name="a68a76cfb86493db710deaebb0148c671a607be2cabb7e141623bf8890e00fc695"></a>Blue&#160;</td><td class="fielddoc"><p>Blue. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dcaf42f37bea354c23fb9d8f702027cf3fe" name="a338b08f6aae49641c1f62523260304dcaf42f37bea354c23fb9d8f702027cf3fe"></a>DarkMagenta&#160;</td><td class="fielddoc"><p>Alias for Purple (system). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671aeb72018378f8b3a1f08def159c22deab" name="a68a76cfb86493db710deaebb0148c671aeb72018378f8b3a1f08def159c22deab"></a>Magenta&#160;</td><td class="fielddoc"><p>Magenta. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dca132b82f72f69ce1f16a4a32e9f34774a" name="a338b08f6aae49641c1f62523260304dca132b82f72f69ce1f16a4a32e9f34774a"></a>DarkCyan&#160;</td><td class="fielddoc"><p>Alias for Teal. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac" name="a68a76cfb86493db710deaebb0148c671ab4d4b2c1dd491db5539a8c6a12df18ac"></a>Cyan&#160;</td><td class="fielddoc"><p>Cyan. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dca4ea531d44426ae92412a3a5ef6f537b3" name="a338b08f6aae49641c1f62523260304dca4ea531d44426ae92412a3a5ef6f537b3"></a>LightGray&#160;</td><td class="fielddoc"><p>Alias for Silver. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671ad751f074dceecb95f5c180b99ddfcd21" name="a68a76cfb86493db710deaebb0148c671ad751f074dceecb95f5c180b99ddfcd21"></a>White&#160;</td><td class="fielddoc"><p>White. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dca553e39a4d1a7c67958471da5f0073386" name="a338b08f6aae49641c1f62523260304dca553e39a4d1a7c67958471da5f0073386"></a>DarkGray&#160;</td><td class="fielddoc"><p>Alias for Grey. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a68a76cfb86493db710deaebb0148c671aab59ecc633c154e7f403d5f59765a7a4" name="a68a76cfb86493db710deaebb0148c671aab59ecc633c154e7f403d5f59765a7a4"></a>Default&#160;</td><td class="fielddoc"><p><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> default color. </p>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dcaeb72018378f8b3a1f08def159c22deab" name="a338b08f6aae49641c1f62523260304dcaeb72018378f8b3a1f08def159c22deab"></a>Magenta&#160;</td><td class="fielddoc"><p>Alias for Fuchsia. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a338b08f6aae49641c1f62523260304dcab4d4b2c1dd491db5539a8c6a12df18ac" name="a338b08f6aae49641c1f62523260304dcab4d4b2c1dd491db5539a8c6a12df18ac"></a>Cyan&#160;</td><td class="fielddoc"><p>Alias for Aqua. </p>
 </td></tr>
 </table>
 
@@ -395,6 +742,76 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a09cfe775f5a603610724377103867e7f" name="a09cfe775f5a603610724377103867e7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09cfe775f5a603610724377103867e7f">&#9670;&#160;</a></span>ansiColor() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classColor.html">Color</a> AnsiStream::ansiColor </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a>&#160;</td>
+          <td class="paramname"><em>color</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the RGB color for an AnsiColor palette entry. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">color</td><td>The palette entry. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The RGB color. </dd></dl>
+
+</div>
+</div>
+<a id="ada0c32947ff91e874fa12378527ba673" name="ada0c32947ff91e874fa12378527ba673"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada0c32947ff91e874fa12378527ba673">&#9670;&#160;</a></span>ansiColor() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classColor.html">Color</a> AnsiStream::ansiColor </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>index</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the RGB color for a 256-color palette entry. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">index</td><td>Palette index (0-255). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The RGB color, or an invalid <a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> if out of range. </dd></dl>
+
+</div>
+</div>
 <a id="a811c6e56cb28e5f65d108f865b27bd7a" name="a811c6e56cb28e5f65d108f865b27bd7a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a811c6e56cb28e5f65d108f865b27bd7a">&#9670;&#160;</a></span>clearLine()</h2>
 
@@ -756,6 +1173,53 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a00e6f9c6441f6c878675ef9291772f26" name="a00e6f9c6441f6c878675ef9291772f26"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00e6f9c6441f6c878675ef9291772f26">&#9670;&#160;</a></span>findClosestAnsiColor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a> AnsiStream::findClosestAnsiColor </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;&#160;</td>
+          <td class="paramname"><em>color</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>maxIndex</em> = <code>255</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Finds the closest ANSI palette entry for an RGB color. </p>
+<p>Uses redmean-weighted Euclidean distance for perceptual accuracy. Chromatic inputs are biased toward colored palette entries over grays.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">color</td><td>The RGB color to match. </td></tr>
+    <tr><td class="paramname">maxIndex</td><td>Maximum palette index to search (15 for 16-color, 255 for 256-color). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The closest palette entry. </dd></dl>
+
+</div>
+</div>
 <a id="a65e4875b18cef8ddaeb4a84480f763b3" name="a65e4875b18cef8ddaeb4a84480f763b3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a65e4875b18cef8ddaeb4a84480f763b3">&#9670;&#160;</a></span>getCursorPosition()</h2>
 
@@ -909,6 +1373,62 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Resets the terminal to default configuration. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="abed1976e1e2407bb75281a3758d84f4e" name="abed1976e1e2407bb75281a3758d84f4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abed1976e1e2407bb75281a3758d84f4e">&#9670;&#160;</a></span>resetBackground()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::resetBackground </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Resets the background to the terminal default. </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a1befa4bfa289a9602969423db2224276" name="a1befa4bfa289a9602969423db2224276"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1befa4bfa289a9602969423db2224276">&#9670;&#160;</a></span>resetForeground()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::resetForeground </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Resets the foreground to the terminal default. </p>
 <dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
 
 </div>
@@ -1074,26 +1594,51 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="af0be61114522ab4283a58d24f392a010" name="af0be61114522ab4283a58d24f392a010"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af0be61114522ab4283a58d24f392a010">&#9670;&#160;</a></span>setBackground()</h2>
+<a id="a27d6b494b961f12b765da92923bb4305" name="a27d6b494b961f12b765da92923bb4305"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27d6b494b961f12b765da92923bb4305">&#9670;&#160;</a></span>setBackground() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::setBackground </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a>&#160;</td>
+          <td class="paramname"><em>color</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the background to an ANSI palette color. </p>
+<p>For indices 0-7, emits the standard SGR code (40-47). For indices 8-15, emits the bright SGR code (100-107). For indices 16-255, emits a 256-color sequence.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">color</td><td>The palette index (0-255). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a30da8d963742c6fd833801567e99f4e7" name="a30da8d963742c6fd833801567e99f4e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30da8d963742c6fd833801567e99f4e7">&#9670;&#160;</a></span>setBackground() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::setBackground </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;&#160;</td>
           <td class="paramname"><em>color</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a>&#160;</td>
-          <td class="paramname"><em>style</em> = <code><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a></code>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>maxIndex</em> = <code>255</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1101,18 +1646,13 @@ Static Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Sets the text background color. </p>
+<p>Sets the background to the closest ANSI palette match. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">color</td><td>The background color to set. </td></tr>
-    <tr><td class="paramname">style</td><td>The text style to apply (default: Bold). </td></tr>
+    <tr><td class="paramname">color</td><td>The RGB color to match. </td></tr>
+    <tr><td class="paramname">maxIndex</td><td>Maximum palette index (15 for 16-color, 255 for 256-color). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1145,6 +1685,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the background to a 256-color palette index. </p>
+<p>Always uses the extended 256-color escape sequence format (\033[48;5;Nm) regardless of index. Use <a class="el" href="classAnsiStream.html#a27d6b494b961f12b765da92923bb4305" title="Sets the background to an ANSI palette color.">setBackground()</a> for automatic selection of the most compatible format.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">index</td><td><a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> index (0-255). </td></tr>
@@ -1254,26 +1795,51 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ac1d0803cf7413e99f3f9477cdd888eae" name="ac1d0803cf7413e99f3f9477cdd888eae"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac1d0803cf7413e99f3f9477cdd888eae">&#9670;&#160;</a></span>setForeground()</h2>
+<a id="a9e1a33fce1bc2e715ebe66cc1d8df533" name="a9e1a33fce1bc2e715ebe66cc1d8df533"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e1a33fce1bc2e715ebe66cc1d8df533">&#9670;&#160;</a></span>setForeground() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::setForeground </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classAnsiStream.html#a68a76cfb86493db710deaebb0148c671">Color</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classAnsiStream.html#a338b08f6aae49641c1f62523260304dc">AnsiColor</a>&#160;</td>
+          <td class="paramname"><em>color</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the foreground to an ANSI palette color. </p>
+<p>For indices 0-7, emits the standard SGR code (30-37). For indices 8-15, emits the bright SGR code (90-97). For indices 16-255, emits a 256-color sequence.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">color</td><td>The palette index (0-255). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this stream for chaining. </dd></dl>
+
+</div>
+</div>
+<a id="a293b0d9228aceff0efb1dd17bba750f6" name="a293b0d9228aceff0efb1dd17bba750f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a293b0d9228aceff0efb1dd17bba750f6">&#9670;&#160;</a></span>setForeground() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAnsiStream.html">AnsiStream</a> &amp; AnsiStream::setForeground </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;&#160;</td>
           <td class="paramname"><em>color</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784b">TextStyle</a>&#160;</td>
-          <td class="paramname"><em>style</em> = <code><a class="el" href="classAnsiStream.html#a7e20231eb70e71674e8522796a2b784ba851150c80acd7db48221a27047311e5c">Bold</a></code>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>maxIndex</em> = <code>255</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1281,18 +1847,13 @@ Static Public Member Functions</h2></td></tr>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Sets the text foreground color. </p>
+<p>Sets the foreground to the closest ANSI palette match. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">color</td><td>The foreground color to set. </td></tr>
-    <tr><td class="paramname">style</td><td>The text style to apply (default: Bold). </td></tr>
+    <tr><td class="paramname">color</td><td>The RGB color to match. </td></tr>
+    <tr><td class="paramname">maxIndex</td><td>Maximum palette index (15 for 16-color, 255 for 256-color). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1325,6 +1886,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets the foreground to a 256-color palette index. </p>
+<p>Always uses the extended 256-color escape sequence format (\033[38;5;Nm) regardless of index. Use <a class="el" href="classAnsiStream.html#a9e1a33fce1bc2e715ebe66cc1d8df533" title="Sets the foreground to an ANSI palette color.">setForeground()</a> for automatic selection of the most compatible format.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">index</td><td><a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> index (0-255). </td></tr>
@@ -1699,7 +2261,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAnsiStream.html">AnsiStream</a></li>
-    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
   </ul>
 </div>
 </body>

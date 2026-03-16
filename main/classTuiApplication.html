@@ -180,6 +180,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a79e9e47ebfd992adee8e4e4e488d6faf" id="r_a79e9e47ebfd992adee8e4e4e488d6faf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">quit</a> (int exitCode=0)</td></tr>
 <tr class="memdesc:a79e9e47ebfd992adee8e4e4e488d6faf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
 <tr class="separator:a79e9e47ebfd992adee8e4e4e488d6faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aedd0e260f8a000795d19e05393930102" id="r_aedd0e260f8a000795d19e05393930102"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#aedd0e260f8a000795d19e05393930102">setColorMode</a> (<a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a> mode)</td></tr>
+<tr class="memdesc:aedd0e260f8a000795d19e05393930102"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the color mode for the TUI screen.  <br /></td></tr>
+<tr class="separator:aedd0e260f8a000795d19e05393930102"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28ed888b97d5222e6faa2bf99571f59a" id="r_a28ed888b97d5222e6faa2bf99571f59a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a28ed888b97d5222e6faa2bf99571f59a">colorMode</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a28ed888b97d5222e6faa2bf99571f59a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current color mode.  <br /></td></tr>
+<tr class="separator:a28ed888b97d5222e6faa2bf99571f59a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afea82b68f6050da42d09234e3714974f" id="r_afea82b68f6050da42d09234e3714974f"><td class="memItemLeft" align="right" valign="top"><a id="afea82b68f6050da42d09234e3714974f" name="afea82b68f6050da42d09234e3714974f"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>updateAll</b> ()</td></tr>
 <tr class="memdesc:afea82b68f6050da42d09234e3714974f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forces a full screen repaint. <br /></td></tr>
@@ -305,6 +311,34 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a28ed888b97d5222e6faa2bf99571f59a" name="a28ed888b97d5222e6faa2bf99571f59a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28ed888b97d5222e6faa2bf99571f59a">&#9670;&#160;</a></span>colorMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a> TuiApplication::colorMode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the current color mode. </p>
+<dl class="section return"><dt>Returns</dt><dd>The color support level in use. </dd></dl>
+
+</div>
+</div>
 <a id="a7915497f82dacecc1840afdb565effd3" name="a7915497f82dacecc1840afdb565effd3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7915497f82dacecc1840afdb565effd3">&#9670;&#160;</a></span>exec()</h2>
 
@@ -426,6 +460,42 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="aedd0e260f8a000795d19e05393930102" name="aedd0e260f8a000795d19e05393930102"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aedd0e260f8a000795d19e05393930102">&#9670;&#160;</a></span>setColorMode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> TuiApplication::setColorMode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a>&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the color mode for the TUI screen. </p>
+<p>Changes how RGB colors are converted to ANSI output. The screen will do its best to gracefully degrade colors to the requested mode, but for optimal appearance, provide a <a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> whose colors suit the target mode.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mode</td><td>The color support level to use. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> </dd></dl>
+
+</div>
+</div>
 <a id="ae7c2cdb04ba56870109e6a2509ec98e2" name="ae7c2cdb04ba56870109e6a2509ec98e2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae7c2cdb04ba56870109e6a2509ec98e2">&#9670;&#160;</a></span>setFocusWidget()</h2>
 
@@ -488,7 +558,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiApplication.html">TuiApplication</a></li>
-    <li class="footer">Generated on 2026-03-16 03:03:26 from commit b668db6 (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
   </ul>
 </div>
 </body>
