@@ -21,6 +21,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * This object is meant to hold some number of audio samples
  * described by an AudioDesc. The sample data is stored in a
+ * shared Buffer. When shared ownership is needed, use Audio::Ptr.
  *
  * @par Example
  * @code
@@ -30,7 +31,6 @@ PROMEKI_NAMESPACE_BEGIN
  * // Shared ownership for pipeline passing
  * Audio::Ptr shared = Audio::Ptr::create(desc, 1024);
  * @endcode
- * shared Buffer. When shared ownership is needed, use Audio::Ptr.
  */
 class Audio {
         PROMEKI_SHARED_FINAL(Audio)
@@ -125,6 +125,18 @@ class Audio {
                         _buffer->fill(0);
                         return;
                 }
+
+                /**
+                 * @brief Converts this Audio to a different sample format.
+                 *
+                 * Returns a new Audio object with the same sample rate, channel count,
+                 * and sample count but with audio data converted to the target format.
+                 * When the source is native float, this is a single-pass conversion.
+                 *
+                 * @param format The target AudioDesc::DataType.
+                 * @return A new Audio object in the target format, or an invalid Audio on failure.
+                 */
+                Audio convertTo(AudioDesc::DataType format) const;
 
                 /**
                  * @brief Resizes the sample count to a value between 0 and maxSamples().

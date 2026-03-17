@@ -8,17 +8,11 @@
 
 ## Progress
 
-**Completed:** Steps 1–3, 4A, 4C, 4E, 5 (pipeline framework, socket layer, prerequisites, TestPatternNode, JpegEncoderNode, FrameDemuxNode, AV-over-IP). See git history for details.
+**Completed:** Steps 1–3, 4A, 4B, 4C, 4E, 5, 6, 7 (pipeline framework, socket layer, prerequisites, TestPatternNode, TimecodeOverlayNode, JpegEncoderNode, FrameDemuxNode, AV-over-IP, RTP streaming sink nodes, vidgen utility). See git history for details.
 
 **Remaining work order:**
 ```
-Step 4: Remaining Pipeline Nodes (TC Overlay, FRC)
-        |
-        v
-Step 6: Streaming Nodes (RtpVideoSinkNode, RtpAudioSinkNode)
-        |
-        v
-Step 7: vidgen Utility
+Step 4D: FrameRateControlNode (not required for vidgen — optional)
 ```
 
 ### Deferred Items from Completed Work
@@ -30,7 +24,7 @@ Step 7: vidgen Utility
 - **TestPatternNode**: End-to-end LTC round-trip test via LtcDecoder (encoder→decoder tested separately in ltcdecoder.cpp)
 - **LtcEncoder**: Multi-format `encode(tc, AudioDesc)` and int8_t→target format conversion
 - **LtcDecoder**: `forward` field in DecodedTimecode (pending libvtc callback direction support), Audio→int8_t conversion, chunked decoding test
-- **JpegEncoderNode**: YUV input format support (currently only RGB8/RGBA8); decompression round-trip test not included (would need JpegDecoderNode or ImageFile)
+- **JpegEncoderNode**: YUV input format support (currently only RGB8/RGBA8); decompression round-trip test not included (would need JpegDecoderNode or ImageFile). Now forces 4:2:2 subsampling for RFC 2435 type 1 compatibility.
 
 ---
 
@@ -38,40 +32,17 @@ Step 7: vidgen Utility
 
 These nodes supplement the existing Phase 4B nodes in [proav_nodes.md](proav_nodes.md).
 
-### 4B. TimecodeOverlayNode
+### ~~4B. TimecodeOverlayNode~~ (DONE)
 
 Burns timecode text into video frames using FontPainter. Processing node (one Image input, one Image output). Reads timecode from the Image's own Metadata (not from a parent Frame — the metadata is propagated when the Frame is split).
 
-**Files:**
-- [ ] `include/promeki/proav/timecodeoverlaynode.h`
-- [ ] `src/timecodeoverlaynode.cpp`
-- [ ] `tests/timecodeoverlaynode.cpp`
-
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one Image input, one Image output
-- [ ] `void setFontPath(const FilePath &path)` — path to .ttf file (required — no built-in default font yet)
-- [ ] `void setFontSize(int points)` — default 36
-- [ ] `void setPosition(int x, int y)` — text position on frame
-- [ ] `enum Position { TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight, Custom }`
-- [ ] `void setPosition(Position pos)` — convenience, auto-calculates x/y based on frame size
-- [ ] `void setTextColor(uint16_t r, uint16_t g, uint16_t b)` — default white
-- [ ] `void setDrawBackground(bool enable)` — draw dark background behind text for legibility
-- [ ] `void setCustomText(const String &text)` — additional text to render (e.g., "TEST SIGNAL")
-- [ ] Override `configure()`:
-  - [ ] Validate that font path is set and file exists; emit error if not
-  - [ ] Initialize FontPainter with font file
-  - [ ] Pass through input ImageDesc to output port
-- [ ] Override `process()`:
-  - [ ] Pull frame from input
-  - [ ] Call `img.modify()` then `img->ensureExclusive()` to ensure exclusive buffer ownership (COW detach if shared, no-op in linear pipeline — see mutation safety convention in proav_pipeline.md)
-  - [ ] Read timecode from Image's Metadata
-  - [ ] Format TC as string via `Timecode::toString()`
-  - [ ] Render text onto image buffer using FontPainter (safe — buffer is exclusively owned)
-  - [ ] Optionally render custom text
-  - [ ] Push frame to output
-- [ ] Uses existing `FontPainter` and `PaintEngine` classes
-- [ ] Doctest: overlay TC on test image, verify image was modified (basic pixel check)
+**Implementation notes:**
+- Position enum with 6 presets plus Custom, auto-calculates x/y based on frame size with margin = fontSize/2
+- Configurable font path, size, text color (16-bit RGB), background toggle, custom text
+- COW-safe: calls `img.modify()` then `img->ensureExclusive()` before rendering
+- Reads timecode from Image's Metadata, falls back to "--:--:--:--" placeholder
+- Uses PaintEngine + FontPainter for text rendering with optional dark background
+- Tests: 16 test cases covering all positions, pixel modification, metadata preservation, RGBA8, custom text, background toggle, multi-frame, registry
 
 ### ~~4C. JpegEncoderNode~~ (DONE)
 
@@ -116,105 +87,64 @@ Controls frame pacing for pipelines that don't have a timing-aware sink node. Pa
 
 ---
 
-## Step 6: Streaming Sink Nodes (Phase 4B — network bridge)
+## ~~Step 6: Streaming Sink Nodes (Phase 4B — network bridge)~~ (DONE)
 
-These nodes live in promeki-proav, which depends on promeki-network for socket and RTP access.
+These nodes live in promeki-proav, which conditionally depends on promeki-network when `PROMEKI_BUILD_NETWORK` is enabled. All network-dependent code is wrapped in `#ifdef PROMEKI_HAVE_NETWORK`.
 
-### 6A. RtpVideoSinkNode
+### ~~6A. RtpVideoSinkNode~~ (DONE)
 
-Sends video frames over RTP. Terminal node (one Image or Encoded input, no outputs). This is the node responsible for real-time pacing — it controls when packets are sent to maintain the correct frame rate on the wire.
+Terminal sink node (one Image input, no outputs). Real-time pacing authority — sleeps between frames using `steady_clock` + `sleep_until` to maintain target frame rate without drift accumulation. Uses `RtpSession` directly (not PrioritySocket) with DSCP set via `UdpSocket::setDscp()`.
 
-**Files:**
-- [ ] `include/promeki/proav/rtpvideosinknode.h`
-- [ ] `src/rtpvideosinknode.cpp`
-- [ ] `tests/rtpvideosinknode.cpp`
+**Implementation notes:**
+- Pacing: first frame sets `_nextFrameTime = now()`, subsequent frames advance by `_frameInterval` then `sleep_until`
+- RTP timestamp increment = `clockRate * fps.denominator() / fps.numerator()`
+- Supports both compressed (`compressedSize()`) and uncompressed (`lineStride() * height()`) images
+- Multicast join on start if `setMulticast()` was called
+- Default DSCP 34 (AF41, broadcast video), default PT 96, default clock rate 90000
+- Tests: 13 tests — construction, registry, port structure, configure failures (no payload/dest/framerate), configure success, start/stop lifecycle, loopback send with RTP header verification, timestamp continuity across frames, starvation counter, extended stats
+- Also added `Metadata::EndOfStream` (bool) to the metadata system for EOS signaling
 
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one input port (Image or Encoded — configured based on upstream connection)
-- [ ] `void setDestination(const SocketAddress &addr)` — unicast or multicast destination
-- [ ] `void setMulticast(const SocketAddress &group)` — convenience for multicast
-- [ ] `void setPayloadType(uint8_t pt)` — RTP payload type number
-- [ ] `void setClockRate(uint32_t hz)` — RTP timestamp clock rate (90000 for video)
-- [ ] `void setRtpPayload(RtpPayload *handler)` — payload packetizer
-- [ ] `void setDscp(uint8_t dscp)` — QoS marking (default: AF41 for video)
-- [ ] Override `configure()`:
-  - [ ] Create RtpSession with configured parameters
-  - [ ] Create PrioritySocket with DSCP setting
-  - [ ] Select appropriate RtpPayload handler based on input format or explicit setting
-- [ ] Override `start()`: start RtpSession
-- [ ] Override `process()`:
-  - [ ] Pull frame from input queue
-  - [ ] Pack media data via RtpPayload handler (returns RtpPacketList — see RtpPacket below)
-  - [ ] Pace transmission: send packets at the correct rate for the frame rate. This node is the real-time timing authority.
-  - [ ] Send RTP packet(s) via RtpSession
-  - [ ] Maintain RTP timestamp continuity
-  - [ ] Check for EOS in frame metadata
-  - [ ] On errors: call `emitWarning()` for transient issues (e.g., EAGAIN), `emitError()` for persistent failures (e.g., socket closed)
-- [ ] Override `starvation()`: call `emitWarning("video underrun")`, optionally repeat last frame or send black
-- [ ] Override `stop()`: stop RtpSession, close socket
-- [ ] Doctest: send frames via loopback, verify RTP packet structure
+### ~~6B. RtpAudioSinkNode~~ (DONE)
 
-**Extended stats (via `extendedStats()`):**
-- [ ] `"packetsSent"` — total RTP packets sent
-- [ ] `"bytesSent"` — total bytes sent
-- [ ] `"underrunCount"` — starvation events
+Terminal sink node (one Audio input, no outputs). Accumulates samples in a dynamically-sized buffer and emits RTP packets when enough data fills a packet. No self-pacing — relies on video sink for pipeline timing.
 
-### 6B. RtpAudioSinkNode
+**Implementation notes:**
+- Accumulation buffer starts at 4x packet size, grows dynamically if needed
+- `_samplesPerPacket = packetTime * 0.001 * clockRate` (e.g., 1ms at 48kHz = 48 samples)
+- `_bytesPerSampleFrame` from `AudioDesc::bytesPerSampleStride()`, with lazy init from first audio frame if port descriptor not set
+- Cross-boundary handling: `memmove` shifts remaining data after each packet send
+- EOS flush: on `Metadata::EndOfStream`, flushes partial accumulation as a short final packet
+- Default DSCP 46 (EF, real-time audio), default PT 97, default clock rate 48000, default ptime 1.0ms
+- Tests: 12 tests — construction, registry, port structure, configure failures (no payload/dest), configure success, start/stop lifecycle, sub-packet accumulation (no send), full packet send via loopback, cross-boundary (1.5x), timestamp tracking, starvation counter, extended stats
 
-Sends audio frames over RTP. Terminal node (one Audio input, no outputs). Accumulates incoming audio samples and builds RTP packets when enough samples are available for the configured packet time, independent of video frame boundaries.
-
-**Files:**
-- [ ] `include/promeki/proav/rtpaudiosinknode.h`
-- [ ] `src/rtpaudiosinknode.cpp`
-- [ ] `tests/rtpaudiosinknode.cpp`
-
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one Audio input port
-- [ ] `void setDestination(const SocketAddress &addr)`
-- [ ] `void setPayloadType(uint8_t pt)`
-- [ ] `void setClockRate(uint32_t hz)` — typically sample rate (48000)
-- [ ] `void setRtpPayload(RtpPayload *handler)` — default: RtpPayloadL24 or L16
-- [ ] `void setPacketTime(double ptime)` — packet time in milliseconds (AES67 default: 1ms). Determines samples per packet (e.g., 1ms at 48kHz = 48 samples).
-- [ ] `void setDscp(uint8_t dscp)` — default: EF (46) for audio
-- [ ] Override `configure()`: create RtpSession, PrioritySocket, compute samples-per-packet from ptime and sample rate
-- [ ] Override `process()`:
-  - [ ] Pull audio frame from input queue
-  - [ ] Append samples to internal accumulation buffer
-  - [ ] While accumulation buffer has enough samples for a packet:
-    - [ ] Extract samples-per-packet samples
-    - [ ] Pack via RtpPayload handler
-    - [ ] Send RTP packet via RtpSession
-    - [ ] Pace transmission to maintain correct packet rate
-  - [ ] Retain remaining samples for next process() call
-  - [ ] Maintain sample-accurate RTP timestamps
-  - [ ] Check for EOS in frame metadata; on EOS, flush remaining samples as a short final packet
-  - [ ] On errors: call `emitWarning()` for transient issues, `emitError()` for persistent failures
-- [ ] Override `starvation()`: call `emitWarning("audio underrun")`
-- [ ] Override `stop()`: flush, stop session, close socket
-- [ ] Doctest: send audio frames with various sizes, verify correct packet count and sample accumulation
-
-**Extended stats (via `extendedStats()`):**
-- [ ] `"packetsSent"` — total RTP packets sent
-- [ ] `"samplesSent"` — total audio samples sent
-- [ ] `"underrunCount"` — starvation events
+**CMake changes:**
+- `promeki-proav` conditionally links `promeki-network` and defines `PROMEKI_HAVE_NETWORK` when `PROMEKI_BUILD_NETWORK=ON`
+- RTP node headers, sources, and test files conditionally appended to proav lists
 
 ---
 
-## Step 7: vidgen Utility
+## ~~Step 7: vidgen Utility~~ (DONE)
 
 Command-line utility that builds a pipeline from command-line options and runs it.
 
 **Files:**
-- [ ] `utils/vidgen/main.cpp`
-- [ ] `utils/vidgen/CMakeLists.txt`
-- [ ] Update top-level `CMakeLists.txt` to add `utils/vidgen/` subdirectory
+- [x] `utils/vidgen/main.cpp`
+- [x] `utils/vidgen/CMakeLists.txt`
+- [x] Update `utils/CMakeLists.txt` to add `vidgen/` subdirectory (conditional on `promeki::network`)
 
 **CMake:**
-- [ ] `PROMEKI_BUILD_UTILS` option (default ON when both PROAV and NETWORK are enabled)
-- [ ] `vidgen` executable target
-- [ ] Links: `promeki-core`, `promeki-proav`, `promeki-network`
+- [x] `PROMEKI_BUILD_UTILS` option (already existed, default ON)
+- [x] `vidgen` executable target
+- [x] Links: `promeki-proav`, `promeki-network`
+
+**Implementation notes:**
+- Single-file implementation (~740 lines) with simple argv parsing
+- Processing loop drives graph manually in topological order on the main thread; RtpVideoSinkNode provides real-time pacing via sleep_until
+- Pipeline construction is dynamic: TimecodeOverlayNode inserted only with `--tc-burn`, JpegEncoderNode only with `--transport mjpeg`, audio nodes only without `--no-audio`
+- RTP payload handlers are stack-allocated in main() and outlive the pipeline
+- SDP generation uses SdpSession with correct media descriptions for both ST 2110 and MJPEG modes
+- Default bundled font (FiraCode) used for TC burn when `--tc-font` not specified
+- Verbose mode prints stats every 5 seconds: frame count, video/audio packets sent, bytes sent
 
 ### Command-Line Interface
 
@@ -302,15 +232,15 @@ FrameDemuxNode splits the Frame into separate Image and Audio streams. Each carr
 `[TimecodeOverlayNode]` is inserted only when `--tc-burn` is specified. Timecode metadata is always present on Image objects regardless — the overlay just renders it visually.
 
 ### Implementation checklist:
-- [ ] Parse command-line arguments (use simple argv parsing — no external deps)
-- [ ] Construct appropriate nodes based on options
-- [ ] Build MediaGraph, connect nodes (including FrameDemuxNode for Frame→Image/Audio split)
-- [ ] Create MediaPipeline, start
-- [ ] Connect to `messageEmitted` signals on all nodes for centralized logging
-- [ ] Handle SIGINT/SIGTERM for clean shutdown
-- [ ] Optionally write SDP file describing the output stream
-- [ ] Print periodic statistics when `--verbose` is set (uses `NodeStats` from each node: frame count, actual fps, queue depths, plus `extendedStats()` for bytes sent, etc.)
-- [ ] Clean shutdown: stop pipeline, close sockets, report final statistics
+- [x] Parse command-line arguments (simple argv parsing — no external deps)
+- [x] Construct appropriate nodes based on options
+- [x] Build MediaGraph, connect nodes (including FrameDemuxNode for Frame→Image/Audio split)
+- [x] Create MediaPipeline, start
+- [x] Connect to `messageEmitted` signals on all nodes for centralized logging
+- [x] Handle SIGINT/SIGTERM for clean shutdown
+- [x] Optionally write SDP file describing the output stream
+- [x] Print periodic statistics when `--verbose` is set (every 5s: frame count, video/audio packets sent, bytes sent)
+- [x] Clean shutdown: stop pipeline, report final statistics
 
 ---
 
@@ -325,7 +255,7 @@ These already exist in the library and will be used by the remaining work:
 | `Image` (compressed support) | JpegEncoderNode | `isCompressed()`, `compressedSize()`, `fromCompressedData()` |
 | `RtpSession` | RtpVideoSinkNode, RtpAudioSinkNode | RTP packet send |
 | `RtpPayload*` | RtpVideoSinkNode, RtpAudioSinkNode | Payload packetization |
-| `PrioritySocket` | RtpVideoSinkNode, RtpAudioSinkNode | DSCP/QoS socket |
+| `UdpSocket` | RtpVideoSinkNode, RtpAudioSinkNode | UDP transport with DSCP via `setDscp()` |
 | `SdpSession` | vidgen | SDP file generation |
 | `MulticastManager` | vidgen | Multicast group management |
 | `TestPatternNode` | vidgen | Video/audio/TC test source |
@@ -340,7 +270,7 @@ These already exist in the library and will be used by the remaining work:
 Each new class gets its own doctest test file as specified in the checklists above.
 
 ### Integration Test: Pipeline Loopback
-- [ ] `tests/vidgen_pipeline.cpp` — builds a minimal vidgen pipeline (test pattern → demux → TC overlay → loopback sink) and verifies frames flow correctly, TC increments, and frame count matches expected.
+- [ ] `tests/vidgen_pipeline.cpp` — builds a minimal vidgen pipeline (test pattern → demux → TC overlay → loopback sink) and verifies frames flow correctly, TC increments, and frame count matches expected. (Deferred — testrender utility already validates this pattern; vidgen smoke-tested with loopback streaming.)
 
 ### Manual Verification
 - Receive vidgen streams with FFmpeg: `ffplay -protocol_whitelist rtp,udp -i stream.sdp`
@@ -363,4 +293,4 @@ These are natural next steps after vidgen is working:
 - **Text overlay node** — general text overlay (not just timecode)
 - **Multi-stream** — multiple video/audio essences from single vidgen instance
 - **HTTP/WebSocket SDP server** — serve SDP via HTTP for NMOS-style discovery
-- **Built-in default font** — embedded bitmap or TTF font for TimecodeOverlayNode so `--tc-font` becomes optional
+- ~~**Built-in default font**~~ — done: FiraCode bundled, `--tc-font` is optional

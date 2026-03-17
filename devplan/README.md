@@ -19,6 +19,7 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 | [proav_pipeline.md](proav_pipeline.md) | 4A | Pipeline framework core (MediaNode, MediaGraph, MediaPipeline) |
 | [proav_nodes.md](proav_nodes.md) | 4B | Concrete nodes (source/sink/mixer/gain/sync) |
 | [proav_dsp.md](proav_dsp.md) | 4C | DSP and effects (filters, resampler, format converter) |
+| [proav_optimization.md](proav_optimization.md) | 4D | Optimization and cleanup (BitmapFont, codec system, auto processing) |
 | [vidgen.md](vidgen.md) | 3-4 | vidgen utility: test pattern nodes, streaming nodes, CLI tool |
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
@@ -30,9 +31,11 @@ This plan builds out all four existing libraries (core, proav, music, tui) towar
 ```
 Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, streams complete, StreamString refactor remaining)
                        |       |
-                       |       +---> Phase 3A (Sockets) ──→ Phase 3C (AV-over-IP) ──┐
+                       |       +---> Phase 3A (COMPLETE) ──→ Phase 3C (COMPLETE) ───┐
                        |       |                                                     |
-                       |       +---> Phase 4A (Pipeline) ──→ Phase 4B (Nodes) ───────+──→ vidgen
+                       |       +---> Phase 4A (mostly done) ──→ Phase 4B (in progress) ──→ vidgen (COMPLETE)
+                       |       |                                  |                  |
+                       |       |                                  +──→ Phase 4D (Optimization/Cleanup)
                        |       |                                                     |
                        |       |                             Phase 3B (HTTP/TLS) ────┘
                        |       |
@@ -45,15 +48,14 @@ Phase 1 (COMPLETE) ----+---> Phase 2 (IO/FS complete, streams complete, StreamSt
 Phase 7 (Cross-Cutting) -- ongoing throughout
 ```
 
-### Current Focus: vidgen Utility
+### Current Focus: Optimization and Next Steps
 
-The immediate priority is building the proav pipeline and network layers to support `vidgen` — a video/audio test pattern generator that streams over RTP. See [vidgen.md](vidgen.md) for the full plan. Work order:
+The `vidgen` utility (video/audio test pattern generator streaming via RTP) is complete. See [vidgen.md](vidgen.md) for details and deferred items.
 
-1. **Phase 4A** (pipeline framework) and **Phase 3A** (sockets) — in parallel
-2. **Phase 4B new nodes** — test pattern generators, TC overlay, JPEG encoder
-3. **Phase 3C** — RTP, SDP, payload types, multicast
-4. **Streaming sink nodes** — bridge pipeline to network (RtpVideoSinkNode, RtpAudioSinkNode)
-5. **vidgen utility** — CLI tool that wires it all together
+**Next priorities:**
+1. **Phase 4D** — Optimization and cleanup: BitmapFont (fast native-format font rendering), video codec abstraction, automatic node processing, batch UDP/kernel pacing. See [proav_optimization.md](proav_optimization.md).
+2. **Remaining Phase 4A** — Audio::ensureExclusive()/isExclusive(), MemSpace::Stats, MemSpacePool. See [proav_pipeline.md](proav_pipeline.md).
+3. **Phase 4B** — File-based source/sink nodes, mixer, gain, color space conversion. See [proav_nodes.md](proav_nodes.md).
 
 ## Phasing
 
@@ -75,17 +77,21 @@ Establish a uniform byte-oriented IO interface that network sockets, files, and 
 
 **Remaining:** StreamString refactor (last std:: stream usage — still uses `std::streambuf`/`std::ostream`).
 
-### Phase 3: Network Library
+### Phase 3: Network Library — IN PROGRESS
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
 **Documents:** `network_sockets.md`, `network_protocols.md`, `network_avoverip.md`
 
 New shared library `promeki-network` with CMake option `PROMEKI_BUILD_NETWORK`. Raw POSIX sockets, vendored mbedTLS for TLS. Work through documents in order: sockets first, then protocols, then AV-over-IP.
 
-### Phase 4: ProAV Pipeline Framework
+**Phase 3A (Sockets) COMPLETE.** Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) COMPLETE** — PrioritySocket, RtpSession, RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing), SdpSession, MulticastManager. PtpClock remaining.
+
+### Phase 4: ProAV Pipeline Framework — IN PROGRESS
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
-**Documents:** `proav_pipeline.md`, `proav_nodes.md`, `proav_dsp.md`
+**Documents:** `proav_pipeline.md`, `proav_nodes.md`, `proav_dsp.md`, `proav_optimization.md`
 
 Generalizes the existing source/sink pattern. Work through documents in order: pipeline core, then concrete nodes, then DSP.
+
+**Phase 4A mostly complete** — MediaPort, MediaNode, MediaLink, MediaGraph, MediaPipeline, EncodedDesc all done. Remaining: Audio::ensureExclusive()/isExclusive(), MemSpace::Stats, MemSpacePool. **Phase 4B in progress** — vidgen nodes (TestPatternNode, TimecodeOverlayNode, JpegEncoderNode, FrameDemuxNode, RtpVideoSinkNode, RtpAudioSinkNode) complete; file I/O nodes, mixer, gain, color space, frame sync remaining. **Phase 4C (DSP) not started.** **Phase 4D (Optimization)** planned — see `proav_optimization.md`.
 
 ### Phase 5: TUI Widget Completion
 **Prerequisites:** Minimal (existing TUI framework). Mostly independent.

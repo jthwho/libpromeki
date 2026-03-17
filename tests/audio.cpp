@@ -174,6 +174,111 @@ TEST_CASE("Audio: data template accessor") {
         CHECK(audio.data<float>()[1] == -0.25f);
 }
 
+TEST_CASE("Audio: convertTo invalid audio returns invalid") {
+        Audio invalid;
+        Audio result = invalid.convertTo(AudioDesc::PCMI_S16LE);
+        CHECK_FALSE(result.isValid());
+}
+
+TEST_CASE("Audio: convertTo same format returns equivalent") {
+        AudioDesc desc(48000, 2);
+        Audio audio(desc, 64);
+        float *p = audio.data<float>();
+        for(size_t i = 0; i < 64 * 2; i++) p[i] = 0.1f * (float)i;
+
+        Audio result = audio.convertTo(AudioDesc::NativeType);
+        REQUIRE(result.isValid());
+        CHECK(result.samples() == 64);
+        CHECK(result.desc().dataType() == AudioDesc::NativeType);
+        // Data should be identical (same format returns *this)
+        CHECK(result.data<float>()[0] == p[0]);
+        CHECK(result.data<float>()[1] == p[1]);
+}
+
+TEST_CASE("Audio: convertTo native float to S16LE (fast path)") {
+        AudioDesc desc(48000, 1);
+        Audio audio(desc, 4);
+        float *p = audio.data<float>();
+        p[0] = 0.0f;
+        p[1] = 0.5f;
+        p[2] = -0.5f;
+        p[3] = 1.0f;
+
+        Audio result = audio.convertTo(AudioDesc::PCMI_S16LE);
+        REQUIRE(result.isValid());
+        CHECK(result.samples() == 4);
+        CHECK(result.desc().dataType() == AudioDesc::PCMI_S16LE);
+        CHECK(result.desc().sampleRate() == 48000);
+        CHECK(result.desc().channels() == 1);
+
+        const int16_t *s = result.data<int16_t>();
+        // Silence should convert to ~0
+        CHECK(s[0] == doctest::Approx(0).epsilon(1));
+        // 0.5 → ~16384
+        CHECK(s[1] > 10000);
+        // -0.5 → ~-16384
+        CHECK(s[2] < -10000);
+}
+
+TEST_CASE("Audio: convertTo S16LE to native float (fast path)") {
+        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
+        Audio audio(desc, 3);
+        int16_t *p = audio.data<int16_t>();
+        p[0] = 0;
+        p[1] = 16384;
+        p[2] = -16384;
+
+        Audio result = audio.convertTo(AudioDesc::NativeType);
+        REQUIRE(result.isValid());
+        CHECK(result.samples() == 3);
+        CHECK(result.desc().dataType() == AudioDesc::NativeType);
+
+        const float *f = result.data<float>();
+        CHECK(f[0] == doctest::Approx(0.0f).epsilon(0.01f));
+        CHECK(f[1] == doctest::Approx(0.5f).epsilon(0.05f));
+        CHECK(f[2] == doctest::Approx(-0.5f).epsilon(0.05f));
+}
+
+TEST_CASE("Audio: convertTo S16LE to S32LE (general two-pass path)") {
+        AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
+        Audio audio(desc, 2);
+        int16_t *p = audio.data<int16_t>();
+        p[0] = 0;
+        p[1] = 16384;
+
+        Audio result = audio.convertTo(AudioDesc::PCMI_S32LE);
+        REQUIRE(result.isValid());
+        CHECK(result.samples() == 2);
+        CHECK(result.desc().dataType() == AudioDesc::PCMI_S32LE);
+
+        const int32_t *s = result.data<int32_t>();
+        // Zero S16 → float → S32: small rounding offset is expected
+        CHECK(std::abs(s[0]) < 100000);
+        // 16384/32768 ≈ 0.5 → large positive 32-bit value
+        CHECK(s[1] > 100000);
+}
+
+TEST_CASE("Audio: convertTo multichannel") {
+        AudioDesc desc(48000, 2);
+        Audio audio(desc, 8);
+        float *p = audio.data<float>();
+        for(size_t i = 0; i < 16; i++) p[i] = (float)i / 16.0f;
+
+        Audio result = audio.convertTo(AudioDesc::PCMI_S16LE);
+        REQUIRE(result.isValid());
+        CHECK(result.samples() == 8);
+        CHECK(result.desc().channels() == 2);
+}
+
+TEST_CASE("Audio: convertTo invalid target format returns invalid") {
+        AudioDesc desc(48000, 1);
+        Audio audio(desc, 4);
+        audio.zero();
+
+        Audio result = audio.convertTo(AudioDesc::Invalid);
+        CHECK_FALSE(result.isValid());
+}
+
 TEST_CASE("Audio: copy semantics") {
         AudioDesc desc(48000, 2);
         Audio audio(desc, 256);

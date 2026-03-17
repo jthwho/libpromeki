@@ -102,6 +102,17 @@ void JpegEncoderNode::process() {
         jpeg_set_defaults(&cinfo);
         jpeg_set_quality(&cinfo, _quality, TRUE);
 
+        // Force 4:2:2 subsampling (Y: H=2 V=1, Cb/Cr: H=1 V=1).
+        // This matches RFC 2435 type 1 which is what RtpPayloadJpeg uses.
+        // Default libjpeg is 4:2:0 (V=2) which is type 0 — less common in
+        // RTP JPEG receivers and lower chroma resolution for video.
+        cinfo.comp_info[0].h_samp_factor = 2;
+        cinfo.comp_info[0].v_samp_factor = 1;
+        cinfo.comp_info[1].h_samp_factor = 1;
+        cinfo.comp_info[1].v_samp_factor = 1;
+        cinfo.comp_info[2].h_samp_factor = 1;
+        cinfo.comp_info[2].v_samp_factor = 1;
+
         jpeg_start_compress(&cinfo, TRUE);
 
         // Write scanlines

@@ -39,7 +39,8 @@
         X(CompressionLevel, double) \
         X(EnableVBR, bool) \
         X(VBRQuality, double) \
-        X(CompressedSize, int) /**< @brief Internal: allocation hint for compressed pixel formats. Use Image::compressedSize() instead. */
+        X(CompressedSize, int) /**< @brief Internal: allocation hint for compressed pixel formats. Use Image::compressedSize() instead. */ \
+        X(EndOfStream, bool) /**< @brief Signals end-of-stream to downstream nodes. */
 
 PROMEKI_NAMESPACE_BEGIN
 

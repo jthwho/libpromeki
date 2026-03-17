@@ -8,6 +8,21 @@
 
 Generalizes the existing source/sink pattern in AudioBlock. Default threading model: thread pool. Nodes can override via `setThreadingPolicy()`.
 
+---
+
+## Progress
+
+**Completed:** MediaPort, MediaNode (including node registry, property interface, NodeStats), MediaLink, MediaGraph, MediaPipeline, EncodedDesc, Image::ensureExclusive()/isExclusive(), Audio::convertTo() (sample format conversion). See git history for details.
+
+**Remaining:**
+- Audio::ensureExclusive() / Audio::isExclusive() — not yet implemented (Image has it)
+- MemSpace::Stats — not yet implemented
+- MemSpacePool — not yet implemented
+
+Note: Individual checkboxes below have NOT been updated to reflect completion — refer to this progress section for current status.
+
+---
+
 ### Design Constraint: JSON-Serializable Graphs
 
 An eventual goal is defining media pipelines via a data structure that can be converted to/from JSON. This is **not** an initial deliverable, but it must influence how we build things now. Specifically:

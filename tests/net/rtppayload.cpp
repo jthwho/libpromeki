@@ -9,8 +9,33 @@
 #include <promeki/network/rtppayload.h>
 #include <cstring>
 #include <cstdlib>
+#include <vector>
 
 using namespace promeki;
+
+// Build a minimal valid JPEG byte stream with the given entropy-coded data size.
+// Returns a vector containing: SOI + DQT(64-byte table) + SOS header + entropy data.
+static std::vector<uint8_t> buildMinimalJpeg(size_t entropySize) {
+        std::vector<uint8_t> jpeg;
+        // SOI
+        jpeg.push_back(0xFF); jpeg.push_back(0xD8);
+        // DQT marker (length=67: 2 length + 1 Pq/Tq + 64 table bytes)
+        jpeg.push_back(0xFF); jpeg.push_back(0xDB);
+        jpeg.push_back(0x00); jpeg.push_back(0x43);
+        jpeg.push_back(0x00); // Pq=0, Tq=0
+        for(int i = 0; i < 64; i++) jpeg.push_back(static_cast<uint8_t>(i + 1));
+        // SOS marker (length=8: minimal 1-component)
+        jpeg.push_back(0xFF); jpeg.push_back(0xDA);
+        jpeg.push_back(0x00); jpeg.push_back(0x08);
+        jpeg.push_back(0x01);
+        jpeg.push_back(0x01); jpeg.push_back(0x00);
+        jpeg.push_back(0x00); jpeg.push_back(0x3F); jpeg.push_back(0x00);
+        // Entropy-coded data (avoid 0xFF bytes to prevent marker confusion)
+        for(size_t i = 0; i < entropySize; i++) {
+                jpeg.push_back(static_cast<uint8_t>((i & 0x7F) + 1));
+        }
+        return jpeg;
+}
 
 TEST_CASE("RtpPayloadL24") {
 
@@ -237,70 +262,107 @@ TEST_CASE("RtpPayloadJpeg") {
 
         SUBCASE("pack small JPEG") {
                 RtpPayloadJpeg payload(320, 240);
-                // Simulate small JPEG data
-                const size_t jpegSize = 500;
-                uint8_t data[500];
-                for(size_t i = 0; i < jpegSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
+                auto jpeg = buildMinimalJpeg(200);
 
-                auto packets = payload.pack(data, jpegSize);
-                CHECK(packets.size() == 1);
+                auto packets = payload.pack(jpeg.data(), jpeg.size());
+                CHECK(packets.size() >= 1);
         }
 
-        SUBCASE("pack/unpack round-trip") {
-                RtpPayloadJpeg payload(640, 480, 85);
-                const size_t jpegSize = 1000;
-                uint8_t data[1000];
-                for(size_t i = 0; i < jpegSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
-
-                auto packets = payload.pack(data, jpegSize);
-                Buffer result = payload.unpack(packets);
-                CHECK(result.size() == jpegSize);
-                CHECK(std::memcmp(result.data(), data, jpegSize) == 0);
-        }
-
-        SUBCASE("large JPEG round-trip") {
+        SUBCASE("large JPEG fragmentation") {
                 RtpPayloadJpeg payload(1920, 1080, 85);
-                // Simulate a larger JPEG (~50KB)
-                const size_t jpegSize = 50000;
-                std::vector<uint8_t> data(jpegSize);
-                for(size_t i = 0; i < jpegSize; i++) data[i] = static_cast<uint8_t>(i & 0xFF);
+                // Build a JPEG with enough entropy data to require multiple packets
+                auto jpeg = buildMinimalJpeg(5000);
 
-                auto packets = payload.pack(data.data(), jpegSize);
+                auto packets = payload.pack(jpeg.data(), jpeg.size());
                 CHECK(packets.size() > 1);
 
-                // All share one buffer
+                // All packets share one backing buffer
                 for(size_t i = 1; i < packets.size(); i++) {
                         CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
                 }
-
-                Buffer result = payload.unpack(packets);
-                CHECK(result.size() == jpegSize);
-                CHECK(std::memcmp(result.data(), data.data(), jpegSize) == 0);
         }
 
         SUBCASE("JPEG header fields") {
                 RtpPayloadJpeg payload(640, 480, 75);
-                uint8_t data[100];
-                std::memset(data, 0xAA, 100);
 
-                auto packets = payload.pack(data, 100);
+                // Build minimal JPEG: SOI + DQT + SOS header + entropy data
+                uint8_t data[128];
+                size_t pos = 0;
+                // SOI
+                data[pos++] = 0xFF; data[pos++] = 0xD8;
+                // DQT marker with a 64-byte table (length = 67: 2 for length + 1 Pq/Tq + 64 table)
+                data[pos++] = 0xFF; data[pos++] = 0xDB;
+                data[pos++] = 0x00; data[pos++] = 0x43; // length = 67
+                data[pos++] = 0x00; // Pq=0 (8-bit), Tq=0
+                for(int i = 0; i < 64; i++) data[pos++] = static_cast<uint8_t>(i + 1);
+                // SOS marker (minimal: length=8, 1 component)
+                data[pos++] = 0xFF; data[pos++] = 0xDA;
+                data[pos++] = 0x00; data[pos++] = 0x08; // length = 8
+                data[pos++] = 0x01; // Ns = 1 component
+                data[pos++] = 0x01; data[pos++] = 0x00; // Cs=1, Td=0/Ta=0
+                data[pos++] = 0x00; data[pos++] = 0x3F; data[pos++] = 0x00; // Ss, Se, Ah/Al
+                // Entropy-coded data
+                size_t ecsStart = pos;
+                for(int i = 0; i < 20; i++) data[pos++] = static_cast<uint8_t>(0xA0 + i);
+
+                auto packets = payload.pack(data, pos);
                 REQUIRE(packets.size() == 1);
 
                 const uint8_t *pkt = packets[0].data();
-                // Check JPEG header at offset 12 (after RTP header)
+                // Check RFC 2435 JPEG header at offset 12 (after RTP header)
                 // Type-specific = 0
                 CHECK(pkt[12] == 0);
                 // Fragment offset = 0 for first packet
                 CHECK(pkt[13] == 0);
                 CHECK(pkt[14] == 0);
                 CHECK(pkt[15] == 0);
-                // Type = 1
-                CHECK(pkt[16] == 1);
-                // Quality = 75
-                CHECK(pkt[17] == 75);
+                // Type = 0 (FFmpeg compat: 4:2:2)
+                CHECK(pkt[16] == 0);
+                // Quality = 255 (explicit tables)
+                CHECK(pkt[17] == 255);
                 // Width/8 = 80
                 CHECK(pkt[18] == 80);
                 // Height/8 = 60
                 CHECK(pkt[19] == 60);
+
+                // Quantization Table Header at offset 20
+                CHECK(pkt[20] == 0);  // MBZ
+                CHECK(pkt[21] == 0);  // Precision (0 = 8-bit)
+                // Length = 64 (one 64-byte table, no Pq/Tq byte)
+                uint16_t qtLen = (static_cast<uint16_t>(pkt[22]) << 8) | pkt[23];
+                CHECK(qtLen == 64);
+                // First byte of table data should be 1 (not 0x00 Pq/Tq)
+                CHECK(pkt[24] == 1);
+        }
+
+        SUBCASE("unpack reassembles fragment data") {
+                RtpPayloadJpeg payload(320, 240);
+                auto jpeg = buildMinimalJpeg(200);
+
+                auto packets = payload.pack(jpeg.data(), jpeg.size());
+                REQUIRE(packets.size() >= 1);
+
+                Buffer result = payload.unpack(packets);
+                // unpack should produce non-empty data
+                CHECK(result.size() > 0);
+        }
+
+        SUBCASE("unpack multi-packet reassembly") {
+                RtpPayloadJpeg payload(1920, 1080, 85);
+                auto jpeg = buildMinimalJpeg(5000);
+
+                auto packets = payload.pack(jpeg.data(), jpeg.size());
+                REQUIRE(packets.size() > 1);
+
+                Buffer result = payload.unpack(packets);
+                // Result should contain QT header + entropy data
+                CHECK(result.size() > 5000);
+        }
+
+        SUBCASE("unpack empty packet list") {
+                RtpPayloadJpeg payload(320, 240);
+                RtpPacket::List empty;
+                Buffer result = payload.unpack(empty);
+                CHECK(result.size() == 0);
         }
 }

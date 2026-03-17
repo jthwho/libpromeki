@@ -23,4 +23,7 @@ add_subdirectory(promeki-info)
 
 if(TARGET promeki::proav)
     add_subdirectory(testrender)
+    if(TARGET promeki::network)
+        add_subdirectory(vidgen)
+    endif()
 endif()

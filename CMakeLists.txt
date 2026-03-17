@@ -431,6 +431,13 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/xyzcolor.h
     )
 
+    if(PROMEKI_BUILD_NETWORK)
+        list(APPEND PROMEKI_PROAV_HEADERS
+            include/promeki/proav/rtpvideosinknode.h
+            include/promeki/proav/rtpaudiosinknode.h
+        )
+    endif()
+
     set(PROMEKI_PROAV_SOURCES
         src/audiodesc.cpp
         src/audio.cpp
@@ -468,6 +475,13 @@ if(PROMEKI_BUILD_PROAV)
         src/videodesc.cpp
     )
 
+    if(PROMEKI_BUILD_NETWORK)
+        list(APPEND PROMEKI_PROAV_SOURCES
+            src/rtpvideosinknode.cpp
+            src/rtpaudiosinknode.cpp
+        )
+    endif()
+
     add_library(promeki-proav SHARED ${PROMEKI_PROAV_SOURCES})
     add_library(promeki::proav ALIAS promeki-proav)
     set_target_properties(promeki-proav PROPERTIES
@@ -500,6 +514,10 @@ if(PROMEKI_BUILD_PROAV)
     target_link_libraries(promeki-proav PUBLIC promeki-core)
     target_link_libraries(promeki-proav PRIVATE vtc_static)
     target_compile_definitions(promeki-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+    if(PROMEKI_BUILD_NETWORK)
+        target_link_libraries(promeki-proav PUBLIC promeki-network)
+        target_compile_definitions(promeki-proav PUBLIC PROMEKI_HAVE_NETWORK)
+    endif()
     add_dependencies(promeki-proav
         zlib-ep libjpeg-turbo-ep libsndfile-ep libpng-ep freetype-ep
     )
@@ -964,6 +982,12 @@ if(PROMEKI_BUILD_TESTS)
             tests/testpatternnode.cpp
             tests/timecodeoverlaynode.cpp
         )
+        if(PROMEKI_BUILD_NETWORK)
+            list(APPEND UNITTEST_PROAV_SOURCES
+                tests/rtpvideosinknode.cpp
+                tests/rtpaudiosinknode.cpp
+            )
+        endif()
         add_executable(unittest-proav ${UNITTEST_PROAV_SOURCES})
         target_compile_definitions(unittest-proav PRIVATE
             $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>
