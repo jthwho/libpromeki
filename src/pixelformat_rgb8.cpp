@@ -31,13 +31,14 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         PaintEngine::Pixel ret;
                         ret.resize(3);
                         if(ct == 1) {
-                                ret[0] = c[0];
-                                ret[1] = c[0];
-                                ret[2] = c[0];
+                                uint8_t v = (uint8_t)(c[0] >> 8);
+                                ret[0] = v;
+                                ret[1] = v;
+                                ret[2] = v;
                         } else if(ct >= 3) {
-                                ret[0] = c[0];
-                                ret[1] = c[1];
-                                ret[2] = c[2];
+                                ret[0] = (uint8_t)(c[0] >> 8);
+                                ret[1] = (uint8_t)(c[1] >> 8);
+                                ret[2] = (uint8_t)(c[2] >> 8);
                         } else {
                                 return PaintEngine::Pixel();
                         }
@@ -104,6 +105,11 @@ class PixelFormat_RGB8 : public PixelFormat {
                         _bytesPerBlock = 3;
                         _hasAlpha = false;
                         _fourccList = { "RGB2" };
+                        _compList = {
+                                { 0, CompRed,   8 },
+                                { 0, CompGreen, 8 },
+                                { 0, CompBlue,  8 }
+                        };
                         _planeList = { { "RGB" } };
                 }
 

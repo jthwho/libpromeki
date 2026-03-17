@@ -78,7 +78,7 @@ TEST_CASE("PaintEngine: fillRect") {
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 20, 15));
         CHECK(drawn == 20 * 15);
 
@@ -103,7 +103,7 @@ TEST_CASE("PaintEngine: drawRect") {
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto red = pe.createPixel(255, 0, 0);
+        auto red = pe.createPixel(65535, 0, 0);
         size_t drawn = pe.drawRect(red, Rect<int32_t>(10, 10, 20, 15));
         CHECK(drawn > 0);
 
@@ -126,7 +126,7 @@ TEST_CASE("PaintEngine: fillCircle") {
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto green = pe.createPixel(0, 255, 0);
+        auto green = pe.createPixel(0, 65535, 0);
         size_t drawn = pe.fillCircle(green, Point2Di32(64, 64), 20);
         CHECK(drawn > 0);
 
@@ -145,7 +145,7 @@ TEST_CASE("PaintEngine: drawCircle") {
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto blue = pe.createPixel(0, 0, 255);
+        auto blue = pe.createPixel(0, 0, 65535);
         size_t drawn = pe.drawCircle(blue, Point2Di32(64, 64), 30);
         CHECK(drawn > 0);
 
@@ -164,7 +164,7 @@ TEST_CASE("PaintEngine: fillEllipse") {
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto yellow = pe.createPixel(255, 255, 0);
+        auto yellow = pe.createPixel(65535, 65535, 0);
         size_t drawn = pe.fillEllipse(yellow, Point2Di32(64, 64), Size2Du32(30, 15));
         CHECK(drawn > 0);
 
@@ -183,7 +183,7 @@ TEST_CASE("PaintEngine: drawEllipse") {
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawEllipse(white, Point2Di32(64, 64), Size2Du32(30, 15));
         CHECK(drawn > 0);
 
@@ -201,7 +201,7 @@ TEST_CASE("PaintEngine: drawEllipse") {
 TEST_CASE("PaintEngine: fillRect zero width") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 0, 10));
         CHECK(drawn == 0);
 }
@@ -209,7 +209,7 @@ TEST_CASE("PaintEngine: fillRect zero width") {
 TEST_CASE("PaintEngine: fillRect zero height") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 10, 0));
         CHECK(drawn == 0);
 }
@@ -217,7 +217,7 @@ TEST_CASE("PaintEngine: fillRect zero height") {
 TEST_CASE("PaintEngine: drawRect zero width") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 0, 10));
         CHECK(drawn == 0);
 }
@@ -225,7 +225,7 @@ TEST_CASE("PaintEngine: drawRect zero width") {
 TEST_CASE("PaintEngine: drawRect zero height") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 10, 0));
         CHECK(drawn == 0);
 }
@@ -233,7 +233,7 @@ TEST_CASE("PaintEngine: drawRect zero height") {
 TEST_CASE("PaintEngine: drawCircle zero radius") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         // Zero radius should still draw the center point
         size_t drawn = pe.drawCircle(white, Point2Di32(32, 32), 0);
         CHECK(drawn >= 0);
@@ -242,7 +242,7 @@ TEST_CASE("PaintEngine: drawCircle zero radius") {
 TEST_CASE("PaintEngine: fillCircle zero radius") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillCircle(white, Point2Di32(32, 32), 0);
         CHECK(drawn >= 0);
 }
@@ -250,7 +250,7 @@ TEST_CASE("PaintEngine: fillCircle zero radius") {
 TEST_CASE("PaintEngine: drawEllipse zero radii") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.drawEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
         CHECK(drawn == 0);
 }
@@ -258,7 +258,7 @@ TEST_CASE("PaintEngine: drawEllipse zero radii") {
 TEST_CASE("PaintEngine: fillEllipse zero radii") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillEllipse(white, Point2Di32(32, 32), Size2Du32(0, 0));
         CHECK(drawn == 0);
 }
@@ -266,7 +266,7 @@ TEST_CASE("PaintEngine: fillEllipse zero radii") {
 TEST_CASE("PaintEngine: drawRect exact point count") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         // 10x10 rect outline: top=10 + bottom=10 + left=8 + right=8 = 36 points
         size_t drawn = pe.drawRect(white, Rect<int32_t>(5, 5, 10, 10));
         CHECK(drawn == 36);
@@ -275,7 +275,7 @@ TEST_CASE("PaintEngine: drawRect exact point count") {
 TEST_CASE("PaintEngine: fillRect 1x1") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         size_t drawn = pe.fillRect(white, Rect<int32_t>(10, 10, 1, 1));
         CHECK(drawn == 1);
 }
@@ -283,8 +283,126 @@ TEST_CASE("PaintEngine: fillRect 1x1") {
 TEST_CASE("PaintEngine: drawRect 1x1") {
         Image img(64, 64, PixelFormat::RGB8);
         PaintEngine pe = img.createPaintEngine();
-        auto white = pe.createPixel(255, 255, 255);
+        auto white = pe.createPixel(65535, 65535, 65535);
         // 1x1 rect outline: top=1 + bottom=1 (same pixel) + no sides => 2 points drawn to same pixel
         size_t drawn = pe.drawRect(white, Rect<int32_t>(10, 10, 1, 1));
         CHECK(drawn > 0);
+}
+
+TEST_CASE("PaintEngine: createPixel scales uint16 to uint8") {
+        Image img(16, 16, PixelFormat::RGB8);
+        PaintEngine pe = img.createPaintEngine();
+
+        // Full white: 65535 -> 255
+        auto white = pe.createPixel(65535, 65535, 65535);
+        pe.fill(white);
+        uint8_t *buf = static_cast<uint8_t *>(img.plane(0)->data());
+        CHECK(buf[0] == 255);
+        CHECK(buf[1] == 255);
+        CHECK(buf[2] == 255);
+
+        // Mid gray: 32768 -> 128
+        auto mid = pe.createPixel(32768, 32768, 32768);
+        pe.fill(mid);
+        CHECK(buf[0] == 128);
+        CHECK(buf[1] == 128);
+        CHECK(buf[2] == 128);
+
+        // 75% level: 49151 -> 191
+        auto level75 = pe.createPixel(49151, 49151, 49151);
+        pe.fill(level75);
+        CHECK(buf[0] == 191);
+        CHECK(buf[1] == 191);
+        CHECK(buf[2] == 191);
+
+        // Black: 0 -> 0
+        auto black = pe.createPixel(0, 0, 0);
+        pe.fill(black);
+        CHECK(buf[0] == 0);
+        CHECK(buf[1] == 0);
+        CHECK(buf[2] == 0);
+}
+
+TEST_CASE("PaintEngine: createPixel scales uint16 to uint8 RGBA") {
+        Image img(16, 16, PixelFormat::RGBA8);
+        PaintEngine pe = img.createPaintEngine();
+
+        // Mid-intensity red with mid alpha
+        auto pixel = pe.createPixel(65535, 0, 32768);
+        pe.fill(pixel);
+        uint8_t *buf = static_cast<uint8_t *>(img.plane(0)->data());
+        CHECK(buf[0] == 255);
+        CHECK(buf[1] == 0);
+        CHECK(buf[2] == 128);
+        CHECK(buf[3] == 255); // alpha defaults to opaque for 3-component createPixel
+}
+
+TEST_CASE("PaintEngine: createPixel RGBA8 with explicit alpha") {
+        Image img(16, 16, PixelFormat::RGBA8);
+        PaintEngine pe = img.createPaintEngine();
+
+        // 4-component: explicit alpha scaling
+        auto pixel = pe.createPixel(65535, 32768, 0, 32768);
+        pe.fill(pixel);
+        uint8_t *buf = static_cast<uint8_t *>(img.plane(0)->data());
+        CHECK(buf[0] == 255);
+        CHECK(buf[1] == 128);
+        CHECK(buf[2] == 0);
+        CHECK(buf[3] == 128);
+
+        // Full transparent
+        auto transparent = pe.createPixel(65535, 65535, 65535, 0);
+        pe.fill(transparent);
+        CHECK(buf[0] == 255);
+        CHECK(buf[3] == 0);
+}
+
+TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGB8") {
+        Image img(16, 16, PixelFormat::RGB8);
+        PaintEngine pe = img.createPaintEngine();
+
+        // 1-component gray: should spread to all 3 channels
+        auto gray = pe.createPixel(32768);
+        pe.fill(gray);
+        uint8_t *buf = static_cast<uint8_t *>(img.plane(0)->data());
+        CHECK(buf[0] == 128);
+        CHECK(buf[1] == 128);
+        CHECK(buf[2] == 128);
+
+        // Full white via mono
+        auto white = pe.createPixel(65535);
+        pe.fill(white);
+        CHECK(buf[0] == 255);
+        CHECK(buf[1] == 255);
+        CHECK(buf[2] == 255);
+
+        // Black via mono
+        auto black = pe.createPixel((uint16_t)0);
+        pe.fill(black);
+        CHECK(buf[0] == 0);
+        CHECK(buf[1] == 0);
+        CHECK(buf[2] == 0);
+}
+
+TEST_CASE("PaintEngine: createPixel monochrome (1-component) RGBA8") {
+        Image img(16, 16, PixelFormat::RGBA8);
+        PaintEngine pe = img.createPaintEngine();
+
+        // 1-component gray on RGBA8: R=G=B=gray, A=0xFF
+        auto gray = pe.createPixel(65535);
+        pe.fill(gray);
+        uint8_t *buf = static_cast<uint8_t *>(img.plane(0)->data());
+        CHECK(buf[0] == 255);
+        CHECK(buf[1] == 255);
+        CHECK(buf[2] == 255);
+        CHECK(buf[3] == 0xFF);
+}
+
+TEST_CASE("PaintEngine: createPixel 2-component returns empty") {
+        Image img(16, 16, PixelFormat::RGB8);
+        PaintEngine pe = img.createPaintEngine();
+
+        // 2-component is invalid for both RGB8 and RGBA8 — should return empty pixel
+        auto pixel = pe.createPixel(65535, 32768);
+        CHECK(pixel.isEmpty());
 }

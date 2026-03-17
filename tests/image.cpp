@@ -54,8 +54,8 @@ PROMEKI_TEST_BEGIN(Image)
         PROMEKI_TEST(data[6] == 3);
         PROMEKI_TEST(data[7] == 4);
 
-        PaintEngine::Pixel black = p.createPixel(0x00, 0x00, 0x00);
-        PaintEngine::Pixel red = p.createPixel(0xFF, 0x00, 0x00);
+        PaintEngine::Pixel black = p.createPixel(0, 0, 0);
+        PaintEngine::Pixel red = p.createPixel(65535, 0, 0);
         PROMEKI_BENCHMARK_BEGIN(fill_black);
         PROMEKI_TEST(p.fill(black));
         PROMEKI_BENCHMARK_END(fill_black);

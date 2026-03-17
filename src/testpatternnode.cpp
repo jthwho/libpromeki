@@ -324,7 +324,7 @@ void TestPatternNode::renderGrid(Image &img, double offset) {
 
         // White grid lines
         auto white = pe.createPixel(65535, 65535, 65535);
-        int spacing = 64;
+        int spacing = 128;
         int intOffset = (int)std::fmod(offset, (double)spacing);
         if(intOffset < 0) intOffset += spacing;
 
@@ -348,7 +348,7 @@ void TestPatternNode::renderCrosshatch(Image &img, double offset) {
         pe.fill(black);
 
         auto white = pe.createPixel(65535, 65535, 65535);
-        int spacing = 32;
+        int spacing = 96;
         int intOffset = (int)std::fmod(offset, (double)spacing);
         if(intOffset < 0) intOffset += spacing;
 
@@ -401,7 +401,7 @@ void TestPatternNode::renderZonePlate(Image &img, double phase) {
         int components = _imageDesc.pixelFormat()->compCount();
         double cx = w / 2.0;
         double cy = h / 2.0;
-        double scale = 0.05;
+        double scale = 0.001;
 
         for(int y = 0; y < h; y++) {
                 uint8_t *row = data + y * stride;
@@ -415,7 +415,7 @@ void TestPatternNode::renderZonePlate(Image &img, double phase) {
                         for(int c = 0; c < components && c < 3; c++) {
                                 p[c] = lum;
                         }
-                        if(components == 4) p[3] = 255; // alpha
+                        if(components >= 4) p[3] = 255;
                 }
         }
         return;
@@ -438,7 +438,7 @@ void TestPatternNode::renderNoise(Image &img) {
                         for(int c = 0; c < components && c < 3; c++) {
                                 p[c] = (uint8_t)rng.randomInt(0, 255);
                         }
-                        if(components == 4) p[3] = 255;
+                        if(components >= 4) p[3] = 255;
                 }
         }
         return;

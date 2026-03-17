@@ -20,3 +20,7 @@ if(NOT TARGET promeki::core)
 endif()
 
 add_subdirectory(promeki-info)
+
+if(TARGET promeki::proav)
+    add_subdirectory(testrender)
+endif()

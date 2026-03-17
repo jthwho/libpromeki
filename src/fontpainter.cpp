@@ -70,10 +70,33 @@ bool FontPainter::drawText(const String &str, int x, int y, int pointSize) const
         FT_Done_Face(face);
         FT_Done_FreeType(ft);
 
-        PaintEngine::Pixel pix = _paintEngine.createPixel(0xFF, 0xFF, 0xFF);
+        PaintEngine::Pixel pix = _paintEngine.createPixel(65535, 65535, 65535);
         _paintEngine.compositePoints(pix, points, alphas);
 
         return true;
+}
+
+int FontPainter::measureText(const String &str, int pointSize) const {
+        FT_Library ft;
+        if(FT_Init_FreeType(&ft)) return 0;
+
+        FT_Face face;
+        if(FT_New_Face(ft, _fontFilename.cstr(), 0, &face)) {
+                FT_Done_FreeType(ft);
+                return 0;
+        }
+
+        FT_Set_Pixel_Sizes(face, 0, pointSize);
+
+        int width = 0;
+        for(Char c : str) {
+                if(FT_Load_Char(face, c.codepoint(), FT_LOAD_DEFAULT)) continue;
+                width += face->glyph->advance.x >> 6;
+        }
+
+        FT_Done_Face(face);
+        FT_Done_FreeType(ft);
+        return width;
 }
 
 PROMEKI_NAMESPACE_END

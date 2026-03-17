@@ -188,6 +188,40 @@ class Image {
                 }
 
                 /**
+                 * @brief Returns true if all plane buffers are exclusively owned.
+                 *
+                 * A plane is exclusive when its Buffer::Ptr has a reference count
+                 * of 1 (or is null). This is useful for determining whether it is
+                 * safe to mutate the pixel data in place without affecting other
+                 * consumers that may share the same buffers.
+                 *
+                 * @return true if every plane buffer has referenceCount() <= 1.
+                 */
+                bool isExclusive() const {
+                        for(const auto &p : _planeList) {
+                                if(p.referenceCount() > 1) return false;
+                        }
+                        return true;
+                }
+
+                /**
+                 * @brief Ensures exclusive ownership of all plane buffers.
+                 *
+                 * For each plane Buffer::Ptr, calls modify() to trigger a
+                 * copy-on-write detach if the reference count is greater than 1.
+                 * In a linear pipeline where only one consumer holds a reference,
+                 * this is a no-op. In fan-out scenarios where multiple consumers
+                 * share the same buffers, this creates private copies so that
+                 * the caller can safely mutate the pixel data.
+                 */
+                void ensureExclusive() {
+                        for(auto &p : _planeList) {
+                                p.modify();
+                        }
+                        return;
+                }
+
+                /**
                  * @brief Creates a paint engine for drawing on this image.
                  * @return A PaintEngine configured for this image's pixel format.
                  */

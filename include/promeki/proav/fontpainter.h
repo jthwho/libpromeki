@@ -50,11 +50,19 @@ class FontPainter {
                  * @brief Draws text at the specified position.
                  * @param text      The text string to render.
                  * @param x         The x coordinate of the text origin.
-                 * @param y         The y coordinate of the text origin.
+                 * @param y         The y coordinate of the text origin (baseline).
                  * @param pointSize The font size in points (default 12).
                  * @return True if the text was drawn successfully.
                  */
                 bool drawText(const String &text, int x, int y, int pointSize = 12) const;
+
+                /**
+                 * @brief Measures the pixel width of a text string without drawing it.
+                 * @param text      The text string to measure.
+                 * @param pointSize The font size in points (default 12).
+                 * @return The width in pixels, or 0 on error.
+                 */
+                int measureText(const String &text, int pointSize = 12) const;
 
         private:
                 PaintEngine     _paintEngine;

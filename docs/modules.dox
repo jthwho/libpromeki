@@ -126,6 +126,15 @@
  */
 
 /**
+ * @defgroup proav_pipeline ProAV Pipeline
+ * @brief Media processing pipeline: graph, nodes, and scheduling.
+ *
+ * MediaGraph and MediaNode framework for constructing audio/video
+ * processing pipelines.  Includes concrete nodes such as
+ * TestPatternNode, FrameDemuxNode, and TimecodeOverlayNode.
+ */
+
+/**
  * @defgroup proav_paint ProAV Paint
  * @brief 2D rendering: font painting and paint engines.
  *

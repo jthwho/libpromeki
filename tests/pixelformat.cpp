@@ -85,3 +85,54 @@ TEST_CASE("PixelFormat: plane count") {
         REQUIRE(pf != nullptr);
         CHECK(pf->planeCount() >= 1);
 }
+
+TEST_CASE("PixelFormat: RGBA8 compCount is 4") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
+        REQUIRE(pf != nullptr);
+        CHECK(pf->compCount() == 4);
+        CHECK(pf->compDesc(0).type == PixelFormat::CompRed);
+        CHECK(pf->compDesc(1).type == PixelFormat::CompGreen);
+        CHECK(pf->compDesc(2).type == PixelFormat::CompBlue);
+        CHECK(pf->compDesc(3).type == PixelFormat::CompAlpha);
+        for(size_t i = 0; i < pf->compCount(); i++) {
+                CHECK(pf->compDesc(i).bits == 8);
+                CHECK(pf->compDesc(i).plane == 0);
+        }
+}
+
+TEST_CASE("PixelFormat: RGB8 compCount is 3") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGB8);
+        REQUIRE(pf != nullptr);
+        CHECK(pf->compCount() == 3);
+        CHECK(pf->compDesc(0).type == PixelFormat::CompRed);
+        CHECK(pf->compDesc(1).type == PixelFormat::CompGreen);
+        CHECK(pf->compDesc(2).type == PixelFormat::CompBlue);
+}
+
+TEST_CASE("PixelFormat: JPEG_RGBA8 compCount is 4") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGBA8);
+        REQUIRE(pf != nullptr);
+        CHECK(pf->compCount() == 4);
+}
+
+TEST_CASE("PixelFormat: JPEG_RGB8 compCount is 3") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
+        REQUIRE(pf != nullptr);
+        CHECK(pf->compCount() == 3);
+        CHECK(pf->compDesc(0).type == PixelFormat::CompRed);
+        CHECK(pf->compDesc(1).type == PixelFormat::CompGreen);
+        CHECK(pf->compDesc(2).type == PixelFormat::CompBlue);
+        for(size_t i = 0; i < pf->compCount(); i++) {
+                CHECK(pf->compDesc(i).bits == 8);
+                CHECK(pf->compDesc(i).plane == 0);
+        }
+}
+
+TEST_CASE("PixelFormat: JPEG_YUV8_422 compCount is 3") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_YUV8_422);
+        REQUIRE(pf != nullptr);
+        CHECK(pf->compCount() == 3);
+        CHECK(pf->compDesc(0).type == PixelFormat::CompY);
+        CHECK(pf->compDesc(1).type == PixelFormat::CompCb);
+        CHECK(pf->compDesc(2).type == PixelFormat::CompCr);
+}

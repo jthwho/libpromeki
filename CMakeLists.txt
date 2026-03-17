@@ -424,6 +424,7 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/paintengine.h
         include/promeki/proav/pixelformat.h
         include/promeki/proav/testpatternnode.h
+        include/promeki/proav/timecodeoverlaynode.h
         include/promeki/proav/pixelformat_old.h
         include/promeki/proav/videodesc.h
         include/promeki/proav/xyzcolor.h
@@ -461,6 +462,7 @@ if(PROMEKI_BUILD_PROAV)
         src/mediapipeline.cpp
         src/mediaport.cpp
         src/testpatternnode.cpp
+        src/timecodeoverlaynode.cpp
         src/videodesc.cpp
     )
 
@@ -957,9 +959,13 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediapipeline.cpp
             tests/mediaport.cpp
             tests/testpatternnode.cpp
+            tests/timecodeoverlaynode.cpp
         )
         add_executable(unittest-proav ${UNITTEST_PROAV_SOURCES})
-        target_compile_definitions(unittest-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_compile_definitions(unittest-proav PRIVATE
+            $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>
+            PROMEKI_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+        )
         target_include_directories(unittest-proav PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-proav PRIVATE promeki-proav)
         add_test(NAME unittest-proav COMMAND unittest-proav)

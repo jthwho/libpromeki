@@ -195,3 +195,100 @@ TEST_CASE("Image_CreatePaintEngine") {
     PaintEngine pe = img.createPaintEngine();
     CHECK(pe.pixelFormat() != nullptr);
 }
+
+// ============================================================================
+// isExclusive
+// ============================================================================
+
+TEST_CASE("Image_IsExclusive_Fresh") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    CHECK(img.isExclusive());
+}
+
+TEST_CASE("Image_IsExclusive_SharedPlane") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+
+    // Copy the plane pointer to create a second reference
+    Buffer::Ptr shared = img.plane(0);
+    CHECK(shared.referenceCount() > 1);
+    CHECK_FALSE(img.isExclusive());
+}
+
+TEST_CASE("Image_IsExclusive_DefaultImage") {
+    Image img;
+    // No planes at all — trivially exclusive
+    CHECK(img.isExclusive());
+}
+
+// ============================================================================
+// ensureExclusive
+// ============================================================================
+
+TEST_CASE("Image_EnsureExclusive_NoOp") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    CHECK(img.isExclusive());
+
+    // Should be a no-op since we already own the planes exclusively
+    void *dataBefore = img.data();
+    img.ensureExclusive();
+    CHECK(img.isExclusive());
+    CHECK(img.data() == dataBefore);
+}
+
+TEST_CASE("Image_EnsureExclusive_DetachesShared") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    img.fill(0x42);
+
+    // Create a shared reference to the plane buffer
+    Buffer::Ptr shared = img.plane(0);
+    REQUIRE(shared.referenceCount() > 1);
+    REQUIRE_FALSE(img.isExclusive());
+
+    // ensureExclusive should COW-detach, making img exclusive again
+    img.ensureExclusive();
+    CHECK(img.isExclusive());
+
+    // The shared copy should still be valid with original data
+    CHECK(shared->isValid());
+    const uint8_t *sharedData = static_cast<const uint8_t *>(shared->data());
+    CHECK(sharedData[0] == 0x42);
+}
+
+TEST_CASE("Image_EnsureExclusive_PreservesData") {
+    Image img(32, 32, PixelFormat::RGB8);
+    REQUIRE(img.isValid());
+    img.fill(0xAA);
+
+    // Force sharing
+    Buffer::Ptr shared = img.plane(0);
+    REQUIRE_FALSE(img.isExclusive());
+
+    img.ensureExclusive();
+    CHECK(img.isExclusive());
+
+    // Data should be preserved after detach
+    const uint8_t *data = static_cast<const uint8_t *>(img.data());
+    CHECK(data[0] == 0xAA);
+    CHECK(data[1] == 0xAA);
+    CHECK(data[2] == 0xAA);
+}
+
+// ============================================================================
+// isExclusive / ensureExclusive with Image::Ptr
+// ============================================================================
+
+TEST_CASE("Image_IsExclusive_ViaPtr") {
+    Image::Ptr imgPtr = Image::Ptr::create(64, 64, PixelFormat::RGBA8);
+    REQUIRE(imgPtr->isValid());
+    CHECK(imgPtr->isExclusive());
+
+    // Sharing the Image::Ptr itself doesn't affect plane exclusivity
+    Image::Ptr copy = imgPtr;
+    CHECK(copy->isExclusive());
+    // But the Image refcount is now 2
+    CHECK(imgPtr.referenceCount() == 2);
+}

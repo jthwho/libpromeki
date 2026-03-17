@@ -33,20 +33,21 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         PaintEngine::Pixel ret;
                         ret.resize(4);
                         if(ct == 1) {
-                                ret[0] = c[0];
-                                ret[1] = c[0];
-                                ret[2] = c[0];
+                                uint8_t v = (uint8_t)(c[0] >> 8);
+                                ret[0] = v;
+                                ret[1] = v;
+                                ret[2] = v;
                                 ret[3] = 0xFF;
                         } else if(ct == 3) {
-                                ret[0] = c[0];
-                                ret[1] = c[1];
-                                ret[2] = c[2];
+                                ret[0] = (uint8_t)(c[0] >> 8);
+                                ret[1] = (uint8_t)(c[1] >> 8);
+                                ret[2] = (uint8_t)(c[2] >> 8);
                                 ret[3] = 0xFF;
                         } else if(ct >= 4) {
-                                ret[0] = c[0];
-                                ret[1] = c[1];
-                                ret[2] = c[2];
-                                ret[3] = c[3];
+                                ret[0] = (uint8_t)(c[0] >> 8);
+                                ret[1] = (uint8_t)(c[1] >> 8);
+                                ret[2] = (uint8_t)(c[2] >> 8);
+                                ret[3] = (uint8_t)(c[3] >> 8);
                         } else {
                                 return PaintEngine::Pixel();
                         }
@@ -156,6 +157,12 @@ class PixelFormat_RGBA8 : public PixelFormat {
                         _bytesPerBlock = 4;
                         _hasAlpha = true;
                         _fourccList = { "RGBA" };
+                        _compList = {
+                                { 0, CompRed,   8 },
+                                { 0, CompGreen, 8 },
+                                { 0, CompBlue,  8 },
+                                { 0, CompAlpha, 8 }
+                        };
                         _planeList = { { "RGBA" } };
                 }
 
