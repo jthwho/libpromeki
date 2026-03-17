@@ -13,6 +13,7 @@
 #include <promeki/core/size2d.h>
 #include <promeki/core/point.h>
 #include <promeki/core/line.h>
+#include <promeki/core/rect.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -130,12 +131,78 @@ class PaintEngine {
                                  */
                                 virtual size_t drawLines(const Pixel &pixel, const Line2Di32 *lines, size_t count) const;
 
-                                //virtual void drawRect(const QRect &rect);
-                                //virtual void drawFilledRect(const QRect &rect);
-                                //virtual void drawCircle(const QPoint &pt, int radius);
-                                //virtual void drawFilledCircle(const QPoint &pt, int radius);
-                                //virtual void drawEllipse(const QPoint &center, const QSize &size);
-                                //virtual void drawFilledEllipse(const QPoint &center, const QSize &size);
+                                /**
+                                 * @brief Draws a rectangle outline.
+                                 *
+                                 * Default implementation rasterizes the outline into
+                                 * a point list and calls drawPoints().
+                                 *
+                                 * @param pixel The pixel value to draw with.
+                                 * @param rect  The rectangle to draw.
+                                 * @return The number of points drawn.
+                                 */
+                                virtual size_t drawRect(const Pixel &pixel, const Rect<int32_t> &rect) const;
+
+                                /**
+                                 * @brief Fills a rectangle with a solid color.
+                                 *
+                                 * Default implementation rasterizes all interior points.
+                                 *
+                                 * @param pixel The pixel value to fill with.
+                                 * @param rect  The rectangle to fill.
+                                 * @return The number of points drawn.
+                                 */
+                                virtual size_t fillRect(const Pixel &pixel, const Rect<int32_t> &rect) const;
+
+                                /**
+                                 * @brief Draws a circle outline.
+                                 *
+                                 * Default implementation uses the midpoint circle algorithm.
+                                 *
+                                 * @param pixel  The pixel value to draw with.
+                                 * @param center Center of the circle.
+                                 * @param radius Radius in pixels.
+                                 * @return The number of points drawn.
+                                 */
+                                virtual size_t drawCircle(const Pixel &pixel, const Point2Di32 &center, int radius) const;
+
+                                /**
+                                 * @brief Fills a circle with a solid color.
+                                 *
+                                 * Default implementation uses the midpoint circle algorithm
+                                 * with horizontal scanline fill.
+                                 *
+                                 * @param pixel  The pixel value to fill with.
+                                 * @param center Center of the circle.
+                                 * @param radius Radius in pixels.
+                                 * @return The number of points drawn.
+                                 */
+                                virtual size_t fillCircle(const Pixel &pixel, const Point2Di32 &center, int radius) const;
+
+                                /**
+                                 * @brief Draws an ellipse outline.
+                                 *
+                                 * Default implementation uses the midpoint ellipse algorithm.
+                                 *
+                                 * @param pixel  The pixel value to draw with.
+                                 * @param center Center of the ellipse.
+                                 * @param size   Half-widths (rx, ry) of the ellipse.
+                                 * @return The number of points drawn.
+                                 */
+                                virtual size_t drawEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const;
+
+                                /**
+                                 * @brief Fills an ellipse with a solid color.
+                                 *
+                                 * Default implementation uses the midpoint ellipse algorithm
+                                 * with horizontal scanline fill.
+                                 *
+                                 * @param pixel  The pixel value to fill with.
+                                 * @param center Center of the ellipse.
+                                 * @param size   Half-widths (rx, ry) of the ellipse.
+                                 * @return The number of points drawn.
+                                 */
+                                virtual size_t fillEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const;
 
                         protected:
                                 /** @brief Pixel format for this implementation. */
@@ -310,6 +377,70 @@ class PaintEngine {
                  */
                 bool fill(const Pixel &pixel) {
                         return d->fill(pixel);
+                }
+
+                /**
+                 * @brief Draws a rectangle outline.
+                 * @param pixel The pixel value to draw with.
+                 * @param rect  The rectangle to draw.
+                 * @return The number of points drawn.
+                 */
+                size_t drawRect(const Pixel &pixel, const Rect<int32_t> &rect) const {
+                        return d->drawRect(pixel, rect);
+                }
+
+                /**
+                 * @brief Fills a rectangle with a solid color.
+                 * @param pixel The pixel value to fill with.
+                 * @param rect  The rectangle to fill.
+                 * @return The number of points drawn.
+                 */
+                size_t fillRect(const Pixel &pixel, const Rect<int32_t> &rect) const {
+                        return d->fillRect(pixel, rect);
+                }
+
+                /**
+                 * @brief Draws a circle outline.
+                 * @param pixel  The pixel value to draw with.
+                 * @param center Center of the circle.
+                 * @param radius Radius in pixels.
+                 * @return The number of points drawn.
+                 */
+                size_t drawCircle(const Pixel &pixel, const Point2Di32 &center, int radius) const {
+                        return d->drawCircle(pixel, center, radius);
+                }
+
+                /**
+                 * @brief Fills a circle with a solid color.
+                 * @param pixel  The pixel value to fill with.
+                 * @param center Center of the circle.
+                 * @param radius Radius in pixels.
+                 * @return The number of points drawn.
+                 */
+                size_t fillCircle(const Pixel &pixel, const Point2Di32 &center, int radius) const {
+                        return d->fillCircle(pixel, center, radius);
+                }
+
+                /**
+                 * @brief Draws an ellipse outline.
+                 * @param pixel  The pixel value to draw with.
+                 * @param center Center of the ellipse.
+                 * @param size   Half-widths (rx, ry) of the ellipse.
+                 * @return The number of points drawn.
+                 */
+                size_t drawEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const {
+                        return d->drawEllipse(pixel, center, size);
+                }
+
+                /**
+                 * @brief Fills an ellipse with a solid color.
+                 * @param pixel  The pixel value to fill with.
+                 * @param center Center of the ellipse.
+                 * @param size   Half-widths (rx, ry) of the ellipse.
+                 * @return The number of points drawn.
+                 */
+                size_t fillEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const {
+                        return d->fillEllipse(pixel, center, size);
                 }
 
                 /**

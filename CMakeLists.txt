@@ -156,6 +156,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/structdatabase.h
     include/promeki/core/system.h
     include/promeki/core/timecode.h
+    include/promeki/core/timecodegenerator.h
     include/promeki/core/timestamp.h
     include/promeki/core/mutex.h
     include/promeki/core/readwritelock.h
@@ -220,6 +221,7 @@ set(PROMEKI_CORE_SOURCES
     src/dir.cpp
     src/timestamp.cpp
     src/timecode.cpp
+    src/timecodegenerator.cpp
     src/variant.cpp
     src/metadata.cpp
     src/cmdlineparser.cpp
@@ -400,6 +402,15 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/ciepoint.h
         include/promeki/proav/ciewavelengthtable.h
         include/promeki/proav/codec.h
+        include/promeki/proav/encodeddesc.h
+        include/promeki/proav/framedemuxnode.h
+        include/promeki/proav/ltcdecoder.h
+        include/promeki/proav/ltcencoder.h
+        include/promeki/proav/mediagraph.h
+        include/promeki/proav/medialink.h
+        include/promeki/proav/medianode.h
+        include/promeki/proav/mediapipeline.h
+        include/promeki/proav/mediaport.h
         include/promeki/proav/colorspace.h
         include/promeki/proav/colorspaceconverter.h
         include/promeki/proav/fontpainter.h
@@ -410,6 +421,7 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/imagefileio.h
         include/promeki/proav/paintengine.h
         include/promeki/proav/pixelformat.h
+        include/promeki/proav/testpatternnode.h
         include/promeki/proav/pixelformat_old.h
         include/promeki/proav/videodesc.h
         include/promeki/proav/xyzcolor.h
@@ -437,6 +449,16 @@ if(PROMEKI_BUILD_PROAV)
         src/ciepoint.cpp
         src/frame.cpp
         src/codec.cpp
+        src/encodeddesc.cpp
+        src/framedemuxnode.cpp
+        src/ltcdecoder.cpp
+        src/ltcencoder.cpp
+        src/mediagraph.cpp
+        src/medialink.cpp
+        src/medianode.cpp
+        src/mediapipeline.cpp
+        src/mediaport.cpp
+        src/testpatternnode.cpp
         src/videodesc.cpp
     )
 
@@ -470,6 +492,7 @@ if(PROMEKI_BUILD_PROAV)
         ${PROMEKI_THIRDPARTY_PREFIX}/lib64
     )
     target_link_libraries(promeki-proav PUBLIC promeki-core)
+    target_link_libraries(promeki-proav PRIVATE vtc_static)
     target_compile_definitions(promeki-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
     add_dependencies(promeki-proav
         zlib-ep libjpeg-turbo-ep libsndfile-ep libpng-ep freetype-ep
@@ -739,6 +762,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/md5.cpp
         tests/sha1.cpp
         tests/timecode.cpp
+        tests/timecodegenerator.cpp
         tests/numname.cpp
         tests/objectbase.cpp
         tests/objectbase2.cpp
@@ -845,6 +869,16 @@ if(PROMEKI_BUILD_TESTS)
             tests/ciepoint.cpp
             tests/imagefile.cpp
             tests/paintengine.cpp
+            tests/encodeddesc.cpp
+            tests/framedemuxnode.cpp
+            tests/ltcdecoder.cpp
+            tests/ltcencoder.cpp
+            tests/mediagraph.cpp
+            tests/medialink.cpp
+            tests/medianode.cpp
+            tests/mediapipeline.cpp
+            tests/mediaport.cpp
+            tests/testpatternnode.cpp
         )
         add_executable(unittest-proav ${UNITTEST_PROAV_SOURCES})
         target_compile_definitions(unittest-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
