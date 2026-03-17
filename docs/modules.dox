@@ -97,6 +97,16 @@
  */
 
 /**
+ * @defgroup network Network
+ * @brief Network address types and utilities.
+ *
+ * IPv4, IPv6, and MAC address value types with parsing, formatting,
+ * subnet checks, multicast MAC mapping, and sockaddr interoperability.
+ * NetworkAddress provides a polymorphic wrapper over all address types
+ * and unresolved hostnames.
+ */
+
+/**
  * @defgroup proav_media ProAV Media
  * @brief Professional audio/video media objects and codecs.
  *

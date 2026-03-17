@@ -12,7 +12,10 @@
 // Operating system detection
 // ============================================================================
 
-#if defined(_WIN64)
+#if defined(__EMSCRIPTEN__)
+#       define PROMEKI_PLATFORM_EMSCRIPTEN 1
+#       define PROMEKI_PLATFORM "Emscripten"
+#elif defined(_WIN64)
 #       define PROMEKI_PLATFORM_WINDOWS 64
 #       define PROMEKI_PLATFORM "Win64"
 #elif defined(_WIN32)

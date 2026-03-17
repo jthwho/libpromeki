@@ -20,6 +20,7 @@ include(CMakePackageConfigHelpers)
 option(PROMEKI_BUILD_PROAV  "Build the promeki-proav library"  ON)
 option(PROMEKI_BUILD_MUSIC  "Build the promeki-music library"  ON)
 option(PROMEKI_BUILD_TUI    "Build the promeki-tui library"    ON)
+option(PROMEKI_BUILD_NETWORK "Build the promeki-network library" ON)
 option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
 option(PROMEKI_BUILD_DEMOS  "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
@@ -621,6 +622,39 @@ if(PROMEKI_BUILD_TUI)
     target_compile_definitions(promeki-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
+# Network Library ##############################################################
+
+if(PROMEKI_BUILD_NETWORK)
+    set(PROMEKI_NETWORK_HEADERS
+        include/promeki/network/ipv4address.h
+        include/promeki/network/ipv6address.h
+        include/promeki/network/macaddress.h
+        include/promeki/network/networkaddress.h
+    )
+
+    set(PROMEKI_NETWORK_SOURCES
+        src/net/ipv4address.cpp
+        src/net/ipv6address.cpp
+        src/net/macaddress.cpp
+        src/net/networkaddress.cpp
+    )
+
+    add_library(promeki-network SHARED ${PROMEKI_NETWORK_SOURCES})
+    add_library(promeki::network ALIAS promeki-network)
+    set_target_properties(promeki-network PROPERTIES
+        VERSION ${APP_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME promeki-network
+        EXPORT_NAME network
+    )
+    target_include_directories(promeki-network PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+    target_link_libraries(promeki-network PUBLIC promeki-core)
+    target_compile_definitions(promeki-network PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+endif()
+
 # Utility Applications #########################################################
 
 if(PROMEKI_BUILD_UTILS)
@@ -706,6 +740,25 @@ if(PROMEKI_BUILD_TUI)
     )
     install(EXPORT promeki-tui-targets
         FILE promeki-tui-targets.cmake
+        NAMESPACE promeki::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
+    )
+endif()
+
+# Network library and headers
+if(PROMEKI_BUILD_NETWORK)
+    install(TARGETS promeki-network
+        EXPORT promeki-network-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+    install(FILES ${PROMEKI_NETWORK_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/network
+    )
+    install(EXPORT promeki-network-targets
+        FILE promeki-network-targets.cmake
         NAMESPACE promeki::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
     )
@@ -917,6 +970,21 @@ if(PROMEKI_BUILD_TESTS)
         add_test(NAME unittest-tui COMMAND unittest-tui)
     endif()
 
+    if(PROMEKI_BUILD_NETWORK)
+        set(UNITTEST_NETWORK_SOURCES
+            tests/doctest_main.cpp
+            tests/net/ipv4address.cpp
+            tests/net/ipv6address.cpp
+            tests/net/macaddress.cpp
+            tests/net/networkaddress.cpp
+        )
+        add_executable(unittest-network ${UNITTEST_NETWORK_SOURCES})
+        target_compile_definitions(unittest-network PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_include_directories(unittest-network PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+        target_link_libraries(unittest-network PRIVATE promeki-network)
+        add_test(NAME unittest-network COMMAND unittest-network)
+    endif()
+
     if(PROMEKI_BUILD_MUSIC)
         set(UNITTEST_MUSIC_SOURCES
             tests/doctest_main.cpp
@@ -939,6 +1007,7 @@ if(PROMEKI_BUILD_TESTS)
         DEPENDS unittest-core
             $<$<BOOL:${PROMEKI_BUILD_PROAV}>:unittest-proav>
             $<$<BOOL:${PROMEKI_BUILD_TUI}>:unittest-tui>
+            $<$<BOOL:${PROMEKI_BUILD_NETWORK}>:unittest-network>
             $<$<BOOL:${PROMEKI_BUILD_MUSIC}>:unittest-music>
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running unit tests"
@@ -1001,6 +1070,19 @@ if(PROMEKI_BUILD_MUSIC)
         list(APPEND PROMEKI_CLEAN_DIRS
             ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-music.dir
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-music
+        )
+    endif()
+endif()
+
+if(PROMEKI_BUILD_NETWORK)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-network.dir
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-network*
+    )
+    if(PROMEKI_BUILD_TESTS)
+        list(APPEND PROMEKI_CLEAN_DIRS
+            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-network.dir
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-network
         )
     endif()
 endif()
