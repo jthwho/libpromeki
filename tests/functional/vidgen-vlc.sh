@@ -2,18 +2,17 @@
 #
 # vidgen-stream.sh — Launch vidgen and open the stream in a player.
 #
-# Tries ffplay first (most reliable for RTP/SDP), then VLC.
-# Note: Ubuntu's VLC package is built without live555, so it cannot
-# open SDP files or receive RTP streams. Use ffplay or build VLC
-# from source with --enable-live555.
-#
 # Usage:
-#   ./tests/functional/vidgen-vlc.sh [mjpeg|st2110] [multicast]
+#   ./tests/functional/vidgen-vlc.sh [mjpeg|st2110] [loopback|multicast] [capture]
+#
+# The optional "capture" argument records the stream to /tmp instead of
+# live playback.  The captured file can be inspected in Audacity or with
+# ffprobe after the run.
 #
 # Examples:
-#   ./tests/functional/vidgen-vlc.sh              # MJPEG loopback
-#   ./tests/functional/vidgen-vlc.sh st2110        # ST 2110 loopback
-#   ./tests/functional/vidgen-vlc.sh mjpeg multicast  # MJPEG multicast
+#   ./tests/functional/vidgen-vlc.sh                     # MJPEG loopback, live
+#   ./tests/functional/vidgen-vlc.sh mjpeg loopback capture  # record to file
+#   ./tests/functional/vidgen-vlc.sh st2110 multicast    # ST 2110 multicast, live
 #
 
 set -euo pipefail
@@ -31,6 +30,7 @@ fi
 
 MODE="${1:-mjpeg}"
 NETWORK="${2:-loopback}"
+CAPTURE_MODE="${3:-}"
 
 COMMON_ARGS=(
         --framerate 30
@@ -63,12 +63,24 @@ case "$NETWORK" in
                 ;;
 esac
 
+VIDGEN_PID=""
+RECEIVER_PID=""
+CAPTURE_FILE=""
+
 cleanup() {
         echo ""
         echo "Cleaning up..."
-        [[ -n "${VIDGEN_PID:-}" ]] && kill "$VIDGEN_PID" 2>/dev/null && wait "$VIDGEN_PID" 2>/dev/null
-        [[ -n "${PLAYER_PID:-}" ]] && kill "$PLAYER_PID" 2>/dev/null && wait "$PLAYER_PID" 2>/dev/null
+        [[ -n "$VIDGEN_PID" ]] && kill "$VIDGEN_PID" 2>/dev/null && wait "$VIDGEN_PID" 2>/dev/null
+        [[ -n "$RECEIVER_PID" ]] && kill "$RECEIVER_PID" 2>/dev/null && wait "$RECEIVER_PID" 2>/dev/null
         rm -f "$SDP"
+        if [[ -n "$CAPTURE_FILE" && -f "$CAPTURE_FILE" ]]; then
+                echo ""
+                echo "Capture saved to: $CAPTURE_FILE"
+                ffprobe -hide_banner "$CAPTURE_FILE" 2>&1 || true
+                echo ""
+                echo "  Play:    ffplay $CAPTURE_FILE"
+                echo "  Inspect: audacity $CAPTURE_FILE"
+        fi
 }
 trap cleanup EXIT
 
@@ -96,20 +108,32 @@ cat "$SDP"
 echo "==========="
 echo ""
 
-# ffplay is the most reliable receiver for RTP/SDP.
-# Ubuntu VLC is built without live555 and cannot handle SDP/RTP.
-PLAYER_PID=""
-if command -v ffplay &>/dev/null; then
-        echo "Opening in ffplay..."
-        ffplay -protocol_whitelist rtp,udp,file -i "$SDP" -window_title "vidgen ($MODE)" 2>/dev/null &
-        PLAYER_PID=$!
-elif command -v vlc &>/dev/null; then
-        echo "Trying VLC (may not work without live555 support)..."
-        vlc "$SDP" 2>/dev/null &
-        PLAYER_PID=$!
+if [[ "$CAPTURE_MODE" == "capture" ]]; then
+        # Record mode: save audio+video to file for offline inspection
+        CAPTURE_FILE="/tmp/vidgen-capture-$$.mkv"
+        echo "Recording stream to $CAPTURE_FILE (Ctrl+C to stop)..."
+        ffmpeg -y -protocol_whitelist rtp,udp,file -i "$SDP" \
+                -c:v copy -c:a pcm_s24le \
+                "$CAPTURE_FILE" &
+        RECEIVER_PID=$!
 else
-        echo "No player found. Install ffmpeg (for ffplay) or VLC with live555."
-        echo "SDP file: $SDP"
+        # Live playback mode
+        if command -v ffplay &>/dev/null; then
+                echo "Opening in ffplay..."
+                # Use Wayland SDL backend when available to avoid GLX
+                # context creation failures through Xwayland.
+                SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-${WAYLAND_DISPLAY:+wayland}}" \
+                ffplay -protocol_whitelist rtp,udp,file -i "$SDP" \
+                        -window_title "vidgen ($MODE)" &
+                RECEIVER_PID=$!
+        elif command -v vlc &>/dev/null; then
+                echo "Trying VLC (may not work without live555 support)..."
+                vlc "$SDP" 2>/dev/null &
+                RECEIVER_PID=$!
+        else
+                echo "No player found. Install ffmpeg (for ffplay) or VLC with live555."
+                echo "SDP file: $SDP"
+        fi
 fi
 
 echo "Press Ctrl+C to stop."

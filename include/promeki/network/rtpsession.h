@@ -11,6 +11,7 @@
 #include <promeki/core/objectbase.h>
 #include <promeki/core/error.h>
 #include <promeki/core/buffer.h>
+#include <promeki/core/duration.h>
 #include <promeki/network/socketaddress.h>
 #include <promeki/network/rtppacket.h>
 
@@ -106,6 +107,28 @@ class RtpSession : public ObjectBase {
                  */
                 Error sendPackets(RtpPacket::List &packets, uint32_t timestamp,
                                   const SocketAddress &dest, bool markerOnLast = true);
+
+                /**
+                 * @brief Sends pre-packed RTP packets with even inter-packet pacing.
+                 *
+                 * Spreads packet transmission evenly across the given duration,
+                 * sleeping between packets to maintain a steady send rate. This
+                 * implements ST 2110-21 style sender pacing to avoid bursting
+                 * all packets at once and overflowing receiver jitter buffers.
+                 *
+                 * @param packets The pre-packed packet list. Modified in-place.
+                 * @param timestamp The RTP timestamp for this frame.
+                 * @param dest The destination address.
+                 * @param spreadInterval The total duration over which to spread
+                 *        packet transmission. Packets are sent at evenly spaced
+                 *        intervals within this window.
+                 * @param markerOnLast If true, set marker bit on the last packet.
+                 * @return Error::Ok on success, or an error on first failure.
+                 */
+                Error sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp,
+                                       const SocketAddress &dest,
+                                       const Duration &spreadInterval,
+                                       bool markerOnLast = true);
 
                 /** @brief Returns the locally generated SSRC. */
                 uint32_t ssrc() const { return _ssrc; }

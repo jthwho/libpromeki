@@ -9,6 +9,7 @@
 #include <doctest/doctest.h>
 #include <promeki/proav/audio.h>
 #include <promeki/proav/audiofile.h>
+#include <promeki/core/audiolevel.h>
 #include <promeki/proav/audiogen.h>
 #include <promeki/core/rational.h>
 #include <promeki/core/uuid.h>
@@ -46,11 +47,11 @@ TEST_CASE("Audio") {
         REQUIRE(err.isOk());
         for(int i = 0; i < 10; i++) {
                 if(i % 2) {
-                        gen.setConfig(0, { AudioGen::Sine, 1000.0, 0.3, 0.0, 0.5 });
-                        gen.setConfig(1, { AudioGen::Silence, 1000.0, 0.5, 0.0, 0.5 });
+                        gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
+                        gen.setConfig(1, { AudioGen::Silence, 0.0f, AudioLevel(), 0.0f, 0.0f });
                 } else {
-                        gen.setConfig(0, { AudioGen::Silence, 0.0, 0.3, 0.0, 0.5 });
-                        gen.setConfig(1, { AudioGen::Sine, 750.0, 0.3, 0.0, 0.5 });
+                        gen.setConfig(0, { AudioGen::Silence, 0.0f, AudioLevel(), 0.0f, 0.0f });
+                        gen.setConfig(1, { AudioGen::Sine, 750.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
                 }
                 Audio audio = gen.generate(4800);
                 CHECK(audio.isValid());
@@ -354,24 +355,24 @@ TEST_CASE("AudioGen: config() returns default config") {
         // Default type should be Silence
         CHECK(cfg0.type == AudioGen::Silence);
         CHECK(cfg1.type == AudioGen::Silence);
-        // Default amplitude and freq should be zero or a reasonable default
-        CHECK(cfg0.amplitude == doctest::Approx(0.0f).epsilon(0.01));
+        // Default level should be silence and freq should be zero
+        CHECK(cfg0.level.isSilence());
         CHECK(cfg0.freq == doctest::Approx(0.0f).epsilon(0.01));
 }
 
 TEST_CASE("AudioGen: setConfig() changes config for a channel") {
         AudioDesc desc(48000, 2);
         AudioGen gen(desc);
-        AudioGen::Config newCfg = { AudioGen::Sine, 440.0f, 0.8f, 0.0f, 0.5f };
+        AudioGen::Config newCfg = { AudioGen::Sine, 440.0f, AudioLevel::fromDbfs(-2.0), 0.0f, 0.0f };
         gen.setConfig(0, newCfg);
         const AudioGen::Config &cfg = gen.config(0);
         CHECK(cfg.type == AudioGen::Sine);
         // Note: setConfig converts freq to radians/sample internally
         float expectedFreq = M_PI * 2 * 440.0f / 48000.0f;
         CHECK(cfg.freq == doctest::Approx(expectedFreq));
-        CHECK(cfg.amplitude == doctest::Approx(0.8f));
+        CHECK(cfg.level.dbfs() == doctest::Approx(-2.0));
+        CHECK(cfg.linearGain == doctest::Approx(cfg.level.toLinearFloat()));
         CHECK(cfg.phase == doctest::Approx(0.0f));
-        CHECK(cfg.dutyCycle == doctest::Approx(0.5f));
         // Channel 1 should remain unchanged
         CHECK(gen.config(1).type == AudioGen::Silence);
 }
@@ -407,7 +408,7 @@ TEST_CASE("AudioGen: generate() with Silence type produces zero samples") {
 TEST_CASE("AudioGen: generate() with Sine type produces non-zero samples") {
         AudioDesc desc(48000, 1);
         AudioGen gen(desc);
-        gen.setConfig(0, { AudioGen::Sine, 1000.0f, 0.5f, 0.0f, 0.5f });
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
         Audio audio = gen.generate(512);
         REQUIRE(audio.isValid());
         REQUIRE(audio.samples() == 512);
@@ -420,18 +421,19 @@ TEST_CASE("AudioGen: generate() with Sine type produces non-zero samples") {
                 }
         }
         CHECK(hasNonZero);
-        // All samples should be within [-amplitude, +amplitude]
+        // All samples should be within [-linear, +linear] for -6 dBFS (~0.501)
+        float linear = AudioLevel::fromDbfs(-6.0).toLinearFloat();
         for(size_t i = 0; i < audio.frames(); i++) {
-                CHECK(samples[i] >= -0.5f);
-                CHECK(samples[i] <= 0.5f);
+                CHECK(samples[i] >= -linear);
+                CHECK(samples[i] <= linear);
         }
 }
 
 TEST_CASE("AudioGen: generate() respects sample count") {
         AudioDesc desc(48000, 2);
         AudioGen gen(desc);
-        gen.setConfig(0, { AudioGen::Sine, 440.0f, 0.3f, 0.0f, 0.5f });
-        gen.setConfig(1, { AudioGen::Sine, 880.0f, 0.3f, 0.0f, 0.5f });
+        gen.setConfig(0, { AudioGen::Sine, 440.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
+        gen.setConfig(1, { AudioGen::Sine, 880.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
 
         // Generate different sample counts and verify each
         size_t counts[] = { 1, 100, 4800, 48000 };
@@ -443,12 +445,67 @@ TEST_CASE("AudioGen: generate() respects sample count") {
         }
 }
 
+TEST_CASE("AudioGen: linearGain is cached from AudioLevel") {
+        AudioDesc desc(48000, 1);
+        AudioGen gen(desc);
+        AudioLevel level = AudioLevel::fromDbfs(-14.0);
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, level, 0.0f, 0.0f });
+        const AudioGen::Config &cfg = gen.config(0);
+        CHECK(cfg.linearGain == doctest::Approx(level.toLinearFloat()));
+        // Also verify the cached value for silence
+        gen.setConfig(0, { AudioGen::Silence, 0.0f, AudioLevel(), 0.0f, 0.0f });
+        CHECK(gen.config(0).linearGain == doctest::Approx(0.0f));
+}
+
+TEST_CASE("AudioGen: consecutive generate calls produce continuous sine") {
+        // Verifies that _sampleCount is properly incremented between calls
+        // so that the sine wave phase is continuous.
+        AudioDesc desc(48000, 1);
+        AudioGen gen(desc);
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
+
+        // Generate two consecutive chunks
+        Audio chunk1 = gen.generate(256);
+        Audio chunk2 = gen.generate(256);
+        REQUIRE(chunk1.isValid());
+        REQUIRE(chunk2.isValid());
+
+        const float *data1 = chunk1.data<float>();
+        const float *data2 = chunk2.data<float>();
+
+        // Generate a single combined chunk for comparison
+        AudioGen genRef(desc);
+        genRef.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
+        Audio combined = genRef.generate(512);
+        REQUIRE(combined.isValid());
+        const float *dataRef = combined.data<float>();
+
+        // The first chunk should match the first 256 samples of the combined
+        for(size_t i = 0; i < 256; i++) {
+                CHECK(data1[i] == doctest::Approx(dataRef[i]).epsilon(0.0001f));
+        }
+        // The second chunk should match samples 256-511 of the combined
+        for(size_t i = 0; i < 256; i++) {
+                CHECK(data2[i] == doctest::Approx(dataRef[256 + i]).epsilon(0.0001f));
+        }
+}
+
+TEST_CASE("AudioGen: setConfig out of range channel is ignored") {
+        AudioDesc desc(48000, 2);
+        AudioGen gen(desc);
+        // Try to set config on channel 5 (only 2 channels exist)
+        gen.setConfig(5, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
+        // Original configs should be unchanged
+        CHECK(gen.config(0).type == AudioGen::Silence);
+        CHECK(gen.config(1).type == AudioGen::Silence);
+}
+
 TEST_CASE("AudioFile: Filename roundtrip via sf_open_virtual") {
         // Write and read back using filename path (internally creates File IODevice).
         AudioDesc desc(48000, 2);
         AudioGen gen(desc);
-        gen.setConfig(0, { AudioGen::Sine, 1000.0f, 0.5f, 0.0f, 0.5f });
-        gen.setConfig(1, { AudioGen::Sine, 500.0f, 0.3f, 0.0f, 0.5f });
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
+        gen.setConfig(1, { AudioGen::Sine, 500.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
 
         const char *testFile = "test_virtual_roundtrip.wav";
 
@@ -484,8 +541,8 @@ TEST_CASE("AudioFile: File IODevice roundtrip") {
         // Write via filename, read back via explicit File IODevice.
         AudioDesc desc(48000, 2);
         AudioGen gen(desc);
-        gen.setConfig(0, { AudioGen::Sine, 1000.0f, 0.5f, 0.0f, 0.5f });
-        gen.setConfig(1, { AudioGen::Sine, 500.0f, 0.3f, 0.0f, 0.5f });
+        gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
+        gen.setConfig(1, { AudioGen::Sine, 500.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
 
         const char *testFile = "test_iodevice_roundtrip.wav";
 
@@ -528,7 +585,7 @@ TEST_CASE("AudioFile: BufferIODevice roundtrip") {
         AudioDesc desc(AudioDesc::PCMI_S16LE, 48000, 1);
 
         AudioGen gen(AudioDesc(48000, 1));
-        gen.setConfig(0, { AudioGen::Sine, 440.0f, 0.5f, 0.0f, 0.5f });
+        gen.setConfig(0, { AudioGen::Sine, 440.0f, AudioLevel::fromDbfs(-6.0), 0.0f, 0.0f });
         Audio srcAudio = gen.generate(480);
         REQUIRE(srcAudio.isValid());
 

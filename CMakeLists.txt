@@ -102,6 +102,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/bufferview.h
     include/promeki/core/bufferediodevice.h
     include/promeki/core/bytearray.h
+    include/promeki/core/audiolevel.h
     include/promeki/core/char.h
     include/promeki/core/cmdlineparser.h
     include/promeki/core/datetime.h
@@ -201,6 +202,7 @@ set(PROMEKI_CORE_SOURCES
     src/regex.cpp
     src/event.cpp
     src/eventloop.cpp
+    src/audiolevel.cpp
     src/duration.cpp
     src/env.cpp
     src/error.cpp
@@ -927,6 +929,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/threadpool.cpp
         tests/random.cpp
         tests/elapsedtimer.cpp
+        tests/audiolevel.cpp
         tests/duration.cpp
         tests/algorithm.cpp
         tests/filepath.cpp

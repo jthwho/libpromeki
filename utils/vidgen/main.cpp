@@ -18,6 +18,7 @@
 #include <promeki/core/framerate.h>
 #include <promeki/core/rational.h>
 #include <promeki/core/filepath.h>
+#include <promeki/core/audiolevel.h>
 
 #include <promeki/proav/mediapipeline.h>
 #include <promeki/proav/mediagraph.h>
@@ -64,10 +65,10 @@ struct Options {
         int             audioRate       = 48000;
         int             audioChannels   = 2;
         double          audioTone       = 1000.0;
-        double          audioAmplitude  = 0.5;
+        double          audioLevel      = -30.0;
         bool            audioSilence    = false;
         bool            audioLtc        = false;
-        float           ltcLevel        = 0.5f;
+        double          ltcLevel        = -20.0;
         int             ltcChannel      = 0;
         bool            noAudio         = false;
 
@@ -117,10 +118,10 @@ static void usage() {
                 "  --audio-rate <R>         Sample rate in Hz (default: 48000)\n"
                 "  --audio-channels <N>     Number of channels (default: 2)\n"
                 "  --audio-tone <Hz>        Tone frequency in Hz (default: 1000)\n"
-                "  --audio-amplitude <A>    Amplitude 0.0-1.0 (default: 0.5)\n"
+                "  --audio-level <dBFS>     Tone level in dBFS (default: -30)\n"
                 "  --audio-silence          Generate silence instead of tone\n"
                 "  --audio-ltc              Generate LTC timecode audio\n"
-                "  --ltc-level <L>          LTC output level 0.0-1.0 (default: 0.5)\n"
+                "  --ltc-level <dBFS>       LTC output level in dBFS (default: -20)\n"
                 "  --ltc-channel <N>        Channel for LTC (default: 0, -1 = all)\n"
                 "  --no-audio               Disable audio output entirely\n"
                 "\n"
@@ -167,10 +168,10 @@ static bool parseOptions(int argc, char *argv[], Options &opts) {
                 else if(arg == "--audio-rate" && i + 1 < argc)  opts.audioRate = atoi(argv[++i]);
                 else if(arg == "--audio-channels" && i + 1 < argc) opts.audioChannels = atoi(argv[++i]);
                 else if(arg == "--audio-tone" && i + 1 < argc)  opts.audioTone = atof(argv[++i]);
-                else if(arg == "--audio-amplitude" && i + 1 < argc) opts.audioAmplitude = atof(argv[++i]);
+                else if(arg == "--audio-level" && i + 1 < argc) opts.audioLevel = atof(argv[++i]);
                 else if(arg == "--audio-silence")                opts.audioSilence = true;
                 else if(arg == "--audio-ltc")                    opts.audioLtc = true;
-                else if(arg == "--ltc-level" && i + 1 < argc)   opts.ltcLevel = static_cast<float>(atof(argv[++i]));
+                else if(arg == "--ltc-level" && i + 1 < argc)   opts.ltcLevel = atof(argv[++i]);
                 else if(arg == "--ltc-channel" && i + 1 < argc) opts.ltcChannel = atoi(argv[++i]);
                 else if(arg == "--no-audio")                     opts.noAudio = true;
                 else if(arg == "--tc-start" && i + 1 < argc)    opts.tcStart = argv[++i];
@@ -233,21 +234,23 @@ struct FormatEntry {
         const char      *name;
         PixelFormat::ID id;
         int             bitsPerPixel;
+        int             bitsPerComponent;
+        const char      *sampling;     ///< RFC 4175 sampling parameter.
 };
 
 static const FormatEntry g_formats[] = {
-        { "rgba8",     PixelFormat::RGBA8,    32 },
-        { "rgb8",      PixelFormat::RGB8,     24 },
-        { "rgb10",     PixelFormat::RGB10,    30 },
-        { "yuv8_422",  PixelFormat::YUV8_422, 16 },
-        { nullptr,     PixelFormat::Invalid,   0 }
+        { "rgba8",     PixelFormat::RGBA8,    32, 8,  "RGB" },
+        { "rgb8",      PixelFormat::RGB8,     24, 8,  "RGB" },
+        { "rgb10",     PixelFormat::RGB10,    30, 10, "RGB" },
+        { "yuv8_422",  PixelFormat::YUV8_422, 16, 8,  "YCbCr-4:2:2" },
+        { nullptr,     PixelFormat::Invalid,   0, 0,  nullptr }
 };
 
-static bool lookupFormat(const String &name, PixelFormat::ID &id, int &bpp) {
+static const FormatEntry *lookupFormat(const String &name) {
         for(const auto *f = g_formats; f->name; f++) {
-                if(name == f->name) { id = f->id; bpp = f->bitsPerPixel; return true; }
+                if(name == f->name) return f;
         }
-        return false;
+        return nullptr;
 }
 
 // --------------------------------------------------------------------
@@ -320,7 +323,7 @@ static Timecode::Mode tcModeFromFrameRate(const FrameRate &fps, bool dropFrame) 
 
 static void writeSdpFile(const String &filename, const Options &opts,
                          const SocketAddress &videoDest, const SocketAddress &audioDest,
-                         const FrameRate &fps, int bpp, bool isMjpeg) {
+                         const FrameRate &fps, const FormatEntry &fmt, bool isMjpeg) {
         SdpSession sdp;
         sdp.setSessionName("vidgen");
         sdp.setOrigin("-", 1, 1);
@@ -341,8 +344,8 @@ static void writeSdpFile(const String &filename, const Options &opts,
                 videoMd.setAttribute("rtpmap", rtpmap);
                 char fmtp[256];
                 snprintf(fmtp, sizeof(fmtp),
-                         "96 sampling=RGB; width=%d; height=%d; depth=%d; exactframerate=%u/%u",
-                         opts.width, opts.height, bpp,
+                         "96 sampling=%s; width=%d; height=%d; depth=%d; exactframerate=%u/%u",
+                         fmt.sampling, opts.width, opts.height, fmt.bitsPerComponent,
                          fps.numerator(), fps.denominator());
                 videoMd.setAttribute("fmtp", fmtp);
         }
@@ -360,7 +363,7 @@ static void writeSdpFile(const String &filename, const Options &opts,
                          opts.audioRate, opts.audioChannels);
                 audioMd.setAttribute("rtpmap", artpmap);
                 char ptime[32];
-                snprintf(ptime, sizeof(ptime), "1");
+                snprintf(ptime, sizeof(ptime), "4");
                 audioMd.setAttribute("ptime", ptime);
                 sdp.addMediaDescription(audioMd);
         }
@@ -445,13 +448,14 @@ int main(int argc, char *argv[]) {
         }
 
         // Parse pixel format
-        PixelFormat::ID pixFmtId;
-        int bitsPerPixel;
-        if(!lookupFormat(opts.pixelFormatStr, pixFmtId, bitsPerPixel)) {
+        const FormatEntry *pixFmt = lookupFormat(opts.pixelFormatStr);
+        if(pixFmt == nullptr) {
                 fprintf(stderr, "Error: unknown pixel format: %s\n", opts.pixelFormatStr.cstr());
                 fprintf(stderr, "Use --list-formats to see available formats\n");
                 return 1;
         }
+        PixelFormat::ID pixFmtId = pixFmt->id;
+        int bitsPerPixel = pixFmt->bitsPerPixel;
 
         bool isMjpeg = (opts.transport == "mjpeg");
 
@@ -553,12 +557,12 @@ int main(int argc, char *argv[]) {
                         src->setAudioMode(TestPatternNode::Silence);
                 } else if(opts.audioLtc) {
                         src->setAudioMode(TestPatternNode::LTC);
-                        src->setLtcLevel(opts.ltcLevel);
+                        src->setLtcLevel(AudioLevel::fromDbfs(opts.ltcLevel));
                         src->setLtcChannel(opts.ltcChannel);
                 } else {
                         src->setAudioMode(TestPatternNode::Tone);
                         src->setToneFrequency(opts.audioTone);
-                        src->setToneAmplitude(opts.audioAmplitude);
+                        src->setToneLevel(AudioLevel::fromDbfs(opts.audioLevel));
                 }
         } else {
                 src->setAudioEnabled(false);
@@ -668,8 +672,9 @@ int main(int argc, char *argv[]) {
         fprintf(stdout, "  Video: %s  Pattern: %s\n",
                 videoDest.toString().cstr(), opts.patternStr.cstr());
         if(!opts.noAudio) {
-                fprintf(stdout, "  Audio: %s  %d Hz %d ch\n",
-                        audioDest.toString().cstr(), opts.audioRate, opts.audioChannels);
+                fprintf(stdout, "  Audio: %s  %d Hz %d ch  %.0f dBFS\n",
+                        audioDest.toString().cstr(), opts.audioRate, opts.audioChannels,
+                        opts.audioLevel);
         }
         if(opts.duration > 0) {
                 fprintf(stdout, "  Duration: %.1f seconds\n", opts.duration);
@@ -678,7 +683,7 @@ int main(int argc, char *argv[]) {
 
         // Write SDP file if requested
         if(!opts.sdpFile.isEmpty()) {
-                writeSdpFile(opts.sdpFile, opts, videoDest, audioDest, fps, bitsPerPixel, isMjpeg);
+                writeSdpFile(opts.sdpFile, opts, videoDest, audioDest, fps, *pixFmt, isMjpeg);
         }
 
         // ================================================================

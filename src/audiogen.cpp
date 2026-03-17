@@ -25,7 +25,7 @@ void AudioGen::genSine(size_t chan, float *data, size_t samples) const {
         const Config &config = _chanConfig[chan];
 	size_t end = _sampleCount + samples;
         float freq = config.freq;
-        float amp = config.amplitude;
+        float amp = config.linearGain;
         size_t chans = _desc.channels();
 	for(size_t i = _sampleCount; i < end; ++i) {
 		*data = amp * sin(freq * i);
@@ -36,7 +36,7 @@ void AudioGen::genSine(size_t chan, float *data, size_t samples) const {
 
 AudioGen::AudioGen(const AudioDesc &desc) : _desc(desc) {
         for(int i = 0; i < _desc.channels(); i++) {
-                _chanConfig += { Silence, 0.0, 0.0, 0.0, 0.0 };
+                _chanConfig += { Silence, 0.0, AudioLevel(), 0.0, 0.0, 0.0 };
         }
 }
 
@@ -47,6 +47,8 @@ void AudioGen::setConfig(size_t chan, Config config) {
         }
         // Convert the frequency to the more useful radians per sample
 	config.freq = M_PI * 2 * config.freq / _desc.sampleRate();
+        // Cache the linear gain to avoid repeated dB-to-linear conversion
+        config.linearGain = config.level.toLinearFloat();
         _chanConfig[chan] = config;
         return;
 }
@@ -63,6 +65,7 @@ Audio AudioGen::generate(size_t samples) {
                 }
                 data++; // FIXME: Need to set to new plane for planar.
         }
+        _sampleCount += samples;
         return ret;
 }
 

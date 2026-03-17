@@ -1,5 +1,5 @@
 /**
- * @file      testpatternnode.cpp
+ * @file      tests/testpatternnode.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -496,7 +496,7 @@ TEST_CASE("TestPatternNode_SetChannelConfig") {
         AudioGen::Config cfg;
         cfg.type = AudioGen::Sine;
         cfg.freq = 440.0f;
-        cfg.amplitude = 0.8f;
+        cfg.level = AudioLevel::fromDbfs(-2.0);
         cfg.phase = 0.0f;
         cfg.dutyCycle = 0.5f;
         src->setChannelConfig(0, cfg);
@@ -531,7 +531,7 @@ TEST_CASE("TestPatternNode_MultiChannelLTC") {
         src->setAudioMode(TestPatternNode::LTC);
         src->setAudioDesc(AudioDesc(48000.0f, 4));
         src->setLtcChannel(2);
-        src->setLtcLevel(0.7f);
+        src->setLtcLevel(AudioLevel::fromDbfs(-3.0));
         src->setStartTimecode(Timecode(Timecode::NDF24, 1, 0, 0, 0));
 
         graph.addNode(src);
@@ -548,6 +548,46 @@ TEST_CASE("TestPatternNode_MultiChannelLTC") {
         CHECK(frame->audioList().size() == 1);
         Audio::Ptr audio = frame->audioList()[0];
         CHECK(audio->samples() > 0);
+}
+
+// ============================================================================
+// setToneLevel
+// ============================================================================
+
+TEST_CASE("TestPatternNode_SetToneLevel") {
+        MediaGraph graph;
+        TestPatternNode *src = new TestPatternNode();
+        CaptureSinkNode *sink = new CaptureSinkNode();
+
+        src->setVideoDesc(makeTestVideoDesc());
+        src->setAudioMode(TestPatternNode::Tone);
+        src->setAudioDesc(AudioDesc(48000.0f, 2));
+        src->setToneFrequency(440.0);
+        src->setToneLevel(AudioLevel::fromDbfs(-6.0));
+
+        graph.addNode(src);
+        graph.addNode(sink);
+        graph.connect(src, 0, sink, 0);
+
+        src->configure();
+        src->start();
+        src->process();
+        sink->drain();
+
+        Frame::Ptr frame = sink->lastFrame();
+        REQUIRE(frame.isValid());
+        CHECK(frame->audioList().size() == 1);
+        Audio::Ptr audio = frame->audioList()[0];
+        REQUIRE(audio->isValid());
+        CHECK(audio->samples() > 0);
+
+        // Verify the samples are within the expected linear gain range for -6 dBFS (~0.501)
+        float linear = AudioLevel::fromDbfs(-6.0).toLinearFloat();
+        const float *samples = audio->data<float>();
+        for(size_t i = 0; i < audio->frames(); i++) {
+                CHECK(samples[i] >= -linear - 0.01f);
+                CHECK(samples[i] <= linear + 0.01f);
+        }
 }
 
 // ============================================================================

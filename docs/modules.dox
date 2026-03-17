@@ -54,6 +54,14 @@
  */
 
 /**
+ * @defgroup core_audio Core Audio
+ * @brief Audio level, format, and signal generation utilities.
+ *
+ * Provides audio-related value types for level measurement,
+ * format description, and signal generation.
+ */
+
+/**
  * @defgroup core_media Core Media
  * @brief Aligned memory buffers for media data.
  *

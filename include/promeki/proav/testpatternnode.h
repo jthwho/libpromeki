@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/core/namespace.h>
+#include <promeki/core/audiolevel.h>
 #include <promeki/core/timecodegenerator.h>
 #include <promeki/proav/medianode.h>
 #include <promeki/proav/videodesc.h>
@@ -42,24 +43,24 @@ class TestPatternNode : public MediaNode {
         public:
                 /** @brief Video test pattern type. */
                 enum Pattern {
-                        ColorBars,      ///< @brief SMPTE 100% color bars.
-                        ColorBars75,    ///< @brief SMPTE 75% color bars.
-                        Ramp,           ///< @brief Luminance gradient ramp.
-                        Grid,           ///< @brief White grid lines on black.
-                        Crosshatch,     ///< @brief Diagonal crosshatch lines.
-                        Checkerboard,   ///< @brief Alternating black/white squares.
-                        SolidColor,     ///< @brief Solid fill with configured color.
-                        White,          ///< @brief Solid white.
-                        Black,          ///< @brief Solid black.
-                        Noise,          ///< @brief Random pixel noise.
-                        ZonePlate       ///< @brief Circular zone plate.
+                        ColorBars,      ///<SMPTE 100% color bars.
+                        ColorBars75,    ///<SMPTE 75% color bars.
+                        Ramp,           ///<Luminance gradient ramp.
+                        Grid,           ///<White grid lines on black.
+                        Crosshatch,     ///<Diagonal crosshatch lines.
+                        Checkerboard,   ///<Alternating black/white squares.
+                        SolidColor,     ///<Solid fill with configured color.
+                        White,          ///<Solid white.
+                        Black,          ///<Solid black.
+                        Noise,          ///<Random pixel noise.
+                        ZonePlate       ///<Circular zone plate.
                 };
 
                 /** @brief Audio generation mode. */
                 enum AudioMode {
-                        Tone,           ///< @brief Sine tone (configurable frequency).
-                        Silence,        ///< @brief Silence.
-                        LTC             ///< @brief LTC timecode audio.
+                        Tone,           ///<Sine tone (configurable frequency).
+                        Silence,        ///<Silence.
+                        LTC             ///<LTC timecode audio.
                 };
 
                 /**
@@ -183,16 +184,16 @@ class TestPatternNode : public MediaNode {
                 void setToneFrequency(double hz) { _toneFreq = hz; return; }
 
                 /**
-                 * @brief Sets the amplitude for all tone channels.
-                 * @param amplitude Amplitude (0.0-1.0).
+                 * @brief Sets the output level for all tone channels.
+                 * @param level Output level in dBFS.
                  */
-                void setToneAmplitude(double amplitude) { _toneAmplitude = amplitude; return; }
+                void setToneLevel(const AudioLevel &level) { _toneLevel = level; return; }
 
                 /**
-                 * @brief Sets the LTC output amplitude.
-                 * @param level Level (0.0-1.0).
+                 * @brief Sets the LTC output level.
+                 * @param level Output level in dBFS.
                  */
-                void setLtcLevel(float level) { _ltcLevel = level; return; }
+                void setLtcLevel(const AudioLevel &level) { _ltcLevel = level; return; }
 
                 /**
                  * @brief Sets which channel carries LTC.
@@ -202,13 +203,40 @@ class TestPatternNode : public MediaNode {
 
                 // ---- Lifecycle overrides ----
 
+                /**
+                 * @brief Validates configuration and creates internal generators.
+                 *
+                 * Checks that a valid VideoDesc is set, initializes the timecode
+                 * generator, and creates the audio generator or LTC encoder based
+                 * on the configured audio mode.
+                 *
+                 * @return Error::Ok on success, or Error::Invalid.
+                 */
                 Error configure() override;
+
+                /**
+                 * @brief Transitions the node to Running state.
+                 * @return Error::Ok on success, or Error::Invalid if not configured.
+                 */
                 Error start() override;
+
+                /**
+                 * @brief Generates one frame of video, audio, and timecode.
+                 *
+                 * Renders the configured test pattern, generates audio samples,
+                 * assembles a Frame, and delivers it to the output port.
+                 */
                 void process() override;
+
+                /** @brief Stops the node and releases internal generators. */
                 void stop() override;
 
                 // ---- Extended stats ----
 
+                /**
+                 * @brief Returns test pattern node statistics.
+                 * @return A map containing framesGenerated and currentTimecode.
+                 */
                 Map<String, Variant> extendedStats() const override;
 
         private:
@@ -230,8 +258,8 @@ class TestPatternNode : public MediaNode {
                 bool                    _audioEnabled = true;
                 AudioMode               _audioMode = Tone;
                 double                  _toneFreq = 1000.0;
-                double                  _toneAmplitude = 0.5;
-                float                   _ltcLevel = 0.5f;
+                AudioLevel              _toneLevel = AudioLevel::fromDbfs(-20.0);
+                AudioLevel              _ltcLevel = AudioLevel::fromDbfs(-20.0);
                 int                     _ltcChannel = 0;
                 List<AudioGen::Config>  _channelConfigs;
 

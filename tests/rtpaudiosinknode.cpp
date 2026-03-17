@@ -66,7 +66,7 @@ TEST_CASE("RtpAudioSinkNode_Construct") {
         CHECK(node.payloadType() == 97);
         CHECK(node.clockRate() == 48000);
         CHECK(node.dscp() == 46);
-        CHECK(node.packetTime() == 1.0);
+        CHECK(node.packetTime() == 4.0);
 }
 
 // ============================================================================

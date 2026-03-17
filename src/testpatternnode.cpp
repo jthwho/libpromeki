@@ -31,7 +31,7 @@ TestPatternNode::~TestPatternNode() {
 
 void TestPatternNode::setChannelConfig(size_t chan, AudioGen::Config config) {
         while(_channelConfigs.size() <= chan) {
-                AudioGen::Config def = { AudioGen::Silence, 0.0f, 0.0f, 0.0f, 0.5f };
+                AudioGen::Config def = { AudioGen::Silence, 0.0f, AudioLevel(), 0.0f, 0.0f, 0.0f };
                 _channelConfigs.pushToBack(def);
         }
         _channelConfigs[chan] = config;
@@ -87,7 +87,7 @@ Error TestPatternNode::configure() {
                 _ltcEncoder = nullptr;
 
                 if(_audioMode == LTC) {
-                        _ltcEncoder = new LtcEncoder((int)_audioDesc.sampleRate(), _ltcLevel);
+                        _ltcEncoder = new LtcEncoder((int)_audioDesc.sampleRate(), _ltcLevel.toLinearFloat());
                 } else {
                         _audioGen = new AudioGen(_audioDesc);
                         for(size_t ch = 0; ch < _audioDesc.channels(); ch++) {
@@ -97,17 +97,17 @@ Error TestPatternNode::configure() {
                                         AudioGen::Config cfg;
                                         cfg.type = AudioGen::Sine;
                                         cfg.freq = (float)_toneFreq;
-                                        cfg.amplitude = (float)_toneAmplitude;
+                                        cfg.level = _toneLevel;
                                         cfg.phase = 0.0f;
-                                        cfg.dutyCycle = 0.5f;
+                                        cfg.dutyCycle = 0.0f;
                                         _audioGen->setConfig(ch, cfg);
                                 } else {
                                         AudioGen::Config cfg;
                                         cfg.type = AudioGen::Silence;
                                         cfg.freq = 0.0f;
-                                        cfg.amplitude = 0.0f;
+                                        cfg.level = AudioLevel();
                                         cfg.phase = 0.0f;
-                                        cfg.dutyCycle = 0.5f;
+                                        cfg.dutyCycle = 0.0f;
                                         _audioGen->setConfig(ch, cfg);
                                 }
                         }

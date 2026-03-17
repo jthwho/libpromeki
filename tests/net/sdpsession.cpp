@@ -249,6 +249,74 @@ TEST_CASE("SdpSession media-level connection address") {
         }
 }
 
+TEST_CASE("SdpSession attribute insertion order in toString") {
+
+        SUBCASE("toString outputs attributes in insertion order") {
+                SdpSession sdp;
+                sdp.setSessionName("order test");
+                sdp.setOrigin("-", 1, 1);
+
+                SdpMediaDescription md;
+                md.setMediaType("video");
+                md.setPort(5004);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(96);
+                // Insert attributes in a specific order
+                md.setAttribute("rtpmap", "96 raw/90000");
+                md.setAttribute("fmtp", "96 width=1920; height=1080");
+                md.setAttribute("source-filter", "incl IN IP4 239.0.0.1 10.0.0.1");
+                md.setAttribute("mediaclk", "direct=0");
+                sdp.addMediaDescription(md);
+
+                String text = sdp.toString();
+
+                // Find positions of each attribute line
+                size_t posRtpmap = text.str().find("a=rtpmap:");
+                size_t posFmtp = text.str().find("a=fmtp:");
+                size_t posFilter = text.str().find("a=source-filter:");
+                size_t posClk = text.str().find("a=mediaclk:");
+
+                REQUIRE(posRtpmap != std::string::npos);
+                REQUIRE(posFmtp != std::string::npos);
+                REQUIRE(posFilter != std::string::npos);
+                REQUIRE(posClk != std::string::npos);
+
+                // Verify they appear in insertion order
+                CHECK(posRtpmap < posFmtp);
+                CHECK(posFmtp < posFilter);
+                CHECK(posFilter < posClk);
+        }
+
+        SUBCASE("round-trip preserves attribute order") {
+                SdpSession original;
+                original.setSessionName("order roundtrip");
+                original.setOrigin("-", 1, 1);
+
+                SdpMediaDescription md;
+                md.setMediaType("audio");
+                md.setPort(5006);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(97);
+                md.setAttribute("rtpmap", "97 L24/48000/2");
+                md.setAttribute("ptime", "1");
+                md.setAttribute("mediaclk", "direct=0");
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008");
+                original.addMediaDescription(md);
+
+                String text = original.toString();
+                auto [parsed, err] = SdpSession::fromString(text);
+                REQUIRE(err.isOk());
+                REQUIRE(parsed.mediaDescriptions().size() == 1);
+
+                const auto &attrs = parsed.mediaDescriptions()[0].attributes();
+                REQUIRE(attrs.size() == 4);
+                CHECK(attrs[0].first() == "rtpmap");
+                CHECK(attrs[1].first() == "ptime");
+                CHECK(attrs[2].first() == "mediaclk");
+                CHECK(attrs[3].first() == "ts-refclk");
+        }
+}
+
 TEST_CASE("SdpSession flag-only attributes") {
 
         SUBCASE("toString generates flag-only attribute") {
@@ -321,5 +389,47 @@ TEST_CASE("SdpMediaDescription") {
         SUBCASE("missing attribute returns empty string") {
                 SdpMediaDescription md;
                 CHECK(md.attribute("nonexistent").isEmpty());
+        }
+
+        SUBCASE("setAttribute overwrites existing value") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "96 raw/90000");
+                CHECK(md.attribute("rtpmap") == "96 raw/90000");
+                md.setAttribute("rtpmap", "97 L24/48000/2");
+                CHECK(md.attribute("rtpmap") == "97 L24/48000/2");
+                // Should still be only one attribute
+                CHECK(md.attributes().size() == 1);
+        }
+
+        SUBCASE("attributes preserve insertion order") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "96 raw/90000");
+                md.setAttribute("fmtp", "96 width=1920");
+                md.setAttribute("source-filter", "incl IN IP4 239.0.0.1");
+                md.setAttribute("mediaclk", "direct=0");
+
+                const auto &attrs = md.attributes();
+                REQUIRE(attrs.size() == 4);
+                CHECK(attrs[0].first() == "rtpmap");
+                CHECK(attrs[1].first() == "fmtp");
+                CHECK(attrs[2].first() == "source-filter");
+                CHECK(attrs[3].first() == "mediaclk");
+        }
+
+        SUBCASE("setAttribute update preserves order of other attributes") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "96 raw/90000");
+                md.setAttribute("fmtp", "96 width=1920");
+                md.setAttribute("mediaclk", "direct=0");
+
+                // Update the middle attribute
+                md.setAttribute("fmtp", "96 width=3840");
+
+                const auto &attrs = md.attributes();
+                REQUIRE(attrs.size() == 3);
+                CHECK(attrs[0].first() == "rtpmap");
+                CHECK(attrs[1].first() == "fmtp");
+                CHECK(attrs[1].second() == "96 width=3840");
+                CHECK(attrs[2].first() == "mediaclk");
         }
 }

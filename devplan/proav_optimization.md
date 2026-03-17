@@ -8,6 +8,8 @@
 
 This document covers four areas of improvement: high-performance font rendering, a proper video codec abstraction, automatic node processing in the pipeline, and batch UDP transmission with kernel-side packet pacing.
 
+**Partial progress on packet pacing:** `RtpSession::sendPacketsPaced()` implements userspace inter-packet pacing using `Duration`/`TimeStamp::sleepUntil()`. `RtpVideoSinkNode` uses it automatically for large packet counts (>=32 packets, i.e., uncompressed video), spreading packets across 90% of the frame interval (ST 2110-21 style). Both RTP sink nodes now use Duration/TimeStamp instead of raw `std::chrono`. The `#ifdef PROMEKI_HAVE_NETWORK` guards have been removed from RTP sink node headers and sources (the conditional compilation is now handled at the CMake level). This is a working userspace fallback; the kernel-level optimizations (`sendmmsg()`, `SO_MAX_PACING_RATE`, `SO_TXTIME`) below remain planned.
+
 ---
 
 ## BitmapFont — Fast Native-Format Font Rendering
@@ -272,14 +274,13 @@ Per-socket rate limiting. The kernel's `fq` (Fair Queue) qdisc paces packets fro
 
 **Verdict:** Simplest option. No per-packet work, no NIC requirements. Kernel does all the pacing. Slightly less precise than `SO_TXTIME` but good enough for most cases. **This should be the default/recommended approach.**
 
-#### Option 3: Userspace pacing fallback
+#### ~~Option 3: Userspace pacing fallback~~ (DONE)
 
-For platforms without kernel pacing support, or for fine-grained control.
+Implemented as `RtpSession::sendPacketsPaced()` — spreads packets across a given Duration using `TimeStamp::sleepUntil()` between sends. `RtpVideoSinkNode` uses it for uncompressed video (>=32 packets per frame). Works everywhere without kernel configuration.
 
-- [ ] `RtpPacer` utility class that spaces out `sendto()` calls using `clock_nanosleep()` or busy-wait between packets
-- [ ] Calculates inter-packet gap from target bitrate: `gap_ns = (packet_size * 8 * 1e9) / bitrate_bps`
-- [ ] Less desirable — keeps a thread busy and is subject to scheduling jitter — but works everywhere
-- [ ] Only implement this if kernel options prove insufficient
+- [x] `RtpSession::sendPacketsPaced()` spaces out `writeDatagram()` calls using `TimeStamp::sleepUntil()`
+- [x] `RtpVideoSinkNode` automatically uses paced sending for large packet counts (>=32), burst for small counts (MJPEG)
+- [x] Inter-packet interval calculated as `spreadInterval / (packetCount - 1)`
 
 #### Option 4: DPDK (Future)
 
@@ -294,7 +295,7 @@ This is the endgame for professional ST 2110 / AES67 deployments where nanosecon
 1. **`SO_MAX_PACING_RATE`** — add `setPacingRate()` to UdpSocket. Minimal code, big impact. `RtpSession` or sink nodes set this based on stream bitrate at configure time.
 2. **`sendmmsg()` batch sending** — add `writeDatagrams()` to UdpSocket, update `RtpSession::sendPackets()`. Reduces syscall overhead.
 3. **`SO_TXTIME`** — add as an advanced option for deployments with hardware support. Per-packet timestamps for ST 2110-level precision.
-4. **Userspace fallback** — only if needed.
+4. ~~**Userspace fallback**~~ — **DONE.** `RtpSession::sendPacketsPaced()` with `TimeStamp::sleepUntil()`.
 5. **DPDK backend** — future phase, once the transport abstraction is in place.
 
 ### RtpSession Integration

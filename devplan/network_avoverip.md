@@ -8,7 +8,7 @@
 
 General-purpose primitives for building AV-over-IP implementations (ST 2110, AES67, custom protocols). Higher-level standard-specific implementations (NDI, Dante) will wrap vendor libraries through our API.
 
-**Completed:** PrioritySocket, RtpSession, RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG), SdpSession, MulticastManager. RtpPayloadJpeg reworked with proper JPEG stream parsing (DQT extraction, entropy-coded data location, quantization table header in RFC 2435 Q≥128 mode) and 4:2:2 subsampling support.
+**Completed:** PrioritySocket, RtpSession, RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG), SdpSession, MulticastManager. RtpPayloadJpeg reworked with proper JPEG stream parsing (DQT extraction, entropy-coded data location, quantization table header in RFC 2435 Q≥128 mode) and 4:2:2 subsampling support. SdpSession attributes refactored from `Map<String,String>` to ordered `List<Pair<String,String>>` preserving insertion order (required for SDP compliance). RtpSession gained `sendPacketsPaced()` for ST 2110-21 style inter-packet pacing using Duration/TimeStamp.
 
 ---
 
@@ -56,5 +56,5 @@ IEEE 1588 PTP clock synchronization. Building block for AES67/ST 2110 sync.
 
 Items deferred from completed classes, to be revisited when needed:
 
-- **RtpSession**: Header extension support, RTCP (Sender/Receiver Reports, SDES), receive path, SSRC collision detection
+- **RtpSession**: Header extension support, RTCP (Sender/Receiver Reports, SDES), receive path, SSRC collision detection, `sendmmsg()` batch sending (see `proav_optimization.md`)
 - **RtpPayloadJpeg**: `unpack()` reassembles raw fragments but does not reconstruct full JPEG headers (SOI/DQT/SOF0/DHT/SOS); no restart marker support

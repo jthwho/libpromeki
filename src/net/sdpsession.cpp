@@ -63,12 +63,13 @@ String SdpSession::toString() const {
                         out << "c=IN IP4 " << md.connectionAddress().str() << "\r\n";
                 }
 
-                // a= (attributes)
-                for(const auto &[key, value] : md.attributes()) {
-                        if(value.isEmpty()) {
-                                out << "a=" << key.str() << "\r\n";
+                // a= (attributes, in insertion order)
+                for(size_t ai = 0; ai < md.attributes().size(); ai++) {
+                        const auto &attr = md.attributes()[ai];
+                        if(attr.second().isEmpty()) {
+                                out << "a=" << attr.first().str() << "\r\n";
                         } else {
-                                out << "a=" << key.str() << ":" << value.str() << "\r\n";
+                                out << "a=" << attr.first().str() << ":" << attr.second().str() << "\r\n";
                         }
                 }
         }

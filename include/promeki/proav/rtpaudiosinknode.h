@@ -13,12 +13,9 @@
 #include <promeki/core/buffer.h>
 #include <promeki/proav/medianode.h>
 #include <promeki/proav/audiodesc.h>
-
-#ifdef PROMEKI_HAVE_NETWORK
 #include <promeki/network/socketaddress.h>
 #include <promeki/network/rtpsession.h>
 #include <promeki/network/rtppayload.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -41,7 +38,7 @@ PROMEKI_NAMESPACE_BEGIN
  * RtpAudioSinkNode *sink = new RtpAudioSinkNode();
  * sink->setDestination(SocketAddress(Ipv4Address("239.0.0.1"), 5006));
  * sink->setRtpPayload(&payload);
- * sink->setPacketTime(1.0); // 1ms AES67
+ * sink->setPacketTime(4.0); // 4ms packet time
  * sink->configure();
  * sink->start();
  * @endcode
@@ -58,7 +55,6 @@ class RtpAudioSinkNode : public MediaNode {
                 /** @brief Destructor. */
                 ~RtpAudioSinkNode() override;
 
-#ifdef PROMEKI_HAVE_NETWORK
                 /**
                  * @brief Sets the destination address for RTP packets.
                  * @param addr Unicast or multicast destination address and port.
@@ -80,7 +76,6 @@ class RtpAudioSinkNode : public MediaNode {
 
                 /** @brief Returns the RTP payload handler. */
                 RtpPayload *rtpPayload() const { return _payload; }
-#endif
 
                 /**
                  * @brief Sets the RTP payload type number.
@@ -102,7 +97,7 @@ class RtpAudioSinkNode : public MediaNode {
 
                 /**
                  * @brief Sets the packet time in milliseconds.
-                 * @param ptime Packet time (default: 1.0ms for AES67).
+                 * @param ptime Packet time (default: 4.0ms). Use 1.0ms for AES67.
                  */
                 void setPacketTime(double ptime) { _packetTime = ptime; return; }
 
@@ -183,7 +178,7 @@ class RtpAudioSinkNode : public MediaNode {
 
                 uint8_t         _payloadType = 97;
                 uint32_t        _clockRate = 48000;
-                double          _packetTime = 1.0;
+                double          _packetTime = 4.0;
                 uint8_t         _dscp = 46;
                 AudioDesc::DataType _outputFormat = AudioDesc::Invalid;
                 uint32_t        _rtpTimestamp = 0;
@@ -197,11 +192,9 @@ class RtpAudioSinkNode : public MediaNode {
                 Buffer::Ptr     _accumBuffer;
                 size_t          _accumOffset = 0;
 
-#ifdef PROMEKI_HAVE_NETWORK
                 SocketAddress   _destination;
                 RtpPayload      *_payload = nullptr;
                 RtpSession      *_session = nullptr;
-#endif
 };
 
 PROMEKI_NAMESPACE_END

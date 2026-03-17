@@ -52,8 +52,10 @@ Phase 7 (Cross-Cutting) -- ongoing throughout
 
 The `vidgen` utility (video/audio test pattern generator streaming via RTP) is complete. See [vidgen.md](vidgen.md) for details and deferred items.
 
+**Recent work:** New `AudioLevel` class (dBFS value type with linear conversion) in promeki-core. AudioGen and TestPatternNode refactored to use AudioLevel instead of raw linear amplitude. vidgen CLI uses `--audio-level`/`--ltc-level` in dBFS. SDP attribute ordering fixed. RTP sender pacing (userspace) implemented. `#ifdef PROMEKI_HAVE_NETWORK` removed from RTP sink node headers.
+
 **Next priorities:**
-1. **Phase 4D** — Optimization and cleanup: BitmapFont (fast native-format font rendering), video codec abstraction, automatic node processing, batch UDP/kernel pacing. See [proav_optimization.md](proav_optimization.md).
+1. **Phase 4D** — Optimization and cleanup: BitmapFont (fast native-format font rendering), video codec abstraction, automatic node processing, batch UDP/kernel pacing (`sendmmsg`, `SO_MAX_PACING_RATE`). Userspace pacing fallback is done. See [proav_optimization.md](proav_optimization.md).
 2. **Remaining Phase 4A** — Audio::ensureExclusive()/isExclusive(), MemSpace::Stats, MemSpacePool. See [proav_pipeline.md](proav_pipeline.md).
 3. **Phase 4B** — File-based source/sink nodes, mixer, gain, color space conversion. See [proav_nodes.md](proav_nodes.md).
 
@@ -83,7 +85,7 @@ Establish a uniform byte-oriented IO interface that network sockets, files, and 
 
 New shared library `promeki-network` with CMake option `PROMEKI_BUILD_NETWORK`. Raw POSIX sockets, vendored mbedTLS for TLS. Work through documents in order: sockets first, then protocols, then AV-over-IP.
 
-**Phase 3A (Sockets) COMPLETE.** Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) COMPLETE** — PrioritySocket, RtpSession, RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing), SdpSession, MulticastManager. PtpClock remaining.
+**Phase 3A (Sockets) COMPLETE.** Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) COMPLETE** — PrioritySocket, RtpSession (including `sendPacketsPaced()` for ST 2110-21 pacing), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing), SdpSession (with insertion-order-preserving attributes), MulticastManager. PtpClock remaining.
 
 ### Phase 4: ProAV Pipeline Framework — IN PROGRESS
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
@@ -91,7 +93,7 @@ New shared library `promeki-network` with CMake option `PROMEKI_BUILD_NETWORK`. 
 
 Generalizes the existing source/sink pattern. Work through documents in order: pipeline core, then concrete nodes, then DSP.
 
-**Phase 4A mostly complete** — MediaPort, MediaNode, MediaLink, MediaGraph, MediaPipeline, EncodedDesc all done. Remaining: Audio::ensureExclusive()/isExclusive(), MemSpace::Stats, MemSpacePool. **Phase 4B in progress** — vidgen nodes (TestPatternNode, TimecodeOverlayNode, JpegEncoderNode, FrameDemuxNode, RtpVideoSinkNode, RtpAudioSinkNode) complete; file I/O nodes, mixer, gain, color space, frame sync remaining. **Phase 4C (DSP) not started.** **Phase 4D (Optimization)** planned — see `proav_optimization.md`.
+**Phase 4A mostly complete** — MediaPort, MediaNode, MediaLink, MediaGraph, MediaPipeline, EncodedDesc all done. Remaining: Audio::ensureExclusive()/isExclusive(), MemSpace::Stats, MemSpacePool. **Phase 4B in progress** — vidgen nodes (TestPatternNode, TimecodeOverlayNode, JpegEncoderNode, FrameDemuxNode, RtpVideoSinkNode, RtpAudioSinkNode) complete; file I/O nodes, mixer, gain, color space, frame sync remaining. **Phase 4C (DSP) not started.** **Phase 4D (Optimization) partially started** — userspace packet pacing done (`RtpSession::sendPacketsPaced()`, used by `RtpVideoSinkNode` for ST 2110-21 style pacing); BitmapFont, codec abstraction, automatic node processing, kernel-level pacing (`sendmmsg`/`SO_MAX_PACING_RATE`/`SO_TXTIME`) remaining. See `proav_optimization.md`.
 
 ### Phase 5: TUI Widget Completion
 **Prerequisites:** Minimal (existing TUI framework). Mostly independent.
@@ -218,7 +220,8 @@ Adding many new classes and a new library (`promeki-network`) requires Doxygen g
 - [ ] `@defgroup core_streams` — DataStream, TextStream
 - [ ] `@defgroup core_strings` — String, RegEx, AnsiStream, StreamString
 - [ ] `@defgroup core_events` — EventLoop, Event, TimerEvent, Thread, ObjectBase
-- [ ] `@defgroup core_media` — AudioDesc, ImageDesc, VideoDesc, Image, Audio, Frame, Buffer, PixelFormat
+- [x] `@defgroup core_audio` — AudioLevel, AudioDesc, AudioGen (added to `docs/modules.dox`)
+- [ ] `@defgroup core_media` — ImageDesc, VideoDesc, Image, Audio, Frame, Buffer, PixelFormat
 - [ ] `@defgroup core_math` — Point, Size2D, Rect, Rational, Matrix3x3, Color, ColorSpace
 - [ ] `@defgroup core_time` — Timecode, TimeStamp, DateTime, Duration, ElapsedTimer
 - [ ] `@defgroup core_util` — Variant, Error, Random, Algorithm, UUID, FourCC, Metadata, Env

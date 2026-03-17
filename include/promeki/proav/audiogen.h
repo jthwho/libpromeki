@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/core/namespace.h>
+#include <promeki/core/audiolevel.h>
 #include <promeki/proav/audiodesc.h>
 #include <promeki/core/list.h>
 
@@ -18,9 +19,21 @@ class Audio;
 /**
  * @brief Audio signal generator for producing test tones and silence.
  * @ingroup proav_media
+ *
+ * Generates multi-channel audio data based on per-channel configuration.
+ * Each channel can independently produce silence or a sine tone at a
+ * configurable frequency and level.
+ *
+ * @par Example
+ * @code
+ * AudioDesc desc(48000, 2);
+ * AudioGen gen(desc);
+ * gen.setConfig(0, { AudioGen::Sine, 1000.0f, AudioLevel::fromDbfs(-10.0), 0.0f, 0.0f });
+ * Audio audio = gen.generate(4800);
+ * @endcode
  */
 class AudioGen {
-	public:
+        public:
                 /** @brief Type of audio signal to generate. */
                 enum Type {
                         Silence = 0,   ///< Generate silence (all zeros).
@@ -31,26 +44,42 @@ class AudioGen {
                 struct Config {
                         Type            type;           ///< Signal type to generate.
                         float           freq;           ///< Frequency in Hz.
-                        float           amplitude;      ///< Amplitude (0.0 to 1.0).
+                        AudioLevel      level;          ///< Output level in dBFS.
                         float           phase;          ///< Phase offset in radians.
                         float           dutyCycle;      ///< Duty cycle (reserved for future waveform types).
+                        float           linearGain;     ///< Cached linear gain from level. Set internally by setConfig().
                 };
 
-                /** @brief Constructs an audio generator with the given audio description. */
-		AudioGen(const AudioDesc &desc);
+                /**
+                 * @brief Constructs an audio generator with the given audio description.
+                 * @param desc The audio format description (sample rate, channels).
+                 */
+                AudioGen(const AudioDesc &desc);
 
-                /** @brief Generates the specified number of audio samples. */
-		Audio generate(size_t samples);
+                /**
+                 * @brief Generates the specified number of audio samples.
+                 * @param samples Number of samples to generate.
+                 * @return An Audio object containing the generated samples.
+                 */
+                Audio generate(size_t samples);
 
-                /** @brief Returns the configuration for the given channel. */
+                /**
+                 * @brief Returns the configuration for the given channel.
+                 * @param chan Channel index.
+                 * @return The channel's generator configuration.
+                 */
                 const Config &config(size_t chan) const {
                         return _chanConfig[chan];
                 }
 
-                /** @brief Sets the configuration for the given channel. */
+                /**
+                 * @brief Sets the configuration for the given channel.
+                 * @param chan Channel index.
+                 * @param val The generator configuration for that channel.
+                 */
                 void setConfig(size_t chan, Config val);
 
-	private:
+        private:
                 AudioDesc       _desc;
                 List<Config>    _chanConfig;
                 size_t          _sampleCount = 0;

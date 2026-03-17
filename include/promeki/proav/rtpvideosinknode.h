@@ -7,19 +7,17 @@
 
 #pragma once
 
-#include <chrono>
 #include <promeki/core/string.h>
+#include <promeki/core/duration.h>
+#include <promeki/core/timestamp.h>
 #include <promeki/core/namespace.h>
 #include <promeki/core/variant.h>
 #include <promeki/core/map.h>
 #include <promeki/core/framerate.h>
 #include <promeki/proav/medianode.h>
-
-#ifdef PROMEKI_HAVE_NETWORK
 #include <promeki/network/socketaddress.h>
 #include <promeki/network/rtpsession.h>
 #include <promeki/network/rtppayload.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -59,7 +57,6 @@ class RtpVideoSinkNode : public MediaNode {
                 /** @brief Destructor. */
                 ~RtpVideoSinkNode() override;
 
-#ifdef PROMEKI_HAVE_NETWORK
                 /**
                  * @brief Sets the destination address for RTP packets.
                  * @param addr Unicast or multicast destination address and port.
@@ -77,7 +74,6 @@ class RtpVideoSinkNode : public MediaNode {
 
                 /** @brief Returns the multicast group, or a null address if not set. */
                 const SocketAddress &multicast() const { return _multicast; }
-#endif
 
                 /**
                  * @brief Sets the video frame rate for pacing.
@@ -88,7 +84,6 @@ class RtpVideoSinkNode : public MediaNode {
                 /** @brief Returns the configured frame rate. */
                 const FrameRate &frameRate() const { return _frameRate; }
 
-#ifdef PROMEKI_HAVE_NETWORK
                 /**
                  * @brief Sets the RTP payload handler.
                  *
@@ -101,7 +96,6 @@ class RtpVideoSinkNode : public MediaNode {
 
                 /** @brief Returns the RTP payload handler. */
                 RtpPayload *rtpPayload() const { return _payload; }
-#endif
 
                 /**
                  * @brief Sets the RTP payload type number.
@@ -199,17 +193,15 @@ class RtpVideoSinkNode : public MediaNode {
                 uint64_t        _bytesSent = 0;
                 uint64_t        _underrunCount = 0;
 
-                std::chrono::nanoseconds                        _frameInterval{0};
-                std::chrono::steady_clock::time_point           _nextFrameTime;
+                Duration                                        _frameInterval;
+                TimeStamp                                       _nextFrameTime;
                 bool                                            _firstFrame = true;
                 String                                          _dumpPath;
 
-#ifdef PROMEKI_HAVE_NETWORK
                 SocketAddress   _destination;
                 SocketAddress   _multicast;
                 RtpPayload      *_payload = nullptr;
                 RtpSession      *_session = nullptr;
-#endif
 };
 
 PROMEKI_NAMESPACE_END

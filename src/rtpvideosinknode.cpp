@@ -6,7 +6,6 @@
  */
 
 #include <cstdio>
-#include <thread>
 #include <promeki/proav/rtpvideosinknode.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
@@ -54,8 +53,8 @@ Error RtpVideoSinkNode::configure() {
         _timestampIncrement = (uint32_t)((uint64_t)_clockRate * _frameRate.denominator() / _frameRate.numerator());
 
         // Compute frame interval in nanoseconds
-        double intervalSec = (double)_frameRate.denominator() / (double)_frameRate.numerator();
-        _frameInterval = std::chrono::nanoseconds((int64_t)(intervalSec * 1e9));
+        int64_t intervalNs = (int64_t)((double)_frameRate.denominator() / (double)_frameRate.numerator() * 1e9);
+        _frameInterval = Duration::fromNanoseconds(intervalNs);
 
 #ifdef PROMEKI_HAVE_NETWORK
         delete _session;
@@ -146,15 +145,28 @@ void RtpVideoSinkNode::process() {
 
         // Pacing: first frame sets the clock, subsequent frames sleep
         if(_firstFrame) {
-                _nextFrameTime = std::chrono::steady_clock::now();
+                _nextFrameTime = TimeStamp::now();
                 _firstFrame = false;
         } else {
-                _nextFrameTime += _frameInterval;
-                std::this_thread::sleep_until(_nextFrameTime);
+                _nextFrameTime += TimeStamp::secondsToDuration(
+                        _frameInterval.toSecondsDouble());
+                _nextFrameTime.sleepUntil();
         }
 
-        // Send packets
-        _session->sendPackets(packets, _rtpTimestamp, _destination, true);
+        // For large packet counts (uncompressed video), spread packets
+        // across 90% of the frame interval to avoid bursting hundreds of
+        // packets at once (ST 2110-21 style pacing).  For small counts
+        // (compressed formats like MJPEG), send immediately — pacing a
+        // handful of packets over tens of milliseconds would cause the
+        // receiver to time out waiting for fragments.
+        static constexpr size_t PacingThreshold = 32;
+        if(packets.size() >= PacingThreshold) {
+                Duration spreadInterval = _frameInterval * 9 / 10;
+                _session->sendPacketsPaced(packets, _rtpTimestamp, _destination,
+                                           spreadInterval, true);
+        } else {
+                _session->sendPackets(packets, _rtpTimestamp, _destination, true);
+        }
 
         // Update stats
         _packetsSent += packets.size();

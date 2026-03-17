@@ -7,6 +7,7 @@
 
 #include <promeki/network/rtpsession.h>
 #include <promeki/network/udpsocket.h>
+#include <promeki/core/timestamp.h>
 #include <cstring>
 #include <random>
 
@@ -94,6 +95,44 @@ Error RtpSession::sendPackets(RtpPacket::List &packets, uint32_t timestamp,
 
                 ssize_t sent = _socket->writeDatagram(pkt.data(), pkt.size(), dest);
                 if(sent < 0) return Error::IOError;
+        }
+        return Error::Ok;
+}
+
+Error RtpSession::sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp,
+                                    const SocketAddress &dest,
+                                    const Duration &spreadInterval,
+                                    bool markerOnLast) {
+        if(!_running) return Error::NotOpen;
+        if(packets.isEmpty()) return Error::Ok;
+
+        // For a single packet, no pacing needed
+        if(packets.size() == 1) {
+                return sendPackets(packets, timestamp, dest, markerOnLast);
+        }
+
+        // Compute inter-packet interval
+        int64_t intervalNs = spreadInterval.nanoseconds() / (int64_t)(packets.size() - 1);
+        Duration packetInterval = Duration::fromNanoseconds(intervalNs);
+
+        TimeStamp sendTime = TimeStamp::now();
+
+        for(size_t i = 0; i < packets.size(); i++) {
+                auto &pkt = packets[i];
+                if(pkt.isNull() || pkt.size() < RtpPacket::HeaderSize) continue;
+
+                bool marker = markerOnLast && (i == packets.size() - 1);
+                fillHeader(pkt, _payloadType, marker, timestamp);
+
+                ssize_t sent = _socket->writeDatagram(pkt.data(), pkt.size(), dest);
+                if(sent < 0) return Error::IOError;
+
+                // Pace: sleep until next packet's send time
+                if(i < packets.size() - 1) {
+                        sendTime += TimeStamp::secondsToDuration(
+                                packetInterval.toSecondsDouble());
+                        sendTime.sleepUntil();
+                }
         }
         return Error::Ok;
 }

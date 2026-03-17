@@ -22,6 +22,7 @@ Step 4D: FrameRateControlNode (not required for vidgen — optional)
 - **TestPatternNode**: `setSamplesPerFrame()` override (current auto-computation works; LTC mode uses LtcEncoder's own sample count)
 - **TestPatternNode**: Pre-render optimization for static patterns (current impl renders fresh each frame)
 - **TestPatternNode**: End-to-end LTC round-trip test via LtcDecoder (encoder→decoder tested separately in ltcdecoder.cpp)
+- **AudioGen**: `_sampleCount` bug fixed (was not incrementing between `generate()` calls, breaking multi-chunk continuity)
 - **LtcEncoder**: Multi-format `encode(tc, AudioDesc)` and int8_t→target format conversion
 - **LtcDecoder**: `forward` field in DecodedTimecode (pending libvtc callback direction support), Audio→int8_t conversion, chunked decoding test
 - **JpegEncoderNode**: YUV input format support (currently only RGB8/RGBA8); decompression round-trip test not included (would need JpegDecoderNode or ImageFile). Now forces 4:2:2 subsampling for RFC 2435 type 1 compatibility.
@@ -171,11 +172,11 @@ Audio Options:
   --audio-rate <R>         Sample rate in Hz (default: 48000)
   --audio-channels <N>     Number of channels (default: 2)
   --audio-tone <Hz>        Tone frequency in Hz (default: 1000)
-  --audio-amplitude <A>    Amplitude 0.0-1.0 (default: 0.5)
+  --audio-level <dBFS>     Tone level in dBFS (default: -30)
   --audio-silence          Generate silence instead of tone
   --audio-ltc              Generate LTC (Linear Timecode) audio from the
                            timecode generator instead of tone
-  --ltc-level <L>          LTC output level 0.0-1.0 (default: 0.5)
+  --ltc-level <dBFS>       LTC output level in dBFS (default: -20)
   --ltc-channel <N>        Channel for LTC (default: 0, -1 = all channels)
   --no-audio               Disable audio output entirely
 

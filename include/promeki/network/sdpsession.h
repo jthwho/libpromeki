@@ -11,7 +11,7 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
 #include <promeki/core/list.h>
-#include <promeki/core/map.h>
+#include <promeki/core/pair.h>
 #include <promeki/core/result.h>
 #include <promeki/core/sharedptr.h>
 
@@ -64,20 +64,39 @@ class SdpMediaDescription {
                 /** @brief Adds a payload type number. */
                 void addPayloadType(uint8_t pt) { _payloadTypes.pushToBack(pt); }
 
+                /** @brief Attribute key-value pair. */
+                using Attribute = Pair<String, String>;
+
+                /** @brief Ordered list of attributes, preserving insertion order. */
+                using AttributeList = List<Attribute>;
+
                 /** @brief Returns the value of a named attribute, or empty string. */
                 String attribute(const String &name) const {
-                        auto it = _attributes.find(name);
-                        if(it != _attributes.end()) return it->second;
+                        for(size_t i = 0; i < _attributes.size(); i++) {
+                                if(_attributes[i].first() == name) return _attributes[i].second();
+                        }
                         return String();
                 }
 
-                /** @brief Sets a named attribute. */
+                /**
+                 * @brief Sets a named attribute.
+                 *
+                 * If an attribute with the same name already exists, its value
+                 * is updated in place. Otherwise a new entry is appended,
+                 * preserving insertion order.
+                 */
                 void setAttribute(const String &name, const String &value) {
-                        _attributes[name] = value;
+                        for(size_t i = 0; i < _attributes.size(); i++) {
+                                if(_attributes[i].first() == name) {
+                                        _attributes[i].setSecond(value);
+                                        return;
+                                }
+                        }
+                        _attributes.pushToBack(Attribute(name, value));
                 }
 
-                /** @brief Returns all attributes as a map. */
-                const Map<String, String> &attributes() const { return _attributes; }
+                /** @brief Returns all attributes in insertion order. */
+                const AttributeList &attributes() const { return _attributes; }
 
                 /**
                  * @brief Returns an optional connection address for this media.
@@ -94,7 +113,7 @@ class SdpMediaDescription {
                 uint16_t        _port = 0;
                 String          _protocol;
                 List<uint8_t>   _payloadTypes;
-                Map<String, String> _attributes;
+                AttributeList   _attributes;
                 String          _connectionAddress;
 };
 
