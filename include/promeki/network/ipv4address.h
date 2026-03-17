@@ -170,7 +170,7 @@ class Ipv4Address {
                 String toString() const;
 
                 /**
-                 * @brief Converts to an IPv4-mapped IPv6 address (::ffff:a.b.c.d).
+                 * @brief Converts to an IPv4-mapped IPv6 address (::%%ffff:a.b.c.d).
                  * @return The corresponding Ipv6Address.
                  */
                 Ipv6Address toIpv6Mapped() const;

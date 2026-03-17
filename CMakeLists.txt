@@ -99,6 +99,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/array.h
     include/promeki/core/buildinfo.h
     include/promeki/core/buffer.h
+    include/promeki/core/bufferview.h
     include/promeki/core/bufferediodevice.h
     include/promeki/core/bytearray.h
     include/promeki/core/char.h
@@ -636,6 +637,12 @@ if(PROMEKI_BUILD_NETWORK)
         include/promeki/network/tcpserver.h
         include/promeki/network/udpsocket.h
         include/promeki/network/rawsocket.h
+        include/promeki/network/prioritysocket.h
+        include/promeki/network/rtppacket.h
+        include/promeki/network/rtppayload.h
+        include/promeki/network/rtpsession.h
+        include/promeki/network/sdpsession.h
+        include/promeki/network/multicastmanager.h
     )
 
     set(PROMEKI_NETWORK_SOURCES
@@ -649,6 +656,11 @@ if(PROMEKI_BUILD_NETWORK)
         src/net/tcpserver.cpp
         src/net/udpsocket.cpp
         src/net/rawsocket.cpp
+        src/net/prioritysocket.cpp
+        src/net/rtppayload.cpp
+        src/net/rtpsession.cpp
+        src/net/sdpsession.cpp
+        src/net/multicastmanager.cpp
     )
 
     add_library(promeki-network SHARED ${PROMEKI_NETWORK_SOURCES})
@@ -836,6 +848,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/json.cpp
         tests/variant.cpp
         tests/buffer.cpp
+        tests/bufferview.cpp
         tests/list.cpp
         tests/logger.cpp
         tests/queue.cpp
@@ -995,6 +1008,12 @@ if(PROMEKI_BUILD_TESTS)
             tests/net/tcpsocket.cpp
             tests/net/tcpserver.cpp
             tests/net/rawsocket.cpp
+            tests/net/prioritysocket.cpp
+            tests/net/rtppacket.cpp
+            tests/net/rtppayload.cpp
+            tests/net/rtpsession.cpp
+            tests/net/sdpsession.cpp
+            tests/net/multicastmanager.cpp
         )
         add_executable(unittest-network ${UNITTEST_NETWORK_SOURCES})
         target_compile_definitions(unittest-network PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)

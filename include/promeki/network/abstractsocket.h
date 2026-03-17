@@ -159,11 +159,7 @@ class AbstractSocket : public IODevice {
                 /** @brief Emitted when the socket is disconnected. @signal */
                 PROMEKI_SIGNAL(disconnected);
 
-                /**
-                 * @brief Emitted when the socket state changes.
-                 * @param state The new socket state.
-                 * @signal
-                 */
+                /** @brief Emitted when the socket state changes. @signal */
                 PROMEKI_SIGNAL(stateChanged, SocketState);
 
         protected:

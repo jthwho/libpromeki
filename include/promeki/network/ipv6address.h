@@ -59,7 +59,7 @@ class Ipv6Address {
                  *
                  * Accepts standard colon-hex formats including "::" compression
                  * and optional "%scope" suffix. Also accepts IPv4-mapped notation
-                 * (e.g. "::ffff:192.168.1.1").
+                 * (e.g. "::%%ffff:192.168.1.1").
                  *
                  * @param str The string to parse.
                  * @return A Result containing the parsed address and Error::Ok,
@@ -102,7 +102,7 @@ class Ipv6Address {
                 /** @brief Returns true if this is a link-local address (fe80::/10). */
                 bool isLinkLocal() const { return _addr[0] == 0xFE && (_addr[1] & 0xC0) == 0x80; }
 
-                /** @brief Returns true if this is an IPv4-mapped address (::ffff:0:0/96). */
+                /** @brief Returns true if this is an IPv4-mapped address (::%%ffff:0:0/96). */
                 bool isV4Mapped() const;
 
                 /** @brief Returns true if this is a site-local address (fec0::/10, deprecated). */

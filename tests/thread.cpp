@@ -607,26 +607,39 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
         Thread t;
         t.start();
 
-        // Create receiver on the worker thread
+        // Create receiver on the worker thread and block the event
+        // loop so that the emit callable cannot run until we release it.
         SenderTracker *recv = nullptr;
         std::atomic<bool> ready{false};
-        t.threadEventLoop()->postCallable([&recv, &ready] {
+        std::atomic<bool> gate{false};
+        t.threadEventLoop()->postCallable([&recv, &ready, &gate] {
                 recv = new SenderTracker();
-                ready = true;
+                ready.store(true, std::memory_order_release);
+                // Hold the event loop until the gate opens, ensuring
+                // the emit callable queued after this one cannot run
+                // until the sender has been destroyed.
+                while(!gate.load(std::memory_order_acquire)) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
         });
-        while(!ready.load()) {
+        while(!ready.load(std::memory_order_acquire)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         {
-                // Create sender on main thread, connect, and emit
+                // Create sender on main thread, connect, and emit.
+                // The emit queues a callable behind the gate, so it
+                // won't execute until we release the gate below.
                 TestOne sender;
                 ObjectBase::connect(&sender.somethingHappenedSignal,
                                     &recv->handleStringSlot);
                 sender.somethingHappenedSignal.emit("test");
-                // Sender is destroyed here before the cross-thread
-                // dispatch can execute.
+                // Sender is destroyed here.
         }
+
+        // Sender is now destroyed. Release the gate so the worker
+        // thread can process the emit callable.
+        gate.store(true, std::memory_order_release);
 
         // Wait for the marshalled slot to execute
         while(recv->callCount.load(std::memory_order_relaxed) == 0) {
@@ -643,4 +656,174 @@ TEST_CASE("Thread: cross-thread signalSender is nullptr when sender destroyed") 
         });
         t.quit();
         t.wait();
+}
+
+TEST_CASE("Thread: ObjectBasePtr cross-thread invalidation") {
+        Thread t;
+        t.start();
+
+        // Create an ObjectBasePtr on the worker thread that tracks
+        // an object on the main thread.
+        std::atomic<bool> ready{false};
+        std::atomic<bool> gate{false};
+        std::atomic<bool> ptrInvalidAfterDestroy{false};
+        TestOne *obj = new TestOne();
+
+        t.threadEventLoop()->postCallable([&] {
+                ObjectBasePtr ptr(obj);
+                ready.store(true, std::memory_order_release);
+                // Block until the main thread destroys the object
+                while(!gate.load(std::memory_order_acquire)) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                ptrInvalidAfterDestroy.store(!ptr.isValid(), std::memory_order_relaxed);
+        });
+
+        while(!ready.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        // Destroy the object while the worker thread holds an ObjectBasePtr
+        delete obj;
+
+        // Release the gate so the worker thread can check validity
+        gate.store(true, std::memory_order_release);
+
+        t.quit();
+        t.wait();
+
+        CHECK(ptrInvalidAfterDestroy.load());
+}
+
+TEST_CASE("Thread: ObjectBasePtr multiple cross-thread trackers invalidated") {
+        constexpr int numThreads = 4;
+        Thread threads[numThreads];
+        std::atomic<int> readyCount{0};
+        std::atomic<bool> gate{false};
+        std::atomic<int> invalidCount{0};
+        TestOne *obj = new TestOne();
+
+        for(int i = 0; i < numThreads; i++) {
+                threads[i].start();
+                threads[i].threadEventLoop()->postCallable([&] {
+                        ObjectBasePtr ptr(obj);
+                        readyCount.fetch_add(1, std::memory_order_release);
+                        while(!gate.load(std::memory_order_acquire)) {
+                                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                        }
+                        if(!ptr.isValid()) {
+                                invalidCount.fetch_add(1, std::memory_order_relaxed);
+                        }
+                });
+        }
+
+        // Wait for all threads to hold an ObjectBasePtr
+        while(readyCount.load(std::memory_order_acquire) < numThreads) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        // Destroy the object — all ObjectBasePtr's should be invalidated
+        delete obj;
+        gate.store(true, std::memory_order_release);
+
+        for(int i = 0; i < numThreads; i++) {
+                threads[i].quit();
+                threads[i].wait();
+        }
+
+        CHECK(invalidCount.load() == numThreads);
+}
+
+TEST_CASE("Thread: ObjectBasePtr data() returns nullptr after cross-thread invalidation") {
+        Thread t;
+        t.start();
+
+        std::atomic<bool> ready{false};
+        std::atomic<bool> gate{false};
+        std::atomic<bool> dataIsNull{false};
+        TestOne *obj = new TestOne();
+
+        t.threadEventLoop()->postCallable([&] {
+                ObjectBasePtr ptr(obj);
+                ready.store(true, std::memory_order_release);
+                while(!gate.load(std::memory_order_acquire)) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                dataIsNull.store(ptr.data() == nullptr, std::memory_order_relaxed);
+        });
+
+        while(!ready.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        delete obj;
+        gate.store(true, std::memory_order_release);
+
+        t.quit();
+        t.wait();
+
+        CHECK(dataIsNull.load());
+}
+
+TEST_CASE("Thread: ObjectBasePtr concurrent destroy ptr and object") {
+        // Exercises the _pointerMap mutex: ObjectBasePtr::unlink() and
+        // ObjectBase::runCleanup() race on _pointerMap concurrently.
+        for(int iter = 0; iter < 100; iter++) {
+                TestOne *obj = new TestOne();
+                std::atomic<bool> ready{false};
+
+                // Create an ObjectBasePtr on a worker thread
+                auto *ptr = new ObjectBasePtr(obj);
+                std::thread worker([&] {
+                        ready.store(true, std::memory_order_release);
+                        // Destroy the ObjectBasePtr (triggers unlink)
+                        delete ptr;
+                });
+
+                while(!ready.load(std::memory_order_acquire)) {
+                        std::this_thread::yield();
+                }
+                // Destroy the object concurrently (triggers runCleanup)
+                delete obj;
+
+                worker.join();
+        }
+        // If we get here without crashing/TSAN errors, the mutex works.
+        CHECK(true);
+}
+
+TEST_CASE("Thread: ObjectBasePtr copy assignment across threads") {
+        Thread t;
+        t.start();
+
+        TestOne *obj = new TestOne();
+        ObjectBasePtr mainPtr(obj);
+
+        std::atomic<bool> ready{false};
+        std::atomic<bool> gate{false};
+        std::atomic<bool> copyValid{false};
+
+        t.threadEventLoop()->postCallable([&] {
+                // Copy-construct from a pointer owned by the main thread
+                ObjectBasePtr workerPtr;
+                workerPtr = mainPtr;
+                ready.store(true, std::memory_order_release);
+                while(!gate.load(std::memory_order_acquire)) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+                copyValid.store(workerPtr.isValid(), std::memory_order_relaxed);
+        });
+
+        while(!ready.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        // Worker copy should still be valid since object is alive
+        gate.store(true, std::memory_order_release);
+
+        t.quit();
+        t.wait();
+
+        CHECK(copyValid.load());
+        delete obj;
 }

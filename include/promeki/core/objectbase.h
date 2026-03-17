@@ -12,6 +12,7 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/list.h>
 #include <promeki/core/map.h>
+#include <promeki/core/mutex.h>
 #include <promeki/core/util.h>
 #include <promeki/core/logger.h>
 #include <promeki/core/signal.h>
@@ -60,7 +61,15 @@ using ObjectBaseList = List<ObjectBase *>;
  * This class will register itself with the given ObjectBase object.  When
  * the registered ObjectBase object is destroyed, it will null the internal
  * pointer.  You can use this object to ensure you don't have dangling
- * pointers to ObjectBase objects. */
+ * pointers to ObjectBase objects.
+ *
+ * @note Thread safety: The internal pointer is stored as a std::atomic,
+ * and the ObjectBase pointer map is protected by a Mutex. This allows
+ * an ObjectBasePtr to be safely invalidated from a different thread
+ * than the one holding it, as happens during cross-thread object
+ * destruction. However, the ObjectBasePtr itself is not designed for
+ * concurrent read/write from multiple threads without external
+ * synchronization. */
 class ObjectBasePtr {
         friend class ObjectBase;
         public:
@@ -73,7 +82,7 @@ class ObjectBasePtr {
                 ObjectBasePtr(ObjectBase *object = nullptr) : p(object) { link(); }
 
                 /** @brief Copy constructor. Tracks the same ObjectBase as the source. */
-                ObjectBasePtr(const ObjectBasePtr &object) : p(object.p) { link(); }
+                ObjectBasePtr(const ObjectBasePtr &object) : p(object.p.load(std::memory_order_relaxed)) { link(); }
 
                 /** @brief Destructor. Unlinks from the tracked ObjectBase. */
                 ~ObjectBasePtr() { unlink(); }
@@ -81,22 +90,22 @@ class ObjectBasePtr {
                 /** @brief Copy assignment operator. Re-links to the new ObjectBase. */
                 ObjectBasePtr &operator=(const ObjectBasePtr &object) {
                         unlink();
-                        p = object.p;
+                        p.store(object.p.load(std::memory_order_relaxed), std::memory_order_relaxed);
                         link();
                         return *this;
                 }
 
                 /** @brief Returns true if the tracked pointer is not null. */
-                bool isValid() const { return p != nullptr; }
+                bool isValid() const { return p.load(std::memory_order_acquire) != nullptr; }
 
                 /** @brief Returns a mutable pointer to the tracked ObjectBase. */
-                ObjectBase *data() { return p; }
+                ObjectBase *data() { return p.load(std::memory_order_acquire); }
 
                 /** @brief Returns a const pointer to the tracked ObjectBase. */
-                const ObjectBase *data() const { return p; }
+                const ObjectBase *data() const { return p.load(std::memory_order_acquire); }
 
         private:
-                ObjectBase *p = nullptr;
+                std::atomic<ObjectBase *> p{nullptr};
 
                 void link();
                 void unlink();
@@ -377,6 +386,7 @@ class ObjectBase {
                 EventLoop                                       *_eventLoop = nullptr;
                 ObjectBaseList                                  _childList;
                 List<SlotItem>                                  _slotList;
+                mutable Mutex                                   _pointerMapMutex; ///< Guards _pointerMap for cross-thread ObjectBasePtr invalidation.
                 Map<ObjectBasePtr *, ObjectBasePtr *>           _pointerMap;
                 List<Cleanup>                                   _cleanupList;
 
@@ -403,9 +413,15 @@ class ObjectBase {
 
                 void runCleanup() {
                         // Null out any ObjectBasePtr's that are currently pointing
-                        // to this object.
-                        for(auto item : _pointerMap) item.first->p = nullptr;
-                        _pointerMap.clear();
+                        // to this object.  Hold the mutex so concurrent unlink()
+                        // on another thread won't modify _pointerMap mid-iteration.
+                        {
+                                Mutex::Locker lock(_pointerMapMutex);
+                                for(auto item : _pointerMap) {
+                                        item.first->p.store(nullptr, std::memory_order_release);
+                                }
+                                _pointerMap.clear();
+                        }
 
                         // Walk down the cleanup list and run any cleanup functions
                         for(auto &item : _cleanupList) {
@@ -418,16 +434,23 @@ class ObjectBase {
 };
 
 inline void ObjectBasePtr::link() {
-        if(p != nullptr) p->_pointerMap[this] = this;
+        ObjectBase *obj = p.load(std::memory_order_relaxed);
+        if(obj != nullptr) {
+                Mutex::Locker lock(obj->_pointerMapMutex);
+                obj->_pointerMap[this] = this;
+        }
         return;
 }
 
 inline void ObjectBasePtr::unlink() {
-        if(p != nullptr) {
-                auto it = p->_pointerMap.find(this);
-                p->_pointerMap.remove(it);
+        ObjectBase *obj = p.exchange(nullptr, std::memory_order_acq_rel);
+        if(obj != nullptr) {
+                Mutex::Locker lock(obj->_pointerMapMutex);
+                auto it = obj->_pointerMap.find(this);
+                if(it != obj->_pointerMap.end()) {
+                        obj->_pointerMap.remove(it);
+                }
         }
-        p = nullptr;
 }
 
 PROMEKI_NAMESPACE_END
