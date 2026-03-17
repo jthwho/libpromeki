@@ -10,7 +10,18 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-// This is a JPEG PixelFormat base object.  It gets used by other JPEG specialization objects
+// Base PixelFormat for all JPEG-compressed formats.
+//
+// Compressed images store the encoded bitstream in a single plane
+// buffer.  The allocation size is determined by reading
+// Metadata::CompressedSize from the ImageDesc — this is an internal
+// detail handled by Image::fromCompressedData().  After construction,
+// the buffer's logical size (Buffer::size()) is the authoritative
+// compressed byte count, exposed via Image::compressedSize().
+//
+// lineStride() returns 0 because compressed data is not scanline-
+// addressable.  createPaintEngine() returns an invalid PaintEngine
+// because drawing on compressed data is not supported — decode first.
 class PixelFormat_JPEG : public PixelFormat {
         public:
                 PixelFormat_JPEG() {
@@ -25,6 +36,7 @@ class PixelFormat_JPEG : public PixelFormat {
                 }
 
                 size_t __planeSize(size_t planeIndex, const ImageDesc &desc) const override {
+                        if(!desc.metadata().contains(Metadata::CompressedSize)) return 0;
                         return desc.metadata().get(Metadata::CompressedSize).get<size_t>();
                 }
 

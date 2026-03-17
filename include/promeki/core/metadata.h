@@ -39,7 +39,7 @@
         X(CompressionLevel, double) \
         X(EnableVBR, bool) \
         X(VBRQuality, double) \
-        X(CompressedSize, int)
+        X(CompressedSize, int) /**< @brief Internal: allocation hint for compressed pixel formats. Use Image::compressedSize() instead. */
 
 PROMEKI_NAMESPACE_BEGIN
 

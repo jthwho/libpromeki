@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 #include <promeki/proav/pixelformat.h>
+#include <promeki/proav/imagedesc.h>
+#include <promeki/core/metadata.h>
 
 using namespace promeki;
 
@@ -71,13 +73,13 @@ TEST_CASE("PixelFormat: RGB8 is valid and not alpha") {
 TEST_CASE("PixelFormat: RGBA8 is not compressed") {
         const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
         REQUIRE(pf != nullptr);
-        CHECK_FALSE(pf->compressed());
+        CHECK_FALSE(pf->isCompressed());
 }
 
 TEST_CASE("PixelFormat: JPEG_RGBA8 is compressed") {
         const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGBA8);
         REQUIRE(pf != nullptr);
-        CHECK(pf->compressed());
+        CHECK(pf->isCompressed());
 }
 
 TEST_CASE("PixelFormat: plane count") {
@@ -126,6 +128,41 @@ TEST_CASE("PixelFormat: JPEG_RGB8 compCount is 3") {
                 CHECK(pf->compDesc(i).bits == 8);
                 CHECK(pf->compDesc(i).plane == 0);
         }
+}
+
+TEST_CASE("PixelFormat: RGB8 is not compressed") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGB8);
+        REQUIRE(pf != nullptr);
+        CHECK_FALSE(pf->isCompressed());
+}
+
+TEST_CASE("PixelFormat: JPEG_RGB8 is compressed") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
+        REQUIRE(pf != nullptr);
+        CHECK(pf->isCompressed());
+}
+
+TEST_CASE("PixelFormat: JPEG planeSize is 0 without CompressedSize metadata") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
+        REQUIRE(pf != nullptr);
+        // ImageDesc with no CompressedSize in metadata
+        ImageDesc desc(640, 480, PixelFormat::JPEG_RGB8);
+        CHECK(pf->planeSize(0, desc) == 0);
+}
+
+TEST_CASE("PixelFormat: JPEG planeSize reads CompressedSize from metadata") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
+        REQUIRE(pf != nullptr);
+        ImageDesc desc(640, 480, PixelFormat::JPEG_RGB8);
+        desc.metadata().set(Metadata::CompressedSize, 12345);
+        CHECK(pf->planeSize(0, desc) == 12345);
+}
+
+TEST_CASE("PixelFormat: JPEG lineStride is 0") {
+        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
+        REQUIRE(pf != nullptr);
+        ImageDesc desc(640, 480, PixelFormat::JPEG_RGB8);
+        CHECK(pf->lineStride(0, desc) == 0);
 }
 
 TEST_CASE("PixelFormat: JPEG_YUV8_422 compCount is 3") {

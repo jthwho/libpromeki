@@ -33,6 +33,19 @@ bool Image::allocate(const MemSpace &ms) {
         return true;
 }
 
+Image Image::fromCompressedData(const void *data, size_t size,
+                                size_t width, size_t height, int pixfmt,
+                                const Metadata &metadata) {
+        ImageDesc desc(width, height, pixfmt);
+        desc.metadata() = metadata;
+        desc.metadata().set(Metadata::CompressedSize, (int)size);
+        Image img(desc);
+        if(img._planeList.isEmpty()) return Image();
+        img._planeList[0]->copyFrom(data, size);
+        img._planeList[0]->setSize(size);
+        return img;
+}
+
 Image Image::convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
         return Image();
 }

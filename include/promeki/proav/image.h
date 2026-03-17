@@ -24,6 +24,26 @@ PROMEKI_NAMESPACE_BEGIN
  * accessors for dimensions, pixel format, and metadata, as well as
  * pixel format conversion and paint engine creation.
  * When shared ownership is needed, use Image::Ptr.
+ *
+ * @par Compressed images
+ * Image also represents compressed (encoded) image data such as JPEG.
+ * A compressed image uses a compressed pixel format (e.g.
+ * PixelFormat::JPEG_RGB8) and stores the encoded bitstream in its
+ * single plane buffer. Use isCompressed() to test whether an image
+ * is compressed, compressedSize() to get the encoded byte count,
+ * and data() to access the raw encoded bytes. The preferred way to
+ * create a compressed image is the fromCompressedData() factory.
+ *
+ * @par Example — creating a compressed image
+ * @code
+ * // After compressing with libjpeg or another codec:
+ * Image jpeg = Image::fromCompressedData(jpegBytes, jpegSize,
+ *                                        1920, 1080,
+ *                                        PixelFormat::JPEG_RGB8,
+ *                                        srcImage.metadata());
+ * assert(jpeg.isCompressed());
+ * assert(jpeg.compressedSize() == jpegSize);
+ * @endcode
  */
 class Image {
         PROMEKI_SHARED_FINAL(Image)
@@ -220,6 +240,57 @@ class Image {
                         }
                         return;
                 }
+
+                /**
+                 * @brief Returns true if this image uses a compressed pixel format.
+                 * @return true if the pixel format is compressed (e.g. JPEG).
+                 */
+                bool isCompressed() const {
+                        const PixelFormat *pf = _desc.pixelFormat();
+                        return pf != nullptr && pf->isCompressed();
+                }
+
+                /**
+                 * @brief Returns the compressed data size in bytes.
+                 *
+                 * For compressed images, the encoded bitstream lives in the
+                 * first plane buffer. This method returns that buffer's logical
+                 * size, which is the actual encoded byte count. Use data() to
+                 * obtain a pointer to the encoded bytes.
+                 *
+                 * Returns 0 for uncompressed images or if no planes are allocated.
+                 *
+                 * @return The compressed data size, or 0.
+                 */
+                size_t compressedSize() const {
+                        if(!isCompressed() || _planeList.isEmpty()) return 0;
+                        return _planeList[0]->size();
+                }
+
+                /**
+                 * @brief Creates a compressed image from pre-encoded data.
+                 *
+                 * This is the preferred way to construct a compressed Image.
+                 * It allocates a plane buffer sized to hold the encoded data,
+                 * copies the bytes in, sets the buffer's logical size to
+                 * @p size, and attaches the supplied metadata. The resulting
+                 * Image reports isCompressed() == true and compressedSize() == @p size.
+                 *
+                 * The @p width and @p height describe the original uncompressed
+                 * dimensions — they are stored in the ImageDesc so that
+                 * downstream consumers know the frame size without decoding.
+                 *
+                 * @param data       Pointer to the compressed data.
+                 * @param size       Size of the compressed data in bytes.
+                 * @param width      Original image width in pixels.
+                 * @param height     Original image height in pixels.
+                 * @param pixfmt     Compressed pixel format ID (e.g. PixelFormat::JPEG_RGB8).
+                 * @param metadata   Optional metadata to attach (e.g. timecode).
+                 * @return A valid compressed Image, or an invalid Image on failure.
+                 */
+                static Image fromCompressedData(const void *data, size_t size,
+                                                size_t width, size_t height, int pixfmt,
+                                                const Metadata &metadata = Metadata());
 
                 /**
                  * @brief Creates a paint engine for drawing on this image.

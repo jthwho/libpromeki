@@ -132,8 +132,17 @@ class PixelFormat {
                 /** @brief Returns true if this format includes an alpha channel. */
                 bool hasAlpha() const { return _hasAlpha; }
 
-                /** @brief Returns true if this is a compressed pixel format. */
-                bool compressed() const { return _compressed; }
+                /**
+                 * @brief Returns true if this is a compressed pixel format.
+                 *
+                 * Compressed formats (e.g. JPEG_RGB8) store an encoded
+                 * bitstream rather than scanline-addressable pixel data.
+                 * Image::isCompressed() is a convenience wrapper around this.
+                 *
+                 * @see Image::isCompressed(), Image::compressedSize(),
+                 *      Image::fromCompressedData()
+                 */
+                bool isCompressed() const { return _compressed; }
 
                 /** @brief Returns the list of FourCC codes associated with this format. */
                 const FourCCList &fourccList() const { return _fourccList; }

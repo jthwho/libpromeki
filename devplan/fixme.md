@@ -87,3 +87,14 @@ The `std::istringstream` was replaced with `strtoll` as part of the stream migra
 - [ ] Consider if this ties into the pipeline framework's buffer handling (Phase 4)
 - [ ] Update tests
 
+---
+
+## Dead Test File: tests/image.cpp
+
+**File:** `tests/image.cpp`
+
+`tests/image.cpp` is not listed in `UNITTEST_PROAV_SOURCES` in CMakeLists.txt and is never compiled. `tests/image2.cpp` appears to be its replacement. The file contains image creation, fill, PaintEngine, FontPainter, and PNG save tests that overlap with `image2.cpp` and `paintengine.cpp`.
+
+- [ ] Verify no unique test coverage exists in `tests/image.cpp` that isn't already in `image2.cpp` or `paintengine.cpp`
+- [ ] Delete `tests/image.cpp` once confirmed redundant
+

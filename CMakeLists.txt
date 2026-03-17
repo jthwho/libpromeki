@@ -406,6 +406,7 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/codec.h
         include/promeki/proav/encodeddesc.h
         include/promeki/proav/framedemuxnode.h
+        include/promeki/proav/jpegencodernode.h
         include/promeki/proav/ltcdecoder.h
         include/promeki/proav/ltcencoder.h
         include/promeki/proav/mediagraph.h
@@ -454,6 +455,7 @@ if(PROMEKI_BUILD_PROAV)
         src/codec.cpp
         src/encodeddesc.cpp
         src/framedemuxnode.cpp
+        src/jpegencodernode.cpp
         src/ltcdecoder.cpp
         src/ltcencoder.cpp
         src/mediagraph.cpp
@@ -951,6 +953,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/paintengine.cpp
             tests/encodeddesc.cpp
             tests/framedemuxnode.cpp
+            tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp
             tests/ltcencoder.cpp
             tests/mediagraph.cpp

@@ -8,11 +8,11 @@
 
 ## Progress
 
-**Completed:** Steps 1–3, 4A, 4E, 5 (pipeline framework, socket layer, prerequisites, TestPatternNode, FrameDemuxNode, AV-over-IP). See git history for details.
+**Completed:** Steps 1–3, 4A, 4C, 4E, 5 (pipeline framework, socket layer, prerequisites, TestPatternNode, JpegEncoderNode, FrameDemuxNode, AV-over-IP). See git history for details.
 
 **Remaining work order:**
 ```
-Step 4: Remaining Pipeline Nodes (TC Overlay, JPEG Encoder, FRC)
+Step 4: Remaining Pipeline Nodes (TC Overlay, FRC)
         |
         v
 Step 6: Streaming Nodes (RtpVideoSinkNode, RtpAudioSinkNode)
@@ -30,6 +30,7 @@ Step 7: vidgen Utility
 - **TestPatternNode**: End-to-end LTC round-trip test via LtcDecoder (encoder→decoder tested separately in ltcdecoder.cpp)
 - **LtcEncoder**: Multi-format `encode(tc, AudioDesc)` and int8_t→target format conversion
 - **LtcDecoder**: `forward` field in DecodedTimecode (pending libvtc callback direction support), Audio→int8_t conversion, chunked decoding test
+- **JpegEncoderNode**: YUV input format support (currently only RGB8/RGBA8); decompression round-trip test not included (would need JpegDecoderNode or ImageFile)
 
 ---
 
@@ -72,37 +73,18 @@ Burns timecode text into video frames using FontPainter. Processing node (one Im
 - [ ] Uses existing `FontPainter` and `PaintEngine` classes
 - [ ] Doctest: overlay TC on test image, verify image was modified (basic pixel check)
 
-### 4C. JpegEncoderNode
+### ~~4C. JpegEncoderNode~~ (DONE)
 
-Compresses video frames to JPEG. Processing node (one Image input, one Encoded output). Uses existing libjpeg-turbo integration via ImageFile codec infrastructure.
+Compresses video frames to JPEG. Processing node (one Image input, one Image output with JPEG pixel format). Uses libjpeg-turbo directly via `jpeg_mem_dest` for in-memory compression.
 
-**Files:**
-- [ ] `include/promeki/proav/jpegencodernode.h`
-- [ ] `src/jpegencodernode.cpp`
-- [ ] `tests/jpegencodernode.cpp`
-
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one Image input, one Encoded output
-- [ ] `void setQuality(int quality)` — JPEG quality 1-100, default 85
-- [ ] `int quality() const`
-- [ ] Override `configure()`:
-  - [ ] Validate input pixel format is compatible with JPEG (RGB8, or convert)
-  - [ ] Set output port EncodedDesc (codec=JPEG, sourceImageDesc from input, quality)
-- [ ] Override `process()`:
-  - [ ] Pull frame from input
-  - [ ] Extract Image
-  - [ ] Compress via libjpeg-turbo (already linked into promeki-proav)
-  - [ ] Store compressed JPEG in `Buffer`
-  - [ ] Create `Frame::Ptr` with compressed Buffer + original metadata (timecode, etc.)
-  - [ ] Push to output
-- [ ] Leverage existing ImageFile JPEG codec infrastructure
-- [ ] Doctest: encode test image, verify JPEG header magic bytes, verify decompression round-trip
-
-**Extended stats (via `extendedStats()`):**
-- [ ] `"framesEncoded"` — total frames compressed
-- [ ] `"avgCompressedSize"` — average JPEG output size in bytes
-- [ ] `"compressionRatio"` — average ratio (uncompressed / compressed)
+**Implementation notes:**
+- Output uses Image with compressed pixel format (e.g. JPEG_RGB8) rather than separate Encoded type — compressed JPEG data lives in the Image's plane buffer, exposed via `Image::isCompressed()` / `Image::compressedSize()` / `Image::fromCompressedData()`
+- Added `Image::isCompressed()`, `Image::compressedSize()`, `Image::fromCompressedData()` to support compressed image representation
+- Renamed `PixelFormat::compressed()` → `PixelFormat::isCompressed()` for consistency
+- Fixed JPEG `__planeSize()` to return 0 when `Metadata::CompressedSize` is absent (was undefined behavior)
+- Custom libjpeg error handler using `longjmp` instead of `exit()`
+- Maps RGB8→JPEG_RGB8, RGBA8→JPEG_RGBA8 automatically
+- Tests verify JPEG SOI/EOI markers, metadata propagation, quality-affects-size, multi-frame encoding, empty frame passthrough, extended stats, and node registry
 
 ### 4D. FrameRateControlNode
 
@@ -340,7 +322,7 @@ These already exist in the library and will be used by the remaining work:
 |---|---|---|
 | `PaintEngine` | TimecodeOverlayNode | 2D drawing on images |
 | `FontPainter` | TimecodeOverlayNode | FreeType text rendering |
-| `ImageFile` (JPEG codec) | JpegEncoderNode | libjpeg-turbo compression |
+| `Image` (compressed support) | JpegEncoderNode | `isCompressed()`, `compressedSize()`, `fromCompressedData()` |
 | `RtpSession` | RtpVideoSinkNode, RtpAudioSinkNode | RTP packet send |
 | `RtpPayload*` | RtpVideoSinkNode, RtpAudioSinkNode | Payload packetization |
 | `PrioritySocket` | RtpVideoSinkNode, RtpAudioSinkNode | DSCP/QoS socket |

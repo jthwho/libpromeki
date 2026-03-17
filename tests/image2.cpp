@@ -292,3 +292,86 @@ TEST_CASE("Image_IsExclusive_ViaPtr") {
     // But the Image refcount is now 2
     CHECK(imgPtr.referenceCount() == 2);
 }
+
+// ============================================================================
+// isCompressed
+// ============================================================================
+
+TEST_CASE("Image_IsCompressed_Uncompressed") {
+    Image img(64, 64, PixelFormat::RGBA8);
+    REQUIRE(img.isValid());
+    CHECK_FALSE(img.isCompressed());
+}
+
+TEST_CASE("Image_IsCompressed_Default") {
+    Image img;
+    CHECK_FALSE(img.isCompressed());
+}
+
+// ============================================================================
+// compressedSize
+// ============================================================================
+
+TEST_CASE("Image_CompressedSize_Uncompressed") {
+    Image img(64, 64, PixelFormat::RGB8);
+    REQUIRE(img.isValid());
+    CHECK(img.compressedSize() == 0);
+}
+
+TEST_CASE("Image_CompressedSize_Default") {
+    Image img;
+    CHECK(img.compressedSize() == 0);
+}
+
+// ============================================================================
+// fromCompressedData
+// ============================================================================
+
+TEST_CASE("Image_FromCompressedData_Valid") {
+    // Fake compressed payload
+    const uint8_t fakeData[] = { 0xFF, 0xD8, 0x00, 0x01, 0x02, 0xFF, 0xD9 };
+    size_t fakeSize = sizeof(fakeData);
+
+    Image img = Image::fromCompressedData(fakeData, fakeSize,
+                                          1920, 1080,
+                                          PixelFormat::JPEG_RGB8);
+    REQUIRE(img.isValid());
+    CHECK(img.width() == 1920);
+    CHECK(img.height() == 1080);
+    CHECK(img.pixelFormatID() == PixelFormat::JPEG_RGB8);
+    CHECK(img.isCompressed());
+    CHECK(img.compressedSize() == fakeSize);
+
+    // Verify the data was copied correctly
+    const uint8_t *out = static_cast<const uint8_t *>(img.data());
+    for(size_t i = 0; i < fakeSize; i++) {
+        CHECK(out[i] == fakeData[i]);
+    }
+}
+
+TEST_CASE("Image_FromCompressedData_MetadataPreserved") {
+    const uint8_t fakeData[] = { 0xAA, 0xBB };
+    Metadata md;
+    md.set(Metadata::Title, String("test jpeg"));
+
+    Image img = Image::fromCompressedData(fakeData, sizeof(fakeData),
+                                          640, 480,
+                                          PixelFormat::JPEG_RGBA8,
+                                          md);
+    REQUIRE(img.isValid());
+    CHECK(img.metadata().contains(Metadata::Title));
+    CHECK(img.metadata().get(Metadata::Title).get<String>() == "test jpeg");
+    // CompressedSize metadata should also be set internally
+    CHECK(img.metadata().contains(Metadata::CompressedSize));
+}
+
+TEST_CASE("Image_FromCompressedData_RGBA8") {
+    const uint8_t fakeData[] = { 0x01, 0x02, 0x03 };
+    Image img = Image::fromCompressedData(fakeData, sizeof(fakeData),
+                                          320, 240,
+                                          PixelFormat::JPEG_RGBA8);
+    REQUIRE(img.isValid());
+    CHECK(img.pixelFormatID() == PixelFormat::JPEG_RGBA8);
+    CHECK(img.isCompressed());
+    CHECK(img.compressedSize() == sizeof(fakeData));
+}
