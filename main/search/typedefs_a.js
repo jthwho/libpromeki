@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['onnewlinefunc_0',['OnNewLineFunc',['../classStreamString.html#a14c26f2adcda09c0f9762cf0c0c78109',1,'StreamString']]],
+  ['onnewlinefunc_0',['onnewlinefunc',['../classStreamStringIODevice.html#acecd3699d23604fda22882a29bfa1afe',1,'StreamStringIODevice::OnNewLineFunc'],['../classStreamString.html#a14c26f2adcda09c0f9762cf0c0c78109',1,'StreamString::OnNewLineFunc']]],
   ['optionboolcallback_1',['OptionBoolCallback',['../classCmdLineParser.html#a7d7a5dc0469a64bbb42d4ec7de4d6647',1,'CmdLineParser']]],
   ['optioncallback_2',['OptionCallback',['../classCmdLineParser.html#a0197bfb6bfc86e1050549c1027f64664',1,'CmdLineParser']]],
   ['optioncallbackvariant_3',['OptionCallbackVariant',['../classCmdLineParser.html#ac938ca2ad49ce2936b0fe38043a9c77f',1,'CmdLineParser']]],

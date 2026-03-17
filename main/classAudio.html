@@ -164,6 +164,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>zero</b> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a07a3d3807c2d71f5ef1fa7be0c97d219"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zeros out all the audio data in the buffer. <br /></td></tr>
 <tr class="separator:a07a3d3807c2d71f5ef1fa7be0c97d219"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a639fd47cab076652c462e7a42c7d5de0" id="r_a639fd47cab076652c462e7a42c7d5de0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html">Audio</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a639fd47cab076652c462e7a42c7d5de0">convertTo</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a> <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">format</a>) <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
+<tr class="memdesc:a639fd47cab076652c462e7a42c7d5de0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> to a different sample format.  <br /></td></tr>
+<tr class="separator:a639fd47cab076652c462e7a42c7d5de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc2ac90f3453dd40c349fecfd37739fb" id="r_abc2ac90f3453dd40c349fecfd37739fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#abc2ac90f3453dd40c349fecfd37739fb">resize</a> (<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a> <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">val</a>)</td></tr>
 <tr class="memdesc:abc2ac90f3453dd40c349fecfd37739fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resizes the sample count to a value between 0 and <a class="el" href="classAudio.html#ac108341b8923cec805d8a5bd926ed657" title="Returns the maximum number of samples this object can contain.">maxSamples()</a>.  <br /></td></tr>
 <tr class="separator:abc2ac90f3453dd40c349fecfd37739fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -174,7 +177,7 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Object to hold some number of audio samples. </p>
-<p>This object is meant to hold some number of audio samples described by an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. The sample data is stored in a</p>
+<p>This object is meant to hold some number of audio samples described by an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. The sample data is stored in a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. When shared ownership is needed, use <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351" title="Shared pointer type for Audio.">Audio::Ptr</a>.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioDesc.html">AudioDesc</a> <a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>(48000, 2, AudioDesc::Float32);</div>
 <div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_typedef" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">audio</a>(<a class="code hl_function" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a>, 1024);  <span class="comment">// 1024 samples</span></div>
 <div class="line"> </div>
@@ -185,7 +188,7 @@ Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassAudio_html_a5a5464f78ba10693bf958d4b2b9c7351"><div class="ttname"><a href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351">Audio::Ptr</a></div><div class="ttdeci">SharedPtr&lt; Audio &gt; Ptr</div><div class="ttdoc">Shared pointer type for Audio.</div><div class="ttdef"><b>Definition</b> audio.h:39</div></div>
 <div class="ttc" id="aclassAudio_html_a7028fbb9df7a2d8b59cc5018940aeed2"><div class="ttname"><a href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">Audio::List</a></div><div class="ttdeci">promeki::List&lt; Audio &gt; List</div><div class="ttdoc">List of Audio values.</div><div class="ttdef"><b>Definition</b> audio.h:42</div></div>
 <div class="ttc" id="aclassAudio_html_af4c906c113ec44e511a595637482367c"><div class="ttname"><a href="classAudio.html#af4c906c113ec44e511a595637482367c">Audio::desc</a></div><div class="ttdeci">const AudioDesc &amp; desc() const</div><div class="ttdoc">Returns the AudioDesc that describes the audio contained in this object.</div><div class="ttdef"><b>Definition</b> audio.h:79</div></div>
-</div><!-- fragment --> shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>. When shared ownership is needed, use <a class="el" href="classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351" title="Shared pointer type for Audio.">Audio::Ptr</a>. </dd></dl>
+</div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a26f61701629343d1dd5933ad80aad188" name="a26f61701629343d1dd5933ad80aad188"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a26f61701629343d1dd5933ad80aad188">&#9670;&#160;</a></span>Audio()</h2>
@@ -285,6 +288,34 @@ Public Member Functions</h2></td></tr>
 
 <p>Returns a const reference to the buffer that holds the audio data. </p>
 <dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> shared pointer. </dd></dl>
+
+</div>
+</div>
+<a id="a639fd47cab076652c462e7a42c7d5de0" name="a639fd47cab076652c462e7a42c7d5de0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a639fd47cab076652c462e7a42c7d5de0">&#9670;&#160;</a></span>convertTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudio.html">Audio</a> Audio::convertTo </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">AudioDesc::DataType</a>&#160;</td>
+          <td class="paramname"><em>format</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Converts this <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> to a different sample format. </p>
+<p>Returns a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object with the same sample rate, channel count, and sample count but with audio data converted to the target format. When the source is native float, this is a single-pass conversion.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">format</td><td>The target <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object in the target format, or an invalid <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> on failure. </dd></dl>
 
 </div>
 </div>
@@ -537,7 +568,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudio.html">Audio</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

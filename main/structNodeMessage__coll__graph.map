@@ -1,0 +1,15 @@
+<map id="NodeMessage" name="NodeMessage">
+<area shape="rect" id="Node000001" title="Structured message emitted by a pipeline node." alt="" coords="81,256,195,281"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,168,65,193"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="50,204,70,230,109,254,106,258,67,234,46,207"/>
+<area shape="rect" id="Node000003" href="$classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock." alt="" coords="89,168,187,193"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="141,207,141,255,135,255,135,207"/>
+<area shape="rect" id="Node000004" href="$classMediaNode.html" title="Base class for all pipeline processing nodes." alt="" coords="211,168,307,193"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="247,207,221,234,199,248,176,258,173,253,196,243,218,230,243,203"/>
+<area shape="rect" id="Node000005" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="211,93,307,119"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="262,133,262,168,257,168,257,133"/>
+<area shape="rect" id="Node000006" href="$classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="65,5,243,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="152,44,153,57,158,68,168,79,182,87,212,98,210,103,179,92,165,83,153,71,148,58,146,45"/>
+<area shape="rect" id="Node000007" href="$classSignal.html" title=" " alt="" coords="276,5,453,31"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="357,45,337,71,318,85,296,96,294,91,315,81,333,67,352,42"/>
+</map>

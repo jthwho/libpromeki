@@ -1,0 +1,17 @@
+<map id="MediaNode" name="MediaNode">
+<area shape="rect" id="Node000001" title="Base class for all pipeline processing nodes." alt="" coords="149,129,245,155"/>
+<area shape="rect" id="Node000003" href="$classFrameDemuxNode.html" title="Splits a Frame into separate Image and Audio streams." alt="" coords="307,5,451,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,116,247,77,268,57,292,40,317,28,319,33,295,44,272,61,251,81,218,120"/>
+<area shape="rect" id="Node000004" href="$classJpegEncoderNode.html" title="Compresses video frames to JPEG using libjpeg&#45;turbo." alt="" coords="311,55,447,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="230,120,292,89,325,78,327,83,294,94,232,125"/>
+<area shape="rect" id="Node000005" href="$classRtpAudioSinkNode.html" title="Terminal sink node that sends audio samples over RTP." alt="" coords="307,104,450,129"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="258,131,307,124,308,129,259,136"/>
+<area shape="rect" id="Node000006" href="$classRtpVideoSinkNode.html" title="Terminal sink node that sends video frames over RTP." alt="" coords="307,153,450,179"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="259,147,308,154,307,159,258,153"/>
+<area shape="rect" id="Node000007" href="$classTestPatternNode.html" title="Source node that generates video and audio test patterns." alt="" coords="315,203,443,228"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="233,159,294,189,327,200,326,205,292,194,231,164"/>
+<area shape="rect" id="Node000008" href="$classTimecodeOverlayNode.html" title="Burns timecode text into video frames using FontPainter." alt="" coords="293,252,464,277"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="218,165,251,203,295,238,319,250,317,254,292,243,247,207,214,168"/>
+<area shape="rect" id="Node000002" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="5,129,101,155"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,139,149,139,149,145,115,145"/>
+</map>

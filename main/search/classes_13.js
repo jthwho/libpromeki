@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['uuid_0',['UUID',['../classUUID.html',1,'']]]
+  ['udpsocket_0',['UdpSocket',['../classUdpSocket.html',1,'']]],
+  ['uuid_1',['UUID',['../classUUID.html',1,'']]]
 ];

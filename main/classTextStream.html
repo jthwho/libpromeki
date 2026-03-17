@@ -663,7 +663,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Flushes any buffered output to the underlying device. </p>
-<dl class="section note"><dt>Note</dt><dd>Currently a no-op. <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a> does not buffer data internally; writes are forwarded immediately to the device. </dd></dl>
+<p>Calls <a class="el" href="classIODevice.html#a25f9109e78ebddcb411a0d82b6a3e348" title="Flushes any buffered output data to the underlying device.">IODevice::flush()</a> on the underlying device. This allows devices that intercept writes (such as <a class="el" href="classStreamStringIODevice.html" title="Write-only IODevice that intercepts writes, accumulates characters, and invokes a callback on newline...">StreamStringIODevice</a>) to act on incomplete data. </p>
 
 </div>
 </div>
@@ -1118,7 +1118,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTextStream.html">TextStream</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

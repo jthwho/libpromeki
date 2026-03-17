@@ -1,0 +1,17 @@
+<map id="PrioritySocket" name="PrioritySocket">
+<area shape="rect" id="Node000001" title="UDP socket with QoS priority convenience methods." alt="" coords="205,420,317,445"/>
+<area shape="rect" id="Node000002" href="$classUdpSocket.html" title="Datagram&#45;oriented UDP socket with multicast support." alt="" coords="215,345,306,371"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="263,385,263,420,258,420,258,385"/>
+<area shape="rect" id="Node000003" href="$classAbstractSocket.html" title="Abstract base class for network sockets." alt="" coords="201,271,320,296"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="263,310,263,345,258,345,258,310"/>
+<area shape="rect" id="Node000004" href="$classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="159,168,240,193"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="216,204,256,269,251,272,211,206"/>
+<area shape="rect" id="Node000005" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="202,133,202,168,197,168,197,133"/>
+<area shape="rect" id="Node000006" href="$classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="92,44,93,57,98,68,108,79,122,87,152,98,150,103,119,92,105,83,93,71,88,58,86,45"/>
+<area shape="rect" id="Node000007" href="$classSignal.html" title=" " alt="" coords="216,5,393,31"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="297,45,277,71,258,85,236,96,234,91,255,81,273,67,292,42"/>
+<area shape="rect" id="Node000008" href="$classSocketAddress.html" title="Network address with port number." alt="" coords="265,168,382,193"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="311,206,270,272,266,269,307,204"/>
+</map>

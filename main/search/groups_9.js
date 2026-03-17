@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['widgets_0',['TUI Widgets',['../group__tui__widgets.html',1,'']]]
+  ['utilities_0',['utilities',['../group__core__crypto.html',1,'Core Cryptographic Utilities'],['../group__core__util.html',1,'Core Utilities']]]
 ];

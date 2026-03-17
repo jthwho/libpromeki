@@ -9,8 +9,6 @@ var classStreamString =
     [ "line", "classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3", null ],
     [ "operator=", "classStreamString.html#a3d9eae5c1d4dfcabfdc656343ef00172", null ],
     [ "operator=", "classStreamString.html#a5bbb2e76c9997b8abce0c1dbac51f57c", null ],
-    [ "overflow", "classStreamString.html#a1b43e69f819c04e1c5e4e985d8391eb2", null ],
     [ "setOnNewLine", "classStreamString.html#a99a8520cb60f328c5f4a5c5fbb146d53", null ],
-    [ "stream", "classStreamString.html#a4b9887560862751eec0b6bbe5816768e", null ],
-    [ "sync", "classStreamString.html#a3bdc2ebef5c38f300996fc1710d0f3e7", null ]
+    [ "stream", "classStreamString.html#a1cddb4e2b602d25731e885b20e2461c4", null ]
 ];

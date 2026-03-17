@@ -188,7 +188,7 @@ Choosing the Right Category</h2>
 Sharing Data Objects Across Threads</h2>
 <p>Data objects are not internally thread-safe — concurrent reads and writes to the same instance require external synchronization. The standard pattern for sharing data between threads is to use the <code>Ptr</code> typedef (<code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code>). The reference counting in <code><a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a></code> is atomic, so passing a <code>Ptr</code> to another thread is safe. The pointed-to object itself is not synchronized, so the pattern relies on ownership handoff: once you pass a <code>Ptr</code> to another thread, you should not mutate the underlying object from the original thread.</p>
 <p><b>Pattern 1: Share a single data object via Ptr.</b></p>
-<p>When you need to pass one data object to another thread (e.g., pushing a <code><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr</a></code> through a <code>MediaLink</code>, or emitting a signal with an <code><a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852" title="Shared pointer type for Image.">Image::Ptr</a></code>), wrap it in its <code>Ptr</code> type:</p>
+<p>When you need to pass one data object to another thread (e.g., pushing a <code><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr</a></code> through a <code><a class="el" href="classMediaLink.html" title="Connects an output port to an input port in a media pipeline.">MediaLink</a></code>, or emitting a signal with an <code><a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852" title="Shared pointer type for Image.">Image::Ptr</a></code>), wrap it in its <code>Ptr</code> type:</p>
 <div class="fragment"><div class="line"><span class="comment">// Producer thread</span></div>
 <div class="line"><a class="code hl_typedef" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> frame = Frame::Ptr::create(desc);</div>
 <div class="line"><span class="comment">// ... fill frame data ...</span></div>
@@ -224,7 +224,7 @@ Sharing Data Objects Across Threads</h2>
 <div class="ttc" id="asharedptr_8h_html_a19c77a1148cf694c53a7d0d6608c0cd9"><div class="ttname"><a href="sharedptr_8h.html#a19c77a1148cf694c53a7d0d6608c0cd9">PROMEKI_SHARED_FINAL</a></div><div class="ttdeci">#define PROMEKI_SHARED_FINAL(TYPE)</div><div class="ttdoc">Macro for non-polymorphic native shared objects.</div><div class="ttdef"><b>Definition</b> sharedptr.h:88</div></div>
 </div><!-- fragment --><p><b>Do not</b> protect data objects with a <code><a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a></code> as a general practice — if you find yourself wrapping a data object in a mutex, you should instead restructure so that each thread works on its own copy or uses the <code>Ptr</code> handoff pattern. The exception is explicitly thread-safe classes like <code><a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a></code> that manage their own synchronization.</p>
 <p>Simple data objects (no <code>PROMEKI_SHARED_FINAL</code>) are cheap to copy. When sharing simple types across threads, just copy them — no <code>Ptr</code> needed:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classTimecode.html">Timecode</a> <a class="code hl_class" href="classList.html">tc</a> = <a class="code hl_class" href="classList.html">currentTimecode</a>();</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classTimecode.html">Timecode</a> <a class="code hl_class" href="classList.html">tc</a> = currentTimecode();</div>
 <div class="line"><a class="code hl_class" href="classList.html">pool</a>.submit([<a class="code hl_class" href="classList.html">tc</a>]() {</div>
 <div class="line">        <span class="comment">// tc is a copy, safe to use</span></div>
 <div class="line">});</div>
@@ -439,9 +439,9 @@ Shareable Data Objects Support SharedPtr</h2>
 <div class="line"><a class="code hl_class" href="classSharedPtr.html">Buffer::Ptr</a> <a class="code hl_class" href="classList.html">buf</a> = Buffer::Ptr::create(1024);</div>
 <div class="line"><a class="code hl_typedef" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a> <a class="code hl_class" href="classList.html">img</a> = Image::Ptr::create(desc);</div>
 <div class="line"><a class="code hl_class" href="classList.html">List&lt;int&gt;::Ptr</a> <a class="code hl_class" href="classList.html">sharedList</a> = <a class="code hl_class" href="classList.html">List&lt;int&gt;::Ptr::create</a>();</div>
-<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel format, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:28</div></div>
-<div class="ttc" id="aclassImage_html_a198b089768debdf038e39b6be082184f"><div class="ttname"><a href="classImage.html#a198b089768debdf038e39b6be082184f">Image::PtrList</a></div><div class="ttdeci">promeki::List&lt; Ptr &gt; PtrList</div><div class="ttdoc">List of shared Image pointers.</div><div class="ttdef"><b>Definition</b> image.h:38</div></div>
-<div class="ttc" id="aclassImage_html_a38745cfc2762b9f0aeaaba861098b852"><div class="ttname"><a href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a></div><div class="ttdeci">SharedPtr&lt; Image &gt; Ptr</div><div class="ttdoc">Shared pointer type for Image.</div><div class="ttdef"><b>Definition</b> image.h:32</div></div>
+<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel format, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
+<div class="ttc" id="aclassImage_html_a198b089768debdf038e39b6be082184f"><div class="ttname"><a href="classImage.html#a198b089768debdf038e39b6be082184f">Image::PtrList</a></div><div class="ttdeci">promeki::List&lt; Ptr &gt; PtrList</div><div class="ttdoc">List of shared Image pointers.</div><div class="ttdef"><b>Definition</b> image.h:58</div></div>
+<div class="ttc" id="aclassImage_html_a38745cfc2762b9f0aeaaba861098b852"><div class="ttname"><a href="classImage.html#a38745cfc2762b9f0aeaaba861098b852">Image::Ptr</a></div><div class="ttdeci">SharedPtr&lt; Image &gt; Ptr</div><div class="ttdoc">Shared pointer type for Image.</div><div class="ttdef"><b>Definition</b> image.h:52</div></div>
 <div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Buffer &gt;</a></div></div>
 </div><!-- fragment --><ul>
 <li><code>Ptr</code> — <a class="el" href="classSharedPtr.html" title="A smart pointer class with reference counting and optional copy-on-write semantics.">SharedPtr</a> alias for shared ownership.</li>
@@ -568,16 +568,50 @@ Namespace</h1>
 </div><!-- fragment --><p>Do not use <code>using namespace promeki;</code> in headers.</p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md62"></a>
+Stream Operator Support (TextStream / DataStream)</h1>
+<p>New data classes should provide free <code>operator&lt;&lt;</code> and <code>operator&gt;&gt;</code> overloads for <code><a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a></code> and, where binary serialization makes sense, <code><a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a></code>. These overloads live in the class's own header (not in <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">textstream.h</a></code> or <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">datastream.h</a></code>), following the same pattern Qt uses for placing <code>QTextStream</code>/<code>QDataStream</code> operators alongside each type.</p>
+<h2><a class="anchor" id="autotoc_md63"></a>
+TextStream</h2>
+<p>Every data class that has a meaningful text representation should provide:</p>
+<div class="fragment"><div class="line"><span class="comment">// In myclass.h — forward-declare TextStream to avoid circular includes</span></div>
+<div class="line"><span class="keyword">class </span><a class="code hl_class" href="classTextStream.html">TextStream</a>;</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;<a class="code hl_function" href="ipv4address_8h.html#ace0f1c3c939b5fff0dcb9f9afb7b89d4">operator&lt;&lt;</a>(<a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;stream, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
+<div class="line"><a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;<a class="code hl_function" href="classTextStream.html#adba7fe8378bc912998ebe23becc05500">operator&gt;&gt;</a>(<a class="code hl_class" href="classTextStream.html">TextStream</a> &amp;stream, <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
+<div class="ttc" id="aclassTextStream_html"><div class="ttname"><a href="classTextStream.html">TextStream</a></div><div class="ttdoc">Formatted text I/O with encoding awareness.</div><div class="ttdef"><b>Definition</b> textstream.h:54</div></div>
+<div class="ttc" id="aclassTextStream_html_adba7fe8378bc912998ebe23becc05500"><div class="ttname"><a href="classTextStream.html#adba7fe8378bc912998ebe23becc05500">TextStream::operator&gt;&gt;</a></div><div class="ttdeci">TextStream &amp; operator&gt;&gt;(String &amp;val)</div><div class="ttdoc">Reads a whitespace-delimited token into a String.</div></div>
+<div class="ttc" id="aipv4address_8h_html_ace0f1c3c939b5fff0dcb9f9afb7b89d4"><div class="ttname"><a href="ipv4address_8h.html#ace0f1c3c939b5fff0dcb9f9afb7b89d4">operator&lt;&lt;</a></div><div class="ttdeci">TextStream &amp; operator&lt;&lt;(TextStream &amp;stream, const Ipv4Address &amp;addr)</div><div class="ttdoc">Writes a dotted-quad IPv4 address to the stream.</div></div>
+</div><!-- fragment --><p>The <code>operator&lt;&lt;</code> should produce a human-readable representation consistent with <code>toString()</code>. The <code>operator&gt;&gt;</code> should parse the same format when round-tripping makes sense; omit it when it doesn't (e.g., complex summary formats).</p>
+<h2><a class="anchor" id="autotoc_md64"></a>
+DataStream</h2>
+<p>Data classes that participate in binary serialization (pipeline frames, object state, network protocols) should provide:</p>
+<div class="fragment"><div class="line"><span class="comment">// In myclass.h — forward-declare DataStream to avoid circular includes</span></div>
+<div class="line"><span class="keyword">class </span><a class="code hl_class" href="classDataStream.html">DataStream</a>;</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;<a class="code hl_function" href="ipv4address_8h.html#ace0f1c3c939b5fff0dcb9f9afb7b89d4">operator&lt;&lt;</a>(<a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;stream, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
+<div class="line"><a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;<a class="code hl_function" href="classDataStream.html#adff852980686f41c6d484f4a5bf815be">operator&gt;&gt;</a>(<a class="code hl_class" href="classDataStream.html">DataStream</a> &amp;stream, <a class="code hl_class" href="classList.html">MyClass</a> &amp;<a class="code hl_class" href="classList.html">val</a>);</div>
+<div class="ttc" id="aclassDataStream_html"><div class="ttname"><a href="classDataStream.html">DataStream</a></div><div class="ttdoc">Binary stream for structured, portable serialization.</div><div class="ttdef"><b>Definition</b> datastream.h:73</div></div>
+<div class="ttc" id="aclassDataStream_html_adff852980686f41c6d484f4a5bf815be"><div class="ttname"><a href="classDataStream.html#adff852980686f41c6d484f4a5bf815be">DataStream::operator&gt;&gt;</a></div><div class="ttdeci">DataStream &amp; operator&gt;&gt;(int8_t &amp;val)</div><div class="ttdoc">Reads an int8_t.</div></div>
+</div><!-- fragment --><p>These write/read the class fields in a well-defined order. See <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">devplan/core_streams.md</a></code> for the wire format conventions.</p>
+<h2><a class="anchor" id="autotoc_md65"></a>
+When to Omit</h2>
+<ul>
+<li>Utility classes (<a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>, <a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a>, etc.) do not need stream operators.</li>
+<li>ObjectBase-derived functional objects do not need stream operators (use saveState/loadState instead).</li>
+<li>Simple wrapper types where the underlying primitive's operator already suffices (e.g., <code><a class="el" href="classAtomic.html" title="Atomic variable wrapping std::atomic&lt;T&gt;.">Atomic</a>&lt;T&gt;</code>) do not need their own operators.</li>
+</ul>
+<hr  />
+<h1><a class="anchor" id="autotoc_md67"></a>
 Documentation (Doxygen)</h1>
 <p>All public API surfaces should be documented with Doxygen comments using the <code>/** ... */</code> style.</p>
-<h2><a class="anchor" id="autotoc_md63"></a>
+<h2><a class="anchor" id="autotoc_md68"></a>
 Class Documentation</h2>
 <p>Every class should have a <code>@brief</code> line followed by a longer description when appropriate. Use <code>@tparam</code> for template parameters and <code>@note</code> for important caveats:</p>
 <div class="fragment"><div class="line"> </div>
 <div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
 <div class="line"><span class="keyword">class </span><a class="code hl_class" href="classQueue.html">Queue</a> { ... };</div>
 <div class="ttc" id="aclassQueue_html"><div class="ttname"><a href="classQueue.html">Queue</a></div><div class="ttdoc">Thread-safe FIFO queue.</div><div class="ttdef"><b>Definition</b> queue.h:45</div></div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md64"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md69"></a>
 Method Documentation</h2>
 <p>Every public method should have at minimum a <code>@brief</code> line. Document parameters, return values, and template parameters as applicable:</p>
 <ul>
@@ -587,7 +621,7 @@ Method Documentation</h2>
 </ul>
 <div class="fragment"><div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classList.html">Result&lt;T&gt;</a> pop(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">timeoutMs</a> = 0);</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md65"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md70"></a>
 Thread Safety Documentation</h2>
 <p>Every class must document its thread safety guarantees in the class-level Doxygen comment. Use one of these standard statements:</p>
 <ul>
@@ -598,19 +632,20 @@ Thread Safety Documentation</h2>
 </ul>
 <p>When individual methods have different thread safety from the class default, document them at the method level. For example, a class that is generally not thread-safe but has a specific atomic query method should note that on the method.</p>
 <div class="fragment"><div class="line"> </div>
-<div class="line"><span class="keyword">class </span><a class="code hl_class" href="classList.html">MulticastManager</a> : <span class="keyword">public</span> <a class="code hl_class" href="classObjectBase.html">ObjectBase</a> { ... };</div>
-<div class="ttc" id="aclassObjectBase_html"><div class="ttname"><a href="classObjectBase.html">ObjectBase</a></div><div class="ttdoc">Base object for promeki.</div><div class="ttdef"><b>Definition</b> objectbase.h:120</div></div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md66"></a>
+<div class="line"><span class="keyword">class </span><a class="code hl_class" href="classMulticastManager.html">MulticastManager</a> : <span class="keyword">public</span> <a class="code hl_class" href="classObjectBase.html">ObjectBase</a> { ... };</div>
+<div class="ttc" id="aclassMulticastManager_html"><div class="ttname"><a href="classMulticastManager.html">MulticastManager</a></div><div class="ttdoc">Manages multicast group membership for multi-stream scenarios.</div><div class="ttdef"><b>Definition</b> multicastmanager.h:47</div></div>
+<div class="ttc" id="aclassObjectBase_html"><div class="ttname"><a href="classObjectBase.html">ObjectBase</a></div><div class="ttdoc">Base object for promeki.</div><div class="ttdef"><b>Definition</b> objectbase.h:129</div></div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md71"></a>
 What Not to Document</h2>
 <ul>
 <li>Private members and implementation details do not require Doxygen comments (plain <code>//</code> comments are fine when needed).</li>
 <li>Trivial getters/setters that are self-explanatory from their name and signature may omit Doxygen, but prefer documenting them when there are non-obvious semantics.</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md68"></a>
+<h1><a class="anchor" id="autotoc_md73"></a>
 Testing</h1>
 <p>Tests use the <a href="https://github.com/doctest/doctest">doctest</a> framework, vendored in <code>thirdparty/doctest/</code>.</p>
-<h2><a class="anchor" id="autotoc_md69"></a>
+<h2><a class="anchor" id="autotoc_md74"></a>
 File Layout</h2>
 <ul>
 <li>Test files live in <code>tests/</code> and are named after the class they test (e.g., <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">tests/string.cpp</a></code> for <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code>).</li>
@@ -618,7 +653,7 @@ File Layout</h2>
 <li>A shared <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">tests/doctest_main.cpp</a></code> defines the <code>main()</code> entry point with <code>DOCTEST_CONFIG_IMPLEMENT</code>. Individual test files should <b>not</b> define <code>main()</code>.</li>
 <li>Tests are compiled and run automatically during the build via CTest.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md70"></a>
+<h2><a class="anchor" id="autotoc_md75"></a>
 Structure</h2>
 <p>Use <code>TEST_CASE</code> for each class or logical grouping, and <code>SUBCASE</code> for individual behaviors:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;doctest/doctest.h&gt;</span></div>
@@ -638,7 +673,7 @@ Structure</h2>
 <div class="line">                <a class="code hl_class" href="classList.html">CHECK</a>(result.name() == <span class="stringliteral">&quot;hello&quot;</span>);</div>
 <div class="line">        }</div>
 <div class="line">}</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md71"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md76"></a>
 Assertions</h2>
 <p>Prefer these doctest macros:</p>
 <ul>
@@ -648,11 +683,11 @@ Assertions</h2>
 <li><code>CHECK(val == <a class="el" href="classList.html#ad6aca4c38c82cc5b5fd56ae77b73815f" title="Constructs a list with a given number of default-constructed elements.">doctest::Approx(expected)</a>.epsilon(<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>))</code> — with custom tolerance.</li>
 <li><code>REQUIRE(expr)</code> — fatal assertion (test stops on failure). Use sparingly, only when subsequent checks depend on this one passing.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md72"></a>
+<h2><a class="anchor" id="autotoc_md77"></a>
 Build Integration</h2>
 <p>Each library (<code>core</code>, <code>proav</code>, <code>music</code>) has its own test executable (<code>unittest-core</code>, <code>unittest-proav</code>, <code>unittest-music</code>). Test executables link against their respective library and are registered with CTest. The <code>run-tests</code> custom target runs all tests as part of the normal build.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md74"></a>
+<h1><a class="anchor" id="autotoc_md79"></a>
 Miscellaneous</h1>
 <ul>
 <li><b>C++ standard</b>: C++20.</li>
@@ -670,7 +705,7 @@ Miscellaneous</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

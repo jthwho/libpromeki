@@ -130,6 +130,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a843ad32940b86656b42feb8a52b296f1" id="r_a843ad32940b86656b42feb8a52b296f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFontPainter.html#a843ad32940b86656b42feb8a52b296f1">drawText</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;text, int x, int y, int <a class="el" href="classList.html">pointSize</a>=12) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a843ad32940b86656b42feb8a52b296f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws text at the specified position.  <br /></td></tr>
 <tr class="separator:a843ad32940b86656b42feb8a52b296f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef3d4cd3405ddc95d8308bd07022186f" id="r_aef3d4cd3405ddc95d8308bd07022186f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFontPainter.html#aef3d4cd3405ddc95d8308bd07022186f">measureText</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;text, int <a class="el" href="classList.html">pointSize</a>=12) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aef3d4cd3405ddc95d8308bd07022186f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Measures the pixel width of a text string without drawing it.  <br /></td></tr>
+<tr class="separator:aef3d4cd3405ddc95d8308bd07022186f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Renders text into an image using a TrueType font. </p>
@@ -178,12 +181,50 @@ Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">text</td><td>The text string to render. </td></tr>
     <tr><td class="paramname">x</td><td>The x coordinate of the text origin. </td></tr>
-    <tr><td class="paramname">y</td><td>The y coordinate of the text origin. </td></tr>
+    <tr><td class="paramname">y</td><td>The y coordinate of the text origin (baseline). </td></tr>
     <tr><td class="paramname">pointSize</td><td>The font size in points (default 12). </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>True if the text was drawn successfully. </dd></dl>
+
+</div>
+</div>
+<a id="aef3d4cd3405ddc95d8308bd07022186f" name="aef3d4cd3405ddc95d8308bd07022186f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aef3d4cd3405ddc95d8308bd07022186f">&#9670;&#160;</a></span>measureText()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int FontPainter::measureText </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>text</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>pointSize</em> = <code>12</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Measures the pixel width of a text string without drawing it. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">text</td><td>The text string to measure. </td></tr>
+    <tr><td class="paramname">pointSize</td><td>The font size in points (default 12). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The width in pixels, or 0 on error. </dd></dl>
 
 </div>
 </div>
@@ -265,7 +306,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFontPainter.html">FontPainter</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

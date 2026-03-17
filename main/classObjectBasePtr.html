@@ -149,6 +149,7 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Object that holds a pointer to an <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> (or derived) object. This class will register itself with the given <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> object. When the registered <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> object is destroyed, it will null the internal pointer. You can use this object to ensure you don't have dangling pointers to <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> objects. </p>
+<dl class="section note"><dt>Note</dt><dd><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> safety: The internal pointer is stored as a std::atomic, and the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> pointer map is protected by a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>. This allows an <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase (or derived) object. This class will register itself wit...">ObjectBasePtr</a> to be safely invalidated from a different thread than the one holding it, as happens during cross-thread object destruction. However, the <a class="el" href="classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase (or derived) object. This class will register itself wit...">ObjectBasePtr</a> itself is not designed for concurrent read/write from multiple threads without external synchronization. </dd></dl>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/core/<a class="el" href="objectbase_8h_source.html">objectbase.h</a></li>
 </ul>
@@ -159,7 +160,7 @@ Friends</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classObjectBasePtr.html">ObjectBasePtr</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

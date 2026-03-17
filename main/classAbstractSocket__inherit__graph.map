@@ -1,0 +1,15 @@
+<map id="AbstractSocket" name="AbstractSocket">
+<area shape="rect" id="Node000001" title="Abstract base class for network sockets." alt="" coords="107,152,226,177"/>
+<area shape="rect" id="Node000004" href="$classRawSocket.html" title="Raw Ethernet frame socket." alt="" coords="5,225,99,251"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="138,187,72,227,69,223,135,182"/>
+<area shape="rect" id="Node000005" href="$classTcpSocket.html" title="Stream&#45;oriented TCP socket." alt="" coords="123,225,210,251"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="169,191,169,225,164,225,164,191"/>
+<area shape="rect" id="Node000006" href="$classUdpSocket.html" title="Datagram&#45;oriented UDP socket with multicast support." alt="" coords="235,225,325,251"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="198,183,263,223,260,227,195,187"/>
+<area shape="rect" id="Node000002" href="$classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="126,79,207,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,118,169,152,164,152,164,118"/>
+<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="119,5,215,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="169,44,169,79,164,79,164,44"/>
+<area shape="rect" id="Node000007" href="$classPrioritySocket.html" title="UDP socket with QoS priority convenience methods." alt="" coords="224,299,336,324"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="283,264,283,299,277,299,277,264"/>
+</map>

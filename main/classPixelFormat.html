@@ -341,10 +341,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> () <a class="el
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>hasAlpha</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a8d033ef47cf8c40127219d2a42e0c525"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this format includes an alpha channel. <br /></td></tr>
 <tr class="separator:a8d033ef47cf8c40127219d2a42e0c525"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a89a1dfa2c24ecdbe092f4c4d83dff144" id="r_a89a1dfa2c24ecdbe092f4c4d83dff144"><td class="memItemLeft" align="right" valign="top"><a id="a89a1dfa2c24ecdbe092f4c4d83dff144" name="a89a1dfa2c24ecdbe092f4c4d83dff144"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>compressed</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a89a1dfa2c24ecdbe092f4c4d83dff144"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this is a compressed pixel format. <br /></td></tr>
-<tr class="separator:a89a1dfa2c24ecdbe092f4c4d83dff144"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd42d40f8ed7dd4e0b3026f47cf0fb25" id="r_abd42d40f8ed7dd4e0b3026f47cf0fb25"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPixelFormat.html#abd42d40f8ed7dd4e0b3026f47cf0fb25">isCompressed</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:abd42d40f8ed7dd4e0b3026f47cf0fb25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this is a compressed pixel format.  <br /></td></tr>
+<tr class="separator:abd42d40f8ed7dd4e0b3026f47cf0fb25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6835d0398ae1c35395086e1d2665c3d" id="r_ae6835d0398ae1c35395086e1d2665c3d"><td class="memItemLeft" align="right" valign="top"><a id="ae6835d0398ae1c35395086e1d2665c3d" name="ae6835d0398ae1c35395086e1d2665c3d"></a>
 <a class="el" href="classList.html">const</a> <a class="el" href="fourcc_8h.html#a7273afc33a6e1d395b0fdd32265996f0">FourCCList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>fourccList</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ae6835d0398ae1c35395086e1d2665c3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> codes associated with this format. <br /></td></tr>
@@ -1270,6 +1269,35 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 
 </div>
 </div>
+<a id="abd42d40f8ed7dd4e0b3026f47cf0fb25" name="abd42d40f8ed7dd4e0b3026f47cf0fb25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd42d40f8ed7dd4e0b3026f47cf0fb25">&#9670;&#160;</a></span>isCompressed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> PixelFormat::isCompressed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if this is a compressed pixel format. </p>
+<p>Compressed formats (e.g. JPEG_RGB8) store an encoded bitstream rather than scanline-addressable pixel data. <a class="el" href="classImage.html#a9f382117be325c70968e980370094263" title="Returns true if this image uses a compressed pixel format.">Image::isCompressed()</a> is a convenience wrapper around this.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classImage.html#a9f382117be325c70968e980370094263" title="Returns true if this image uses a compressed pixel format.">Image::isCompressed()</a>, <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">Image::compressedSize()</a>, <a class="el" href="classImage.html#afb741342251172251e4d3f86d038e6b5" title="Creates a compressed image from pre-encoded data.">Image::fromCompressedData()</a> </dd></dl>
+
+</div>
+</div>
 <a id="a9c9111a8b6948b41a8be0ea5770df00b" name="a9c9111a8b6948b41a8be0ea5770df00b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9c9111a8b6948b41a8be0ea5770df00b">&#9670;&#160;</a></span>isValidCompCount()</h2>
 
@@ -1624,7 +1652,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_id</b> = <a class="el
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPixelFormat.html">PixelFormat</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

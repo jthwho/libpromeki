@@ -7,6 +7,7 @@ var classAudio =
     [ "Audio", "classAudio.html#a26f61701629343d1dd5933ad80aad188", null ],
     [ "buffer", "classAudio.html#a265a9ee1e0e0a9d102388d7f7c1c5655", null ],
     [ "buffer", "classAudio.html#a3a1ccd471d9c48cc193f66fc21098105", null ],
+    [ "convertTo", "classAudio.html#a639fd47cab076652c462e7a42c7d5de0", null ],
     [ "data", "classAudio.html#a55558ab750f8d19bc9e068a40a1814b5", null ],
     [ "desc", "classAudio.html#af4c906c113ec44e511a595637482367c", null ],
     [ "frames", "classAudio.html#a88072bd5b083d9cd82e18dedfb2fd19c", null ],

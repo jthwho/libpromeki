@@ -6,5 +6,6 @@ var searchData=
   ['complist_3',['compList',['../structPixelFormat_1_1Data.html#a8d47fc3ebc2dc41e67b25386ff0b4e70',1,'PixelFormat::Data']]],
   ['copy_4',['copy',['../structMemSpace_1_1Ops.html#a1d4ccdc87d78f4913341121f3f2e5adc',1,'MemSpace::Ops']]],
   ['createpixel_5',['createPixel',['../structPixelFormat_1_1Data.html#a18937eb0ab769e3b639af41bde1d1a13',1,'PixelFormat::Data']]],
-  ['currentversion_6',['CurrentVersion',['../classDataStream.html#a39cb7d2d7745d20b5b6fc734dda8753b',1,'DataStream']]]
+  ['currentqueuedepth_6',['currentQueueDepth',['../structNodeStats.html#af73718e7342f78556c066840aa7b83d9',1,'NodeStats']]],
+  ['currentversion_7',['CurrentVersion',['../classDataStream.html#a39cb7d2d7745d20b5b6fc734dda8753b',1,'DataStream']]]
 ];

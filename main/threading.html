@@ -262,13 +262,13 @@ ThreadPool</h1>
 <p>Tasks submitted to the pool should be self-contained. Pass data in by copy (for simple types) or by <code>Ptr</code> (for shareable types). Do not capture raw pointers to <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> instances &ndash; use signals instead to communicate results back.</p>
 <h1><a class="anchor" id="thread_pipeline"></a>
 Pipeline Threading</h1>
-<p>The MediaPipeline schedules <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">MediaNode::process()</a> calls across a thread pool. Each node can specify its threading policy:</p>
+<p>The <a class="el" href="classMediaPipeline.html" title="Owns a MediaGraph and orchestrates pipeline processing.">MediaPipeline</a> schedules <a class="el" href="classMediaNode.html#ab6fbd04386109e9ea5d5815255fe0b7a" title="Processes one cycle of data.">MediaNode::process()</a> calls across a thread pool. Each node can specify its threading policy:</p>
 <ul>
 <li><b>UseGraphPool</b> (default): scheduled on the pipeline's shared <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a>.</li>
 <li><b>DedicatedThread</b>: gets its own thread for deterministic scheduling (e.g., real-time audio nodes).</li>
 <li><b>CustomPool</b>: uses a separate <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a> instance.</li>
 </ul>
-<p>Data flows between nodes through MediaLink, which uses a thread-safe <a class="el" href="classQueue.html">Queue</a> internally. Nodes receive data via <code>pullFrame()</code> and produce data via <code>pushFrame()</code> &ndash; both are safe to call from the node's processing thread. </p>
+<p>Data flows between nodes through <a class="el" href="classMediaLink.html" title="Connects an output port to an input port in a media pipeline.">MediaLink</a>, which uses a thread-safe <a class="el" href="classQueue.html">Queue</a> internally. Nodes receive data via <code>pullFrame()</code> and produce data via <code>pushFrame()</code> &ndash; both are safe to call from the node's processing thread. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -276,7 +276,7 @@ Pipeline Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

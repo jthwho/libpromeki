@@ -1,0 +1,19 @@
+<map id="include/promeki/network/socketaddress.h" name="include/promeki/network/socketaddress.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="525,5,709,45"/>
+<area shape="rect" id="Node000002" href="$abstractsocket_8h.html" title=" " alt="" coords="213,93,397,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="536,52,374,96,373,91,535,46"/>
+<area shape="rect" id="Node000007" href="$multicastmanager_8h.html" title=" " alt="" coords="421,93,605,133"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="585,56,538,95,535,91,582,52"/>
+<area shape="rect" id="Node000008" href="$rtpsession_8h.html" title=" " alt="" coords="629,93,813,133"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="653,52,700,91,697,95,649,56"/>
+<area shape="rect" id="Node000009" href="$tcpserver_8h.html" title=" " alt="" coords="837,93,1021,133"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="700,46,862,91,860,96,698,52"/>
+<area shape="rect" id="Node000003" href="$rawsocket_8h.html" title=" " alt="" coords="5,181,189,221"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="248,141,144,184,142,179,246,136"/>
+<area shape="rect" id="Node000004" href="$tcpsocket_8h.html" title=" " alt="" coords="213,181,397,221"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="308,147,308,181,303,181,303,147"/>
+<area shape="rect" id="Node000005" href="$udpsocket_8h.html" title=" " alt="" coords="421,181,605,221"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="365,136,469,179,467,184,363,141"/>
+<area shape="rect" id="Node000006" href="$prioritysocket_8h.html" title=" " alt="" coords="421,269,605,309"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="516,235,516,269,511,269,511,235"/>
+</map>

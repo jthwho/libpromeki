@@ -111,19 +111,24 @@ var NAVTREE =
       ] ],
       [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md58", null ],
       [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md60", null ],
-      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md62", [
-        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md63", null ],
-        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md64", null ],
-        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md65", null ],
-        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md66", null ]
+      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md62", [
+        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md63", null ],
+        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md64", null ],
+        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md65", null ]
       ] ],
-      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md68", [
-        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md69", null ],
-        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md70", null ],
-        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md71", null ],
-        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md72", null ]
+      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md67", [
+        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md68", null ],
+        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md69", null ],
+        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md70", null ],
+        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md71", null ]
       ] ],
-      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md74", null ]
+      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md73", [
+        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md74", null ],
+        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md75", null ],
+        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md76", null ],
+        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md77", null ]
+      ] ],
+      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md79", null ]
     ] ],
     [ "Signal List", "signal.html", null ],
     [ "Deprecated List", "deprecated.html", null ],
@@ -162,24 +167,27 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"algorithm_8h.html",
-"classAnsiStream.html#a338b08f6aae49641c1f62523260304dcabc4b4662a28a998acae2fdea1341a431",
-"classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4abb1a07faad8eede4edad63bcef33d8ce",
-"classDataStream.html#a031c1cb50817d1530452c4feae207fcb",
-"classEvent.html#aefa8b5aaf44c1868a1fe5febe3f1b1a3",
-"classHashMap.html#afde27966e9769bc0963ffc884bb8df4c",
-"classKeyEvent.html#a7c25591b43fc9cecb46c5ff35349389f",
-"classMemPool_1_1Block.html#a9832fa37c5c118a8c50eaad32b5ac5d7",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3adf4ce549c8bfc7246936d13964ff17b9",
-"classPair.html#a72d5f9d4ca541adc21ec76125ee1c876",
-"classQueue.html#ab18970a73283f0fafbf05978ae2f121c",
-"classStreamString.html#a5bbb2e76c9997b8abce0c1dbac51f57c",
-"classStringUnicodeData.html#ac6ef11c2fdaf94f05b8041dfc8624dad",
-"classTuiApplication.html#aec485838ac3d4115d42a36969d307efe",
-"classTuiWidget.html#ae4a7697a67a0e02e5b3bc9180ec43386",
-"functions_rela.html",
-"progressbar_8h.html",
-"waitcondition_8h_source.html"
+"abstractsocket_8h.html",
+"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca84aa28ec9a3a754e94020ed72d80080d",
+"classAudioBlock.html#a72f11a9fce8cb8e7c13e15744e6d5dfc",
+"classCmdLineParser_1_1Option.html#af36860253d6946da6c3a49af658f9d41",
+"classEncodedDesc.html#a3d11f0db93f503a293908d76ba184eca",
+"classFrameRate.html",
+"classIpv4Address.html#ad0cea1e85bf178d3e8f3405d8e72a308",
+"classLogger.html#ab8bdb095bc42de4845060b26282f2714",
+"classMediaPipeline.html#a48591532723de50ab0988a6e59317f33",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a82915af763c85459d5a3264ad9acc515",
+"classNetworkAddress.html#ad454c715759d0275a4a99de4b0958d06",
+"classPixelFormat.html#aa47cca27864c57b6e7b820564294390ba063c33785fb635fdf722480186a82cf3",
+"classRefCount.html#a871f21de0112bc4ca80b47d81e1be6e4",
+"classSize2DTemplate.html#a1258357cb4c5d46ffdb5217e9393250f",
+"classStringData.html#adf5b573840a1912309d2e692e365cc34",
+"classTestPatternNode.html#acadbee74845f882d210f9b2fc84b3273",
+"classTuiButton.html#a53de611e4078be71d22106e902674788",
+"classUUID.html#a3629d821d3ee36fbae26548e153061a7",
+"functions_func_~.html",
+"musicalnote_8h_source.html",
+"structPixelFormat_1_1Data.html#a8d47fc3ebc2dc41e67b25386ff0b4e70"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

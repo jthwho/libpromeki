@@ -102,6 +102,7 @@ $(document).ready(function(){initNavTree('classImage.html',''); initResizable();
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classImage-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Image Class Reference<div class="ingroups"><a class="el" href="group__proav__media.html">ProAV Media</a></div></div></div>
 </div><!--header-->
@@ -184,16 +185,47 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0ad1d382f2dc0c18c65786ba5b16a0dc" id="r_a0ad1d382f2dc0c18c65786ba5b16a0dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a0ad1d382f2dc0c18c65786ba5b16a0dc">fill</a> (<a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">char</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>) <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
 <tr class="memdesc:a0ad1d382f2dc0c18c65786ba5b16a0dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills all image planes with the given byte value.  <br /></td></tr>
 <tr class="separator:a0ad1d382f2dc0c18c65786ba5b16a0dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e0432eb699f012ce6a1e498392ee83f" id="r_a7e0432eb699f012ce6a1e498392ee83f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a7e0432eb699f012ce6a1e498392ee83f">isExclusive</a> () <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
+<tr class="memdesc:a7e0432eb699f012ce6a1e498392ee83f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if all plane buffers are exclusively owned.  <br /></td></tr>
+<tr class="separator:a7e0432eb699f012ce6a1e498392ee83f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a350033e3fb9fad034de15f79b1b2d72c" id="r_a350033e3fb9fad034de15f79b1b2d72c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a350033e3fb9fad034de15f79b1b2d72c">ensureExclusive</a> ()</td></tr>
+<tr class="memdesc:a350033e3fb9fad034de15f79b1b2d72c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ensures exclusive ownership of all plane buffers.  <br /></td></tr>
+<tr class="separator:a350033e3fb9fad034de15f79b1b2d72c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f382117be325c70968e980370094263" id="r_a9f382117be325c70968e980370094263"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a9f382117be325c70968e980370094263">isCompressed</a> () <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
+<tr class="memdesc:a9f382117be325c70968e980370094263"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this image uses a compressed pixel format.  <br /></td></tr>
+<tr class="separator:a9f382117be325c70968e980370094263"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b610a3cd7782ad7318d22a912021243" id="r_a9b610a3cd7782ad7318d22a912021243"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243">compressedSize</a> () <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
+<tr class="memdesc:a9b610a3cd7782ad7318d22a912021243"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the compressed data size in bytes.  <br /></td></tr>
+<tr class="separator:a9b610a3cd7782ad7318d22a912021243"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ea6053a9be42b4b21b59a0944e5d564" id="r_a2ea6053a9be42b4b21b59a0944e5d564"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classPaintEngine.html">PaintEngine</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a2ea6053a9be42b4b21b59a0944e5d564">createPaintEngine</a> () <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
 <tr class="memdesc:a2ea6053a9be42b4b21b59a0944e5d564"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a paint engine for drawing on this image.  <br /></td></tr>
 <tr class="separator:a2ea6053a9be42b4b21b59a0944e5d564"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a409a3540b213e2135e345cdcdda81ba2" id="r_a409a3540b213e2135e345cdcdda81ba2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html">Image</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#a409a3540b213e2135e345cdcdda81ba2">convert</a> (<a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">PixelFormat::ID</a> <a class="el" href="classImage.html#af974e3280db0d8d44e0b34d1e4bf63c6">pixelFormat</a>, <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;<a class="el" href="classImage.html#a41648e00f1e62388c26b526afb817409">metadata</a>) <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a></td></tr>
 <tr class="memdesc:a409a3540b213e2135e345cdcdda81ba2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts this image to a different pixel format.  <br /></td></tr>
 <tr class="separator:a409a3540b213e2135e345cdcdda81ba2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:afb741342251172251e4d3f86d038e6b5" id="r_afb741342251172251e4d3f86d038e6b5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">static</a> <a class="el" href="classImage.html">Image</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImage.html#afb741342251172251e4d3f86d038e6b5">fromCompressedData</a> (<a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">void</a> *<a class="el" href="classImage.html#a1940daf743c22020142daf837d76c8ca">data</a>, <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a> <a class="el" href="classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f">size</a>, <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a> <a class="el" href="classImage.html#aa3c6a86a6e5f35499ae781710154cb33">width</a>, <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a> <a class="el" href="classImage.html#a07d2c4468079fc049cd06594481d7c5e">height</a>, int <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">pixfmt</a>, <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;<a class="el" href="classImage.html#a41648e00f1e62388c26b526afb817409">metadata</a>=<a class="el" href="classMetadata.html">Metadata</a>())</td></tr>
+<tr class="memdesc:afb741342251172251e4d3f86d038e6b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a compressed image from pre-encoded data.  <br /></td></tr>
+<tr class="separator:afb741342251172251e4d3f86d038e6b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Raster image with pixel format, planes, and metadata. </p>
-<p>Holds image pixel data organized into one or more memory planes according to the image's pixel format. Provides convenience accessors for dimensions, pixel format, and metadata, as well as pixel format conversion and paint engine creation. When shared ownership is needed, use <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852" title="Shared pointer type for Image.">Image::Ptr</a>. </p>
+<p>Holds image pixel data organized into one or more memory planes according to the image's pixel format. Provides convenience accessors for dimensions, pixel format, and metadata, as well as pixel format conversion and paint engine creation. When shared ownership is needed, use <a class="el" href="classImage.html#a38745cfc2762b9f0aeaaba861098b852" title="Shared pointer type for Image.">Image::Ptr</a>.</p>
+<dl class="section user"><dt>Compressed images</dt><dd><a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> also represents compressed (encoded) image data such as JPEG. A compressed image uses a compressed pixel format (e.g. <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69" title="JPEG-compressed 8-bit RGB.">PixelFormat::JPEG_RGB8</a>) and stores the encoded bitstream in its single plane buffer. Use <a class="el" href="classImage.html#a9f382117be325c70968e980370094263" title="Returns true if this image uses a compressed pixel format.">isCompressed()</a> to test whether an image is compressed, <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">compressedSize()</a> to get the encoded byte count, and <a class="el" href="classImage.html#a1940daf743c22020142daf837d76c8ca" title="Returns a raw data pointer for the given plane.">data()</a> to access the raw encoded bytes. The preferred way to create a compressed image is the <a class="el" href="classImage.html#afb741342251172251e4d3f86d038e6b5" title="Creates a compressed image from pre-encoded data.">fromCompressedData()</a> factory.</dd></dl>
+<dl class="section user"><dt>Example — creating a compressed image</dt><dd><div class="fragment"><div class="line"><span class="comment">// After compressing with libjpeg or another codec:</span></div>
+<div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpeg</a> = <a class="code hl_function" href="classImage.html#afb741342251172251e4d3f86d038e6b5">Image::fromCompressedData</a>(<a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpegBytes</a>, <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpegSize</a>,</div>
+<div class="line">                                       1920, 1080,</div>
+<div class="line">                                       <a class="code hl_enumvalue" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69">PixelFormat::JPEG_RGB8</a>,</div>
+<div class="line">                                       <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">srcImage</a>.metadata());</div>
+<div class="line"><a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">assert</a>(<a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpeg</a>.isCompressed());</div>
+<div class="line"><a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">assert</a>(<a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpeg</a>.compressedSize() == <a class="code hl_typedef" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">jpegSize</a>);</div>
+<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel format, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
+<div class="ttc" id="aclassImage_html_ae43a93b1c8ae60153e670caf42fd9fe8"><div class="ttname"><a href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">Image::List</a></div><div class="ttdeci">promeki::List&lt; Image &gt; List</div><div class="ttdoc">List of Image values.</div><div class="ttdef"><b>Definition</b> image.h:55</div></div>
+<div class="ttc" id="aclassImage_html_afb741342251172251e4d3f86d038e6b5"><div class="ttname"><a href="classImage.html#afb741342251172251e4d3f86d038e6b5">Image::fromCompressedData</a></div><div class="ttdeci">static Image fromCompressedData(const void *data, size_t size, size_t width, size_t height, int pixfmt, const Metadata &amp;metadata=Metadata())</div><div class="ttdoc">Creates a compressed image from pre-encoded data.</div></div>
+<div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69">PixelFormat::JPEG_RGB8</a></div><div class="ttdeci">@ JPEG_RGB8</div><div class="ttdoc">JPEG-compressed 8-bit RGB.</div><div class="ttdef"><b>Definition</b> pixelformat.h:54</div></div>
+</div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a96b8f9e7236e49a70f8e487be611e9b4" name="a96b8f9e7236e49a70f8e487be611e9b4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a96b8f9e7236e49a70f8e487be611e9b4">&#9670;&#160;</a></span>Image() <span class="overload">[1/3]</span></h2>
@@ -344,6 +376,36 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a9b610a3cd7782ad7318d22a912021243" name="a9b610a3cd7782ad7318d22a912021243"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9b610a3cd7782ad7318d22a912021243">&#9670;&#160;</a></span>compressedSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a> Image::compressedSize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the compressed data size in bytes. </p>
+<p>For compressed images, the encoded bitstream lives in the first plane buffer. This method returns that buffer's logical size, which is the actual encoded byte count. Use <a class="el" href="classImage.html#a1940daf743c22020142daf837d76c8ca" title="Returns a raw data pointer for the given plane.">data()</a> to obtain a pointer to the encoded bytes.</p>
+<p>Returns 0 for uncompressed images or if no planes are allocated.</p>
+<dl class="section return"><dt>Returns</dt><dd>The compressed data size, or 0. </dd></dl>
+
+</div>
+</div>
 <a id="a409a3540b213e2135e345cdcdda81ba2" name="a409a3540b213e2135e345cdcdda81ba2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a409a3540b213e2135e345cdcdda81ba2">&#9670;&#160;</a></span>convert()</h2>
 
@@ -473,6 +535,34 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a350033e3fb9fad034de15f79b1b2d72c" name="a350033e3fb9fad034de15f79b1b2d72c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a350033e3fb9fad034de15f79b1b2d72c">&#9670;&#160;</a></span>ensureExclusive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">void</a> Image::ensureExclusive </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Ensures exclusive ownership of all plane buffers. </p>
+<p>For each plane <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a>, calls modify() to trigger a copy-on-write detach if the reference count is greater than 1. In a linear pipeline where only one consumer holds a reference, this is a no-op. In fan-out scenarios where multiple consumers share the same buffers, this creates private copies so that the caller can safely mutate the pixel data. </p>
+
+</div>
+</div>
 <a id="a0ad1d382f2dc0c18c65786ba5b16a0dc" name="a0ad1d382f2dc0c18c65786ba5b16a0dc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0ad1d382f2dc0c18c65786ba5b16a0dc">&#9670;&#160;</a></span>fill()</h2>
 
@@ -508,6 +598,82 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afb741342251172251e4d3f86d038e6b5" name="afb741342251172251e4d3f86d038e6b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb741342251172251e4d3f86d038e6b5">&#9670;&#160;</a></span>fromCompressedData()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">static</a> <a class="el" href="classImage.html">Image</a> Image::fromCompressedData </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">void</a> *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a>&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a>&#160;</td>
+          <td class="paramname"><em>width</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">size_t</a>&#160;</td>
+          <td class="paramname"><em>height</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>pixfmt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td>
+          <td class="paramname"><em>metadata</em> = <code><a class="el" href="classMetadata.html">Metadata</a>()</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a compressed image from pre-encoded data. </p>
+<p>This is the preferred way to construct a compressed <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a>. It allocates a plane buffer sized to hold the encoded data, copies the bytes in, sets the buffer's logical size to <code>size</code>, and attaches the supplied metadata. The resulting <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> reports <a class="el" href="classImage.html#a9f382117be325c70968e980370094263" title="Returns true if this image uses a compressed pixel format.">isCompressed()</a> == true and <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">compressedSize()</a> == <code>size</code>.</p>
+<p>The <code>width</code> and <code>height</code> describe the original uncompressed dimensions — they are stored in the <a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a> so that downstream consumers know the frame size without decoding.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>Pointer to the compressed data. </td></tr>
+    <tr><td class="paramname">size</td><td>Size of the compressed data in bytes. </td></tr>
+    <tr><td class="paramname">width</td><td>Original image width in pixels. </td></tr>
+    <tr><td class="paramname">height</td><td>Original image height in pixels. </td></tr>
+    <tr><td class="paramname">pixfmt</td><td>Compressed pixel format ID (e.g. <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69" title="JPEG-compressed 8-bit RGB.">PixelFormat::JPEG_RGB8</a>). </td></tr>
+    <tr><td class="paramname">metadata</td><td>Optional metadata to attach (e.g. timecode). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A valid compressed <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a>, or an invalid <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> on failure. </dd></dl>
+
+</div>
+</div>
 <a id="a07d2c4468079fc049cd06594481d7c5e" name="a07d2c4468079fc049cd06594481d7c5e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a07d2c4468079fc049cd06594481d7c5e">&#9670;&#160;</a></span>height()</h2>
 
@@ -533,6 +699,63 @@ Public Member Functions</h2></td></tr>
 
 <p>Returns the image height in pixels. </p>
 <dl class="section return"><dt>Returns</dt><dd>The height. </dd></dl>
+
+</div>
+</div>
+<a id="a9f382117be325c70968e980370094263" name="a9f382117be325c70968e980370094263"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f382117be325c70968e980370094263">&#9670;&#160;</a></span>isCompressed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">bool</a> Image::isCompressed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if this image uses a compressed pixel format. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the pixel format is compressed (e.g. JPEG). </dd></dl>
+
+</div>
+</div>
+<a id="a7e0432eb699f012ce6a1e498392ee83f" name="a7e0432eb699f012ce6a1e498392ee83f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e0432eb699f012ce6a1e498392ee83f">&#9670;&#160;</a></span>isExclusive()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html#ae43a93b1c8ae60153e670caf42fd9fe8">bool</a> Image::isExclusive </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if all plane buffers are exclusively owned. </p>
+<p>A plane is exclusive when its <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3" title="Shared pointer type for Buffer.">Buffer::Ptr</a> has a reference count of 1 (or is null). This is useful for determining whether it is safe to mutate the pixel data in place without affecting other consumers that may share the same buffers.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if every plane buffer has referenceCount() &lt;= 1. </dd></dl>
 
 </div>
 </div>
@@ -840,7 +1063,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImage.html">Image</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

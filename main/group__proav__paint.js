@@ -4,6 +4,7 @@ var group__proav__paint =
       [ "FontPainter", "classFontPainter.html#ade478428aecd16fbe4bf0cf2d1cc4c36", null ],
       [ "~FontPainter", "classFontPainter.html#afac54a7739266e93a3bae416a4dfa1c8", null ],
       [ "drawText", "classFontPainter.html#a843ad32940b86656b42feb8a52b296f1", null ],
+      [ "measureText", "classFontPainter.html#aef3d4cd3405ddc95d8308bd07022186f", null ],
       [ "setFontFilename", "classFontPainter.html#aec82bcf95142dcfbdd7f56186c33a0bf", null ],
       [ "setPaintEngine", "classFontPainter.html#a5efdb03768e170dab4d3e9f6b0f899be", null ]
     ] ],
@@ -13,9 +14,15 @@ var group__proav__paint =
         [ "blit", "classPaintEngine_1_1Impl.html#a80e8266f5907fdb3a31b31d40f7e556b", null ],
         [ "compositePoints", "classPaintEngine_1_1Impl.html#aab615fd9f0387e563e88fb355639ad8c", null ],
         [ "createPixel", "classPaintEngine_1_1Impl.html#a89ba9a79a5b727b39ae74aed6f5f9aea", null ],
+        [ "drawCircle", "classPaintEngine_1_1Impl.html#ae654bda5da90ec0d104f88f74f174ffc", null ],
+        [ "drawEllipse", "classPaintEngine_1_1Impl.html#a82d7b6f149a4284649ce6e301e7abd54", null ],
         [ "drawLines", "classPaintEngine_1_1Impl.html#a6a9c072bb1b1acdaaf1784c64283aade", null ],
         [ "drawPoints", "classPaintEngine_1_1Impl.html#aa003f1a13308191f238379ade2ffd9f0", null ],
+        [ "drawRect", "classPaintEngine_1_1Impl.html#a5d9e57976aeca367a10a51fde7611c78", null ],
         [ "fill", "classPaintEngine_1_1Impl.html#a52cd5e741add321ebc0ce56b23c09021", null ],
+        [ "fillCircle", "classPaintEngine_1_1Impl.html#af750ffa3bcc7c6236df78da1e6b760a5", null ],
+        [ "fillEllipse", "classPaintEngine_1_1Impl.html#adf337a2874ecdde37f1a8fac0c8f26ab", null ],
+        [ "fillRect", "classPaintEngine_1_1Impl.html#aa2745ee578e5d195adcca40f3a2f119e", null ],
         [ "pixelFormat", "classPaintEngine_1_1Impl.html#a725e3e284243d7b565bb53f8f8e304b2", null ],
         [ "_pixelFormat", "classPaintEngine_1_1Impl.html#a748922ddea4a668016197cd64a926043", null ]
       ] ],
@@ -33,12 +40,18 @@ var group__proav__paint =
       [ "createPixel", "classPaintEngine.html#a49ff472944aae8cff10c25944c07e60c", null ],
       [ "createPixel", "classPaintEngine.html#a6b5c54001b3893ef0318abf04a56e44c", null ],
       [ "createPixel", "classPaintEngine.html#a303a975d33f252b2a387721a69451bab", null ],
+      [ "drawCircle", "classPaintEngine.html#a97f858e4f9dc0336523230dc50f6bd42", null ],
+      [ "drawEllipse", "classPaintEngine.html#ae3924fdc52c98c19a6516b670610de02", null ],
       [ "drawLine", "classPaintEngine.html#a417198377175c07f74572572e30d566c", null ],
       [ "drawLine", "classPaintEngine.html#a8afb12d3e1e316113d28dd4053215d3f", null ],
       [ "drawLines", "classPaintEngine.html#ac1d0e026752f3e1bdf8d84da86643baf", null ],
       [ "drawPoints", "classPaintEngine.html#a744c7224d44385fb485a7de19aa6282c", null ],
       [ "drawPoints", "classPaintEngine.html#a5f89f2cd2b85ec5916e5b7e56fd754f5", null ],
+      [ "drawRect", "classPaintEngine.html#a3cbf5ad4aaf269654f8c8c8aeeb82edc", null ],
       [ "fill", "classPaintEngine.html#aa3d5805d110325036a3bf772be3a2cf1", null ],
+      [ "fillCircle", "classPaintEngine.html#a09ee73b28e43fbd785843d32121e64d5", null ],
+      [ "fillEllipse", "classPaintEngine.html#a47860bee2d201a40204c7f6a9e9671f0", null ],
+      [ "fillRect", "classPaintEngine.html#ab7ee459fa790ba346a045f5ff12c47a2", null ],
       [ "pixelFormat", "classPaintEngine.html#a7aedea4f49607bfdffe1503711d4c050", null ]
     ] ]
 ];

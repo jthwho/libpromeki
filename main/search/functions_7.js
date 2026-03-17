@@ -10,8 +10,8 @@ var searchData=
   ['generatev7_7',['generateV7',['../classUUID.html#a6f61a1528f819fdd59d7b553f0e48333',1,'UUID']]],
   ['geometry_8',['geometry',['../classTuiWidget.html#a9d728fc9be701fcb79199b7875571a41',1,'TuiWidget']]],
   ['get_9',['get',['../classMatrix3x3.html#ad4a20447ac3ab508a4b802c354453131',1,'Matrix3x3::get()'],['../classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe',1,'VariantImpl::get()'],['../classStructDatabase.html#a64a470a9de2bae25353a2896e22c4dcb',1,'StructDatabase::get()'],['../classPair.html#a57f5e2a21b7efe50c75964aced5a3b48',1,'Pair::get() &amp;&amp;'],['../classPair.html#a8dfc0b9a09b5eebc05e7b64430b343c6',1,'Pair::get() const &amp;'],['../classPair.html#acea562e8e7452113a5838c5cd66119e2',1,'Pair::get() &amp;'],['../classMetadata.html#ac8a74f86424a0e9dd9ca8350c88720b9',1,'Metadata::get()'],['../classEnv.html#af2286e9900dafc2a34997797d1d6f281',1,'Env::get(const char *name, const String &amp;defaultValue)'],['../classEnv.html#a1a7542737d1fce2a67a13d87dbb94267',1,'Env::get(const char *name)']]],
-  ['getarray_10',['getarray',['../classJsonObject.html#a217105ce1f5d4961a797826631d0286e',1,'JsonObject::getArray()'],['../classJsonArray.html#a307c1bb8083bd9279bac468ba743a4c1',1,'JsonArray::getArray()']]],
-  ['getbool_11',['getbool',['../classJsonObject.html#ad0d6553d43d1a9e0dd21aa0d3c65ce0b',1,'JsonObject::getBool()'],['../classJsonArray.html#ae0d5a5d086cb397e320908f8b94c0e98',1,'JsonArray::getBool()']]],
+  ['getarray_10',['getarray',['../classJsonObject.html#a217105ce1f5d4961a797826631d0286e',1,'JsonObject::getArray()'],['../classJsonArray.html#a307c1bb8083bd9279bac468ba743a4c1',1,'JsonArray::getArray(int index, Error *err=nullptr) const']]],
+  ['getbool_11',['getbool',['../classJsonArray.html#ae0d5a5d086cb397e320908f8b94c0e98',1,'JsonArray::getBool()'],['../classJsonObject.html#ad0d6553d43d1a9e0dd21aa0d3c65ce0b',1,'JsonObject::getBool()']]],
   ['getbuildinfo_12',['getBuildInfo',['../buildinfo_8h.html#a8ec3a8904528a908f8fa91fc5385431a',1,'buildinfo.h']]],
   ['getcursorposition_13',['getCursorPosition',['../classAnsiStream.html#a65e4875b18cef8ddaeb4a84480f763b3',1,'AnsiStream']]],
   ['getdouble_14',['getdouble',['../classJsonArray.html#a93002fc6bee73f84969e0049d317f2fd',1,'JsonArray::getDouble()'],['../classJsonObject.html#ae176100371822f1bd643ccf840e6ed05',1,'JsonObject::getDouble()']]],
@@ -26,5 +26,6 @@ var searchData=
   ['global_23',['global',['../classRandom.html#a0543016b80f333ade4769ce022937775',1,'Random']]],
   ['gmpercussion_24',['gmPercussion',['../classMidiNoteNames.html#a8733a11bd004d68fd532a47812ebfe7f',1,'MidiNoteNames']]],
   ['grabmouse_25',['grabMouse',['../classTuiApplication.html#a07b6736b52630f2870d5bd4006957d8c',1,'TuiApplication']]],
-  ['green_26',['green',['../classColorSpace.html#ad6e5d752fef560cea329a70595839ea1',1,'ColorSpace']]]
+  ['graph_26',['graph',['../classMediaPipeline.html#a22f3a2b1893b2983ce9af1199216c463',1,'MediaPipeline::graph()'],['../classMediaPipeline.html#afc2b1d3d133d4d5054dda17ecd13d40e',1,'MediaPipeline::graph() const']]],
+  ['green_27',['green',['../classColorSpace.html#ad6e5d752fef560cea329a70595839ea1',1,'ColorSpace']]]
 ];

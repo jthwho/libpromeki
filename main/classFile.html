@@ -1125,8 +1125,8 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Reads <code>size</code> bytes from the current file position into <code>buf</code>, using direct I/O for the aligned interior of the region and normal I/O for any unaligned head and tail bytes. This is the optimal strategy for reading large media payloads (image data, audio samples) from container files, bypassing the OS page cache for the bulk transfer while handling misaligned boundaries gracefully.</p>
 <p>This method calls shiftData() on <code>buf</code> so that the direct I/O portion lands on an aligned destination address. After a successful call, <a class="el" href="classList.html#a81b322fbd948794fae1a38d0f9db48ab" title="Returns a pointer to the underlying contiguous storage.">buf.data()</a> points to the first byte of the requested payload. The caller only needs to ensure the buffer is allocated with at least <a class="el" href="classFile.html#ab5c88c11d95cc841bc9db6193d75c78d" title="Returns the direct I/O alignment requirement for this file.">directIOAlignment()</a> alignment and that allocSize() is at least <code>size</code> + <a class="el" href="classFile.html#ab5c88c11d95cc841bc9db6193d75c78d" title="Returns the direct I/O alignment requirement for this file.">directIOAlignment()</a>:</p>
 <div class="fragment"><div class="line"><span class="keywordtype">size_t</span> align = file.directIOAlignment();</div>
-<div class="line"><a class="code hl_class" href="classBuffer.html">Buffer</a> <a class="code hl_class" href="classList.html">buf</a>(<a class="code hl_class" href="classList.html">payloadSize</a> + align, align);</div>
-<div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a> = file.readBulk(<a class="code hl_class" href="classList.html">buf</a>, <a class="code hl_class" href="classList.html">payloadSize</a>);</div>
+<div class="line"><a class="code hl_class" href="classBuffer.html">Buffer</a> <a class="code hl_class" href="classList.html">buf</a>(payloadSize + align, align);</div>
+<div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a> = file.readBulk(<a class="code hl_class" href="classList.html">buf</a>, payloadSize);</div>
 <div class="line"><span class="comment">// buf.data() now points to the start of the payload</span></div>
 <div class="ttc" id="aclassBuffer_html"><div class="ttname"><a href="classBuffer.html">Buffer</a></div><div class="ttdoc">Generic memory buffer descriptor with alignment and memory space support.</div><div class="ttdef"><b>Definition</b> buffer.h:85</div></div>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
@@ -1510,7 +1510,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFile.html">File</a></li>
-    <li class="footer">Generated on 2026-03-16 07:23:53 from commit 377f78d (1.0.0).</li>
+    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
   </ul>
 </div>
 </body>

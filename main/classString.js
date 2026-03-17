@@ -100,9 +100,7 @@ var classString =
     [ "toUpper", "classString.html#ad72c7328e23bb1f5384295e7af3a40d1", null ],
     [ "trim", "classString.html#a5ed648f71d99bb8aef15e8ba35422a30", null ],
     [ "operator<", "classString.html#ad94401dcf2dfb1476aa89ca9835170b5", null ],
-    [ "operator<<", "classString.html#a010c9c48d9f1dbaaa799966e34512522", null ],
     [ "operator<=", "classString.html#a48545cc6c63142caa4dcce85a1b6feda", null ],
     [ "operator>", "classString.html#a1d1bcc50e73c2538ca16f3aec01eef87", null ],
-    [ "operator>=", "classString.html#a8aaac987f17f693b727f6f61c82ef59d", null ],
-    [ "operator>>", "classString.html#a1dfd94671780a016fc9ce6cb8223b123", null ]
+    [ "operator>=", "classString.html#a8aaac987f17f693b727f6f61c82ef59d", null ]
 ];

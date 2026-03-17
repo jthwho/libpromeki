@@ -11,7 +11,8 @@ var searchData=
   ['point_3c_20t_2c_202_20_3e_8',['Point&lt; T, 2 &gt;',['../classPoint.html',1,'']]],
   ['point_3c_20t_2c_20n_20_3e_9',['Point&lt; T, N &gt;',['../classPoint.html',1,'']]],
   ['priorityqueue_10',['PriorityQueue',['../classPriorityQueue.html',1,'']]],
-  ['process_11',['Process',['../classProcess.html',1,'']]],
-  ['promise_12',['Promise',['../classPromise.html',1,'']]],
-  ['promise_3c_20void_20_3e_13',['Promise&lt; void &gt;',['../classPromise_3_01void_01_4.html',1,'']]]
+  ['prioritysocket_11',['PrioritySocket',['../classPrioritySocket.html',1,'']]],
+  ['process_12',['Process',['../classProcess.html',1,'']]],
+  ['promise_13',['Promise',['../classPromise.html',1,'']]],
+  ['promise_3c_20void_20_3e_14',['Promise&lt; void &gt;',['../classPromise_3_01void_01_4.html',1,'']]]
 ];
