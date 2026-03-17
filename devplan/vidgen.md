@@ -90,16 +90,19 @@ Base-level statistics common to all nodes. Avoids ad-hoc per-node counters.
 
 ---
 
-## Step 2: Socket Layer (Phase 3A)
+## Step 2: Socket Layer (Phase 3A) — **DONE**
 
 Already fully specified in [network_sockets.md](network_sockets.md). For vidgen we need at minimum:
 
-1. **CMake setup** — new `promeki-network` library
-2. **SocketAddress** — IP + port data object
-3. **AbstractSocket** — IODevice-derived base
-4. **UdpSocket** — datagram socket with multicast support
+1. ~~**CMake setup** — new `promeki-network` library~~ **DONE**
+2. ~~**SocketAddress** — IP + port data object~~ **DONE**
+3. ~~**AbstractSocket** — IODevice-derived base~~ **DONE**
+4. ~~**UdpSocket** — datagram socket with multicast support~~ **DONE**
 
-TcpSocket, TcpServer, and RawSocket are not required for vidgen but should be implemented for library completeness since they share the AbstractSocket base. Implement them all.
+TcpSocket, TcpServer, and RawSocket are not required for vidgen but should be implemented for library completeness since they share the AbstractSocket base. All implemented:
+5. ~~**TcpSocket** — stream-oriented TCP socket~~ **DONE**
+6. ~~**TcpServer** — TCP connection listener~~ **DONE**
+7. ~~**RawSocket** — raw Ethernet frame socket (Linux AF_PACKET)~~ **DONE**
 
 ---
 

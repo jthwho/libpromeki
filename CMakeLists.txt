@@ -630,6 +630,12 @@ if(PROMEKI_BUILD_NETWORK)
         include/promeki/network/ipv6address.h
         include/promeki/network/macaddress.h
         include/promeki/network/networkaddress.h
+        include/promeki/network/socketaddress.h
+        include/promeki/network/abstractsocket.h
+        include/promeki/network/tcpsocket.h
+        include/promeki/network/tcpserver.h
+        include/promeki/network/udpsocket.h
+        include/promeki/network/rawsocket.h
     )
 
     set(PROMEKI_NETWORK_SOURCES
@@ -637,6 +643,12 @@ if(PROMEKI_BUILD_NETWORK)
         src/net/ipv6address.cpp
         src/net/macaddress.cpp
         src/net/networkaddress.cpp
+        src/net/socketaddress.cpp
+        src/net/abstractsocket.cpp
+        src/net/tcpsocket.cpp
+        src/net/tcpserver.cpp
+        src/net/udpsocket.cpp
+        src/net/rawsocket.cpp
     )
 
     add_library(promeki-network SHARED ${PROMEKI_NETWORK_SOURCES})
@@ -977,6 +989,12 @@ if(PROMEKI_BUILD_TESTS)
             tests/net/ipv6address.cpp
             tests/net/macaddress.cpp
             tests/net/networkaddress.cpp
+            tests/net/socketaddress.cpp
+            tests/net/abstractsocket.cpp
+            tests/net/udpsocket.cpp
+            tests/net/tcpsocket.cpp
+            tests/net/tcpserver.cpp
+            tests/net/rawsocket.cpp
         )
         add_executable(unittest-network ${UNITTEST_NETWORK_SOURCES})
         target_compile_definitions(unittest-network PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
