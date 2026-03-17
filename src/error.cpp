@@ -81,7 +81,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(InvalidArgument, NONE, "Invalid argument passed to function"),
         DEFINE_ERROR(InvalidDimension, NONE, "Invalid dimension for operation"),
         DEFINE_ERROR(NotHostAccessible, NONE, "Memory is not host-accessible"),
-        DEFINE_ERROR(BufferTooSmall, NONE, "Buffer is too small for the operation")
+        DEFINE_ERROR(BufferTooSmall, NONE, "Buffer is too small for the operation"),
+        DEFINE_ERROR(IdNotFound, NONE, "Requested ID was not found in the database"),
+        DEFINE_ERROR(ConversionFailed, NONE, "Type conversion could not be performed")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

@@ -86,7 +86,9 @@ class Error {
                         InvalidArgument,         ///< Invalid argument supplied.
                         InvalidDimension,        ///< Invalid dimension value.
                         NotHostAccessible,       ///< Memory is not host-accessible.
-                        BufferTooSmall           ///< Buffer is too small for the operation.
+                        BufferTooSmall,          ///< Buffer is too small for the operation.
+                        IdNotFound,              ///< Requested ID was not found in the database.
+                        ConversionFailed         ///< Type conversion could not be performed.
                 };
 
                 /**

@@ -98,6 +98,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/application.h
     include/promeki/core/array.h
     include/promeki/core/buildinfo.h
+    include/promeki/core/configoption.h
     include/promeki/core/buffer.h
     include/promeki/core/bufferview.h
     include/promeki/core/bufferediodevice.h
@@ -154,6 +155,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/slot.h
     include/promeki/core/streamstring.h
     include/promeki/core/string.h
+    include/promeki/core/stringregistry.h
     include/promeki/core/stringdata.h
     include/promeki/core/stringlist.h
     include/promeki/core/structdatabase.h
@@ -174,6 +176,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/util.h
     include/promeki/core/uuid.h
     include/promeki/core/variant.h
+    include/promeki/core/variantdatabase.h
     include/promeki/core/rect.h
     include/promeki/core/color.h
     include/promeki/core/terminal.h
@@ -943,6 +946,9 @@ if(PROMEKI_BUILD_TESTS)
         tests/fileiodevice.cpp
         tests/textstream.cpp
         tests/fileformatfactory.cpp
+        tests/stringregistry.cpp
+        tests/variantdatabase.cpp
+        tests/configoption.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})

@@ -5,6 +5,19 @@
 
 ---
 
+### StringRegistry, VariantDatabase, Config (COMPLETE)
+
+New utility classes providing a generic named-value store built on string interning:
+
+- `StringRegistry<Tag>` — thread-safe append-only registry that maps unique `String` values to compact `uint32_t` IDs. Separate registries per tag type; IDs are process-local and must not be persisted.
+- `VariantDatabase<Tag>` — maps `StringRegistry::Item` IDs to `Variant` values. Supports JSON, DataStream, and TextStream serialization. Per-tag ID namespace ensures independent databases cannot accidentally share IDs.
+- `Config` — convenience alias `VariantDatabase<ConfigTag>` for application configuration use.
+- `Error::IdNotFound` and `Error::ConversionFailed` added for `VariantDatabase::getAs()` error reporting.
+
+Tests: `tests/stringregistry.cpp`, `tests/variantdatabase.cpp`, `tests/configoption.cpp`.
+
+---
+
 ### Result\<T\> Adoption
 
 Migrate existing `std::pair<T, Error>` returns to `Result<T>` as classes are touched:
