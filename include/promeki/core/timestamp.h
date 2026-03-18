@@ -206,6 +206,12 @@ class TimeStamp {
                         return String::number(seconds());
                 }
 
+                /** @brief Returns true if both timestamps represent the same time point. */
+                bool operator==(const TimeStamp &other) const { return _value == other._value; }
+
+                /** @brief Returns true if the timestamps represent different time points. */
+                bool operator!=(const TimeStamp &other) const { return _value != other._value; }
+
                 /** @brief Converts the TimeStamp to a String. */
                 operator String() const {
                         return toString();

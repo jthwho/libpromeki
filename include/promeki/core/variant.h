@@ -81,7 +81,10 @@ PROMEKI_NAMESPACE_BEGIN
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
-        struct VariantEnd {};
+        struct VariantEnd {
+                bool operator==(const VariantEnd &) const { return true; }
+                bool operator!=(const VariantEnd &) const { return false; }
+        };
 }
 
 /**
@@ -352,6 +355,67 @@ template <typename... Types> class VariantImpl {
                         }
                         return *this;
                 }
+
+                /**
+                 * @brief Returns true if both variants hold equal values.
+                 *
+                 * Comparison is performed in three tiers:
+                 *  1. **Same type** — uses the type's own operator==.
+                 *  2. **Cross-type numeric** (including bool) — promotes to a
+                 *     common representation: double when either operand is
+                 *     floating-point, otherwise a safe signed/unsigned integer
+                 *     comparison via uint64_t with a negative-value guard.
+                 *  3. **Cross-type convertible** — attempts to convert one
+                 *     operand to the other's type via get<T>().  Both
+                 *     directions are tried; if either conversion succeeds
+                 *     and the converted values compare equal, returns true.
+                 *
+                 * @par Example
+                 * @code
+                 * // Same type — direct comparison
+                 * Variant(int32_t(42)) == Variant(int32_t(42));  // true
+                 *
+                 * // Cross-type numeric promotion
+                 * Variant(int32_t(42)) == Variant(uint32_t(42)); // true
+                 * Variant(int32_t(3))  == Variant(3.0);          // true
+                 * Variant(int32_t(-1)) == Variant(uint32_t(0));  // false (negative guard)
+                 *
+                 * // Cross-type convertible
+                 * Variant(int32_t(42)) == Variant(String("42")); // true
+                 * @endcode
+                 */
+                bool operator==(const VariantImpl &other) const {
+                        return std::visit([this, &other](auto &&a, auto &&b) -> bool {
+                                using A = std::decay_t<decltype(a)>;
+                                using B = std::decay_t<decltype(b)>;
+                                if constexpr (std::is_same_v<A, B>) {
+                                        return a == b;
+                                } else if constexpr (std::is_arithmetic_v<A> && std::is_arithmetic_v<B>) {
+                                        if constexpr (std::is_floating_point_v<A> || std::is_floating_point_v<B>) {
+                                                return static_cast<double>(a) == static_cast<double>(b);
+                                        } else if constexpr (std::is_signed_v<A> && !std::is_signed_v<B>) {
+                                                if(a < 0) return false;
+                                                return static_cast<uint64_t>(a) == static_cast<uint64_t>(b);
+                                        } else if constexpr (!std::is_signed_v<A> && std::is_signed_v<B>) {
+                                                if(b < 0) return false;
+                                                return static_cast<uint64_t>(a) == static_cast<uint64_t>(b);
+                                        } else {
+                                                using Common = std::common_type_t<A, B>;
+                                                return static_cast<Common>(a) == static_cast<Common>(b);
+                                        }
+                                } else {
+                                        Error err;
+                                        A ca = other.template get<A>(&err);
+                                        if(err.isOk() && a == ca) return true;
+                                        B cb = get<B>(&err);
+                                        if(err.isOk() && cb == b) return true;
+                                        return false;
+                                }
+                        }, v, other.v);
+                }
+
+                /** @brief Returns true if the variants are not equal. */
+                bool operator!=(const VariantImpl &other) const { return !(*this == other); }
 
         private:
                 std::variant<Types...> v;

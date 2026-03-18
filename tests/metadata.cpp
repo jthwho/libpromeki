@@ -116,10 +116,22 @@ TEST_CASE("Metadata_ForEach") {
 // ============================================================================
 
 TEST_CASE("Metadata_IDConversion") {
+    // Well-known IDs are valid and round-trip through name
+    CHECK(Metadata::Title.isValid());
+    CHECK(Metadata::Artist.isValid());
     CHECK(Metadata::idToString(Metadata::Title) == "Title");
     CHECK(Metadata::idToString(Metadata::Artist) == "Artist");
     CHECK(Metadata::stringToID("Title") == Metadata::Title);
     CHECK(Metadata::stringToID("Artist") == Metadata::Artist);
+
+    // All well-known IDs are distinct
+    CHECK(Metadata::Title != Metadata::Artist);
+    CHECK(Metadata::Timecode != Metadata::FrameRate);
+    CHECK(Metadata::EnableBWF != Metadata::EnableVBR);
+
+    // Default-constructed ID is invalid
+    Metadata::ID invalid;
+    CHECK(!invalid.isValid());
 }
 
 // ============================================================================

@@ -246,6 +246,30 @@ class VariantDatabase {
                 }
 
                 // ============================================================
+                // Comparison
+                // ============================================================
+
+                /**
+                 * @brief Returns true if both databases contain the same entries.
+                 *
+                 * Two databases are equal if they hold the same set of IDs and each
+                 * corresponding value compares equal via Variant::operator==.
+                 *
+                 * @par Example
+                 * @code
+                 * VariantDatabase<MyTag> a, b;
+                 * VariantDatabase<MyTag>::ID key("width");
+                 * a.set(key, 1920);
+                 * b.set(key, 1920);
+                 * bool same = (a == b);  // true
+                 * @endcode
+                 */
+                bool operator==(const VariantDatabase &other) const { return _data == other._data; }
+
+                /** @brief Returns true if the databases differ. */
+                bool operator!=(const VariantDatabase &other) const { return _data != other._data; }
+
+                // ============================================================
                 // JSON serialization
                 // ============================================================
 

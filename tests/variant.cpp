@@ -173,3 +173,65 @@ TEST_CASE("Variant_Copy") {
     CHECK(v2.get<String>() == "hello");
     CHECK(v1.type() == v2.type());
 }
+
+// ============================================================================
+// Equality
+// ============================================================================
+
+TEST_CASE("Variant_EqualitySameType") {
+    CHECK(Variant(int32_t(42)) == Variant(int32_t(42)));
+    CHECK(Variant(String("hello")) == Variant(String("hello")));
+    CHECK(Variant(true) == Variant(true));
+    CHECK(Variant(3.14) == Variant(3.14));
+}
+
+TEST_CASE("Variant_InequalitySameType") {
+    CHECK(Variant(int32_t(1)) != Variant(int32_t(2)));
+    CHECK(Variant(String("a")) != Variant(String("b")));
+    CHECK(Variant(true) != Variant(false));
+}
+
+TEST_CASE("Variant_EqualityCrossNumeric") {
+    // Same value, different integer widths/signs
+    CHECK(Variant(int32_t(42)) == Variant(uint32_t(42)));
+    CHECK(Variant(int32_t(42)) == Variant(int64_t(42)));
+    CHECK(Variant(uint8_t(7)) == Variant(int64_t(7)));
+    CHECK(Variant(int32_t(1)) == Variant(true));
+    CHECK(Variant(int32_t(0)) == Variant(false));
+
+    // Integer vs floating-point
+    CHECK(Variant(int32_t(3)) == Variant(3.0));
+    CHECK(Variant(uint64_t(100)) == Variant(100.0f));
+
+    // Negative signed vs unsigned is never equal
+    CHECK(Variant(int32_t(-1)) != Variant(uint32_t(0)));
+
+    // Numeric vs non-numeric: conversion is attempted
+    CHECK(Variant(int32_t(42)) == Variant(String("42")));
+    CHECK(Variant(int32_t(42)) != Variant(String("99")));
+}
+
+TEST_CASE("Variant_EqualityCrossConvertible") {
+    // Timecode <-> String
+    Timecode tc = Timecode::fromFrameNumber(Timecode::NDF24, 86400);
+    auto [tcStr, strErr] = tc.toString();
+    CHECK(Variant(tc) == Variant(tcStr));
+
+    // UUID <-> String
+    UUID u = UUID::generate();
+    String uStr = u.toString();
+    CHECK(Variant(u) == Variant(uStr));
+
+    // Mismatched values still compare unequal
+    CHECK(Variant(tc) != Variant(String("not a timecode")));
+
+    // Completely unrelated types are unequal
+    CHECK(Variant(tc) != Variant(u));
+}
+
+TEST_CASE("Variant_EqualityInvalid") {
+    Variant a;
+    Variant b;
+    CHECK(a == b);
+    CHECK(a != Variant(int32_t(0)));
+}

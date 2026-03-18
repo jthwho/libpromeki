@@ -88,6 +88,16 @@ template<typename T> class Size2DTemplate {
                         return toString();
                 }
 
+                /** @brief Returns true if both sizes have equal width and height. */
+                bool operator==(const Size2DTemplate &other) const {
+                        return _width == other._width && _height == other._height;
+                }
+
+                /** @brief Returns true if the sizes differ. */
+                bool operator!=(const Size2DTemplate &other) const {
+                        return !(*this == other);
+                }
+
                 /** @brief Returns true if the given 2D point lies within the size bounds. */
                 template <typename N> bool pointIsInside(const Point<N, 2> &p) const {
                         return p.x() >= 0 && 

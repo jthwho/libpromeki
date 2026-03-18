@@ -108,3 +108,27 @@ TEST_CASE("TimeStamp: Value conversion operator") {
         TimeStamp ts2(v);
         CHECK(ts2.seconds() == doctest::Approx(ts.seconds()));
 }
+
+// ============================================================================
+// Equality operators
+// ============================================================================
+
+TEST_CASE("TimeStamp: equality same value") {
+        TimeStamp ts = TimeStamp::now();
+        TimeStamp ts2(ts.value());
+        CHECK(ts == ts2);
+        CHECK_FALSE(ts != ts2);
+}
+
+TEST_CASE("TimeStamp: equality different values") {
+        TimeStamp a = TimeStamp::now();
+        TimeStamp b = a + TimeStamp::secondsToDuration(1.0);
+        CHECK_FALSE(a == b);
+        CHECK(a != b);
+}
+
+TEST_CASE("TimeStamp: equality default constructed") {
+        TimeStamp a;
+        TimeStamp b;
+        CHECK(a == b);
+}

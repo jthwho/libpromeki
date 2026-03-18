@@ -513,3 +513,76 @@ TEST_CASE("VariantDatabase: TextStream empty output") {
 
         CHECK(output.isEmpty());
 }
+
+// ============================================================
+// Equality
+// ============================================================
+
+TEST_CASE("VariantDatabase: equality empty") {
+        struct EqEmptyTag {};
+        using DB = VariantDatabase<EqEmptyTag>;
+
+        DB a;
+        DB b;
+        CHECK(a == b);
+        CHECK_FALSE(a != b);
+}
+
+TEST_CASE("VariantDatabase: equality matching") {
+        struct EqMatchTag {};
+        using DB = VariantDatabase<EqMatchTag>;
+        DB::ID name("name");
+        DB::ID count("count");
+
+        DB a;
+        a.set(name, String("hello"));
+        a.set(count, int32_t(42));
+
+        DB b;
+        b.set(name, String("hello"));
+        b.set(count, int32_t(42));
+
+        CHECK(a == b);
+}
+
+TEST_CASE("VariantDatabase: inequality different values") {
+        struct EqDiffValTag {};
+        using DB = VariantDatabase<EqDiffValTag>;
+        DB::ID name("name");
+
+        DB a;
+        a.set(name, String("hello"));
+        DB b;
+        b.set(name, String("world"));
+
+        CHECK(a != b);
+}
+
+TEST_CASE("VariantDatabase: inequality different keys") {
+        struct EqDiffKeyTag {};
+        using DB = VariantDatabase<EqDiffKeyTag>;
+        DB::ID k1("k1");
+        DB::ID k2("k2");
+
+        DB a;
+        a.set(k1, int32_t(1));
+        DB b;
+        b.set(k2, int32_t(1));
+
+        CHECK(a != b);
+}
+
+TEST_CASE("VariantDatabase: inequality different size") {
+        struct EqDiffSzTag {};
+        using DB = VariantDatabase<EqDiffSzTag>;
+        DB::ID k1("k1");
+        DB::ID k2("k2");
+
+        DB a;
+        a.set(k1, int32_t(1));
+        DB b;
+        b.set(k1, int32_t(1));
+        b.set(k2, int32_t(2));
+
+        CHECK(a != b);
+}

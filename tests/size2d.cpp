@@ -91,3 +91,42 @@ TEST_CASE("Size2Dd: double specialization") {
         CHECK(s.width() == doctest::Approx(1920.5));
         CHECK(s.height() == doctest::Approx(1080.5));
 }
+
+// ============================================================================
+// Equality operators
+// ============================================================================
+
+TEST_CASE("Size2Du32: equality equal") {
+        Size2Du32 a(1920, 1080);
+        Size2Du32 b(1920, 1080);
+        CHECK(a == b);
+        CHECK_FALSE(a != b);
+}
+
+TEST_CASE("Size2Du32: equality different width") {
+        Size2Du32 a(1920, 1080);
+        Size2Du32 b(1280, 1080);
+        CHECK_FALSE(a == b);
+        CHECK(a != b);
+}
+
+TEST_CASE("Size2Du32: equality different height") {
+        Size2Du32 a(1920, 1080);
+        Size2Du32 b(1920, 720);
+        CHECK_FALSE(a == b);
+        CHECK(a != b);
+}
+
+TEST_CASE("Size2Du32: equality default constructed") {
+        Size2Du32 a;
+        Size2Du32 b;
+        CHECK(a == b);
+}
+
+TEST_CASE("Size2Di32: equality") {
+        Size2Di32 a(640, 480);
+        Size2Di32 b(640, 480);
+        Size2Di32 c(640, 240);
+        CHECK(a == b);
+        CHECK(a != c);
+}
