@@ -98,3 +98,39 @@ The `std::istringstream` was replaced with `strtoll` as part of the stream migra
 - [ ] Verify no unique test coverage exists in `tests/image.cpp` that isn't already in `image2.cpp` or `paintengine.cpp`
 - [ ] Delete `tests/image.cpp` once confirmed redundant
 
+---
+
+## Replace Direct std Library Usage with Library Wrappers
+
+Library classes should use the library's own container/type wrappers (`List`, `Map`, `Array`, `String`) instead of raw std types. The following violations have been identified:
+
+### std::vector → List\<T\>
+
+- **`include/promeki/proav/pixelformat_old.h:77,134-136`** — Public typedef `CompList = std::vector<Comp>` and `Data` struct members (`fourccList`, `compList`, `planeList`) all use `std::vector` directly.
+- **`src/bufferediodevice.cpp:149,167,211,227,240`** — Multiple `std::vector<uint8_t>` used as temporary read/collect buffers.
+- **`src/imagefileio_png.cpp:105`** — `std::vector<png_bytep>` for PNG row pointers.
+
+### std::map → Map\<K,V\>
+
+- **`src/string.cpp:283`** — `static const std::map<std::string, int64_t> numberWords` lookup table.
+- **`src/datetime.cpp:78`** — `static const std::map<std::string, system_clock::duration> units` lookup table.
+
+### std::array → Array\<T,N\>
+
+- **`include/promeki/proav/colorspace.h:41`** — `typedef std::array<CIEPoint, 4> Params` in public API.
+- **`include/promeki/network/macaddress.h:109`** — `std::array<uint8_t, 6>` in constructor initializer.
+- **`include/promeki/music/musicalscale.h:45`** — `using MembershipMask = std::array<int, 12>` public typedef.
+- **`include/promeki/core/util.h:116,127,141-144,154`** — `std::array<T, 4>` in public template function signatures (`promekiCatmullRom`, `promekiBezier`, `promekiBicubic`, `promekiCubic`).
+- **`src/system.cpp:27`** — `std::array<char, HOST_NAME_MAX>` local variable.
+
+### Tasks
+
+- [ ] Replace `std::vector` with `List<T>` in `pixelformat_old.h`
+- [ ] Replace `std::vector` with `List<T>` in `bufferediodevice.cpp`
+- [ ] Replace `std::vector` with `List<T>` in `imagefileio_png.cpp`
+- [ ] Replace `std::map` with `Map<K,V>` in `string.cpp` and `datetime.cpp`
+- [ ] Replace `std::array` with `Array<T,N>` in `colorspace.h`, `macaddress.h`, `musicalscale.h`
+- [ ] Replace `std::array` with `Array<T,N>` in `util.h` template functions
+- [ ] Replace `std::array` with `Array<T,N>` in `system.cpp`
+- [ ] Verify all replacements compile and pass tests
+
