@@ -6,9 +6,11 @@
  */
 
 #include <cstring>
+#include <thread>
 #include <doctest/doctest.h>
 #include <promeki/proav/rtpvideosinknode.h>
-#include <promeki/proav/mediagraph.h>
+#include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
@@ -33,8 +35,12 @@ class RtpVideoTestSource : public MediaNode {
         public:
                 RtpVideoTestSource() : MediaNode() {
                         setName("RtpVideoTestSource");
-                        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Image);
-                        addOutputPort(port);
+                        auto port = MediaSource::Ptr::create("output", ContentVideo);
+                        addSource(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override { return; }
                 void pushFrame(Frame::Ptr frame) {
@@ -70,12 +76,9 @@ static Image createSmallTestImage(int width = 64, int height = 64) {
 TEST_CASE("RtpVideoSinkNode_Construct") {
         RtpVideoSinkNode node;
         CHECK(node.name() == "RtpVideoSinkNode");
-        CHECK(node.inputPortCount() == 1);
-        CHECK(node.outputPortCount() == 0);
-        CHECK(node.inputPort(0)->mediaType() == MediaPort::Image);
-        CHECK(node.payloadType() == 96);
-        CHECK(node.clockRate() == 90000);
-        CHECK(node.dscp() == 34);
+        CHECK(node.sinkCount() == 1);
+        CHECK(node.sourceCount() == 0);
+        CHECK(node.sink(0)->contentHint() == ContentVideo);
 }
 
 // ============================================================================
@@ -93,11 +96,10 @@ TEST_CASE("RtpVideoSinkNode_Registry") {
 
 TEST_CASE("RtpVideoSinkNode_PortStructure") {
         RtpVideoSinkNode node;
-        CHECK(node.inputPortCount() == 1);
-        CHECK(node.outputPortCount() == 0);
-        CHECK(node.inputPort(0)->name() == "input");
-        CHECK(node.inputPort(0)->direction() == MediaPort::Input);
-        CHECK(node.inputPort(0)->mediaType() == MediaPort::Image);
+        CHECK(node.sinkCount() == 1);
+        CHECK(node.sourceCount() == 0);
+        CHECK(node.sink(0)->name() == "input");
+        CHECK(node.sink(0)->contentHint() == ContentVideo);
 }
 
 #ifdef PROMEKI_HAVE_NETWORK
@@ -107,10 +109,22 @@ TEST_CASE("RtpVideoSinkNode_PortStructure") {
 // ============================================================================
 
 TEST_CASE("RtpVideoSinkNode_ConfigureFailNoPayload") {
-        RtpVideoSinkNode node;
-        node.setDestination(SocketAddress::localhost(5004));
-        node.setFrameRate(FrameRate::FPS_30);
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        RtpVideoTestSource *src = new RtpVideoTestSource();
+        RtpVideoSinkNode *sink = new RtpVideoSinkNode();
+
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("destination", Variant(String("127.0.0.1:5004")));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        BuildResult result = sink->build(sinkCfg);
+        CHECK(result.isError());
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        Error err = pipeline.start();
         CHECK(err.isError());
 }
 
@@ -120,10 +134,22 @@ TEST_CASE("RtpVideoSinkNode_ConfigureFailNoPayload") {
 
 TEST_CASE("RtpVideoSinkNode_ConfigureFailNoDestination") {
         RtpPayloadRawVideo payload(64, 64, 24);
-        RtpVideoSinkNode node;
-        node.setRtpPayload(&payload);
-        node.setFrameRate(FrameRate::FPS_30);
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        RtpVideoTestSource *src = new RtpVideoTestSource();
+        RtpVideoSinkNode *sink = new RtpVideoSinkNode();
+
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        BuildResult result = sink->build(sinkCfg);
+        CHECK(result.isError());
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        Error err = pipeline.start();
         CHECK(err.isError());
 }
 
@@ -133,10 +159,22 @@ TEST_CASE("RtpVideoSinkNode_ConfigureFailNoDestination") {
 
 TEST_CASE("RtpVideoSinkNode_ConfigureFailNoFrameRate") {
         RtpPayloadRawVideo payload(64, 64, 24);
-        RtpVideoSinkNode node;
-        node.setRtpPayload(&payload);
-        node.setDestination(SocketAddress::localhost(5004));
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        RtpVideoTestSource *src = new RtpVideoTestSource();
+        RtpVideoSinkNode *sink = new RtpVideoSinkNode();
+
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("destination", Variant(String("127.0.0.1:5004")));
+        BuildResult result = sink->build(sinkCfg);
+        CHECK(result.isError());
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        Error err = pipeline.start();
         CHECK(err.isError());
 }
 
@@ -146,13 +184,24 @@ TEST_CASE("RtpVideoSinkNode_ConfigureFailNoFrameRate") {
 
 TEST_CASE("RtpVideoSinkNode_ConfigureSuccess") {
         RtpPayloadRawVideo payload(64, 64, 24);
-        RtpVideoSinkNode node;
-        node.setDestination(SocketAddress::localhost(5004));
-        node.setFrameRate(FrameRate::FPS_30);
-        node.setRtpPayload(&payload);
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        RtpVideoTestSource *src = new RtpVideoTestSource();
+        RtpVideoSinkNode *sink = new RtpVideoSinkNode();
+
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("destination", Variant(String("127.0.0.1:5004")));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sink->build(sinkCfg);
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        Error err = pipeline.start();
         CHECK(err.isOk());
-        CHECK(node.state() == MediaNode::Configured);
+        CHECK(sink->state() == MediaNode::Running);
 }
 
 // ============================================================================
@@ -161,22 +210,32 @@ TEST_CASE("RtpVideoSinkNode_ConfigureSuccess") {
 
 TEST_CASE("RtpVideoSinkNode_StartStopLifecycle") {
         RtpPayloadRawVideo payload(64, 64, 24);
-        RtpVideoSinkNode node;
-        node.setDestination(SocketAddress::localhost(5004));
-        node.setFrameRate(FrameRate::FPS_30);
-        node.setRtpPayload(&payload);
-        REQUIRE(node.configure().isOk());
+        MediaPipeline pipeline;
+        RtpVideoTestSource *src = new RtpVideoTestSource();
+        RtpVideoSinkNode *sink = new RtpVideoSinkNode();
 
-        Error err = node.start();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("destination", Variant(String("127.0.0.1:5004")));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sink->build(sinkCfg);
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+
+        Error err = pipeline.start();
         CHECK(err.isOk());
-        CHECK(node.state() == MediaNode::Running);
+        CHECK(sink->state() == MediaNode::Running);
 
-        node.stop();
-        CHECK(node.state() == MediaNode::Idle);
+        pipeline.stop();
+        CHECK(sink->state() == MediaNode::Idle);
 }
 
 // ============================================================================
-// Send frame via loopback — verify RTP headers
+// Send frame via loopback -- verify RTP headers
 // ============================================================================
 
 TEST_CASE("RtpVideoSinkNode_SendFrameLoopback") {
@@ -187,26 +246,30 @@ TEST_CASE("RtpVideoSinkNode_SendFrameLoopback") {
 
         RtpPayloadRawVideo payload(64, 64, 24);
 
-        // Graph owns all nodes — heap-allocate everything
-        MediaGraph graph;
+        // Graph owns all nodes -- heap-allocate everything
+        MediaPipeline pipeline;
         RtpVideoTestSource *src = new RtpVideoTestSource();
         RtpVideoSinkNode *sink = new RtpVideoSinkNode();
-        sink->setDestination(SocketAddress::localhost(recvPort));
-        sink->setFrameRate(FrameRate::FPS_30);
-        sink->setRtpPayload(&payload);
-        sink->setPayloadType(96);
-        REQUIRE(sink->configure().isOk());
-        REQUIRE(sink->start().isOk());
 
-        graph.addNode(src);
-        graph.addNode(sink);
-        graph.connect(src, 0, sink, 0);
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("destination", Variant(String("127.0.0.1:" + String::number(recvPort))));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("payloadType", Variant(uint8_t(96)));
+        sink->build(sinkCfg);
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        REQUIRE(pipeline.start().isOk());
 
         Image img = createSmallTestImage();
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        sink->process();
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // Receive at least one datagram
         bool received = false;
@@ -224,7 +287,7 @@ TEST_CASE("RtpVideoSinkNode_SendFrameLoopback") {
         }
         CHECK(received);
 
-        sink->stop();
+        pipeline.stop();
 }
 
 // ============================================================================
@@ -239,19 +302,23 @@ TEST_CASE("RtpVideoSinkNode_TimestampContinuity") {
 
         RtpPayloadRawVideo payload(16, 16, 24);
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         RtpVideoTestSource *src = new RtpVideoTestSource();
         RtpVideoSinkNode *sink = new RtpVideoSinkNode();
-        sink->setDestination(SocketAddress::localhost(recvPort));
-        sink->setFrameRate(FrameRate::FPS_30);
-        sink->setRtpPayload(&payload);
-        sink->setClockRate(90000);
-        REQUIRE(sink->configure().isOk());
-        REQUIRE(sink->start().isOk());
 
-        graph.addNode(src);
-        graph.addNode(sink);
-        graph.connect(src, 0, sink, 0);
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("destination", Variant(String("127.0.0.1:" + String::number(recvPort))));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("clockRate", Variant(uint32_t(90000)));
+        sink->build(sinkCfg);
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        REQUIRE(pipeline.start().isOk());
 
         // Expected increment: 90000 * 1 / 30 = 3000
         uint32_t expectedIncrement = 3000;
@@ -262,7 +329,7 @@ TEST_CASE("RtpVideoSinkNode_TimestampContinuity") {
                 Frame::Ptr frame = Frame::Ptr::create();
                 frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
                 src->pushFrame(frame);
-                sink->process();
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
                 // Drain all packets for this frame, keep last (marker) timestamp
                 uint8_t buf[2048];
@@ -286,29 +353,7 @@ TEST_CASE("RtpVideoSinkNode_TimestampContinuity") {
         REQUIRE(timestamps.size() == 2);
         CHECK(timestamps[1] - timestamps[0] == expectedIncrement);
 
-        sink->stop();
-}
-
-// ============================================================================
-// Starvation counter
-// ============================================================================
-
-TEST_CASE("RtpVideoSinkNode_Starvation") {
-        RtpPayloadRawVideo payload(64, 64, 24);
-        RtpVideoSinkNode node;
-        node.setDestination(SocketAddress::localhost(5004));
-        node.setFrameRate(FrameRate::FPS_30);
-        node.setRtpPayload(&payload);
-        REQUIRE(node.configure().isOk());
-
-        auto stats0 = node.extendedStats();
-        CHECK(stats0["underrunCount"].get<uint64_t>() == 0);
-
-        node.starvation();
-        node.starvation();
-
-        auto stats1 = node.extendedStats();
-        CHECK(stats1["underrunCount"].get<uint64_t>() == 2);
+        pipeline.stop();
 }
 
 // ============================================================================
@@ -317,13 +362,24 @@ TEST_CASE("RtpVideoSinkNode_Starvation") {
 
 TEST_CASE("RtpVideoSinkNode_ExtendedStats") {
         RtpPayloadRawVideo payload(64, 64, 24);
-        RtpVideoSinkNode node;
-        node.setDestination(SocketAddress::localhost(5004));
-        node.setFrameRate(FrameRate::FPS_30);
-        node.setRtpPayload(&payload);
-        REQUIRE(node.configure().isOk());
+        MediaPipeline pipeline;
+        RtpVideoTestSource *src = new RtpVideoTestSource();
+        RtpVideoSinkNode *sink = new RtpVideoSinkNode();
 
-        auto stats = node.extendedStats();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig sinkCfg("RtpVideoSinkNode", "sink");
+        sinkCfg.set("destination", Variant(String("127.0.0.1:5004")));
+        sinkCfg.set("frameRate", Variant(String("30")));
+        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sink->build(sinkCfg);
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        REQUIRE(pipeline.start().isOk());
+
+        auto stats = sink->extendedStats();
         CHECK(stats.contains("packetsSent"));
         CHECK(stats.contains("bytesSent"));
         CHECK(stats.contains("underrunCount"));

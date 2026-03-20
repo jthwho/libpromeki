@@ -6,124 +6,224 @@
  */
 
 #include <promeki/proav/medianode.h>
+#include <promeki/proav/medianodeconfig.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+// ---- BuildResult ----
+
+bool BuildResult::isOk() const {
+        for(const auto &e : entries) {
+                if(e.severity == Severity::Error || e.severity == Severity::Fatal) return false;
+        }
+        return true;
+}
+
+bool BuildResult::isError() const {
+        return !isOk();
+}
+
+void BuildResult::addInfo(const String &msg) {
+        entries.pushToBack({Severity::Info, msg});
+        return;
+}
+
+void BuildResult::addWarning(const String &msg) {
+        entries.pushToBack({Severity::Warning, msg});
+        return;
+}
+
+void BuildResult::addError(const String &msg) {
+        entries.pushToBack({Severity::Error, msg});
+        return;
+}
+
+// ---- MediaNodeThread ----
+
+// Internal Thread subclass that runs a MediaNode's processing loop.
+class MediaNodeThread : public Thread {
+        public:
+                MediaNodeThread(MediaNode *node) : _node(node) { }
+        protected:
+                void run() override { _node->threadEntry(); return; }
+        private:
+                MediaNode *_node;
+};
+
+// ---- MediaNode ----
 
 MediaNode::MediaNode(ObjectBase *parent) : ObjectBase(parent) {
 }
 
 MediaNode::~MediaNode() {
+        delete _thread;
 }
 
-MediaPort::Ptr MediaNode::inputPort(int index) const {
-        if(index < 0 || index >= (int)_inputPorts.size()) return MediaPort::Ptr();
-        return _inputPorts[index];
+MediaSink::Ptr MediaNode::sink(int index) const {
+        if(index < 0 || index >= (int)_sinks.size()) return MediaSink::Ptr();
+        return _sinks[index];
 }
 
-MediaPort::Ptr MediaNode::outputPort(int index) const {
-        if(index < 0 || index >= (int)_outputPorts.size()) return MediaPort::Ptr();
-        return _outputPorts[index];
+MediaSource::Ptr MediaNode::source(int index) const {
+        if(index < 0 || index >= (int)_sources.size()) return MediaSource::Ptr();
+        return _sources[index];
 }
 
-MediaPort::Ptr MediaNode::inputPort(const String &name) const {
-        for(const auto &port : _inputPorts) {
-                if(port->name() == name) return port;
+MediaSink::Ptr MediaNode::sink(const String &name) const {
+        for(const auto &s : _sinks) {
+                if(s->name() == name) return s;
         }
-        return MediaPort::Ptr();
+        return MediaSink::Ptr();
 }
 
-MediaPort::Ptr MediaNode::outputPort(const String &name) const {
-        for(const auto &port : _outputPorts) {
-                if(port->name() == name) return port;
+MediaSource::Ptr MediaNode::source(const String &name) const {
+        for(const auto &s : _sources) {
+                if(s->name() == name) return s;
         }
-        return MediaPort::Ptr();
+        return MediaSource::Ptr();
 }
 
-void MediaNode::enqueueInput(Frame::Ptr frame) {
-        _inputQueue.push(std::move(frame));
-        int depth = _inputQueue.size();
-        std::lock_guard<std::mutex> lock(_statsMutex);
-        if(depth > _peakQueueDepth) _peakQueueDepth = depth;
+void MediaNode::setThread(Thread *thread) {
+        delete _thread;
+        _thread = thread;
         return;
 }
 
-Error MediaNode::configure() {
-        if(_state != Idle) return Error(Error::Invalid);
-        setState(Configured);
+void MediaNode::wake() {
+        _workCv.wakeAll();
+        return;
+}
+
+bool MediaNode::hasInput() const {
+        for(const auto &s : _sinks) {
+                if(s->queueSize() > 0) return true;
+        }
+        return false;
+}
+
+bool MediaNode::canOutput() const {
+        for(int i = 0; i < (int)_sources.size(); i++) {
+                if(!canOutput(i)) return false;
+        }
+        return true;
+}
+
+bool MediaNode::canOutput(int sourceIndex) const {
+        MediaSource::Ptr src = source(sourceIndex);
+        if(!src.isValid()) return false;
+        return src->sinksReadyForFrame();
+}
+
+bool MediaNode::hasWork() const {
+        if(_sinks.isEmpty()) {
+                // Source node: can produce if outputs can accept
+                return canOutput();
+        }
+        return hasInput() && canOutput();
+}
+
+Error MediaNode::waitForWork(unsigned int timeoutMs) {
+        if(_state != Running) return Error(Error::Stopped);
+        Mutex::Locker lock(_workMutex);
+        Error err = _workCv.wait(_workMutex,
+                [this] { return hasWork() || _state != Running; }, timeoutMs);
+        if(err != Error::Ok) return err;
+        if(_state != Running) return Error(Error::Stopped);
         return Error(Error::Ok);
 }
 
 Error MediaNode::start() {
         if(_state != Configured) return Error(Error::Invalid);
         setState(Running);
+        if(_thread == nullptr) {
+                _thread = new MediaNodeThread(this);
+        }
+        _thread->start();
         return Error(Error::Ok);
 }
 
 void MediaNode::stop() {
         setState(Idle);
-        return;
-}
-
-void MediaNode::starvation() {
-        return;
-}
-
-Map<String, Variant> MediaNode::properties() const {
-        Map<String, Variant> ret;
-        ret.insert("name", Variant(_name));
-        return ret;
-}
-
-Error MediaNode::setProperty(const String &name, const Variant &value) {
-        if(name == "name") {
-                _name = value.get<String>();
-                return Error(Error::Ok);
+        wake();
+        if(_thread != nullptr) {
+                _thread->wait();
+                delete _thread;
+                _thread = nullptr;
         }
-        return Error(Error::Invalid);
+        cleanup();
+        return;
 }
 
-Variant MediaNode::property(const String &name) const {
-        Map<String, Variant> props = properties();
-        if(props.contains(name)) return props[name];
-        return Variant();
+void MediaNode::cleanup() {
+        return;
 }
 
-Frame::Ptr MediaNode::dequeueInput() {
+Frame::Ptr MediaNode::dequeueInput(int sinkIndex) {
+        MediaSink::Ptr s = sink(sinkIndex);
+        if(!s.isValid()) return Frame::Ptr();
         Frame::Ptr frame;
-        _inputQueue.popOrFail(frame);
+        if(!s->popOrFail(frame)) return Frame::Ptr();
         return frame;
 }
 
-void MediaNode::deliverOutput(int portIndex, Frame::Ptr frame) {
-        MediaPort::Ptr port = outputPort(portIndex);
-        if(!port.isValid()) return;
-        for(auto &link : _outgoingLinks) {
-                if(link->sourceNode() == this &&
-                   link->source()->name() == port->name()) {
-                        link->deliver(frame);
+Frame::Ptr MediaNode::dequeueInput(const String &sinkName) {
+        for(int i = 0; i < (int)_sinks.size(); i++) {
+                if(_sinks[i]->name() == sinkName) {
+                        return dequeueInput(i);
                 }
         }
+        return Frame::Ptr();
+}
+
+Frame::Ptr MediaNode::dequeueInput() {
+        for(int i = 0; i < (int)_sinks.size(); i++) {
+                if(_sinks[i]->queueSize() > 0) {
+                        return dequeueInput(i);
+                }
+        }
+        return Frame::Ptr();
+}
+
+void MediaNode::threadEntry() {
+        while(_state == Running) {
+                Error err = waitForWork();
+                if(err != Error::Ok) break;
+                process();
+        }
+        return;
+}
+
+int MediaNode::aggregateQueueDepth() const {
+        int total = 0;
+        for(const auto &s : _sinks) {
+                total += (int)s->queueSize();
+        }
+        return total;
+}
+
+void MediaNode::deliverOutput(int sourceIndex, Frame::Ptr frame) {
+        MediaSource::Ptr src = source(sourceIndex);
+        if(!src.isValid()) return;
+        src->deliver(std::move(frame));
         return;
 }
 
 void MediaNode::deliverOutput(Frame::Ptr frame) {
-        for(auto &link : _outgoingLinks) {
-                link->deliver(frame);
+        for(const auto &src : _sources) {
+                src->deliver(frame);
         }
         return;
 }
 
-void MediaNode::addInputPort(MediaPort::Ptr port) {
-        port.modify()->setNode(this);
-        port.modify()->setConnected(false);
-        _inputPorts.pushToBack(std::move(port));
+void MediaNode::addSink(MediaSink::Ptr sink) {
+        sink->setNode(this);
+        _sinks.pushToBack(std::move(sink));
         return;
 }
 
-void MediaNode::addOutputPort(MediaPort::Ptr port) {
-        port.modify()->setNode(this);
-        port.modify()->setConnected(false);
-        _outputPorts.pushToBack(std::move(port));
+void MediaNode::addSource(MediaSource::Ptr source) {
+        source->setNode(this);
+        _sources.pushToBack(std::move(source));
         return;
 }
 
@@ -138,11 +238,10 @@ NodeStats MediaNode::stats() const {
         std::lock_guard<std::mutex> lock(_statsMutex);
         NodeStats s;
         s.processCount = _processCount;
-        s.starvationCount = _starvationCount;
         s.lastProcessDuration = _lastProcessDuration;
         s.avgProcessDuration = _avgProcessDuration;
         s.peakProcessDuration = _peakProcessDuration;
-        s.currentQueueDepth = _inputQueue.size();
+        s.currentQueueDepth = const_cast<MediaNode *>(this)->aggregateQueueDepth();
         s.peakQueueDepth = _peakQueueDepth;
         return s;
 }
@@ -150,7 +249,6 @@ NodeStats MediaNode::stats() const {
 void MediaNode::resetStats() {
         std::lock_guard<std::mutex> lock(_statsMutex);
         _processCount = 0;
-        _starvationCount = 0;
         _lastProcessDuration = 0.0;
         _avgProcessDuration = 0.0;
         _peakProcessDuration = 0.0;
@@ -167,18 +265,13 @@ void MediaNode::recordProcessTiming(double duration) {
         _processCount++;
         _lastProcessDuration = duration;
         if(duration > _peakProcessDuration) _peakProcessDuration = duration;
-        // Exponential moving average with alpha = 0.1
         if(_processCount == 1) {
                 _avgProcessDuration = duration;
         } else {
                 _avgProcessDuration = 0.9 * _avgProcessDuration + 0.1 * duration;
         }
-        return;
-}
-
-void MediaNode::recordStarvation() {
-        std::lock_guard<std::mutex> lock(_statsMutex);
-        _starvationCount++;
+        int depth = aggregateQueueDepth();
+        if(depth > _peakQueueDepth) _peakQueueDepth = depth;
         return;
 }
 

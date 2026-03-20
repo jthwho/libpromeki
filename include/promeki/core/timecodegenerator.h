@@ -158,6 +158,7 @@ class TimecodeGenerator {
                 uint64_t        _frameCount = 0;
 
                 void deriveMode();
+                void applyMode();
 };
 
 PROMEKI_NAMESPACE_END

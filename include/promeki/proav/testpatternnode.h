@@ -25,17 +25,40 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Produces complete Frame objects with synchronized video, audio, and
  * timecode metadata on each process cycle. The video pattern, audio mode,
- * and timecode are all configurable.
+ * and timecode are all configurable via build().
  *
  * This is a source node: no inputs, one Frame output.
  *
+ * @par Config options
+ * - `pattern` (String): Test pattern name (default: "colorbars").
+ *   Values: colorbars, colorbars75, ramp, grid, crosshatch, checkerboard,
+ *   solidcolor, white, black, noise, zoneplate.
+ * - `width` (uint32_t): Frame width (required).
+ * - `height` (uint32_t): Frame height (required).
+ * - `pixelFormat` (int): PixelFormat::ID (default: PixelFormat::RGB8).
+ * - `frameRate` (String): Frame rate string (required). E.g. "24", "29.97".
+ * - `solidColorR` (uint16_t): Red for SolidColor pattern (0-65535).
+ * - `solidColorG` (uint16_t): Green for SolidColor pattern.
+ * - `solidColorB` (uint16_t): Blue for SolidColor pattern.
+ * - `motion` (double): Pattern motion speed (default: 0.0).
+ * - `startTimecode` (String): Starting timecode (default: "00:00:00:00").
+ * - `dropFrame` (bool): Enable drop-frame timecode.
+ * - `audioEnabled` (bool): Enable audio generation (default: true).
+ * - `audioMode` (String): Audio mode: "tone", "silence", "ltc" (default: "tone").
+ * - `audioRate` (float): Audio sample rate (default: 48000).
+ * - `audioChannels` (int): Audio channels (default: 2).
+ * - `toneFrequency` (double): Tone frequency in Hz (default: 1000).
+ * - `toneLevel` (double): Tone level in dBFS (default: -20).
+ * - `ltcLevel` (double): LTC level in dBFS (default: -20).
+ * - `ltcChannel` (int): Channel for LTC (-1 = all, default: 0).
+ *
  * @par Example
  * @code
- * TestPatternNode *src = new TestPatternNode();
- * src->setPattern(TestPatternNode::ColorBars);
- * src->setVideoDesc(videoDesc);
- * src->setAudioDesc(audioDesc);
- * src->setStartTimecode(Timecode(Timecode::NDF24, 1, 0, 0, 0));
+ * MediaNodeConfig cfg("TestPatternNode", "source");
+ * cfg.set("pattern", Variant(String("colorbars")));
+ * cfg.set("width", Variant(uint32_t(1920)));
+ * cfg.set("height", Variant(uint32_t(1080)));
+ * cfg.set("frameRate", Variant(String("29.97")));
  * @endcode
  */
 class TestPatternNode : public MediaNode {
@@ -43,24 +66,24 @@ class TestPatternNode : public MediaNode {
         public:
                 /** @brief Video test pattern type. */
                 enum Pattern {
-                        ColorBars,      ///<SMPTE 100% color bars.
-                        ColorBars75,    ///<SMPTE 75% color bars.
-                        Ramp,           ///<Luminance gradient ramp.
-                        Grid,           ///<White grid lines on black.
-                        Crosshatch,     ///<Diagonal crosshatch lines.
-                        Checkerboard,   ///<Alternating black/white squares.
-                        SolidColor,     ///<Solid fill with configured color.
-                        White,          ///<Solid white.
-                        Black,          ///<Solid black.
-                        Noise,          ///<Random pixel noise.
-                        ZonePlate       ///<Circular zone plate.
+                        ColorBars,      ///< @brief SMPTE 100% color bars.
+                        ColorBars75,    ///< @brief SMPTE 75% color bars.
+                        Ramp,           ///< @brief Luminance gradient ramp.
+                        Grid,           ///< @brief White grid lines on black.
+                        Crosshatch,     ///< @brief Diagonal crosshatch lines.
+                        Checkerboard,   ///< @brief Alternating black/white squares.
+                        SolidColor,     ///< @brief Solid fill with configured color.
+                        White,          ///< @brief Solid white.
+                        Black,          ///< @brief Solid black.
+                        Noise,          ///< @brief Random pixel noise.
+                        ZonePlate       ///< @brief Circular zone plate.
                 };
 
                 /** @brief Audio generation mode. */
                 enum AudioMode {
-                        Tone,           ///<Sine tone (configurable frequency).
-                        Silence,        ///<Silence.
-                        LTC             ///<LTC timecode audio.
+                        Tone,           ///< @brief Sine tone (configurable frequency).
+                        Silence,        ///< @brief Silence.
+                        LTC             ///< @brief LTC timecode audio.
                 };
 
                 /**
@@ -72,172 +95,18 @@ class TestPatternNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~TestPatternNode();
 
-                // ---- Video configuration ----
-
-                /**
-                 * @brief Sets the video test pattern.
-                 * @param p The pattern to generate.
-                 */
-                void setPattern(Pattern p) { _pattern = p; return; }
-
-                /** @brief Returns the current pattern. */
-                Pattern pattern() const { return _pattern; }
-
-                /**
-                 * @brief Sets the video description (frame rate, resolution, pixel format).
-                 * @param desc The video description.
-                 */
-                void setVideoDesc(const VideoDesc &desc) { _videoDesc = desc; return; }
-
-                /** @brief Returns the video description. */
-                const VideoDesc &videoDesc() const { return _videoDesc; }
-
-                /**
-                 * @brief Sets the solid color for SolidColor pattern.
-                 * @param r Red component (0-65535).
-                 * @param g Green component (0-65535).
-                 * @param b Blue component (0-65535).
-                 */
-                void setSolidColor(uint16_t r, uint16_t g, uint16_t b) {
-                        _solidR = r; _solidG = g; _solidB = b;
-                        return;
-                }
-
-                // ---- Motion ----
-
-                /**
-                 * @brief Sets the pattern motion speed.
-                 * @param speed 0.0 = static, positive = forward, negative = reverse.
-                 *              1.0 = one pattern-width per second.
-                 */
-                void setMotion(double speed) { _motion = speed; return; }
-
-                /** @brief Returns the motion speed. */
-                double motion() const { return _motion; }
-
-                // ---- Timecode ----
-
-                /** @brief Returns a mutable reference to the internal timecode generator. */
-                TimecodeGenerator &timecodeGenerator() { return _tcGen; }
-
-                /** @brief Returns a const reference to the internal timecode generator. */
-                const TimecodeGenerator &timecodeGenerator() const { return _tcGen; }
-
-                /**
-                 * @brief Sets the starting timecode.
-                 * @param tc The starting timecode value.
-                 */
-                void setStartTimecode(const Timecode &tc) { _tcGen.setTimecode(tc); return; }
-
-                /**
-                 * @brief Enables or disables drop-frame timecode.
-                 * @param df true for drop-frame (only effective at 30000/1001 fps).
-                 */
-                void setDropFrame(bool df) { _tcGen.setDropFrame(df); return; }
-
-                /** @brief Returns the current timecode value. */
-                Timecode currentTimecode() const { return _tcGen.timecode(); }
-
-                /** @brief Returns the total number of frames generated. */
-                uint64_t frameCount() const { return _frameCount; }
-
-                // ---- Audio ----
-
-                /**
-                 * @brief Sets the audio description.
-                 * @param desc The audio format description.
-                 */
-                void setAudioDesc(const AudioDesc &desc) { _audioDesc = desc; return; }
-
-                /** @brief Returns the audio description. */
-                const AudioDesc &audioDesc() const { return _audioDesc; }
-
-                /**
-                 * @brief Enables or disables audio generation.
-                 * @param enable true to enable audio output.
-                 */
-                void setAudioEnabled(bool enable) { _audioEnabled = enable; return; }
-
-                /** @brief Returns true if audio generation is enabled. */
-                bool audioEnabled() const { return _audioEnabled; }
-
-                /**
-                 * @brief Sets the audio generation mode.
-                 * @param mode Tone, Silence, or LTC.
-                 */
-                void setAudioMode(AudioMode mode) { _audioMode = mode; return; }
-
-                /** @brief Returns the current audio mode. */
-                AudioMode audioMode() const { return _audioMode; }
-
-                /**
-                 * @brief Sets per-channel audio configuration (Tone mode).
-                 * @param chan Channel index.
-                 * @param config The audio generator config for that channel.
-                 */
-                void setChannelConfig(size_t chan, AudioGen::Config config);
-
-                /**
-                 * @brief Sets all channels to a sine tone at the given frequency.
-                 * @param hz Frequency in Hz.
-                 */
-                void setToneFrequency(double hz) { _toneFreq = hz; return; }
-
-                /**
-                 * @brief Sets the output level for all tone channels.
-                 * @param level Output level in dBFS.
-                 */
-                void setToneLevel(const AudioLevel &level) { _toneLevel = level; return; }
-
-                /**
-                 * @brief Sets the LTC output level.
-                 * @param level Output level in dBFS.
-                 */
-                void setLtcLevel(const AudioLevel &level) { _ltcLevel = level; return; }
-
-                /**
-                 * @brief Sets which channel carries LTC.
-                 * @param chan Channel index, or -1 for all channels.
-                 */
-                void setLtcChannel(int chan) { _ltcChannel = chan; return; }
-
-                // ---- Lifecycle overrides ----
-
-                /**
-                 * @brief Validates configuration and creates internal generators.
-                 *
-                 * Checks that a valid VideoDesc is set, initializes the timecode
-                 * generator, and creates the audio generator or LTC encoder based
-                 * on the configured audio mode.
-                 *
-                 * @return Error::Ok on success, or Error::Invalid.
-                 */
-                Error configure() override;
-
-                /**
-                 * @brief Transitions the node to Running state.
-                 * @return Error::Ok on success, or Error::Invalid if not configured.
-                 */
-                Error start() override;
-
-                /**
-                 * @brief Generates one frame of video, audio, and timecode.
-                 *
-                 * Renders the configured test pattern, generates audio samples,
-                 * assembles a Frame, and delivers it to the output port.
-                 */
-                void process() override;
-
-                /** @brief Stops the node and releases internal generators. */
-                void stop() override;
-
-                // ---- Extended stats ----
+                BuildResult build(const MediaNodeConfig &config) override;
 
                 /**
                  * @brief Returns test pattern node statistics.
                  * @return A map containing framesGenerated and currentTimecode.
                  */
                 Map<String, Variant> extendedStats() const override;
+
+        protected:
+                Error start() override;
+                void process() override;
+                void stop() override;
 
         private:
                 // Video config
@@ -268,6 +137,11 @@ class TestPatternNode : public MediaNode {
                 LtcEncoder              *_ltcEncoder = nullptr;
                 ImageDesc               _imageDesc;
                 size_t                  _samplesPerFrame = 0;
+
+                // Config parsing helpers
+                static bool parsePattern(const String &name, Pattern &out);
+                static bool parseAudioMode(const String &name, AudioMode &out);
+                static bool parseFrameRate(const String &str, FrameRate &out);
 
                 // Pattern rendering
                 void renderPattern(Image &img, double motionOffset);

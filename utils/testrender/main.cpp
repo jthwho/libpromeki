@@ -9,7 +9,8 @@
 #include <promeki/proav/testpatternnode.h>
 #include <promeki/proav/framedemuxnode.h>
 #include <promeki/proav/timecodeoverlaynode.h>
-#include <promeki/proav/mediagraph.h>
+#include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/imagefile.h>
 #include <promeki/proav/pixelformat.h>
 #include <promeki/core/timecode.h>
@@ -17,35 +18,90 @@
 
 using namespace promeki;
 
-// Simple sink that captures the last image frame
+// Simple sink that captures the last image frame.
+// Exposes process() and provides non-threaded start for synchronous use.
 class ImageCaptureSink : public MediaNode {
         PROMEKI_OBJECT(ImageCaptureSink, MediaNode)
         public:
                 ImageCaptureSink() : MediaNode() {
                         setName("Capture");
-                        addInputPort(MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image));
+                        addSink(MediaSink::Ptr::create("input", ContentVideo));
                 }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
                 void process() override {
                         Frame::Ptr f = dequeueInput();
                         if(f.isValid()) _last = f;
                         return;
                 }
-                void drain() { while(queuedFrameCount() > 0) process(); return; }
+                void drain() { while(sink(0)->queueSize() > 0) process(); return; }
                 Frame::Ptr last() const { return _last; }
         private:
                 Frame::Ptr _last;
 };
 
-// Audio discard sink
+// Audio discard sink (same pattern).
 class AudioDiscardSink : public MediaNode {
         PROMEKI_OBJECT(AudioDiscardSink, MediaNode)
         public:
                 AudioDiscardSink() : MediaNode() {
                         setName("AudioDiscard");
-                        addInputPort(MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Audio));
+                        addSink(MediaSink::Ptr::create("input", ContentAudio));
                 }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
                 void process() override { dequeueInput(); return; }
-                void drain() { while(queuedFrameCount() > 0) process(); return; }
+                void drain() { while(sink(0)->queueSize() > 0) process(); return; }
+};
+
+// Thin wrappers that expose process() for synchronous pumping.
+class PumpableSource : public TestPatternNode {
+        public:
+                using TestPatternNode::process;
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
+};
+
+class PumpableDemux : public FrameDemuxNode {
+        public:
+                using FrameDemuxNode::process;
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
+};
+
+class PumpableOverlay : public TimecodeOverlayNode {
+        public:
+                using TimecodeOverlayNode::process;
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
 };
 
 static void usage() {
@@ -69,26 +125,24 @@ static void usage() {
         );
 }
 
-static TestPatternNode::Pattern parsePattern(const char *name) {
+static String parsePattern(const char *name) {
         String s(name);
-        if(s == "colorbars")    return TestPatternNode::ColorBars;
-        if(s == "colorbars75")  return TestPatternNode::ColorBars75;
-        if(s == "ramp")         return TestPatternNode::Ramp;
-        if(s == "grid")         return TestPatternNode::Grid;
-        if(s == "crosshatch")   return TestPatternNode::Crosshatch;
-        if(s == "checkerboard") return TestPatternNode::Checkerboard;
-        if(s == "black")        return TestPatternNode::Black;
-        if(s == "white")        return TestPatternNode::White;
-        if(s == "noise")        return TestPatternNode::Noise;
-        if(s == "zoneplate")    return TestPatternNode::ZonePlate;
+        // Validate against known patterns
+        const char *valid[] = {
+                "colorbars", "colorbars75", "ramp", "grid", "crosshatch",
+                "checkerboard", "black", "white", "noise", "zoneplate", nullptr
+        };
+        for(const char **p = valid; *p; p++) {
+                if(s == *p) return s;
+        }
         fprintf(stderr, "Unknown pattern: %s\n", name);
-        return TestPatternNode::ColorBars;
+        return "colorbars";
 }
 
 int main(int argc, char *argv[]) {
         int width = 1920;
         int height = 1080;
-        TestPatternNode::Pattern pattern = TestPatternNode::ColorBars;
+        String patternStr = "colorbars";
         String tcStr = "01:00:00:00";
         String fontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
         int fontSize = 48;
@@ -101,7 +155,7 @@ int main(int argc, char *argv[]) {
                 if(arg == "--help" || arg == "-h") { usage(); return 0; }
                 else if(arg == "--width" && i + 1 < argc)   width = atoi(argv[++i]);
                 else if(arg == "--height" && i + 1 < argc)  height = atoi(argv[++i]);
-                else if(arg == "--pattern" && i + 1 < argc) pattern = parsePattern(argv[++i]);
+                else if(arg == "--pattern" && i + 1 < argc) patternStr = parsePattern(argv[++i]);
                 else if(arg == "--tc" && i + 1 < argc)      tcStr = argv[++i];
                 else if(arg == "--font" && i + 1 < argc)    fontPath = argv[++i];
                 else if(arg == "--fontsize" && i + 1 < argc) fontSize = atoi(argv[++i]);
@@ -117,8 +171,112 @@ int main(int argc, char *argv[]) {
                 return 1;
         }
 
-        // Parse timecode — fromString parses digits but doesn't infer a format,
-        // so we construct with NDF24 mode and the parsed digit values.
+        // Build nodes
+
+        // Source
+        PumpableSource *src = new PumpableSource();
+        {
+                MediaNodeConfig cfg("TestPatternNode", "Source");
+                cfg.set("pattern", Variant(patternStr));
+                cfg.set("width", Variant(uint32_t(width)));
+                cfg.set("height", Variant(uint32_t(height)));
+                cfg.set("pixelFormat", Variant(int(PixelFormat::RGBA8)));
+                cfg.set("frameRate", Variant(String("24")));
+                cfg.set("startTimecode", Variant(tcStr));
+                cfg.set("audioEnabled", Variant(true));
+                BuildResult br = src->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Source build failed\n");
+                        return 1;
+                }
+        }
+
+        // Demux
+        PumpableDemux *demux = new PumpableDemux();
+        {
+                MediaNodeConfig cfg("FrameDemuxNode", "Demux");
+                BuildResult br = demux->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Demux build failed\n");
+                        return 1;
+                }
+        }
+
+        // TC overlay (optional)
+        PumpableOverlay *overlay = nullptr;
+        if(burnTc) {
+                overlay = new PumpableOverlay();
+                MediaNodeConfig cfg("TimecodeOverlayNode", "Overlay");
+                cfg.set("fontPath", Variant(fontPath));
+                cfg.set("fontSize", Variant(fontSize));
+                cfg.set("position", Variant(String("bottomcenter")));
+                cfg.set("drawBackground", Variant(true));
+                if(!customText.isEmpty()) cfg.set("customText", Variant(customText));
+                BuildResult br = overlay->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Overlay build failed\n");
+                        return 1;
+                }
+        }
+
+        // Image capture sink
+        ImageCaptureSink *sink = new ImageCaptureSink();
+        { MediaNodeConfig cfg; sink->build(cfg); }
+
+        // Audio discard sink
+        AudioDiscardSink *audSink = new AudioDiscardSink();
+        { MediaNodeConfig cfg; audSink->build(cfg); }
+
+        // Build pipeline topology
+        MediaPipeline pipeline;
+        pipeline.addNode(src);
+        pipeline.addNode(demux);
+        pipeline.connect(src, 0, demux, 0);
+
+        if(overlay) {
+                pipeline.addNode(overlay);
+                pipeline.connect(demux, "image", overlay, "input");
+        }
+
+        pipeline.addNode(sink);
+        if(overlay) {
+                pipeline.connect(overlay, "output", sink, "input");
+        } else {
+                pipeline.connect(demux, "image", sink, "input");
+        }
+
+        pipeline.addNode(audSink);
+        pipeline.connect(demux, "audio", audSink, "input");
+
+        // Start nodes (non-threaded via our overrides)
+        Error err = pipeline.start();
+        if(err.isError()) { fprintf(stderr, "Pipeline start failed\n"); return 1; }
+
+        // Generate one frame synchronously
+        src->process();
+
+        // Push through demux
+        while(demux->sink(0)->queueSize() > 0) demux->process();
+
+        // Push through overlay
+        if(overlay) {
+                while(overlay->sink(0)->queueSize() > 0) overlay->process();
+        }
+
+        // Drain sinks
+        sink->drain();
+        audSink->drain();
+
+        pipeline.stop();
+
+        // Save result
+        Frame::Ptr result = sink->last();
+        if(!result.isValid() || result->imageList().isEmpty()) {
+                fprintf(stderr, "No image produced\n");
+                return 1;
+        }
+
+        // Parse TC for display
         auto [parsedTc, tcErr] = Timecode::fromString(tcStr);
         Timecode tc;
         if(tcErr.isOk()) {
@@ -126,86 +284,6 @@ int main(int argc, char *argv[]) {
                               parsedTc.sec(), parsedTc.frame());
         } else {
                 tc = Timecode(Timecode::NDF24, 1, 0, 0, 0);
-        }
-
-        // Build pipeline
-        MediaGraph graph;
-
-        // Source
-        TestPatternNode *src = new TestPatternNode();
-        src->setPattern(pattern);
-        VideoDesc vdesc;
-        vdesc.setFrameRate(FrameRate(FrameRate::FPS_24));
-        ImageDesc idesc(width, height, PixelFormat::RGBA8);
-        vdesc.imageList().pushToBack(idesc);
-        src->setVideoDesc(vdesc);
-        src->setStartTimecode(tc);
-        src->setAudioEnabled(true);
-        graph.addNode(src);
-
-        // Demux
-        FrameDemuxNode *demux = new FrameDemuxNode();
-        graph.addNode(demux);
-        graph.connect(src, 0, demux, 0);
-
-        // TC overlay (optional)
-        TimecodeOverlayNode *overlay = nullptr;
-        if(burnTc) {
-                overlay = new TimecodeOverlayNode();
-                overlay->setFontPath(FilePath(fontPath));
-                overlay->setFontSize(fontSize);
-                overlay->setPosition(TimecodeOverlayNode::BottomCenter);
-                overlay->setDrawBackground(true);
-                if(!customText.isEmpty()) overlay->setCustomText(customText);
-                graph.addNode(overlay);
-                graph.connect(demux, "image", overlay, "input");
-        }
-
-        // Image capture sink
-        ImageCaptureSink *sink = new ImageCaptureSink();
-        graph.addNode(sink);
-        if(overlay) {
-                graph.connect(overlay, "output", sink, "input");
-        } else {
-                graph.connect(demux, "image", sink, "input");
-        }
-
-        // Audio discard sink
-        AudioDiscardSink *audSink = new AudioDiscardSink();
-        graph.addNode(audSink);
-        graph.connect(demux, "audio", audSink, "input");
-
-        // Configure all nodes
-        Error err = src->configure();
-        if(err.isError()) { fprintf(stderr, "TestPatternNode configure failed\n"); return 1; }
-        err = demux->configure();
-        if(err.isError()) { fprintf(stderr, "FrameDemuxNode configure failed\n"); return 1; }
-        if(overlay) {
-                err = overlay->configure();
-                if(err.isError()) { fprintf(stderr, "TimecodeOverlayNode configure failed\n"); return 1; }
-        }
-
-        // Start source and generate one frame
-        src->start();
-        src->process();
-
-        // Push through demux
-        while(demux->queuedFrameCount() > 0) demux->process();
-
-        // Push through overlay
-        if(overlay) {
-                while(overlay->queuedFrameCount() > 0) overlay->process();
-        }
-
-        // Drain sink
-        sink->drain();
-        audSink->drain();
-
-        // Save result
-        Frame::Ptr result = sink->last();
-        if(!result.isValid() || result->imageList().isEmpty()) {
-                fprintf(stderr, "No image produced\n");
-                return 1;
         }
 
         Image outImg = *result->imageList()[0];

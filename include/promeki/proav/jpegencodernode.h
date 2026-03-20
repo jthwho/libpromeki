@@ -25,10 +25,13 @@ PROMEKI_NAMESPACE_BEGIN
  * output Image's plane buffer, with Metadata::CompressedSize set
  * to the actual encoded byte count.
  *
+ * @par Config options
+ * - `quality` (int): JPEG quality 1-100 (default: 85).
+ *
  * @par Example
  * @code
- * JpegEncoderNode *enc = new JpegEncoderNode();
- * enc->setQuality(90);
+ * MediaNodeConfig cfg("JpegEncoderNode", "encoder");
+ * cfg.set("quality", Variant(90));
  * @endcode
  */
 class JpegEncoderNode : public MediaNode {
@@ -43,37 +46,7 @@ class JpegEncoderNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~JpegEncoderNode() = default;
 
-                /**
-                 * @brief Sets the JPEG compression quality.
-                 * @param quality Quality level 1-100 (default: 85).
-                 */
-                void setQuality(int quality) { _quality = quality; return; }
-
-                /**
-                 * @brief Returns the JPEG compression quality.
-                 * @return The quality level 1-100.
-                 */
-                int quality() const { return _quality; }
-
-                // ---- Lifecycle overrides ----
-
-                /**
-                 * @brief Validates input format and configures the node.
-                 *
-                 * Transitions to Configured on success. Fails if the node
-                 * is not in Idle state.
-                 *
-                 * @return Error::Ok on success, or Error::Invalid.
-                 */
-                Error configure() override;
-
-                /**
-                 * @brief Compresses an input image to JPEG.
-                 *
-                 * Dequeues a Frame from the input port, compresses the first
-                 * image via libjpeg-turbo, wraps the result in an Image with
-                 * a JPEG pixel format, and delivers it on the output port.
-                 */
+                BuildResult build(const MediaNodeConfig &config) override;
                 void process() override;
 
                 /**

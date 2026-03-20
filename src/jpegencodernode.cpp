@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <csetjmp>
 #include <promeki/proav/jpegencodernode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/pixelformat.h>
@@ -42,16 +43,24 @@ static int jpegPixelFormatFor(int srcFormat) {
 
 JpegEncoderNode::JpegEncoderNode(ObjectBase *parent) : MediaNode(parent) {
         setName("JpegEncoderNode");
-        auto input = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image);
-        auto output = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Image);
-        addInputPort(input);
-        addOutputPort(output);
+        addSink(MediaSink::Ptr::create("input", ContentVideo));
+        addSource(MediaSource::Ptr::create("output", ContentVideo));
 }
 
-Error JpegEncoderNode::configure() {
-        if(state() != Idle) return Error(Error::Invalid);
+BuildResult JpegEncoderNode::build(const MediaNodeConfig &config) {
+        BuildResult result;
+        if(state() != Idle) {
+                result.addError("Node is not in Idle state");
+                return result;
+        }
+        _quality = config.get("quality", Variant(85)).get<int>();
+        if(_quality < 1 || _quality > 100) {
+                result.addWarning("Quality clamped to 1-100 range");
+                if(_quality < 1) _quality = 1;
+                if(_quality > 100) _quality = 100;
+        }
         setState(Configured);
-        return Error(Error::Ok);
+        return result;
 }
 
 void JpegEncoderNode::process() {

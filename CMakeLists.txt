@@ -414,11 +414,12 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/jpegencodernode.h
         include/promeki/proav/ltcdecoder.h
         include/promeki/proav/ltcencoder.h
-        include/promeki/proav/mediagraph.h
-        include/promeki/proav/medialink.h
         include/promeki/proav/medianode.h
+        include/promeki/proav/medianodeconfig.h
         include/promeki/proav/mediapipeline.h
-        include/promeki/proav/mediaport.h
+        include/promeki/proav/mediapipelineconfig.h
+        include/promeki/proav/mediasink.h
+        include/promeki/proav/mediasource.h
         include/promeki/proav/colorspace.h
         include/promeki/proav/colorspaceconverter.h
         include/promeki/proav/fontpainter.h
@@ -470,11 +471,12 @@ if(PROMEKI_BUILD_PROAV)
         src/jpegencodernode.cpp
         src/ltcdecoder.cpp
         src/ltcencoder.cpp
-        src/mediagraph.cpp
-        src/medialink.cpp
         src/medianode.cpp
+        src/medianodeconfig.cpp
         src/mediapipeline.cpp
-        src/mediaport.cpp
+        src/mediapipelineconfig.cpp
+        src/mediasink.cpp
+        src/mediasource.cpp
         src/testpatternnode.cpp
         src/timecodeoverlaynode.cpp
         src/videodesc.cpp
@@ -983,11 +985,12 @@ if(PROMEKI_BUILD_TESTS)
             tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp
             tests/ltcencoder.cpp
-            tests/mediagraph.cpp
-            tests/medialink.cpp
             tests/medianode.cpp
+            tests/medianodeconfig.cpp
             tests/mediapipeline.cpp
-            tests/mediaport.cpp
+            tests/mediapipelineconfig.cpp
+            tests/mediasink.cpp
+            tests/mediasource.cpp
             tests/testpatternnode.cpp
             tests/timecodeoverlaynode.cpp
         )

@@ -5,9 +5,12 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <atomic>
+#include <thread>
 #include <doctest/doctest.h>
 #include <promeki/proav/timecodeoverlaynode.h>
-#include <promeki/proav/mediagraph.h>
+#include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
@@ -34,8 +37,12 @@ class ImageSourceNode : public MediaNode {
         public:
                 ImageSourceNode() : MediaNode() {
                         setName("ImageSource");
-                        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Image);
-                        addOutputPort(port);
+                        auto port = MediaSource::Ptr::create("output", ContentVideo);
+                        addSource(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override { return; }
                 void pushFrame(Frame::Ptr frame) {
@@ -53,21 +60,56 @@ class ImageCaptureSink : public MediaNode {
         public:
                 ImageCaptureSink() : MediaNode() {
                         setName("ImageCaptureSink");
-                        auto port = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image);
-                        addInputPort(port);
+                        auto port = MediaSink::Ptr::create("input", ContentVideo);
+                        addSink(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override {
                         Frame::Ptr frame = dequeueInput();
                         if(frame.isValid()) { _lastFrame = frame; _count++; }
                         return;
                 }
-                void drain() { while(queuedFrameCount() > 0) process(); return; }
                 Frame::Ptr lastFrame() const { return _lastFrame; }
                 int count() const { return _count; }
         private:
                 Frame::Ptr _lastFrame;
-                int _count = 0;
+                std::atomic<int> _count = 0;
 };
+
+// ============================================================================
+// Helper: push an image through an overlay pipeline, return the output frame.
+// ============================================================================
+
+static Frame::Ptr overlayImage(const Image &img, const MediaNodeConfig &overlayCfg) {
+        MediaPipeline pipeline;
+        ImageSourceNode *src = new ImageSourceNode();
+        TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
+        ImageCaptureSink *sink = new ImageCaptureSink();
+
+        src->build(MediaNodeConfig());
+        overlay->build(overlayCfg);
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
+
+        Frame::Ptr frame = Frame::Ptr::create();
+        frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
+        src->pushFrame(frame);
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
+        return sink->lastFrame();
+}
 
 // ============================================================================
 // Construction
@@ -75,13 +117,10 @@ class ImageCaptureSink : public MediaNode {
 
 TEST_CASE("TimecodeOverlayNode_Construct") {
         TimecodeOverlayNode node;
-        CHECK(node.inputPortCount() == 1);
-        CHECK(node.outputPortCount() == 1);
-        CHECK(node.inputPort(0)->mediaType() == MediaPort::Image);
-        CHECK(node.outputPort(0)->mediaType() == MediaPort::Image);
-        CHECK(node.fontSize() == 36);
-        CHECK(node.position() == TimecodeOverlayNode::BottomCenter);
-        CHECK(node.drawBackground() == true);
+        CHECK(node.sinkCount() == 1);
+        CHECK(node.sourceCount() == 1);
+        CHECK(node.sink(0)->contentHint() == ContentVideo);
+        CHECK(node.source(0)->contentHint() == ContentVideo);
 }
 
 // ============================================================================
@@ -89,8 +128,26 @@ TEST_CASE("TimecodeOverlayNode_Construct") {
 // ============================================================================
 
 TEST_CASE("TimecodeOverlayNode_ConfigureNoFont") {
-        TimecodeOverlayNode node;
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        ImageSourceNode *src = new ImageSourceNode();
+        TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
+        ImageCaptureSink *sink = new ImageCaptureSink();
+
+        src->build(MediaNodeConfig());
+        // Build without fontPath — should fail
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        BuildResult result = overlay->build(overlayCfg);
+        CHECK(result.isError());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+
+        sink->build(MediaNodeConfig());
+
+        Error err = pipeline.start();
         CHECK(err.isError());
 }
 
@@ -99,9 +156,27 @@ TEST_CASE("TimecodeOverlayNode_ConfigureNoFont") {
 // ============================================================================
 
 TEST_CASE("TimecodeOverlayNode_ConfigureBadFont") {
-        TimecodeOverlayNode node;
-        node.setFontPath(FilePath("/nonexistent/font.ttf"));
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        ImageSourceNode *src = new ImageSourceNode();
+        TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
+        ImageCaptureSink *sink = new ImageCaptureSink();
+
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String("/nonexistent/font.ttf")));
+        BuildResult result = overlay->build(overlayCfg);
+        CHECK(result.isError());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+
+        sink->build(MediaNodeConfig());
+
+        Error err = pipeline.start();
         CHECK(err.isError());
 }
 
@@ -111,11 +186,27 @@ TEST_CASE("TimecodeOverlayNode_ConfigureBadFont") {
 
 TEST_CASE("TimecodeOverlayNode_ConfigureOk") {
         if(!fontAvailable()) return;
-        TimecodeOverlayNode node;
-        node.setFontPath(FilePath(testFontPath));
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        ImageSourceNode *src = new ImageSourceNode();
+        TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
+        ImageCaptureSink *sink = new ImageCaptureSink();
+
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        Error err = pipeline.start();
         CHECK(err.isOk());
-        CHECK(node.state() == MediaNode::Configured);
+        CHECK(overlay->state() == MediaNode::Running);
 }
 
 // ============================================================================
@@ -125,23 +216,29 @@ TEST_CASE("TimecodeOverlayNode_ConfigureOk") {
 TEST_CASE("TimecodeOverlayNode_OverlayModifiesPixels") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        overlay->setFontSize(36);
-        overlay->setPosition(TimecodeOverlayNode::BottomCenter);
+        src->build(MediaNodeConfig());
 
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("fontSize", Variant(36));
+        overlayCfg.set("position", Variant(String("bottomcenter")));
+        overlay->build(overlayCfg);
 
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
+        sink->build(MediaNodeConfig());
 
-        overlay->configure();
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+
+        pipeline.start();
 
         // Create a black image with timecode metadata
         ImageDesc idesc(320, 240, PixelFormat::RGB8);
@@ -160,8 +257,11 @@ TEST_CASE("TimecodeOverlayNode_OverlayModifiesPixels") {
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         // Verify output received
         REQUIRE(sink->count() == 1);
@@ -185,18 +285,25 @@ TEST_CASE("TimecodeOverlayNode_OverlayModifiesPixels") {
 TEST_CASE("TimecodeOverlayNode_MetadataPreserved") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         ImageDesc idesc(320, 240, PixelFormat::RGB8);
         Image img(idesc);
@@ -208,8 +315,11 @@ TEST_CASE("TimecodeOverlayNode_MetadataPreserved") {
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         frame.modify()->metadata().set(Metadata::Timecode, tc);
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         Frame::Ptr outFrame = sink->lastFrame();
@@ -229,77 +339,34 @@ TEST_CASE("TimecodeOverlayNode_Registry") {
 }
 
 // ============================================================================
-// Setter/getter coverage
-// ============================================================================
-
-TEST_CASE("TimecodeOverlayNode_SetFontSize") {
-        TimecodeOverlayNode node;
-        CHECK(node.fontSize() == 36); // default
-        node.setFontSize(72);
-        CHECK(node.fontSize() == 72);
-}
-
-TEST_CASE("TimecodeOverlayNode_SetPosition_Presets") {
-        TimecodeOverlayNode node;
-        CHECK(node.position() == TimecodeOverlayNode::BottomCenter); // default
-
-        node.setPosition(TimecodeOverlayNode::TopLeft);
-        CHECK(node.position() == TimecodeOverlayNode::TopLeft);
-
-        node.setPosition(TimecodeOverlayNode::TopCenter);
-        CHECK(node.position() == TimecodeOverlayNode::TopCenter);
-
-        node.setPosition(TimecodeOverlayNode::TopRight);
-        CHECK(node.position() == TimecodeOverlayNode::TopRight);
-
-        node.setPosition(TimecodeOverlayNode::BottomLeft);
-        CHECK(node.position() == TimecodeOverlayNode::BottomLeft);
-
-        node.setPosition(TimecodeOverlayNode::BottomRight);
-        CHECK(node.position() == TimecodeOverlayNode::BottomRight);
-}
-
-TEST_CASE("TimecodeOverlayNode_SetPosition_Custom") {
-        TimecodeOverlayNode node;
-        node.setPosition(100, 200);
-        CHECK(node.position() == TimecodeOverlayNode::Custom);
-}
-
-TEST_CASE("TimecodeOverlayNode_SetDrawBackground") {
-        TimecodeOverlayNode node;
-        CHECK(node.drawBackground() == true); // default
-        node.setDrawBackground(false);
-        CHECK(node.drawBackground() == false);
-}
-
-TEST_CASE("TimecodeOverlayNode_SetCustomText") {
-        TimecodeOverlayNode node;
-        CHECK(node.customText().isEmpty());
-        node.setCustomText("TEST SIGNAL");
-        CHECK(node.customText() == "TEST SIGNAL");
-}
-
-TEST_CASE("TimecodeOverlayNode_SetFontPath") {
-        TimecodeOverlayNode node;
-        CHECK(node.fontPath().isEmpty());
-        node.setFontPath(FilePath("/some/font.ttf"));
-        CHECK(node.fontPath().toString() == "/some/font.ttf");
-}
-
-// ============================================================================
 // Configure from non-Idle state
 // ============================================================================
 
 TEST_CASE("TimecodeOverlayNode_ConfigureNotIdleReturnsError") {
         if(!fontAvailable()) return;
-        TimecodeOverlayNode node;
-        node.setFontPath(FilePath(testFontPath));
-        Error err = node.configure();
-        REQUIRE(err.isOk());
-        CHECK(node.state() == MediaNode::Configured);
+        MediaPipeline pipeline;
+        ImageSourceNode *src = new ImageSourceNode();
+        TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
+        ImageCaptureSink *sink = new ImageCaptureSink();
 
-        // Trying to configure again from Configured state should fail
-        Error err2 = node.configure();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        REQUIRE(pipeline.start().isOk());
+        CHECK(overlay->state() == MediaNode::Running);
+
+        // Trying to start again should fail
+        Error err2 = pipeline.start();
         CHECK(err2.isError());
 }
 
@@ -310,24 +377,34 @@ TEST_CASE("TimecodeOverlayNode_ConfigureNotIdleReturnsError") {
 TEST_CASE("TimecodeOverlayNode_EmptyFramePassthrough") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         // Push a frame with no images
         Frame::Ptr frame = Frame::Ptr::create();
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         Frame::Ptr outFrame = sink->lastFrame();
@@ -342,19 +419,26 @@ TEST_CASE("TimecodeOverlayNode_EmptyFramePassthrough") {
 TEST_CASE("TimecodeOverlayNode_NoTimecodeMetadata") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        overlay->setFontSize(24);
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("fontSize", Variant(24));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         // Push an image with NO timecode metadata
         ImageDesc idesc(320, 240, PixelFormat::RGB8);
@@ -364,8 +448,11 @@ TEST_CASE("TimecodeOverlayNode_NoTimecodeMetadata") {
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         Frame::Ptr outFrame = sink->lastFrame();
@@ -391,35 +478,18 @@ TEST_CASE("TimecodeOverlayNode_CustomText") {
         // Render with custom text and without, compare pixel sums to verify
         // custom text adds more drawn pixels.
         auto renderAndSum = [](const String &customText) -> uint64_t {
-                MediaGraph graph;
-                ImageSourceNode *src = new ImageSourceNode();
-                TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
-                ImageCaptureSink *sink = new ImageCaptureSink();
-
-                overlay->setFontPath(FilePath(testFontPath));
-                overlay->setFontSize(24);
-                overlay->setPosition(TimecodeOverlayNode::TopLeft);
-                if(!customText.isEmpty()) overlay->setCustomText(customText);
-
-                graph.addNode(src);
-                graph.addNode(overlay);
-                graph.addNode(sink);
-                graph.connect(src, 0, overlay, 0);
-                graph.connect(overlay, 0, sink, 0);
-                overlay->configure();
+                MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+                overlayCfg.set("fontPath", Variant(String(testFontPath)));
+                overlayCfg.set("fontSize", Variant(24));
+                overlayCfg.set("position", Variant(String("topleft")));
+                if(!customText.isEmpty()) overlayCfg.set("customText", Variant(customText));
 
                 ImageDesc idesc(320, 240, PixelFormat::RGB8);
                 Image img(idesc);
                 img.fill(0);
                 img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
 
-                Frame::Ptr frame = Frame::Ptr::create();
-                frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
-                src->pushFrame(frame);
-                while(overlay->queuedFrameCount() > 0) overlay->process();
-                sink->drain();
-
-                Frame::Ptr outFrame = sink->lastFrame();
+                Frame::Ptr outFrame = overlayImage(img, overlayCfg);
                 Image::Ptr outImg = outFrame->imageList()[0];
                 const uint8_t *data = (const uint8_t *)outImg->data();
                 size_t dataSize = outImg->lineStride() * outImg->height();
@@ -441,21 +511,10 @@ TEST_CASE("TimecodeOverlayNode_NoBackground") {
         if(!fontAvailable()) return;
 
         auto renderAndSum = [](bool drawBg) -> uint64_t {
-                MediaGraph graph;
-                ImageSourceNode *src = new ImageSourceNode();
-                TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
-                ImageCaptureSink *sink = new ImageCaptureSink();
-
-                overlay->setFontPath(FilePath(testFontPath));
-                overlay->setFontSize(24);
-                overlay->setDrawBackground(drawBg);
-
-                graph.addNode(src);
-                graph.addNode(overlay);
-                graph.addNode(sink);
-                graph.connect(src, 0, overlay, 0);
-                graph.connect(overlay, 0, sink, 0);
-                overlay->configure();
+                MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+                overlayCfg.set("fontPath", Variant(String(testFontPath)));
+                overlayCfg.set("fontSize", Variant(24));
+                overlayCfg.set("drawBackground", Variant(drawBg));
 
                 ImageDesc idesc(320, 240, PixelFormat::RGB8);
                 Image img(idesc);
@@ -463,13 +522,7 @@ TEST_CASE("TimecodeOverlayNode_NoBackground") {
                 img.fill(128);
                 img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
 
-                Frame::Ptr frame = Frame::Ptr::create();
-                frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
-                src->pushFrame(frame);
-                while(overlay->queuedFrameCount() > 0) overlay->process();
-                sink->drain();
-
-                Frame::Ptr outFrame = sink->lastFrame();
+                Frame::Ptr outFrame = overlayImage(img, overlayCfg);
                 Image::Ptr outImg = outFrame->imageList()[0];
                 const uint8_t *data = (const uint8_t *)outImg->data();
                 size_t dataSize = outImg->lineStride() * outImg->height();
@@ -495,21 +548,27 @@ TEST_CASE("TimecodeOverlayNode_NoBackground") {
 TEST_CASE("TimecodeOverlayNode_TopLeftPosition") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        overlay->setFontSize(24);
-        overlay->setPosition(TimecodeOverlayNode::TopLeft);
+        src->build(MediaNodeConfig());
 
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("fontSize", Variant(24));
+        overlayCfg.set("position", Variant(String("topleft")));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         ImageDesc idesc(640, 480, PixelFormat::RGB8);
         Image img(idesc);
@@ -519,8 +578,11 @@ TEST_CASE("TimecodeOverlayNode_TopLeftPosition") {
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         Image::Ptr outImg = sink->lastFrame()->imageList()[0];
@@ -549,21 +611,27 @@ TEST_CASE("TimecodeOverlayNode_TopLeftPosition") {
 TEST_CASE("TimecodeOverlayNode_BottomRightPosition") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        overlay->setFontSize(24);
-        overlay->setPosition(TimecodeOverlayNode::BottomRight);
+        src->build(MediaNodeConfig());
 
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("fontSize", Variant(24));
+        overlayCfg.set("position", Variant(String("bottomright")));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         ImageDesc idesc(640, 480, PixelFormat::RGB8);
         Image img(idesc);
@@ -573,8 +641,11 @@ TEST_CASE("TimecodeOverlayNode_BottomRightPosition") {
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         Image::Ptr outImg = sink->lastFrame()->imageList()[0];
@@ -607,19 +678,26 @@ TEST_CASE("TimecodeOverlayNode_BottomRightPosition") {
 TEST_CASE("TimecodeOverlayNode_MultipleFrames") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        overlay->setFontSize(24);
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("fontSize", Variant(24));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         // Push 3 frames with different timecodes
         for(int i = 0; i < 3; i++) {
@@ -633,8 +711,11 @@ TEST_CASE("TimecodeOverlayNode_MultipleFrames") {
                 src->pushFrame(frame);
         }
 
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+        // Wait for all frames to flow through the pipeline
+        for(int i = 0; i < 200 && sink->count() < 3; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         CHECK(sink->count() == 3);
 }
@@ -646,19 +727,26 @@ TEST_CASE("TimecodeOverlayNode_MultipleFrames") {
 TEST_CASE("TimecodeOverlayNode_RGBA8") {
         if(!fontAvailable()) return;
 
-        MediaGraph graph;
+        MediaPipeline pipeline;
         ImageSourceNode *src = new ImageSourceNode();
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
         ImageCaptureSink *sink = new ImageCaptureSink();
 
-        overlay->setFontPath(FilePath(testFontPath));
-        overlay->setFontSize(36);
-        graph.addNode(src);
-        graph.addNode(overlay);
-        graph.addNode(sink);
-        graph.connect(src, 0, overlay, 0);
-        graph.connect(overlay, 0, sink, 0);
-        overlay->configure();
+        src->build(MediaNodeConfig());
+
+        MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("fontSize", Variant(36));
+        overlay->build(overlayCfg);
+
+        sink->build(MediaNodeConfig());
+
+        pipeline.addNode(src);
+        pipeline.addNode(overlay);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, overlay, 0);
+        pipeline.connect(overlay, 0, sink, 0);
+        pipeline.start();
 
         ImageDesc idesc(320, 240, PixelFormat::RGBA8);
         Image img(idesc);
@@ -668,8 +756,11 @@ TEST_CASE("TimecodeOverlayNode_RGBA8") {
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        while(overlay->queuedFrameCount() > 0) overlay->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         Image::Ptr outImg = sink->lastFrame()->imageList()[0];

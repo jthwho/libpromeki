@@ -33,6 +33,7 @@ bool FontPainter::drawText(const String &str, int x, int y, int pointSize) const
         FT_Face face;
         if (FT_New_Face(ft, _fontFilename.cstr(), 0, &face)) {
                 promekiErr("Could not open font '%s'", _fontFilename.cstr());
+                FT_Done_FreeType(ft);
                 return false;
         }
 
@@ -53,15 +54,15 @@ bool FontPainter::drawText(const String &str, int x, int y, int pointSize) const
                 FT_Int bitmap_left = face->glyph->bitmap_left;
                 FT_Int bitmap_top = face->glyph->bitmap_top;
 
-                for (int row = 0; row < bitmap->rows; ++row) {
-                        for (int col = 0; col < bitmap->width; ++col) {
+                for (unsigned int row = 0; row < bitmap->rows; ++row) {
+                        for (unsigned int col = 0; col < bitmap->width; ++col) {
                                 int x_pixel = pen_x + bitmap_left + col;
                                 int y_pixel = pen_y - bitmap_top + row;
                                 uint8_t alpha = bitmap->buffer[row * bitmap->pitch + col];
                                 if(alpha > 0) {
                                         points += Point2Di32(x_pixel, y_pixel);
-                                        alphas += (float)alpha / 255.0;
-                                } 
+                                        alphas += (float)alpha / 255.0f;
+                                }
                         }
                 }
                 pen_x += face->glyph->advance.x >> 6;

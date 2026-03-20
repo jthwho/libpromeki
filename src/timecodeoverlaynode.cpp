@@ -6,6 +6,7 @@
  */
 
 #include <promeki/proav/timecodeoverlaynode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/paintengine.h>
@@ -18,37 +19,65 @@ PROMEKI_REGISTER_NODE(TimecodeOverlayNode)
 
 TimecodeOverlayNode::TimecodeOverlayNode(ObjectBase *parent) : MediaNode(parent) {
         setName("TimecodeOverlayNode");
-        auto input = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image);
-        auto output = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Image);
-        addInputPort(input);
-        addOutputPort(output);
+        addSink(MediaSink::Ptr::create("input", ContentVideo));
+        addSource(MediaSource::Ptr::create("output", ContentVideo));
 }
 
-Error TimecodeOverlayNode::configure() {
-        if(state() != Idle) return Error(Error::Invalid);
+bool TimecodeOverlayNode::parsePosition(const String &str, Position &out) {
+        if(str == "topleft")        { out = TopLeft;      return true; }
+        if(str == "topcenter")      { out = TopCenter;    return true; }
+        if(str == "topright")       { out = TopRight;     return true; }
+        if(str == "bottomleft")     { out = BottomLeft;   return true; }
+        if(str == "bottomcenter")   { out = BottomCenter; return true; }
+        if(str == "bottomright")    { out = BottomRight;  return true; }
+        if(str == "custom")         { out = Custom;       return true; }
+        return false;
+}
+
+BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
+        BuildResult result;
+        if(state() != Idle) {
+                result.addError("Node is not in Idle state");
+                return result;
+        }
+
+        // Read config
+        _fontPath = FilePath(config.get("fontPath", Variant(String())).get<String>());
+        _fontSize = config.get("fontSize", Variant(36)).get<int>();
+        _drawBackground = config.get("drawBackground", Variant(true)).get<bool>();
+        _customText = config.get("customText", Variant(String())).get<String>();
+        _colorR = config.get("textColorR", Variant(uint16_t(65535))).get<uint16_t>();
+        _colorG = config.get("textColorG", Variant(uint16_t(65535))).get<uint16_t>();
+        _colorB = config.get("textColorB", Variant(uint16_t(65535))).get<uint16_t>();
+
+        // Parse position
+        String posStr = config.get("position", Variant(String("bottomcenter"))).get<String>();
+        if(!posStr.isEmpty()) {
+                if(!parsePosition(posStr, _position)) {
+                        result.addError("Unknown position: " + posStr);
+                        return result;
+                }
+        }
+        if(_position == Custom) {
+                _customX = config.get("customX", Variant(0)).get<int>();
+                _customY = config.get("customY", Variant(0)).get<int>();
+        }
 
         // Validate font path
         if(_fontPath.isEmpty()) {
-                emitError("Font path is not set");
-                return Error(Error::Invalid);
+                result.addError("Font path is not set");
+                return result;
         }
         if(!_fontPath.exists()) {
-                emitError("Font file does not exist: " + _fontPath.toString());
-                return Error(Error::Invalid);
+                result.addError("Font file does not exist: " + _fontPath.toString());
+                return result;
         }
 
         // Initialize FontPainter
         _fontPainter.setFontFilename(_fontPath.toString());
 
-        // Pass through ImageDesc from input to output
-        MediaPort::Ptr input = inputPort(0);
-        MediaPort::Ptr output = outputPort(0);
-        if(input->imageDesc().isValid()) {
-                output.modify()->setImageDesc(input->imageDesc());
-        }
-
         setState(Configured);
-        return Error(Error::Ok);
+        return result;
 }
 
 void TimecodeOverlayNode::process() {

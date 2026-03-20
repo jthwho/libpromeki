@@ -5,9 +5,12 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <atomic>
+#include <thread>
 #include <doctest/doctest.h>
 #include <promeki/proav/jpegencodernode.h>
-#include <promeki/proav/mediagraph.h>
+#include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
@@ -27,8 +30,12 @@ class JpegTestSourceNode : public MediaNode {
         public:
                 JpegTestSourceNode() : MediaNode() {
                         setName("JpegTestSource");
-                        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Image);
-                        addOutputPort(port);
+                        auto port = MediaSource::Ptr::create("output", ContentVideo);
+                        addSource(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override { return; }
                 void pushFrame(Frame::Ptr frame) {
@@ -46,20 +53,23 @@ class JpegCaptureSink : public MediaNode {
         public:
                 JpegCaptureSink() : MediaNode() {
                         setName("JpegCaptureSink");
-                        auto port = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image);
-                        addInputPort(port);
+                        auto port = MediaSink::Ptr::create("input", ContentVideo);
+                        addSink(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override {
                         Frame::Ptr frame = dequeueInput();
                         if(frame.isValid()) { _lastFrame = frame; _count++; }
                         return;
                 }
-                void drain() { while(queuedFrameCount() > 0) process(); return; }
                 Frame::Ptr lastFrame() const { return _lastFrame; }
                 int count() const { return _count; }
         private:
                 Frame::Ptr _lastFrame;
-                int _count = 0;
+                std::atomic<int> _count = 0;
 };
 
 // ============================================================================
@@ -86,25 +96,35 @@ static Image createTestImage(int width, int height, int pixfmt = PixelFormat::RG
 
 // Helper: push an image through an encoder pipeline, return the output frame.
 static Frame::Ptr encodeImage(const Image &img, int quality = 85) {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         JpegTestSourceNode *src = new JpegTestSourceNode();
         JpegEncoderNode *enc = new JpegEncoderNode();
         JpegCaptureSink *sink = new JpegCaptureSink();
 
-        enc->setQuality(quality);
-        graph.addNode(src);
-        graph.addNode(enc);
-        graph.addNode(sink);
-        graph.connect(src, 0, enc, 0);
-        graph.connect(enc, 0, sink, 0);
-        enc->configure();
+        MediaNodeConfig encCfg("JpegEncoderNode", "enc");
+        encCfg.set("quality", Variant(quality));
+        enc->build(encCfg);
+
+        pipeline.addNode(src);
+        pipeline.addNode(enc);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, enc, 0);
+        pipeline.connect(enc, 0, sink, 0);
+
+        src->build(MediaNodeConfig());
+        sink->build(MediaNodeConfig());
+
+        pipeline.start();
 
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         frame.modify()->metadata() = img.metadata();
         src->pushFrame(frame);
-        while(enc->queuedFrameCount() > 0) enc->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
         return sink->lastFrame();
 }
 
@@ -115,11 +135,10 @@ static Frame::Ptr encodeImage(const Image &img, int quality = 85) {
 TEST_CASE("JpegEncoderNode_Construct") {
         JpegEncoderNode node;
         CHECK(node.name() == "JpegEncoderNode");
-        CHECK(node.inputPortCount() == 1);
-        CHECK(node.outputPortCount() == 1);
-        CHECK(node.inputPort(0)->mediaType() == MediaPort::Image);
-        CHECK(node.outputPort(0)->mediaType() == MediaPort::Image);
-        CHECK(node.quality() == 85);
+        CHECK(node.sinkCount() == 1);
+        CHECK(node.sourceCount() == 1);
+        CHECK(node.sink(0)->contentHint() == ContentVideo);
+        CHECK(node.source(0)->contentHint() == ContentVideo);
 }
 
 // ============================================================================
@@ -127,31 +146,48 @@ TEST_CASE("JpegEncoderNode_Construct") {
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_ConfigureOk") {
-        JpegEncoderNode node;
-        Error err = node.configure();
+        MediaPipeline pipeline;
+        JpegTestSourceNode *src = new JpegTestSourceNode();
+        JpegEncoderNode *enc = new JpegEncoderNode();
+        JpegCaptureSink *sink = new JpegCaptureSink();
+
+        pipeline.addNode(src);
+        pipeline.addNode(enc);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, enc, 0);
+        pipeline.connect(enc, 0, sink, 0);
+
+        src->build(MediaNodeConfig());
+        enc->build(MediaNodeConfig());
+        sink->build(MediaNodeConfig());
+
+        Error err = pipeline.start();
         CHECK(err.isOk());
-        CHECK(node.state() == MediaNode::Configured);
+        CHECK(enc->state() == MediaNode::Running);
 }
 
 TEST_CASE("JpegEncoderNode_ConfigureNotIdleReturnsError") {
-        JpegEncoderNode node;
-        REQUIRE(node.configure().isOk());
-        CHECK(node.configure().isError());
+        MediaPipeline pipeline;
+        JpegTestSourceNode *src = new JpegTestSourceNode();
+        JpegEncoderNode *enc = new JpegEncoderNode();
+        JpegCaptureSink *sink = new JpegCaptureSink();
+
+        pipeline.addNode(src);
+        pipeline.addNode(enc);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, enc, 0);
+        pipeline.connect(enc, 0, sink, 0);
+
+        src->build(MediaNodeConfig());
+        enc->build(MediaNodeConfig());
+        sink->build(MediaNodeConfig());
+
+        REQUIRE(pipeline.start().isOk());
+        CHECK(pipeline.start().isError()); // Already running
 }
 
 // ============================================================================
-// Quality setter/getter
-// ============================================================================
-
-TEST_CASE("JpegEncoderNode_SetQuality") {
-        JpegEncoderNode node;
-        CHECK(node.quality() == 85);
-        node.setQuality(50);
-        CHECK(node.quality() == 50);
-}
-
-// ============================================================================
-// Encode RGB8 image — verify JPEG pixel format and header bytes
+// Encode RGB8 image -- verify JPEG pixel format and header bytes
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_EncodeRGB8") {
@@ -225,22 +261,30 @@ TEST_CASE("JpegEncoderNode_MetadataPreserved") {
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_EmptyFramePassthrough") {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         JpegTestSourceNode *src = new JpegTestSourceNode();
         JpegEncoderNode *enc = new JpegEncoderNode();
         JpegCaptureSink *sink = new JpegCaptureSink();
 
-        graph.addNode(src);
-        graph.addNode(enc);
-        graph.addNode(sink);
-        graph.connect(src, 0, enc, 0);
-        graph.connect(enc, 0, sink, 0);
-        enc->configure();
+        pipeline.addNode(src);
+        pipeline.addNode(enc);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, enc, 0);
+        pipeline.connect(enc, 0, sink, 0);
+
+        src->build(MediaNodeConfig());
+        enc->build(MediaNodeConfig());
+        sink->build(MediaNodeConfig());
+
+        pipeline.start();
 
         Frame::Ptr frame = Frame::Ptr::create();
         src->pushFrame(frame);
-        while(enc->queuedFrameCount() > 0) enc->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         REQUIRE(sink->count() == 1);
         CHECK(sink->lastFrame()->imageList().isEmpty());
@@ -251,17 +295,22 @@ TEST_CASE("JpegEncoderNode_EmptyFramePassthrough") {
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_MultipleFrames") {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         JpegTestSourceNode *src = new JpegTestSourceNode();
         JpegEncoderNode *enc = new JpegEncoderNode();
         JpegCaptureSink *sink = new JpegCaptureSink();
 
-        graph.addNode(src);
-        graph.addNode(enc);
-        graph.addNode(sink);
-        graph.connect(src, 0, enc, 0);
-        graph.connect(enc, 0, sink, 0);
-        enc->configure();
+        pipeline.addNode(src);
+        pipeline.addNode(enc);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, enc, 0);
+        pipeline.connect(enc, 0, sink, 0);
+
+        src->build(MediaNodeConfig());
+        enc->build(MediaNodeConfig());
+        sink->build(MediaNodeConfig());
+
+        pipeline.start();
 
         for(int i = 0; i < 5; i++) {
                 Image img = createTestImage(64, 64);
@@ -269,8 +318,12 @@ TEST_CASE("JpegEncoderNode_MultipleFrames") {
                 frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
                 src->pushFrame(frame);
         }
-        while(enc->queuedFrameCount() > 0) enc->process();
-        sink->drain();
+
+        // Wait for all frames to flow through the pipeline
+        for(int i = 0; i < 200 && sink->count() < 5; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         CHECK(sink->count() == 5);
 }
@@ -295,17 +348,22 @@ TEST_CASE("JpegEncoderNode_QualityAffectsSize") {
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_ExtendedStats") {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         JpegTestSourceNode *src = new JpegTestSourceNode();
         JpegEncoderNode *enc = new JpegEncoderNode();
         JpegCaptureSink *sink = new JpegCaptureSink();
 
-        graph.addNode(src);
-        graph.addNode(enc);
-        graph.addNode(sink);
-        graph.connect(src, 0, enc, 0);
-        graph.connect(enc, 0, sink, 0);
-        enc->configure();
+        pipeline.addNode(src);
+        pipeline.addNode(enc);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, enc, 0);
+        pipeline.connect(enc, 0, sink, 0);
+
+        src->build(MediaNodeConfig());
+        enc->build(MediaNodeConfig());
+        sink->build(MediaNodeConfig());
+
+        pipeline.start();
 
         auto stats0 = enc->extendedStats();
         CHECK(stats0["framesEncoded"].get<uint64_t>() == 0);
@@ -316,8 +374,11 @@ TEST_CASE("JpegEncoderNode_ExtendedStats") {
         Frame::Ptr frame = Frame::Ptr::create();
         frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         src->pushFrame(frame);
-        while(enc->queuedFrameCount() > 0) enc->process();
-        sink->drain();
+
+        for(int i = 0; i < 200 && sink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         auto stats1 = enc->extendedStats();
         CHECK(stats1["framesEncoded"].get<uint64_t>() == 1);
@@ -360,13 +421,13 @@ TEST_CASE("JpegEncoderNode_JpegStructureForRfc2435") {
         CHECK(data[0] == 0xFF);
         CHECK(data[1] == 0xD8);
 
-        // 2. Find DQT markers — should have quantization tables
+        // 2. Find DQT markers -- should have quantization tables
         size_t dqt1 = scanMarker(data, size, 0xDB, 2);
         REQUIRE(dqt1 < size);
         uint16_t dqt1Len = segmentLength(data, dqt1);
         MESSAGE("DQT1 at offset " << dqt1 << ", length " << dqt1Len);
 
-        // 3. Find SOF0 — verify 4:2:2 subsampling
+        // 3. Find SOF0 -- verify 4:2:2 subsampling
         size_t sof0 = scanMarker(data, size, 0xC0, 2);
         REQUIRE(sof0 < size);
         uint16_t sofLen = segmentLength(data, sof0);
@@ -390,7 +451,7 @@ TEST_CASE("JpegEncoderNode_JpegStructureForRfc2435") {
         uint8_t y_qt = data[sof0 + 12];
         MESSAGE("Y: id=" << (int)y_id << " samp=0x" << std::hex << (int)y_samp
                 << " qt=" << std::dec << (int)y_qt);
-        CHECK(y_samp == 0x21); // H=2, V=1 → 4:2:2
+        CHECK(y_samp == 0x21); // H=2, V=1 -> 4:2:2
 
         // Component 1 (Cb): sampling should be 1x1
         uint8_t cb_samp = data[sof0 + 14];

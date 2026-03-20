@@ -65,6 +65,7 @@ void TimecodeGenerator::deriveMode() {
 
         if(num == 0 || den == 0) {
                 _mode = Timecode::Mode();
+                applyMode();
                 return;
         }
 
@@ -73,6 +74,7 @@ void TimecodeGenerator::deriveMode() {
         if((num == 24000 && den == 1001) || (num == 24 && den == 1)) {
                 _mode = Timecode::Mode(Timecode::NDF24);
                 _dropFrame = false;
+                applyMode();
                 return;
         }
 
@@ -80,6 +82,7 @@ void TimecodeGenerator::deriveMode() {
         if(num == 25 && den == 1) {
                 _mode = Timecode::Mode(Timecode::NDF25);
                 _dropFrame = false;
+                applyMode();
                 return;
         }
 
@@ -90,6 +93,7 @@ void TimecodeGenerator::deriveMode() {
                 } else {
                         _mode = Timecode::Mode(Timecode::NDF30);
                 }
+                applyMode();
                 return;
         }
 
@@ -97,6 +101,7 @@ void TimecodeGenerator::deriveMode() {
         if(num == 30 && den == 1) {
                 _mode = Timecode::Mode(Timecode::NDF30);
                 _dropFrame = false;
+                applyMode();
                 return;
         }
 
@@ -106,6 +111,13 @@ void TimecodeGenerator::deriveMode() {
         double fps = (double)num / (double)den;
         uint32_t tcFps = (uint32_t)(fps + 0.5);
         _mode = Timecode::Mode(vtc_format_find_or_create(num, den, tcFps, 0));
+        applyMode();
+        return;
+}
+
+void TimecodeGenerator::applyMode() {
+        _timecode.setMode(_mode);
+        _startTimecode.setMode(_mode);
         return;
 }
 

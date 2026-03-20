@@ -6,7 +6,9 @@
  */
 
 #include <cstdio>
+#include <cstring>
 #include <promeki/proav/rtpvideosinknode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #ifdef PROMEKI_HAVE_NETWORK
@@ -19,8 +21,7 @@ PROMEKI_REGISTER_NODE(RtpVideoSinkNode)
 
 RtpVideoSinkNode::RtpVideoSinkNode(ObjectBase *parent) : MediaNode(parent) {
         setName("RtpVideoSinkNode");
-        auto input = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image);
-        addInputPort(input);
+        addSink(MediaSink::Ptr::create("input", ContentVideo));
 }
 
 RtpVideoSinkNode::~RtpVideoSinkNode() {
@@ -29,23 +30,93 @@ RtpVideoSinkNode::~RtpVideoSinkNode() {
 #endif
 }
 
-Error RtpVideoSinkNode::configure() {
-        if(state() != Idle) return Error(Error::Invalid);
+bool RtpVideoSinkNode::parseFrameRate(const String &str, FrameRate &out) {
+        if(str == "23.976" || str == "23.98") { out = FrameRate(FrameRate::FPS_2398); return true; }
+        if(str == "24")                       { out = FrameRate(FrameRate::FPS_24);   return true; }
+        if(str == "25")                       { out = FrameRate(FrameRate::FPS_25);   return true; }
+        if(str == "29.97")                    { out = FrameRate(FrameRate::FPS_2997); return true; }
+        if(str == "30")                       { out = FrameRate(FrameRate::FPS_30);   return true; }
+        if(str == "50")                       { out = FrameRate(FrameRate::FPS_50);   return true; }
+        if(str == "59.94")                    { out = FrameRate(FrameRate::FPS_5994); return true; }
+        if(str == "60")                       { out = FrameRate(FrameRate::FPS_60);   return true; }
 
+        const char *slash = strchr(str.cstr(), '/');
+        if(slash) {
+                unsigned int num = static_cast<unsigned int>(atoi(str.cstr()));
+                unsigned int den = static_cast<unsigned int>(atoi(slash + 1));
+                if(num > 0 && den > 0) {
+                        out = FrameRate(FrameRate::RationalType(num, den));
+                        return true;
+                }
+        }
+        return false;
+}
+
+BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
+        BuildResult result;
+        if(state() != Idle) {
+                result.addError("Node is not in Idle state");
+                return result;
+        }
+
+        // Read config
+        _payloadType = config.get("payloadType", Variant(uint8_t(96))).get<uint8_t>();
+        _clockRate = config.get("clockRate", Variant(uint32_t(90000))).get<uint32_t>();
+        _dscp = config.get("dscp", Variant(uint8_t(34))).get<uint8_t>();
+        _dumpPath = config.get("dumpPath", Variant(String())).get<String>();
+
+        // Parse destination
+        String destStr = config.get("destination", Variant(String())).get<String>();
+        if(!destStr.isEmpty()) {
+                auto [addr, err] = SocketAddress::fromString(destStr);
+                if(err.isError()) {
+                        result.addError("Invalid destination address: " + destStr);
+                        return result;
+                }
+                _destination = addr;
+        }
+
+        // Parse multicast
+        String mcastStr = config.get("multicast", Variant(String())).get<String>();
+        if(!mcastStr.isEmpty()) {
+                auto [addr, err] = SocketAddress::fromString(mcastStr);
+                if(err.isError()) {
+                        result.addError("Invalid multicast address: " + mcastStr);
+                        return result;
+                }
+                _multicast = addr;
+        }
+
+        // Parse frame rate
+        String fpsStr = config.get("frameRate", Variant(String())).get<String>();
+        if(!fpsStr.isEmpty()) {
+                if(!parseFrameRate(fpsStr, _frameRate)) {
+                        result.addError("Invalid frame rate: " + fpsStr);
+                        return result;
+                }
+        }
+
+        // Accept RTP payload handler passed as uint64_t (pointer cast)
+        Variant payloadVar = config.get("rtpPayload");
+        if(payloadVar.isValid()) {
+                _payload = reinterpret_cast<RtpPayload *>(payloadVar.get<uint64_t>());
+        }
+
+        // Validate
 #ifdef PROMEKI_HAVE_NETWORK
         if(_payload == nullptr) {
-                emitError("No RTP payload handler set");
-                return Error(Error::Invalid);
+                result.addError("No RTP payload handler set");
+                return result;
         }
         if(_destination.isNull()) {
-                emitError("No destination address set");
-                return Error(Error::Invalid);
+                result.addError("No destination address set");
+                return result;
         }
 #endif
 
         if(!_frameRate.isValid()) {
-                emitError("No frame rate set");
-                return Error(Error::Invalid);
+                result.addError("No frame rate set");
+                return result;
         }
 
         // Compute RTP timestamp increment per frame:
@@ -70,7 +141,7 @@ Error RtpVideoSinkNode::configure() {
         _firstFrame = true;
 
         setState(Configured);
-        return Error(Error::Ok);
+        return result;
 }
 
 Error RtpVideoSinkNode::start() {
@@ -90,18 +161,17 @@ Error RtpVideoSinkNode::start() {
         }
 #endif
 
-        setState(Running);
-        return Error(Error::Ok);
+        return MediaNode::start();
 }
 
 void RtpVideoSinkNode::stop() {
+        MediaNode::stop();
 #ifdef PROMEKI_HAVE_NETWORK
         if(_session != nullptr) {
                 _session->stop();
         }
 #endif
         _firstFrame = true;
-        setState(Idle);
         return;
 }
 
@@ -177,12 +247,6 @@ void RtpVideoSinkNode::process() {
 
         // Advance RTP timestamp
         _rtpTimestamp += _timestampIncrement;
-        return;
-}
-
-void RtpVideoSinkNode::starvation() {
-        _underrunCount++;
-        emitWarning("video underrun");
         return;
 }
 

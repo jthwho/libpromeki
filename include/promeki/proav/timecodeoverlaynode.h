@@ -23,15 +23,25 @@ PROMEKI_NAMESPACE_BEGIN
  * timecode from the Image's own Metadata and renders it as text onto
  * the image buffer. Optionally renders additional custom text.
  *
- * Requires a TrueType font file to be set via setFontPath() before
- * configure() is called.
+ * @par Config options
+ * - `fontPath` (String): Path to a TrueType font file (required).
+ * - `fontSize` (int): Font size in points (default: 36).
+ * - `position` (String): Position preset (default: "bottomcenter").
+ *   Values: topleft, topcenter, topright, bottomleft, bottomcenter, bottomright.
+ * - `customX` (int): Custom X position (only used with position "custom").
+ * - `customY` (int): Custom Y position (only used with position "custom").
+ * - `textColorR` (uint16_t): Red component 0-65535 (default: 65535).
+ * - `textColorG` (uint16_t): Green component 0-65535 (default: 65535).
+ * - `textColorB` (uint16_t): Blue component 0-65535 (default: 65535).
+ * - `drawBackground` (bool): Draw dark background behind text (default: true).
+ * - `customText` (String): Additional text to render below timecode.
  *
  * @par Example
  * @code
- * TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
- * overlay->setFontPath("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf");
- * overlay->setFontSize(48);
- * overlay->setPosition(TimecodeOverlayNode::BottomCenter);
+ * MediaNodeConfig cfg("TimecodeOverlayNode", "overlay");
+ * cfg.set("fontPath", Variant(String("/path/to/font.ttf")));
+ * cfg.set("fontSize", Variant(48));
+ * cfg.set("position", Variant(String("bottomcenter")));
  * @endcode
  */
 class TimecodeOverlayNode : public MediaNode {
@@ -57,100 +67,7 @@ class TimecodeOverlayNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~TimecodeOverlayNode() = default;
 
-                /**
-                 * @brief Sets the path to the TrueType font file.
-                 * @param path Path to a .ttf font file (required).
-                 */
-                void setFontPath(const FilePath &path) { _fontPath = path; return; }
-
-                /** @brief Returns the font path. */
-                const FilePath &fontPath() const { return _fontPath; }
-
-                /**
-                 * @brief Sets the font size in points.
-                 * @param points Font size (default: 36).
-                 */
-                void setFontSize(int points) { _fontSize = points; return; }
-
-                /** @brief Returns the font size in points. */
-                int fontSize() const { return _fontSize; }
-
-                /**
-                 * @brief Sets the text position using a named preset.
-                 *
-                 * The actual x/y coordinates are computed during process()
-                 * based on the frame dimensions and font size.
-                 *
-                 * @param pos The position preset.
-                 */
-                void setPosition(Position pos) { _position = pos; return; }
-
-                /**
-                 * @brief Sets a custom text position.
-                 *
-                 * Switches the position mode to Custom.
-                 *
-                 * @param x X coordinate of the text origin.
-                 * @param y Y coordinate of the text origin.
-                 */
-                void setPosition(int x, int y) {
-                        _position = Custom;
-                        _customX = x;
-                        _customY = y;
-                        return;
-                }
-
-                /** @brief Returns the current position preset. */
-                Position position() const { return _position; }
-
-                /**
-                 * @brief Sets the text color.
-                 * @param r Red component (0-65535).
-                 * @param g Green component (0-65535).
-                 * @param b Blue component (0-65535).
-                 */
-                void setTextColor(uint16_t r, uint16_t g, uint16_t b) {
-                        _colorR = r; _colorG = g; _colorB = b;
-                        return;
-                }
-
-                /**
-                 * @brief Enables or disables drawing a dark background behind the text.
-                 * @param enable true to draw a background rectangle for legibility.
-                 */
-                void setDrawBackground(bool enable) { _drawBackground = enable; return; }
-
-                /** @brief Returns true if background drawing is enabled. */
-                bool drawBackground() const { return _drawBackground; }
-
-                /**
-                 * @brief Sets additional custom text to render below the timecode.
-                 * @param text The custom text string (e.g., "TEST SIGNAL").
-                 */
-                void setCustomText(const String &text) { _customText = text; return; }
-
-                /** @brief Returns the custom text. */
-                const String &customText() const { return _customText; }
-
-                // ---- Lifecycle overrides ----
-
-                /**
-                 * @brief Validates the font path and initializes the FontPainter.
-                 *
-                 * Transitions to Configured on success. Fails if the font path
-                 * is not set or does not exist on disk.
-                 *
-                 * @return Error::Ok on success, or Error::Invalid.
-                 */
-                Error configure() override;
-
-                /**
-                 * @brief Reads timecode from the input image's metadata and renders it as text.
-                 *
-                 * Dequeues a Frame from the input port, ensures exclusive buffer
-                 * ownership via copy-on-write, renders the timecode (and optional
-                 * custom text), then delivers the modified Frame to the output port.
-                 */
+                BuildResult build(const MediaNodeConfig &config) override;
                 void process() override;
 
         private:
@@ -166,6 +83,8 @@ class TimecodeOverlayNode : public MediaNode {
                 String          _customText;
 
                 FontPainter     _fontPainter;
+
+                static bool parsePosition(const String &str, Position &out);
 
                 /**
                  * @brief Computes text placement coordinates from the current position preset.

@@ -34,15 +34,21 @@ PROMEKI_NAMESPACE_BEGIN
  * it sleeps between frames to maintain the target frame rate,
  * preventing drift from processing time.
  *
+ * @par Config options
+ * - `destination` (String): Destination "IP:port" (required).
+ * - `multicast` (String): Multicast group "IP:port" (optional).
+ * - `frameRate` (String): Frame rate (required). E.g. "29.97", "30000/1001".
+ * - `payloadType` (uint8_t): RTP payload type (default: 96).
+ * - `clockRate` (uint32_t): RTP clock rate in Hz (default: 90000).
+ * - `dscp` (uint8_t): DSCP value for QoS (default: 34, AF41).
+ * - `dumpPath` (String): File path to dump first frame's raw data.
+ * - `rtpPayload` (pointer, set programmatically): RTP payload handler.
+ *
  * @par Example
  * @code
- * RtpPayloadJpeg payload(1920, 1080);
- * RtpVideoSinkNode *sink = new RtpVideoSinkNode();
- * sink->setDestination(SocketAddress(Ipv4Address("239.0.0.1"), 5004));
- * sink->setFrameRate(FrameRate::FPS_30);
- * sink->setRtpPayload(&payload);
- * sink->configure();
- * sink->start();
+ * MediaNodeConfig cfg("RtpVideoSinkNode", "videoSink");
+ * cfg.set("destination", Variant(String("239.0.0.1:5004")));
+ * cfg.set("frameRate", Variant(String("29.97")));
  * @endcode
  */
 class RtpVideoSinkNode : public MediaNode {
@@ -57,130 +63,18 @@ class RtpVideoSinkNode : public MediaNode {
                 /** @brief Destructor. */
                 ~RtpVideoSinkNode() override;
 
-                /**
-                 * @brief Sets the destination address for RTP packets.
-                 * @param addr Unicast or multicast destination address and port.
-                 */
-                void setDestination(const SocketAddress &addr) { _destination = addr; return; }
-
-                /** @brief Returns the destination address. */
-                const SocketAddress &destination() const { return _destination; }
-
-                /**
-                 * @brief Sets a multicast group to join on start.
-                 * @param group The multicast group address and port.
-                 */
-                void setMulticast(const SocketAddress &group) { _multicast = group; return; }
-
-                /** @brief Returns the multicast group, or a null address if not set. */
-                const SocketAddress &multicast() const { return _multicast; }
-
-                /**
-                 * @brief Sets the video frame rate for pacing.
-                 * @param fps The target frame rate.
-                 */
-                void setFrameRate(const FrameRate &fps) { _frameRate = fps; return; }
-
-                /** @brief Returns the configured frame rate. */
-                const FrameRate &frameRate() const { return _frameRate; }
-
-                /**
-                 * @brief Sets the RTP payload handler.
-                 *
-                 * The payload handler is not owned by this node. The caller
-                 * must ensure it outlives the node.
-                 *
-                 * @param handler The RTP payload handler.
-                 */
-                void setRtpPayload(RtpPayload *handler) { _payload = handler; return; }
-
-                /** @brief Returns the RTP payload handler. */
-                RtpPayload *rtpPayload() const { return _payload; }
-
-                /**
-                 * @brief Sets the RTP payload type number.
-                 * @param pt Payload type (default: 96).
-                 */
-                void setPayloadType(uint8_t pt) { _payloadType = pt; return; }
-
-                /** @brief Returns the RTP payload type. */
-                uint8_t payloadType() const { return _payloadType; }
-
-                /**
-                 * @brief Sets the RTP timestamp clock rate.
-                 * @param hz Clock rate in Hz (default: 90000).
-                 */
-                void setClockRate(uint32_t hz) { _clockRate = hz; return; }
-
-                /** @brief Returns the RTP clock rate. */
-                uint32_t clockRate() const { return _clockRate; }
-
-                /**
-                 * @brief Sets a file path to dump the first frame's raw data.
-                 *
-                 * When set, the first frame processed will be written to this
-                 * path as-is (e.g. a complete JPEG file for MJPEG transport).
-                 * Useful for diagnosing encoding or packing issues.
-                 *
-                 * @param path Output file path, or empty to disable.
-                 */
-                void setDumpPath(const String &path) { _dumpPath = path; return; }
-
-                /** @brief Returns the dump path. */
-                const String &dumpPath() const { return _dumpPath; }
-
-                /**
-                 * @brief Sets the DSCP value for QoS marking.
-                 * @param dscp DSCP value (default: 34, AF41 for broadcast video).
-                 */
-                void setDscp(uint8_t dscp) { _dscp = dscp; return; }
-
-                /** @brief Returns the DSCP value. */
-                uint8_t dscp() const { return _dscp; }
-
-                // ---- Lifecycle overrides ----
-
-                /**
-                 * @brief Validates configuration and creates the RTP session.
-                 *
-                 * Checks that an RTP payload handler, destination address, and
-                 * frame rate are set. Computes the RTP timestamp increment and
-                 * frame interval for pacing.
-                 *
-                 * @return Error::Ok on success, or Error::Invalid.
-                 */
-                Error configure() override;
-
-                /**
-                 * @brief Starts the RTP session and optionally joins a multicast group.
-                 * @return Error::Ok on success, or an error if the session cannot start.
-                 */
-                Error start() override;
-
-                /**
-                 * @brief Stops the RTP session.
-                 */
-                void stop() override;
-
-                /**
-                 * @brief Sends a video frame over RTP with real-time pacing.
-                 *
-                 * Dequeues a Frame from the input port, packs the image data
-                 * into RTP packets via the payload handler, sleeps to maintain
-                 * the target frame rate, and sends the packets.
-                 */
-                void process() override;
-
-                /**
-                 * @brief Records a video underrun event.
-                 */
-                void starvation() override;
+                BuildResult build(const MediaNodeConfig &config) override;
 
                 /**
                  * @brief Returns video sink statistics.
                  * @return A map containing packetsSent, bytesSent, and underrunCount.
                  */
                 Map<String, Variant> extendedStats() const override;
+
+        protected:
+                Error start() override;
+                void stop() override;
+                void process() override;
 
         private:
                 FrameRate       _frameRate;
@@ -202,6 +96,8 @@ class RtpVideoSinkNode : public MediaNode {
                 SocketAddress   _multicast;
                 RtpPayload      *_payload = nullptr;
                 RtpSession      *_session = nullptr;
+
+                static bool parseFrameRate(const String &str, FrameRate &out);
 };
 
 PROMEKI_NAMESPACE_END

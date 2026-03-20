@@ -6,10 +6,8 @@
  */
 
 #include <promeki/proav/framedemuxnode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
-#include <promeki/proav/image.h>
-#include <promeki/proav/audio.h>
-#include <promeki/core/metadata.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -17,36 +15,20 @@ PROMEKI_REGISTER_NODE(FrameDemuxNode)
 
 FrameDemuxNode::FrameDemuxNode(ObjectBase *parent) : MediaNode(parent) {
         setName("FrameDemuxNode");
-        auto input = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Frame);
-        auto imageOut = MediaPort::Ptr::create("image", MediaPort::Output, MediaPort::Image);
-        auto audioOut = MediaPort::Ptr::create("audio", MediaPort::Output, MediaPort::Audio);
-        addInputPort(input);
-        addOutputPort(imageOut);
-        addOutputPort(audioOut);
+        addSink(MediaSink::Ptr::create("input", ContentNone));
+        addSource(MediaSource::Ptr::create("image", ContentVideo));
+        addSource(MediaSource::Ptr::create("audio", ContentAudio));
 }
 
-Error FrameDemuxNode::configure() {
-        if(state() != Idle) return Error(Error::Invalid);
-
-        // Pass through descriptors from input to outputs
-        MediaPort::Ptr input = inputPort(0);
-        MediaPort::Ptr imageOut = outputPort(0);
-        MediaPort::Ptr audioOut = outputPort(1);
-
-        if(input->videoDesc().isValid()) {
-                if(!input->videoDesc().imageList().isEmpty()) {
-                        imageOut.modify()->setImageDesc(input->videoDesc().imageList()[0]);
-                }
-                if(!input->videoDesc().audioList().isEmpty()) {
-                        audioOut.modify()->setAudioDesc(input->videoDesc().audioList()[0]);
-                }
+BuildResult FrameDemuxNode::build(const MediaNodeConfig &config) {
+        (void)config;
+        BuildResult result;
+        if(state() != Idle) {
+                result.addError("Node is not in Idle state");
+                return result;
         }
-        if(input->audioDesc().isValid()) {
-                audioOut.modify()->setAudioDesc(input->audioDesc());
-        }
-
         setState(Configured);
-        return Error(Error::Ok);
+        return result;
 }
 
 void FrameDemuxNode::process() {

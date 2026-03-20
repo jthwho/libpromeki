@@ -25,10 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * FrameDemuxNode *demux = new FrameDemuxNode();
- * graph.connect(source, 0, demux, 0);       // Frame input
- * graph.connect(demux, 0, videoSink, 0);     // Image output
- * graph.connect(demux, 1, audioSink, 0);     // Audio output
+ * MediaNodeConfig cfg("FrameDemuxNode", "demux");
  * @endcode
  */
 class FrameDemuxNode : public MediaNode {
@@ -43,7 +40,7 @@ class FrameDemuxNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~FrameDemuxNode() = default;
 
-                Error configure() override;
+                BuildResult build(const MediaNodeConfig &config) override;
                 void process() override;
 };
 

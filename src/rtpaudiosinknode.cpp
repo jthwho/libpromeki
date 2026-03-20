@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <promeki/proav/rtpaudiosinknode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/audio.h>
 #include <promeki/proav/audiodesc.h>
@@ -20,57 +21,78 @@ PROMEKI_REGISTER_NODE(RtpAudioSinkNode)
 
 RtpAudioSinkNode::RtpAudioSinkNode(ObjectBase *parent) : MediaNode(parent) {
         setName("RtpAudioSinkNode");
-        auto input = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Audio);
-        addInputPort(input);
+        addSink(MediaSink::Ptr::create("input", ContentAudio));
+
 }
 
 RtpAudioSinkNode::~RtpAudioSinkNode() {
         delete _session;
 }
 
-Error RtpAudioSinkNode::configure() {
-        if(state() != Idle) return Error(Error::Invalid);
+BuildResult RtpAudioSinkNode::build(const MediaNodeConfig &config) {
+        BuildResult result;
+        if(state() != Idle) {
+                result.addError("Node is not in Idle state");
+                return result;
+        }
 
+        // Read config
+        _payloadType = config.get("payloadType", Variant(uint8_t(97))).get<uint8_t>();
+        _clockRate = config.get("clockRate", Variant(uint32_t(48000))).get<uint32_t>();
+        _packetTime = config.get("packetTime", Variant(4.0)).get<double>();
+        _dscp = config.get("dscp", Variant(uint8_t(46))).get<uint8_t>();
+
+        // Parse output format
+        // TODO: parse from string name when formats are registered by name
+        Variant fmtVar = config.get("outputFormat");
+        if(fmtVar.isValid()) {
+                _outputFormat = static_cast<AudioDesc::DataType>(fmtVar.get<int>());
+        }
+
+        // Parse destination
+        String destStr = config.get("destination", Variant(String())).get<String>();
+        if(!destStr.isEmpty()) {
+                auto [addr, err] = SocketAddress::fromString(destStr);
+                if(err.isError()) {
+                        result.addError("Invalid destination address: " + destStr);
+                        return result;
+                }
+                _destination = addr;
+        }
+
+        // Accept RTP payload handler passed as uint64_t (pointer cast)
+        Variant payloadVar = config.get("rtpPayload");
+        if(payloadVar.isValid()) {
+                _payload = reinterpret_cast<RtpPayload *>(payloadVar.get<uint64_t>());
+        }
+
+        // Validate
         if(_payload == nullptr) {
-                emitError("No RTP payload handler set");
-                return Error(Error::Invalid);
+                result.addError("No RTP payload handler set");
+                return result;
         }
         if(_destination.isNull()) {
-                emitError("No destination address set");
-                return Error(Error::Invalid);
+                result.addError("No destination address set");
+                return result;
         }
 
         // Compute samples per packet from packet time
         _samplesPerPacket = (size_t)(_packetTime * 0.001 * _clockRate);
         if(_samplesPerPacket == 0) {
-                emitError("Invalid packet time / clock rate combination");
-                return Error(Error::Invalid);
+                result.addError("Invalid packet time / clock rate combination");
+                return result;
         }
 
-        // Get bytes per sample frame from the output format (if set) or input port.
-        // If the input port's audioDesc is not yet available (port descriptors
-        // are not propagated until the first frame arrives), leave
-        // _bytesPerSampleFrame at 0 so that process() detects the correct
-        // value from the actual audio data.
-        const AudioDesc &adesc = inputPort(0)->audioDesc();
+        // Bytes per sample frame will be determined from actual audio data
+        // in process() when the first frame arrives.
         if(_outputFormat != AudioDesc::Invalid) {
                 const AudioDesc::Format *fmt = AudioDesc::lookupFormat(_outputFormat);
                 if(fmt == nullptr || fmt->bytesPerSample == 0) {
-                        emitError("Invalid output format");
-                        return Error(Error::Invalid);
-                }
-                if(adesc.isValid()) {
-                        _bytesPerSampleFrame = fmt->bytesPerSample * adesc.channels();
-                } else {
-                        _bytesPerSampleFrame = 0;
-                }
-        } else {
-                if(adesc.isValid()) {
-                        _bytesPerSampleFrame = adesc.bytesPerSampleStride();
-                } else {
-                        _bytesPerSampleFrame = 0;
+                        result.addError("Invalid output format");
+                        return result;
                 }
         }
+        _bytesPerSampleFrame = 0;
 
         _packetBytes = _samplesPerPacket * (_bytesPerSampleFrame > 0 ? _bytesPerSampleFrame : 1);
 
@@ -89,7 +111,7 @@ Error RtpAudioSinkNode::configure() {
         _underrunCount = 0;
 
         setState(Configured);
-        return Error(Error::Ok);
+        return result;
 }
 
 Error RtpAudioSinkNode::start() {
@@ -105,18 +127,17 @@ Error RtpAudioSinkNode::start() {
 
         _accumOffset = 0;
 
-        setState(Running);
-        return Error(Error::Ok);
+        return MediaNode::start();
 }
 
 void RtpAudioSinkNode::stop() {
+        MediaNode::stop();
         flushRemaining();
 
         if(_session != nullptr) {
                 _session->stop();
         }
 
-        setState(Idle);
         return;
 }
 
@@ -205,12 +226,6 @@ void RtpAudioSinkNode::flushRemaining() {
                 _rtpTimestamp += (uint32_t)samplesInPacket;
                 _accumOffset = 0;
         }
-        return;
-}
-
-void RtpAudioSinkNode::starvation() {
-        _underrunCount++;
-        emitWarning("audio underrun");
         return;
 }
 

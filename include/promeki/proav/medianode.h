@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <mutex>
 #include <promeki/core/namespace.h>
@@ -16,16 +17,18 @@
 #include <promeki/core/list.h>
 #include <promeki/core/map.h>
 #include <promeki/core/variant.h>
-#include <promeki/core/queue.h>
+#include <promeki/core/mutex.h>
+#include <promeki/core/waitcondition.h>
+#include <promeki/core/thread.h>
 #include <promeki/core/timestamp.h>
-#include <promeki/proav/mediaport.h>
-#include <promeki/proav/medialink.h>
+#include <promeki/proav/mediasink.h>
+#include <promeki/proav/mediasource.h>
 #include <promeki/proav/frame.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class ThreadPool;
 class MediaNode;
+class MediaNodeConfig;
 class MediaPipeline;
 
 /**
@@ -34,9 +37,9 @@ class MediaPipeline;
  */
 enum class Severity {
         Info,           ///< @brief Informational message.
-        Warning,        ///< @brief Warning — non-fatal issue.
-        Error,          ///< @brief Error — node transitions to ErrorState.
-        Fatal           ///< @brief Fatal — pipeline should stop.
+        Warning,        ///< @brief Warning -- non-fatal issue.
+        Error,          ///< @brief Error -- node transitions to ErrorState.
+        Fatal           ///< @brief Fatal -- pipeline should stop.
 };
 
 /**
@@ -57,12 +60,45 @@ struct NodeMessage {
  */
 struct NodeStats {
         uint64_t processCount = 0;              ///< @brief Total process() invocations.
-        uint64_t starvationCount = 0;           ///< @brief Total starvation() invocations.
         double lastProcessDuration = 0.0;       ///< @brief Wall-clock time of last process() call in seconds.
         double avgProcessDuration = 0.0;        ///< @brief Exponential moving average of process() duration in seconds.
         double peakProcessDuration = 0.0;       ///< @brief Peak process() duration in seconds.
-        int currentQueueDepth = 0;              ///< @brief Current input queue depth.
-        int peakQueueDepth = 0;                 ///< @brief Peak input queue depth observed.
+        int currentQueueDepth = 0;              ///< @brief Aggregate input queue depth across all sinks.
+        int peakQueueDepth = 0;                 ///< @brief Peak aggregate input queue depth observed.
+};
+
+/**
+ * @brief Collects diagnostic messages from a node's build() call.
+ * @ingroup proav_pipeline
+ *
+ * BuildResult can contain informational, warning, and error entries.
+ * A build succeeds if there are no Error or Fatal entries.
+ */
+struct BuildResult {
+        /** @brief A single diagnostic entry. */
+        struct Entry {
+                Severity severity;      ///< @brief Entry severity.
+                String message;         ///< @brief Human-readable description.
+        };
+
+        using EntryList = List<Entry>;
+
+        EntryList entries;              ///< @brief All collected entries.
+
+        /** @brief Returns true if there are no error-level entries. */
+        bool isOk() const;
+
+        /** @brief Returns true if there is at least one error-level entry. */
+        bool isError() const;
+
+        /** @brief Adds an informational entry. */
+        void addInfo(const String &msg);
+
+        /** @brief Adds a warning entry. */
+        void addWarning(const String &msg);
+
+        /** @brief Adds an error entry. */
+        void addError(const String &msg);
 };
 
 /**
@@ -70,13 +106,18 @@ struct NodeStats {
  * @ingroup proav_pipeline
  *
  * MediaNode is the ObjectBase-derived base class for all processing nodes
- * in the media pipeline framework. It manages input and output ports,
- * lifecycle state transitions, threading policy, and provides a uniform
- * property interface for future JSON serialization.
+ * in the media pipeline framework. It manages input sinks and output
+ * sources, lifecycle state transitions, and per-sink queued input with
+ * backpressure.
  *
  * Concrete node subclasses override the virtual lifecycle methods
- * (configure, start, stop, process, starvation) to implement their
- * specific processing logic.
+ * (build, start, stop, cleanup, process) to implement their specific
+ * processing logic. All configuration flows through the build() method
+ * via MediaNodeConfig; nodes do not expose public setters.
+ *
+ * The MediaPipeline is the sole interface for managing node lifecycle.
+ * Nodes cannot be configured, started, or stopped directly — only
+ * through the pipeline.
  */
 class MediaNode : public ObjectBase {
         PROMEKI_OBJECT(MediaNode, ObjectBase)
@@ -87,13 +128,6 @@ class MediaNode : public ObjectBase {
                         Configured,     ///< @brief Configured and ready to start.
                         Running,        ///< @brief Actively processing data.
                         ErrorState      ///< @brief An error has occurred.
-                };
-
-                /** @brief Threading policy for this node. */
-                enum ThreadingPolicy {
-                        UseGraphPool,   ///< @brief Use the graph's default thread pool.
-                        DedicatedThread,///< @brief Run on a dedicated thread.
-                        CustomPool      ///< @brief Use a custom thread pool.
                 };
 
                 /**
@@ -117,159 +151,107 @@ class MediaNode : public ObjectBase {
                  */
                 void setName(const String &name) { _name = name; return; }
 
-                // ---- Port management ----
+                // ---- Sink / Source management ----
 
-                /** @brief Returns the list of input ports. */
-                const MediaPort::PtrList &inputPorts() const { return _inputPorts; }
+                /** @brief Returns the list of input sinks. */
+                const MediaSink::PtrList &sinks() const { return _sinks; }
 
-                /** @brief Returns the list of output ports. */
-                const MediaPort::PtrList &outputPorts() const { return _outputPorts; }
-
-                /**
-                 * @brief Returns the input port at the given index.
-                 * @param index Zero-based port index.
-                 * @return The port, or a null Ptr if the index is out of range.
-                 */
-                MediaPort::Ptr inputPort(int index) const;
+                /** @brief Returns the list of output sources. */
+                const MediaSource::PtrList &sources() const { return _sources; }
 
                 /**
-                 * @brief Returns the output port at the given index.
-                 * @param index Zero-based port index.
-                 * @return The port, or a null Ptr if the index is out of range.
+                 * @brief Returns the input sink at the given index.
+                 * @param index Zero-based index.
+                 * @return The sink, or a null Ptr if the index is out of range.
                  */
-                MediaPort::Ptr outputPort(int index) const;
+                MediaSink::Ptr sink(int index) const;
 
                 /**
-                 * @brief Returns the input port with the given name.
-                 * @param name The port name.
-                 * @return The port, or a null Ptr if not found.
+                 * @brief Returns the output source at the given index.
+                 * @param index Zero-based index.
+                 * @return The source, or a null Ptr if the index is out of range.
                  */
-                MediaPort::Ptr inputPort(const String &name) const;
+                MediaSource::Ptr source(int index) const;
 
                 /**
-                 * @brief Returns the output port with the given name.
-                 * @param name The port name.
-                 * @return The port, or a null Ptr if not found.
+                 * @brief Returns the input sink with the given name.
+                 * @param name The sink name.
+                 * @return The sink, or a null Ptr if not found.
                  */
-                MediaPort::Ptr outputPort(const String &name) const;
+                MediaSink::Ptr sink(const String &name) const;
 
-                /** @brief Returns the number of input ports. */
-                int inputPortCount() const { return _inputPorts.size(); }
+                /**
+                 * @brief Returns the output source with the given name.
+                 * @param name The source name.
+                 * @return The source, or a null Ptr if not found.
+                 */
+                MediaSource::Ptr source(const String &name) const;
 
-                /** @brief Returns the number of output ports. */
-                int outputPortCount() const { return _outputPorts.size(); }
+                /** @brief Returns the number of input sinks. */
+                int sinkCount() const { return _sinks.size(); }
+
+                /** @brief Returns the number of output sources. */
+                int sourceCount() const { return _sources.size(); }
 
                 // ---- Threading ----
 
                 /**
-                 * @brief Sets the threading policy.
-                 * @param policy The threading policy to use.
+                 * @brief Returns the Thread owned by this node, or nullptr.
                  */
-                void setThreadingPolicy(ThreadingPolicy policy) {
-                        _threadingPolicy = policy;
-                        return;
-                }
+                Thread *thread() const { return _thread; }
 
                 /**
-                 * @brief Sets a custom thread pool and switches policy to CustomPool.
-                 * @param pool The custom thread pool.
+                 * @brief Wakes the node so it re-evaluates work availability.
+                 *
+                 * Called by MediaSink::push() when a frame arrives, and by
+                 * sinks when backpressure is relieved.
                  */
-                void setThreadingPolicy(ThreadPool *pool) {
-                        _threadingPolicy = CustomPool;
-                        _customPool = pool;
-                        return;
-                }
+                void wake();
 
-                /** @brief Returns the current threading policy. */
-                ThreadingPolicy threadingPolicy() const { return _threadingPolicy; }
+                // ---- Work availability and backpressure ----
 
-                /** @brief Returns the custom thread pool, or nullptr if not using CustomPool. */
-                ThreadPool *customThreadPool() const { return _customPool; }
-
-                // ---- Input queue ----
+                /** @brief Returns true if any input sink queue has data. */
+                bool hasInput() const;
 
                 /**
-                 * @brief Sets the ideal input queue depth.
+                 * @brief Returns true if all output sources can deliver.
                  *
-                 * The pipeline uses this as a hint for back-pressure.
-                 *
-                 * @param size Target queue depth (default: 2).
+                 * Checks sinksReadyForFrame() on every source.
                  */
-                void setIdealQueueSize(int size) { _idealQueueSize = size; return; }
-
-                /** @brief Returns the ideal input queue size. */
-                int idealQueueSize() const { return _idealQueueSize; }
-
-                /** @brief Returns the current input queue depth. */
-                int queuedFrameCount() const { return _inputQueue.size(); }
-
-                // ---- Virtual lifecycle ----
+                bool canOutput() const;
 
                 /**
-                 * @brief Validates ports and allocates resources.
-                 *
-                 * Transitions the node from Idle to Configured on success.
-                 *
-                 * @return Error::Ok on success, or an error code.
+                 * @brief Returns true if the output source at the given index can deliver.
+                 * @param sourceIndex Output source index.
                  */
-                virtual Error configure();
+                bool canOutput(int sourceIndex) const;
 
                 /**
-                 * @brief Begins processing.
+                 * @brief Returns true if the node has work to do.
                  *
-                 * Transitions the node from Configured to Running on success.
-                 *
-                 * @return Error::Ok on success, or an error code.
+                 * For nodes with sinks: hasInput() && canOutput().
+                 * For source nodes (no sinks): canOutput().
                  */
-                virtual Error start();
+                bool hasWork() const;
+
+                /** @brief Returns the pipeline this node belongs to, or nullptr. */
+                MediaPipeline *pipeline() const { return _pipeline; }
+
+                // ---- Build from config ----
 
                 /**
-                 * @brief Stops processing.
+                 * @brief Configures this node from a MediaNodeConfig.
                  *
-                 * Transitions the node from Running to Idle.
-                 */
-                virtual void stop();
-
-                /**
-                 * @brief Processes one cycle of data.
+                 * Called by MediaPipeline::build() after creating the node
+                 * via the factory and wiring connections. The node reads
+                 * its configuration from the config, validates it, allocates
+                 * resources, and transitions to the Configured state on
+                 * success.
                  *
-                 * Pure virtual — must be implemented by concrete node subclasses.
+                 * @param config The node configuration.
+                 * @return A BuildResult collecting any diagnostics.
                  */
-                virtual void process() = 0;
-
-                /**
-                 * @brief Called when the node's input queue is empty and data is needed.
-                 *
-                 * Override for nodes that need to handle starvation (e.g. log,
-                 * insert silence/black, repeat last frame). Default: no-op.
-                 */
-                virtual void starvation();
-
-                // ---- Property interface ----
-
-                /**
-                 * @brief Returns all configurable properties as key-value pairs.
-                 *
-                 * Concrete nodes override this to expose their configuration.
-                 *
-                 * @return A map of property names to Variant values.
-                 */
-                virtual Map<String, Variant> properties() const;
-
-                /**
-                 * @brief Sets a property by name.
-                 * @param name  The property name.
-                 * @param value The value to set.
-                 * @return Error::Ok on success, or an error (e.g. unknown property, type mismatch).
-                 */
-                virtual Error setProperty(const String &name, const Variant &value);
-
-                /**
-                 * @brief Gets a single property value by name.
-                 * @param name The property name.
-                 * @return The property value, or an invalid Variant if not found.
-                 */
-                Variant property(const String &name) const;
+                virtual BuildResult build(const MediaNodeConfig &config) = 0;
 
                 // ---- Node type registry ----
 
@@ -326,45 +308,94 @@ class MediaNode : public ObjectBase {
                 PROMEKI_SIGNAL(messageEmitted, NodeMessage);
 
         protected:
+                // ---- Virtual lifecycle ----
+
                 /**
-                 * @brief Enqueues a frame into this node's input queue.
+                 * @brief Begins processing.
                  *
-                 * Called by the pipeline to deliver frames from upstream nodes.
+                 * Transitions the node from Configured to Running on success.
                  *
-                 * @param frame The frame to enqueue.
+                 * @return Error::Ok on success, or an error code.
                  */
-                void enqueueInput(Frame::Ptr frame);
+                virtual Error start();
+
+                /**
+                 * @brief Stops processing.
+                 *
+                 * Transitions the node to Idle, wakes any threads
+                 * blocked in waitForWork() so they see Error::Stopped,
+                 * then calls cleanup().
+                 */
+                virtual void stop();
+
+                /**
+                 * @brief Called during stop() to allow cleanup while the object
+                 *        is still fully constructed.
+                 *
+                 * Override to release resources, disconnect signals, or
+                 * notify external systems. Called after the node transitions
+                 * to Idle and waiters are woken. Default implementation is
+                 * a no-op.
+                 */
+                virtual void cleanup();
+
+                /**
+                 * @brief Processes one cycle of data.
+                 *
+                 * Pure virtual -- must be implemented by concrete node subclasses.
+                 * Called by the node's thread in the default run loop.
+                 */
+                virtual void process() = 0;
+
+                /**
+                 * @brief Sets the thread for this node. Takes ownership.
+                 *
+                 * The node deletes the thread on destruction or when replaced.
+                 * Pass nullptr to clear.
+                 *
+                 * @param thread The thread to own.
+                 */
+                void setThread(Thread *thread);
+
+                // ---- Data flow ----
+
+                /**
+                 * @brief Dequeues a frame from the input sink at the given index.
+                 * @param sinkIndex The input sink index.
+                 * @return The next frame, or a null Ptr if the queue is empty.
+                 */
+                Frame::Ptr dequeueInput(int sinkIndex);
+
+                /**
+                 * @brief Dequeues a frame from the named input sink.
+                 * @param sinkName The input sink name.
+                 * @return The next frame, or a null Ptr if the queue is empty.
+                 */
+                Frame::Ptr dequeueInput(const String &sinkName);
+
+                /**
+                 * @brief Dequeues a frame from the first input sink that has data.
+                 * @return The next frame, or a null Ptr if all queues are empty.
+                 */
+                Frame::Ptr dequeueInput();
 
                 /**
                  * @brief Records timing for a process() call.
-                 *
-                 * Called by the pipeline to instrument process() with timing.
-                 * Updates processCount, lastProcessDuration, avgProcessDuration,
-                 * and peakProcessDuration.
-                 *
                  * @param duration The wall-clock duration of the process() call in seconds.
                  */
                 void recordProcessTiming(double duration);
 
                 /**
-                 * @brief Records a starvation event.
-                 *
-                 * Called by the pipeline when starvation() is invoked.
-                 * Increments starvationCount.
+                 * @brief Adds an input sink to this node.
+                 * @param sink The sink to add. Ownership is shared via Ptr.
                  */
-                void recordStarvation();
+                void addSink(MediaSink::Ptr sink);
 
                 /**
-                 * @brief Adds an input port to this node.
-                 * @param port The port to add.
+                 * @brief Adds an output source to this node.
+                 * @param source The source to add. Ownership is shared via Ptr.
                  */
-                void addInputPort(MediaPort::Ptr port);
-
-                /**
-                 * @brief Adds an output port to this node.
-                 * @param port The port to add.
-                 */
-                void addOutputPort(MediaPort::Ptr port);
+                void addSource(MediaSource::Ptr source);
 
                 /**
                  * @brief Sets the node state and emits stateChanged.
@@ -373,27 +404,14 @@ class MediaNode : public ObjectBase {
                 void setState(State state);
 
                 /**
-                 * @brief Dequeues a frame from this node's input queue.
-                 *
-                 * Returns a null Ptr if the queue is empty. Subclasses call
-                 * this from process() to pull input frames.
-                 *
-                 * @return The next frame, or a null Ptr if the queue is empty.
-                 */
-                Frame::Ptr dequeueInput();
-
-                /**
-                 * @brief Delivers a frame to all outgoing links on the given output port.
-                 *
-                 * Source nodes call this from process() to push frames downstream.
-                 *
-                 * @param portIndex The output port index.
+                 * @brief Delivers a frame via the output source at the given index.
+                 * @param sourceIndex The output source index.
                  * @param frame The frame to deliver.
                  */
-                void deliverOutput(int portIndex, Frame::Ptr frame);
+                void deliverOutput(int sourceIndex, Frame::Ptr frame);
 
                 /**
-                 * @brief Delivers a frame to all outgoing links on all output ports.
+                 * @brief Delivers a frame via all output sources.
                  *
                  * Convenience for single-output nodes.
                  *
@@ -403,55 +421,63 @@ class MediaNode : public ObjectBase {
 
                 /**
                  * @brief Emits a message with the given severity and text.
-                 *
-                 * Auto-populates timestamp and node pointer. Subclasses
-                 * call this to report events during processing.
-                 *
                  * @param severity The message severity.
                  * @param message The message text.
                  * @param frameNumber The frame number this relates to (0 if not frame-specific).
                  */
                 void emitMessage(Severity severity, const String &message, uint64_t frameNumber = 0);
 
-                /**
-                 * @brief Emits a Warning-severity message.
-                 * @param message The warning text.
-                 */
+                /** @brief Emits a Warning-severity message. */
                 void emitWarning(const String &message);
 
                 /**
                  * @brief Emits an Error-severity message.
                  *
                  * Also transitions the node to ErrorState and emits errorOccurred.
-                 *
-                 * @param message The error text.
                  */
                 void emitError(const String &message);
+
+                /**
+                 * @brief Blocks until the node has work to do, the node
+                 *        leaves Running state, or the timeout expires.
+                 *
+                 * For nodes with sinks: waits until input is available and
+                 * outputs can accept. For source nodes: waits until outputs
+                 * can accept (backpressure relief).
+                 *
+                 * @param timeoutMs Maximum time to wait in milliseconds.
+                 *        Zero (the default) waits indefinitely.
+                 * @return Error::Ok if work is available,
+                 *         Error::Stopped if the node is no longer Running,
+                 *         Error::Timeout on timeout.
+                 */
+                Error waitForWork(unsigned int timeoutMs = 0);
 
         private:
                 String                  _name;
                 State                   _state = Idle;
-                ThreadingPolicy         _threadingPolicy = UseGraphPool;
-                ThreadPool              *_customPool = nullptr;
-                int                     _idealQueueSize = 2;
-                MediaPort::PtrList      _inputPorts;
-                MediaPort::PtrList      _outputPorts;
-                Queue<Frame::Ptr>       _inputQueue;
+                MediaSink::PtrList      _sinks;
+                MediaSource::PtrList    _sources;
 
-                // Outgoing links (managed by MediaGraph)
-                MediaLink::PtrList      _outgoingLinks;
-                friend class MediaGraph;
-                friend class MediaLink;
+                // Wake mechanism
+                Mutex                   _workMutex;
+                WaitCondition           _workCv;
+                Thread                  *_thread = nullptr;
+
+                MediaPipeline           *_pipeline = nullptr;
                 friend class MediaPipeline;
+                friend class MediaNodeThread;
 
                 // Statistics (guarded by _statsMutex)
                 mutable std::mutex      _statsMutex;
                 uint64_t                _processCount = 0;
-                uint64_t                _starvationCount = 0;
                 double                  _lastProcessDuration = 0.0;
                 double                  _avgProcessDuration = 0.0;
                 double                  _peakProcessDuration = 0.0;
                 int                     _peakQueueDepth = 0;
+
+                int aggregateQueueDepth() const;
+                void threadEntry();
 
                 static Map<String, std::function<MediaNode *()>> &nodeRegistry();
 };
@@ -460,8 +486,6 @@ class MediaNode : public ObjectBase {
  * @brief Macro to register a MediaNode subclass for runtime creation.
  *
  * Place this in the .cpp file of each concrete MediaNode subclass.
- * It registers the class at static initialization time so that
- * MediaNode::createNode() can instantiate it by name.
  */
 #define PROMEKI_REGISTER_NODE(ClassName) \
         static struct ClassName##Registrar { \

@@ -88,7 +88,8 @@ class Error {
                         NotHostAccessible,       ///< Memory is not host-accessible.
                         BufferTooSmall,          ///< Buffer is too small for the operation.
                         IdNotFound,              ///< Requested ID was not found in the database.
-                        ConversionFailed         ///< Type conversion could not be performed.
+                        ConversionFailed,        ///< Type conversion could not be performed.
+                        Stopped                  ///< Operation interrupted because the object is stopping.
                 };
 
                 /**

@@ -12,7 +12,9 @@ Generalizes the existing source/sink pattern in AudioBlock. Default threading mo
 
 ## Progress
 
-**Completed:** MediaPort, MediaNode (including node registry, property interface, NodeStats), MediaLink, MediaGraph, MediaPipeline, EncodedDesc, Image::ensureExclusive()/isExclusive(), Audio::convertTo() (sample format conversion). See git history for details.
+**Completed:** MediaSink, MediaSource, MediaNodeConfig, MediaPipelineConfig, MediaNode (including node registry, NodeStats, BuildResult), MediaPipeline, EncodedDesc, Image::ensureExclusive()/isExclusive(), Audio::convertTo() (sample format conversion). See git history for details.
+
+**Architecture note:** The original MediaPort/MediaLink/MediaGraph abstraction layer was replaced by a simpler MediaSink/MediaSource direct-connection model. MediaNode now owns its sinks and sources directly; MediaPipeline owns nodes and manages connections. All node configuration flows through MediaNodeConfig::build() (pure virtual, returns BuildResult). The property system and configure() virtual have been removed — all config goes through build().
 
 **Remaining:**
 - Audio::ensureExclusive() / Audio::isExclusive() — not yet implemented (Image has it)

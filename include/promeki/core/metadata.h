@@ -100,6 +100,8 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 static inline const ID CompressedSize{"CompressedSize"};
                 /// @brief Signals end-of-stream to downstream nodes.
                 static inline const ID EndOfStream{"EndOfStream"};
+                /// @brief Frame sequence number within a stream.
+                static inline const ID FrameNumber{"FrameNumber"};
 
                 /**
                  * @brief Converts a metadata ID to its string name.

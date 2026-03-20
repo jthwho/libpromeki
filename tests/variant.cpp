@@ -235,3 +235,93 @@ TEST_CASE("Variant_EqualityInvalid") {
     CHECK(a == b);
     CHECK(a != Variant(int32_t(0)));
 }
+
+// ============================================================================
+// StringList
+// ============================================================================
+
+TEST_CASE("Variant_StringList") {
+    StringList sl;
+    sl.pushToBack("alpha");
+    sl.pushToBack("beta");
+    sl.pushToBack("gamma");
+
+    Variant v(sl);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeStringList);
+
+    StringList out = v.get<StringList>();
+    CHECK(out.size() == 3);
+    CHECK(out[0] == "alpha");
+    CHECK(out[1] == "beta");
+    CHECK(out[2] == "gamma");
+}
+
+TEST_CASE("Variant_StringListToString") {
+    StringList sl;
+    sl.pushToBack("a");
+    sl.pushToBack("b");
+    sl.pushToBack("c");
+
+    Variant v(sl);
+    String s = v.get<String>();
+    CHECK(s == "a,b,c");
+}
+
+TEST_CASE("Variant_StringToStringList") {
+    Variant v(String("x,y,z"));
+    StringList sl = v.get<StringList>();
+    CHECK(sl.size() == 3);
+    CHECK(sl[0] == "x");
+    CHECK(sl[1] == "y");
+    CHECK(sl[2] == "z");
+}
+
+TEST_CASE("Variant_StringListEquality") {
+    StringList sl1;
+    sl1.pushToBack("a");
+    sl1.pushToBack("b");
+
+    StringList sl2;
+    sl2.pushToBack("a");
+    sl2.pushToBack("b");
+
+    StringList sl3;
+    sl3.pushToBack("a");
+    sl3.pushToBack("c");
+
+    CHECK(Variant(sl1) == Variant(sl2));
+    CHECK(Variant(sl1) != Variant(sl3));
+}
+
+TEST_CASE("Variant_StringListFromJson") {
+    nlohmann::json j = nlohmann::json::array({"foo", "bar", "baz"});
+    Variant v = Variant::fromJson(j);
+    CHECK(v.type() == Variant::TypeStringList);
+
+    StringList sl = v.get<StringList>();
+    CHECK(sl.size() == 3);
+    CHECK(sl[0] == "foo");
+    CHECK(sl[1] == "bar");
+    CHECK(sl[2] == "baz");
+}
+
+TEST_CASE("Variant_StringListToStandardType") {
+    StringList sl;
+    sl.pushToBack("one");
+    sl.pushToBack("two");
+
+    Variant v(sl);
+    Variant standard = v.toStandardType();
+    CHECK(standard.type() == Variant::TypeString);
+    CHECK(standard.get<String>() == "one,two");
+}
+
+TEST_CASE("Variant_EmptyStringList") {
+    StringList sl;
+    Variant v(sl);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeStringList);
+    CHECK(v.get<StringList>().isEmpty());
+    CHECK(v.get<String>() == "");
+}

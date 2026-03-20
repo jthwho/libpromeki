@@ -5,9 +5,12 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <atomic>
+#include <thread>
 #include <doctest/doctest.h>
 #include <promeki/proav/framedemuxnode.h>
-#include <promeki/proav/mediagraph.h>
+#include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/audio.h>
@@ -28,20 +31,23 @@ class ImageSinkNode : public MediaNode {
         public:
                 ImageSinkNode() : MediaNode() {
                         setName("ImageSink");
-                        auto port = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Image);
-                        addInputPort(port);
+                        auto port = MediaSink::Ptr::create("input", ContentVideo);
+                        addSink(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override {
                         Frame::Ptr frame = dequeueInput();
                         if(frame.isValid()) { _lastFrame = frame; _count++; }
                         return;
                 }
-                void drain() { while(queuedFrameCount() > 0) process(); return; }
                 Frame::Ptr lastFrame() const { return _lastFrame; }
                 int count() const { return _count; }
         private:
                 Frame::Ptr _lastFrame;
-                int _count = 0;
+                std::atomic<int> _count = 0;
 };
 
 // ============================================================================
@@ -53,20 +59,23 @@ class AudioSinkNode : public MediaNode {
         public:
                 AudioSinkNode() : MediaNode() {
                         setName("AudioSink");
-                        auto port = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Audio);
-                        addInputPort(port);
+                        auto port = MediaSink::Ptr::create("input", ContentAudio);
+                        addSink(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override {
                         Frame::Ptr frame = dequeueInput();
                         if(frame.isValid()) { _lastFrame = frame; _count++; }
                         return;
                 }
-                void drain() { while(queuedFrameCount() > 0) process(); return; }
                 Frame::Ptr lastFrame() const { return _lastFrame; }
                 int count() const { return _count; }
         private:
                 Frame::Ptr _lastFrame;
-                int _count = 0;
+                std::atomic<int> _count = 0;
 };
 
 // ============================================================================
@@ -78,8 +87,12 @@ class FrameSourceNode : public MediaNode {
         public:
                 FrameSourceNode() : MediaNode() {
                         setName("FrameSource");
-                        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Frame);
-                        addOutputPort(port);
+                        auto port = MediaSource::Ptr::create("output", ContentNone);
+                        addSource(port);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override { return; }
                 void pushFrame(Frame::Ptr frame) {
@@ -88,17 +101,24 @@ class FrameSourceNode : public MediaNode {
                 }
 };
 
+// Helper to build all nodes in a pipeline with default config
+static void buildAllNodes(MediaPipeline &pipeline) {
+        for(auto *node : pipeline.nodes()) {
+                node->build(MediaNodeConfig());
+        }
+}
+
 // ============================================================================
 // Construction
 // ============================================================================
 
 TEST_CASE("FrameDemuxNode_Construct") {
         FrameDemuxNode node;
-        CHECK(node.inputPortCount() == 1);
-        CHECK(node.outputPortCount() == 2);
-        CHECK(node.inputPort(0)->mediaType() == MediaPort::Frame);
-        CHECK(node.outputPort(0)->mediaType() == MediaPort::Image);
-        CHECK(node.outputPort(1)->mediaType() == MediaPort::Audio);
+        CHECK(node.sinkCount() == 1);
+        CHECK(node.sourceCount() == 2);
+        CHECK(node.sink(0)->contentHint() == ContentNone);
+        CHECK(node.source(0)->contentHint() == ContentVideo);
+        CHECK(node.source(1)->contentHint() == ContentAudio);
 }
 
 // ============================================================================
@@ -106,22 +126,23 @@ TEST_CASE("FrameDemuxNode_Construct") {
 // ============================================================================
 
 TEST_CASE("FrameDemuxNode_Split") {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         FrameSourceNode *src = new FrameSourceNode();
         FrameDemuxNode *demux = new FrameDemuxNode();
         ImageSinkNode *imgSink = new ImageSinkNode();
         AudioSinkNode *audSink = new AudioSinkNode();
 
-        graph.addNode(src);
-        graph.addNode(demux);
-        graph.addNode(imgSink);
-        graph.addNode(audSink);
+        pipeline.addNode(src);
+        pipeline.addNode(demux);
+        pipeline.addNode(imgSink);
+        pipeline.addNode(audSink);
 
-        graph.connect(src, 0, demux, 0);
-        graph.connect(demux, "image", imgSink, "input");
-        graph.connect(demux, "audio", audSink, "input");
+        pipeline.connect(src, 0, demux, 0);
+        pipeline.connect(demux, "image", imgSink, "input");
+        pipeline.connect(demux, "audio", audSink, "input");
 
-        demux->configure();
+        buildAllNodes(pipeline);
+        pipeline.start();
 
         // Create a Frame with image and audio
         Frame::Ptr frame = Frame::Ptr::create();
@@ -138,9 +159,12 @@ TEST_CASE("FrameDemuxNode_Split") {
 
         // Push through demux
         src->pushFrame(frame);
-        while(demux->queuedFrameCount() > 0) demux->process();
-        imgSink->drain();
-        audSink->drain();
+
+        // Wait for both sinks to receive their frames
+        for(int i = 0; i < 200 && (imgSink->count() < 1 || audSink->count() < 1); i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        pipeline.stop();
 
         // Verify image output
         REQUIRE(imgSink->count() == 1);
@@ -166,82 +190,103 @@ TEST_CASE("FrameDemuxNode_Split") {
 // ============================================================================
 
 TEST_CASE("FrameDemuxNode_NoAudio") {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         FrameSourceNode *src = new FrameSourceNode();
         FrameDemuxNode *demux = new FrameDemuxNode();
         ImageSinkNode *imgSink = new ImageSinkNode();
         AudioSinkNode *audSink = new AudioSinkNode();
 
-        graph.addNode(src);
-        graph.addNode(demux);
-        graph.addNode(imgSink);
-        graph.addNode(audSink);
+        pipeline.addNode(src);
+        pipeline.addNode(demux);
+        pipeline.addNode(imgSink);
+        pipeline.addNode(audSink);
 
-        graph.connect(src, 0, demux, 0);
-        graph.connect(demux, "image", imgSink, "input");
-        graph.connect(demux, "audio", audSink, "input");
+        pipeline.connect(src, 0, demux, 0);
+        pipeline.connect(demux, "image", imgSink, "input");
+        pipeline.connect(demux, "audio", audSink, "input");
 
-        demux->configure();
+        buildAllNodes(pipeline);
+        pipeline.start();
 
         Frame::Ptr frame = Frame::Ptr::create();
         ImageDesc idesc(320, 240, PixelFormat::RGB8);
         frame.modify()->imageList().pushToBack(Image::Ptr::create(Image(idesc)));
 
         src->pushFrame(frame);
-        while(demux->queuedFrameCount() > 0) demux->process();
-        imgSink->drain();
-        audSink->drain();
+
+        // Wait for image sink to receive the frame
+        for(int i = 0; i < 200 && imgSink->count() < 1; i++) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        // Give a brief window for audio sink to erroneously receive something
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        pipeline.stop();
 
         CHECK(imgSink->count() == 1);
         CHECK(audSink->count() == 0);
 }
 
 // ============================================================================
-// Registry
-// ============================================================================
-
-// ============================================================================
 // Empty frame produces no output
 // ============================================================================
 
 TEST_CASE("FrameDemuxNode_EmptyFrame") {
-        MediaGraph graph;
+        MediaPipeline pipeline;
         FrameSourceNode *src = new FrameSourceNode();
         FrameDemuxNode *demux = new FrameDemuxNode();
         ImageSinkNode *imgSink = new ImageSinkNode();
         AudioSinkNode *audSink = new AudioSinkNode();
 
-        graph.addNode(src);
-        graph.addNode(demux);
-        graph.addNode(imgSink);
-        graph.addNode(audSink);
+        pipeline.addNode(src);
+        pipeline.addNode(demux);
+        pipeline.addNode(imgSink);
+        pipeline.addNode(audSink);
 
-        graph.connect(src, 0, demux, 0);
-        graph.connect(demux, "image", imgSink, "input");
-        graph.connect(demux, "audio", audSink, "input");
+        pipeline.connect(src, 0, demux, 0);
+        pipeline.connect(demux, "image", imgSink, "input");
+        pipeline.connect(demux, "audio", audSink, "input");
 
-        demux->configure();
+        buildAllNodes(pipeline);
+        pipeline.start();
 
         // Push an empty frame (no images, no audio)
         Frame::Ptr frame = Frame::Ptr::create();
         src->pushFrame(frame);
-        while(demux->queuedFrameCount() > 0) demux->process();
-        imgSink->drain();
-        audSink->drain();
+
+        // Give pipeline time to process the empty frame
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        pipeline.stop();
 
         CHECK(imgSink->count() == 0);
         CHECK(audSink->count() == 0);
 }
 
 // ============================================================================
-// Process with no input does nothing
+// Node starts and stops cleanly with no input
 // ============================================================================
 
 TEST_CASE("FrameDemuxNode_ProcessEmpty") {
-        FrameDemuxNode node;
-        node.configure();
-        // process() with empty queue should be a no-op
-        node.process();
+        MediaPipeline pipeline;
+        FrameSourceNode *src = new FrameSourceNode();
+        FrameDemuxNode *demux = new FrameDemuxNode();
+        ImageSinkNode *imgSink = new ImageSinkNode();
+        AudioSinkNode *audSink = new AudioSinkNode();
+
+        pipeline.addNode(src);
+        pipeline.addNode(demux);
+        pipeline.addNode(imgSink);
+        pipeline.addNode(audSink);
+
+        pipeline.connect(src, 0, demux, 0);
+        pipeline.connect(demux, "image", imgSink, "input");
+        pipeline.connect(demux, "audio", audSink, "input");
+
+        buildAllNodes(pipeline);
+
+        // Verify the node starts and stops cleanly with no input
+        Error err = pipeline.start();
+        CHECK(err == Error::Ok);
+        pipeline.stop();
 }
 
 // ============================================================================

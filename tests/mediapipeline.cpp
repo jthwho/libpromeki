@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
 
 using namespace promeki;
 
@@ -18,8 +19,12 @@ class PipeSourceNode : public MediaNode {
         PROMEKI_OBJECT(PipeSourceNode, MediaNode)
         public:
                 PipeSourceNode() : MediaNode() {
-                        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Frame);
-                        addOutputPort(port);
+                        addSource(MediaSource::Ptr::create("output",
+                                  ContentHint(ContentVideo | ContentAudio)));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override {
                         _processCount++;
@@ -33,16 +38,41 @@ class PipeSinkNode : public MediaNode {
         PROMEKI_OBJECT(PipeSinkNode, MediaNode)
         public:
                 PipeSinkNode() : MediaNode() {
-                        auto port = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Frame);
-                        addInputPort(port);
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 void process() override {
                         _processCount++;
+                        dequeueInput();
                 }
                 int processCount() const { return _processCount; }
         private:
                 int _processCount = 0;
 };
+
+class PipeProcessNode : public MediaNode {
+        PROMEKI_OBJECT(PipeProcessNode, MediaNode)
+        public:
+                PipeProcessNode() : MediaNode() {
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
+                        addSource(MediaSource::Ptr::create("output", ContentNone));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                void process() override { }
+};
+
+// Helper to build all nodes in a pipeline with default config
+static void buildAllNodes(MediaPipeline &pipeline) {
+        for(auto *node : pipeline.nodes()) {
+                node->build(MediaNodeConfig());
+        }
+}
 
 // ============================================================================
 // Default state
@@ -51,8 +81,277 @@ class PipeSinkNode : public MediaNode {
 TEST_CASE("MediaPipeline_DefaultState") {
     MediaPipeline pipeline;
     CHECK(pipeline.state() == MediaPipeline::Stopped);
-    CHECK(pipeline.graph() != nullptr);
-    CHECK(pipeline.graph()->nodes().isEmpty());
+    CHECK(pipeline.nodes().isEmpty());
+}
+
+// ============================================================================
+// Node management
+// ============================================================================
+
+TEST_CASE("MediaPipeline_AddNode") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    src->setName("source");
+    Error err = pipeline.addNode(src);
+    CHECK(err == Error::Ok);
+    CHECK(pipeline.nodes().size() == 1);
+}
+
+TEST_CASE("MediaPipeline_AddDuplicate") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    pipeline.addNode(src);
+    Error err = pipeline.addNode(src);
+    CHECK(err == Error::Exists);
+}
+
+TEST_CASE("MediaPipeline_AddNull") {
+    MediaPipeline pipeline;
+    Error err = pipeline.addNode(nullptr);
+    CHECK(err == Error::Invalid);
+}
+
+TEST_CASE("MediaPipeline_FindByName") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    src->setName("mysource");
+    pipeline.addNode(src);
+    CHECK(pipeline.node("mysource") == src);
+    CHECK(pipeline.node("nonexistent") == nullptr);
+}
+
+TEST_CASE("MediaPipeline_RemoveNode") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    pipeline.addNode(src);
+    Error err = pipeline.removeNode(src);
+    CHECK(err == Error::Ok);
+    CHECK(pipeline.nodes().isEmpty());
+    delete src;
+}
+
+// ============================================================================
+// Connecting nodes
+// ============================================================================
+
+TEST_CASE("MediaPipeline_ConnectByIndex") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+
+    Error err = pipeline.connect(src, 0, sink, 0);
+    CHECK(err == Error::Ok);
+    CHECK(src->source(0)->isConnected());
+}
+
+TEST_CASE("MediaPipeline_ConnectByName") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+
+    Error err = pipeline.connect(src, "output", sink, "input");
+    CHECK(err == Error::Ok);
+    CHECK(src->source(0)->connectedSinks().size() == 1);
+}
+
+TEST_CASE("MediaPipeline_ConnectBySourceSink") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+
+    Error err = pipeline.connect(src->source(0), sink->sink(0));
+    CHECK(err == Error::Ok);
+    CHECK(src->source(0)->isConnected());
+}
+
+TEST_CASE("MediaPipeline_ConnectInvalidIndex") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+
+    Error err = pipeline.connect(src, 5, sink, 5);
+    CHECK(err == Error::Invalid);
+}
+
+// ============================================================================
+// Disconnecting
+// ============================================================================
+
+TEST_CASE("MediaPipeline_Disconnect") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+
+    pipeline.connect(src, 0, sink, 0);
+    CHECK(src->source(0)->isConnected());
+
+    Error err = pipeline.disconnect(src->source(0), sink->sink(0));
+    CHECK(err == Error::Ok);
+    CHECK(!src->source(0)->isConnected());
+}
+
+TEST_CASE("MediaPipeline_RemoveNodeDisconnects") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+    CHECK(src->source(0)->isConnected());
+
+    pipeline.removeNode(src);
+    CHECK(!src->source(0)->isConnected());
+    delete src;
+}
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+TEST_CASE("MediaPipeline_ValidateEmpty") {
+    MediaPipeline pipeline;
+    CHECK(pipeline.validate() == Error::Invalid);
+}
+
+TEST_CASE("MediaPipeline_ValidateSimple") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+    CHECK(pipeline.validate() == Error::Ok);
+}
+
+// ============================================================================
+// Topological sort
+// ============================================================================
+
+TEST_CASE("MediaPipeline_TopologicalSort") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    src->setName("src");
+    auto *proc = new PipeProcessNode();
+    proc->setName("proc");
+    auto *sink = new PipeSinkNode();
+    sink->setName("sink");
+
+    pipeline.addNode(src);
+    pipeline.addNode(proc);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, proc, 0);
+    pipeline.connect(proc, 0, sink, 0);
+
+    auto sorted = pipeline.topologicalSort();
+    CHECK(sorted.size() == 3);
+
+    int srcIdx = -1, procIdx = -1, sinkIdx = -1;
+    for(int i = 0; i < (int)sorted.size(); i++) {
+        if(sorted[i] == src) srcIdx = i;
+        if(sorted[i] == proc) procIdx = i;
+        if(sorted[i] == sink) sinkIdx = i;
+    }
+    CHECK(srcIdx < procIdx);
+    CHECK(procIdx < sinkIdx);
+}
+
+// ============================================================================
+// Source and sink node queries
+// ============================================================================
+
+TEST_CASE("MediaPipeline_SourceAndSinkNodes") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *proc = new PipeProcessNode();
+    auto *sink = new PipeSinkNode();
+
+    pipeline.addNode(src);
+    pipeline.addNode(proc);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, proc, 0);
+    pipeline.connect(proc, 0, sink, 0);
+
+    auto sources = pipeline.sourceNodes();
+    CHECK(sources.size() == 1);
+    CHECK(sources[0] == src);
+
+    auto sinks = pipeline.sinkNodes();
+    CHECK(sinks.size() == 1);
+    CHECK(sinks[0] == sink);
+}
+
+// ============================================================================
+// Fan-out
+// ============================================================================
+
+TEST_CASE("MediaPipeline_FanOut") {
+    MediaPipeline pipeline;
+    auto *src = new PipeSourceNode();
+    auto *sink1 = new PipeSinkNode();
+    sink1->setName("sink1");
+    auto *sink2 = new PipeSinkNode();
+    sink2->setName("sink2");
+
+    pipeline.addNode(src);
+    pipeline.addNode(sink1);
+    pipeline.addNode(sink2);
+
+    Error err1 = pipeline.connect(src, 0, sink1, 0);
+    Error err2 = pipeline.connect(src, 0, sink2, 0);
+    CHECK(err1 == Error::Ok);
+    CHECK(err2 == Error::Ok);
+    CHECK(src->source(0)->connectedSinks().size() == 2);
+}
+
+// ============================================================================
+// Cycle detection
+// ============================================================================
+
+TEST_CASE("MediaPipeline_CycleDetection") {
+    MediaPipeline pipeline;
+    auto *a = new PipeProcessNode();
+    a->setName("a");
+    auto *b = new PipeProcessNode();
+    b->setName("b");
+    auto *c = new PipeProcessNode();
+    c->setName("c");
+
+    pipeline.addNode(a);
+    pipeline.addNode(b);
+    pipeline.addNode(c);
+
+    pipeline.connect(a, 0, b, 0);
+    pipeline.connect(b, 0, c, 0);
+    pipeline.connect(c, 0, a, 0);
+
+    auto sorted = pipeline.topologicalSort();
+    CHECK(sorted.isEmpty());
+
+    CHECK(pipeline.validate() != Error::Ok);
+}
+
+// ============================================================================
+// Clear
+// ============================================================================
+
+TEST_CASE("MediaPipeline_Clear") {
+    MediaPipeline pipeline;
+    pipeline.addNode(new PipeSourceNode());
+    pipeline.addNode(new PipeSinkNode());
+    CHECK(pipeline.nodes().size() == 2);
+
+    pipeline.clear();
+    CHECK(pipeline.nodes().isEmpty());
 }
 
 // ============================================================================
@@ -64,15 +363,17 @@ TEST_CASE("MediaPipeline_StartStop") {
 
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    buildAllNodes(pipeline);
 
     Error err = pipeline.start();
     CHECK(err == Error::Ok);
     CHECK(pipeline.state() == MediaPipeline::Running);
 
-    // Verify nodes were configured and started
+    // Verify nodes were started
     CHECK(src->state() == MediaNode::Running);
     CHECK(sink->state() == MediaNode::Running);
 
@@ -86,10 +387,10 @@ TEST_CASE("MediaPipeline_StartStop") {
 }
 
 // ============================================================================
-// Start with invalid graph
+// Start with invalid pipeline
 // ============================================================================
 
-TEST_CASE("MediaPipeline_StartEmptyGraph") {
+TEST_CASE("MediaPipeline_StartEmptyPipeline") {
     MediaPipeline pipeline;
     Error err = pipeline.start();
     CHECK(err != Error::Ok);
@@ -105,9 +406,11 @@ TEST_CASE("MediaPipeline_PauseResume") {
 
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    buildAllNodes(pipeline);
 
     pipeline.start();
     CHECK(pipeline.state() == MediaPipeline::Running);
@@ -144,9 +447,11 @@ TEST_CASE("MediaPipeline_DoubleStart") {
 
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    buildAllNodes(pipeline);
 
     pipeline.start();
     Error err = pipeline.start();
@@ -177,9 +482,11 @@ TEST_CASE("MediaPipeline_Signals") {
 
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    buildAllNodes(pipeline);
 
     pipeline.start();
     CHECK(gotStarted);
@@ -190,7 +497,7 @@ TEST_CASE("MediaPipeline_Signals") {
 }
 
 // ============================================================================
-// Error signal on bad graph
+// Error signal on bad pipeline
 // ============================================================================
 
 TEST_CASE("MediaPipeline_ErrorSignal") {
@@ -205,40 +512,19 @@ TEST_CASE("MediaPipeline_ErrorSignal") {
 }
 
 // ============================================================================
-// Custom thread pool
-// ============================================================================
-
-TEST_CASE("MediaPipeline_CustomThreadPool") {
-    MediaPipeline pipeline;
-    ThreadPool pool(2);
-    pipeline.setThreadPool(&pool);
-
-    auto *src = new PipeSourceNode();
-    auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
-
-    Error err = pipeline.start();
-    CHECK(err == Error::Ok);
-    CHECK(pipeline.threadPool() == &pool);
-
-    pipeline.stop();
-}
-
-// ============================================================================
-// Node configuration failure
+// Node build failure
 // ============================================================================
 
 class FailConfigNode : public MediaNode {
         PROMEKI_OBJECT(FailConfigNode, MediaNode)
         public:
                 FailConfigNode() : MediaNode() {
-                        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Frame);
-                        addOutputPort(port);
+                        addSource(MediaSource::Ptr::create("output", ContentNone));
                 }
-                Error configure() override {
-                        return Error(Error::LibraryFailure);
+                BuildResult build(const MediaNodeConfig &) override {
+                        BuildResult result;
+                        result.addError("configuration failed");
+                        return result;
                 }
                 void process() override { }
 };
@@ -248,10 +534,16 @@ TEST_CASE("MediaPipeline_NodeConfigFailure") {
 
     auto *bad = new FailConfigNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(bad);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(bad, 0, sink, 0);
+    pipeline.addNode(bad);
+    pipeline.addNode(sink);
+    pipeline.connect(bad, 0, sink, 0);
 
+    // Build the good node, then try building the bad one
+    sink->build(MediaNodeConfig());
+    BuildResult result = bad->build(MediaNodeConfig());
+    CHECK(result.isError());
+
+    // Pipeline start will fail because bad node is not Configured
     Error err = pipeline.start();
     CHECK(err != Error::Ok);
     CHECK(pipeline.state() == MediaPipeline::ErrorState);
@@ -265,8 +557,11 @@ class FailStartNode : public MediaNode {
         PROMEKI_OBJECT(FailStartNode, MediaNode)
         public:
                 FailStartNode() : MediaNode() {
-                        auto port = MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Frame);
-                        addInputPort(port);
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
                 Error start() override {
                         return Error(Error::LibraryFailure);
@@ -279,9 +574,11 @@ TEST_CASE("MediaPipeline_NodeStartFailureRollback") {
 
     auto *src = new PipeSourceNode();
     auto *bad = new FailStartNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(bad);
-    pipeline.graph()->connect(src, 0, bad, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(bad);
+    pipeline.connect(src, 0, bad, 0);
+
+    buildAllNodes(pipeline);
 
     Error err = pipeline.start();
     CHECK(err != Error::Ok);
@@ -305,9 +602,11 @@ TEST_CASE("MediaPipeline_StateTransitionOrder") {
 
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    buildAllNodes(pipeline);
 
     pipeline.start();
     pipeline.stop();
@@ -321,97 +620,35 @@ TEST_CASE("MediaPipeline_StateTransitionOrder") {
 }
 
 // ============================================================================
-// Pause from error state
+// Disconnect by source/sink
 // ============================================================================
 
-TEST_CASE("MediaPipeline_PauseFromErrorState") {
+TEST_CASE("MediaPipeline_DisconnectBySourceSink") {
     MediaPipeline pipeline;
-    // Start with empty graph to get into ErrorState
-    pipeline.start();
-    CHECK(pipeline.state() == MediaPipeline::ErrorState);
-
-    Error err = pipeline.pause();
-    CHECK(err == Error::Invalid);
-}
-
-// ============================================================================
-// Resume from stopped
-// ============================================================================
-
-TEST_CASE("MediaPipeline_ResumeFromStopped") {
-    MediaPipeline pipeline;
-    Error err = pipeline.resume();
-    CHECK(err == Error::Invalid);
-}
-
-// ============================================================================
-// Destructor while running calls stop
-// ============================================================================
-
-TEST_CASE("MediaPipeline_DestructorWhileRunning") {
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
 
-    {
-        MediaPipeline pipeline;
-        pipeline.graph()->addNode(src);
-        pipeline.graph()->addNode(sink);
-        pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.connect(src, 0, sink, 0);
+    CHECK(src->source(0)->isConnected());
 
-        pipeline.start();
-        CHECK(pipeline.state() == MediaPipeline::Running);
-        // Let destructor run without calling stop()
-    }
-    // If we got here without crashing, the destructor properly cleaned up
+    Error err = pipeline.disconnect(src->source(0), sink->sink(0));
+    CHECK(err == Error::Ok);
+    CHECK(!src->source(0)->isConnected());
 }
 
 // ============================================================================
-// Destructor while paused calls stop
+// Validate with unconnected nodes
 // ============================================================================
 
-TEST_CASE("MediaPipeline_DestructorWhilePaused") {
+TEST_CASE("MediaPipeline_ValidateUnconnectedNodes") {
+    MediaPipeline pipeline;
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-
-    {
-        MediaPipeline pipeline;
-        pipeline.graph()->addNode(src);
-        pipeline.graph()->addNode(sink);
-        pipeline.graph()->connect(src, 0, sink, 0);
-
-        pipeline.start();
-        pipeline.pause();
-        CHECK(pipeline.state() == MediaPipeline::Paused);
-    }
-}
-
-// ============================================================================
-// External thread pool is not deleted
-// ============================================================================
-
-TEST_CASE("MediaPipeline_ExternalPoolNotDeleted") {
-    ThreadPool pool(2);
-    bool poolUsable = false;
-
-    {
-        MediaPipeline pipeline;
-        pipeline.setThreadPool(&pool);
-
-        auto *src = new PipeSourceNode();
-        auto *sink = new PipeSinkNode();
-        pipeline.graph()->addNode(src);
-        pipeline.graph()->addNode(sink);
-        pipeline.graph()->connect(src, 0, sink, 0);
-
-        pipeline.start();
-        pipeline.stop();
-    }
-
-    // Pool should still be usable after pipeline destruction
-    pool.submit([]() { });
-    pool.waitForDone();
-    poolUsable = true;
-    CHECK(poolUsable);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    CHECK(pipeline.validate() == Error::Ok);
 }
 
 // ============================================================================
@@ -423,9 +660,11 @@ TEST_CASE("MediaPipeline_StopFromPaused") {
 
     auto *src = new PipeSourceNode();
     auto *sink = new PipeSinkNode();
-    pipeline.graph()->addNode(src);
-    pipeline.graph()->addNode(sink);
-    pipeline.graph()->connect(src, 0, sink, 0);
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    buildAllNodes(pipeline);
 
     pipeline.start();
     pipeline.pause();
@@ -434,4 +673,36 @@ TEST_CASE("MediaPipeline_StopFromPaused") {
     Error err = pipeline.stop();
     CHECK(err == Error::Ok);
     CHECK(pipeline.state() == MediaPipeline::Stopped);
+}
+
+// ============================================================================
+// Destructor while running calls stop
+// ============================================================================
+
+TEST_CASE("MediaPipeline_DestructorWhileRunning") {
+    {
+        MediaPipeline pipeline;
+        auto *src = new PipeSourceNode();
+        auto *sink = new PipeSinkNode();
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+
+        buildAllNodes(pipeline);
+
+        pipeline.start();
+        CHECK(pipeline.state() == MediaPipeline::Running);
+    }
+}
+
+// ============================================================================
+// Remove non-existent node
+// ============================================================================
+
+TEST_CASE("MediaPipeline_RemoveNonExistent") {
+    MediaPipeline pipeline;
+    auto *node = new PipeSourceNode();
+    Error err = pipeline.removeNode(node);
+    CHECK(err == Error::NotExist);
+    delete node;
 }

@@ -8,7 +8,7 @@
 
 ## Progress
 
-**Completed:** Steps 1–3, 4A, 4B, 4C, 4E, 5, 6, 7 (pipeline framework, socket layer, prerequisites, TestPatternNode, TimecodeOverlayNode, JpegEncoderNode, FrameDemuxNode, AV-over-IP, RTP streaming sink nodes, vidgen utility). See git history for details.
+**Completed:** Steps 1–3, 4A, 4B, 4C, 4E, 5, 6, 7 (pipeline framework, socket layer, prerequisites, TestPatternNode, TimecodeOverlayNode, JpegEncoderNode, FrameDemuxNode, AV-over-IP, RTP streaming sink nodes, vidgen utility). Pipeline refactoring to MediaSink/MediaSource/MediaNodeConfig/MediaPipelineConfig model also complete. See git history for details.
 
 **Remaining work order:**
 ```
@@ -18,7 +18,7 @@ Step 4D: FrameRateControlNode (not required for vidgen — optional)
 ### Deferred Items from Completed Work
 
 - **MediaNode**: Fatal messages propagating to MediaPipeline to stop the pipeline (requires pipeline processing loop integration)
-- **MediaNode**: `_outgoingLinks` is unprotected — safe only if graph is never mutated while running. Read-write lock needed for hot-reconfiguration.
+- **MediaNode**: MediaSink/MediaSource connection lists are unprotected — safe only if the pipeline graph is never mutated while running. Read-write lock needed for hot-reconfiguration.
 - **TestPatternNode**: `setSamplesPerFrame()` override (current auto-computation works; LTC mode uses LtcEncoder's own sample count)
 - **TestPatternNode**: Pre-render optimization for static patterns (current impl renders fresh each frame)
 - **TestPatternNode**: End-to-end LTC round-trip test via LtcDecoder (encoder→decoder tested separately in ltcdecoder.cpp)

@@ -21,8 +21,8 @@
 #include <promeki/core/audiolevel.h>
 
 #include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/mediagraph.h>
 #include <promeki/proav/medianode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/testpatternnode.h>
 #include <promeki/proav/framedemuxnode.h>
 #include <promeki/proav/timecodeoverlaynode.h>
@@ -223,9 +223,9 @@ static const PatternEntry g_patterns[] = {
         { nullptr,        TestPatternNode::ColorBars }
 };
 
-static bool lookupPattern(const String &name, TestPatternNode::Pattern &out) {
+static bool lookupPattern(const String &name, String &out) {
         for(const auto *p = g_patterns; p->name; p++) {
-                if(name == p->name) { out = p->pattern; return true; }
+                if(name == p->name) { out = name; return true; }
         }
         return false;
 }
@@ -280,41 +280,6 @@ static bool parseFrameRate(const String &str, FrameRate &out) {
         }
 
         return false;
-}
-
-// --------------------------------------------------------------------
-// Timecode overlay position
-// --------------------------------------------------------------------
-
-static bool parseTcPosition(const String &str, TimecodeOverlayNode::Position &out) {
-        if(str == "topleft")        { out = TimecodeOverlayNode::TopLeft;      return true; }
-        if(str == "topcenter")      { out = TimecodeOverlayNode::TopCenter;    return true; }
-        if(str == "topright")       { out = TimecodeOverlayNode::TopRight;     return true; }
-        if(str == "bottomleft")     { out = TimecodeOverlayNode::BottomLeft;   return true; }
-        if(str == "bottomcenter")   { out = TimecodeOverlayNode::BottomCenter; return true; }
-        if(str == "bottomright")    { out = TimecodeOverlayNode::BottomRight;  return true; }
-        return false;
-}
-
-// --------------------------------------------------------------------
-// Timecode mode from frame rate
-// --------------------------------------------------------------------
-
-static Timecode::Mode tcModeFromFrameRate(const FrameRate &fps, bool dropFrame) {
-        if(dropFrame && fps.wellKnownRate() == FrameRate::FPS_2997) {
-                return Timecode::DF30;
-        }
-        switch(fps.wellKnownRate()) {
-                case FrameRate::FPS_2398: return Timecode::NDF24;
-                case FrameRate::FPS_24:   return Timecode::NDF24;
-                case FrameRate::FPS_25:   return Timecode::NDF25;
-                case FrameRate::FPS_2997: return Timecode::NDF30;
-                case FrameRate::FPS_30:   return Timecode::NDF30;
-                case FrameRate::FPS_50:   return Timecode::NDF25; // 50fps uses 25 TC base
-                case FrameRate::FPS_5994: return Timecode::NDF30;
-                case FrameRate::FPS_60:   return Timecode::NDF30;
-                default:                  return Timecode::NDF30;
-        }
 }
 
 // --------------------------------------------------------------------
@@ -439,9 +404,9 @@ int main(int argc, char *argv[]) {
                 return 1;
         }
 
-        // Parse pattern
-        TestPatternNode::Pattern pattern;
-        if(!lookupPattern(opts.patternStr, pattern)) {
+        // Validate pattern name
+        String patternStr;
+        if(!lookupPattern(opts.patternStr, patternStr)) {
                 fprintf(stderr, "Error: unknown pattern: %s\n", opts.patternStr.cstr());
                 fprintf(stderr, "Use --list-patterns to see available patterns\n");
                 return 1;
@@ -499,29 +464,10 @@ int main(int argc, char *argv[]) {
                 }
         }
 
-        // Parse timecode
-        Timecode::Mode tcMode = tcModeFromFrameRate(fps, opts.tcDf);
-        auto [parsedTc, tcErr] = Timecode::fromString(opts.tcStart);
-        Timecode startTc;
-        if(tcErr.isOk()) {
-                startTc = Timecode(tcMode, parsedTc.hour(), parsedTc.min(),
-                                   parsedTc.sec(), parsedTc.frame());
-        } else {
-                startTc = Timecode(tcMode, 1, 0, 0, 0);
-                fprintf(stderr, "Warning: could not parse timecode '%s', using 01:00:00:00\n",
-                        opts.tcStart.cstr());
-        }
-
         // Validate TC burn options
         if(opts.tcBurn && opts.tcFont.isEmpty()) {
                 // Try bundled font
                 opts.tcFont = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
-        }
-
-        TimecodeOverlayNode::Position tcPos;
-        if(!parseTcPosition(opts.tcPosition, tcPos)) {
-                fprintf(stderr, "Error: unknown TC position: %s\n", opts.tcPosition.cstr());
-                return 1;
         }
 
         // Install signal handlers
@@ -533,124 +479,156 @@ int main(int argc, char *argv[]) {
         // ================================================================
 
         MediaPipeline pipeline;
-        MediaGraph *graph = pipeline.graph();
-
-        // --- Source ---
-        TestPatternNode *src = new TestPatternNode();
-        src->setName("Source");
-        src->setPattern(pattern);
-        src->setMotion(opts.motion);
-        src->setStartTimecode(startTc);
-        src->setDropFrame(opts.tcDf && fps.wellKnownRate() == FrameRate::FPS_2997);
-
-        VideoDesc vdesc;
-        vdesc.setFrameRate(fps);
-        ImageDesc idesc(opts.width, opts.height, pixFmtId);
-        vdesc.imageList().pushToBack(idesc);
-        src->setVideoDesc(vdesc);
-
-        if(!opts.noAudio) {
-                AudioDesc adesc(static_cast<float>(opts.audioRate), opts.audioChannels);
-                src->setAudioDesc(adesc);
-                src->setAudioEnabled(true);
-                if(opts.audioSilence) {
-                        src->setAudioMode(TestPatternNode::Silence);
-                } else if(opts.audioLtc) {
-                        src->setAudioMode(TestPatternNode::LTC);
-                        src->setLtcLevel(AudioLevel::fromDbfs(opts.ltcLevel));
-                        src->setLtcChannel(opts.ltcChannel);
-                } else {
-                        src->setAudioMode(TestPatternNode::Tone);
-                        src->setToneFrequency(opts.audioTone);
-                        src->setToneLevel(AudioLevel::fromDbfs(opts.audioLevel));
-                }
-        } else {
-                src->setAudioEnabled(false);
-        }
-        graph->addNode(src);
-
-        // --- Demux ---
-        FrameDemuxNode *demux = new FrameDemuxNode();
-        demux->setName("Demux");
-        graph->addNode(demux);
-        graph->connect(src, 0, demux, 0);
-
-        // --- TC Overlay (optional) ---
-        TimecodeOverlayNode *overlay = nullptr;
-        if(opts.tcBurn) {
-                overlay = new TimecodeOverlayNode();
-                overlay->setName("TCOverlay");
-                overlay->setFontPath(FilePath(opts.tcFont));
-                overlay->setFontSize(opts.tcSize);
-                overlay->setPosition(tcPos);
-                overlay->setDrawBackground(true);
-                graph->addNode(overlay);
-                graph->connect(demux, "image", overlay, "input");
-        }
-
-        // --- JPEG Encoder (optional, for MJPEG transport) ---
-        JpegEncoderNode *jpegEnc = nullptr;
-        if(isMjpeg) {
-                jpegEnc = new JpegEncoderNode();
-                jpegEnc->setName("JpegEncoder");
-                jpegEnc->setQuality(opts.jpegQuality);
-                graph->addNode(jpegEnc);
-                if(overlay) {
-                        graph->connect(overlay, "output", jpegEnc, "input");
-                } else {
-                        graph->connect(demux, "image", jpegEnc, "input");
-                }
-        }
 
         // --- RTP payload handlers (must outlive the pipeline) ---
         RtpPayloadRawVideo rawVideoPayload(opts.width, opts.height, bitsPerPixel);
         RtpPayloadJpeg jpegPayload(opts.width, opts.height, opts.jpegQuality);
         RtpPayloadL24 audioPayload(static_cast<uint32_t>(opts.audioRate), opts.audioChannels);
 
+        // --- Source ---
+        TestPatternNode *src = new TestPatternNode();
+        {
+                MediaNodeConfig cfg("TestPatternNode", "Source");
+                cfg.set("pattern", Variant(patternStr));
+                cfg.set("motion", Variant(opts.motion));
+                cfg.set("startTimecode", Variant(opts.tcStart));
+                cfg.set("dropFrame", Variant(opts.tcDf && fps.wellKnownRate() == FrameRate::FPS_2997));
+                cfg.set("width", Variant(uint32_t(opts.width)));
+                cfg.set("height", Variant(uint32_t(opts.height)));
+                cfg.set("pixelFormat", Variant(int(pixFmtId)));
+                cfg.set("frameRate", Variant(opts.framerateStr));
+                if(!opts.noAudio) {
+                        cfg.set("audioEnabled", Variant(true));
+                        cfg.set("audioRate", Variant(float(opts.audioRate)));
+                        cfg.set("audioChannels", Variant(opts.audioChannels));
+                        if(opts.audioSilence) {
+                                cfg.set("audioMode", Variant(String("silence")));
+                        } else if(opts.audioLtc) {
+                                cfg.set("audioMode", Variant(String("ltc")));
+                                cfg.set("ltcLevel", Variant(opts.ltcLevel));
+                                cfg.set("ltcChannel", Variant(opts.ltcChannel));
+                        } else {
+                                cfg.set("audioMode", Variant(String("tone")));
+                                cfg.set("toneFrequency", Variant(opts.audioTone));
+                                cfg.set("toneLevel", Variant(opts.audioLevel));
+                        }
+                } else {
+                        cfg.set("audioEnabled", Variant(false));
+                }
+                BuildResult br = src->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Error: source node build failed\n");
+                        return 1;
+                }
+        }
+        pipeline.addNode(src);
+
+        // --- Demux ---
+        FrameDemuxNode *demux = new FrameDemuxNode();
+        {
+                MediaNodeConfig cfg("FrameDemuxNode", "Demux");
+                BuildResult br = demux->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Error: demux node build failed\n");
+                        return 1;
+                }
+        }
+        pipeline.addNode(demux);
+        pipeline.connect(src, 0, demux, 0);
+
+        // --- TC Overlay (optional) ---
+        TimecodeOverlayNode *overlay = nullptr;
+        if(opts.tcBurn) {
+                overlay = new TimecodeOverlayNode();
+                MediaNodeConfig cfg("TimecodeOverlayNode", "TCOverlay");
+                cfg.set("fontPath", Variant(opts.tcFont));
+                cfg.set("fontSize", Variant(opts.tcSize));
+                cfg.set("position", Variant(opts.tcPosition));
+                cfg.set("drawBackground", Variant(true));
+                BuildResult br = overlay->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Error: TC overlay node build failed\n");
+                        return 1;
+                }
+                pipeline.addNode(overlay);
+                pipeline.connect(demux, "image", overlay, "input");
+        }
+
+        // --- JPEG Encoder (optional, for MJPEG transport) ---
+        JpegEncoderNode *jpegEnc = nullptr;
+        if(isMjpeg) {
+                jpegEnc = new JpegEncoderNode();
+                MediaNodeConfig cfg("JpegEncoderNode", "JpegEncoder");
+                cfg.set("quality", Variant(opts.jpegQuality));
+                BuildResult br = jpegEnc->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Error: JPEG encoder node build failed\n");
+                        return 1;
+                }
+                pipeline.addNode(jpegEnc);
+                if(overlay) {
+                        pipeline.connect(overlay, "output", jpegEnc, "input");
+                } else {
+                        pipeline.connect(demux, "image", jpegEnc, "input");
+                }
+        }
+
         // --- Video Sink ---
         RtpVideoSinkNode *videoSink = new RtpVideoSinkNode();
-        videoSink->setName("VideoSink");
-        videoSink->setDestination(videoDest);
-        videoSink->setFrameRate(fps);
-        if(isMjpeg) {
-                videoSink->setRtpPayload(&jpegPayload);
-                videoSink->setPayloadType(26);
-        } else {
-                videoSink->setRtpPayload(&rawVideoPayload);
-                videoSink->setPayloadType(96);
+        {
+                MediaNodeConfig cfg("RtpVideoSinkNode", "VideoSink");
+                cfg.set("destination", Variant(videoDest.toString()));
+                cfg.set("frameRate", Variant(opts.framerateStr));
+                if(isMjpeg) {
+                        cfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&jpegPayload)));
+                        cfg.set("payloadType", Variant(uint8_t(26)));
+                } else {
+                        cfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&rawVideoPayload)));
+                        cfg.set("payloadType", Variant(uint8_t(96)));
+                }
+                if(!opts.multicast.isEmpty() && videoDest.isMulticast()) {
+                        cfg.set("multicast", Variant(videoDest.toString()));
+                }
+                if(!opts.dumpJpeg.isEmpty()) {
+                        cfg.set("dumpPath", Variant(opts.dumpJpeg));
+                }
+                BuildResult br = videoSink->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Error: video sink node build failed\n");
+                        return 1;
+                }
         }
-        if(!opts.multicast.isEmpty() && videoDest.isMulticast()) {
-                videoSink->setMulticast(videoDest);
-        }
-        if(!opts.dumpJpeg.isEmpty()) {
-                videoSink->setDumpPath(opts.dumpJpeg);
-        }
-        graph->addNode(videoSink);
+        pipeline.addNode(videoSink);
 
         // Connect to video sink
         if(isMjpeg && jpegEnc) {
-                graph->connect(jpegEnc, "output", videoSink, "input");
+                pipeline.connect(jpegEnc, "output", videoSink, "input");
         } else if(overlay) {
-                graph->connect(overlay, "output", videoSink, "input");
+                pipeline.connect(overlay, "output", videoSink, "input");
         } else {
-                graph->connect(demux, "image", videoSink, "input");
+                pipeline.connect(demux, "image", videoSink, "input");
         }
 
         // --- Audio Sink ---
         RtpAudioSinkNode *audioSink = nullptr;
         if(!opts.noAudio) {
                 audioSink = new RtpAudioSinkNode();
-                audioSink->setName("AudioSink");
-                audioSink->setDestination(audioDest);
-                audioSink->setRtpPayload(&audioPayload);
-                audioSink->setClockRate(static_cast<uint32_t>(opts.audioRate));
-                audioSink->setOutputFormat(AudioDesc::PCMI_S24BE);
-                graph->addNode(audioSink);
-                graph->connect(demux, "audio", audioSink, "input");
+                MediaNodeConfig cfg("RtpAudioSinkNode", "AudioSink");
+                cfg.set("destination", Variant(audioDest.toString()));
+                cfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&audioPayload)));
+                cfg.set("clockRate", Variant(uint32_t(opts.audioRate)));
+                cfg.set("outputFormat", Variant(int(AudioDesc::PCMI_S24BE)));
+                BuildResult br = audioSink->build(cfg);
+                if(br.isError()) {
+                        fprintf(stderr, "Error: audio sink node build failed\n");
+                        return 1;
+                }
+                pipeline.addNode(audioSink);
+                pipeline.connect(demux, "audio", audioSink, "input");
         }
 
         // --- Connect message handlers ---
-        for(auto *node : graph->nodes()) {
+        for(auto *node : pipeline.nodes()) {
                 node->messageEmittedSignal.connect(onNodeMessage);
         }
 
@@ -687,24 +665,14 @@ int main(int argc, char *argv[]) {
         }
 
         // ================================================================
-        // Run loop — drive processing in topological order
+        // Run loop — pipeline nodes run on their own threads
         // ================================================================
-        // The video sink node is the pacing authority: its process()
-        // sleeps to maintain the target frame rate. We drive the graph
-        // in topological order on the main thread.
-
-        List<MediaNode *> processingOrder = graph->topologicalSort();
 
         auto startTime = std::chrono::steady_clock::now();
         auto lastStats = startTime;
 
         while(g_running) {
-                // Drive all nodes in topological order
-                for(auto *node : processingOrder) {
-                        node->process();
-                        // Drain intermediate nodes that may have queued frames
-                        while(node->queuedFrameCount() > 0) node->process();
-                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                 // Check duration
                 if(opts.duration > 0) {
@@ -720,8 +688,14 @@ int main(int argc, char *argv[]) {
                         if(sinceStats >= 5.0) {
                                 lastStats = now;
                                 auto elapsed = std::chrono::duration<double>(now - startTime).count();
+                                auto srcStats = src->extendedStats();
+                                auto fgIt = srcStats.find("framesGenerated");
+                                unsigned long frameCount = 0;
+                                if(fgIt != srcStats.end()) {
+                                        frameCount = fgIt->second.get<unsigned long>();
+                                }
                                 fprintf(stdout, "[%.1fs] frames: %lu",
-                                        elapsed, static_cast<unsigned long>(src->frameCount()));
+                                        elapsed, frameCount);
 
                                 auto vstats = videoSink->extendedStats();
                                 auto pit = vstats.find("packetsSent");
@@ -753,7 +727,12 @@ int main(int argc, char *argv[]) {
         // ================================================================
 
         // Capture stats before stop (stop() resets node counters)
-        uint64_t totalFrames = src->frameCount();
+        auto srcStats = src->extendedStats();
+        auto fgIt = srcStats.find("framesGenerated");
+        unsigned long totalFrames = 0;
+        if(fgIt != srcStats.end()) {
+                totalFrames = fgIt->second.get<unsigned long>();
+        }
         auto totalElapsed = std::chrono::duration<double>(
                 std::chrono::steady_clock::now() - startTime).count();
 
@@ -761,7 +740,7 @@ int main(int argc, char *argv[]) {
         pipeline.stop();
 
         fprintf(stdout, "Ran for %.1f seconds, %lu frames generated\n",
-                totalElapsed, static_cast<unsigned long>(totalFrames));
+                totalElapsed, totalFrames);
 
         return 0;
 }

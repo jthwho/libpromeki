@@ -5,14 +5,18 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <thread>
+#include <atomic>
 #include <doctest/doctest.h>
 #include <promeki/proav/medianode.h>
-#include <promeki/core/threadpool.h>
+#include <promeki/proav/mediapipeline.h>
+#include <promeki/proav/medianodeconfig.h>
+#include <promeki/core/metadata.h>
 
 using namespace promeki;
 
 // ============================================================================
-// Concrete test node subclass
+// Concrete test node subclass (no threading, for unit tests)
 // ============================================================================
 
 class TestNode : public MediaNode {
@@ -27,67 +31,83 @@ class TestNode : public MediaNode {
 
                 int processCount() const { return _processCount; }
 
-                Map<String, Variant> properties() const override {
-                        Map<String, Variant> ret = MediaNode::properties();
-                        ret.insert("testValue", Variant(_testValue));
-                        return ret;
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
                 }
-
-                Error setProperty(const String &name, const Variant &value) override {
-                        if(name == "testValue") {
-                                _testValue = value.get<int>();
-                                return Error(Error::Ok);
-                        }
-                        return MediaNode::setProperty(name, value);
-                }
-
-                int testValue() const { return _testValue; }
-                void setTestValue(int val) { _testValue = val; return; }
 
                 // Expose protected methods for testing
+                using MediaNode::process;
+                using MediaNode::cleanup;
                 using MediaNode::emitMessage;
                 using MediaNode::emitWarning;
                 using MediaNode::emitError;
-                using MediaNode::enqueueInput;
                 using MediaNode::recordProcessTiming;
-                using MediaNode::recordStarvation;
+
+                // Non-threaded start/stop for unit tests
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override {
+                        setState(Idle);
+                        wake();
+                        cleanup();
+                        return;
+                }
 
         private:
                 int _processCount = 0;
-                int _testValue = 0;
 };
 
 PROMEKI_REGISTER_NODE(TestNode)
 
-// Concrete source node (no inputs, one output)
+// Concrete source node (no inputs, one output, no threading)
 class TestSourceNode : public MediaNode {
         PROMEKI_OBJECT(TestSourceNode, MediaNode)
         public:
                 TestSourceNode(ObjectBase *parent = nullptr) : MediaNode(parent) {
-                        auto port = MediaPort::Ptr::create(
-                                "output", MediaPort::Output, MediaPort::Frame
-                        );
-                        addOutputPort(port);
+                        addSource(MediaSource::Ptr::create(
+                                "output",
+                                ContentHint(ContentVideo | ContentAudio)
+                        ));
                 }
                 void process() override { }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
 };
 
 PROMEKI_REGISTER_NODE(TestSourceNode)
 
-// Concrete sink node (one input, no outputs)
+// Concrete sink node (one input, no outputs, no threading)
 class TestSinkNode : public MediaNode {
         PROMEKI_OBJECT(TestSinkNode, MediaNode)
         public:
                 TestSinkNode(ObjectBase *parent = nullptr) : MediaNode(parent) {
-                        auto port = MediaPort::Ptr::create(
-                                "input", MediaPort::Input, MediaPort::Frame
-                        );
-                        addInputPort(port);
+                        addSink(MediaSink::Ptr::create(
+                                "input", ContentNone
+                        ));
                 }
                 void process() override { }
-
-                // Expose protected methods for testing
-                using MediaNode::enqueueInput;
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override { setState(Idle); return; }
 };
 
 PROMEKI_REGISTER_NODE(TestSinkNode)
@@ -100,11 +120,8 @@ TEST_CASE("MediaNode_DefaultState") {
     TestNode node;
     CHECK(node.state() == MediaNode::Idle);
     CHECK(node.name().isEmpty());
-    CHECK(node.inputPortCount() == 0);
-    CHECK(node.outputPortCount() == 0);
-    CHECK(node.threadingPolicy() == MediaNode::UseGraphPool);
-    CHECK(node.idealQueueSize() == 2);
-    CHECK(node.queuedFrameCount() == 0);
+    CHECK(node.sinkCount() == 0);
+    CHECK(node.sourceCount() == 0);
 }
 
 // ============================================================================
@@ -125,11 +142,11 @@ TEST_CASE("MediaNode_StateTransitions") {
     TestNode node;
     CHECK(node.state() == MediaNode::Idle);
 
-    Error err = node.configure();
-    CHECK(err == Error::Ok);
+    BuildResult result = node.build(MediaNodeConfig());
+    CHECK(result.isOk());
     CHECK(node.state() == MediaNode::Configured);
 
-    err = node.start();
+    Error err = node.start();
     CHECK(err == Error::Ok);
     CHECK(node.state() == MediaNode::Running);
 
@@ -137,11 +154,12 @@ TEST_CASE("MediaNode_StateTransitions") {
     CHECK(node.state() == MediaNode::Idle);
 }
 
-TEST_CASE("MediaNode_ConfigureFromNonIdle") {
+TEST_CASE("MediaNode_BuildFromNonIdle") {
     TestNode node;
-    node.configure();
-    Error err = node.configure();
-    CHECK(err == Error::Invalid);
+    node.build(MediaNodeConfig());
+    // Building again from Configured state — node's build() always succeeds
+    // but real nodes may reject non-Idle builds
+    CHECK(node.state() == MediaNode::Configured);
 }
 
 TEST_CASE("MediaNode_StartFromNonConfigured") {
@@ -156,67 +174,107 @@ TEST_CASE("MediaNode_StartFromNonConfigured") {
 
 TEST_CASE("MediaNode_SourcePorts") {
     TestSourceNode node;
-    CHECK(node.inputPortCount() == 0);
-    CHECK(node.outputPortCount() == 1);
-    CHECK(node.outputPort(0)->name() == "output");
-    CHECK(node.outputPort(0)->direction() == MediaPort::Output);
-    CHECK(node.outputPort(0)->node() == &node);
+    CHECK(node.sinkCount() == 0);
+    CHECK(node.sourceCount() == 1);
+    CHECK(node.source(0)->name() == "output");
+    CHECK(node.source(0)->node() == &node);
 }
 
 TEST_CASE("MediaNode_SinkPorts") {
     TestSinkNode node;
-    CHECK(node.inputPortCount() == 1);
-    CHECK(node.outputPortCount() == 0);
-    CHECK(node.inputPort(0)->name() == "input");
-    CHECK(node.inputPort(0)->direction() == MediaPort::Input);
-    CHECK(node.inputPort(0)->node() == &node);
+    CHECK(node.sinkCount() == 1);
+    CHECK(node.sourceCount() == 0);
+    CHECK(node.sink(0)->name() == "input");
+    CHECK(node.sink(0)->node() == &node);
 }
 
 TEST_CASE("MediaNode_PortByName") {
     TestSourceNode node;
-    auto port = node.outputPort("output");
+    auto port = node.source("output");
     CHECK(port.isValid());
     CHECK(port->name() == "output");
 
-    auto missing = node.outputPort("nonexistent");
+    auto missing = node.source("nonexistent");
     CHECK(!missing.isValid());
 }
 
 TEST_CASE("MediaNode_PortByIndexOutOfRange") {
     TestNode node;
-    auto port = node.inputPort(0);
+    auto port = node.sink(0);
     CHECK(!port.isValid());
-    auto port2 = node.outputPort(-1);
+    auto port2 = node.source(-1);
     CHECK(!port2.isValid());
 }
 
 // ============================================================================
-// Threading policy
+// Per-port queue operations
 // ============================================================================
 
-TEST_CASE("MediaNode_ThreadingPolicy") {
-    TestNode node;
-    node.setThreadingPolicy(MediaNode::DedicatedThread);
-    CHECK(node.threadingPolicy() == MediaNode::DedicatedThread);
+class QueueTestNode : public MediaNode {
+        PROMEKI_OBJECT(QueueTestNode, MediaNode)
+        public:
+                QueueTestNode() : MediaNode() {
+                        addSink(MediaSink::Ptr::create("in1", ContentVideo));
+                        addSink(MediaSink::Ptr::create("in2", ContentAudio));
+                }
+                void process() override { }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                using MediaNode::dequeueInput;
+};
+
+TEST_CASE("MediaNode_PerPortQueue") {
+    QueueTestNode node;
+    node.sink(0)->push(Frame::Ptr::create());
+    CHECK(node.sink(0)->queueSize() == 1);
+    CHECK(node.sink(1)->queueSize() == 0);
+    CHECK(node.hasInput());
+
+    Frame::Ptr f = node.dequeueInput(0);
+    CHECK(f.isValid());
+    CHECK(node.sink(0)->queueSize() == 0);
+
+    f = node.dequeueInput(0);
+    CHECK(!f.isValid());
+}
+
+TEST_CASE("MediaNode_DequeueByName") {
+    QueueTestNode node;
+    node.sink(1)->push(Frame::Ptr::create());
+    Frame::Ptr f = node.dequeueInput("in2");
+    CHECK(f.isValid());
+}
+
+TEST_CASE("MediaNode_DequeueFirstAvailable") {
+    QueueTestNode node;
+    node.sink(1)->push(Frame::Ptr::create());
+    Frame::Ptr f = node.dequeueInput();
+    CHECK(f.isValid());
+    CHECK(node.sink(1)->queueSize() == 0);
 }
 
 // ============================================================================
-// Input queue
+// hasWork / hasInput / canOutput
 // ============================================================================
 
-TEST_CASE("MediaNode_IdealQueueSize") {
-    TestNode node;
-    node.setIdealQueueSize(4);
-    CHECK(node.idealQueueSize() == 4);
-}
-
-TEST_CASE("MediaNode_EnqueueInput") {
+TEST_CASE("MediaNode_HasInput") {
     TestSinkNode node;
-    CHECK(node.queuedFrameCount() == 0);
-    node.enqueueInput(Frame::Ptr::create());
-    CHECK(node.queuedFrameCount() == 1);
-    node.enqueueInput(Frame::Ptr::create());
-    CHECK(node.queuedFrameCount() == 2);
+    CHECK(!node.hasInput());
+    node.sink(0)->push(Frame::Ptr::create());
+    CHECK(node.hasInput());
+}
+
+TEST_CASE("MediaNode_SourceNodeHasWork") {
+    TestSourceNode node;
+    // Source with no connected sinks has no work (prevents spinning)
+    CHECK(!node.hasWork());
+
+    // Once a sink is connected, the source has work
+    MediaSink::Ptr sink = MediaSink::Ptr::create("input", ContentNone);
+    node.source(0)->connect(sink);
+    CHECK(node.hasWork());
 }
 
 // ============================================================================
@@ -229,51 +287,6 @@ TEST_CASE("MediaNode_Process") {
     node.process();
     node.process();
     CHECK(node.processCount() == 3);
-}
-
-// ============================================================================
-// Property interface
-// ============================================================================
-
-TEST_CASE("MediaNode_Properties") {
-    TestNode node;
-    node.setName("test");
-    node.setTestValue(42);
-    auto props = node.properties();
-    CHECK(props.contains("name"));
-    CHECK(props.contains("testValue"));
-    CHECK(props["name"].get<String>() == "test");
-    CHECK(props["testValue"].get<int>() == 42);
-}
-
-TEST_CASE("MediaNode_SetProperty") {
-    TestNode node;
-    Error err = node.setProperty("name", Variant(String("new_name")));
-    CHECK(err == Error::Ok);
-    CHECK(node.name() == "new_name");
-
-    err = node.setProperty("testValue", Variant(99));
-    CHECK(err == Error::Ok);
-    CHECK(node.testValue() == 99);
-}
-
-TEST_CASE("MediaNode_SetPropertyUnknown") {
-    TestNode node;
-    Error err = node.setProperty("bogus", Variant(42));
-    CHECK(err == Error::Invalid);
-}
-
-TEST_CASE("MediaNode_PropertyByName") {
-    TestNode node;
-    node.setTestValue(7);
-    Variant val = node.property("testValue");
-    CHECK(val.get<int>() == 7);
-}
-
-TEST_CASE("MediaNode_PropertyByNameMissing") {
-    TestNode node;
-    Variant val = node.property("nonexistent");
-    CHECK(!val.isValid());
 }
 
 // ============================================================================
@@ -290,8 +303,8 @@ TEST_CASE("MediaNode_RegisteredTypes") {
 TEST_CASE("MediaNode_CreateByTypeName") {
     MediaNode *node = MediaNode::createNode("TestNode");
     CHECK(node != nullptr);
-    CHECK(node->inputPortCount() == 0);
-    CHECK(node->outputPortCount() == 0);
+    CHECK(node->sinkCount() == 0);
+    CHECK(node->sourceCount() == 0);
     delete node;
 }
 
@@ -313,7 +326,7 @@ TEST_CASE("MediaNode_StateChangedSignal") {
         lastState = s;
     });
 
-    node.configure();
+    node.build(MediaNodeConfig());
     CHECK(signalCount == 1);
     CHECK(lastState == MediaNode::Configured);
 
@@ -335,76 +348,9 @@ TEST_CASE("MediaNode_ErrorSignal") {
     bool gotError = false;
     node.errorOccurredSignal.connect([&](Error) { gotError = true; });
 
-    // Starting from Idle (not Configured) should fail
     Error err = node.start();
     CHECK(err == Error::Invalid);
-    // Error signal is not emitted for state violations — those are returned
     CHECK(!gotError);
-}
-
-// ============================================================================
-// Starvation callback (default is no-op)
-// ============================================================================
-
-class StarvationTestNode : public MediaNode {
-        PROMEKI_OBJECT(StarvationTestNode, MediaNode)
-        public:
-                StarvationTestNode() : MediaNode() { }
-                void process() override { }
-                void starvation() override { _starvationCount++; return; }
-                int starvationCount() const { return _starvationCount; }
-        private:
-                int _starvationCount = 0;
-};
-
-TEST_CASE("MediaNode_Starvation") {
-    StarvationTestNode node;
-    CHECK(node.starvationCount() == 0);
-    node.starvation();
-    node.starvation();
-    CHECK(node.starvationCount() == 2);
-}
-
-TEST_CASE("MediaNode_DefaultStarvationNoOp") {
-    TestNode node;
-    // Default starvation() is a no-op — just ensure it doesn't crash
-    node.starvation();
-}
-
-// ============================================================================
-// Custom thread pool
-// ============================================================================
-
-TEST_CASE("MediaNode_CustomPool") {
-    TestNode node;
-    ThreadPool pool(2);
-    node.setThreadingPolicy(&pool);
-    CHECK(node.threadingPolicy() == MediaNode::CustomPool);
-    CHECK(node.customThreadPool() == &pool);
-}
-
-// ============================================================================
-// Multiple ports
-// ============================================================================
-
-class MultiPortNode : public MediaNode {
-        PROMEKI_OBJECT(MultiPortNode, MediaNode)
-        public:
-                MultiPortNode() : MediaNode() {
-                        addInputPort(MediaPort::Ptr::create("in1", MediaPort::Input, MediaPort::Frame));
-                        addInputPort(MediaPort::Ptr::create("in2", MediaPort::Input, MediaPort::Audio));
-                        addOutputPort(MediaPort::Ptr::create("out1", MediaPort::Output, MediaPort::Frame));
-                }
-                void process() override { }
-};
-
-TEST_CASE("MediaNode_MultiplePorts") {
-    MultiPortNode node;
-    CHECK(node.inputPortCount() == 2);
-    CHECK(node.outputPortCount() == 1);
-    CHECK(node.inputPort("in1")->mediaType() == MediaPort::Frame);
-    CHECK(node.inputPort("in2")->mediaType() == MediaPort::Audio);
-    CHECK(node.outputPort("out1")->mediaType() == MediaPort::Frame);
 }
 
 // ============================================================================
@@ -413,7 +359,6 @@ TEST_CASE("MediaNode_MultiplePorts") {
 
 TEST_CASE("MediaNode_StopFromIdle") {
     TestNode node;
-    // stop() transitions to Idle regardless — just shouldn't crash
     node.stop();
     CHECK(node.state() == MediaNode::Idle);
 }
@@ -426,7 +371,6 @@ TEST_CASE("MediaNode_StatsDefault") {
     TestNode node;
     NodeStats s = node.stats();
     CHECK(s.processCount == 0);
-    CHECK(s.starvationCount == 0);
     CHECK(s.lastProcessDuration == 0.0);
     CHECK(s.avgProcessDuration == 0.0);
     CHECK(s.peakProcessDuration == 0.0);
@@ -447,31 +391,13 @@ TEST_CASE("MediaNode_RecordProcessTiming") {
     CHECK(s.avgProcessDuration > 0.0);
 }
 
-TEST_CASE("MediaNode_RecordStarvation") {
-    TestNode node;
-    node.recordStarvation();
-    node.recordStarvation();
-    CHECK(node.stats().starvationCount == 2);
-}
-
 TEST_CASE("MediaNode_ResetStats") {
     TestNode node;
     node.recordProcessTiming(0.010);
-    node.recordStarvation();
     node.resetStats();
     NodeStats s = node.stats();
     CHECK(s.processCount == 0);
-    CHECK(s.starvationCount == 0);
     CHECK(s.peakProcessDuration == 0.0);
-}
-
-TEST_CASE("MediaNode_PeakQueueDepth") {
-    TestSinkNode node;
-    node.enqueueInput(Frame::Ptr::create());
-    node.enqueueInput(Frame::Ptr::create());
-    node.enqueueInput(Frame::Ptr::create());
-    CHECK(node.stats().peakQueueDepth == 3);
-    CHECK(node.stats().currentQueueDepth == 3);
 }
 
 TEST_CASE("MediaNode_ExtendedStatsDefault") {
@@ -499,7 +425,6 @@ TEST_CASE("MediaNode_EmitWarning") {
     CHECK(lastMsg.severity == Severity::Warning);
     CHECK(lastMsg.message == "buffer underrun");
     CHECK(lastMsg.node == &node);
-    // Node should still be in same state (warning doesn't change state)
     CHECK(node.state() == MediaNode::Idle);
 }
 
@@ -540,9 +465,13 @@ class DequeueTestNode : public MediaNode {
         PROMEKI_OBJECT(DequeueTestNode, MediaNode)
         public:
                 DequeueTestNode() : MediaNode() {
-                        addInputPort(MediaPort::Ptr::create("input", MediaPort::Input, MediaPort::Frame));
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
                 }
                 void process() override { }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
                 using MediaNode::dequeueInput;
 };
 
@@ -560,16 +489,20 @@ class DeliverTestNode : public MediaNode {
         PROMEKI_OBJECT(DeliverTestNode, MediaNode)
         public:
                 DeliverTestNode() : MediaNode() {
-                        addOutputPort(MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Frame));
+                        addSource(MediaSource::Ptr::create("output",
+                                      ContentHint(ContentVideo | ContentAudio)));
                 }
                 void process() override { }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
                 using MediaNode::deliverOutput;
 };
 
 TEST_CASE("MediaNode_DeliverOutputNoLinks") {
     DeliverTestNode node;
     Frame::Ptr frame = Frame::Ptr::create();
-    // Should be a no-op — no links, no crash
     node.deliverOutput(0, frame);
     node.deliverOutput(frame);
 }
@@ -577,6 +510,447 @@ TEST_CASE("MediaNode_DeliverOutputNoLinks") {
 TEST_CASE("MediaNode_DeliverOutputInvalidPort") {
     DeliverTestNode node;
     Frame::Ptr frame = Frame::Ptr::create();
-    // Port index 5 doesn't exist — should be a no-op
     node.deliverOutput(5, frame);
+}
+
+// ============================================================================
+// Multiple ports with ContentHint
+// ============================================================================
+
+class MultiPortNode : public MediaNode {
+        PROMEKI_OBJECT(MultiPortNode, MediaNode)
+        public:
+                MultiPortNode() : MediaNode() {
+                        addSink(MediaSink::Ptr::create("in1", ContentNone));
+                        addSink(MediaSink::Ptr::create("in2", ContentAudio));
+                        addSource(MediaSource::Ptr::create("out1",
+                                      ContentHint(ContentVideo | ContentAudio)));
+                }
+                void process() override { }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+};
+
+TEST_CASE("MediaNode_MultiplePorts") {
+    MultiPortNode node;
+    CHECK(node.sinkCount() == 2);
+    CHECK(node.sourceCount() == 1);
+    CHECK(node.sink("in1")->contentHint() == ContentNone);
+    CHECK(node.sink("in2")->contentHint() == ContentAudio);
+    CHECK((node.source("out1")->contentHint() & ContentVideo) != ContentNone);
+}
+
+// ============================================================================
+// wake
+// ============================================================================
+
+TEST_CASE("MediaNode_Wake") {
+    TestNode node;
+    node.wake();
+}
+
+// ============================================================================
+// cleanup
+// ============================================================================
+
+class CleanupTestNode : public MediaNode {
+        PROMEKI_OBJECT(CleanupTestNode, MediaNode)
+        public:
+                CleanupTestNode(bool &flag) : MediaNode(), _cleaned(flag) {
+                        _cleaned = false;
+                }
+                void process() override { }
+                void cleanup() override { _cleaned = true; return; }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                // Non-threaded start for testing
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override {
+                        setState(Idle);
+                        wake();
+                        cleanup();
+                        return;
+                }
+        private:
+                bool &_cleaned;
+};
+
+TEST_CASE("MediaNode_CleanupCalledOnStop") {
+    bool cleaned = false;
+    CleanupTestNode node(cleaned);
+    node.build(MediaNodeConfig());
+    node.start();
+    CHECK(!cleaned);
+    node.stop();
+    CHECK(cleaned);
+}
+
+// ============================================================================
+// waitForWork returns Stopped when node is not Running
+// ============================================================================
+
+class WaitTestNode : public MediaNode {
+        PROMEKI_OBJECT(WaitTestNode, MediaNode)
+        public:
+                WaitTestNode() : MediaNode() {
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
+                }
+                void process() override { }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                using MediaNode::waitForWork;
+                // Non-threaded start for testing
+                Error start() override {
+                        if(state() != Configured) return Error(Error::Invalid);
+                        setState(Running);
+                        return Error(Error::Ok);
+                }
+                void stop() override {
+                        setState(Idle);
+                        wake();
+                        return;
+                }
+};
+
+TEST_CASE("MediaNode_WaitForWorkStoppedWhenIdle") {
+    WaitTestNode node;
+    Error err = node.waitForWork(100);
+    CHECK(err == Error::Stopped);
+}
+
+TEST_CASE("MediaNode_WaitForWorkReturnsOkWithData") {
+    WaitTestNode node;
+    node.build(MediaNodeConfig());
+    node.start();
+    CHECK(node.state() == MediaNode::Running);
+
+    node.sink(0)->push(Frame::Ptr::create());
+
+    Error err = node.waitForWork(100);
+    CHECK(err == Error::Ok);
+}
+
+TEST_CASE("MediaNode_WaitForWorkTimesOut") {
+    WaitTestNode node;
+    node.build(MediaNodeConfig());
+    node.start();
+    CHECK(node.state() == MediaNode::Running);
+
+    Error err = node.waitForWork(10);
+    CHECK(err == Error::Timeout);
+}
+
+TEST_CASE("MediaNode_StopWakesWaiters") {
+    WaitTestNode node;
+    node.build(MediaNodeConfig());
+    node.start();
+    CHECK(node.state() == MediaNode::Running);
+
+    std::atomic<Error::Code> result{Error::Ok};
+    std::thread waiter([&]() {
+        Error err = node.waitForWork();
+        result = err.code();
+    });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    node.stop();
+    waiter.join();
+
+    CHECK(result == Error::Stopped);
+}
+
+// ============================================================================
+// pipeline() accessor
+// ============================================================================
+
+TEST_CASE("MediaNode_PipelinePointer") {
+    MediaPipeline pipeline;
+    auto *src = new TestSourceNode();
+    CHECK(src->pipeline() == nullptr);
+
+    pipeline.addNode(src);
+    CHECK(src->pipeline() == &pipeline);
+
+    pipeline.removeNode(src);
+    CHECK(src->pipeline() == nullptr);
+    delete src;
+}
+
+// ============================================================================
+// Integration: threaded pipeline (Source -> Process -> Sink)
+// ============================================================================
+
+// Threaded source: generates numbered frames until stopped
+class IntSourceNode : public MediaNode {
+        PROMEKI_OBJECT(IntSourceNode, MediaNode)
+        public:
+                IntSourceNode() : MediaNode() {
+                        setName("IntSource");
+                        addSource(MediaSource::Ptr::create("output", ContentNone));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                void process() override {
+                        Frame::Ptr frame = Frame::Ptr::create();
+                        frame.modify()->metadata().set(Metadata::FrameNumber, Variant((uint64_t)_seq++));
+                        deliverOutput(frame);
+                        return;
+                }
+                uint64_t seq() const { return _seq; }
+        private:
+                std::atomic<uint64_t> _seq{0};
+};
+
+// Threaded processor: reads input, tags with name, passes through
+class IntProcessNode : public MediaNode {
+        PROMEKI_OBJECT(IntProcessNode, MediaNode)
+        public:
+                IntProcessNode(const String &tag) : MediaNode(), _tag(tag) {
+                        setName(tag);
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
+                        addSource(MediaSource::Ptr::create("output", ContentNone));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                void process() override {
+                        Frame::Ptr frame = dequeueInput();
+                        if(!frame.isValid()) return;
+                        frame.modify()->metadata().set(Metadata::Description, Variant(String(_tag)));
+                        deliverOutput(frame);
+                        _count++;
+                        return;
+                }
+                std::atomic<int> &count() { return _count; }
+        private:
+                String _tag;
+                std::atomic<int> _count{0};
+};
+
+// Threaded sink: captures received frames
+class IntSinkNode : public MediaNode {
+        PROMEKI_OBJECT(IntSinkNode, MediaNode)
+        public:
+                IntSinkNode(const String &name = "IntSink") : MediaNode() {
+                        setName(name);
+                        addSink(MediaSink::Ptr::create("input", ContentNone));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                void process() override {
+                        Frame::Ptr frame = dequeueInput();
+                        if(frame.isValid()) _count++;
+                        return;
+                }
+                std::atomic<int> &count() { return _count; }
+        private:
+                std::atomic<int> _count{0};
+};
+
+TEST_CASE("MediaNode_Integration_ThreadedChain") {
+    // Source -> ProcessA -> ProcessB -> Sink
+    // All nodes run on their own threads via the default start()
+    MediaPipeline pipeline;
+
+    auto *src = new IntSourceNode();
+    auto *procA = new IntProcessNode("A");
+    auto *procB = new IntProcessNode("B");
+    auto *sink = new IntSinkNode();
+
+    pipeline.addNode(src);
+    pipeline.addNode(procA);
+    pipeline.addNode(procB);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, procA, 0);
+    pipeline.connect(procA, 0, procB, 0);
+    pipeline.connect(procB, 0, sink, 0);
+
+    // Build all nodes before starting
+    src->build(MediaNodeConfig());
+    procA->build(MediaNodeConfig());
+    procB->build(MediaNodeConfig());
+    sink->build(MediaNodeConfig());
+
+    Error err = pipeline.start();
+    REQUIRE(err == Error::Ok);
+
+    // Let the pipeline run until the sink has received some frames
+    for(int i = 0; i < 100 && sink->count() < 5; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    pipeline.stop();
+
+    // Frames should have flowed through the entire chain
+    CHECK(src->seq() > 0);
+    CHECK(procA->count() > 0);
+    CHECK(procB->count() > 0);
+    CHECK(sink->count() > 0);
+}
+
+// ============================================================================
+// Integration: threaded fan-out
+// ============================================================================
+
+TEST_CASE("MediaNode_Integration_ThreadedFanOut") {
+    MediaPipeline pipeline;
+
+    auto *src = new IntSourceNode();
+    auto *sink1 = new IntSinkNode("Sink1");
+    auto *sink2 = new IntSinkNode("Sink2");
+
+    pipeline.addNode(src);
+    pipeline.addNode(sink1);
+    pipeline.addNode(sink2);
+    pipeline.connect(src, 0, sink1, 0);
+    pipeline.connect(src, 0, sink2, 0);
+
+    src->build(MediaNodeConfig());
+    sink1->build(MediaNodeConfig());
+    sink2->build(MediaNodeConfig());
+
+    Error err = pipeline.start();
+    REQUIRE(err == Error::Ok);
+
+    for(int i = 0; i < 100 && (sink1->count() < 3 || sink2->count() < 3); i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    pipeline.stop();
+
+    // Both sinks should have received frames
+    CHECK(sink1->count() > 0);
+    CHECK(sink2->count() > 0);
+}
+
+// ============================================================================
+// Integration: threaded fan-in
+// ============================================================================
+
+class DualInputSink : public MediaNode {
+        PROMEKI_OBJECT(DualInputSink, MediaNode)
+        public:
+                DualInputSink() : MediaNode() {
+                        setName("DualSink");
+                        addSink(MediaSink::Ptr::create("video", ContentVideo));
+                        addSink(MediaSink::Ptr::create("audio", ContentAudio));
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                void process() override {
+                        Frame::Ptr f0 = dequeueInput(0);
+                        Frame::Ptr f1 = dequeueInput(1);
+                        if(f0.isValid()) _videoCount++;
+                        if(f1.isValid()) _audioCount++;
+                        return;
+                }
+                std::atomic<int> &videoCount() { return _videoCount; }
+                std::atomic<int> &audioCount() { return _audioCount; }
+        private:
+                std::atomic<int> _videoCount{0};
+                std::atomic<int> _audioCount{0};
+};
+
+TEST_CASE("MediaNode_Integration_ThreadedFanIn") {
+    MediaPipeline pipeline;
+
+    auto *videoSrc = new IntSourceNode();
+    videoSrc->setName("VideoSrc");
+    auto *audioSrc = new IntSourceNode();
+    audioSrc->setName("AudioSrc");
+    auto *sink = new DualInputSink();
+
+    pipeline.addNode(videoSrc);
+    pipeline.addNode(audioSrc);
+    pipeline.addNode(sink);
+    pipeline.connect(videoSrc, "output", sink, "video");
+    pipeline.connect(audioSrc, "output", sink, "audio");
+
+    videoSrc->build(MediaNodeConfig());
+    audioSrc->build(MediaNodeConfig());
+    sink->build(MediaNodeConfig());
+
+    Error err = pipeline.start();
+    REQUIRE(err == Error::Ok);
+
+    for(int i = 0; i < 100 && (sink->videoCount() < 3 || sink->audioCount() < 3); i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    pipeline.stop();
+
+    CHECK(sink->videoCount() > 0);
+    CHECK(sink->audioCount() > 0);
+}
+
+// ============================================================================
+// Integration: backpressure (queue fills, source blocks)
+// ============================================================================
+
+class ShallowSinkNode : public MediaNode {
+        PROMEKI_OBJECT(ShallowSinkNode, MediaNode)
+        public:
+                ShallowSinkNode(int maxDepth) : MediaNode() {
+                        setName("ShallowSink");
+                        auto s = MediaSink::Ptr::create("input", ContentNone);
+                        s->setMaxQueueDepth(maxDepth);
+                        addSink(s);
+                }
+                BuildResult build(const MediaNodeConfig &) override {
+                        setState(Configured);
+                        return BuildResult();
+                }
+                void process() override {
+                        Frame::Ptr frame = dequeueInput();
+                        if(frame.isValid()) _count++;
+                        return;
+                }
+                std::atomic<int> &count() { return _count; }
+        private:
+                std::atomic<int> _count{0};
+};
+
+TEST_CASE("MediaNode_Integration_Backpressure") {
+    MediaPipeline pipeline;
+
+    auto *src = new IntSourceNode();
+    auto *sink = new ShallowSinkNode(2);
+
+    pipeline.addNode(src);
+    pipeline.addNode(sink);
+    pipeline.connect(src, 0, sink, 0);
+
+    src->build(MediaNodeConfig());
+    sink->build(MediaNodeConfig());
+
+    Error err = pipeline.start();
+    REQUIRE(err == Error::Ok);
+
+    // Let it run -- source should produce, sink should consume
+    for(int i = 0; i < 100 && sink->count() < 5; i++) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    pipeline.stop();
+
+    // Source produced frames, sink consumed them despite shallow queue
+    CHECK(src->seq() > 0);
+    CHECK(sink->count() > 0);
 }

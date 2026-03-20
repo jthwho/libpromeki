@@ -6,13 +6,17 @@
  */
 
 #include <cmath>
+#include <cstring>
 #include <promeki/proav/testpatternnode.h>
+#include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/paintengine.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/audio.h>
 #include <promeki/proav/frame.h>
+#include <promeki/proav/pixelformat.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/random.h>
+#include <promeki/core/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -20,8 +24,8 @@ PROMEKI_REGISTER_NODE(TestPatternNode)
 
 TestPatternNode::TestPatternNode(ObjectBase *parent) : MediaNode(parent) {
         setName("TestPatternNode");
-        auto port = MediaPort::Ptr::create("output", MediaPort::Output, MediaPort::Frame);
-        addOutputPort(port);
+        auto output = MediaSource::Ptr::create("output", ContentHint(ContentVideo | ContentAudio));
+        addSource(output);
 }
 
 TestPatternNode::~TestPatternNode() {
@@ -29,40 +33,147 @@ TestPatternNode::~TestPatternNode() {
         delete _ltcEncoder;
 }
 
-void TestPatternNode::setChannelConfig(size_t chan, AudioGen::Config config) {
-        while(_channelConfigs.size() <= chan) {
-                AudioGen::Config def = { AudioGen::Silence, 0.0f, AudioLevel(), 0.0f, 0.0f, 0.0f };
-                _channelConfigs.pushToBack(def);
-        }
-        _channelConfigs[chan] = config;
-        return;
+bool TestPatternNode::parsePattern(const String &name, Pattern &out) {
+        if(name == "colorbars")    { out = ColorBars;    return true; }
+        if(name == "colorbars75")  { out = ColorBars75;  return true; }
+        if(name == "ramp")         { out = Ramp;         return true; }
+        if(name == "grid")         { out = Grid;         return true; }
+        if(name == "crosshatch")   { out = Crosshatch;   return true; }
+        if(name == "checkerboard") { out = Checkerboard; return true; }
+        if(name == "solidcolor")   { out = SolidColor;   return true; }
+        if(name == "white")        { out = White;        return true; }
+        if(name == "black")        { out = Black;        return true; }
+        if(name == "noise")        { out = Noise;        return true; }
+        if(name == "zoneplate")    { out = ZonePlate;    return true; }
+        return false;
 }
 
-Error TestPatternNode::configure() {
-        if(state() != Idle) return Error(Error::Invalid);
+bool TestPatternNode::parseAudioMode(const String &name, AudioMode &out) {
+        if(name == "tone")    { out = Tone;    return true; }
+        if(name == "silence") { out = Silence; return true; }
+        if(name == "ltc")     { out = LTC;     return true; }
+        return false;
+}
 
-        // Validate video description
+bool TestPatternNode::parseFrameRate(const String &str, FrameRate &out) {
+        if(str == "23.976" || str == "23.98") { out = FrameRate(FrameRate::FPS_2398); return true; }
+        if(str == "24")                       { out = FrameRate(FrameRate::FPS_24);   return true; }
+        if(str == "25")                       { out = FrameRate(FrameRate::FPS_25);   return true; }
+        if(str == "29.97")                    { out = FrameRate(FrameRate::FPS_2997); return true; }
+        if(str == "30")                       { out = FrameRate(FrameRate::FPS_30);   return true; }
+        if(str == "50")                       { out = FrameRate(FrameRate::FPS_50);   return true; }
+        if(str == "59.94")                    { out = FrameRate(FrameRate::FPS_5994); return true; }
+        if(str == "60")                       { out = FrameRate(FrameRate::FPS_60);   return true; }
+
+        const char *slash = strchr(str.cstr(), '/');
+        if(slash) {
+                unsigned int num = static_cast<unsigned int>(atoi(str.cstr()));
+                unsigned int den = static_cast<unsigned int>(atoi(slash + 1));
+                if(num > 0 && den > 0) {
+                        out = FrameRate(FrameRate::RationalType(num, den));
+                        return true;
+                }
+        }
+        return false;
+}
+
+BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
+        BuildResult result;
+        if(state() != Idle) {
+                result.addError("Node is not in Idle state");
+                return result;
+        }
+
+        // Parse pattern
+        String patStr = config.get("pattern", Variant(String("colorbars"))).get<String>();
+        if(!patStr.isEmpty() && !parsePattern(patStr, _pattern)) {
+                result.addError("Unknown pattern: " + patStr);
+                return result;
+        }
+
+        // Parse video config
+        uint32_t width = config.get("width", Variant(uint32_t(0))).get<uint32_t>();
+        uint32_t height = config.get("height", Variant(uint32_t(0))).get<uint32_t>();
+        int pixFmt = config.get("pixelFormat", Variant(PixelFormat::RGB8)).get<int>();
+
+        String fpsStr = config.get("frameRate", Variant(String())).get<String>();
+        FrameRate fps;
+        if(!fpsStr.isEmpty() && !parseFrameRate(fpsStr, fps)) {
+                result.addError("Invalid frame rate: " + fpsStr);
+                return result;
+        }
+
+        if(width > 0 && height > 0 && fps.isValid()) {
+                _videoDesc = VideoDesc();
+                _videoDesc.setFrameRate(fps);
+                _videoDesc.imageList().pushToBack(ImageDesc(width, height, pixFmt));
+        }
+
+        // Solid color
+        _solidR = config.get("solidColorR", Variant(uint16_t(0))).get<uint16_t>();
+        _solidG = config.get("solidColorG", Variant(uint16_t(0))).get<uint16_t>();
+        _solidB = config.get("solidColorB", Variant(uint16_t(0))).get<uint16_t>();
+
+        // Motion
+        _motion = config.get("motion", Variant(0.0)).get<double>();
+
+        // Audio config
+        _audioEnabled = config.get("audioEnabled", Variant(true)).get<bool>();
+        String audioModeStr = config.get("audioMode", Variant(String("tone"))).get<String>();
+        if(!audioModeStr.isEmpty() && !parseAudioMode(audioModeStr, _audioMode)) {
+                result.addError("Unknown audio mode: " + audioModeStr);
+                return result;
+        }
+
+        float audioRate = config.get("audioRate", Variant(48000.0f)).get<float>();
+        int audioChannels = config.get("audioChannels", Variant(2)).get<int>();
+
+        if(_audioEnabled) {
+                _audioDesc = AudioDesc(audioRate, audioChannels);
+        }
+
+        _toneFreq = config.get("toneFrequency", Variant(1000.0)).get<double>();
+        double toneLevelDbfs = config.get("toneLevel", Variant(-20.0)).get<double>();
+        _toneLevel = AudioLevel::fromDbfs(toneLevelDbfs);
+        double ltcLevelDbfs = config.get("ltcLevel", Variant(-20.0)).get<double>();
+        _ltcLevel = AudioLevel::fromDbfs(ltcLevelDbfs);
+        _ltcChannel = config.get("ltcChannel", Variant(0)).get<int>();
+
+        // Timecode
+        String tcStr = config.get("startTimecode", Variant(String())).get<String>();
+        if(!tcStr.isEmpty()) {
+                auto [tc, err] = Timecode::fromString(tcStr);
+                if(err.isOk()) {
+                        _tcGen.setTimecode(tc);
+                }
+        }
+        // Accept a pre-built Timecode via Variant
+        Variant tcVar = config.get("timecode");
+        if(tcVar.isValid()) {
+                _tcGen.setTimecode(tcVar.get<Timecode>());
+        }
+        bool dropFrame = config.get("dropFrame", Variant(false)).get<bool>();
+        _tcGen.setDropFrame(dropFrame);
+
+        // ---- Validate and configure (formerly configure()) ----
+
         if(!_videoDesc.isValid()) {
-                emitError("VideoDesc is not valid");
-                return Error(Error::Invalid);
+                result.addError("VideoDesc is not valid");
+                return result;
         }
         if(_videoDesc.imageList().isEmpty()) {
-                emitError("VideoDesc has no image layers");
-                return Error(Error::Invalid);
+                result.addError("VideoDesc has no image layers");
+                return result;
         }
 
         _imageDesc = _videoDesc.imageList()[0];
         if(!_imageDesc.isValid()) {
-                emitError("ImageDesc is not valid");
-                return Error(Error::Invalid);
+                result.addError("ImageDesc is not valid");
+                return result;
         }
 
         // Set up timecode generator from frame rate
         _tcGen.setFrameRate(_videoDesc.frameRate());
-
-        // Set output port descriptors
-        MediaPort::Ptr port = outputPort(0);
-        port.modify()->setVideoDesc(_videoDesc);
 
         // Set up audio
         if(_audioEnabled) {
@@ -70,12 +181,11 @@ Error TestPatternNode::configure() {
                         // Default audio: 48kHz stereo native float
                         _audioDesc = AudioDesc(48000.0f, 2);
                 }
-                port.modify()->setAudioDesc(_audioDesc);
 
                 // Compute samples per frame from video frame rate and audio sample rate
-                double fps = _videoDesc.frameRate().toDouble();
-                if(fps > 0.0) {
-                        _samplesPerFrame = (size_t)std::round(_audioDesc.sampleRate() / fps);
+                double fpsVal = _videoDesc.frameRate().toDouble();
+                if(fpsVal > 0.0) {
+                        _samplesPerFrame = (size_t)std::round(_audioDesc.sampleRate() / fpsVal);
                 } else {
                         _samplesPerFrame = 1600; // fallback
                 }
@@ -118,13 +228,11 @@ Error TestPatternNode::configure() {
         _frameCount = 0;
 
         setState(Configured);
-        return Error(Error::Ok);
+        return result;
 }
 
 Error TestPatternNode::start() {
-        if(state() != Configured) return Error(Error::Invalid);
-        setState(Running);
-        return Error(Error::Ok);
+        return MediaNode::start();
 }
 
 void TestPatternNode::process() {
@@ -183,9 +291,9 @@ void TestPatternNode::process() {
 
         // Advance motion
         if(_motion != 0.0) {
-                double fps = _videoDesc.frameRate().toDouble();
-                if(fps > 0.0) {
-                        _motionOffset += _motion * (double)_imageDesc.size().width() / fps;
+                double fpsVal = _videoDesc.frameRate().toDouble();
+                if(fpsVal > 0.0) {
+                        _motionOffset += _motion * (double)_imageDesc.size().width() / fpsVal;
                         // Wrap at pattern period (use image width)
                         double period = (double)_imageDesc.size().width();
                         if(period > 0.0) {
@@ -200,6 +308,7 @@ void TestPatternNode::process() {
 }
 
 void TestPatternNode::stop() {
+        MediaNode::stop();
         delete _audioGen;
         _audioGen = nullptr;
         delete _ltcEncoder;
@@ -207,7 +316,6 @@ void TestPatternNode::stop() {
         _frameCount = 0;
         _motionOffset = 0.0;
         _tcGen.reset();
-        setState(Idle);
         return;
 }
 
@@ -246,29 +354,18 @@ void TestPatternNode::renderColorBars(Image &img, double offset, bool full) {
         int barWidth = w / 8;
         if(barWidth < 1) barWidth = 1;
 
-        // SMPTE color bars: White, Yellow, Cyan, Green, Magenta, Red, Blue, Black
-        // 100% values
         struct BarColor { uint16_t r, g, b; };
         BarColor bars100[] = {
-                {65535, 65535, 65535}, // White
-                {65535, 65535, 0},     // Yellow
-                {0, 65535, 65535},     // Cyan
-                {0, 65535, 0},         // Green
-                {65535, 0, 65535},     // Magenta
-                {65535, 0, 0},         // Red
-                {0, 0, 65535},         // Blue
-                {0, 0, 0}             // Black
+                {65535, 65535, 65535}, {65535, 65535, 0},
+                {0, 65535, 65535}, {0, 65535, 0},
+                {65535, 0, 65535}, {65535, 0, 0},
+                {0, 0, 65535}, {0, 0, 0}
         };
-        // 75% values
         BarColor bars75[] = {
-                {49151, 49151, 49151}, // White 75%
-                {49151, 49151, 0},     // Yellow 75%
-                {0, 49151, 49151},     // Cyan 75%
-                {0, 49151, 0},         // Green 75%
-                {49151, 0, 49151},     // Magenta 75%
-                {49151, 0, 0},         // Red 75%
-                {0, 0, 49151},         // Blue 75%
-                {0, 0, 0}             // Black
+                {49151, 49151, 49151}, {49151, 49151, 0},
+                {0, 49151, 49151}, {0, 49151, 0},
+                {49151, 0, 49151}, {49151, 0, 0},
+                {0, 0, 49151}, {0, 0, 0}
         };
 
         BarColor *bars = full ? bars100 : bars75;
@@ -278,7 +375,6 @@ void TestPatternNode::renderColorBars(Image &img, double offset, bool full) {
         for(int i = 0; i < 8; i++) {
                 auto pixel = pe.createPixel(bars[i].r, bars[i].g, bars[i].b);
                 int x0 = (i * barWidth + intOffset) % w;
-                // Handle wrap-around
                 if(x0 + barWidth <= w) {
                         pe.fillRect(pixel, Rect<int32_t>(x0, 0, barWidth, h));
                 } else {
@@ -287,7 +383,6 @@ void TestPatternNode::renderColorBars(Image &img, double offset, bool full) {
                         pe.fillRect(pixel, Rect<int32_t>(0, 0, barWidth - firstPart, h));
                 }
         }
-        // Fill remaining pixels if w is not exactly 8*barWidth
         if(barWidth * 8 < w) {
                 auto black = pe.createPixel(0, 0, 0);
                 int remaining = w - barWidth * 8;
@@ -318,21 +413,17 @@ void TestPatternNode::renderGrid(Image &img, double offset) {
         int w = (int)img.width();
         int h = (int)img.height();
 
-        // Black background
         auto black = pe.createPixel(0, 0, 0);
         pe.fill(black);
 
-        // White grid lines
         auto white = pe.createPixel(65535, 65535, 65535);
         int spacing = 128;
         int intOffset = (int)std::fmod(offset, (double)spacing);
         if(intOffset < 0) intOffset += spacing;
 
-        // Vertical lines
         for(int x = intOffset; x < w; x += spacing) {
                 pe.fillRect(white, Rect<int32_t>(x, 0, 1, h));
         }
-        // Horizontal lines
         for(int y = intOffset; y < h; y += spacing) {
                 pe.fillRect(white, Rect<int32_t>(0, y, w, 1));
         }
@@ -352,11 +443,9 @@ void TestPatternNode::renderCrosshatch(Image &img, double offset) {
         int intOffset = (int)std::fmod(offset, (double)spacing);
         if(intOffset < 0) intOffset += spacing;
 
-        // Diagonal lines (top-left to bottom-right)
         for(int d = -h + intOffset; d < w + h; d += spacing) {
                 pe.drawLine(white, d, 0, d + h, h);
         }
-        // Diagonal lines (top-right to bottom-left)
         for(int d = -h + intOffset; d < w + h; d += spacing) {
                 pe.drawLine(white, w - d, 0, w - d - h, h);
         }

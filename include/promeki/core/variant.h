@@ -18,6 +18,7 @@
 #include <promeki/core/uuid.h>
 #include <promeki/core/timecode.h>
 #include <promeki/core/rational.h>
+#include <promeki/core/stringlist.h>
 #include <promeki/core/list.h>
 #include <promeki/thirdparty/nlohmann/json.hpp>
 
@@ -57,6 +58,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeUUID      | `UUID`              |
  * | TypeTimecode  | `Timecode`          |
  * | TypeRational  | `Rational<int>`     |
+ * | TypeStringList| `StringList`        |
  */
 #define PROMEKI_VARIANT_TYPES           \
         X(TypeInvalid, std::monostate)  \
@@ -77,7 +79,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeSize2D, Size2Du32)           \
         X(TypeUUID, UUID)               \
         X(TypeTimecode, Timecode)       \
-        X(TypeRational, Rational<int>)
+        X(TypeRational, Rational<int>)  \
+        X(TypeStringList, StringList)
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
@@ -141,6 +144,7 @@ template <typename... Types> class VariantImpl {
                  *  - signed integer    -> `int64_t`
                  *  - floating-point    -> `double`
                  *  - string            -> `String`
+                 *  - array             -> `StringList` (elements converted to String)
                  *  - anything else     -> `String` (via `json::dump()`)
                  *
                  * @param val  The JSON value to convert.
@@ -155,6 +159,14 @@ template <typename... Types> class VariantImpl {
                         }
                         if(val.is_number_float()) return val.get<double>();
                         if(val.is_string()) return String(val.get<std::string>());
+                        if(val.is_array()) {
+                                StringList list;
+                                for(const auto &item : val) {
+                                        if(item.is_string()) list.pushToBack(String(item.get<std::string>()));
+                                        else list.pushToBack(String(item.dump()));
+                                }
+                                return list;
+                        }
                         return String(val.dump());
                 }
 
@@ -296,6 +308,9 @@ template <typename... Types> class VariantImpl {
                                         }
 
 
+                                } else if constexpr (std::is_same_v<To, StringList>) {
+                                        if constexpr (std::is_same_v<From, String>) return arg.split(",");
+
                                 } else if constexpr (std::is_same_v<To, String>) {
                                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -314,6 +329,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first;
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
 
                                 }
                                 if(err != nullptr) *err = Error::Invalid;
@@ -334,9 +350,9 @@ template <typename... Types> class VariantImpl {
                 /**
                  * @brief Converts complex types to their String representation, leaving simple types unchanged.
                  *
-                 * Types such as String, DateTime, TimeStamp, Size2Du32, UUID, Timecode, and
-                 * Rational are converted to String via `get<std::string>()`.  All other
-                 * types (numeric, bool, invalid) are returned as-is.
+                 * Types such as String, DateTime, TimeStamp, Size2Du32, UUID, Timecode,
+                 * Rational, and StringList are converted to String via `get<String>()`.
+                 * All other types (numeric, bool, invalid) are returned as-is.
                  *
                  * @return A new VariantImpl containing either the original value or its
                  *         String representation.
@@ -350,7 +366,8 @@ template <typename... Types> class VariantImpl {
                                 case TypeUUID:
                                 case TypeTimecode:
                                 case TypeRational:
-                                        return get<std::string>();
+                                case TypeStringList:
+                                        return get<String>();
                                         break;
                         }
                         return *this;

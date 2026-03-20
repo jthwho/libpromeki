@@ -211,6 +211,11 @@ class Timecode {
                 uint32_t fps() const { return _mode.fps(); }
                 /** @brief Returns the timecode mode. */
                 Mode mode() const { return _mode; }
+                /**
+                 * @brief Sets the timecode mode, preserving the digit values.
+                 * @param md The new mode.
+                 */
+                void setMode(const Mode &md) { _mode = md; return; }
 
                 /** @brief Pre-increment: advances the timecode by one frame. */
                 Timecode &operator++();
