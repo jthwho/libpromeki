@@ -35,20 +35,20 @@ PROMEKI_NAMESPACE_BEGIN
  * preventing drift from processing time.
  *
  * @par Config options
- * - `destination` (String): Destination "IP:port" (required).
- * - `multicast` (String): Multicast group "IP:port" (optional).
- * - `frameRate` (String): Frame rate (required). E.g. "29.97", "30000/1001".
- * - `payloadType` (uint8_t): RTP payload type (default: 96).
- * - `clockRate` (uint32_t): RTP clock rate in Hz (default: 90000).
- * - `dscp` (uint8_t): DSCP value for QoS (default: 34, AF41).
- * - `dumpPath` (String): File path to dump first frame's raw data.
- * - `rtpPayload` (pointer, set programmatically): RTP payload handler.
+ * - `Destination` (String): Destination "IP:port" (required).
+ * - `Multicast` (String): Multicast group "IP:port" (optional).
+ * - `FrameRate` (String): Frame rate (required). E.g. "29.97", "30000/1001".
+ * - `PayloadType` (uint8_t): RTP payload type (default: 96).
+ * - `ClockRate` (uint32_t): RTP clock rate in Hz (default: 90000).
+ * - `Dscp` (uint8_t): DSCP value for QoS (default: 34, AF41).
+ * - `DumpPath` (String): File path to dump first frame's raw data.
+ * - `RtpPayload` (pointer, set programmatically): RTP payload handler.
  *
  * @par Example
  * @code
  * MediaNodeConfig cfg("RtpVideoSinkNode", "videoSink");
- * cfg.set("destination", Variant(String("239.0.0.1:5004")));
- * cfg.set("frameRate", Variant(String("29.97")));
+ * cfg.set("Destination", "239.0.0.1:5004");
+ * cfg.set("FrameRate", "29.97");
  * @endcode
  */
 class RtpVideoSinkNode : public MediaNode {
@@ -63,11 +63,12 @@ class RtpVideoSinkNode : public MediaNode {
                 /** @brief Destructor. */
                 ~RtpVideoSinkNode() override;
 
+                MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
 
                 /**
                  * @brief Returns video sink statistics.
-                 * @return A map containing packetsSent, bytesSent, and underrunCount.
+                 * @return A map containing PacketsSent, BytesSent, and UnderrunCount.
                  */
                 Map<String, Variant> extendedStats() const override;
 

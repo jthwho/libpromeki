@@ -40,6 +40,7 @@ class FrameDemuxNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~FrameDemuxNode() = default;
 
+                MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
 
         protected:

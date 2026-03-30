@@ -66,10 +66,10 @@ static MediaNodeConfig makeTestConfig(
         const String &fps = "24"
 ) {
         MediaNodeConfig cfg("TestPatternNode", name);
-        cfg.set("width", Variant(uint32_t(w)));
-        cfg.set("height", Variant(uint32_t(h)));
-        cfg.set("pixelFormat", Variant(int(PixelFormat::RGB8)));
-        cfg.set("frameRate", Variant(String(fps)));
+        cfg.set("Width", uint32_t(w));
+        cfg.set("Height", uint32_t(h));
+        cfg.set("PixelFormat", int(PixelFormat::RGB8));
+        cfg.set("FrameRate", fps);
         return cfg;
 }
 
@@ -156,9 +156,9 @@ TEST_CASE("TestPatternNode_AllPatterns") {
                 CaptureSinkNode *sink = new CaptureSinkNode();
 
                 MediaNodeConfig cfg = makeTestConfig();
-                cfg.set("pattern", Variant(String(patName)));
-                cfg.set("audioEnabled", Variant(false));
-                cfg.set("timecode", Variant(Timecode(Timecode::NDF24, 1, 0, 0, 0)));
+                cfg.set("Pattern", patName);
+                cfg.set("AudioEnabled", false);
+                cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
                 src->build(cfg);
 
                 pipeline.addNode(src);
@@ -195,8 +195,8 @@ TEST_CASE("TestPatternNode_TimecodeIncrements") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioEnabled", Variant(false));
-        cfg.set("timecode", Variant(Timecode(Timecode::NDF24, 1, 0, 0, 0)));
+        cfg.set("AudioEnabled", false);
+        cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -213,7 +213,7 @@ TEST_CASE("TestPatternNode_TimecodeIncrements") {
         }
 
         // Capture frame count before stop (stop resets counters)
-        uint64_t frameCount = src->extendedStats()["framesGenerated"].get<uint64_t>();
+        uint64_t frameCount = src->extendedStats()["FramesGenerated"].get<uint64_t>();
         Frame::Ptr frame = sink->lastFrame();
 
         pipeline.stop();
@@ -235,8 +235,8 @@ TEST_CASE("TestPatternNode_AudioTone") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioMode", Variant(String("tone")));
-        cfg.set("toneFrequency", Variant(1000.0));
+        cfg.set("AudioMode", "tone");
+        cfg.set("ToneFrequency", 1000.0);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -269,7 +269,7 @@ TEST_CASE("TestPatternNode_AudioSilence") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioMode", Variant(String("silence")));
+        cfg.set("AudioMode", "silence");
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -300,7 +300,7 @@ TEST_CASE("TestPatternNode_AudioDisabled") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioEnabled", Variant(false));
+        cfg.set("AudioEnabled", false);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -331,10 +331,10 @@ TEST_CASE("TestPatternNode_AudioLTC") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioMode", Variant(String("ltc")));
-        cfg.set("audioRate", Variant(48000.0f));
-        cfg.set("audioChannels", Variant(1));
-        cfg.set("timecode", Variant(Timecode(Timecode::NDF24, 1, 0, 0, 0)));
+        cfg.set("AudioMode", "ltc");
+        cfg.set("AudioRate", 48000.0f);
+        cfg.set("AudioChannels", 1);
+        cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -367,9 +367,9 @@ TEST_CASE("TestPatternNode_MotionDiffers") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("pattern", Variant(String("ramp")));
-        cfg.set("motion", Variant(1.0));
-        cfg.set("audioEnabled", Variant(false));
+        cfg.set("Pattern", "ramp");
+        cfg.set("Motion", 1.0);
+        cfg.set("AudioEnabled", false);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -407,9 +407,9 @@ TEST_CASE("TestPatternNode_StaticUnchanged") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("pattern", Variant(String("white")));
-        cfg.set("motion", Variant(1.0));
-        cfg.set("audioEnabled", Variant(false));
+        cfg.set("Pattern", "white");
+        cfg.set("Motion", 1.0);
+        cfg.set("AudioEnabled", false);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -445,8 +445,8 @@ TEST_CASE("TestPatternNode_ExtendedStats") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioEnabled", Variant(false));
-        cfg.set("timecode", Variant(Timecode(Timecode::NDF24, 1, 0, 0, 0)));
+        cfg.set("AudioEnabled", false);
+        cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -464,8 +464,8 @@ TEST_CASE("TestPatternNode_ExtendedStats") {
         pipeline.stop();
 
         auto stats = src->extendedStats();
-        CHECK(stats.contains("framesGenerated"));
-        CHECK(stats.contains("currentTimecode"));
+        CHECK(stats.contains("FramesGenerated"));
+        CHECK(stats.contains("CurrentTimecode"));
 }
 
 // ============================================================================
@@ -517,11 +517,11 @@ TEST_CASE("TestPatternNode_SolidColor") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("pattern", Variant(String("solidcolor")));
-        cfg.set("solidColorR", Variant(uint16_t(65535)));
-        cfg.set("solidColorG", Variant(uint16_t(0)));
-        cfg.set("solidColorB", Variant(uint16_t(0)));
-        cfg.set("audioEnabled", Variant(false));
+        cfg.set("Pattern", "solidcolor");
+        cfg.set("SolidColorR", uint16_t(65535));
+        cfg.set("SolidColorG", uint16_t(0));
+        cfg.set("SolidColorB", uint16_t(0));
+        cfg.set("AudioEnabled", false);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -557,11 +557,11 @@ TEST_CASE("TestPatternNode_SetChannelConfig") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioMode", Variant(String("tone")));
-        cfg.set("audioRate", Variant(48000.0f));
-        cfg.set("audioChannels", Variant(2));
-        cfg.set("toneFrequency", Variant(440.0));
-        cfg.set("toneLevel", Variant(-2.0));
+        cfg.set("AudioMode", "tone");
+        cfg.set("AudioRate", 48000.0f);
+        cfg.set("AudioChannels", 2);
+        cfg.set("ToneFrequency", 440.0);
+        cfg.set("ToneLevel", -2.0);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -594,12 +594,12 @@ TEST_CASE("TestPatternNode_MultiChannelLTC") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioMode", Variant(String("ltc")));
-        cfg.set("audioRate", Variant(48000.0f));
-        cfg.set("audioChannels", Variant(4));
-        cfg.set("ltcChannel", Variant(2));
-        cfg.set("ltcLevel", Variant(-3.0));
-        cfg.set("timecode", Variant(Timecode(Timecode::NDF24, 1, 0, 0, 0)));
+        cfg.set("AudioMode", "ltc");
+        cfg.set("AudioRate", 48000.0f);
+        cfg.set("AudioChannels", 4);
+        cfg.set("LtcChannel", 2);
+        cfg.set("LtcLevel", -3.0);
+        cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -632,11 +632,11 @@ TEST_CASE("TestPatternNode_SetToneLevel") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("audioMode", Variant(String("tone")));
-        cfg.set("audioRate", Variant(48000.0f));
-        cfg.set("audioChannels", Variant(2));
-        cfg.set("toneFrequency", Variant(440.0));
-        cfg.set("toneLevel", Variant(-6.0));
+        cfg.set("AudioMode", "tone");
+        cfg.set("AudioRate", 48000.0f);
+        cfg.set("AudioChannels", 2);
+        cfg.set("ToneFrequency", 440.0);
+        cfg.set("ToneLevel", -6.0);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -728,9 +728,9 @@ TEST_CASE("TestPatternNode_ConfigureNoImageLayers") {
 
         // Width/height of 0 means no valid video desc
         MediaNodeConfig cfg("TestPatternNode", "node");
-        cfg.set("width", Variant(uint32_t(0)));
-        cfg.set("height", Variant(uint32_t(0)));
-        cfg.set("frameRate", Variant(String("24")));
+        cfg.set("Width", uint32_t(0));
+        cfg.set("Height", uint32_t(0));
+        cfg.set("FrameRate", "24");
         BuildResult result = node->build(cfg);
         CHECK(result.isError());
 
@@ -742,4 +742,38 @@ TEST_CASE("TestPatternNode_ConfigureNoImageLayers") {
 
         Error err = pipeline.start();
         CHECK(err != Error::Ok);
+}
+
+// ============================================================================
+// defaultConfig returns usable defaults
+// ============================================================================
+
+TEST_CASE("TestPatternNode_DefaultConfig") {
+        TestPatternNode node;
+        MediaNodeConfig cfg = node.defaultConfig();
+
+        CHECK(cfg.type() == "TestPatternNode");
+        CHECK(cfg.get("Width").get<uint32_t>() == 1920);
+        CHECK(cfg.get("Height").get<uint32_t>() == 1080);
+        CHECK(cfg.get("FrameRate").get<String>() == "29.97");
+        CHECK(cfg.get("Pattern").get<String>() == "colorbars");
+        CHECK(cfg.get("AudioEnabled").get<bool>() == true);
+        CHECK(cfg.get("AudioMode").get<String>() == "tone");
+        CHECK(cfg.get("ToneFrequency").get<double>() == 1000.0);
+
+        // Should build successfully with just the defaults
+        cfg.setName("src");
+        MediaPipeline pipeline;
+        TestPatternNode *src = new TestPatternNode();
+        CaptureSinkNode *sink = new CaptureSinkNode();
+        BuildResult result = src->build(cfg);
+        CHECK(result.isOk());
+
+        pipeline.addNode(src);
+        pipeline.addNode(sink);
+        pipeline.connect(src, 0, sink, 0);
+        sink->build(MediaNodeConfig());
+
+        CHECK(pipeline.start() == Error::Ok);
+        pipeline.stop();
 }

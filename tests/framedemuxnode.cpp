@@ -300,3 +300,9 @@ TEST_CASE("FrameDemuxNode_Registry") {
         auto types = MediaNode::registeredNodeTypes();
         CHECK(types.contains("FrameDemuxNode"));
 }
+
+TEST_CASE("FrameDemuxNode_DefaultConfig") {
+        FrameDemuxNode node;
+        MediaNodeConfig cfg = node.defaultConfig();
+        CHECK(cfg.type() == "FrameDemuxNode");
+}

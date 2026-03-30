@@ -489,31 +489,31 @@ int main(int argc, char *argv[]) {
         TestPatternNode *src = new TestPatternNode();
         {
                 MediaNodeConfig cfg("TestPatternNode", "Source");
-                cfg.set("pattern", Variant(patternStr));
-                cfg.set("motion", Variant(opts.motion));
-                cfg.set("startTimecode", Variant(opts.tcStart));
-                cfg.set("dropFrame", Variant(opts.tcDf && fps.wellKnownRate() == FrameRate::FPS_2997));
-                cfg.set("width", Variant(uint32_t(opts.width)));
-                cfg.set("height", Variant(uint32_t(opts.height)));
-                cfg.set("pixelFormat", Variant(int(pixFmtId)));
-                cfg.set("frameRate", Variant(opts.framerateStr));
+                cfg.set("Pattern", patternStr);
+                cfg.set("Motion", opts.motion);
+                cfg.set("StartTimecode", opts.tcStart);
+                cfg.set("DropFrame", opts.tcDf && fps.wellKnownRate() == FrameRate::FPS_2997);
+                cfg.set("Width", uint32_t(opts.width));
+                cfg.set("Height", uint32_t(opts.height));
+                cfg.set("PixelFormat", int(pixFmtId));
+                cfg.set("FrameRate", opts.framerateStr);
                 if(!opts.noAudio) {
-                        cfg.set("audioEnabled", Variant(true));
-                        cfg.set("audioRate", Variant(float(opts.audioRate)));
-                        cfg.set("audioChannels", Variant(opts.audioChannels));
+                        cfg.set("AudioEnabled", true);
+                        cfg.set("AudioRate", float(opts.audioRate));
+                        cfg.set("AudioChannels", opts.audioChannels);
                         if(opts.audioSilence) {
-                                cfg.set("audioMode", Variant(String("silence")));
+                                cfg.set("AudioMode", "silence");
                         } else if(opts.audioLtc) {
-                                cfg.set("audioMode", Variant(String("ltc")));
-                                cfg.set("ltcLevel", Variant(opts.ltcLevel));
-                                cfg.set("ltcChannel", Variant(opts.ltcChannel));
+                                cfg.set("AudioMode", "ltc");
+                                cfg.set("LtcLevel", opts.ltcLevel);
+                                cfg.set("LtcChannel", opts.ltcChannel);
                         } else {
-                                cfg.set("audioMode", Variant(String("tone")));
-                                cfg.set("toneFrequency", Variant(opts.audioTone));
-                                cfg.set("toneLevel", Variant(opts.audioLevel));
+                                cfg.set("AudioMode", "tone");
+                                cfg.set("ToneFrequency", opts.audioTone);
+                                cfg.set("ToneLevel", opts.audioLevel);
                         }
                 } else {
-                        cfg.set("audioEnabled", Variant(false));
+                        cfg.set("AudioEnabled", false);
                 }
                 BuildResult br = src->build(cfg);
                 if(br.isError()) {
@@ -541,10 +541,10 @@ int main(int argc, char *argv[]) {
         if(opts.tcBurn) {
                 overlay = new TimecodeOverlayNode();
                 MediaNodeConfig cfg("TimecodeOverlayNode", "TCOverlay");
-                cfg.set("fontPath", Variant(opts.tcFont));
-                cfg.set("fontSize", Variant(opts.tcSize));
-                cfg.set("position", Variant(opts.tcPosition));
-                cfg.set("drawBackground", Variant(true));
+                cfg.set("FontPath", opts.tcFont);
+                cfg.set("FontSize", opts.tcSize);
+                cfg.set("Position", opts.tcPosition);
+                cfg.set("DrawBackground", true);
                 BuildResult br = overlay->build(cfg);
                 if(br.isError()) {
                         fprintf(stderr, "Error: TC overlay node build failed\n");
@@ -559,7 +559,7 @@ int main(int argc, char *argv[]) {
         if(isMjpeg) {
                 jpegEnc = new JpegEncoderNode();
                 MediaNodeConfig cfg("JpegEncoderNode", "JpegEncoder");
-                cfg.set("quality", Variant(opts.jpegQuality));
+                cfg.set("Quality", opts.jpegQuality);
                 BuildResult br = jpegEnc->build(cfg);
                 if(br.isError()) {
                         fprintf(stderr, "Error: JPEG encoder node build failed\n");
@@ -577,20 +577,20 @@ int main(int argc, char *argv[]) {
         RtpVideoSinkNode *videoSink = new RtpVideoSinkNode();
         {
                 MediaNodeConfig cfg("RtpVideoSinkNode", "VideoSink");
-                cfg.set("destination", Variant(videoDest.toString()));
-                cfg.set("frameRate", Variant(opts.framerateStr));
+                cfg.set("Destination", videoDest.toString());
+                cfg.set("FrameRate", opts.framerateStr);
                 if(isMjpeg) {
-                        cfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&jpegPayload)));
-                        cfg.set("payloadType", Variant(uint8_t(26)));
+                        cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&jpegPayload));
+                        cfg.set("PayloadType", uint8_t(26));
                 } else {
-                        cfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&rawVideoPayload)));
-                        cfg.set("payloadType", Variant(uint8_t(96)));
+                        cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&rawVideoPayload));
+                        cfg.set("PayloadType", uint8_t(96));
                 }
                 if(!opts.multicast.isEmpty() && videoDest.isMulticast()) {
-                        cfg.set("multicast", Variant(videoDest.toString()));
+                        cfg.set("Multicast", videoDest.toString());
                 }
                 if(!opts.dumpJpeg.isEmpty()) {
-                        cfg.set("dumpPath", Variant(opts.dumpJpeg));
+                        cfg.set("DumpPath", opts.dumpJpeg);
                 }
                 BuildResult br = videoSink->build(cfg);
                 if(br.isError()) {
@@ -614,10 +614,10 @@ int main(int argc, char *argv[]) {
         if(!opts.noAudio) {
                 audioSink = new RtpAudioSinkNode();
                 MediaNodeConfig cfg("RtpAudioSinkNode", "AudioSink");
-                cfg.set("destination", Variant(audioDest.toString()));
-                cfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&audioPayload)));
-                cfg.set("clockRate", Variant(uint32_t(opts.audioRate)));
-                cfg.set("outputFormat", Variant(int(AudioDesc::PCMI_S24BE)));
+                cfg.set("Destination", audioDest.toString());
+                cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&audioPayload));
+                cfg.set("ClockRate", uint32_t(opts.audioRate));
+                cfg.set("OutputFormat", int(AudioDesc::PCMI_S24BE));
                 BuildResult br = audioSink->build(cfg);
                 if(br.isError()) {
                         fprintf(stderr, "Error: audio sink node build failed\n");
@@ -689,7 +689,7 @@ int main(int argc, char *argv[]) {
                                 lastStats = now;
                                 auto elapsed = std::chrono::duration<double>(now - startTime).count();
                                 auto srcStats = src->extendedStats();
-                                auto fgIt = srcStats.find("framesGenerated");
+                                auto fgIt = srcStats.find("FramesGenerated");
                                 unsigned long frameCount = 0;
                                 if(fgIt != srcStats.end()) {
                                         frameCount = fgIt->second.get<unsigned long>();
@@ -698,12 +698,12 @@ int main(int argc, char *argv[]) {
                                         elapsed, frameCount);
 
                                 auto vstats = videoSink->extendedStats();
-                                auto pit = vstats.find("packetsSent");
+                                auto pit = vstats.find("PacketsSent");
                                 if(pit != vstats.end()) {
                                         fprintf(stdout, "  video pkts: %lu",
                                                 static_cast<unsigned long>(pit->second.get<uint64_t>()));
                                 }
-                                auto bit = vstats.find("bytesSent");
+                                auto bit = vstats.find("BytesSent");
                                 if(bit != vstats.end()) {
                                         double mb = static_cast<double>(bit->second.get<uint64_t>()) / (1024.0 * 1024.0);
                                         fprintf(stdout, "  (%.1f MB)", mb);
@@ -711,7 +711,7 @@ int main(int argc, char *argv[]) {
 
                                 if(audioSink) {
                                         auto astats = audioSink->extendedStats();
-                                        auto apit = astats.find("packetsSent");
+                                        auto apit = astats.find("PacketsSent");
                                         if(apit != astats.end()) {
                                                 fprintf(stdout, "  audio pkts: %lu",
                                                         static_cast<unsigned long>(apit->second.get<uint64_t>()));
@@ -728,7 +728,7 @@ int main(int argc, char *argv[]) {
 
         // Capture stats before stop (stop() resets node counters)
         auto srcStats = src->extendedStats();
-        auto fgIt = srcStats.find("framesGenerated");
+        auto fgIt = srcStats.find("FramesGenerated");
         unsigned long totalFrames = 0;
         if(fgIt != srcStats.end()) {
                 totalFrames = fgIt->second.get<unsigned long>();

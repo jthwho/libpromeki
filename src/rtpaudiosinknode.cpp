@@ -29,6 +29,15 @@ RtpAudioSinkNode::~RtpAudioSinkNode() {
         delete _session;
 }
 
+MediaNodeConfig RtpAudioSinkNode::defaultConfig() const {
+        MediaNodeConfig cfg("RtpAudioSinkNode", "");
+        cfg.set("PayloadType", uint8_t(97));
+        cfg.set("ClockRate", uint32_t(48000));
+        cfg.set("PacketTime", 4.0);
+        cfg.set("Dscp", uint8_t(46));
+        return cfg;
+}
+
 BuildResult RtpAudioSinkNode::build(const MediaNodeConfig &config) {
         BuildResult result;
         if(state() != Idle) {
@@ -37,20 +46,20 @@ BuildResult RtpAudioSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Read config
-        _payloadType = config.get("payloadType", Variant(uint8_t(97))).get<uint8_t>();
-        _clockRate = config.get("clockRate", Variant(uint32_t(48000))).get<uint32_t>();
-        _packetTime = config.get("packetTime", Variant(4.0)).get<double>();
-        _dscp = config.get("dscp", Variant(uint8_t(46))).get<uint8_t>();
+        _payloadType = config.get("PayloadType", uint8_t(97)).get<uint8_t>();
+        _clockRate = config.get("ClockRate", uint32_t(48000)).get<uint32_t>();
+        _packetTime = config.get("PacketTime", 4.0).get<double>();
+        _dscp = config.get("Dscp", uint8_t(46)).get<uint8_t>();
 
         // Parse output format
         // TODO: parse from string name when formats are registered by name
-        Variant fmtVar = config.get("outputFormat");
+        Variant fmtVar = config.get("OutputFormat");
         if(fmtVar.isValid()) {
                 _outputFormat = static_cast<AudioDesc::DataType>(fmtVar.get<int>());
         }
 
         // Parse destination
-        String destStr = config.get("destination", Variant(String())).get<String>();
+        String destStr = config.get("Destination", String()).get<String>();
         if(!destStr.isEmpty()) {
                 auto [addr, err] = SocketAddress::fromString(destStr);
                 if(err.isError()) {
@@ -61,7 +70,7 @@ BuildResult RtpAudioSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Accept RTP payload handler passed as uint64_t (pointer cast)
-        Variant payloadVar = config.get("rtpPayload");
+        Variant payloadVar = config.get("RtpPayload");
         if(payloadVar.isValid()) {
                 _payload = reinterpret_cast<RtpPayload *>(payloadVar.get<uint64_t>());
         }
@@ -233,9 +242,9 @@ void RtpAudioSinkNode::flushRemaining() {
 
 Map<String, Variant> RtpAudioSinkNode::extendedStats() const {
         Map<String, Variant> ret;
-        ret.insert("packetsSent", Variant((uint64_t)_packetsSent));
-        ret.insert("samplesSent", Variant((uint64_t)_samplesSent));
-        ret.insert("underrunCount", Variant((uint64_t)_underrunCount));
+        ret.insert("PacketsSent", Variant((uint64_t)_packetsSent));
+        ret.insert("SamplesSent", Variant((uint64_t)_samplesSent));
+        ret.insert("UnderrunCount", Variant((uint64_t)_underrunCount));
         return ret;
 }
 

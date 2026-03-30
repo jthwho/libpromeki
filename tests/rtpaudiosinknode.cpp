@@ -16,12 +16,10 @@
 #include <promeki/proav/audiodesc.h>
 #include <promeki/core/buffer.h>
 
-#ifdef PROMEKI_HAVE_NETWORK
 #include <promeki/network/socketaddress.h>
 #include <promeki/network/udpsocket.h>
 #include <promeki/network/rtppayload.h>
 #include <promeki/network/rtppacket.h>
-#endif
 
 using namespace promeki;
 
@@ -95,8 +93,6 @@ TEST_CASE("RtpAudioSinkNode_PortStructure") {
         CHECK(node.sink(0)->contentHint() == ContentAudio);
 }
 
-#ifdef PROMEKI_HAVE_NETWORK
-
 // ============================================================================
 // Configure failure: no payload set
 // ============================================================================
@@ -109,7 +105,7 @@ TEST_CASE("RtpAudioSinkNode_ConfigureFailNoPayload") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:5006")));
+        sinkCfg.set("Destination", "127.0.0.1:5006");
         BuildResult result = sink->build(sinkCfg);
         CHECK(result.isError());
 
@@ -133,7 +129,7 @@ TEST_CASE("RtpAudioSinkNode_ConfigureFailNoDestination") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
         BuildResult result = sink->build(sinkCfg);
         CHECK(result.isError());
 
@@ -157,8 +153,8 @@ TEST_CASE("RtpAudioSinkNode_ConfigureSuccess") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:5006")));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("Destination", "127.0.0.1:5006");
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -182,8 +178,8 @@ TEST_CASE("RtpAudioSinkNode_StartStopLifecycle") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:5006")));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("Destination", "127.0.0.1:5006");
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -217,10 +213,10 @@ TEST_CASE("RtpAudioSinkNode_AccumulationSubPacket") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:" + String::number(recvPort))));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
-        sinkCfg.set("packetTime", Variant(1.0)); // 48 samples per packet
-        sinkCfg.set("clockRate", Variant(uint32_t(48000)));
+        sinkCfg.set("Destination", "127.0.0.1:" + String::number(recvPort));
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
+        sinkCfg.set("PacketTime", 1.0); // 48 samples per packet
+        sinkCfg.set("ClockRate", uint32_t(48000));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -235,7 +231,7 @@ TEST_CASE("RtpAudioSinkNode_AccumulationSubPacket") {
         src->pushFrame(frame);
 
         // Wait for the node to process the frame
-        for(int i = 0; i < 200 && sink->extendedStats()["packetsSent"].get<uint64_t>() == 0; i++) {
+        for(int i = 0; i < 200 && sink->extendedStats()["PacketsSent"].get<uint64_t>() == 0; i++) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
         // Brief extra wait to ensure no packets leak through
@@ -245,7 +241,7 @@ TEST_CASE("RtpAudioSinkNode_AccumulationSubPacket") {
         CHECK_FALSE(receiver.hasPendingDatagrams());
 
         auto stats = sink->extendedStats();
-        CHECK(stats["packetsSent"].get<uint64_t>() == 0);
+        CHECK(stats["PacketsSent"].get<uint64_t>() == 0);
 
         pipeline.stop();
 }
@@ -269,10 +265,10 @@ TEST_CASE("RtpAudioSinkNode_AccumulationFullPacket") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:" + String::number(recvPort))));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
-        sinkCfg.set("packetTime", Variant(1.0)); // 48 samples per packet
-        sinkCfg.set("clockRate", Variant(uint32_t(48000)));
+        sinkCfg.set("Destination", "127.0.0.1:" + String::number(recvPort));
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
+        sinkCfg.set("PacketTime", 1.0); // 48 samples per packet
+        sinkCfg.set("ClockRate", uint32_t(48000));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -287,7 +283,7 @@ TEST_CASE("RtpAudioSinkNode_AccumulationFullPacket") {
         src->pushFrame(frame);
 
         // Wait for at least one packet to be sent
-        for(int i = 0; i < 200 && sink->extendedStats()["packetsSent"].get<uint64_t>() == 0; i++) {
+        for(int i = 0; i < 200 && sink->extendedStats()["PacketsSent"].get<uint64_t>() == 0; i++) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
@@ -325,10 +321,10 @@ TEST_CASE("RtpAudioSinkNode_CrossBoundary") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:" + String::number(recvPort))));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
-        sinkCfg.set("packetTime", Variant(1.0)); // 48 samples per packet
-        sinkCfg.set("clockRate", Variant(uint32_t(48000)));
+        sinkCfg.set("Destination", "127.0.0.1:" + String::number(recvPort));
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
+        sinkCfg.set("PacketTime", 1.0); // 48 samples per packet
+        sinkCfg.set("ClockRate", uint32_t(48000));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -343,12 +339,12 @@ TEST_CASE("RtpAudioSinkNode_CrossBoundary") {
         src->pushFrame(frame);
 
         // Wait for processing
-        for(int i = 0; i < 200 && sink->extendedStats()["samplesSent"].get<uint64_t>() == 0; i++) {
+        for(int i = 0; i < 200 && sink->extendedStats()["SamplesSent"].get<uint64_t>() == 0; i++) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
         auto stats = sink->extendedStats();
-        CHECK(stats["samplesSent"].get<uint64_t>() == 48);
+        CHECK(stats["SamplesSent"].get<uint64_t>() == 48);
 
         pipeline.stop();
 }
@@ -372,10 +368,10 @@ TEST_CASE("RtpAudioSinkNode_TimestampTracking") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:" + String::number(recvPort))));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
-        sinkCfg.set("packetTime", Variant(1.0));
-        sinkCfg.set("clockRate", Variant(uint32_t(48000)));
+        sinkCfg.set("Destination", "127.0.0.1:" + String::number(recvPort));
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
+        sinkCfg.set("PacketTime", 1.0);
+        sinkCfg.set("ClockRate", uint32_t(48000));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -390,7 +386,7 @@ TEST_CASE("RtpAudioSinkNode_TimestampTracking") {
         src->pushFrame(frame);
 
         // Wait for 2 packets to be sent
-        for(int i = 0; i < 200 && sink->extendedStats()["samplesSent"].get<uint64_t>() < 96; i++) {
+        for(int i = 0; i < 200 && sink->extendedStats()["SamplesSent"].get<uint64_t>() < 96; i++) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
 
@@ -430,8 +426,8 @@ TEST_CASE("RtpAudioSinkNode_ExtendedStats") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig sinkCfg("RtpAudioSinkNode", "sink");
-        sinkCfg.set("destination", Variant(String("127.0.0.1:5006")));
-        sinkCfg.set("rtpPayload", Variant(reinterpret_cast<uint64_t>(&payload)));
+        sinkCfg.set("Destination", "127.0.0.1:5006");
+        sinkCfg.set("RtpPayload", reinterpret_cast<uint64_t>(&payload));
         sink->build(sinkCfg);
 
         pipeline.addNode(src);
@@ -440,11 +436,19 @@ TEST_CASE("RtpAudioSinkNode_ExtendedStats") {
         REQUIRE(pipeline.start().isOk());
 
         auto stats = sink->extendedStats();
-        CHECK(stats.contains("packetsSent"));
-        CHECK(stats.contains("samplesSent"));
-        CHECK(stats.contains("underrunCount"));
-        CHECK(stats["packetsSent"].get<uint64_t>() == 0);
-        CHECK(stats["samplesSent"].get<uint64_t>() == 0);
+        CHECK(stats.contains("PacketsSent"));
+        CHECK(stats.contains("SamplesSent"));
+        CHECK(stats.contains("UnderrunCount"));
+        CHECK(stats["PacketsSent"].get<uint64_t>() == 0);
+        CHECK(stats["SamplesSent"].get<uint64_t>() == 0);
 }
 
-#endif // PROMEKI_HAVE_NETWORK
+TEST_CASE("RtpAudioSinkNode_DefaultConfig") {
+        RtpAudioSinkNode node;
+        MediaNodeConfig cfg = node.defaultConfig();
+        CHECK(cfg.type() == "RtpAudioSinkNode");
+        CHECK(cfg.get("PayloadType").get<uint8_t>() == 97);
+        CHECK(cfg.get("ClockRate").get<uint32_t>() == 48000);
+        CHECK(cfg.get("PacketTime").get<double>() == 4.0);
+        CHECK(cfg.get("Dscp").get<uint8_t>() == 46);
+}

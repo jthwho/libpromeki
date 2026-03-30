@@ -27,7 +27,7 @@ PROMEKI_NAMESPACE_BEGIN
  * MediaPipelineConfig pipeConfig;
  *
  * MediaNodeConfig src("TestPatternNode", "source");
- * src.set("width", Variant(uint32_t(1920)));
+ * src.set("Width", uint32_t(1920));
  * pipeConfig.addNode(src);
  *
  * MediaNodeConfig sink("RtpVideoSinkNode", "output");

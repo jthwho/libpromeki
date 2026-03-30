@@ -20,6 +20,10 @@ FrameDemuxNode::FrameDemuxNode(ObjectBase *parent) : MediaNode(parent) {
         addSource(MediaSource::Ptr::create("audio", ContentAudio));
 }
 
+MediaNodeConfig FrameDemuxNode::defaultConfig() const {
+        return MediaNodeConfig("FrameDemuxNode", "");
+}
+
 BuildResult FrameDemuxNode::build(const MediaNodeConfig &config) {
         (void)config;
         BuildResult result;

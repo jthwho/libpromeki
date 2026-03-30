@@ -6,7 +6,7 @@
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-All nodes derive from `MediaNode`, implement `process()`, and declare their input/output ports.
+All nodes derive from `MediaNode`, implement `process()`, and declare their input/output ports. All config option keys use UpperCamelCase (CamelCaps), starting with an upper-case letter (see `proav_pipeline.md` for details).
 
 **Additional nodes for vidgen:** TestPatternNode (combined video+audio+metadata generator with motion), TimecodeOverlayNode, JpegEncoderNode, FrameRateControlNode, RtpVideoSinkNode, RtpAudioSinkNode are specified in [vidgen.md](vidgen.md).
 

@@ -34,6 +34,17 @@ bool TimecodeOverlayNode::parsePosition(const String &str, Position &out) {
         return false;
 }
 
+MediaNodeConfig TimecodeOverlayNode::defaultConfig() const {
+        MediaNodeConfig cfg("TimecodeOverlayNode", "");
+        cfg.set("FontSize", 36);
+        cfg.set("Position", "bottomcenter");
+        cfg.set("TextColorR", uint16_t(65535));
+        cfg.set("TextColorG", uint16_t(65535));
+        cfg.set("TextColorB", uint16_t(65535));
+        cfg.set("DrawBackground", true);
+        return cfg;
+}
+
 BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
         BuildResult result;
         if(state() != Idle) {
@@ -42,16 +53,16 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
         }
 
         // Read config
-        _fontPath = FilePath(config.get("fontPath", Variant(String())).get<String>());
-        _fontSize = config.get("fontSize", Variant(36)).get<int>();
-        _drawBackground = config.get("drawBackground", Variant(true)).get<bool>();
-        _customText = config.get("customText", Variant(String())).get<String>();
-        _colorR = config.get("textColorR", Variant(uint16_t(65535))).get<uint16_t>();
-        _colorG = config.get("textColorG", Variant(uint16_t(65535))).get<uint16_t>();
-        _colorB = config.get("textColorB", Variant(uint16_t(65535))).get<uint16_t>();
+        _fontPath = FilePath(config.get("FontPath", String()).get<String>());
+        _fontSize = config.get("FontSize", 36).get<int>();
+        _drawBackground = config.get("DrawBackground", true).get<bool>();
+        _customText = config.get("CustomText", String()).get<String>();
+        _colorR = config.get("TextColorR", uint16_t(65535)).get<uint16_t>();
+        _colorG = config.get("TextColorG", uint16_t(65535)).get<uint16_t>();
+        _colorB = config.get("TextColorB", uint16_t(65535)).get<uint16_t>();
 
         // Parse position
-        String posStr = config.get("position", Variant(String("bottomcenter"))).get<String>();
+        String posStr = config.get("Position", "bottomcenter").get<String>();
         if(!posStr.isEmpty()) {
                 if(!parsePosition(posStr, _position)) {
                         result.addError("Unknown position: " + posStr);
@@ -59,8 +70,8 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
                 }
         }
         if(_position == Custom) {
-                _customX = config.get("customX", Variant(0)).get<int>();
-                _customY = config.get("customY", Variant(0)).get<int>();
+                _customX = config.get("CustomX", 0).get<int>();
+                _customY = config.get("CustomY", 0).get<int>();
         }
 
         // Validate font path

@@ -11,9 +11,7 @@
 #include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
-#ifdef PROMEKI_HAVE_NETWORK
 #include <promeki/network/udpsocket.h>
-#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,9 +23,7 @@ RtpVideoSinkNode::RtpVideoSinkNode(ObjectBase *parent) : MediaNode(parent) {
 }
 
 RtpVideoSinkNode::~RtpVideoSinkNode() {
-#ifdef PROMEKI_HAVE_NETWORK
         delete _session;
-#endif
 }
 
 bool RtpVideoSinkNode::parseFrameRate(const String &str, FrameRate &out) {
@@ -52,6 +48,14 @@ bool RtpVideoSinkNode::parseFrameRate(const String &str, FrameRate &out) {
         return false;
 }
 
+MediaNodeConfig RtpVideoSinkNode::defaultConfig() const {
+        MediaNodeConfig cfg("RtpVideoSinkNode", "");
+        cfg.set("PayloadType", uint8_t(96));
+        cfg.set("ClockRate", uint32_t(90000));
+        cfg.set("Dscp", uint8_t(34));
+        return cfg;
+}
+
 BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         BuildResult result;
         if(state() != Idle) {
@@ -60,13 +64,13 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Read config
-        _payloadType = config.get("payloadType", Variant(uint8_t(96))).get<uint8_t>();
-        _clockRate = config.get("clockRate", Variant(uint32_t(90000))).get<uint32_t>();
-        _dscp = config.get("dscp", Variant(uint8_t(34))).get<uint8_t>();
-        _dumpPath = config.get("dumpPath", Variant(String())).get<String>();
+        _payloadType = config.get("PayloadType", uint8_t(96)).get<uint8_t>();
+        _clockRate = config.get("ClockRate", uint32_t(90000)).get<uint32_t>();
+        _dscp = config.get("Dscp", uint8_t(34)).get<uint8_t>();
+        _dumpPath = config.get("DumpPath", String()).get<String>();
 
         // Parse destination
-        String destStr = config.get("destination", Variant(String())).get<String>();
+        String destStr = config.get("Destination", String()).get<String>();
         if(!destStr.isEmpty()) {
                 auto [addr, err] = SocketAddress::fromString(destStr);
                 if(err.isError()) {
@@ -77,7 +81,7 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Parse multicast
-        String mcastStr = config.get("multicast", Variant(String())).get<String>();
+        String mcastStr = config.get("Multicast", String()).get<String>();
         if(!mcastStr.isEmpty()) {
                 auto [addr, err] = SocketAddress::fromString(mcastStr);
                 if(err.isError()) {
@@ -88,7 +92,7 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Parse frame rate
-        String fpsStr = config.get("frameRate", Variant(String())).get<String>();
+        String fpsStr = config.get("FrameRate", String()).get<String>();
         if(!fpsStr.isEmpty()) {
                 if(!parseFrameRate(fpsStr, _frameRate)) {
                         result.addError("Invalid frame rate: " + fpsStr);
@@ -97,13 +101,12 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Accept RTP payload handler passed as uint64_t (pointer cast)
-        Variant payloadVar = config.get("rtpPayload");
+        Variant payloadVar = config.get("RtpPayload");
         if(payloadVar.isValid()) {
                 _payload = reinterpret_cast<RtpPayload *>(payloadVar.get<uint64_t>());
         }
 
         // Validate
-#ifdef PROMEKI_HAVE_NETWORK
         if(_payload == nullptr) {
                 result.addError("No RTP payload handler set");
                 return result;
@@ -112,7 +115,6 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
                 result.addError("No destination address set");
                 return result;
         }
-#endif
 
         if(!_frameRate.isValid()) {
                 result.addError("No frame rate set");
@@ -127,12 +129,10 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         int64_t intervalNs = (int64_t)((double)_frameRate.denominator() / (double)_frameRate.numerator() * 1e9);
         _frameInterval = Duration::fromNanoseconds(intervalNs);
 
-#ifdef PROMEKI_HAVE_NETWORK
         delete _session;
         _session = new RtpSession(this);
         _session->setPayloadType(_payloadType);
         _session->setClockRate(_clockRate);
-#endif
 
         _rtpTimestamp = 0;
         _packetsSent = 0;
@@ -147,7 +147,6 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
 Error RtpVideoSinkNode::start() {
         if(state() != Configured) return Error(Error::Invalid);
 
-#ifdef PROMEKI_HAVE_NETWORK
         Error err = _session->start(SocketAddress::any(0));
         if(err.isError()) {
                 emitError("Failed to start RTP session");
@@ -159,18 +158,15 @@ Error RtpVideoSinkNode::start() {
         if(!_multicast.isNull()) {
                 _session->socket()->joinMulticastGroup(_multicast);
         }
-#endif
 
         return MediaNode::start();
 }
 
 void RtpVideoSinkNode::stop() {
         MediaNode::stop();
-#ifdef PROMEKI_HAVE_NETWORK
         if(_session != nullptr) {
                 _session->stop();
         }
-#endif
         _firstFrame = true;
         return;
 }
@@ -211,7 +207,6 @@ void RtpVideoSinkNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryL
                 _dumpPath = String();
         }
 
-#ifdef PROMEKI_HAVE_NETWORK
         // Pack into RTP packets
         RtpPacket::List packets = _payload->pack(dataPtr, dataSize);
 
@@ -245,7 +240,6 @@ void RtpVideoSinkNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryL
         for(size_t i = 0; i < packets.size(); i++) {
                 _bytesSent += packets[i].size();
         }
-#endif
 
         // Advance RTP timestamp
         _rtpTimestamp += _timestampIncrement;
@@ -254,9 +248,9 @@ void RtpVideoSinkNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryL
 
 Map<String, Variant> RtpVideoSinkNode::extendedStats() const {
         Map<String, Variant> ret;
-        ret.insert("packetsSent", Variant((uint64_t)_packetsSent));
-        ret.insert("bytesSent", Variant((uint64_t)_bytesSent));
-        ret.insert("underrunCount", Variant((uint64_t)_underrunCount));
+        ret.insert("PacketsSent", Variant((uint64_t)_packetsSent));
+        ret.insert("BytesSent", Variant((uint64_t)_bytesSent));
+        ret.insert("UnderrunCount", Variant((uint64_t)_underrunCount));
         return ret;
 }
 

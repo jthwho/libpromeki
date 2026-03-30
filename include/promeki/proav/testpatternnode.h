@@ -30,35 +30,35 @@ PROMEKI_NAMESPACE_BEGIN
  * This is a source node: no inputs, one Frame output.
  *
  * @par Config options
- * - `pattern` (String): Test pattern name (default: "colorbars").
+ * - `Pattern` (String): Test pattern name (default: "colorbars").
  *   Values: colorbars, colorbars75, ramp, grid, crosshatch, checkerboard,
  *   solidcolor, white, black, noise, zoneplate.
- * - `width` (uint32_t): Frame width (required).
- * - `height` (uint32_t): Frame height (required).
- * - `pixelFormat` (int): PixelFormat::ID (default: PixelFormat::RGB8).
- * - `frameRate` (String): Frame rate string (required). E.g. "24", "29.97".
- * - `solidColorR` (uint16_t): Red for SolidColor pattern (0-65535).
- * - `solidColorG` (uint16_t): Green for SolidColor pattern.
- * - `solidColorB` (uint16_t): Blue for SolidColor pattern.
- * - `motion` (double): Pattern motion speed (default: 0.0).
- * - `startTimecode` (String): Starting timecode (default: "00:00:00:00").
- * - `dropFrame` (bool): Enable drop-frame timecode.
- * - `audioEnabled` (bool): Enable audio generation (default: true).
- * - `audioMode` (String): Audio mode: "tone", "silence", "ltc" (default: "tone").
- * - `audioRate` (float): Audio sample rate (default: 48000).
- * - `audioChannels` (int): Audio channels (default: 2).
- * - `toneFrequency` (double): Tone frequency in Hz (default: 1000).
- * - `toneLevel` (double): Tone level in dBFS (default: -20).
- * - `ltcLevel` (double): LTC level in dBFS (default: -20).
- * - `ltcChannel` (int): Channel for LTC (-1 = all, default: 0).
+ * - `Width` (uint32_t): Frame width (required).
+ * - `Height` (uint32_t): Frame height (required).
+ * - `PixelFormat` (int): PixelFormat::ID (default: PixelFormat::RGB8).
+ * - `FrameRate` (String): Frame rate string (required). E.g. "24", "29.97".
+ * - `SolidColorR` (uint16_t): Red for SolidColor pattern (0-65535).
+ * - `SolidColorG` (uint16_t): Green for SolidColor pattern.
+ * - `SolidColorB` (uint16_t): Blue for SolidColor pattern.
+ * - `Motion` (double): Pattern motion speed (default: 0.0).
+ * - `StartTimecode` (String): Starting timecode (default: "00:00:00:00").
+ * - `DropFrame` (bool): Enable drop-frame timecode.
+ * - `AudioEnabled` (bool): Enable audio generation (default: true).
+ * - `AudioMode` (String): Audio mode: "tone", "silence", "ltc" (default: "tone").
+ * - `AudioRate` (float): Audio sample rate (default: 48000).
+ * - `AudioChannels` (int): Audio channels (default: 2).
+ * - `ToneFrequency` (double): Tone frequency in Hz (default: 1000).
+ * - `ToneLevel` (double): Tone level in dBFS (default: -20).
+ * - `LtcLevel` (double): LTC level in dBFS (default: -20).
+ * - `LtcChannel` (int): Channel for LTC (-1 = all, default: 0).
  *
  * @par Example
  * @code
  * MediaNodeConfig cfg("TestPatternNode", "source");
- * cfg.set("pattern", Variant(String("colorbars")));
- * cfg.set("width", Variant(uint32_t(1920)));
- * cfg.set("height", Variant(uint32_t(1080)));
- * cfg.set("frameRate", Variant(String("29.97")));
+ * cfg.set("Pattern", "colorbars");
+ * cfg.set("Width", uint32_t(1920));
+ * cfg.set("Height", uint32_t(1080));
+ * cfg.set("FrameRate", "29.97");
  * @endcode
  */
 class TestPatternNode : public MediaNode {
@@ -95,11 +95,12 @@ class TestPatternNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~TestPatternNode();
 
+                MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
 
                 /**
                  * @brief Returns test pattern node statistics.
-                 * @return A map containing framesGenerated and currentTimecode.
+                 * @return A map containing FramesGenerated and CurrentTimecode.
                  */
                 Map<String, Variant> extendedStats() const override;
 

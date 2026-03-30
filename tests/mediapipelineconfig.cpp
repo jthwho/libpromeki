@@ -26,7 +26,7 @@ class BuildSourceNode : public MediaNode {
                         (void)frame; (void)inputIndex; (void)deliveries;
                 }
                 BuildResult build(const MediaNodeConfig &config) override {
-                        _builtWidth = config.get("width", Variant(uint32_t(0))).get<uint32_t>();
+                        _builtWidth = config.get("Width", uint32_t(0)).get<uint32_t>();
                         setState(Configured);
                         return BuildResult();
                 }
@@ -273,7 +273,7 @@ TEST_CASE("MediaPipeline_BuildPassesOptions") {
     MediaPipelineConfig cfg;
 
     MediaNodeConfig srcCfg("BuildSourceNode", "src");
-    srcCfg.set("width", Variant(uint32_t(1920)));
+    srcCfg.set("Width", uint32_t(1920));
     cfg.addNode(srcCfg);
 
     MediaNodeConfig sink("BuildSinkNode", "sink");

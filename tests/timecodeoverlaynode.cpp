@@ -167,7 +167,7 @@ TEST_CASE("TimecodeOverlayNode_ConfigureBadFont") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String("/nonexistent/font.ttf")));
+        overlayCfg.set("FontPath", "/nonexistent/font.ttf");
         BuildResult result = overlay->build(overlayCfg);
         CHECK(result.isError());
 
@@ -197,7 +197,7 @@ TEST_CASE("TimecodeOverlayNode_ConfigureOk") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -227,9 +227,9 @@ TEST_CASE("TimecodeOverlayNode_OverlayModifiesPixels") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
-        overlayCfg.set("fontSize", Variant(36));
-        overlayCfg.set("position", Variant(String("bottomcenter")));
+        overlayCfg.set("FontPath", testFontPath);
+        overlayCfg.set("FontSize", 36);
+        overlayCfg.set("Position", "bottomcenter");
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -296,7 +296,7 @@ TEST_CASE("TimecodeOverlayNode_MetadataPreserved") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -355,7 +355,7 @@ TEST_CASE("TimecodeOverlayNode_ConfigureNotIdleReturnsError") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -388,7 +388,7 @@ TEST_CASE("TimecodeOverlayNode_EmptyFramePassthrough") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
+        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -430,8 +430,8 @@ TEST_CASE("TimecodeOverlayNode_NoTimecodeMetadata") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
-        overlayCfg.set("fontSize", Variant(24));
+        overlayCfg.set("FontPath", testFontPath);
+        overlayCfg.set("FontSize", 24);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -482,10 +482,10 @@ TEST_CASE("TimecodeOverlayNode_CustomText") {
         // custom text adds more drawn pixels.
         auto renderAndSum = [](const String &customText) -> uint64_t {
                 MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-                overlayCfg.set("fontPath", Variant(String(testFontPath)));
-                overlayCfg.set("fontSize", Variant(24));
-                overlayCfg.set("position", Variant(String("topleft")));
-                if(!customText.isEmpty()) overlayCfg.set("customText", Variant(customText));
+                overlayCfg.set("FontPath", testFontPath);
+                overlayCfg.set("FontSize", 24);
+                overlayCfg.set("Position", "topleft");
+                if(!customText.isEmpty()) overlayCfg.set("CustomText", customText);
 
                 ImageDesc idesc(320, 240, PixelFormat::RGB8);
                 Image img(idesc);
@@ -515,9 +515,9 @@ TEST_CASE("TimecodeOverlayNode_NoBackground") {
 
         auto renderAndSum = [](bool drawBg) -> uint64_t {
                 MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-                overlayCfg.set("fontPath", Variant(String(testFontPath)));
-                overlayCfg.set("fontSize", Variant(24));
-                overlayCfg.set("drawBackground", Variant(drawBg));
+                overlayCfg.set("FontPath", testFontPath);
+                overlayCfg.set("FontSize", 24);
+                overlayCfg.set("DrawBackground", drawBg);
 
                 ImageDesc idesc(320, 240, PixelFormat::RGB8);
                 Image img(idesc);
@@ -559,9 +559,9 @@ TEST_CASE("TimecodeOverlayNode_TopLeftPosition") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
-        overlayCfg.set("fontSize", Variant(24));
-        overlayCfg.set("position", Variant(String("topleft")));
+        overlayCfg.set("FontPath", testFontPath);
+        overlayCfg.set("FontSize", 24);
+        overlayCfg.set("Position", "topleft");
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -622,9 +622,9 @@ TEST_CASE("TimecodeOverlayNode_BottomRightPosition") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
-        overlayCfg.set("fontSize", Variant(24));
-        overlayCfg.set("position", Variant(String("bottomright")));
+        overlayCfg.set("FontPath", testFontPath);
+        overlayCfg.set("FontSize", 24);
+        overlayCfg.set("Position", "bottomright");
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -689,8 +689,8 @@ TEST_CASE("TimecodeOverlayNode_MultipleFrames") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
-        overlayCfg.set("fontSize", Variant(24));
+        overlayCfg.set("FontPath", testFontPath);
+        overlayCfg.set("FontSize", 24);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -738,8 +738,8 @@ TEST_CASE("TimecodeOverlayNode_RGBA8") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("fontPath", Variant(String(testFontPath)));
-        overlayCfg.set("fontSize", Variant(36));
+        overlayCfg.set("FontPath", testFontPath);
+        overlayCfg.set("FontSize", 36);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -772,4 +772,18 @@ TEST_CASE("TimecodeOverlayNode_RGBA8") {
         uint64_t outSum = 0;
         for(size_t i = 0; i < outSize; i++) outSum += outData[i];
         CHECK(outSum > 0);
+}
+
+// ============================================================================
+// defaultConfig
+// ============================================================================
+
+TEST_CASE("TimecodeOverlayNode_DefaultConfig") {
+        TimecodeOverlayNode node;
+        MediaNodeConfig cfg = node.defaultConfig();
+        CHECK(cfg.type() == "TimecodeOverlayNode");
+        CHECK(cfg.get("FontSize").get<int>() == 36);
+        CHECK(cfg.get("Position").get<String>() == "bottomcenter");
+        CHECK(cfg.get("DrawBackground").get<bool>() == true);
+        CHECK(cfg.get("TextColorR").get<uint16_t>() == 65535);
 }

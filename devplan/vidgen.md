@@ -82,9 +82,9 @@ Controls frame pacing for pipelines that don't have a timing-aware sink node. Pa
 - [ ] Doctest: verify frame pacing within tolerance
 
 **Extended stats (via `extendedStats()`):**
-- [ ] `"framesPassed"` — total frames passed through
-- [ ] `"actualFrameRate"` — measured frame rate over recent window
-- [ ] `"driftMs"` — current timing drift in milliseconds
+- [ ] `"FramesPassed"` — total frames passed through
+- [ ] `"ActualFrameRate"` — measured frame rate over recent window
+- [ ] `"DriftMs"` — current timing drift in milliseconds
 
 ---
 
@@ -119,8 +119,9 @@ Terminal sink node (one Audio input, no outputs). Accumulates samples in a dynam
 - Tests: 12 tests — construction, registry, port structure, configure failures (no payload/dest), configure success, start/stop lifecycle, sub-packet accumulation (no send), full packet send via loopback, cross-boundary (1.5x), timestamp tracking, starvation counter, extended stats
 
 **CMake changes:**
-- `promeki-proav` conditionally links `promeki-network` and defines `PROMEKI_HAVE_NETWORK` when `PROMEKI_BUILD_NETWORK=ON`
-- RTP node headers, sources, and test files conditionally appended to proav lists
+- `promeki-proav` unconditionally links `promeki-network` (the `PROMEKI_BUILD_NETWORK` conditional guards have been removed — network support is now always on)
+- RTP node headers, sources, and test files are always included in the proav build (no longer conditional)
+- `PROMEKI_HAVE_NETWORK` define removed; code that was guarded by it is now compiled unconditionally
 
 ---
 

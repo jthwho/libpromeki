@@ -105,7 +105,7 @@ static Frame::Ptr encodeImage(const Image &img, int quality = 85) {
         JpegCaptureSink *sink = new JpegCaptureSink();
 
         MediaNodeConfig encCfg("JpegEncoderNode", "enc");
-        encCfg.set("quality", Variant(quality));
+        encCfg.set("Quality", quality);
         enc->build(encCfg);
 
         pipeline.addNode(src);
@@ -369,9 +369,9 @@ TEST_CASE("JpegEncoderNode_ExtendedStats") {
         pipeline.start();
 
         auto stats0 = enc->extendedStats();
-        CHECK(stats0["framesEncoded"].get<uint64_t>() == 0);
-        CHECK_FALSE(stats0.contains("avgCompressedSize"));
-        CHECK_FALSE(stats0.contains("compressionRatio"));
+        CHECK(stats0["FramesEncoded"].get<uint64_t>() == 0);
+        CHECK_FALSE(stats0.contains("AvgCompressedSize"));
+        CHECK_FALSE(stats0.contains("CompressionRatio"));
 
         Image img = createTestImage(64, 64);
         Frame::Ptr frame = Frame::Ptr::create();
@@ -384,9 +384,9 @@ TEST_CASE("JpegEncoderNode_ExtendedStats") {
         pipeline.stop();
 
         auto stats1 = enc->extendedStats();
-        CHECK(stats1["framesEncoded"].get<uint64_t>() == 1);
-        CHECK(stats1["avgCompressedSize"].get<uint64_t>() > 0);
-        CHECK(stats1["compressionRatio"].get<double>() > 1.0);
+        CHECK(stats1["FramesEncoded"].get<uint64_t>() == 1);
+        CHECK(stats1["AvgCompressedSize"].get<uint64_t>() > 0);
+        CHECK(stats1["CompressionRatio"].get<double>() > 1.0);
 }
 
 // ============================================================================
@@ -512,4 +512,15 @@ TEST_CASE("JpegEncoderNode_JpegStructureForRfc2435") {
 TEST_CASE("JpegEncoderNode_Registry") {
         auto types = MediaNode::registeredNodeTypes();
         CHECK(types.contains("JpegEncoderNode"));
+}
+
+// ============================================================================
+// defaultConfig
+// ============================================================================
+
+TEST_CASE("JpegEncoderNode_DefaultConfig") {
+        JpegEncoderNode node;
+        MediaNodeConfig cfg = node.defaultConfig();
+        CHECK(cfg.type() == "JpegEncoderNode");
+        CHECK(cfg.get("Quality").get<int>() == 85);
 }

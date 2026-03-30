@@ -256,6 +256,21 @@ class MediaNode : public ObjectBase {
                 // ---- Build from config ----
 
                 /**
+                 * @brief Returns a default configuration for this node type.
+                 *
+                 * Override in concrete nodes to provide sensible defaults
+                 * for all config options.  The returned config has its Type
+                 * set to the node's class name but no Name or Connections
+                 * (those are pipeline concerns).
+                 *
+                 * The base class implementation returns an empty,
+                 * default-constructed config.
+                 *
+                 * @return A MediaNodeConfig populated with default values.
+                 */
+                virtual MediaNodeConfig defaultConfig() const;
+
+                /**
                  * @brief Configures this node from a MediaNodeConfig.
                  *
                  * Called by MediaPipeline::build() after creating the node
@@ -306,7 +321,7 @@ class MediaNode : public ObjectBase {
                  * @brief Returns additional node-specific statistics.
                  *
                  * Override in concrete nodes to expose custom statistics
-                 * (e.g., "packetsSent", "bytesSent" for RTP nodes).
+                 * (e.g., "PacketsSent", "BytesSent" for RTP nodes).
                  *
                  * @return A map of stat names to Variant values.
                  */

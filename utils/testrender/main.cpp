@@ -180,13 +180,13 @@ int main(int argc, char *argv[]) {
         PumpableSource *src = new PumpableSource();
         {
                 MediaNodeConfig cfg("TestPatternNode", "Source");
-                cfg.set("pattern", Variant(patternStr));
-                cfg.set("width", Variant(uint32_t(width)));
-                cfg.set("height", Variant(uint32_t(height)));
-                cfg.set("pixelFormat", Variant(int(PixelFormat::RGBA8)));
-                cfg.set("frameRate", Variant(String("24")));
-                cfg.set("startTimecode", Variant(tcStr));
-                cfg.set("audioEnabled", Variant(true));
+                cfg.set("Pattern", patternStr);
+                cfg.set("Width", uint32_t(width));
+                cfg.set("Height", uint32_t(height));
+                cfg.set("PixelFormat", int(PixelFormat::RGBA8));
+                cfg.set("FrameRate", "24");
+                cfg.set("StartTimecode", tcStr);
+                cfg.set("AudioEnabled", true);
                 BuildResult br = src->build(cfg);
                 if(br.isError()) {
                         fprintf(stderr, "Source build failed\n");
@@ -210,11 +210,11 @@ int main(int argc, char *argv[]) {
         if(burnTc) {
                 overlay = new PumpableOverlay();
                 MediaNodeConfig cfg("TimecodeOverlayNode", "Overlay");
-                cfg.set("fontPath", Variant(fontPath));
-                cfg.set("fontSize", Variant(fontSize));
-                cfg.set("position", Variant(String("bottomcenter")));
-                cfg.set("drawBackground", Variant(true));
-                if(!customText.isEmpty()) cfg.set("customText", Variant(customText));
+                cfg.set("FontPath", fontPath);
+                cfg.set("FontSize", fontSize);
+                cfg.set("Position", "bottomcenter");
+                cfg.set("DrawBackground", true);
+                if(!customText.isEmpty()) cfg.set("CustomText", customText);
                 BuildResult br = overlay->build(cfg);
                 if(br.isError()) {
                         fprintf(stderr, "Overlay build failed\n");

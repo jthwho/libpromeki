@@ -377,6 +377,10 @@ void MediaNode::resetStats() {
         return;
 }
 
+MediaNodeConfig MediaNode::defaultConfig() const {
+        return MediaNodeConfig();
+}
+
 Map<String, Variant> MediaNode::extendedStats() const {
         return Map<String, Variant>();
 }

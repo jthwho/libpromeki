@@ -33,19 +33,19 @@ PROMEKI_NAMESPACE_BEGIN
  * timing authority, and audio flows at the rate frames arrive.
  *
  * @par Config options
- * - `destination` (String): Destination "IP:port" (required).
- * - `payloadType` (uint8_t): RTP payload type (default: 97).
- * - `clockRate` (uint32_t): RTP clock rate in Hz (default: 48000).
- * - `packetTime` (double): Packet time in ms (default: 4.0).
- * - `outputFormat` (String): Output sample format name (optional).
- * - `dscp` (uint8_t): DSCP value for QoS (default: 46, EF).
- * - `rtpPayload` (pointer, set programmatically): RTP payload handler.
+ * - `Destination` (String): Destination "IP:port" (required).
+ * - `PayloadType` (uint8_t): RTP payload type (default: 97).
+ * - `ClockRate` (uint32_t): RTP clock rate in Hz (default: 48000).
+ * - `PacketTime` (double): Packet time in ms (default: 4.0).
+ * - `OutputFormat` (String): Output sample format name (optional).
+ * - `Dscp` (uint8_t): DSCP value for QoS (default: 46, EF).
+ * - `RtpPayload` (pointer, set programmatically): RTP payload handler.
  *
  * @par Example
  * @code
  * MediaNodeConfig cfg("RtpAudioSinkNode", "audioSink");
- * cfg.set("destination", Variant(String("239.0.0.1:5006")));
- * cfg.set("packetTime", Variant(4.0));
+ * cfg.set("Destination", "239.0.0.1:5006");
+ * cfg.set("PacketTime", 4.0);
  * @endcode
  */
 class RtpAudioSinkNode : public MediaNode {
@@ -60,11 +60,12 @@ class RtpAudioSinkNode : public MediaNode {
                 /** @brief Destructor. */
                 ~RtpAudioSinkNode() override;
 
+                MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
 
                 /**
                  * @brief Returns audio sink statistics.
-                 * @return A map containing packetsSent, samplesSent, and underrunCount.
+                 * @return A map containing PacketsSent, SamplesSent, and UnderrunCount.
                  */
                 Map<String, Variant> extendedStats() const override;
 

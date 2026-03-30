@@ -79,19 +79,19 @@ TEST_CASE("MediaNodeConfig_SetConnections") {
 
 TEST_CASE("MediaNodeConfig_Options") {
     MediaNodeConfig cfg("Type", "node");
-    cfg.set("width", Variant(uint32_t(1920)));
-    cfg.set("height", Variant(uint32_t(1080)));
+    cfg.set("Width", uint32_t(1920));
+    cfg.set("Height", uint32_t(1080));
 
-    CHECK(cfg.contains("width"));
-    CHECK(cfg.get("width").get<uint32_t>() == 1920);
-    CHECK(cfg.get("height").get<uint32_t>() == 1080);
+    CHECK(cfg.contains("Width"));
+    CHECK(cfg.get("Width").get<uint32_t>() == 1920);
+    CHECK(cfg.get("Height").get<uint32_t>() == 1080);
     CHECK(!cfg.get("missing").isValid());
-    CHECK(cfg.get("missing", Variant(int32_t(42))).get<int32_t>() == 42);
+    CHECK(cfg.get("missing", int32_t(42)).get<int32_t>() == 42);
 }
 
 TEST_CASE("MediaNodeConfig_RemoveOption") {
     MediaNodeConfig cfg("Type", "node");
-    cfg.set("key", Variant(String("value")));
+    cfg.set("key", "value");
     CHECK(cfg.contains("key"));
     CHECK(cfg.remove("key"));
     CHECK(!cfg.contains("key"));

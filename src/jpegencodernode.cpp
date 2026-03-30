@@ -47,13 +47,19 @@ JpegEncoderNode::JpegEncoderNode(ObjectBase *parent) : MediaNode(parent) {
         addSource(MediaSource::Ptr::create("output", ContentVideo));
 }
 
+MediaNodeConfig JpegEncoderNode::defaultConfig() const {
+        MediaNodeConfig cfg("JpegEncoderNode", "");
+        cfg.set("Quality", 85);
+        return cfg;
+}
+
 BuildResult JpegEncoderNode::build(const MediaNodeConfig &config) {
         BuildResult result;
         if(state() != Idle) {
                 result.addError("Node is not in Idle state");
                 return result;
         }
-        _quality = config.get("quality", Variant(85)).get<int>();
+        _quality = config.get("Quality", 85).get<int>();
         if(_quality < 1 || _quality > 100) {
                 result.addWarning("Quality clamped to 1-100 range");
                 if(_quality < 1) _quality = 1;
@@ -159,12 +165,12 @@ void JpegEncoderNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryLi
 
 Map<String, Variant> JpegEncoderNode::extendedStats() const {
         Map<String, Variant> ret;
-        ret.insert("framesEncoded", Variant((uint64_t)_framesEncoded));
+        ret.insert("FramesEncoded", Variant((uint64_t)_framesEncoded));
         if(_framesEncoded > 0) {
-                ret.insert("avgCompressedSize", Variant((uint64_t)(_totalCompressedBytes / _framesEncoded)));
+                ret.insert("AvgCompressedSize", Variant((uint64_t)(_totalCompressedBytes / _framesEncoded)));
                 if(_totalCompressedBytes > 0) {
                         double ratio = (double)_totalUncompressedBytes / (double)_totalCompressedBytes;
-                        ret.insert("compressionRatio", Variant(ratio));
+                        ret.insert("CompressionRatio", Variant(ratio));
                 }
         }
         return ret;

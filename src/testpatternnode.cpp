@@ -77,6 +77,27 @@ bool TestPatternNode::parseFrameRate(const String &str, FrameRate &out) {
         return false;
 }
 
+MediaNodeConfig TestPatternNode::defaultConfig() const {
+        MediaNodeConfig cfg("TestPatternNode", "");
+        cfg.set("Pattern", "colorbars");
+        cfg.set("Width", uint32_t(1920));
+        cfg.set("Height", uint32_t(1080));
+        cfg.set("PixelFormat", int(PixelFormat::RGB8));
+        cfg.set("FrameRate", "29.97");
+        cfg.set("Motion", 0.0);
+        cfg.set("StartTimecode", "00:00:00:00");
+        cfg.set("DropFrame", false);
+        cfg.set("AudioEnabled", true);
+        cfg.set("AudioMode", "tone");
+        cfg.set("AudioRate", 48000.0f);
+        cfg.set("AudioChannels", 2);
+        cfg.set("ToneFrequency", 1000.0);
+        cfg.set("ToneLevel", -20.0);
+        cfg.set("LtcLevel", -20.0);
+        cfg.set("LtcChannel", 0);
+        return cfg;
+}
+
 BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         BuildResult result;
         if(state() != Idle) {
@@ -85,18 +106,18 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         }
 
         // Parse pattern
-        String patStr = config.get("pattern", Variant(String("colorbars"))).get<String>();
+        String patStr = config.get("Pattern", "colorbars").get<String>();
         if(!patStr.isEmpty() && !parsePattern(patStr, _pattern)) {
                 result.addError("Unknown pattern: " + patStr);
                 return result;
         }
 
         // Parse video config
-        uint32_t width = config.get("width", Variant(uint32_t(0))).get<uint32_t>();
-        uint32_t height = config.get("height", Variant(uint32_t(0))).get<uint32_t>();
-        int pixFmt = config.get("pixelFormat", Variant(PixelFormat::RGB8)).get<int>();
+        uint32_t width = config.get("Width", uint32_t(0)).get<uint32_t>();
+        uint32_t height = config.get("Height", uint32_t(0)).get<uint32_t>();
+        int pixFmt = config.get("PixelFormat", PixelFormat::RGB8).get<int>();
 
-        String fpsStr = config.get("frameRate", Variant(String())).get<String>();
+        String fpsStr = config.get("FrameRate", String()).get<String>();
         FrameRate fps;
         if(!fpsStr.isEmpty() && !parseFrameRate(fpsStr, fps)) {
                 result.addError("Invalid frame rate: " + fpsStr);
@@ -110,37 +131,37 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         }
 
         // Solid color
-        _solidR = config.get("solidColorR", Variant(uint16_t(0))).get<uint16_t>();
-        _solidG = config.get("solidColorG", Variant(uint16_t(0))).get<uint16_t>();
-        _solidB = config.get("solidColorB", Variant(uint16_t(0))).get<uint16_t>();
+        _solidR = config.get("SolidColorR", uint16_t(0)).get<uint16_t>();
+        _solidG = config.get("SolidColorG", uint16_t(0)).get<uint16_t>();
+        _solidB = config.get("SolidColorB", uint16_t(0)).get<uint16_t>();
 
         // Motion
-        _motion = config.get("motion", Variant(0.0)).get<double>();
+        _motion = config.get("Motion", 0.0).get<double>();
 
         // Audio config
-        _audioEnabled = config.get("audioEnabled", Variant(true)).get<bool>();
-        String audioModeStr = config.get("audioMode", Variant(String("tone"))).get<String>();
+        _audioEnabled = config.get("AudioEnabled", true).get<bool>();
+        String audioModeStr = config.get("AudioMode", "tone").get<String>();
         if(!audioModeStr.isEmpty() && !parseAudioMode(audioModeStr, _audioMode)) {
                 result.addError("Unknown audio mode: " + audioModeStr);
                 return result;
         }
 
-        float audioRate = config.get("audioRate", Variant(48000.0f)).get<float>();
-        int audioChannels = config.get("audioChannels", Variant(2)).get<int>();
+        float audioRate = config.get("AudioRate", 48000.0f).get<float>();
+        int audioChannels = config.get("AudioChannels", 2).get<int>();
 
         if(_audioEnabled) {
                 _audioDesc = AudioDesc(audioRate, audioChannels);
         }
 
-        _toneFreq = config.get("toneFrequency", Variant(1000.0)).get<double>();
-        double toneLevelDbfs = config.get("toneLevel", Variant(-20.0)).get<double>();
+        _toneFreq = config.get("ToneFrequency", 1000.0).get<double>();
+        double toneLevelDbfs = config.get("ToneLevel", -20.0).get<double>();
         _toneLevel = AudioLevel::fromDbfs(toneLevelDbfs);
-        double ltcLevelDbfs = config.get("ltcLevel", Variant(-20.0)).get<double>();
+        double ltcLevelDbfs = config.get("LtcLevel", -20.0).get<double>();
         _ltcLevel = AudioLevel::fromDbfs(ltcLevelDbfs);
-        _ltcChannel = config.get("ltcChannel", Variant(0)).get<int>();
+        _ltcChannel = config.get("LtcChannel", 0).get<int>();
 
         // Timecode
-        String tcStr = config.get("startTimecode", Variant(String())).get<String>();
+        String tcStr = config.get("StartTimecode", String()).get<String>();
         if(!tcStr.isEmpty()) {
                 auto [tc, err] = Timecode::fromString(tcStr);
                 if(err.isOk()) {
@@ -148,11 +169,11 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
                 }
         }
         // Accept a pre-built Timecode via Variant
-        Variant tcVar = config.get("timecode");
+        Variant tcVar = config.get("Timecode");
         if(tcVar.isValid()) {
                 _tcGen.setTimecode(tcVar.get<Timecode>());
         }
-        bool dropFrame = config.get("dropFrame", Variant(false)).get<bool>();
+        bool dropFrame = config.get("DropFrame", false).get<bool>();
         _tcGen.setDropFrame(dropFrame);
 
         // ---- Validate and configure (formerly configure()) ----
@@ -326,8 +347,8 @@ void TestPatternNode::stop() {
 
 Map<String, Variant> TestPatternNode::extendedStats() const {
         Map<String, Variant> ret;
-        ret.insert("framesGenerated", Variant((unsigned long)_frameCount));
-        ret.insert("currentTimecode", Variant(_tcGen.timecode().toString().first));
+        ret.insert("FramesGenerated", Variant((unsigned long)_frameCount));
+        ret.insert("CurrentTimecode", Variant(_tcGen.timecode().toString().first));
         return ret;
 }
 

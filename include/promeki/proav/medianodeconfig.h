@@ -41,12 +41,20 @@ PROMEKI_NAMESPACE_BEGIN
  * calls MediaNode::build(), the full MediaNodeConfig is passed; the node
  * ignores the standard pipeline-level keys and reads only its own options.
  *
+ * @par Naming convention
+ * All string keys in the pipeline use **UpperCamelCase** (CamelCaps),
+ * starting with an upper-case letter.  This applies to config option keys,
+ * extendedStats() keys, and any other `Map<String, Variant>` dictionaries
+ * in the node API.  Examples: `"Name"`, `"FrameRate"`, `"PacketsSent"`,
+ * `"AudioEnabled"`.  Acronyms are treated as single words with only the
+ * first letter capitalised: `"Dscp"`, `"RtpPayload"`, `"LtcChannel"`.
+ *
  * @par Example
  * @code
  * MediaNodeConfig cfg("TestPatternNode", "pattern1");
  * cfg.addConnection(""); // sink 0 has no connection (source node)
- * cfg.set("width", Variant(uint32_t(1920)));
- * cfg.set("height", Variant(uint32_t(1080)));
+ * cfg.set("Width", uint32_t(1920));
+ * cfg.set("Height", uint32_t(1080));
  * @endcode
  */
 class MediaNodeConfig {
@@ -112,12 +120,35 @@ class MediaNodeConfig {
                 void set(const String &key, const Variant &value);
 
                 /**
+                 * @brief Sets an option from any Variant-compatible type.
+                 * @tparam T   A type accepted by Variant's constructor.
+                 * @param key   The option key.
+                 * @param value The value to store.
+                 */
+                template <typename T> void set(const String &key, const T &value) { set(key, Variant(value)); }
+
+                /** @brief Overload for string literals to avoid `bool` ambiguity. */
+                void set(const String &key, const char *value) { set(key, Variant(String(value))); }
+
+                /**
                  * @brief Gets an option value.
                  * @param key          The option key.
                  * @param defaultValue Value to return if the key is not found.
                  * @return The option value, or @p defaultValue if not found.
                  */
                 Variant get(const String &key, const Variant &defaultValue = Variant()) const;
+
+                /**
+                 * @brief Gets an option with a typed default.
+                 * @tparam T   A type accepted by Variant's constructor.
+                 * @param key          The option key.
+                 * @param defaultValue Value to return if the key is not found.
+                 * @return The option value, or a Variant wrapping @p defaultValue.
+                 */
+                template <typename T> Variant get(const String &key, const T &defaultValue) const { return get(key, Variant(defaultValue)); }
+
+                /** @brief Overload for string-literal defaults. */
+                Variant get(const String &key, const char *defaultValue) const { return get(key, Variant(String(defaultValue))); }
 
                 /**
                  * @brief Returns true if the options map contains the given key.

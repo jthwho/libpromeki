@@ -26,12 +26,12 @@ PROMEKI_NAMESPACE_BEGIN
  * to the actual encoded byte count.
  *
  * @par Config options
- * - `quality` (int): JPEG quality 1-100 (default: 85).
+ * - `Quality` (int): JPEG quality 1-100 (default: 85).
  *
  * @par Example
  * @code
  * MediaNodeConfig cfg("JpegEncoderNode", "encoder");
- * cfg.set("quality", Variant(90));
+ * cfg.set("Quality", 90);
  * @endcode
  */
 class JpegEncoderNode : public MediaNode {
@@ -46,11 +46,12 @@ class JpegEncoderNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~JpegEncoderNode() = default;
 
+                MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
 
                 /**
                  * @brief Returns node-specific statistics.
-                 * @return A map containing framesEncoded, avgCompressedSize, and compressionRatio.
+                 * @return A map containing FramesEncoded, AvgCompressedSize, and CompressionRatio.
                  */
                 Map<String, Variant> extendedStats() const override;
 

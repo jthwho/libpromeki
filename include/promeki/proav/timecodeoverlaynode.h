@@ -24,24 +24,24 @@ PROMEKI_NAMESPACE_BEGIN
  * the image buffer. Optionally renders additional custom text.
  *
  * @par Config options
- * - `fontPath` (String): Path to a TrueType font file (required).
- * - `fontSize` (int): Font size in points (default: 36).
- * - `position` (String): Position preset (default: "bottomcenter").
+ * - `FontPath` (String): Path to a TrueType font file (required).
+ * - `FontSize` (int): Font size in points (default: 36).
+ * - `Position` (String): Position preset (default: "bottomcenter").
  *   Values: topleft, topcenter, topright, bottomleft, bottomcenter, bottomright.
- * - `customX` (int): Custom X position (only used with position "custom").
- * - `customY` (int): Custom Y position (only used with position "custom").
- * - `textColorR` (uint16_t): Red component 0-65535 (default: 65535).
- * - `textColorG` (uint16_t): Green component 0-65535 (default: 65535).
- * - `textColorB` (uint16_t): Blue component 0-65535 (default: 65535).
- * - `drawBackground` (bool): Draw dark background behind text (default: true).
- * - `customText` (String): Additional text to render below timecode.
+ * - `CustomX` (int): Custom X position (only used with position "custom").
+ * - `CustomY` (int): Custom Y position (only used with position "custom").
+ * - `TextColorR` (uint16_t): Red component 0-65535 (default: 65535).
+ * - `TextColorG` (uint16_t): Green component 0-65535 (default: 65535).
+ * - `TextColorB` (uint16_t): Blue component 0-65535 (default: 65535).
+ * - `DrawBackground` (bool): Draw dark background behind text (default: true).
+ * - `CustomText` (String): Additional text to render below timecode.
  *
  * @par Example
  * @code
  * MediaNodeConfig cfg("TimecodeOverlayNode", "overlay");
- * cfg.set("fontPath", Variant(String("/path/to/font.ttf")));
- * cfg.set("fontSize", Variant(48));
- * cfg.set("position", Variant(String("bottomcenter")));
+ * cfg.set("FontPath", "/path/to/font.ttf");
+ * cfg.set("FontSize", 48);
+ * cfg.set("Position", "bottomcenter");
  * @endcode
  */
 class TimecodeOverlayNode : public MediaNode {
@@ -67,6 +67,7 @@ class TimecodeOverlayNode : public MediaNode {
                 /** @brief Destructor. */
                 virtual ~TimecodeOverlayNode() = default;
 
+                MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
 
         protected:
