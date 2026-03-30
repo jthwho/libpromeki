@@ -10,6 +10,7 @@
 
 #include <promeki/core/namespace.h>
 #include <promeki/core/sharedptr.h>
+#include <promeki/core/benchmark.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/audio.h>
 #include <promeki/core/metadata.h>
@@ -82,10 +83,29 @@ class Frame {
                  */
                 Metadata &metadata() { return _metadata; }
 
+                /**
+                 * @brief Returns a const reference to the frame benchmark.
+                 * @return The benchmark pointer (may be null if benchmarking is disabled).
+                 */
+                const Benchmark::Ptr &benchmark() const { return _benchmark; }
+
+                /**
+                 * @brief Returns a mutable reference to the frame benchmark.
+                 * @return The benchmark pointer.
+                 */
+                Benchmark::Ptr &benchmark() { return _benchmark; }
+
+                /**
+                 * @brief Sets the frame benchmark.
+                 * @param bm The benchmark to attach.
+                 */
+                void setBenchmark(Benchmark::Ptr bm) { _benchmark = std::move(bm); return; }
+
         private:
                 Image::PtrList  _imageList;
                 Audio::PtrList  _audioList;
                 Metadata        _metadata;
+                Benchmark::Ptr  _benchmark;
 };
 
 PROMEKI_NAMESPACE_END

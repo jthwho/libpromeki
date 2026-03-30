@@ -12,6 +12,7 @@ PROMEKI_NAMESPACE_BEGIN
 const String MediaNodeConfig::KeyName("Name");
 const String MediaNodeConfig::KeyType("Type");
 const String MediaNodeConfig::KeyConnections("Connections");
+const String MediaNodeConfig::KeyBenchmarkEnabled("BenchmarkEnabled");
 
 MediaNodeConfig::MediaNodeConfig(const String &type, const String &name) {
         _options.insert(KeyName, Variant(name));
@@ -76,12 +77,21 @@ bool MediaNodeConfig::remove(const String &key) {
         return true;
 }
 
+bool MediaNodeConfig::benchmarkEnabled() const {
+        return get(KeyBenchmarkEnabled, Variant(false)).get<bool>();
+}
+
+void MediaNodeConfig::setBenchmarkEnabled(bool enabled) {
+        set(KeyBenchmarkEnabled, Variant(enabled));
+        return;
+}
+
 bool MediaNodeConfig::isValid() const {
         return !name().isEmpty() && !type().isEmpty();
 }
 
 bool MediaNodeConfig::isStandardKey(const String &key) {
-        return key == KeyName || key == KeyType || key == KeyConnections;
+        return key == KeyName || key == KeyType || key == KeyConnections || key == KeyBenchmarkEnabled;
 }
 
 MediaNodeConfig::ParsedConnection MediaNodeConfig::parseConnection(const String &connStr, Error *err) {

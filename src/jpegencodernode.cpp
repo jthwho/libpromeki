@@ -63,12 +63,13 @@ BuildResult JpegEncoderNode::build(const MediaNodeConfig &config) {
         return result;
 }
 
-void JpegEncoderNode::process() {
-        Frame::Ptr frame = dequeueInput();
+void JpegEncoderNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)inputIndex;
+        (void)deliveries;
+
         if(!frame.isValid()) return;
 
         if(frame->imageList().isEmpty()) {
-                deliverOutput(frame);
                 return;
         }
 
@@ -148,11 +149,11 @@ void JpegEncoderNode::process() {
                                                   jpegFmt, img->metadata());
         free(outBuffer);
 
-        // Build output frame
-        Frame::Ptr outFrame = Frame::Ptr::create();
-        outFrame.modify()->imageList().pushToBack(Image::Ptr::create(jpegImg));
-        outFrame.modify()->metadata() = frame->metadata();
-        deliverOutput(outFrame);
+        // Replace frame contents with encoded output, preserving metadata
+        Metadata md = frame->metadata();
+        frame = Frame::Ptr::create();
+        frame.modify()->imageList().pushToBack(Image::Ptr::create(jpegImg));
+        frame.modify()->metadata() = md;
         return;
 }
 

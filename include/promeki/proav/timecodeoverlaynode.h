@@ -68,7 +68,9 @@ class TimecodeOverlayNode : public MediaNode {
                 virtual ~TimecodeOverlayNode() = default;
 
                 BuildResult build(const MediaNodeConfig &config) override;
-                void process() override;
+
+        protected:
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override;
 
         private:
                 FilePath        _fontPath;

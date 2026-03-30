@@ -41,7 +41,9 @@ class FrameDemuxNode : public MediaNode {
                 virtual ~FrameDemuxNode() = default;
 
                 BuildResult build(const MediaNodeConfig &config) override;
-                void process() override;
+
+        protected:
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override;
 };
 
 PROMEKI_NAMESPACE_END

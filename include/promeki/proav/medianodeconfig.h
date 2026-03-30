@@ -56,6 +56,7 @@ class MediaNodeConfig {
                 static const String KeyName;            ///< @brief Key for the node name ("Name").
                 static const String KeyType;            ///< @brief Key for the node type ("Type").
                 static const String KeyConnections;     ///< @brief Key for the connections list ("Connections").
+                static const String KeyBenchmarkEnabled; ///< @brief Key for the benchmark enable flag ("BenchmarkEnabled").
 
                 /**
                  * @brief Result of parsing a connection string.
@@ -133,6 +134,18 @@ class MediaNodeConfig {
 
                 /** @brief Returns the full options map (including standard keys). */
                 const Map<String, Variant> &options() const { return _options; }
+
+                /**
+                 * @brief Returns true if benchmarking is enabled for this node.
+                 * @return True if enabled, false otherwise (default: false).
+                 */
+                bool benchmarkEnabled() const;
+
+                /**
+                 * @brief Enables or disables benchmarking for this node.
+                 * @param enabled True to enable benchmarking.
+                 */
+                void setBenchmarkEnabled(bool enabled);
 
                 /**
                  * @brief Returns true if both name and type are set.

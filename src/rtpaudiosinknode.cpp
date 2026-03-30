@@ -141,8 +141,10 @@ void RtpAudioSinkNode::stop() {
         return;
 }
 
-void RtpAudioSinkNode::process() {
-        Frame::Ptr frame = dequeueInput();
+void RtpAudioSinkNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)inputIndex;
+        (void)deliveries;
+
         if(!frame.isValid()) return;
 
         if(frame->audioList().isEmpty()) return;

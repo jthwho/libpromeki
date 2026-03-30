@@ -235,7 +235,10 @@ Error TestPatternNode::start() {
         return MediaNode::start();
 }
 
-void TestPatternNode::process() {
+void TestPatternNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)inputIndex;
+        (void)deliveries;
+
         // Advance timecode — returns the value for the current frame
         Timecode tc = _tcGen.advance();
 
@@ -247,9 +250,14 @@ void TestPatternNode::process() {
         img.metadata().set(Metadata::Timecode, tc);
 
         // Create frame
-        Frame::Ptr frame = Frame::Ptr::create();
+        frame = Frame::Ptr::create();
         Image::Ptr imgPtr = Image::Ptr::create(img);
         frame.modify()->imageList().pushToBack(imgPtr);
+
+        // Attach benchmark if enabled
+        if(currentBenchmark().isValid()) {
+                frame.modify()->setBenchmark(currentBenchmark());
+        }
 
         // Generate audio
         if(_audioEnabled) {
@@ -285,9 +293,6 @@ void TestPatternNode::process() {
 
         // Set frame metadata
         frame.modify()->metadata().set(Metadata::Timecode, tc);
-
-        // Deliver to output
-        deliverOutput(frame);
 
         // Advance motion
         if(_motion != 0.0) {

@@ -19,7 +19,7 @@
 using namespace promeki;
 
 // Simple sink that captures the last image frame.
-// Exposes process() and provides non-threaded start for synchronous use.
+// Provides non-threaded start for synchronous use.
 class ImageCaptureSink : public MediaNode {
         PROMEKI_OBJECT(ImageCaptureSink, MediaNode)
         public:
@@ -37,9 +37,9 @@ class ImageCaptureSink : public MediaNode {
                         return Error(Error::Ok);
                 }
                 void stop() override { setState(Idle); return; }
-                void process() override {
-                        Frame::Ptr f = dequeueInput();
-                        if(f.isValid()) _last = f;
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
+                        if(frame.isValid()) _last = frame;
                         return;
                 }
                 void drain() { while(sink(0)->queueSize() > 0) process(); return; }
@@ -66,11 +66,14 @@ class AudioDiscardSink : public MediaNode {
                         return Error(Error::Ok);
                 }
                 void stop() override { setState(Idle); return; }
-                void process() override { dequeueInput(); return; }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                        return;
+                }
                 void drain() { while(sink(0)->queueSize() > 0) process(); return; }
 };
 
-// Thin wrappers that expose process() for synchronous pumping.
+// Thin wrappers that expose process() publicly for synchronous pumping.
 class PumpableSource : public TestPatternNode {
         public:
                 using TestPatternNode::process;

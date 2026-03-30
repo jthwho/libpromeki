@@ -21,6 +21,7 @@
 #include <promeki/core/waitcondition.h>
 #include <promeki/core/thread.h>
 #include <promeki/core/timestamp.h>
+#include <promeki/core/benchmark.h>
 #include <promeki/proav/mediasink.h>
 #include <promeki/proav/mediasource.h>
 #include <promeki/proav/frame.h>
@@ -30,6 +31,7 @@ PROMEKI_NAMESPACE_BEGIN
 class MediaNode;
 class MediaNodeConfig;
 class MediaPipeline;
+class BenchmarkReporter;
 
 /**
  * @brief Severity level for node messages.
@@ -102,6 +104,21 @@ struct BuildResult {
 };
 
 /**
+ * @brief Specifies which output source should receive a frame.
+ * @ingroup proav_pipeline
+ *
+ * Used by processFrame() to direct frames to specific outputs.
+ * A sourceIndex of -1 means deliver to all outputs.
+ */
+struct Delivery {
+        int        sourceIndex = -1;    ///< @brief Output source index, or -1 for all.
+        Frame::Ptr frame;               ///< @brief The frame to deliver.
+};
+
+/** @brief List of Delivery items. */
+using DeliveryList = List<Delivery>;
+
+/**
  * @brief Base class for all pipeline processing nodes.
  * @ingroup proav_pipeline
  *
@@ -110,10 +127,9 @@ struct BuildResult {
  * sources, lifecycle state transitions, and per-sink queued input with
  * backpressure.
  *
- * Concrete node subclasses override the virtual lifecycle methods
- * (build, start, stop, cleanup, process) to implement their specific
- * processing logic. All configuration flows through the build() method
- * via MediaNodeConfig; nodes do not expose public setters.
+ * Concrete node subclasses override processFrame() to implement their
+ * specific processing logic. The base class handles dequeuing input,
+ * benchmark stamping, delivering output, and recording process timing.
  *
  * The MediaPipeline is the sole interface for managing node lifecycle.
  * Nodes cannot be configured, started, or stopped directly — only
@@ -296,6 +312,17 @@ class MediaNode : public ObjectBase {
                  */
                 virtual Map<String, Variant> extendedStats() const;
 
+                // ---- Benchmark ----
+
+                /** @brief Returns true if benchmarking is enabled for this node. */
+                bool benchmarkEnabled() const { return _benchmarkEnabled; }
+
+                /**
+                 * @brief Returns the benchmark reporter for this node, if any.
+                 * @return The reporter pointer (may be null if benchmarking is disabled).
+                 */
+                BenchmarkReporter *benchmarkReporter() const { return _benchmarkReporter; }
+
                 // ---- Signals ----
 
                 /** @brief Emitted when the node's state changes. */
@@ -340,12 +367,50 @@ class MediaNode : public ObjectBase {
                 virtual void cleanup();
 
                 /**
-                 * @brief Processes one cycle of data.
+                 * @brief Processes a single frame of data.
                  *
-                 * Pure virtual -- must be implemented by concrete node subclasses.
-                 * Called by the node's thread in the default run loop.
+                 * Called by the base class process() after dequeuing input
+                 * and stamping benchmarks.  Concrete nodes implement their
+                 * processing logic here.
+                 *
+                 * For nodes with inputs: @p frame contains the dequeued data
+                 * and @p inputIndex identifies which sink it came from.
+                 *
+                 * For source nodes (no sinks): @p frame is null and
+                 * @p inputIndex is -1.  The node creates and populates the frame.
+                 *
+                 * Output delivery is controlled via @p deliveries:
+                 * - If @p deliveries is left empty and @p frame is valid after
+                 *   return, the base class delivers @p frame to all outputs.
+                 * - If @p deliveries is populated, each entry is delivered to
+                 *   its specified sourceIndex (or all outputs if sourceIndex is -1).
+                 * - If both are empty/invalid, no delivery occurs (terminal sinks).
+                 *
+                 * @param frame      The input frame (or null for source nodes).
+                 * @param inputIndex The sink index the frame came from, or -1 for source nodes.
+                 * @param deliveries Output delivery list; populate for multi-output routing.
                  */
-                virtual void process() = 0;
+                virtual void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) = 0;
+
+                /**
+                 * @brief Runs one processing cycle.
+                 *
+                 * Dequeues input (if any sinks), calls processFrame(),
+                 * stamps benchmarks, delivers output, and records timing.
+                 * Called by the node's thread in the default run loop.
+                 * Subclasses may expose this for synchronous testing.
+                 */
+                void process();
+
+                /**
+                 * @brief Returns the pre-created benchmark for the current frame.
+                 *
+                 * Valid only during a processFrame() call when benchmarking is
+                 * enabled.  Source nodes should attach this to their created frame.
+                 *
+                 * @return The current frame's benchmark, or null if benchmarking is disabled.
+                 */
+                Benchmark::Ptr currentBenchmark() const { return _currentBenchmark; }
 
                 /**
                  * @brief Sets the thread for this node. Takes ownership.
@@ -476,6 +541,15 @@ class MediaNode : public ObjectBase {
                 double                  _peakProcessDuration = 0.0;
                 int                     _peakQueueDepth = 0;
 
+                // Benchmark
+                bool                    _benchmarkEnabled = false;
+                BenchmarkReporter       *_benchmarkReporter = nullptr;
+                Benchmark::Ptr          _currentBenchmark;
+                Benchmark::Id           _bmQueued;
+                Benchmark::Id           _bmBeginProcess;
+                Benchmark::Id           _bmEndProcess;
+
+                void initBenchmarkIds();
                 int aggregateQueueDepth() const;
                 void threadEntry();
 

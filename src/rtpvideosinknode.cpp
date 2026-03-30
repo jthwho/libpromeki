@@ -175,8 +175,10 @@ void RtpVideoSinkNode::stop() {
         return;
 }
 
-void RtpVideoSinkNode::process() {
-        Frame::Ptr frame = dequeueInput();
+void RtpVideoSinkNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)inputIndex;
+        (void)deliveries;
+
         if(!frame.isValid()) return;
 
         if(frame->imageList().isEmpty()) return;

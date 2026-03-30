@@ -80,12 +80,11 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
         return result;
 }
 
-void TimecodeOverlayNode::process() {
-        Frame::Ptr frame = dequeueInput();
-        if(!frame.isValid()) return;
+void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)inputIndex;
+        (void)deliveries;
 
         if(frame->imageList().isEmpty()) {
-                deliverOutput(frame);
                 return;
         }
 
@@ -138,11 +137,11 @@ void TimecodeOverlayNode::process() {
                 _fontPainter.drawText(_customText, customX, customY, _fontSize);
         }
 
-        // Rebuild output frame with the modified image
-        Frame::Ptr outFrame = Frame::Ptr::create();
-        outFrame.modify()->imageList().pushToBack(img);
-        outFrame.modify()->metadata() = frame->metadata();
-        deliverOutput(outFrame);
+        // Rebuild output frame with the modified image, preserving metadata
+        Metadata md = frame->metadata();
+        frame = Frame::Ptr::create();
+        frame.modify()->imageList().pushToBack(img);
+        frame.modify()->metadata() = md;
         return;
 }
 

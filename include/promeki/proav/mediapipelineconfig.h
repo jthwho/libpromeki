@@ -75,6 +75,12 @@ class MediaPipelineConfig {
                 const MediaNodeConfig *node(const String &name) const;
 
                 /**
+                 * @brief Enables or disables benchmarking on all nodes.
+                 * @param enabled True to enable benchmarking on every node.
+                 */
+                void setBenchmarkEnabled(bool enabled);
+
+                /**
                  * @brief Validates the configuration.
                  *
                  * Checks that all node configs are valid, all names are unique,

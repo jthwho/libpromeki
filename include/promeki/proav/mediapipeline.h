@@ -241,6 +241,12 @@ class MediaPipeline : public ObjectBase {
                  */
                 Error resume();
 
+                /**
+                 * @brief Produces a combined benchmark summary from all nodes.
+                 * @return A formatted String with per-node benchmark statistics.
+                 */
+                String benchmarkSummary() const;
+
                 /** @brief Returns the current pipeline state. */
                 State state() const { return _state; }
 

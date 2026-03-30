@@ -47,13 +47,15 @@ class JpegEncoderNode : public MediaNode {
                 virtual ~JpegEncoderNode() = default;
 
                 BuildResult build(const MediaNodeConfig &config) override;
-                void process() override;
 
                 /**
                  * @brief Returns node-specific statistics.
                  * @return A map containing framesEncoded, avgCompressedSize, and compressionRatio.
                  */
                 Map<String, Variant> extendedStats() const override;
+
+        protected:
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override;
 
         private:
                 int             _quality = 85;

@@ -22,7 +22,9 @@ class BuildSourceNode : public MediaNode {
                         addSource(MediaSource::Ptr::create("output",
                                   ContentHint(ContentVideo | ContentAudio)));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &config) override {
                         _builtWidth = config.get("width", Variant(uint32_t(0))).get<uint32_t>();
                         setState(Configured);
@@ -40,7 +42,9 @@ class BuildSinkNode : public MediaNode {
                 BuildSinkNode() : MediaNode() {
                         addSink(MediaSink::Ptr::create("input", ContentNone));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -55,7 +59,9 @@ class BuildProcessNode : public MediaNode {
                         addSink(MediaSink::Ptr::create("input", ContentNone));
                         addSource(MediaSource::Ptr::create("output", ContentNone));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -72,7 +78,9 @@ class BuildMultiSourceNode : public MediaNode {
                         addSource(MediaSource::Ptr::create("audio",
                                   ContentHint(ContentAudio)));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -87,7 +95,9 @@ class BuildMultiSinkNode : public MediaNode {
                         addSink(MediaSink::Ptr::create("video", ContentNone));
                         addSink(MediaSink::Ptr::create("audio", ContentNone));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -101,7 +111,9 @@ class BuildFailNode : public MediaNode {
                 BuildFailNode() : MediaNode() {
                         addSink(MediaSink::Ptr::create("input", ContentNone));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         BuildResult result;
                         result.addError("build failed");

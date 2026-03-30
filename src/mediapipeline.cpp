@@ -7,6 +7,7 @@
 
 #include <promeki/proav/mediapipeline.h>
 #include <promeki/proav/medianodeconfig.h>
+#include <promeki/proav/benchmarkreporter.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -373,6 +374,16 @@ MediaPipeline::BuildError MediaPipeline::build(const MediaPipelineConfig &config
                 return result;
         }
 
+        // Phase 4: Initialize benchmarking
+        for(const auto &cfg : config.nodes()) {
+                if(cfg.benchmarkEnabled()) {
+                        MediaNode *n = nodeMap[cfg.name()];
+                        n->_benchmarkEnabled = true;
+                        n->_benchmarkReporter = new BenchmarkReporter();
+                        n->initBenchmarkIds();
+                }
+        }
+
         return result;
 }
 
@@ -449,6 +460,18 @@ Error MediaPipeline::resume() {
         _paused = false;
         setState(Running);
         return Error(Error::Ok);
+}
+
+String MediaPipeline::benchmarkSummary() const {
+        String result;
+        for(auto *n : _nodes) {
+                BenchmarkReporter *reporter = n->benchmarkReporter();
+                if(reporter == nullptr) continue;
+                if(!result.isEmpty()) result += "\n";
+                result += reporter->summaryReport();
+        }
+        if(result.isEmpty()) return String("No benchmark data collected");
+        return result;
 }
 
 void MediaPipeline::setState(State state) {

@@ -38,8 +38,8 @@ class ImageSinkNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr frame = dequeueInput();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
                         if(frame.isValid()) { _lastFrame = frame; _count++; }
                         return;
                 }
@@ -66,8 +66,8 @@ class AudioSinkNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr frame = dequeueInput();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
                         if(frame.isValid()) { _lastFrame = frame; _count++; }
                         return;
                 }
@@ -94,7 +94,10 @@ class FrameSourceNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override { return; }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                        return;
+                }
                 void pushFrame(Frame::Ptr frame) {
                         deliverOutput(frame);
                         return;

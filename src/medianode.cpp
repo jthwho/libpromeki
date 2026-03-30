@@ -7,6 +7,7 @@
 
 #include <promeki/proav/medianode.h>
 #include <promeki/proav/medianodeconfig.h>
+#include <promeki/proav/benchmarkreporter.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -57,6 +58,14 @@ MediaNode::MediaNode(ObjectBase *parent) : ObjectBase(parent) {
 
 MediaNode::~MediaNode() {
         delete _thread;
+        delete _benchmarkReporter;
+}
+
+void MediaNode::initBenchmarkIds() {
+        _bmQueued = Benchmark::Id(_name + ".Queued");
+        _bmBeginProcess = Benchmark::Id(_name + ".BeginProcess");
+        _bmEndProcess = Benchmark::Id(_name + ".EndProcess");
+        return;
 }
 
 MediaSink::Ptr MediaNode::sink(int index) const {
@@ -189,6 +198,118 @@ void MediaNode::threadEntry() {
                 Error err = waitForWork();
                 if(err != Error::Ok) break;
                 process();
+        }
+        return;
+}
+
+void MediaNode::process() {
+        if(_sinks.isEmpty()) {
+                // Source node: no input to dequeue
+                Frame::Ptr frame;
+                DeliveryList deliveries;
+
+                if(_benchmarkEnabled) {
+                        _currentBenchmark = Benchmark::Ptr::create();
+                        _currentBenchmark.modify()->stamp(_bmBeginProcess);
+                }
+
+                TimeStamp beginTs = TimeStamp::now();
+                processFrame(frame, -1, deliveries);
+                double elapsed = beginTs.elapsedSeconds();
+
+                if(_benchmarkEnabled) {
+                        // Stamp EndProcess on the current benchmark
+                        _currentBenchmark.modify()->stamp(_bmEndProcess);
+
+                        // Attach to frame if source node set it but didn't attach
+                        if(frame.isValid() && !frame->benchmark().isValid()) {
+                                frame.modify()->setBenchmark(_currentBenchmark);
+                        }
+
+                        // Also attach to any delivery frames
+                        for(auto &d : deliveries) {
+                                if(d.frame.isValid() && !d.frame->benchmark().isValid()) {
+                                        d.frame.modify()->setBenchmark(_currentBenchmark);
+                                }
+                        }
+
+                        _currentBenchmark = Benchmark::Ptr();
+                }
+
+                // Handle delivery
+                if(!deliveries.isEmpty()) {
+                        for(auto &d : deliveries) {
+                                if(d.sourceIndex < 0) {
+                                        deliverOutput(d.frame);
+                                } else {
+                                        deliverOutput(d.sourceIndex, d.frame);
+                                }
+                        }
+                } else if(frame.isValid()) {
+                        deliverOutput(frame);
+                }
+
+                recordProcessTiming(elapsed);
+        } else {
+                // Filter or sink node: dequeue from first sink with data
+                for(int i = 0; i < (int)_sinks.size(); i++) {
+                        if(_sinks[i]->queueSize() > 0) {
+                                Frame::Ptr frame = dequeueInput(i);
+                                if(!frame.isValid()) continue;
+
+                                DeliveryList deliveries;
+
+                                if(_benchmarkEnabled && frame->benchmark().isValid()) {
+                                        frame.modify()->benchmark().modify()->stamp(_bmBeginProcess);
+                                }
+
+                                TimeStamp beginTs = TimeStamp::now();
+                                processFrame(frame, i, deliveries);
+                                double elapsed = beginTs.elapsedSeconds();
+
+                                if(_benchmarkEnabled) {
+                                        // Stamp EndProcess on the input frame's benchmark
+                                        if(frame.isValid() && frame->benchmark().isValid()) {
+                                                frame.modify()->benchmark().modify()->stamp(_bmEndProcess);
+                                        }
+
+                                        // Stamp EndProcess on any delivery frames that have benchmarks
+                                        for(auto &d : deliveries) {
+                                                if(d.frame.isValid() && d.frame->benchmark().isValid()) {
+                                                        d.frame.modify()->benchmark().modify()->stamp(_bmEndProcess);
+                                                }
+                                        }
+
+                                        // Submit to reporter
+                                        if(_benchmarkReporter != nullptr) {
+                                                if(frame.isValid() && frame->benchmark().isValid()) {
+                                                        _benchmarkReporter->submit(*frame->benchmark());
+                                                }
+                                                for(const auto &d : deliveries) {
+                                                        if(d.frame.isValid() && d.frame->benchmark().isValid()) {
+                                                                _benchmarkReporter->submit(*d.frame->benchmark());
+                                                        }
+                                                }
+                                        }
+                                }
+
+                                // Handle delivery
+                                if(!deliveries.isEmpty()) {
+                                        for(auto &d : deliveries) {
+                                                if(d.sourceIndex < 0) {
+                                                        deliverOutput(d.frame);
+                                                } else {
+                                                        deliverOutput(d.sourceIndex, d.frame);
+                                                }
+                                        }
+                                } else if(frame.isValid() && !_sources.isEmpty()) {
+                                        deliverOutput(frame);
+                                }
+
+                                recordProcessTiming(elapsed);
+                                return;
+                        }
+                }
         }
         return;
 }

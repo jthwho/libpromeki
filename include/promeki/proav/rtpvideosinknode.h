@@ -74,7 +74,7 @@ class RtpVideoSinkNode : public MediaNode {
         protected:
                 Error start() override;
                 void stop() override;
-                void process() override;
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override;
 
         private:
                 FrameRate       _frameRate;

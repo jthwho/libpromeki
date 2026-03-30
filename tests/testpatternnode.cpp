@@ -38,8 +38,8 @@ class CaptureSinkNode : public MediaNode {
                         return BuildResult();
                 }
 
-                void process() override {
-                        Frame::Ptr frame = dequeueInput();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
                         if(frame.isValid()) {
                                 _lastFrame = frame;
                                 _count++;

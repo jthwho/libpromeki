@@ -26,6 +26,13 @@ const MediaNodeConfig *MediaPipelineConfig::node(const String &name) const {
         return nullptr;
 }
 
+void MediaPipelineConfig::setBenchmarkEnabled(bool enabled) {
+        for(auto &cfg : _nodes) {
+                cfg.setBenchmarkEnabled(enabled);
+        }
+        return;
+}
+
 bool MediaPipelineConfig::isValid(Error *err) const {
         if(err != nullptr) *err = Error::Ok;
 

@@ -8,10 +8,15 @@
 #include <promeki/proav/mediasink.h>
 #include <promeki/proav/mediasource.h>
 #include <promeki/proav/medianode.h>
+#include <promeki/core/benchmark.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 void MediaSink::push(Frame::Ptr frame) const {
+        if(frame.isValid() && frame->benchmark().isValid() && _node != nullptr) {
+                Benchmark::Id queuedId(_node->name() + ".Queued");
+                frame.modify()->benchmark().modify()->stamp(queuedId);
+        }
         _queue.push(std::move(frame));
         if(_node != nullptr) _node->wake();
         return;

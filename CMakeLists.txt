@@ -254,6 +254,7 @@ set(PROMEKI_CORE_SOURCES
     src/stringiodevice.cpp
     src/fileiodevice.cpp
     src/textstream.cpp
+    src/benchmark.cpp
 )
 
 add_library(promeki-core SHARED ${PROMEKI_CORE_SOURCES})
@@ -477,6 +478,7 @@ if(PROMEKI_BUILD_PROAV)
         src/mediapipelineconfig.cpp
         src/mediasink.cpp
         src/mediasource.cpp
+        src/benchmarkreporter.cpp
         src/testpatternnode.cpp
         src/timecodeoverlaynode.cpp
         src/videodesc.cpp

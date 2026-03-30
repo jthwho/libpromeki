@@ -24,7 +24,8 @@ class TestNode : public MediaNode {
         public:
                 TestNode(ObjectBase *parent = nullptr) : MediaNode(parent) { }
 
-                void process() override {
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
                         _processCount++;
                         return;
                 }
@@ -73,7 +74,9 @@ class TestSourceNode : public MediaNode {
                                 ContentHint(ContentVideo | ContentAudio)
                         ));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -97,7 +100,9 @@ class TestSinkNode : public MediaNode {
                                 "input", ContentNone
                         ));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -217,7 +222,9 @@ class QueueTestNode : public MediaNode {
                         addSink(MediaSink::Ptr::create("in1", ContentVideo));
                         addSink(MediaSink::Ptr::create("in2", ContentAudio));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -467,7 +474,9 @@ class DequeueTestNode : public MediaNode {
                 DequeueTestNode() : MediaNode() {
                         addSink(MediaSink::Ptr::create("input", ContentNone));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -492,7 +501,9 @@ class DeliverTestNode : public MediaNode {
                         addSource(MediaSource::Ptr::create("output",
                                       ContentHint(ContentVideo | ContentAudio)));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -526,7 +537,9 @@ class MultiPortNode : public MediaNode {
                         addSource(MediaSource::Ptr::create("out1",
                                       ContentHint(ContentVideo | ContentAudio)));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -561,7 +574,9 @@ class CleanupTestNode : public MediaNode {
                 CleanupTestNode(bool &flag) : MediaNode(), _cleaned(flag) {
                         _cleaned = false;
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 void cleanup() override { _cleaned = true; return; }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
@@ -603,7 +618,9 @@ class WaitTestNode : public MediaNode {
                 WaitTestNode() : MediaNode() {
                         addSink(MediaSink::Ptr::create("input", ContentNone));
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
                 BuildResult build(const MediaNodeConfig &) override {
                         setState(Configured);
                         return BuildResult();
@@ -702,10 +719,10 @@ class IntSourceNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr frame = Frame::Ptr::create();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
+                        frame = Frame::Ptr::create();
                         frame.modify()->metadata().set(Metadata::FrameNumber, Variant((uint64_t)_seq++));
-                        deliverOutput(frame);
                         return;
                 }
                 uint64_t seq() const { return _seq; }
@@ -726,11 +743,10 @@ class IntProcessNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr frame = dequeueInput();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
                         if(!frame.isValid()) return;
                         frame.modify()->metadata().set(Metadata::Description, Variant(String(_tag)));
-                        deliverOutput(frame);
                         _count++;
                         return;
                 }
@@ -752,8 +768,8 @@ class IntSinkNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr frame = dequeueInput();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
                         if(frame.isValid()) _count++;
                         return;
                 }
@@ -854,11 +870,11 @@ class DualInputSink : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr f0 = dequeueInput(0);
-                        Frame::Ptr f1 = dequeueInput(1);
-                        if(f0.isValid()) _videoCount++;
-                        if(f1.isValid()) _audioCount++;
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)deliveries;
+                        if(!frame.isValid()) return;
+                        if(inputIndex == 0) _videoCount++;
+                        else if(inputIndex == 1) _audioCount++;
                         return;
                 }
                 std::atomic<int> &videoCount() { return _videoCount; }
@@ -917,8 +933,8 @@ class ShallowSinkNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
-                        Frame::Ptr frame = dequeueInput();
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)inputIndex; (void)deliveries;
                         if(frame.isValid()) _count++;
                         return;
                 }

@@ -26,7 +26,8 @@ class PipeSourceNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
                         _processCount++;
                 }
                 int processCount() const { return _processCount; }
@@ -44,9 +45,9 @@ class PipeSinkNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override {
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
                         _processCount++;
-                        dequeueInput();
                 }
                 int processCount() const { return _processCount; }
         private:
@@ -64,7 +65,9 @@ class PipeProcessNode : public MediaNode {
                         setState(Configured);
                         return BuildResult();
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
 };
 
 // Helper to build all nodes in a pipeline with default config
@@ -526,7 +529,9 @@ class FailConfigNode : public MediaNode {
                         result.addError("configuration failed");
                         return result;
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
 };
 
 TEST_CASE("MediaPipeline_NodeConfigFailure") {
@@ -566,7 +571,9 @@ class FailStartNode : public MediaNode {
                 Error start() override {
                         return Error(Error::LibraryFailure);
                 }
-                void process() override { }
+                void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
+                        (void)frame; (void)inputIndex; (void)deliveries;
+                }
 };
 
 TEST_CASE("MediaPipeline_NodeStartFailureRollback") {

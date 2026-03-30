@@ -31,16 +31,18 @@ BuildResult FrameDemuxNode::build(const MediaNodeConfig &config) {
         return result;
 }
 
-void FrameDemuxNode::process() {
-        Frame::Ptr frame = dequeueInput();
-        if(!frame.isValid()) return;
+void FrameDemuxNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)inputIndex;
 
         // Extract and deliver images
         if(!frame->imageList().isEmpty()) {
                 Frame::Ptr imgFrame = Frame::Ptr::create();
                 imgFrame.modify()->imageList() = frame->imageList();
                 imgFrame.modify()->metadata() = frame->metadata();
-                deliverOutput(0, imgFrame);
+                if(frame->benchmark().isValid()) {
+                        imgFrame.modify()->setBenchmark(frame->benchmark());
+                }
+                deliveries.pushToBack({0, imgFrame});
         }
 
         // Extract and deliver audio
@@ -48,8 +50,14 @@ void FrameDemuxNode::process() {
                 Frame::Ptr audioFrame = Frame::Ptr::create();
                 audioFrame.modify()->audioList() = frame->audioList();
                 audioFrame.modify()->metadata() = frame->metadata();
-                deliverOutput(1, audioFrame);
+                if(frame->benchmark().isValid()) {
+                        audioFrame.modify()->setBenchmark(frame->benchmark());
+                }
+                deliveries.pushToBack({1, audioFrame});
         }
+
+        // Invalidate input frame so base class doesn't also deliver it
+        frame = Frame::Ptr();
         return;
 }
 
