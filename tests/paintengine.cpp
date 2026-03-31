@@ -657,3 +657,120 @@ TEST_CASE("PaintEngine: blit mismatched RGBA dst from RGB src returns false") {
         bool ok = dstPe.blit(Point2Di32(0, 0), src);
         CHECK_FALSE(ok);
 }
+
+// ============================================================================
+// RGBA8 blit tests (regression: clipping at high Y coordinates)
+// ============================================================================
+
+TEST_CASE("PaintEngine: RGBA8 blit full image") {
+        Image src(8, 8, PixelFormat::RGBA8);
+        PaintEngine srcPe = src.createPaintEngine();
+        srcPe.fill(srcPe.createPixel(Color::Red));
+
+        Image dst(16, 16, PixelFormat::RGBA8);
+        PaintEngine dstPe = dst.createPaintEngine();
+        dstPe.fill(dstPe.createPixel(Color::Black));
+
+        bool ok = dstPe.blit(Point2Di32(4, 4), src);
+        CHECK(ok);
+
+        uint8_t *buf = static_cast<uint8_t *>(dst.plane(0)->data());
+        size_t stride = dst.lineStride();
+
+        // Pixel inside blit region should be red
+        uint8_t *p = buf + stride * 6 + 6 * 4;
+        CHECK(p[0] == 255);
+        CHECK(p[1] == 0);
+        CHECK(p[2] == 0);
+        CHECK(p[3] == 255);
+
+        // Pixel outside blit region should be black
+        uint8_t *outside = buf + stride * 0 + 0 * 4;
+        CHECK(outside[0] == 0);
+        CHECK(outside[1] == 0);
+        CHECK(outside[2] == 0);
+}
+
+TEST_CASE("PaintEngine: RGBA8 blit at high Y coordinate") {
+        // Regression test: RGBA8 blit had a clipping bug where
+        // srcHeight was incorrectly reduced when destY was large.
+        Image src(4, 4, PixelFormat::RGBA8);
+        PaintEngine srcPe = src.createPaintEngine();
+        srcPe.fill(srcPe.createPixel(Color::Red));
+
+        Image dst(32, 1080, PixelFormat::RGBA8);
+        PaintEngine dstPe = dst.createPaintEngine();
+        dstPe.fill(dstPe.createPixel(Color::Black));
+
+        // Blit near the bottom of the image
+        bool ok = dstPe.blit(Point2Di32(0, 1000), src);
+        CHECK(ok);
+
+        uint8_t *buf = static_cast<uint8_t *>(dst.plane(0)->data());
+        size_t stride = dst.lineStride();
+
+        // Pixel at (1, 1001) should be red
+        uint8_t *p = buf + stride * 1001 + 1 * 4;
+        CHECK(p[0] == 255);
+        CHECK(p[1] == 0);
+        CHECK(p[2] == 0);
+}
+
+TEST_CASE("PaintEngine: RGBA8 blit at lower half of large image") {
+        // Specifically tests destY > size.height()/2, which triggered the bug.
+        Image src(10, 60, PixelFormat::RGBA8);
+        PaintEngine srcPe = src.createPaintEngine();
+        srcPe.fill(srcPe.createPixel(Color::Green));
+
+        Image dst(1920, 1080, PixelFormat::RGBA8);
+        PaintEngine dstPe = dst.createPaintEngine();
+        dstPe.fill(dstPe.createPixel(Color::Black));
+
+        // Blit to a position simulating timecode overlay coordinates
+        bool ok = dstPe.blit(Point2Di32(795, 998), src);
+        CHECK(ok);
+
+        uint8_t *buf = static_cast<uint8_t *>(dst.plane(0)->data());
+        size_t stride = dst.lineStride();
+
+        // Verify the center of the blitted region has green pixels
+        uint8_t *p = buf + stride * 1020 + 800 * 4;
+        CHECK(p[0] == 0);
+        CHECK(p[1] == 255);
+        CHECK(p[2] == 0);
+
+        // Verify pixel outside the blit region is still black
+        uint8_t *outside = buf + stride * 500 + 500 * 4;
+        CHECK(outside[0] == 0);
+        CHECK(outside[1] == 0);
+        CHECK(outside[2] == 0);
+}
+
+TEST_CASE("PaintEngine: RGBA8 blit clipped at right/bottom edge") {
+        Image src(8, 8, PixelFormat::RGBA8);
+        PaintEngine srcPe = src.createPaintEngine();
+        srcPe.fill(srcPe.createPixel(Color::Blue));
+
+        Image dst(16, 16, PixelFormat::RGBA8);
+        PaintEngine dstPe = dst.createPaintEngine();
+        dstPe.fill(dstPe.createPixel(Color::Black));
+
+        // Blit at position that overflows right/bottom
+        bool ok = dstPe.blit(Point2Di32(12, 12), src);
+        CHECK(ok);
+
+        uint8_t *buf = static_cast<uint8_t *>(dst.plane(0)->data());
+        size_t stride = dst.lineStride();
+
+        // (13, 13) should be blue
+        uint8_t *p = buf + stride * 13 + 13 * 4;
+        CHECK(p[0] == 0);
+        CHECK(p[1] == 0);
+        CHECK(p[2] == 255);
+
+        // (15, 15) should be blue (corner of clipped blit)
+        uint8_t *corner = buf + stride * 15 + 15 * 4;
+        CHECK(corner[0] == 0);
+        CHECK(corner[1] == 0);
+        CHECK(corner[2] == 255);
+}

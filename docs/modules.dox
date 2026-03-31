@@ -144,10 +144,11 @@
 
 /**
  * @defgroup proav_paint ProAV Paint
- * @brief 2D rendering: font painting and paint engines.
+ * @brief 2D rendering: font rendering and paint engines.
  *
- * FontPainter for glyph rendering via FreeType and PaintEngine for
- * basic 2D drawing operations on Image buffers.
+ * Font rendering framework (Font base, FastFont, BasicFont) with
+ * FreeType backend, and PaintEngine for 2D drawing on Image buffers.
+ * See @ref fonts "Font Rendering" for usage guidance.
  */
 
 /**

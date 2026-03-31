@@ -113,8 +113,8 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         int destWidth = size.width() - destX;
                         int destHeight = size.height() - destY;
                         int srcX = spt.x();
-                        int srcY = spt.y(); 
-                        if(destX < 0 || destY < 0 || destWidth < 0 || destHeight < 0) return false;
+                        int srcY = spt.y();
+                        if(destX < 0 || destY < 0 || destWidth <= 0 || destHeight <= 0) return false;
                         if(srcX < 0 || srcY < 0 || srcX >= src.width() || srcY >= src.height()) return false;
 
                         int srcWidth, srcHeight;
@@ -131,8 +131,6 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         }
                         if(srcWidth > destWidth) srcWidth = destWidth;
                         if(srcHeight > destHeight) srcHeight = destHeight;
-                        if(srcWidth + destX > destWidth) srcWidth -= destX;
-                        if(srcHeight + destY > destHeight) srcHeight -= destY;
                         if(srcWidth <= 0 || srcHeight <= 0) return false;
 
                         size_t lineBytes = srcWidth * bytesPerPixel;

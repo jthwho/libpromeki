@@ -425,8 +425,9 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/mediasource.h
         include/promeki/proav/colorspace.h
         include/promeki/proav/colorspaceconverter.h
-        include/promeki/proav/fontpainter.h
-        include/promeki/proav/textrenderer.h
+        include/promeki/proav/font.h
+        include/promeki/proav/fastfont.h
+        include/promeki/proav/basicfont.h
         include/promeki/proav/frame.h
         include/promeki/proav/image.h
         include/promeki/proav/imagedesc.h
@@ -544,8 +545,9 @@ if(PROMEKI_BUILD_PROAV)
     )
     target_sources(promeki-proav PRIVATE
         src/imagefileio_png.cpp
-        src/fontpainter.cpp
-        src/textrenderer.cpp
+        src/font.cpp
+        src/fastfont.cpp
+        src/basicfont.cpp
         src/audiofile_libsndfile.cpp
     )
 endif()
@@ -998,7 +1000,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/audiotestpattern.cpp
             tests/jpegimagecodec.cpp
             tests/testpatternnode.cpp
-            tests/textrenderer.cpp
+            tests/fastfont.cpp
+            tests/basicfont.cpp
             tests/timecodeoverlaynode.cpp
         )
         list(APPEND UNITTEST_PROAV_SOURCES

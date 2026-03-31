@@ -9,7 +9,7 @@
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagefile.h>
 #include <promeki/proav/paintengine.h>
-#include <promeki/proav/fontpainter.h>
+#include <promeki/proav/basicfont.h>
 
 using namespace promeki;
 
@@ -66,10 +66,10 @@ PROMEKI_TEST_BEGIN(Image)
         PROMEKI_BENCHMARK_END(draw_lines);
 
         PROMEKI_BENCHMARK_BEGIN(draw_text);
-        FontPainter fp;
-        fp.setPaintEngine(p);
-        fp.setFontFilename("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
-        fp.drawText("Hello World", 50, 50, 30);
+        BasicFont bf(p);
+        bf.setFontFilename(String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf");
+        bf.setFontSize(30);
+        bf.drawText("Hello World", 50, 50);
         PROMEKI_BENCHMARK_END(draw_text);
 
         PROMEKI_BENCHMARK_BEGIN(save_png);

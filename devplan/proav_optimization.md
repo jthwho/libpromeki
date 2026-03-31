@@ -12,43 +12,96 @@ This document covers four areas of improvement: high-performance font rendering,
 
 ---
 
-## TextRenderer — Fast Cached Font Rendering
+## Font Rendering Framework — FastFont / BasicFont / Font
 
-**Completed.** The planned `BitmapFont` class was implemented as `TextRenderer`, a cached glyph renderer that pre-renders each character cell as a native-format `Image` using `PaintEngine::createPixel()` and blits glyphs via `PaintEngine::blit()`. This approach reuses the existing PaintEngine abstraction for pixel format portability while still caching the heavy FreeType rasterization work across frames.
+**Completed.** The font rendering system has been fully refactored from the earlier `TextRenderer` / `FontPainter` pair into a proper class hierarchy with a shared abstract base.
+
+**Architecture:**
+- `Font` — abstract base class managing common state (filename, size, colors, PaintEngine, kerning) and defining the rendering interface (`drawText()`, `measureText()`, `lineHeight()`, `ascender()`, `descender()`). State changes are propagated to subclasses via the `onStateChanged()` hook. `setPaintEngine()` is smart: it only calls `onStateChanged()` when the pixel format pointer changes, so switching between engines with the same format is cheap.
+- `FastFont` (was `TextRenderer`) — high-performance cached glyph renderer. Pre-renders each glyph into a native-format `Image` using `PaintEngine::createPixel()` and blits via `PaintEngine::blit()`. Opaque background fill; not suitable for transparent overlays.
+- `BasicFont` (was `FontPainter`) — alpha-compositing renderer. Rasterizes each glyph with FreeType and composites per-pixel using the foreground color and glyph alpha. No cache; low memory; correct transparency.
+
+**Bug fixed:** RGBA8 blit had a double-subtraction clipping bug in `pixelformat_rgba8.cpp` that caused the source height to be incorrectly reduced when `destY` was large (e.g., rendering timecode at the bottom of a 1080p image). Fixed and covered by regression tests.
+
+**TimecodeOverlayNode fix:** Now uses actual font metrics (`ascender()`, `lineHeight()`) for layout instead of the raw `_fontSize` integer, ensuring correct baseline placement at all font sizes.
 
 **Files:**
-- [x] `include/promeki/proav/textrenderer.h`
-- [x] `src/textrenderer.cpp`
-- [x] `tests/textrenderer.cpp`
+- [x] `include/promeki/proav/font.h` / `src/font.cpp` — abstract base
+- [x] `include/promeki/proav/fastfont.h` / `src/fastfont.cpp` — cached opaque renderer
+- [x] `include/promeki/proav/basicfont.h` / `src/basicfont.cpp` — alpha-compositing renderer
+- [x] `src/pixelformat_rgba8.cpp` — RGBA8 blit clipping bug fix
+- [x] `src/timecodeoverlaynode.cpp` — font metrics used for layout
+- [x] `docs/fonts.dox` — Font Rendering documentation page
+- [x] `docs/modules.dox` — `proav_paint` group updated
+- [x] `tests/fastfont.cpp` — full test suite for FastFont
+- [x] `tests/basicfont.cpp` — full test suite for BasicFont
+- [x] `tests/paintengine.cpp` — RGBA8 blit regression tests added
+- [x] Deleted: `textrenderer.h`, `textrenderer.cpp`, `tests/textrenderer.cpp`, `fontpainter.h`, `fontpainter.cpp`
 
-**Completed:**
-- [x] `setFontFilename()` / `fontFilename()` — path to TrueType font file; changing invalidates the full cache (font + glyphs)
-- [x] `setFontSize()` / `fontSize()` — pixel size; changing invalidates the full cache
-- [x] `setForegroundColor(Color)` — glyph foreground color; changing invalidates the glyph pixel cache
-- [x] `setBackgroundColor(Color)` — background color; changing invalidates the glyph pixel cache
-- [x] `setPaintEngine(PaintEngine)` — target pixel format context; changing invalidates the glyph pixel cache
-- [x] `lineHeight()` / `ascender()` — font metrics, available after first draw/measure
-- [x] `drawText(text, x, y)` — renders text via per-glyph `PaintEngine::blit()`; returns false if font not loaded
-- [x] `measureText(text)` — returns pixel width without drawing; returns 0 if font not loaded
-- [x] Internal `Map<uint32_t, CachedGlyph>` — each glyph stored as a pre-rendered `Image` in the native pixel format plus an advance width
-- [x] Tiered cache invalidation: font-level (rebuilds FT_Face + all glyphs) vs pixel-level (rebuilds glyph images only, reuses FT bitmaps)
-- [x] FT_Library leak fix — library is properly freed in destructor
-- [x] Single-lookup `getGlyph()` — loads glyph into cache on first use, returns cached entry on subsequent calls
-- [x] `TimecodeOverlayNode` migrated from `FontPainter` to `TextRenderer`; `TextColor`/`BackgroundColor` config keys now accept `Color` values
+**Completed features (Font base):**
+- [x] `setFontFilename()` / `fontFilename()`
+- [x] `setFontSize()` / `fontSize()`
+- [x] `setForegroundColor()` / `foregroundColor()`
+- [x] `setBackgroundColor()` / `backgroundColor()`
+- [x] `setPaintEngine()` — smart invalidation: only triggers `onStateChanged()` on pixel format change
+- [x] `setKerningEnabled()` / `kerningEnabled()` — optional FreeType kerning support
+- [x] `isValid()` — true when filename, size, and paint engine pixel format are all set
+- [x] `descender()` metric (new, was missing from original classes)
 
-**Performance note:** `TextRenderer` uses `PaintEngine::blit()` for glyph blitting rather than direct `memcpy`. For a future ultra-low-latency path, a `BitmapFont` variant that bypasses PaintEngine and writes directly into the image buffer could be implemented, but `TextRenderer` is sufficient for current overlay use cases.
+**Completed features (FastFont):**
+- [x] Cached glyph rendering via `Map<uint32_t, CachedGlyph>` (pre-rendered native-format `Image` + advance width)
+- [x] Tiered cache invalidation: font-level (FT_Face + glyphs) vs pixel-level (glyph images only)
+- [x] Deferred PaintEngine pattern: configure all properties with a null engine, then assign engine later
+- [x] `TimecodeOverlayNode` migrated from old classes to `FastFont`
 
-**Doctest:**
-- [x] Default construction, getters
-- [x] setFontFilename / setFontSize (no-op when same value)
+**Completed features (BasicFont):**
+- [x] Per-pixel FreeType alpha compositing — correct anti-aliased text over any background
+- [x] No glyph cache (minimal memory footprint)
+- [x] Ignores background color (composites foreground over existing pixel content)
+
+**Doctest (FastFont):**
+- [x] Default construction, all getters
+- [x] `setFontFilename` / `setFontSize` no-op when same value
+- [x] `isValid()` requires filename + positive size + pixel format
 - [x] `drawText` / `measureText` without font — returns false/0
 - [x] `drawText` / `measureText` with bad font path — returns false/0
-- [x] Font metrics after loading (lineHeight > 0, ascender > 0, lineHeight >= ascender)
-- [x] `measureText("")` returns 0; single char > 0; longer string wider
+- [x] Font metrics after loading (`lineHeight > 0`, `ascender > 0`, `lineHeight >= ascender`)
+- [x] `measureText("")` == 0; single char > 0; longer string wider
 - [x] Monospace character widths equal (Fira Code)
 - [x] `drawText` changes pixels; different color combos produce different sums
 - [x] `drawText` on RGBA8 image
-- [x] Cache invalidation: changing font size produces different glyph widths; changing to invalid font path returns 0
+- [x] Cache invalidation: size change produces different widths; bad path returns 0
+- [x] `setPaintEngine` same pixel format preserves cache
+- [x] Deferred PaintEngine on RGB8 and RGBA8
+- [x] Deferred PaintEngine measures same as direct construction
+- [x] Large RGBA8 image (1920x1080): text at bottom draws pixels (regression)
+- [x] Large RGB8 image: text at bottom draws pixels (regression)
+- [x] `lineHeight == ascender + descender`
+- [x] Metrics scale with font size
+- [x] Metrics match between deferred and direct construction
+
+**Doctest (BasicFont):**
+- [x] Default construction, all getters
+- [x] `setFontFilename`, `setFontSize`, `setForegroundColor`, `setKerningEnabled`
+- [x] `drawText` / `measureText` without font — returns false/0
+- [x] `drawText` with bad font path — returns false/0
+- [x] Font metrics after loading
+- [x] `measureText("")` == 0; longer string wider
+- [x] `drawText` renders pixels; different foreground colors produce different sums
+- [x] `drawText` on RGBA8 image
+- [x] Changing font size works; changing to bad path returns 0
+- [x] Deferred PaintEngine on RGB8 and RGBA8
+- [x] Large RGBA8 image: text at bottom draws pixels (regression)
+- [x] Large RGB8 image: text at bottom draws pixels (regression)
+- [x] `lineHeight == ascender + descender`
+- [x] Metrics match FastFont for same font and size
+- [x] `measureText` matches FastFont
+
+**Doctest (PaintEngine — RGBA8 blit regression):**
+- [x] RGBA8 blit full image — correct pixels in/outside region
+- [x] RGBA8 blit at high Y coordinate — regression for double-subtraction bug
+- [x] RGBA8 blit at lower half of large image (1920x1080, destY=998)
+- [x] RGBA8 blit clipped at right/bottom edge
 
 ---
 

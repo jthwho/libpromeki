@@ -18,7 +18,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_NODE(TimecodeOverlayNode)
 
-TimecodeOverlayNode::TimecodeOverlayNode(ObjectBase *parent) : MediaNode(parent) {
+TimecodeOverlayNode::TimecodeOverlayNode(ObjectBase *parent) : MediaNode(parent), _fastFont(PaintEngine()) {
         setName("TimecodeOverlayNode");
         addSink(MediaSink::Ptr::create("input", ContentVideo));
         addSource(MediaSource::Ptr::create("output", ContentVideo));
@@ -83,11 +83,11 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
                 return result;
         }
 
-        // Initialize TextRenderer
-        _textRenderer.setFontFilename(_fontPath.toString());
-        _textRenderer.setFontSize(_fontSize);
-        _textRenderer.setForegroundColor(_textColor);
-        _textRenderer.setBackgroundColor(_bgColor);
+        // Initialize FastFont
+        _fastFont.setFontFilename(_fontPath.toString());
+        _fastFont.setFontSize(_fontSize);
+        _fastFont.setForegroundColor(_textColor);
+        _fastFont.setBackgroundColor(_bgColor);
 
         setState(Configured);
         return result;
@@ -108,7 +108,7 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
 
         // Set up paint engine on the image
         PaintEngine pe = imgMut->createPaintEngine();
-        _textRenderer.setPaintEngine(pe);
+        _fastFont.setPaintEngine(pe);
 
         // Read timecode from Image metadata
         String tcStr;
@@ -119,35 +119,39 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
                 tcStr = "--:--:--:--";
         }
 
-        // Measure text to get accurate widths
-        int tcWidth = _textRenderer.measureText(tcStr);
-        int customWidth = _customText.isEmpty() ? 0 : _textRenderer.measureText(_customText);
-        int maxTextWidth = tcWidth > customWidth ? tcWidth : customWidth;
-        int lineSpacing = _fontSize / 4;
-        int totalHeight = _fontSize + (_customText.isEmpty() ? 0 : lineSpacing + _fontSize);
+        // Use actual font metrics for layout instead of _fontSize
+        int fontAscender = _fastFont.ascender();
+        int fontLineHeight = _fastFont.lineHeight();
 
-        // Compute text position (x,y is the top-left of the text block)
+        // Measure text to get accurate widths
+        int tcWidth = _fastFont.measureText(tcStr);
+        int customWidth = _customText.isEmpty() ? 0 : _fastFont.measureText(_customText);
+        int maxTextWidth = tcWidth > customWidth ? tcWidth : customWidth;
+        int lineSpacing = fontLineHeight / 4;
+        int totalHeight = fontLineHeight + (_customText.isEmpty() ? 0 : lineSpacing + fontLineHeight);
+
+        // Compute text position (x,y is the baseline of the first text line)
         int x = 0, y = 0;
-        computePosition((int)img->width(), (int)img->height(), maxTextWidth, totalHeight, x, y);
+        computePosition((int)img->width(), (int)img->height(), maxTextWidth, totalHeight, fontAscender, x, y);
 
         // Draw background rectangle for legibility (padding area around text)
         if(_drawBackground) {
-                int pad = _fontSize / 4;
+                int pad = fontLineHeight / 4;
                 PaintEngine::Pixel bgPixel = pe.createPixel(_bgColor);
-                Rect<int32_t> bgRect(x - pad, y - _fontSize - pad,
+                Rect<int32_t> bgRect(x - pad, y - fontAscender - pad,
                                      maxTextWidth + pad * 2, totalHeight + pad * 2);
                 pe.fillRect(bgPixel, bgRect);
         }
 
         // Draw timecode text, centered within the block width
         int tcX = x + (maxTextWidth - tcWidth) / 2;
-        _textRenderer.drawText(tcStr, tcX, y);
+        _fastFont.drawText(tcStr, tcX, y);
 
         // Draw custom text below timecode if set, also centered
         if(!_customText.isEmpty()) {
                 int customX = x + (maxTextWidth - customWidth) / 2;
-                int customY = y + _fontSize + lineSpacing;
-                _textRenderer.drawText(_customText, customX, customY);
+                int customY = y + fontLineHeight + lineSpacing;
+                _fastFont.drawText(_customText, customX, customY);
         }
 
         // Rebuild output frame with the modified image, preserving metadata
@@ -158,32 +162,32 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
         return;
 }
 
-void TimecodeOverlayNode::computePosition(int frameWidth, int frameHeight, int textWidth, int totalHeight, int &x, int &y) const {
-        int margin = _fontSize / 2;
+void TimecodeOverlayNode::computePosition(int frameWidth, int frameHeight, int textWidth, int totalHeight, int fontAscender, int &x, int &y) const {
+        int margin = fontAscender / 2;
         switch(_position) {
                 case TopLeft:
                         x = margin;
-                        y = margin + _fontSize;
+                        y = margin + fontAscender;
                         break;
                 case TopCenter:
                         x = (frameWidth - textWidth) / 2;
-                        y = margin + _fontSize;
+                        y = margin + fontAscender;
                         break;
                 case TopRight:
                         x = frameWidth - textWidth - margin;
-                        y = margin + _fontSize;
+                        y = margin + fontAscender;
                         break;
                 case BottomLeft:
                         x = margin;
-                        y = frameHeight - margin - (totalHeight - _fontSize);
+                        y = frameHeight - margin - totalHeight + fontAscender;
                         break;
                 case BottomCenter:
                         x = (frameWidth - textWidth) / 2;
-                        y = frameHeight - margin - (totalHeight - _fontSize);
+                        y = frameHeight - margin - totalHeight + fontAscender;
                         break;
                 case BottomRight:
                         x = frameWidth - textWidth - margin;
-                        y = frameHeight - margin - (totalHeight - _fontSize);
+                        y = frameHeight - margin - totalHeight + fontAscender;
                         break;
                 case Custom:
                         x = _customX;

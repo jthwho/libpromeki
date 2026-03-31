@@ -11,12 +11,12 @@
 #include <promeki/core/string.h>
 #include <promeki/core/filepath.h>
 #include <promeki/proav/medianode.h>
-#include <promeki/proav/textrenderer.h>
+#include <promeki/proav/fastfont.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Burns timecode text into video frames using TextRenderer.
+ * @brief Burns timecode text into video frames using FastFont.
  * @ingroup proav_pipeline
  *
  * Processing node with one Image input and one Image output. Reads
@@ -83,20 +83,21 @@ class TimecodeOverlayNode : public MediaNode {
                 bool            _drawBackground = true;
                 String          _customText;
 
-                TextRenderer    _textRenderer;
+                FastFont        _fastFont;
 
                 static bool parsePosition(const String &str, Position &out);
 
                 /**
                  * @brief Computes text placement coordinates from the current position preset.
-                 * @param frameWidth  Width of the frame in pixels.
-                 * @param frameHeight Height of the frame in pixels.
-                 * @param textWidth   Width of the widest text line in pixels.
-                 * @param totalHeight Total height of the text block in pixels.
-                 * @param[out] x      Computed x origin.
-                 * @param[out] y      Computed y origin (baseline of first line).
+                 * @param frameWidth   Width of the frame in pixels.
+                 * @param frameHeight  Height of the frame in pixels.
+                 * @param textWidth    Width of the widest text line in pixels.
+                 * @param totalHeight  Total height of the text block in pixels.
+                 * @param fontAscender Font ascender in pixels (baseline to top of cell).
+                 * @param[out] x       Computed x origin.
+                 * @param[out] y       Computed y origin (baseline of first line).
                  */
-                void computePosition(int frameWidth, int frameHeight, int textWidth, int totalHeight, int &x, int &y) const;
+                void computePosition(int frameWidth, int frameHeight, int textWidth, int totalHeight, int fontAscender, int &x, int &y) const;
 };
 
 PROMEKI_NAMESPACE_END

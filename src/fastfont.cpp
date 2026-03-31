@@ -1,5 +1,5 @@
 /**
- * @file      textrenderer.cpp
+ * @file      fastfont.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -10,54 +10,29 @@
 #include FT_GLYPH_H
 #include FT_BITMAP_H
 
-#include <promeki/proav/textrenderer.h>
+#include <promeki/proav/fastfont.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-TextRenderer::TextRenderer() {
+FastFont::FastFont(const PaintEngine &pe) : Font(pe) {
 
 }
 
-TextRenderer::~TextRenderer() {
+FastFont::~FastFont() {
         invalidateAll();
 }
 
-void TextRenderer::setFontFilename(const String &val) {
-        if(_fontFilename == val) return;
-        _fontFilename = val;
+void FastFont::onStateChanged() {
         invalidateAll();
 }
 
-void TextRenderer::setFontSize(int val) {
-        if(_fontSize == val) return;
-        _fontSize = val;
-        invalidateFont();
-}
-
-void TextRenderer::setForegroundColor(const Color &color) {
-        if(_fg == color) return;
-        _fg = color;
-        invalidateGlyphs();
-}
-
-void TextRenderer::setBackgroundColor(const Color &color) {
-        if(_bg == color) return;
-        _bg = color;
-        invalidateGlyphs();
-}
-
-void TextRenderer::setPaintEngine(const PaintEngine &pe) {
-        _paintEngine = pe;
-        invalidateGlyphs();
-}
-
-void TextRenderer::invalidateGlyphs() {
+void FastFont::invalidateGlyphs() {
         _glyphCache.clear();
         _pixelsDirty = true;
 }
 
-void TextRenderer::invalidateFont() {
+void FastFont::invalidateFont() {
         invalidateGlyphs();
         if(_ftFace != nullptr) {
                 FT_Done_Face(static_cast<FT_Face>(_ftFace));
@@ -68,7 +43,7 @@ void TextRenderer::invalidateFont() {
         _lineHeight = 0;
 }
 
-void TextRenderer::invalidateAll() {
+void FastFont::invalidateAll() {
         invalidateFont();
         if(_ftLibrary != nullptr) {
                 FT_Done_FreeType(static_cast<FT_Library>(_ftLibrary));
@@ -76,7 +51,7 @@ void TextRenderer::invalidateAll() {
         }
 }
 
-bool TextRenderer::ensureFontLoaded() {
+bool FastFont::ensureFontLoaded() {
         if(_ftFace != nullptr) return true;
 
         if(_ftLibrary == nullptr) {
@@ -106,14 +81,14 @@ bool TextRenderer::ensureFontLoaded() {
         return true;
 }
 
-void TextRenderer::ensurePixels() {
+void FastFont::ensurePixels() {
         if(!_pixelsDirty) return;
         _fgPixel = _paintEngine.createPixel(_fg);
         _bgPixel = _paintEngine.createPixel(_bg);
         _pixelsDirty = false;
 }
 
-const TextRenderer::CachedGlyph *TextRenderer::getGlyph(uint32_t codepoint) {
+const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         auto it = _glyphCache.find(codepoint);
         if(it != _glyphCache.end()) return &it->second;
 
@@ -175,7 +150,7 @@ const TextRenderer::CachedGlyph *TextRenderer::getGlyph(uint32_t codepoint) {
         return &_glyphCache[codepoint];
 }
 
-bool TextRenderer::drawText(const String &text, int x, int y) {
+bool FastFont::drawText(const String &text, int x, int y) {
         if(!ensureFontLoaded()) return false;
         ensurePixels();
 
@@ -183,28 +158,76 @@ bool TextRenderer::drawText(const String &text, int x, int y) {
         int cellTop = y - _ascender;
         int penX = x;
 
+        FT_Face face = _kerning ? static_cast<FT_Face>(_ftFace) : nullptr;
+        bool hasKerning = face != nullptr && FT_HAS_KERNING(face);
+        FT_UInt prevIndex = 0;
+
         for(Char c : text) {
+                FT_UInt glyphIndex = 0;
+                if(hasKerning) {
+                        glyphIndex = FT_Get_Char_Index(face, c.codepoint());
+                        if(prevIndex != 0 && glyphIndex != 0) {
+                                FT_Vector delta;
+                                FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
+                                penX += delta.x >> 6;
+                        }
+                }
+
                 const CachedGlyph *glyph = getGlyph(c.codepoint());
                 if(glyph == nullptr) continue;
 
                 _paintEngine.blit(Point2Di32(penX, cellTop), glyph->image);
                 penX += glyph->advanceX;
+
+                if(hasKerning) prevIndex = glyphIndex;
         }
 
         return true;
 }
 
-int TextRenderer::measureText(const String &text) {
+int FastFont::measureText(const String &text) {
         if(!ensureFontLoaded()) return 0;
         ensurePixels();
 
         int width = 0;
+
+        FT_Face face = _kerning ? static_cast<FT_Face>(_ftFace) : nullptr;
+        bool hasKerning = face != nullptr && FT_HAS_KERNING(face);
+        FT_UInt prevIndex = 0;
+
         for(Char c : text) {
+                FT_UInt glyphIndex = 0;
+                if(hasKerning) {
+                        glyphIndex = FT_Get_Char_Index(face, c.codepoint());
+                        if(prevIndex != 0 && glyphIndex != 0) {
+                                FT_Vector delta;
+                                FT_Get_Kerning(face, prevIndex, glyphIndex, FT_KERNING_DEFAULT, &delta);
+                                width += delta.x >> 6;
+                        }
+                }
+
                 const CachedGlyph *glyph = getGlyph(c.codepoint());
                 if(glyph == nullptr) continue;
                 width += glyph->advanceX;
+
+                if(hasKerning) prevIndex = glyphIndex;
         }
         return width;
+}
+
+int FastFont::lineHeight() {
+        ensureFontLoaded();
+        return _lineHeight;
+}
+
+int FastFont::ascender() {
+        ensureFontLoaded();
+        return _ascender;
+}
+
+int FastFont::descender() {
+        ensureFontLoaded();
+        return _descender;
 }
 
 PROMEKI_NAMESPACE_END
