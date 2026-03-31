@@ -9,13 +9,11 @@
 #include <cstring>
 #include <promeki/proav/testpatternnode.h>
 #include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/paintengine.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/audio.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/pixelformat.h>
 #include <promeki/core/metadata.h>
-#include <promeki/core/random.h>
 #include <promeki/core/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -29,30 +27,7 @@ TestPatternNode::TestPatternNode(ObjectBase *parent) : MediaNode(parent) {
 }
 
 TestPatternNode::~TestPatternNode() {
-        delete _audioGen;
-        delete _ltcEncoder;
-}
-
-bool TestPatternNode::parsePattern(const String &name, Pattern &out) {
-        if(name == "colorbars")    { out = ColorBars;    return true; }
-        if(name == "colorbars75")  { out = ColorBars75;  return true; }
-        if(name == "ramp")         { out = Ramp;         return true; }
-        if(name == "grid")         { out = Grid;         return true; }
-        if(name == "crosshatch")   { out = Crosshatch;   return true; }
-        if(name == "checkerboard") { out = Checkerboard; return true; }
-        if(name == "solidcolor")   { out = SolidColor;   return true; }
-        if(name == "white")        { out = White;        return true; }
-        if(name == "black")        { out = Black;        return true; }
-        if(name == "noise")        { out = Noise;        return true; }
-        if(name == "zoneplate")    { out = ZonePlate;    return true; }
-        return false;
-}
-
-bool TestPatternNode::parseAudioMode(const String &name, AudioMode &out) {
-        if(name == "tone")    { out = Tone;    return true; }
-        if(name == "silence") { out = Silence; return true; }
-        if(name == "ltc")     { out = LTC;     return true; }
-        return false;
+        delete _audioPattern;
 }
 
 bool TestPatternNode::parseFrameRate(const String &str, FrameRate &out) {
@@ -107,9 +82,13 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
 
         // Parse pattern
         String patStr = config.get("Pattern", "colorbars").get<String>();
-        if(!patStr.isEmpty() && !parsePattern(patStr, _pattern)) {
-                result.addError("Unknown pattern: " + patStr);
-                return result;
+        if(!patStr.isEmpty()) {
+                auto [pat, err] = VideoTestPattern::fromString(patStr);
+                if(err.isError()) {
+                        result.addError("Unknown pattern: " + patStr);
+                        return result;
+                }
+                _videoPattern.setPattern(pat);
         }
 
         // Parse video config
@@ -131,34 +110,22 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         }
 
         // Solid color
-        _solidR = config.get("SolidColorR", uint16_t(0)).get<uint16_t>();
-        _solidG = config.get("SolidColorG", uint16_t(0)).get<uint16_t>();
-        _solidB = config.get("SolidColorB", uint16_t(0)).get<uint16_t>();
+        uint16_t solidR = config.get("SolidColorR", uint16_t(0)).get<uint16_t>();
+        uint16_t solidG = config.get("SolidColorG", uint16_t(0)).get<uint16_t>();
+        uint16_t solidB = config.get("SolidColorB", uint16_t(0)).get<uint16_t>();
+        _videoPattern.setSolidColor(solidR, solidG, solidB);
 
         // Motion
         _motion = config.get("Motion", 0.0).get<double>();
 
         // Audio config
         _audioEnabled = config.get("AudioEnabled", true).get<bool>();
-        String audioModeStr = config.get("AudioMode", "tone").get<String>();
-        if(!audioModeStr.isEmpty() && !parseAudioMode(audioModeStr, _audioMode)) {
-                result.addError("Unknown audio mode: " + audioModeStr);
-                return result;
-        }
-
         float audioRate = config.get("AudioRate", 48000.0f).get<float>();
         int audioChannels = config.get("AudioChannels", 2).get<int>();
 
         if(_audioEnabled) {
                 _audioDesc = AudioDesc(audioRate, audioChannels);
         }
-
-        _toneFreq = config.get("ToneFrequency", 1000.0).get<double>();
-        double toneLevelDbfs = config.get("ToneLevel", -20.0).get<double>();
-        _toneLevel = AudioLevel::fromDbfs(toneLevelDbfs);
-        double ltcLevelDbfs = config.get("LtcLevel", -20.0).get<double>();
-        _ltcLevel = AudioLevel::fromDbfs(ltcLevelDbfs);
-        _ltcChannel = config.get("LtcChannel", 0).get<int>();
 
         // Timecode
         String tcStr = config.get("StartTimecode", String()).get<String>();
@@ -176,7 +143,7 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         bool dropFrame = config.get("DropFrame", false).get<bool>();
         _tcGen.setDropFrame(dropFrame);
 
-        // ---- Validate and configure (formerly configure()) ----
+        // ---- Validate and configure ----
 
         if(!_videoDesc.isValid()) {
                 result.addError("VideoDesc is not valid");
@@ -199,7 +166,6 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         // Set up audio
         if(_audioEnabled) {
                 if(!_audioDesc.isValid()) {
-                        // Default audio: 48kHz stereo native float
                         _audioDesc = AudioDesc(48000.0f, 2);
                 }
 
@@ -208,45 +174,43 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
                 if(fpsVal > 0.0) {
                         _samplesPerFrame = (size_t)std::round(_audioDesc.sampleRate() / fpsVal);
                 } else {
-                        _samplesPerFrame = 1600; // fallback
+                        _samplesPerFrame = 1600;
                 }
 
-                // Create audio generator or LTC encoder
-                delete _audioGen;
-                _audioGen = nullptr;
-                delete _ltcEncoder;
-                _ltcEncoder = nullptr;
+                // Configure audio pattern generator
+                delete _audioPattern;
+                _audioPattern = new AudioTestPattern(_audioDesc);
 
-                if(_audioMode == LTC) {
-                        _ltcEncoder = new LtcEncoder((int)_audioDesc.sampleRate(), _ltcLevel.toLinearFloat());
-                } else {
-                        _audioGen = new AudioGen(_audioDesc);
-                        for(size_t ch = 0; ch < _audioDesc.channels(); ch++) {
-                                if(ch < _channelConfigs.size()) {
-                                        _audioGen->setConfig(ch, _channelConfigs[ch]);
-                                } else if(_audioMode == Tone) {
-                                        AudioGen::Config cfg;
-                                        cfg.type = AudioGen::Sine;
-                                        cfg.freq = (float)_toneFreq;
-                                        cfg.level = _toneLevel;
-                                        cfg.phase = 0.0f;
-                                        cfg.dutyCycle = 0.0f;
-                                        _audioGen->setConfig(ch, cfg);
-                                } else {
-                                        AudioGen::Config cfg;
-                                        cfg.type = AudioGen::Silence;
-                                        cfg.freq = 0.0f;
-                                        cfg.level = AudioLevel();
-                                        cfg.phase = 0.0f;
-                                        cfg.dutyCycle = 0.0f;
-                                        _audioGen->setConfig(ch, cfg);
-                                }
+                String audioModeStr = config.get("AudioMode", "tone").get<String>();
+                if(!audioModeStr.isEmpty()) {
+                        auto [mode, modeErr] = AudioTestPattern::fromString(audioModeStr);
+                        if(modeErr.isError()) {
+                                result.addError("Unknown audio mode: " + audioModeStr);
+                                return result;
                         }
+                        _audioPattern->setMode(mode);
                 }
+
+                double toneFreq = config.get("ToneFrequency", 1000.0).get<double>();
+                double toneLevelDbfs = config.get("ToneLevel", -20.0).get<double>();
+                double ltcLevelDbfs = config.get("LtcLevel", -20.0).get<double>();
+                int ltcChannel = config.get("LtcChannel", 0).get<int>();
+
+                _audioPattern->setToneFrequency(toneFreq);
+                _audioPattern->setToneLevel(AudioLevel::fromDbfs(toneLevelDbfs));
+                _audioPattern->setLtcLevel(AudioLevel::fromDbfs(ltcLevelDbfs));
+                _audioPattern->setLtcChannel(ltcChannel);
+                _audioPattern->configure();
         }
 
         _motionOffset = 0.0;
         _frameCount = 0;
+        _cachedImage = Image();
+
+        // Pre-render cached image for static patterns (no motion, not Noise)
+        if(_motion == 0.0 && _videoPattern.pattern() != VideoTestPattern::Noise) {
+                _cachedImage = _videoPattern.create(_imageDesc);
+        }
 
         setState(Configured);
         return result;
@@ -257,63 +221,40 @@ Error TestPatternNode::start() {
 }
 
 void TestPatternNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) {
+        (void)frame;
         (void)inputIndex;
-        (void)deliveries;
 
         // Advance timecode — returns the value for the current frame
         Timecode tc = _tcGen.advance();
 
-        // Create image
-        Image img(_imageDesc);
-        renderPattern(img, _motionOffset);
+        // Use cached image or render a new one
+        Image img;
+        if(_cachedImage.isValid()) {
+                img = _cachedImage;
+        } else {
+                img = _videoPattern.create(_imageDesc, _motionOffset);
+        }
 
         // Set metadata on the image
         img.metadata().set(Metadata::Timecode, tc);
 
         // Create frame
-        frame = Frame::Ptr::create();
-        Image::Ptr imgPtr = Image::Ptr::create(img);
-        frame.modify()->imageList().pushToBack(imgPtr);
+        Frame::Ptr outFrame = Frame::Ptr::create();
+        outFrame.modify()->imageList().pushToBack(Image::Ptr::create(img));
 
-        // Attach benchmark if enabled
-        if(currentBenchmark().isValid()) {
-                frame.modify()->setBenchmark(currentBenchmark());
-        }
-
-        // Generate audio
-        if(_audioEnabled) {
-                Audio::Ptr audioPtr;
-                if(_audioMode == LTC && _ltcEncoder != nullptr) {
-                        Audio ltcAudio = _ltcEncoder->encode(tc);
-                        if(ltcAudio.isValid()) {
-                                // If multi-channel and specific LTC channel, embed in silent multi-ch audio
-                                if(_audioDesc.channels() > 1 && _ltcChannel >= 0) {
-                                        Audio audio(_audioDesc, ltcAudio.samples());
-                                        audio.zero();
-                                        // Copy LTC into the target channel
-                                        int8_t *ltcData = ltcAudio.data<int8_t>();
-                                        float *outData = audio.data<float>();
-                                        size_t channels = _audioDesc.channels();
-                                        for(size_t s = 0; s < ltcAudio.samples(); s++) {
-                                                float val = (float)ltcData[s] / 127.0f;
-                                                outData[s * channels + (size_t)_ltcChannel] = val;
-                                        }
-                                        audioPtr = Audio::Ptr::create(audio);
-                                } else {
-                                        audioPtr = Audio::Ptr::create(ltcAudio);
-                                }
-                        }
-                } else if(_audioGen != nullptr) {
-                        Audio audio = _audioGen->generate(_samplesPerFrame);
-                        audioPtr = Audio::Ptr::create(audio);
-                }
-                if(audioPtr.isValid()) {
-                        frame.modify()->audioList().pushToBack(audioPtr);
+        // Generate audio using AudioTestPattern
+        if(_audioEnabled && _audioPattern != nullptr) {
+                Audio audio = _audioPattern->create(_samplesPerFrame, tc);
+                if(audio.isValid()) {
+                        outFrame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
                 }
         }
 
         // Set frame metadata
-        frame.modify()->metadata().set(Metadata::Timecode, tc);
+        outFrame.modify()->metadata().set(Metadata::Timecode, tc);
+
+        // Deliver to all outputs
+        deliveries.pushToBack(Delivery{-1, outFrame});
 
         // Advance motion
         if(_motion != 0.0) {
@@ -330,240 +271,36 @@ void TestPatternNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryLi
         }
 
         _frameCount++;
-        return;
+
+        // Update thread-safe stats snapshot
+        {
+                Mutex::Locker lock(_statsMutex);
+                _statsFrameCount = _frameCount;
+                _statsTimecode = tc;
+        }
 }
 
 void TestPatternNode::stop() {
         MediaNode::stop();
-        delete _audioGen;
-        _audioGen = nullptr;
-        delete _ltcEncoder;
-        _ltcEncoder = nullptr;
+        delete _audioPattern;
+        _audioPattern = nullptr;
         _frameCount = 0;
         _motionOffset = 0.0;
+        _cachedImage = Image();
         _tcGen.reset();
-        return;
+        {
+                Mutex::Locker lock(_statsMutex);
+                _statsFrameCount = 0;
+                _statsTimecode = Timecode();
+        }
 }
 
 Map<String, Variant> TestPatternNode::extendedStats() const {
+        Mutex::Locker lock(_statsMutex);
         Map<String, Variant> ret;
-        ret.insert("FramesGenerated", Variant((unsigned long)_frameCount));
-        ret.insert("CurrentTimecode", Variant(_tcGen.timecode().toString().first));
+        ret.insert("FramesGenerated", Variant(_statsFrameCount));
+        ret.insert("CurrentTimecode", Variant(_statsTimecode.toString().first));
         return ret;
-}
-
-// ============================================================================
-// Pattern rendering
-// ============================================================================
-
-void TestPatternNode::renderPattern(Image &img, double motionOffset) {
-        switch(_pattern) {
-                case ColorBars:      renderColorBars(img, motionOffset, true); break;
-                case ColorBars75:    renderColorBars(img, motionOffset, false); break;
-                case Ramp:           renderRamp(img, motionOffset); break;
-                case Grid:           renderGrid(img, motionOffset); break;
-                case Crosshatch:     renderCrosshatch(img, motionOffset); break;
-                case Checkerboard:   renderCheckerboard(img, motionOffset); break;
-                case SolidColor:     renderSolid(img, _solidR, _solidG, _solidB); break;
-                case White:          renderSolid(img, 65535, 65535, 65535); break;
-                case Black:          renderSolid(img, 0, 0, 0); break;
-                case Noise:          renderNoise(img); break;
-                case ZonePlate:      renderZonePlate(img, motionOffset); break;
-        }
-        return;
-}
-
-void TestPatternNode::renderColorBars(Image &img, double offset, bool full) {
-        PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
-        int barWidth = w / 8;
-        if(barWidth < 1) barWidth = 1;
-
-        struct BarColor { uint16_t r, g, b; };
-        BarColor bars100[] = {
-                {65535, 65535, 65535}, {65535, 65535, 0},
-                {0, 65535, 65535}, {0, 65535, 0},
-                {65535, 0, 65535}, {65535, 0, 0},
-                {0, 0, 65535}, {0, 0, 0}
-        };
-        BarColor bars75[] = {
-                {49151, 49151, 49151}, {49151, 49151, 0},
-                {0, 49151, 49151}, {0, 49151, 0},
-                {49151, 0, 49151}, {49151, 0, 0},
-                {0, 0, 49151}, {0, 0, 0}
-        };
-
-        BarColor *bars = full ? bars100 : bars75;
-        int intOffset = (int)std::fmod(offset, (double)w);
-        if(intOffset < 0) intOffset += w;
-
-        for(int i = 0; i < 8; i++) {
-                auto pixel = pe.createPixel(bars[i].r, bars[i].g, bars[i].b);
-                int x0 = (i * barWidth + intOffset) % w;
-                if(x0 + barWidth <= w) {
-                        pe.fillRect(pixel, Rect<int32_t>(x0, 0, barWidth, h));
-                } else {
-                        int firstPart = w - x0;
-                        pe.fillRect(pixel, Rect<int32_t>(x0, 0, firstPart, h));
-                        pe.fillRect(pixel, Rect<int32_t>(0, 0, barWidth - firstPart, h));
-                }
-        }
-        if(barWidth * 8 < w) {
-                auto black = pe.createPixel(0, 0, 0);
-                int remaining = w - barWidth * 8;
-                int x0 = (barWidth * 8 + intOffset) % w;
-                pe.fillRect(black, Rect<int32_t>(x0, 0, remaining, h));
-        }
-        return;
-}
-
-void TestPatternNode::renderRamp(Image &img, double offset) {
-        PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
-        int intOffset = (int)std::fmod(offset, (double)w);
-        if(intOffset < 0) intOffset += w;
-
-        for(int x = 0; x < w; x++) {
-                int srcX = (x + intOffset) % w;
-                uint16_t lum = (uint16_t)((double)srcX / (double)(w - 1) * 65535.0);
-                auto pixel = pe.createPixel(lum, lum, lum);
-                pe.fillRect(pixel, Rect<int32_t>(x, 0, 1, h));
-        }
-        return;
-}
-
-void TestPatternNode::renderGrid(Image &img, double offset) {
-        PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
-
-        auto black = pe.createPixel(0, 0, 0);
-        pe.fill(black);
-
-        auto white = pe.createPixel(65535, 65535, 65535);
-        int spacing = 128;
-        int intOffset = (int)std::fmod(offset, (double)spacing);
-        if(intOffset < 0) intOffset += spacing;
-
-        for(int x = intOffset; x < w; x += spacing) {
-                pe.fillRect(white, Rect<int32_t>(x, 0, 1, h));
-        }
-        for(int y = intOffset; y < h; y += spacing) {
-                pe.fillRect(white, Rect<int32_t>(0, y, w, 1));
-        }
-        return;
-}
-
-void TestPatternNode::renderCrosshatch(Image &img, double offset) {
-        PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
-
-        auto black = pe.createPixel(0, 0, 0);
-        pe.fill(black);
-
-        auto white = pe.createPixel(65535, 65535, 65535);
-        int spacing = 96;
-        int intOffset = (int)std::fmod(offset, (double)spacing);
-        if(intOffset < 0) intOffset += spacing;
-
-        for(int d = -h + intOffset; d < w + h; d += spacing) {
-                pe.drawLine(white, d, 0, d + h, h);
-        }
-        for(int d = -h + intOffset; d < w + h; d += spacing) {
-                pe.drawLine(white, w - d, 0, w - d - h, h);
-        }
-        return;
-}
-
-void TestPatternNode::renderCheckerboard(Image &img, double offset) {
-        PaintEngine pe = img.createPaintEngine();
-        int w = (int)img.width();
-        int h = (int)img.height();
-
-        auto black = pe.createPixel(0, 0, 0);
-        auto white = pe.createPixel(65535, 65535, 65535);
-        pe.fill(black);
-
-        int squareSize = 64;
-        int intOffset = (int)std::fmod(offset, (double)(squareSize * 2));
-        if(intOffset < 0) intOffset += squareSize * 2;
-
-        for(int y = 0; y < h; y += squareSize) {
-                for(int x = 0; x < w; x += squareSize) {
-                        int adjX = x + intOffset;
-                        int adjY = y + intOffset;
-                        bool isWhite = ((adjX / squareSize) + (adjY / squareSize)) % 2 == 0;
-                        if(isWhite) {
-                                int rw = (x + squareSize > w) ? w - x : squareSize;
-                                int rh = (y + squareSize > h) ? h - y : squareSize;
-                                pe.fillRect(white, Rect<int32_t>(x, y, rw, rh));
-                        }
-                }
-        }
-        return;
-}
-
-void TestPatternNode::renderZonePlate(Image &img, double phase) {
-        int w = (int)img.width();
-        int h = (int)img.height();
-
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
-        int bpp = _imageDesc.pixelFormat()->bytesPerBlock();
-        int components = _imageDesc.pixelFormat()->compCount();
-        double cx = w / 2.0;
-        double cy = h / 2.0;
-        double scale = 0.001;
-
-        for(int y = 0; y < h; y++) {
-                uint8_t *row = data + y * stride;
-                for(int x = 0; x < w; x++) {
-                        double dx = x - cx;
-                        double dy = y - cy;
-                        double r2 = dx * dx + dy * dy;
-                        double val = (std::sin(r2 * scale + phase * 0.1) + 1.0) * 0.5;
-                        uint8_t lum = (uint8_t)(val * 255.0);
-                        uint8_t *p = row + x * bpp;
-                        for(int c = 0; c < components && c < 3; c++) {
-                                p[c] = lum;
-                        }
-                        if(components >= 4) p[3] = 255;
-                }
-        }
-        return;
-}
-
-void TestPatternNode::renderNoise(Image &img) {
-        int w = (int)img.width();
-        int h = (int)img.height();
-
-        uint8_t *data = static_cast<uint8_t *>(img.data());
-        size_t stride = img.lineStride();
-        int bpp = _imageDesc.pixelFormat()->bytesPerBlock();
-        int components = _imageDesc.pixelFormat()->compCount();
-
-        Random rng;
-        for(int y = 0; y < h; y++) {
-                uint8_t *row = data + y * stride;
-                for(int x = 0; x < w; x++) {
-                        uint8_t *p = row + x * bpp;
-                        for(int c = 0; c < components && c < 3; c++) {
-                                p[c] = (uint8_t)rng.randomInt(0, 255);
-                        }
-                        if(components >= 4) p[3] = 255;
-                }
-        }
-        return;
-}
-
-void TestPatternNode::renderSolid(Image &img, uint16_t r, uint16_t g, uint16_t b) {
-        PaintEngine pe = img.createPaintEngine();
-        auto pixel = pe.createPixel(r, g, b);
-        pe.fill(pixel);
-        return;
 }
 
 PROMEKI_NAMESPACE_END

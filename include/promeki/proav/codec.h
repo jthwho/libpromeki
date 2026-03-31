@@ -1,78 +1,184 @@
 /**
  * @file      proav/codec.h
- * @author    Jason Howard <jth@howardlogic.com>
- * @copyright Howard Logic.  All rights reserved.
- * 
+ * @copyright Howard Logic. All rights reserved.
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
 #pragma once
 
+#include <functional>
 #include <promeki/core/namespace.h>
-#include <promeki/proav/image.h>
+#include <promeki/core/string.h>
+#include <promeki/core/error.h>
+#include <promeki/core/list.h>
+#include <promeki/core/map.h>
 
 PROMEKI_NAMESPACE_BEGIN
+
+class Image;
 
 /**
  * @brief Abstract base class for image codecs.
  * @ingroup proav_media
  *
- * Provides an interface for querying conversion capabilities and creating
- * codec instances that perform image format conversions. Subclasses implement
- * specific encoding/decoding algorithms.
+ * ImageCodec provides an interface for encoding and decoding images.
+ * Concrete subclasses implement specific algorithms (JPEG, PNG, etc.).
+ *
+ * Codec instances are configured once (quality, subsampling, etc.)
+ * then encode or decode multiple frames without reconfiguration.
+ *
+ * Subclasses are registered via PROMEKI_REGISTER_IMAGE_CODEC and
+ * looked up by name at runtime.
+ *
+ * This class is not thread-safe. Each thread should use its own
+ * codec instance.
+ *
+ * @par Example
+ * @code
+ * ImageCodec *codec = ImageCodec::createCodec("jpeg");
+ * if(codec) {
+ *         Image compressed = codec->encode(sourceImage);
+ *         delete codec;
+ * }
+ * @endcode
  */
-class Codec {
-    public:
-        /** @brief Represents an active codec instance used for performing conversions. */
-        class Instance {
-            public:
-                /**
-                 * @brief Constructs a codec instance associated with the given codec.
-                 * @param codec Pointer to the parent codec.
-                 */
-                Instance(Codec *codec) : _codec(codec) {};
+class ImageCodec {
+        public:
+                /** @brief Virtual destructor. */
+                virtual ~ImageCodec();
 
-                /** @brief Destructor. */
-                virtual ~Instance() {};
+                /** @brief Returns the codec name (e.g. "jpeg", "png"). */
+                virtual String name() const = 0;
+
+                /** @brief Returns a human-readable description. */
+                virtual String description() const = 0;
 
                 /**
-                 * @brief Converts the given input image and returns the result.
-                 * @param input The source image to convert.
-                 * @return The converted image.
+                 * @brief Returns whether this codec supports encoding.
+                 * @return true if encode() is implemented.
                  */
-                Image convert(const Image &input) {
-                    return Image();
-                }
+                virtual bool canEncode() const = 0;
 
-            private:
-                Codec *_codec = nullptr;
-        };
+                /**
+                 * @brief Returns whether this codec supports decoding.
+                 * @return true if decode() is implemented.
+                 */
+                virtual bool canDecode() const = 0;
 
-        /** @brief Default constructor. */
-        Codec() {};
+                /**
+                 * @brief Encodes an uncompressed image to compressed form.
+                 * @param input The source image (uncompressed pixel format).
+                 * @return The compressed image, or an invalid Image on failure.
+                 */
+                virtual Image encode(const Image &input) = 0;
 
-        /** @brief Destructor. */
-        virtual ~Codec() {};
+                /**
+                 * @brief Decodes a compressed image to uncompressed form.
+                 * @param input The compressed image.
+                 * @param outputFormat Desired output pixel format ID. Pass 0 for codec default.
+                 * @return The decoded image, or an invalid Image on failure.
+                 */
+                virtual Image decode(const Image &input, int outputFormat = 0) = 0;
 
-        /**
-         * @brief Returns whether this codec can convert the given input to the specified output format.
-         * @param inDesc  The input image description.
-         * @param outID   The desired output pixel format ID.
-         * @param outMeta The desired output metadata.
-         * @return true if the codec supports the requested conversion.
-         */
-        bool canConvert(const ImageDesc &inDesc, PixelFormat::ID outID, const Metadata &outMeta) const {
-            return false;
-        }
+                /**
+                 * @brief Returns the last error that occurred.
+                 * @return The last error.
+                 */
+                Error lastError() const { return _lastError; }
 
-        /**
-         * @brief Creates and returns a new codec instance.
-         * @return A pointer to a new Instance, or nullptr if creation fails.
-         */
-        Instance *createInstance() {
-            return nullptr;
-        }
+                /**
+                 * @brief Returns a human-readable string for the last error.
+                 * @return The last error message.
+                 */
+                const String &lastErrorMessage() const { return _lastErrorMessage; }
+
+                // ---- Registry ----
+
+                /**
+                 * @brief Registers an image codec factory.
+                 * @param name Unique codec name.
+                 * @param factory Factory function that creates a new instance.
+                 */
+                static void registerCodec(const String &name,
+                                          std::function<ImageCodec *()> factory);
+
+                /**
+                 * @brief Creates a codec instance by name.
+                 * @param name The codec name.
+                 * @return A new codec instance, or nullptr if not registered.
+                 *
+                 * @par Example
+                 * @code
+                 * ImageCodec *codec = ImageCodec::createCodec("jpeg");
+                 * if(codec) {
+                 *         Image out = codec->encode(src);
+                 *         delete codec;
+                 * }
+                 * @endcode
+                 */
+                static ImageCodec *createCodec(const String &name);
+
+                /**
+                 * @brief Returns the list of all registered codec names.
+                 * @return A list of codec name strings.
+                 *
+                 * @par Example
+                 * @code
+                 * for(const auto &name : ImageCodec::registeredCodecs())
+                 *         qDebug() << name;
+                 * @endcode
+                 */
+                static List<String> registeredCodecs();
+
+        protected:
+                Error           _lastError;
+                String          _lastErrorMessage;
+
+                /**
+                 * @brief Sets the last error state.
+                 * @param err The error code.
+                 * @param msg Human-readable message.
+                 */
+                void setError(Error err, const String &msg = String());
+
+                /** @brief Clears the error state. */
+                void clearError();
+
+        private:
+                static Map<String, std::function<ImageCodec *()>> &codecRegistry();
 };
 
-PROMEKI_NAMESPACE_END
+/**
+ * @brief Stub base class for audio codecs (future expansion).
+ * @ingroup proav_media
+ */
+class AudioCodec {
+        public:
+                /** @brief Virtual destructor. */
+                virtual ~AudioCodec();
 
+                /** @brief Returns the codec name. */
+                virtual String name() const = 0;
+
+                /** @brief Returns a human-readable description. */
+                virtual String description() const = 0;
+};
+
+/**
+ * @brief Macro to register an ImageCodec subclass for runtime creation.
+ *
+ * Place this in the .cpp file of each concrete ImageCodec subclass.
+ *
+ * @param ClassName The concrete ImageCodec subclass name.
+ * @param CodecName A string literal for the codec name (e.g. "jpeg").
+ */
+#define PROMEKI_REGISTER_IMAGE_CODEC(ClassName, CodecName) \
+        static struct ClassName##CodecRegistrar { \
+                ClassName##CodecRegistrar() { \
+                        ImageCodec::registerCodec(CodecName, \
+                                []() -> ImageCodec * { return new ClassName(); }); \
+                } \
+        } __##ClassName##CodecRegistrar;
+
+PROMEKI_NAMESPACE_END

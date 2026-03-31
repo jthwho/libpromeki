@@ -409,9 +409,11 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/audiogen.h
         include/promeki/proav/ciepoint.h
         include/promeki/proav/ciewavelengthtable.h
+        include/promeki/proav/audiotestpattern.h
         include/promeki/proav/codec.h
         include/promeki/proav/encodeddesc.h
         include/promeki/proav/framedemuxnode.h
+        include/promeki/proav/jpegimagecodec.h
         include/promeki/proav/jpegencodernode.h
         include/promeki/proav/ltcdecoder.h
         include/promeki/proav/ltcencoder.h
@@ -432,6 +434,7 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/paintengine.h
         include/promeki/proav/pixelformat.h
         include/promeki/proav/testpatternnode.h
+        include/promeki/proav/videotestpattern.h
         include/promeki/proav/timecodeoverlaynode.h
         include/promeki/proav/pixelformat_old.h
         include/promeki/proav/videodesc.h
@@ -464,9 +467,11 @@ if(PROMEKI_BUILD_PROAV)
         src/xyzcolor.cpp
         src/ciepoint.cpp
         src/frame.cpp
+        src/audiotestpattern.cpp
         src/codec.cpp
         src/encodeddesc.cpp
         src/framedemuxnode.cpp
+        src/jpegimagecodec.cpp
         src/jpegencodernode.cpp
         src/ltcdecoder.cpp
         src/ltcencoder.cpp
@@ -478,6 +483,7 @@ if(PROMEKI_BUILD_PROAV)
         src/mediasource.cpp
         src/benchmarkreporter.cpp
         src/testpatternnode.cpp
+        src/videotestpattern.cpp
         src/timecodeoverlaynode.cpp
         src/videodesc.cpp
     )
@@ -986,6 +992,9 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediapipelineconfig.cpp
             tests/mediasink.cpp
             tests/mediasource.cpp
+            tests/videotestpattern.cpp
+            tests/audiotestpattern.cpp
+            tests/jpegimagecodec.cpp
             tests/testpatternnode.cpp
             tests/timecodeoverlaynode.cpp
         )

@@ -24,6 +24,7 @@
 #include <promeki/proav/medianode.h>
 #include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/testpatternnode.h>
+#include <promeki/proav/videotestpattern.h>
 #include <promeki/proav/framedemuxnode.h>
 #include <promeki/proav/timecodeoverlaynode.h>
 #include <promeki/proav/jpegencodernode.h>
@@ -205,22 +206,22 @@ static bool parseOptions(int argc, char *argv[], Options &opts) {
 // --------------------------------------------------------------------
 
 struct PatternEntry {
-        const char              *name;
-        TestPatternNode::Pattern pattern;
+        const char                      *name;
+        VideoTestPattern::Pattern       pattern;
 };
 
 static const PatternEntry g_patterns[] = {
-        { "colorbars",    TestPatternNode::ColorBars },
-        { "colorbars75",  TestPatternNode::ColorBars75 },
-        { "ramp",         TestPatternNode::Ramp },
-        { "grid",         TestPatternNode::Grid },
-        { "crosshatch",   TestPatternNode::Crosshatch },
-        { "checkerboard", TestPatternNode::Checkerboard },
-        { "black",        TestPatternNode::Black },
-        { "white",        TestPatternNode::White },
-        { "noise",        TestPatternNode::Noise },
-        { "zoneplate",    TestPatternNode::ZonePlate },
-        { nullptr,        TestPatternNode::ColorBars }
+        { "colorbars",    VideoTestPattern::ColorBars },
+        { "colorbars75",  VideoTestPattern::ColorBars75 },
+        { "ramp",         VideoTestPattern::Ramp },
+        { "grid",         VideoTestPattern::Grid },
+        { "crosshatch",   VideoTestPattern::Crosshatch },
+        { "checkerboard", VideoTestPattern::Checkerboard },
+        { "black",        VideoTestPattern::Black },
+        { "white",        VideoTestPattern::White },
+        { "noise",        VideoTestPattern::Noise },
+        { "zoneplate",    VideoTestPattern::ZonePlate },
+        { nullptr,        VideoTestPattern::ColorBars }
 };
 
 static bool lookupPattern(const String &name, String &out) {

@@ -79,85 +79,62 @@ The key insight is that for overlay text (timecodes, labels, burn-ins), the font
 
 ## Video Codec System
 
-JpegEncoderNode currently embeds all JPEG compression logic (libjpeg-turbo setup, subsampling configuration, memory destination, error handling) directly in its `process()` method. This works for the single JPEG case, but as we add more codecs (H.264, HEVC, etc.) this pattern doesn't scale. The codec logic should be factored out into a proper abstraction.
+**Partial progress:** `ImageCodec` / `AudioCodec` abstract base classes and `JpegImageCodec` are implemented. `VideoTestPattern` and `AudioTestPattern` have been extracted from `TestPatternNode` into standalone reusable classes. `JpegEncoderNode` now delegates to `JpegImageCodec`. See git log for details.
 
-**Goal:** A `VideoEncoder` / `VideoDecoder` abstraction that encapsulates codec configuration and encode/decode operations. Codec nodes become thin wrappers that pull frames, hand them to the codec, and deliver the result.
+**Completed:**
+- [x] `ImageCodec` abstract base class (`include/promeki/proav/codec.h`, `src/codec.cpp`) — name-based string registry (`registerCodec()`, `createCodec()`, `registeredCodecs()`), `encode()`/`decode()` virtuals, `canEncode()`/`canDecode()`, `lastError()`/`lastErrorMessage()`, `setError()`/`clearError()`
+- [x] `AudioCodec` stub base class (same files) — name/description virtuals, future expansion
+- [x] `PROMEKI_REGISTER_IMAGE_CODEC` macro for static self-registration
+- [x] `JpegImageCodec` (`include/promeki/proav/jpegimagecodec.h`, `src/jpegimagecodec.cpp`) — derives from `ImageCodec`, libjpeg-turbo encode, quality 1-100 with clamping, `Subsampling` enum (444/422/420), registered as "jpeg"
+- [x] `VideoTestPattern` (`include/promeki/proav/videotestpattern.h`, `src/videotestpattern.cpp`) — all 11 patterns, `create()`/`render()` dual-mode, `fromString()`/`toString()`, motion offset support
+- [x] `AudioTestPattern` (`include/promeki/proav/audiotestpattern.h`, `src/audiotestpattern.cpp`) — Tone/Silence/LTC modes, `configure()`/`create()`/`render()`, `fromString()`/`toString()`
+- [x] `JpegEncoderNode` refactored to delegate to `JpegImageCodec` — adds `Subsampling` config key, thread-safe stats
+- [x] `TestPatternNode` refactored to delegate to `VideoTestPattern` and `AudioTestPattern`
+- [x] Tests: `tests/jpegimagecodec.cpp`, `tests/videotestpattern.cpp`, `tests/audiotestpattern.cpp`, `tests/codec.cpp` (updated)
 
-**Files:**
-- [ ] `include/promeki/proav/videoencoder.h`
-- [ ] `src/videoencoder.cpp`
-- [ ] `include/promeki/proav/videodecoder.h`
-- [ ] `src/videodecoder.cpp`
-- [ ] `include/promeki/proav/jpegcodec.h`
-- [ ] `src/jpegcodec.cpp`
-- [ ] `tests/videoencoder.cpp`
-- [ ] `tests/videodecoder.cpp`
-- [ ] `tests/jpegcodec.cpp`
+**Remaining — VideoEncoder/VideoDecoder pipeline abstraction:**
 
-### VideoEncoder
+The `ImageCodec` design takes a stateful encode/decode approach (codec owns config, returns Image). A future `VideoEncoder`/`VideoDecoder` layer may be needed for temporal codecs (H.264, HEVC) that operate on streams rather than individual images. That abstraction remains unbuilt.
 
-Base class for all video encoders.
+**Files still planned:**
+- [ ] `include/promeki/proav/videoencoder.h` / `src/videoencoder.cpp`
+- [ ] `include/promeki/proav/videodecoder.h` / `src/videodecoder.cpp`
+- [ ] `tests/videoencoder.cpp` / `tests/videodecoder.cpp`
 
-- [ ] `enum Codec { JPEG, H264, HEVC }` — or use FourCC for open-ended codec identification
+### VideoEncoder (still planned)
+
+Base class for temporal/stream codecs (H.264, HEVC, etc.).
+
 - [ ] `virtual Error configure(const ImageDesc &inputDesc)` — set up encoder for the given input format
 - [ ] `virtual Result<Buffer::Ptr> encode(const Image &img)` — encode a single image, return compressed data
-- [ ] `virtual void flush()` — flush any buffered frames (relevant for temporal codecs, no-op for JPEG)
+- [ ] `virtual void flush()` — flush buffered frames (temporal codecs only, no-op for intra-only)
 - [ ] `virtual bool isConfigured() const`
 - [ ] `ImageDesc inputDesc() const`
-- [ ] `EncodedDesc encodedDesc() const` — describes the output (codec FourCC, quality, etc.)
-- [ ] Static factory: `static VideoEncoder *create(const FourCC &codec)` — instantiate encoder by codec ID
-- [ ] Static registry following the same pattern as MediaNode: `registerEncoderType()` / `registeredEncoderTypes()`
+- [ ] `EncodedDesc encodedDesc() const`
+- [ ] Static factory: `static VideoEncoder *create(const FourCC &codec)`
+- [ ] Static registry: `registerEncoderType()` / `registeredEncoderTypes()`
 
-### VideoDecoder
+### VideoDecoder (still planned)
 
-Base class for all video decoders.
+- [ ] `virtual Error configure(const EncodedDesc &inputDesc)`
+- [ ] `virtual Result<Image> decode(const Buffer &data)`
+- [ ] Static factory and registry
 
-- [ ] `virtual Error configure(const EncodedDesc &inputDesc)` — set up decoder for the given compressed format
-- [ ] `virtual Result<Image> decode(const Buffer &data)` — decode compressed data, return image
-- [ ] `virtual bool isConfigured() const`
-- [ ] `EncodedDesc inputDesc() const`
-- [ ] `ImageDesc outputDesc() const`
-- [ ] Static factory and registry (same pattern as VideoEncoder)
-
-### JpegCodec
-
-Concrete JPEG encoder and decoder using libjpeg-turbo.
-
-**JpegEncoder (derives from VideoEncoder):**
-- [ ] `void setQuality(int quality)` — JPEG quality 1-100 (default: 80)
-- [ ] `int quality() const`
-- [ ] `void setSubsampling(enum { Sub444, Sub422, Sub420 })` — chroma subsampling (default: Sub422 for RTP compat)
-- [ ] Move existing libjpeg-turbo setup, error handling, and compression logic from `JpegEncoderNode::process()` into `encode()`
-- [ ] `encode()` returns a `Buffer::Ptr` containing the JPEG bitstream
-
-**JpegDecoder (derives from VideoDecoder):**
-- [ ] `decode()` decompresses JPEG data into an Image
-- [ ] Uses `jpeg_mem_src()` for in-memory input
-
-### VideoEncoderNode / VideoDecoderNode
+### VideoEncoderNode / VideoDecoderNode (still planned)
 
 Generic pipeline nodes that delegate to a VideoEncoder/VideoDecoder instance.
 
 - [ ] `include/promeki/proav/videoencodernode.h` / `src/videoencodernode.cpp`
 - [ ] `include/promeki/proav/videodecodernode.h` / `src/videodecodernode.cpp`
-- [ ] `VideoEncoderNode` takes an image input, encodes via its `VideoEncoder`, outputs encoded data
-- [ ] `VideoDecoderNode` takes encoded input, decodes via its `VideoDecoder`, outputs image
-- [ ] Configurable: `setEncoder(VideoEncoder *)` or construct with codec FourCC
-- [ ] Property interface exposes codec-specific settings
 
-### Migration
+### JpegDecoder (still planned)
 
-- [ ] Refactor `JpegEncoderNode` to use `JpegEncoder` internally (or replace with `VideoEncoderNode` + `JpegEncoder`)
-- [ ] Existing tests and vidgen usage should continue to work unchanged
-- [ ] `JpegEncoderNode` can remain as a convenience alias/typedef if desired
+- [ ] `JpegImageCodec::decode()` — currently returns `Error::NotImplemented`. Implement using `jpeg_mem_src()`.
 
-### Doctest
+### Doctest (remaining)
 
-- [ ] JpegEncoder: configure, encode test image, verify output is valid JPEG
-- [ ] JpegDecoder: decode JPEG data, verify image dimensions and pixel format
-- [ ] Round-trip: encode then decode, verify image is visually equivalent (within JPEG loss)
-- [ ] VideoEncoderNode: end-to-end pipeline test with JPEG encoder
-- [ ] Codec registry: register, create by FourCC, list registered codecs
+- [ ] JpegImageCodec: decode round-trip (encode then decode, verify dimensions and pixel format match)
+- [ ] VideoEncoder/VideoDecoder: once implemented
 
 ---
 

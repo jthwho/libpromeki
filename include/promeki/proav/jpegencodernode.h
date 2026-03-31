@@ -10,12 +10,15 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/variant.h>
 #include <promeki/core/map.h>
+#include <promeki/core/mutex.h>
 #include <promeki/proav/medianode.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
+class JpegImageCodec;
+
 /**
- * @brief Compresses video frames to JPEG using libjpeg-turbo.
+ * @brief Compresses video frames to JPEG using JpegImageCodec.
  * @ingroup proav_pipeline
  *
  * Processing node with one Image input and one Image output. The
@@ -25,13 +28,17 @@ PROMEKI_NAMESPACE_BEGIN
  * output Image's plane buffer, with Metadata::CompressedSize set
  * to the actual encoded byte count.
  *
+ * JPEG encoding is delegated to JpegImageCodec.
+ *
  * @par Config options
  * - `Quality` (int): JPEG quality 1-100 (default: 85).
+ * - `Subsampling` (String): Chroma subsampling: "422" (default), "444", "420".
  *
  * @par Example
  * @code
  * MediaNodeConfig cfg("JpegEncoderNode", "encoder");
  * cfg.set("Quality", 90);
+ * cfg.set("Subsampling", "422");
  * @endcode
  */
 class JpegEncoderNode : public MediaNode {
@@ -44,7 +51,7 @@ class JpegEncoderNode : public MediaNode {
                 JpegEncoderNode(ObjectBase *parent = nullptr);
 
                 /** @brief Destructor. */
-                virtual ~JpegEncoderNode() = default;
+                virtual ~JpegEncoderNode();
 
                 MediaNodeConfig defaultConfig() const override;
                 BuildResult build(const MediaNodeConfig &config) override;
@@ -59,10 +66,16 @@ class JpegEncoderNode : public MediaNode {
                 void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override;
 
         private:
-                int             _quality = 85;
+                JpegImageCodec  *_codec = nullptr;
                 uint64_t        _framesEncoded = 0;
                 uint64_t        _totalCompressedBytes = 0;
                 uint64_t        _totalUncompressedBytes = 0;
+
+                // Thread-safe stats snapshot
+                mutable Mutex   _statsMutex;
+                uint64_t        _statsFramesEncoded = 0;
+                uint64_t        _statsTotalCompressedBytes = 0;
+                uint64_t        _statsTotalUncompressedBytes = 0;
 };
 
 PROMEKI_NAMESPACE_END

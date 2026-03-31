@@ -5,41 +5,16 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <csetjmp>
 #include <promeki/proav/jpegencodernode.h>
+#include <promeki/proav/jpegimagecodec.h>
 #include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
-#include <promeki/proav/pixelformat.h>
-#include <promeki/core/buffer.h>
 #include <promeki/core/metadata.h>
-#include <promeki/thirdparty/jpeglib.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_NODE(JpegEncoderNode)
-
-// Custom error handler that uses longjmp instead of calling exit()
-struct JpegErrorMgr {
-        jpeg_error_mgr  pub;
-        jmp_buf         jmpBuf;
-};
-
-static void jpegErrorExit(j_common_ptr cinfo) {
-        JpegErrorMgr *mgr = reinterpret_cast<JpegErrorMgr *>(cinfo->err);
-        longjmp(mgr->jmpBuf, 1);
-}
-
-// Maps an uncompressed pixel format ID to its JPEG counterpart.
-static int jpegPixelFormatFor(int srcFormat) {
-        switch(srcFormat) {
-                case PixelFormat::RGB8:  return PixelFormat::JPEG_RGB8;
-                case PixelFormat::RGBA8: return PixelFormat::JPEG_RGBA8;
-                default:                 return PixelFormat::JPEG_RGB8;
-        }
-}
 
 JpegEncoderNode::JpegEncoderNode(ObjectBase *parent) : MediaNode(parent) {
         setName("JpegEncoderNode");
@@ -47,9 +22,14 @@ JpegEncoderNode::JpegEncoderNode(ObjectBase *parent) : MediaNode(parent) {
         addSource(MediaSource::Ptr::create("output", ContentVideo));
 }
 
+JpegEncoderNode::~JpegEncoderNode() {
+        delete _codec;
+}
+
 MediaNodeConfig JpegEncoderNode::defaultConfig() const {
         MediaNodeConfig cfg("JpegEncoderNode", "");
         cfg.set("Quality", 85);
+        cfg.set("Subsampling", "422");
         return cfg;
 }
 
@@ -59,12 +39,29 @@ BuildResult JpegEncoderNode::build(const MediaNodeConfig &config) {
                 result.addError("Node is not in Idle state");
                 return result;
         }
-        _quality = config.get("Quality", 85).get<int>();
-        if(_quality < 1 || _quality > 100) {
+
+        delete _codec;
+        _codec = new JpegImageCodec();
+
+        int quality = config.get("Quality", 85).get<int>();
+        if(quality < 1 || quality > 100) {
                 result.addWarning("Quality clamped to 1-100 range");
-                if(_quality < 1) _quality = 1;
-                if(_quality > 100) _quality = 100;
         }
+        _codec->setQuality(quality);
+
+        String subsampStr = config.get("Subsampling", "422").get<String>();
+        if(subsampStr == "444") {
+                _codec->setSubsampling(JpegImageCodec::Subsampling444);
+        } else if(subsampStr == "420") {
+                _codec->setSubsampling(JpegImageCodec::Subsampling420);
+        } else {
+                _codec->setSubsampling(JpegImageCodec::Subsampling422);
+        }
+
+        _framesEncoded = 0;
+        _totalCompressedBytes = 0;
+        _totalUncompressedBytes = 0;
+
         setState(Configured);
         return result;
 }
@@ -74,102 +71,45 @@ void JpegEncoderNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryLi
         (void)deliveries;
 
         if(!frame.isValid()) return;
-
-        if(frame->imageList().isEmpty()) {
-                return;
-        }
+        if(frame->imageList().isEmpty()) return;
 
         Image::Ptr img = frame->imageList()[0];
-        int width = (int)img->width();
-        int height = (int)img->height();
-        const PixelFormat *pf = img->pixelFormat();
-
-        // Determine JPEG input color space and component count
-        J_COLOR_SPACE colorSpace = JCS_RGB;
-        int numComponents = 3;
-        if(pf != nullptr && pf->id() == PixelFormat::RGBA8) {
-                colorSpace = JCS_EXT_RGBA;
-                numComponents = 4;
-        }
-
-        // Set up libjpeg compression
-        jpeg_compress_struct cinfo;
-        JpegErrorMgr jerr;
-        cinfo.err = jpeg_std_error(&jerr.pub);
-        jerr.pub.error_exit = jpegErrorExit;
-
-        if(setjmp(jerr.jmpBuf)) {
-                jpeg_destroy_compress(&cinfo);
-                emitError("JPEG compression failed");
+        Image encoded = _codec->encode(*img);
+        if(!encoded.isValid()) {
+                emitError(_codec->lastErrorMessage());
                 return;
         }
 
-        jpeg_create_compress(&cinfo);
-
-        // Use memory destination
-        unsigned char *outBuffer = nullptr;
-        unsigned long outSize = 0;
-        jpeg_mem_dest(&cinfo, &outBuffer, &outSize);
-
-        cinfo.image_width = width;
-        cinfo.image_height = height;
-        cinfo.input_components = numComponents;
-        cinfo.in_color_space = colorSpace;
-        jpeg_set_defaults(&cinfo);
-        jpeg_set_quality(&cinfo, _quality, TRUE);
-
-        // Force 4:2:2 subsampling (Y: H=2 V=1, Cb/Cr: H=1 V=1).
-        // This matches RFC 2435 type 1 which is what RtpPayloadJpeg uses.
-        // Default libjpeg is 4:2:0 (V=2) which is type 0 — less common in
-        // RTP JPEG receivers and lower chroma resolution for video.
-        cinfo.comp_info[0].h_samp_factor = 2;
-        cinfo.comp_info[0].v_samp_factor = 1;
-        cinfo.comp_info[1].h_samp_factor = 1;
-        cinfo.comp_info[1].v_samp_factor = 1;
-        cinfo.comp_info[2].h_samp_factor = 1;
-        cinfo.comp_info[2].v_samp_factor = 1;
-
-        jpeg_start_compress(&cinfo, TRUE);
-
-        // Write scanlines
-        size_t stride = img->lineStride();
-        const uint8_t *pixels = static_cast<const uint8_t *>(img->data());
-        while(cinfo.next_scanline < cinfo.image_height) {
-                const uint8_t *row = pixels + cinfo.next_scanline * stride;
-                JSAMPROW rowPtr = const_cast<JSAMPROW>(row);
-                jpeg_write_scanlines(&cinfo, &rowPtr, 1);
-        }
-
-        jpeg_finish_compress(&cinfo);
-        jpeg_destroy_compress(&cinfo);
-
         // Track stats
-        size_t uncompressedSize = stride * height;
+        size_t uncompressedSize = img->lineStride() * img->height();
+        size_t compressedSize = encoded.compressedSize();
         _framesEncoded++;
-        _totalCompressedBytes += outSize;
+        _totalCompressedBytes += compressedSize;
         _totalUncompressedBytes += uncompressedSize;
 
-        // Wrap compressed data in a JPEG Image
-        int jpegFmt = jpegPixelFormatFor(pf ? pf->id() : PixelFormat::RGB8);
-        Image jpegImg = Image::fromCompressedData(outBuffer, outSize, width, height,
-                                                  jpegFmt, img->metadata());
-        free(outBuffer);
+        // Update thread-safe stats snapshot
+        {
+                Mutex::Locker lock(_statsMutex);
+                _statsFramesEncoded = _framesEncoded;
+                _statsTotalCompressedBytes = _totalCompressedBytes;
+                _statsTotalUncompressedBytes = _totalUncompressedBytes;
+        }
 
         // Replace frame contents with encoded output, preserving metadata
         Metadata md = frame->metadata();
         frame = Frame::Ptr::create();
-        frame.modify()->imageList().pushToBack(Image::Ptr::create(jpegImg));
+        frame.modify()->imageList().pushToBack(Image::Ptr::create(encoded));
         frame.modify()->metadata() = md;
-        return;
 }
 
 Map<String, Variant> JpegEncoderNode::extendedStats() const {
+        Mutex::Locker lock(_statsMutex);
         Map<String, Variant> ret;
-        ret.insert("FramesEncoded", Variant((uint64_t)_framesEncoded));
-        if(_framesEncoded > 0) {
-                ret.insert("AvgCompressedSize", Variant((uint64_t)(_totalCompressedBytes / _framesEncoded)));
-                if(_totalCompressedBytes > 0) {
-                        double ratio = (double)_totalUncompressedBytes / (double)_totalCompressedBytes;
+        ret.insert("FramesEncoded", Variant(_statsFramesEncoded));
+        if(_statsFramesEncoded > 0) {
+                ret.insert("AvgCompressedSize", Variant(_statsTotalCompressedBytes / _statsFramesEncoded));
+                if(_statsTotalCompressedBytes > 0) {
+                        double ratio = (double)_statsTotalUncompressedBytes / (double)_statsTotalCompressedBytes;
                         ret.insert("CompressionRatio", Variant(ratio));
                 }
         }

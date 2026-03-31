@@ -9,13 +9,15 @@
 
 #include <promeki/core/namespace.h>
 #include <promeki/core/audiolevel.h>
+#include <promeki/core/mutex.h>
 #include <promeki/core/timecodegenerator.h>
 #include <promeki/proav/medianode.h>
 #include <promeki/proav/videodesc.h>
 #include <promeki/proav/imagedesc.h>
 #include <promeki/proav/audiodesc.h>
-#include <promeki/proav/audiogen.h>
-#include <promeki/proav/ltcencoder.h>
+#include <promeki/proav/image.h>
+#include <promeki/proav/videotestpattern.h>
+#include <promeki/proav/audiotestpattern.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -28,6 +30,9 @@ PROMEKI_NAMESPACE_BEGIN
  * and timecode are all configurable via build().
  *
  * This is a source node: no inputs, one Frame output.
+ *
+ * Video pattern generation is delegated to VideoTestPattern and audio
+ * generation to AudioTestPattern.
  *
  * @par Config options
  * - `Pattern` (String): Test pattern name (default: "colorbars").
@@ -64,28 +69,6 @@ PROMEKI_NAMESPACE_BEGIN
 class TestPatternNode : public MediaNode {
         PROMEKI_OBJECT(TestPatternNode, MediaNode)
         public:
-                /** @brief Video test pattern type. */
-                enum Pattern {
-                        ColorBars,      ///< @brief SMPTE 100% color bars.
-                        ColorBars75,    ///< @brief SMPTE 75% color bars.
-                        Ramp,           ///< @brief Luminance gradient ramp.
-                        Grid,           ///< @brief White grid lines on black.
-                        Crosshatch,     ///< @brief Diagonal crosshatch lines.
-                        Checkerboard,   ///< @brief Alternating black/white squares.
-                        SolidColor,     ///< @brief Solid fill with configured color.
-                        White,          ///< @brief Solid white.
-                        Black,          ///< @brief Solid black.
-                        Noise,          ///< @brief Random pixel noise.
-                        ZonePlate       ///< @brief Circular zone plate.
-                };
-
-                /** @brief Audio generation mode. */
-                enum AudioMode {
-                        Tone,           ///< @brief Sine tone (configurable frequency).
-                        Silence,        ///< @brief Silence.
-                        LTC             ///< @brief LTC timecode audio.
-                };
-
                 /**
                  * @brief Constructs a TestPatternNode.
                  * @param parent Optional parent object.
@@ -110,50 +93,31 @@ class TestPatternNode : public MediaNode {
                 void stop() override;
 
         private:
-                // Video config
-                Pattern                 _pattern = ColorBars;
+                // Video
+                VideoTestPattern        _videoPattern;
                 VideoDesc               _videoDesc;
-                uint16_t                _solidR = 0;
-                uint16_t                _solidG = 0;
-                uint16_t                _solidB = 0;
+                ImageDesc               _imageDesc;
                 double                  _motion = 0.0;
                 double                  _motionOffset = 0.0;
+                Image                   _cachedImage;
 
                 // Timecode
                 TimecodeGenerator       _tcGen;
                 uint64_t                _frameCount = 0;
 
-                // Audio config
+                // Audio
+                AudioTestPattern        *_audioPattern = nullptr;
                 AudioDesc               _audioDesc;
                 bool                    _audioEnabled = true;
-                AudioMode               _audioMode = Tone;
-                double                  _toneFreq = 1000.0;
-                AudioLevel              _toneLevel = AudioLevel::fromDbfs(-20.0);
-                AudioLevel              _ltcLevel = AudioLevel::fromDbfs(-20.0);
-                int                     _ltcChannel = 0;
-                List<AudioGen::Config>  _channelConfigs;
-
-                // Runtime state
-                AudioGen                *_audioGen = nullptr;
-                LtcEncoder              *_ltcEncoder = nullptr;
-                ImageDesc               _imageDesc;
                 size_t                  _samplesPerFrame = 0;
 
-                // Config parsing helpers
-                static bool parsePattern(const String &name, Pattern &out);
-                static bool parseAudioMode(const String &name, AudioMode &out);
-                static bool parseFrameRate(const String &str, FrameRate &out);
+                // Thread safety for extendedStats()
+                mutable Mutex           _statsMutex;
+                uint64_t                _statsFrameCount = 0;
+                Timecode                _statsTimecode;
 
-                // Pattern rendering
-                void renderPattern(Image &img, double motionOffset);
-                void renderColorBars(Image &img, double offset, bool full);
-                void renderRamp(Image &img, double offset);
-                void renderGrid(Image &img, double offset);
-                void renderCrosshatch(Image &img, double offset);
-                void renderCheckerboard(Image &img, double offset);
-                void renderZonePlate(Image &img, double phase);
-                void renderNoise(Image &img);
-                void renderSolid(Image &img, uint16_t r, uint16_t g, uint16_t b);
+                // Config parsing helpers
+                static bool parseFrameRate(const String &str, FrameRate &out);
 };
 
 PROMEKI_NAMESPACE_END
