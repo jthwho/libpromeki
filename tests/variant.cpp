@@ -325,3 +325,100 @@ TEST_CASE("Variant_EmptyStringList") {
     CHECK(v.get<StringList>().isEmpty());
     CHECK(v.get<String>() == "");
 }
+
+// ============================================================================
+// Color
+// ============================================================================
+
+TEST_CASE("Variant_Color") {
+    Variant v(Color::Red);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeColor);
+    CHECK(v.get<Color>() == Color::Red);
+}
+
+TEST_CASE("Variant_ColorToString") {
+    Variant v(Color(255, 128, 64));
+    CHECK(v.get<String>() == "rgb(1,0.501961,0.25098)");
+}
+
+TEST_CASE("Variant_StringToColor") {
+    Variant v(String("#ff8040"));
+    Color c = v.get<Color>();
+    CHECK(c.isValid());
+    CHECK(c.r() == 255);
+    CHECK(c.g() == 128);
+    CHECK(c.b() == 64);
+}
+
+TEST_CASE("Variant_StringNameToColor") {
+    Variant v(String("red"));
+    Color c = v.get<Color>();
+    CHECK(c == Color::Red);
+}
+
+TEST_CASE("Variant_ColorEquality") {
+    CHECK(Variant(Color::White) == Variant(Color::White));
+    CHECK(Variant(Color::White) != Variant(Color::Black));
+}
+
+TEST_CASE("Variant_ColorToStandardType") {
+    Variant v(Color(255, 128, 64));
+    Variant standard = v.toStandardType();
+    CHECK(standard.type() == Variant::TypeString);
+    CHECK(standard.get<String>() == "rgb(1,0.501961,0.25098)");
+}
+
+TEST_CASE("Variant_ColorCrossTypeEquality") {
+    // Color vs String comparison via conversion
+    CHECK(Variant(Color::Red) == Variant(String("rgb(1,0,0)")));
+    CHECK(Variant(Color::White) == Variant(String("rgb(1,1,1)")));
+    CHECK(Variant(Color::Red) != Variant(String("rgb(0,1,0)")));
+}
+
+TEST_CASE("Variant_ColorCopy") {
+    Variant v1(Color(10, 20, 30, 40));
+    Variant v2 = v1;
+    CHECK(v2.type() == Variant::TypeColor);
+    CHECK(v2.get<Color>().r() == 10);
+    CHECK(v2.get<Color>().g() == 20);
+    CHECK(v2.get<Color>().b() == 30);
+    CHECK(v2.get<Color>().a() == 40);
+}
+
+TEST_CASE("Variant_ColorSet") {
+    Variant v;
+    v.set(Color::Blue);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeColor);
+    CHECK(v.get<Color>() == Color::Blue);
+}
+
+TEST_CASE("Variant_ColorTypeName") {
+    Variant v(Color::Red);
+    CHECK(String(v.typeName()) == "Color");
+}
+
+TEST_CASE("Variant_InvalidStringToColor") {
+    Variant v(String("notacolor"));
+    Error err;
+    Color c = v.get<Color>(&err);
+    // fromString returns an invalid Color for unknown strings
+    CHECK_FALSE(c.isValid());
+}
+
+TEST_CASE("Variant_ColorNamedStringConversion") {
+    // Named color strings should convert via fromString
+    Variant v(String("white"));
+    Color c = v.get<Color>();
+    CHECK(c == Color::White);
+}
+
+TEST_CASE("Variant_ColorCommaStringConversion") {
+    Variant v(String("128,64,32"));
+    Color c = v.get<Color>();
+    CHECK(c.isValid());
+    CHECK(c.r() == 128);
+    CHECK(c.g() == 64);
+    CHECK(c.b() == 32);
+}

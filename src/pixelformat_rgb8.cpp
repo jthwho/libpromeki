@@ -74,7 +74,7 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points, 
+                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points,
                                 const float *alphas, size_t count) const override {
                         size_t ret = 0;
                         const uint8_t *pdata = pixel.data();
@@ -90,6 +90,47 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                                 ret++;
                         }
                         return ret;
+                }
+
+                bool blit(const Point2Di32 &destTopLeft, const Image &src,
+                                const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const override {
+                        if(src.pixelFormat() != _pixelFormat) return false;
+
+                        const uint8_t *srcBuf = static_cast<const uint8_t *>(src.data());
+                        size_t srcStride = src.lineStride();
+
+                        int sx0 = srcTopLeft.x();
+                        int sy0 = srcTopLeft.y();
+                        if(sx0 < 0 || sy0 < 0 || sx0 >= src.width() || sy0 >= src.height()) return false;
+
+                        int srcW, srcH;
+                        if(srcSize.isValid()) {
+                                srcW = srcSize.width();
+                                srcH = srcSize.height();
+                                if(srcW + sx0 > src.width())  srcW = src.width() - sx0;
+                                if(srcH + sy0 > src.height()) srcH = src.height() - sy0;
+                        } else {
+                                srcW = src.width() - sx0;
+                                srcH = src.height() - sy0;
+                        }
+
+                        int dx = destTopLeft.x();
+                        int dy = destTopLeft.y();
+
+                        // Clip against destination
+                        if(dx < 0) { sx0 -= dx; srcW += dx; dx = 0; }
+                        if(dy < 0) { sy0 -= dy; srcH += dy; dy = 0; }
+                        if(dx + srcW > (int)size.width())  srcW = size.width() - dx;
+                        if(dy + srcH > (int)size.height()) srcH = size.height() - dy;
+                        if(srcW <= 0 || srcH <= 0) return true;
+
+                        int copyBytes = srcW * 3;
+                        for(int row = 0; row < srcH; ++row) {
+                                const uint8_t *s = srcBuf + (sy0 + row) * srcStride + sx0 * 3;
+                                uint8_t *d = buf + (dy + row) * stride + dx * 3;
+                                std::memcpy(d, s, copyBytes);
+                        }
+                        return true;
                 }
 
 };

@@ -17,6 +17,7 @@
 #include <promeki/proav/pixelformat.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/timecode.h>
+#include <promeki/core/color.h>
 #include <promeki/core/filepath.h>
 
 using namespace promeki;
@@ -785,5 +786,47 @@ TEST_CASE("TimecodeOverlayNode_DefaultConfig") {
         CHECK(cfg.get("FontSize").get<int>() == 36);
         CHECK(cfg.get("Position").get<String>() == "bottomcenter");
         CHECK(cfg.get("DrawBackground").get<bool>() == true);
-        CHECK(cfg.get("TextColorR").get<uint16_t>() == 65535);
+        CHECK(cfg.get("TextColor").get<Color>() == Color::White);
+        CHECK(cfg.get("BackgroundColor").get<Color>() == Color::Black);
+}
+
+// ============================================================================
+// Custom text color and background color
+// ============================================================================
+
+TEST_CASE("TimecodeOverlayNode_CustomColors") {
+        if(!fontAvailable()) return;
+
+        // Render with red text on green background and verify output differs
+        // from default white on black.
+        auto renderAndSum = [](Color textColor, Color bgColor) -> uint64_t {
+                MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
+                overlayCfg.set("FontPath", testFontPath);
+                overlayCfg.set("FontSize", 24);
+                overlayCfg.set("Position", "topleft");
+                overlayCfg.set("TextColor", textColor);
+                overlayCfg.set("BackgroundColor", bgColor);
+
+                ImageDesc idesc(320, 240, PixelFormat::RGB8);
+                Image img(idesc);
+                img.fill(0);
+                img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
+
+                Frame::Ptr outFrame = overlayImage(img, overlayCfg);
+                if(!outFrame.isValid()) return 0;
+                Image::Ptr outImg = outFrame->imageList()[0];
+                const uint8_t *data = (const uint8_t *)outImg->data();
+                size_t dataSize = outImg->lineStride() * outImg->height();
+                uint64_t sum = 0;
+                for(size_t i = 0; i < dataSize; i++) sum += data[i];
+                return sum;
+        };
+
+        uint64_t sumDefault = renderAndSum(Color::White, Color::Black);
+        uint64_t sumCustom = renderAndSum(Color::Red, Color::Green);
+        // Both should render something (non-zero), but different color combos
+        // produce different pixel sums
+        CHECK(sumDefault > 0);
+        CHECK(sumCustom > 0);
+        CHECK(sumDefault != sumCustom);
 }

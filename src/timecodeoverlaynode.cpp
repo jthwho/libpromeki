@@ -10,6 +10,7 @@
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/paintengine.h>
+#include <promeki/core/color.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/timecode.h>
 
@@ -38,9 +39,8 @@ MediaNodeConfig TimecodeOverlayNode::defaultConfig() const {
         MediaNodeConfig cfg("TimecodeOverlayNode", "");
         cfg.set("FontSize", 36);
         cfg.set("Position", "bottomcenter");
-        cfg.set("TextColorR", uint16_t(65535));
-        cfg.set("TextColorG", uint16_t(65535));
-        cfg.set("TextColorB", uint16_t(65535));
+        cfg.set("TextColor", Color::White);
+        cfg.set("BackgroundColor", Color::Black);
         cfg.set("DrawBackground", true);
         return cfg;
 }
@@ -57,9 +57,8 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
         _fontSize = config.get("FontSize", 36).get<int>();
         _drawBackground = config.get("DrawBackground", true).get<bool>();
         _customText = config.get("CustomText", String()).get<String>();
-        _colorR = config.get("TextColorR", uint16_t(65535)).get<uint16_t>();
-        _colorG = config.get("TextColorG", uint16_t(65535)).get<uint16_t>();
-        _colorB = config.get("TextColorB", uint16_t(65535)).get<uint16_t>();
+        _textColor = config.get("TextColor", Color::White).get<Color>();
+        _bgColor = config.get("BackgroundColor", Color::Black).get<Color>();
 
         // Parse position
         String posStr = config.get("Position", "bottomcenter").get<String>();
@@ -84,8 +83,11 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
                 return result;
         }
 
-        // Initialize FontPainter
-        _fontPainter.setFontFilename(_fontPath.toString());
+        // Initialize TextRenderer
+        _textRenderer.setFontFilename(_fontPath.toString());
+        _textRenderer.setFontSize(_fontSize);
+        _textRenderer.setForegroundColor(_textColor);
+        _textRenderer.setBackgroundColor(_bgColor);
 
         setState(Configured);
         return result;
@@ -106,7 +108,7 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
 
         // Set up paint engine on the image
         PaintEngine pe = imgMut->createPaintEngine();
-        _fontPainter.setPaintEngine(pe);
+        _textRenderer.setPaintEngine(pe);
 
         // Read timecode from Image metadata
         String tcStr;
@@ -118,8 +120,8 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
         }
 
         // Measure text to get accurate widths
-        int tcWidth = _fontPainter.measureText(tcStr, _fontSize);
-        int customWidth = _customText.isEmpty() ? 0 : _fontPainter.measureText(_customText, _fontSize);
+        int tcWidth = _textRenderer.measureText(tcStr);
+        int customWidth = _customText.isEmpty() ? 0 : _textRenderer.measureText(_customText);
         int maxTextWidth = tcWidth > customWidth ? tcWidth : customWidth;
         int lineSpacing = _fontSize / 4;
         int totalHeight = _fontSize + (_customText.isEmpty() ? 0 : lineSpacing + _fontSize);
@@ -128,10 +130,10 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
         int x = 0, y = 0;
         computePosition((int)img->width(), (int)img->height(), maxTextWidth, totalHeight, x, y);
 
-        // Draw background rectangle for legibility
+        // Draw background rectangle for legibility (padding area around text)
         if(_drawBackground) {
                 int pad = _fontSize / 4;
-                PaintEngine::Pixel bgPixel = pe.createPixel(0, 0, 0);
+                PaintEngine::Pixel bgPixel = pe.createPixel(_bgColor);
                 Rect<int32_t> bgRect(x - pad, y - _fontSize - pad,
                                      maxTextWidth + pad * 2, totalHeight + pad * 2);
                 pe.fillRect(bgPixel, bgRect);
@@ -139,13 +141,13 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
 
         // Draw timecode text, centered within the block width
         int tcX = x + (maxTextWidth - tcWidth) / 2;
-        _fontPainter.drawText(tcStr, tcX, y, _fontSize);
+        _textRenderer.drawText(tcStr, tcX, y);
 
         // Draw custom text below timecode if set, also centered
         if(!_customText.isEmpty()) {
                 int customX = x + (maxTextWidth - customWidth) / 2;
                 int customY = y + _fontSize + lineSpacing;
-                _fontPainter.drawText(_customText, customX, customY, _fontSize);
+                _textRenderer.drawText(_customText, customX, customY);
         }
 
         // Rebuild output frame with the modified image, preserving metadata

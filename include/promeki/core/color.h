@@ -23,6 +23,26 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class Color {
         public:
+                /**
+                 * @brief Output format for toString().
+                 *
+                 * Controls how a Color is serialized to a string.
+                 */
+                enum StringFormat {
+                        HexFormat,      ///< "#RRGGBB" or "#RRGGBBAA".
+                        CSVFormat,      ///< "128,64,32" or "128,64,32,200".
+                        FloatFormat,    ///< "rgb(0.502,0.251,0.125)" or "rgba(0.502,0.251,0.125,0.784)".
+                };
+
+                /**
+                 * @brief Alpha-channel inclusion policy for toString().
+                 */
+                enum AlphaMode {
+                        AlphaAuto,      ///< Include alpha only when it differs from the maximum (255).
+                        AlphaAlways,    ///< Always include alpha.
+                        AlphaNever,     ///< Never include alpha.
+                };
+
                 /** @brief Default constructor. Creates an invalid (all-zero) color. */
                 Color() = default;
 
@@ -66,6 +86,30 @@ class Color {
                  * @return The parsed Color, or an invalid Color on failure.
                  */
                 static Color fromHex(const String &hex);
+
+                /**
+                 * @brief Creates a Color from a string representation.
+                 *
+                 * Tries the following formats in order:
+                 *  1. Functional notation: "rgb(r,g,b)" or "rgba(r,g,b,a)" with
+                 *     normalized float values in the range 0.0 to 1.0.
+                 *  2. Hex string: "#RRGGBB" or "#RRGGBBAA".
+                 *  3. Named color (case-insensitive): "black", "white", "red", etc.
+                 *  4. Comma-separated integer values: "128,64,32" or "128,64,32,200".
+                 *
+                 * @param str The string to parse.
+                 * @return The parsed Color, or an invalid Color on failure.
+                 */
+                static Color fromString(const String &str);
+
+                /**
+                 * @brief Converts this color to a string representation.
+                 *
+                 * @param fmt   Output format (default: FloatFormat).
+                 * @param alpha Alpha inclusion policy (default: AlphaAuto).
+                 * @return The string representation.
+                 */
+                String toString(StringFormat fmt = FloatFormat, AlphaMode alpha = AlphaAuto) const;
 
                 /**
                  * @brief Converts this color to a hex string.

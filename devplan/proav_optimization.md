@@ -12,68 +12,43 @@ This document covers four areas of improvement: high-performance font rendering,
 
 ---
 
-## BitmapFont — Fast Native-Format Font Rendering
+## TextRenderer — Fast Cached Font Rendering
 
-FontPainter currently renders text by loading each glyph through FreeType on every `drawText()` call, extracting per-pixel alpha values, and compositing them via `PaintEngine::compositePoints()`. This works but is slow — every frame re-rasterizes glyphs and does per-pixel alpha blending through the paint engine abstraction.
-
-**Goal:** A new `BitmapFont` class that pre-renders glyphs as bitmaps in the target pixel format at construction time. Drawing a glyph becomes a simple `memcpy` (or small set of memcpys for the glyph rows) directly into the image buffer — no FreeType calls, no alpha blending, no paint engine indirection per frame.
+**Completed.** The planned `BitmapFont` class was implemented as `TextRenderer`, a cached glyph renderer that pre-renders each character cell as a native-format `Image` using `PaintEngine::createPixel()` and blits glyphs via `PaintEngine::blit()`. This approach reuses the existing PaintEngine abstraction for pixel format portability while still caching the heavy FreeType rasterization work across frames.
 
 **Files:**
-- [ ] `include/promeki/proav/bitmapfont.h`
-- [ ] `src/bitmapfont.cpp`
-- [ ] `tests/bitmapfont.cpp`
+- [x] `include/promeki/proav/textrenderer.h`
+- [x] `src/textrenderer.cpp`
+- [x] `tests/textrenderer.cpp`
 
-**Design:**
+**Completed:**
+- [x] `setFontFilename()` / `fontFilename()` — path to TrueType font file; changing invalidates the full cache (font + glyphs)
+- [x] `setFontSize()` / `fontSize()` — pixel size; changing invalidates the full cache
+- [x] `setForegroundColor(Color)` — glyph foreground color; changing invalidates the glyph pixel cache
+- [x] `setBackgroundColor(Color)` — background color; changing invalidates the glyph pixel cache
+- [x] `setPaintEngine(PaintEngine)` — target pixel format context; changing invalidates the glyph pixel cache
+- [x] `lineHeight()` / `ascender()` — font metrics, available after first draw/measure
+- [x] `drawText(text, x, y)` — renders text via per-glyph `PaintEngine::blit()`; returns false if font not loaded
+- [x] `measureText(text)` — returns pixel width without drawing; returns 0 if font not loaded
+- [x] Internal `Map<uint32_t, CachedGlyph>` — each glyph stored as a pre-rendered `Image` in the native pixel format plus an advance width
+- [x] Tiered cache invalidation: font-level (rebuilds FT_Face + all glyphs) vs pixel-level (rebuilds glyph images only, reuses FT bitmaps)
+- [x] FT_Library leak fix — library is properly freed in destructor
+- [x] Single-lookup `getGlyph()` — loads glyph into cache on first use, returns cached entry on subsequent calls
+- [x] `TimecodeOverlayNode` migrated from `FontPainter` to `TextRenderer`; `TextColor`/`BackgroundColor` config keys now accept `Color` values
 
-The key insight is that for overlay text (timecodes, labels, burn-ins), the font, size, and colors are known at configure time and don't change frame-to-frame. We can pre-render every needed glyph into the native pixel format once, then blit them with memcpy at process time.
-
-**Implementation checklist:**
-- [ ] `BitmapFont(const FilePath &fontPath, int pixelSize, const PixelFormat &pf)` — construct with font file, size, and target pixel format
-- [ ] `Error prepare(const String &charset)` — pre-render all glyphs in the given character set. Default charset covers ASCII printable (0x20-0x7E) plus common timecode characters (`:`, `;`, `.`). Uses FreeType to rasterize each glyph, then converts the alpha bitmap into the target pixel format with foreground/background colors baked in.
-- [ ] `void setForegroundColor(const Color &fg)` — glyph foreground color (must call `prepare()` again after changing)
-- [ ] `void setBackgroundColor(const Color &bg)` — glyph background color. If set, glyphs are rendered with an opaque background (no alpha blending needed at draw time). If not set, background pixels are left transparent (requires compositing at draw time — slower path).
-- [ ] `Color foregroundColor() const`
-- [ ] `Color backgroundColor() const`
-- [ ] `int pixelSize() const`
-- [ ] `PixelFormat pixelFormat() const`
-- [ ] `bool isPrepared() const`
-
-**Glyph storage:**
-- [ ] Internal `Map<uint32_t, GlyphBitmap>` keyed by Unicode codepoint
-- [ ] `struct GlyphBitmap` — pre-rendered glyph data:
-  - [ ] `Buffer data` — pixel data in target format, row-major
-  - [ ] `int width` — glyph bitmap width in pixels
-  - [ ] `int height` — glyph bitmap height in pixels
-  - [ ] `int bearingX` — horizontal offset from pen position
-  - [ ] `int bearingY` — vertical offset from baseline
-  - [ ] `int advance` — horizontal advance to next glyph position
-  - [ ] `int bytesPerRow` — stride of the glyph bitmap
-
-**Drawing API:**
-- [ ] `void drawText(uint8_t *dst, int dstStride, int x, int y, const String &text) const` — blit pre-rendered glyphs directly into a raw image buffer. Each glyph row is a memcpy from the GlyphBitmap into the destination. No PaintEngine needed.
-- [ ] `void drawText(Image &img, int x, int y, const String &text) const` — convenience that extracts the plane pointer and stride from the Image
-- [ ] `Size2Di32 measureText(const String &text) const` — compute bounding box without drawing (sum of advances + max ascent/descent)
-- [ ] `int lineHeight() const` — total line height (ascent + descent + leading)
-- [ ] `int ascent() const`
-- [ ] `int descent() const`
-
-**Performance characteristics:**
-- `prepare()` is slow (FreeType rasterization + format conversion) — called once at configure time
-- `drawText()` is fast — one memcpy per glyph row, no branches, no alpha math when background color is set
-- For opaque-background mode: each glyph is fully pre-composited, draw is pure memcpy
-- For transparent-background mode: falls back to a simple per-pixel copy-if-nonzero loop (still much faster than FreeType re-rasterization)
-- Memory cost: ~(charsetSize * pixelSize^2 * bytesPerPixel) — negligible for typical use
-
-**Migration:**
-- [ ] Update `TimecodeOverlayNode` to use `BitmapFont` instead of `FontPainter` — create `BitmapFont` in `configure()` with the image's pixel format, then use `drawText()` directly in `process()`
-- [ ] `FontPainter` remains available for dynamic / one-shot text rendering where pre-rendering doesn't make sense
+**Performance note:** `TextRenderer` uses `PaintEngine::blit()` for glyph blitting rather than direct `memcpy`. For a future ultra-low-latency path, a `BitmapFont` variant that bypasses PaintEngine and writes directly into the image buffer could be implemented, but `TextRenderer` is sufficient for current overlay use cases.
 
 **Doctest:**
-- [ ] Construct BitmapFont, prepare ASCII charset
-- [ ] Measure text, verify dimensions are reasonable
-- [ ] Draw text into a test image, verify pixels are non-zero in expected region
-- [ ] Verify opaque background mode produces fully opaque glyph regions
-- [ ] Round-trip: same text drawn twice at same position produces identical pixels
+- [x] Default construction, getters
+- [x] setFontFilename / setFontSize (no-op when same value)
+- [x] `drawText` / `measureText` without font — returns false/0
+- [x] `drawText` / `measureText` with bad font path — returns false/0
+- [x] Font metrics after loading (lineHeight > 0, ascender > 0, lineHeight >= ascender)
+- [x] `measureText("")` returns 0; single char > 0; longer string wider
+- [x] Monospace character widths equal (Fira Code)
+- [x] `drawText` changes pixels; different color combos produce different sums
+- [x] `drawText` on RGBA8 image
+- [x] Cache invalidation: changing font size produces different glyph widths; changing to invalid font path returns 0
 
 ---
 

@@ -5,10 +5,10 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <cstdio>
-#include <cstring>
 #include <cmath>
 #include <promeki/core/color.h>
+#include <promeki/core/error.h>
+#include <promeki/core/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -26,30 +26,144 @@ const Color Color::Orange(255, 165, 0);
 const Color Color::Transparent(0, 0, 0, 0);
 const Color Color::Ignored;
 
-Color Color::fromHex(const String &hex) {
-        const char *str = hex.cstr();
-        if(str == nullptr || str[0] != '#') return Color();
-        size_t len = std::strlen(str + 1);
-        unsigned int rv = 0, gv = 0, bv = 0, av = 255;
-        if(len == 6) {
-                if(std::sscanf(str, "#%02x%02x%02x", &rv, &gv, &bv) != 3) return Color();
-        } else if(len == 8) {
-                if(std::sscanf(str, "#%02x%02x%02x%02x", &rv, &gv, &bv, &av) != 4) return Color();
-        } else {
+static Color parseFloatFunc(const String &str) {
+        // Parse "rgb(r,g,b)" or "rgba(r,g,b,a)" with normalized 0.0-1.0 values
+        String lower = str.toLower().trim();
+        bool hasAlpha = lower.startsWith("rgba(");
+        bool isRgb = lower.startsWith("rgb(");
+        if(!hasAlpha && !isRgb) return Color();
+        if(!lower.endsWith(")")) return Color();
+
+        size_t prefixLen = hasAlpha ? 5 : 4;
+        String inner = lower.mid(prefixLen, lower.length() - prefixLen - 1);
+        StringList parts = inner.split(",");
+
+        if(hasAlpha && parts.size() != 4) return Color();
+        if(!hasAlpha && parts.size() != 3) return Color();
+
+        Error err;
+        double rv = parts[0].trim().toDouble(&err); if(err.isError()) return Color();
+        double gv = parts[1].trim().toDouble(&err); if(err.isError()) return Color();
+        double bv = parts[2].trim().toDouble(&err); if(err.isError()) return Color();
+        double av = 1.0;
+        if(hasAlpha) {
+                av = parts[3].trim().toDouble(&err);
+                if(err.isError()) return Color();
+        }
+        if(rv < 0.0 || rv > 1.0 || gv < 0.0 || gv > 1.0 ||
+           bv < 0.0 || bv > 1.0 || av < 0.0 || av > 1.0) {
                 return Color();
         }
-        return Color(static_cast<uint8_t>(rv), static_cast<uint8_t>(gv),
-                     static_cast<uint8_t>(bv), static_cast<uint8_t>(av));
+        return Color(
+                static_cast<uint8_t>(std::round(rv * 255.0)),
+                static_cast<uint8_t>(std::round(gv * 255.0)),
+                static_cast<uint8_t>(std::round(bv * 255.0)),
+                static_cast<uint8_t>(std::round(av * 255.0))
+        );
+}
+
+Color Color::fromString(const String &str) {
+        if(str.isEmpty()) return Color();
+
+        // Try functional notation: rgb(...) / rgba(...)
+        {
+                Color c = parseFloatFunc(str);
+                if(c.isValid()) return c;
+        }
+
+        // Try hex format
+        if(str.charAt(0) == '#') return fromHex(str);
+
+        // Try named colors (case-insensitive)
+        String lower = str.toLower();
+        if(lower == "black")       return Black;
+        if(lower == "white")       return White;
+        if(lower == "red")         return Red;
+        if(lower == "green")       return Green;
+        if(lower == "blue")        return Blue;
+        if(lower == "yellow")      return Yellow;
+        if(lower == "cyan")        return Cyan;
+        if(lower == "magenta")     return Magenta;
+        if(lower == "darkgray" || lower == "darkgrey")   return DarkGray;
+        if(lower == "lightgray" || lower == "lightgrey") return LightGray;
+        if(lower == "orange")      return Orange;
+        if(lower == "transparent") return Transparent;
+
+        // Try comma-separated integer R,G,B or R,G,B,A
+        StringList parts = str.split(",");
+        if(parts.size() == 3 || parts.size() == 4) {
+                Error err;
+                int r = parts[0].trim().toInt(&err); if(err.isError()) return Color();
+                int g = parts[1].trim().toInt(&err); if(err.isError()) return Color();
+                int b = parts[2].trim().toInt(&err); if(err.isError()) return Color();
+                int a = 255;
+                if(parts.size() == 4) {
+                        a = parts[3].trim().toInt(&err);
+                        if(err.isError()) return Color();
+                }
+                if(r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 255) {
+                        return Color();
+                }
+                return Color(r, g, b, a);
+        }
+
+        return Color();
+}
+
+static int parseHexByte(const String &str, size_t offset) {
+        int hi = str.charAt(offset).hexDigitValue();
+        int lo = str.charAt(offset + 1).hexDigitValue();
+        if(hi < 0 || lo < 0) return -1;
+        return (hi << 4) | lo;
+}
+
+Color Color::fromHex(const String &hex) {
+        if(hex.isEmpty() || hex.charAt(0) != '#') return Color();
+        size_t len = hex.length() - 1;
+        if(len != 6 && len != 8) return Color();
+
+        int rv = parseHexByte(hex, 1); if(rv < 0) return Color();
+        int gv = parseHexByte(hex, 3); if(gv < 0) return Color();
+        int bv = parseHexByte(hex, 5); if(bv < 0) return Color();
+        int av = 255;
+        if(len == 8) {
+                av = parseHexByte(hex, 7);
+                if(av < 0) return Color();
+        }
+        return Color(rv, gv, bv, av);
+}
+
+String Color::toString(StringFormat fmt, AlphaMode alpha) const {
+        bool includeAlpha;
+        switch(alpha) {
+                case AlphaAlways: includeAlpha = true; break;
+                case AlphaNever:  includeAlpha = false; break;
+                default:          includeAlpha = (_a != 255); break;
+        }
+
+        switch(fmt) {
+                case HexFormat:
+                        return toHex(includeAlpha);
+
+                case CSVFormat:
+                        if(includeAlpha)
+                                return String::sprintf("%u,%u,%u,%u", _r, _g, _b, _a);
+                        return String::sprintf("%u,%u,%u", _r, _g, _b);
+
+                case FloatFormat:
+                        if(includeAlpha)
+                                return String::sprintf("rgba(%.6g,%.6g,%.6g,%.6g)",
+                                        _r / 255.0, _g / 255.0, _b / 255.0, _a / 255.0);
+                        return String::sprintf("rgb(%.6g,%.6g,%.6g)",
+                                _r / 255.0, _g / 255.0, _b / 255.0);
+        }
+        return String();
 }
 
 String Color::toHex(bool includeAlpha) const {
-        char buf[10];
-        if(includeAlpha) {
-                std::snprintf(buf, sizeof(buf), "#%02x%02x%02x%02x", _r, _g, _b, _a);
-        } else {
-                std::snprintf(buf, sizeof(buf), "#%02x%02x%02x", _r, _g, _b);
-        }
-        return String(buf);
+        if(includeAlpha)
+                return String::sprintf("#%02x%02x%02x%02x", _r, _g, _b, _a);
+        return String::sprintf("#%02x%02x%02x", _r, _g, _b);
 }
 
 Color Color::lerp(const Color &other, double t) const {

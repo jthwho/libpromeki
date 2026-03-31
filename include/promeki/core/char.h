@@ -61,6 +61,24 @@ class Char {
                 /** @brief Returns true if the character is printable. */
                 bool isPrintable() const;
 
+                /** @brief Returns true if the character is a hexadecimal digit (0-9, a-f, A-F). */
+                bool isHexDigit() const {
+                        return (_cp >= '0' && _cp <= '9') ||
+                               (_cp >= 'a' && _cp <= 'f') ||
+                               (_cp >= 'A' && _cp <= 'F');
+                }
+
+                /**
+                 * @brief Returns the numeric value of this hex digit.
+                 * @return 0-15 for valid hex digits, or -1 if not a hex digit.
+                 */
+                int hexDigitValue() const {
+                        if(_cp >= '0' && _cp <= '9') return _cp - '0';
+                        if(_cp >= 'a' && _cp <= 'f') return 10 + _cp - 'a';
+                        if(_cp >= 'A' && _cp <= 'F') return 10 + _cp - 'A';
+                        return -1;
+                }
+
                 /** @brief Returns the uppercase version of this character. */
                 Char toUpper() const;
 

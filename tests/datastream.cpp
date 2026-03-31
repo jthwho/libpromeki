@@ -16,6 +16,7 @@
 #include <promeki/core/uuid.h>
 #include <promeki/core/timecode.h>
 #include <promeki/core/datetime.h>
+#include <promeki/core/color.h>
 
 using namespace promeki;
 
@@ -865,4 +866,54 @@ TEST_CASE("DataStream: device accessor") {
         WriterFixture f;
         DataStream ds(&f.dev);
         CHECK(ds.device() == &f.dev);
+}
+
+// ============================================================================
+// round-trip Variant Color
+// ============================================================================
+
+TEST_CASE("DataStream: round-trip Variant Color") {
+        WriterFixture f;
+        Color c(128, 64, 32, 200);
+        Variant vc(c);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << vc;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant val;
+                rs >> val;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(val.type() == Variant::TypeColor);
+                Color out = val.get<Color>();
+                CHECK(out.r() == 128);
+                CHECK(out.g() == 64);
+                CHECK(out.b() == 32);
+                CHECK(out.a() == 200);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant Color named constants") {
+        WriterFixture f;
+        Variant vc(Color::White);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << vc;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant val;
+                rs >> val;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(val.type() == Variant::TypeColor);
+                Color out = val.get<Color>();
+                CHECK(out.r() == 255);
+                CHECK(out.g() == 255);
+                CHECK(out.b() == 255);
+        }
 }

@@ -103,6 +103,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                 }
 
                 bool blit(const Point2Di32 &dpt, const Image &src, const Point2Di32 &spt, const Size2Du32 &ssz) const override {
+                        if(src.pixelFormat() != _pixelFormat) return false;
                         static const int bytesPerPixel = 4;
                         const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t srcStride = src.lineStride(0);

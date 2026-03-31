@@ -426,6 +426,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeUUID:
                 case Variant::TypeTimecode:
                 case Variant::TypeRational:
+                case Variant::TypeColor:
                         writeStringData(val.get<String>());
                         break;
         }
@@ -599,6 +600,11 @@ DataStream &DataStream::operator>>(Variant &val) {
                                 if(err.isError()) val = v;
                                 else val = tc;
                         }
+                        break;
+                }
+                case Variant::TypeColor: {
+                        String v = readStringData();
+                        if(_status == Ok) val = Color::fromString(v);
                         break;
                 }
                 default:

@@ -11,12 +11,12 @@
 #include <promeki/core/string.h>
 #include <promeki/core/filepath.h>
 #include <promeki/proav/medianode.h>
-#include <promeki/proav/fontpainter.h>
+#include <promeki/proav/textrenderer.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Burns timecode text into video frames using FontPainter.
+ * @brief Burns timecode text into video frames using TextRenderer.
  * @ingroup proav_pipeline
  *
  * Processing node with one Image input and one Image output. Reads
@@ -30,10 +30,9 @@ PROMEKI_NAMESPACE_BEGIN
  *   Values: topleft, topcenter, topright, bottomleft, bottomcenter, bottomright.
  * - `CustomX` (int): Custom X position (only used with position "custom").
  * - `CustomY` (int): Custom Y position (only used with position "custom").
- * - `TextColorR` (uint16_t): Red component 0-65535 (default: 65535).
- * - `TextColorG` (uint16_t): Green component 0-65535 (default: 65535).
- * - `TextColorB` (uint16_t): Blue component 0-65535 (default: 65535).
- * - `DrawBackground` (bool): Draw dark background behind text (default: true).
+ * - `TextColor` (Color): Text color (default: Color::White).
+ * - `BackgroundColor` (Color): Background color (default: Color::Black).
+ * - `DrawBackground` (bool): Draw padded background behind text (default: true).
  * - `CustomText` (String): Additional text to render below timecode.
  *
  * @par Example
@@ -79,13 +78,12 @@ class TimecodeOverlayNode : public MediaNode {
                 Position        _position = BottomCenter;
                 int             _customX = 0;
                 int             _customY = 0;
-                uint16_t        _colorR = 65535;
-                uint16_t        _colorG = 65535;
-                uint16_t        _colorB = 65535;
+                Color           _textColor = Color::White;
+                Color           _bgColor = Color::Black;
                 bool            _drawBackground = true;
                 String          _customText;
 
-                FontPainter     _fontPainter;
+                TextRenderer    _textRenderer;
 
                 static bool parsePosition(const String &str, Position &out);
 

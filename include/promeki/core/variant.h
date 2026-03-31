@@ -19,6 +19,7 @@
 #include <promeki/core/timecode.h>
 #include <promeki/core/rational.h>
 #include <promeki/core/stringlist.h>
+#include <promeki/core/color.h>
 #include <promeki/core/list.h>
 #include <promeki/thirdparty/nlohmann/json.hpp>
 
@@ -59,6 +60,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeTimecode  | `Timecode`          |
  * | TypeRational  | `Rational<int>`     |
  * | TypeStringList| `StringList`        |
+ * | TypeColor     | `Color`             |
  */
 #define PROMEKI_VARIANT_TYPES           \
         X(TypeInvalid, std::monostate)  \
@@ -80,7 +82,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeUUID, UUID)               \
         X(TypeTimecode, Timecode)       \
         X(TypeRational, Rational<int>)  \
-        X(TypeStringList, StringList)
+        X(TypeStringList, StringList)   \
+        X(TypeColor, Color)
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
@@ -311,6 +314,9 @@ template <typename... Types> class VariantImpl {
                                 } else if constexpr (std::is_same_v<To, StringList>) {
                                         if constexpr (std::is_same_v<From, String>) return arg.split(",");
 
+                                } else if constexpr (std::is_same_v<To, Color>) {
+                                        if constexpr (std::is_same_v<From, String>) return Color::fromString(arg);
+
                                 } else if constexpr (std::is_same_v<To, String>) {
                                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -330,6 +336,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first;
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
                                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
+                                        if constexpr (std::is_same_v<From, Color>) return arg.toString();
 
                                 }
                                 if(err != nullptr) *err = Error::Invalid;
@@ -367,6 +374,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeTimecode:
                                 case TypeRational:
                                 case TypeStringList:
+                                case TypeColor:
                                         return get<String>();
                                         break;
                         }

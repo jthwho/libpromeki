@@ -49,6 +49,22 @@ Tests: `tests/size2d.cpp` and `tests/timestamp.cpp` — equality test cases adde
 
 ---
 
+### Color Generalization
+
+Planned refactor to make `Color` precision-independent and support multiple color models beyond 8-bit RGBA:
+
+- [ ] Internal representation: switch from `uint8_t` RGBA to normalized `double` (or `float`) components
+- [ ] Support additional color models (HSL, XYZ, etc.) with a model identifier
+- [ ] Extend `StringFormat::FloatFormat` to emit the active color model prefix (e.g., `hsl(...)`, `xyz(...)`)
+- [ ] Update `fromString()` to parse all supported model prefixes
+- [ ] Preserve backwards compatibility for 8-bit convenience constructors and accessors
+- [ ] Update `PaintEngine::createPixel(Color)` to work with the new internal representation
+- [ ] Update tests
+
+**Preparation already done:** `toString()` now defaults to `FloatFormat` with `rgb()`/`rgba()` functional notation, and `fromString()` auto-detects this format. `StringFormat` and `AlphaMode` enums provide extensible serialization control.
+
+---
+
 ### Result\<T\> Adoption
 
 Migrate existing `std::pair<T, Error>` returns to `Result<T>` as classes are touched:

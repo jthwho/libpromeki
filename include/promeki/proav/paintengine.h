@@ -14,6 +14,7 @@
 #include <promeki/core/point.h>
 #include <promeki/core/line.h>
 #include <promeki/core/rect.h>
+#include <promeki/core/color.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -288,6 +289,26 @@ class PaintEngine {
                  */
                 Pixel createPixel(uint16_t c1, uint16_t c2, uint16_t c3, uint16_t c4) const {
                         uint16_t data[] = { c1, c2, c3, c4 };
+                        return d->createPixel(data, 4);
+                }
+
+                /**
+                 * @brief Creates a Pixel from a Color value.
+                 *
+                 * Converts 8-bit Color components to 16-bit and delegates
+                 * to the format-specific createPixel().  If the Color has an
+                 * alpha channel and the format supports it, alpha is included.
+                 *
+                 * @param color The Color to convert.
+                 * @return A Pixel suitable for drawing on this engine.
+                 */
+                Pixel createPixel(const Color &color) const {
+                        uint16_t data[] = {
+                                static_cast<uint16_t>(color.r() * 257u),
+                                static_cast<uint16_t>(color.g() * 257u),
+                                static_cast<uint16_t>(color.b() * 257u),
+                                static_cast<uint16_t>(color.a() * 257u)
+                        };
                         return d->createPixel(data, 4);
                 }
 

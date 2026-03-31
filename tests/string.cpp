@@ -91,6 +91,31 @@ TEST_CASE("Char_Utf8RoundTrip") {
         CHECK(br == 4);
 }
 
+TEST_CASE("Char_IsHexDigit") {
+        CHECK(Char('0').isHexDigit());
+        CHECK(Char('9').isHexDigit());
+        CHECK(Char('a').isHexDigit());
+        CHECK(Char('f').isHexDigit());
+        CHECK(Char('A').isHexDigit());
+        CHECK(Char('F').isHexDigit());
+        CHECK_FALSE(Char('g').isHexDigit());
+        CHECK_FALSE(Char('G').isHexDigit());
+        CHECK_FALSE(Char(' ').isHexDigit());
+        CHECK_FALSE(Char('/').isHexDigit());
+        CHECK_FALSE(Char(':').isHexDigit());
+}
+
+TEST_CASE("Char_HexDigitValue") {
+        CHECK(Char('0').hexDigitValue() == 0);
+        CHECK(Char('9').hexDigitValue() == 9);
+        CHECK(Char('a').hexDigitValue() == 10);
+        CHECK(Char('f').hexDigitValue() == 15);
+        CHECK(Char('A').hexDigitValue() == 10);
+        CHECK(Char('F').hexDigitValue() == 15);
+        CHECK(Char('g').hexDigitValue() == -1);
+        CHECK(Char(' ').hexDigitValue() == -1);
+}
+
 // ============================================================================
 // Construction
 // ============================================================================
