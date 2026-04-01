@@ -29,6 +29,8 @@ Application::~Application() {
         delete data().mainThread;
         data().mainThread = nullptr;
         data().arguments.clear();
+        data().exitCode = 0;
+        data().shouldQuit = false;
         return;
 }
 
@@ -73,6 +75,20 @@ IODevice *Application::stdoutDevice() {
 
 IODevice *Application::stderrDevice() {
         return FileIODevice::stderrDevice();
+}
+
+void Application::quit(int exitCode) {
+        data().exitCode = exitCode;
+        data().shouldQuit = true;
+        return;
+}
+
+bool Application::shouldQuit() {
+        return data().shouldQuit;
+}
+
+int Application::exitCode() {
+        return data().exitCode;
 }
 
 PROMEKI_NAMESPACE_END

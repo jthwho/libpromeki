@@ -24,6 +24,7 @@ option(PROMEKI_BUILD_NETWORK "Build the promeki-network library" ON)
 option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
 option(PROMEKI_BUILD_DEMOS  "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
+option(PROMEKI_BUILD_SDL    "Build the promeki-sdl library"    OFF)
 option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
 
 find_package(Git QUIET REQUIRED)
@@ -122,6 +123,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/fnv1a.h
     include/promeki/core/fourcc.h
     include/promeki/core/framerate.h
+    include/promeki/core/layout.h
     include/promeki/core/json.h
     include/promeki/core/line.h
     include/promeki/core/list.h
@@ -166,6 +168,7 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/mutex.h
     include/promeki/core/readwritelock.h
     include/promeki/core/waitcondition.h
+    include/promeki/core/widget.h
     include/promeki/core/atomic.h
     include/promeki/core/future.h
     include/promeki/core/promise.h
@@ -230,6 +233,7 @@ set(PROMEKI_CORE_SOURCES
     src/timecode.cpp
     src/timecodegenerator.cpp
     src/variant.cpp
+    src/widget.cpp
     src/metadata.cpp
     src/cmdlineparser.cpp
     src/file.cpp
@@ -244,6 +248,7 @@ set(PROMEKI_CORE_SOURCES
     src/process.cpp
     src/json.cpp
     src/framerate.cpp
+    src/layout.cpp
     src/rect.cpp
     src/color.cpp
     src/terminal.cpp
@@ -623,7 +628,7 @@ if(PROMEKI_BUILD_TUI)
         src/tui/screen.cpp
         src/tui/widget.cpp
         src/tui/painter.cpp
-        src/tui/layout.cpp
+        #src/tui/layout.cpp  # moved to core
         src/tui/application.cpp
         src/tui/label.cpp
         src/tui/button.cpp
@@ -655,6 +660,50 @@ if(PROMEKI_BUILD_TUI)
     )
     target_link_libraries(promeki-tui PUBLIC promeki-core)
     target_compile_definitions(promeki-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+endif()
+
+# SDL Library ##################################################################
+
+if(PROMEKI_BUILD_SDL)
+    if(NOT PROMEKI_BUILD_PROAV)
+        message(FATAL_ERROR "promeki-sdl requires promeki-proav (PROMEKI_BUILD_PROAV=ON)")
+    endif()
+
+    find_package(SDL3 REQUIRED)
+
+    set(PROMEKI_SDL_HEADERS
+        include/promeki/sdl/sdlapplication.h
+        include/promeki/sdl/sdlwindow.h
+        include/promeki/sdl/sdleventpump.h
+        include/promeki/sdl/sdlvideowidget.h
+        include/promeki/sdl/sdlaudiooutput.h
+        include/promeki/sdl/sdldisplaynode.h
+    )
+
+    set(PROMEKI_SDL_SOURCES
+        src/sdl/sdlapplication.cpp
+        src/sdl/sdlwindow.cpp
+        src/sdl/sdleventpump.cpp
+        src/sdl/sdlvideowidget.cpp
+        src/sdl/sdlaudiooutput.cpp
+        src/sdl/sdldisplaynode.cpp
+    )
+
+    add_library(promeki-sdl SHARED ${PROMEKI_SDL_SOURCES})
+    add_library(promeki::sdl ALIAS promeki-sdl)
+    set_target_properties(promeki-sdl PROPERTIES
+        VERSION ${APP_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        OUTPUT_NAME promeki-sdl
+        EXPORT_NAME sdl
+    )
+    target_include_directories(promeki-sdl PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+    target_link_libraries(promeki-sdl PUBLIC promeki-proav)
+    target_link_libraries(promeki-sdl PUBLIC SDL3::SDL3)
+    target_compile_definitions(promeki-sdl PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
 # Network Library ##############################################################
@@ -836,6 +885,25 @@ if(PROMEKI_BUILD_MUSIC)
     )
     install(EXPORT promeki-music-targets
         FILE promeki-music-targets.cmake
+        NAMESPACE promeki::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
+    )
+endif()
+
+# SDL library and headers
+if(PROMEKI_BUILD_SDL)
+    install(TARGETS promeki-sdl
+        EXPORT promeki-sdl-targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+    install(FILES ${PROMEKI_SDL_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/sdl
+    )
+    install(EXPORT promeki-sdl-targets
+        FILE promeki-sdl-targets.cmake
         NAMESPACE promeki::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
     )
@@ -1091,6 +1159,18 @@ if(PROMEKI_BUILD_TESTS)
         add_test(NAME unittest-music COMMAND unittest-music)
     endif()
 
+    if(PROMEKI_BUILD_SDL)
+        set(UNITTEST_SDL_SOURCES
+            tests/doctest_main.cpp
+            tests/sdl/sdlrenderer.cpp
+        )
+        add_executable(unittest-sdl ${UNITTEST_SDL_SOURCES})
+        target_compile_definitions(unittest-sdl PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_include_directories(unittest-sdl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+        target_link_libraries(unittest-sdl PRIVATE promeki-sdl)
+        add_test(NAME unittest-sdl COMMAND unittest-sdl)
+    endif()
+
     # Run tests as part of the normal build
     add_custom_target(run-tests ALL
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
@@ -1099,6 +1179,7 @@ if(PROMEKI_BUILD_TESTS)
             $<$<BOOL:${PROMEKI_BUILD_TUI}>:unittest-tui>
             $<$<BOOL:${PROMEKI_BUILD_NETWORK}>:unittest-network>
             $<$<BOOL:${PROMEKI_BUILD_MUSIC}>:unittest-music>
+            $<$<BOOL:${PROMEKI_BUILD_SDL}>:unittest-sdl>
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running unit tests"
     )
@@ -1173,6 +1254,19 @@ if(PROMEKI_BUILD_NETWORK)
         list(APPEND PROMEKI_CLEAN_DIRS
             ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-network.dir
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-network
+        )
+    endif()
+endif()
+
+if(PROMEKI_BUILD_SDL)
+    list(APPEND PROMEKI_CLEAN_DIRS
+        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-sdl.dir
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-sdl*
+    )
+    if(PROMEKI_BUILD_TESTS)
+        list(APPEND PROMEKI_CLEAN_DIRS
+            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-sdl.dir
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-sdl
         )
     endif()
 endif()

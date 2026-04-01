@@ -755,7 +755,7 @@ TEST_CASE("TestPatternNode_DefaultConfig") {
         CHECK(cfg.type() == "TestPatternNode");
         CHECK(cfg.get("Width").get<uint32_t>() == 1920);
         CHECK(cfg.get("Height").get<uint32_t>() == 1080);
-        CHECK(cfg.get("FrameRate").get<String>() == "29.97");
+        CHECK(cfg.get("FrameRate").get<FrameRate>() == FrameRate(FrameRate::FPS_2997));
         CHECK(cfg.get("Pattern").get<String>() == "colorbars");
         CHECK(cfg.get("AudioEnabled").get<bool>() == true);
         CHECK(cfg.get("AudioMode").get<String>() == "tone");

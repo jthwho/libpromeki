@@ -6,6 +6,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cstdlib>
+#include <cstring>
 #include <promeki/core/framerate.h>
 #include <promeki/core/structdatabase.h>
 
@@ -48,6 +50,30 @@ FrameRate::FrameRate(const RationalType &r) :
     }
 }
 
+
+Result<FrameRate> FrameRate::fromString(const String &str) {
+        // Try well-known rate names first
+        for(const auto &pair : db.database()) {
+                if(pair.second.name == str) {
+                        return makeResult(FrameRate(pair.first));
+                }
+        }
+
+        // Also accept "23.976" as an alias for "23.98"
+        if(str == "23.976") return makeResult(FrameRate(FPS_2398));
+
+        // Try fraction form: num/den
+        const char *slash = strchr(str.cstr(), '/');
+        if(slash) {
+                unsigned int num = static_cast<unsigned int>(atoi(str.cstr()));
+                unsigned int den = static_cast<unsigned int>(atoi(slash + 1));
+                if(num > 0 && den > 0) {
+                        return makeResult(FrameRate(RationalType(num, den)));
+                }
+        }
+
+        return makeError<FrameRate>(Error::Invalid);
+}
 
 PROMEKI_NAMESPACE_END
 

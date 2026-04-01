@@ -116,8 +116,6 @@ class TestPatternNode : public MediaNode {
                 uint64_t                _statsFrameCount = 0;
                 Timecode                _statsTimecode;
 
-                // Config parsing helpers
-                static bool parseFrameRate(const String &str, FrameRate &out);
 };
 
 PROMEKI_NAMESPACE_END

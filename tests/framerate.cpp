@@ -95,3 +95,108 @@ TEST_CASE("FrameRate: toString") {
         String s = fr.toString();
         CHECK_FALSE(s.isEmpty());
 }
+
+TEST_CASE("FrameRate: rational() accessor") {
+        FrameRate fr(FrameRate::FPS_2997);
+        const FrameRate::RationalType &r = fr.rational();
+        CHECK(r.numerator() == 30000);
+        CHECK(r.denominator() == 1001);
+}
+
+TEST_CASE("FrameRate: operator== and operator!=") {
+        FrameRate a(FrameRate::FPS_24);
+        FrameRate b(FrameRate::FPS_24);
+        FrameRate c(FrameRate::FPS_25);
+
+        CHECK(a == b);
+        CHECK_FALSE(a == c);
+        CHECK(a != c);
+        CHECK_FALSE(a != b);
+
+        // Same rational from different construction paths
+        FrameRate::RationalType r(24, 1);
+        FrameRate d(r);
+        CHECK(a == d);
+}
+
+TEST_CASE("FrameRate: fromString well-known names") {
+        SUBCASE("24") {
+                auto [fr, e] = FrameRate::fromString("24");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_24));
+        }
+        SUBCASE("25") {
+                auto [fr, e] = FrameRate::fromString("25");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_25));
+        }
+        SUBCASE("29.97") {
+                auto [fr, e] = FrameRate::fromString("29.97");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_2997));
+        }
+        SUBCASE("30") {
+                auto [fr, e] = FrameRate::fromString("30");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_30));
+        }
+        SUBCASE("50") {
+                auto [fr, e] = FrameRate::fromString("50");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_50));
+        }
+        SUBCASE("59.94") {
+                auto [fr, e] = FrameRate::fromString("59.94");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_5994));
+        }
+        SUBCASE("60") {
+                auto [fr, e] = FrameRate::fromString("60");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_60));
+        }
+        SUBCASE("23.98") {
+                auto [fr, e] = FrameRate::fromString("23.98");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_2398));
+        }
+        SUBCASE("23.976 alias") {
+                auto [fr, e] = FrameRate::fromString("23.976");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_2398));
+        }
+}
+
+TEST_CASE("FrameRate: fromString fraction form") {
+        SUBCASE("30000/1001") {
+                auto [fr, e] = FrameRate::fromString("30000/1001");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_2997));
+        }
+        SUBCASE("48/1") {
+                auto [fr, e] = FrameRate::fromString("48/1");
+                CHECK_FALSE(e.isError());
+                CHECK(fr.numerator() == 48);
+                CHECK(fr.denominator() == 1);
+        }
+        SUBCASE("24000/1001 (23.976)") {
+                auto [fr, e] = FrameRate::fromString("24000/1001");
+                CHECK_FALSE(e.isError());
+                CHECK(fr == FrameRate(FrameRate::FPS_2398));
+        }
+}
+
+TEST_CASE("FrameRate: fromString invalid") {
+        SUBCASE("empty string") {
+                auto [fr, e] = FrameRate::fromString("");
+                CHECK(e.isError());
+        }
+        SUBCASE("garbage string") {
+                auto [fr, e] = FrameRate::fromString("not_a_rate");
+                CHECK(e.isError());
+        }
+        SUBCASE("zero denominator") {
+                auto [fr, e] = FrameRate::fromString("30/0");
+                CHECK(e.isError());
+        }
+}

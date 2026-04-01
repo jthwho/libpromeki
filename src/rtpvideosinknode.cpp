@@ -6,7 +6,6 @@
  */
 
 #include <cstdio>
-#include <cstring>
 #include <promeki/proav/rtpvideosinknode.h>
 #include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/frame.h>
@@ -24,28 +23,6 @@ RtpVideoSinkNode::RtpVideoSinkNode(ObjectBase *parent) : MediaNode(parent) {
 
 RtpVideoSinkNode::~RtpVideoSinkNode() {
         delete _session;
-}
-
-bool RtpVideoSinkNode::parseFrameRate(const String &str, FrameRate &out) {
-        if(str == "23.976" || str == "23.98") { out = FrameRate(FrameRate::FPS_2398); return true; }
-        if(str == "24")                       { out = FrameRate(FrameRate::FPS_24);   return true; }
-        if(str == "25")                       { out = FrameRate(FrameRate::FPS_25);   return true; }
-        if(str == "29.97")                    { out = FrameRate(FrameRate::FPS_2997); return true; }
-        if(str == "30")                       { out = FrameRate(FrameRate::FPS_30);   return true; }
-        if(str == "50")                       { out = FrameRate(FrameRate::FPS_50);   return true; }
-        if(str == "59.94")                    { out = FrameRate(FrameRate::FPS_5994); return true; }
-        if(str == "60")                       { out = FrameRate(FrameRate::FPS_60);   return true; }
-
-        const char *slash = strchr(str.cstr(), '/');
-        if(slash) {
-                unsigned int num = static_cast<unsigned int>(atoi(str.cstr()));
-                unsigned int den = static_cast<unsigned int>(atoi(slash + 1));
-                if(num > 0 && den > 0) {
-                        out = FrameRate(FrameRate::RationalType(num, den));
-                        return true;
-                }
-        }
-        return false;
 }
 
 MediaNodeConfig RtpVideoSinkNode::defaultConfig() const {
@@ -92,13 +69,7 @@ BuildResult RtpVideoSinkNode::build(const MediaNodeConfig &config) {
         }
 
         // Parse frame rate
-        String fpsStr = config.get("FrameRate", String()).get<String>();
-        if(!fpsStr.isEmpty()) {
-                if(!parseFrameRate(fpsStr, _frameRate)) {
-                        result.addError("Invalid frame rate: " + fpsStr);
-                        return result;
-                }
-        }
+        _frameRate = config.get("FrameRate", FrameRate()).get<FrameRate>();
 
         // Accept RTP payload handler passed as uint64_t (pointer cast)
         Variant payloadVar = config.get("RtpPayload");

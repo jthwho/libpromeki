@@ -80,3 +80,36 @@ TEST_CASE("Application: not copyable or movable") {
         CHECK_FALSE(std::is_copy_assignable_v<Application>);
         CHECK_FALSE(std::is_move_assignable_v<Application>);
 }
+
+TEST_CASE("Application: quit and shouldQuit") {
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        CHECK_FALSE(Application::shouldQuit());
+        CHECK(Application::exitCode() == 0);
+
+        Application::quit();
+        CHECK(Application::shouldQuit());
+        CHECK(Application::exitCode() == 0);
+}
+
+TEST_CASE("Application: quit with non-zero exit code") {
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        CHECK_FALSE(Application::shouldQuit());
+        Application::quit(42);
+        CHECK(Application::shouldQuit());
+        CHECK(Application::exitCode() == 42);
+}
+
+TEST_CASE("Application: exitCode default is zero") {
+        char arg0[] = "test";
+        char *argv[] = { arg0 };
+        Application app(1, argv);
+
+        CHECK(Application::exitCode() == 0);
+        CHECK_FALSE(Application::shouldQuit());
+}

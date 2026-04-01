@@ -422,3 +422,116 @@ TEST_CASE("Variant_ColorCommaStringConversion") {
     CHECK(c.g() == 64);
     CHECK(c.b() == 32);
 }
+
+// ============================================================================
+// FrameRate
+// ============================================================================
+
+TEST_CASE("Variant_FrameRate_Store") {
+    Variant v(FrameRate(FrameRate::FPS_2997));
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeFrameRate);
+    CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_2997));
+}
+
+TEST_CASE("Variant_FrameRate_AllWellKnownRates") {
+    SUBCASE("FPS_24") {
+        Variant v(FrameRate(FrameRate::FPS_24));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_24));
+    }
+    SUBCASE("FPS_25") {
+        Variant v(FrameRate(FrameRate::FPS_25));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_25));
+    }
+    SUBCASE("FPS_30") {
+        Variant v(FrameRate(FrameRate::FPS_30));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_30));
+    }
+    SUBCASE("FPS_50") {
+        Variant v(FrameRate(FrameRate::FPS_50));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_50));
+    }
+    SUBCASE("FPS_5994") {
+        Variant v(FrameRate(FrameRate::FPS_5994));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_5994));
+    }
+    SUBCASE("FPS_60") {
+        Variant v(FrameRate(FrameRate::FPS_60));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_60));
+    }
+    SUBCASE("FPS_2398") {
+        Variant v(FrameRate(FrameRate::FPS_2398));
+        CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_2398));
+    }
+}
+
+TEST_CASE("Variant_FrameRate_ToDouble") {
+    Variant v(FrameRate(FrameRate::FPS_24));
+    double d = v.get<double>();
+    CHECK(d == doctest::Approx(24.0));
+}
+
+TEST_CASE("Variant_FrameRate_ToFloat") {
+    Variant v(FrameRate(FrameRate::FPS_25));
+    float f = v.get<float>();
+    CHECK(f == doctest::Approx(25.0f));
+}
+
+TEST_CASE("Variant_FrameRate_ToString") {
+    Variant v(FrameRate(FrameRate::FPS_2997));
+    String s = v.get<String>();
+    CHECK_FALSE(s.isEmpty());
+}
+
+TEST_CASE("Variant_FrameRate_FromString") {
+    Variant v(String("29.97"));
+    FrameRate fr = v.get<FrameRate>();
+    CHECK(fr == FrameRate(FrameRate::FPS_2997));
+}
+
+TEST_CASE("Variant_FrameRate_FromString_Fraction") {
+    Variant v(String("30000/1001"));
+    FrameRate fr = v.get<FrameRate>();
+    CHECK(fr == FrameRate(FrameRate::FPS_2997));
+}
+
+TEST_CASE("Variant_FrameRate_FromInvalidString") {
+    Variant v(String("not_a_framerate"));
+    Error err;
+    FrameRate fr = v.get<FrameRate>(&err);
+    CHECK(err.isError());
+    CHECK_FALSE(fr.isValid());
+}
+
+TEST_CASE("Variant_FrameRate_FromRational") {
+    Variant v(Rational<int>(30000, 1001));
+    FrameRate fr = v.get<FrameRate>();
+    CHECK(fr == FrameRate(FrameRate::FPS_2997));
+}
+
+TEST_CASE("Variant_FrameRate_ToStandardType") {
+    Variant v(FrameRate(FrameRate::FPS_24));
+    Variant standard = v.toStandardType();
+    CHECK(standard.type() == Variant::TypeString);
+    CHECK_FALSE(standard.get<String>().isEmpty());
+}
+
+TEST_CASE("Variant_FrameRate_TypeName") {
+    Variant v(FrameRate(FrameRate::FPS_24));
+    CHECK(String(v.typeName()) == "FrameRate");
+}
+
+TEST_CASE("Variant_FrameRate_Copy") {
+    Variant v1(FrameRate(FrameRate::FPS_60));
+    Variant v2 = v1;
+    CHECK(v2.type() == Variant::TypeFrameRate);
+    CHECK(v2.get<FrameRate>() == FrameRate(FrameRate::FPS_60));
+}
+
+TEST_CASE("Variant_FrameRate_Set") {
+    Variant v;
+    v.set(FrameRate(FrameRate::FPS_50));
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeFrameRate);
+    CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_50));
+}

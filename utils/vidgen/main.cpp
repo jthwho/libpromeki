@@ -39,6 +39,14 @@
 #include <promeki/network/sdpsession.h>
 #include <promeki/network/rtppayload.h>
 
+#if defined(PROMEKI_HAS_SDL)
+#include <promeki/sdl/sdlapplication.h>
+#include <promeki/sdl/sdldisplaynode.h>
+#include <promeki/sdl/sdlwindow.h>
+#include <promeki/sdl/sdlvideowidget.h>
+#include <promeki/sdl/sdlaudiooutput.h>
+#endif
+
 using namespace promeki;
 
 static std::atomic<bool> g_running{true};
@@ -88,6 +96,9 @@ struct Options {
         int             jpegQuality     = 85;
         String          audioDest;
         String          sdpFile;
+
+        // Display
+        bool            display         = false;
 
         // General
         double          duration        = 0.0;
@@ -144,6 +155,11 @@ static void usage() {
                 "  --audio-dest <IP:PORT>   Audio destination (default: video port+2)\n"
                 "  --sdp <FILE>             Write SDP file describing the stream\n"
                 "\n"
+#if defined(PROMEKI_HAS_SDL)
+                "Display Options:\n"
+                "  --display                Display video in an SDL window instead of RTP\n"
+                "\n"
+#endif
                 "Diagnostics:\n"
                 "  --dump-jpeg <FILE>       Save first JPEG frame to file (MJPEG only)\n"
                 "\n"
@@ -187,6 +203,7 @@ static bool parseOptions(int argc, char *argv[], Options &opts) {
                 else if(arg == "--jpeg-quality" && i + 1 < argc) opts.jpegQuality = atoi(argv[++i]);
                 else if(arg == "--audio-dest" && i + 1 < argc)  opts.audioDest = argv[++i];
                 else if(arg == "--sdp" && i + 1 < argc)         opts.sdpFile = argv[++i];
+                else if(arg == "--display")                      opts.display = true;
                 else if(arg == "--duration" && i + 1 < argc)    opts.duration = atof(argv[++i]);
                 else if(arg == "--verbose")                      opts.verbose = true;
                 else if(arg == "--list-patterns")                opts.listPatterns = true;
@@ -252,35 +269,6 @@ static const FormatEntry *lookupFormat(const String &name) {
                 if(name == f->name) return f;
         }
         return nullptr;
-}
-
-// --------------------------------------------------------------------
-// Frame rate parsing
-// --------------------------------------------------------------------
-
-static bool parseFrameRate(const String &str, FrameRate &out) {
-        // Try well-known rates first
-        if(str == "23.976" || str == "23.98") { out = FrameRate(FrameRate::FPS_2398); return true; }
-        if(str == "24")                       { out = FrameRate(FrameRate::FPS_24);   return true; }
-        if(str == "25")                       { out = FrameRate(FrameRate::FPS_25);   return true; }
-        if(str == "29.97")                    { out = FrameRate(FrameRate::FPS_2997); return true; }
-        if(str == "30")                       { out = FrameRate(FrameRate::FPS_30);   return true; }
-        if(str == "50")                       { out = FrameRate(FrameRate::FPS_50);   return true; }
-        if(str == "59.94")                    { out = FrameRate(FrameRate::FPS_5994); return true; }
-        if(str == "60")                       { out = FrameRate(FrameRate::FPS_60);   return true; }
-
-        // Try fraction form: num/den
-        const char *slash = strchr(str.cstr(), '/');
-        if(slash) {
-                unsigned int num = static_cast<unsigned int>(atoi(str.cstr()));
-                unsigned int den = static_cast<unsigned int>(atoi(slash + 1));
-                if(num > 0 && den > 0) {
-                        out = FrameRate(FrameRate::RationalType(num, den));
-                        return true;
-                }
-        }
-
-        return false;
 }
 
 // --------------------------------------------------------------------
@@ -392,15 +380,15 @@ int main(int argc, char *argv[]) {
         }
 
         // Validate required options
-        if(opts.dest.isEmpty() && opts.multicast.isEmpty()) {
-                fprintf(stderr, "Error: --dest or --multicast is required\n");
+        if(opts.dest.isEmpty() && opts.multicast.isEmpty() && !opts.display) {
+                fprintf(stderr, "Error: --dest, --multicast, or --display is required\n");
                 usage();
                 return 1;
         }
 
         // Parse frame rate
-        FrameRate fps;
-        if(!parseFrameRate(opts.framerateStr, fps)) {
+        auto [fps, fpsErr] = FrameRate::fromString(opts.framerateStr);
+        if(fpsErr.isError()) {
                 fprintf(stderr, "Error: invalid frame rate: %s\n", opts.framerateStr.cstr());
                 return 1;
         }
@@ -424,44 +412,47 @@ int main(int argc, char *argv[]) {
         int bitsPerPixel = pixFmt->bitsPerPixel;
 
         bool isMjpeg = (opts.transport == "mjpeg");
+        bool useRtp = !opts.display;
 
-        // Parse video destination
+        // Parse video destination (only needed for RTP output)
         SocketAddress videoDest;
-        if(!opts.dest.isEmpty()) {
-                auto [addr, err] = SocketAddress::fromString(opts.dest);
-                if(err.isError()) {
-                        fprintf(stderr, "Error: invalid destination address: %s\n", opts.dest.cstr());
-                        return 1;
-                }
-                videoDest = addr;
-        } else {
-                auto [addr, err] = SocketAddress::fromString(opts.multicast);
-                if(err.isError()) {
-                        fprintf(stderr, "Error: invalid multicast address: %s\n", opts.multicast.cstr());
-                        return 1;
-                }
-                videoDest = addr;
-        }
-
-        // Parse audio destination (default: video port + 2)
         SocketAddress audioDest;
-        if(!opts.noAudio) {
-                if(!opts.audioDest.isEmpty()) {
-                        auto [addr, err] = SocketAddress::fromString(opts.audioDest);
+        if(useRtp) {
+                if(!opts.dest.isEmpty()) {
+                        auto [addr, err] = SocketAddress::fromString(opts.dest);
                         if(err.isError()) {
-                                fprintf(stderr, "Error: invalid audio destination: %s\n", opts.audioDest.cstr());
+                                fprintf(stderr, "Error: invalid destination address: %s\n", opts.dest.cstr());
                                 return 1;
                         }
-                        audioDest = addr;
+                        videoDest = addr;
                 } else {
-                        audioDest = videoDest;
-                        uint16_t audioPort = videoDest.port() + 2;
-                        if(audioPort < videoDest.port()) {
-                                // Wrapped past 65535
-                                audioPort = 1024;
-                                fprintf(stderr, "Warning: video port+2 exceeds 65535, using audio port %d\n", audioPort);
+                        auto [addr, err] = SocketAddress::fromString(opts.multicast);
+                        if(err.isError()) {
+                                fprintf(stderr, "Error: invalid multicast address: %s\n", opts.multicast.cstr());
+                                return 1;
                         }
-                        audioDest.setPort(audioPort);
+                        videoDest = addr;
+                }
+
+                // Parse audio destination (default: video port + 2)
+                if(!opts.noAudio) {
+                        if(!opts.audioDest.isEmpty()) {
+                                auto [addr, err] = SocketAddress::fromString(opts.audioDest);
+                                if(err.isError()) {
+                                        fprintf(stderr, "Error: invalid audio destination: %s\n", opts.audioDest.cstr());
+                                        return 1;
+                                }
+                                audioDest = addr;
+                        } else {
+                                audioDest = videoDest;
+                                uint16_t audioPort = videoDest.port() + 2;
+                                if(audioPort < videoDest.port()) {
+                                        // Wrapped past 65535
+                                        audioPort = 1024;
+                                        fprintf(stderr, "Warning: video port+2 exceeds 65535, using audio port %d\n", audioPort);
+                                }
+                                audioDest.setPort(audioPort);
+                        }
                 }
         }
 
@@ -475,6 +466,15 @@ int main(int argc, char *argv[]) {
         signal(SIGINT, signalHandler);
         signal(SIGTERM, signalHandler);
 
+#if defined(PROMEKI_HAS_SDL)
+        // Initialize SDL when display mode is requested.
+        // SDLApplication must be created before any SDL windows or renderers.
+        SDLApplication *sdlApp = nullptr;
+        if(opts.display) {
+                sdlApp = new SDLApplication(argc, argv);
+        }
+#endif
+
         // ================================================================
         // Build pipeline
         // ================================================================
@@ -482,6 +482,8 @@ int main(int argc, char *argv[]) {
         MediaPipeline pipeline;
 
         // --- RTP payload handlers (must outlive the pipeline) ---
+        // Only needed for RTP output, but declared unconditionally
+        // so they remain in scope for the lifetime of the pipeline.
         RtpPayloadRawVideo rawVideoPayload(opts.width, opts.height, bitsPerPixel);
         RtpPayloadJpeg jpegPayload(opts.width, opts.height, opts.jpegQuality);
         RtpPayloadL24 audioPayload(static_cast<uint32_t>(opts.audioRate), opts.audioChannels);
@@ -497,7 +499,7 @@ int main(int argc, char *argv[]) {
                 cfg.set("Width", uint32_t(opts.width));
                 cfg.set("Height", uint32_t(opts.height));
                 cfg.set("PixelFormat", int(pixFmtId));
-                cfg.set("FrameRate", opts.framerateStr);
+                cfg.set("FrameRate", fps);
                 if(!opts.noAudio) {
                         cfg.set("AudioEnabled", true);
                         cfg.set("AudioRate", float(opts.audioRate));
@@ -525,17 +527,23 @@ int main(int argc, char *argv[]) {
         pipeline.addNode(src);
 
         // --- Demux ---
-        FrameDemuxNode *demux = new FrameDemuxNode();
-        {
+        // The demux splits video and audio into separate streams.  It is
+        // only needed when we have both video and audio sinks, because
+        // MediaSource::sinksReadyForFrame() returns false for unconnected
+        // outputs, which would deadlock the demux if its audio output has
+        // no sink.
+        FrameDemuxNode *demux = nullptr;
+        if(useRtp) {
+                demux = new FrameDemuxNode();
                 MediaNodeConfig cfg("FrameDemuxNode", "Demux");
                 BuildResult br = demux->build(cfg);
                 if(br.isError()) {
                         fprintf(stderr, "Error: demux node build failed\n");
                         return 1;
                 }
+                pipeline.addNode(demux);
+                pipeline.connect(src, 0, demux, 0);
         }
-        pipeline.addNode(demux);
-        pipeline.connect(src, 0, demux, 0);
 
         // --- TC Overlay (optional) ---
         TimecodeOverlayNode *overlay = nullptr;
@@ -552,12 +560,16 @@ int main(int argc, char *argv[]) {
                         return 1;
                 }
                 pipeline.addNode(overlay);
-                pipeline.connect(demux, "image", overlay, "input");
+                if(demux) {
+                        pipeline.connect(demux, "image", overlay, "input");
+                } else {
+                        pipeline.connect(src, 0, overlay, 0);
+                }
         }
 
-        // --- JPEG Encoder (optional, for MJPEG transport) ---
+        // --- JPEG Encoder (optional, for MJPEG transport over RTP) ---
         JpegEncoderNode *jpegEnc = nullptr;
-        if(isMjpeg) {
+        if(isMjpeg && useRtp) {
                 jpegEnc = new JpegEncoderNode();
                 MediaNodeConfig cfg("JpegEncoderNode", "JpegEncoder");
                 cfg.set("Quality", opts.jpegQuality);
@@ -574,45 +586,104 @@ int main(int argc, char *argv[]) {
                 }
         }
 
-        // --- Video Sink ---
-        RtpVideoSinkNode *videoSink = new RtpVideoSinkNode();
-        {
-                MediaNodeConfig cfg("RtpVideoSinkNode", "VideoSink");
-                cfg.set("Destination", videoDest.toString());
-                cfg.set("FrameRate", opts.framerateStr);
-                if(isMjpeg) {
-                        cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&jpegPayload));
-                        cfg.set("PayloadType", uint8_t(26));
-                } else {
-                        cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&rawVideoPayload));
-                        cfg.set("PayloadType", uint8_t(96));
-                }
-                if(!opts.multicast.isEmpty() && videoDest.isMulticast()) {
-                        cfg.set("Multicast", videoDest.toString());
-                }
-                if(!opts.dumpJpeg.isEmpty()) {
-                        cfg.set("DumpPath", opts.dumpJpeg);
-                }
-                BuildResult br = videoSink->build(cfg);
-                if(br.isError()) {
-                        fprintf(stderr, "Error: video sink node build failed\n");
-                        return 1;
-                }
-        }
-        pipeline.addNode(videoSink);
+        // --- Video Output ---
+        // The video output is either an RTP sink or an SDL display node,
+        // depending on the --display flag.
 
-        // Connect to video sink
-        if(isMjpeg && jpegEnc) {
-                pipeline.connect(jpegEnc, "output", videoSink, "input");
-        } else if(overlay) {
-                pipeline.connect(overlay, "output", videoSink, "input");
-        } else {
-                pipeline.connect(demux, "image", videoSink, "input");
+        RtpVideoSinkNode *videoSink = nullptr;
+#if defined(PROMEKI_HAS_SDL)
+        SDLDisplayNode *displayNode = nullptr;
+        SDLWindow *sdlWindow = nullptr;
+        SDLVideoWidget *sdlVideoWidget = nullptr;
+        SDLAudioOutput *sdlAudioOutput = nullptr;
+#endif
+
+        if(useRtp) {
+                // --- RTP Video Sink ---
+                videoSink = new RtpVideoSinkNode();
+                {
+                        MediaNodeConfig cfg("RtpVideoSinkNode", "VideoSink");
+                        cfg.set("Destination", videoDest.toString());
+                        cfg.set("FrameRate", fps);
+                        if(isMjpeg) {
+                                cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&jpegPayload));
+                                cfg.set("PayloadType", uint8_t(26));
+                        } else {
+                                cfg.set("RtpPayload", reinterpret_cast<uint64_t>(&rawVideoPayload));
+                                cfg.set("PayloadType", uint8_t(96));
+                        }
+                        if(!opts.multicast.isEmpty() && videoDest.isMulticast()) {
+                                cfg.set("Multicast", videoDest.toString());
+                        }
+                        if(!opts.dumpJpeg.isEmpty()) {
+                                cfg.set("DumpPath", opts.dumpJpeg);
+                        }
+                        BuildResult br = videoSink->build(cfg);
+                        if(br.isError()) {
+                                fprintf(stderr, "Error: video sink node build failed\n");
+                                return 1;
+                        }
+                }
+                pipeline.addNode(videoSink);
+
+                // Connect to RTP video sink
+                if(isMjpeg && jpegEnc) {
+                        pipeline.connect(jpegEnc, "output", videoSink, "input");
+                } else if(overlay) {
+                        pipeline.connect(overlay, "output", videoSink, "input");
+                } else {
+                        pipeline.connect(demux, "image", videoSink, "input");
+                }
         }
+#if defined(PROMEKI_HAS_SDL)
+        else {
+                // --- SDL Display ---
+                // Application creates the UI, then hands the widgets to the node.
+
+                // Create window and video widget
+                sdlWindow = new SDLWindow("vidgen", opts.width, opts.height);
+                sdlVideoWidget = new SDLVideoWidget(sdlWindow);
+                sdlVideoWidget->setGeometry(Rect2Di32(0, 0, opts.width, opts.height));
+                sdlWindow->resizedSignal.connect([&sdlVideoWidget](Size2Di32 sz) {
+                        sdlVideoWidget->setGeometry(Rect2Di32(0, 0, sz.width(), sz.height()));
+                });
+                sdlWindow->show();
+
+                // Create audio output
+                if(!opts.noAudio) {
+                        sdlAudioOutput = new SDLAudioOutput();
+                        AudioDesc audioDesc(float(opts.audioRate), opts.audioChannels);
+                        sdlAudioOutput->configure(audioDesc);
+                        sdlAudioOutput->open();
+                }
+
+                // Configure the display node
+                displayNode = new SDLDisplayNode();
+                displayNode->setVideoWidget(sdlVideoWidget);
+                if(sdlAudioOutput) displayNode->setAudioOutput(sdlAudioOutput);
+                {
+                        MediaNodeConfig cfg("SDLDisplayNode", "Display");
+                        cfg.set("FrameRate", fps);
+                        BuildResult br = displayNode->build(cfg);
+                        if(br.isError()) {
+                                fprintf(stderr, "Error: display node build failed\n");
+                                return 1;
+                        }
+                }
+                pipeline.addNode(displayNode);
+
+                // Connect to SDL display
+                if(overlay) {
+                        pipeline.connect(overlay, "output", displayNode, "input");
+                } else {
+                        pipeline.connect(src, 0, displayNode, 0);
+                }
+        }
+#endif
 
         // --- Audio Sink ---
         RtpAudioSinkNode *audioSink = nullptr;
-        if(!opts.noAudio) {
+        if(!opts.noAudio && useRtp && demux) {
                 audioSink = new RtpAudioSinkNode();
                 MediaNodeConfig cfg("RtpAudioSinkNode", "AudioSink");
                 cfg.set("Destination", audioDest.toString());
@@ -644,16 +715,22 @@ int main(int argc, char *argv[]) {
         }
 
         // Print stream info
-        fprintf(stdout, "vidgen streaming %dx%d %s @ %s fps\n",
-                opts.width, opts.height,
-                isMjpeg ? "MJPEG" : "ST2110",
-                fps.toString().cstr());
-        fprintf(stdout, "  Video: %s  Pattern: %s\n",
-                videoDest.toString().cstr(), opts.patternStr.cstr());
-        if(!opts.noAudio) {
-                fprintf(stdout, "  Audio: %s  %d Hz %d ch  %.0f dBFS\n",
-                        audioDest.toString().cstr(), opts.audioRate, opts.audioChannels,
-                        opts.audioLevel);
+        if(opts.display) {
+                fprintf(stdout, "vidgen displaying %dx%d @ %s fps\n",
+                        opts.width, opts.height, fps.toString().cstr());
+                fprintf(stdout, "  Pattern: %s\n", opts.patternStr.cstr());
+        } else {
+                fprintf(stdout, "vidgen streaming %dx%d %s @ %s fps\n",
+                        opts.width, opts.height,
+                        isMjpeg ? "MJPEG" : "ST2110",
+                        fps.toString().cstr());
+                fprintf(stdout, "  Video: %s  Pattern: %s\n",
+                        videoDest.toString().cstr(), opts.patternStr.cstr());
+                if(!opts.noAudio) {
+                        fprintf(stdout, "  Audio: %s  %d Hz %d ch  %.0f dBFS\n",
+                                audioDest.toString().cstr(), opts.audioRate, opts.audioChannels,
+                                opts.audioLevel);
+                }
         }
         if(opts.duration > 0) {
                 fprintf(stdout, "  Duration: %.1f seconds\n", opts.duration);
@@ -661,7 +738,7 @@ int main(int argc, char *argv[]) {
         fprintf(stdout, "Press Ctrl+C to stop.\n");
 
         // Write SDP file if requested
-        if(!opts.sdpFile.isEmpty()) {
+        if(!opts.sdpFile.isEmpty() && useRtp) {
                 writeSdpFile(opts.sdpFile, opts, videoDest, audioDest, fps, *pixFmt, isMjpeg);
         }
 
@@ -670,55 +747,106 @@ int main(int argc, char *argv[]) {
         // ================================================================
 
         auto startTime = std::chrono::steady_clock::now();
-        auto lastStats = startTime;
 
-        while(g_running) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#if defined(PROMEKI_HAS_SDL)
+        if(opts.display) {
+                // Display mode: use SDLApplication::exec() which blocks
+                // on SDL_WaitEvent (no polling).  The SDLDisplayNode posts
+                // renderPending() to the main EventLoop when frames arrive.
 
-                // Check duration
+                // Duration timer (single-shot)
                 if(opts.duration > 0) {
-                        auto elapsed = std::chrono::steady_clock::now() - startTime;
-                        double secs = std::chrono::duration<double>(elapsed).count();
-                        if(secs >= opts.duration) break;
+                        sdlApp->eventLoop().startTimer(
+                                static_cast<unsigned int>(opts.duration * 1000),
+                                [&]() { sdlApp->quit(0); },
+                                true);
                 }
 
-                // Print stats periodically
+                // Verbose stats timer (repeating)
                 if(opts.verbose) {
-                        auto now = std::chrono::steady_clock::now();
-                        auto sinceStats = std::chrono::duration<double>(now - lastStats).count();
-                        if(sinceStats >= 5.0) {
-                                lastStats = now;
+                        sdlApp->eventLoop().startTimer(5000, [&]() {
+                                auto now = std::chrono::steady_clock::now();
                                 auto elapsed = std::chrono::duration<double>(now - startTime).count();
-                                auto srcStats = src->extendedStats();
-                                auto fgIt = srcStats.find("FramesGenerated");
+                                auto stats = src->extendedStats();
+                                auto fgIt = stats.find("FramesGenerated");
                                 unsigned long frameCount = 0;
-                                if(fgIt != srcStats.end()) {
+                                if(fgIt != stats.end()) {
                                         frameCount = fgIt->second.get<unsigned long>();
                                 }
-                                fprintf(stdout, "[%.1fs] frames: %lu",
-                                        elapsed, frameCount);
-
-                                auto vstats = videoSink->extendedStats();
-                                auto pit = vstats.find("PacketsSent");
-                                if(pit != vstats.end()) {
-                                        fprintf(stdout, "  video pkts: %lu",
-                                                static_cast<unsigned long>(pit->second.get<uint64_t>()));
-                                }
-                                auto bit = vstats.find("BytesSent");
-                                if(bit != vstats.end()) {
-                                        double mb = static_cast<double>(bit->second.get<uint64_t>()) / (1024.0 * 1024.0);
-                                        fprintf(stdout, "  (%.1f MB)", mb);
-                                }
-
-                                if(audioSink) {
-                                        auto astats = audioSink->extendedStats();
-                                        auto apit = astats.find("PacketsSent");
-                                        if(apit != astats.end()) {
-                                                fprintf(stdout, "  audio pkts: %lu",
-                                                        static_cast<unsigned long>(apit->second.get<uint64_t>()));
+                                fprintf(stdout, "[%.1fs] frames: %lu", elapsed, frameCount);
+                                if(displayNode) {
+                                        auto dstats = displayNode->extendedStats();
+                                        auto dit = dstats.find("FramesDisplayed");
+                                        if(dit != dstats.end()) {
+                                                fprintf(stdout, "  displayed: %lu",
+                                                        static_cast<unsigned long>(dit->second.get<uint64_t>()));
                                         }
                                 }
                                 fprintf(stdout, "\n");
+                        });
+                }
+
+                // SIGINT/SIGTERM should quit the SDL application
+                signal(SIGINT, [](int) { Application::quit(0); });
+                signal(SIGTERM, [](int) { Application::quit(0); });
+
+                sdlApp->exec();
+        } else
+#endif
+        {
+                // RTP mode: simple sleep loop (pipeline threads do the work)
+                auto lastStats = startTime;
+
+                while(g_running) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                        // Check duration
+                        if(opts.duration > 0) {
+                                auto elapsed = std::chrono::steady_clock::now() - startTime;
+                                double secs = std::chrono::duration<double>(elapsed).count();
+                                if(secs >= opts.duration) break;
+                        }
+
+                        // Print stats periodically
+                        if(opts.verbose) {
+                                auto now = std::chrono::steady_clock::now();
+                                auto sinceStats = std::chrono::duration<double>(now - lastStats).count();
+                                if(sinceStats >= 5.0) {
+                                        lastStats = now;
+                                        auto elapsed = std::chrono::duration<double>(now - startTime).count();
+                                        auto srcStats = src->extendedStats();
+                                        auto fgIt = srcStats.find("FramesGenerated");
+                                        unsigned long frameCount = 0;
+                                        if(fgIt != srcStats.end()) {
+                                                frameCount = fgIt->second.get<unsigned long>();
+                                        }
+                                        fprintf(stdout, "[%.1fs] frames: %lu",
+                                                elapsed, frameCount);
+
+                                        if(videoSink) {
+                                                auto vstats = videoSink->extendedStats();
+                                                auto pit = vstats.find("PacketsSent");
+                                                if(pit != vstats.end()) {
+                                                        fprintf(stdout, "  video pkts: %lu",
+                                                                static_cast<unsigned long>(pit->second.get<uint64_t>()));
+                                                }
+                                                auto bit = vstats.find("BytesSent");
+                                                if(bit != vstats.end()) {
+                                                        double mb = static_cast<double>(bit->second.get<uint64_t>()) / (1024.0 * 1024.0);
+                                                        fprintf(stdout, "  (%.1f MB)", mb);
+                                                }
+                                        }
+
+                                        if(audioSink) {
+                                                auto astats = audioSink->extendedStats();
+                                                auto apit = astats.find("PacketsSent");
+                                                if(apit != astats.end()) {
+                                                        fprintf(stdout, "  audio pkts: %lu",
+                                                                static_cast<unsigned long>(apit->second.get<uint64_t>()));
+                                                }
+                                        }
+                                        fprintf(stdout, "\n");
+                                }
                         }
                 }
         }
@@ -739,6 +867,13 @@ int main(int argc, char *argv[]) {
 
         fprintf(stdout, "\nStopping...\n");
         pipeline.stop();
+
+#if defined(PROMEKI_HAS_SDL)
+        delete sdlAudioOutput;
+        // sdlVideoWidget is a child of sdlWindow — destroyed with it
+        delete sdlWindow;
+        delete sdlApp;
+#endif
 
         fprintf(stdout, "Ran for %.1f seconds, %lu frames generated\n",
                 totalElapsed, totalFrames);

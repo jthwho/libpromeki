@@ -142,12 +142,32 @@ class Application {
                  */
                 static IODevice *stderrDevice();
 
+                /**
+                 * @brief Requests the application to quit.
+                 * @param exitCode The exit code (retrievable via exitCode()).
+                 */
+                static void quit(int exitCode = 0);
+
+                /**
+                 * @brief Returns true if quit() has been called.
+                 * @return true if the application should exit.
+                 */
+                static bool shouldQuit();
+
+                /**
+                 * @brief Returns the exit code set by quit().
+                 * @return The exit code, or 0 if quit() was never called.
+                 */
+                static int exitCode();
+
         private:
                 struct Data {
                         StringList      arguments;
                         UUID            appUUID;
                         String          appName;
                         Thread          *mainThread = nullptr;
+                        int             exitCode = 0;
+                        bool            shouldQuit = false;
                 };
                 static Data &data();
 };

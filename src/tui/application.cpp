@@ -131,14 +131,14 @@ void TuiApplication::markNeedsRepaint() {
 void TuiApplication::setFocusWidget(TuiWidget *widget) {
         if(_focusWidget == widget) return;
         if(_focusWidget) {
-                _focusWidget->_focused = false;
+                _focusWidget->setFocused(false);
                 Event e(Event::InvalidType);
                 _focusWidget->focusOutEvent(&e);
                 _focusWidget->update();
         }
         _focusWidget = widget;
         if(_focusWidget) {
-                _focusWidget->_focused = true;
+                _focusWidget->setFocused(true);
                 Event e(Event::InvalidType);
                 _focusWidget->focusInEvent(&e);
                 _focusWidget->update();

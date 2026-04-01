@@ -98,7 +98,6 @@ class RtpVideoSinkNode : public MediaNode {
                 RtpPayload      *_payload = nullptr;
                 RtpSession      *_session = nullptr;
 
-                static bool parseFrameRate(const String &str, FrameRate &out);
 };
 
 PROMEKI_NAMESPACE_END

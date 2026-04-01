@@ -10,6 +10,8 @@
 
 #include <promeki/core/namespace.h>
 #include <promeki/core/rational.h>
+#include <promeki/core/result.h>
+#include <promeki/core/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -29,9 +31,66 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup core_time
  *
  * FrameRate wraps a Rational value and provides an enumeration of
- * well-known industry-standard frame rates (24, 25, 29.97, 30, etc.).
- * A frame rate can be constructed from a WellKnownRate enum or from
- * an arbitrary rational value.
+ * well-known industry-standard frame rates.  A frame rate can be
+ * constructed from a WellKnownRate enum or from an arbitrary
+ * rational value.  FrameRate is a first-class Variant type and
+ * can be stored directly in MediaNodeConfig and other Variant-based
+ * containers.
+ *
+ * @par Why rational numbers?
+ *
+ * Video frame rates must be represented as exact rational numbers
+ * (numerator / denominator), never as floating-point approximations.
+ * This requirement originates from the 1953 transition to NTSC color
+ * television in the United States.
+ *
+ * The original black-and-white NTSC standard operated at exactly
+ * 30 frames per second (60 fields/s), derived from the 60 Hz AC
+ * power line frequency.  When color was added, engineers needed to
+ * multiplex a 3.579545 MHz color subcarrier into the existing signal
+ * without creating visible interference patterns.  A beat frequency
+ * between the color subcarrier and the 4.5 MHz audio carrier would
+ * have produced objectionable artifacts in the picture.  To eliminate
+ * this beat, the frame rate was reduced by a factor of exactly
+ * 1000/1001, shifting the color subcarrier frequency just enough to
+ * place the beat outside the visible spectrum.  The resulting frame
+ * rate is exactly 30000/1001 frames per second -- not 29.97, which
+ * is merely a convenient approximation.
+ *
+ * This 1000/1001 relationship propagates to every frame rate derived
+ * from the NTSC family:
+ *
+ * | Common name | Exact rational  | Decimal (approx.) |
+ * |-------------|-----------------|-------------------|
+ * | "59.94"     | 60000/1001      | 59.94005994...    |
+ * | "29.97"     | 30000/1001      | 29.97002997...    |
+ * | "23.976"    | 24000/1001      | 23.97602397...    |
+ *
+ * The names "29.97" and "23.976" (sometimes written "23.98") are
+ * widespread in the industry but are not the actual frame rates --
+ * they are approximate shorthands.  Using the floating-point value
+ * 29.97 instead of the rational 30000/1001 introduces a small but
+ * compounding error: over the course of a one-hour program, the
+ * accumulated drift amounts to approximately 3.6 frames (about
+ * 108 milliseconds at 30000/1001).  In professional workflows
+ * involving timecode, edit decision lists, and long-form content,
+ * this drift causes frame-accurate synchronization to fail.
+ *
+ * By storing the frame rate as an exact rational, FrameRate avoids
+ * this class of error entirely.  Frame interval calculations,
+ * timecode conversions, and duration computations remain exact
+ * regardless of program length.
+ *
+ * @par Well-known rates
+ *
+ * The WellKnownRate enum identifies industry-standard frame rates
+ * so that code can branch on them without comparing rationals.
+ * When a FrameRate is constructed from a rational that matches a
+ * well-known rate, the enum is set automatically.
+ *
+ * The fromString() factory accepts both the approximate common
+ * names ("29.97", "23.976", "23.98") and exact fraction strings
+ * ("30000/1001"), always producing the correct rational internally.
  */
 class FrameRate {
         public:
@@ -96,6 +155,30 @@ class FrameRate {
                  * @return The matching WellKnownRate, or FPS_NotWellKnown.
                  */
                 WellKnownRate wellKnownRate() const { return _rate; }
+
+                /**
+                 * @brief Returns the underlying rational value.
+                 * @return The rational frame rate.
+                 */
+                const RationalType &rational() const { return _fps; }
+
+                /**
+                 * @brief Parses a frame rate from a string.
+                 *
+                 * Accepts well-known rate strings ("23.976", "23.98", "24",
+                 * "25", "29.97", "30", "50", "59.94", "60") and fraction
+                 * strings ("30000/1001", "24/1").
+                 *
+                 * @param str The string to parse.
+                 * @return A Result containing the parsed FrameRate or an Error.
+                 */
+                static Result<FrameRate> fromString(const String &str);
+
+                /** @brief Returns true if both frame rates represent the same rational value. */
+                bool operator==(const FrameRate &other) const { return _fps == other._fps; }
+
+                /** @brief Returns true if the frame rates differ. */
+                bool operator!=(const FrameRate &other) const { return _fps != other._fps; }
 
         private:
                 RationalType    _fps;

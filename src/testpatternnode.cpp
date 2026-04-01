@@ -30,35 +30,13 @@ TestPatternNode::~TestPatternNode() {
         delete _audioPattern;
 }
 
-bool TestPatternNode::parseFrameRate(const String &str, FrameRate &out) {
-        if(str == "23.976" || str == "23.98") { out = FrameRate(FrameRate::FPS_2398); return true; }
-        if(str == "24")                       { out = FrameRate(FrameRate::FPS_24);   return true; }
-        if(str == "25")                       { out = FrameRate(FrameRate::FPS_25);   return true; }
-        if(str == "29.97")                    { out = FrameRate(FrameRate::FPS_2997); return true; }
-        if(str == "30")                       { out = FrameRate(FrameRate::FPS_30);   return true; }
-        if(str == "50")                       { out = FrameRate(FrameRate::FPS_50);   return true; }
-        if(str == "59.94")                    { out = FrameRate(FrameRate::FPS_5994); return true; }
-        if(str == "60")                       { out = FrameRate(FrameRate::FPS_60);   return true; }
-
-        const char *slash = strchr(str.cstr(), '/');
-        if(slash) {
-                unsigned int num = static_cast<unsigned int>(atoi(str.cstr()));
-                unsigned int den = static_cast<unsigned int>(atoi(slash + 1));
-                if(num > 0 && den > 0) {
-                        out = FrameRate(FrameRate::RationalType(num, den));
-                        return true;
-                }
-        }
-        return false;
-}
-
 MediaNodeConfig TestPatternNode::defaultConfig() const {
         MediaNodeConfig cfg("TestPatternNode", "");
         cfg.set("Pattern", "colorbars");
         cfg.set("Width", uint32_t(1920));
         cfg.set("Height", uint32_t(1080));
         cfg.set("PixelFormat", int(PixelFormat::RGB8));
-        cfg.set("FrameRate", "29.97");
+        cfg.set("FrameRate", FrameRate(FrameRate::FPS_2997));
         cfg.set("Motion", 0.0);
         cfg.set("StartTimecode", "00:00:00:00");
         cfg.set("DropFrame", false);
@@ -96,10 +74,9 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         uint32_t height = config.get("Height", uint32_t(0)).get<uint32_t>();
         int pixFmt = config.get("PixelFormat", PixelFormat::RGB8).get<int>();
 
-        String fpsStr = config.get("FrameRate", String()).get<String>();
-        FrameRate fps;
-        if(!fpsStr.isEmpty() && !parseFrameRate(fpsStr, fps)) {
-                result.addError("Invalid frame rate: " + fpsStr);
+        FrameRate fps = config.get("FrameRate", FrameRate()).get<FrameRate>();
+        if(!fps.isValid()) {
+                result.addError("Invalid or missing frame rate");
                 return result;
         }
 

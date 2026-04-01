@@ -18,6 +18,7 @@
 #include <promeki/core/uuid.h>
 #include <promeki/core/timecode.h>
 #include <promeki/core/rational.h>
+#include <promeki/core/framerate.h>
 #include <promeki/core/stringlist.h>
 #include <promeki/core/color.h>
 #include <promeki/core/list.h>
@@ -59,6 +60,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeUUID      | `UUID`              |
  * | TypeTimecode  | `Timecode`          |
  * | TypeRational  | `Rational<int>`     |
+ * | TypeFrameRate | `FrameRate`         |
  * | TypeStringList| `StringList`        |
  * | TypeColor     | `Color`             |
  */
@@ -82,6 +84,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeUUID, UUID)               \
         X(TypeTimecode, Timecode)       \
         X(TypeRational, Rational<int>)  \
+        X(TypeFrameRate, FrameRate)     \
         X(TypeStringList, StringList)   \
         X(TypeColor, Color)
 
@@ -277,6 +280,7 @@ template <typename... Types> class VariantImpl {
                                                         std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
+                                        if constexpr (std::is_same_v<From, FrameRate>) return static_cast<float>(arg.toDouble());
 
                                 } else if constexpr (std::is_same_v<To, double>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
@@ -284,6 +288,7 @@ template <typename... Types> class VariantImpl {
                                                         std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toDouble();
+                                        if constexpr (std::is_same_v<From, FrameRate>) return arg.toDouble();
 
                                 } else if constexpr (std::is_same_v<To, DateTime>) {
                                         if constexpr (std::is_same_v<From, String>) return DateTime::fromString(
@@ -311,6 +316,21 @@ template <typename... Types> class VariantImpl {
                                         }
 
 
+                                } else if constexpr (std::is_same_v<To, FrameRate>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [fr, e] = FrameRate::fromString(arg);
+                                                if(e.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return FrameRate();
+                                                }
+                                                return fr;
+                                        }
+                                        if constexpr (std::is_same_v<From, Rational<int>>) {
+                                                return FrameRate(FrameRate::RationalType(
+                                                        static_cast<unsigned int>(arg.numerator()),
+                                                        static_cast<unsigned int>(arg.denominator())));
+                                        }
+
                                 } else if constexpr (std::is_same_v<To, StringList>) {
                                         if constexpr (std::is_same_v<From, String>) return arg.split(",");
 
@@ -335,6 +355,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first;
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
                                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
                                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
 
@@ -373,6 +394,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeUUID:
                                 case TypeTimecode:
                                 case TypeRational:
+                                case TypeFrameRate:
                                 case TypeStringList:
                                 case TypeColor:
                                         return get<String>();
