@@ -34,20 +34,21 @@ FrameRate::FrameRate(WellKnownRate rate) {
     const WellKnownFrameRate &item = db.get(rate);
     if(item.id != FPS_Invalid) {
         _fps = item.fps;
-        _rate = item.id;
     }
 }
 
-FrameRate::FrameRate(const RationalType &r) : 
-    _fps(r) 
+FrameRate::FrameRate(const RationalType &r) :
+    _fps(r)
 {
-    // Can we match the fps rational to any of the well known rates?
+}
+
+FrameRate::WellKnownRate FrameRate::wellKnownRate() const {
+    if(!isValid()) return FPS_NotWellKnown;
     for(const auto &pair : db.database()) {
-        if(pair.second.fps == _fps) {
-            _rate = pair.first;
-            break;
-        }
+        if(pair.first == FPS_Invalid) continue;
+        if(pair.second.fps == _fps) return pair.first;
     }
+    return FPS_NotWellKnown;
 }
 
 

@@ -69,6 +69,41 @@ TEST_CASE("FrameRate: construction from well-known rate 23.98") {
         CHECK(fr.denominator() == 1001);
 }
 
+TEST_CASE("FrameRate: construction from well-known rate 120") {
+        FrameRate fr(FrameRate::FPS_120);
+        CHECK(fr.isValid());
+        CHECK(fr.numerator() == 120);
+        CHECK(fr.denominator() == 1);
+}
+
+TEST_CASE("FrameRate: construction from well-known rate 119.88") {
+        FrameRate fr(FrameRate::FPS_11988);
+        CHECK(fr.isValid());
+        CHECK(fr.numerator() == 120000);
+        CHECK(fr.denominator() == 1001);
+}
+
+TEST_CASE("FrameRate: construction from well-known rate 100") {
+        FrameRate fr(FrameRate::FPS_100);
+        CHECK(fr.isValid());
+        CHECK(fr.numerator() == 100);
+        CHECK(fr.denominator() == 1);
+}
+
+TEST_CASE("FrameRate: construction from well-known rate 48") {
+        FrameRate fr(FrameRate::FPS_48);
+        CHECK(fr.isValid());
+        CHECK(fr.numerator() == 48);
+        CHECK(fr.denominator() == 1);
+}
+
+TEST_CASE("FrameRate: construction from well-known rate 47.95") {
+        FrameRate fr(FrameRate::FPS_4795);
+        CHECK(fr.isValid());
+        CHECK(fr.numerator() == 48000);
+        CHECK(fr.denominator() == 1001);
+}
+
 TEST_CASE("FrameRate: construction from well-known rate 50") {
         FrameRate fr(FrameRate::FPS_50);
         CHECK(fr.isValid());
@@ -77,10 +112,10 @@ TEST_CASE("FrameRate: construction from well-known rate 50") {
 }
 
 TEST_CASE("FrameRate: construction from rational") {
-        FrameRate::RationalType r(48, 1);
+        FrameRate::RationalType r(90, 1);
         FrameRate fr(r);
         CHECK(fr.isValid());
-        CHECK(fr.numerator() == 48);
+        CHECK(fr.numerator() == 90);
         CHECK(fr.denominator() == 1);
         CHECK_FALSE(fr.isWellKnownRate());
 }
@@ -176,14 +211,29 @@ TEST_CASE("FrameRate: fromString fraction form") {
         SUBCASE("48/1") {
                 auto [fr, e] = FrameRate::fromString("48/1");
                 CHECK_FALSE(e.isError());
-                CHECK(fr.numerator() == 48);
-                CHECK(fr.denominator() == 1);
+                CHECK(fr == FrameRate(FrameRate::FPS_48));
         }
         SUBCASE("24000/1001 (23.976)") {
                 auto [fr, e] = FrameRate::fromString("24000/1001");
                 CHECK_FALSE(e.isError());
                 CHECK(fr == FrameRate(FrameRate::FPS_2398));
         }
+}
+
+TEST_CASE("FrameRate: wellKnownRate matches via reduced rational") {
+        // 30000/1000 reduces to 30/1, which should match FPS_30
+        FrameRate fr(FrameRate::RationalType(30000, 1000));
+        CHECK(fr.isWellKnownRate());
+        CHECK(fr.wellKnownRate() == FrameRate::FPS_30);
+
+        // 60000/1000 reduces to 60/1, which should match FPS_60
+        FrameRate fr2(FrameRate::RationalType(60000, 1000));
+        CHECK(fr2.wellKnownRate() == FrameRate::FPS_60);
+
+        // Non-well-known rate
+        FrameRate fr3(FrameRate::RationalType(90, 1));
+        CHECK_FALSE(fr3.isWellKnownRate());
+        CHECK(fr3.wellKnownRate() == FrameRate::FPS_NotWellKnown);
 }
 
 TEST_CASE("FrameRate: fromString invalid") {

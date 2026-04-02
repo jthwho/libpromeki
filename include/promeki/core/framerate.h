@@ -17,9 +17,14 @@ PROMEKI_NAMESPACE_BEGIN
 
 #define PROMEKI_WELL_KNOWN_FRAME_RATES \
     X(FPS_Invalid,  "INV",      0,          1) \
+    X(FPS_120,      "120",      120,        1) \
+    X(FPS_11988,    "119.88",   120000,     1001) \
+    X(FPS_100,      "100",      100,        1) \
     X(FPS_60,       "60",       60,         1) \
     X(FPS_5994,     "59.94",    60000,      1001) \
     X(FPS_50,       "50",       50,         1) \
+    X(FPS_48,       "48",       48,         1) \
+    X(FPS_4795,     "47.95",    48000,      1001) \
     X(FPS_30,       "30",       30,         1) \
     X(FPS_2997,     "29.97",    30000,      1001) \
     X(FPS_25,       "25",       25,         1) \
@@ -148,13 +153,26 @@ class FrameRate {
                  * @brief Returns true if this is a well-known industry frame rate.
                  * @return true if the rate matches a WellKnownRate entry.
                  */
-                bool isWellKnownRate() const { return _rate != FPS_NotWellKnown; }
+                bool isWellKnownRate() const { return wellKnownRate() != FPS_NotWellKnown; }
 
                 /**
                  * @brief Returns the WellKnownRate enum value for this frame rate.
+                 *
+                 * Compares the current rational value against all well-known rates
+                 * using reduced form, so e.g. 30000/1000 matches FPS_30 (30/1).
+                 *
+                 * @par Example
+                 * @code
+                 * FrameRate fr(FrameRate::RationalType(30000, 1000));
+                 * assert(fr.wellKnownRate() == FrameRate::FPS_30); // 30000/1000 reduces to 30/1
+                 *
+                 * FrameRate custom(FrameRate::RationalType(90, 1));
+                 * assert(custom.wellKnownRate() == FrameRate::FPS_NotWellKnown);
+                 * @endcode
+                 *
                  * @return The matching WellKnownRate, or FPS_NotWellKnown.
                  */
-                WellKnownRate wellKnownRate() const { return _rate; }
+                WellKnownRate wellKnownRate() const;
 
                 /**
                  * @brief Returns the underlying rational value.
@@ -166,8 +184,9 @@ class FrameRate {
                  * @brief Parses a frame rate from a string.
                  *
                  * Accepts well-known rate strings ("23.976", "23.98", "24",
-                 * "25", "29.97", "30", "50", "59.94", "60") and fraction
-                 * strings ("30000/1001", "24/1").
+                 * "25", "29.97", "30", "47.95", "48", "50", "59.94", "60",
+                 * "100", "119.88", "120") and fraction strings ("30000/1001",
+                 * "24/1").
                  *
                  * @param str The string to parse.
                  * @return A Result containing the parsed FrameRate or an Error.
@@ -182,7 +201,6 @@ class FrameRate {
 
         private:
                 RationalType    _fps;
-                WellKnownRate   _rate = FPS_NotWellKnown;
 };
 
 PROMEKI_NAMESPACE_END
