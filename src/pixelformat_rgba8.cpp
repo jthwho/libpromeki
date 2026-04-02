@@ -157,9 +157,9 @@ class PixelFormat_RGBA8 : public PixelFormat {
                         _hasAlpha = true;
                         _fourccList = { "RGBA" };
                         _compList = {
-                                { 0, CompRed,   8 },
-                                { 0, CompGreen, 8 },
-                                { 0, CompBlue,  8 },
+                                { 0, Comp0,   8 },
+                                { 0, Comp1, 8 },
+                                { 0, Comp2,  8 },
                                 { 0, CompAlpha, 8 }
                         };
                         _planeList = { { "RGBA" } };

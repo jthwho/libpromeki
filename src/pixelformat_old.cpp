@@ -112,9 +112,9 @@ static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
                 .hasAlpha = true,
                 .fourccList = { PROMEKI_FOURCC("RGBA") },
                 .compList = {
-                        { 0, .type = PixelFormat::CompRed,   .bits = 8 },
-                        { 0, .type = PixelFormat::CompGreen, .bits = 8 },
-                        { 0, .type = PixelFormat::CompBlue,  .bits = 8 },
+                        { 0, .type = PixelFormat::Comp0,   .bits = 8 },
+                        { 0, .type = PixelFormat::Comp1, .bits = 8 },
+                        { 0, .type = PixelFormat::Comp2,  .bits = 8 },
                         { 0, .type = PixelFormat::CompAlpha, .bits = 8 }
                 },
                 .planeList = {
@@ -132,9 +132,9 @@ static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
                 .hasAlpha = false,
                 .fourccList = { PROMEKI_FOURCC("RGB2") },
                 .compList = {
-                        { 0, .type = PixelFormat::CompRed,   .bits = 8 },
-                        { 0, .type = PixelFormat::CompGreen, .bits = 8 },
-                        { 0, .type = PixelFormat::CompBlue,  .bits = 8 }
+                        { 0, .type = PixelFormat::Comp0,   .bits = 8 },
+                        { 0, .type = PixelFormat::Comp1, .bits = 8 },
+                        { 0, .type = PixelFormat::Comp2,  .bits = 8 }
                 },
                 .planeList = {
                         { .stride = stride_RGB8, .size = size_RGB8 }
@@ -149,9 +149,9 @@ static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
                 .hasAlpha = false,
                 .fourccList = { PROMEKI_FOURCC("r210") },
                 .compList = {
-                        { 0, .type = PixelFormat::CompRed,   .bits = 10 },
-                        { 0, .type = PixelFormat::CompGreen, .bits = 10 },
-                        { 0, .type = PixelFormat::CompBlue,  .bits = 10 }
+                        { 0, .type = PixelFormat::Comp0,   .bits = 10 },
+                        { 0, .type = PixelFormat::Comp1, .bits = 10 },
+                        { 0, .type = PixelFormat::Comp2,  .bits = 10 }
                 },
                 .planeList = {
                         { .stride = stride_RGB10, .size = size_RGB10 }
@@ -177,9 +177,9 @@ static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
                         PROMEKI_FOURCC("2Vu1")
                 },
                 .compList = {
-                        { 0, .type = PixelFormat::CompY,  .bits = 8 },
-                        { 0, .type = PixelFormat::CompCb, .bits = 8 },
-                        { 0, .type = PixelFormat::CompCr, .bits = 8 }
+                        { 0, .type = PixelFormat::Comp0,  .bits = 8 },
+                        { 0, .type = PixelFormat::Comp1, .bits = 8 },
+                        { 0, .type = PixelFormat::Comp2, .bits = 8 }
                 },
                 .planeList = {
                         { .stride = stride_YUV8_422, .size = size_YUV8_422 }
@@ -194,9 +194,9 @@ static StructDatabase<PixelFormat::ID, PixelFormat::Data> db = {
                 .hasAlpha = false,
                 .fourccList = { PROMEKI_FOURCC("v210") },
                 .compList = {
-                        { 0, .type = PixelFormat::CompY,  .bits = 10 },
-                        { 0, .type = PixelFormat::CompCb, .bits = 10 },
-                        { 0, .type = PixelFormat::CompCr, .bits = 10 }
+                        { 0, .type = PixelFormat::Comp0,  .bits = 10 },
+                        { 0, .type = PixelFormat::Comp1, .bits = 10 },
+                        { 0, .type = PixelFormat::Comp2, .bits = 10 }
                 },
                 .planeList = {
                         { .stride = stride_YUV10_422, .size = size_YUV10_422 }

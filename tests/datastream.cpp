@@ -889,10 +889,10 @@ TEST_CASE("DataStream: round-trip Variant Color") {
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeColor);
                 Color out = val.get<Color>();
-                CHECK(out.r() == 128);
-                CHECK(out.g() == 64);
-                CHECK(out.b() == 32);
-                CHECK(out.a() == 200);
+                CHECK(out.r8() == 128);
+                CHECK(out.g8() == 64);
+                CHECK(out.b8() == 32);
+                CHECK(out.a8() == 200);
         }
 }
 
@@ -912,8 +912,8 @@ TEST_CASE("DataStream: round-trip Variant Color named constants") {
                 CHECK(rs.status() == DataStream::Ok);
                 CHECK(val.type() == Variant::TypeColor);
                 Color out = val.get<Color>();
-                CHECK(out.r() == 255);
-                CHECK(out.g() == 255);
-                CHECK(out.b() == 255);
+                CHECK(out.r8() == 255);
+                CHECK(out.g8() == 255);
+                CHECK(out.b8() == 255);
         }
 }

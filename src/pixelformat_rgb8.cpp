@@ -147,9 +147,9 @@ class PixelFormat_RGB8 : public PixelFormat {
                         _hasAlpha = false;
                         _fourccList = { "RGB2" };
                         _compList = {
-                                { 0, CompRed,   8 },
-                                { 0, CompGreen, 8 },
-                                { 0, CompBlue,  8 }
+                                { 0, Comp0,   8 },
+                                { 0, Comp1, 8 },
+                                { 0, Comp2,  8 }
                         };
                         _planeList = { { "RGB" } };
                 }

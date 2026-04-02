@@ -64,16 +64,20 @@ class PixelFormat {
                         Sampling420            ///< 4:2:0 (horizontal and vertical chroma subsampling by 2).
                 };
 
-                /** @brief Pixel component type. */
+                /**
+                 * @brief Pixel component type.
+                 *
+                 * Component identifiers are position-based rather than color-model-specific.
+                 * The semantic meaning of Comp0/Comp1/Comp2 (e.g. R/G/B vs Y/Cb/Cr)
+                 * is determined by the ColorModel associated with the image, not by
+                 * the pixel format.
+                 */
                 enum CompType {
                         CompEmpty = 0, ///< Empty or unused component slot.
                         CompAlpha,     ///< Alpha (transparency) component.
-                        CompRed,       ///< Red color component.
-                        CompGreen,     ///< Green color component.
-                        CompBlue,      ///< Blue color component.
-                        CompY,         ///< Luma (Y) component.
-                        CompCb,        ///< Blue-difference chroma (Cb/U) component.
-                        CompCr         ///< Red-difference chroma (Cr/V) component.
+                        Comp0,         ///< First color component (e.g. R, Y, H).
+                        Comp1,         ///< Second color component (e.g. G, Cb, S).
+                        Comp2          ///< Third color component (e.g. B, Cr, V).
                 };
 
                 /** @brief Describes a single component within the pixel format. */

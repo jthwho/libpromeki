@@ -10,6 +10,7 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/sharedptr.h>
 #include <promeki/core/size2d.h>
+#include <promeki/core/colormodel.h>
 #include <promeki/proav/pixelformat.h>
 #include <promeki/core/metadata.h>
 
@@ -202,13 +203,33 @@ class ImageDesc {
                 }
 
                 /**
+                 * @brief Returns the color model for this image.
+                 * @return Pointer to the ColorModel.
+                 */
+                const ColorModel &colorModel() const {
+                        return _colorModel;
+                }
+
+                /**
+                 * @brief Sets the color model for this image.
+                 * @param model The color model.
+                 */
+                void setColorModel(const ColorModel &model) {
+                        _colorModel = model;
+                }
+
+                /**
                  * @brief Returns a human-readable string representation of this image description.
-                 * @return A String containing the dimensions and pixel format name.
+                 * @return A String containing the dimensions, pixel format name, and color model.
                  */
                 String toString() const {
                         String ret = _size.toString();
                         ret += ' ';
                         ret += _pixelFormat->name();
+                        if(_colorModel.isValid()) {
+                                ret += ' ';
+                                ret += _colorModel.name();
+                        }
                         return ret;
                 }
 
@@ -223,6 +244,7 @@ class ImageDesc {
                 size_t                  _lineAlign = 1;
                 bool                    _interlaced = false;
                 const PixelFormat       *_pixelFormat;
+                ColorModel              _colorModel = ColorModel::sRGB;
                 Metadata                _metadata;
 };
 

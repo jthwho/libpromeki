@@ -156,6 +156,7 @@ PROMEKI_NAMESPACE_BEGIN
 class MyClass {
         public:
                 // Types / enums
+                // Static constants
                 // Static methods
                 // Constructors / destructor
                 // Operators

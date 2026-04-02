@@ -354,8 +354,8 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                                                 if(m.contains(map.metadataID)) {
                                                         int ret = sf_set_string(_file, map.sndfileID,
                                                                 m.get(map.metadataID).get<String>().cstr());
-                                                        if(ret) promekiWarn("open: Failed to write metadata %d",
-                                                                map.metadataID);
+                                                        if(ret) promekiWarn("open: Failed to write metadata %s",
+                                                                map.metadataID.name().cstr());
                                                 }
                                         }
                                         writeBroadcastInfo();

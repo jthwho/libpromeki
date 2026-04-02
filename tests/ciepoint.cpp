@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/ciepoint.h>
+#include <promeki/core/ciepoint.h>
 
 using namespace promeki;
 

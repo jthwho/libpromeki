@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/xyzcolor.h>
+#include <promeki/core/xyzcolor.h>
 
 using namespace promeki;
 
@@ -47,11 +47,11 @@ TEST_CASE("XYZColor: set all at once") {
         CHECK(c.z() == doctest::Approx(0.3));
 }
 
-TEST_CASE("XYZColor: isValid with out-of-range values") {
+TEST_CASE("XYZColor: isValid with negative values") {
         XYZColor a(1.5, 0.5, 0.5);
-        CHECK_FALSE(a.isValid());
+        CHECK(a.isValid());  // CIE XYZ components can exceed 1.0
         XYZColor b(0.5, -0.1, 0.5);
-        CHECK_FALSE(b.isValid());
+        CHECK_FALSE(b.isValid());  // Negative values are invalid
 }
 
 TEST_CASE("XYZColor: isValid with boundary values") {

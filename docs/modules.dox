@@ -125,12 +125,15 @@
  */
 
 /**
- * @defgroup proav_color ProAV Color
- * @brief Color science: CIE color spaces, conversions, and XYZ colors.
+ * @defgroup core_color Core Color
+ * @brief Color science: color models, CIE colorimetry, and precise conversion.
  *
- * CIE chromaticity points, spectral wavelength tables, color space
- * definitions (sRGB, Rec. 709, DCI-P3, etc.), and color space
- * conversion utilities.
+ * Color and ColorModel classes for representing and converting colors
+ * across sRGB, Rec.709, Rec.601, Rec.2020, CIE XYZ, CIE L*a*b*, HSV,
+ * HSL, and YCbCr color models.  Includes CIE chromaticity primitives
+ * (CIEPoint, XYZColor) and a standard observer wavelength table.
+ *
+ * See @ref color_science "Color Science" for a conceptual introduction.
  */
 
 /**

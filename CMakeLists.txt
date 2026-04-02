@@ -178,10 +178,14 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/algorithm.h
     include/promeki/core/util.h
     include/promeki/core/uuid.h
+    include/promeki/core/xyzcolor.h
     include/promeki/core/variant.h
     include/promeki/core/variantdatabase.h
     include/promeki/core/rect.h
+    include/promeki/core/ciepoint.h
+    include/promeki/core/ciewavelengthtable.h
     include/promeki/core/color.h
+    include/promeki/core/colormodel.h
     include/promeki/core/terminal.h
     include/promeki/core/keyevent.h
     include/promeki/core/mouseevent.h
@@ -250,7 +254,9 @@ set(PROMEKI_CORE_SOURCES
     src/framerate.cpp
     src/layout.cpp
     src/rect.cpp
+    src/ciepoint.cpp
     src/color.cpp
+    src/colormodel.cpp
     src/terminal.cpp
     src/keyevent.cpp
     src/mouseevent.cpp
@@ -260,6 +266,7 @@ set(PROMEKI_CORE_SOURCES
     src/fileiodevice.cpp
     src/textstream.cpp
     src/benchmark.cpp
+    src/xyzcolor.cpp
 )
 
 add_library(promeki-core SHARED ${PROMEKI_CORE_SOURCES})
@@ -428,8 +435,6 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/mediapipelineconfig.h
         include/promeki/proav/mediasink.h
         include/promeki/proav/mediasource.h
-        include/promeki/proav/colorspace.h
-        include/promeki/proav/colorspaceconverter.h
         include/promeki/proav/font.h
         include/promeki/proav/fastfont.h
         include/promeki/proav/basicfont.h
@@ -469,10 +474,6 @@ if(PROMEKI_BUILD_PROAV)
         src/pixelformat_rgba8.cpp
         src/pixelformat_jpeg.cpp
         src/paintengine.cpp
-        src/colorspace.cpp
-        src/colorspaceconverter.cpp
-        src/xyzcolor.cpp
-        src/ciepoint.cpp
         src/frame.cpp
         src/audiotestpattern.cpp
         src/codec.cpp
@@ -1024,6 +1025,10 @@ if(PROMEKI_BUILD_TESTS)
         tests/stringregistry.cpp
         tests/variantdatabase.cpp
         tests/configoption.cpp
+        tests/xyzcolor.cpp
+        tests/ciepoint.cpp
+        tests/ciewavelengthtable.cpp
+        tests/colormodel.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
@@ -1042,15 +1047,10 @@ if(PROMEKI_BUILD_TESTS)
             tests/image2.cpp
             tests/pixelformat.cpp
             tests/frame.cpp
-            tests/colorspace.cpp
-            tests/xyzcolor.cpp
             tests/imagefileio.cpp
             tests/codec.cpp
-            tests/colorspaceconverter.cpp
-            tests/ciewavelengthtable.cpp
             tests/audioblock.cpp
             tests/audiofilefactory.cpp
-            tests/ciepoint.cpp
             tests/imagefile.cpp
             tests/paintengine.cpp
             tests/encodeddesc.cpp

@@ -281,9 +281,9 @@ TEST_CASE("AnsiStream: ansiColor out-of-range returns invalid") {
 
 TEST_CASE("AnsiStream: ansiColor(AnsiColor) overload works") {
         Color c = AnsiStream::ansiColor(AnsiStream::Red);
-        CHECK(c.r() == 255);
-        CHECK(c.g() == 0);
-        CHECK(c.b() == 0);
+        CHECK(c.r8() == 255);
+        CHECK(c.g8() == 0);
+        CHECK(c.b8() == 0);
 }
 
 TEST_CASE("AnsiStream: ansiColor system color values") {

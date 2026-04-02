@@ -114,9 +114,9 @@ TEST_CASE("TuiScreen: ansiColor out-of-range returns invalid") {
 
 TEST_CASE("TuiScreen: ansiColor(9) is bright red") {
         Color c = AnsiStream::ansiColor(9);
-        CHECK(c.r() == 255);
-        CHECK(c.g() == 0);
-        CHECK(c.b() == 0);
+        CHECK(c.r8() == 255);
+        CHECK(c.g8() == 0);
+        CHECK(c.b8() == 0);
 }
 
 TEST_CASE("TuiScreen: colorMode default is TrueColor") {
@@ -137,13 +137,13 @@ TEST_CASE("TuiScreen: setColorMode round-trip") {
 TEST_CASE("TuiScreen 256: all 256 palette colors round-trip to same RGB") {
         for(int i = 0; i < 256; ++i) {
                 Color c = AnsiStream::ansiColor(i);
-                int idx = match256(c.r(), c.g(), c.b());
+                int idx = match256(c.r8(), c.g8(), c.b8());
                 Color matched = AnsiStream::ansiColor(idx);
-                INFO("palette index: ", i, " r=", c.r(), " g=", c.g(), " b=", c.b(),
+                INFO("palette index: ", i, " r=", c.r8(), " g=", c.g8(), " b=", c.b8(),
                      " matched index=", idx);
-                CHECK(matched.r() == c.r());
-                CHECK(matched.g() == c.g());
-                CHECK(matched.b() == c.b());
+                CHECK(matched.r8() == c.r8());
+                CHECK(matched.g8() == c.g8());
+                CHECK(matched.b8() == c.b8());
         }
 }
 
@@ -186,28 +186,28 @@ TEST_CASE("TuiScreen 256: pure magenta matches index 13 (bright magenta)") {
 TEST_CASE("TuiScreen 256: near-red (250,5,5) picks bright red (9) not dark red (1)") {
         int idx = match256(250, 5, 5);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() >= 200);
-        CHECK(matched.g() <= 30);
-        CHECK(matched.b() <= 30);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() >= 200);
+        CHECK(matched.g8() <= 30);
+        CHECK(matched.b8() <= 30);
 }
 
 TEST_CASE("TuiScreen 256: near-green (5,250,5) picks bright green") {
         int idx = match256(5, 250, 5);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() <= 30);
-        CHECK(matched.g() >= 200);
-        CHECK(matched.b() <= 30);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() <= 30);
+        CHECK(matched.g8() >= 200);
+        CHECK(matched.b8() <= 30);
 }
 
 TEST_CASE("TuiScreen 256: near-blue (5,5,250) picks bright blue") {
         int idx = match256(5, 5, 250);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() <= 30);
-        CHECK(matched.g() <= 30);
-        CHECK(matched.b() >= 200);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() <= 30);
+        CHECK(matched.g8() <= 30);
+        CHECK(matched.b8() >= 200);
 }
 
 // ── 256-color matching: cube colors ─────────────────────────────────
@@ -216,9 +216,9 @@ TEST_CASE("TuiScreen 256: color near cube vertex (100,135,175) hits index 67") {
         int idx = match256(100, 135, 175);
         Color matched = AnsiStream::ansiColor(idx);
         INFO("matched index=", idx);
-        CHECK(std::abs(matched.r() - 100) <= 40);
-        CHECK(std::abs(matched.g() - 135) <= 40);
-        CHECK(std::abs(matched.b() - 175) <= 40);
+        CHECK(std::abs(matched.r8() - 100) <= 40);
+        CHECK(std::abs(matched.g8() - 135) <= 40);
+        CHECK(std::abs(matched.b8() - 175) <= 40);
 }
 
 TEST_CASE("TuiScreen 256: exact cube vertex (95,135,175) round-trips") {
@@ -234,35 +234,35 @@ TEST_CASE("TuiScreen 256: exact cube vertex (215,175,95) round-trips") {
 TEST_CASE("TuiScreen 256: mid-gray (128,128,128) picks grayscale 244 or system 8") {
         int idx = match256(128, 128, 128);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r());
-        CHECK(matched.r() == matched.g());
-        CHECK(matched.g() == matched.b());
-        CHECK(std::abs(static_cast<int>(matched.r()) - 128) <= 15);
+        INFO("matched index=", idx, " r=", matched.r8());
+        CHECK(matched.r8() == matched.g8());
+        CHECK(matched.g8() == matched.b8());
+        CHECK(std::abs(static_cast<int>(matched.r8()) - 128) <= 15);
 }
 
 TEST_CASE("TuiScreen 256: near-gray (130,130,130) picks a grayscale entry") {
         int idx = match256(130, 130, 130);
         Color matched = AnsiStream::ansiColor(idx);
-        CHECK(matched.r() == matched.g());
-        CHECK(matched.g() == matched.b());
+        CHECK(matched.r8() == matched.g8());
+        CHECK(matched.g8() == matched.b8());
 }
 
 TEST_CASE("TuiScreen 256: light gray (200,200,200) picks a grayscale entry") {
         int idx = match256(200, 200, 200);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r());
-        CHECK(matched.r() == matched.g());
-        CHECK(matched.g() == matched.b());
-        CHECK(std::abs(static_cast<int>(matched.r()) - 200) <= 15);
+        INFO("matched index=", idx, " r=", matched.r8());
+        CHECK(matched.r8() == matched.g8());
+        CHECK(matched.g8() == matched.b8());
+        CHECK(std::abs(static_cast<int>(matched.r8()) - 200) <= 15);
 }
 
 TEST_CASE("TuiScreen 256: dark gray (50,50,50) picks a grayscale entry") {
         int idx = match256(50, 50, 50);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r());
-        CHECK(matched.r() == matched.g());
-        CHECK(matched.g() == matched.b());
-        CHECK(std::abs(static_cast<int>(matched.r()) - 50) <= 15);
+        INFO("matched index=", idx, " r=", matched.r8());
+        CHECK(matched.r8() == matched.g8());
+        CHECK(matched.g8() == matched.b8());
+        CHECK(std::abs(static_cast<int>(matched.r8()) - 50) <= 15);
 }
 
 // ── 256-color matching: common UI colors ────────────────────────────
@@ -270,46 +270,46 @@ TEST_CASE("TuiScreen 256: dark gray (50,50,50) picks a grayscale entry") {
 TEST_CASE("TuiScreen 256: orange (255,165,0) picks a warm color") {
         int idx = match256(255, 165, 0);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() >= 180);
-        CHECK(matched.g() >= 100);
-        CHECK(matched.b() <= 50);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() >= 180);
+        CHECK(matched.g8() >= 100);
+        CHECK(matched.b8() <= 50);
 }
 
 TEST_CASE("TuiScreen 256: pink (255,192,203) picks a pinkish color") {
         int idx = match256(255, 192, 203);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() >= 200);
-        CHECK(matched.g() >= 150);
-        CHECK(matched.b() >= 150);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() >= 200);
+        CHECK(matched.g8() >= 150);
+        CHECK(matched.b8() >= 150);
 }
 
 TEST_CASE("TuiScreen 256: brown (139,69,19) picks a brownish color") {
         int idx = match256(139, 69, 19);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() >= 100);
-        CHECK(matched.g() <= 120);
-        CHECK(matched.b() <= 60);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() >= 100);
+        CHECK(matched.g8() <= 120);
+        CHECK(matched.b8() <= 60);
 }
 
 TEST_CASE("TuiScreen 256: teal (0,128,128) picks a teal-ish color") {
         int idx = match256(0, 128, 128);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() <= 40);
-        CHECK(matched.g() >= 90);
-        CHECK(matched.b() >= 90);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() <= 40);
+        CHECK(matched.g8() >= 90);
+        CHECK(matched.b8() >= 90);
 }
 
 TEST_CASE("TuiScreen 256: navy (0,0,128) picks a dark blue") {
         int idx = match256(0, 0, 128);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.r() <= 20);
-        CHECK(matched.g() <= 20);
-        CHECK(matched.b() >= 90);
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.r8() <= 20);
+        CHECK(matched.g8() <= 20);
+        CHECK(matched.b8() >= 90);
 }
 
 // ── 256-color matching: symmetry / no bizarre mismatches ────────────
@@ -325,20 +325,20 @@ TEST_CASE("TuiScreen 256: matched color is always closer than a random sample") 
         for(auto &tc : tests) {
                 int idx = match256(tc.r, tc.g, tc.b);
                 Color matched = AnsiStream::ansiColor(idx);
-                int bestDist = (tc.r - matched.r()) * (tc.r - matched.r()) +
-                               (tc.g - matched.g()) * (tc.g - matched.g()) +
-                               (tc.b - matched.b()) * (tc.b - matched.b());
+                int bestDist = (tc.r - matched.r8()) * (tc.r - matched.r8()) +
+                               (tc.g - matched.g8()) * (tc.g - matched.g8()) +
+                               (tc.b - matched.b8()) * (tc.b - matched.b8());
                 for(int i = 0; i < 256; ++i) {
                         Color alt = AnsiStream::ansiColor(i);
-                        int altDist = (tc.r - alt.r()) * (tc.r - alt.r()) +
-                                      (tc.g - alt.g()) * (tc.g - alt.g()) +
-                                      (tc.b - alt.b()) * (tc.b - alt.b());
+                        int altDist = (tc.r - alt.r8()) * (tc.r - alt.r8()) +
+                                      (tc.g - alt.g8()) * (tc.g - alt.g8()) +
+                                      (tc.b - alt.b8()) * (tc.b - alt.b8());
                         if(altDist < bestDist / 4) {
                                 INFO("input=(", tc.r, ",", tc.g, ",", tc.b,
                                      ") chosen idx=", idx,
-                                     " (", matched.r(), ",", matched.g(), ",", matched.b(),
+                                     " (", matched.r8(), ",", matched.g8(), ",", matched.b8(),
                                      ") but idx=", i,
-                                     " (", alt.r(), ",", alt.g(), ",", alt.b(),
+                                     " (", alt.r8(), ",", alt.g8(), ",", alt.b8(),
                                      ") is 4x closer by L2");
                                 CHECK(false);
                         }
@@ -399,7 +399,7 @@ TEST_CASE("TuiScreen 256: gray gradient is monotonic in luminance") {
                 int idx = match256(static_cast<uint8_t>(i), static_cast<uint8_t>(i),
                                    static_cast<uint8_t>(i));
                 Color matched = AnsiStream::ansiColor(idx);
-                int lum = matched.r() + matched.g() + matched.b();
+                int lum = matched.r8() + matched.g8() + matched.b8();
                 INFO("input gray=", i, " matched index=", idx, " lum=", lum,
                      " prev=", prevLum);
                 CHECK(lum >= prevLum);
@@ -433,10 +433,10 @@ TEST_CASE("TuiScreen Basic: dark red (128,0,0) → dark red (code 31)") {
         int code = matchBasic(128, 0, 0);
         int idx = basicCodeToIndex(code);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("code=", code, " index=", idx, " r=", matched.r());
-        CHECK(matched.r() >= 100);
-        CHECK(matched.g() <= 10);
-        CHECK(matched.b() <= 10);
+        INFO("code=", code, " index=", idx, " r=", matched.r8());
+        CHECK(matched.r8() >= 100);
+        CHECK(matched.g8() <= 10);
+        CHECK(matched.b8() <= 10);
 }
 
 TEST_CASE("TuiScreen Basic: mid-gray → dark white (code 37) or bright black (code 90)") {
@@ -454,63 +454,63 @@ TEST_CASE("TuiScreen Basic: orange (255,165,0) picks yellow family") {
 TEST_CASE("TuiScreen 256: active progress bar green (32,160,64) matches a green") {
         int idx = match256(32, 160, 64);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.g() >= 135);
-        CHECK(matched.g() > matched.r());
-        CHECK(matched.g() > matched.b());
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.g8() >= 135);
+        CHECK(matched.g8() > matched.r8());
+        CHECK(matched.g8() > matched.b8());
 }
 
 TEST_CASE("TuiScreen 256: inactive progress bar green (32,96,48) matches a colored entry, not gray") {
         int idx = match256(32, 96, 48);
         Color matched = AnsiStream::ansiColor(idx);
-        INFO("matched index=", idx, " r=", matched.r(), " g=", matched.g(), " b=", matched.b());
-        CHECK(matched.g() >= 90);
-        CHECK(matched.g() > matched.r());
-        CHECK(!(matched.r() == matched.g() && matched.g() == matched.b()));
+        INFO("matched index=", idx, " r=", matched.r8(), " g=", matched.g8(), " b=", matched.b8());
+        CHECK(matched.g8() >= 90);
+        CHECK(matched.g8() > matched.r8());
+        CHECK(!(matched.r8() == matched.g8() && matched.g8() == matched.b8()));
 }
 
 TEST_CASE("TuiScreen 256: dark saturated colors prefer colored entries over gray") {
         int idx = match256(96, 16, 16);
         Color m = AnsiStream::ansiColor(idx);
-        INFO("dark red: index=", idx, " r=", m.r(), " g=", m.g(), " b=", m.b());
-        CHECK(m.r() > m.g());
-        CHECK(m.r() > m.b());
+        INFO("dark red: index=", idx, " r=", m.r8(), " g=", m.g8(), " b=", m.b8());
+        CHECK(m.r8() > m.g8());
+        CHECK(m.r8() > m.b8());
 
         idx = match256(16, 16, 96);
         m = AnsiStream::ansiColor(idx);
-        INFO("dark blue: index=", idx, " r=", m.r(), " g=", m.g(), " b=", m.b());
-        CHECK(m.b() > m.r());
-        CHECK(m.b() > m.g());
+        INFO("dark blue: index=", idx, " r=", m.r8(), " g=", m.g8(), " b=", m.b8());
+        CHECK(m.b8() > m.r8());
+        CHECK(m.b8() > m.g8());
 }
 
 TEST_CASE("TuiScreen 256: true grays still match grayscale entries") {
         int idx = match256(68, 68, 68);
         Color m = AnsiStream::ansiColor(idx);
-        INFO("gray 68: index=", idx, " r=", m.r(), " g=", m.g(), " b=", m.b());
-        CHECK(m.r() == m.g());
-        CHECK(m.g() == m.b());
+        INFO("gray 68: index=", idx, " r=", m.r8(), " g=", m.g8(), " b=", m.b8());
+        CHECK(m.r8() == m.g8());
+        CHECK(m.g8() == m.b8());
 
         idx = match256(100, 100, 100);
         m = AnsiStream::ansiColor(idx);
-        INFO("gray 100: index=", idx, " r=", m.r(), " g=", m.g(), " b=", m.b());
-        CHECK(m.r() == m.g());
-        CHECK(m.g() == m.b());
+        INFO("gray 100: index=", idx, " r=", m.r8(), " g=", m.g8(), " b=", m.b8());
+        CHECK(m.r8() == m.g8());
+        CHECK(m.g8() == m.b8());
 }
 
 TEST_CASE("TuiScreen 256: near-gray with tiny saturation stays gray") {
         int idx = match256(70, 68, 68);
         Color m = AnsiStream::ansiColor(idx);
-        INFO("near-gray: index=", idx, " r=", m.r(), " g=", m.g(), " b=", m.b());
-        CHECK(m.r() == m.g());
-        CHECK(m.g() == m.b());
+        INFO("near-gray: index=", idx, " r=", m.r8(), " g=", m.g8(), " b=", m.b8());
+        CHECK(m.r8() == m.g8());
+        CHECK(m.g8() == m.b8());
 }
 
 TEST_CASE("TuiScreen Basic: all 16 system colors round-trip") {
         for(int i = 0; i < 16; ++i) {
                 Color c = AnsiStream::ansiColor(i);
-                int code = matchBasic(c.r(), c.g(), c.b());
+                int code = matchBasic(c.r8(), c.g8(), c.b8());
                 int matched = basicCodeToIndex(code);
-                INFO("system color ", i, " r=", c.r(), " g=", c.g(), " b=", c.b(),
+                INFO("system color ", i, " r=", c.r8(), " g=", c.g8(), " b=", c.b8(),
                      " code=", code, " matched index=", matched);
                 CHECK(matched == i);
         }

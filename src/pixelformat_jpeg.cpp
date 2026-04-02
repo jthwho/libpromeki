@@ -57,9 +57,9 @@ class PixelFormat_JPEG_RGB8 : public PixelFormat_JPEG {
                         _bytesPerBlock = 3;
                         _hasAlpha = false;
                         _compList = {
-                                { 0, CompRed,   8 },
-                                { 0, CompGreen, 8 },
-                                { 0, CompBlue,  8 }
+                                { 0, Comp0,   8 },
+                                { 0, Comp1, 8 },
+                                { 0, Comp2,  8 }
                         };
                         _planeList = { { "JPEG RGB" } };
                 }
@@ -80,9 +80,9 @@ class PixelFormat_JPEG_RGBA8 : public PixelFormat_JPEG {
                         _bytesPerBlock = 4;
                         _hasAlpha = true;
                         _compList = {
-                                { 0, CompRed,   8 },
-                                { 0, CompGreen, 8 },
-                                { 0, CompBlue,  8 },
+                                { 0, Comp0,   8 },
+                                { 0, Comp1, 8 },
+                                { 0, Comp2,  8 },
                                 { 0, CompAlpha, 8 }
                         };
                         _planeList = { { "JPEG RGBA" } };
@@ -104,9 +104,9 @@ class PixelFormat_JPEG_YUV8_422 : public PixelFormat_JPEG {
                         _bytesPerBlock = 2;
                         _hasAlpha = false;
                         _compList = {
-                                { 0, CompY,  8 },
-                                { 0, CompCb, 8 },
-                                { 0, CompCr, 8 }
+                                { 0, Comp0,  8 },
+                                { 0, Comp1, 8 },
+                                { 0, Comp2, 8 }
                         };
                         _planeList = { { "JPEG YUV 422" } };
                 }

@@ -136,7 +136,7 @@ Color AnsiStream::ansiColor(int index) {
 }
 
 AnsiStream::AnsiColor AnsiStream::findClosestAnsiColor(const Color &color, int maxIndex) {
-        uint8_t r = color.r(), g = color.g(), b = color.b();
+        uint8_t r = color.r8(), g = color.g8(), b = color.b8();
 
         // Try exact match via hash map
         const auto &map = paletteHashMap();

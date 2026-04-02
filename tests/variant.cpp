@@ -339,16 +339,16 @@ TEST_CASE("Variant_Color") {
 
 TEST_CASE("Variant_ColorToString") {
     Variant v(Color(255, 128, 64));
-    CHECK(v.get<String>() == "rgb(1,0.501961,0.25098)");
+    CHECK(v.get<String>() == "sRGB(1,0.501961,0.25098,1)");
 }
 
 TEST_CASE("Variant_StringToColor") {
     Variant v(String("#ff8040"));
     Color c = v.get<Color>();
     CHECK(c.isValid());
-    CHECK(c.r() == 255);
-    CHECK(c.g() == 128);
-    CHECK(c.b() == 64);
+    CHECK(c.r8() == 255);
+    CHECK(c.g8() == 128);
+    CHECK(c.b8() == 64);
 }
 
 TEST_CASE("Variant_StringNameToColor") {
@@ -366,7 +366,7 @@ TEST_CASE("Variant_ColorToStandardType") {
     Variant v(Color(255, 128, 64));
     Variant standard = v.toStandardType();
     CHECK(standard.type() == Variant::TypeString);
-    CHECK(standard.get<String>() == "rgb(1,0.501961,0.25098)");
+    CHECK(standard.get<String>() == "sRGB(1,0.501961,0.25098,1)");
 }
 
 TEST_CASE("Variant_ColorCrossTypeEquality") {
@@ -380,10 +380,10 @@ TEST_CASE("Variant_ColorCopy") {
     Variant v1(Color(10, 20, 30, 40));
     Variant v2 = v1;
     CHECK(v2.type() == Variant::TypeColor);
-    CHECK(v2.get<Color>().r() == 10);
-    CHECK(v2.get<Color>().g() == 20);
-    CHECK(v2.get<Color>().b() == 30);
-    CHECK(v2.get<Color>().a() == 40);
+    CHECK(v2.get<Color>().r8() == 10);
+    CHECK(v2.get<Color>().g8() == 20);
+    CHECK(v2.get<Color>().b8() == 30);
+    CHECK(v2.get<Color>().a8() == 40);
 }
 
 TEST_CASE("Variant_ColorSet") {
@@ -418,9 +418,9 @@ TEST_CASE("Variant_ColorCommaStringConversion") {
     Variant v(String("128,64,32"));
     Color c = v.get<Color>();
     CHECK(c.isValid());
-    CHECK(c.r() == 128);
-    CHECK(c.g() == 64);
-    CHECK(c.b() == 32);
+    CHECK(c.r8() == 128);
+    CHECK(c.g8() == 64);
+    CHECK(c.b8() == 32);
 }
 
 // ============================================================================

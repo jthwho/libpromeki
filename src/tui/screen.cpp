@@ -12,7 +12,7 @@ PROMEKI_NAMESPACE_BEGIN
 
 // Convert a Color to its perceptual grayscale value (Rec. 709).
 static uint8_t colorToGray(const Color &color) {
-        return static_cast<uint8_t>(0.2126 * color.r() + 0.7152 * color.g() + 0.0722 * color.b() + 0.5);
+        return static_cast<uint8_t>(std::round(255.0 * (0.2126 * color.r() + 0.7152 * color.g() + 0.0722 * color.b())));
 }
 
 // Map a grayscale value to one of the 4 gray levels in the 16-color palette.
@@ -90,7 +90,7 @@ static void emitForeground(AnsiStream &stream, const Color &color, Terminal::Col
                         break;
                 }
                 case Terminal::TrueColor:
-                        stream.setForegroundRGB(color.r(), color.g(), color.b());
+                        stream.setForegroundRGB(color.r8(), color.g8(), color.b8());
                         break;
                 case Terminal::Color256:
                         stream.setForeground(AnsiStream::findClosestAnsiColor(color, 255));
@@ -117,7 +117,7 @@ static void emitBackground(AnsiStream &stream, const Color &color, Terminal::Col
                         break;
                 }
                 case Terminal::TrueColor:
-                        stream.setBackgroundRGB(color.r(), color.g(), color.b());
+                        stream.setBackgroundRGB(color.r8(), color.g8(), color.b8());
                         break;
                 case Terminal::Color256:
                         stream.setBackground(AnsiStream::findClosestAnsiColor(color, 255));

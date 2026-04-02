@@ -303,11 +303,13 @@ class PaintEngine {
                  * @return A Pixel suitable for drawing on this engine.
                  */
                 Pixel createPixel(const Color &color) const {
+                        Color c = (color.model() == ColorModel::sRGB)
+                                ? color : color.toRGB();
                         uint16_t data[] = {
-                                static_cast<uint16_t>(color.r() * 257u),
-                                static_cast<uint16_t>(color.g() * 257u),
-                                static_cast<uint16_t>(color.b() * 257u),
-                                static_cast<uint16_t>(color.a() * 257u)
+                                static_cast<uint16_t>(c.r8() * 257u),
+                                static_cast<uint16_t>(c.g8() * 257u),
+                                static_cast<uint16_t>(c.b8() * 257u),
+                                static_cast<uint16_t>(c.a8() * 257u)
                         };
                         return d->createPixel(data, 4);
                 }
