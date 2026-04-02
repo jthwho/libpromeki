@@ -19,12 +19,17 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Single source of truth for a color model and its associated color space.
  * @ingroup core_color
  *
+ * Uses the @ref typeregistry "TypeRegistry pattern": a lightweight inline
+ * wrapper around an immutable Data record, identified by an integer ID.
+ * Well-known models are provided as enum constants; user-defined models
+ * can be registered at runtime via registerType() and registerData().
+ *
  * A "color model" defines how color is represented mathematically (RGB, HSV,
  * YCbCr, etc.), while a "color space" pins that model to specific real-world
  * colors by defining primaries, a white point, and a transfer function. This
- * class combines both concepts: ColorModel::sRGB, for example, specifies
- * not just "RGB" but the exact sRGB primaries, D65 white point, and the
- * IEC 61966-2-1 transfer curve.
+ * class combines both concepts: a ColorModel constructed from sRGB, for
+ * example, specifies not just "RGB" but the exact sRGB primaries, D65 white
+ * point, and the IEC 61966-2-1 transfer curve.
  *
  * @par Color model categories
  *
@@ -99,9 +104,6 @@ PROMEKI_NAMESPACE_BEGIN
  * used in static initializers without cross-translation-unit ordering
  * concerns. Copying a ColorModel is trivial (pointer copy).
  *
- * This class is not thread-safe. Instances are immutable after construction,
- * so concurrent reads of the same instance from multiple threads are safe.
- *
  * @par References
  * - IEC 61966-2-1:1999, "Multimedia systems and equipment -- Colour
  *   measurement and management -- Part 2-1: Colour management -- Default
@@ -121,42 +123,43 @@ PROMEKI_NAMESPACE_BEGIN
  * @see Color for the user-facing type that combines components with a ColorModel.
  * @see XYZColor for the connection space through which all conversions pass.
  * @see CIEPoint for chromaticity coordinates used to define primaries.
+ * @see @ref typeregistry "TypeRegistry Pattern" for the design pattern.
  */
 class ColorModel {
         public:
                 /**
-                 * @brief Identifies a well-known color model.
+                 * @brief Identifies a color model.
                  *
-                 * Each ID corresponds to a unique combination of color model type,
-                 * primaries, white point, and transfer function. The "_ID" suffix
-                 * distinguishes these enumerators from the static ColorModel constants
-                 * of the same name (e.g. sRGB_ID vs ColorModel::sRGB).
+                 * Well-known models have named enumerators.  User-defined
+                 * models obtain IDs from registerType().  The atomic counter
+                 * starts at UserDefined.
                  */
                 enum ID {
-                        Invalid_ID = 0,        ///< Invalid or unset.
-                        sRGB_ID,               ///< sRGB (IEC 61966-2-1).
-                        LinearSRGB_ID,         ///< Linear sRGB (scene-referred).
-                        Rec709_ID,             ///< ITU-R BT.709 (gamma-corrected).
-                        LinearRec709_ID,       ///< ITU-R BT.709 (linear).
-                        Rec601_PAL_ID,         ///< ITU-R BT.601 PAL (gamma-corrected).
-                        LinearRec601_PAL_ID,   ///< ITU-R BT.601 PAL (linear).
-                        Rec601_NTSC_ID,        ///< ITU-R BT.601 NTSC (gamma-corrected).
-                        LinearRec601_NTSC_ID,  ///< ITU-R BT.601 NTSC (linear).
-                        Rec2020_ID,            ///< ITU-R BT.2020 (gamma-corrected).
-                        LinearRec2020_ID,      ///< ITU-R BT.2020 (linear).
-                        DCI_P3_ID,             ///< DCI-P3 Display (D65, sRGB transfer).
-                        LinearDCI_P3_ID,       ///< Linear DCI-P3 Display (D65).
-                        AdobeRGB_ID,           ///< Adobe RGB (1998).
-                        LinearAdobeRGB_ID,     ///< Linear Adobe RGB (1998).
-                        ACES_AP0_ID,           ///< ACES 2065-1 (AP0 primaries, linear).
-                        ACES_AP1_ID,           ///< ACEScg (AP1 primaries, linear).
-                        CIEXYZ_ID,             ///< CIE 1931 XYZ (connection space).
-                        CIELab_ID,             ///< CIE L*a*b* (D65 white point).
-                        HSV_sRGB_ID,           ///< HSV derived from sRGB.
-                        HSL_sRGB_ID,           ///< HSL derived from sRGB.
-                        YCbCr_Rec709_ID,       ///< YCbCr with BT.709 coefficients.
-                        YCbCr_Rec601_ID,       ///< YCbCr with BT.601 coefficients.
-                        YCbCr_Rec2020_ID,      ///< YCbCr with BT.2020 coefficients.
+                        Invalid          = 0,   ///< Invalid or unset.
+                        sRGB             = 1,   ///< sRGB (IEC 61966-2-1).
+                        LinearSRGB       = 2,   ///< Linear sRGB (scene-referred).
+                        Rec709           = 3,   ///< ITU-R BT.709 (gamma-corrected).
+                        LinearRec709     = 4,   ///< ITU-R BT.709 (linear).
+                        Rec601_PAL       = 5,   ///< ITU-R BT.601 PAL (gamma-corrected).
+                        LinearRec601_PAL = 6,   ///< ITU-R BT.601 PAL (linear).
+                        Rec601_NTSC      = 7,   ///< ITU-R BT.601 NTSC (gamma-corrected).
+                        LinearRec601_NTSC= 8,   ///< ITU-R BT.601 NTSC (linear).
+                        Rec2020          = 9,   ///< ITU-R BT.2020 (gamma-corrected).
+                        LinearRec2020    = 10,  ///< ITU-R BT.2020 (linear).
+                        DCI_P3           = 11,  ///< DCI-P3 Display (D65, sRGB transfer).
+                        LinearDCI_P3     = 12,  ///< Linear DCI-P3 Display (D65).
+                        AdobeRGB         = 13,  ///< Adobe RGB (1998).
+                        LinearAdobeRGB   = 14,  ///< Linear Adobe RGB (1998).
+                        ACES_AP0         = 15,  ///< ACES 2065-1 (AP0 primaries, linear).
+                        ACES_AP1         = 16,  ///< ACEScg (AP1 primaries, linear).
+                        CIEXYZ           = 17,  ///< CIE 1931 XYZ (connection space).
+                        CIELab           = 18,  ///< CIE L*a*b* (D65 white point).
+                        HSV_sRGB         = 19,  ///< HSV derived from sRGB.
+                        HSL_sRGB         = 20,  ///< HSL derived from sRGB.
+                        YCbCr_Rec709     = 21,  ///< YCbCr with BT.709 coefficients.
+                        YCbCr_Rec601     = 22,  ///< YCbCr with BT.601 coefficients.
+                        YCbCr_Rec2020    = 23,  ///< YCbCr with BT.2020 coefficients.
+                        UserDefined      = 1024 ///< First ID available for user-registered types.
                 };
 
                 /**
@@ -219,70 +222,63 @@ class ColorModel {
                 typedef Array<CIEPoint, 4> Primaries;
 
                 /**
-                 * @name Well-known color model constants
+                 * @brief Immutable descriptor for a color model.
                  *
-                 * Pre-defined constants for common color models. These are the
-                 * values you pass to Color's constructor or convert() method.
+                 * Holds all properties that define a color model: geometric type,
+                 * primaries, transfer functions, conversion matrices, and
+                 * component metadata.  Populated by the library for well-known
+                 * models, or by users via registerData() for custom models.
                  *
-                 * **sRGB** is the default for consumer displays, the web, and
-                 * most image formats (PNG, JPEG). If you are unsure which model
-                 * to use, sRGB is almost certainly correct.
-                 *
-                 * **Rec.709** shares the same primaries as sRGB but uses a
-                 * slightly different transfer function; it is the standard for
-                 * HD video (1080i/1080p). **Rec.601** is the older SD video
-                 * standard (PAL and NTSC variants differ in primaries).
-                 * **Rec.2020** is the wide-gamut standard for UHD/4K/8K video.
-                 *
-                 * Each gamma-encoded model has a **Linear** counterpart with
-                 * the same primaries but an identity transfer function, for use
-                 * in physically-based rendering, compositing, or any context
-                 * where arithmetic on light intensities must be linear.
-                 *
-                 * **HSV** and **HSL** are derived from sRGB and separate hue,
-                 * saturation, and brightness/lightness into independent axes.
-                 * They are primarily useful for color pickers and artistic
-                 * adjustments.
-                 *
-                 * **YCbCr** models separate luma from chroma and are used in
-                 * video compression (H.264, H.265, etc.) and broadcast.
-                 *
-                 * **CIEXYZ** is the device-independent connection space used
-                 * internally for all conversions. **CIELab** is a perceptually
-                 * uniform rearrangement of XYZ useful for measuring color
-                 * differences.
-                 * @{
+                 * @see @ref typeregistry "TypeRegistry Pattern"
                  */
-                static const ColorModel Invalid;          ///< Invalid / unset.
-                static const ColorModel sRGB;             ///< sRGB (IEC 61966-2-1). The standard for consumer displays and the web.
-                static const ColorModel LinearSRGB;       ///< Linear sRGB. Same primaries as sRGB, no gamma. Use for compositing and physically-based rendering.
-                static const ColorModel Rec709;           ///< ITU-R BT.709 (HD video). Same primaries as sRGB, different transfer function.
-                static const ColorModel LinearRec709;     ///< Linear Rec.709. Same primaries, identity transfer.
-                static const ColorModel Rec601_PAL;       ///< ITU-R BT.601 PAL (SD video, 625-line systems).
-                static const ColorModel LinearRec601_PAL; ///< Linear Rec.601 PAL.
-                static const ColorModel Rec601_NTSC;      ///< ITU-R BT.601 NTSC (SD video, 525-line systems).
-                static const ColorModel LinearRec601_NTSC;///< Linear Rec.601 NTSC.
-                static const ColorModel Rec2020;          ///< ITU-R BT.2020 (UHD/4K/8K video). Wide gamut.
-                static const ColorModel LinearRec2020;    ///< Linear Rec.2020.
-                static const ColorModel DCI_P3;           ///< DCI-P3 Display (D65 white point, sRGB transfer). Used by Apple displays and HDR content.
-                static const ColorModel LinearDCI_P3;     ///< Linear DCI-P3 Display (D65).
-                static const ColorModel AdobeRGB;         ///< Adobe RGB (1998). Wide-gamut space for photography and prepress.
-                static const ColorModel LinearAdobeRGB;   ///< Linear Adobe RGB (1998).
-                static const ColorModel ACES_AP0;         ///< ACES 2065-1 (AP0 primaries, linear, D60 white). Encompasses all visible colors. The archival/interchange format for ACES.
-                static const ColorModel ACES_AP1;         ///< ACEScg (AP1 primaries, linear, D60 white). The working space for ACES compositing and CGI rendering.
-                static const ColorModel CIEXYZ;           ///< CIE 1931 XYZ. The device-independent connection space for all conversions.
-                static const ColorModel CIELab;           ///< CIE L*a*b* (D65 white point). Perceptually uniform; useful for color difference metrics.
-                static const ColorModel HSV_sRGB;         ///< HSV derived from sRGB. Hue-Saturation-Value for color pickers.
-                static const ColorModel HSL_sRGB;         ///< HSL derived from sRGB. Hue-Saturation-Lightness.
-                static const ColorModel YCbCr_Rec709;     ///< YCbCr with BT.709 luma coefficients. Used in HD video compression.
-                static const ColorModel YCbCr_Rec601;     ///< YCbCr with BT.601 luma coefficients. Used in SD video compression.
-                static const ColorModel YCbCr_Rec2020;    ///< YCbCr with BT.2020 luma coefficients. Used in UHD video compression.
-                /** @} */
+                struct Data {
+                        ID                      id = Invalid;               ///< The ID this data was registered under.
+                        Type                    type = TypeInvalid;            ///< Geometric type (RGB, HSV, etc.).
+                        String                  name;                          ///< Human-readable name.
+                        String                  desc;                          ///< Longer description.
+                        Primaries               primaries;                     ///< CIE chromaticity primaries and white point.
+                        CompInfo                comps[3] = {};                 ///< Component descriptors (3 color channels).
+                        TransferFunc            oetf = nullptr;                ///< Linear -> encoded transfer function.
+                        TransferFunc            eotf = nullptr;                ///< Encoded -> linear transfer function.
+                        bool                    linear = false;                ///< True if transfer function is identity.
+                        ID                      linearCounterpart = Invalid;    ///< ID of linear version (or self).
+                        ID                      nonlinearCounterpart = Invalid; ///< ID of gamma-encoded version (or self).
+                        ID                      parentModel = Invalid;          ///< Parent RGB model for derived types.
+                        Matrix3x3               rgbToXyz;                      ///< RGB-to-XYZ Normalized Primary Matrix.
+                        Matrix3x3               xyzToRgb;                      ///< XYZ-to-RGB (inverse of rgbToXyz).
+                        Matrix3x3               toParentMatrix;                ///< For matrix-derived models (YCbCr).
+                        Matrix3x3               fromParentMatrix;              ///< Inverse of toParentMatrix.
+                        float                   toParentOffset[3] = {};        ///< Offset applied before toParentMatrix.
+                        float                   fromParentOffset[3] = {};      ///< Offset applied after fromParentMatrix.
+                        void (*toXYZFunc)(const Data *d, const float *src, float *dst) = nullptr;   ///< Convert to CIE XYZ.
+                        void (*fromXYZFunc)(const Data *d, const float *src, float *dst) = nullptr; ///< Convert from CIE XYZ.
+                };
+
+                /**
+                 * @brief Allocates and returns a unique ID for a user-defined color model.
+                 *
+                 * Each call returns a new, never-before-used ID.  Thread-safe.
+                 *
+                 * @return A unique ID value.
+                 * @see registerData()
+                 */
+                static ID registerType();
+
+                /**
+                 * @brief Registers a Data record in the registry.
+                 *
+                 * After this call, constructing a ColorModel from @p data.id
+                 * will resolve to the registered data.
+                 *
+                 * @param data The populated Data struct with id set to a value from registerType().
+                 * @see registerType()
+                 */
+                static void registerData(Data &&data);
 
                 /**
                  * @brief Looks up a well-known ColorModel by name.
                  * @param name The name to search for (e.g. "sRGB", "HSV_sRGB").
-                 * @return The matching model, or Invalid if not found.
+                 * @return The matching model, or an invalid model if not found.
                  */
                 static ColorModel lookup(const String &name);
 
@@ -292,13 +288,13 @@ class ColorModel {
                  * Resolves the ID to internal data via a construct-on-first-use
                  * registry. Safe to call during static initialization.
                  */
-                ColorModel(ID id = Invalid_ID);
+                inline ColorModel(ID id = Invalid);
 
                 /** @brief Returns the ID of this model. */
-                ID id() const;
+                ID id() const { return _d->id; }
 
                 /** @brief Returns true if this is a valid (non-Invalid) color model. */
-                bool isValid() const;
+                bool isValid() const { return _d != nullptr && _d->type != TypeInvalid; }
 
                 /** @brief Equality operator. */
                 bool operator==(const ColorModel &other) const { return _d == other._d; }
@@ -307,59 +303,47 @@ class ColorModel {
                 bool operator!=(const ColorModel &other) const { return _d != other._d; }
 
                 /** @brief Returns the geometric type of this model. */
-                Type type() const;
+                Type type() const { return _d->type; }
 
                 /** @brief Returns the human-readable name of this model. */
-                const String &name() const;
+                const String &name() const { return _d->name; }
 
                 /** @brief Returns a longer description of this model. */
-                const String &desc() const;
+                const String &desc() const { return _d->desc; }
 
                 /**
                  * @brief Returns the number of color components (always 3).
                  *
                  * Alpha is managed by Color, not ColorModel.
                  */
-                size_t compCount() const;
+                size_t compCount() const { return 3; }
 
                 /**
                  * @brief Returns descriptor for the given component index (0-2).
                  * @param index Component index.
                  * @return CompInfo describing the component's name and native range.
                  */
-                const CompInfo &compInfo(size_t index) const;
+                const CompInfo &compInfo(size_t index) const { return _d->comps[index < 3 ? index : 0]; }
 
                 /**
                  * @brief Returns the CIE chromaticity primaries and white point.
                  *
                  * The array contains [Red, Green, Blue, WhitePoint] as CIEPoints.
-                 * These define the triangle of reproducible colors (the gamut)
-                 * for RGB models. For non-RGB models, the primaries are
-                 * inherited from the parent model or may be empty.
                  */
-                const Primaries &primaries() const;
+                const Primaries &primaries() const { return _d->primaries; }
 
                 /**
                  * @brief Returns the white point chromaticity coordinate.
                  *
                  * The white point defines what "white" means in this color space.
-                 * Most modern standards use D65 (approximately 6504 K daylight),
-                 * which has chromaticity coordinates (0.3127, 0.3290). The
-                 * graphic arts industry sometimes uses D50 (~5003 K) instead.
+                 * Most modern standards use D65 (approximately 6504 K daylight).
                  */
-                const CIEPoint &whitePoint() const;
+                const CIEPoint &whitePoint() const { return _d->primaries[3]; }
 
                 /**
                  * @brief Returns true if this model uses a linear (identity) transfer function.
-                 *
-                 * Linear models store values proportional to physical light
-                 * intensity. This is required for correct alpha compositing,
-                 * lighting calculations, and any arithmetic that assumes
-                 * superposition of light. Non-linear (gamma-encoded) models
-                 * are more efficient for storage and display but must be
-                 * linearized before arithmetic operations.
                  */
-                bool isLinear() const;
+                bool isLinear() const { return _d->linear; }
 
                 /**
                  * @brief Returns the linear counterpart of this model.
@@ -368,7 +352,7 @@ class ColorModel {
                  * same primaries. For models that are already linear or have no
                  * transfer function, returns this.
                  */
-                ColorModel linearCounterpart() const;
+                inline ColorModel linearCounterpart() const;
 
                 /**
                  * @brief Returns the non-linear (gamma-encoded) counterpart of this model.
@@ -376,33 +360,23 @@ class ColorModel {
                  * For a linear RGB model, returns the gamma-encoded version. For
                  * models that are already non-linear, returns this.
                  */
-                ColorModel nonlinearCounterpart() const;
+                inline ColorModel nonlinearCounterpart() const;
 
                 /**
                  * @brief Applies the forward transfer function (OETF) to a linear value.
                  *
-                 * Converts a linear-light intensity to the encoded (non-linear)
-                 * representation used for storage and display. For sRGB, this is
-                 * approximately raising to the power of 1/2.4 (with a linear
-                 * segment near black).
-                 *
                  * @param linear The linear-light value (0.0-1.0 for SDR content).
                  * @return The encoded (gamma-corrected) value.
                  */
-                double applyTransfer(double linear) const;
+                double applyTransfer(double linear) const { return _d->oetf(linear); }
 
                 /**
                  * @brief Removes the transfer function (EOTF) from an encoded value.
                  *
-                 * Converts an encoded (non-linear) value back to linear light.
-                 * This is the inverse of applyTransfer(). For sRGB, this is
-                 * approximately raising to the power of 2.4 (with a linear
-                 * segment near black).
-                 *
                  * @param encoded The gamma-corrected value (0.0-1.0 for SDR content).
                  * @return The linear-light value.
                  */
-                double removeTransfer(double encoded) const;
+                double removeTransfer(double encoded) const { return _d->eotf(encoded); }
 
                 /**
                  * @brief Returns the parent model for derived types.
@@ -411,35 +385,23 @@ class ColorModel {
                  * the RGB model they are defined relative to. Primary RGB models
                  * and XYZ/Lab return Invalid.
                  */
-                ColorModel parentModel() const;
+                inline ColorModel parentModel() const;
 
                 /**
                  * @brief Converts components from this model to CIE XYZ.
                  *
-                 * This is the core conversion primitive. For RGB models the
-                 * pipeline is: remove transfer function (EOTF), then multiply
-                 * by the RGB-to-XYZ matrix. For derived models (HSV, YCbCr)
-                 * the components are first converted to the parent RGB model,
-                 * then that model's toXYZ is applied.
-                 *
-                 * This method is intended for precise single-color conversions,
-                 * not for bulk pixel processing.
-                 *
                  * @param src Source components in this model (3 floats, alpha excluded).
                  * @param dst Destination CIE XYZ components (3 floats).
                  */
-                void toXYZ(const float *src, float *dst) const;
+                void toXYZ(const float *src, float *dst) const { _d->toXYZFunc(_d, src, dst); }
 
                 /**
                  * @brief Converts components from CIE XYZ to this model.
                  *
-                 * The reverse of toXYZ(). For RGB models: multiply by the
-                 * XYZ-to-RGB matrix, then apply the transfer function (OETF).
-                 *
                  * @param src Source CIE XYZ components (3 floats).
                  * @param dst Destination components in this model (3 floats, alpha excluded).
                  */
-                void fromXYZ(const float *src, float *dst) const;
+                void fromXYZ(const float *src, float *dst) const { _d->fromXYZFunc(_d, src, dst); }
 
                 /**
                  * @brief Converts a normalized component value to native display units.
@@ -447,7 +409,11 @@ class ColorModel {
                  * @param normalized The normalized value (typically 0.0-1.0).
                  * @return The value in native units (e.g. 0-360 for hue).
                  */
-                float toNative(size_t comp, float normalized) const;
+                float toNative(size_t comp, float normalized) const {
+                        if(comp >= 3) return 0.0f;
+                        const CompInfo &ci = _d->comps[comp];
+                        return ci.nativeMin + normalized * (ci.nativeMax - ci.nativeMin);
+                }
 
                 /**
                  * @brief Converts a native display value to normalized form.
@@ -455,14 +421,38 @@ class ColorModel {
                  * @param native The value in native units.
                  * @return The normalized value.
                  */
-                float fromNative(size_t comp, float native) const;
+                float fromNative(size_t comp, float native) const {
+                        if(comp >= 3) return 0.0f;
+                        const CompInfo &ci = _d->comps[comp];
+                        float range = ci.nativeMax - ci.nativeMin;
+                        if(range == 0.0f) return 0.0f;
+                        return (native - ci.nativeMin) / range;
+                }
 
-                /** @cond INTERNAL */
-                struct Data;
-                /** @endcond */
+                /** @brief Returns the underlying Data pointer. */
+                const Data *data() const { return _d; }
 
         private:
                 const Data *_d = nullptr;
+                static const Data *lookupData(ID id);
 };
+
+// Deferred inline definitions that require the full class to be visible.
+
+inline ColorModel::ColorModel(ID id) : _d(lookupData(id)) {}
+
+inline ColorModel ColorModel::linearCounterpart() const {
+        ID lcid = _d->linearCounterpart;
+        return lcid != Invalid ? ColorModel(lcid) : *this;
+}
+
+inline ColorModel ColorModel::nonlinearCounterpart() const {
+        ID nlid = _d->nonlinearCounterpart;
+        return nlid != Invalid ? ColorModel(nlid) : *this;
+}
+
+inline ColorModel ColorModel::parentModel() const {
+        return ColorModel(_d->parentModel);
+}
 
 PROMEKI_NAMESPACE_END

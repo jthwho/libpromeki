@@ -7,45 +7,24 @@
 
 #include <cmath>
 #include <promeki/core/colormodel.h>
+#include <promeki/core/atomic.h>
 #include <promeki/core/map.h>
 #include <promeki/core/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 // ---------------------------------------------------------------------------
-// Internal Data struct
+// Atomic ID counter for user-registered types
 // ---------------------------------------------------------------------------
 
-struct ColorModel::Data {
-        ID                      id = Invalid_ID;
-        Type                    type = TypeInvalid;
-        String                  name;
-        String                  desc;
-        Primaries               primaries;
-        CompInfo                comps[3] = {};
-        TransferFunc            oetf = nullptr;       // Linear -> encoded
-        TransferFunc            eotf = nullptr;       // Encoded -> linear
-        ID                      linearCounterpart = Invalid_ID;
-        ID                      nonlinearCounterpart = Invalid_ID;
-        ID                      parentModel = Invalid_ID;
+static Atomic<int> _nextType{ColorModel::UserDefined};
 
-        // Precomputed matrices for RGB<->XYZ conversion (primary RGB models only)
-        Matrix3x3               rgbToXyz;
-        Matrix3x3               xyzToRgb;
-
-        // For matrix-derived models (YCbCr): conversion relative to parent RGB
-        Matrix3x3               toParentMatrix;
-        Matrix3x3               fromParentMatrix;
-        float                   toParentOffset[3] = {};
-        float                   fromParentOffset[3] = {};
-
-        // Conversion function pointers (set per model category)
-        void (*toXYZFunc)(const Data *d, const float *src, float *dst) = nullptr;
-        void (*fromXYZFunc)(const Data *d, const float *src, float *dst) = nullptr;
-};
+ColorModel::ID ColorModel::registerType() {
+        return static_cast<ID>(_nextType.fetchAndAdd(1));
+}
 
 // Forward declaration — needed by conversion functions
-static const ColorModel::Data &lookupData(ColorModel::ID id);
+static const ColorModel::Data &registryLookup(ColorModel::ID id);
 
 // ---------------------------------------------------------------------------
 // Transfer functions
@@ -281,13 +260,13 @@ static void hsvToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float m = v - c;
         float rgb[3] = { r1 + m, g1 + m, b1 + m };
 
-        const auto &parent = lookupData(d->parentModel);
+        const auto &parent = registryLookup(d->parentModel);
         parent.toXYZFunc(&parent, rgb, dst);
 }
 
 static void hsvFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float rgb[3];
-        const auto &parent = lookupData(d->parentModel);
+        const auto &parent = registryLookup(d->parentModel);
         parent.fromXYZFunc(&parent, src, rgb);
 
         float r = rgb[0], g = rgb[1], b = rgb[2];
@@ -328,13 +307,13 @@ static void hslToXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float m = l - c * 0.5f;
         float rgb[3] = { r1 + m, g1 + m, b1 + m };
 
-        const auto &parent = lookupData(d->parentModel);
+        const auto &parent = registryLookup(d->parentModel);
         parent.toXYZFunc(&parent, rgb, dst);
 }
 
 static void hslFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float rgb[3];
-        const auto &parent = lookupData(d->parentModel);
+        const auto &parent = registryLookup(d->parentModel);
         parent.fromXYZFunc(&parent, src, rgb);
 
         float r = rgb[0], g = rgb[1], b = rgb[2];
@@ -366,13 +345,13 @@ static void ycbcrToXYZ(const ColorModel::Data *d, const float *src, float *dst) 
                 src[2] + d->toParentOffset[2]
         };
         d->toParentMatrix.vectorTransform(tmp);
-        const auto &parent = lookupData(d->parentModel);
+        const auto &parent = registryLookup(d->parentModel);
         parent.toXYZFunc(&parent, tmp, dst);
 }
 
 static void ycbcrFromXYZ(const ColorModel::Data *d, const float *src, float *dst) {
         float rgb[3];
-        const auto &parent = lookupData(d->parentModel);
+        const auto &parent = registryLookup(d->parentModel);
         parent.fromXYZFunc(&parent, src, rgb);
         d->fromParentMatrix.vectorTransform(rgb);
         dst[0] = rgb[0] + d->fromParentOffset[0];
@@ -434,13 +413,14 @@ static void initRGBMatrices(ColorModel::Data &d) {
 
 static ColorModel::Data makeInvalid() {
         ColorModel::Data d;
-        d.id = ColorModel::Invalid_ID;
+        d.id = ColorModel::Invalid;
         d.type = ColorModel::TypeInvalid;
         d.name = "Invalid";
         d.desc = "Invalid color model";
         setInvalidComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
+        d.linear = true;
         d.toXYZFunc = xyzToXYZ;
         d.fromXYZFunc = xyzFromXYZ;
         return d;
@@ -448,7 +428,7 @@ static ColorModel::Data makeInvalid() {
 
 static ColorModel::Data makeSRGB() {
         ColorModel::Data d;
-        d.id = ColorModel::sRGB_ID;
+        d.id = ColorModel::sRGB;
         d.type = ColorModel::TypeRGB;
         d.name = "sRGB";
         d.desc = "IEC 61966-2-1 sRGB";
@@ -456,8 +436,9 @@ static ColorModel::Data makeSRGB() {
         setRGBComps(d);
         d.oetf = transferSRGB;
         d.eotf = invTransferSRGB;
-        d.linearCounterpart = ColorModel::LinearSRGB_ID;
-        d.nonlinearCounterpart = ColorModel::sRGB_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearSRGB;
+        d.nonlinearCounterpart = ColorModel::sRGB;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -466,7 +447,7 @@ static ColorModel::Data makeSRGB() {
 
 static ColorModel::Data makeLinearSRGB() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearSRGB_ID;
+        d.id = ColorModel::LinearSRGB;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearSRGB";
         d.desc = "Linear sRGB";
@@ -474,8 +455,9 @@ static ColorModel::Data makeLinearSRGB() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearSRGB_ID;
-        d.nonlinearCounterpart = ColorModel::sRGB_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearSRGB;
+        d.nonlinearCounterpart = ColorModel::sRGB;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -484,7 +466,7 @@ static ColorModel::Data makeLinearSRGB() {
 
 static ColorModel::Data makeRec709() {
         ColorModel::Data d;
-        d.id = ColorModel::Rec709_ID;
+        d.id = ColorModel::Rec709;
         d.type = ColorModel::TypeRGB;
         d.name = "Rec709";
         d.desc = "ITU-R BT.709";
@@ -492,8 +474,9 @@ static ColorModel::Data makeRec709() {
         setRGBComps(d);
         d.oetf = transferRec709;
         d.eotf = invTransferRec709;
-        d.linearCounterpart = ColorModel::LinearRec709_ID;
-        d.nonlinearCounterpart = ColorModel::Rec709_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearRec709;
+        d.nonlinearCounterpart = ColorModel::Rec709;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -502,7 +485,7 @@ static ColorModel::Data makeRec709() {
 
 static ColorModel::Data makeLinearRec709() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearRec709_ID;
+        d.id = ColorModel::LinearRec709;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearRec709";
         d.desc = "Linear ITU-R BT.709";
@@ -510,8 +493,9 @@ static ColorModel::Data makeLinearRec709() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearRec709_ID;
-        d.nonlinearCounterpart = ColorModel::Rec709_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearRec709;
+        d.nonlinearCounterpart = ColorModel::Rec709;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -520,7 +504,7 @@ static ColorModel::Data makeLinearRec709() {
 
 static ColorModel::Data makeRec601PAL() {
         ColorModel::Data d;
-        d.id = ColorModel::Rec601_PAL_ID;
+        d.id = ColorModel::Rec601_PAL;
         d.type = ColorModel::TypeRGB;
         d.name = "Rec601_PAL";
         d.desc = "ITU-R BT.601 PAL";
@@ -528,8 +512,9 @@ static ColorModel::Data makeRec601PAL() {
         setRGBComps(d);
         d.oetf = transferRec709;
         d.eotf = invTransferRec709;
-        d.linearCounterpart = ColorModel::LinearRec601_PAL_ID;
-        d.nonlinearCounterpart = ColorModel::Rec601_PAL_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearRec601_PAL;
+        d.nonlinearCounterpart = ColorModel::Rec601_PAL;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -538,7 +523,7 @@ static ColorModel::Data makeRec601PAL() {
 
 static ColorModel::Data makeLinearRec601PAL() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearRec601_PAL_ID;
+        d.id = ColorModel::LinearRec601_PAL;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearRec601_PAL";
         d.desc = "Linear ITU-R BT.601 PAL";
@@ -546,8 +531,9 @@ static ColorModel::Data makeLinearRec601PAL() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearRec601_PAL_ID;
-        d.nonlinearCounterpart = ColorModel::Rec601_PAL_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearRec601_PAL;
+        d.nonlinearCounterpart = ColorModel::Rec601_PAL;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -556,7 +542,7 @@ static ColorModel::Data makeLinearRec601PAL() {
 
 static ColorModel::Data makeRec601NTSC() {
         ColorModel::Data d;
-        d.id = ColorModel::Rec601_NTSC_ID;
+        d.id = ColorModel::Rec601_NTSC;
         d.type = ColorModel::TypeRGB;
         d.name = "Rec601_NTSC";
         d.desc = "ITU-R BT.601 NTSC";
@@ -564,8 +550,9 @@ static ColorModel::Data makeRec601NTSC() {
         setRGBComps(d);
         d.oetf = transferRec709;
         d.eotf = invTransferRec709;
-        d.linearCounterpart = ColorModel::LinearRec601_NTSC_ID;
-        d.nonlinearCounterpart = ColorModel::Rec601_NTSC_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearRec601_NTSC;
+        d.nonlinearCounterpart = ColorModel::Rec601_NTSC;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -574,7 +561,7 @@ static ColorModel::Data makeRec601NTSC() {
 
 static ColorModel::Data makeLinearRec601NTSC() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearRec601_NTSC_ID;
+        d.id = ColorModel::LinearRec601_NTSC;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearRec601_NTSC";
         d.desc = "Linear ITU-R BT.601 NTSC";
@@ -582,8 +569,9 @@ static ColorModel::Data makeLinearRec601NTSC() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearRec601_NTSC_ID;
-        d.nonlinearCounterpart = ColorModel::Rec601_NTSC_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearRec601_NTSC;
+        d.nonlinearCounterpart = ColorModel::Rec601_NTSC;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -592,7 +580,7 @@ static ColorModel::Data makeLinearRec601NTSC() {
 
 static ColorModel::Data makeRec2020() {
         ColorModel::Data d;
-        d.id = ColorModel::Rec2020_ID;
+        d.id = ColorModel::Rec2020;
         d.type = ColorModel::TypeRGB;
         d.name = "Rec2020";
         d.desc = "ITU-R BT.2020";
@@ -600,8 +588,9 @@ static ColorModel::Data makeRec2020() {
         setRGBComps(d);
         d.oetf = transferRec2020;
         d.eotf = invTransferRec2020;
-        d.linearCounterpart = ColorModel::LinearRec2020_ID;
-        d.nonlinearCounterpart = ColorModel::Rec2020_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearRec2020;
+        d.nonlinearCounterpart = ColorModel::Rec2020;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -610,7 +599,7 @@ static ColorModel::Data makeRec2020() {
 
 static ColorModel::Data makeLinearRec2020() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearRec2020_ID;
+        d.id = ColorModel::LinearRec2020;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearRec2020";
         d.desc = "Linear ITU-R BT.2020";
@@ -618,8 +607,9 @@ static ColorModel::Data makeLinearRec2020() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearRec2020_ID;
-        d.nonlinearCounterpart = ColorModel::Rec2020_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearRec2020;
+        d.nonlinearCounterpart = ColorModel::Rec2020;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -628,7 +618,7 @@ static ColorModel::Data makeLinearRec2020() {
 
 static ColorModel::Data makeDCI_P3() {
         ColorModel::Data d;
-        d.id = ColorModel::DCI_P3_ID;
+        d.id = ColorModel::DCI_P3;
         d.type = ColorModel::TypeRGB;
         d.name = "DCI_P3";
         d.desc = "DCI-P3 Display (D65)";
@@ -636,8 +626,9 @@ static ColorModel::Data makeDCI_P3() {
         setRGBComps(d);
         d.oetf = transferSRGB;
         d.eotf = invTransferSRGB;
-        d.linearCounterpart = ColorModel::LinearDCI_P3_ID;
-        d.nonlinearCounterpart = ColorModel::DCI_P3_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearDCI_P3;
+        d.nonlinearCounterpart = ColorModel::DCI_P3;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -646,7 +637,7 @@ static ColorModel::Data makeDCI_P3() {
 
 static ColorModel::Data makeLinearDCI_P3() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearDCI_P3_ID;
+        d.id = ColorModel::LinearDCI_P3;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearDCI_P3";
         d.desc = "Linear DCI-P3 Display (D65)";
@@ -654,8 +645,9 @@ static ColorModel::Data makeLinearDCI_P3() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearDCI_P3_ID;
-        d.nonlinearCounterpart = ColorModel::DCI_P3_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearDCI_P3;
+        d.nonlinearCounterpart = ColorModel::DCI_P3;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -664,7 +656,7 @@ static ColorModel::Data makeLinearDCI_P3() {
 
 static ColorModel::Data makeAdobeRGB() {
         ColorModel::Data d;
-        d.id = ColorModel::AdobeRGB_ID;
+        d.id = ColorModel::AdobeRGB;
         d.type = ColorModel::TypeRGB;
         d.name = "AdobeRGB";
         d.desc = "Adobe RGB (1998)";
@@ -672,8 +664,9 @@ static ColorModel::Data makeAdobeRGB() {
         setRGBComps(d);
         d.oetf = transferAdobeRGB;
         d.eotf = invTransferAdobeRGB;
-        d.linearCounterpart = ColorModel::LinearAdobeRGB_ID;
-        d.nonlinearCounterpart = ColorModel::AdobeRGB_ID;
+        d.linear = false;
+        d.linearCounterpart = ColorModel::LinearAdobeRGB;
+        d.nonlinearCounterpart = ColorModel::AdobeRGB;
         d.toXYZFunc = rgbGammaToXYZ;
         d.fromXYZFunc = rgbGammaFromXYZ;
         initRGBMatrices(d);
@@ -682,7 +675,7 @@ static ColorModel::Data makeAdobeRGB() {
 
 static ColorModel::Data makeLinearAdobeRGB() {
         ColorModel::Data d;
-        d.id = ColorModel::LinearAdobeRGB_ID;
+        d.id = ColorModel::LinearAdobeRGB;
         d.type = ColorModel::TypeRGB;
         d.name = "LinearAdobeRGB";
         d.desc = "Linear Adobe RGB (1998)";
@@ -690,8 +683,9 @@ static ColorModel::Data makeLinearAdobeRGB() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.linearCounterpart = ColorModel::LinearAdobeRGB_ID;
-        d.nonlinearCounterpart = ColorModel::AdobeRGB_ID;
+        d.linear = true;
+        d.linearCounterpart = ColorModel::LinearAdobeRGB;
+        d.nonlinearCounterpart = ColorModel::AdobeRGB;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -701,7 +695,7 @@ static ColorModel::Data makeLinearAdobeRGB() {
 // ACES AP0 and AP1 are both linear-only working spaces
 static ColorModel::Data makeACES_AP0() {
         ColorModel::Data d;
-        d.id = ColorModel::ACES_AP0_ID;
+        d.id = ColorModel::ACES_AP0;
         d.type = ColorModel::TypeRGB;
         d.name = "ACES_AP0";
         d.desc = "ACES 2065-1 (AP0)";
@@ -709,6 +703,7 @@ static ColorModel::Data makeACES_AP0() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
+        d.linear = true;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
@@ -717,7 +712,7 @@ static ColorModel::Data makeACES_AP0() {
 
 static ColorModel::Data makeACES_AP1() {
         ColorModel::Data d;
-        d.id = ColorModel::ACES_AP1_ID;
+        d.id = ColorModel::ACES_AP1;
         d.type = ColorModel::TypeRGB;
         d.name = "ACES_AP1";
         d.desc = "ACEScg (AP1)";
@@ -725,22 +720,130 @@ static ColorModel::Data makeACES_AP1() {
         setRGBComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
+        d.linear = true;
         d.toXYZFunc = rgbLinearToXYZ;
         d.fromXYZFunc = rgbLinearFromXYZ;
         initRGBMatrices(d);
         return d;
 }
 
+static ColorModel::Data makeHSV_sRGB() {
+        ColorModel::Data d;
+        d.id = ColorModel::HSV_sRGB;
+        d.type = ColorModel::TypeHSV;
+        d.name = "HSV_sRGB";
+        d.desc = "HSV (sRGB)";
+        setHSVComps(d);
+        d.oetf = transferLinear;
+        d.eotf = transferLinear;
+        d.linear = false;
+        d.parentModel = ColorModel::sRGB;
+        d.toXYZFunc = hsvToXYZ;
+        d.fromXYZFunc = hsvFromXYZ;
+        return d;
+}
+
+static ColorModel::Data makeHSL_sRGB() {
+        ColorModel::Data d;
+        d.id = ColorModel::HSL_sRGB;
+        d.type = ColorModel::TypeHSL;
+        d.name = "HSL_sRGB";
+        d.desc = "HSL (sRGB)";
+        setHSLComps(d);
+        d.oetf = transferLinear;
+        d.eotf = transferLinear;
+        d.linear = false;
+        d.parentModel = ColorModel::sRGB;
+        d.toXYZFunc = hslToXYZ;
+        d.fromXYZFunc = hslFromXYZ;
+        return d;
+}
+
+static ColorModel::Data makeYCbCr_Rec709() {
+        ColorModel::Data d;
+        d.id = ColorModel::YCbCr_Rec709;
+        d.type = ColorModel::TypeYCbCr;
+        d.name = "YCbCr_Rec709";
+        d.desc = "YCbCr (BT.709)";
+        setYCbCrComps(d);
+        d.oetf = transferLinear;
+        d.eotf = transferLinear;
+        d.linear = false;
+        d.parentModel = ColorModel::Rec709;
+
+        float rgbToYcbcr[3][3] = {
+                { 0.2126f,  0.7152f,  0.0722f},
+                {-0.1146f, -0.3854f,  0.5f},
+                { 0.5f,    -0.4542f, -0.0458f}
+        };
+        d.fromParentMatrix.set(rgbToYcbcr);
+        d.fromParentOffset[0] = 0.0f;
+        d.fromParentOffset[1] = 0.5f;
+        d.fromParentOffset[2] = 0.5f;
+
+        float ycbcrToRgb[3][3] = {
+                {1.0f,  0.0f,     1.5748f},
+                {1.0f, -0.1873f, -0.4681f},
+                {1.0f,  1.8556f,  0.0f}
+        };
+        d.toParentMatrix.set(ycbcrToRgb);
+        d.toParentOffset[0] = 0.0f;
+        d.toParentOffset[1] = -0.5f;
+        d.toParentOffset[2] = -0.5f;
+
+        d.toXYZFunc = ycbcrToXYZ;
+        d.fromXYZFunc = ycbcrFromXYZ;
+        return d;
+}
+
+static ColorModel::Data makeYCbCr_Rec601() {
+        ColorModel::Data d;
+        d.id = ColorModel::YCbCr_Rec601;
+        d.type = ColorModel::TypeYCbCr;
+        d.name = "YCbCr_Rec601";
+        d.desc = "YCbCr (BT.601)";
+        setYCbCrComps(d);
+        d.oetf = transferLinear;
+        d.eotf = transferLinear;
+        d.linear = false;
+        d.parentModel = ColorModel::Rec601_PAL;
+
+        float rgbToYcbcr[3][3] = {
+                { 0.299f,    0.587f,   0.114f},
+                {-0.168736f,-0.331264f,0.5f},
+                { 0.5f,     -0.418688f,-0.081312f}
+        };
+        d.fromParentMatrix.set(rgbToYcbcr);
+        d.fromParentOffset[0] = 0.0f;
+        d.fromParentOffset[1] = 0.5f;
+        d.fromParentOffset[2] = 0.5f;
+
+        float ycbcrToRgb[3][3] = {
+                {1.0f,  0.0f,      1.402f},
+                {1.0f, -0.344136f,-0.714136f},
+                {1.0f,  1.772f,    0.0f}
+        };
+        d.toParentMatrix.set(ycbcrToRgb);
+        d.toParentOffset[0] = 0.0f;
+        d.toParentOffset[1] = -0.5f;
+        d.toParentOffset[2] = -0.5f;
+
+        d.toXYZFunc = ycbcrToXYZ;
+        d.fromXYZFunc = ycbcrFromXYZ;
+        return d;
+}
+
 static ColorModel::Data makeYCbCr_Rec2020() {
         ColorModel::Data d;
-        d.id = ColorModel::YCbCr_Rec2020_ID;
+        d.id = ColorModel::YCbCr_Rec2020;
         d.type = ColorModel::TypeYCbCr;
         d.name = "YCbCr_Rec2020";
         d.desc = "YCbCr (BT.2020)";
         setYCbCrComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
-        d.parentModel = ColorModel::Rec2020_ID;
+        d.linear = false;
+        d.parentModel = ColorModel::Rec2020;
 
         // BT.2020 luma coefficients (non-constant luminance)
         float rgbToYcbcr[3][3] = {
@@ -770,13 +873,14 @@ static ColorModel::Data makeYCbCr_Rec2020() {
 
 static ColorModel::Data makeCIEXYZ() {
         ColorModel::Data d;
-        d.id = ColorModel::CIEXYZ_ID;
+        d.id = ColorModel::CIEXYZ;
         d.type = ColorModel::TypeXYZ;
         d.name = "CIEXYZ";
         d.desc = "CIE 1931 XYZ";
         setXYZComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
+        d.linear = true;
         d.toXYZFunc = xyzToXYZ;
         d.fromXYZFunc = xyzFromXYZ;
         return d;
@@ -784,117 +888,16 @@ static ColorModel::Data makeCIEXYZ() {
 
 static ColorModel::Data makeCIELab() {
         ColorModel::Data d;
-        d.id = ColorModel::CIELab_ID;
+        d.id = ColorModel::CIELab;
         d.type = ColorModel::TypeLab;
         d.name = "CIELab";
         d.desc = "CIE L*a*b* (D65)";
         setLabComps(d);
         d.oetf = transferLinear;
         d.eotf = transferLinear;
+        d.linear = false;
         d.toXYZFunc = labToXYZ;
         d.fromXYZFunc = labFromXYZ;
-        return d;
-}
-
-static ColorModel::Data makeHSV_sRGB() {
-        ColorModel::Data d;
-        d.id = ColorModel::HSV_sRGB_ID;
-        d.type = ColorModel::TypeHSV;
-        d.name = "HSV_sRGB";
-        d.desc = "HSV (sRGB)";
-        setHSVComps(d);
-        d.oetf = transferLinear;
-        d.eotf = transferLinear;
-        d.parentModel = ColorModel::sRGB_ID;
-        d.toXYZFunc = hsvToXYZ;
-        d.fromXYZFunc = hsvFromXYZ;
-        return d;
-}
-
-static ColorModel::Data makeHSL_sRGB() {
-        ColorModel::Data d;
-        d.id = ColorModel::HSL_sRGB_ID;
-        d.type = ColorModel::TypeHSL;
-        d.name = "HSL_sRGB";
-        d.desc = "HSL (sRGB)";
-        setHSLComps(d);
-        d.oetf = transferLinear;
-        d.eotf = transferLinear;
-        d.parentModel = ColorModel::sRGB_ID;
-        d.toXYZFunc = hslToXYZ;
-        d.fromXYZFunc = hslFromXYZ;
-        return d;
-}
-
-static ColorModel::Data makeYCbCr_Rec709() {
-        ColorModel::Data d;
-        d.id = ColorModel::YCbCr_Rec709_ID;
-        d.type = ColorModel::TypeYCbCr;
-        d.name = "YCbCr_Rec709";
-        d.desc = "YCbCr (BT.709)";
-        setYCbCrComps(d);
-        d.oetf = transferLinear;
-        d.eotf = transferLinear;
-        d.parentModel = ColorModel::Rec709_ID;
-
-        float rgbToYcbcr[3][3] = {
-                { 0.2126f,  0.7152f,  0.0722f},
-                {-0.1146f, -0.3854f,  0.5f},
-                { 0.5f,    -0.4542f, -0.0458f}
-        };
-        d.fromParentMatrix.set(rgbToYcbcr);
-        d.fromParentOffset[0] = 0.0f;
-        d.fromParentOffset[1] = 0.5f;
-        d.fromParentOffset[2] = 0.5f;
-
-        float ycbcrToRgb[3][3] = {
-                {1.0f,  0.0f,     1.5748f},
-                {1.0f, -0.1873f, -0.4681f},
-                {1.0f,  1.8556f,  0.0f}
-        };
-        d.toParentMatrix.set(ycbcrToRgb);
-        d.toParentOffset[0] = 0.0f;
-        d.toParentOffset[1] = -0.5f;
-        d.toParentOffset[2] = -0.5f;
-
-        d.toXYZFunc = ycbcrToXYZ;
-        d.fromXYZFunc = ycbcrFromXYZ;
-        return d;
-}
-
-static ColorModel::Data makeYCbCr_Rec601() {
-        ColorModel::Data d;
-        d.id = ColorModel::YCbCr_Rec601_ID;
-        d.type = ColorModel::TypeYCbCr;
-        d.name = "YCbCr_Rec601";
-        d.desc = "YCbCr (BT.601)";
-        setYCbCrComps(d);
-        d.oetf = transferLinear;
-        d.eotf = transferLinear;
-        d.parentModel = ColorModel::Rec601_PAL_ID;
-
-        float rgbToYcbcr[3][3] = {
-                { 0.299f,    0.587f,   0.114f},
-                {-0.168736f,-0.331264f,0.5f},
-                { 0.5f,     -0.418688f,-0.081312f}
-        };
-        d.fromParentMatrix.set(rgbToYcbcr);
-        d.fromParentOffset[0] = 0.0f;
-        d.fromParentOffset[1] = 0.5f;
-        d.fromParentOffset[2] = 0.5f;
-
-        float ycbcrToRgb[3][3] = {
-                {1.0f,  0.0f,      1.402f},
-                {1.0f, -0.344136f,-0.714136f},
-                {1.0f,  1.772f,    0.0f}
-        };
-        d.toParentMatrix.set(ycbcrToRgb);
-        d.toParentOffset[0] = 0.0f;
-        d.toParentOffset[1] = -0.5f;
-        d.toParentOffset[2] = -0.5f;
-
-        d.toXYZFunc = ycbcrToXYZ;
-        d.fromXYZFunc = ycbcrFromXYZ;
         return d;
 }
 
@@ -903,40 +906,42 @@ static ColorModel::Data makeYCbCr_Rec601() {
 // ---------------------------------------------------------------------------
 
 struct DataRegistry {
-        ColorModel::Data entries[ColorModel::YCbCr_Rec2020_ID + 1];
+        Map<ColorModel::ID, ColorModel::Data> entries;
         Map<String, ColorModel::ID> nameMap;
 
         DataRegistry() {
-                entries[ColorModel::Invalid_ID]          = makeInvalid();
-                entries[ColorModel::sRGB_ID]             = makeSRGB();
-                entries[ColorModel::LinearSRGB_ID]       = makeLinearSRGB();
-                entries[ColorModel::Rec709_ID]           = makeRec709();
-                entries[ColorModel::LinearRec709_ID]     = makeLinearRec709();
-                entries[ColorModel::Rec601_PAL_ID]       = makeRec601PAL();
-                entries[ColorModel::LinearRec601_PAL_ID] = makeLinearRec601PAL();
-                entries[ColorModel::Rec601_NTSC_ID]      = makeRec601NTSC();
-                entries[ColorModel::LinearRec601_NTSC_ID]= makeLinearRec601NTSC();
-                entries[ColorModel::Rec2020_ID]          = makeRec2020();
-                entries[ColorModel::LinearRec2020_ID]    = makeLinearRec2020();
-                entries[ColorModel::DCI_P3_ID]           = makeDCI_P3();
-                entries[ColorModel::LinearDCI_P3_ID]     = makeLinearDCI_P3();
-                entries[ColorModel::AdobeRGB_ID]         = makeAdobeRGB();
-                entries[ColorModel::LinearAdobeRGB_ID]   = makeLinearAdobeRGB();
-                entries[ColorModel::ACES_AP0_ID]         = makeACES_AP0();
-                entries[ColorModel::ACES_AP1_ID]         = makeACES_AP1();
-                entries[ColorModel::CIEXYZ_ID]           = makeCIEXYZ();
-                entries[ColorModel::CIELab_ID]           = makeCIELab();
-                entries[ColorModel::HSV_sRGB_ID]         = makeHSV_sRGB();
-                entries[ColorModel::HSL_sRGB_ID]         = makeHSL_sRGB();
-                entries[ColorModel::YCbCr_Rec709_ID]     = makeYCbCr_Rec709();
-                entries[ColorModel::YCbCr_Rec601_ID]     = makeYCbCr_Rec601();
-                entries[ColorModel::YCbCr_Rec2020_ID]    = makeYCbCr_Rec2020();
+                add(makeInvalid());
+                add(makeSRGB());
+                add(makeLinearSRGB());
+                add(makeRec709());
+                add(makeLinearRec709());
+                add(makeRec601PAL());
+                add(makeLinearRec601PAL());
+                add(makeRec601NTSC());
+                add(makeLinearRec601NTSC());
+                add(makeRec2020());
+                add(makeLinearRec2020());
+                add(makeDCI_P3());
+                add(makeLinearDCI_P3());
+                add(makeAdobeRGB());
+                add(makeLinearAdobeRGB());
+                add(makeACES_AP0());
+                add(makeACES_AP1());
+                add(makeCIEXYZ());
+                add(makeCIELab());
+                add(makeHSV_sRGB());
+                add(makeHSL_sRGB());
+                add(makeYCbCr_Rec709());
+                add(makeYCbCr_Rec601());
+                add(makeYCbCr_Rec2020());
+        }
 
-                for(size_t i = 0; i < PROMEKI_ARRAY_SIZE(entries); ++i) {
-                        if(entries[i].type != ColorModel::TypeInvalid) {
-                                nameMap[entries[i].name] = entries[i].id;
-                        }
+        void add(ColorModel::Data d) {
+                ColorModel::ID id = d.id;
+                if(d.type != ColorModel::TypeInvalid) {
+                        nameMap[d.name] = id;
                 }
+                entries[id] = std::move(d);
         }
 };
 
@@ -945,137 +950,33 @@ static DataRegistry &registry() {
         return reg;
 }
 
-static const ColorModel::Data &lookupData(ColorModel::ID id) {
+static const ColorModel::Data &registryLookup(ColorModel::ID id) {
         auto &reg = registry();
-        size_t idx = static_cast<size_t>(id);
-        if(idx < PROMEKI_ARRAY_SIZE(reg.entries)) return reg.entries[idx];
-        return reg.entries[0]; // Invalid
+        auto it = reg.entries.find(id);
+        if(it != reg.entries.end()) return it->second;
+        return reg.entries[ColorModel::Invalid];
 }
 
 // ---------------------------------------------------------------------------
-// Static ColorModel instances — defined here so the registry (and all
-// file-scope data it depends on) is guaranteed to be initialized first.
+// Static methods
 // ---------------------------------------------------------------------------
 
-const ColorModel ColorModel::Invalid{Invalid_ID};
-const ColorModel ColorModel::sRGB{sRGB_ID};
-const ColorModel ColorModel::LinearSRGB{LinearSRGB_ID};
-const ColorModel ColorModel::Rec709{Rec709_ID};
-const ColorModel ColorModel::LinearRec709{LinearRec709_ID};
-const ColorModel ColorModel::Rec601_PAL{Rec601_PAL_ID};
-const ColorModel ColorModel::LinearRec601_PAL{LinearRec601_PAL_ID};
-const ColorModel ColorModel::Rec601_NTSC{Rec601_NTSC_ID};
-const ColorModel ColorModel::LinearRec601_NTSC{LinearRec601_NTSC_ID};
-const ColorModel ColorModel::Rec2020{Rec2020_ID};
-const ColorModel ColorModel::LinearRec2020{LinearRec2020_ID};
-const ColorModel ColorModel::DCI_P3{DCI_P3_ID};
-const ColorModel ColorModel::LinearDCI_P3{LinearDCI_P3_ID};
-const ColorModel ColorModel::AdobeRGB{AdobeRGB_ID};
-const ColorModel ColorModel::LinearAdobeRGB{LinearAdobeRGB_ID};
-const ColorModel ColorModel::ACES_AP0{ACES_AP0_ID};
-const ColorModel ColorModel::ACES_AP1{ACES_AP1_ID};
-const ColorModel ColorModel::CIEXYZ{CIEXYZ_ID};
-const ColorModel ColorModel::CIELab{CIELab_ID};
-const ColorModel ColorModel::HSV_sRGB{HSV_sRGB_ID};
-const ColorModel ColorModel::HSL_sRGB{HSL_sRGB_ID};
-const ColorModel ColorModel::YCbCr_Rec709{YCbCr_Rec709_ID};
-const ColorModel ColorModel::YCbCr_Rec601{YCbCr_Rec601_ID};
-const ColorModel ColorModel::YCbCr_Rec2020{YCbCr_Rec2020_ID};
-
-// ---------------------------------------------------------------------------
-// ColorModel method implementations
-// ---------------------------------------------------------------------------
-
-ColorModel::ColorModel(ID id) : _d(&lookupData(id)) {}
-
-bool ColorModel::isValid() const {
-        return _d && _d->type != TypeInvalid;
+const ColorModel::Data *ColorModel::lookupData(ID id) {
+        return &registryLookup(id);
 }
 
-ColorModel::ID ColorModel::id() const {
-        return _d ? _d->id : Invalid_ID;
-}
-
-ColorModel::Type ColorModel::type() const {
-        return _d->type;
-}
-
-const String &ColorModel::name() const {
-        return _d->name;
-}
-
-const String &ColorModel::desc() const {
-        return _d->desc;
-}
-
-size_t ColorModel::compCount() const {
-        return 3;
-}
-
-const ColorModel::CompInfo &ColorModel::compInfo(size_t index) const {
-        return _d->comps[index < 3 ? index : 0];
-}
-
-const ColorModel::Primaries &ColorModel::primaries() const {
-        return _d->primaries;
-}
-
-const CIEPoint &ColorModel::whitePoint() const {
-        return _d->primaries[3];
-}
-
-bool ColorModel::isLinear() const {
-        return _d->oetf == transferLinear && _d->eotf == transferLinear;
-}
-
-ColorModel ColorModel::linearCounterpart() const {
-        ID lcid = _d->linearCounterpart;
-        return lcid != Invalid_ID ? ColorModel(lcid) : *this;
-}
-
-ColorModel ColorModel::nonlinearCounterpart() const {
-        ID nlid = _d->nonlinearCounterpart;
-        return nlid != Invalid_ID ? ColorModel(nlid) : *this;
-}
-
-double ColorModel::applyTransfer(double linear) const {
-        return _d->oetf(linear);
-}
-
-double ColorModel::removeTransfer(double encoded) const {
-        return _d->eotf(encoded);
-}
-
-ColorModel ColorModel::parentModel() const {
-        return ColorModel(_d->parentModel);
-}
-
-void ColorModel::toXYZ(const float *src, float *dst) const {
-        _d->toXYZFunc(_d, src, dst);
-}
-
-void ColorModel::fromXYZ(const float *src, float *dst) const {
-        _d->fromXYZFunc(_d, src, dst);
-}
-
-float ColorModel::toNative(size_t comp, float normalized) const {
-        if(comp >= 3) return 0.0f;
-        const CompInfo &ci = _d->comps[comp];
-        return ci.nativeMin + normalized * (ci.nativeMax - ci.nativeMin);
-}
-
-float ColorModel::fromNative(size_t comp, float native) const {
-        if(comp >= 3) return 0.0f;
-        const CompInfo &ci = _d->comps[comp];
-        float range = ci.nativeMax - ci.nativeMin;
-        if(range == 0.0f) return 0.0f;
-        return (native - ci.nativeMin) / range;
+void ColorModel::registerData(Data &&data) {
+        auto &reg = registry();
+        if(data.type != TypeInvalid) {
+                reg.nameMap[data.name] = data.id;
+        }
+        reg.entries[data.id] = std::move(data);
 }
 
 ColorModel ColorModel::lookup(const String &name) {
         auto &reg = registry();
         auto it = reg.nameMap.find(name);
-        return (it != reg.nameMap.end()) ? ColorModel(it->second) : Invalid;
+        return (it != reg.nameMap.end()) ? ColorModel(it->second) : ColorModel(Invalid);
 }
 
 PROMEKI_NAMESPACE_END

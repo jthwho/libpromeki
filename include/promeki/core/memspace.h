@@ -19,6 +19,11 @@ struct MemAllocation;
  * @brief Abstraction for memory allocation in different address spaces.
  * @ingroup core_util
  *
+ * Uses the @ref typeregistry "TypeRegistry pattern": a lightweight inline
+ * wrapper around an immutable Ops record, identified by an integer ID.
+ * Well-known memory spaces are provided as ID constants; user-defined
+ * spaces can be registered at runtime via registerType() and registerData().
+ *
  * Provides a uniform interface for allocating, releasing, copying, and setting
  * memory that may reside in different memory spaces (e.g. system RAM, GPU memory).
  * Each memory space is identified by an ID and provides its own set of operations.
@@ -26,14 +31,23 @@ struct MemAllocation;
  * Memory spaces handle their own lifecycle concerns internally. For example,
  * SystemSecure performs page locking on allocation and secure zeroing on release
  * without exposing those details through the MemSpace API.
+ *
+ * @see @ref typeregistry "TypeRegistry Pattern" for the design pattern.
  */
 class MemSpace {
         public:
-                /** @brief Identifies a memory space. */
+                /**
+                 * @brief Identifies a memory space.
+                 *
+                 * Well-known spaces have named enumerators.  User-defined
+                 * spaces obtain IDs from registerType().  The atomic counter
+                 * starts at UserDefined.
+                 */
                 enum ID {
-                        System = 0,     ///< System (CPU) memory.
-                        SystemSecure,   ///< System memory with secure zeroing on free and page locking.
-                        Default = System ///< Alias for System memory.
+                        System       = 0,    ///< System (CPU) memory.
+                        SystemSecure = 1,    ///< System memory with secure zeroing on free and page locking.
+                        Default      = System, ///< Alias for System memory.
+                        UserDefined  = 1024  ///< First ID available for user-registered types.
                 };
 
                 /** @brief Function table for memory space operations. */
@@ -41,17 +55,55 @@ class MemSpace {
                         ID id;                                                              ///< The memory space identifier.
                         String name;                                                        ///< Human-readable name of the memory space.
                         bool (*isHostAccessible)(const MemAllocation &alloc);                ///< Returns true if the allocation is directly accessible from the host CPU.
-                        void (*alloc)(MemAllocation &alloc);                                             ///< Allocate memory. Size and align are pre-filled.
-                        void (*release)(MemAllocation &alloc);                                          ///< Release previously allocated memory.
+                        void (*alloc)(MemAllocation &alloc);                                ///< Allocate memory. Size and align are pre-filled.
+                        void (*release)(MemAllocation &alloc);                              ///< Release previously allocated memory.
                         bool (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another.
-                        Error (*fill)(void *ptr, size_t bytes, char value);                              ///< Fill memory with a byte value.
+                        Error (*fill)(void *ptr, size_t bytes, char value);                 ///< Fill memory with a byte value.
                 };
 
                 /**
-                 * @brief Constructs a MemSpace for the given memory space ID.
-                 * @param id The memory space to use (default: Default).
+                 * @brief Allocates and returns a unique ID for a user-defined memory space.
+                 *
+                 * Each call returns a new, never-before-used ID.  Thread-safe.
+                 *
+                 * @code
+                 * // Register a GPU memory space backed by a custom allocator.
+                 * MemSpace::ID gpuID = MemSpace::registerType();
+                 *
+                 * MemSpace::Ops ops;
+                 * ops.id   = gpuID;
+                 * ops.name = "GPU";
+                 * ops.isHostAccessible = [](const MemAllocation &) { return false; };
+                 * ops.alloc   = myGpuAlloc;
+                 * ops.release = myGpuFree;
+                 * ops.copy    = myGpuCopy;
+                 * ops.fill    = myGpuFill;
+                 * MemSpace::registerData(std::move(ops));
+                 *
+                 * MemSpace gpu(gpuID);  // now usable like any built-in space
+                 * @endcode
+                 *
+                 * @return A unique ID value.
+                 * @see registerData()
                  */
-                MemSpace(ID id = Default) : d(lookup(id)) { }
+                static ID registerType();
+
+                /**
+                 * @brief Registers an Ops record in the registry.
+                 *
+                 * After this call, constructing a MemSpace from @p ops.id
+                 * will resolve to the registered operations.
+                 *
+                 * @param ops The populated Ops struct with id set to a value from registerType().
+                 * @see registerType()
+                 */
+                static void registerData(Ops &&ops);
+
+                /**
+                 * @brief Constructs a MemSpace for the given memory space ID.
+                 * @param id The memory space to use (default: Default, which is System).
+                 */
+                inline MemSpace(ID id = Default);
 
                 /**
                  * @brief Returns the human-readable name of this memory space.
@@ -112,6 +164,9 @@ class MemSpace {
                         return d->fill(ptr, bytes, value);
                 }
 
+                /** @brief Returns the underlying Ops pointer. */
+                const Ops *data() const { return d; }
+
         private:
                 const Ops *d = nullptr;
                 static const Ops *lookup(ID id);
@@ -134,6 +189,8 @@ struct MemAllocation {
         /** @brief Returns true if this allocation is valid. */
         bool isValid() const { return ptr != nullptr; }
 };
+
+inline MemSpace::MemSpace(ID id) : d(lookup(id)) {}
 
 inline bool MemSpace::copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const {
         if(src.ptr == nullptr || dst.ptr == nullptr) return false;

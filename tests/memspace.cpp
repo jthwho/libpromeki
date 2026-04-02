@@ -103,3 +103,56 @@ TEST_CASE("MemSpace: isHostAccessible") {
         CHECK(ms.isHostAccessible(a));
         ms.release(a);
 }
+
+// ── TypeRegistry: registerType() / registerData() ─────────────────
+
+TEST_CASE("MemSpace: registerType returns unique IDs above UserDefined") {
+        MemSpace::ID id1 = MemSpace::registerType();
+        MemSpace::ID id2 = MemSpace::registerType();
+        CHECK(id1 >= MemSpace::UserDefined);
+        CHECK(id2 >= MemSpace::UserDefined);
+        CHECK(id1 != id2);
+}
+
+TEST_CASE("MemSpace: registerData and construction from custom ID") {
+        MemSpace::ID id = MemSpace::registerType();
+
+        // A custom memory space that delegates entirely to System memory,
+        // but reports a unique ID so we can verify registration.
+        MemSpace::Ops ops;
+        ops.id   = id;
+        ops.name = "TestSpace";
+        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.alloc = [](MemAllocation &a) {
+                size_t allocSize = (a.size + a.align - 1) & ~(a.align - 1);
+                a.ptr = std::aligned_alloc(a.align, allocSize);
+        };
+        ops.release = [](MemAllocation &a) {
+                std::free(a.ptr);
+                a.ptr = nullptr;
+        };
+        ops.copy = [](const MemAllocation &src, const MemAllocation &dst, size_t bytes) -> bool {
+                std::memcpy(dst.ptr, src.ptr, bytes);
+                return true;
+        };
+        ops.fill = [](void *ptr, size_t bytes, char value) -> Error {
+                std::memset(ptr, value, bytes);
+                return Error::Ok;
+        };
+
+        MemSpace::registerData(std::move(ops));
+
+        MemSpace ms(id);
+        CHECK(ms.id() == id);
+        CHECK(ms.name() == "TestSpace");
+
+        MemAllocation a = ms.alloc(128, 16);
+        REQUIRE(a.isValid());
+        CHECK(ms.isHostAccessible(a));
+        CHECK(ms.fill(a.ptr, 128, 0x5A).isOk());
+        unsigned char *bytes = static_cast<unsigned char *>(a.ptr);
+        CHECK(bytes[0] == 0x5A);
+        CHECK(bytes[127] == 0x5A);
+        ms.release(a);
+        CHECK_FALSE(a.isValid());
+}
