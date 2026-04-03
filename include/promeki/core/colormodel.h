@@ -9,6 +9,7 @@
 
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
+#include <promeki/core/list.h>
 #include <promeki/core/array.h>
 #include <promeki/core/ciepoint.h>
 #include <promeki/core/matrix3x3.h>
@@ -221,6 +222,9 @@ class ColorModel {
                  */
                 typedef Array<CIEPoint, 4> Primaries;
 
+                /** @brief List of ColorModel IDs. */
+                using IDList = List<ID>;
+
                 /**
                  * @brief Immutable descriptor for a color model.
                  *
@@ -274,6 +278,15 @@ class ColorModel {
                  * @see registerType()
                  */
                 static void registerData(Data &&data);
+
+                /**
+                 * @brief Returns a list of all registered ColorModel IDs.
+                 *
+                 * Excludes Invalid.  Includes both well-known and user-registered types.
+                 *
+                 * @return A List of ID values.
+                 */
+                static IDList registeredIDs();
 
                 /**
                  * @brief Looks up a well-known ColorModel by name.

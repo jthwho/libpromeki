@@ -14,7 +14,7 @@
 #include <promeki/proav/image.h>
 #include <promeki/proav/audio.h>
 #include <promeki/proav/frame.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/proav/ltcdecoder.h>
 #include <promeki/core/audiolevel.h>
 
@@ -68,7 +68,7 @@ static MediaNodeConfig makeTestConfig(
         MediaNodeConfig cfg("TestPatternNode", name);
         cfg.set("Width", uint32_t(w));
         cfg.set("Height", uint32_t(h));
-        cfg.set("PixelFormat", int(PixelFormat::RGB8));
+        cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB_Full));
         cfg.set("FrameRate", fps);
         return cfg;
 }

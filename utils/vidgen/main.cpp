@@ -31,7 +31,7 @@
 #include <promeki/proav/videodesc.h>
 #include <promeki/proav/imagedesc.h>
 #include <promeki/proav/audiodesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/proav/rtpvideosinknode.h>
 #include <promeki/proav/rtpaudiosinknode.h>
 
@@ -250,18 +250,18 @@ static bool lookupPattern(const String &name, String &out) {
 
 struct FormatEntry {
         const char      *name;
-        PixelFormat::ID id;
+        PixelDesc::ID id;
         int             bitsPerPixel;
         int             bitsPerComponent;
         const char      *sampling;     ///< RFC 4175 sampling parameter.
 };
 
 static const FormatEntry g_formats[] = {
-        { "rgba8",     PixelFormat::RGBA8,    32, 8,  "RGB" },
-        { "rgb8",      PixelFormat::RGB8,     24, 8,  "RGB" },
-        { "rgb10",     PixelFormat::RGB10,    30, 10, "RGB" },
-        { "yuv8_422",  PixelFormat::YUV8_422, 16, 8,  "YCbCr-4:2:2" },
-        { nullptr,     PixelFormat::Invalid,   0, 0,  nullptr }
+        { "rgba8",     PixelDesc::RGBA8_sRGB_Full,    32, 8,  "RGB" },
+        { "rgb8",      PixelDesc::RGB8_sRGB_Full,     24, 8,  "RGB" },
+        { "rgb10",     PixelDesc::RGB10_sRGB_Full,    30, 10, "RGB" },
+        { "yuv8_422",  PixelDesc::YUV8_422_Rec709_Limited, 16, 8,  "YCbCr-4:2:2" },
+        { nullptr,     PixelDesc::Invalid,   0, 0,  nullptr }
 };
 
 static const FormatEntry *lookupFormat(const String &name) {
@@ -408,7 +408,7 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Use --list-formats to see available formats\n");
                 return 1;
         }
-        PixelFormat::ID pixFmtId = pixFmt->id;
+        PixelDesc::ID pixFmtId = pixFmt->id;
         int bitsPerPixel = pixFmt->bitsPerPixel;
 
         bool isMjpeg = (opts.transport == "mjpeg");

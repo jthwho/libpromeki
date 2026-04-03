@@ -1,13 +1,13 @@
 /**
- * @file      pixelformat_rgba8.cpp
+ * @file      pixeldesc_rgba8.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
 #include <algorithm>
 #include <cstring>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/proav/paintengine.h>
 #include <promeki/proav/image.h>
 
@@ -17,17 +17,20 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
         PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_RGBA8)
         public:
                 Image           image;
-                Size2Du32          size;
+                Size2Du32       size;
                 uint8_t         *buf;
                 size_t          stride;
+                PixelDesc       pixDesc;
 
                 PaintEngine_RGBA8(const Image &img) {
                         image = img;
                         size = img.size();
                         buf = static_cast<uint8_t *>(image.plane(0)->data());
                         stride = img.lineStride(0);
-                        _pixelFormat = img.pixelFormat();
+                        pixDesc = img.pixelDesc();
                 }
+
+                const PixelDesc &pixelDesc() const override { return pixDesc; }
 
                 PaintEngine::Pixel createPixel(const uint16_t *c, size_t ct) const override {
                         PaintEngine::Pixel ret;
@@ -55,14 +58,12 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                 }
 
                 bool fill(const PaintEngine::Pixel &pixel) const override {
-                        // First, fill the first line w/ the pixel value
                         uint8_t *p = buf;
                         uint8_t *line0 = buf;
                         for(int i = 0; i < size.width(); i++) {
                                 std::memcpy(p, pixel.data(), 4);
                                 p += 4;
                         }
-                        // Now, fill the rest of the lines from the first.
                         p = buf + stride;
                         for(int i = 1; i < size.height(); i++) {
                                 std::memcpy(p, line0, stride);
@@ -83,7 +84,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                         return ret;
                 }
 
-                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points, 
+                size_t compositePoints(const PaintEngine::Pixel &pixel, const Point2Di32 *points,
                                 const float *alphas, size_t count) const override {
                         size_t ret = 0;
                         const uint8_t *pdata = pixel.data();
@@ -103,7 +104,7 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                 }
 
                 bool blit(const Point2Di32 &dpt, const Image &src, const Point2Di32 &spt, const Size2Du32 &ssz) const override {
-                        if(src.pixelFormat() != _pixelFormat) return false;
+                        if(src.pixelDesc() != pixDesc) return false;
                         static const int bytesPerPixel = 4;
                         const uint8_t *inbuf = static_cast<const uint8_t *>(src.plane(0)->data());
                         size_t srcStride = src.lineStride(0);
@@ -145,43 +146,8 @@ class PaintEngine_RGBA8 : public PaintEngine::Impl {
                 }
 };
 
-class PixelFormat_RGBA8 : public PixelFormat {
-        public:
-                PixelFormat_RGBA8() {
-                        _id = RGBA8;
-                        _name = "RGBA8";
-                        _desc = "8bit RGBA";
-                        _sampling = Sampling444;
-                        _pixelsPerBlock = 1;
-                        _bytesPerBlock = 4;
-                        _hasAlpha = true;
-                        _fourccList = { "RGBA" };
-                        _compList = {
-                                { 0, Comp0,   8 },
-                                { 0, Comp1, 8 },
-                                { 0, Comp2,  8 },
-                                { 0, CompAlpha, 8 }
-                        };
-                        _planeList = { { "RGBA" } };
-                }
-
-                ~PixelFormat_RGBA8() {}
-
-                size_t __lineStride(size_t planeIndex, const ImageDesc &desc) const override {
-                        size_t lineBytes = desc.width() * 4 + desc.linePad();
-                        return PROMEKI_ALIGN_UP(lineBytes, desc.lineAlign());
-                }
-
-                size_t __planeSize(size_t planeIndex, const ImageDesc &desc) const override {
-                        return __lineStride(planeIndex, desc) * desc.height();
-                }
-
-                PaintEngine __createPaintEngine(const Image &image) const override {
-                        return new PaintEngine_RGBA8(image);
-                }
-};
-
-PROMEKI_REGISTER_PIXELFORMAT(PixelFormat_RGBA8);
+PaintEngine createPaintEngine_RGBA8(const PixelDesc::Data *, const Image &img) {
+        return new PaintEngine_RGBA8(img);
+}
 
 PROMEKI_NAMESPACE_END
-

@@ -979,4 +979,13 @@ ColorModel ColorModel::lookup(const String &name) {
         return (it != reg.nameMap.end()) ? ColorModel(it->second) : ColorModel(Invalid);
 }
 
+ColorModel::IDList ColorModel::registeredIDs() {
+        auto &reg = registry();
+        IDList ret;
+        for(const auto &[id, data] : reg.entries) {
+                if(id != Invalid) ret.pushToBack(id);
+        }
+        return ret;
+}
+
 PROMEKI_NAMESPACE_END

@@ -77,18 +77,6 @@ The `std::istringstream` was replaced with `strtoll` as part of the stream migra
 
 ---
 
-## PixelFormat Memory Space Validation
-
-**File:** `src/pixelformat_old.cpp:217`
-**FIXME:** "We don't check the image is in a memory space we can access. Need to work out a way to dispatch to different fill() functions for different memory spaces."
-
-- [ ] Add memory space check before calling fill function
-- [ ] Design dispatch mechanism for per-memory-space fill implementations
-- [ ] Consider if this ties into the pipeline framework's buffer handling (Phase 4)
-- [ ] Update tests
-
----
-
 ## Dead Test File: tests/image.cpp
 
 **File:** `tests/image.cpp`
@@ -106,7 +94,6 @@ Library classes should use the library's own container/type wrappers (`List`, `M
 
 ### std::vector → List\<T\>
 
-- **`include/promeki/proav/pixelformat_old.h:77,134-136`** — Public typedef `CompList = std::vector<Comp>` and `Data` struct members (`fourccList`, `compList`, `planeList`) all use `std::vector` directly.
 - **`src/bufferediodevice.cpp:149,167,211,227,240`** — Multiple `std::vector<uint8_t>` used as temporary read/collect buffers.
 - **`src/imagefileio_png.cpp:105`** — `std::vector<png_bytep>` for PNG row pointers.
 
@@ -125,7 +112,6 @@ Library classes should use the library's own container/type wrappers (`List`, `M
 
 ### Tasks
 
-- [ ] Replace `std::vector` with `List<T>` in `pixelformat_old.h`
 - [ ] Replace `std::vector` with `List<T>` in `bufferediodevice.cpp`
 - [ ] Replace `std::vector` with `List<T>` in `imagefileio_png.cpp`
 - [ ] Replace `std::map` with `Map<K,V>` in `string.cpp` and `datetime.cpp`

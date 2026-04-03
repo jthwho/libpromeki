@@ -14,7 +14,7 @@
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/buffer.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/timecode.h>
@@ -79,10 +79,10 @@ class JpegCaptureSink : public MediaNode {
 // Helper: create a test image with a color gradient
 // ============================================================================
 
-static Image createTestImage(int width, int height, int pixfmt = PixelFormat::RGB8) {
+static Image createTestImage(int width, int height, PixelDesc::ID pixfmt = PixelDesc::RGB8_sRGB_Full) {
         ImageDesc idesc(width, height, pixfmt);
         Image img(idesc);
-        int comps = (pixfmt == PixelFormat::RGBA8) ? 4 : 3;
+        int comps = (pixfmt == PixelDesc::RGBA8_sRGB_Full) ? 4 : 3;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
         for(int y = 0; y < height; y++) {
@@ -201,7 +201,7 @@ TEST_CASE("JpegEncoderNode_EncodeRGB8") {
         REQUIRE(out->imageList().size() == 1);
 
         Image::Ptr jpegImg = out->imageList()[0];
-        CHECK(jpegImg->pixelFormatID() == PixelFormat::JPEG_RGB8);
+        CHECK(jpegImg->pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB_Full);
         CHECK(jpegImg->isCompressed());
 
         size_t compSize = jpegImg->compressedSize();
@@ -220,12 +220,12 @@ TEST_CASE("JpegEncoderNode_EncodeRGB8") {
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_EncodeRGBA8") {
-        Image img = createTestImage(160, 120, PixelFormat::RGBA8);
+        Image img = createTestImage(160, 120, PixelDesc::RGBA8_sRGB_Full);
         Frame::Ptr out = encodeImage(img);
 
         REQUIRE(out.isValid());
         Image::Ptr jpegImg = out->imageList()[0];
-        CHECK(jpegImg->pixelFormatID() == PixelFormat::JPEG_RGBA8);
+        CHECK(jpegImg->pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB_Full);
 
         const uint8_t *data = static_cast<const uint8_t *>(jpegImg->data());
         CHECK(data[0] == 0xFF);

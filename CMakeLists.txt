@@ -186,6 +186,8 @@ set(PROMEKI_CORE_HEADERS
     include/promeki/core/ciewavelengthtable.h
     include/promeki/core/color.h
     include/promeki/core/colormodel.h
+    include/promeki/core/pixelformat.h
+    include/promeki/core/pixeldesc.h
     include/promeki/core/terminal.h
     include/promeki/core/keyevent.h
     include/promeki/core/mouseevent.h
@@ -267,6 +269,8 @@ set(PROMEKI_CORE_SOURCES
     src/textstream.cpp
     src/benchmark.cpp
     src/xyzcolor.cpp
+    src/pixelformat.cpp
+    src/pixeldesc.cpp
 )
 
 add_library(promeki-core SHARED ${PROMEKI_CORE_SOURCES})
@@ -444,11 +448,9 @@ if(PROMEKI_BUILD_PROAV)
         include/promeki/proav/imagefile.h
         include/promeki/proav/imagefileio.h
         include/promeki/proav/paintengine.h
-        include/promeki/proav/pixelformat.h
         include/promeki/proav/testpatternnode.h
         include/promeki/proav/videotestpattern.h
         include/promeki/proav/timecodeoverlaynode.h
-        include/promeki/proav/pixelformat_old.h
         include/promeki/proav/videodesc.h
         include/promeki/proav/xyzcolor.h
     )
@@ -469,10 +471,9 @@ if(PROMEKI_BUILD_PROAV)
         src/image.cpp
         src/imagefile.cpp
         src/imagefileio.cpp
-        src/pixelformat.cpp
-        src/pixelformat_rgb8.cpp
-        src/pixelformat_rgba8.cpp
-        src/pixelformat_jpeg.cpp
+        src/pixeldesc_proav.cpp
+        src/pixeldesc_rgba8.cpp
+        src/pixeldesc_rgb8.cpp
         src/paintengine.cpp
         src/frame.cpp
         src/audiotestpattern.cpp
@@ -1029,6 +1030,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/ciepoint.cpp
         tests/ciewavelengthtable.cpp
         tests/colormodel.cpp
+        tests/pixelformat.cpp
     )
 
     add_executable(unittest-core ${UNITTEST_SOURCES})
@@ -1045,7 +1047,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/audiodesc.cpp
             tests/videodesc.cpp
             tests/image2.cpp
-            tests/pixelformat.cpp
+            tests/pixeldesc.cpp
             tests/frame.cpp
             tests/imagefileio.cpp
             tests/codec.cpp

@@ -40,7 +40,7 @@ PROMEKI_NAMESPACE_BEGIN
  *   solidcolor, white, black, noise, zoneplate.
  * - `Width` (uint32_t): Frame width (required).
  * - `Height` (uint32_t): Frame height (required).
- * - `PixelFormat` (int): PixelFormat::ID (default: PixelFormat::RGB8).
+ * - `PixelFormat` (PixelDesc): Pixel description (default: PixelDesc::RGB8_sRGB_Full).
  * - `FrameRate` (String): Frame rate string (required). E.g. "24", "29.97".
  * - `SolidColorR` (uint16_t): Red for SolidColor pattern (0-65535).
  * - `SolidColorG` (uint16_t): Green for SolidColor pattern.

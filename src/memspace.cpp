@@ -128,4 +128,13 @@ void MemSpace::registerData(Ops &&ops) {
         reg.entries[ops.id] = std::move(ops);
 }
 
+MemSpace::IDList MemSpace::registeredIDs() {
+        auto &reg = registry();
+        IDList ret;
+        for(const auto &[id, data] : reg.entries) {
+                ret.pushToBack(id);
+        }
+        return ret;
+}
+
 PROMEKI_NAMESPACE_END

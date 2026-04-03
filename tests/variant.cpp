@@ -535,3 +535,148 @@ TEST_CASE("Variant_FrameRate_Set") {
     CHECK(v.type() == Variant::TypeFrameRate);
     CHECK(v.get<FrameRate>() == FrameRate(FrameRate::FPS_50));
 }
+
+// ============================================================================
+// PixelFormat
+// ============================================================================
+
+TEST_CASE("Variant_PixelFormat_RoundTrip") {
+    PixelFormat pf(PixelFormat::Interleaved_4x8);
+    Variant v(pf);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypePixelFormat);
+    CHECK(v.get<PixelFormat>() == pf);
+}
+
+TEST_CASE("Variant_PixelFormat_ToString") {
+    Variant v(PixelFormat(PixelFormat::Interleaved_3x8));
+    String s = v.get<String>();
+    CHECK(s == "Interleaved_3x8");
+}
+
+TEST_CASE("Variant_PixelFormat_FromString") {
+    Variant v(String("Interleaved_4x8"));
+    PixelFormat pf = v.get<PixelFormat>();
+    CHECK(pf.id() == PixelFormat::Interleaved_4x8);
+}
+
+TEST_CASE("Variant_PixelFormat_FromInt") {
+    Variant v(int32_t(PixelFormat::Interleaved_3x8));
+    PixelFormat pf = v.get<PixelFormat>();
+    CHECK(pf.id() == PixelFormat::Interleaved_3x8);
+}
+
+TEST_CASE("Variant_PixelFormat_ToInt") {
+    Variant v(PixelFormat(PixelFormat::Interleaved_4x8));
+    int32_t id = v.get<int32_t>();
+    CHECK(id == PixelFormat::Interleaved_4x8);
+}
+
+// ============================================================================
+// PixelDesc
+// ============================================================================
+
+TEST_CASE("Variant_PixelDesc_RoundTrip") {
+    PixelDesc pd(PixelDesc::RGBA8_sRGB_Full);
+    Variant v(pd);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypePixelDesc);
+    CHECK(v.get<PixelDesc>() == pd);
+}
+
+TEST_CASE("Variant_PixelDesc_ToString") {
+    Variant v(PixelDesc(PixelDesc::RGB8_sRGB_Full));
+    String s = v.get<String>();
+    CHECK(s == "RGB8_sRGB_Full");
+}
+
+TEST_CASE("Variant_PixelDesc_FromString") {
+    Variant v(String("RGBA8_sRGB_Full"));
+    PixelDesc pd = v.get<PixelDesc>();
+    CHECK(pd.id() == PixelDesc::RGBA8_sRGB_Full);
+}
+
+TEST_CASE("Variant_PixelDesc_FromInt") {
+    Variant v(int32_t(PixelDesc::YUV8_422_Rec709_Limited));
+    PixelDesc pd = v.get<PixelDesc>();
+    CHECK(pd.id() == PixelDesc::YUV8_422_Rec709_Limited);
+}
+
+TEST_CASE("Variant_PixelDesc_ToInt") {
+    Variant v(PixelDesc(PixelDesc::RGBA8_sRGB_Full));
+    int32_t id = v.get<int32_t>();
+    CHECK(id == PixelDesc::RGBA8_sRGB_Full);
+}
+
+// ============================================================================
+// ColorModel
+// ============================================================================
+
+TEST_CASE("Variant_ColorModel_RoundTrip") {
+    ColorModel cm(ColorModel::sRGB);
+    Variant v(cm);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeColorModel);
+    CHECK(v.get<ColorModel>() == cm);
+}
+
+TEST_CASE("Variant_ColorModel_ToString") {
+    Variant v(ColorModel(ColorModel::Rec709));
+    CHECK(v.get<String>() == "Rec709");
+}
+
+TEST_CASE("Variant_ColorModel_FromString") {
+    Variant v(String("sRGB"));
+    CHECK(v.get<ColorModel>().id() == ColorModel::sRGB);
+}
+
+TEST_CASE("Variant_ColorModel_FromInt") {
+    Variant v(int32_t(ColorModel::sRGB));
+    CHECK(v.get<ColorModel>().id() == ColorModel::sRGB);
+}
+
+TEST_CASE("Variant_ColorModel_ToInt") {
+    Variant v(ColorModel(ColorModel::sRGB));
+    CHECK(v.get<int32_t>() == ColorModel::sRGB);
+}
+
+// ============================================================================
+// MemSpace
+// ============================================================================
+
+TEST_CASE("Variant_MemSpace_RoundTrip") {
+    MemSpace ms(MemSpace::System);
+    Variant v(ms);
+    CHECK(v.isValid());
+    CHECK(v.type() == Variant::TypeMemSpace);
+    CHECK(v.get<MemSpace>() == ms);
+}
+
+TEST_CASE("Variant_MemSpace_FromInt") {
+    Variant v(int32_t(MemSpace::System));
+    CHECK(v.get<MemSpace>().id() == MemSpace::System);
+}
+
+TEST_CASE("Variant_MemSpace_ToInt") {
+    Variant v(MemSpace(MemSpace::SystemSecure));
+    CHECK(v.get<int32_t>() == MemSpace::SystemSecure);
+}
+
+// ============================================================================
+// TypeRegistry integer conversion across int types
+// ============================================================================
+
+TEST_CASE("Variant_PixelDesc_FromUint32") {
+    Variant v(uint32_t(PixelDesc::RGBA8_sRGB_Full));
+    CHECK(v.get<PixelDesc>().id() == PixelDesc::RGBA8_sRGB_Full);
+}
+
+TEST_CASE("Variant_PixelFormat_ToUint32") {
+    Variant v(PixelFormat(PixelFormat::Interleaved_4x8));
+    CHECK(v.get<uint32_t>() == PixelFormat::Interleaved_4x8);
+}
+
+TEST_CASE("Variant_ColorModel_FromInt64") {
+    Variant v(int64_t(ColorModel::Rec2020));
+    CHECK(v.get<ColorModel>().id() == ColorModel::Rec2020);
+}

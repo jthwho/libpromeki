@@ -106,10 +106,9 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
 
         // Create a temporary Image for this glyph cell and render into it
         // using the PaintEngine, which handles all pixel format specifics.
-        const PixelFormat *pf = _paintEngine.pixelFormat();
         int cellWidth = advanceX;
         if(cellWidth <= 0) cellWidth = 1;
-        Image glyphImg(cellWidth, _lineHeight, pf->id());
+        Image glyphImg(cellWidth, _lineHeight, _paintEngine.pixelDesc().id());
 
         PaintEngine pe = glyphImg.createPaintEngine();
 

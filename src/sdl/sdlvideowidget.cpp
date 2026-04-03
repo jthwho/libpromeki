@@ -7,7 +7,7 @@
 
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/logger.h>
 
 #include <SDL3/SDL.h>
@@ -40,19 +40,19 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
         if(renderer == nullptr) return;
 
         // Upload the image to a texture
-        int promekiFmt = _currentImage.pixelFormatID();
-        uint32_t sdlFmt = mapPixelFormat(promekiFmt);
+        PixelDesc::ID promekiPd = _currentImage.pixelDesc().id();
+        uint32_t sdlFmt = mapPixelDesc(promekiPd);
 
         if(sdlFmt != 0) {
                 ensureTexture(_currentImage.width(), _currentImage.height(), sdlFmt);
                 uploadImage(_currentImage, sdlFmt);
         } else {
-                Image converted = _currentImage.convert(PixelFormat::RGBA8, _currentImage.metadata());
+                Image converted = _currentImage.convert(PixelDesc::RGBA8_sRGB_Full, _currentImage.metadata());
                 if(!converted.isValid()) {
                         promekiErr("SDLVideoWidget: format conversion to RGBA8 failed");
                         return;
                 }
-                uint32_t rgba8Fmt = mapPixelFormat(PixelFormat::RGBA8);
+                uint32_t rgba8Fmt = mapPixelDesc(PixelDesc::RGBA8_sRGB_Full);
                 ensureTexture(converted.width(), converted.height(), rgba8Fmt);
                 uploadImage(converted, rgba8Fmt);
         }
@@ -97,16 +97,16 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
         return;
 }
 
-uint32_t SDLVideoWidget::mapPixelFormat(int promekiFormat) {
-        switch(promekiFormat) {
-                case PixelFormat::RGBA8:     return SDL_PIXELFORMAT_RGBA8888;
-                case PixelFormat::RGB8:      return SDL_PIXELFORMAT_RGB24;
-                default:                     return 0;
+uint32_t SDLVideoWidget::mapPixelDesc(PixelDesc::ID pd) {
+        switch(pd) {
+                case PixelDesc::RGBA8_sRGB_Full:     return SDL_PIXELFORMAT_RGBA8888;
+                case PixelDesc::RGB8_sRGB_Full:      return SDL_PIXELFORMAT_RGB24;
+                default:                   return 0;
         }
 }
 
-bool SDLVideoWidget::isDirectlyMappable(int promekiFormat) {
-        return mapPixelFormat(promekiFormat) != 0;
+bool SDLVideoWidget::isDirectlyMappable(PixelDesc::ID pd) {
+        return mapPixelDesc(pd) != 0;
 }
 
 void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt) {

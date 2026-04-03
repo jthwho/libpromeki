@@ -16,19 +16,19 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Raster image with pixel format, planes, and metadata.
+ * @brief Raster image with pixel description, planes, and metadata.
  * @ingroup proav_media
  *
  * Holds image pixel data organized into one or more memory planes
- * according to the image's pixel format. Provides convenience
+ * according to the image's pixel description. Provides convenience
  * accessors for dimensions, pixel format, and metadata, as well as
  * pixel format conversion and paint engine creation.
  * When shared ownership is needed, use Image::Ptr.
  *
  * @par Compressed images
  * Image also represents compressed (encoded) image data such as JPEG.
- * A compressed image uses a compressed pixel format (e.g.
- * PixelFormat::JPEG_RGB8) and stores the encoded bitstream in its
+ * A compressed image uses a compressed pixel description (e.g.
+ * PixelDesc::JPEG_RGB8_sRGB_Full) and stores the encoded bitstream in its
  * single plane buffer. Use isCompressed() to test whether an image
  * is compressed, compressedSize() to get the encoded byte count,
  * and data() to access the raw encoded bytes. The preferred way to
@@ -36,10 +36,9 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example — creating a compressed image
  * @code
- * // After compressing with libjpeg or another codec:
  * Image jpeg = Image::fromCompressedData(jpegBytes, jpegSize,
  *                                        1920, 1080,
- *                                        PixelFormat::JPEG_RGB8,
+ *                                        PixelDesc::JPEG_RGB8_sRGB_Full,
  *                                        srcImage.metadata());
  * assert(jpeg.isCompressed());
  * assert(jpeg.compressedSize() == jpegSize);
@@ -62,29 +61,29 @@ class Image {
 
                 /**
                  * @brief Constructs an image from an image descriptor.
-                 * @param desc Image descriptor specifying size, pixel format, and metadata.
+                 * @param desc Image descriptor specifying size, pixel description, and metadata.
                  * @param ms   Memory space to allocate plane buffers from.
                  */
                 Image(const ImageDesc &desc, const MemSpace &ms = MemSpace::Default);
 
                 /**
-                 * @brief Constructs an image from a size and pixel format ID.
-                 * @param s      Image dimensions.
-                 * @param pixfmt Pixel format identifier.
-                 * @param ms     Memory space to allocate from.
+                 * @brief Constructs an image from a size and pixel description ID.
+                 * @param s  Image dimensions.
+                 * @param pd Pixel description identifier.
+                 * @param ms Memory space to allocate from.
                  */
-                Image(const Size2Du32 &s, int pixfmt, const MemSpace &ms = MemSpace::Default) :
-                        Image(ImageDesc(s, pixfmt), ms) { }
+                Image(const Size2Du32 &s, PixelDesc::ID pd, const MemSpace &ms = MemSpace::Default) :
+                        Image(ImageDesc(s, pd), ms) { }
 
                 /**
-                 * @brief Constructs an image from width, height, and pixel format ID.
-                 * @param w      Image width in pixels.
-                 * @param h      Image height in pixels.
-                 * @param pixfmt Pixel format identifier.
-                 * @param ms     Memory space to allocate from.
+                 * @brief Constructs an image from width, height, and pixel description ID.
+                 * @param w  Image width in pixels.
+                 * @param h  Image height in pixels.
+                 * @param pd Pixel description identifier.
+                 * @param ms Memory space to allocate from.
                  */
-                Image(size_t w, size_t h, int pixfmt, const MemSpace &ms = MemSpace::Default) :
-                        Image(ImageDesc(w, h, pixfmt), ms) { }
+                Image(size_t w, size_t h, PixelDesc::ID pd, const MemSpace &ms = MemSpace::Default) :
+                        Image(ImageDesc(w, h, pd), ms) { }
 
                 /**
                  * @brief Returns true if the image has a valid descriptor and allocated planes.
@@ -103,19 +102,11 @@ class Image {
                 }
 
                 /**
-                 * @brief Returns the pixel format identifier.
-                 * @return The pixel format ID integer.
+                 * @brief Returns the pixel description.
+                 * @return A const reference to the PixelDesc.
                  */
-                int pixelFormatID() const {
-                        return _desc.pixelFormatID();
-                }
-
-                /**
-                 * @brief Returns a pointer to the PixelFormat object.
-                 * @return The PixelFormat pointer, or nullptr if unknown.
-                 */
-                const PixelFormat *pixelFormat() const {
-                        return _desc.pixelFormat();
+                const PixelDesc &pixelDesc() const {
+                        return _desc.pixelDesc();
                 }
 
                 /**
@@ -164,7 +155,7 @@ class Image {
                  * @return The number of bytes per scanline.
                  */
                 size_t lineStride(int plane = 0) const {
-                        return _desc.pixelFormat()->lineStride(plane, _desc);
+                        return _desc.pixelDesc().lineStride(plane, _desc);
                 }
 
                 /**
@@ -209,12 +200,6 @@ class Image {
 
                 /**
                  * @brief Returns true if all plane buffers are exclusively owned.
-                 *
-                 * A plane is exclusive when its Buffer::Ptr has a reference count
-                 * of 1 (or is null). This is useful for determining whether it is
-                 * safe to mutate the pixel data in place without affecting other
-                 * consumers that may share the same buffers.
-                 *
                  * @return true if every plane buffer has referenceCount() <= 1.
                  */
                 bool isExclusive() const {
@@ -226,13 +211,6 @@ class Image {
 
                 /**
                  * @brief Ensures exclusive ownership of all plane buffers.
-                 *
-                 * For each plane Buffer::Ptr, calls modify() to trigger a
-                 * copy-on-write detach if the reference count is greater than 1.
-                 * In a linear pipeline where only one consumer holds a reference,
-                 * this is a no-op. In fan-out scenarios where multiple consumers
-                 * share the same buffers, this creates private copies so that
-                 * the caller can safely mutate the pixel data.
                  */
                 void ensureExclusive() {
                         for(auto &p : _planeList) {
@@ -242,21 +220,15 @@ class Image {
                 }
 
                 /**
-                 * @brief Returns true if this image uses a compressed pixel format.
-                 * @return true if the pixel format is compressed (e.g. JPEG).
+                 * @brief Returns true if this image uses a compressed pixel description.
+                 * @return true if the pixel description is compressed (e.g. JPEG).
                  */
                 bool isCompressed() const {
-                        const PixelFormat *pf = _desc.pixelFormat();
-                        return pf != nullptr && pf->isCompressed();
+                        return _desc.pixelDesc().isCompressed();
                 }
 
                 /**
                  * @brief Returns the compressed data size in bytes.
-                 *
-                 * For compressed images, the encoded bitstream lives in the
-                 * first plane buffer. This method returns that buffer's logical
-                 * size, which is the actual encoded byte count. Use data() to
-                 * obtain a pointer to the encoded bytes.
                  *
                  * Returns 0 for uncompressed images or if no planes are allocated.
                  *
@@ -270,43 +242,33 @@ class Image {
                 /**
                  * @brief Creates a compressed image from pre-encoded data.
                  *
-                 * This is the preferred way to construct a compressed Image.
-                 * It allocates a plane buffer sized to hold the encoded data,
-                 * copies the bytes in, sets the buffer's logical size to
-                 * @p size, and attaches the supplied metadata. The resulting
-                 * Image reports isCompressed() == true and compressedSize() == @p size.
-                 *
-                 * The @p width and @p height describe the original uncompressed
-                 * dimensions — they are stored in the ImageDesc so that
-                 * downstream consumers know the frame size without decoding.
-                 *
                  * @param data       Pointer to the compressed data.
                  * @param size       Size of the compressed data in bytes.
                  * @param width      Original image width in pixels.
                  * @param height     Original image height in pixels.
-                 * @param pixfmt     Compressed pixel format ID (e.g. PixelFormat::JPEG_RGB8).
+                 * @param pd         Compressed pixel description ID (e.g. PixelDesc::JPEG_RGB8_sRGB_Full).
                  * @param metadata   Optional metadata to attach (e.g. timecode).
                  * @return A valid compressed Image, or an invalid Image on failure.
                  */
                 static Image fromCompressedData(const void *data, size_t size,
-                                                size_t width, size_t height, int pixfmt,
+                                                size_t width, size_t height, PixelDesc::ID pd,
                                                 const Metadata &metadata = Metadata());
 
                 /**
                  * @brief Creates a paint engine for drawing on this image.
-                 * @return A PaintEngine configured for this image's pixel format.
+                 * @return A PaintEngine configured for this image's pixel description.
                  */
                 PaintEngine createPaintEngine() const {
-                        return _desc.pixelFormat()->createPaintEngine(*this);
+                        return _desc.pixelDesc().createPaintEngine(*this);
                 }
 
                 /**
-                 * @brief Converts this image to a different pixel format.
-                 * @param pixelFormat The target pixel format ID.
-                 * @param metadata    Metadata to attach to the converted image.
-                 * @return A new Image in the target pixel format.
+                 * @brief Converts this image to a different pixel description.
+                 * @param pd       The target pixel description ID.
+                 * @param metadata Metadata to attach to the converted image.
+                 * @return A new Image in the target pixel description.
                  */
-                Image convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const;
+                Image convert(PixelDesc::ID pd, const Metadata &metadata) const;
 
         private:
                 ImageDesc       _desc;

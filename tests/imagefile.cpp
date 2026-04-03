@@ -34,7 +34,7 @@ TEST_CASE("ImageFile: filename accessors") {
 TEST_CASE("ImageFile: image accessors") {
         ImageFile f;
         CHECK(!f.image().isValid());
-        Image img(64, 64, PixelFormat::RGBA8);
+        Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
         REQUIRE(img.isValid());
         f.setImage(img);
         CHECK(f.image().isValid());
@@ -55,7 +55,7 @@ TEST_CASE("ImageFile: isValid states") {
         CHECK(!valid.filename().isEmpty());
 
         // With an image set as well
-        Image img(32, 32, PixelFormat::RGBA8);
+        Image img(32, 32, PixelDesc::RGBA8_sRGB_Full);
         valid.setImage(img);
         CHECK(valid.image().isValid());
 }

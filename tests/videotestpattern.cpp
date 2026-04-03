@@ -9,11 +9,11 @@
 #include <promeki/proav/videotestpattern.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 
 using namespace promeki;
 
-static ImageDesc testDesc(int w = 320, int h = 240, int fmt = PixelFormat::RGB8) {
+static ImageDesc testDesc(int w = 320, int h = 240, PixelDesc::ID fmt = PixelDesc::RGB8_sRGB_Full) {
         return ImageDesc(w, h, fmt);
 }
 
@@ -135,10 +135,10 @@ TEST_CASE("VideoTestPattern_RGBA8") {
         VideoTestPattern gen;
         gen.setPattern(VideoTestPattern::White);
 
-        ImageDesc desc = testDesc(16, 16, PixelFormat::RGBA8);
+        ImageDesc desc = testDesc(16, 16, PixelDesc::RGBA8_sRGB_Full);
         Image img = gen.create(desc);
         CHECK(img.isValid());
-        CHECK(img.pixelFormatID() == PixelFormat::RGBA8);
+        CHECK(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
 }
 
 // ============================================================================

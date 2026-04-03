@@ -18,7 +18,7 @@ using namespace promeki;
 TEST_CASE("ImageDesc_Default") {
     ImageDesc desc;
     CHECK(!desc.isValid());
-    CHECK(desc.pixelFormatID() == PixelFormat::Invalid);
+    CHECK(desc.pixelDesc().id() == PixelDesc::Invalid);
 }
 
 // ============================================================================
@@ -26,20 +26,20 @@ TEST_CASE("ImageDesc_Default") {
 // ============================================================================
 
 TEST_CASE("ImageDesc_Construct") {
-    ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
+    ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
     CHECK(desc.isValid());
     CHECK(desc.width() == 1920);
     CHECK(desc.height() == 1080);
-    CHECK(desc.pixelFormatID() == PixelFormat::RGBA8);
+    CHECK(desc.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
 }
 
 TEST_CASE("ImageDesc_ConstructSize2D") {
     Size2Du32 sz(3840, 2160);
-    ImageDesc desc(sz, PixelFormat::RGB8);
+    ImageDesc desc(sz, PixelDesc::RGB8_sRGB_Full);
     CHECK(desc.isValid());
     CHECK(desc.width() == 3840);
     CHECK(desc.height() == 2160);
-    CHECK(desc.pixelFormatID() == PixelFormat::RGB8);
+    CHECK(desc.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
 }
 
 // ============================================================================
@@ -58,11 +58,11 @@ TEST_CASE("ImageDesc_SetSize") {
 }
 
 TEST_CASE("ImageDesc_SetPixelFormat") {
-    ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
-    CHECK(desc.pixelFormatID() == PixelFormat::RGBA8);
+    ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
+    CHECK(desc.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
 
-    desc.setPixelFormat(PixelFormat::RGB8);
-    CHECK(desc.pixelFormatID() == PixelFormat::RGB8);
+    desc.setPixelDesc(PixelDesc::RGB8_sRGB_Full);
+    CHECK(desc.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
 }
 
 TEST_CASE("ImageDesc_SetLinePad") {
@@ -94,7 +94,7 @@ TEST_CASE("ImageDesc_SetInterlaced") {
 // ============================================================================
 
 TEST_CASE("ImageDesc_CopyIsIndependent") {
-    ImageDesc d1(1920, 1080, PixelFormat::RGBA8);
+    ImageDesc d1(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
     ImageDesc d2 = d1;
 
     d2.setSize(3840, 2160);
@@ -103,12 +103,12 @@ TEST_CASE("ImageDesc_CopyIsIndependent") {
 }
 
 TEST_CASE("ImageDesc_CopyPixelFormatIndependent") {
-    ImageDesc d1(1920, 1080, PixelFormat::RGBA8);
+    ImageDesc d1(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
     ImageDesc d2 = d1;
 
-    d2.setPixelFormat(PixelFormat::RGB8);
-    CHECK(d1.pixelFormatID() == PixelFormat::RGBA8);
-    CHECK(d2.pixelFormatID() == PixelFormat::RGB8);
+    d2.setPixelDesc(PixelDesc::RGB8_sRGB_Full);
+    CHECK(d1.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
+    CHECK(d2.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
 }
 
 // ============================================================================
@@ -116,7 +116,7 @@ TEST_CASE("ImageDesc_CopyPixelFormatIndependent") {
 // ============================================================================
 
 TEST_CASE("ImageDesc_Metadata") {
-    ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
+    ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
     const Metadata &cm = desc.metadata();
     CHECK(cm.isEmpty());
 
@@ -130,7 +130,7 @@ TEST_CASE("ImageDesc_Metadata") {
 // ============================================================================
 
 TEST_CASE("ImageDesc_ToString") {
-    ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
+    ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
     String s = desc.toString();
     CHECK(s.size() > 0);
 }
@@ -140,6 +140,6 @@ TEST_CASE("ImageDesc_ToString") {
 // ============================================================================
 
 TEST_CASE("ImageDesc_PlaneCount") {
-    ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
+    ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
     CHECK(desc.planeCount() > 0);
 }

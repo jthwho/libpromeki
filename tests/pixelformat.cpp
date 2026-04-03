@@ -6,170 +6,252 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/pixelformat.h>
-#include <promeki/proav/imagedesc.h>
-#include <promeki/core/metadata.h>
+#include <promeki/core/pixelformat.h>
 
 using namespace promeki;
 
-TEST_CASE("PixelFormat: lookup Invalid returns null or invalid") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::Invalid);
-        if(pf != nullptr) {
-                CHECK_FALSE(pf->isValid());
+// ============================================================================
+// Default / Invalid construction
+// ============================================================================
+
+TEST_CASE("PixelFormat: default constructs to Invalid") {
+        PixelFormat pf;
+        CHECK_FALSE(pf.isValid());
+        CHECK(pf.id() == PixelFormat::Invalid);
+}
+
+TEST_CASE("PixelFormat: explicit Invalid construction") {
+        PixelFormat pf(PixelFormat::Invalid);
+        CHECK_FALSE(pf.isValid());
+}
+
+// ============================================================================
+// Interleaved_4x8 (e.g. RGBA8 layout)
+// ============================================================================
+
+TEST_CASE("PixelFormat: Interleaved_4x8 is valid") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.isValid());
+        CHECK(pf.id() == PixelFormat::Interleaved_4x8);
+}
+
+TEST_CASE("PixelFormat: Interleaved_4x8 name is non-empty") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK_FALSE(pf.name().isEmpty());
+}
+
+TEST_CASE("PixelFormat: Interleaved_4x8 compCount is 4") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.compCount() == 4);
+}
+
+TEST_CASE("PixelFormat: Interleaved_4x8 planeCount is 1") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.planeCount() == 1);
+}
+
+TEST_CASE("PixelFormat: Interleaved_4x8 bytesPerBlock is 4") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.bytesPerBlock() == 4);
+}
+
+TEST_CASE("PixelFormat: Interleaved_4x8 sampling is 444") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.sampling() == PixelFormat::Sampling444);
+}
+
+TEST_CASE("PixelFormat: Interleaved_4x8 component bits are 8") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        for(size_t i = 0; i < pf.compCount(); i++) {
+                CHECK(pf.compDesc(i).bits == 8);
+                CHECK(pf.compDesc(i).plane == 0);
         }
 }
 
-TEST_CASE("PixelFormat: lookup RGBA8") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->isValid());
-        CHECK(pf->id() == PixelFormat::RGBA8);
+TEST_CASE("PixelFormat: Interleaved_4x8 component byteOffsets are sequential") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.compDesc(0).byteOffset == 0);
+        CHECK(pf.compDesc(1).byteOffset == 1);
+        CHECK(pf.compDesc(2).byteOffset == 2);
+        CHECK(pf.compDesc(3).byteOffset == 3);
 }
 
-TEST_CASE("PixelFormat: RGBA8 name is non-empty") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK_FALSE(pf->name().isEmpty());
+TEST_CASE("PixelFormat: Interleaved_3x8 component byteOffsets are sequential") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.compDesc(0).byteOffset == 0);
+        CHECK(pf.compDesc(1).byteOffset == 1);
+        CHECK(pf.compDesc(2).byteOffset == 2);
 }
 
-TEST_CASE("PixelFormat: RGBA8 has alpha") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->hasAlpha());
+TEST_CASE("PixelFormat: Interleaved_4x8 lineStride") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.lineStride(0, 1920) == 1920 * 4);
 }
 
-TEST_CASE("PixelFormat: RGB8 does not have alpha") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGB8);
-        REQUIRE(pf != nullptr);
-        CHECK_FALSE(pf->hasAlpha());
+TEST_CASE("PixelFormat: Interleaved_4x8 planeSize") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.planeSize(0, 1920, 1080) == 1920 * 1080 * 4);
 }
 
-TEST_CASE("PixelFormat: RGBA8 bytes per block") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->bytesPerBlock() > 0);
-        CHECK(pf->pixelsPerBlock() > 0);
+// ============================================================================
+// Interleaved_3x8 (e.g. RGB8 layout)
+// ============================================================================
+
+TEST_CASE("PixelFormat: Interleaved_3x8 is valid") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.isValid());
+        CHECK(pf.id() == PixelFormat::Interleaved_3x8);
 }
 
-TEST_CASE("PixelFormat: RGBA8 sampling is 444") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->sampling() == PixelFormat::Sampling444);
+TEST_CASE("PixelFormat: Interleaved_3x8 compCount is 3") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.compCount() == 3);
 }
 
-TEST_CASE("PixelFormat: RGBA8 plane count") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->planeCount() == 1);
+TEST_CASE("PixelFormat: Interleaved_3x8 planeCount is 1") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.planeCount() == 1);
 }
 
-TEST_CASE("PixelFormat: RGB8 is valid and not alpha") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGB8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->isValid());
-        CHECK_FALSE(pf->hasAlpha());
+TEST_CASE("PixelFormat: Interleaved_3x8 bytesPerBlock is 3") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.bytesPerBlock() == 3);
 }
 
-TEST_CASE("PixelFormat: RGBA8 is not compressed") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK_FALSE(pf->isCompressed());
+TEST_CASE("PixelFormat: Interleaved_3x8 sampling is 444") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.sampling() == PixelFormat::Sampling444);
 }
 
-TEST_CASE("PixelFormat: JPEG_RGBA8 is compressed") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->isCompressed());
+TEST_CASE("PixelFormat: Interleaved_3x8 lineStride") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.lineStride(0, 1920) == 1920 * 3);
 }
 
-TEST_CASE("PixelFormat: plane count") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->planeCount() >= 1);
+TEST_CASE("PixelFormat: Interleaved_3x8 planeSize") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        CHECK(pf.planeSize(0, 1920, 1080) == 1920 * 1080 * 3);
 }
 
-TEST_CASE("PixelFormat: RGBA8 compCount is 4") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->compCount() == 4);
-        CHECK(pf->compDesc(0).type == PixelFormat::Comp0);
-        CHECK(pf->compDesc(1).type == PixelFormat::Comp1);
-        CHECK(pf->compDesc(2).type == PixelFormat::Comp2);
-        CHECK(pf->compDesc(3).type == PixelFormat::CompAlpha);
-        for(size_t i = 0; i < pf->compCount(); i++) {
-                CHECK(pf->compDesc(i).bits == 8);
-                CHECK(pf->compDesc(i).plane == 0);
+// ============================================================================
+// Interleaved_3x10 (e.g. RGB10 layout)
+// ============================================================================
+
+TEST_CASE("PixelFormat: Interleaved_3x10 is valid") {
+        PixelFormat pf(PixelFormat::Interleaved_3x10);
+        CHECK(pf.isValid());
+        CHECK(pf.compCount() == 3);
+}
+
+TEST_CASE("PixelFormat: Interleaved_3x10 component bits are 10") {
+        PixelFormat pf(PixelFormat::Interleaved_3x10);
+        for(size_t i = 0; i < pf.compCount(); i++) {
+                CHECK(pf.compDesc(i).bits == 10);
         }
 }
 
-TEST_CASE("PixelFormat: RGB8 compCount is 3") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGB8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->compCount() == 3);
-        CHECK(pf->compDesc(0).type == PixelFormat::Comp0);
-        CHECK(pf->compDesc(1).type == PixelFormat::Comp1);
-        CHECK(pf->compDesc(2).type == PixelFormat::Comp2);
+TEST_CASE("PixelFormat: Interleaved_3x10 bytesPerBlock") {
+        PixelFormat pf(PixelFormat::Interleaved_3x10);
+        CHECK(pf.bytesPerBlock() > 0);
 }
 
-TEST_CASE("PixelFormat: JPEG_RGBA8 compCount is 4") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGBA8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->compCount() == 4);
+// ============================================================================
+// Interleaved_422_3x8 (e.g. YUV8_422 layout)
+// ============================================================================
+
+TEST_CASE("PixelFormat: Interleaved_422_3x8 is valid") {
+        PixelFormat pf(PixelFormat::Interleaved_422_3x8);
+        CHECK(pf.isValid());
+        CHECK(pf.compCount() == 3);
 }
 
-TEST_CASE("PixelFormat: JPEG_RGB8 compCount is 3") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->compCount() == 3);
-        CHECK(pf->compDesc(0).type == PixelFormat::Comp0);
-        CHECK(pf->compDesc(1).type == PixelFormat::Comp1);
-        CHECK(pf->compDesc(2).type == PixelFormat::Comp2);
-        for(size_t i = 0; i < pf->compCount(); i++) {
-                CHECK(pf->compDesc(i).bits == 8);
-                CHECK(pf->compDesc(i).plane == 0);
-        }
+TEST_CASE("PixelFormat: Interleaved_422_3x8 sampling is 422") {
+        PixelFormat pf(PixelFormat::Interleaved_422_3x8);
+        CHECK(pf.sampling() == PixelFormat::Sampling422);
 }
 
-TEST_CASE("PixelFormat: RGB8 is not compressed") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::RGB8);
-        REQUIRE(pf != nullptr);
-        CHECK_FALSE(pf->isCompressed());
+TEST_CASE("PixelFormat: Interleaved_422_3x8 planeCount is 1") {
+        PixelFormat pf(PixelFormat::Interleaved_422_3x8);
+        CHECK(pf.planeCount() == 1);
 }
 
-TEST_CASE("PixelFormat: JPEG_RGB8 is compressed") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->isCompressed());
+// ============================================================================
+// Interleaved_422_3x10 (e.g. YUV10_422 layout)
+// ============================================================================
+
+TEST_CASE("PixelFormat: Interleaved_422_3x10 is valid") {
+        PixelFormat pf(PixelFormat::Interleaved_422_3x10);
+        CHECK(pf.isValid());
+        CHECK(pf.compCount() == 3);
+        CHECK(pf.sampling() == PixelFormat::Sampling422);
 }
 
-TEST_CASE("PixelFormat: JPEG planeSize is 0 without CompressedSize metadata") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
-        REQUIRE(pf != nullptr);
-        // ImageDesc with no CompressedSize in metadata
-        ImageDesc desc(640, 480, PixelFormat::JPEG_RGB8);
-        CHECK(pf->planeSize(0, desc) == 0);
+// ============================================================================
+// lineStride with padding and alignment
+// ============================================================================
+
+TEST_CASE("PixelFormat: Interleaved_3x8 lineStride with linePad") {
+        PixelFormat pf(PixelFormat::Interleaved_3x8);
+        size_t stride = pf.lineStride(0, 100, 4, 1);
+        CHECK(stride == 100 * 3 + 4);
 }
 
-TEST_CASE("PixelFormat: JPEG planeSize reads CompressedSize from metadata") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
-        REQUIRE(pf != nullptr);
-        ImageDesc desc(640, 480, PixelFormat::JPEG_RGB8);
-        desc.metadata().set(Metadata::CompressedSize, 12345);
-        CHECK(pf->planeSize(0, desc) == 12345);
+TEST_CASE("PixelFormat: Interleaved_4x8 lineStride with alignment") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        // 1920 * 4 = 7680, already aligned to any power-of-2 up to 128
+        size_t stride = pf.lineStride(0, 1920, 0, 16);
+        CHECK(stride % 16 == 0);
+        CHECK(stride >= 1920 * 4);
 }
 
-TEST_CASE("PixelFormat: JPEG lineStride is 0") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_RGB8);
-        REQUIRE(pf != nullptr);
-        ImageDesc desc(640, 480, PixelFormat::JPEG_RGB8);
-        CHECK(pf->lineStride(0, desc) == 0);
+// ============================================================================
+// Invalid plane index
+// ============================================================================
+
+TEST_CASE("PixelFormat: lineStride for invalid plane returns 0") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.lineStride(1, 1920) == 0);
 }
 
-TEST_CASE("PixelFormat: JPEG_YUV8_422 compCount is 3") {
-        const PixelFormat *pf = PixelFormat::lookup(PixelFormat::JPEG_YUV8_422);
-        REQUIRE(pf != nullptr);
-        CHECK(pf->compCount() == 3);
-        CHECK(pf->compDesc(0).type == PixelFormat::Comp0);
-        CHECK(pf->compDesc(1).type == PixelFormat::Comp1);
-        CHECK(pf->compDesc(2).type == PixelFormat::Comp2);
+TEST_CASE("PixelFormat: planeSize for invalid plane returns 0") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        CHECK(pf.planeSize(1, 1920, 1080) == 0);
+}
+
+// ============================================================================
+// Equality
+// ============================================================================
+
+TEST_CASE("PixelFormat: equality") {
+        PixelFormat a(PixelFormat::Interleaved_4x8);
+        PixelFormat b(PixelFormat::Interleaved_4x8);
+        PixelFormat c(PixelFormat::Interleaved_3x8);
+        CHECK(a == b);
+        CHECK(a != c);
+}
+
+// ============================================================================
+// lookup by name
+// ============================================================================
+
+TEST_CASE("PixelFormat: lookup by name") {
+        PixelFormat pf(PixelFormat::Interleaved_4x8);
+        PixelFormat found = PixelFormat::lookup(pf.name());
+        CHECK(found.isValid());
+        CHECK(found == pf);
+}
+
+TEST_CASE("PixelFormat: lookup unknown name returns invalid") {
+        PixelFormat found = PixelFormat::lookup("bogus_nonexistent_format");
+        CHECK_FALSE(found.isValid());
+}
+
+TEST_CASE("PixelFormat: registeredIDs returns all well-known formats") {
+        auto ids = PixelFormat::registeredIDs();
+        CHECK(ids.size() >= 5);
+        CHECK(ids.contains(PixelFormat::Interleaved_4x8));
+        CHECK(ids.contains(PixelFormat::Interleaved_3x8));
+        CHECK(ids.contains(PixelFormat::Interleaved_3x10));
+        CHECK(ids.contains(PixelFormat::Interleaved_422_3x8));
+        CHECK(ids.contains(PixelFormat::Interleaved_422_3x10));
 }

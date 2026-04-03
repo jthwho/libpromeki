@@ -80,18 +80,18 @@ class SDLVideoWidget : public Widget {
                 ScaleMode scaleMode() const { return _scaleMode; }
 
                 /**
-                 * @brief Maps a promeki PixelFormat ID to an SDL pixel format.
-                 * @param promekiFormat The promeki PixelFormat::ID.
+                 * @brief Maps a promeki PixelDesc ID to an SDL pixel format.
+                 * @param pd The promeki PixelDesc::ID.
                  * @return The SDL pixel format enum value, or 0 if no direct mapping.
                  */
-                static uint32_t mapPixelFormat(int promekiFormat);
+                static uint32_t mapPixelDesc(PixelDesc::ID pd);
 
                 /**
-                 * @brief Returns whether a promeki format can be directly uploaded.
-                 * @param promekiFormat The promeki PixelFormat::ID.
+                 * @brief Returns whether a promeki pixel description can be directly uploaded.
+                 * @param pd The promeki PixelDesc::ID.
                  * @return true if the format maps directly to an SDL format.
                  */
-                static bool isDirectlyMappable(int promekiFormat);
+                static bool isDirectlyMappable(PixelDesc::ID pd);
 
         protected:
                 void paintEvent(PaintEvent *e) override;

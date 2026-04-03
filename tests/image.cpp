@@ -7,6 +7,7 @@
 
 #include <promeki/unittest.h>
 #include <promeki/proav/image.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/proav/imagefile.h>
 #include <promeki/proav/paintengine.h>
 #include <promeki/proav/basicfont.h>
@@ -16,14 +17,14 @@ using namespace promeki;
 PROMEKI_DEBUG(ImageTest);
 
 PROMEKI_TEST_BEGIN(Image)
-        ImageDesc d(1920, 1080, PixelFormat::RGBA8);
+        ImageDesc d(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
         promekiInfo("ImageDesc: %s", d.toString().cstr());
         PROMEKI_TEST(d.size().isValid());
 
         Image img1(d);
         promekiInfo("Image: %s", img1.desc().toString().cstr());
-        PROMEKI_TEST(d.pixelFormat()->lineStride(0, d) == 1920 * 4);
-        PROMEKI_TEST(d.pixelFormat()->planeSize(0, d) == 1920 * 1080 * 4);
+        PROMEKI_TEST(d.pixelDesc().lineStride(0, d) == 1920 * 4);
+        PROMEKI_TEST(d.pixelDesc().planeSize(0, d) == 1920 * 1080 * 4);
         PROMEKI_TEST(img1.size().isValid());
         PROMEKI_TEST(img1.desc().isValid());
         PROMEKI_TEST(img1.isValid());

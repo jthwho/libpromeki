@@ -32,7 +32,7 @@ TEST_CASE("EncodedDesc_ConstructWithCodec") {
 }
 
 TEST_CASE("EncodedDesc_ConstructWithCodecAndImageDesc") {
-    ImageDesc imgDesc(1920, 1080, PixelFormat::RGB8);
+    ImageDesc imgDesc(1920, 1080, PixelDesc::RGB8_sRGB_Full);
     EncodedDesc desc(FourCC("JPEG"), imgDesc);
     CHECK(desc.isValid());
     CHECK(desc.codec() == FourCC("JPEG"));
@@ -59,7 +59,7 @@ TEST_CASE("EncodedDesc_SetQuality") {
 
 TEST_CASE("EncodedDesc_SetSourceImageDesc") {
     EncodedDesc desc(FourCC("JPEG"));
-    ImageDesc imgDesc(1280, 720, PixelFormat::RGB8);
+    ImageDesc imgDesc(1280, 720, PixelDesc::RGB8_sRGB_Full);
     desc.setSourceImageDesc(imgDesc);
     CHECK(desc.sourceImageDesc().width() == 1280);
     CHECK(desc.sourceImageDesc().height() == 720);

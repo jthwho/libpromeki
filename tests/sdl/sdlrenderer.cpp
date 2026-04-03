@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/sdl/sdlvideowidget.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 
 using namespace promeki;
 
@@ -15,32 +15,32 @@ TEST_SUITE("SDLVideoWidget") {
 
         TEST_CASE("Pixel format mapping") {
                 SUBCASE("RGBA8 maps to SDL format") {
-                        uint32_t fmt = SDLVideoWidget::mapPixelFormat(PixelFormat::RGBA8);
+                        uint32_t fmt = SDLVideoWidget::mapPixelDesc(PixelDesc::RGBA8_sRGB_Full);
                         CHECK(fmt != 0);
                 }
 
                 SUBCASE("RGB8 maps to SDL format") {
-                        uint32_t fmt = SDLVideoWidget::mapPixelFormat(PixelFormat::RGB8);
+                        uint32_t fmt = SDLVideoWidget::mapPixelDesc(PixelDesc::RGB8_sRGB_Full);
                         CHECK(fmt != 0);
                 }
 
                 SUBCASE("YUV formats are not directly mappable") {
-                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::YUV8_422));
-                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::YUV10_422));
+                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelDesc::YUV8_422_Rec709_Limited));
+                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelDesc::YUV10_422_Rec709_Limited));
                 }
 
                 SUBCASE("RGB10 is not directly mappable") {
-                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::RGB10));
+                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelDesc::RGB10_sRGB_Full));
                 }
 
                 SUBCASE("Compressed formats are not directly mappable") {
-                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::JPEG_RGBA8));
-                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::JPEG_RGB8));
-                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelFormat::JPEG_YUV8_422));
+                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelDesc::JPEG_RGBA8_sRGB_Full));
+                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelDesc::JPEG_RGB8_sRGB_Full));
+                        CHECK_FALSE(SDLVideoWidget::isDirectlyMappable(PixelDesc::JPEG_YUV8_422_Rec709_Limited));
                 }
 
                 SUBCASE("Invalid format returns zero") {
-                        CHECK(SDLVideoWidget::mapPixelFormat(PixelFormat::Invalid) == 0);
+                        CHECK(SDLVideoWidget::mapPixelDesc(PixelDesc::Invalid) == 0);
                 }
         }
 

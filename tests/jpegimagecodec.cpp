@@ -9,16 +9,16 @@
 #include <promeki/proav/jpegimagecodec.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/timecode.h>
 
 using namespace promeki;
 
-static Image createTestImage(int width, int height, int pixfmt = PixelFormat::RGB8) {
+static Image createTestImage(int width, int height, PixelDesc::ID pixfmt = PixelDesc::RGB8_sRGB_Full) {
         ImageDesc idesc(width, height, pixfmt);
         Image img(idesc);
-        int comps = (pixfmt == PixelFormat::RGBA8) ? 4 : 3;
+        int comps = (pixfmt == PixelDesc::RGBA8_sRGB_Full) ? 4 : 3;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
         for(int y = 0; y < height; y++) {
@@ -72,7 +72,7 @@ TEST_CASE("JpegImageCodec_EncodeRGB8") {
         Image encoded = codec.encode(img);
         CHECK(encoded.isValid());
         CHECK(encoded.isCompressed());
-        CHECK(encoded.pixelFormatID() == PixelFormat::JPEG_RGB8);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB_Full);
         CHECK(encoded.width() == 320);
         CHECK(encoded.height() == 240);
 
@@ -92,11 +92,11 @@ TEST_CASE("JpegImageCodec_EncodeRGB8") {
 
 TEST_CASE("JpegImageCodec_EncodeRGBA8") {
         JpegImageCodec codec;
-        Image img = createTestImage(160, 120, PixelFormat::RGBA8);
+        Image img = createTestImage(160, 120, PixelDesc::RGBA8_sRGB_Full);
 
         Image encoded = codec.encode(img);
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelFormatID() == PixelFormat::JPEG_RGBA8);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB_Full);
 }
 
 // ============================================================================

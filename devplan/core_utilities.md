@@ -26,6 +26,14 @@ Tests: `tests/metadata.cpp` — all existing tests updated; equality tests added
 
 ---
 
+### Variant TypeRegistry Type Support (COMPLETE)
+
+`Variant` extended to hold all four TypeRegistry wrapper types: `ColorModel`, `MemSpace`, `PixelFormat`, `PixelDesc`. New `TypeColorModel`, `TypeMemSpace`, `TypePixelFormat`, `TypePixelDesc` variant type constants added to the `X`-macro type list. A `detail::is_type_registry<T>` trait detects these types to enable shared conversion logic: TypeRegistry values convert to/from integers via `T::ID` cast, to/from `String` via `T::lookup()`/`T::name()`, and to `String` via `arg.name()`. The `toString()` specialization routes TypeRegistry types through `arg.name()`.
+
+Tests: `tests/variant.cpp` — 30+ new test cases covering round-trip, toString, fromString, and cross-integer-type (int32, uint32, int64) conversions for all four TypeRegistry types.
+
+---
+
 ### Variant Equality (COMPLETE)
 
 `VariantImpl::operator==`/`operator!=` added with three-tier comparison semantics:

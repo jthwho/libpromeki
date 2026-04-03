@@ -9,7 +9,7 @@
 #include <promeki/proav/videotestpattern.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/paintengine.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/random.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -202,8 +202,8 @@ void VideoTestPattern::renderZonePlate(Image &img, double phase) const {
 
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
-        int bpp = img.pixelFormat()->bytesPerBlock();
-        int components = img.pixelFormat()->compCount();
+        int bpp = img.pixelDesc().pixelFormat().bytesPerBlock();
+        int components = img.pixelDesc().pixelFormat().compCount();
         double cx = w / 2.0;
         double cy = h / 2.0;
         double scale = 0.001;
@@ -231,8 +231,8 @@ void VideoTestPattern::renderNoise(Image &img) const {
 
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
-        int bpp = img.pixelFormat()->bytesPerBlock();
-        int components = img.pixelFormat()->compCount();
+        int bpp = img.pixelDesc().pixelFormat().bytesPerBlock();
+        int components = img.pixelDesc().pixelFormat().compCount();
 
         Random rng;
         for(int y = 0; y < h; y++) {

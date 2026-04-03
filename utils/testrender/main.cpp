@@ -12,7 +12,7 @@
 #include <promeki/proav/mediapipeline.h>
 #include <promeki/proav/medianodeconfig.h>
 #include <promeki/proav/imagefile.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/timecode.h>
 #include <promeki/core/framerate.h>
 
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
                 cfg.set("Pattern", patternStr);
                 cfg.set("Width", uint32_t(width));
                 cfg.set("Height", uint32_t(height));
-                cfg.set("PixelFormat", int(PixelFormat::RGBA8));
+                cfg.set("PixelFormat", int(PixelDesc::RGBA8_sRGB_Full));
                 cfg.set("FrameRate", "24");
                 cfg.set("StartTimecode", tcStr);
                 cfg.set("AudioEnabled", true);

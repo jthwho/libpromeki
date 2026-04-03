@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <promeki/proav/paintengine.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -50,6 +51,11 @@ List<Point2Di32> PaintEngine::plotLine(int x1, int y1, int x2, int y2) {
 
 PaintEngine::Impl::~Impl() {
 
+}
+
+const PixelDesc &PaintEngine::Impl::pixelDesc() const {
+        static PixelDesc invalid;
+        return invalid;
 }
 
 bool PaintEngine::Impl::blit(const Point2Di32 &destTopLeft, const Image &src, const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const {

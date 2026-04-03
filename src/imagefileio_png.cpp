@@ -77,15 +77,15 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile) const {
 	}
 	
 	png_init_io(pngp, fp);
-	switch(image.pixelFormat()->id()) {
-                case PixelFormat::RGBA8:
+	switch(image.pixelDesc().id()) {
+                case PixelDesc::RGBA8_sRGB_Full:
 			color = PNG_COLOR_TYPE_RGB_ALPHA;
 			depth = 8;
 			break;
 
 		default:
-			promekiErr("Write '%s' failed: Pixel format '%s' not supported",
-                                filename.cstr(), image.pixelFormat()->name().cstr());
+			promekiErr("Write '%s' failed: Pixel description '%s' not supported",
+                                filename.cstr(), image.pixelDesc().name().cstr());
 			png_destroy_write_struct(&pngp, &infop);
                         std::fclose(fp);
 			return Error::PixelFormatNotSupported;

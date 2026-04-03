@@ -22,6 +22,10 @@
 #include <promeki/core/stringlist.h>
 #include <promeki/core/color.h>
 #include <promeki/core/list.h>
+#include <promeki/core/colormodel.h>
+#include <promeki/core/memspace.h>
+#include <promeki/core/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/thirdparty/nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -63,6 +67,10 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeFrameRate | `FrameRate`         |
  * | TypeStringList| `StringList`        |
  * | TypeColor     | `Color`             |
+ * | TypeColorModel | `ColorModel`      |
+ * | TypeMemSpace  | `MemSpace`          |
+ * | TypePixelFormat | `PixelFormat`     |
+ * | TypePixelDesc | `PixelDesc`         |
  */
 #define PROMEKI_VARIANT_TYPES           \
         X(TypeInvalid, std::monostate)  \
@@ -86,7 +94,11 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeRational, Rational<int>)  \
         X(TypeFrameRate, FrameRate)     \
         X(TypeStringList, StringList)   \
-        X(TypeColor, Color)
+        X(TypeColor, Color)             \
+        X(TypeColorModel, ColorModel)   \
+        X(TypeMemSpace, MemSpace)       \
+        X(TypePixelFormat, PixelFormat) \
+        X(TypePixelDesc, PixelDesc)
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
@@ -94,6 +106,14 @@ namespace detail {
                 bool operator==(const VariantEnd &) const { return true; }
                 bool operator!=(const VariantEnd &) const { return false; }
         };
+
+        /** @brief True for TypeRegistry wrapper types that have an integer ID. */
+        template <typename T> struct is_type_registry : std::false_type {};
+        template <> struct is_type_registry<ColorModel>   : std::true_type {};
+        template <> struct is_type_registry<MemSpace>     : std::true_type {};
+        template <> struct is_type_registry<PixelFormat>  : std::true_type {};
+        template <> struct is_type_registry<PixelDesc>    : std::true_type {};
+        template <typename T> inline constexpr bool is_type_registry_v = is_type_registry<T>::value;
 }
 
 /**
@@ -226,53 +246,12 @@ template <typename... Types> class VariantImpl {
                                                 std::is_floating_point<From>::value) return arg ? true : false;
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
 
-                                } else if constexpr (std::is_same_v<To, int8_t>) {
+                                } else if constexpr (std::is_integral<To>::value) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
                                         if constexpr (std::is_integral<From>::value ||
                                                 std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, uint8_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, int16_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, uint16_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, int32_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, uint32_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, int64_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
-
-                                } else if constexpr (std::is_same_v<To, uint64_t>) {
-                                        if constexpr (std::is_same_v<From, bool>) return !!arg;
-                                        if constexpr (std::is_integral<From>::value ||
-                                                        std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
-                                        if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
+                                        if constexpr (detail::is_type_registry_v<From>) return static_cast<To>(arg.id());
 
                                 } else if constexpr (std::is_same_v<To, float>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
@@ -337,6 +316,21 @@ template <typename... Types> class VariantImpl {
                                 } else if constexpr (std::is_same_v<To, Color>) {
                                         if constexpr (std::is_same_v<From, String>) return Color::fromString(arg);
 
+                                } else if constexpr (std::is_same_v<To, ColorModel>) {
+                                        if constexpr (std::is_same_v<From, String>) return ColorModel::lookup(arg);
+                                        if constexpr (std::is_integral<From>::value) return ColorModel(static_cast<ColorModel::ID>(arg));
+
+                                } else if constexpr (std::is_same_v<To, MemSpace>) {
+                                        if constexpr (std::is_integral<From>::value) return MemSpace(static_cast<MemSpace::ID>(arg));
+
+                                } else if constexpr (std::is_same_v<To, PixelFormat>) {
+                                        if constexpr (std::is_same_v<From, String>) return PixelFormat::lookup(arg);
+                                        if constexpr (std::is_integral<From>::value) return PixelFormat(static_cast<PixelFormat::ID>(arg));
+
+                                } else if constexpr (std::is_same_v<To, PixelDesc>) {
+                                        if constexpr (std::is_same_v<From, String>) return PixelDesc::lookup(arg);
+                                        if constexpr (std::is_integral<From>::value) return PixelDesc(static_cast<PixelDesc::ID>(arg));
+
                                 } else if constexpr (std::is_same_v<To, String>) {
                                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -358,6 +352,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
                                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
                                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
+                                        if constexpr (detail::is_type_registry_v<From>) return arg.name();
 
                                 }
                                 if(err != nullptr) *err = Error::Invalid;
@@ -397,6 +392,10 @@ template <typename... Types> class VariantImpl {
                                 case TypeFrameRate:
                                 case TypeStringList:
                                 case TypeColor:
+                                case TypeColorModel:
+                                case TypeMemSpace:
+                                case TypePixelFormat:
+                                case TypePixelDesc:
                                         return get<String>();
                                         break;
                         }

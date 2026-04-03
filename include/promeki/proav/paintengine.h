@@ -1,13 +1,13 @@
 /**
  * @file      proav/paintengine.h
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
 
 #pragma once
 #include <promeki/core/namespace.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/sharedptr.h>
 #include <promeki/core/list.h>
 #include <promeki/core/size2d.h>
@@ -24,9 +24,9 @@ class Image;
  * @brief 2D drawing engine for rendering primitives onto images.
  * @ingroup proav_paint
  *
- * PaintEngine provides a pixel-format-aware interface for drawing points,
+ * PaintEngine provides a pixel-description-aware interface for drawing points,
  * lines, filling surfaces, and blitting images.  It delegates to a
- * polymorphic Impl that is specific to the underlying pixel format.
+ * polymorphic Impl that is specific to the underlying pixel description.
  */
 class PaintEngine {
 	public:
@@ -45,7 +45,7 @@ class PaintEngine {
                 /**
                  * @brief Abstract implementation backend for PaintEngine.
                  *
-                 * Subclass this to provide pixel-format-specific drawing
+                 * Subclass this to provide pixel-description-specific drawing
                  * operations.  The PaintEngine facade delegates every call
                  * to the active Impl instance.
                  */
@@ -54,12 +54,6 @@ class PaintEngine {
                         public:
                                 /** @brief Virtual destructor. */
                                 virtual ~Impl();
-
-                                /**
-                                 * @brief Returns the pixel format used by this implementation.
-                                 * @return Pointer to the PixelFormat, or nullptr if unset.
-                                 */
-                                const PixelFormat *pixelFormat() const { return _pixelFormat; }
 
                                 /**
                                  * @brief Blits a rectangular region from a source image onto the surface.
@@ -74,12 +68,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Creates a Pixel value from component values.
-                                 *
-                                 * The returned Pixel is in a format specific to the underlying
-                                 * data layout and may contain pre-packed component values for
-                                 * fast drawing.  Do not modify the returned Pixel unless you
-                                 * know the underlying packing format.
-                                 *
                                  * @param comps     Array of component values.
                                  * @param compCount Number of components in the array.
                                  * @return A Pixel suitable for use with this engine's draw calls.
@@ -97,11 +85,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Composites a set of points onto the surface with per-point alpha.
-                                 *
-                                 * The default implementation simply calls drawPoints() without
-                                 * compositing.  Reimplement in your surface-specific subclass
-                                 * to support true alpha compositing.
-                                 *
                                  * @param pixel      The pixel value to composite.
                                  * @param points     Array of points to composite.
                                  * @param alphas     Array of alpha values, one per point.
@@ -120,11 +103,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Draws a set of line segments onto the surface.
-                                 *
-                                 * The default implementation rasterizes each line into a point
-                                 * list and calls drawPoints().  Reimplement for a natively
-                                 * faster line-drawing path.
-                                 *
                                  * @param pixel The pixel value to draw with.
                                  * @param lines Array of line segments to draw.
                                  * @param count Number of line segments in the array.
@@ -134,10 +112,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Draws a rectangle outline.
-                                 *
-                                 * Default implementation rasterizes the outline into
-                                 * a point list and calls drawPoints().
-                                 *
                                  * @param pixel The pixel value to draw with.
                                  * @param rect  The rectangle to draw.
                                  * @return The number of points drawn.
@@ -146,9 +120,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Fills a rectangle with a solid color.
-                                 *
-                                 * Default implementation rasterizes all interior points.
-                                 *
                                  * @param pixel The pixel value to fill with.
                                  * @param rect  The rectangle to fill.
                                  * @return The number of points drawn.
@@ -157,9 +128,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Draws a circle outline.
-                                 *
-                                 * Default implementation uses the midpoint circle algorithm.
-                                 *
                                  * @param pixel  The pixel value to draw with.
                                  * @param center Center of the circle.
                                  * @param radius Radius in pixels.
@@ -169,10 +137,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Fills a circle with a solid color.
-                                 *
-                                 * Default implementation uses the midpoint circle algorithm
-                                 * with horizontal scanline fill.
-                                 *
                                  * @param pixel  The pixel value to fill with.
                                  * @param center Center of the circle.
                                  * @param radius Radius in pixels.
@@ -182,9 +146,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Draws an ellipse outline.
-                                 *
-                                 * Default implementation uses the midpoint ellipse algorithm.
-                                 *
                                  * @param pixel  The pixel value to draw with.
                                  * @param center Center of the ellipse.
                                  * @param size   Half-widths (rx, ry) of the ellipse.
@@ -194,10 +155,6 @@ class PaintEngine {
 
                                 /**
                                  * @brief Fills an ellipse with a solid color.
-                                 *
-                                 * Default implementation uses the midpoint ellipse algorithm
-                                 * with horizontal scanline fill.
-                                 *
                                  * @param pixel  The pixel value to fill with.
                                  * @param center Center of the ellipse.
                                  * @param size   Half-widths (rx, ry) of the ellipse.
@@ -205,9 +162,13 @@ class PaintEngine {
                                  */
                                 virtual size_t fillEllipse(const Pixel &pixel, const Point2Di32 &center, const Size2Du32 &size) const;
 
+                                /**
+                                 * @brief Returns the pixel description associated with this implementation.
+                                 * @return The PixelDesc, or an invalid PixelDesc if unset.
+                                 */
+                                virtual const PixelDesc &pixelDesc() const;
+
                         protected:
-                                /** @brief Pixel format for this implementation. */
-                                const PixelFormat       *_pixelFormat = nullptr;
                 };
 
                 /**
@@ -230,11 +191,11 @@ class PaintEngine {
                 PaintEngine(Impl *impl) : d(SharedPtr<Impl, false>::takeOwnership(impl)) {}
 
                 /**
-                 * @brief Returns the pixel format of the underlying implementation.
-                 * @return Pointer to the PixelFormat.
+                 * @brief Returns the pixel description of the underlying implementation.
+                 * @return A const reference to the PixelDesc.
                  */
-                const PixelFormat *pixelFormat() const {
-                        return d->pixelFormat();
+                const PixelDesc &pixelDesc() const {
+                        return d->pixelDesc();
                 }
 
                 /**
@@ -295,23 +256,30 @@ class PaintEngine {
                 /**
                  * @brief Creates a Pixel from a Color value.
                  *
-                 * Converts 8-bit Color components to 16-bit and delegates
-                 * to the format-specific createPixel().  If the Color has an
-                 * alpha channel and the format supports it, alpha is included.
+                 * Converts the Color to the PaintEngine's color model (from
+                 * PixelDesc), then maps each component to a 16-bit value and
+                 * delegates to the format-specific createPixel().
                  *
                  * @param color The Color to convert.
                  * @return A Pixel suitable for drawing on this engine.
                  */
                 Pixel createPixel(const Color &color) const {
-                        Color c = (color.model() == ColorModel::sRGB)
-                                ? color : color.toRGB();
-                        uint16_t data[] = {
-                                static_cast<uint16_t>(c.r8() * 257u),
-                                static_cast<uint16_t>(c.g8() * 257u),
-                                static_cast<uint16_t>(c.b8() * 257u),
-                                static_cast<uint16_t>(c.a8() * 257u)
-                        };
-                        return d->createPixel(data, 4);
+                        const PixelDesc &pd = d->pixelDesc();
+                        const ColorModel &targetModel = pd.isValid()
+                                ? pd.colorModel() : ColorModel(ColorModel::sRGB);
+                        Color c = (color.model() == targetModel)
+                                ? color : color.convert(targetModel);
+                        size_t count = pd.isValid() ? pd.compCount() : 4;
+                        uint16_t data[PixelFormat::MaxComps] = {};
+                        for(size_t i = 0; i < count && i < 3; i++) {
+                                data[i] = static_cast<uint16_t>(c.comp(i) * 65535.0f);
+                        }
+                        if(pd.isValid() && pd.hasAlpha() && pd.alphaCompIndex() >= 0) {
+                                data[pd.alphaCompIndex()] = static_cast<uint16_t>(c.alpha() * 65535.0f);
+                        } else if(count >= 4) {
+                                data[3] = static_cast<uint16_t>(c.alpha() * 65535.0f);
+                        }
+                        return d->createPixel(data, count);
                 }
 
                 /**
@@ -485,4 +453,3 @@ class PaintEngine {
 };
 
 PROMEKI_NAMESPACE_END
-

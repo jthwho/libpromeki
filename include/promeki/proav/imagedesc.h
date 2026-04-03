@@ -10,8 +10,7 @@
 #include <promeki/core/namespace.h>
 #include <promeki/core/sharedptr.h>
 #include <promeki/core/size2d.h>
-#include <promeki/core/colormodel.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/metadata.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -20,16 +19,16 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief Describes the format and layout of a single image.
  * @ingroup proav_media
  *
- * ImageDesc encapsulates image dimensions (Size2Du32), pixel format, line padding
- * and alignment, interlace mode, and associated metadata. It is used by Image
+ * ImageDesc encapsulates image dimensions (Size2Du32), pixel description,
+ * line padding and alignment, interlace mode, and associated metadata.
+ * It is used by Image and VideoDesc to define the properties of image data.
  *
  * @par Example
  * @code
- * ImageDesc desc(1920, 1080, PixelFormat::RGBA8);
- * size_t bytes = desc.imageSize();  // total bytes for all planes
+ * ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
+ * size_t stride = desc.pixelDesc().lineStride(0, desc);
  * int planes = desc.planeCount();
  * @endcode
- * and VideoDesc to define the properties of image data.
  */
 class ImageDesc {
         PROMEKI_SHARED_FINAL(ImageDesc)
@@ -37,40 +36,72 @@ class ImageDesc {
                 /** @brief Shared pointer type for ImageDesc. */
                 using Ptr = SharedPtr<ImageDesc>;
 
-                /** @brief Constructs an invalid (default) image description with no pixel format. */
-                ImageDesc() : _pixelFormat(PixelFormat::lookup(PixelFormat::Invalid)) { }
+                /** @brief Constructs an invalid (default) image description. */
+                ImageDesc() { }
 
                 /**
-                 * @brief Constructs an image description from a size and pixel format ID.
-                 * @param sz     The image dimensions.
-                 * @param pixfmt The pixel format identifier (PixelFormat enum value).
+                 * @brief Constructs an image description from a size and pixel description ID.
+                 * @param sz The image dimensions.
+                 * @param pd The pixel description identifier.
                  */
-                ImageDesc(const Size2Du32 &sz, int pixfmt) :
-                        _size(sz), _pixelFormat(PixelFormat::lookup(pixfmt)) { }
+                ImageDesc(const Size2Du32 &sz, PixelDesc::ID pd) :
+                        _size(sz), _pixelDesc(pd) { }
 
                 /**
-                 * @brief Constructs an image description from width, height, and pixel format ID.
-                 * @param w      The image width in pixels.
-                 * @param h      The image height in pixels.
-                 * @param pixfmt The pixel format identifier (PixelFormat enum value).
+                 * @brief Constructs an image description from width, height, and pixel description ID.
+                 * @param w  The image width in pixels.
+                 * @param h  The image height in pixels.
+                 * @param pd The pixel description identifier.
                  */
-                ImageDesc(size_t w, size_t h, int pixfmt) :
-                        _size(Size2Du32(w, h)), _pixelFormat(PixelFormat::lookup(pixfmt)) { }
+                ImageDesc(size_t w, size_t h, PixelDesc::ID pd) :
+                        _size(Size2Du32(w, h)), _pixelDesc(pd) { }
 
                 /**
-                 * @brief Returns the pixel format identifier.
-                 * @return The PixelFormat enum value for this image.
-                 */
-                int pixelFormatID() const {
-                        return _pixelFormat->id();
-                }
-
-                /**
-                 * @brief Returns true if this image description has valid dimensions and pixel format.
+                 * @brief Returns true if this image description has valid dimensions and pixel description.
                  * @return true if valid.
                  */
                 bool isValid() const {
-                        return _size.isValid() && _pixelFormat->isValid();
+                        return _size.isValid() && _pixelDesc.isValid();
+                }
+
+                /**
+                 * @brief Returns the pixel description.
+                 * @return A const reference to the PixelDesc.
+                 */
+                const PixelDesc &pixelDesc() const {
+                        return _pixelDesc;
+                }
+
+                /**
+                 * @brief Sets the pixel description by ID.
+                 * @param pd The pixel description identifier.
+                 */
+                void setPixelDesc(PixelDesc::ID pd) {
+                        _pixelDesc = PixelDesc(pd);
+                }
+
+                /**
+                 * @brief Sets the pixel description.
+                 * @param pd The pixel description.
+                 */
+                void setPixelDesc(const PixelDesc &pd) {
+                        _pixelDesc = pd;
+                }
+
+                /**
+                 * @brief Returns the pixel format (memory layout) from the pixel description.
+                 * @return A const reference to the PixelFormat.
+                 */
+                const PixelFormat &pixelFormat() const {
+                        return _pixelDesc.pixelFormat();
+                }
+
+                /**
+                 * @brief Returns the color model from the pixel description.
+                 * @return A const reference to the ColorModel.
+                 */
+                const ColorModel &colorModel() const {
+                        return _pixelDesc.colorModel();
                 }
 
                 /**
@@ -167,23 +198,6 @@ class ImageDesc {
                         return;
                 }
 
-                /**
-                 * @brief Returns a pointer to the PixelFormat descriptor for this image.
-                 * @return The PixelFormat pointer.
-                 */
-                const PixelFormat *pixelFormat() const {
-                        return _pixelFormat;
-                }
-
-                /**
-                 * @brief Sets the pixel format by ID.
-                 * @param pixfmt The pixel format identifier (PixelFormat enum value).
-                 */
-                void setPixelFormat(int pixfmt) {
-                        _pixelFormat = PixelFormat::lookup(pixfmt);
-                        return;
-                }
-
                 /** @brief Returns a const reference to the metadata. */
                 const Metadata &metadata() const {
                         return _metadata;
@@ -199,36 +213,18 @@ class ImageDesc {
                  * @return The plane count.
                  */
                 int planeCount() const {
-                        return _pixelFormat->planeCount();
-                }
-
-                /**
-                 * @brief Returns the color model for this image.
-                 * @return Pointer to the ColorModel.
-                 */
-                const ColorModel &colorModel() const {
-                        return _colorModel;
-                }
-
-                /**
-                 * @brief Sets the color model for this image.
-                 * @param model The color model.
-                 */
-                void setColorModel(const ColorModel &model) {
-                        _colorModel = model;
+                        return _pixelDesc.planeCount();
                 }
 
                 /**
                  * @brief Returns a human-readable string representation of this image description.
-                 * @return A String containing the dimensions, pixel format name, and color model.
+                 * @return A String containing the dimensions and pixel description name.
                  */
                 String toString() const {
                         String ret = _size.toString();
-                        ret += ' ';
-                        ret += _pixelFormat->name();
-                        if(_colorModel.isValid()) {
+                        if(_pixelDesc.isValid()) {
                                 ret += ' ';
-                                ret += _colorModel.name();
+                                ret += _pixelDesc.name();
                         }
                         return ret;
                 }
@@ -239,14 +235,12 @@ class ImageDesc {
                 }
 
         private:
-                Size2Du32                  _size;
+                Size2Du32               _size;
                 size_t                  _linePad = 0;
                 size_t                  _lineAlign = 1;
                 bool                    _interlaced = false;
-                const PixelFormat       *_pixelFormat;
-                ColorModel              _colorModel = ColorModel::sRGB;
+                PixelDesc               _pixelDesc;
                 Metadata                _metadata;
 };
 
 PROMEKI_NAMESPACE_END
-

@@ -35,7 +35,7 @@ class Image;
  * gen.setPattern(VideoTestPattern::ColorBars);
  *
  * // Create a new image with the pattern
- * ImageDesc desc(1920, 1080, PixelFormat::RGB8);
+ * ImageDesc desc(1920, 1080, PixelDesc::RGB8_sRGB_Full);
  * Image img = gen.create(desc);
  *
  * // Or render into an existing image
@@ -118,7 +118,7 @@ class VideoTestPattern {
                  *
                  * @par Example
                  * @code
-                 * ImageDesc desc(1920, 1080, PixelFormat::RGB8);
+                 * ImageDesc desc(1920, 1080, PixelDesc::RGB8_sRGB_Full);
                  * Image frame = gen.create(desc, motionOffset);
                  * motionOffset += 2.0; // advance 2 pixels per frame
                  * @endcode

@@ -16,7 +16,7 @@
 #include <promeki/proav/audio.h>
 #include <promeki/proav/imagedesc.h>
 #include <promeki/proav/audiodesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/timecode.h>
 
@@ -149,7 +149,7 @@ TEST_CASE("FrameDemuxNode_Split") {
 
         // Create a Frame with image and audio
         Frame::Ptr frame = Frame::Ptr::create();
-        ImageDesc idesc(320, 240, PixelFormat::RGB8);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
         Image::Ptr img = Image::Ptr::create(Image(idesc));
         frame.modify()->imageList().pushToBack(img);
 
@@ -212,7 +212,7 @@ TEST_CASE("FrameDemuxNode_NoAudio") {
         pipeline.start();
 
         Frame::Ptr frame = Frame::Ptr::create();
-        ImageDesc idesc(320, 240, PixelFormat::RGB8);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
         frame.modify()->imageList().pushToBack(Image::Ptr::create(Image(idesc)));
 
         src->pushFrame(frame);

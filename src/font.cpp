@@ -46,9 +46,9 @@ void Font::setBackgroundColor(const Color &color) {
 }
 
 void Font::setPaintEngine(const PaintEngine &pe) {
-        const PixelFormat *oldPf = _paintEngine.pixelFormat();
+        PaintEngine old = _paintEngine;
         _paintEngine = pe;
-        if(pe.pixelFormat() != oldPf) onStateChanged();
+        onStateChanged();
 }
 
 void Font::setKerningEnabled(bool val) {
@@ -58,7 +58,7 @@ void Font::setKerningEnabled(bool val) {
 }
 
 bool Font::isValid() const {
-        return !_fontFilename.isEmpty() && _fontSize > 0 && _paintEngine.pixelFormat() != nullptr;
+        return !_fontFilename.isEmpty() && _fontSize > 0;
 }
 
 PROMEKI_NAMESPACE_END

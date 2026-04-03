@@ -1,11 +1,12 @@
 /**
- * @file      pixelformat_rgb8.cpp
+ * @file      pixeldesc_rgb8.cpp
  * @copyright Howard Logic. All rights reserved.
- * 
+ *
  * See LICENSE file in the project root folder for license information.
  */
+
 #include <cstring>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/proav/paintengine.h>
 #include <promeki/proav/image.h>
 
@@ -15,17 +16,20 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
         PROMEKI_SHARED_DERIVED(PaintEngine::Impl, PaintEngine_RGB8)
         public:
                 Image           image;
-                Size2Du32          size;
+                Size2Du32       size;
                 uint8_t         *buf;
                 size_t          stride;
+                PixelDesc       pixDesc;
 
                 PaintEngine_RGB8(const Image &img) {
                         image = img;
                         size = img.size();
                         buf = static_cast<uint8_t *>(image.plane(0)->data());
                         stride = img.lineStride(0);
-                        _pixelFormat = img.pixelFormat();
+                        pixDesc = img.pixelDesc();
                 }
+
+                const PixelDesc &pixelDesc() const override { return pixDesc; }
 
                 PaintEngine::Pixel createPixel(const uint16_t *c, size_t ct) const override {
                         PaintEngine::Pixel ret;
@@ -46,14 +50,12 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                 }
 
                 bool fill(const PaintEngine::Pixel &pixel) const override {
-                        // First, fill the first line w/ the pixel value
                         uint8_t *p = buf;
                         uint8_t *line0 = buf;
                         for(int i = 0; i < size.width(); i++) {
                                 std::memcpy(p, pixel.data(), 3);
                                 p += 3;
                         }
-                        // Now, fill the rest of the lines from the first.
                         p = buf + stride;
                         for(int i = 1; i < size.height(); i++) {
                                 std::memcpy(p, line0, stride);
@@ -94,7 +96,7 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
 
                 bool blit(const Point2Di32 &destTopLeft, const Image &src,
                                 const Point2Di32 &srcTopLeft, const Size2Du32 &srcSize) const override {
-                        if(src.pixelFormat() != _pixelFormat) return false;
+                        if(src.pixelDesc() != pixDesc) return false;
 
                         const uint8_t *srcBuf = static_cast<const uint8_t *>(src.data());
                         size_t srcStride = src.lineStride();
@@ -117,7 +119,6 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
                         int dx = destTopLeft.x();
                         int dy = destTopLeft.y();
 
-                        // Clip against destination
                         if(dx < 0) { sx0 -= dx; srcW += dx; dx = 0; }
                         if(dy < 0) { sy0 -= dy; srcH += dy; dy = 0; }
                         if(dx + srcW > (int)size.width())  srcW = size.width() - dx;
@@ -135,44 +136,8 @@ class PaintEngine_RGB8 : public PaintEngine::Impl {
 
 };
 
-class PixelFormat_RGB8 : public PixelFormat {
-        public:
-                PixelFormat_RGB8() {
-                        _id = RGB8;
-                        _name = "RGB8";
-                        _desc = "8bit RGB";
-                        _sampling = Sampling444;
-                        _pixelsPerBlock = 1;
-                        _bytesPerBlock = 3;
-                        _hasAlpha = false;
-                        _fourccList = { "RGB2" };
-                        _compList = {
-                                { 0, Comp0,   8 },
-                                { 0, Comp1, 8 },
-                                { 0, Comp2,  8 }
-                        };
-                        _planeList = { { "RGB" } };
-                }
-
-
-                ~PixelFormat_RGB8() {}
-
-                size_t __lineStride(size_t planeIndex, const ImageDesc &desc) const override {
-                        size_t lineBytes = desc.width() * 3 + desc.linePad();
-                        return PROMEKI_ALIGN_UP(lineBytes, desc.lineAlign());
-                }
-
-                size_t __planeSize(size_t planeIndex, const ImageDesc &desc) const override {
-                        return __lineStride(planeIndex, desc) * desc.height();
-                }
-
-                PaintEngine __createPaintEngine(const Image &img) const override {
-                        return new PaintEngine_RGB8(img);
-                }
-
-};
-
-PROMEKI_REGISTER_PIXELFORMAT(PixelFormat_RGB8);
+PaintEngine createPaintEngine_RGB8(const PixelDesc::Data *, const Image &img) {
+        return new PaintEngine_RGB8(img);
+}
 
 PROMEKI_NAMESPACE_END
-

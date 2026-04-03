@@ -9,6 +9,7 @@
 
 #include <promeki/core/namespace.h>
 #include <promeki/core/string.h>
+#include <promeki/core/list.h>
 #include <promeki/core/error.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -49,6 +50,9 @@ class MemSpace {
                         Default      = System, ///< Alias for System memory.
                         UserDefined  = 1024  ///< First ID available for user-registered types.
                 };
+
+                /** @brief List of MemSpace IDs. */
+                using IDList = List<ID>;
 
                 /** @brief Function table for memory space operations. */
                 struct Ops {
@@ -98,6 +102,15 @@ class MemSpace {
                  * @see registerType()
                  */
                 static void registerData(Ops &&ops);
+
+                /**
+                 * @brief Returns a list of all registered MemSpace IDs.
+                 *
+                 * Includes both well-known and user-registered types.
+                 *
+                 * @return A list of ID values.
+                 */
+                static IDList registeredIDs();
 
                 /**
                  * @brief Constructs a MemSpace for the given memory space ID.
@@ -166,6 +179,12 @@ class MemSpace {
 
                 /** @brief Returns the underlying Ops pointer. */
                 const Ops *data() const { return d; }
+
+                /** @brief Equality comparison (identity-based). */
+                bool operator==(const MemSpace &o) const { return d == o.d; }
+
+                /** @brief Inequality comparison. */
+                bool operator!=(const MemSpace &o) const { return d != o.d; }
 
         private:
                 const Ops *d = nullptr;

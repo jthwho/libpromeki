@@ -14,7 +14,7 @@
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/buffer.h>
 
 #include <promeki/network/socketaddress.h>
@@ -55,7 +55,7 @@ class RtpVideoTestSource : public MediaNode {
 // ============================================================================
 
 static Image createSmallTestImage(int width = 64, int height = 64) {
-        ImageDesc idesc(width, height, PixelFormat::RGB8);
+        ImageDesc idesc(width, height, PixelDesc::RGB8_sRGB_Full);
         Image img(idesc);
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();

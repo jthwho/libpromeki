@@ -10,7 +10,7 @@
 #include <csetjmp>
 #include <promeki/proav/jpegimagecodec.h>
 #include <promeki/proav/image.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/buffer.h>
 #include <promeki/thirdparty/jpeglib.h>
 
@@ -29,12 +29,12 @@ static void jpegErrorExit(j_common_ptr cinfo) {
         longjmp(mgr->jmpBuf, 1);
 }
 
-// Maps an uncompressed pixel format ID to its JPEG counterpart.
-static int jpegPixelFormatFor(int srcFormat) {
-        switch(srcFormat) {
-                case PixelFormat::RGB8:  return PixelFormat::JPEG_RGB8;
-                case PixelFormat::RGBA8: return PixelFormat::JPEG_RGBA8;
-                default:                 return PixelFormat::JPEG_RGB8;
+// Maps an uncompressed PixelDesc to its JPEG counterpart.
+static PixelDesc::ID jpegPixelDescFor(PixelDesc::ID srcDesc) {
+        switch(srcDesc) {
+                case PixelDesc::RGB8_sRGB_Full:  return PixelDesc::JPEG_RGB8_sRGB_Full;
+                case PixelDesc::RGBA8_sRGB_Full: return PixelDesc::JPEG_RGBA8_sRGB_Full;
+                default:               return PixelDesc::JPEG_RGB8_sRGB_Full;
         }
 }
 
@@ -72,12 +72,12 @@ Image JpegImageCodec::encode(const Image &input) {
 
         int width = (int)input.width();
         int height = (int)input.height();
-        const PixelFormat *pf = input.pixelFormat();
+        const PixelDesc &pd = input.pixelDesc();
 
         // Determine JPEG input color space and component count
         J_COLOR_SPACE colorSpace = JCS_RGB;
         int numComponents = 3;
-        if(pf != nullptr && pf->id() == PixelFormat::RGBA8) {
+        if(pd.isValid() && pd.id() == PixelDesc::RGBA8_sRGB_Full) {
                 colorSpace = JCS_EXT_RGBA;
                 numComponents = 4;
         }
@@ -145,9 +145,9 @@ Image JpegImageCodec::encode(const Image &input) {
         jpeg_destroy_compress(&cinfo);
 
         // Wrap compressed data in a JPEG Image
-        int jpegFmt = jpegPixelFormatFor(pf ? pf->id() : PixelFormat::RGB8);
+        PixelDesc::ID jpegPd = jpegPixelDescFor(pd.isValid() ? pd.id() : PixelDesc::RGB8_sRGB_Full);
         Image result = Image::fromCompressedData(outBuffer, outSize, width, height,
-                                                  jpegFmt, input.metadata());
+                                                  jpegPd, input.metadata());
         free(outBuffer);
         return result;
 }

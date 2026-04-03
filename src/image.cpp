@@ -16,11 +16,11 @@ Image::Image(const ImageDesc &desc, const MemSpace &ms) : _desc(desc) {
 }
 
 bool Image::allocate(const MemSpace &ms) {
-        const PixelFormat *pixfmt = _desc.pixelFormat();
-        int planes = pixfmt->planeCount();
+        const PixelDesc &pd = _desc.pixelDesc();
+        int planes = pd.planeCount();
         Buffer::PtrList list;
         for(int i = 0; i < planes; i++) {
-                size_t size = pixfmt->planeSize(i, _desc);
+                size_t size = pd.planeSize(i, _desc);
                 auto buf = Buffer::Ptr::create(size, Buffer::DefaultAlign, ms);
                 if(!buf->isValid()) {
                         promekiErr("Image(%s) plane %d allocate failed", _desc.toString().cstr(), i);
@@ -34,9 +34,9 @@ bool Image::allocate(const MemSpace &ms) {
 }
 
 Image Image::fromCompressedData(const void *data, size_t size,
-                                size_t width, size_t height, int pixfmt,
+                                size_t width, size_t height, PixelDesc::ID pd,
                                 const Metadata &metadata) {
-        ImageDesc desc(width, height, pixfmt);
+        ImageDesc desc(width, height, pd);
         desc.metadata() = metadata;
         desc.metadata().set(Metadata::CompressedSize, (int)size);
         Image img(desc);
@@ -46,7 +46,7 @@ Image Image::fromCompressedData(const void *data, size_t size,
         return img;
 }
 
-Image Image::convert(PixelFormat::ID pixelFormat, const Metadata &metadata) const {
+Image Image::convert(PixelDesc::ID pd, const Metadata &metadata) const {
         return Image();
 }
 

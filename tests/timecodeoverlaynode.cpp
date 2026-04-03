@@ -14,7 +14,7 @@
 #include <promeki/proav/frame.h>
 #include <promeki/proav/image.h>
 #include <promeki/proav/imagedesc.h>
-#include <promeki/proav/pixelformat.h>
+#include <promeki/core/pixeldesc.h>
 #include <promeki/core/metadata.h>
 #include <promeki/core/timecode.h>
 #include <promeki/core/color.h>
@@ -245,7 +245,7 @@ TEST_CASE("TimecodeOverlayNode_OverlayModifiesPixels") {
         pipeline.start();
 
         // Create a black image with timecode metadata
-        ImageDesc idesc(320, 240, PixelFormat::RGB8);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
         Image img(idesc);
         img.fill(0);
         img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
@@ -309,7 +309,7 @@ TEST_CASE("TimecodeOverlayNode_MetadataPreserved") {
         pipeline.connect(overlay, 0, sink, 0);
         pipeline.start();
 
-        ImageDesc idesc(320, 240, PixelFormat::RGB8);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
         Image img(idesc);
         img.fill(0);
         Timecode tc(Timecode::NDF25, 10, 30, 0, 0);
@@ -445,7 +445,7 @@ TEST_CASE("TimecodeOverlayNode_NoTimecodeMetadata") {
         pipeline.start();
 
         // Push an image with NO timecode metadata
-        ImageDesc idesc(320, 240, PixelFormat::RGB8);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
         Image img(idesc);
         img.fill(0);
 
@@ -488,7 +488,7 @@ TEST_CASE("TimecodeOverlayNode_CustomText") {
                 overlayCfg.set("Position", "topleft");
                 if(!customText.isEmpty()) overlayCfg.set("CustomText", customText);
 
-                ImageDesc idesc(320, 240, PixelFormat::RGB8);
+                ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
                 Image img(idesc);
                 img.fill(0);
                 img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
@@ -520,7 +520,7 @@ TEST_CASE("TimecodeOverlayNode_NoBackground") {
                 overlayCfg.set("FontSize", 24);
                 overlayCfg.set("DrawBackground", drawBg);
 
-                ImageDesc idesc(320, 240, PixelFormat::RGB8);
+                ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
                 Image img(idesc);
                 // Fill with mid-gray so we can detect both black bg and white text
                 img.fill(128);
@@ -574,7 +574,7 @@ TEST_CASE("TimecodeOverlayNode_TopLeftPosition") {
         pipeline.connect(overlay, 0, sink, 0);
         pipeline.start();
 
-        ImageDesc idesc(640, 480, PixelFormat::RGB8);
+        ImageDesc idesc(640, 480, PixelDesc::RGB8_sRGB_Full);
         Image img(idesc);
         img.fill(0);
         img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
@@ -637,7 +637,7 @@ TEST_CASE("TimecodeOverlayNode_BottomRightPosition") {
         pipeline.connect(overlay, 0, sink, 0);
         pipeline.start();
 
-        ImageDesc idesc(640, 480, PixelFormat::RGB8);
+        ImageDesc idesc(640, 480, PixelDesc::RGB8_sRGB_Full);
         Image img(idesc);
         img.fill(0);
         img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
@@ -705,7 +705,7 @@ TEST_CASE("TimecodeOverlayNode_MultipleFrames") {
 
         // Push 3 frames with different timecodes
         for(int i = 0; i < 3; i++) {
-                ImageDesc idesc(320, 240, PixelFormat::RGB8);
+                ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
                 Image img(idesc);
                 img.fill(0);
                 img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, i, 0, 0, 0));
@@ -752,7 +752,7 @@ TEST_CASE("TimecodeOverlayNode_RGBA8") {
         pipeline.connect(overlay, 0, sink, 0);
         pipeline.start();
 
-        ImageDesc idesc(320, 240, PixelFormat::RGBA8);
+        ImageDesc idesc(320, 240, PixelDesc::RGBA8_sRGB_Full);
         Image img(idesc);
         img.fill(0);
         img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
@@ -807,7 +807,7 @@ TEST_CASE("TimecodeOverlayNode_CustomColors") {
                 overlayCfg.set("TextColor", textColor);
                 overlayCfg.set("BackgroundColor", bgColor);
 
-                ImageDesc idesc(320, 240, PixelFormat::RGB8);
+                ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
                 Image img(idesc);
                 img.fill(0);
                 img.metadata().set(Metadata::Timecode, Timecode(Timecode::NDF24, 1, 0, 0, 0));
