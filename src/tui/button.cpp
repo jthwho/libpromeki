@@ -10,8 +10,8 @@
 #include <promeki/tui/screen.h>
 #include <promeki/tui/palette.h>
 #include <promeki/tui/application.h>
-#include <promeki/core/keyevent.h>
-#include <promeki/core/mouseevent.h>
+#include <promeki/keyevent.h>
+#include <promeki/mouseevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

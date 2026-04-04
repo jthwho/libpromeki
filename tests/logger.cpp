@@ -7,9 +7,9 @@
 
 #include <filesystem>
 #include <doctest/doctest.h>
-#include <promeki/core/logger.h>
-#include <promeki/core/file.h>
-#include <promeki/core/textstream.h>
+#include <promeki/logger.h>
+#include <promeki/file.h>
+#include <promeki/textstream.h>
 
 using namespace promeki;
 

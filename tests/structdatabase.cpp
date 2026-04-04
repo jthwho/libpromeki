@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/structdatabase.h>
+#include <promeki/structdatabase.h>
 
 using namespace promeki;
 

@@ -6,11 +6,11 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/algorithm.h>
-#include <promeki/core/list.h>
-#include <promeki/core/set.h>
-#include <promeki/core/deque.h>
-#include <promeki/core/string.h>
+#include <promeki/algorithm.h>
+#include <promeki/list.h>
+#include <promeki/set.h>
+#include <promeki/deque.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/fileformatfactory.h>
+#include <promeki/fileformatfactory.h>
 
 using namespace promeki;
 

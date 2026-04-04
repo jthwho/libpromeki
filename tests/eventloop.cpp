@@ -8,10 +8,10 @@
 #include <doctest/doctest.h>
 #include <thread>
 #include <atomic>
-#include <promeki/core/eventloop.h>
-#include <promeki/core/objectbase.h>
-#include <promeki/core/timerevent.h>
-#include <promeki/core/logger.h>
+#include <promeki/eventloop.h>
+#include <promeki/objectbase.h>
+#include <promeki/timerevent.h>
+#include <promeki/logger.h>
 
 using namespace promeki;
 

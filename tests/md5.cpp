@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <cstring>
-#include <promeki/core/md5.h>
+#include <promeki/md5.h>
 
 using namespace promeki;
 

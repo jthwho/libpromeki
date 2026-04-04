@@ -8,8 +8,8 @@
 #include <cstring>
 #include <algorithm>
 #include <doctest/doctest.h>
-#include <promeki/core/iodevice.h>
-#include <promeki/core/result.h>
+#include <promeki/iodevice.h>
+#include <promeki/result.h>
 
 using namespace promeki;
 

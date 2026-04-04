@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/ansistream.h>
-#include <promeki/core/stringiodevice.h>
-#include <promeki/core/terminal.h>
+#include <promeki/ansistream.h>
+#include <promeki/stringiodevice.h>
+#include <promeki/terminal.h>
 
 using namespace promeki;
 

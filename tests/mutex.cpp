@@ -7,7 +7,7 @@
 
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/core/mutex.h>
+#include <promeki/mutex.h>
 
 using namespace promeki;
 

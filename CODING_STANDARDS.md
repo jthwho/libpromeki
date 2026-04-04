@@ -147,7 +147,7 @@ pool.submit([tc]() {
 #pragma once
 
 #include <std-headers>
-#include <promeki/core/dependency.h>
+#include <promeki/dependency.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -189,9 +189,9 @@ Always use `#pragma once`. No `#ifndef` guards.
 Order:
 1. C++ standard library headers (`<cstdint>`, `<vector>`, etc.)
 2. Third-party headers (nlohmann/json, libvtc, etc.)
-3. promeki headers (`<promeki/core/foo.h>`)
+3. promeki headers (`<promeki/foo.h>`)
 
-Use angle brackets for all includes: `<promeki/core/foo.h>`, not `"promeki/foo.h"`.
+Use angle brackets for all includes: `<promeki/foo.h>`, not `"promeki/foo.h"`.
 
 ---
 
@@ -623,7 +623,7 @@ Use `TEST_CASE` for each class or logical grouping, and `SUBCASE` for individual
 
 ```cpp
 #include <doctest/doctest.h>
-#include <promeki/core/myclass.h>
+#include <promeki/myclass.h>
 
 using namespace promeki;
 
@@ -653,7 +653,7 @@ Prefer these doctest macros:
 
 ### Build Integration
 
-Each library (`core`, `proav`, `music`) has its own test executable (`unittest-core`, `unittest-proav`, `unittest-music`). Test executables link against their respective library and are registered with CTest. The `run-tests` custom target runs all tests as part of the normal build.
+All library code is built into a single `promeki` shared library with one test executable (`unittest-promeki`). It is registered with CTest. The `run-tests` custom target runs all tests as part of the normal build.
 
 ---
 

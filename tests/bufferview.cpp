@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/bufferview.h>
+#include <promeki/bufferview.h>
 #include <cstring>
 
 using namespace promeki;

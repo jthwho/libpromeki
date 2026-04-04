@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <doctest/doctest.h>
-#include <promeki/core/fileiodevice.h>
+#include <promeki/fileiodevice.h>
 
 using namespace promeki;
 

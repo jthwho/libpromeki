@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/ciewavelengthtable.h>
+#include <promeki/ciewavelengthtable.h>
 
 using namespace promeki;
 

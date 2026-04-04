@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/proav/imagedesc.h>
-#include <promeki/core/metadata.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/imagedesc.h>
+#include <promeki/metadata.h>
 
 using namespace promeki;
 

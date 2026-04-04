@@ -6,10 +6,10 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/paintengine.h>
-#include <promeki/proav/image.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/core/color.h>
+#include <promeki/paintengine.h>
+#include <promeki/image.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/color.h>
 
 using namespace promeki;
 

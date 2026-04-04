@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # When built standalone, find the installed promeki library.
 # When built as part of the main project, the targets already exist.
-if(NOT TARGET promeki::core)
+if(NOT TARGET promeki::promeki)
     find_package(promeki REQUIRED)
 endif()
 

@@ -7,7 +7,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/json.h>
+#include <promeki/json.h>
 
 using namespace promeki;
 

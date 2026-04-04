@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
-#include <promeki/core/rect.h>
-#include <promeki/core/color.h>
-#include <promeki/core/string.h>
+#include <promeki/namespace.h>
+#include <promeki/rect.h>
+#include <promeki/color.h>
+#include <promeki/string.h>
 #include <promeki/tui/screen.h>
 
 PROMEKI_NAMESPACE_BEGIN

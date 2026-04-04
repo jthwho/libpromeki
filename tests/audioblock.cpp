@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/audioblock.h>
-#include <promeki/proav/audiodesc.h>
-#include <promeki/core/string.h>
+#include <promeki/audioblock.h>
+#include <promeki/audiodesc.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

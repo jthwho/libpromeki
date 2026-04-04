@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/size2d.h>
+#include <promeki/size2d.h>
 
 using namespace promeki;
 

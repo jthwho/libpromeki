@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/array.h>
+#include <promeki/array.h>
 
 using namespace promeki;
 

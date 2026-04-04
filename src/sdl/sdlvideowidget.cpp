@@ -7,8 +7,8 @@
 
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/core/logger.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
 

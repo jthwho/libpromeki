@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include <doctest/doctest.h>
-#include <promeki/core/bufferediodevice.h>
+#include <promeki/bufferediodevice.h>
 
 using namespace promeki;
 

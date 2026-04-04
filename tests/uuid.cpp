@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/uuid.h>
-#include <promeki/core/application.h>
+#include <promeki/uuid.h>
+#include <promeki/application.h>
 
 using namespace promeki;
 

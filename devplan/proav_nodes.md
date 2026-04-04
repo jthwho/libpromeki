@@ -2,7 +2,7 @@
 
 **Phase:** 4B
 **Dependencies:** Phase 4A (MediaNode, MediaPort, MediaGraph, MediaPipeline)
-**Library:** `promeki-proav`
+**Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
@@ -17,8 +17,8 @@ All nodes derive from `MediaNode`, implement `process()`, and declare their inpu
 Reads audio from AudioFile and outputs frames.
 
 **Files:**
-- [ ] `include/promeki/proav/audiosourcenode.h`
-- [ ] `src/audiosourcenode.cpp`
+- [ ] `include/promeki/audiosourcenode.h`
+- [ ] `src/proav/audiosourcenode.cpp`
 - [ ] `tests/audiosourcenode.cpp`
 
 **Implementation checklist:**
@@ -47,8 +47,8 @@ Reads audio from AudioFile and outputs frames.
 Writes audio frames to AudioFile.
 
 **Files:**
-- [ ] `include/promeki/proav/audiosinknode.h`
-- [ ] `src/audiosinknode.cpp`
+- [ ] `include/promeki/audiosinknode.h`
+- [ ] `src/proav/audiosinknode.cpp`
 - [ ] `tests/audiosinknode.cpp`
 
 **Implementation checklist:**
@@ -73,8 +73,8 @@ Writes audio frames to AudioFile.
 Reads image sequences and outputs video frames.
 
 **Files:**
-- [ ] `include/promeki/proav/imagesourcenode.h`
-- [ ] `src/imagesourcenode.cpp`
+- [ ] `include/promeki/imagesourcenode.h`
+- [ ] `src/proav/imagesourcenode.cpp`
 - [ ] `tests/imagesourcenode.cpp`
 
 **Implementation checklist:**
@@ -102,8 +102,8 @@ Reads image sequences and outputs video frames.
 Writes video frames as image sequences.
 
 **Files:**
-- [ ] `include/promeki/proav/imagesinknode.h`
-- [ ] `src/imagesinknode.cpp`
+- [ ] `include/promeki/imagesinknode.h`
+- [ ] `src/proav/imagesinknode.cpp`
 - [ ] `tests/imagesinknode.cpp`
 
 **Implementation checklist:**
@@ -126,8 +126,8 @@ Writes video frames as image sequences.
 N-input audio mixer with per-input gain.
 
 **Files:**
-- [ ] `include/promeki/proav/audiomixernode.h`
-- [ ] `src/audiomixernode.cpp`
+- [ ] `include/promeki/audiomixernode.h`
+- [ ] `src/proav/audiomixernode.cpp`
 - [ ] `tests/audiomixernode.cpp`
 
 **Implementation checklist:**
@@ -155,8 +155,8 @@ N-input audio mixer with per-input gain.
 Simple gain adjustment node.
 
 **Files:**
-- [ ] `include/promeki/proav/audiogainnode.h`
-- [ ] `src/audiogainnode.cpp`
+- [ ] `include/promeki/audiogainnode.h`
+- [ ] `src/proav/audiogainnode.cpp`
 - [ ] `tests/audiogainnode.cpp`
 
 **Implementation checklist:**
@@ -181,8 +181,8 @@ Simple gain adjustment node.
 Image color space conversion.
 
 **Files:**
-- [ ] `include/promeki/proav/colorspaceconvertnode.h`
-- [ ] `src/colorspaceconvertnode.cpp`
+- [ ] `include/promeki/colorspaceconvertnode.h`
+- [ ] `src/proav/colorspaceconvertnode.cpp`
 - [ ] `tests/colorspaceconvertnode.cpp`
 
 **Implementation checklist:**
@@ -209,8 +209,8 @@ Image color space conversion.
 Audio/video synchronization using Timecode.
 
 **Files:**
-- [ ] `include/promeki/proav/framesyncnode.h`
-- [ ] `src/framesyncnode.cpp`
+- [ ] `include/promeki/framesyncnode.h`
+- [ ] `src/proav/framesyncnode.cpp`
 - [ ] `tests/framesyncnode.cpp`
 
 **Implementation checklist:**

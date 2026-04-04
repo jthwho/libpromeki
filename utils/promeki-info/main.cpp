@@ -7,7 +7,7 @@
  *****************************************************************************/
 
 #include <cstdio>
-#include <promeki/core/buildinfo.h>
+#include <promeki/buildinfo.h>
 
 using namespace promeki;
 

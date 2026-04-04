@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/objectbase.h>
+#include <promeki/objectbase.h>
 #include "test.h"
 
 using namespace promeki;

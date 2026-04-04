@@ -2,7 +2,7 @@
 
 **Phase:** 6C, 6D
 **Dependencies:** Phase 6A (music theory classes: Interval, Chord, Key, Tempo, TempoMap, TimeSignature, Dynamics, Articulation)
-**Library:** `promeki-music`
+**Library:** `promeki`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 ---
@@ -16,7 +16,7 @@
 Data object representing a single MIDI event. PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/midievent.h`
+- [ ] `include/promeki/midievent.h`
 - [ ] `src/music/midievent.cpp`
 - [ ] `tests/midievent.cpp`
 
@@ -65,7 +65,7 @@ Data object representing a single MIDI event. PROMEKI_SHARED_FINAL.
 Ordered sequence of MidiEvents. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/miditrack.h`
+- [ ] `include/promeki/miditrack.h`
 - [ ] `src/music/miditrack.cpp`
 - [ ] `tests/miditrack.cpp`
 
@@ -100,7 +100,7 @@ Ordered sequence of MidiEvents. Data object with PROMEKI_SHARED_FINAL.
 Read/write Standard MIDI Files (SMF). Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/midifile.h`
+- [ ] `include/promeki/midifile.h`
 - [ ] `src/music/midifile.cpp`
 - [ ] `tests/midifile.cpp`
 
@@ -143,7 +143,7 @@ Read/write Standard MIDI Files (SMF). Data object with PROMEKI_SHARED_FINAL.
 Name and MIDI mapping. Simple value type.
 
 **Files:**
-- [ ] `include/promeki/music/instrument.h`
+- [ ] `include/promeki/instrument.h`
 - [ ] `src/music/instrument.cpp`
 - [ ] `tests/instrument.cpp`
 
@@ -171,7 +171,7 @@ Name and MIDI mapping. Simple value type.
 Instrument + sequence of musical notes. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/track.h`
+- [ ] `include/promeki/track.h`
 - [ ] `src/music/track.cpp`
 - [ ] `tests/track.cpp`
 
@@ -203,7 +203,7 @@ Instrument + sequence of musical notes. Data object with PROMEKI_SHARED_FINAL.
 Full score: list of tracks + TempoMap + Key. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/arrangement.h`
+- [ ] `include/promeki/arrangement.h`
 - [ ] `src/music/arrangement.cpp`
 - [ ] `tests/arrangement.cpp`
 

@@ -2,8 +2,8 @@
 #include <ostream>
 #include <streambuf>
 #include <doctest/doctest.h>
-#include <promeki/core/logger.h>
-#include <promeki/core/string.h>
+#include <promeki/logger.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

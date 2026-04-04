@@ -2,7 +2,7 @@
 
 **Phase:** 6A, 6B
 **Dependencies:** Minimal (existing music framework)
-**Library:** `promeki-music`
+**Library:** `promeki`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 ---
@@ -16,7 +16,7 @@
 Musical interval. Simple value type — no PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/interval.h`
+- [ ] `include/promeki/interval.h`
 - [ ] `src/music/interval.cpp`
 - [ ] `tests/interval.cpp`
 
@@ -48,7 +48,7 @@ Musical interval. Simple value type — no PROMEKI_SHARED_FINAL.
 Chord defined by root note and intervals. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/chord.h`
+- [ ] `include/promeki/chord.h`
 - [ ] `src/music/chord.cpp`
 - [ ] `tests/chord.cpp`
 
@@ -81,7 +81,7 @@ Chord defined by root note and intervals. Data object with PROMEKI_SHARED_FINAL.
 Sequence of chords with durations. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/chordprogression.h`
+- [ ] `include/promeki/chordprogression.h`
 - [ ] `src/music/chordprogression.cpp`
 - [ ] `tests/chordprogression.cpp`
 
@@ -110,7 +110,7 @@ Sequence of chords with durations. Data object with PROMEKI_SHARED_FINAL.
 Root note + mode. Simple value type.
 
 **Files:**
-- [ ] `include/promeki/music/key.h`
+- [ ] `include/promeki/key.h`
 - [ ] `src/music/key.cpp`
 - [ ] `tests/key.cpp`
 
@@ -139,7 +139,7 @@ Root note + mode. Simple value type.
 Simple value type.
 
 **Files:**
-- [ ] `include/promeki/music/timesignature.h`
+- [ ] `include/promeki/timesignature.h`
 - [ ] `src/music/timesignature.cpp`
 - [ ] `tests/timesignature.cpp`
 
@@ -166,7 +166,7 @@ Simple value type.
 Simple value type.
 
 **Files:**
-- [ ] `include/promeki/music/tempo.h`
+- [ ] `include/promeki/tempo.h`
 - [ ] `src/music/tempo.cpp`
 - [ ] `tests/tempo.cpp`
 
@@ -192,7 +192,7 @@ Simple value type.
 Tempo and time signature changes over time. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/tempomap.h`
+- [ ] `include/promeki/tempomap.h`
 - [ ] `src/music/tempomap.cpp`
 - [ ] `tests/tempomap.cpp`
 
@@ -220,7 +220,7 @@ Tempo and time signature changes over time. Data object with PROMEKI_SHARED_FINA
 Pattern of durations and rests. Data object with PROMEKI_SHARED_FINAL.
 
 **Files:**
-- [ ] `include/promeki/music/rhythm.h`
+- [ ] `include/promeki/rhythm.h`
 - [ ] `src/music/rhythm.cpp`
 - [ ] `tests/rhythm.cpp`
 
@@ -255,7 +255,7 @@ Pattern of durations and rests. Data object with PROMEKI_SHARED_FINAL.
 Enum-based dynamic markings with velocity mapping.
 
 **Files:**
-- [ ] `include/promeki/music/dynamics.h`
+- [ ] `include/promeki/dynamics.h`
 - [ ] `src/music/dynamics.cpp`
 - [ ] `tests/dynamics.cpp`
 
@@ -282,7 +282,7 @@ Enum-based dynamic markings with velocity mapping.
 Enum-based articulation markings.
 
 **Files:**
-- [ ] `include/promeki/music/articulation.h`
+- [ ] `include/promeki/articulation.h`
 - [ ] `src/music/articulation.cpp`
 - [ ] `tests/articulation.cpp`
 

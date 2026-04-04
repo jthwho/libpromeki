@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/audiofilefactory.h>
-#include <promeki/core/string.h>
+#include <promeki/audiofilefactory.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

@@ -9,7 +9,7 @@
 #include <promeki/tui/painter.h>
 #include <promeki/tui/palette.h>
 #include <promeki/tui/application.h>
-#include <promeki/core/timerevent.h>
+#include <promeki/timerevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

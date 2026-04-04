@@ -2,7 +2,7 @@
 
 **Phase:** 4A
 **Dependencies:** Phase 1 (Mutex, WaitCondition, Future, PriorityQueue, ThreadPool), Phase 2 (IODevice)
-**Library:** `promeki-proav` (extends existing library)
+**Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
@@ -73,7 +73,7 @@ See the MemSpace Statistics and MemSpacePool sections below for the allocation-l
 
 MemSpace currently provides allocation, release, copy, and fill operations but no visibility into allocation behavior. For pipeline debugging and performance analysis, per-space statistics are essential.
 
-**Files:** existing `include/promeki/core/memspace.h`, `src/memspace.cpp`
+**Files:** existing `include/promeki/memspace.h`, `src/core/memspace.cpp`
 
 **Statistics struct:**
 - [ ] `struct MemSpace::Stats` — snapshot of allocation statistics for a memory space:
@@ -115,8 +115,8 @@ MemSpace currently provides allocation, release, copy, and fill operations but n
 A MemSpace implementation that recycles fixed-size allocations instead of going to the system allocator on every alloc/release. Buffers allocated from a pool MemSpace are transparently recycled — Buffer, Image, and Audio never know the difference. COW clones of pool-allocated buffers also come from the pool (since Buffer's copy constructor uses the source's MemSpace).
 
 **Files:**
-- [ ] `include/promeki/core/memspacepool.h`
-- [ ] `src/memspacepool.cpp`
+- [ ] `include/promeki/memspacepool.h`
+- [ ] `src/core/memspacepool.cpp`
 - [ ] `tests/memspacepool.cpp`
 
 **Implementation checklist:**
@@ -165,8 +165,8 @@ img->ensureExclusive();  // if copy needed, new buffer comes from videoPool
 Data object describing compressed/encoded media. Analogous to ImageDesc/AudioDesc but for encoded bitstreams.
 
 **Files:**
-- [ ] `include/promeki/proav/encodeddesc.h`
-- [ ] `src/encodeddesc.cpp`
+- [ ] `include/promeki/encodeddesc.h`
+- [ ] `src/proav/encodeddesc.cpp`
 - [ ] `tests/encodeddesc.cpp`
 
 **Implementation checklist:**

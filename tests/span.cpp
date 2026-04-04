@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/span.h>
-#include <promeki/core/list.h>
-#include <promeki/core/array.h>
+#include <promeki/span.h>
+#include <promeki/list.h>
+#include <promeki/array.h>
 
 using namespace promeki;
 

@@ -6,10 +6,10 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/objectbase.h>
-#include <promeki/core/signal.h>
-#include <promeki/core/slot.h>
-#include <promeki/core/logger.h>
+#include <promeki/objectbase.h>
+#include <promeki/signal.h>
+#include <promeki/slot.h>
+#include <promeki/logger.h>
 #include "test.h"
 
 using namespace promeki;

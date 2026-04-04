@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/pair.h>
-#include <promeki/core/string.h>
+#include <promeki/pair.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

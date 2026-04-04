@@ -8,15 +8,15 @@
 #include <cstring>
 #include <algorithm>
 #include <doctest/doctest.h>
-#include <promeki/core/datastream.h>
-#include <promeki/core/bufferiodevice.h>
-#include <promeki/core/buffer.h>
-#include <promeki/core/string.h>
-#include <promeki/core/variant.h>
-#include <promeki/core/uuid.h>
-#include <promeki/core/timecode.h>
-#include <promeki/core/datetime.h>
-#include <promeki/core/color.h>
+#include <promeki/datastream.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
+#include <promeki/string.h>
+#include <promeki/variant.h>
+#include <promeki/uuid.h>
+#include <promeki/timecode.h>
+#include <promeki/datetime.h>
+#include <promeki/color.h>
 
 using namespace promeki;
 

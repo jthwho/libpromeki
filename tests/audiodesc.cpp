@@ -7,7 +7,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/audiodesc.h>
+#include <promeki/audiodesc.h>
 
 using namespace promeki;
 

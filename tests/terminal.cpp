@@ -7,8 +7,8 @@
 
 #include <unistd.h>
 #include <doctest/doctest.h>
-#include <promeki/core/terminal.h>
-#include <promeki/core/env.h>
+#include <promeki/terminal.h>
+#include <promeki/env.h>
 
 using namespace promeki;
 

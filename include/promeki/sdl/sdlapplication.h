@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
-#include <promeki/core/application.h>
-#include <promeki/core/eventloop.h>
+#include <promeki/namespace.h>
+#include <promeki/application.h>
+#include <promeki/eventloop.h>
 #include <promeki/sdl/sdleventpump.h>
 
 PROMEKI_NAMESPACE_BEGIN

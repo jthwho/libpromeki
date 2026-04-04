@@ -1,5 +1,5 @@
 add_executable(vidgen main.cpp)
-target_link_libraries(vidgen PRIVATE promeki::proav promeki::network)
+target_link_libraries(vidgen PRIVATE promeki::promeki)
 target_compile_definitions(vidgen PRIVATE
     PROMEKI_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )

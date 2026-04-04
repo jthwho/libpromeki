@@ -64,8 +64,8 @@
  *
  * 1. Create a new subdirectory under @c utils/ (e.g. @c utils/my-new-util/).
  * 2. Add a @c CMakeLists.txt that creates the executable and links against the
- *    appropriate promeki target(s) (@c promeki::core, @c promeki::proav, or
- *    @c promeki::music).
+ *    appropriate promeki target (@c promeki::promeki, or @c promeki::tui /
+ *    @c promeki::sdl for UI libraries).
  * 3. Include an @c install(TARGETS ...) rule so it gets installed.
  * 4. Add an @c add_subdirectory() call in @c utils/CMakeLists.txt.
  *
@@ -73,5 +73,5 @@
  *
  * | Utility        | Library        | Description                          |
  * |----------------|----------------|--------------------------------------|
- * | promeki-info   | promeki::core  | Prints library build information     |
+ * | promeki-info   | promeki::promeki | Prints library build information   |
  */

@@ -7,17 +7,17 @@
 
 #include <cstdio>
 #include <doctest/doctest.h>
-#include <promeki/proav/audio.h>
-#include <promeki/proav/audiofile.h>
-#include <promeki/core/audiolevel.h>
-#include <promeki/proav/audiogen.h>
-#include <promeki/core/rational.h>
-#include <promeki/core/uuid.h>
-#include <promeki/core/logger.h>
-#include <promeki/core/file.h>
-#include <promeki/core/buffer.h>
-#include <promeki/core/bufferiodevice.h>
-#include <promeki/core/fileiodevice.h>
+#include <promeki/audio.h>
+#include <promeki/audiofile.h>
+#include <promeki/audiolevel.h>
+#include <promeki/audiogen.h>
+#include <promeki/rational.h>
+#include <promeki/uuid.h>
+#include <promeki/logger.h>
+#include <promeki/file.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/fileiodevice.h>
 
 using namespace promeki;
 

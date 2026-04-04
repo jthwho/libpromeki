@@ -1,16 +1,16 @@
 @PACKAGE_INIT@
 
-# Import core targets
-include("${CMAKE_CURRENT_LIST_DIR}/promeki-core-targets.cmake")
+# Import main library targets
+include("${CMAKE_CURRENT_LIST_DIR}/promeki-targets.cmake")
 
-# Import proav targets if they were built and installed
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/promeki-proav-targets.cmake")
-    include("${CMAKE_CURRENT_LIST_DIR}/promeki-proav-targets.cmake")
+# Import TUI targets if they were built and installed
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/promeki-tui-targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/promeki-tui-targets.cmake")
 endif()
 
-# Import music targets if they were built and installed
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/promeki-music-targets.cmake")
-    include("${CMAKE_CURRENT_LIST_DIR}/promeki-music-targets.cmake")
+# Import SDL targets if they were built and installed
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/promeki-sdl-targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/promeki-sdl-targets.cmake")
 endif()
 
 check_required_components(promeki)

@@ -142,10 +142,10 @@
  * pattern.  The exception is explicitly thread-safe classes like
  * @ref Queue that manage their own internal synchronization.
  *
- * @see @ref core_containers "Core Containers" — List, Map, Set, Array, and other container types.
- * @see @ref core_media "Core Media" — Buffer for aligned memory storage.
- * @see @ref proav_media "ProAV Media" — Audio, Image, Frame, and format descriptors.
- * @see @ref core_math "Core Math" — Point, Size, Rect, Rational, and other value types.
- * @see @ref core_time "Core Time" — Timecode, TimeStamp, and Duration.
- * @see @ref core_util "Core Utilities" — Variant, UUID, Metadata, Error, and other helpers.
+ * @see @ref containers "Containers" — List, Map, Set, Array, and other container types.
+ * @see @ref media "Media" — Buffer for aligned memory storage.
+ * @see @ref proav "ProAV Media" — Audio, Image, Frame, and format descriptors.
+ * @see @ref math "Math" — Point, Size, Rect, Rational, and other value types.
+ * @see @ref time "Time" — Timecode, TimeStamp, and Duration.
+ * @see @ref util "Utilities" — Variant, UUID, Metadata, Error, and other helpers.
  */

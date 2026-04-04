@@ -2,7 +2,7 @@
 
 **Phase:** 4C
 **Dependencies:** Phase 4A (MediaNode), Phase 4B (audio node conventions)
-**Library:** `promeki-proav`
+**Library:** `promeki`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 ---
@@ -12,8 +12,8 @@
 Base for audio filters. Derives from MediaNode.
 
 **Files:**
-- [ ] `include/promeki/proav/audiofilter.h`
-- [ ] `src/audiofilter.cpp`
+- [ ] `include/promeki/audiofilter.h`
+- [ ] `src/proav/audiofilter.cpp`
 - [ ] `tests/audiofilter.cpp`
 
 **Implementation checklist:**
@@ -45,8 +45,8 @@ Base for audio filters. Derives from MediaNode.
 Sample rate conversion.
 
 **Files:**
-- [ ] `include/promeki/proav/audioresampler.h`
-- [ ] `src/audioresampler.cpp`
+- [ ] `include/promeki/audioresampler.h`
+- [ ] `src/proav/audioresampler.cpp`
 - [ ] `tests/audioresampler.cpp`
 
 **Implementation checklist:**
@@ -80,8 +80,8 @@ Sample rate conversion.
 Sample format conversion (int16 <-> float32, etc.).
 
 **Files:**
-- [ ] `include/promeki/proav/audioformatconverter.h`
-- [ ] `src/audioformatconverter.cpp`
+- [ ] `include/promeki/audioformatconverter.h`
+- [ ] `src/proav/audioformatconverter.cpp`
 - [ ] `tests/audioformatconverter.cpp`
 
 **Implementation checklist:**

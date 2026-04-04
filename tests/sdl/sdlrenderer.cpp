@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/sdl/sdlvideowidget.h>
-#include <promeki/core/pixeldesc.h>
+#include <promeki/pixeldesc.h>
 
 using namespace promeki;
 

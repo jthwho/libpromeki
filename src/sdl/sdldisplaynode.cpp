@@ -10,9 +10,9 @@
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
 #include <promeki/sdl/sdlapplication.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/frame.h>
-#include <promeki/core/logger.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/frame.h>
+#include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
 

@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/imagefile.h>
+#include <promeki/imagefile.h>
 
 using namespace promeki;
 

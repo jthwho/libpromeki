@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/bytearray.h>
+#include <promeki/bytearray.h>
 
 using namespace promeki;
 

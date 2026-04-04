@@ -8,15 +8,15 @@
 #pragma once
 
 #include <mutex>
-#include <promeki/core/namespace.h>
-#include <promeki/core/string.h>
-#include <promeki/core/variant.h>
-#include <promeki/core/map.h>
-#include <promeki/core/framerate.h>
-#include <promeki/core/duration.h>
-#include <promeki/core/timestamp.h>
-#include <promeki/proav/medianode.h>
-#include <promeki/proav/image.h>
+#include <promeki/namespace.h>
+#include <promeki/string.h>
+#include <promeki/variant.h>
+#include <promeki/map.h>
+#include <promeki/framerate.h>
+#include <promeki/duration.h>
+#include <promeki/timestamp.h>
+#include <promeki/medianode.h>
+#include <promeki/image.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

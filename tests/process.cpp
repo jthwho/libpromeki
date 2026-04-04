@@ -7,7 +7,7 @@
 
 #include <cstring>
 #include <doctest/doctest.h>
-#include <promeki/core/process.h>
+#include <promeki/process.h>
 
 using namespace promeki;
 

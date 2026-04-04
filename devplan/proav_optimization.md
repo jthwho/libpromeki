@@ -2,7 +2,7 @@
 
 **Phase:** 4D
 **Dependencies:** Phase 4A (MediaNode, MediaPipeline), Phase 4B (concrete nodes), Phase 3A (sockets)
-**Library:** `promeki-proav`, `promeki-network`
+**Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
@@ -26,11 +26,11 @@ This document covers four areas of improvement: high-performance font rendering,
 **TimecodeOverlayNode fix:** Now uses actual font metrics (`ascender()`, `lineHeight()`) for layout instead of the raw `_fontSize` integer, ensuring correct baseline placement at all font sizes.
 
 **Files:**
-- [x] `include/promeki/proav/font.h` / `src/font.cpp` — abstract base
-- [x] `include/promeki/proav/fastfont.h` / `src/fastfont.cpp` — cached opaque renderer
-- [x] `include/promeki/proav/basicfont.h` / `src/basicfont.cpp` — alpha-compositing renderer
-- [x] `src/pixelformat_rgba8.cpp` — RGBA8 blit clipping bug fix
-- [x] `src/timecodeoverlaynode.cpp` — font metrics used for layout
+- [x] `include/promeki/font.h` / `src/proav/font.cpp` — abstract base
+- [x] `include/promeki/fastfont.h` / `src/proav/fastfont.cpp` — cached opaque renderer
+- [x] `include/promeki/basicfont.h` / `src/proav/basicfont.cpp` — alpha-compositing renderer
+- [x] `src/proav/pixelformat_rgba8.cpp` — RGBA8 blit clipping bug fix
+- [x] `src/proav/timecodeoverlaynode.cpp` — font metrics used for layout
 - [x] `docs/fonts.dox` — Font Rendering documentation page
 - [x] `docs/modules.dox` — `proav_paint` group updated
 - [x] `tests/fastfont.cpp` — full test suite for FastFont
@@ -110,12 +110,12 @@ This document covers four areas of improvement: high-performance font rendering,
 **Partial progress:** `ImageCodec` / `AudioCodec` abstract base classes and `JpegImageCodec` are implemented. `VideoTestPattern` and `AudioTestPattern` have been extracted from `TestPatternNode` into standalone reusable classes. `JpegEncoderNode` now delegates to `JpegImageCodec`. See git log for details.
 
 **Completed:**
-- [x] `ImageCodec` abstract base class (`include/promeki/proav/codec.h`, `src/codec.cpp`) — name-based string registry (`registerCodec()`, `createCodec()`, `registeredCodecs()`), `encode()`/`decode()` virtuals, `canEncode()`/`canDecode()`, `lastError()`/`lastErrorMessage()`, `setError()`/`clearError()`
+- [x] `ImageCodec` abstract base class (`include/promeki/codec.h`, `src/proav/codec.cpp`) — name-based string registry (`registerCodec()`, `createCodec()`, `registeredCodecs()`), `encode()`/`decode()` virtuals, `canEncode()`/`canDecode()`, `lastError()`/`lastErrorMessage()`, `setError()`/`clearError()`
 - [x] `AudioCodec` stub base class (same files) — name/description virtuals, future expansion
 - [x] `PROMEKI_REGISTER_IMAGE_CODEC` macro for static self-registration
-- [x] `JpegImageCodec` (`include/promeki/proav/jpegimagecodec.h`, `src/jpegimagecodec.cpp`) — derives from `ImageCodec`, libjpeg-turbo encode, quality 1-100 with clamping, `Subsampling` enum (444/422/420), registered as "jpeg"
-- [x] `VideoTestPattern` (`include/promeki/proav/videotestpattern.h`, `src/videotestpattern.cpp`) — all 11 patterns, `create()`/`render()` dual-mode, `fromString()`/`toString()`, motion offset support
-- [x] `AudioTestPattern` (`include/promeki/proav/audiotestpattern.h`, `src/audiotestpattern.cpp`) — Tone/Silence/LTC modes, `configure()`/`create()`/`render()`, `fromString()`/`toString()`
+- [x] `JpegImageCodec` (`include/promeki/jpegimagecodec.h`, `src/proav/jpegimagecodec.cpp`) — derives from `ImageCodec`, libjpeg-turbo encode, quality 1-100 with clamping, `Subsampling` enum (444/422/420), registered as "jpeg"
+- [x] `VideoTestPattern` (`include/promeki/videotestpattern.h`, `src/proav/videotestpattern.cpp`) — all 11 patterns, `create()`/`render()` dual-mode, `fromString()`/`toString()`, motion offset support
+- [x] `AudioTestPattern` (`include/promeki/audiotestpattern.h`, `src/proav/audiotestpattern.cpp`) — Tone/Silence/LTC modes, `configure()`/`create()`/`render()`, `fromString()`/`toString()`
 - [x] `JpegEncoderNode` refactored to delegate to `JpegImageCodec` — adds `Subsampling` config key, thread-safe stats
 - [x] `TestPatternNode` refactored to delegate to `VideoTestPattern` and `AudioTestPattern`
 - [x] Tests: `tests/jpegimagecodec.cpp`, `tests/videotestpattern.cpp`, `tests/audiotestpattern.cpp`, `tests/codec.cpp` (updated)
@@ -125,8 +125,8 @@ This document covers four areas of improvement: high-performance font rendering,
 The `ImageCodec` design takes a stateful encode/decode approach (codec owns config, returns Image). A future `VideoEncoder`/`VideoDecoder` layer may be needed for temporal codecs (H.264, HEVC) that operate on streams rather than individual images. That abstraction remains unbuilt.
 
 **Files still planned:**
-- [ ] `include/promeki/proav/videoencoder.h` / `src/videoencoder.cpp`
-- [ ] `include/promeki/proav/videodecoder.h` / `src/videodecoder.cpp`
+- [ ] `include/promeki/videoencoder.h` / `src/proav/videoencoder.cpp`
+- [ ] `include/promeki/videodecoder.h` / `src/proav/videodecoder.cpp`
 - [ ] `tests/videoencoder.cpp` / `tests/videodecoder.cpp`
 
 ### VideoEncoder (still planned)
@@ -152,8 +152,8 @@ Base class for temporal/stream codecs (H.264, HEVC, etc.).
 
 Generic pipeline nodes that delegate to a VideoEncoder/VideoDecoder instance.
 
-- [ ] `include/promeki/proav/videoencodernode.h` / `src/videoencodernode.cpp`
-- [ ] `include/promeki/proav/videodecodernode.h` / `src/videodecodernode.cpp`
+- [ ] `include/promeki/videoencodernode.h` / `src/proav/videoencodernode.cpp`
+- [ ] `include/promeki/videodecodernode.h` / `src/proav/videodecodernode.cpp`
 
 ### JpegDecoder (still planned)
 
@@ -234,7 +234,7 @@ Linux `sendmmsg()` (since 2.6.33) sends multiple datagrams in a single syscall. 
 
 **UdpSocket additions:**
 
-**Files:** existing `include/promeki/network/udpsocket.h`, `src/net/udpsocket.cpp`
+**Files:** existing `include/promeki/udpsocket.h`, `src/network/udpsocket.cpp`
 
 - [ ] `struct Datagram` — describes one outgoing datagram:
   - [ ] `const void *data`
@@ -329,7 +329,7 @@ DPDK replaces the entire kernel network path. There are no sockets, no `sendto()
 A minimal interface that covers what RtpSession actually needs from the network layer.
 
 **Files:**
-- [ ] `include/promeki/network/packettransport.h`
+- [ ] `include/promeki/packettransport.h`
 
 **Interface:**
 - [ ] `class PacketTransport` — abstract base
@@ -355,8 +355,8 @@ A minimal interface that covers what RtpSession actually needs from the network 
 
 Concrete implementation wrapping UdpSocket.
 
-- [ ] `include/promeki/network/udpsockettransport.h`
-- [ ] `src/net/udpsockettransport.cpp`
+- [ ] `include/promeki/udpsockettransport.h`
+- [ ] `src/network/udpsockettransport.cpp`
 - [ ] Owns a `UdpSocket`, delegates all methods
 - [ ] `sendPackets()` uses `sendmmsg()` via `UdpSocket::writeDatagrams()`
 - [ ] `setPacingRate()` delegates to `UdpSocket::setPacingRate()`
@@ -384,8 +384,8 @@ The `PacketTransport` interface is deliberately minimal so this doesn't require 
 
 #### LoopbackTransport (for testing)
 
-- [ ] `include/promeki/network/loopbacktransport.h`
-- [ ] `src/net/loopbacktransport.cpp`
+- [ ] `include/promeki/loopbacktransport.h`
+- [ ] `src/network/loopbacktransport.cpp`
 - [ ] Two paired `LoopbackTransport` instances — what one sends, the other receives (via shared `Queue<Buffer>`)
 - [ ] Useful for pipeline integration tests without actual network I/O
 - [ ] Zero-copy: sender's buffer is directly enqueued for receiver

@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
-#include <promeki/core/string.h>
-#include <promeki/core/stringlist.h>
+#include <promeki/namespace.h>
+#include <promeki/string.h>
+#include <promeki/stringlist.h>
 #include <promeki/tui/widget.h>
 
 PROMEKI_NAMESPACE_BEGIN

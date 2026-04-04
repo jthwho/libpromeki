@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/timecode.h>
-#include <promeki/core/logger.h>
+#include <promeki/timecode.h>
+#include <promeki/logger.h>
 
 using namespace promeki;
 

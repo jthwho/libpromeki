@@ -7,9 +7,9 @@
 
 #include <cstring>
 #include <doctest/doctest.h>
-#include <promeki/core/stringiodevice.h>
-#include <promeki/core/string.h>
-#include <promeki/core/result.h>
+#include <promeki/stringiodevice.h>
+#include <promeki/string.h>
+#include <promeki/result.h>
 
 using namespace promeki;
 

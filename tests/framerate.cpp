@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/framerate.h>
+#include <promeki/framerate.h>
 
 using namespace promeki;
 

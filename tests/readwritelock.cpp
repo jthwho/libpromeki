@@ -9,7 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <doctest/doctest.h>
-#include <promeki/core/readwritelock.h>
+#include <promeki/readwritelock.h>
 
 using namespace promeki;
 

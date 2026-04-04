@@ -7,8 +7,8 @@
 
 #include <doctest/doctest.h>
 #include <promeki/tui/inputparser.h>
-#include <promeki/core/keyevent.h>
-#include <promeki/core/mouseevent.h>
+#include <promeki/keyevent.h>
+#include <promeki/mouseevent.h>
 
 using namespace promeki;
 

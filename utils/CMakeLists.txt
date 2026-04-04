@@ -15,15 +15,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # When built standalone, find the installed promeki library.
 # When built as part of the main project, the targets already exist.
-if(NOT TARGET promeki::core)
+if(NOT TARGET promeki::promeki)
     find_package(promeki REQUIRED)
 endif()
 
 add_subdirectory(promeki-info)
 
-if(TARGET promeki::proav)
+if(PROMEKI_ENABLE_PROAV)
     add_subdirectory(testrender)
-    if(TARGET promeki::network)
+    if(PROMEKI_ENABLE_NETWORK)
         add_subdirectory(vidgen)
     endif()
 endif()

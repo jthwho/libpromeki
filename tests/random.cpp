@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/random.h>
-#include <promeki/core/buffer.h>
-#include <promeki/core/error.h>
+#include <promeki/random.h>
+#include <promeki/buffer.h>
+#include <promeki/error.h>
 
 using namespace promeki;
 

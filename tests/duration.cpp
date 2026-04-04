@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/duration.h>
-#include <promeki/core/string.h>
+#include <promeki/duration.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

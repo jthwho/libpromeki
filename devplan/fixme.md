@@ -8,7 +8,7 @@ Tracked FIXME comments scattered across the codebase. Address these as they beco
 
 ## Windows File Implementation
 
-**File:** `src/file.cpp:44`
+**File:** `src/core/file.cpp:44`
 **FIXME:** "The windows code here needs love."
 
 The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest of the Windows-specific File methods are likely incomplete or missing.
@@ -21,7 +21,7 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 
 ## ~~AudioDesc Metadata Comparison~~ (DONE)
 
-**File:** `include/promeki/proav/audiodesc.h`
+**File:** `include/promeki/audiodesc.h`
 
 - [x] `operator==` now includes metadata comparison
 - [x] Added `formatEquals()` for format-only comparison (type, rate, channels)
@@ -33,7 +33,7 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 
 ## ~~AudioFile libsndfile Readability Check~~ (DONE)
 
-**File:** `src/audiofile_libsndfile.cpp`
+**File:** `src/proav/audiofile_libsndfile.cpp`
 
 - [x] `fileIsReadable()` now validates `info.channels > 0`, `info.samplerate > 0`, and `info.format != 0`
 - [x] Added `memset` initialization of `SF_INFO` before `sf_open`
@@ -43,7 +43,7 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 
 ## AudioGen Planar Format Support
 
-**File:** `src/audiogen.cpp:64`
+**File:** `src/proav/audiogen.cpp:64`
 **FIXME:** "Need to set to new plane for planar."
 
 Currently increments `data++` per channel, which only works for interleaved formats. Planar formats store each channel in a separate memory plane.
@@ -57,7 +57,7 @@ Currently increments `data++` per channel, which only works for interleaved form
 
 ## DateTime Number Word Parsing
 
-**File:** `src/datetime.cpp:108`
+**File:** `src/core/datetime.cpp:108`
 **FIXME:** "Need to use the String::parseNumberWords()"
 
 The `std::istringstream` was replaced with `strtoll` as part of the stream migration, but the FIXME still stands: the code should use `String::parseNumberWords()` for natural language number parsing (e.g., "three days ago") instead of bare `strtoll`.
@@ -70,21 +70,16 @@ The `std::istringstream` was replaced with `strtoll` as part of the stream migra
 
 ## ~~FileInfo::suffix() Crashes on Extensionless Files~~ (DONE)
 
-**File:** `include/promeki/core/fileinfo.h`
+**File:** `include/promeki/fileinfo.h`
 
 - [x] Guard against empty extension before calling `substr(1)`
 - [x] Tests added for extensionless files, dotfiles, and compound extensions
 
 ---
 
-## Dead Test File: tests/image.cpp
+## ~~Dead Test File: tests/image.cpp~~ (DONE)
 
-**File:** `tests/image.cpp`
-
-`tests/image.cpp` is not listed in `UNITTEST_PROAV_SOURCES` in CMakeLists.txt and is never compiled. `tests/image2.cpp` appears to be its replacement. The file contains image creation, fill, PaintEngine, FontPainter, and PNG save tests that overlap with `image2.cpp` and `paintengine.cpp`.
-
-- [ ] Verify no unique test coverage exists in `tests/image.cpp` that isn't already in `image2.cpp` or `paintengine.cpp`
-- [ ] Delete `tests/image.cpp` once confirmed redundant
+- [x] Old `tests/image.cpp` deleted; `tests/image2.cpp` renamed to `tests/image.cpp` during library consolidation
 
 ---
 
@@ -94,29 +89,28 @@ Library classes should use the library's own container/type wrappers (`List`, `M
 
 ### std::vector → List\<T\>
 
-- **`src/bufferediodevice.cpp:149,167,211,227,240`** — Multiple `std::vector<uint8_t>` used as temporary read/collect buffers.
-- **`src/imagefileio_png.cpp:105`** — `std::vector<png_bytep>` for PNG row pointers.
+- **`src/core/bufferediodevice.cpp:149,167,211,227,240`** — Multiple `std::vector<uint8_t>` used as temporary read/collect buffers.
+- **`src/proav/imagefileio_png.cpp:105`** — `std::vector<png_bytep>` for PNG row pointers.
 
 ### std::map → Map\<K,V\>
 
-- **`src/string.cpp:283`** — `static const std::map<std::string, int64_t> numberWords` lookup table.
-- **`src/datetime.cpp:78`** — `static const std::map<std::string, system_clock::duration> units` lookup table.
+- **`src/core/string.cpp:283`** — `static const std::map<std::string, int64_t> numberWords` lookup table.
+- **`src/core/datetime.cpp:78`** — `static const std::map<std::string, system_clock::duration> units` lookup table.
 
 ### std::array → Array\<T,N\>
 
-- **`include/promeki/proav/colorspace.h:41`** — `typedef std::array<CIEPoint, 4> Params` in public API.
-- **`include/promeki/network/macaddress.h:109`** — `std::array<uint8_t, 6>` in constructor initializer.
-- **`include/promeki/music/musicalscale.h:45`** — `using MembershipMask = std::array<int, 12>` public typedef.
-- **`include/promeki/core/util.h:116,127,141-144,154`** — `std::array<T, 4>` in public template function signatures (`promekiCatmullRom`, `promekiBezier`, `promekiBicubic`, `promekiCubic`).
-- **`src/system.cpp:27`** — `std::array<char, HOST_NAME_MAX>` local variable.
+- **`include/promeki/macaddress.h:109`** — `std::array<uint8_t, 6>` in constructor initializer.
+- **`include/promeki/musicalscale.h:45`** — `using MembershipMask = std::array<int, 12>` public typedef.
+- **`include/promeki/util.h:116,127,141-144,154`** — `std::array<T, 4>` in public template function signatures (`promekiCatmullRom`, `promekiBezier`, `promekiBicubic`, `promekiCubic`).
+- **`src/core/system.cpp:27`** — `std::array<char, HOST_NAME_MAX>` local variable.
 
 ### Tasks
 
-- [ ] Replace `std::vector` with `List<T>` in `bufferediodevice.cpp`
-- [ ] Replace `std::vector` with `List<T>` in `imagefileio_png.cpp`
-- [ ] Replace `std::map` with `Map<K,V>` in `string.cpp` and `datetime.cpp`
-- [ ] Replace `std::array` with `Array<T,N>` in `colorspace.h`, `macaddress.h`, `musicalscale.h`
+- [ ] Replace `std::vector` with `List<T>` in `src/core/bufferediodevice.cpp`
+- [ ] Replace `std::vector` with `List<T>` in `src/proav/imagefileio_png.cpp`
+- [ ] Replace `std::map` with `Map<K,V>` in `src/core/string.cpp` and `src/core/datetime.cpp`
+- [ ] Replace `std::array` with `Array<T,N>` in `macaddress.h`, `musicalscale.h`
 - [ ] Replace `std::array` with `Array<T,N>` in `util.h` template functions
-- [ ] Replace `std::array` with `Array<T,N>` in `system.cpp`
+- [ ] Replace `std::array` with `Array<T,N>` in `src/core/system.cpp`
 - [ ] Verify all replacements compile and pass tests
 

@@ -8,7 +8,7 @@
 #include <doctest/doctest.h>
 #include <thread>
 #include <chrono>
-#include <promeki/core/elapsedtimer.h>
+#include <promeki/elapsedtimer.h>
 
 using namespace promeki;
 

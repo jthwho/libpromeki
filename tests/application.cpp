@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/application.h>
-#include <promeki/core/iodevice.h>
+#include <promeki/application.h>
+#include <promeki/iodevice.h>
 
 using namespace promeki;
 

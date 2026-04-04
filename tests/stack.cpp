@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/stack.h>
+#include <promeki/stack.h>
 
 using namespace promeki;
 

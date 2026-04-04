@@ -8,9 +8,9 @@
 #pragma once
 
 #include <cstdint>
-#include <promeki/core/namespace.h>
-#include <promeki/core/map.h>
-#include <promeki/core/keyevent.h>
+#include <promeki/namespace.h>
+#include <promeki/map.h>
+#include <promeki/keyevent.h>
 
 union SDL_Event;
 

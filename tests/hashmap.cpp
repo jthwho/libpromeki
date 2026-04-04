@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/hashmap.h>
-#include <promeki/core/string.h>
+#include <promeki/hashmap.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

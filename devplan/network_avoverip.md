@@ -2,7 +2,7 @@
 
 **Phase:** 3C
 **Dependencies:** Phase 3A (UdpSocket, AbstractSocket), Phase 3B (SslSocket for secure transports)
-**Library:** `promeki-network`
+**Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
@@ -17,8 +17,8 @@ General-purpose primitives for building AV-over-IP implementations (ST 2110, AES
 IEEE 1588 PTP clock synchronization. Building block for AES67/ST 2110 sync.
 
 **Files:**
-- [ ] `include/promeki/network/ptpclock.h`
-- [ ] `src/net/ptpclock.cpp`
+- [ ] `include/promeki/ptpclock.h`
+- [ ] `src/network/ptpclock.cpp`
 - [ ] `tests/ptpclock.cpp`
 
 **Implementation checklist:**

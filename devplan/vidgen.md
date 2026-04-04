@@ -63,8 +63,8 @@ Compresses video frames to JPEG. Processing node (one Image input, one Image out
 Controls frame pacing for pipelines that don't have a timing-aware sink node. Passthrough node. Not used in the vidgen pipeline (RTP sink nodes handle timing), but useful for file-output pipelines, benchmarking, or any scenario where you need to throttle frame rate without a network sink.
 
 **Files:**
-- [ ] `include/promeki/proav/frameratecontrolnode.h`
-- [ ] `src/frameratecontrolnode.cpp`
+- [ ] `include/promeki/frameratecontrolnode.h`
+- [ ] `src/proav/frameratecontrolnode.cpp`
 - [ ] `tests/frameratecontrolnode.cpp`
 
 **Implementation checklist:**
@@ -90,7 +90,7 @@ Controls frame pacing for pipelines that don't have a timing-aware sink node. Pa
 
 ## ~~Step 6: Streaming Sink Nodes (Phase 4B — network bridge)~~ (DONE)
 
-These nodes live in promeki-proav, which conditionally depends on promeki-network when `PROMEKI_BUILD_NETWORK` is enabled. All network-dependent code is wrapped in `#ifdef PROMEKI_HAVE_NETWORK`.
+These nodes live in the `promeki` library (proav and network sources). RTP sink nodes are conditionally compiled when `PROMEKI_ENABLE_NETWORK` and `PROMEKI_ENABLE_PROAV` are both enabled.
 
 ### ~~6A. RtpVideoSinkNode~~ (DONE)
 
@@ -119,8 +119,8 @@ Terminal sink node (one Audio input, no outputs). Accumulates samples in a dynam
 - Tests: 12 tests — construction, registry, port structure, configure failures (no payload/dest), configure success, start/stop lifecycle, sub-packet accumulation (no send), full packet send via loopback, cross-boundary (1.5x), timestamp tracking, starvation counter, extended stats
 
 **CMake changes:**
-- `promeki-proav` unconditionally links `promeki-network` (the `PROMEKI_BUILD_NETWORK` conditional guards have been removed — network support is now always on)
-- RTP node headers, sources, and test files are always included in the proav build (no longer conditional)
+- All network, proav, and RTP sources are part of the single `promeki` library (consolidated from separate promeki-core, promeki-proav, promeki-network libraries)
+- RTP sink node sources are conditionally compiled when both `PROMEKI_ENABLE_NETWORK` and `PROMEKI_ENABLE_PROAV` are ON
 - `PROMEKI_HAVE_NETWORK` define removed; code that was guarded by it is now compiled unconditionally
 
 ---
@@ -132,12 +132,12 @@ Command-line utility that builds a pipeline from command-line options and runs i
 **Files:**
 - [x] `utils/vidgen/main.cpp`
 - [x] `utils/vidgen/CMakeLists.txt`
-- [x] Update `utils/CMakeLists.txt` to add `vidgen/` subdirectory (conditional on `promeki::network`)
+- [x] Update `utils/CMakeLists.txt` to add `vidgen/` subdirectory (conditional on `PROMEKI_ENABLE_NETWORK`)
 
 **CMake:**
 - [x] `PROMEKI_BUILD_UTILS` option (already existed, default ON)
 - [x] `vidgen` executable target
-- [x] Links: `promeki-proav`, `promeki-network`
+- [x] Links: `promeki::promeki`
 
 **Implementation notes:**
 - Single-file implementation (~740 lines) with simple argv parsing

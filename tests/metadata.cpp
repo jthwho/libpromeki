@@ -7,8 +7,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/metadata.h>
-#include <promeki/core/stringlist.h>
+#include <promeki/metadata.h>
+#include <promeki/stringlist.h>
 
 using namespace promeki;
 

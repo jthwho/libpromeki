@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/timecodegenerator.h>
-#include <promeki/core/framerate.h>
+#include <promeki/timecodegenerator.h>
+#include <promeki/framerate.h>
 
 using namespace promeki;
 

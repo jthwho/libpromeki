@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/priorityqueue.h>
+#include <promeki/priorityqueue.h>
 
 using namespace promeki;
 

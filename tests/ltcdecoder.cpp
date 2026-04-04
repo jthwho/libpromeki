@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/ltcencoder.h>
-#include <promeki/proav/ltcdecoder.h>
+#include <promeki/ltcencoder.h>
+#include <promeki/ltcdecoder.h>
 
 using namespace promeki;
 

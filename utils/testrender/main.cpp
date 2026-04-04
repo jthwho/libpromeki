@@ -6,15 +6,15 @@
  */
 
 #include <cstdio>
-#include <promeki/proav/testpatternnode.h>
-#include <promeki/proav/framedemuxnode.h>
-#include <promeki/proav/timecodeoverlaynode.h>
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/imagefile.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/core/timecode.h>
-#include <promeki/core/framerate.h>
+#include <promeki/testpatternnode.h>
+#include <promeki/framedemuxnode.h>
+#include <promeki/timecodeoverlaynode.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/imagefile.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/timecode.h>
+#include <promeki/framerate.h>
 
 using namespace promeki;
 

@@ -7,11 +7,11 @@
 
 #include <cmath>
 #include <doctest/doctest.h>
-#include <promeki/proav/audiotestpattern.h>
-#include <promeki/proav/audio.h>
-#include <promeki/proav/audiodesc.h>
-#include <promeki/core/audiolevel.h>
-#include <promeki/core/timecode.h>
+#include <promeki/audiotestpattern.h>
+#include <promeki/audio.h>
+#include <promeki/audiodesc.h>
+#include <promeki/audiolevel.h>
+#include <promeki/timecode.h>
 
 using namespace promeki;
 

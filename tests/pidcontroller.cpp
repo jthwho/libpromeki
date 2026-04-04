@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/pidcontroller.h>
+#include <promeki/pidcontroller.h>
 
 using namespace promeki;
 

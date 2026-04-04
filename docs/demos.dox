@@ -56,8 +56,8 @@
  *
  * 1. Create a new subdirectory under @c demos/ (e.g. @c demos/my-new-demo/).
  * 2. Add a @c CMakeLists.txt that creates the executable and links against the
- *    appropriate promeki target(s) (@c promeki::core, @c promeki::proav,
- *    @c promeki::tui, or @c promeki::music).
+ *    appropriate promeki target (@c promeki::promeki, or @c promeki::tui /
+ *    @c promeki::sdl for UI libraries).
  * 3. Include an @c install(TARGETS ...) rule so it gets installed.
  * 4. Add an @c add_subdirectory() call in @c demos/CMakeLists.txt.
  *

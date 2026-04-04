@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/pixelformat.h>
+#include <promeki/pixelformat.h>
 
 using namespace promeki;
 

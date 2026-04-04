@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/mediasink.h>
+#include <promeki/mediasink.h>
 
 using namespace promeki;
 

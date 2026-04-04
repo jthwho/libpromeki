@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/stringregistry.h>
+#include <promeki/stringregistry.h>
 
 using namespace promeki;
 

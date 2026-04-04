@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/matrix.h>
-#include <promeki/core/error.h>
+#include <promeki/matrix.h>
+#include <promeki/error.h>
 
 using namespace promeki;
 

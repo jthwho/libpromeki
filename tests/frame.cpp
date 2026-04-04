@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/frame.h>
+#include <promeki/frame.h>
 
 using namespace promeki;
 

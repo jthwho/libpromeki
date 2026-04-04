@@ -15,17 +15,57 @@ project(${APP_NAME} VERSION ${APP_VERSION} LANGUAGES C CXX)
 include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+include(ExternalProject)
 
-# Build options
-option(PROMEKI_BUILD_PROAV  "Build the promeki-proav library"  ON)
-option(PROMEKI_BUILD_MUSIC  "Build the promeki-music library"  ON)
+# Build options ################################################################
+
 option(PROMEKI_BUILD_TUI    "Build the promeki-tui library"    ON)
-option(PROMEKI_BUILD_NETWORK "Build the promeki-network library" ON)
+option(PROMEKI_BUILD_SDL    "Build the promeki-sdl library"    OFF)
 option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
 option(PROMEKI_BUILD_DEMOS  "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
-option(PROMEKI_BUILD_SDL    "Build the promeki-sdl library"    OFF)
 option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
+
+# Feature flags for the main promeki library
+option(PROMEKI_ENABLE_NETWORK  "Include networking support"             ON)
+option(PROMEKI_ENABLE_PROAV    "Include pro A/V support"                ON)
+option(PROMEKI_ENABLE_MUSIC    "Include music support"                  ON)
+option(PROMEKI_ENABLE_PNG      "Include PNG image I/O"                  ON)
+option(PROMEKI_ENABLE_JPEG     "Include JPEG codec"                     ON)
+option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
+option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
+
+# Vendored vs system dependency options
+option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored"           OFF)
+option(PROMEKI_USE_SYSTEM_LIBPNG        "Use system libpng instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_LIBJPEG       "Use system libjpeg instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
+option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
+option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
+option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
+
+# Dependency validation ########################################################
+
+if(PROMEKI_ENABLE_MUSIC AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_MUSIC requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_PNG AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_PNG requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_JPEG AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_JPEG requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_FREETYPE AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_FREETYPE requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_AUDIO requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_BUILD_SDL AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_BUILD_SDL requires PROMEKI_ENABLE_PROAV")
+endif()
+
+# Build info ###################################################################
 
 find_package(Git QUIET REQUIRED)
 
@@ -43,8 +83,6 @@ set_property(GLOBAL APPEND
     "${PROJECT_SOURCE_DIR}/.git/index"
 )
 
-# Capture any other build info variables
-# Must be below project()
 if(NOT ${APP_VERSION_RC} EQUAL "0")
     set(BUILD_INFO_VERSION "${APP_VERSION}-rc${APP_VERSION_RC}")
 elseif(NOT ${APP_VERSION_BETA} EQUAL "0")
@@ -59,13 +97,18 @@ string(TIMESTAMP BUILD_INFO_DATE "%Y-%m-%d")
 string(TIMESTAMP BUILD_INFO_TIME "%H:%M:%S")
 set(BUILD_INFO_TYPE "${CMAKE_BUILD_TYPE}")
 cmake_host_system_information(RESULT BUILD_INFO_HOSTNAME QUERY HOSTNAME)
-configure_file(src/buildinfo.cpp.in buildinfo.cpp)
+configure_file(src/core/buildinfo.cpp.in buildinfo.cpp)
 
-# Make sure we regenerate the buildinfo.cpp file each time we build.
 add_custom_target(
     libpromeki_invalidate_build_info
     ALL
-    COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/src/buildinfo.cpp.in
+    COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/src/core/buildinfo.cpp.in
+)
+
+# Generate config.h
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/config.h
 )
 
 # Output directories ###########################################################
@@ -76,576 +119,650 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING "Archive
 
 # Third Party Dependencies ####################################################
 
-# nlohmann/json (header-only, bundled)
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-set(JSON_Install OFF CACHE INTERNAL "")
-set(JSON_SystemInclude ON CACHE INTERNAL "")
-add_subdirectory(thirdparty/nlohmann-json EXCLUDE_FROM_ALL)
+# Prefix for vendored thirdparty builds
+set(PROMEKI_THIRDPARTY_PREFIX ${CMAKE_BINARY_DIR}/thirdparty-install)
+file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include)
 
-# libvtc (video timecode library, static)
-set(VTC_BUILD_SHARED OFF CACHE INTERNAL "")
-set(VTC_BUILD_STATIC ON CACHE INTERNAL "")
-set(VTC_BUILD_UTILS OFF CACHE INTERNAL "")
-set(VTC_BUILD_TESTS OFF CACHE INTERNAL "")
-set(VTC_BUILD_GUI OFF CACHE INTERNAL "")
-set(VTC_BUILD_CPP OFF CACHE INTERNAL "")
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_subdirectory(thirdparty/libvtc EXCLUDE_FROM_ALL)
+# --- nlohmann/json ---
+if(PROMEKI_USE_SYSTEM_NLOHMANN_JSON)
+    find_package(nlohmann_json REQUIRED)
+else()
+    set(JSON_BuildTests OFF CACHE INTERNAL "")
+    set(JSON_Install OFF CACHE INTERNAL "")
+    set(JSON_SystemInclude ON CACHE INTERNAL "")
+    add_subdirectory(thirdparty/nlohmann-json EXCLUDE_FROM_ALL)
+endif()
 
-# Core Library #################################################################
+# --- libvtc ---
+if(PROMEKI_USE_SYSTEM_VTC)
+    find_package(vtc REQUIRED)
+    set(PROMEKI_VTC_TARGET vtc::vtc)
+else()
+    set(VTC_BUILD_SHARED OFF CACHE INTERNAL "")
+    set(VTC_BUILD_STATIC ON CACHE INTERNAL "")
+    set(VTC_BUILD_UTILS OFF CACHE INTERNAL "")
+    set(VTC_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(VTC_BUILD_GUI OFF CACHE INTERNAL "")
+    set(VTC_BUILD_CPP OFF CACHE INTERNAL "")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    add_subdirectory(thirdparty/libvtc EXCLUDE_FROM_ALL)
+    set(PROMEKI_VTC_TARGET vtc_static)
+endif()
 
-set(PROMEKI_CORE_HEADERS
-    include/promeki/core/ansistream.h
-    include/promeki/core/application.h
-    include/promeki/core/array.h
-    include/promeki/core/buildinfo.h
-    include/promeki/core/configoption.h
-    include/promeki/core/buffer.h
-    include/promeki/core/bufferview.h
-    include/promeki/core/bufferediodevice.h
-    include/promeki/core/bytearray.h
-    include/promeki/core/audiolevel.h
-    include/promeki/core/char.h
-    include/promeki/core/cmdlineparser.h
-    include/promeki/core/datetime.h
-    include/promeki/core/dir.h
-    include/promeki/core/duration.h
-    include/promeki/core/elapsedtimer.h
-    include/promeki/core/env.h
-    include/promeki/core/error.h
-    include/promeki/core/event.h
-    include/promeki/core/eventloop.h
-    include/promeki/core/file.h
-    include/promeki/core/fileformatfactory.h
-    include/promeki/core/fileinfo.h
-    include/promeki/core/filepath.h
-    include/promeki/core/iodevice.h
-    include/promeki/core/fnv1a.h
-    include/promeki/core/fourcc.h
-    include/promeki/core/framerate.h
-    include/promeki/core/layout.h
-    include/promeki/core/json.h
-    include/promeki/core/line.h
-    include/promeki/core/list.h
-    include/promeki/core/logger.h
-    include/promeki/core/map.h
-    include/promeki/core/matrix.h
-    include/promeki/core/matrix3x3.h
-    include/promeki/core/md5.h
-    include/promeki/core/mempool.h
-    include/promeki/core/memspace.h
-    include/promeki/core/metadata.h
-    include/promeki/core/namespace.h
-    include/promeki/core/numname.h
-    include/promeki/core/obfuscatedstring.h
-    include/promeki/core/numnameseq.h
-    include/promeki/core/objectbase.h
-    include/promeki/core/pidcontroller.h
-    include/promeki/core/platform.h
-    include/promeki/core/point.h
-    include/promeki/core/process.h
-    include/promeki/core/rational.h
-    include/promeki/core/regex.h
-    include/promeki/core/securemem.h
-    include/promeki/core/set.h
-    include/promeki/core/sha1.h
-    include/promeki/core/sharedptr.h
-    include/promeki/core/signal.h
-    include/promeki/core/size2d.h
-    include/promeki/core/thread.h
-    include/promeki/core/timerevent.h
-    include/promeki/core/slot.h
-    include/promeki/core/streamstring.h
-    include/promeki/core/string.h
-    include/promeki/core/stringregistry.h
-    include/promeki/core/stringdata.h
-    include/promeki/core/stringlist.h
-    include/promeki/core/structdatabase.h
-    include/promeki/core/system.h
-    include/promeki/core/timecode.h
-    include/promeki/core/timecodegenerator.h
-    include/promeki/core/timestamp.h
-    include/promeki/core/mutex.h
-    include/promeki/core/readwritelock.h
-    include/promeki/core/waitcondition.h
-    include/promeki/core/widget.h
-    include/promeki/core/atomic.h
-    include/promeki/core/future.h
-    include/promeki/core/promise.h
-    include/promeki/core/threadpool.h
-    include/promeki/core/queue.h
-    include/promeki/core/random.h
-    include/promeki/core/algorithm.h
-    include/promeki/core/util.h
-    include/promeki/core/uuid.h
-    include/promeki/core/xyzcolor.h
-    include/promeki/core/variant.h
-    include/promeki/core/variantdatabase.h
-    include/promeki/core/rect.h
-    include/promeki/core/ciepoint.h
-    include/promeki/core/ciewavelengthtable.h
-    include/promeki/core/color.h
-    include/promeki/core/colormodel.h
-    include/promeki/core/pixelformat.h
-    include/promeki/core/pixeldesc.h
-    include/promeki/core/terminal.h
-    include/promeki/core/keyevent.h
-    include/promeki/core/mouseevent.h
+# --- zlib (needed by libpng and freetype) ---
+if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
+    if(PROMEKI_USE_SYSTEM_ZLIB)
+        find_package(ZLIB REQUIRED)
+        set(PROMEKI_ZLIB_TARGET ZLIB::ZLIB)
+        set(PROMEKI_ZLIB_INCLUDE ${ZLIB_INCLUDE_DIRS})
+        set(PROMEKI_ZLIB_LIBRARY ${ZLIB_LIBRARIES})
+    else()
+        set(PROMEKI_ZLIB_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/zlib)
+        ExternalProject_Add(
+            zlib-ep
+            DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zlib
+                ${PROMEKI_ZLIB_SRC_COPY}
+            SOURCE_DIR ${PROMEKI_ZLIB_SRC_COPY}
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DZLIB_BUILD_EXAMPLES=OFF
+        )
+        set(PROMEKI_ZLIB_INCLUDE ${PROMEKI_THIRDPARTY_PREFIX}/include)
+        set(PROMEKI_ZLIB_LIBRARY ${PROMEKI_THIRDPARTY_PREFIX}/lib/libz.a)
+        add_library(promeki_zlib_vendored STATIC IMPORTED)
+        set_target_properties(promeki_zlib_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_ZLIB_LIBRARY}
+            INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_ZLIB_INCLUDE}
+        )
+        add_dependencies(promeki_zlib_vendored zlib-ep)
+        set(PROMEKI_ZLIB_TARGET promeki_zlib_vendored)
+    endif()
+endif()
+
+# --- libjpeg-turbo ---
+if(PROMEKI_ENABLE_JPEG)
+    if(PROMEKI_USE_SYSTEM_LIBJPEG)
+        find_package(JPEG REQUIRED)
+        set(PROMEKI_JPEG_TARGET JPEG::JPEG)
+    else()
+        ExternalProject_Add(
+            libjpeg-turbo-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libjpeg-turbo
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DENABLE_SHARED=OFF
+                -DENABLE_STATIC=ON
+                -DWITH_TURBOJPEG=OFF
+        )
+        add_library(promeki_jpeg_vendored STATIC IMPORTED)
+        set_target_properties(promeki_jpeg_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libjpeg.a
+        )
+        add_dependencies(promeki_jpeg_vendored libjpeg-turbo-ep)
+        set(PROMEKI_JPEG_TARGET promeki_jpeg_vendored)
+    endif()
+endif()
+
+# --- libpng ---
+if(PROMEKI_ENABLE_PNG)
+    if(PROMEKI_USE_SYSTEM_LIBPNG)
+        find_package(PNG REQUIRED)
+        set(PROMEKI_PNG_TARGET PNG::PNG)
+    else()
+        ExternalProject_Add(
+            libpng-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libpng
+            DEPENDS zlib-ep
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DZLIB_INCLUDE_DIR=${PROMEKI_ZLIB_INCLUDE}
+                -DZLIB_LIBRARY=${PROMEKI_ZLIB_LIBRARY}
+                -DPNG_SHARED=OFF
+                -DPNG_STATIC=ON
+                -DPNG_TESTS=OFF
+                -DPNG_TOOLS=OFF
+        )
+        add_library(promeki_png_vendored STATIC IMPORTED)
+        set_target_properties(promeki_png_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libpng.a
+        )
+        add_dependencies(promeki_png_vendored libpng-ep)
+        set(PROMEKI_PNG_TARGET promeki_png_vendored)
+    endif()
+endif()
+
+# --- libsndfile ---
+if(PROMEKI_ENABLE_AUDIO)
+    if(PROMEKI_USE_SYSTEM_SNDFILE)
+        find_package(SndFile REQUIRED)
+        set(PROMEKI_SNDFILE_TARGET SndFile::sndfile)
+    else()
+        ExternalProject_Add(
+            libsndfile-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libsndfile
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_PROGRAMS=OFF
+                -DBUILD_EXAMPLES=OFF
+                -DBUILD_TESTING=OFF
+                -DENABLE_EXTERNAL_LIBS=OFF
+                -DENABLE_MPEG=OFF
+        )
+        add_library(promeki_sndfile_vendored STATIC IMPORTED)
+        set_target_properties(promeki_sndfile_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsndfile.a
+        )
+        add_dependencies(promeki_sndfile_vendored libsndfile-ep)
+        set(PROMEKI_SNDFILE_TARGET promeki_sndfile_vendored)
+    endif()
+endif()
+
+# --- freetype ---
+if(PROMEKI_ENABLE_FREETYPE)
+    if(PROMEKI_USE_SYSTEM_FREETYPE)
+        find_package(Freetype REQUIRED)
+        set(PROMEKI_FREETYPE_TARGET Freetype::Freetype)
+    else()
+        ExternalProject_Add(
+            freetype-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/freetype
+            DEPENDS zlib-ep
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DZLIB_INCLUDE_DIR=${PROMEKI_ZLIB_INCLUDE}
+                -DZLIB_LIBRARY=${PROMEKI_ZLIB_LIBRARY}
+                -DBUILD_SHARED_LIBS=OFF
+                -DFT_DISABLE_BZIP2=ON
+                -DFT_DISABLE_BROTLI=ON
+                -DFT_DISABLE_HARFBUZZ=ON
+                -DFT_DISABLE_PNG=ON
+        )
+        add_library(promeki_freetype_vendored STATIC IMPORTED)
+        set_target_properties(promeki_freetype_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libfreetype.a
+        )
+        add_dependencies(promeki_freetype_vendored freetype-ep)
+        set(PROMEKI_FREETYPE_TARGET promeki_freetype_vendored)
+    endif()
+endif()
+
+# Main Library: promeki ########################################################
+
+set(PROMEKI_HEADERS
+    include/promeki/algorithm.h
+    include/promeki/ansistream.h
+    include/promeki/application.h
+    include/promeki/array.h
+    include/promeki/atomic.h
+    include/promeki/audiolevel.h
+    include/promeki/benchmark.h
+    include/promeki/buffer.h
+    include/promeki/bufferediodevice.h
+    include/promeki/bufferiodevice.h
+    include/promeki/bufferview.h
+    include/promeki/buildinfo.h
+    include/promeki/bytearray.h
+    include/promeki/char.h
+    include/promeki/ciepoint.h
+    include/promeki/ciewavelengthtable.h
+    include/promeki/cmdlineparser.h
+    include/promeki/color.h
+    include/promeki/colormodel.h
+    include/promeki/configoption.h
+    include/promeki/datetime.h
+    include/promeki/dir.h
+    include/promeki/duration.h
+    include/promeki/elapsedtimer.h
+    include/promeki/env.h
+    include/promeki/error.h
+    include/promeki/event.h
+    include/promeki/eventloop.h
+    include/promeki/file.h
+    include/promeki/fileformatfactory.h
+    include/promeki/fileinfo.h
+    include/promeki/filepath.h
+    include/promeki/fnv1a.h
+    include/promeki/fourcc.h
+    include/promeki/framerate.h
+    include/promeki/future.h
+    include/promeki/iodevice.h
+    include/promeki/json.h
+    include/promeki/keyevent.h
+    include/promeki/layout.h
+    include/promeki/line.h
+    include/promeki/list.h
+    include/promeki/logger.h
+    include/promeki/map.h
+    include/promeki/matrix.h
+    include/promeki/matrix3x3.h
+    include/promeki/md5.h
+    include/promeki/mempool.h
+    include/promeki/memspace.h
+    include/promeki/metadata.h
+    include/promeki/mouseevent.h
+    include/promeki/mutex.h
+    include/promeki/namespace.h
+    include/promeki/numname.h
+    include/promeki/numnameseq.h
+    include/promeki/objectbase.h
+    include/promeki/obfuscatedstring.h
+    include/promeki/pidcontroller.h
+    include/promeki/pixeldesc.h
+    include/promeki/pixelformat.h
+    include/promeki/platform.h
+    include/promeki/point.h
+    include/promeki/process.h
+    include/promeki/promise.h
+    include/promeki/queue.h
+    include/promeki/random.h
+    include/promeki/rational.h
+    include/promeki/readwritelock.h
+    include/promeki/rect.h
+    include/promeki/regex.h
+    include/promeki/securemem.h
+    include/promeki/set.h
+    include/promeki/sha1.h
+    include/promeki/sharedptr.h
+    include/promeki/signal.h
+    include/promeki/size2d.h
+    include/promeki/slot.h
+    include/promeki/streamstring.h
+    include/promeki/string.h
+    include/promeki/stringdata.h
+    include/promeki/stringlist.h
+    include/promeki/stringregistry.h
+    include/promeki/structdatabase.h
+    include/promeki/system.h
+    include/promeki/terminal.h
+    include/promeki/thread.h
+    include/promeki/threadpool.h
+    include/promeki/timecode.h
+    include/promeki/timecodegenerator.h
+    include/promeki/timerevent.h
+    include/promeki/timestamp.h
+    include/promeki/util.h
+    include/promeki/uuid.h
+    include/promeki/variant.h
+    include/promeki/variantdatabase.h
+    include/promeki/waitcondition.h
+    include/promeki/widget.h
+    include/promeki/xyzcolor.h
 )
 
-set(PROMEKI_CORE_SOURCES
+set(PROMEKI_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/buildinfo.cpp
-    src/application.cpp
-    src/objectbase.cpp
-    src/system.cpp
-    src/util.cpp
-    src/rational.cpp
-    src/fourcc.cpp
-    src/array.cpp
-    src/matrix.cpp
-    src/map.cpp
-    src/matrix3x3.cpp
-    src/list.cpp
-    src/char.cpp
-    src/string.cpp
-    src/stringdata.cpp
-    src/stringlist.cpp
-    src/set.cpp
-    src/regex.cpp
-    src/event.cpp
-    src/eventloop.cpp
-    src/audiolevel.cpp
-    src/duration.cpp
-    src/env.cpp
-    src/error.cpp
-    src/random.cpp
-    src/uuid.cpp
-    src/md5.cpp
-    src/sha1.cpp
-    src/sharedptr.cpp
-    src/point.cpp
-    src/line.cpp
-    src/size2d.cpp
-    src/mempool.cpp
-    src/memspace.cpp
-    src/buffer.cpp
-    src/bufferediodevice.cpp
-    src/logger.cpp
-    src/ansistream.cpp
-    src/fileinfo.cpp
-    src/datetime.cpp
-    src/dir.cpp
-    src/timestamp.cpp
-    src/timecode.cpp
-    src/timecodegenerator.cpp
-    src/variant.cpp
-    src/widget.cpp
-    src/metadata.cpp
-    src/cmdlineparser.cpp
-    src/file.cpp
-    src/iodevice.cpp
-    src/numname.cpp
-    src/numnameseq.cpp
-    src/signal.cpp
-    src/slot.cpp
-    src/thread.cpp
-    src/threadpool.cpp
-    src/pidcontroller.cpp
-    src/process.cpp
-    src/json.cpp
-    src/framerate.cpp
-    src/layout.cpp
-    src/rect.cpp
-    src/ciepoint.cpp
-    src/color.cpp
-    src/colormodel.cpp
-    src/terminal.cpp
-    src/keyevent.cpp
-    src/mouseevent.cpp
-    src/datastream.cpp
-    src/bufferiodevice.cpp
-    src/stringiodevice.cpp
-    src/fileiodevice.cpp
-    src/textstream.cpp
-    src/benchmark.cpp
-    src/xyzcolor.cpp
-    src/pixelformat.cpp
-    src/pixeldesc.cpp
+    src/core/ansistream.cpp
+    src/core/application.cpp
+    src/core/array.cpp
+    src/core/audiolevel.cpp
+    src/core/benchmark.cpp
+    src/core/buffer.cpp
+    src/core/bufferediodevice.cpp
+    src/core/bufferiodevice.cpp
+    src/core/char.cpp
+    src/core/ciepoint.cpp
+    src/core/cmdlineparser.cpp
+    src/core/color.cpp
+    src/core/colormodel.cpp
+    src/core/datastream.cpp
+    src/core/datetime.cpp
+    src/core/dir.cpp
+    src/core/duration.cpp
+    src/core/env.cpp
+    src/core/error.cpp
+    src/core/event.cpp
+    src/core/eventloop.cpp
+    src/core/file.cpp
+    src/core/fileinfo.cpp
+    src/core/fileiodevice.cpp
+    src/core/fourcc.cpp
+    src/core/framerate.cpp
+    src/core/iodevice.cpp
+    src/core/json.cpp
+    src/core/keyevent.cpp
+    src/core/layout.cpp
+    src/core/line.cpp
+    src/core/list.cpp
+    src/core/logger.cpp
+    src/core/map.cpp
+    src/core/matrix.cpp
+    src/core/matrix3x3.cpp
+    src/core/md5.cpp
+    src/core/mempool.cpp
+    src/core/memspace.cpp
+    src/core/metadata.cpp
+    src/core/mouseevent.cpp
+    src/core/numname.cpp
+    src/core/numnameseq.cpp
+    src/core/objectbase.cpp
+    src/core/pidcontroller.cpp
+    src/core/pixeldesc.cpp
+    src/core/pixelformat.cpp
+    src/core/point.cpp
+    src/core/process.cpp
+    src/core/random.cpp
+    src/core/rational.cpp
+    src/core/rect.cpp
+    src/core/regex.cpp
+    src/core/set.cpp
+    src/core/sha1.cpp
+    src/core/sharedptr.cpp
+    src/core/signal.cpp
+    src/core/size2d.cpp
+    src/core/slot.cpp
+    src/core/string.cpp
+    src/core/stringdata.cpp
+    src/core/stringiodevice.cpp
+    src/core/stringlist.cpp
+    src/core/system.cpp
+    src/core/terminal.cpp
+    src/core/textstream.cpp
+    src/core/thread.cpp
+    src/core/threadpool.cpp
+    src/core/timecode.cpp
+    src/core/timecodegenerator.cpp
+    src/core/timestamp.cpp
+    src/core/util.cpp
+    src/core/uuid.cpp
+    src/core/variant.cpp
+    src/core/widget.cpp
+    src/core/xyzcolor.cpp
 )
 
-add_library(promeki-core SHARED ${PROMEKI_CORE_SOURCES})
-add_library(promeki::core ALIAS promeki-core)
-set_target_properties(promeki-core PROPERTIES
-    VERSION ${APP_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    OUTPUT_NAME promeki-core
-    EXPORT_NAME core
-)
-# Create a build-time directory layout so that
-# #include <promeki/thirdparty/nlohmann/json.hpp> resolves correctly.
-# At install time, the nlohmann headers land under the same path.
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/thirdparty-include/promeki/thirdparty)
-file(CREATE_LINK
-    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include/nlohmann
-    ${CMAKE_BINARY_DIR}/thirdparty-include/promeki/thirdparty/nlohmann
-    SYMBOLIC
-)
-file(CREATE_LINK
-    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
-    ${CMAKE_BINARY_DIR}/thirdparty-include/promeki/thirdparty/doctest
-    SYMBOLIC
-)
-target_include_directories(promeki-core PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/thirdparty-include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
-# nlohmann headers internally use #include <nlohmann/...> with angle
-# brackets, so the parent directory must also be on the include path.
-target_include_directories(promeki-core PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
-)
-target_include_directories(promeki-core PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libvtc/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
-)
-target_link_libraries(promeki-core PUBLIC stdc++fs)
-target_link_libraries(promeki-core PRIVATE vtc_static m)
-target_compile_definitions(promeki-core PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-
-# ProAV Library ################################################################
-
-if(PROMEKI_BUILD_PROAV)
-    include(ExternalProject)
-
-    # All thirdparty static libs are built with -fPIC and absorbed into
-    # promeki-proav.so.  Their headers install under promeki/thirdparty/
-    # so they never collide with system versions of the same libraries.
-    set(PROMEKI_THIRDPARTY_PREFIX ${CMAKE_BINARY_DIR}/thirdparty-install)
-    set(PROMEKI_THIRDPARTY_INCDIR include/promeki/thirdparty)
-
-    # Pre-create the thirdparty include directory.  ExternalProject builds
-    # that export cmake configs (e.g. zlib) reference this path in their
-    # INTERFACE_INCLUDE_DIRECTORIES, and CMake validates it exists at
-    # configure time of dependent EPs.
-    file(MAKE_DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/${PROMEKI_THIRDPARTY_INCDIR})
-
-    # zlib — required by libpng and freetype, built first
-    # Note: zlib's cmake modifies its source tree (renames zconf.h), so we
-    # copy the source to a build-time directory to keep the submodule clean.
-    set(PROMEKI_ZLIB_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/zlib)
-    ExternalProject_Add(
-        zlib-ep
-        DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zlib
-            ${PROMEKI_ZLIB_SRC_COPY}
-        SOURCE_DIR ${PROMEKI_ZLIB_SRC_COPY}
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-            -DCMAKE_INSTALL_INCLUDEDIR=${PROMEKI_THIRDPARTY_INCDIR}
-            -DZLIB_BUILD_EXAMPLES=OFF
+# Network sources
+if(PROMEKI_ENABLE_NETWORK)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/abstractsocket.h
+        include/promeki/ipv4address.h
+        include/promeki/ipv6address.h
+        include/promeki/macaddress.h
+        include/promeki/multicastmanager.h
+        include/promeki/networkaddress.h
+        include/promeki/prioritysocket.h
+        include/promeki/rawsocket.h
+        include/promeki/rtppacket.h
+        include/promeki/rtppayload.h
+        include/promeki/rtpsession.h
+        include/promeki/sdpsession.h
+        include/promeki/socketaddress.h
+        include/promeki/tcpserver.h
+        include/promeki/tcpsocket.h
+        include/promeki/udpsocket.h
     )
-
-    # libjpeg-turbo
-    ExternalProject_Add(
-        libjpeg-turbo-ep
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libjpeg-turbo
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-            -DENABLE_SHARED=OFF
-            -DENABLE_STATIC=ON
-            -DWITH_TURBOJPEG=OFF
-            -DCMAKE_INSTALL_INCLUDEDIR=${PROMEKI_THIRDPARTY_INCDIR}
-    )
-
-    # libsndfile
-    ExternalProject_Add(
-        libsndfile-ep
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libsndfile
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-            -DBUILD_SHARED_LIBS=OFF
-            -DBUILD_PROGRAMS=OFF
-            -DBUILD_EXAMPLES=OFF
-            -DBUILD_TESTING=OFF
-            -DENABLE_EXTERNAL_LIBS=OFF
-            -DENABLE_MPEG=OFF
-            -DCMAKE_INSTALL_INCLUDEDIR=${PROMEKI_THIRDPARTY_INCDIR}
-    )
-
-    # Paths for finding bundled zlib from libpng/freetype
-    set(PROMEKI_ZLIB_INCLUDE ${PROMEKI_THIRDPARTY_PREFIX}/${PROMEKI_THIRDPARTY_INCDIR})
-    set(PROMEKI_ZLIB_LIBRARY ${PROMEKI_THIRDPARTY_PREFIX}/lib/libz.a)
-
-    # libpng — depends on zlib
-    ExternalProject_Add(
-        libpng-ep
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libpng
-        DEPENDS zlib-ep
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-            -DZLIB_INCLUDE_DIR=${PROMEKI_ZLIB_INCLUDE}
-            -DZLIB_LIBRARY=${PROMEKI_ZLIB_LIBRARY}
-            -DPNG_SHARED=OFF
-            -DPNG_STATIC=ON
-            -DPNG_TESTS=OFF
-            -DPNG_TOOLS=OFF
-            -DCMAKE_INSTALL_INCLUDEDIR=${PROMEKI_THIRDPARTY_INCDIR}
-    )
-
-    # freetype — depends on zlib, disable all other optional deps
-    ExternalProject_Add(
-        freetype-ep
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/freetype
-        DEPENDS zlib-ep
-        CMAKE_ARGS
-            -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
-            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-            -DZLIB_INCLUDE_DIR=${PROMEKI_ZLIB_INCLUDE}
-            -DZLIB_LIBRARY=${PROMEKI_ZLIB_LIBRARY}
-            -DBUILD_SHARED_LIBS=OFF
-            -DFT_DISABLE_BZIP2=ON
-            -DFT_DISABLE_BROTLI=ON
-            -DFT_DISABLE_HARFBUZZ=ON
-            -DFT_DISABLE_PNG=ON
-            -DCMAKE_INSTALL_INCLUDEDIR=${PROMEKI_THIRDPARTY_INCDIR}
-    )
-
-    set(PROMEKI_PROAV_HEADERS
-        include/promeki/proav/audio.h
-        include/promeki/proav/audioblock.h
-        include/promeki/proav/audiodesc.h
-        include/promeki/proav/audiofile.h
-        include/promeki/proav/audiofilefactory.h
-        include/promeki/proav/audiogen.h
-        include/promeki/proav/ciepoint.h
-        include/promeki/proav/ciewavelengthtable.h
-        include/promeki/proav/audiotestpattern.h
-        include/promeki/proav/codec.h
-        include/promeki/proav/encodeddesc.h
-        include/promeki/proav/framedemuxnode.h
-        include/promeki/proav/jpegimagecodec.h
-        include/promeki/proav/jpegencodernode.h
-        include/promeki/proav/ltcdecoder.h
-        include/promeki/proav/ltcencoder.h
-        include/promeki/proav/medianode.h
-        include/promeki/proav/medianodeconfig.h
-        include/promeki/proav/mediapipeline.h
-        include/promeki/proav/mediapipelineconfig.h
-        include/promeki/proav/mediasink.h
-        include/promeki/proav/mediasource.h
-        include/promeki/proav/font.h
-        include/promeki/proav/fastfont.h
-        include/promeki/proav/basicfont.h
-        include/promeki/proav/frame.h
-        include/promeki/proav/image.h
-        include/promeki/proav/imagedesc.h
-        include/promeki/proav/imagefile.h
-        include/promeki/proav/imagefileio.h
-        include/promeki/proav/paintengine.h
-        include/promeki/proav/testpatternnode.h
-        include/promeki/proav/videotestpattern.h
-        include/promeki/proav/timecodeoverlaynode.h
-        include/promeki/proav/videodesc.h
-        include/promeki/proav/xyzcolor.h
-    )
-
-    list(APPEND PROMEKI_PROAV_HEADERS
-        include/promeki/proav/rtpvideosinknode.h
-        include/promeki/proav/rtpaudiosinknode.h
-    )
-
-    set(PROMEKI_PROAV_SOURCES
-        src/audiodesc.cpp
-        src/audio.cpp
-        src/audioblock.cpp
-        src/audiofile.cpp
-        src/audiofilefactory.cpp
-        src/audiogen.cpp
-        src/imagedesc.cpp
-        src/image.cpp
-        src/imagefile.cpp
-        src/imagefileio.cpp
-        src/pixeldesc_proav.cpp
-        src/pixeldesc_rgba8.cpp
-        src/pixeldesc_rgb8.cpp
-        src/paintengine.cpp
-        src/frame.cpp
-        src/audiotestpattern.cpp
-        src/codec.cpp
-        src/encodeddesc.cpp
-        src/framedemuxnode.cpp
-        src/jpegimagecodec.cpp
-        src/jpegencodernode.cpp
-        src/ltcdecoder.cpp
-        src/ltcencoder.cpp
-        src/medianode.cpp
-        src/medianodeconfig.cpp
-        src/mediapipeline.cpp
-        src/mediapipelineconfig.cpp
-        src/mediasink.cpp
-        src/mediasource.cpp
-        src/benchmarkreporter.cpp
-        src/testpatternnode.cpp
-        src/videotestpattern.cpp
-        src/timecodeoverlaynode.cpp
-        src/videodesc.cpp
-    )
-
-    list(APPEND PROMEKI_PROAV_SOURCES
-        src/rtpvideosinknode.cpp
-        src/rtpaudiosinknode.cpp
-    )
-
-    add_library(promeki-proav SHARED ${PROMEKI_PROAV_SOURCES})
-    add_library(promeki::proav ALIAS promeki-proav)
-    set_target_properties(promeki-proav PROPERTIES
-        VERSION ${APP_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        OUTPUT_NAME promeki-proav
-        EXPORT_NAME proav
-    )
-    # Thirdparty headers live under promeki/thirdparty/ to avoid collisions
-    # with system versions.  Include paths are set so that:
-    #   #include <promeki/thirdparty/sndfile.h>
-    #   #include <promeki/thirdparty/jpeglib.h>
-    #   #include <promeki/thirdparty/freetype2/ft2build.h>
-    # work at both build time and after install.
-    #
-    # The freetype2/ path is needed because ft2build.h internally does
-    # #include <freetype/config/ftheader.h> with angle brackets.
-    target_include_directories(promeki-proav PUBLIC
-        $<BUILD_INTERFACE:${PROMEKI_THIRDPARTY_PREFIX}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    )
-    target_include_directories(promeki-proav PUBLIC
-        $<BUILD_INTERFACE:${PROMEKI_THIRDPARTY_PREFIX}/${PROMEKI_THIRDPARTY_INCDIR}/freetype2>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty/freetype2>
-    )
-    target_link_directories(promeki-proav PRIVATE
-        ${PROMEKI_THIRDPARTY_PREFIX}/lib
-        ${PROMEKI_THIRDPARTY_PREFIX}/lib64
-    )
-    target_link_libraries(promeki-proav PUBLIC promeki-core)
-    target_link_libraries(promeki-proav PUBLIC promeki-network)
-    target_link_libraries(promeki-proav PRIVATE vtc_static)
-    target_compile_definitions(promeki-proav PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-    add_dependencies(promeki-proav
-        zlib-ep libjpeg-turbo-ep libsndfile-ep libpng-ep freetype-ep
-    )
-
-    # All static libs are absorbed into libpromeki-proav.so — consumers
-    # never need to link against them directly.
-    target_link_libraries(promeki-proav PRIVATE jpeg)
-    target_link_libraries(promeki-proav PRIVATE sndfile)
-    target_link_libraries(promeki-proav PRIVATE png z)
-    target_link_libraries(promeki-proav PRIVATE freetype)
-    target_compile_definitions(promeki-proav PRIVATE
-        PROMEKI_ENABLE_PNG
-        PROMEKI_ENABLE_FREETYPE
-        PROMEKI_ENABLE_SNDFILE
-    )
-    target_sources(promeki-proav PRIVATE
-        src/imagefileio_png.cpp
-        src/font.cpp
-        src/fastfont.cpp
-        src/basicfont.cpp
-        src/audiofile_libsndfile.cpp
+    list(APPEND PROMEKI_SOURCES
+        src/network/abstractsocket.cpp
+        src/network/ipv4address.cpp
+        src/network/ipv6address.cpp
+        src/network/macaddress.cpp
+        src/network/multicastmanager.cpp
+        src/network/networkaddress.cpp
+        src/network/prioritysocket.cpp
+        src/network/rawsocket.cpp
+        src/network/rtppayload.cpp
+        src/network/rtpsession.cpp
+        src/network/sdpsession.cpp
+        src/network/socketaddress.cpp
+        src/network/tcpserver.cpp
+        src/network/tcpsocket.cpp
+        src/network/udpsocket.cpp
     )
 endif()
 
-# Music Library ################################################################
+# ProAV sources
+if(PROMEKI_ENABLE_PROAV)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/audio.h
+        include/promeki/audioblock.h
+        include/promeki/audiodesc.h
+        include/promeki/audiofile.h
+        include/promeki/audiofilefactory.h
+        include/promeki/audiogen.h
+        include/promeki/audiotestpattern.h
+        include/promeki/basicfont.h
+        include/promeki/benchmarkreporter.h
+        include/promeki/codec.h
+        include/promeki/encodeddesc.h
+        include/promeki/fastfont.h
+        include/promeki/font.h
+        include/promeki/frame.h
+        include/promeki/image.h
+        include/promeki/imagedesc.h
+        include/promeki/imagefile.h
+        include/promeki/imagefileio.h
+        include/promeki/jpegimagecodec.h
+        include/promeki/jpegencodernode.h
+        include/promeki/ltcdecoder.h
+        include/promeki/ltcencoder.h
+        include/promeki/medianode.h
+        include/promeki/medianodeconfig.h
+        include/promeki/mediapipeline.h
+        include/promeki/mediapipelineconfig.h
+        include/promeki/mediasink.h
+        include/promeki/mediasource.h
+        include/promeki/paintengine.h
+        include/promeki/testpatternnode.h
+        include/promeki/timecodeoverlaynode.h
+        include/promeki/videodesc.h
+        include/promeki/videotestpattern.h
+    )
+    list(APPEND PROMEKI_SOURCES
+        src/proav/audio.cpp
+        src/proav/audioblock.cpp
+        src/proav/audiodesc.cpp
+        src/proav/audiofile.cpp
+        src/proav/audiofilefactory.cpp
+        src/proav/audiogen.cpp
+        src/proav/audiotestpattern.cpp
+        src/proav/benchmarkreporter.cpp
+        src/proav/codec.cpp
+        src/proav/encodeddesc.cpp
+        src/proav/frame.cpp
+        src/proav/framedemuxnode.cpp
+        src/proav/image.cpp
+        src/proav/imagedesc.cpp
+        src/proav/imagefile.cpp
+        src/proav/imagefileio.cpp
+        src/proav/jpegimagecodec.cpp
+        src/proav/jpegencodernode.cpp
+        src/proav/ltcdecoder.cpp
+        src/proav/ltcencoder.cpp
+        src/proav/medianode.cpp
+        src/proav/medianodeconfig.cpp
+        src/proav/mediapipeline.cpp
+        src/proav/mediapipelineconfig.cpp
+        src/proav/mediasink.cpp
+        src/proav/mediasource.cpp
+        src/proav/paintengine.cpp
+        src/proav/pixeldesc_rgb8.cpp
+        src/proav/pixeldesc_rgba8.cpp
+        src/proav/testpatternnode.cpp
+        src/proav/timecodeoverlaynode.cpp
+        src/proav/videodesc.cpp
+        src/proav/videotestpattern.cpp
+    )
 
-if(PROMEKI_BUILD_MUSIC)
-    if(NOT PROMEKI_BUILD_PROAV)
-        message(FATAL_ERROR "promeki-music requires promeki-proav (PROMEKI_BUILD_PROAV=ON)")
+    # RTP sink nodes require networking
+    if(PROMEKI_ENABLE_NETWORK)
+        list(APPEND PROMEKI_HEADERS
+            include/promeki/rtpaudiosinknode.h
+            include/promeki/rtpvideosinknode.h
+        )
+        list(APPEND PROMEKI_SOURCES
+            src/proav/rtpaudiosinknode.cpp
+            src/proav/rtpvideosinknode.cpp
+        )
     endif()
 
-    set(PROMEKI_MUSIC_HEADERS
-        include/promeki/music/musicalnote.h
-        include/promeki/music/musicalscale.h
-        include/promeki/music/midinote.h
-        include/promeki/music/midinotenames.h
-        include/promeki/music/notesequenceparser.h
-    )
+    # Feature-gated proav sources
+    if(PROMEKI_ENABLE_JPEG)
+        # jpegimagecodec is always included when proav is on; this gate
+        # controls linking against libjpeg (codec uses it internally)
+    endif()
+    if(PROMEKI_ENABLE_PNG)
+        list(APPEND PROMEKI_SOURCES src/proav/imagefileio_png.cpp)
+    endif()
+    if(PROMEKI_ENABLE_FREETYPE)
+        list(APPEND PROMEKI_SOURCES
+            src/proav/font.cpp
+            src/proav/fastfont.cpp
+            src/proav/basicfont.cpp
+        )
+    endif()
+    if(PROMEKI_ENABLE_AUDIO)
+        list(APPEND PROMEKI_SOURCES src/proav/audiofile_libsndfile.cpp)
+    endif()
+endif()
 
-    set(PROMEKI_MUSIC_SOURCES
-        src/musicalscale.cpp
-        src/midinote.cpp
-        src/midinotenames.cpp
-        src/notesequenceparser.cpp
+# Music sources
+if(PROMEKI_ENABLE_MUSIC)
+    list(APPEND PROMEKI_HEADERS
+        include/promeki/midinote.h
+        include/promeki/midinotenames.h
+        include/promeki/musicalnote.h
+        include/promeki/musicalscale.h
+        include/promeki/notesequenceparser.h
     )
+    list(APPEND PROMEKI_SOURCES
+        src/music/midinote.cpp
+        src/music/midinotenames.cpp
+        src/music/musicalscale.cpp
+        src/music/notesequenceparser.cpp
+    )
+endif()
 
-    add_library(promeki-music SHARED ${PROMEKI_MUSIC_SOURCES})
-    add_library(promeki::music ALIAS promeki-music)
-    set_target_properties(promeki-music PROPERTIES
-        VERSION ${APP_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        OUTPUT_NAME promeki-music
-        EXPORT_NAME music
+add_library(promeki SHARED ${PROMEKI_SOURCES})
+add_library(promeki::promeki ALIAS promeki)
+set_target_properties(promeki PROPERTIES
+    VERSION ${APP_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    OUTPUT_NAME promeki
+    EXPORT_NAME promeki
+)
+
+# Include directories
+target_include_directories(promeki PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+# nlohmann-json include paths (headers use #include <nlohmann/json.hpp>)
+if(PROMEKI_USE_SYSTEM_NLOHMANN_JSON)
+    target_link_libraries(promeki PUBLIC nlohmann_json::nlohmann_json)
+else()
+    target_include_directories(promeki PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
     )
-    target_include_directories(promeki-music PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+endif()
+
+# libvtc include paths
+if(PROMEKI_USE_SYSTEM_VTC)
+    target_link_libraries(promeki PRIVATE ${PROMEKI_VTC_TARGET})
+else()
+    target_include_directories(promeki PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libvtc/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
     )
-    target_link_libraries(promeki-music PUBLIC promeki-proav)
-    target_compile_definitions(promeki-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+    target_link_libraries(promeki PRIVATE ${PROMEKI_VTC_TARGET})
+endif()
+
+target_link_libraries(promeki PUBLIC stdc++fs)
+target_link_libraries(promeki PRIVATE m)
+target_compile_definitions(promeki PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+
+# Vendored thirdparty include paths and link dependencies
+if(PROMEKI_ENABLE_PROAV)
+    # When using vendored deps, we need their include paths for compilation
+    if(NOT PROMEKI_USE_SYSTEM_LIBJPEG AND PROMEKI_ENABLE_JPEG)
+        target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
+    endif()
+    if(NOT PROMEKI_USE_SYSTEM_LIBPNG AND PROMEKI_ENABLE_PNG)
+        target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
+    endif()
+    if(NOT PROMEKI_USE_SYSTEM_SNDFILE AND PROMEKI_ENABLE_AUDIO)
+        target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
+    endif()
+    if(NOT PROMEKI_USE_SYSTEM_FREETYPE AND PROMEKI_ENABLE_FREETYPE)
+        target_include_directories(promeki PRIVATE
+            ${PROMEKI_THIRDPARTY_PREFIX}/include
+            ${PROMEKI_THIRDPARTY_PREFIX}/include/freetype2
+        )
+    endif()
+
+    if(PROMEKI_ENABLE_JPEG)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_JPEG_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_JPEG)
+    endif()
+    if(PROMEKI_ENABLE_PNG)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_PNG_TARGET} ${PROMEKI_ZLIB_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_PNG)
+    endif()
+    if(PROMEKI_ENABLE_FREETYPE)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_FREETYPE_TARGET} ${PROMEKI_ZLIB_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_FREETYPE)
+    endif()
+    if(PROMEKI_ENABLE_AUDIO)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
+    endif()
 endif()
 
 # TUI Library ##################################################################
 
 if(PROMEKI_BUILD_TUI)
     set(PROMEKI_TUI_HEADERS
-        include/promeki/tui/style.h
-        include/promeki/tui/screen.h
-        include/promeki/tui/widget.h
-        include/promeki/tui/painter.h
-        include/promeki/tui/layout.h
         include/promeki/tui/application.h
-        include/promeki/tui/label.h
         include/promeki/tui/button.h
         include/promeki/tui/checkbox.h
-        include/promeki/tui/lineedit.h
-        include/promeki/tui/textarea.h
-        include/promeki/tui/listview.h
         include/promeki/tui/frame.h
+        include/promeki/tui/inputparser.h
+        include/promeki/tui/label.h
+        include/promeki/tui/layout.h
+        include/promeki/tui/lineedit.h
+        include/promeki/tui/listview.h
+        include/promeki/tui/menu.h
+        include/promeki/tui/painter.h
+        include/promeki/tui/palette.h
+        include/promeki/tui/progressbar.h
+        include/promeki/tui/screen.h
         include/promeki/tui/scrollarea.h
         include/promeki/tui/splitter.h
-        include/promeki/tui/tabwidget.h
-        include/promeki/tui/progressbar.h
         include/promeki/tui/statusbar.h
-        include/promeki/tui/menu.h
-        include/promeki/tui/palette.h
-        include/promeki/tui/inputparser.h
+        include/promeki/tui/style.h
+        include/promeki/tui/tabwidget.h
+        include/promeki/tui/textarea.h
+        include/promeki/tui/widget.h
     )
 
     set(PROMEKI_TUI_SOURCES
-        src/tui/style.cpp
-        src/tui/palette.cpp
-        src/tui/screen.cpp
-        src/tui/widget.cpp
-        src/tui/painter.cpp
-        #src/tui/layout.cpp  # moved to core
         src/tui/application.cpp
-        src/tui/label.cpp
         src/tui/button.cpp
         src/tui/checkbox.cpp
-        src/tui/lineedit.cpp
-        src/tui/textarea.cpp
-        src/tui/listview.cpp
         src/tui/frame.cpp
+        src/tui/inputparser.cpp
+        src/tui/label.cpp
+        src/tui/lineedit.cpp
+        src/tui/listview.cpp
+        src/tui/menu.cpp
+        src/tui/painter.cpp
+        src/tui/palette.cpp
+        src/tui/progressbar.cpp
+        src/tui/screen.cpp
         src/tui/scrollarea.cpp
         src/tui/splitter.cpp
-        src/tui/tabwidget.cpp
-        src/tui/progressbar.cpp
         src/tui/statusbar.cpp
-        src/tui/menu.cpp
-        src/tui/inputparser.cpp
+        src/tui/style.cpp
+        src/tui/tabwidget.cpp
+        src/tui/textarea.cpp
+        src/tui/widget.cpp
     )
 
     add_library(promeki-tui SHARED ${PROMEKI_TUI_SOURCES})
@@ -660,35 +777,31 @@ if(PROMEKI_BUILD_TUI)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
-    target_link_libraries(promeki-tui PUBLIC promeki-core)
+    target_link_libraries(promeki-tui PUBLIC promeki)
     target_compile_definitions(promeki-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
 # SDL Library ##################################################################
 
 if(PROMEKI_BUILD_SDL)
-    if(NOT PROMEKI_BUILD_PROAV)
-        message(FATAL_ERROR "promeki-sdl requires promeki-proav (PROMEKI_BUILD_PROAV=ON)")
-    endif()
-
     find_package(SDL3 REQUIRED)
 
     set(PROMEKI_SDL_HEADERS
         include/promeki/sdl/sdlapplication.h
-        include/promeki/sdl/sdlwindow.h
-        include/promeki/sdl/sdleventpump.h
-        include/promeki/sdl/sdlvideowidget.h
         include/promeki/sdl/sdlaudiooutput.h
         include/promeki/sdl/sdldisplaynode.h
+        include/promeki/sdl/sdleventpump.h
+        include/promeki/sdl/sdlvideowidget.h
+        include/promeki/sdl/sdlwindow.h
     )
 
     set(PROMEKI_SDL_SOURCES
         src/sdl/sdlapplication.cpp
-        src/sdl/sdlwindow.cpp
-        src/sdl/sdleventpump.cpp
-        src/sdl/sdlvideowidget.cpp
         src/sdl/sdlaudiooutput.cpp
         src/sdl/sdldisplaynode.cpp
+        src/sdl/sdleventpump.cpp
+        src/sdl/sdlvideowidget.cpp
+        src/sdl/sdlwindow.cpp
     )
 
     add_library(promeki-sdl SHARED ${PROMEKI_SDL_SOURCES})
@@ -703,65 +816,8 @@ if(PROMEKI_BUILD_SDL)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
-    target_link_libraries(promeki-sdl PUBLIC promeki-proav)
-    target_link_libraries(promeki-sdl PUBLIC SDL3::SDL3)
+    target_link_libraries(promeki-sdl PUBLIC promeki SDL3::SDL3)
     target_compile_definitions(promeki-sdl PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-endif()
-
-# Network Library ##############################################################
-
-if(PROMEKI_BUILD_NETWORK)
-    set(PROMEKI_NETWORK_HEADERS
-        include/promeki/network/ipv4address.h
-        include/promeki/network/ipv6address.h
-        include/promeki/network/macaddress.h
-        include/promeki/network/networkaddress.h
-        include/promeki/network/socketaddress.h
-        include/promeki/network/abstractsocket.h
-        include/promeki/network/tcpsocket.h
-        include/promeki/network/tcpserver.h
-        include/promeki/network/udpsocket.h
-        include/promeki/network/rawsocket.h
-        include/promeki/network/prioritysocket.h
-        include/promeki/network/rtppacket.h
-        include/promeki/network/rtppayload.h
-        include/promeki/network/rtpsession.h
-        include/promeki/network/sdpsession.h
-        include/promeki/network/multicastmanager.h
-    )
-
-    set(PROMEKI_NETWORK_SOURCES
-        src/net/ipv4address.cpp
-        src/net/ipv6address.cpp
-        src/net/macaddress.cpp
-        src/net/networkaddress.cpp
-        src/net/socketaddress.cpp
-        src/net/abstractsocket.cpp
-        src/net/tcpsocket.cpp
-        src/net/tcpserver.cpp
-        src/net/udpsocket.cpp
-        src/net/rawsocket.cpp
-        src/net/prioritysocket.cpp
-        src/net/rtppayload.cpp
-        src/net/rtpsession.cpp
-        src/net/sdpsession.cpp
-        src/net/multicastmanager.cpp
-    )
-
-    add_library(promeki-network SHARED ${PROMEKI_NETWORK_SOURCES})
-    add_library(promeki::network ALIAS promeki-network)
-    set_target_properties(promeki-network PROPERTIES
-        VERSION ${APP_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        OUTPUT_NAME promeki-network
-        EXPORT_NAME network
-    )
-    target_include_directories(promeki-network PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    )
-    target_link_libraries(promeki-network PUBLIC promeki-core)
-    target_compile_definitions(promeki-network PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
 # Utility Applications #########################################################
@@ -785,57 +841,56 @@ install(FILES
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 
-# Core library and headers
-install(TARGETS promeki-core
-    EXPORT promeki-core-targets
+# Main library
+install(TARGETS promeki
+    EXPORT promeki-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-install(FILES ${PROMEKI_CORE_HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/core
+
+# Install headers (flat under promeki/, excluding tui and sdl subdirs)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN "tui" EXCLUDE
+    PATTERN "sdl" EXCLUDE
+    PATTERN "*.h.in" EXCLUDE
 )
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include/nlohmann
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
+
+# Install generated config.h
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/promeki/config.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
 )
+
+# Install vendored nlohmann headers (needed by consumers) unless using system
+if(NOT PROMEKI_USE_SYSTEM_NLOHMANN_JSON)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/nlohmann-json/include/nlohmann
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
+    )
+endif()
+
+# Install vendored libvtc headers (needed by consumers) unless using system
+if(NOT PROMEKI_USE_SYSTEM_VTC)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libvtc/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
+    )
+endif()
+
+# Install doctest headers
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/doctest
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty
 )
 
-# Export core targets
-install(EXPORT promeki-core-targets
-    FILE promeki-core-targets.cmake
+# Export main targets
+install(EXPORT promeki-targets
+    FILE promeki-targets.cmake
     NAMESPACE promeki::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
 )
 
-# ProAV library and headers
-if(PROMEKI_BUILD_PROAV)
-    install(TARGETS promeki-proav
-        EXPORT promeki-proav-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-    install(FILES ${PROMEKI_PROAV_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/proav
-    )
-    # Ship bundled thirdparty headers under promeki/thirdparty/ so they
-    # never collide with system versions.  The actual libraries are
-    # statically linked into libpromeki-proav.so — no extra -l flags needed.
-    install(DIRECTORY ${PROMEKI_THIRDPARTY_PREFIX}/include/promeki/thirdparty
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki
-    )
-    install(EXPORT promeki-proav-targets
-        FILE promeki-proav-targets.cmake
-        NAMESPACE promeki::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
-    )
-endif()
-
-# TUI library and headers
+# TUI library
 if(PROMEKI_BUILD_TUI)
     install(TARGETS promeki-tui
         EXPORT promeki-tui-targets
@@ -854,45 +909,7 @@ if(PROMEKI_BUILD_TUI)
     )
 endif()
 
-# Network library and headers
-if(PROMEKI_BUILD_NETWORK)
-    install(TARGETS promeki-network
-        EXPORT promeki-network-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-    install(FILES ${PROMEKI_NETWORK_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/network
-    )
-    install(EXPORT promeki-network-targets
-        FILE promeki-network-targets.cmake
-        NAMESPACE promeki::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
-    )
-endif()
-
-# Music library and headers
-if(PROMEKI_BUILD_MUSIC)
-    install(TARGETS promeki-music
-        EXPORT promeki-music-targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-    install(FILES ${PROMEKI_MUSIC_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/promeki/music
-    )
-    install(EXPORT promeki-music-targets
-        FILE promeki-music-targets.cmake
-        NAMESPACE promeki::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/promeki
-    )
-endif()
-
-# SDL library and headers
+# SDL library
 if(PROMEKI_BUILD_SDL)
     install(TARGETS promeki-sdl
         EXPORT promeki-sdl-targets
@@ -935,128 +952,143 @@ install(FILES
 if(PROMEKI_BUILD_TESTS)
     set(UNITTEST_SOURCES
         tests/doctest_main.cpp
-        tests/mempool.cpp
-        tests/string.cpp
-        tests/point.cpp
-        tests/uuid.cpp
-        tests/bytearray.cpp
-        tests/md5.cpp
-        tests/sha1.cpp
-        tests/timecode.cpp
-        tests/timecodegenerator.cpp
-        tests/numname.cpp
-        tests/objectbase.cpp
-        tests/objectbase2.cpp
-        tests/sharedptr.cpp
-        tests/metadata.cpp
-        tests/json.cpp
-        tests/variant.cpp
-        tests/buffer.cpp
-        tests/bufferview.cpp
-        tests/list.cpp
-        tests/logger.cpp
-        tests/queue.cpp
-        tests/streamstring.cpp
-        tests/rational.cpp
-        tests/map.cpp
-        tests/error.cpp
-        tests/fourcc.cpp
-        tests/size2d.cpp
-        tests/line.cpp
-        tests/array.cpp
-        tests/stringlist.cpp
-        tests/framerate.cpp
-        tests/datetime.cpp
-        tests/timestamp.cpp
-        tests/matrix.cpp
-        tests/matrix3x3.cpp
-        tests/regex.cpp
-        tests/application.cpp
-        tests/system.cpp
-        tests/memspace.cpp
-        tests/file.cpp
-        tests/buildinfo.cpp
-        tests/pidcontroller.cpp
-        tests/set.cpp
-        tests/structdatabase.cpp
-        tests/cmdlineparser.cpp
-        tests/ansistream.cpp
-        tests/fileinfo.cpp
-        tests/fnv1a.cpp
-        tests/obfuscatedstring.cpp
-        tests/signal.cpp
-        tests/event.cpp
-        tests/eventloop.cpp
-        tests/thread.cpp
-        tests/securebuffer.cpp
-        tests/rect.cpp
-        tests/color.cpp
-        tests/env.cpp
-        tests/terminal.cpp
-        tests/pair.cpp
-        tests/result.cpp
-        tests/hashmap.cpp
-        tests/hashset.cpp
-        tests/deque.cpp
-        tests/stack.cpp
-        tests/priorityqueue.cpp
-        tests/span.cpp
-        tests/mutex.cpp
-        tests/readwritelock.cpp
-        tests/waitcondition.cpp
-        tests/atomic.cpp
-        tests/future.cpp
-        tests/threadpool.cpp
-        tests/random.cpp
-        tests/elapsedtimer.cpp
-        tests/audiolevel.cpp
-        tests/duration.cpp
         tests/algorithm.cpp
-        tests/filepath.cpp
-        tests/iodevice.cpp
+        tests/ansistream.cpp
+        tests/application.cpp
+        tests/array.cpp
+        tests/atomic.cpp
+        tests/audiolevel.cpp
+        tests/buffer.cpp
         tests/bufferediodevice.cpp
-        tests/dir.cpp
-        tests/process.cpp
-        tests/datastream.cpp
         tests/bufferiodevice.cpp
-        tests/stringiodevice.cpp
-        tests/fileiodevice.cpp
-        tests/textstream.cpp
-        tests/fileformatfactory.cpp
-        tests/stringregistry.cpp
-        tests/variantdatabase.cpp
-        tests/configoption.cpp
-        tests/xyzcolor.cpp
+        tests/bufferview.cpp
+        tests/buildinfo.cpp
+        tests/bytearray.cpp
         tests/ciepoint.cpp
         tests/ciewavelengthtable.cpp
+        tests/cmdlineparser.cpp
+        tests/color.cpp
         tests/colormodel.cpp
+        tests/configoption.cpp
+        tests/datastream.cpp
+        tests/datetime.cpp
+        tests/deque.cpp
+        tests/dir.cpp
+        tests/duration.cpp
+        tests/elapsedtimer.cpp
+        tests/env.cpp
+        tests/error.cpp
+        tests/event.cpp
+        tests/eventloop.cpp
+        tests/file.cpp
+        tests/fileformatfactory.cpp
+        tests/fileinfo.cpp
+        tests/fileiodevice.cpp
+        tests/filepath.cpp
+        tests/fnv1a.cpp
+        tests/fourcc.cpp
+        tests/framerate.cpp
+        tests/future.cpp
+        tests/hashmap.cpp
+        tests/hashset.cpp
+        tests/iodevice.cpp
+        tests/json.cpp
+        tests/line.cpp
+        tests/list.cpp
+        tests/logger.cpp
+        tests/map.cpp
+        tests/matrix.cpp
+        tests/matrix3x3.cpp
+        tests/md5.cpp
+        tests/mempool.cpp
+        tests/memspace.cpp
+        tests/metadata.cpp
+        tests/mutex.cpp
+        tests/numname.cpp
+        tests/obfuscatedstring.cpp
+        tests/objectbase.cpp
+        tests/objectbase2.cpp
+        tests/pair.cpp
+        tests/pidcontroller.cpp
         tests/pixelformat.cpp
+        tests/point.cpp
+        tests/priorityqueue.cpp
+        tests/process.cpp
+        tests/queue.cpp
+        tests/random.cpp
+        tests/rational.cpp
+        tests/readwritelock.cpp
+        tests/rect.cpp
+        tests/regex.cpp
+        tests/result.cpp
+        tests/securebuffer.cpp
+        tests/set.cpp
+        tests/sha1.cpp
+        tests/sharedptr.cpp
+        tests/signal.cpp
+        tests/size2d.cpp
+        tests/span.cpp
+        tests/stack.cpp
+        tests/streamstring.cpp
+        tests/string.cpp
+        tests/stringiodevice.cpp
+        tests/stringlist.cpp
+        tests/stringregistry.cpp
+        tests/structdatabase.cpp
+        tests/system.cpp
+        tests/terminal.cpp
+        tests/textstream.cpp
+        tests/thread.cpp
+        tests/threadpool.cpp
+        tests/timecode.cpp
+        tests/timecodegenerator.cpp
+        tests/timestamp.cpp
+        tests/uuid.cpp
+        tests/variant.cpp
+        tests/variantdatabase.cpp
+        tests/waitcondition.cpp
+        tests/xyzcolor.cpp
     )
 
-    add_executable(unittest-core ${UNITTEST_SOURCES})
-    target_compile_definitions(unittest-core PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-    target_include_directories(unittest-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-    target_link_libraries(unittest-core PRIVATE promeki-core)
-    add_test(NAME unittest-core COMMAND unittest-core)
+    if(PROMEKI_ENABLE_NETWORK)
+        list(APPEND UNITTEST_SOURCES
+            tests/network/abstractsocket.cpp
+            tests/network/ipv4address.cpp
+            tests/network/ipv6address.cpp
+            tests/network/macaddress.cpp
+            tests/network/multicastmanager.cpp
+            tests/network/networkaddress.cpp
+            tests/network/prioritysocket.cpp
+            tests/network/rawsocket.cpp
+            tests/network/rtppacket.cpp
+            tests/network/rtppayload.cpp
+            tests/network/rtpsession.cpp
+            tests/network/sdpsession.cpp
+            tests/network/socketaddress.cpp
+            tests/network/tcpserver.cpp
+            tests/network/tcpsocket.cpp
+            tests/network/udpsocket.cpp
+        )
+    endif()
 
-    if(PROMEKI_BUILD_PROAV)
-        set(UNITTEST_PROAV_SOURCES
-            tests/doctest_main.cpp
+    if(PROMEKI_ENABLE_PROAV)
+        list(APPEND UNITTEST_SOURCES
             tests/audio.cpp
-            tests/imagedesc.cpp
-            tests/audiodesc.cpp
-            tests/videodesc.cpp
-            tests/image2.cpp
-            tests/pixeldesc.cpp
-            tests/frame.cpp
-            tests/imagefileio.cpp
-            tests/codec.cpp
             tests/audioblock.cpp
+            tests/audiodesc.cpp
             tests/audiofilefactory.cpp
-            tests/imagefile.cpp
-            tests/paintengine.cpp
+            tests/audiotestpattern.cpp
+            tests/codec.cpp
             tests/encodeddesc.cpp
+            tests/fastfont.cpp
+            tests/basicfont.cpp
+            tests/frame.cpp
             tests/framedemuxnode.cpp
+            tests/image.cpp
+            tests/imagedesc.cpp
+            tests/imagefile.cpp
+            tests/imagefileio.cpp
+            tests/jpegimagecodec.cpp
             tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp
             tests/ltcencoder.cpp
@@ -1066,99 +1098,68 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediapipelineconfig.cpp
             tests/mediasink.cpp
             tests/mediasource.cpp
-            tests/videotestpattern.cpp
-            tests/audiotestpattern.cpp
-            tests/jpegimagecodec.cpp
+            tests/paintengine.cpp
+            tests/pixeldesc.cpp
             tests/testpatternnode.cpp
-            tests/fastfont.cpp
-            tests/basicfont.cpp
             tests/timecodeoverlaynode.cpp
+            tests/videodesc.cpp
+            tests/videotestpattern.cpp
         )
-        list(APPEND UNITTEST_PROAV_SOURCES
-            tests/rtpvideosinknode.cpp
-            tests/rtpaudiosinknode.cpp
-        )
-        add_executable(unittest-proav ${UNITTEST_PROAV_SOURCES})
-        target_compile_definitions(unittest-proav PRIVATE
-            $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>
-            PROMEKI_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
-        )
-        target_include_directories(unittest-proav PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-        target_link_libraries(unittest-proav PRIVATE promeki-proav)
-        add_test(NAME unittest-proav COMMAND unittest-proav)
+        if(PROMEKI_ENABLE_NETWORK)
+            list(APPEND UNITTEST_SOURCES
+                tests/rtpaudiosinknode.cpp
+                tests/rtpvideosinknode.cpp
+            )
+        endif()
     endif()
+
+    if(PROMEKI_ENABLE_MUSIC)
+        list(APPEND UNITTEST_SOURCES
+            tests/midinote.cpp
+            tests/midinotenames.cpp
+            tests/musicalnote.cpp
+            tests/musicalscale.cpp
+            tests/notesequenceparser.cpp
+        )
+    endif()
+
+    add_executable(unittest-promeki ${UNITTEST_SOURCES})
+    target_compile_definitions(unittest-promeki PRIVATE
+        $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>
+        PROMEKI_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    target_include_directories(unittest-promeki PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+    target_link_libraries(unittest-promeki PRIVATE promeki)
+    add_test(NAME unittest-promeki COMMAND unittest-promeki)
 
     if(PROMEKI_BUILD_TUI)
         set(UNITTEST_TUI_SOURCES
             tests/doctest_main.cpp
-            tests/tui/screen.cpp
-            tests/tui/widget.cpp
-            tests/tui/painter.cpp
-            tests/tui/layout.cpp
-            tests/tui/label.cpp
             tests/tui/button.cpp
             tests/tui/checkbox.cpp
             tests/tui/frame.cpp
             tests/tui/inputparser.cpp
-            tests/tui/palette.cpp
+            tests/tui/label.cpp
+            tests/tui/layout.cpp
             tests/tui/lineedit.cpp
-            tests/tui/textarea.cpp
             tests/tui/listview.cpp
+            tests/tui/menu.cpp
+            tests/tui/painter.cpp
+            tests/tui/palette.cpp
+            tests/tui/progressbar.cpp
+            tests/tui/screen.cpp
             tests/tui/scrollarea.cpp
             tests/tui/splitter.cpp
-            tests/tui/tabwidget.cpp
-            tests/tui/progressbar.cpp
             tests/tui/statusbar.cpp
-            tests/tui/menu.cpp
+            tests/tui/tabwidget.cpp
+            tests/tui/textarea.cpp
+            tests/tui/widget.cpp
         )
         add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
         target_compile_definitions(unittest-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
         target_include_directories(unittest-tui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-tui PRIVATE promeki-tui)
         add_test(NAME unittest-tui COMMAND unittest-tui)
-    endif()
-
-    if(PROMEKI_BUILD_NETWORK)
-        set(UNITTEST_NETWORK_SOURCES
-            tests/doctest_main.cpp
-            tests/net/ipv4address.cpp
-            tests/net/ipv6address.cpp
-            tests/net/macaddress.cpp
-            tests/net/networkaddress.cpp
-            tests/net/socketaddress.cpp
-            tests/net/abstractsocket.cpp
-            tests/net/udpsocket.cpp
-            tests/net/tcpsocket.cpp
-            tests/net/tcpserver.cpp
-            tests/net/rawsocket.cpp
-            tests/net/prioritysocket.cpp
-            tests/net/rtppacket.cpp
-            tests/net/rtppayload.cpp
-            tests/net/rtpsession.cpp
-            tests/net/sdpsession.cpp
-            tests/net/multicastmanager.cpp
-        )
-        add_executable(unittest-network ${UNITTEST_NETWORK_SOURCES})
-        target_compile_definitions(unittest-network PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-        target_include_directories(unittest-network PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-        target_link_libraries(unittest-network PRIVATE promeki-network)
-        add_test(NAME unittest-network COMMAND unittest-network)
-    endif()
-
-    if(PROMEKI_BUILD_MUSIC)
-        set(UNITTEST_MUSIC_SOURCES
-            tests/doctest_main.cpp
-            tests/midinote.cpp
-            tests/midinotenames.cpp
-            tests/musicalscale.cpp
-            tests/notesequenceparser.cpp
-            tests/musicalnote.cpp
-        )
-        add_executable(unittest-music ${UNITTEST_MUSIC_SOURCES})
-        target_compile_definitions(unittest-music PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
-        target_include_directories(unittest-music PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
-        target_link_libraries(unittest-music PRIVATE promeki-music)
-        add_test(NAME unittest-music COMMAND unittest-music)
     endif()
 
     if(PROMEKI_BUILD_SDL)
@@ -1174,51 +1175,38 @@ if(PROMEKI_BUILD_TESTS)
     endif()
 
     # Run tests as part of the normal build
+    set(PROMEKI_TEST_TARGETS unittest-promeki)
+    if(PROMEKI_BUILD_TUI)
+        list(APPEND PROMEKI_TEST_TARGETS unittest-tui)
+    endif()
+    if(PROMEKI_BUILD_SDL)
+        list(APPEND PROMEKI_TEST_TARGETS unittest-sdl)
+    endif()
+
     add_custom_target(run-tests ALL
         COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-        DEPENDS unittest-core
-            $<$<BOOL:${PROMEKI_BUILD_PROAV}>:unittest-proav>
-            $<$<BOOL:${PROMEKI_BUILD_TUI}>:unittest-tui>
-            $<$<BOOL:${PROMEKI_BUILD_NETWORK}>:unittest-network>
-            $<$<BOOL:${PROMEKI_BUILD_MUSIC}>:unittest-music>
-            $<$<BOOL:${PROMEKI_BUILD_SDL}>:unittest-sdl>
+        DEPENDS ${PROMEKI_TEST_TARGETS}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running unit tests"
     )
 endif()
 
 # Custom Clean Targets #########################################################
-# libclean:  removes only promeki library objects, tests, utils, and demos
-#            (preserves third-party builds so they don't need to be rebuilt)
-# clean:     built-in CMake target that removes everything including third-party
 
 set(PROMEKI_CLEAN_DIRS
-    ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-core.dir
+    ${CMAKE_BINARY_DIR}/CMakeFiles/promeki.dir
     ${CMAKE_BINARY_DIR}/CMakeFiles/libpromeki_invalidate_build_info.dir
     ${CMAKE_BINARY_DIR}/buildinfo.cpp
-    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-core*
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki.*
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-*.so*
 )
 
-set(PROMEKI_CLEAN_TEST_DIRS "")
 if(PROMEKI_BUILD_TESTS)
     list(APPEND PROMEKI_CLEAN_DIRS
-        ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-core.dir
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-core
+        ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-promeki.dir
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-promeki
         ${CMAKE_BINARY_DIR}/CMakeFiles/run-tests.dir
     )
-endif()
-
-if(PROMEKI_BUILD_PROAV)
-    list(APPEND PROMEKI_CLEAN_DIRS
-        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-proav.dir
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-proav*
-    )
-    if(PROMEKI_BUILD_TESTS)
-        list(APPEND PROMEKI_CLEAN_DIRS
-            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-proav.dir
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-proav
-        )
-    endif()
 endif()
 
 if(PROMEKI_BUILD_TUI)
@@ -1230,32 +1218,6 @@ if(PROMEKI_BUILD_TUI)
         list(APPEND PROMEKI_CLEAN_DIRS
             ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-tui.dir
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-tui
-        )
-    endif()
-endif()
-
-if(PROMEKI_BUILD_MUSIC)
-    list(APPEND PROMEKI_CLEAN_DIRS
-        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-music.dir
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-music*
-    )
-    if(PROMEKI_BUILD_TESTS)
-        list(APPEND PROMEKI_CLEAN_DIRS
-            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-music.dir
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-music
-        )
-    endif()
-endif()
-
-if(PROMEKI_BUILD_NETWORK)
-    list(APPEND PROMEKI_CLEAN_DIRS
-        ${CMAKE_BINARY_DIR}/CMakeFiles/promeki-network.dir
-        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpromeki-network*
-    )
-    if(PROMEKI_BUILD_TESTS)
-        list(APPEND PROMEKI_CLEAN_DIRS
-            ${CMAKE_BINARY_DIR}/CMakeFiles/unittest-network.dir
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest-network
         )
     endif()
 endif()

@@ -2,27 +2,21 @@
 
 **Phase:** 3A
 **Dependencies:** Phase 1 (HashMap, Mutex, WaitCondition, Future), Phase 2 (IODevice)
-**Library:** `promeki-network` (new shared library, CMake option `PROMEKI_BUILD_NETWORK`)
+**Library:** `promeki` (consolidated library, feature flag `PROMEKI_ENABLE_NETWORK`)
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-Headers under `include/promeki/network/`. Uses raw POSIX sockets (no libuv/asio). Socket interfaces are virtual/abstract so WASM can later provide Emscripten-based backends without API changes. Must not preclude a future `SrtSocket` subclass.
+Headers under `include/promeki/`. Sources under `src/network/`. Uses raw POSIX sockets (no libuv/asio). Socket interfaces are virtual/abstract so WASM can later provide Emscripten-based backends without API changes. Must not preclude a future `SrtSocket` subclass.
 
 ---
 
 ## CMake Setup — **DONE**
 
-- [x] Add `PROMEKI_BUILD_NETWORK` option (default ON)
-- [x] Create `include/promeki/network/` directory
-- [x] Create `promeki-network` shared library target (SHARED, with VERSION/SOVERSION matching other libraries)
-- [x] Link against `promeki-core`
-- [x] Create `unittest-network` test executable, register with CTest
-- [x] Install targets (follow existing pattern from promeki-core/promeki-proav):
-  - [x] Headers installed to `include/promeki/network/`
-  - [x] Shared library installed to standard lib location
-  - [x] CMake package config for `find_package(promeki-network)`
-  - [x] Export target so downstream projects can `target_link_libraries(... promeki-network)`
-- [ ] mbedTLS static library built and absorbed into `promeki-network.so` (same pattern as zlib/libjpeg in promeki-proav) *(deferred — not needed until TLS/DTLS support is added)*
+- [x] Network sources conditionally compiled via `PROMEKI_ENABLE_NETWORK` feature flag
+- [x] Headers in flat `include/promeki/` directory
+- [x] Sources in `src/network/` subdirectory
+- [x] Network tests included in `unittest-promeki` when `PROMEKI_ENABLE_NETWORK` is ON
+- [ ] mbedTLS static library built and absorbed into `libpromeki.so` *(deferred — not needed until TLS/DTLS support is added)*
 
 ---
 
@@ -31,9 +25,9 @@ Headers under `include/promeki/network/`. Uses raw POSIX sockets (no libuv/asio)
 Simple data object: IP address + port. No PROMEKI_SHARED_FINAL (simple value type).
 
 **Files:**
-- [x] `include/promeki/network/socketaddress.h`
-- [x] `src/net/socketaddress.cpp`
-- [x] `tests/net/socketaddress.cpp`
+- [x] `include/promeki/socketaddress.h`
+- [x] `src/network/socketaddress.cpp`
+- [x] `tests/network/socketaddress.cpp`
 
 **Implementation checklist:**
 - [x] Header guard, includes, namespace
@@ -63,9 +57,9 @@ Simple data object: IP address + port. No PROMEKI_SHARED_FINAL (simple value typ
 Derives from IODevice. Base for TCP, UDP, raw sockets.
 
 **Files:**
-- [x] `include/promeki/network/abstractsocket.h`
-- [x] `src/net/abstractsocket.cpp`
-- [x] `tests/net/abstractsocket.cpp`
+- [x] `include/promeki/abstractsocket.h`
+- [x] `src/network/abstractsocket.cpp`
+- [x] `tests/network/abstractsocket.cpp`
 
 **Implementation checklist:**
 - [x] Header guard, includes, namespace
@@ -102,9 +96,9 @@ Derives from IODevice. Base for TCP, UDP, raw sockets.
 Stream-oriented TCP socket. Uses IODevice read/write.
 
 **Files:**
-- [x] `include/promeki/network/tcpsocket.h`
-- [x] `src/net/tcpsocket.cpp`
-- [x] `tests/net/tcpsocket.cpp`
+- [x] `include/promeki/tcpsocket.h`
+- [x] `src/network/tcpsocket.cpp`
+- [x] `tests/network/tcpsocket.cpp`
 
 **Implementation checklist:**
 - [x] Derive from `AbstractSocket`
@@ -127,9 +121,9 @@ Stream-oriented TCP socket. Uses IODevice read/write.
 Listens for incoming TCP connections.
 
 **Files:**
-- [x] `include/promeki/network/tcpserver.h`
-- [x] `src/net/tcpserver.cpp`
-- [x] `tests/net/tcpserver.cpp`
+- [x] `include/promeki/tcpserver.h`
+- [x] `src/network/tcpserver.cpp`
+- [x] `tests/network/tcpserver.cpp`
 
 **Implementation checklist:**
 - [x] Derive from `ObjectBase`, use `PROMEKI_OBJECT`
@@ -152,9 +146,9 @@ Listens for incoming TCP connections.
 Datagram-oriented UDP socket. Must support multicast for AV-over-IP use. Must not preclude future SrtSocket subclass.
 
 **Files:**
-- [x] `include/promeki/network/udpsocket.h`
-- [x] `src/net/udpsocket.cpp`
-- [x] `tests/net/udpsocket.cpp`
+- [x] `include/promeki/udpsocket.h`
+- [x] `src/network/udpsocket.cpp`
+- [x] `tests/network/udpsocket.cpp`
 
 **Implementation checklist:**
 - [x] Derive from `AbstractSocket`
@@ -186,9 +180,9 @@ Datagram-oriented UDP socket. Must support multicast for AV-over-IP use. Must no
 Raw Ethernet frame send/receive. For AV-over-IP raw packet work.
 
 **Files:**
-- [x] `include/promeki/network/rawsocket.h`
-- [x] `src/net/rawsocket.cpp`
-- [x] `tests/net/rawsocket.cpp`
+- [x] `include/promeki/rawsocket.h`
+- [x] `src/network/rawsocket.cpp`
+- [x] `tests/network/rawsocket.cpp`
 
 **Implementation checklist:**
 - [x] Derive from `AbstractSocket`

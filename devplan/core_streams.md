@@ -82,8 +82,8 @@ Add `DataStream` operators for binary serialization of promeki types. Each overl
 Add binary state serialization to ObjectBase. Each subclass can override to save/restore its own state. Uses DataStream for portable, versioned binary format.
 
 **Files:**
-- [ ] Modify `include/promeki/core/core/objectbase.h`
-- [ ] Modify `src/objectbase.cpp`
+- [ ] Modify `include/promeki/objectbase.h`
+- [ ] Modify `src/core/objectbase.cpp`
 - [ ] `tests/objectbase_serialization.cpp`
 
 **Implementation checklist:**

@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/fileinfo.h>
-#include <promeki/core/filepath.h>
-#include <promeki/core/string.h>
+#include <promeki/fileinfo.h>
+#include <promeki/filepath.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 

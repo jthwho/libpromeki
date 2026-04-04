@@ -6,12 +6,12 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/jpegimagecodec.h>
-#include <promeki/proav/image.h>
-#include <promeki/proav/imagedesc.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/core/metadata.h>
-#include <promeki/core/timecode.h>
+#include <promeki/jpegimagecodec.h>
+#include <promeki/image.h>
+#include <promeki/imagedesc.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/metadata.h>
+#include <promeki/timecode.h>
 
 using namespace promeki;
 

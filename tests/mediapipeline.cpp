@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianodeconfig.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianodeconfig.h>
 
 using namespace promeki;
 

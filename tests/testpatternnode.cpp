@@ -8,15 +8,15 @@
 #include <atomic>
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/proav/testpatternnode.h>
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/image.h>
-#include <promeki/proav/audio.h>
-#include <promeki/proav/frame.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/proav/ltcdecoder.h>
-#include <promeki/core/audiolevel.h>
+#include <promeki/testpatternnode.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/image.h>
+#include <promeki/audio.h>
+#include <promeki/frame.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/ltcdecoder.h>
+#include <promeki/audiolevel.h>
 
 using namespace promeki;
 

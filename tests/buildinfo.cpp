@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/buildinfo.h>
+#include <promeki/buildinfo.h>
 
 using namespace promeki;
 

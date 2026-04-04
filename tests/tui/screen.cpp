@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/tui/screen.h>
-#include <promeki/core/stringiodevice.h>
+#include <promeki/stringiodevice.h>
 
 using namespace promeki;
 

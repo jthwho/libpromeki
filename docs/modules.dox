@@ -1,5 +1,5 @@
 /**
- * @defgroup core_containers Core Containers
+ * @defgroup containers Containers
  * @brief Container classes wrapping the C++ Standard Library containers.
  *
  * Provides consistent, Qt-inspired APIs over standard containers such as
@@ -9,7 +9,7 @@
  */
 
 /**
- * @defgroup core_concurrency Core Concurrency
+ * @defgroup concurrency Concurrency
  * @brief Threading primitives and synchronization utilities.
  *
  * Wraps standard concurrency types (std::mutex, std::future, etc.) with
@@ -19,7 +19,7 @@
  */
 
 /**
- * @defgroup core_io Core I/O
+ * @defgroup io I/O
  * @brief File system access and device-oriented I/O.
  *
  * Layered I/O device hierarchy (IODevice, BufferedIODevice, File) plus
@@ -28,7 +28,7 @@
  */
 
 /**
- * @defgroup core_streams Core Streams
+ * @defgroup streams Streams
  * @brief Typed serialization streams for binary and text data.
  *
  * DataStream provides portable binary serialization; TextStream provides
@@ -37,7 +37,7 @@
  */
 
 /**
- * @defgroup core_strings Core Strings
+ * @defgroup strings Strings
  * @brief String handling, regular expressions, and character utilities.
  *
  * Encoding-aware String class, StringList, RegEx, ANSI escape-code
@@ -45,7 +45,7 @@
  */
 
 /**
- * @defgroup core_events Core Events
+ * @defgroup events Events
  * @brief Event loop, signals/slots, and object lifecycle management.
  *
  * Per-thread EventLoop with timer support, Signal/Slot connections
@@ -54,7 +54,7 @@
  */
 
 /**
- * @defgroup core_audio Core Audio
+ * @defgroup audio Audio
  * @brief Audio level, format, and signal generation utilities.
  *
  * Provides audio-related value types for level measurement,
@@ -62,7 +62,7 @@
  */
 
 /**
- * @defgroup core_media Core Media
+ * @defgroup media Media
  * @brief Aligned memory buffers for media data.
  *
  * The Buffer class provides page-aligned, reference-counted memory
@@ -71,7 +71,7 @@
  */
 
 /**
- * @defgroup core_math Core Math
+ * @defgroup math Math
  * @brief Mathematical primitives: points, sizes, rectangles, matrices.
  *
  * N-dimensional Point, 2D Size and Rect, Rational fractions, 4x4 and
@@ -79,7 +79,7 @@
  */
 
 /**
- * @defgroup core_time Core Time
+ * @defgroup time Time
  * @brief Timecode, timestamps, durations, and frame rates.
  *
  * SMPTE Timecode (backed by libvtc), steady-clock TimeStamp,
@@ -88,7 +88,7 @@
  */
 
 /**
- * @defgroup core_util Core Utilities
+ * @defgroup util Utilities
  * @brief General-purpose utilities, error handling, and diagnostics.
  *
  * Variant type, Error reporting, UUID generation, FourCC codes,
@@ -97,7 +97,7 @@
  */
 
 /**
- * @defgroup core_crypto Core Cryptographic Utilities
+ * @defgroup crypto Cryptographic Utilities
  * @brief Hash functions for data integrity.
  *
  * MD5 and SHA-1 implementations for checksums and content addressing.
@@ -115,7 +115,7 @@
  */
 
 /**
- * @defgroup proav_media ProAV Media
+ * @defgroup proav ProAV Media
  * @brief Professional audio/video media objects and codecs.
  *
  * Audio and image containers with format descriptors, file I/O
@@ -125,7 +125,7 @@
  */
 
 /**
- * @defgroup core_color Core Color
+ * @defgroup color Color
  * @brief Color science: color models, CIE colorimetry, and precise conversion.
  *
  * Color and ColorModel classes for representing and converting colors
@@ -137,7 +137,7 @@
  */
 
 /**
- * @defgroup proav_pipeline ProAV Pipeline
+ * @defgroup pipeline Pipeline
  * @brief Media processing pipeline: graph, nodes, and scheduling.
  *
  * MediaGraph and MediaNode framework for constructing audio/video
@@ -146,7 +146,7 @@
  */
 
 /**
- * @defgroup proav_paint ProAV Paint
+ * @defgroup paint Paint
  * @brief 2D rendering: font rendering and paint engines.
  *
  * Font rendering framework (Font base, FastFont, BasicFont) with
@@ -155,7 +155,7 @@
  */
 
 /**
- * @defgroup music_theory Music Theory
+ * @defgroup music Music Theory
  * @brief Musical note representation, scales, and MIDI utilities.
  *
  * MusicalNote and MusicalScale for Western music theory, MIDI note

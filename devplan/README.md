@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan builds out all four existing libraries (core, proav, music, tui) toward completeness and adds a new network library (`promeki-network`). Work is organized into 7 phases ordered by dependency.
+This plan builds out the consolidated `promeki` library (core, network, proav, music) and the separate `promeki-tui` and `promeki-sdl` UI libraries toward completeness. Work is organized into 7 phases ordered by dependency.
 
 **Maintenance note:** Completed items are removed from individual phase documents once merged, unless they provide context needed by a future phase in the same document. The code and git history are the source of truth for completed work. Phase summaries in this README note what's complete at a high level.
 
@@ -52,7 +52,7 @@ Phase 7 (Cross-Cutting) -- ongoing throughout
 
 The `vidgen` utility (video/audio test pattern generator streaming via RTP) is complete. See [vidgen.md](vidgen.md) for details and deferred items.
 
-**Recent work:** New `StringRegistry<Tag>` (thread-safe append-only string-to-ID registry), `VariantDatabase<Tag>` (named Variant store with JSON/DataStream/TextStream serialization), and `Config` alias (`VariantDatabase<ConfigTag>`) added to promeki-core. Two new `Error` codes: `IdNotFound` and `ConversionFailed`. New `AudioLevel` class (dBFS value type with linear conversion) in promeki-core. AudioGen and TestPatternNode refactored to use AudioLevel instead of raw linear amplitude. vidgen CLI uses `--audio-level`/`--ltc-level` in dBFS. SDP attribute ordering fixed. RTP sender pacing (userspace) implemented. `#ifdef PROMEKI_HAVE_NETWORK` removed from RTP sink node headers. `Metadata` refactored to inherit from `VariantDatabase<MetadataTag>` (X-macro enum removed, well-known keys are now `static inline const ID` members). `Variant::operator==`/`operator!=` added with three-tier cross-type comparison. `VariantDatabase::operator==`/`operator!=` added. `Size2DTemplate` and `TimeStamp` gain `operator==`/`operator!=`. **Phase 4D partial:** `ImageCodec`/`AudioCodec` abstract bases with string-based name registry, `JpegImageCodec` (libjpeg-turbo, quality/subsampling, registered as "jpeg"), `VideoTestPattern` (11 patterns, dual-mode create/render, motion, fromString/toString), `AudioTestPattern` (Tone/Silence/LTC, configure/create/render, fromString/toString). `JpegEncoderNode` and `TestPatternNode` refactored to delegate to these new classes. `Codec` class removed (was a placeholder). **Color/ColorModel refactoring (complete):** Major refactoring of the color system across 6 phases: `XYZColor`, `CIEPoint`, and `CIEWavelengthTable` moved from proav to core (backward-compatible include stubs left in proav); new `ColorModel` class is the single source of truth for color model + space (ID-based construct-on-first-use registry avoids static init ordering issues); `Color` refactored from `uint8_t` RGBA to `float[4]` + `ColorModel` (model-aware serialization via `toString()`/`fromString()`, `uint8_t` constructor preserved for backward compat); `PixelFormat` CompType deconflated to `Comp0/1/2` (no longer implies RGB channel semantics); old `ColorSpace`/`ColorSpaceConverter` classes removed (proav stubs redirect to `ColorModel`); 19 color models added including DCI-P3, Adobe RGB, ACES AP0/AP1, YCbCr Rec.2020; 2187 test assertions across 217 test cases; color science guide page at `docs/color.dox`. `core_color` Doxygen group added. **TypeRegistry pattern (complete):** Introduced the TypeRegistry design pattern (documented at `docs/typeregistry.dox`) and retrofitted it onto `ColorModel` and `MemSpace`: enum IDs replace ad-hoc constants, `registerType()`/`registerData()` enable user-defined entries at runtime, `Data`/`Ops` structs are public in headers so callers can populate them, registries use `Map` (construct-on-first-use singletons), `StructDatabase` dependency removed from `MemSpace`. `Color(ColorModel::ID, float, float, float, float)` constructor added to resolve overload ambiguity with the `ColorModel` and `uint8_t` overloads. **FrameRate well-known rate expansion:** Five new well-known rates added to `PROMEKI_WELL_KNOWN_FRAME_RATES`: `FPS_4795` (47.95, 48000/1001), `FPS_48` (48, 48/1), `FPS_100` (100, 100/1), `FPS_11988` (119.88, 120000/1001), `FPS_120` (120, 120/1). `wellKnownRate()` refactored from a cached `_rate` member to an on-demand computation that compares the reduced rational against all well-known entries, enabling non-stored rationals (e.g. 30000/1000) to correctly match (e.g. FPS_30). `fromString()` documentation updated to list all accepted rate strings including the 5 new ones. **Image system refactor (complete):** The old monolithic polymorphic `PixelFormat` class has been split into two TypeRegistry value types: `PixelFormat` (memory layout only: component count, bit depths, bytes per block, planes, sampling, `byteOffset` per component) and `PixelDesc` (full pixel description: `PixelFormat` + `ColorModel` + per-component semantic ranges + compression info with `encodeSources`/`decodeTargets` + paint engine factory). Both classes live in `include/promeki/core/` (moved out of proav). Descriptive well-known IDs added (`RGBA8_sRGB_Full`, `YUV8_422_Rec709_Limited`, etc.). `Variant` support added for all four TypeRegistry types (`ColorModel`, `MemSpace`, `PixelFormat`, `PixelDesc`) with full toString/fromString/integer conversion. `PaintEngine::createPixel(Color)` is now color-model-aware (converts the Color to the PixelDesc's target ColorModel before mapping to 16-bit components). `registeredIDs()` added to all four TypeRegistry types. ~55 consumer files (headers, sources, tests, utilities) migrated. Old `pixelformat_old.h`, `pixelformat_old.cpp`, `pixelformat_rgb8.cpp`, `pixelformat_rgba8.cpp`, `pixelformat_jpeg.cpp` removed.
+**Recent work:** **Library consolidation (complete):** The four separate shared libraries (`promeki-core`, `promeki-network`, `promeki-proav`, `promeki-music`) have been merged into a single `promeki` shared library. `promeki-tui` and `promeki-sdl` remain separate. CMakeLists.txt rewritten with `PROMEKI_ENABLE_*` feature flags and `PROMEKI_USE_SYSTEM_*` vendored-vs-system options. Generated `build/include/promeki/config.h` provides compile-time feature detection. Headers flattened from `promeki/core/`, `promeki/proav/`, `promeki/network/`, `promeki/music/` subdirectories into `promeki/`. Sources reorganized into `src/core/`, `src/proav/`, `src/network/`, `src/music/`. Test executables consolidated to `unittest-promeki` (network tests in `tests/network/`). All documentation, Doxygen groups (removed `core_` prefix), devplan files, README, and CODING_STANDARDS updated. `pixeldesc_proav.cpp` merged back into `pixeldesc.cpp`. Dead test file `image.cpp` removed, `image2.cpp` renamed to `image.cpp`. **New `StringRegistry<Tag>` (thread-safe append-only string-to-ID registry), `VariantDatabase<Tag>` (named Variant store with JSON/DataStream/TextStream serialization), and `Config` alias (`VariantDatabase<ConfigTag>`) added to promeki. Two new `Error` codes: `IdNotFound` and `ConversionFailed`. New `AudioLevel` class (dBFS value type with linear conversion) in promeki. AudioGen and TestPatternNode refactored to use AudioLevel instead of raw linear amplitude. vidgen CLI uses `--audio-level`/`--ltc-level` in dBFS. SDP attribute ordering fixed. RTP sender pacing (userspace) implemented. `#ifdef PROMEKI_HAVE_NETWORK` removed from RTP sink node headers. `Metadata` refactored to inherit from `VariantDatabase<MetadataTag>` (X-macro enum removed, well-known keys are now `static inline const ID` members). `Variant::operator==`/`operator!=` added with three-tier cross-type comparison. `VariantDatabase::operator==`/`operator!=` added. `Size2DTemplate` and `TimeStamp` gain `operator==`/`operator!=`. **Phase 4D partial:** `ImageCodec`/`AudioCodec` abstract bases with string-based name registry, `JpegImageCodec` (libjpeg-turbo, quality/subsampling, registered as "jpeg"), `VideoTestPattern` (11 patterns, dual-mode create/render, motion, fromString/toString), `AudioTestPattern` (Tone/Silence/LTC, configure/create/render, fromString/toString). `JpegEncoderNode` and `TestPatternNode` refactored to delegate to these new classes. `Codec` class removed (was a placeholder). **Color/ColorModel refactoring (complete):** Major refactoring of the color system across 6 phases: `XYZColor`, `CIEPoint`, and `CIEWavelengthTable` consolidated into flat include/promeki/ directory; new `ColorModel` class is the single source of truth for color model + space (ID-based construct-on-first-use registry avoids static init ordering issues); `Color` refactored from `uint8_t` RGBA to `float[4]` + `ColorModel` (model-aware serialization via `toString()`/`fromString()`, `uint8_t` constructor preserved for backward compat); `PixelFormat` CompType deconflated to `Comp0/1/2` (no longer implies RGB channel semantics); old `ColorSpace`/`ColorSpaceConverter` classes removed; 19 color models added including DCI-P3, Adobe RGB, ACES AP0/AP1, YCbCr Rec.2020; 2187 test assertions across 217 test cases; color science guide page at `docs/color.dox`. `core_color` Doxygen group added. **TypeRegistry pattern (complete):** Introduced the TypeRegistry design pattern (documented at `docs/typeregistry.dox`) and retrofitted it onto `ColorModel` and `MemSpace`: enum IDs replace ad-hoc constants, `registerType()`/`registerData()` enable user-defined entries at runtime, `Data`/`Ops` structs are public in headers so callers can populate them, registries use `Map` (construct-on-first-use singletons), `StructDatabase` dependency removed from `MemSpace`. `Color(ColorModel::ID, float, float, float, float)` constructor added to resolve overload ambiguity with the `ColorModel` and `uint8_t` overloads. **FrameRate well-known rate expansion:** Five new well-known rates added to `PROMEKI_WELL_KNOWN_FRAME_RATES`: `FPS_4795` (47.95, 48000/1001), `FPS_48` (48, 48/1), `FPS_100` (100, 100/1), `FPS_11988` (119.88, 120000/1001), `FPS_120` (120, 120/1). `wellKnownRate()` refactored from a cached `_rate` member to an on-demand computation that compares the reduced rational against all well-known entries, enabling non-stored rationals (e.g. 30000/1000) to correctly match (e.g. FPS_30). `fromString()` documentation updated to list all accepted rate strings including the 5 new ones. **Image system refactor (complete):** The old monolithic polymorphic `PixelFormat` class has been split into two TypeRegistry value types: `PixelFormat` (memory layout only: component count, bit depths, bytes per block, planes, sampling, `byteOffset` per component) and `PixelDesc` (full pixel description: `PixelFormat` + `ColorModel` + per-component semantic ranges + compression info with `encodeSources`/`decodeTargets` + paint engine factory). Both classes live in `include/promeki/` (moved out of proav). Descriptive well-known IDs added (`RGBA8_sRGB_Full`, `YUV8_422_Rec709_Limited`, etc.). `Variant` support added for all four TypeRegistry types (`ColorModel`, `MemSpace`, `PixelFormat`, `PixelDesc`) with full toString/fromString/integer conversion. `PaintEngine::createPixel(Color)` is now color-model-aware (converts the Color to the PixelDesc's target ColorModel before mapping to 16-bit components). `registeredIDs()` added to all four TypeRegistry types. ~55 consumer files (headers, sources, tests, utilities) migrated. Old `pixelformat_old.h`, `pixelformat_old.cpp`, `pixelformat_rgb8.cpp`, `pixelformat_rgba8.cpp`, `pixelformat_jpeg.cpp` removed.
 
 **Next priorities:**
 1. **Phase 4D** — Optimization and cleanup: BitmapFont (fast native-format font rendering), video codec abstraction, automatic node processing, batch UDP/kernel pacing (`sendmmsg`, `SO_MAX_PACING_RATE`). Userspace pacing fallback is done. See [proav_optimization.md](proav_optimization.md).
@@ -83,7 +83,7 @@ Establish a uniform byte-oriented IO interface that network sockets, files, and 
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)
 **Documents:** `network_sockets.md`, `network_protocols.md`, `network_avoverip.md`
 
-New shared library `promeki-network` with CMake option `PROMEKI_BUILD_NETWORK`. Raw POSIX sockets, vendored mbedTLS for TLS. Work through documents in order: sockets first, then protocols, then AV-over-IP.
+Network sources in the `promeki` library, controlled by `PROMEKI_ENABLE_NETWORK` feature flag. Raw POSIX sockets, vendored mbedTLS for TLS. Work through documents in order: sockets first, then protocols, then AV-over-IP.
 
 **Phase 3A (Sockets) COMPLETE.** Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) COMPLETE** — PrioritySocket, RtpSession (including `sendPacketsPaced()` for ST 2110-21 pacing), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing), SdpSession (with insertion-order-preserving attributes), MulticastManager. PtpClock remaining.
 
@@ -150,7 +150,7 @@ Every new class must have complete unit tests. Every modification to an existing
   - Error paths (invalid input, timeout, resource exhaustion)
   - Thread safety for concurrent classes (Mutex, Queue, ThreadPool, etc.)
 - **Assertions**: `CHECK()` for non-fatal, `REQUIRE()` only when subsequent checks depend on it. `doctest::Approx()` for floating-point.
-- **Test executables**: `unittest-core`, `unittest-proav`, `unittest-music`, `unittest-network` (new). Tests run automatically during build via CTest.
+- **Test executables**: `unittest-promeki` (consolidated), `unittest-tui`, `unittest-sdl`. Tests run automatically during build via CTest.
 - **Build verification**: `build` command compiles and runs all tests. A class is not done until its tests pass.
 
 ---
@@ -170,7 +170,7 @@ Every new class must have complete unit tests. Every modification to an existing
 
 - Each new class gets a doctest unit test (`tests/<classname>.cpp`)
 - Build with `build` command; tests run automatically
-- New libraries need CMake target + test executable (e.g., `unittest-network`)
+- New feature modules add sources to the `promeki` library and tests to `unittest-promeki`
 - TUI widgets verified via `tui-demo` (add new tabs for new widgets)
 - Pipeline framework verified via a simple audio-passthrough demo
 - Network verified via loopback echo tests (UDP + TCP)
@@ -195,7 +195,7 @@ Performance-critical code (DSP, threading, network, container operations) needs 
 - [ ] Add benchmark framework: header-only [nanobench](https://github.com/martinus/nanobench) or similar lightweight benchmarker to `thirdparty/`
 - [ ] Create `benchmarks/` directory for benchmark source files
 - [ ] Add `PROMEKI_BUILD_BENCHMARKS` CMake option (default OFF)
-- [ ] Create `benchmark-core`, `benchmark-proav`, `benchmark-network` executables
+- [ ] Create `benchmark-promeki` executable (conditionally includes network/proav/music benchmarks based on feature flags)
 - [ ] Add `run-benchmarks` custom CMake target (separate from `run-tests` — benchmarks are opt-in)
 
 ### Phase-specific benchmarks
@@ -211,29 +211,29 @@ Performance-critical code (DSP, threading, network, container operations) needs 
 
 ## Doxygen Module Organization
 
-Adding many new classes and a new library (`promeki-network`) requires Doxygen group organization so generated docs are navigable, not a flat alphabetical wall.
+Adding many new classes requires Doxygen group organization so generated docs are navigable, not a flat alphabetical wall.
 
 ### New Doxygen groups
-- [ ] `@defgroup core_containers` — List, Map, Set, HashMap, HashSet, Deque, Stack, PriorityQueue, Span, Queue, Array
-- [ ] `@defgroup core_concurrency` — Mutex, ReadWriteLock, WaitCondition, Atomic, Future, Promise, ThreadPool
-- [ ] `@defgroup core_io` — IODevice, BufferedIODevice, File, FilePath, Dir, FileInfo, Process
-- [ ] `@defgroup core_streams` — DataStream, TextStream
-- [ ] `@defgroup core_strings` — String, RegEx, AnsiStream, StreamString
-- [ ] `@defgroup core_events` — EventLoop, Event, TimerEvent, Thread, ObjectBase
-- [x] `@defgroup core_audio` — AudioLevel, AudioDesc, AudioGen (added to `docs/modules.dox`)
-- [ ] `@defgroup core_media` — ImageDesc, VideoDesc, Image, Audio, Frame, Buffer, PixelFormat
-- [ ] `@defgroup core_math` — Point, Size2D, Rect, Rational, Matrix3x3
-- [x] `@defgroup core_color` — Color, ColorModel, XYZColor, CIEPoint, CIEWavelengthTable (added to `docs/modules.dox`; `docs/color.dox` color science guide page added)
-- [ ] `@defgroup core_time` — Timecode, TimeStamp, DateTime, Duration, ElapsedTimer
-- [ ] `@defgroup core_util` — Variant, Error, Random, Algorithm, UUID, FourCC, Metadata, Env
-- [ ] `@defgroup net_sockets` — AbstractSocket, TcpSocket, TcpServer, UdpSocket, RawSocket, SocketAddress
-- [ ] `@defgroup net_protocols` — HttpClient, HttpRequest, HttpResponse, WebSocket, SslSocket, SslContext
-- [ ] `@defgroup net_avoverip` — PrioritySocket, PtpClock, RtpSession, RtpPayload, SdpSession, MulticastManager
-- [ ] `@defgroup proav_pipeline` — MediaNode, MediaPort, MediaLink, MediaGraph, MediaPipeline
-- [ ] `@defgroup proav_nodes` — AudioSourceNode, AudioSinkNode, ImageSourceNode, etc.
-- [ ] `@defgroup proav_dsp` — AudioFilter, AudioResampler, AudioFormatConverter
-- [ ] `@defgroup music_theory` — Interval, Chord, ChordProgression, Key, Tempo, TempoMap, etc.
-- [ ] `@defgroup music_midi` — MidiEvent, MidiTrack, MidiFile, Instrument, Track, Arrangement
+- [ ] `@defgroup containers` — List, Map, Set, HashMap, HashSet, Deque, Stack, PriorityQueue, Span, Queue, Array
+- [ ] `@defgroup concurrency` — Mutex, ReadWriteLock, WaitCondition, Atomic, Future, Promise, ThreadPool
+- [ ] `@defgroup io` — IODevice, BufferedIODevice, File, FilePath, Dir, FileInfo, Process
+- [ ] `@defgroup streams` — DataStream, TextStream
+- [ ] `@defgroup strings` — String, RegEx, AnsiStream, StreamString
+- [ ] `@defgroup events` — EventLoop, Event, TimerEvent, Thread, ObjectBase
+- [x] `@defgroup audio` — AudioLevel, AudioDesc, AudioGen (added to `docs/modules.dox`)
+- [ ] `@defgroup media` — ImageDesc, VideoDesc, Image, Audio, Frame, Buffer, PixelFormat
+- [ ] `@defgroup math` — Point, Size2D, Rect, Rational, Matrix3x3
+- [x] `@defgroup color` — Color, ColorModel, XYZColor, CIEPoint, CIEWavelengthTable (added to `docs/modules.dox`; `docs/color.dox` color science guide page added)
+- [ ] `@defgroup time` — Timecode, TimeStamp, DateTime, Duration, ElapsedTimer
+- [ ] `@defgroup util` — Variant, Error, Random, Algorithm, UUID, FourCC, Metadata, Env
+- [ ] `@defgroup network` — AbstractSocket, TcpSocket, TcpServer, UdpSocket, RawSocket, SocketAddress
+- [ ] `@defgroup protocols` — HttpClient, HttpRequest, HttpResponse, WebSocket, SslSocket, SslContext
+- [ ] `@defgroup avoverip` — PrioritySocket, PtpClock, RtpSession, RtpPayload, SdpSession, MulticastManager
+- [ ] `@defgroup pipeline` — MediaNode, MediaPort, MediaLink, MediaGraph, MediaPipeline
+- [ ] `@defgroup nodes` — AudioSourceNode, AudioSinkNode, ImageSourceNode, etc.
+- [ ] `@defgroup dsp` — AudioFilter, AudioResampler, AudioFormatConverter
+- [ ] `@defgroup music` — Interval, Chord, ChordProgression, Key, Tempo, TempoMap, etc.
+- [ ] `@defgroup midi` — MidiEvent, MidiTrack, MidiFile, Instrument, Track, Arrangement
 - [ ] `@defgroup tui_widgets` — All TUI widgets
 
 ### Implementation
@@ -252,6 +252,6 @@ There are 3 remaining FIXME comments in the codebase. These are tracked in [fixm
 
 | File | Issue | Natural Phase |
 |---|---|---|
-| `src/file.cpp:44` | Windows File implementation is a stub | Phase 2 (File -> IODevice) |
-| `src/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |
-| `src/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `strtoll` | Phase 7 (String enhancements) |
+| `src/core/file.cpp:44` | Windows File implementation is a stub | Phase 2 (File -> IODevice) |
+| `src/proav/audiogen.cpp:64` | Audio generation doesn't handle planar formats | Phase 4B |
+| `src/core/datetime.cpp:108` | Should use `String::parseNumberWords()` instead of `strtoll` | Phase 7 (String enhancements) |

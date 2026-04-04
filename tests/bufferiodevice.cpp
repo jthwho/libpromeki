@@ -7,9 +7,9 @@
 
 #include <cstring>
 #include <doctest/doctest.h>
-#include <promeki/core/bufferiodevice.h>
-#include <promeki/core/buffer.h>
-#include <promeki/core/result.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
+#include <promeki/result.h>
 
 using namespace promeki;
 

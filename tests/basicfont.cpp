@@ -6,12 +6,12 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/basicfont.h>
-#include <promeki/proav/fastfont.h>
-#include <promeki/proav/image.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/core/color.h>
-#include <promeki/core/filepath.h>
+#include <promeki/basicfont.h>
+#include <promeki/fastfont.h>
+#include <promeki/image.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/color.h>
+#include <promeki/filepath.h>
 
 using namespace promeki;
 

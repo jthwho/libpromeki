@@ -7,7 +7,7 @@
 
 #include <cstring>
 #include <doctest/doctest.h>
-#include <promeki/core/memspace.h>
+#include <promeki/memspace.h>
 
 using namespace promeki;
 

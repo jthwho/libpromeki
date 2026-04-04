@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/event.h>
-#include <promeki/core/timerevent.h>
+#include <promeki/event.h>
+#include <promeki/timerevent.h>
 
 using namespace promeki;
 

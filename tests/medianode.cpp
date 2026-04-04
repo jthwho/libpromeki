@@ -8,10 +8,10 @@
 #include <thread>
 #include <atomic>
 #include <doctest/doctest.h>
-#include <promeki/proav/medianode.h>
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/core/metadata.h>
+#include <promeki/medianode.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/metadata.h>
 
 using namespace promeki;
 

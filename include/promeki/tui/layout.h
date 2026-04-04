@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <promeki/core/layout.h>
+#include <promeki/layout.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

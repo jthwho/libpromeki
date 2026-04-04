@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
-#include <promeki/proav/audiodesc.h>
-#include <promeki/proav/audio.h>
+#include <promeki/namespace.h>
+#include <promeki/audiodesc.h>
+#include <promeki/audio.h>
 
 struct SDL_AudioStream;
 

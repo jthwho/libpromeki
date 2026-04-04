@@ -8,12 +8,12 @@
 #pragma once
 
 #include <cstdint>
-#include <promeki/core/namespace.h>
-#include <promeki/core/list.h>
-#include <promeki/core/char.h>
-#include <promeki/core/terminal.h>
+#include <promeki/namespace.h>
+#include <promeki/list.h>
+#include <promeki/char.h>
+#include <promeki/terminal.h>
 #include <promeki/tui/style.h>
-#include <promeki/core/ansistream.h>
+#include <promeki/ansistream.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

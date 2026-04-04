@@ -8,8 +8,8 @@
 #include <thread>
 #include <atomic>
 #include <doctest/doctest.h>
-#include <promeki/core/mutex.h>
-#include <promeki/core/waitcondition.h>
+#include <promeki/mutex.h>
+#include <promeki/waitcondition.h>
 
 using namespace promeki;
 

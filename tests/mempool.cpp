@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/mempool.h>
-#include <promeki/core/string.h>
-#include <promeki/core/logger.h>
+#include <promeki/mempool.h>
+#include <promeki/string.h>
+#include <promeki/logger.h>
 
 using namespace promeki;
 

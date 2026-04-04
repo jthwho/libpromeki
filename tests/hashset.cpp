@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/hashset.h>
+#include <promeki/hashset.h>
 
 using namespace promeki;
 

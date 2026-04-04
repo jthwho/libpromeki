@@ -6,7 +6,7 @@
  */
 
 #include <promeki/sdl/sdlapplication.h>
-#include <promeki/core/logger.h>
+#include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
 

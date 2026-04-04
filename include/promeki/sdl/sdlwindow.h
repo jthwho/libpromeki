@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
-#include <promeki/core/widget.h>
-#include <promeki/core/string.h>
+#include <promeki/namespace.h>
+#include <promeki/widget.h>
+#include <promeki/string.h>
 
 struct SDL_Window;
 struct SDL_Renderer;

@@ -8,18 +8,18 @@
 #include <cstring>
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/proav/rtpaudiosinknode.h>
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/frame.h>
-#include <promeki/proav/audio.h>
-#include <promeki/proav/audiodesc.h>
-#include <promeki/core/buffer.h>
+#include <promeki/rtpaudiosinknode.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/frame.h>
+#include <promeki/audio.h>
+#include <promeki/audiodesc.h>
+#include <promeki/buffer.h>
 
-#include <promeki/network/socketaddress.h>
-#include <promeki/network/udpsocket.h>
-#include <promeki/network/rtppayload.h>
-#include <promeki/network/rtppacket.h>
+#include <promeki/socketaddress.h>
+#include <promeki/udpsocket.h>
+#include <promeki/rtppayload.h>
+#include <promeki/rtppacket.h>
 
 using namespace promeki;
 

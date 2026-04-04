@@ -6,9 +6,9 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/variantdatabase.h>
-#include <promeki/core/bufferiodevice.h>
-#include <promeki/core/buffer.h>
+#include <promeki/variantdatabase.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
 
 using namespace promeki;
 

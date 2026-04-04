@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
-#include <promeki/core/list.h>
-#include <promeki/core/keyevent.h>
-#include <promeki/core/mouseevent.h>
+#include <promeki/namespace.h>
+#include <promeki/list.h>
+#include <promeki/keyevent.h>
+#include <promeki/mouseevent.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

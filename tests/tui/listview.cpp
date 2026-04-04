@@ -7,7 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/tui/listview.h>
-#include <promeki/core/rect.h>
+#include <promeki/rect.h>
 
 using namespace promeki;
 

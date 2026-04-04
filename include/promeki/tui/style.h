@@ -8,8 +8,8 @@
 #pragma once
 
 #include <cstdint>
-#include <promeki/core/namespace.h>
-#include <promeki/core/color.h>
+#include <promeki/namespace.h>
+#include <promeki/color.h>
 
 PROMEKI_NAMESPACE_BEGIN
 

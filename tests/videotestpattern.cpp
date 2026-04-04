@@ -6,10 +6,10 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/videotestpattern.h>
-#include <promeki/proav/image.h>
-#include <promeki/proav/imagedesc.h>
-#include <promeki/core/pixeldesc.h>
+#include <promeki/videotestpattern.h>
+#include <promeki/image.h>
+#include <promeki/imagedesc.h>
+#include <promeki/pixeldesc.h>
 
 using namespace promeki;
 

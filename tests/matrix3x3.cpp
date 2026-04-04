@@ -7,7 +7,7 @@
 
 #include <cmath>
 #include <doctest/doctest.h>
-#include <promeki/core/matrix3x3.h>
+#include <promeki/matrix3x3.h>
 
 using namespace promeki;
 

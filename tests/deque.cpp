@@ -6,8 +6,8 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/deque.h>
-#include <promeki/core/list.h>
+#include <promeki/deque.h>
+#include <promeki/list.h>
 
 using namespace promeki;
 

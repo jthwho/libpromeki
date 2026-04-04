@@ -8,17 +8,17 @@
 #include <atomic>
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/proav/framedemuxnode.h>
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/frame.h>
-#include <promeki/proav/image.h>
-#include <promeki/proav/audio.h>
-#include <promeki/proav/imagedesc.h>
-#include <promeki/proav/audiodesc.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/core/metadata.h>
-#include <promeki/core/timecode.h>
+#include <promeki/framedemuxnode.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/frame.h>
+#include <promeki/image.h>
+#include <promeki/audio.h>
+#include <promeki/imagedesc.h>
+#include <promeki/audiodesc.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/metadata.h>
+#include <promeki/timecode.h>
 
 using namespace promeki;
 

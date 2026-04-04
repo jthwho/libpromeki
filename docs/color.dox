@@ -344,7 +344,7 @@
  * @subsection cs_usage Quick Start
  *
  * @code
- * #include <promeki/core/color.h>
+ * #include <promeki/color.h>
  *
  * using namespace promeki;
  *

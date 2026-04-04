@@ -7,7 +7,7 @@
 
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/core/atomic.h>
+#include <promeki/atomic.h>
 
 using namespace promeki;
 

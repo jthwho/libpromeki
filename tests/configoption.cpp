@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/configoption.h>
+#include <promeki/configoption.h>
 
 using namespace promeki;
 

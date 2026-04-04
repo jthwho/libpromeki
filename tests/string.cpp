@@ -9,9 +9,9 @@
 #include <vector>
 #include <unordered_map>
 #include <doctest/doctest.h>
-#include <promeki/core/char.h>
-#include <promeki/core/string.h>
-#include <promeki/core/stringlist.h>
+#include <promeki/char.h>
+#include <promeki/string.h>
+#include <promeki/stringlist.h>
 
 using namespace promeki;
 

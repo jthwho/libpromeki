@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/core/timestamp.h>
+#include <promeki/timestamp.h>
 
 using namespace promeki;
 

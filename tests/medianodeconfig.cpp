@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/medianodeconfig.h>
+#include <promeki/medianodeconfig.h>
 
 using namespace promeki;
 

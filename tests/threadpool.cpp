@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/core/threadpool.h>
+#include <promeki/threadpool.h>
 
 using namespace promeki;
 

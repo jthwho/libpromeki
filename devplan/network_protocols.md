@@ -2,7 +2,7 @@
 
 **Phase:** 3B
 **Dependencies:** Phase 3A (TcpSocket, UdpSocket, AbstractSocket)
-**Library:** `promeki-network`
+**Library:** `promeki`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 ---
@@ -12,8 +12,8 @@
 Data object: method, URL, headers, body. Shareable.
 
 **Files:**
-- [ ] `include/promeki/network/httprequest.h`
-- [ ] `src/net/httprequest.cpp`
+- [ ] `include/promeki/httprequest.h`
+- [ ] `src/network/httprequest.cpp`
 
 **Implementation checklist:**
 - [ ] Header guard, includes, namespace
@@ -34,8 +34,8 @@ Data object: method, URL, headers, body. Shareable.
 Data object: status code, headers, body. Shareable.
 
 **Files:**
-- [ ] `include/promeki/network/httpresponse.h`
-- [ ] `src/net/httpresponse.cpp`
+- [ ] `include/promeki/httpresponse.h`
+- [ ] `src/network/httpresponse.cpp`
 
 **Implementation checklist:**
 - [ ] Header guard, includes, namespace
@@ -57,8 +57,8 @@ Data object: status code, headers, body. Shareable.
 Async HTTP client. Returns `Future<HttpResponse>`.
 
 **Files:**
-- [ ] `include/promeki/network/httpclient.h`
-- [ ] `src/net/httpclient.cpp`
+- [ ] `include/promeki/httpclient.h`
+- [ ] `src/network/httpclient.cpp`
 - [ ] `tests/httpclient.cpp`
 
 **Implementation checklist:**
@@ -89,8 +89,8 @@ Async HTTP client. Returns `Future<HttpResponse>`.
 TLS/SSL configuration via vendored mbedTLS.
 
 **Files:**
-- [ ] `include/promeki/network/sslcontext.h`
-- [ ] `src/net/sslcontext.cpp`
+- [ ] `include/promeki/sslcontext.h`
+- [ ] `src/network/sslcontext.cpp`
 
 **Implementation checklist:**
 - [ ] Header guard, includes (mbedTLS headers), namespace
@@ -113,8 +113,8 @@ TLS/SSL configuration via vendored mbedTLS.
 TcpSocket with TLS encryption via mbedTLS.
 
 **Files:**
-- [ ] `include/promeki/network/sslsocket.h`
-- [ ] `src/net/sslsocket.cpp`
+- [ ] `include/promeki/sslsocket.h`
+- [ ] `src/network/sslsocket.cpp`
 - [ ] `tests/sslsocket.cpp`
 
 **Implementation checklist:**
@@ -140,8 +140,8 @@ TcpSocket with TLS encryption via mbedTLS.
 Message-oriented WebSocket protocol. Not IODevice-derived (message-oriented, not byte-stream).
 
 **Files:**
-- [ ] `include/promeki/network/websocket.h`
-- [ ] `src/net/websocket.cpp`
+- [ ] `include/promeki/websocket.h`
+- [ ] `src/network/websocket.cpp`
 - [ ] `tests/websocket.cpp`
 
 **Implementation checklist:**
@@ -175,5 +175,5 @@ Message-oriented WebSocket protocol. Not IODevice-derived (message-oriented, not
 
 - [ ] Add mbedTLS to `thirdparty/mbedtls/`
 - [ ] CMake: build as static library with `-fPIC`
-- [ ] Link into `promeki-network`
+- [ ] Link into `promeki`
 - [ ] Verify build on Linux (primary), consider macOS/Windows stubs

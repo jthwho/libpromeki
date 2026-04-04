@@ -11,42 +11,40 @@ instead of reinventing infrastructure.
 
 ## Library Architecture
 
-libpromeki is split into three shared libraries:
+libpromeki is organized into one main shared library and two optional
+UI libraries:
 
-**promeki-core** — General-purpose C++ utilities with no media-specific
-dependencies.  Includes strings with copy-on-write, shared pointers,
-points/matrices, date/time, timecode, UUID, logging, JSON, signals/slots,
-an object system, command-line parsing, file I/O, memory pools, and a
-unit test framework.
+**promeki** — The core library containing general-purpose C++ utilities,
+networking, professional audio/video classes, and music/MIDI support.
+Includes strings with copy-on-write, shared pointers, points/matrices,
+date/time, timecode, UUID, logging, JSON, signals/slots, an object
+system, command-line parsing, file I/O, memory pools, TCP/UDP/raw
+sockets, RTP/SDP, image and audio descriptors, pixel format registry,
+image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG), font
+painting, color space conversion, codecs, frame/video descriptors, MIDI
+notes, musical scales, and a note-sequence parser.
 
-**promeki-proav** — Professional audio/video classes built on top of
-promeki-core.  Includes image and audio descriptors, pixel format
-registry, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG),
-font painting, color space conversion, codecs, and frame/video
-descriptors.
+**promeki-tui** — Terminal UI widget library (optional).
 
-**promeki-music** — Music and MIDI utilities built on top of
-promeki-proav.  Includes MIDI note representation with named constants
-for all 128 notes and General MIDI percussion, customizable note name
-overlays, musical scales with degree-to-MIDI mapping, and a
-note-sequence parser for text-based musical notation.
+**promeki-sdl** — SDL3-based GUI library (optional, off by default).
 
-You can use promeki-core on its own for non-media projects, link
-against promeki-proav to get the full media toolkit, or add
-promeki-music for music and MIDI functionality.
+Individual feature areas (networking, pro A/V, music, image formats,
+font rendering, audio file I/O) can be independently enabled or disabled
+via CMake feature flags.  Each external dependency can be sourced from
+the vendored submodules or from system-installed packages.
 
 ## No Dependency Hell
 
-All third-party libraries that promeki-proav depends on (zlib, libpng,
+All third-party libraries that promeki depends on (zlib, libpng,
 FreeType, libjpeg-turbo, libsndfile) are vendored as git submodules,
 built as static libraries with `-fPIC`, and absorbed directly into
-`libpromeki-proav.so`.  Their headers are installed under
-`promeki/thirdparty/` to avoid collisions with system versions.
+`libpromeki.so`.  Alternatively, each dependency can be switched to use
+system-installed versions via `PROMEKI_USE_SYSTEM_*` CMake options.
 
-When you install libpromeki, you get three shared libraries and a set of
-headers.  Your application links against `promeki::core` and/or
-`promeki::proav` — no chasing down system packages, no version
-mismatches, no transitive dependency surprises.
+When you install libpromeki, you get a shared library and a set of
+headers.  Your application links against `promeki::promeki` — no
+chasing down system packages, no version mismatches, no transitive
+dependency surprises.
 
 ## History
 
@@ -78,17 +76,53 @@ cmake --build build -j$(nproc)
 
 ### CMake Build Options
 
+**Feature flags** (control what goes into `libpromeki.so`):
+
 | Option | Default | Description |
 |--------|---------|-------------|
-| `PROMEKI_BUILD_PROAV` | `ON` | Build the promeki-proav media library |
-| `PROMEKI_BUILD_MUSIC` | `ON` | Build the promeki-music library (requires proav) |
+| `PROMEKI_ENABLE_NETWORK` | `ON` | Include networking support (sockets, RTP, SDP) |
+| `PROMEKI_ENABLE_PROAV` | `ON` | Include pro A/V support (image, audio, pipeline) |
+| `PROMEKI_ENABLE_MUSIC` | `ON` | Include music support (MIDI, scales) |
+| `PROMEKI_ENABLE_PNG` | `ON` | Include PNG image I/O |
+| `PROMEKI_ENABLE_JPEG` | `ON` | Include JPEG codec |
+| `PROMEKI_ENABLE_FREETYPE` | `ON` | Include FreeType font rendering |
+| `PROMEKI_ENABLE_AUDIO` | `ON` | Include audio file I/O (libsndfile) |
+
+**Dependency source** (vendored submodule or system package):
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `PROMEKI_USE_SYSTEM_ZLIB` | `OFF` | Use system zlib |
+| `PROMEKI_USE_SYSTEM_LIBPNG` | `OFF` | Use system libpng |
+| `PROMEKI_USE_SYSTEM_LIBJPEG` | `OFF` | Use system libjpeg-turbo |
+| `PROMEKI_USE_SYSTEM_FREETYPE` | `OFF` | Use system FreeType |
+| `PROMEKI_USE_SYSTEM_SNDFILE` | `OFF` | Use system libsndfile |
+| `PROMEKI_USE_SYSTEM_NLOHMANN_JSON` | `OFF` | Use system nlohmann-json |
+| `PROMEKI_USE_SYSTEM_VTC` | `OFF` | Use system libvtc |
+
+**Build targets:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `PROMEKI_BUILD_TUI` | `ON` | Build the promeki-tui library |
+| `PROMEKI_BUILD_SDL` | `OFF` | Build the promeki-sdl library |
 | `PROMEKI_BUILD_TESTS` | `ON` | Build unit tests |
+| `PROMEKI_BUILD_UTILS` | `ON` | Build utility applications |
+| `PROMEKI_BUILD_DEMOS` | `ON` | Build demonstration applications |
 | `PROMEKI_BUILD_DOCS` | `OFF` | Build Doxygen API documentation |
 
-To build only the core library without media or music components:
+To build a minimal core-only library:
 
 ```sh
-cmake -B build -DPROMEKI_BUILD_PROAV=OFF -DPROMEKI_BUILD_MUSIC=OFF
+cmake -B build -DPROMEKI_ENABLE_PROAV=OFF -DPROMEKI_ENABLE_NETWORK=OFF -DPROMEKI_ENABLE_MUSIC=OFF
+```
+
+To build using system-installed dependencies:
+
+```sh
+cmake -B build -DPROMEKI_USE_SYSTEM_ZLIB=ON -DPROMEKI_USE_SYSTEM_LIBPNG=ON \
+    -DPROMEKI_USE_SYSTEM_FREETYPE=ON -DPROMEKI_USE_SYSTEM_SNDFILE=ON \
+    -DPROMEKI_USE_SYSTEM_LIBJPEG=ON
 ```
 
 ### Cleaning
@@ -125,9 +159,9 @@ cmake --install build --prefix /opt/promeki
 ```
 
 This installs:
-- `lib/libpromeki-core.so`, `lib/libpromeki-proav.so`, and `lib/libpromeki-music.so` (versioned, with SONAME)
-- `include/promeki/` — all public headers
-- `include/promeki/thirdparty/` — bundled third-party headers
+- `lib/libpromeki.so` (versioned, with SONAME), plus `libpromeki-tui.so` and `libpromeki-sdl.so` if enabled
+- `include/promeki/` — all public headers (including generated `config.h`)
+- `include/promeki/thirdparty/` — bundled third-party headers (when using vendored deps)
 - `lib/cmake/promeki/` — CMake package config files
 - `share/doc/promeki/` — license and third-party notices
 
@@ -138,14 +172,14 @@ After installing, add this to your project's `CMakeLists.txt`:
 ```cmake
 find_package(promeki REQUIRED)
 
-# For general-purpose utilities only:
-target_link_libraries(myapp PRIVATE promeki::core)
+# Link against the main library:
+target_link_libraries(myapp PRIVATE promeki::promeki)
 
-# For media/audio/video functionality (includes core):
-target_link_libraries(myapp PRIVATE promeki::proav)
+# For TUI applications:
+target_link_libraries(myapp PRIVATE promeki::tui)
 
-# For music/MIDI functionality (includes proav and core):
-target_link_libraries(myapp PRIVATE promeki::music)
+# For SDL applications:
+target_link_libraries(myapp PRIVATE promeki::sdl)
 ```
 
 If you installed to a non-standard prefix, tell CMake where to find it:
@@ -159,16 +193,17 @@ cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki
 All promeki headers live under the `promeki/` namespace:
 
 ```cpp
-#include <promeki/core/string.h>
-#include <promeki/core/timecode.h>
-#include <promeki/proav/imagedesc.h>
+#include <promeki/string.h>
+#include <promeki/timecode.h>
+#include <promeki/imagedesc.h>
 ```
 
-Bundled third-party headers are under `promeki/thirdparty/`:
+Bundled third-party headers use their canonical include paths:
 
 ```cpp
-#include <promeki/thirdparty/png.h>
-#include <promeki/thirdparty/freetype2/ft2build.h>
+#include <nlohmann/json.hpp>
+#include <png.h>
+#include <ft2build.h>
 ```
 
 Everything in promeki is in the `promeki` namespace:

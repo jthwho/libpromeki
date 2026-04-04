@@ -8,11 +8,11 @@
 #pragma once
 
 #include <chrono>
-#include <promeki/core/namespace.h>
-#include <promeki/core/application.h>
-#include <promeki/core/terminal.h>
-#include <promeki/core/point.h>
-#include <promeki/core/eventloop.h>
+#include <promeki/namespace.h>
+#include <promeki/application.h>
+#include <promeki/terminal.h>
+#include <promeki/point.h>
+#include <promeki/eventloop.h>
 #include <promeki/tui/screen.h>
 #include <promeki/tui/palette.h>
 #include <promeki/tui/inputparser.h>

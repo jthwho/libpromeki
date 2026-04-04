@@ -13,31 +13,31 @@
 #include <chrono>
 #include <thread>
 
-#include <promeki/core/string.h>
-#include <promeki/core/timecode.h>
-#include <promeki/core/framerate.h>
-#include <promeki/core/rational.h>
-#include <promeki/core/filepath.h>
-#include <promeki/core/audiolevel.h>
+#include <promeki/string.h>
+#include <promeki/timecode.h>
+#include <promeki/framerate.h>
+#include <promeki/rational.h>
+#include <promeki/filepath.h>
+#include <promeki/audiolevel.h>
 
-#include <promeki/proav/mediapipeline.h>
-#include <promeki/proav/medianode.h>
-#include <promeki/proav/medianodeconfig.h>
-#include <promeki/proav/testpatternnode.h>
-#include <promeki/proav/videotestpattern.h>
-#include <promeki/proav/framedemuxnode.h>
-#include <promeki/proav/timecodeoverlaynode.h>
-#include <promeki/proav/jpegencodernode.h>
-#include <promeki/proav/videodesc.h>
-#include <promeki/proav/imagedesc.h>
-#include <promeki/proav/audiodesc.h>
-#include <promeki/core/pixeldesc.h>
-#include <promeki/proav/rtpvideosinknode.h>
-#include <promeki/proav/rtpaudiosinknode.h>
+#include <promeki/mediapipeline.h>
+#include <promeki/medianode.h>
+#include <promeki/medianodeconfig.h>
+#include <promeki/testpatternnode.h>
+#include <promeki/videotestpattern.h>
+#include <promeki/framedemuxnode.h>
+#include <promeki/timecodeoverlaynode.h>
+#include <promeki/jpegencodernode.h>
+#include <promeki/videodesc.h>
+#include <promeki/imagedesc.h>
+#include <promeki/audiodesc.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/rtpvideosinknode.h>
+#include <promeki/rtpaudiosinknode.h>
 
-#include <promeki/network/socketaddress.h>
-#include <promeki/network/sdpsession.h>
-#include <promeki/network/rtppayload.h>
+#include <promeki/socketaddress.h>
+#include <promeki/sdpsession.h>
+#include <promeki/rtppayload.h>
 
 #if defined(PROMEKI_HAS_SDL)
 #include <promeki/sdl/sdlapplication.h>

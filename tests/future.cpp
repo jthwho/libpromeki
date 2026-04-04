@@ -7,8 +7,8 @@
 
 #include <thread>
 #include <doctest/doctest.h>
-#include <promeki/core/future.h>
-#include <promeki/core/promise.h>
+#include <promeki/future.h>
+#include <promeki/promise.h>
 
 using namespace promeki;
 

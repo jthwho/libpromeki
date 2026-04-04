@@ -7,13 +7,13 @@
 
 #include <cstdio>
 #include <doctest/doctest.h>
-#include <promeki/core/textstream.h>
-#include <promeki/core/stringiodevice.h>
-#include <promeki/core/fileiodevice.h>
-#include <promeki/core/bufferiodevice.h>
-#include <promeki/core/buffer.h>
-#include <promeki/core/string.h>
-#include <promeki/core/variant.h>
+#include <promeki/textstream.h>
+#include <promeki/stringiodevice.h>
+#include <promeki/fileiodevice.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
+#include <promeki/string.h>
+#include <promeki/variant.h>
 
 using namespace promeki;
 

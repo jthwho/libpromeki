@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <promeki/core/namespace.h>
+#include <promeki/namespace.h>
 #include <promeki/tui/widget.h>
 
 PROMEKI_NAMESPACE_BEGIN

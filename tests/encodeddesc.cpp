@@ -6,7 +6,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/proav/encodeddesc.h>
+#include <promeki/encodeddesc.h>
 
 using namespace promeki;
 
