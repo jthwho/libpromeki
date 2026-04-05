@@ -108,6 +108,8 @@
  * |-------|-------------|-------------|
  * | @ref ColorModel | ColorModel::Data | Color model / color space descriptors |
  * | @ref MemSpace | MemSpace::Ops | Memory space operation tables |
+ * | @ref PixelFormat | PixelFormat::Data | Pixel memory layout (components, bit depths, planes) |
+ * | @ref PixelDesc | PixelDesc::Data | Full pixel description (format + color model + ranges) |
  *
- * @see ColorModel, MemSpace
+ * @see ColorModel, MemSpace, PixelFormat, PixelDesc
  */

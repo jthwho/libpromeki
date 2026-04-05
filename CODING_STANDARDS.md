@@ -83,7 +83,7 @@ Data objects are not internally thread-safe — concurrent reads and writes to t
 
 **Pattern 1: Share a single data object via Ptr.**
 
-When you need to pass one data object to another thread (e.g., pushing a `Frame::Ptr` through a `MediaLink`, or emitting a signal with an `Image::Ptr`), wrap it in its `Ptr` type:
+When you need to pass one data object to another thread (e.g., pushing a `Frame::Ptr` through a pipeline, or emitting a signal with an `Image::Ptr`), wrap it in its `Ptr` type:
 
 ```cpp
 // Producer thread

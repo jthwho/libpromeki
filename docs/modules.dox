@@ -106,12 +106,13 @@
 
 /**
  * @defgroup network Network
- * @brief Network address types and utilities.
+ * @brief Network sockets, address types, and AV-over-IP building blocks.
  *
- * IPv4, IPv6, and MAC address value types with parsing, formatting,
- * subnet checks, multicast MAC mapping, and sockaddr interoperability.
- * NetworkAddress provides a polymorphic wrapper over all address types
- * and unresolved hostnames.
+ * Raw POSIX socket layer (AbstractSocket, TcpSocket, TcpServer, UdpSocket,
+ * RawSocket), IPv4/IPv6/MAC address types, SocketAddress, RTP session and
+ * payload handling (L24, L16, RawVideo, JPEG), SDP session description,
+ * PrioritySocket for QoS, and MulticastManager.  NetworkAddress provides
+ * a polymorphic wrapper over all address types and unresolved hostnames.
  */
 
 /**
@@ -140,7 +141,7 @@
  * @defgroup pipeline Pipeline
  * @brief Media processing pipeline: graph, nodes, and scheduling.
  *
- * MediaGraph and MediaNode framework for constructing audio/video
+ * MediaNode and MediaPipeline framework for constructing audio/video
  * processing pipelines.  Includes concrete nodes such as
  * TestPatternNode, FrameDemuxNode, and TimecodeOverlayNode.
  */
@@ -161,6 +162,15 @@
  * MusicalNote and MusicalScale for Western music theory, MIDI note
  * numbers and names, and NoteSequenceParser for string-based note
  * input.
+ */
+
+/**
+ * @defgroup widget SDL Widget Framework
+ * @brief Base widget classes, layouts, and events for the SDL GUI library.
+ *
+ * Widget base class, Layout management (HBoxLayout, VBoxLayout, GridLayout,
+ * StackedLayout, FormLayout, FixedLayout), and widget events (PaintEvent,
+ * ResizeEvent, KeyEvent, MouseEvent).
  */
 
 /**

@@ -74,4 +74,6 @@
  * | Utility        | Library        | Description                          |
  * |----------------|----------------|--------------------------------------|
  * | promeki-info   | promeki::promeki | Prints library build information   |
+ * | testrender     | promeki::promeki | Renders test patterns to image files |
+ * | vidgen         | promeki::promeki | Generates video/audio test patterns and streams via RTP |
  */

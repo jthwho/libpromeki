@@ -16,13 +16,18 @@ UI libraries:
 
 **promeki** — The core library containing general-purpose C++ utilities,
 networking, professional audio/video classes, and music/MIDI support.
-Includes strings with copy-on-write, shared pointers, points/matrices,
-date/time, timecode, UUID, logging, JSON, signals/slots, an object
-system, command-line parsing, file I/O, memory pools, TCP/UDP/raw
-sockets, RTP/SDP, image and audio descriptors, pixel format registry,
-image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG), font
-painting, color space conversion, codecs, frame/video descriptors, MIDI
-notes, musical scales, and a note-sequence parser.
+Includes strings with copy-on-write, shared pointers, containers
+(List, Map, Set, HashMap), concurrency primitives (Mutex, ThreadPool,
+Queue, Future/Promise), an event loop with signals/slots, points/matrices,
+date/time, timecode, frame rates, UUID, logging, JSON, an object system,
+command-line parsing, file I/O, typed serialization streams (DataStream,
+TextStream), memory spaces, TCP/UDP/raw sockets, RTP/SDP, color models
+and color science, pixel format/descriptor registries, image and audio
+descriptors, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG),
+font rendering (cached and alpha-compositing), codecs, a media processing
+pipeline (MediaNode, MediaPipeline), test pattern generation, LTC
+encoding/decoding, frame/video descriptors, MIDI notes, musical scales,
+and a note-sequence parser.
 
 **promeki-tui** — Terminal UI widget library (optional).
 

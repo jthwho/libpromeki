@@ -28,10 +28,10 @@ Base for audio filters. Derives from MediaNode.
 - [ ] `double q() const`
 - [ ] `void setGainDb(double db)` — for shelf and peaking filters
 - [ ] `double gainDb() const`
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Compute biquad coefficients based on type, frequency, Q, gain, sample rate
   - [ ] Allocate per-channel state buffers
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Apply biquad filter to each channel
   - [ ] Direct Form II Transposed implementation (numerically stable)
 - [ ] `void recalculate()` — recompute coefficients when parameters change at runtime
@@ -56,12 +56,12 @@ Sample rate conversion.
 - [ ] `void setOutputSampleRate(uint32_t sampleRate)`
 - [ ] `uint32_t outputSampleRate() const`
 - [ ] `void setQuality(Quality quality)` — controls filter length
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Read input sample rate from input port AudioDesc
   - [ ] Compute resampling ratio
   - [ ] Design anti-aliasing filter based on quality setting
   - [ ] Set output port AudioDesc with new sample rate
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Pull input frame
   - [ ] Apply polyphase interpolation/decimation
   - [ ] Handle fractional ratios (e.g., 44100 -> 48000)
@@ -98,10 +98,10 @@ Sample format conversion (int16 <-> float32, etc.).
   - [ ] float32 <-> float64
   - [ ] int24 (packed) <-> int32
   - [ ] int24 (packed) <-> float32
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Set output port AudioDesc with new format
   - [ ] Select appropriate conversion function
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Pull input frame
   - [ ] Convert sample format
   - [ ] Push converted frame to output

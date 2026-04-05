@@ -6,119 +6,23 @@
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-This document covers four areas of improvement: high-performance font rendering, a proper video codec abstraction, automatic node processing in the pipeline, and batch UDP transmission with kernel-side packet pacing.
+This document covers four areas: font rendering (complete), video codec abstraction (partially complete), automatic node processing, and batch UDP transmission with kernel-side packet pacing.
 
-**Partial progress on packet pacing:** `RtpSession::sendPacketsPaced()` implements userspace inter-packet pacing using `Duration`/`TimeStamp::sleepUntil()`. `RtpVideoSinkNode` uses it automatically for large packet counts (>=32 packets, i.e., uncompressed video), spreading packets across 90% of the frame interval (ST 2110-21 style). Both RTP sink nodes now use Duration/TimeStamp instead of raw `std::chrono`. The `#ifdef PROMEKI_HAVE_NETWORK` guards have been removed from RTP sink node headers and sources (the conditional compilation is now handled at the CMake level). This is a working userspace fallback; the kernel-level optimizations (`sendmmsg()`, `SO_MAX_PACING_RATE`, `SO_TXTIME`) below remain planned.
+**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec, VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`).
+
+**Remaining:** VideoEncoder/VideoDecoder (temporal codec abstraction), automatic node processing, batch UDP (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE`/`SO_TXTIME`), PacketTransport abstraction (DPDK-readiness).
 
 ---
 
-## Font Rendering Framework — FastFont / BasicFont / Font
+## Font Rendering Framework — COMPLETE
 
-**Completed.** The font rendering system has been fully refactored from the earlier `TextRenderer` / `FontPainter` pair into a proper class hierarchy with a shared abstract base.
-
-**Architecture:**
-- `Font` — abstract base class managing common state (filename, size, colors, PaintEngine, kerning) and defining the rendering interface (`drawText()`, `measureText()`, `lineHeight()`, `ascender()`, `descender()`). State changes are propagated to subclasses via the `onStateChanged()` hook. `setPaintEngine()` is smart: it only calls `onStateChanged()` when the pixel format pointer changes, so switching between engines with the same format is cheap.
-- `FastFont` (was `TextRenderer`) — high-performance cached glyph renderer. Pre-renders each glyph into a native-format `Image` using `PaintEngine::createPixel()` and blits via `PaintEngine::blit()`. Opaque background fill; not suitable for transparent overlays.
-- `BasicFont` (was `FontPainter`) — alpha-compositing renderer. Rasterizes each glyph with FreeType and composites per-pixel using the foreground color and glyph alpha. No cache; low memory; correct transparency.
-
-**Bug fixed:** RGBA8 blit had a double-subtraction clipping bug in `pixelformat_rgba8.cpp` that caused the source height to be incorrectly reduced when `destY` was large (e.g., rendering timecode at the bottom of a 1080p image). Fixed and covered by regression tests.
-
-**TimecodeOverlayNode fix:** Now uses actual font metrics (`ascender()`, `lineHeight()`) for layout instead of the raw `_fontSize` integer, ensuring correct baseline placement at all font sizes.
-
-**Files:**
-- [x] `include/promeki/font.h` / `src/proav/font.cpp` — abstract base
-- [x] `include/promeki/fastfont.h` / `src/proav/fastfont.cpp` — cached opaque renderer
-- [x] `include/promeki/basicfont.h` / `src/proav/basicfont.cpp` — alpha-compositing renderer
-- [x] `src/proav/pixelformat_rgba8.cpp` — RGBA8 blit clipping bug fix
-- [x] `src/proav/timecodeoverlaynode.cpp` — font metrics used for layout
-- [x] `docs/fonts.dox` — Font Rendering documentation page
-- [x] `docs/modules.dox` — `proav_paint` group updated
-- [x] `tests/fastfont.cpp` — full test suite for FastFont
-- [x] `tests/basicfont.cpp` — full test suite for BasicFont
-- [x] `tests/paintengine.cpp` — RGBA8 blit regression tests added
-- [x] Deleted: `textrenderer.h`, `textrenderer.cpp`, `tests/textrenderer.cpp`, `fontpainter.h`, `fontpainter.cpp`
-
-**Completed features (Font base):**
-- [x] `setFontFilename()` / `fontFilename()`
-- [x] `setFontSize()` / `fontSize()`
-- [x] `setForegroundColor()` / `foregroundColor()`
-- [x] `setBackgroundColor()` / `backgroundColor()`
-- [x] `setPaintEngine()` — smart invalidation: only triggers `onStateChanged()` on pixel format change
-- [x] `setKerningEnabled()` / `kerningEnabled()` — optional FreeType kerning support
-- [x] `isValid()` — true when filename, size, and paint engine pixel format are all set
-- [x] `descender()` metric (new, was missing from original classes)
-
-**Completed features (FastFont):**
-- [x] Cached glyph rendering via `Map<uint32_t, CachedGlyph>` (pre-rendered native-format `Image` + advance width)
-- [x] Tiered cache invalidation: font-level (FT_Face + glyphs) vs pixel-level (glyph images only)
-- [x] Deferred PaintEngine pattern: configure all properties with a null engine, then assign engine later
-- [x] `TimecodeOverlayNode` migrated from old classes to `FastFont`
-
-**Completed features (BasicFont):**
-- [x] Per-pixel FreeType alpha compositing — correct anti-aliased text over any background
-- [x] No glyph cache (minimal memory footprint)
-- [x] Ignores background color (composites foreground over existing pixel content)
-
-**Doctest (FastFont):**
-- [x] Default construction, all getters
-- [x] `setFontFilename` / `setFontSize` no-op when same value
-- [x] `isValid()` requires filename + positive size + pixel format
-- [x] `drawText` / `measureText` without font — returns false/0
-- [x] `drawText` / `measureText` with bad font path — returns false/0
-- [x] Font metrics after loading (`lineHeight > 0`, `ascender > 0`, `lineHeight >= ascender`)
-- [x] `measureText("")` == 0; single char > 0; longer string wider
-- [x] Monospace character widths equal (Fira Code)
-- [x] `drawText` changes pixels; different color combos produce different sums
-- [x] `drawText` on RGBA8 image
-- [x] Cache invalidation: size change produces different widths; bad path returns 0
-- [x] `setPaintEngine` same pixel format preserves cache
-- [x] Deferred PaintEngine on RGB8 and RGBA8
-- [x] Deferred PaintEngine measures same as direct construction
-- [x] Large RGBA8 image (1920x1080): text at bottom draws pixels (regression)
-- [x] Large RGB8 image: text at bottom draws pixels (regression)
-- [x] `lineHeight == ascender + descender`
-- [x] Metrics scale with font size
-- [x] Metrics match between deferred and direct construction
-
-**Doctest (BasicFont):**
-- [x] Default construction, all getters
-- [x] `setFontFilename`, `setFontSize`, `setForegroundColor`, `setKerningEnabled`
-- [x] `drawText` / `measureText` without font — returns false/0
-- [x] `drawText` with bad font path — returns false/0
-- [x] Font metrics after loading
-- [x] `measureText("")` == 0; longer string wider
-- [x] `drawText` renders pixels; different foreground colors produce different sums
-- [x] `drawText` on RGBA8 image
-- [x] Changing font size works; changing to bad path returns 0
-- [x] Deferred PaintEngine on RGB8 and RGBA8
-- [x] Large RGBA8 image: text at bottom draws pixels (regression)
-- [x] Large RGB8 image: text at bottom draws pixels (regression)
-- [x] `lineHeight == ascender + descender`
-- [x] Metrics match FastFont for same font and size
-- [x] `measureText` matches FastFont
-
-**Doctest (PaintEngine — RGBA8 blit regression):**
-- [x] RGBA8 blit full image — correct pixels in/outside region
-- [x] RGBA8 blit at high Y coordinate — regression for double-subtraction bug
-- [x] RGBA8 blit at lower half of large image (1920x1080, destY=998)
-- [x] RGBA8 blit clipped at right/bottom edge
+Font/FastFont/BasicFont class hierarchy implemented. `Font` is the abstract base; `FastFont` is a cached opaque glyph renderer; `BasicFont` is an alpha-compositing renderer. RGBA8 blit clipping bug fixed. TimecodeOverlayNode uses font metrics for layout. Full test suites for both renderers. Documentation at `docs/fonts.dox`.
 
 ---
 
 ## Video Codec System
 
-**Partial progress:** `ImageCodec` / `AudioCodec` abstract base classes and `JpegImageCodec` are implemented. `VideoTestPattern` and `AudioTestPattern` have been extracted from `TestPatternNode` into standalone reusable classes. `JpegEncoderNode` now delegates to `JpegImageCodec`. See git log for details.
-
-**Completed:**
-- [x] `ImageCodec` abstract base class (`include/promeki/codec.h`, `src/proav/codec.cpp`) — name-based string registry (`registerCodec()`, `createCodec()`, `registeredCodecs()`), `encode()`/`decode()` virtuals, `canEncode()`/`canDecode()`, `lastError()`/`lastErrorMessage()`, `setError()`/`clearError()`
-- [x] `AudioCodec` stub base class (same files) — name/description virtuals, future expansion
-- [x] `PROMEKI_REGISTER_IMAGE_CODEC` macro for static self-registration
-- [x] `JpegImageCodec` (`include/promeki/jpegimagecodec.h`, `src/proav/jpegimagecodec.cpp`) — derives from `ImageCodec`, libjpeg-turbo encode, quality 1-100 with clamping, `Subsampling` enum (444/422/420), registered as "jpeg"
-- [x] `VideoTestPattern` (`include/promeki/videotestpattern.h`, `src/proav/videotestpattern.cpp`) — all 11 patterns, `create()`/`render()` dual-mode, `fromString()`/`toString()`, motion offset support
-- [x] `AudioTestPattern` (`include/promeki/audiotestpattern.h`, `src/proav/audiotestpattern.cpp`) — Tone/Silence/LTC modes, `configure()`/`create()`/`render()`, `fromString()`/`toString()`
-- [x] `JpegEncoderNode` refactored to delegate to `JpegImageCodec` — adds `Subsampling` config key, thread-safe stats
-- [x] `TestPatternNode` refactored to delegate to `VideoTestPattern` and `AudioTestPattern`
-- [x] Tests: `tests/jpegimagecodec.cpp`, `tests/videotestpattern.cpp`, `tests/audiotestpattern.cpp`, `tests/codec.cpp` (updated)
+**Partially complete:** `ImageCodec`/`AudioCodec` abstract bases, `JpegImageCodec`, `VideoTestPattern`, `AudioTestPattern` all implemented and tested. `JpegEncoderNode` and `TestPatternNode` refactored to delegate to these classes.
 
 **Remaining — VideoEncoder/VideoDecoder pipeline abstraction:**
 
@@ -180,13 +84,13 @@ Currently, node processing requires explicit `process()` calls. In tests this is
 
 ### Proposed Design
 
-**Data-driven scheduling:** When a frame is delivered to a node's input queue (via `MediaLink::deliver()`), the node automatically becomes eligible for processing. The pipeline's scheduler picks it up and runs `process()` on the thread pool.
+**Data-driven scheduling:** When a frame is delivered to a node's input queue (via `MediaSink::deliver()`), the node automatically becomes eligible for processing. The pipeline's scheduler picks it up and runs `process()` on the thread pool.
 
 **Implementation checklist:**
 
 - [ ] **MediaNode: work-available signaling**
   - [ ] Add `PROMEKI_SIGNAL(workAvailable)` — emitted when the node has work to do (input enqueued, or source node is ready to produce)
-  - [ ] `MediaLink::deliver()` emits `workAvailable` on the sink node after enqueuing the frame
+  - [ ] `MediaSink::deliver()` emits `workAvailable` on the sink node after enqueuing the frame
   - [ ] Source nodes (no inputs) emit `workAvailable` after each `process()` completes (they always have more work unless stopped)
   - [ ] `bool hasWork() const` — returns true if input queue is non-empty (processing nodes) or node is a running source
 

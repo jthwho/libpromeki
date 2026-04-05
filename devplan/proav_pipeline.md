@@ -12,9 +12,9 @@ Generalizes the existing source/sink pattern in AudioBlock. Nodes own their own 
 
 ## Progress
 
-**Completed:** MediaSink, MediaSource, MediaNodeConfig (including typed `set<T>()`/`get<T>()` template overloads and string-literal overloads), MediaPipelineConfig, MediaNode (including node registry, NodeStats, BuildResult, Severity, NodeMessage, Delivery/DeliveryList, processFrame/process split, wake/waitForWork threading, PROMEKI_REGISTER_NODE macro, benchmark infrastructure, `defaultConfig()` virtual method), MediaPipeline (including BuildError, topological sort, cycle detection, build-from-config, start/stop/pause/resume, benchmarkSummary), Benchmark, BenchmarkReporter, EncodedDesc, Image::ensureExclusive()/isExclusive(), Audio::convertTo() (sample format conversion), concrete nodes (TestPatternNode, FrameDemuxNode, JpegEncoderNode, TimecodeOverlayNode, RtpVideoSinkNode, RtpAudioSinkNode — all implement `defaultConfig()`). UpperCamelCase key naming convention applied uniformly across all nodes and their config options, extendedStats(), and documentation. `MediaNode::stop()` race fix: state set to Idle and `_workCv.wakeAll()` called while holding `_workMutex` to prevent worker thread from missing the wake. Test-fixture capture-sink nodes (TestPatternNode, JpegEncoderNode, TimecodeOverlayNode, FrameDemuxNode tests) use `Mutex`/`Mutex::Locker` around `_lastFrame` and `Atomic<int>` for `_count` in place of `std::atomic`. See git history for details.
+**Completed:** MediaSink, MediaSource, MediaNodeConfig, MediaPipelineConfig, MediaNode (node registry, NodeStats, BuildResult, PROMEKI_REGISTER_NODE, benchmark infrastructure, `defaultConfig()`), MediaPipeline (topological sort, cycle detection, build-from-config, start/stop/pause/resume, benchmarkSummary), Benchmark, BenchmarkReporter, EncodedDesc, Image::ensureExclusive()/isExclusive(), Audio::convertTo(), all vidgen concrete nodes (TestPatternNode, FrameDemuxNode, JpegEncoderNode, TimecodeOverlayNode, RtpVideoSinkNode, RtpAudioSinkNode). `MediaNode::stop()` race condition fixed. See git history for details.
 
-**Architecture:** The pipeline uses a direct MediaSink/MediaSource connection model. MediaNode owns its sinks and sources; MediaPipeline owns nodes and manages connections. All node configuration flows through MediaNodeConfig → MediaNode::build() (pure virtual, returns BuildResult). Concrete nodes override `processFrame()` — the base class `process()` handles dequeuing, benchmark stamping, delivery, and timing. The old MediaPort/MediaLink/MediaGraph abstraction layer was removed.
+**Architecture:** Direct MediaSink/MediaSource connection model. MediaNode owns sinks and sources; MediaPipeline owns nodes and manages connections. Config flows through MediaNodeConfig → MediaNode::build(). Concrete nodes override `processFrame()` — base class `process()` handles dequeuing, benchmark stamping, delivery, and timing.
 
 **String key naming convention:** All string keys in `Map<String, Variant>` dictionaries use UpperCamelCase (CamelCaps), starting with an upper-case letter. This applies to config option keys (`Name`, `Type`, `FrameRate`, `PayloadType`), `extendedStats()` keys (`PacketsSent`, `BytesSent`, `FramesGenerated`), and any other string-keyed maps in the node API. Acronyms are treated as single words with only the first letter capitalised: `Dscp`, `RtpPayload`, `LtcChannel`.
 
@@ -95,7 +95,7 @@ MemSpace currently provides allocation, release, copy, and fill operations but n
 - [ ] `static void resetAllStats()` — reset all spaces
 
 **Implementation:**
-- [ ] Per-ID atomic counters (alongside existing `StructDatabase<ID, Ops>`)
+- [ ] Per-ID atomic counters (alongside existing registry `Map<ID, Ops>`)
 - [ ] `alloc()` increments allocCount, allocBytes, updates activeCount/activeBytes/peaks
 - [ ] `release()` increments releaseCount, releaseBytes, decrements activeCount/activeBytes
 - [ ] Peak tracking: `peakCount = max(peakCount, activeCount)` (atomic compare-exchange)
@@ -160,25 +160,6 @@ img->ensureExclusive();  // if copy needed, new buffer comes from videoPool
 
 ---
 
-## EncodedDesc
+## EncodedDesc — COMPLETE
 
-Data object describing compressed/encoded media. Analogous to ImageDesc/AudioDesc but for encoded bitstreams.
-
-**Files:**
-- [ ] `include/promeki/encodeddesc.h`
-- [ ] `src/proav/encodeddesc.cpp`
-- [ ] `tests/encodeddesc.cpp`
-
-**Implementation checklist:**
-- [ ] Header guard, includes, namespace
-- [ ] PROMEKI_SHARED_FINAL, `::Ptr`, `::List`, `::PtrList`
-- [ ] `FourCC codec() const` — codec identifier (e.g., "JPEG", "H264", "HEVC")
-- [ ] `void setCodec(const FourCC &codec)`
-- [ ] `ImageDesc sourceImageDesc() const` — the uncompressed image format this was encoded from
-- [ ] `void setSourceImageDesc(const ImageDesc &desc)`
-- [ ] `int quality() const` — codec-specific quality parameter (e.g., JPEG quality 1-100). -1 if not applicable.
-- [ ] `void setQuality(int q)`
-- [ ] `Metadata metadata() const`, `setMetadata(const Metadata &)` — additional codec parameters
-- [ ] `bool isValid() const`
-- [ ] `operator==`, `operator!=`
-- [ ] Doctest: construction, codec/quality set/get, equality
+Data object describing compressed/encoded media. Implemented, tested, and merged.

@@ -8,7 +8,7 @@ Tracked FIXME comments scattered across the codebase. Address these as they beco
 
 ## Windows File Implementation
 
-**File:** `src/core/file.cpp:44`
+**File:** `src/core/file.cpp:40`
 **FIXME:** "The windows code here needs love."
 
 The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest of the Windows-specific File methods are likely incomplete or missing.
@@ -19,31 +19,9 @@ The Windows `#ifdef` branch is a stub — `isOpen()` returns false, and the rest
 
 ---
 
-## ~~AudioDesc Metadata Comparison~~ (DONE)
-
-**File:** `include/promeki/audiodesc.h`
-
-- [x] `operator==` now includes metadata comparison
-- [x] Added `formatEquals()` for format-only comparison (type, rate, channels)
-- [x] Added `operator==` to `Metadata` (via `toJson()`) and `JsonObject`
-- [x] AudioFile write check uses `formatEquals()` since audio buffers don't carry file-level metadata
-- [x] Tests added for `Metadata::operator==`, `JsonObject::operator==`, and `AudioDesc` equality variants
-
----
-
-## ~~AudioFile libsndfile Readability Check~~ (DONE)
-
-**File:** `src/proav/audiofile_libsndfile.cpp`
-
-- [x] `fileIsReadable()` now validates `info.channels > 0`, `info.samplerate > 0`, and `info.format != 0`
-- [x] Added `memset` initialization of `SF_INFO` before `sf_open`
-- [x] Returns false for files with unsupported configurations
-
----
-
 ## AudioGen Planar Format Support
 
-**File:** `src/proav/audiogen.cpp:64`
+**File:** `src/proav/audiogen.cpp:66`
 **FIXME:** "Need to set to new plane for planar."
 
 Currently increments `data++` per channel, which only works for interleaved formats. Planar formats store each channel in a separate memory plane.
@@ -57,7 +35,7 @@ Currently increments `data++` per channel, which only works for interleaved form
 
 ## DateTime Number Word Parsing
 
-**File:** `src/core/datetime.cpp:108`
+**File:** `src/core/datetime.cpp:112`
 **FIXME:** "Need to use the String::parseNumberWords()"
 
 The `std::istringstream` was replaced with `strtoll` as part of the stream migration, but the FIXME still stands: the code should use `String::parseNumberWords()` for natural language number parsing (e.g., "three days ago") instead of bare `strtoll`.
@@ -65,21 +43,6 @@ The `std::istringstream` was replaced with `strtoll` as part of the stream migra
 - [ ] Implement or verify `String::parseNumberWords()` exists
 - [ ] Replace `strtoll` token parsing with `String::parseNumberWords()`
 - [ ] Update tests
-
----
-
-## ~~FileInfo::suffix() Crashes on Extensionless Files~~ (DONE)
-
-**File:** `include/promeki/fileinfo.h`
-
-- [x] Guard against empty extension before calling `substr(1)`
-- [x] Tests added for extensionless files, dotfiles, and compound extensions
-
----
-
-## ~~Dead Test File: tests/image.cpp~~ (DONE)
-
-- [x] Old `tests/image.cpp` deleted; `tests/image2.cpp` renamed to `tests/image.cpp` during library consolidation
 
 ---
 

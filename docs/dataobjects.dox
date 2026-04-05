@@ -23,11 +23,19 @@
  * | @ref Timecode | SMPTE timecode (H:M:S:F) |
  * | @ref TimeStamp | Steady-clock time point |
  * | @ref XYZColor | CIE XYZ color triple |
+ * | @ref Color | Float[4] color value with ColorModel |
+ * | @ref ColorModel | Color model / color space descriptor (TypeRegistry) |
+ * | @ref MemSpace | Memory space descriptor (TypeRegistry) |
+ * | @ref PixelFormat | Pixel memory layout descriptor (TypeRegistry) |
+ * | @ref PixelDesc | Full pixel description: format + color model + ranges (TypeRegistry) |
  * | @ref Pair | Typed pair of two values |
  * | @ref Result | Pair\<T, Error\> for fallible operations |
  * | @ref Span | Non-owning view over contiguous storage |
  * | @ref Stack | LIFO stack (std::stack wrapper) |
  * | @ref PriorityQueue | Priority queue (std::priority_queue wrapper) |
+ * | @ref Duration | Time duration value |
+ * | @ref FrameRate | Frame rate descriptor |
+ * | @ref AudioLevel | Audio level in dBFS |
  *
  * @section shareable Shareable
  *
@@ -69,6 +77,7 @@
  * | @ref Image | Image descriptor + pixel buffer planes |
  * | @ref Audio | Audio descriptor + sample buffer |
  * | @ref Frame | Container of images, audio, and metadata |
+ * | @ref EncodedDesc | Compressed/encoded media descriptor |
  *
  * @section dataobj_threading Thread Safety and Cross-Thread Sharing
  *

@@ -236,8 +236,8 @@
  *   scheduling (e.g., real-time audio nodes).
  * - **CustomPool**: uses a separate ThreadPool instance.
  *
- * Data flows between nodes through MediaLink, which uses a
- * thread-safe @ref Queue internally.  Nodes receive data via
- * @c pullFrame() and produce data via @c pushFrame() -- both are
+ * Data flows between nodes through MediaSink/MediaSource connections,
+ * which use a thread-safe @ref Queue internally.  Nodes receive data
+ * via their sinks and produce data via their sources -- both are
  * safe to call from the node's processing thread.
  */

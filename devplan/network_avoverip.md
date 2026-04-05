@@ -8,7 +8,7 @@
 
 General-purpose primitives for building AV-over-IP implementations (ST 2110, AES67, custom protocols). Higher-level standard-specific implementations (NDI, Dante) will wrap vendor libraries through our API.
 
-**Completed:** PrioritySocket, RtpSession, RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG), SdpSession, MulticastManager. RtpPayloadJpeg reworked with proper JPEG stream parsing (DQT extraction, entropy-coded data location, quantization table header in RFC 2435 Q≥128 mode) and 4:2:2 subsampling support. SdpSession attributes refactored from `Map<String,String>` to ordered `List<Pair<String,String>>` preserving insertion order (required for SDP compliance). RtpSession gained `sendPacketsPaced()` for ST 2110-21 style inter-packet pacing using Duration/TimeStamp.
+**Completed:** PrioritySocket, RtpSession (including `sendPacketsPaced()` for ST 2110-21 pacing), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing and 4:2:2 support), SdpSession (insertion-order-preserving attributes), MulticastManager.
 
 ---
 

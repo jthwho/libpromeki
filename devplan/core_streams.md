@@ -1,13 +1,13 @@
 # Core Streams and Serialization
 
-**Phase:** 2 (alongside IO abstractions) — **Core phase complete.**
+**Phase:** 2 — **COMPLETE**
 **Dependencies:** Phase 1 (containers), Phase 2A (IODevice)
 **Depends-on-this:** Phase 4 (pipeline frame serialization), Phase 7 (ObjectBase saveState/loadState)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-**Maintenance note:** Completed items are removed from this document once merged. Only retain completed items when they provide context needed by a future phase in this same document. If something is done, trust the code and git history as the source of truth.
+Provides promeki-native stream classes for binary and text I/O. Qt-style API, integrates with IODevice and promeki types. DataStream, TextStream, and StreamString are all implemented. All std:: stream usage has been migrated out of the library (only `tests/doctest_main.cpp` retains std:: streams, required by the doctest API).
 
-Provides promeki-native stream classes for binary and text I/O. These present a Qt-style API and integrate with IODevice and promeki types. DataStream and TextStream are implemented, and all std:: stream usage has been migrated out of the library (only `tests/doctest_main.cpp` retains std:: streams, required by the doctest API).
+The remaining sections in this document are **extension work** — adding type-specific stream operators and ObjectBase serialization.
 
 ---
 

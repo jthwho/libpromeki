@@ -1,12 +1,12 @@
 # ProAV Concrete Nodes
 
 **Phase:** 4B
-**Dependencies:** Phase 4A (MediaNode, MediaPort, MediaGraph, MediaPipeline)
+**Dependencies:** Phase 4A (MediaNode, MediaSink, MediaSource, MediaPipeline)
 **Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-All nodes derive from `MediaNode`, implement `process()`, and declare their input/output ports. All config option keys use UpperCamelCase (CamelCaps), starting with an upper-case letter (see `proav_pipeline.md` for details).
+All nodes derive from `MediaNode`, implement `processFrame()`, and declare their sinks/sources. All config option keys use UpperCamelCase (CamelCaps), starting with an upper-case letter (see `proav_pipeline.md` for details).
 
 **Additional nodes for vidgen:** TestPatternNode (combined video+audio+metadata generator with motion), TimecodeOverlayNode, JpegEncoderNode, FrameRateControlNode, RtpVideoSinkNode, RtpAudioSinkNode are specified in [vidgen.md](vidgen.md).
 
@@ -27,14 +27,14 @@ Reads audio from AudioFile and outputs frames.
 - [ ] `void setFilePath(const FilePath &path)` — or `String` path
 - [ ] `void setAudioFile(AudioFile *file)` — use existing AudioFile
 - [ ] `void setLooping(bool loop)` — loop at end of file
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Open AudioFile, read AudioDesc
   - [ ] Set output port AudioDesc from file
 - [ ] Override `start()`: seek to beginning (or specified start)
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Read next block of audio from file
   - [ ] Create `Frame::Ptr` with `Audio` data
-  - [ ] Push to output port via MediaLink
+  - [ ] Push to output via source
   - [ ] Handle EOF (stop or loop)
 - [ ] Override `stop()`: close file
 - [ ] `PROMEKI_SIGNAL(endOfFile)`
@@ -56,11 +56,11 @@ Writes audio frames to AudioFile.
 - [ ] Constructor: creates one audio input port
 - [ ] `void setFilePath(const FilePath &path)`
 - [ ] `void setAudioDesc(const AudioDesc &desc)` — output file format
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Negotiate format with input port
   - [ ] Create/open output AudioFile
-- [ ] Override `process()`:
-  - [ ] Pull `Frame::Ptr` from input port via MediaLink
+- [ ] Override `processFrame()`:
+  - [ ] Pull `Frame::Ptr` from input sink
   - [ ] Extract `Audio` data
   - [ ] Write to AudioFile
 - [ ] Override `stop()`: finalize and close file
@@ -83,10 +83,10 @@ Reads image sequences and outputs video frames.
 - [ ] `void setSequencePath(const String &pattern)` — e.g., "frame_%04d.dpx"
 - [ ] `void setFrameRange(FrameNumber start, FrameNumber end)`
 - [ ] `void setLooping(bool loop)`
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Detect image format from first frame
   - [ ] Set output port VideoDesc/ImageDesc
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Read next image in sequence
   - [ ] Create `Frame::Ptr` with `Image` data
   - [ ] Push to output port
@@ -111,8 +111,8 @@ Writes video frames as image sequences.
 - [ ] Constructor: creates one video input port
 - [ ] `void setSequencePath(const String &pattern)`
 - [ ] `void setStartFrame(FrameNumber frame)`
-- [ ] Override `configure()`: validate output path, create directory if needed
-- [ ] Override `process()`:
+- [ ] Override `build()`: validate output path, create directory if needed
+- [ ] Override `processFrame()`:
   - [ ] Pull `Frame::Ptr` from input
   - [ ] Extract `Image` data
   - [ ] Write to numbered file
@@ -136,10 +136,10 @@ N-input audio mixer with per-input gain.
 - [ ] Constructor: creates one audio output port
 - [ ] `void setInputGain(int inputIndex, double gain)` — per-input gain (linear, 1.0 = unity)
 - [ ] `double inputGain(int inputIndex) const`
-- [ ] Override `configure()`:
+- [ ] Override `build()`:
   - [ ] Verify all inputs have compatible AudioDesc (sample rate, format)
   - [ ] Output AudioDesc matches input (or is configured explicitly)
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Pull frames from all inputs
   - [ ] Allocate output Audio buffer, mix into it: sum samples with per-input gain
   - [ ] Handle missing inputs gracefully (silence)
@@ -166,8 +166,8 @@ Simple gain adjustment node.
 - [ ] `void setGainDb(double db)` — gain in decibels
 - [ ] `double gain() const`
 - [ ] `double gainDb() const`
-- [ ] Override `configure()`: output AudioDesc = input AudioDesc
-- [ ] Override `process()`:
+- [ ] Override `build()`: output AudioDesc = input AudioDesc
+- [ ] Override `processFrame()`:
   - [ ] Pull frame from input
   - [ ] Call `audio.modify()` then `audio->ensureExclusive()` (COW detach if shared, no-op in linear pipeline)
   - [ ] Apply gain to all samples in place
@@ -176,31 +176,30 @@ Simple gain adjustment node.
 
 ---
 
-## ColorSpaceConvertNode
+## ColorModelConvertNode
 
-Image color space conversion.
+Image color model conversion.
 
 **Files:**
-- [ ] `include/promeki/colorspaceconvertnode.h`
-- [ ] `src/proav/colorspaceconvertnode.cpp`
-- [ ] `tests/colorspaceconvertnode.cpp`
+- [ ] `include/promeki/colormodelconvertnode.h`
+- [ ] `src/proav/colormodelconvertnode.cpp`
+- [ ] `tests/colormodelconvertnode.cpp`
 
 **Implementation checklist:**
 - [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
 - [ ] Constructor: one video input, one video output
-- [ ] `void setOutputColorSpace(const ColorSpace &cs)`
-- [ ] `ColorSpace outputColorSpace() const`
-- [ ] Override `configure()`:
-  - [ ] Read input port ColorSpace
-  - [ ] Set output port with target ColorSpace
+- [ ] `void setOutputColorModel(ColorModel model)`
+- [ ] `ColorModel outputColorModel() const`
+- [ ] Override `build()`:
+  - [ ] Read input PixelDesc's ColorModel
+  - [ ] Set output PixelDesc with target ColorModel
   - [ ] Pre-compute conversion matrix/LUT
-- [ ] Override `process()`:
+- [ ] Override `processFrame()`:
   - [ ] Pull frame from input
   - [ ] Call `img.modify()` then `img->ensureExclusive()` (COW detach if shared)
-  - [ ] Apply color space conversion in place (use existing `ColorSpaceConverter`)
+  - [ ] Apply color model conversion in place via Color conversion
   - [ ] Push to output
-- [ ] Leverage existing `ColorSpaceConverter` class
-- [ ] Doctest: convert between known color spaces, verify pixel values
+- [ ] Doctest: convert between known color models, verify pixel values
 
 ---
 
@@ -219,8 +218,8 @@ Audio/video synchronization using Timecode.
 - [ ] `void setTimecodeMode(Timecode::Mode mode)`
 - [ ] `void setSyncSource(enum { Audio, Video, External })` — which stream is master
 - [ ] `void setMaxDrift(Duration maxDrift)` — acceptable A/V offset before correction
-- [ ] Override `configure()`: validate input formats
-- [ ] Override `process()`:
+- [ ] Override `build()`: validate input formats
+- [ ] Override `processFrame()`:
   - [ ] Read timecodes from incoming frames
   - [ ] Compare A/V timecodes
   - [ ] Drop/duplicate frames to maintain sync
