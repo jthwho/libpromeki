@@ -1203,6 +1203,286 @@ void FastPathRGBA10LEtoV210(const void *const *srcPlanes,
         return;
 }
 
+// =========================================================================
+// 12-bit helpers
+// =========================================================================
+//
+// 12-bit limited range: Y: 256-3760, Cb/Cr: 256-3840 (out of 0-4095)
+
+static inline uint16_t clip12(int v) {
+        return static_cast<uint16_t>(v < 0 ? 0 : (v > 4095 ? 4095 : v));
+}
+
+// BT.709 12-bit
+static inline void yuv12_709ToRgba12(int y, int cb, int cr, uint16_t *dst) {
+        int c = y - 256, d = cb - 2048, e = cr - 2048;
+        dst[0] = clip12((4787*c + 7370*e + 2048) >> 12);
+        dst[1] = clip12((4787*c - 877*d - 2191*e + 2048) >> 12);
+        dst[2] = clip12((4787*c + 8684*d + 2048) >> 12);
+        dst[3] = 4095;
+}
+
+static inline void rgba12ToYCbCr709_12(int r, int g, int b, int *y, int *cb, int *cr) {
+        *y  = (( 745*r + 2506*g +  253*b + 2048) >> 12) + 256;
+        *cb = ((-411*r - 1381*g + 1792*b + 2048) >> 12) + 2048;
+        *cr = ((1792*r - 1628*g -  164*b + 2048) >> 12) + 2048;
+}
+
+// BT.2020 12-bit
+static inline void yuv12_2020ToRgba12(int y, int cb, int cr, uint16_t *dst) {
+        int c = y - 256, d = cb - 2048, e = cr - 2048;
+        dst[0] = clip12((4787*c + 6901*e + 2048) >> 12);
+        dst[1] = clip12((4787*c - 770*d - 2674*e + 2048) >> 12);
+        dst[2] = clip12((4787*c + 8805*d + 2048) >> 12);
+        dst[3] = 4095;
+}
+
+static inline void rgba12ToYCbCr2020_12(int r, int g, int b, int *y, int *cb, int *cr) {
+        *y  = (( 921*r + 2376*g +  208*b + 2048) >> 12) + 256;
+        *cb = ((-500*r - 1292*g + 1792*b + 2048) >> 12) + 2048;
+        *cr = ((1792*r - 1648*g -  144*b + 2048) >> 12) + 2048;
+}
+
+// =========================================================================
+// 12-bit BT.709 UYVY LE <-> RGBA12 LE
+// =========================================================================
+
+void FastPathUYVY12LE_709toRGBA12LE(const void *const *srcPlanes,
+                                     const size_t *srcStrides,
+                                     void *const *dstPlanes,
+                                     const size_t *dstStrides,
+                                     size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int cb = src[i*4+0], y0 = src[i*4+1], cr = src[i*4+2], y1 = src[i*4+3];
+                yuv12_709ToRgba12(y0, cb, cr, dst + i*8);
+                yuv12_709ToRgba12(y1, cb, cr, dst + i*8 + 4);
+        }
+        return;
+}
+
+void FastPathRGBA12LEtoUYVY12LE_709(const void *const *srcPlanes,
+                                     const size_t *srcStrides,
+                                     void *const *dstPlanes,
+                                     const size_t *dstStrides,
+                                     size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int r0 = src[i*8+0], g0 = src[i*8+1], b0 = src[i*8+2];
+                int r1 = src[i*8+4], g1 = src[i*8+5], b1 = src[i*8+6];
+                int y0, cb0, cr0, y1, cb1, cr1;
+                rgba12ToYCbCr709_12(r0, g0, b0, &y0, &cb0, &cr0);
+                rgba12ToYCbCr709_12(r1, g1, b1, &y1, &cb1, &cr1);
+                dst[i*4+0] = clip12((cb0+cb1+1)>>1);
+                dst[i*4+1] = clip12(y0);
+                dst[i*4+2] = clip12((cr0+cr1+1)>>1);
+                dst[i*4+3] = clip12(y1);
+        }
+        return;
+}
+
+// =========================================================================
+// 12-bit BT.709 Planar 422/420 LE <-> RGBA12 LE
+// =========================================================================
+
+void FastPathPlanar12LE422_709toRGBA12LE(const void *const *srcPlanes,
+                                          const size_t *srcStrides,
+                                          void *const *dstPlanes,
+                                          const size_t *dstStrides,
+                                          size_t width, CSCContext &ctx) {
+        const uint16_t *yp = static_cast<const uint16_t *>(srcPlanes[0]);
+        const uint16_t *cbp = static_cast<const uint16_t *>(srcPlanes[1]);
+        const uint16_t *crp = static_cast<const uint16_t *>(srcPlanes[2]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                yuv12_709ToRgba12(yp[i*2],   cbp[i], crp[i], dst + i*8);
+                yuv12_709ToRgba12(yp[i*2+1], cbp[i], crp[i], dst + i*8 + 4);
+        }
+        return;
+}
+
+void FastPathRGBA12LEtoPlanar12LE422_709(const void *const *srcPlanes,
+                                          const size_t *srcStrides,
+                                          void *const *dstPlanes,
+                                          const size_t *dstStrides,
+                                          size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *yp = static_cast<uint16_t *>(dstPlanes[0]);
+        uint16_t *cbp = static_cast<uint16_t *>(dstPlanes[1]);
+        uint16_t *crp = static_cast<uint16_t *>(dstPlanes[2]);
+        for(size_t x = 0; x < width; x++) {
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                int y, cb, cr;
+                rgba12ToYCbCr709_12(r, g, b, &y, &cb, &cr);
+                yp[x] = clip12(y);
+        }
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int r = (src[i*8+0]+src[i*8+4]+1)>>1;
+                int g = (src[i*8+1]+src[i*8+5]+1)>>1;
+                int b = (src[i*8+2]+src[i*8+6]+1)>>1;
+                int y, cb, cr;
+                rgba12ToYCbCr709_12(r, g, b, &y, &cb, &cr);
+                cbp[i] = clip12(cb);
+                crp[i] = clip12(cr);
+        }
+        return;
+}
+
+void FastPathPlanar12LE420_709toRGBA12LE(const void *const *s, const size_t *ss,
+                                          void *const *d, const size_t *ds,
+                                          size_t w, CSCContext &c) {
+        FastPathPlanar12LE422_709toRGBA12LE(s, ss, d, ds, w, c);
+}
+void FastPathRGBA12LEtoPlanar12LE420_709(const void *const *s, const size_t *ss,
+                                          void *const *d, const size_t *ds,
+                                          size_t w, CSCContext &c) {
+        FastPathRGBA12LEtoPlanar12LE422_709(s, ss, d, ds, w, c);
+}
+
+// =========================================================================
+// 12-bit BT.709 NV12 LE <-> RGBA12 LE
+// =========================================================================
+
+void FastPathNV12_12LE_709toRGBA12LE(const void *const *srcPlanes,
+                                      const size_t *srcStrides,
+                                      void *const *dstPlanes,
+                                      const size_t *dstStrides,
+                                      size_t width, CSCContext &ctx) {
+        const uint16_t *luma = static_cast<const uint16_t *>(srcPlanes[0]);
+        const uint16_t *chroma = static_cast<const uint16_t *>(srcPlanes[1]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int y0 = luma[i*2], y1 = luma[i*2+1];
+                int cb = chroma[i*2], cr = chroma[i*2+1];
+                yuv12_709ToRgba12(y0, cb, cr, dst + i*8);
+                yuv12_709ToRgba12(y1, cb, cr, dst + i*8 + 4);
+        }
+        return;
+}
+
+void FastPathRGBA12LEtoNV12_12LE_709(const void *const *srcPlanes,
+                                      const size_t *srcStrides,
+                                      void *const *dstPlanes,
+                                      const size_t *dstStrides,
+                                      size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *luma = static_cast<uint16_t *>(dstPlanes[0]);
+        uint16_t *chroma = static_cast<uint16_t *>(dstPlanes[1]);
+        for(size_t x = 0; x < width; x++) {
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                int y, cb, cr;
+                rgba12ToYCbCr709_12(r, g, b, &y, &cb, &cr);
+                luma[x] = clip12(y);
+        }
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int r = (src[i*8+0]+src[i*8+4]+1)>>1;
+                int g = (src[i*8+1]+src[i*8+5]+1)>>1;
+                int b = (src[i*8+2]+src[i*8+6]+1)>>1;
+                int y, cb, cr;
+                rgba12ToYCbCr709_12(r, g, b, &y, &cb, &cr);
+                chroma[i*2]   = clip12(cb);
+                chroma[i*2+1] = clip12(cr);
+        }
+        return;
+}
+
+// =========================================================================
+// 12-bit BT.2020 UYVY LE <-> RGBA12 LE
+// =========================================================================
+
+void FastPathUYVY12LE_2020toRGBA12LE(const void *const *srcPlanes,
+                                      const size_t *srcStrides,
+                                      void *const *dstPlanes,
+                                      const size_t *dstStrides,
+                                      size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int cb = src[i*4+0], y0 = src[i*4+1], cr = src[i*4+2], y1 = src[i*4+3];
+                yuv12_2020ToRgba12(y0, cb, cr, dst + i*8);
+                yuv12_2020ToRgba12(y1, cb, cr, dst + i*8 + 4);
+        }
+        return;
+}
+
+void FastPathRGBA12LEtoUYVY12LE_2020(const void *const *srcPlanes,
+                                      const size_t *srcStrides,
+                                      void *const *dstPlanes,
+                                      const size_t *dstStrides,
+                                      size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int r0 = src[i*8+0], g0 = src[i*8+1], b0 = src[i*8+2];
+                int r1 = src[i*8+4], g1 = src[i*8+5], b1 = src[i*8+6];
+                int y0, cb0, cr0, y1, cb1, cr1;
+                rgba12ToYCbCr2020_12(r0, g0, b0, &y0, &cb0, &cr0);
+                rgba12ToYCbCr2020_12(r1, g1, b1, &y1, &cb1, &cr1);
+                dst[i*4+0] = clip12((cb0+cb1+1)>>1);
+                dst[i*4+1] = clip12(y0);
+                dst[i*4+2] = clip12((cr0+cr1+1)>>1);
+                dst[i*4+3] = clip12(y1);
+        }
+        return;
+}
+
+// 12-bit BT.2020 Planar 420 LE <-> RGBA12 LE
+
+void FastPathPlanar12LE420_2020toRGBA12LE(const void *const *srcPlanes,
+                                           const size_t *srcStrides,
+                                           void *const *dstPlanes,
+                                           const size_t *dstStrides,
+                                           size_t width, CSCContext &ctx) {
+        const uint16_t *yp = static_cast<const uint16_t *>(srcPlanes[0]);
+        const uint16_t *cbp = static_cast<const uint16_t *>(srcPlanes[1]);
+        const uint16_t *crp = static_cast<const uint16_t *>(srcPlanes[2]);
+        uint16_t *dst = static_cast<uint16_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                yuv12_2020ToRgba12(yp[i*2],   cbp[i], crp[i], dst + i*8);
+                yuv12_2020ToRgba12(yp[i*2+1], cbp[i], crp[i], dst + i*8 + 4);
+        }
+        return;
+}
+
+void FastPathRGBA12LEtoPlanar12LE420_2020(const void *const *srcPlanes,
+                                           const size_t *srcStrides,
+                                           void *const *dstPlanes,
+                                           const size_t *dstStrides,
+                                           size_t width, CSCContext &ctx) {
+        const uint16_t *src = static_cast<const uint16_t *>(srcPlanes[0]);
+        uint16_t *yp = static_cast<uint16_t *>(dstPlanes[0]);
+        uint16_t *cbp = static_cast<uint16_t *>(dstPlanes[1]);
+        uint16_t *crp = static_cast<uint16_t *>(dstPlanes[2]);
+        for(size_t x = 0; x < width; x++) {
+                int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
+                int y, cb, cr;
+                rgba12ToYCbCr2020_12(r, g, b, &y, &cb, &cr);
+                yp[x] = clip12(y);
+        }
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                int r = (src[i*8+0]+src[i*8+4]+1)>>1;
+                int g = (src[i*8+1]+src[i*8+5]+1)>>1;
+                int b = (src[i*8+2]+src[i*8+6]+1)>>1;
+                int y, cb, cr;
+                rgba12ToYCbCr2020_12(r, g, b, &y, &cb, &cr);
+                cbp[i] = clip12(cb);
+                crp[i] = clip12(cr);
+        }
+        return;
+}
+
 }  // namespace HWY_NAMESPACE
 }  // namespace csc
 }  // namespace promeki

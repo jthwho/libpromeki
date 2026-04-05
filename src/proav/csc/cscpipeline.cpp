@@ -93,7 +93,10 @@ static void kernelUnpackInterleaved(const CSCPipeline::Stage *stage,
                                     const size_t *dstStrides,
                                     size_t width, size_t y,
                                     CSCContext &ctx) {
-        float *buffers[4] = { ctx.buffer(0), ctx.buffer(1), ctx.buffer(2), ctx.buffer(3) };
+        // Use semBufMap to route components to correct SoA buffers
+        // (handles BGRA, ARGB, etc. where component order differs from R,G,B,A)
+        const int *m = stage->semBufMap;
+        float *buffers[4] = { ctx.buffer(m[0]), ctx.buffer(m[1]), ctx.buffer(m[2]), ctx.buffer(m[3]) };
         csc::unpackInterleaved(srcPlanes[0], buffers, width,
                                stage->pixelCompCount, stage->bitsPerComp,
                                stage->bytesPerBlock, stage->pixelsPerBlock,
@@ -140,7 +143,8 @@ static void kernelPackInterleaved(const CSCPipeline::Stage *stage,
                                   const size_t *dstStrides,
                                   size_t width, size_t y,
                                   CSCContext &ctx) {
-        const float *buffers[4] = { ctx.buffer(0), ctx.buffer(1), ctx.buffer(2), ctx.buffer(3) };
+        const int *m = stage->semBufMap;
+        const float *buffers[4] = { ctx.buffer(m[0]), ctx.buffer(m[1]), ctx.buffer(m[2]), ctx.buffer(m[3]) };
         csc::packInterleaved(buffers, dstPlanes[0], width,
                              stage->pixelCompCount, stage->bitsPerComp,
                              stage->bytesPerBlock, stage->pixelsPerBlock,
@@ -229,6 +233,23 @@ static void kernelAlphaFill(const CSCPipeline::Stage *stage,
 
 // --- Pipeline compiler ---
 
+// Compute semantic buffer mapping: maps component index to SoA buffer
+// index based on the component's semantic meaning.
+// R/Y -> buf 0, G/Cb -> buf 1, B/Cr -> buf 2, A -> buf 3.
+static void computeSemBufMap(const PixelDesc &pd, int *semBufMap) {
+        const PixelDesc::Data *pdd = pd.data();
+        int cc = static_cast<int>(pd.pixelFormat().compCount());
+        for(int c = 0; c < cc; c++) {
+                const String &abbrev = pdd->compSemantics[c].abbrev;
+                if(abbrev == "R" || abbrev == "Y")       semBufMap[c] = 0;
+                else if(abbrev == "G" || abbrev == "Cb")  semBufMap[c] = 1;
+                else if(abbrev == "B" || abbrev == "Cr")  semBufMap[c] = 2;
+                else if(abbrev == "A")                    semBufMap[c] = 3;
+                else                                      semBufMap[c] = c; // fallback
+        }
+        return;
+}
+
 void CSCPipeline::buildUnpackStage(const PixelDesc &pd, Stage &stage) {
         stage.type = StageUnpack;
         const PixelFormat &pf = pd.pixelFormat();
@@ -247,6 +268,8 @@ void CSCPipeline::buildUnpackStage(const PixelDesc &pd, Stage &stage) {
                 stage.compByteOffset[i] = static_cast<int>(pfd->comps[i].byteOffset);
                 stage.compBits[i] = static_cast<int>(pfd->comps[i].bits);
         }
+
+        computeSemBufMap(pd, stage.semBufMap);
 
         for(size_t i = 0; i < pfd->planeCount; i++) {
                 stage.planeHSub[i] = static_cast<int>(pfd->planes[i].hSubsampling);
@@ -282,6 +305,8 @@ void CSCPipeline::buildPackStage(const PixelDesc &pd, Stage &stage) {
                 stage.compByteOffset[i] = static_cast<int>(pfd->comps[i].byteOffset);
                 stage.compBits[i] = static_cast<int>(pfd->comps[i].bits);
         }
+
+        computeSemBufMap(pd, stage.semBufMap);
 
         for(size_t i = 0; i < pfd->planeCount; i++) {
                 stage.planeHSub[i] = static_cast<int>(pfd->planes[i].hSubsampling);

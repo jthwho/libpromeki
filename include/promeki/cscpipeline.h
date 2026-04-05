@@ -164,6 +164,16 @@ class CSCPipeline {
                         /** @brief Vertical chroma subsampling ratio. */
                         int chromaVRatio = 1;
 
+                        /**
+                         * @brief Semantic buffer map for unpack/pack.
+                         *
+                         * Maps component index to SoA buffer index based on
+                         * semantic meaning (R/Y->0, G/Cb->1, B/Cr->2, A->3).
+                         * Handles formats with non-standard component ordering
+                         * such as BGRA, ARGB, etc.
+                         */
+                        int semBufMap[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+
                         /** @brief Source/target component count for unpack/pack. */
                         int pixelCompCount = 0;
 

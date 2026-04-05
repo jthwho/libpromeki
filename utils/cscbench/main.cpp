@@ -173,6 +173,16 @@ static List<ConvPair> standardPairs() {
         add(PixelDesc::RGBA10_LE_sRGB,             PixelDesc::YUV10_420_Planar_LE_Rec2020);
         add(PixelDesc::YUV10_420_Planar_LE_Rec2020, PixelDesc::RGBA10_LE_sRGB);
 
+        // 12-bit Rec.709
+        add(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_422_UYVY_LE_Rec709);
+        add(PixelDesc::YUV12_422_UYVY_LE_Rec709,   PixelDesc::RGBA12_LE_sRGB);
+        add(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_420_Planar_LE_Rec709);
+        add(PixelDesc::YUV12_420_Planar_LE_Rec709,  PixelDesc::RGBA12_LE_sRGB);
+
+        // 12-bit Rec.2020
+        add(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_422_UYVY_LE_Rec2020);
+        add(PixelDesc::YUV12_422_UYVY_LE_Rec2020,  PixelDesc::RGBA12_LE_sRGB);
+
         // Bit depth change
         add(PixelDesc::RGBA8_sRGB,               PixelDesc::RGBA16_LE_sRGB);
         add(PixelDesc::RGBA16_LE_sRGB,           PixelDesc::RGBA8_sRGB);

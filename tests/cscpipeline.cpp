@@ -481,6 +481,122 @@ TEST_CASE("CSC L8: range boundaries 10-bit") {
         CHECK(wd[0] == 512);  CHECK(wd[2] == 512);
 }
 
+TEST_CASE("CSC L8: range boundaries 12-bit") {
+        auto make12 = [](uint16_t r, uint16_t g, uint16_t b) {
+                return makeUniformRGBA10LE(r, g, b); // reuse; PixelDesc handles bit depth
+        };
+
+        SUBCASE("black 12-bit UYVY Rec.709") {
+                Image src = makeUniformRGBA10LE(0, 0, 0); // 10-bit zeros = 12-bit zeros when upconverted
+                Image src12 = src.convert(PixelDesc::RGBA12_LE_sRGB, Metadata(), scalarConfig());
+                REQUIRE(src12.isValid());
+                Image dst = src12.convert(PixelDesc::YUV12_422_UYVY_LE_Rec709, Metadata());
+                REQUIRE(dst.isValid());
+                CSCPipeline p(PixelDesc::RGBA12_LE_sRGB, PixelDesc::YUV12_422_UYVY_LE_Rec709);
+                CHECK(p.isFastPath());
+                const uint16_t *yuv = static_cast<const uint16_t *>(dst.data());
+                CHECK(std::abs((int)yuv[1] - 256) <= 2);   // Y ~ 256
+                CHECK(std::abs((int)yuv[0] - 2048) <= 2);  // Cb ~ 2048
+                CHECK(std::abs((int)yuv[2] - 2048) <= 2);  // Cr ~ 2048
+        }
+
+        SUBCASE("black 12-bit Planar 420 Rec.709") {
+                Image src(2, 2, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                src.fill(0);
+                Image dst = src.convert(PixelDesc::YUV12_420_Planar_LE_Rec709, Metadata());
+                REQUIRE(dst.isValid());
+                CHECK(dst.pixelDesc().pixelFormat().planeCount() == 3);
+                const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
+                CHECK(std::abs((int)yp[0] - 256) <= 2);
+        }
+
+        SUBCASE("black 12-bit NV12 Rec.709") {
+                Image src(2, 2, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                src.fill(0);
+                Image dst = src.convert(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709, Metadata());
+                REQUIRE(dst.isValid());
+                CHECK(dst.pixelDesc().pixelFormat().planeCount() == 2);
+                const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
+                CHECK(std::abs((int)yp[0] - 256) <= 2);
+        }
+
+        SUBCASE("black 12-bit Planar 422 Rec.709") {
+                Image src(2, 1, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                src.fill(0);
+                Image dst = src.convert(PixelDesc::YUV12_422_Planar_LE_Rec709, Metadata());
+                REQUIRE(dst.isValid());
+                const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
+                CHECK(std::abs((int)yp[0] - 256) <= 2);
+        }
+
+        SUBCASE("black 12-bit UYVY Rec.2020") {
+                Image src(2, 1, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                src.fill(0);
+                Image dst = src.convert(PixelDesc::YUV12_422_UYVY_LE_Rec2020, Metadata());
+                REQUIRE(dst.isValid());
+                CSCPipeline p(PixelDesc::RGBA12_LE_sRGB, PixelDesc::YUV12_422_UYVY_LE_Rec2020);
+                CHECK(p.isFastPath());
+                const uint16_t *yuv = static_cast<const uint16_t *>(dst.data());
+                CHECK(std::abs((int)yuv[1] - 256) <= 2);
+                CHECK(std::abs((int)yuv[0] - 2048) <= 2);
+        }
+
+        SUBCASE("black 12-bit Planar 420 Rec.2020") {
+                Image src(2, 2, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                src.fill(0);
+                Image dst = src.convert(PixelDesc::YUV12_420_Planar_LE_Rec2020, Metadata());
+                REQUIRE(dst.isValid());
+                CSCPipeline p(PixelDesc::RGBA12_LE_sRGB, PixelDesc::YUV12_420_Planar_LE_Rec2020);
+                CHECK(p.isFastPath());
+                const uint16_t *yp = static_cast<const uint16_t *>(dst.data(0));
+                CHECK(std::abs((int)yp[0] - 256) <= 2);
+        }
+
+        SUBCASE("12-bit round-trips") {
+                // Verify all 12-bit fast paths produce valid round-trip output
+                Image src(4, 2, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                uint16_t *d = static_cast<uint16_t *>(src.data());
+                for(int i = 0; i < 4 * 2 * 4; i++) d[i] = 2048;
+
+                PixelDesc::ID targets[] = {
+                        PixelDesc::YUV12_422_UYVY_LE_Rec709,
+                        PixelDesc::YUV12_422_Planar_LE_Rec709,
+                        PixelDesc::YUV12_420_Planar_LE_Rec709,
+                        PixelDesc::YUV12_420_SemiPlanar_LE_Rec709,
+                        PixelDesc::YUV12_422_UYVY_LE_Rec2020,
+                        PixelDesc::YUV12_420_Planar_LE_Rec2020,
+                };
+                for(auto tid : targets) {
+                        PixelDesc target(tid);
+                        Image yuv = src.convert(target, Metadata());
+                        REQUIRE(yuv.isValid());
+                        Image back = yuv.convert(PixelDesc::RGBA12_LE_sRGB, Metadata());
+                        INFO("12-bit round-trip: " << target.name());
+                        CHECK(back.isValid());
+                }
+        }
+
+        SUBCASE("white 12-bit UYVY Rec.709") {
+                // Create white in 12-bit (4095)
+                Image src(2, 1, PixelDesc::RGBA12_LE_sRGB);
+                REQUIRE(src.isValid());
+                uint16_t *d = static_cast<uint16_t *>(src.data());
+                for(int i = 0; i < 8; i++) d[i] = 4095;
+                Image dst = src.convert(PixelDesc::YUV12_422_UYVY_LE_Rec709, Metadata());
+                REQUIRE(dst.isValid());
+                const uint16_t *yuv = static_cast<const uint16_t *>(dst.data());
+                CHECK(std::abs((int)yuv[1] - 3760) <= 2);  // Y ~ 3760
+                CHECK(std::abs((int)yuv[0] - 2048) <= 2);  // Cb achromatic
+                CHECK(std::abs((int)yuv[2] - 2048) <= 2);  // Cr achromatic
+        }
+}
+
 TEST_CASE("CSC L8: edge cases") {
         SUBCASE("1px wide") {
                 Image s(1, 1, PixelDesc::RGBA8_sRGB);
@@ -651,6 +767,33 @@ TEST_CASE("CSC planar format coverage") {
 // =========================================================================
 // Fast-path cross-validation
 // =========================================================================
+
+TEST_CASE("CSC BGRA8 <-> RGBA8 scalar correctness") {
+        // Validates that the generic scalar pipeline correctly reorders
+        // components by semantic (R,G,B,A) rather than by positional index.
+        Image src = makeUniformRGBA8(200, 100, 50);
+        REQUIRE(src.isValid());
+
+        // Convert RGBA8 -> BGRA8 -> RGBA8 through the scalar pipeline
+        Image bgra = src.convert(PixelDesc::BGRA8_sRGB, src.metadata(), scalarConfig());
+        REQUIRE(bgra.isValid());
+        Image back = bgra.convert(PixelDesc::RGBA8_sRGB, Metadata(), scalarConfig());
+        REQUIRE(back.isValid());
+
+        const uint8_t *orig = static_cast<const uint8_t *>(src.data());
+        const uint8_t *trip = static_cast<const uint8_t *>(back.data());
+        CHECK(trip[0] == orig[0]);  // R
+        CHECK(trip[1] == orig[1]);  // G
+        CHECK(trip[2] == orig[2]);  // B
+        CHECK(trip[3] == orig[3]);  // A
+
+        // Also verify the intermediate BGRA has swapped R and B
+        const uint8_t *bd = static_cast<const uint8_t *>(bgra.data());
+        CHECK(bd[0] == orig[2]);  // BGRA[0] = B = orig R position? No: BGRA[0] = B = orig[2]
+        CHECK(bd[1] == orig[1]);  // G
+        CHECK(bd[2] == orig[0]);  // R
+        CHECK(bd[3] == orig[3]);  // A
+}
 
 TEST_CASE("CSC fast-path cross-validation") {
         struct Pair { PixelDesc::ID src; PixelDesc::ID dst; int tolerance; };

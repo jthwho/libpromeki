@@ -60,6 +60,18 @@ HWY_EXPORT(FastPathNV12_10LEtoRGBA10LE);
 HWY_EXPORT(FastPathRGBA10LEtoNV12_10LE);
 HWY_EXPORT(FastPathV210toRGBA10LE);
 HWY_EXPORT(FastPathRGBA10LEtoV210);
+HWY_EXPORT(FastPathUYVY12LE_709toRGBA12LE);
+HWY_EXPORT(FastPathRGBA12LEtoUYVY12LE_709);
+HWY_EXPORT(FastPathPlanar12LE422_709toRGBA12LE);
+HWY_EXPORT(FastPathRGBA12LEtoPlanar12LE422_709);
+HWY_EXPORT(FastPathPlanar12LE420_709toRGBA12LE);
+HWY_EXPORT(FastPathRGBA12LEtoPlanar12LE420_709);
+HWY_EXPORT(FastPathNV12_12LE_709toRGBA12LE);
+HWY_EXPORT(FastPathRGBA12LEtoNV12_12LE_709);
+HWY_EXPORT(FastPathUYVY12LE_2020toRGBA12LE);
+HWY_EXPORT(FastPathRGBA12LEtoUYVY12LE_2020);
+HWY_EXPORT(FastPathPlanar12LE420_2020toRGBA12LE);
+HWY_EXPORT(FastPathRGBA12LEtoPlanar12LE420_2020);
 
 // Generate dispatch wrappers via macro to avoid repetitive boilerplate
 #define CSC_DISPATCH(Name) \
@@ -109,6 +121,18 @@ CSC_DISPATCH(FastPathNV12_10LEtoRGBA10LE)
 CSC_DISPATCH(FastPathRGBA10LEtoNV12_10LE)
 CSC_DISPATCH(FastPathV210toRGBA10LE)
 CSC_DISPATCH(FastPathRGBA10LEtoV210)
+CSC_DISPATCH(FastPathUYVY12LE_709toRGBA12LE)
+CSC_DISPATCH(FastPathRGBA12LEtoUYVY12LE_709)
+CSC_DISPATCH(FastPathPlanar12LE422_709toRGBA12LE)
+CSC_DISPATCH(FastPathRGBA12LEtoPlanar12LE422_709)
+CSC_DISPATCH(FastPathPlanar12LE420_709toRGBA12LE)
+CSC_DISPATCH(FastPathRGBA12LEtoPlanar12LE420_709)
+CSC_DISPATCH(FastPathNV12_12LE_709toRGBA12LE)
+CSC_DISPATCH(FastPathRGBA12LEtoNV12_12LE_709)
+CSC_DISPATCH(FastPathUYVY12LE_2020toRGBA12LE)
+CSC_DISPATCH(FastPathRGBA12LEtoUYVY12LE_2020)
+CSC_DISPATCH(FastPathPlanar12LE420_2020toRGBA12LE)
+CSC_DISPATCH(FastPathRGBA12LEtoPlanar12LE420_2020)
 
 #undef CSC_DISPATCH
 
@@ -200,6 +224,34 @@ static struct FastPathRegistrar {
                 // Planar 420 10-bit LE Rec.2020
                 reg(PixelDesc::YUV10_420_Planar_LE_Rec2020, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathPlanar10LE420_2020toRGBA10LE);
                 reg(PixelDesc::RGBA10_LE_sRGB,              PixelDesc::YUV10_420_Planar_LE_Rec2020, dispatch_FastPathRGBA10LEtoPlanar10LE420_2020);
+
+                // --- 12-bit LE BT.709 fast paths ---
+
+                // UYVY 12-bit LE Rec.709
+                reg(PixelDesc::YUV12_422_UYVY_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathUYVY12LE_709toRGBA12LE);
+                reg(PixelDesc::RGBA12_LE_sRGB,           PixelDesc::YUV12_422_UYVY_LE_Rec709, dispatch_FastPathRGBA12LEtoUYVY12LE_709);
+
+                // Planar 422 12-bit LE Rec.709
+                reg(PixelDesc::YUV12_422_Planar_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE422_709toRGBA12LE);
+                reg(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_422_Planar_LE_Rec709, dispatch_FastPathRGBA12LEtoPlanar12LE422_709);
+
+                // Planar 420 12-bit LE Rec.709
+                reg(PixelDesc::YUV12_420_Planar_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_709toRGBA12LE);
+                reg(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_420_Planar_LE_Rec709, dispatch_FastPathRGBA12LEtoPlanar12LE420_709);
+
+                // NV12 12-bit LE Rec.709
+                reg(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathNV12_12LE_709toRGBA12LE);
+                reg(PixelDesc::RGBA12_LE_sRGB,                 PixelDesc::YUV12_420_SemiPlanar_LE_Rec709, dispatch_FastPathRGBA12LEtoNV12_12LE_709);
+
+                // --- 12-bit LE BT.2020 fast paths ---
+
+                // UYVY 12-bit LE Rec.2020
+                reg(PixelDesc::YUV12_422_UYVY_LE_Rec2020, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathUYVY12LE_2020toRGBA12LE);
+                reg(PixelDesc::RGBA12_LE_sRGB,             PixelDesc::YUV12_422_UYVY_LE_Rec2020, dispatch_FastPathRGBA12LEtoUYVY12LE_2020);
+
+                // Planar 420 12-bit LE Rec.2020
+                reg(PixelDesc::YUV12_420_Planar_LE_Rec2020, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_2020toRGBA12LE);
+                reg(PixelDesc::RGBA12_LE_sRGB,              PixelDesc::YUV12_420_Planar_LE_Rec2020, dispatch_FastPathRGBA12LEtoPlanar12LE420_2020);
         }
 } __fastPathRegistrar;
 
