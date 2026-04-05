@@ -145,6 +145,7 @@ TEST_CASE("MulticastManager") {
 
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReuseAddress(true);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t port = receiver.localAddress().port();
 

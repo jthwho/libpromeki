@@ -6,10 +6,10 @@
  */
 
 #include <thread>
-#include <atomic>
 #include <chrono>
 #include <doctest/doctest.h>
 #include <promeki/readwritelock.h>
+#include <promeki/atomic.h>
 
 using namespace promeki;
 
@@ -27,22 +27,28 @@ TEST_CASE("ReadWriteLock_WriteLock") {
 
 TEST_CASE("ReadWriteLock_ConcurrentReads") {
         ReadWriteLock rwl;
-        std::atomic<int> readersInside{0};
-        int maxConcurrentReaders = 0;
+        Atomic<int> readersInside(0);
+        Atomic<int> maxConcurrentReaders(0);
+        Atomic<int> ready(0);
 
         auto reader = [&] {
+                // Ensure both threads are alive before acquiring the lock
+                ready.fetchAndAdd(1);
+                while(ready.value() < 2) std::this_thread::yield();
+
                 ReadWriteLock::ReadLocker locker(rwl);
-                int val = readersInside.fetch_add(1) + 1;
-                if(val > maxConcurrentReaders) maxConcurrentReaders = val;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                readersInside.fetch_sub(1);
+                int val = readersInside.fetchAndAdd(1) + 1;
+                int prev = maxConcurrentReaders.value();
+                while(val > prev && !maxConcurrentReaders.compareAndSwap(prev, val));
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                readersInside.fetchAndSub(1);
         };
 
         std::thread t1(reader);
         std::thread t2(reader);
         t1.join();
         t2.join();
-        CHECK(maxConcurrentReaders >= 2);
+        CHECK(maxConcurrentReaders.value() >= 2);
 }
 
 TEST_CASE("ReadWriteLock_WriteExcludesReaders") {

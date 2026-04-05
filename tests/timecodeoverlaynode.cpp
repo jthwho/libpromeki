@@ -5,9 +5,10 @@
  * See LICENSE file in the project root folder for license information.
  */
 
-#include <atomic>
 #include <thread>
 #include <doctest/doctest.h>
+#include <promeki/atomic.h>
+#include <promeki/mutex.h>
 #include <promeki/timecodeoverlaynode.h>
 #include <promeki/mediapipeline.h>
 #include <promeki/medianodeconfig.h>
@@ -73,14 +74,22 @@ class ImageCaptureSink : public MediaNode {
                 }
                 void processFrame(Frame::Ptr &frame, int inputIndex, DeliveryList &deliveries) override {
                         (void)inputIndex; (void)deliveries;
-                        if(frame.isValid()) { _lastFrame = frame; _count++; }
+                        if(frame.isValid()) {
+                                Mutex::Locker lock(_mutex);
+                                _lastFrame = frame;
+                                _count.fetchAndAdd(1);
+                        }
                         return;
                 }
-                Frame::Ptr lastFrame() const { return _lastFrame; }
-                int count() const { return _count; }
+                Frame::Ptr lastFrame() const {
+                        Mutex::Locker lock(_mutex);
+                        return _lastFrame;
+                }
+                int count() const { return _count.value(); }
         private:
+                mutable Mutex _mutex;
                 Frame::Ptr _lastFrame;
-                std::atomic<int> _count = 0;
+                Atomic<int> _count{0};
 };
 
 // ============================================================================

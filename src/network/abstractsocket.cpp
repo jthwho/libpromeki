@@ -134,6 +134,28 @@ void AbstractSocket::setSocketDescriptor(int fd) {
         }
 }
 
+Error AbstractSocket::setReceiveTimeout(unsigned int timeoutMs) {
+        if(_fd < 0) return Error::NotOpen;
+        struct timeval tv;
+        tv.tv_sec  = timeoutMs / 1000;
+        tv.tv_usec = (timeoutMs % 1000) * 1000;
+        if(::setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+                return Error::syserr();
+        }
+        return Error::Ok;
+}
+
+Error AbstractSocket::setSendTimeout(unsigned int timeoutMs) {
+        if(_fd < 0) return Error::NotOpen;
+        struct timeval tv;
+        tv.tv_sec  = timeoutMs / 1000;
+        tv.tv_usec = (timeoutMs % 1000) * 1000;
+        if(::setsockopt(_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0) {
+                return Error::syserr();
+        }
+        return Error::Ok;
+}
+
 Error AbstractSocket::setSocketOption(int level, int option, int value) {
         if(_fd < 0) return Error::NotOpen;
         if(::setsockopt(_fd, level, option, &value, sizeof(value)) < 0) {
@@ -157,6 +179,8 @@ Error AbstractSocket::createSocket(int domain, int type, int protocol) {
         _fd = ::socket(domain, type, protocol);
         if(_fd < 0) return Error::syserr();
         setOpenMode(ReadWrite);
+        setReceiveTimeout(DefaultReceiveTimeoutMs);
+        setSendTimeout(DefaultSendTimeoutMs);
         return Error::Ok;
 }
 

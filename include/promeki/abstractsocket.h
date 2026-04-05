@@ -38,6 +38,16 @@ PROMEKI_NAMESPACE_BEGIN
 class AbstractSocket : public IODevice {
         PROMEKI_OBJECT(AbstractSocket, IODevice)
         public:
+                /** @brief Default receive timeout in milliseconds applied to
+                 *  newly created sockets.  Prevents blocking reads from
+                 *  waiting indefinitely. */
+                static constexpr unsigned int DefaultReceiveTimeoutMs = 5000;
+
+                /** @brief Default send timeout in milliseconds applied to
+                 *  newly created sockets.  Prevents blocking writes from
+                 *  waiting indefinitely. */
+                static constexpr unsigned int DefaultSendTimeoutMs = 5000;
+
                 /** @brief The type of socket. */
                 enum SocketType {
                         TcpSocketType,  ///< Stream-oriented TCP socket.
@@ -129,6 +139,46 @@ class AbstractSocket : public IODevice {
                  * @param fd The file descriptor to adopt.
                  */
                 void setSocketDescriptor(int fd);
+
+                /**
+                 * @brief Sets the receive timeout for blocking read operations.
+                 *
+                 * When a receive timeout is set, blocking calls such as read()
+                 * and readDatagram() will return with an error after the
+                 * specified duration if no data has arrived.
+                 *
+                 * @param timeoutMs Timeout in milliseconds.  A value of zero
+                 *        removes the timeout (waits indefinitely).
+                 * @return Error::Ok on success, or an error on failure.
+                 *
+                 * @par Example
+                 * @code
+                 * UdpSocket sock;
+                 * sock.open(IODevice::ReadWrite);
+                 * sock.setReceiveTimeout(1000);    // reads time out after 1 s
+                 * @endcode
+                 */
+                Error setReceiveTimeout(unsigned int timeoutMs);
+
+                /**
+                 * @brief Sets the send timeout for blocking write operations.
+                 *
+                 * When a send timeout is set, blocking calls such as write()
+                 * and writeDatagram() will return with an error after the
+                 * specified duration if the data cannot be sent.
+                 *
+                 * @param timeoutMs Timeout in milliseconds.  A value of zero
+                 *        removes the timeout (waits indefinitely).
+                 * @return Error::Ok on success, or an error on failure.
+                 *
+                 * @par Example
+                 * @code
+                 * TcpSocket sock;
+                 * sock.open(IODevice::ReadWrite);
+                 * sock.setSendTimeout(5000);    // writes time out after 5 s
+                 * @endcode
+                 */
+                Error setSendTimeout(unsigned int timeoutMs);
 
                 /**
                  * @brief Sets a raw socket option via setsockopt().

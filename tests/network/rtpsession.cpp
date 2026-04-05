@@ -72,6 +72,7 @@ TEST_CASE("RtpSession") {
                 // Set up receiver
                 UdpSocket receiver;
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
@@ -123,6 +124,7 @@ TEST_CASE("RtpSession") {
         SUBCASE("sequence number increments") {
                 UdpSocket receiver;
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
@@ -154,6 +156,7 @@ TEST_CASE("RtpSession") {
         SUBCASE("sendPackets with pre-packed data") {
                 UdpSocket receiver;
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);
@@ -196,6 +199,7 @@ TEST_CASE("RtpSession") {
         SUBCASE("sendPackets marker only on last") {
                 UdpSocket receiver;
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t recvPort = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), recvPort);

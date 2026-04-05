@@ -152,8 +152,11 @@ Error MediaNode::start() {
 }
 
 void MediaNode::stop() {
-        setState(Idle);
-        wake();
+        {
+                Mutex::Locker lock(_workMutex);
+                setState(Idle);
+                _workCv.wakeAll();
+        }
         if(_thread != nullptr) {
                 _thread->wait();
                 delete _thread;

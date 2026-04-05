@@ -80,6 +80,9 @@ Derives from IODevice. Base for TCP, UDP, raw sockets.
 - [x] `Result<int> socketOption(int level, int option) const` — raw getsockopt
 - [x] `int socketDescriptor() const` — raw fd access
 - [x] `void setSocketDescriptor(int fd)` — adopt existing fd
+- [x] `Error setReceiveTimeout(unsigned int timeoutMs)` — SO_RCVTIMEO; zero removes timeout
+- [x] `Error setSendTimeout(unsigned int timeoutMs)` — SO_SNDTIMEO; zero removes timeout
+- [x] `static constexpr DefaultReceiveTimeoutMs = 5000` / `DefaultSendTimeoutMs = 5000` — applied automatically in `createSocket()`
 - [x] `PROMEKI_SIGNAL(connected)`
 - [x] `PROMEKI_SIGNAL(disconnected)`
 - [x] `PROMEKI_SIGNAL(stateChanged, SocketState)`
@@ -87,7 +90,7 @@ Derives from IODevice. Base for TCP, UDP, raw sockets.
 - [x] Protected: `createSocket()`, `closeSocket()`, `setNonBlocking()`, `updateLocalAddress()`, `setState()`
 - [x] `isSequential()` override returns `true`
 - [ ] EventLoop integration: register fd for read/write notifications *(deferred — poll-based waiting works for current use; EventLoop fd registration is future work)*
-- [x] Doctest: state transitions, bind, socket options, setSocketDescriptor
+- [x] Doctest: state transitions, bind, socket options, setSocketDescriptor, setReceiveTimeout/setSendTimeout (closed/open/timing), default timeout on open
 
 ---
 

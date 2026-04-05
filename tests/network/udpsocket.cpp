@@ -51,6 +51,7 @@ TEST_CASE("UdpSocket") {
 
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
 
                 // Bind receiver to a known port
                 Error err = receiver.bind(SocketAddress::any(0));
@@ -79,6 +80,7 @@ TEST_CASE("UdpSocket") {
 
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
 
                 Error err = receiver.bind(SocketAddress::any(0));
                 REQUIRE(err.isOk());
@@ -105,6 +107,7 @@ TEST_CASE("UdpSocket") {
 
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t port = receiver.localAddress().port();
                 SocketAddress dest(Ipv4Address::loopback(), port);
@@ -161,6 +164,7 @@ TEST_CASE("UdpSocket") {
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
                 receiver.setReuseAddress(true);
+                receiver.setReceiveTimeout(2000);
 
                 SocketAddress mcAddr(Ipv4Address(239, 255, 0, 1), 0);
 
@@ -229,6 +233,7 @@ TEST_CASE("UdpSocket") {
 
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t port = receiver.localAddress().port();
 
@@ -253,6 +258,7 @@ TEST_CASE("UdpSocket") {
 
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
                 receiver.bind(SocketAddress::any(0));
                 uint16_t port = receiver.localAddress().port();
 

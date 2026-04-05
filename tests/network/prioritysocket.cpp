@@ -76,6 +76,7 @@ TEST_CASE("PrioritySocket") {
 
                 sender.open(IODevice::ReadWrite);
                 receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
 
                 sender.setPriority(PrioritySocket::Video);
 

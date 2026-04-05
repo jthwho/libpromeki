@@ -1131,6 +1131,7 @@ if(PROMEKI_BUILD_TESTS)
     target_include_directories(unittest-promeki PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
     target_link_libraries(unittest-promeki PRIVATE promeki)
     add_test(NAME unittest-promeki COMMAND unittest-promeki)
+    set_tests_properties(unittest-promeki PROPERTIES TIMEOUT 60)
 
     if(PROMEKI_BUILD_TUI)
         set(UNITTEST_TUI_SOURCES
@@ -1160,6 +1161,7 @@ if(PROMEKI_BUILD_TESTS)
         target_include_directories(unittest-tui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-tui PRIVATE promeki-tui)
         add_test(NAME unittest-tui COMMAND unittest-tui)
+        set_tests_properties(unittest-tui PROPERTIES TIMEOUT 60)
     endif()
 
     if(PROMEKI_BUILD_SDL)
@@ -1172,6 +1174,7 @@ if(PROMEKI_BUILD_TESTS)
         target_include_directories(unittest-sdl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-sdl PRIVATE promeki-sdl)
         add_test(NAME unittest-sdl COMMAND unittest-sdl)
+        set_tests_properties(unittest-sdl PROPERTIES TIMEOUT 60)
     endif()
 
     # Run tests as part of the normal build

@@ -74,6 +74,10 @@ TEST_CASE("TcpSocket") {
                 REQUIRE(accepted != nullptr);
                 CHECK(accepted->isOpen());
 
+                // Set receive timeouts to prevent hanging
+                accepted->setReceiveTimeout(2000);
+                client.setReceiveTimeout(2000);
+
                 // Send from client, receive on server
                 const char *msg = "hello TCP";
                 int64_t sent = client.write(msg, std::strlen(msg));
