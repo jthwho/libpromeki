@@ -1451,6 +1451,16 @@ PixelDesc::IDList PixelDesc::registeredIDs() {
 
 PaintEngine createPaintEngine_RGBA8(const PixelDesc::Data *d, const Image &img);
 PaintEngine createPaintEngine_RGB8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGB10_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGB12_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGBA16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_RGB16_LE(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGRA8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_BGR8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ARGB8(const PixelDesc::Data *d, const Image &img);
+PaintEngine createPaintEngine_ABGR8(const PixelDesc::Data *d, const Image &img);
 
 // ---------------------------------------------------------------------------
 // Register paint engine factories with PixelDesc entries.
@@ -1465,8 +1475,28 @@ static struct PixelDescPaintEngineInit {
                         d.createPaintEngineFunc = func;
                         PixelDesc::registerData(std::move(d));
                 };
+
+                // 8-bit
                 patch(PixelDesc::RGBA8_sRGB, createPaintEngine_RGBA8);
-                patch(PixelDesc::RGB8_sRGB, createPaintEngine_RGB8);
+                patch(PixelDesc::RGB8_sRGB,  createPaintEngine_RGB8);
+
+                // 10-bit LE
+                patch(PixelDesc::RGBA10_LE_sRGB, createPaintEngine_RGBA10_LE);
+                patch(PixelDesc::RGB10_LE_sRGB,  createPaintEngine_RGB10_LE);
+
+                // 12-bit LE
+                patch(PixelDesc::RGBA12_LE_sRGB, createPaintEngine_RGBA12_LE);
+                patch(PixelDesc::RGB12_LE_sRGB,  createPaintEngine_RGB12_LE);
+
+                // 16-bit LE
+                patch(PixelDesc::RGBA16_LE_sRGB, createPaintEngine_RGBA16_LE);
+                patch(PixelDesc::RGB16_LE_sRGB,  createPaintEngine_RGB16_LE);
+
+                // Component-reordered 8-bit
+                patch(PixelDesc::BGRA8_sRGB, createPaintEngine_BGRA8);
+                patch(PixelDesc::BGR8_sRGB,  createPaintEngine_BGR8);
+                patch(PixelDesc::ARGB8_sRGB, createPaintEngine_ARGB8);
+                patch(PixelDesc::ABGR8_sRGB, createPaintEngine_ABGR8);
         }
 } __pixelDescPaintEngineInit;
 

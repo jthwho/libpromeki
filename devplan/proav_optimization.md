@@ -8,9 +8,33 @@
 
 This document covers four areas: font rendering (complete), video codec abstraction (partially complete), automatic node processing, and batch UDP transmission with kernel-side packet pacing.
 
-**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec (encode + decode for RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12), VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`).
+**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec (encode + decode for RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12), VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`), PaintEngine interleaved overhaul (see below).
 
 **Remaining:** VideoEncoder/VideoDecoder (temporal codec abstraction), automatic node processing, batch UDP (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE`/`SO_TXTIME`), PacketTransport abstraction (DPDK-readiness).
+
+---
+
+## PaintEngine Interleaved Overhaul — COMPLETE
+
+Replaced `pixeldesc_rgb8.cpp` and `pixeldesc_rgba8.cpp` with a single C++20 template file `paintengine_interleaved.cpp` (`PaintEngine_Interleaved<CompType, CompCount, BitsPerComp, CompMap>`). Twelve explicit instantiations cover:
+
+- 8-bit: RGBA8, RGB8, BGRA8, BGR8, ARGB8, ABGR8
+- 10-bit LE: RGBA10, RGB10
+- 12-bit LE: RGBA12, RGB12
+- 16-bit LE: RGBA16, RGB16
+
+The compile-time `CompMap` non-type template parameter eliminates all runtime component-order indirection. Key optimizations in the template body:
+
+- `fillSpan()` — O(log n) doubling memcpy span fill
+- `fill()` — memset fast path for uniform-byte pixels (black/white fills)
+- `fillRect()` — fillSpan first line, then per-line memcpy (no PointList)
+- `fillCircle()`/`fillEllipse()` — scanline spans via `clippedSpan()` (no PointList)
+- `drawLines()` — inline Bresenham, direct pixel writes (no PointList)
+- `writePixel()` — `if constexpr` enables single 32-bit store for 4-byte pixels
+
+`PaintEngine::Pixel` changed from `List<uint8_t>` (heap-allocated) to an inline struct (`uint8_t _data[16]`, `uint8_t _size`) — zero heap allocation, source-compatible API.
+
+`VideoTestPattern` now renders natively into 10-bit+ formats. CSC L7 test updated to generate 10-bit color bars directly via VideoTestPattern (tolerance tightened from ±4 to ±2).
 
 ---
 

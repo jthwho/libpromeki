@@ -408,10 +408,11 @@ TEST_CASE("CSC L6: cross-format consistency") {
 // =========================================================================
 
 TEST_CASE("CSC L7: 10-bit bar values") {
-        // Generate 8-bit bars, upconvert to 10-bit, convert to 10-bit YCbCr.
-        Image src8 = makeColorBars8();
-        REQUIRE(src8.isValid());
-        Image src10 = src8.convert(PixelDesc::RGBA10_LE_sRGB, src8.metadata(), scalarConfig());
+        // Generate 10-bit bars directly via VideoTestPattern (PaintEngine now
+        // supports RGBA10_LE natively).
+        VideoTestPattern gen;
+        gen.setPattern(VideoTestPattern::ColorBars);
+        Image src10 = gen.create(ImageDesc(160, 2, PixelDesc::RGBA10_LE_sRGB));
         REQUIRE(src10.isValid());
 
         Image dst = src10.convert(PixelDesc::YUV10_422_UYVY_LE_Rec709, src10.metadata());
@@ -436,10 +437,10 @@ TEST_CASE("CSC L7: 10-bit bar values") {
                 INFO(bars100[i].name << " 10b: Y=" << pY << " ref=" << refs[i].y
                      << "  Cb=" << pCb << " ref=" << refs[i].cb
                      << "  Cr=" << pCr << " ref=" << refs[i].cr);
-                // Wider tolerance for 8-bit -> 10-bit upconversion + fast path
-                CHECK(std::abs(pY  - refs[i].y)  <= 4);
-                CHECK(std::abs(pCb - refs[i].cb) <= 4);
-                CHECK(std::abs(pCr - refs[i].cr) <= 4);
+                // Direct 10-bit rendering + fast path should be tight
+                CHECK(std::abs(pY  - refs[i].y)  <= 2);
+                CHECK(std::abs(pCb - refs[i].cb) <= 2);
+                CHECK(std::abs(pCr - refs[i].cr) <= 2);
         }
 }
 

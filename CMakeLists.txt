@@ -604,8 +604,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediasink.cpp
         src/proav/mediasource.cpp
         src/proav/paintengine.cpp
-        src/proav/pixeldesc_rgb8.cpp
-        src/proav/pixeldesc_rgba8.cpp
+        src/proav/paintengine_interleaved.cpp
         src/proav/testpatternnode.cpp
         src/proav/timecodeoverlaynode.cpp
         src/proav/videodesc.cpp

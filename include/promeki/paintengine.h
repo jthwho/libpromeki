@@ -9,6 +9,7 @@
 #include <promeki/namespace.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/sharedptr.h>
+#include <promeki/array.h>
 #include <promeki/list.h>
 #include <promeki/size2d.h>
 #include <promeki/point.h>
@@ -33,8 +34,40 @@ class PaintEngine {
                 /** @brief Shared pointer type for PaintEngine. */
                 using Ptr = SharedPtr<PaintEngine>;
 
-                /** @brief Opaque pixel value optimized for the underlying format. */
-                using Pixel = List<uint8_t>;
+                /** @brief Maximum bytes per pixel supported (covers RGBA F32). */
+                static constexpr size_t MaxPixelBytes = 16;
+
+                /**
+                 * @brief Opaque pixel value with inline fixed-size storage.
+                 *
+                 * No heap allocation.  Stores up to MaxPixelBytes bytes of
+                 * format-specific pixel data.  The @p _size field tracks how
+                 * many bytes are meaningful; isEmpty() returns true when no
+                 * pixel data has been written (e.g. invalid createPixel call).
+                 */
+                struct Pixel {
+                        uint8_t         _data[MaxPixelBytes] = {};
+                        uint8_t         _size = 0;
+
+                        /** @brief Returns true if the pixel has no data. */
+                        bool isEmpty() const { return _size == 0; }
+
+                        /** @brief Returns the number of meaningful bytes. */
+                        size_t size() const { return _size; }
+
+                        /** @brief Returns a pointer to the pixel data. */
+                        const uint8_t *data() const { return _data; }
+
+                        /** @brief Returns a mutable pointer to the pixel data. */
+                        uint8_t *data() { return _data; }
+
+                        /** @brief Element access. */
+                        uint8_t &operator[](size_t i) { return _data[i]; }
+                        uint8_t operator[](size_t i) const { return _data[i]; }
+
+                        /** @brief Sets the active byte count. */
+                        void resize(size_t n) { _size = static_cast<uint8_t>(n); }
+                };
 
                 /** @brief List of 2D points used for batch drawing operations. */
                 using PointList = List<Point2Di32>;
