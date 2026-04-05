@@ -40,12 +40,12 @@ static constexpr Resolution wellKnownResolutions[] = {
 
 static PixelDesc::ID pixelDescFromExtension(const String &ext) {
         String lower = ext.toLower();
-        if(lower == ".uyvy")                            return PixelDesc::YUV8_422_UYVY_Rec709_Limited;
-        if(lower == ".yuyv" || lower == ".yuy2")        return PixelDesc::YUV8_422_Rec709_Limited;
-        if(lower == ".v210")                            return PixelDesc::YUV10_422_v210_Rec709_Limited;
-        if(lower == ".i420" || lower == ".yuv420p")     return PixelDesc::YUV8_420_Planar_Rec709_Limited;
-        if(lower == ".nv12")                            return PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited;
-        if(lower == ".i422" || lower == ".yuv422p")     return PixelDesc::YUV8_422_Planar_Rec709_Limited;
+        if(lower == ".uyvy")                            return PixelDesc::YUV8_422_UYVY_Rec709;
+        if(lower == ".yuyv" || lower == ".yuy2")        return PixelDesc::YUV8_422_Rec709;
+        if(lower == ".v210")                            return PixelDesc::YUV10_422_v210_Rec709;
+        if(lower == ".i420" || lower == ".yuv420p")     return PixelDesc::YUV8_420_Planar_Rec709;
+        if(lower == ".nv12")                            return PixelDesc::YUV8_420_SemiPlanar_Rec709;
+        if(lower == ".i422" || lower == ".yuv422p")     return PixelDesc::YUV8_422_Planar_Rec709;
         if(lower == ".yuv")                             return PixelDesc::Invalid; // handled by smart detection
         return PixelDesc::Invalid;
 }
@@ -55,10 +55,10 @@ static PixelDesc::ID pixelDescFromExtension(const String &ext) {
 // ---------------------------------------------------------------------------
 
 static const PixelDesc::ID yuvCandidates[] = {
-        PixelDesc::YUV8_420_Planar_Rec709_Limited,       // I420 — most common .yuv convention
-        PixelDesc::YUV8_422_UYVY_Rec709_Limited,         // UYVY
-        PixelDesc::YUV8_422_Planar_Rec709_Limited,       // YUV422P
-        PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited,   // NV12
+        PixelDesc::YUV8_420_Planar_Rec709,       // I420 — most common .yuv convention
+        PixelDesc::YUV8_422_UYVY_Rec709,         // UYVY
+        PixelDesc::YUV8_422_Planar_Rec709,       // YUV422P
+        PixelDesc::YUV8_420_SemiPlanar_Rec709,   // NV12
 };
 
 static String fileExtension(const String &filename) {

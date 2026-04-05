@@ -35,7 +35,7 @@ MediaNodeConfig TestPatternNode::defaultConfig() const {
         cfg.set("Pattern", "colorbars");
         cfg.set("Width", uint32_t(1920));
         cfg.set("Height", uint32_t(1080));
-        cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB_Full));
+        cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB));
         cfg.set("FrameRate", FrameRate(FrameRate::FPS_2997));
         cfg.set("Motion", 0.0);
         cfg.set("StartTimecode", "00:00:00:00");
@@ -72,7 +72,7 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         // Parse video config
         uint32_t width = config.get("Width", uint32_t(0)).get<uint32_t>();
         uint32_t height = config.get("Height", uint32_t(0)).get<uint32_t>();
-        PixelDesc pd = config.get("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB_Full)).get<PixelDesc>();
+        PixelDesc pd = config.get("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB)).get<PixelDesc>();
         PixelDesc::ID pixFmt = pd.id();
 
         FrameRate fps = config.get("FrameRate", FrameRate()).get<FrameRate>();

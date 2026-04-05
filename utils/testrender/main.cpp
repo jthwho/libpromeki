@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
                 cfg.set("Pattern", patternStr);
                 cfg.set("Width", uint32_t(width));
                 cfg.set("Height", uint32_t(height));
-                cfg.set("PixelFormat", int(PixelDesc::RGBA8_sRGB_Full));
+                cfg.set("PixelFormat", int(PixelDesc::RGBA8_sRGB));
                 cfg.set("FrameRate", "24");
                 cfg.set("StartTimecode", tcStr);
                 cfg.set("AudioEnabled", true);

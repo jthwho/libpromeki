@@ -257,10 +257,10 @@ struct FormatEntry {
 };
 
 static const FormatEntry g_formats[] = {
-        { "rgba8",     PixelDesc::RGBA8_sRGB_Full,    32, 8,  "RGB" },
-        { "rgb8",      PixelDesc::RGB8_sRGB_Full,     24, 8,  "RGB" },
-        { "rgb10",     PixelDesc::RGB10_sRGB_Full,    30, 10, "RGB" },
-        { "yuv8_422",  PixelDesc::YUV8_422_Rec709_Limited, 16, 8,  "YCbCr-4:2:2" },
+        { "rgba8",     PixelDesc::RGBA8_sRGB,    32, 8,  "RGB" },
+        { "rgb8",      PixelDesc::RGB8_sRGB,     24, 8,  "RGB" },
+        { "rgb10",     PixelDesc::RGB10_DPX_sRGB,    30, 10, "RGB" },
+        { "yuv8_422",  PixelDesc::YUV8_422_Rec709, 16, 8,  "YCbCr-4:2:2" },
         { nullptr,     PixelDesc::Invalid,   0, 0,  nullptr }
 };
 

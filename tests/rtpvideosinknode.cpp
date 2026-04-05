@@ -55,7 +55,7 @@ class RtpVideoTestSource : public MediaNode {
 // ============================================================================
 
 static Image createSmallTestImage(int width = 64, int height = 64) {
-        ImageDesc idesc(width, height, PixelDesc::RGB8_sRGB_Full);
+        ImageDesc idesc(width, height, PixelDesc::RGB8_sRGB);
         Image img(idesc);
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();

@@ -26,19 +26,19 @@ TEST_CASE("Image_Default") {
 // ============================================================================
 
 TEST_CASE("Image_Construct") {
-    Image img(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
+    Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
     CHECK(img.isValid());
     CHECK(img.width() == 1920);
     CHECK(img.height() == 1080);
-    CHECK(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
+    CHECK(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
 }
 
 TEST_CASE("Image_ConstructFromDesc") {
-    ImageDesc desc(1920, 1080, PixelDesc::RGB8_sRGB_Full);
+    ImageDesc desc(1920, 1080, PixelDesc::RGB8_sRGB);
     Image img(desc);
     CHECK(img.isValid());
     CHECK(img.width() == 1920);
-    CHECK(img.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
+    CHECK(img.pixelDesc().id() == PixelDesc::RGB8_sRGB);
 }
 
 // ============================================================================
@@ -46,7 +46,7 @@ TEST_CASE("Image_ConstructFromDesc") {
 // ============================================================================
 
 TEST_CASE("Image_Fill") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     CHECK(img.fill(0xAB).isOk());
 
@@ -60,7 +60,7 @@ TEST_CASE("Image_Fill") {
 // ============================================================================
 
 TEST_CASE("Image_Plane") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     const Buffer::Ptr &p = img.plane(0);
     CHECK(p->isValid());
@@ -72,7 +72,7 @@ TEST_CASE("Image_Plane") {
 // ============================================================================
 
 TEST_CASE("Image_Copy") {
-    Image img1(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img1(64, 64, PixelDesc::RGBA8_sRGB);
     Image img2 = img1;
     CHECK(img1.width() == img2.width());
     CHECK(img1.height() == img2.height());
@@ -83,7 +83,7 @@ TEST_CASE("Image_Copy") {
 // ============================================================================
 
 TEST_CASE("Image_Metadata") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     CHECK(img.metadata().isEmpty());
 
     img.metadata().set(Metadata::Title, String("Test Image"));
@@ -96,7 +96,7 @@ TEST_CASE("Image_Metadata") {
 // ============================================================================
 
 TEST_CASE("Image_LineStride") {
-    Image img(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
+    Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
     CHECK(img.lineStride() == 1920 * 4);
 }
 
@@ -106,7 +106,7 @@ TEST_CASE("Image_LineStride") {
 
 TEST_CASE("Image_ConstructFromSize2D") {
     Size2Du32 sz(640, 480);
-    Image img(sz, PixelDesc::RGBA8_sRGB_Full);
+    Image img(sz, PixelDesc::RGBA8_sRGB);
     CHECK(img.isValid());
     CHECK(img.width() == 640);
     CHECK(img.height() == 480);
@@ -119,13 +119,13 @@ TEST_CASE("Image_ConstructFromSize2D") {
 // ============================================================================
 
 TEST_CASE("Image_DescAccessor") {
-    Image img(1280, 720, PixelDesc::RGB8_sRGB_Full);
+    Image img(1280, 720, PixelDesc::RGB8_sRGB);
     REQUIRE(img.isValid());
     const ImageDesc &desc = img.desc();
     CHECK(desc.isValid());
     CHECK(desc.width() == 1280);
     CHECK(desc.height() == 720);
-    CHECK(desc.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
+    CHECK(desc.pixelDesc().id() == PixelDesc::RGB8_sRGB);
 }
 
 // ============================================================================
@@ -133,10 +133,10 @@ TEST_CASE("Image_DescAccessor") {
 // ============================================================================
 
 TEST_CASE("Image_PixelDesc") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     const PixelDesc &pd = img.pixelDesc();
-    CHECK(pd.id() == PixelDesc::RGBA8_sRGB_Full);
+    CHECK(pd.id() == PixelDesc::RGBA8_sRGB);
     CHECK(pd.isValid());
 }
 
@@ -145,7 +145,7 @@ TEST_CASE("Image_PixelDesc") {
 // ============================================================================
 
 TEST_CASE("Image_Planes") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     const Buffer::PtrList &pl = img.planes();
     CHECK(pl.size() >= 1);
@@ -157,7 +157,7 @@ TEST_CASE("Image_Planes") {
 // ============================================================================
 
 TEST_CASE("Image_DataPointer") {
-    Image img(32, 32, PixelDesc::RGBA8_sRGB_Full);
+    Image img(32, 32, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     void *ptr = img.data();
     CHECK(ptr != nullptr);
@@ -179,10 +179,10 @@ TEST_CASE("Image_FillInvalid") {
 // ============================================================================
 
 TEST_CASE("Image_RGB8_LineStride") {
-    Image img(100, 100, PixelDesc::RGB8_sRGB_Full);
+    Image img(100, 100, PixelDesc::RGB8_sRGB);
     REQUIRE(img.isValid());
     CHECK(img.lineStride() == 100 * 3);
-    CHECK(img.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
+    CHECK(img.pixelDesc().id() == PixelDesc::RGB8_sRGB);
 }
 
 // ============================================================================
@@ -190,7 +190,7 @@ TEST_CASE("Image_RGB8_LineStride") {
 // ============================================================================
 
 TEST_CASE("Image_CreatePaintEngine") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     PaintEngine pe = img.createPaintEngine();
     CHECK(pe.pixelDesc().isValid());
@@ -201,13 +201,13 @@ TEST_CASE("Image_CreatePaintEngine") {
 // ============================================================================
 
 TEST_CASE("Image_IsExclusive_Fresh") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     CHECK(img.isExclusive());
 }
 
 TEST_CASE("Image_IsExclusive_SharedPlane") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
 
     // Copy the plane pointer to create a second reference
@@ -227,7 +227,7 @@ TEST_CASE("Image_IsExclusive_DefaultImage") {
 // ============================================================================
 
 TEST_CASE("Image_EnsureExclusive_NoOp") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     CHECK(img.isExclusive());
 
@@ -239,7 +239,7 @@ TEST_CASE("Image_EnsureExclusive_NoOp") {
 }
 
 TEST_CASE("Image_EnsureExclusive_DetachesShared") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     img.fill(0x42);
 
@@ -259,7 +259,7 @@ TEST_CASE("Image_EnsureExclusive_DetachesShared") {
 }
 
 TEST_CASE("Image_EnsureExclusive_PreservesData") {
-    Image img(32, 32, PixelDesc::RGB8_sRGB_Full);
+    Image img(32, 32, PixelDesc::RGB8_sRGB);
     REQUIRE(img.isValid());
     img.fill(0xAA);
 
@@ -282,7 +282,7 @@ TEST_CASE("Image_EnsureExclusive_PreservesData") {
 // ============================================================================
 
 TEST_CASE("Image_IsExclusive_ViaPtr") {
-    Image::Ptr imgPtr = Image::Ptr::create(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image::Ptr imgPtr = Image::Ptr::create(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(imgPtr->isValid());
     CHECK(imgPtr->isExclusive());
 
@@ -298,7 +298,7 @@ TEST_CASE("Image_IsExclusive_ViaPtr") {
 // ============================================================================
 
 TEST_CASE("Image_IsCompressed_Uncompressed") {
-    Image img(64, 64, PixelDesc::RGBA8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGBA8_sRGB);
     REQUIRE(img.isValid());
     CHECK_FALSE(img.isCompressed());
 }
@@ -313,7 +313,7 @@ TEST_CASE("Image_IsCompressed_Default") {
 // ============================================================================
 
 TEST_CASE("Image_CompressedSize_Uncompressed") {
-    Image img(64, 64, PixelDesc::RGB8_sRGB_Full);
+    Image img(64, 64, PixelDesc::RGB8_sRGB);
     REQUIRE(img.isValid());
     CHECK(img.compressedSize() == 0);
 }
@@ -334,11 +334,11 @@ TEST_CASE("Image_FromCompressedData_Valid") {
 
     Image img = Image::fromCompressedData(fakeData, fakeSize,
                                           1920, 1080,
-                                          PixelDesc::JPEG_RGB8_sRGB_Full);
+                                          PixelDesc::JPEG_RGB8_sRGB);
     REQUIRE(img.isValid());
     CHECK(img.width() == 1920);
     CHECK(img.height() == 1080);
-    CHECK(img.pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB_Full);
+    CHECK(img.pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB);
     CHECK(img.isCompressed());
     CHECK(img.compressedSize() == fakeSize);
 
@@ -356,7 +356,7 @@ TEST_CASE("Image_FromCompressedData_MetadataPreserved") {
 
     Image img = Image::fromCompressedData(fakeData, sizeof(fakeData),
                                           640, 480,
-                                          PixelDesc::JPEG_RGBA8_sRGB_Full,
+                                          PixelDesc::JPEG_RGBA8_sRGB,
                                           md);
     REQUIRE(img.isValid());
     CHECK(img.metadata().contains(Metadata::Title));
@@ -369,9 +369,9 @@ TEST_CASE("Image_FromCompressedData_RGBA8") {
     const uint8_t fakeData[] = { 0x01, 0x02, 0x03 };
     Image img = Image::fromCompressedData(fakeData, sizeof(fakeData),
                                           320, 240,
-                                          PixelDesc::JPEG_RGBA8_sRGB_Full);
+                                          PixelDesc::JPEG_RGBA8_sRGB);
     REQUIRE(img.isValid());
-    CHECK(img.pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB_Full);
+    CHECK(img.pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB);
     CHECK(img.isCompressed());
     CHECK(img.compressedSize() == sizeof(fakeData));
 }

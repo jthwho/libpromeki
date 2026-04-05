@@ -49,15 +49,15 @@ struct YCbCrInfo {
 
 static YCbCrInfo classifyYCbCr(PixelDesc::ID id) {
         switch(id) {
-                case PixelDesc::YUV8_422_UYVY_Rec709_Limited:
+                case PixelDesc::YUV8_422_UYVY_Rec709:
                         return { LayoutInterleavedUYVY, false };
-                case PixelDesc::YUV8_422_Rec709_Limited:
+                case PixelDesc::YUV8_422_Rec709:
                         return { LayoutInterleavedYUYV, false };
-                case PixelDesc::YUV8_422_Planar_Rec709_Limited:
+                case PixelDesc::YUV8_422_Planar_Rec709:
                         return { LayoutPlanar422, false };
-                case PixelDesc::YUV8_420_Planar_Rec709_Limited:
+                case PixelDesc::YUV8_420_Planar_Rec709:
                         return { LayoutPlanar420, true };
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited:
+                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
                         return { LayoutSemiPlanar420, true };
                 default:
                         return { LayoutNone, false };
@@ -66,16 +66,16 @@ static YCbCrInfo classifyYCbCr(PixelDesc::ID id) {
 
 static PixelDesc::ID jpegPixelDescFor(PixelDesc::ID srcDesc) {
         switch(srcDesc) {
-                case PixelDesc::RGB8_sRGB_Full:   return PixelDesc::JPEG_RGB8_sRGB_Full;
-                case PixelDesc::RGBA8_sRGB_Full:  return PixelDesc::JPEG_RGBA8_sRGB_Full;
-                case PixelDesc::YUV8_422_Rec709_Limited:
-                case PixelDesc::YUV8_422_UYVY_Rec709_Limited:
-                case PixelDesc::YUV8_422_Planar_Rec709_Limited:
-                        return PixelDesc::JPEG_YUV8_422_Rec709_Limited;
-                case PixelDesc::YUV8_420_Planar_Rec709_Limited:
-                case PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited:
-                        return PixelDesc::JPEG_YUV8_420_Rec709_Limited;
-                default: return PixelDesc::JPEG_RGB8_sRGB_Full;
+                case PixelDesc::RGB8_sRGB:   return PixelDesc::JPEG_RGB8_sRGB;
+                case PixelDesc::RGBA8_sRGB:  return PixelDesc::JPEG_RGBA8_sRGB;
+                case PixelDesc::YUV8_422_Rec709:
+                case PixelDesc::YUV8_422_UYVY_Rec709:
+                case PixelDesc::YUV8_422_Planar_Rec709:
+                        return PixelDesc::JPEG_YUV8_422_Rec709;
+                case PixelDesc::YUV8_420_Planar_Rec709:
+                case PixelDesc::YUV8_420_SemiPlanar_Rec709:
+                        return PixelDesc::JPEG_YUV8_420_Rec709;
+                default: return PixelDesc::JPEG_RGB8_sRGB;
         }
 }
 
@@ -164,7 +164,7 @@ static Image encodeRGB(const Image &input, int quality, JpegImageCodec::Subsampl
 
         J_COLOR_SPACE colorSpace = JCS_RGB;
         int numComponents = 3;
-        if(pd.id() == PixelDesc::RGBA8_sRGB_Full) {
+        if(pd.id() == PixelDesc::RGBA8_sRGB) {
                 colorSpace = JCS_EXT_RGBA;
                 numComponents = 4;
         }
@@ -415,7 +415,7 @@ static Image decodeToRGB(const Image &input, PixelDesc::ID outputPd) {
         jpeg_mem_src(&dinfo, jpegData, input.compressedSize());
         jpeg_read_header(&dinfo, TRUE);
 
-        dinfo.out_color_space = (outputPd == PixelDesc::RGBA8_sRGB_Full) ? JCS_EXT_RGBA : JCS_RGB;
+        dinfo.out_color_space = (outputPd == PixelDesc::RGBA8_sRGB) ? JCS_EXT_RGBA : JCS_RGB;
         jpeg_start_decompress(&dinfo);
 
         Image output(dinfo.output_width, dinfo.output_height, outputPd);
@@ -597,7 +597,7 @@ Image JpegImageCodec::decode(const Image &input, int outputFormat) {
                 outPd = targets[0];
         }
 
-        if(outPd == PixelDesc::RGB8_sRGB_Full || outPd == PixelDesc::RGBA8_sRGB_Full) {
+        if(outPd == PixelDesc::RGB8_sRGB || outPd == PixelDesc::RGBA8_sRGB) {
                 Image result = decodeToRGB(input, outPd);
                 if(!result.isValid()) setError(Error::IOError, "JPEG RGB decompression failed");
                 return result;

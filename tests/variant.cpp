@@ -541,7 +541,7 @@ TEST_CASE("Variant_FrameRate_Set") {
 // ============================================================================
 
 TEST_CASE("Variant_PixelFormat_RoundTrip") {
-    PixelFormat pf(PixelFormat::Interleaved_4x8);
+    PixelFormat pf(PixelFormat::I_4x8);
     Variant v(pf);
     CHECK(v.isValid());
     CHECK(v.type() == Variant::TypePixelFormat);
@@ -549,27 +549,27 @@ TEST_CASE("Variant_PixelFormat_RoundTrip") {
 }
 
 TEST_CASE("Variant_PixelFormat_ToString") {
-    Variant v(PixelFormat(PixelFormat::Interleaved_3x8));
+    Variant v(PixelFormat(PixelFormat::I_3x8));
     String s = v.get<String>();
-    CHECK(s == "Interleaved_3x8");
+    CHECK(s == "3x8");
 }
 
 TEST_CASE("Variant_PixelFormat_FromString") {
-    Variant v(String("Interleaved_4x8"));
+    Variant v(String("4x8"));
     PixelFormat pf = v.get<PixelFormat>();
-    CHECK(pf.id() == PixelFormat::Interleaved_4x8);
+    CHECK(pf.id() == PixelFormat::I_4x8);
 }
 
 TEST_CASE("Variant_PixelFormat_FromInt") {
-    Variant v(int32_t(PixelFormat::Interleaved_3x8));
+    Variant v(int32_t(PixelFormat::I_3x8));
     PixelFormat pf = v.get<PixelFormat>();
-    CHECK(pf.id() == PixelFormat::Interleaved_3x8);
+    CHECK(pf.id() == PixelFormat::I_3x8);
 }
 
 TEST_CASE("Variant_PixelFormat_ToInt") {
-    Variant v(PixelFormat(PixelFormat::Interleaved_4x8));
+    Variant v(PixelFormat(PixelFormat::I_4x8));
     int32_t id = v.get<int32_t>();
-    CHECK(id == PixelFormat::Interleaved_4x8);
+    CHECK(id == PixelFormat::I_4x8);
 }
 
 // ============================================================================
@@ -577,7 +577,7 @@ TEST_CASE("Variant_PixelFormat_ToInt") {
 // ============================================================================
 
 TEST_CASE("Variant_PixelDesc_RoundTrip") {
-    PixelDesc pd(PixelDesc::RGBA8_sRGB_Full);
+    PixelDesc pd(PixelDesc::RGBA8_sRGB);
     Variant v(pd);
     CHECK(v.isValid());
     CHECK(v.type() == Variant::TypePixelDesc);
@@ -585,27 +585,27 @@ TEST_CASE("Variant_PixelDesc_RoundTrip") {
 }
 
 TEST_CASE("Variant_PixelDesc_ToString") {
-    Variant v(PixelDesc(PixelDesc::RGB8_sRGB_Full));
+    Variant v(PixelDesc(PixelDesc::RGB8_sRGB));
     String s = v.get<String>();
-    CHECK(s == "RGB8_sRGB_Full");
+    CHECK(s == "RGB8_sRGB");
 }
 
 TEST_CASE("Variant_PixelDesc_FromString") {
-    Variant v(String("RGBA8_sRGB_Full"));
+    Variant v(String("RGBA8_sRGB"));
     PixelDesc pd = v.get<PixelDesc>();
-    CHECK(pd.id() == PixelDesc::RGBA8_sRGB_Full);
+    CHECK(pd.id() == PixelDesc::RGBA8_sRGB);
 }
 
 TEST_CASE("Variant_PixelDesc_FromInt") {
-    Variant v(int32_t(PixelDesc::YUV8_422_Rec709_Limited));
+    Variant v(int32_t(PixelDesc::YUV8_422_Rec709));
     PixelDesc pd = v.get<PixelDesc>();
-    CHECK(pd.id() == PixelDesc::YUV8_422_Rec709_Limited);
+    CHECK(pd.id() == PixelDesc::YUV8_422_Rec709);
 }
 
 TEST_CASE("Variant_PixelDesc_ToInt") {
-    Variant v(PixelDesc(PixelDesc::RGBA8_sRGB_Full));
+    Variant v(PixelDesc(PixelDesc::RGBA8_sRGB));
     int32_t id = v.get<int32_t>();
-    CHECK(id == PixelDesc::RGBA8_sRGB_Full);
+    CHECK(id == PixelDesc::RGBA8_sRGB);
 }
 
 // ============================================================================
@@ -667,13 +667,13 @@ TEST_CASE("Variant_MemSpace_ToInt") {
 // ============================================================================
 
 TEST_CASE("Variant_PixelDesc_FromUint32") {
-    Variant v(uint32_t(PixelDesc::RGBA8_sRGB_Full));
-    CHECK(v.get<PixelDesc>().id() == PixelDesc::RGBA8_sRGB_Full);
+    Variant v(uint32_t(PixelDesc::RGBA8_sRGB));
+    CHECK(v.get<PixelDesc>().id() == PixelDesc::RGBA8_sRGB);
 }
 
 TEST_CASE("Variant_PixelFormat_ToUint32") {
-    Variant v(PixelFormat(PixelFormat::Interleaved_4x8));
-    CHECK(v.get<uint32_t>() == PixelFormat::Interleaved_4x8);
+    Variant v(PixelFormat(PixelFormat::I_4x8));
+    CHECK(v.get<uint32_t>() == PixelFormat::I_4x8);
 }
 
 TEST_CASE("Variant_ColorModel_FromInt64") {

@@ -13,7 +13,7 @@
 
 using namespace promeki;
 
-static ImageDesc testDesc(int w = 320, int h = 240, PixelDesc::ID fmt = PixelDesc::RGB8_sRGB_Full) {
+static ImageDesc testDesc(int w = 320, int h = 240, PixelDesc::ID fmt = PixelDesc::RGB8_sRGB) {
         return ImageDesc(w, h, fmt);
 }
 
@@ -135,10 +135,10 @@ TEST_CASE("VideoTestPattern_RGBA8") {
         VideoTestPattern gen;
         gen.setPattern(VideoTestPattern::White);
 
-        ImageDesc desc = testDesc(16, 16, PixelDesc::RGBA8_sRGB_Full);
+        ImageDesc desc = testDesc(16, 16, PixelDesc::RGBA8_sRGB);
         Image img = gen.create(desc);
         CHECK(img.isValid());
-        CHECK(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
+        CHECK(img.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
 }
 
 // ============================================================================

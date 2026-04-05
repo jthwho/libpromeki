@@ -28,9 +28,74 @@ PROMEKI_NAMESPACE_BEGIN
  * (e.g. R/G/B vs Y/Cb/Cr), whether there is an alpha channel, or any
  * color model details.  Those semantics belong to PixelDesc.
  *
+ * @par Naming Convention
+ *
+ * C++ enum identifiers use a short prefix to indicate the plane layout:
+ * - @b I_ — Interleaved (all components in a single plane).
+ * - @b P_ — Planar (each component in its own plane).
+ * - @b SP_ — Semi-planar (luma in one plane, chroma interleaved in another).
+ *
+ * The string name returned by name() omits the prefix for interleaved
+ * formats (interleaved is the default assumption) and spells out
+ * "Planar_" or "SemiPlanar_" for the others.
+ *
+ * @par Component Count
+ *
+ * Formats can have 1, 3, or 4 components:
+ * - @b 1 — Monochrome / grayscale (single luma or intensity value).
+ * - @b 3 — Typically RGB or Y'CbCr without alpha.
+ * - @b 4 — Typically RGBA or Y'CbCr with alpha.
+ *
+ * After the prefix, the format of the name is:
+ * @code
+ * [<subsampling>_][<variant>_]<comps>x<bits>[_<storage>]
+ * @endcode
+ *
+ * Where:
+ * - @b subsampling — Chroma subsampling ratio, e.g. "422", "420", or
+ *   "411".  Omitted for 4:4:4 (no subsampling).
+ * - @b variant — Component ordering or packing variant, e.g. "UYVY",
+ *   "v210", "NV21".  Omitted when the default ordering applies (YUYV
+ *   for 4:2:2 interleaved, CbCr for semi-planar, sequential for
+ *   4:4:4).  NV21 indicates CrCb chroma order (as opposed to the
+ *   default CbCr order used by NV12/NV16).
+ * - @b comps x bits — Component count and bit depth, e.g. "3x8",
+ *   "4x16".  Omitted for formats with a unique packing (v210).
+ *   For mixed bit-depth packed formats, the individual bit depths
+ *   are spelled out (e.g. "10_10_10_2" for 3x10 + 1x2 in 32 bits).
+ * - @b storage — Byte-order or packing mode:
+ *   - "LE" / "BE" — for components stored in 16-bit or 32-bit words.
+ *   - "DPX" — DPX/Cineon-style packed formats (e.g. 3x10 bits packed
+ *     into a 32-bit word).
+ *   - "F16" — Half-precision IEEE 754 float (16-bit).
+ *   - "F32" — Single-precision IEEE 754 float (32-bit).
+ *   - "10_10_10_2" — Mixed bit-depth packed format (3x10 + 1x2 in
+ *     32 bits).
+ *   .
+ *   Omitted for byte-aligned formats (8-bit) where endianness is
+ *   irrelevant.
+ *
+ * @par Examples
+ * | C++ enum          | String name          | Description                                    |
+ * |-------------------|----------------------|------------------------------------------------|
+ * | I_4x8             | 4x8                  | 4 components, 8 bits, interleaved               |
+ * | I_3x10_DPX        | 3x10_DPX             | 3 components, 10 bits, DPX packed (4 bytes)     |
+ * | I_3x12_LE         | 3x12_LE              | 3 components, 12 bits in 16-bit LE words        |
+ * | I_1x8             | 1x8                  | 1 component, 8 bits, monochrome                 |
+ * | I_4xF16_LE        | 4xF16_LE             | 4 components, half-float LE                     |
+ * | I_3xF32_LE        | 3xF32_LE             | 3 components, float LE                          |
+ * | I_10_10_10_2_LE   | 10_10_10_2_LE        | 4 components (10+10+10+2) packed LE             |
+ * | I_422_3x8         | 422_3x8              | 3 components, 8 bits, 4:2:2 YUYV                |
+ * | I_422_UYVY_3x10_LE| 422_UYVY_3x10_LE     | 3 components, 10 bits LE, 4:2:2 UYVY            |
+ * | P_422_3x8         | Planar_422_3x8       | 3 planes, 8 bits, 4:2:2 planar                  |
+ * | P_411_3x8         | Planar_411_3x8       | 3 planes, 8 bits, 4:1:1 planar                  |
+ * | SP_420_10_LE      | SemiPlanar_420_10_LE  | 2 planes, 10 bits LE, 4:2:0 NV12                |
+ * | SP_420_NV21_8     | SemiPlanar_420_NV21_8 | 2 planes, 8 bits, 4:2:0 NV21 (CrCb order)       |
+ * | SP_422_8          | SemiPlanar_422_8      | 2 planes, 8 bits, 4:2:2 NV16 semi-planar        |
+ *
  * @par Example
  * @code
- * PixelFormat pf(PixelFormat::Interleaved_4x8);
+ * PixelFormat pf(PixelFormat::I_4x8);
  * size_t stride = pf.lineStride(0, 1920, 0, 1);
  * size_t planeBytes = pf.planeSize(0, 1920, 1080, 0, 1);
  * @endcode
@@ -50,34 +115,121 @@ class PixelFormat {
                  * starts at UserDefined.
                  */
                 enum ID {
-                        Invalid             = 0,    ///< Invalid or uninitialized pixel format.
-                        Interleaved_4x8     = 1,    ///< 4 components, 8 bits each, 1 interleaved plane.
-                        Interleaved_3x8     = 2,    ///< 3 components, 8 bits each, 1 interleaved plane.
-                        Interleaved_3x10    = 3,    ///< 3 components, 10 bits each, 1 interleaved plane.
-                        Interleaved_422_3x8 = 4,    ///< 3 components, 8 bits, 4:2:2 YUYV, 1 interleaved plane.
-                        Interleaved_422_3x10 = 5,   ///< 3 components, 10 bits, 4:2:2 YUYV, 1 interleaved plane.
-                        Interleaved_422_UYVY_3x8 = 6,      ///< 3 components, 8 bits, 4:2:2 UYVY, 1 interleaved plane.
-                        Interleaved_422_UYVY_3x10_LE = 7,  ///< 3 components, 10 bits in 16-bit LE words, 4:2:2 UYVY.
-                        Interleaved_422_UYVY_3x10_BE = 8,  ///< 3 components, 10 bits in 16-bit BE words, 4:2:2 UYVY.
-                        Interleaved_422_UYVY_3x12_LE = 9,  ///< 3 components, 12 bits in 16-bit LE words, 4:2:2 UYVY.
-                        Interleaved_422_UYVY_3x12_BE = 10, ///< 3 components, 12 bits in 16-bit BE words, 4:2:2 UYVY.
-                        Interleaved_422_v210 = 11,          ///< 3 components, 10 bits, 4:2:2 v210 packed (3x10 in 32-bit words).
-                        Planar_422_3x8       = 12,  ///< 3 planes, 8-bit, 4:2:2 (Y + Cb half-width + Cr half-width).
-                        Planar_422_3x10_LE   = 13,  ///< 3 planes, 10-bit in 16-bit LE words, 4:2:2.
-                        Planar_422_3x10_BE   = 14,  ///< 3 planes, 10-bit in 16-bit BE words, 4:2:2.
-                        Planar_422_3x12_LE   = 15,  ///< 3 planes, 12-bit in 16-bit LE words, 4:2:2.
-                        Planar_422_3x12_BE   = 16,  ///< 3 planes, 12-bit in 16-bit BE words, 4:2:2.
-                        Planar_420_3x8       = 17,  ///< 3 planes, 8-bit, 4:2:0 (Y + Cb quarter + Cr quarter).
-                        Planar_420_3x10_LE   = 18,  ///< 3 planes, 10-bit in 16-bit LE words, 4:2:0.
-                        Planar_420_3x10_BE   = 19,  ///< 3 planes, 10-bit in 16-bit BE words, 4:2:0.
-                        Planar_420_3x12_LE   = 20,  ///< 3 planes, 12-bit in 16-bit LE words, 4:2:0.
-                        Planar_420_3x12_BE   = 21,  ///< 3 planes, 12-bit in 16-bit BE words, 4:2:0.
-                        SemiPlanar_420_8     = 22,  ///< 2 planes, 8-bit, 4:2:0 NV12 (Y + interleaved CbCr).
-                        SemiPlanar_420_10_LE = 23,  ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV12.
-                        SemiPlanar_420_10_BE = 24,  ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV12.
-                        SemiPlanar_420_12_LE = 25,  ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV12.
-                        SemiPlanar_420_12_BE = 26,  ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV12.
-                        UserDefined         = 1024  ///< First ID available for user-registered types.
+                        Invalid              = 0,    ///< Invalid or uninitialized pixel format.
+
+                        // -- Interleaved 4:4:4 (byte-aligned) --
+                        I_4x8                = 1,    ///< 4 components, 8 bits each, interleaved (4 bytes/pixel).
+                        I_3x8                = 2,    ///< 3 components, 8 bits each, interleaved (3 bytes/pixel).
+
+                        // -- Interleaved 4:4:4 (DPX/Cineon packed) --
+                        I_3x10_DPX           = 3,    ///< 3 components, 10 bits, DPX packed (30 bits in 4 bytes).
+
+                        // -- Interleaved 4:2:2 YUYV --
+                        I_422_3x8            = 4,    ///< 3 components, 8 bits, 4:2:2 YUYV interleaved.
+                        I_422_3x10           = 5,    ///< 3 components, 10 bits, 4:2:2 YUYV interleaved.
+
+                        // -- Interleaved 4:2:2 UYVY --
+                        I_422_UYVY_3x8       = 6,    ///< 3 components, 8 bits, 4:2:2 UYVY interleaved.
+                        I_422_UYVY_3x10_LE   = 7,    ///< 3 components, 10 bits in 16-bit LE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x10_BE   = 8,    ///< 3 components, 10 bits in 16-bit BE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x12_LE   = 9,    ///< 3 components, 12 bits in 16-bit LE words, 4:2:2 UYVY.
+                        I_422_UYVY_3x12_BE   = 10,   ///< 3 components, 12 bits in 16-bit BE words, 4:2:2 UYVY.
+
+                        // -- Interleaved 4:2:2 v210 --
+                        I_422_v210           = 11,   ///< 3 components, 10 bits, 4:2:2 v210 packed (3x10 in 32-bit words).
+
+                        // -- Planar 4:2:2 --
+                        P_422_3x8            = 12,   ///< 3 planes, 8-bit, 4:2:2 (Y + Cb half-width + Cr half-width).
+                        P_422_3x10_LE        = 13,   ///< 3 planes, 10-bit in 16-bit LE words, 4:2:2.
+                        P_422_3x10_BE        = 14,   ///< 3 planes, 10-bit in 16-bit BE words, 4:2:2.
+                        P_422_3x12_LE        = 15,   ///< 3 planes, 12-bit in 16-bit LE words, 4:2:2.
+                        P_422_3x12_BE        = 16,   ///< 3 planes, 12-bit in 16-bit BE words, 4:2:2.
+
+                        // -- Planar 4:2:0 --
+                        P_420_3x8            = 17,   ///< 3 planes, 8-bit, 4:2:0 (Y + Cb quarter + Cr quarter).
+                        P_420_3x10_LE        = 18,   ///< 3 planes, 10-bit in 16-bit LE words, 4:2:0.
+                        P_420_3x10_BE        = 19,   ///< 3 planes, 10-bit in 16-bit BE words, 4:2:0.
+                        P_420_3x12_LE        = 20,   ///< 3 planes, 12-bit in 16-bit LE words, 4:2:0.
+                        P_420_3x12_BE        = 21,   ///< 3 planes, 12-bit in 16-bit BE words, 4:2:0.
+
+                        // -- Semi-planar 4:2:0 (NV12) --
+                        SP_420_8             = 22,   ///< 2 planes, 8-bit, 4:2:0 NV12 (Y + interleaved CbCr).
+                        SP_420_10_LE         = 23,   ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV12.
+                        SP_420_10_BE         = 24,   ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV12.
+                        SP_420_12_LE         = 25,   ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV12.
+                        SP_420_12_BE         = 26,   ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV12.
+
+                        // -- Interleaved 4:4:4 (10/12/16-bit in 16-bit words) --
+                        I_4x10_LE            = 27,   ///< 4 components, 10 bits in 16-bit LE words (8 bytes/pixel).
+                        I_4x10_BE            = 28,   ///< 4 components, 10 bits in 16-bit BE words (8 bytes/pixel).
+                        I_3x10_LE            = 29,   ///< 3 components, 10 bits in 16-bit LE words (6 bytes/pixel).
+                        I_3x10_BE            = 30,   ///< 3 components, 10 bits in 16-bit BE words (6 bytes/pixel).
+                        I_4x12_LE            = 31,   ///< 4 components, 12 bits in 16-bit LE words (8 bytes/pixel).
+                        I_4x12_BE            = 32,   ///< 4 components, 12 bits in 16-bit BE words (8 bytes/pixel).
+                        I_3x12_LE            = 33,   ///< 3 components, 12 bits in 16-bit LE words (6 bytes/pixel).
+                        I_3x12_BE            = 34,   ///< 3 components, 12 bits in 16-bit BE words (6 bytes/pixel).
+                        I_4x16_LE            = 35,   ///< 4 components, 16 bits LE (8 bytes/pixel).
+                        I_4x16_BE            = 36,   ///< 4 components, 16 bits BE (8 bytes/pixel).
+                        I_3x16_LE            = 37,   ///< 3 components, 16 bits LE (6 bytes/pixel).
+                        I_3x16_BE            = 38,   ///< 3 components, 16 bits BE (6 bytes/pixel).
+
+                        // -- Monochrome (single component) --
+                        I_1x8                = 39,   ///< 1 component, 8 bits (1 byte/pixel).
+                        I_1x10_LE            = 40,   ///< 1 component, 10 bits in 16-bit LE word (2 bytes/pixel).
+                        I_1x10_BE            = 41,   ///< 1 component, 10 bits in 16-bit BE word (2 bytes/pixel).
+                        I_1x12_LE            = 42,   ///< 1 component, 12 bits in 16-bit LE word (2 bytes/pixel).
+                        I_1x12_BE            = 43,   ///< 1 component, 12 bits in 16-bit BE word (2 bytes/pixel).
+                        I_1x16_LE            = 44,   ///< 1 component, 16 bits LE (2 bytes/pixel).
+                        I_1x16_BE            = 45,   ///< 1 component, 16 bits BE (2 bytes/pixel).
+
+                        // -- Float half-precision (16-bit IEEE 754) --
+                        I_4xF16_LE           = 46,   ///< 4 components, half-float LE (8 bytes/pixel).
+                        I_4xF16_BE           = 47,   ///< 4 components, half-float BE (8 bytes/pixel).
+                        I_3xF16_LE           = 48,   ///< 3 components, half-float LE (6 bytes/pixel).
+                        I_3xF16_BE           = 49,   ///< 3 components, half-float BE (6 bytes/pixel).
+                        I_1xF16_LE           = 50,   ///< 1 component, half-float LE (2 bytes/pixel).
+                        I_1xF16_BE           = 51,   ///< 1 component, half-float BE (2 bytes/pixel).
+
+                        // -- Float single-precision (32-bit IEEE 754) --
+                        I_4xF32_LE           = 52,   ///< 4 components, float LE (16 bytes/pixel).
+                        I_4xF32_BE           = 53,   ///< 4 components, float BE (16 bytes/pixel).
+                        I_3xF32_LE           = 54,   ///< 3 components, float LE (12 bytes/pixel).
+                        I_3xF32_BE           = 55,   ///< 3 components, float BE (12 bytes/pixel).
+                        I_1xF32_LE           = 56,   ///< 1 component, float LE (4 bytes/pixel).
+                        I_1xF32_BE           = 57,   ///< 1 component, float BE (4 bytes/pixel).
+
+                        // -- 10:10:10:2 packed (3x10-bit + 1x2-bit in 32 bits) --
+                        I_10_10_10_2_LE      = 58,   ///< 4 components (10+10+10+2 bits) in 32-bit LE word.
+                        I_10_10_10_2_BE      = 59,   ///< 4 components (10+10+10+2 bits) in 32-bit BE word.
+
+                        // -- Semi-planar 4:2:0 NV21 (CrCb order) --
+                        SP_420_NV21_8        = 60,   ///< 2 planes, 8-bit, 4:2:0 NV21 (Y + interleaved CrCb).
+                        SP_420_NV21_10_LE    = 61,   ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV21.
+                        SP_420_NV21_10_BE    = 62,   ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV21.
+                        SP_420_NV21_12_LE    = 63,   ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV21.
+                        SP_420_NV21_12_BE    = 64,   ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV21.
+
+                        // -- Semi-planar 4:2:2 (NV16) --
+                        SP_422_8             = 65,   ///< 2 planes, 8-bit, 4:2:2 NV16 (Y + interleaved CbCr).
+                        SP_422_10_LE         = 66,   ///< 2 planes, 10-bit in 16-bit LE words, 4:2:2 NV16.
+                        SP_422_10_BE         = 67,   ///< 2 planes, 10-bit in 16-bit BE words, 4:2:2 NV16.
+                        SP_422_12_LE         = 68,   ///< 2 planes, 12-bit in 16-bit LE words, 4:2:2 NV16.
+                        SP_422_12_BE         = 69,   ///< 2 planes, 12-bit in 16-bit BE words, 4:2:2 NV16.
+
+                        // -- Planar 4:1:1 --
+                        P_411_3x8            = 70,   ///< 3 planes, 8-bit, 4:1:1 (Y + Cb quarter-width + Cr quarter-width).
+
+                        // -- 16-bit YCbCr additions --
+                        P_422_3x16_LE        = 71,   ///< 3 planes, 16-bit LE, 4:2:2.
+                        P_422_3x16_BE        = 72,   ///< 3 planes, 16-bit BE, 4:2:2.
+                        P_420_3x16_LE        = 73,   ///< 3 planes, 16-bit LE, 4:2:0.
+                        P_420_3x16_BE        = 74,   ///< 3 planes, 16-bit BE, 4:2:0.
+                        SP_420_16_LE         = 75,   ///< 2 planes, 16-bit LE, 4:2:0 NV12.
+                        SP_420_16_BE         = 76,   ///< 2 planes, 16-bit BE, 4:2:0 NV12.
+                        I_422_UYVY_3x16_LE   = 77,   ///< 3 components, 16-bit LE, 4:2:2 UYVY.
+                        I_422_UYVY_3x16_BE   = 78,   ///< 3 components, 16-bit BE, 4:2:2 UYVY.
+
+                        UserDefined          = 1024  ///< First ID available for user-registered types.
                 };
 
                 /** @brief Chroma subsampling mode. */
@@ -124,7 +276,7 @@ class PixelFormat {
                 /** @brief Immutable data record for a pixel format. */
                 struct Data {
                         ID              id = Invalid;                   ///< Unique format identifier.
-                        String          name;                           ///< Short format name (e.g. "Interleaved_4x8").
+                        String          name;                           ///< Short format name (e.g. "I_4x8").
                         String          desc;                           ///< Human-readable description.
                         Sampling        sampling = SamplingUndefined;   ///< Chroma subsampling mode.
                         size_t          pixelsPerBlock = 0;             ///< Number of pixels in one encoded block.

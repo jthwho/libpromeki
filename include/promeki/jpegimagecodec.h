@@ -82,10 +82,10 @@ class JpegImageCodec : public ImageCodec {
                  * @par Example
                  * @code
                  * JpegImageCodec codec;
-                 * Image rgb  = codec.decode(jpegImage, PixelDesc::RGB8_sRGB_Full);
-                 * Image uyvy = codec.decode(jpegImage, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
-                 * Image i420 = codec.decode(jpegImage, PixelDesc::YUV8_420_Planar_Rec709_Limited);
-                 * Image nv12 = codec.decode(jpegImage, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+                 * Image rgb  = codec.decode(jpegImage, PixelDesc::RGB8_sRGB);
+                 * Image uyvy = codec.decode(jpegImage, PixelDesc::YUV8_422_UYVY_Rec709);
+                 * Image i420 = codec.decode(jpegImage, PixelDesc::YUV8_420_Planar_Rec709);
+                 * Image nv12 = codec.decode(jpegImage, PixelDesc::YUV8_420_SemiPlanar_Rec709);
                  * @endcode
                  */
                 Image decode(const Image &input, int outputFormat = 0) override;

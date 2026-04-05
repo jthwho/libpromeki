@@ -78,7 +78,7 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile) const {
 	
 	png_init_io(pngp, fp);
 	switch(image.pixelDesc().id()) {
-                case PixelDesc::RGBA8_sRGB_Full:
+                case PixelDesc::RGBA8_sRGB:
 			color = PNG_COLOR_TYPE_RGB_ALPHA;
 			depth = 8;
 			break;

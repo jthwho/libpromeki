@@ -88,10 +88,10 @@ class JpegCaptureSink : public MediaNode {
 // Helper: create a test image with a color gradient
 // ============================================================================
 
-static Image createTestImage(int width, int height, PixelDesc::ID pixfmt = PixelDesc::RGB8_sRGB_Full) {
+static Image createTestImage(int width, int height, PixelDesc::ID pixfmt = PixelDesc::RGB8_sRGB) {
         ImageDesc idesc(width, height, pixfmt);
         Image img(idesc);
-        int comps = (pixfmt == PixelDesc::RGBA8_sRGB_Full) ? 4 : 3;
+        int comps = (pixfmt == PixelDesc::RGBA8_sRGB) ? 4 : 3;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
         for(int y = 0; y < height; y++) {
@@ -210,7 +210,7 @@ TEST_CASE("JpegEncoderNode_EncodeRGB8") {
         REQUIRE(out->imageList().size() == 1);
 
         Image::Ptr jpegImg = out->imageList()[0];
-        CHECK(jpegImg->pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB_Full);
+        CHECK(jpegImg->pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB);
         CHECK(jpegImg->isCompressed());
 
         size_t compSize = jpegImg->compressedSize();
@@ -229,12 +229,12 @@ TEST_CASE("JpegEncoderNode_EncodeRGB8") {
 // ============================================================================
 
 TEST_CASE("JpegEncoderNode_EncodeRGBA8") {
-        Image img = createTestImage(160, 120, PixelDesc::RGBA8_sRGB_Full);
+        Image img = createTestImage(160, 120, PixelDesc::RGBA8_sRGB);
         Frame::Ptr out = encodeImage(img);
 
         REQUIRE(out.isValid());
         Image::Ptr jpegImg = out->imageList()[0];
-        CHECK(jpegImg->pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB_Full);
+        CHECK(jpegImg->pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB);
 
         const uint8_t *data = static_cast<const uint8_t *>(jpegImg->data());
         CHECK(data[0] == 0xFF);

@@ -74,7 +74,7 @@ static MediaNodeConfig makeTestConfig(
         MediaNodeConfig cfg("TestPatternNode", name);
         cfg.set("Width", uint32_t(w));
         cfg.set("Height", uint32_t(h));
-        cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB_Full));
+        cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB));
         cfg.set("FrameRate", fps);
         return cfg;
 }

@@ -39,7 +39,7 @@ TEST_CASE("ImageFileIO: RawYUV UYVY 8-bit round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.uyvy";
 
-        Image src(w, h, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image src(w, h, PixelDesc::YUV8_422_UYVY_Rec709);
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
         size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, w, h);
@@ -50,7 +50,7 @@ TEST_CASE("ImageFileIO: RawYUV UYVY 8-bit round-trip") {
         sf.setImage(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image hint(w, h, PixelDesc::YUV8_422_UYVY_Rec709);
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         lf.setImage(hint);
@@ -68,7 +68,7 @@ TEST_CASE("ImageFileIO: RawYUV YUYV 8-bit round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.yuyv";
 
-        Image src(w, h, PixelDesc::YUV8_422_Rec709_Limited);
+        Image src(w, h, PixelDesc::YUV8_422_Rec709);
         REQUIRE(src.isValid());
         uint8_t *data = static_cast<uint8_t *>(src.data());
         size_t bytes = src.pixelDesc().pixelFormat().planeSize(0, w, h);
@@ -79,7 +79,7 @@ TEST_CASE("ImageFileIO: RawYUV YUYV 8-bit round-trip") {
         sf.setImage(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelDesc::YUV8_422_Rec709_Limited);
+        Image hint(w, h, PixelDesc::YUV8_422_Rec709);
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         lf.setImage(hint);
@@ -95,7 +95,7 @@ TEST_CASE("ImageFileIO: RawYUV YUYV 8-bit round-trip") {
 
 TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 UYVY from file size") {
         const char *fn = "/tmp/promeki_test_guess.uyvy";
-        Image src(1920, 1080, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image src(1920, 1080, PixelDesc::YUV8_422_UYVY_Rec709);
         REQUIRE(src.isValid());
         src.fill(0x80);
 
@@ -115,7 +115,7 @@ TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 UYVY from file size") {
 
 TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 v210 from file size") {
         const char *fn = "/tmp/promeki_test_guess.v210";
-        Image src(1920, 1080, PixelDesc::YUV10_422_v210_Rec709_Limited);
+        Image src(1920, 1080, PixelDesc::YUV10_422_v210_Rec709);
         REQUIRE(src.isValid());
         src.fill(0x00);
 
@@ -139,7 +139,7 @@ TEST_CASE("ImageFileIO: RawYUV guesses 1920x1080 v210 from file size") {
 
 TEST_CASE("ImageFileIO: RawYUV v210 round-trip") {
         const char *fn = "/tmp/promeki_test.v210";
-        Image src(1920, 1080, PixelDesc::YUV10_422_v210_Rec709_Limited);
+        Image src(1920, 1080, PixelDesc::YUV10_422_v210_Rec709);
         REQUIRE(src.isValid());
         src.fill(0x00);
         uint8_t *data = static_cast<uint8_t *>(src.data());
@@ -150,7 +150,7 @@ TEST_CASE("ImageFileIO: RawYUV v210 round-trip") {
         sf.setImage(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(1920, 1080, PixelDesc::YUV10_422_v210_Rec709_Limited);
+        Image hint(1920, 1080, PixelDesc::YUV10_422_v210_Rec709);
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         lf.setImage(hint);
@@ -168,7 +168,7 @@ TEST_CASE("ImageFileIO: RawYUV I420 planar round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.i420";
 
-        Image src(w, h, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        Image src(w, h, PixelDesc::YUV8_420_Planar_Rec709);
         REQUIRE(src.isValid());
         REQUIRE(src.pixelDesc().planeCount() == 3);
 
@@ -183,7 +183,7 @@ TEST_CASE("ImageFileIO: RawYUV I420 planar round-trip") {
         sf.setImage(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        Image hint(w, h, PixelDesc::YUV8_420_Planar_Rec709);
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         lf.setImage(hint);
@@ -205,7 +205,7 @@ TEST_CASE("ImageFileIO: RawYUV NV12 round-trip") {
         const size_t w = 64, h = 48;
         const char *fn = "/tmp/promeki_test.nv12";
 
-        Image src(w, h, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        Image src(w, h, PixelDesc::YUV8_420_SemiPlanar_Rec709);
         REQUIRE(src.isValid());
         REQUIRE(src.pixelDesc().planeCount() == 2);
 
@@ -220,7 +220,7 @@ TEST_CASE("ImageFileIO: RawYUV NV12 round-trip") {
         sf.setImage(src);
         CHECK(sf.save() == Error::Ok);
 
-        Image hint(w, h, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        Image hint(w, h, PixelDesc::YUV8_420_SemiPlanar_Rec709);
         ImageFile lf(ImageFile::RawYUV);
         lf.setFilename(fn);
         lf.setImage(hint);
@@ -240,7 +240,7 @@ TEST_CASE("ImageFileIO: RawYUV NV12 round-trip") {
 
 TEST_CASE("ImageFileIO: Smart .yuv guesses I420 for 1920x1080") {
         const char *fn = "/tmp/promeki_test_smart.yuv";
-        Image src(1920, 1080, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        Image src(1920, 1080, PixelDesc::YUV8_420_Planar_Rec709);
         REQUIRE(src.isValid());
         src.fill(0x80);
 
@@ -254,7 +254,7 @@ TEST_CASE("ImageFileIO: Smart .yuv guesses I420 for 1920x1080") {
         CHECK(lf.load() == Error::Ok);
         CHECK(lf.image().width() == 1920);
         CHECK(lf.image().height() == 1080);
-        CHECK(lf.image().pixelDesc().id() == PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        CHECK(lf.image().pixelDesc().id() == PixelDesc::YUV8_420_Planar_Rec709);
 
         std::remove(fn);
 }

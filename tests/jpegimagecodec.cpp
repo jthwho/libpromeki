@@ -17,10 +17,10 @@
 
 using namespace promeki;
 
-static Image createTestImage(int width, int height, PixelDesc::ID pixfmt = PixelDesc::RGB8_sRGB_Full) {
+static Image createTestImage(int width, int height, PixelDesc::ID pixfmt = PixelDesc::RGB8_sRGB) {
         ImageDesc idesc(width, height, pixfmt);
         Image img(idesc);
-        int comps = (pixfmt == PixelDesc::RGBA8_sRGB_Full) ? 4 : 3;
+        int comps = (pixfmt == PixelDesc::RGBA8_sRGB) ? 4 : 3;
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
         for(int y = 0; y < height; y++) {
@@ -39,7 +39,7 @@ static Image createTestYCbCrImage(int width, int height, PixelDesc::ID pd) {
         Image img(width, height, pd);
         uint8_t *data = static_cast<uint8_t *>(img.data());
         size_t stride = img.lineStride();
-        bool isUYVY = (pd == PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        bool isUYVY = (pd == PixelDesc::YUV8_422_UYVY_Rec709);
         for(int y = 0; y < height; y++) {
                 uint8_t *row = data + y * stride;
                 for(int x = 0; x < width / 2; x++) {
@@ -99,16 +99,16 @@ TEST_CASE("JpegImageCodec_EncodeRGB8") {
         Image encoded = codec.encode(createTestImage(320, 240));
         CHECK(encoded.isValid());
         CHECK(encoded.isCompressed());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB_Full);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_RGB8_sRGB);
         const uint8_t *d = static_cast<const uint8_t *>(encoded.data());
         CHECK(d[0] == 0xFF); CHECK(d[1] == 0xD8);
 }
 
 TEST_CASE("JpegImageCodec_EncodeRGBA8") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createTestImage(160, 120, PixelDesc::RGBA8_sRGB_Full));
+        Image encoded = codec.encode(createTestImage(160, 120, PixelDesc::RGBA8_sRGB));
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB_Full);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_RGBA8_sRGB);
 }
 
 // ============================================================================
@@ -165,19 +165,19 @@ TEST_CASE("JpegImageCodec_RoundTripRGB8") {
         JpegImageCodec codec; codec.setQuality(100);
         Image encoded = codec.encode(createTestImage(320, 240));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::RGB8_sRGB_Full);
+        Image decoded = codec.decode(encoded, PixelDesc::RGB8_sRGB);
         CHECK(decoded.isValid());
         CHECK(decoded.width() == 320);
-        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB);
 }
 
 TEST_CASE("JpegImageCodec_DecodeToRGBA8") {
         JpegImageCodec codec;
         Image encoded = codec.encode(createTestImage(160, 120));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::RGBA8_sRGB_Full);
+        Image decoded = codec.decode(encoded, PixelDesc::RGBA8_sRGB);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::RGBA8_sRGB_Full);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
 }
 
 // ============================================================================
@@ -220,26 +220,26 @@ TEST_CASE("JpegImageCodec_422Structure") {
 
 TEST_CASE("JpegImageCodec_EncodeUYVY") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_UYVY_Rec709_Limited));
+        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_UYVY_Rec709));
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709_Limited);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709);
 }
 
 TEST_CASE("JpegImageCodec_EncodeYUYV") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_Rec709_Limited));
+        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_Rec709));
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709_Limited);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709);
 }
 
 TEST_CASE("JpegImageCodec_RoundTripUYVY") {
         JpegImageCodec codec; codec.setQuality(100);
-        Image src = createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image src = createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_UYVY_Rec709);
         Image encoded = codec.encode(src);
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_UYVY_Rec709);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
         const uint8_t *s = static_cast<const uint8_t *>(src.data());
         const uint8_t *d = static_cast<const uint8_t *>(decoded.data());
         CHECK(std::abs((int)s[1] - (int)d[1]) < 4);
@@ -247,9 +247,9 @@ TEST_CASE("JpegImageCodec_RoundTripUYVY") {
 
 TEST_CASE("JpegImageCodec_RoundTripYUYV") {
         JpegImageCodec codec; codec.setQuality(100);
-        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_Rec709_Limited));
+        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_Rec709));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_Rec709);
         CHECK(decoded.isValid());
 }
 
@@ -259,18 +259,18 @@ TEST_CASE("JpegImageCodec_RoundTripYUYV") {
 
 TEST_CASE("JpegImageCodec_EncodeUYVYDecodeRGB") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_UYVY_Rec709_Limited));
+        Image encoded = codec.encode(createTestYCbCrImage(320, 240, PixelDesc::YUV8_422_UYVY_Rec709));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::RGB8_sRGB_Full);
+        Image decoded = codec.decode(encoded, PixelDesc::RGB8_sRGB);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB);
 }
 
 TEST_CASE("JpegImageCodec_EncodeRGBDecodeUYVY") {
         JpegImageCodec codec;
         Image encoded = codec.encode(createTestImage(320, 240));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_UYVY_Rec709);
         CHECK(decoded.isValid());
 }
 
@@ -280,9 +280,9 @@ TEST_CASE("JpegImageCodec_EncodeRGBDecodeUYVY") {
 
 TEST_CASE("JpegImageCodec_EncodeUYVYNonAlignedHeight") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createTestYCbCrImage(320, 244, PixelDesc::YUV8_422_UYVY_Rec709_Limited));
+        Image encoded = codec.encode(createTestYCbCrImage(320, 244, PixelDesc::YUV8_422_UYVY_Rec709));
         CHECK(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_UYVY_Rec709);
         CHECK(decoded.isValid());
         CHECK(decoded.height() == 244);
 }
@@ -305,19 +305,19 @@ TEST_CASE("JpegImageCodec_DecodeDefaultFormat") {
 
 TEST_CASE("JpegImageCodec_EncodePlanar422") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_422_Planar_Rec709_Limited));
+        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_422_Planar_Rec709));
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709_Limited);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_422_Rec709);
 }
 
 TEST_CASE("JpegImageCodec_RoundTripPlanar422") {
         JpegImageCodec codec; codec.setQuality(100);
-        Image src = createPlanarImage(320, 240, PixelDesc::YUV8_422_Planar_Rec709_Limited);
+        Image src = createPlanarImage(320, 240, PixelDesc::YUV8_422_Planar_Rec709);
         Image encoded = codec.encode(src);
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_Planar_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_422_Planar_Rec709);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_422_Planar_Rec709_Limited);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_422_Planar_Rec709);
         CHECK(decoded.width() == 320);
         CHECK(decoded.height() == 240);
 }
@@ -328,19 +328,19 @@ TEST_CASE("JpegImageCodec_RoundTripPlanar422") {
 
 TEST_CASE("JpegImageCodec_EncodePlanar420") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_420_Planar_Rec709_Limited));
+        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_420_Planar_Rec709));
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_420_Rec709_Limited);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_420_Rec709);
 }
 
 TEST_CASE("JpegImageCodec_RoundTripPlanar420") {
         JpegImageCodec codec; codec.setQuality(100);
-        Image src = createPlanarImage(320, 240, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        Image src = createPlanarImage(320, 240, PixelDesc::YUV8_420_Planar_Rec709);
         Image encoded = codec.encode(src);
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_420_Planar_Rec709);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_420_Planar_Rec709);
 }
 
 // ============================================================================
@@ -349,19 +349,19 @@ TEST_CASE("JpegImageCodec_RoundTripPlanar420") {
 
 TEST_CASE("JpegImageCodec_EncodeNV12") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited));
+        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_420_SemiPlanar_Rec709));
         CHECK(encoded.isValid());
-        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_420_Rec709_Limited);
+        CHECK(encoded.pixelDesc().id() == PixelDesc::JPEG_YUV8_420_Rec709);
 }
 
 TEST_CASE("JpegImageCodec_RoundTripNV12") {
         JpegImageCodec codec; codec.setQuality(100);
-        Image src = createPlanarImage(320, 240, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        Image src = createPlanarImage(320, 240, PixelDesc::YUV8_420_SemiPlanar_Rec709);
         Image encoded = codec.encode(src);
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_420_SemiPlanar_Rec709);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_420_SemiPlanar_Rec709);
 }
 
 // ============================================================================
@@ -370,11 +370,11 @@ TEST_CASE("JpegImageCodec_RoundTripNV12") {
 
 TEST_CASE("JpegImageCodec_EncodePlanar420DecodeRGB") {
         JpegImageCodec codec;
-        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_420_Planar_Rec709_Limited));
+        Image encoded = codec.encode(createPlanarImage(320, 240, PixelDesc::YUV8_420_Planar_Rec709));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::RGB8_sRGB_Full);
+        Image decoded = codec.decode(encoded, PixelDesc::RGB8_sRGB);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB_Full);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB);
 }
 
 TEST_CASE("JpegImageCodec_EncodeRGBDecodePlanar420") {
@@ -382,7 +382,7 @@ TEST_CASE("JpegImageCodec_EncodeRGBDecodePlanar420") {
         codec.setSubsampling(JpegImageCodec::Subsampling420);
         Image encoded = codec.encode(createTestImage(320, 240));
         REQUIRE(encoded.isValid());
-        Image decoded = codec.decode(encoded, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        Image decoded = codec.decode(encoded, PixelDesc::YUV8_420_Planar_Rec709);
         CHECK(decoded.isValid());
-        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        CHECK(decoded.pixelDesc().id() == PixelDesc::YUV8_420_Planar_Rec709);
 }

@@ -25,7 +25,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
+ * ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB);
  * size_t stride = desc.pixelDesc().lineStride(0, desc);
  * int planes = desc.planeCount();
  * @endcode

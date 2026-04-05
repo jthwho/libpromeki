@@ -28,7 +28,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Compressed images
  * Image also represents compressed (encoded) image data such as JPEG.
  * A compressed image uses a compressed pixel description (e.g.
- * PixelDesc::JPEG_RGB8_sRGB_Full) and stores the encoded bitstream in its
+ * PixelDesc::JPEG_RGB8_sRGB) and stores the encoded bitstream in its
  * single plane buffer. Use isCompressed() to test whether an image
  * is compressed, compressedSize() to get the encoded byte count,
  * and data() to access the raw encoded bytes. The preferred way to
@@ -38,7 +38,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * Image jpeg = Image::fromCompressedData(jpegBytes, jpegSize,
  *                                        1920, 1080,
- *                                        PixelDesc::JPEG_RGB8_sRGB_Full,
+ *                                        PixelDesc::JPEG_RGB8_sRGB,
  *                                        srcImage.metadata());
  * assert(jpeg.isCompressed());
  * assert(jpeg.compressedSize() == jpegSize);
@@ -246,7 +246,7 @@ class Image {
                  * @param size       Size of the compressed data in bytes.
                  * @param width      Original image width in pixels.
                  * @param height     Original image height in pixels.
-                 * @param pd         Compressed pixel description ID (e.g. PixelDesc::JPEG_RGB8_sRGB_Full).
+                 * @param pd         Compressed pixel description ID (e.g. PixelDesc::JPEG_RGB8_sRGB).
                  * @param metadata   Optional metadata to attach (e.g. timecode).
                  * @return A valid compressed Image, or an invalid Image on failure.
                  */

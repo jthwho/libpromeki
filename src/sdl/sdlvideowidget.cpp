@@ -47,12 +47,12 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
                 ensureTexture(_currentImage.width(), _currentImage.height(), sdlFmt);
                 uploadImage(_currentImage, sdlFmt);
         } else {
-                Image converted = _currentImage.convert(PixelDesc::RGBA8_sRGB_Full, _currentImage.metadata());
+                Image converted = _currentImage.convert(PixelDesc::RGBA8_sRGB, _currentImage.metadata());
                 if(!converted.isValid()) {
                         promekiErr("SDLVideoWidget: format conversion to RGBA8 failed");
                         return;
                 }
-                uint32_t rgba8Fmt = mapPixelDesc(PixelDesc::RGBA8_sRGB_Full);
+                uint32_t rgba8Fmt = mapPixelDesc(PixelDesc::RGBA8_sRGB);
                 ensureTexture(converted.width(), converted.height(), rgba8Fmt);
                 uploadImage(converted, rgba8Fmt);
         }
@@ -99,8 +99,8 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
 
 uint32_t SDLVideoWidget::mapPixelDesc(PixelDesc::ID pd) {
         switch(pd) {
-                case PixelDesc::RGBA8_sRGB_Full:     return SDL_PIXELFORMAT_RGBA8888;
-                case PixelDesc::RGB8_sRGB_Full:      return SDL_PIXELFORMAT_RGB24;
+                case PixelDesc::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA8888;
+                case PixelDesc::RGB8_sRGB:      return SDL_PIXELFORMAT_RGB24;
                 default:                   return 0;
         }
 }

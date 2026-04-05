@@ -41,7 +41,7 @@ TEST_CASE("VideoDesc_ValidWithImage") {
     vd.setFrameRate(FrameRate(FrameRate::FPS_24));
     CHECK(!vd.isValid());
 
-    vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB_Full));
+    vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
     CHECK(vd.isValid());
     CHECK(vd.imageList().size() == 1);
 }
@@ -65,7 +65,7 @@ TEST_CASE("VideoDesc_ValidWithAudio") {
 TEST_CASE("VideoDesc_CopyIsIndependent") {
     VideoDesc v1;
     v1.setFrameRate(FrameRate(FrameRate::FPS_24));
-    v1.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB_Full));
+    v1.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
 
     VideoDesc v2 = v1;
 
@@ -92,8 +92,8 @@ TEST_CASE("VideoDesc_Metadata") {
 TEST_CASE("VideoDesc_MultipleStreams") {
     VideoDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_2398));
-    vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB_Full));
-    vd.imageList().pushToBack(ImageDesc(3840, 2160, PixelDesc::RGB8_sRGB_Full));
+    vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
+    vd.imageList().pushToBack(ImageDesc(3840, 2160, PixelDesc::RGB8_sRGB));
     vd.audioList().pushToBack(AudioDesc(48000.0f, 2));
     vd.audioList().pushToBack(AudioDesc(48000.0f, 8));
 

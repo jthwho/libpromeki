@@ -166,7 +166,7 @@ TEST_CASE("FrameDemuxNode_Split") {
 
         // Create a Frame with image and audio
         Frame::Ptr frame = Frame::Ptr::create();
-        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB);
         Image::Ptr img = Image::Ptr::create(Image(idesc));
         frame.modify()->imageList().pushToBack(img);
 
@@ -229,7 +229,7 @@ TEST_CASE("FrameDemuxNode_NoAudio") {
         pipeline.start();
 
         Frame::Ptr frame = Frame::Ptr::create();
-        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB_Full);
+        ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB);
         frame.modify()->imageList().pushToBack(Image::Ptr::create(Image(idesc)));
 
         src->pushFrame(frame);

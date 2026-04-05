@@ -27,9 +27,9 @@ TEST_CASE("PixelDesc: default constructs to Invalid") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: RGBA8 is valid") {
-        PixelDesc pd(PixelDesc::RGBA8_sRGB_Full);
+        PixelDesc pd(PixelDesc::RGBA8_sRGB);
         CHECK(pd.isValid());
-        CHECK(pd.pixelFormat().id() == PixelFormat::Interleaved_4x8);
+        CHECK(pd.pixelFormat().id() == PixelFormat::I_4x8);
         CHECK(pd.hasAlpha());
         CHECK_FALSE(pd.isCompressed());
         CHECK(pd.compCount() == 4);
@@ -41,7 +41,7 @@ TEST_CASE("PixelDesc: RGBA8 is valid") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: RGB8 is valid") {
-        PixelDesc pd(PixelDesc::RGB8_sRGB_Full);
+        PixelDesc pd(PixelDesc::RGB8_sRGB);
         CHECK(pd.isValid());
         CHECK_FALSE(pd.hasAlpha());
         CHECK(pd.compCount() == 3);
@@ -52,14 +52,14 @@ TEST_CASE("PixelDesc: RGB8 is valid") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: YUV8_422 is valid") {
-        PixelDesc pd(PixelDesc::YUV8_422_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.compCount() == 3);
         CHECK_FALSE(pd.hasAlpha());
 }
 
 TEST_CASE("PixelDesc: YUV8_422 YUYV has YUY2 and YUYV FourCCs") {
-        PixelDesc pd(PixelDesc::YUV8_422_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_Rec709);
         CHECK(pd.fourccList().size() == 2);
         CHECK(pd.fourccList()[0] == FourCC("YUY2"));
         CHECK(pd.fourccList()[1] == FourCC("YUYV"));
@@ -70,45 +70,45 @@ TEST_CASE("PixelDesc: YUV8_422 YUYV has YUY2 and YUYV FourCCs") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: JPEG_RGBA8 is compressed") {
-        PixelDesc pd(PixelDesc::JPEG_RGBA8_sRGB_Full);
+        PixelDesc pd(PixelDesc::JPEG_RGBA8_sRGB);
         CHECK(pd.isCompressed());
         CHECK(pd.hasAlpha());
 }
 
 TEST_CASE("PixelDesc: JPEG_RGB8 codecName is jpeg") {
-        PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB_Full);
+        PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB);
         CHECK(pd.codecName() == "jpeg");
 }
 
 TEST_CASE("PixelDesc: JPEG_RGBA8 encodeSources and decodeTargets") {
-        PixelDesc pd(PixelDesc::JPEG_RGBA8_sRGB_Full);
+        PixelDesc pd(PixelDesc::JPEG_RGBA8_sRGB);
         CHECK(pd.encodeSources().size() == 1);
-        CHECK(pd.encodeSources()[0] == PixelDesc::RGBA8_sRGB_Full);
+        CHECK(pd.encodeSources()[0] == PixelDesc::RGBA8_sRGB);
         CHECK(pd.decodeTargets().size() == 1);
-        CHECK(pd.decodeTargets()[0] == PixelDesc::RGBA8_sRGB_Full);
+        CHECK(pd.decodeTargets()[0] == PixelDesc::RGBA8_sRGB);
 }
 
 TEST_CASE("PixelDesc: JPEG_RGB8 encodeSources includes RGB8 and RGBA8") {
-        PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB_Full);
+        PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB);
         CHECK(pd.encodeSources().size() == 2);
-        CHECK(pd.encodeSources()[0] == PixelDesc::RGB8_sRGB_Full);
-        CHECK(pd.encodeSources()[1] == PixelDesc::RGBA8_sRGB_Full);
+        CHECK(pd.encodeSources()[0] == PixelDesc::RGB8_sRGB);
+        CHECK(pd.encodeSources()[1] == PixelDesc::RGBA8_sRGB);
 }
 
 TEST_CASE("PixelDesc: JPEG_YUV8_422 encodeSources and decodeTargets") {
-        PixelDesc pd(PixelDesc::JPEG_YUV8_422_Rec709_Limited);
+        PixelDesc pd(PixelDesc::JPEG_YUV8_422_Rec709);
         CHECK(pd.encodeSources().size() == 5);
-        CHECK(pd.encodeSources().contains(PixelDesc::RGB8_sRGB_Full));
-        CHECK(pd.encodeSources().contains(PixelDesc::RGBA8_sRGB_Full));
-        CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_Rec709_Limited));
-        CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_UYVY_Rec709_Limited));
-        CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_Planar_Rec709_Limited));
+        CHECK(pd.encodeSources().contains(PixelDesc::RGB8_sRGB));
+        CHECK(pd.encodeSources().contains(PixelDesc::RGBA8_sRGB));
+        CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_Rec709));
+        CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_UYVY_Rec709));
+        CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_Planar_Rec709));
         CHECK(pd.decodeTargets().size() == 5);
-        CHECK(pd.decodeTargets().contains(PixelDesc::YUV8_422_Rec709_Limited));
-        CHECK(pd.decodeTargets().contains(PixelDesc::YUV8_422_UYVY_Rec709_Limited));
-        CHECK(pd.decodeTargets().contains(PixelDesc::YUV8_422_Planar_Rec709_Limited));
-        CHECK(pd.decodeTargets().contains(PixelDesc::RGB8_sRGB_Full));
-        CHECK(pd.decodeTargets().contains(PixelDesc::RGBA8_sRGB_Full));
+        CHECK(pd.decodeTargets().contains(PixelDesc::YUV8_422_Rec709));
+        CHECK(pd.decodeTargets().contains(PixelDesc::YUV8_422_UYVY_Rec709));
+        CHECK(pd.decodeTargets().contains(PixelDesc::YUV8_422_Planar_Rec709));
+        CHECK(pd.decodeTargets().contains(PixelDesc::RGB8_sRGB));
+        CHECK(pd.decodeTargets().contains(PixelDesc::RGBA8_sRGB));
 }
 
 // ============================================================================
@@ -116,15 +116,15 @@ TEST_CASE("PixelDesc: JPEG_YUV8_422 encodeSources and decodeTargets") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: RGBA8 lineStride via ImageDesc") {
-        ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB_Full);
-        PixelDesc pd(PixelDesc::RGBA8_sRGB_Full);
+        ImageDesc desc(1920, 1080, PixelDesc::RGBA8_sRGB);
+        PixelDesc pd(PixelDesc::RGBA8_sRGB);
         CHECK(pd.lineStride(0, desc) == 1920 * 4);
 }
 
 TEST_CASE("PixelDesc: JPEG planeSize reads CompressedSize from metadata") {
-        ImageDesc desc(640, 480, PixelDesc::JPEG_RGB8_sRGB_Full);
+        ImageDesc desc(640, 480, PixelDesc::JPEG_RGB8_sRGB);
         desc.metadata().set(Metadata::CompressedSize, 12345);
-        PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB_Full);
+        PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB);
         CHECK(pd.planeSize(0, desc) == 12345);
 }
 
@@ -133,15 +133,15 @@ TEST_CASE("PixelDesc: JPEG planeSize reads CompressedSize from metadata") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: lookup by name") {
-        PixelDesc pd(PixelDesc::RGBA8_sRGB_Full);
+        PixelDesc pd(PixelDesc::RGBA8_sRGB);
         PixelDesc found = PixelDesc::lookup(pd.name());
         CHECK(found == pd);
 }
 
 TEST_CASE("PixelDesc: equality") {
-        PixelDesc a(PixelDesc::RGBA8_sRGB_Full);
-        PixelDesc b(PixelDesc::RGBA8_sRGB_Full);
-        PixelDesc c(PixelDesc::RGB8_sRGB_Full);
+        PixelDesc a(PixelDesc::RGBA8_sRGB);
+        PixelDesc b(PixelDesc::RGBA8_sRGB);
+        PixelDesc c(PixelDesc::RGB8_sRGB);
         CHECK(a == b);
         CHECK(a != c);
 }
@@ -151,19 +151,19 @@ TEST_CASE("PixelDesc: equality") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: YUV8_422_UYVY is valid") {
-        PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709);
         CHECK(pd.isValid());
-        CHECK(pd.pixelFormat().id() == PixelFormat::Interleaved_422_UYVY_3x8);
+        CHECK(pd.pixelFormat().id() == PixelFormat::I_422_UYVY_3x8);
         CHECK(pd.colorModel().id() == ColorModel::YCbCr_Rec709);
 }
 
 TEST_CASE("PixelDesc: YUV8_422_UYVY has UYVY FourCC") {
-        PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709);
         CHECK(pd.fourccList()[0] == FourCC("UYVY"));
 }
 
 TEST_CASE("PixelDesc: YUV8_422_UYVY limited range") {
-        PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709);
         CHECK(pd.compSemantic(0).rangeMin == 16);
         CHECK(pd.compSemantic(0).rangeMax == 235);
 }
@@ -173,19 +173,19 @@ TEST_CASE("PixelDesc: YUV8_422_UYVY limited range") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: YUV10_422_UYVY_LE is valid") {
-        PixelDesc pd(PixelDesc::YUV10_422_UYVY_LE_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV10_422_UYVY_LE_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.compSemantic(0).rangeMax == 940);
 }
 
 TEST_CASE("PixelDesc: YUV12_422_UYVY_LE is valid") {
-        PixelDesc pd(PixelDesc::YUV12_422_UYVY_LE_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV12_422_UYVY_LE_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.compSemantic(0).rangeMax == 3760);
 }
 
 TEST_CASE("PixelDesc: YUV10_422_v210 has v210 FourCC") {
-        PixelDesc pd(PixelDesc::YUV10_422_v210_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV10_422_v210_Rec709);
         CHECK(pd.fourccList()[0] == FourCC("v210"));
 }
 
@@ -194,16 +194,16 @@ TEST_CASE("PixelDesc: YUV10_422_v210 has v210 FourCC") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: YUV8_422_Planar is valid") {
-        PixelDesc pd(PixelDesc::YUV8_422_Planar_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_Planar_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.compCount() == 3);
         CHECK(pd.planeCount() == 3);
-        CHECK(pd.pixelFormat().id() == PixelFormat::Planar_422_3x8);
+        CHECK(pd.pixelFormat().id() == PixelFormat::P_422_3x8);
         CHECK(pd.colorModel().id() == ColorModel::YCbCr_Rec709);
 }
 
 TEST_CASE("PixelDesc: YUV8_422_Planar has I422 FourCC") {
-        PixelDesc pd(PixelDesc::YUV8_422_Planar_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_422_Planar_Rec709);
         CHECK(pd.fourccList()[0] == FourCC("I422"));
 }
 
@@ -212,28 +212,28 @@ TEST_CASE("PixelDesc: YUV8_422_Planar has I422 FourCC") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: YUV8_420_Planar is valid") {
-        PixelDesc pd(PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_420_Planar_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.compCount() == 3);
         CHECK(pd.planeCount() == 3);
-        CHECK(pd.pixelFormat().id() == PixelFormat::Planar_420_3x8);
+        CHECK(pd.pixelFormat().id() == PixelFormat::P_420_3x8);
 }
 
 TEST_CASE("PixelDesc: YUV8_420_Planar has I420 FourCC") {
-        PixelDesc pd(PixelDesc::YUV8_420_Planar_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_420_Planar_Rec709);
         CHECK(pd.fourccList()[0] == FourCC("I420"));
 }
 
 TEST_CASE("PixelDesc: YUV10_420_Planar_LE is valid") {
-        PixelDesc pd(PixelDesc::YUV10_420_Planar_LE_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV10_420_Planar_LE_Rec709);
         CHECK(pd.isValid());
-        CHECK(pd.pixelFormat().id() == PixelFormat::Planar_420_3x10_LE);
+        CHECK(pd.pixelFormat().id() == PixelFormat::P_420_3x10_LE);
 }
 
 TEST_CASE("PixelDesc: YUV12_420_Planar_BE is valid") {
-        PixelDesc pd(PixelDesc::YUV12_420_Planar_BE_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV12_420_Planar_BE_Rec709);
         CHECK(pd.isValid());
-        CHECK(pd.pixelFormat().id() == PixelFormat::Planar_420_3x12_BE);
+        CHECK(pd.pixelFormat().id() == PixelFormat::P_420_3x12_BE);
 }
 
 // ============================================================================
@@ -241,15 +241,15 @@ TEST_CASE("PixelDesc: YUV12_420_Planar_BE is valid") {
 // ============================================================================
 
 TEST_CASE("PixelDesc: YUV8_420_SemiPlanar is valid") {
-        PixelDesc pd(PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_420_SemiPlanar_Rec709);
         CHECK(pd.isValid());
         CHECK(pd.compCount() == 3);
         CHECK(pd.planeCount() == 2);
-        CHECK(pd.pixelFormat().id() == PixelFormat::SemiPlanar_420_8);
+        CHECK(pd.pixelFormat().id() == PixelFormat::SP_420_8);
 }
 
 TEST_CASE("PixelDesc: YUV8_420_SemiPlanar has NV12 FourCC") {
-        PixelDesc pd(PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+        PixelDesc pd(PixelDesc::YUV8_420_SemiPlanar_Rec709);
         CHECK(pd.fourccList()[0] == FourCC("NV12"));
 }
 
@@ -259,12 +259,227 @@ TEST_CASE("PixelDesc: YUV8_420_SemiPlanar has NV12 FourCC") {
 
 TEST_CASE("PixelDesc: registeredIDs includes all formats") {
         auto ids = PixelDesc::registeredIDs();
-        CHECK(ids.size() >= 29);
-        CHECK(ids.contains(PixelDesc::RGBA8_sRGB_Full));
-        CHECK(ids.contains(PixelDesc::YUV8_422_UYVY_Rec709_Limited));
-        CHECK(ids.contains(PixelDesc::YUV10_422_v210_Rec709_Limited));
-        CHECK(ids.contains(PixelDesc::YUV8_422_Planar_Rec709_Limited));
-        CHECK(ids.contains(PixelDesc::YUV8_420_Planar_Rec709_Limited));
-        CHECK(ids.contains(PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited));
-        CHECK(ids.contains(PixelDesc::YUV12_420_SemiPlanar_BE_Rec709_Limited));
+        CHECK(ids.size() >= 132);
+        CHECK(ids.contains(PixelDesc::RGBA8_sRGB));
+        CHECK(ids.contains(PixelDesc::YUV8_422_UYVY_Rec709));
+        CHECK(ids.contains(PixelDesc::YUV10_422_v210_Rec709));
+        CHECK(ids.contains(PixelDesc::YUV8_422_Planar_Rec709));
+        CHECK(ids.contains(PixelDesc::YUV8_420_Planar_Rec709));
+        CHECK(ids.contains(PixelDesc::YUV8_420_SemiPlanar_Rec709));
+        CHECK(ids.contains(PixelDesc::YUV12_420_SemiPlanar_BE_Rec709));
+}
+
+// ============================================================================
+// Automatic iteration over ALL registered PixelDescs
+// ============================================================================
+
+TEST_CASE("PixelDesc: all registered descs have valid properties") {
+        auto ids = PixelDesc::registeredIDs();
+        for(auto id : ids) {
+                PixelDesc pd(id);
+                CHECK(pd.isValid());
+                CHECK_FALSE(pd.name().isEmpty());
+                CHECK(pd.pixelFormat().isValid());
+                CHECK(pd.colorModel().isValid());
+                CHECK(PixelDesc::lookup(pd.name()) == pd);
+        }
+}
+
+// ============================================================================
+// BGRA
+// ============================================================================
+
+TEST_CASE("PixelDesc: BGRA8_sRGB") {
+        SUBCASE("component order and alpha") {
+                PixelDesc pd(PixelDesc::BGRA8_sRGB);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).abbrev == "B");
+                CHECK(pd.compSemantic(2).abbrev == "R");
+                CHECK(pd.hasAlpha());
+                CHECK(pd.alphaCompIndex() == 3);
+        }
+}
+
+// ============================================================================
+// BGR
+// ============================================================================
+
+TEST_CASE("PixelDesc: BGR8_sRGB") {
+        SUBCASE("component order and no alpha") {
+                PixelDesc pd(PixelDesc::BGR8_sRGB);
+                CHECK(pd.isValid());
+                CHECK_FALSE(pd.hasAlpha());
+                CHECK(pd.compSemantic(0).abbrev == "B");
+        }
+}
+
+// ============================================================================
+// ARGB
+// ============================================================================
+
+TEST_CASE("PixelDesc: ARGB8_sRGB") {
+        SUBCASE("alpha-first component order") {
+                PixelDesc pd(PixelDesc::ARGB8_sRGB);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).abbrev == "A");
+                CHECK(pd.hasAlpha());
+                CHECK(pd.alphaCompIndex() == 0);
+        }
+}
+
+// ============================================================================
+// ABGR
+// ============================================================================
+
+TEST_CASE("PixelDesc: ABGR8_sRGB") {
+        SUBCASE("alpha-first blue-first component order") {
+                PixelDesc pd(PixelDesc::ABGR8_sRGB);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).abbrev == "A");
+                CHECK(pd.compSemantic(1).abbrev == "B");
+                CHECK(pd.alphaCompIndex() == 0);
+        }
+}
+
+// ============================================================================
+// Monochrome
+// ============================================================================
+
+TEST_CASE("PixelDesc: Mono8_sRGB") {
+        SUBCASE("single luminance component") {
+                PixelDesc pd(PixelDesc::Mono8_sRGB);
+                CHECK(pd.isValid());
+                CHECK(pd.compCount() == 1);
+                CHECK(pd.compSemantic(0).name == "Luminance");
+        }
+}
+
+// ============================================================================
+// Float RGBA
+// ============================================================================
+
+TEST_CASE("PixelDesc: RGBAF16_LE_LinearRec709") {
+        SUBCASE("float range and alpha") {
+                PixelDesc pd(PixelDesc::RGBAF16_LE_LinearRec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).rangeMax == doctest::Approx(1.0));
+                CHECK(pd.hasAlpha());
+                CHECK(pd.colorModel().id() == ColorModel::LinearRec709);
+        }
+}
+
+// ============================================================================
+// Float Mono
+// ============================================================================
+
+TEST_CASE("PixelDesc: MonoF32_LE_LinearRec709") {
+        SUBCASE("float mono properties") {
+                PixelDesc pd(PixelDesc::MonoF32_LE_LinearRec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compCount() == 1);
+                CHECK(pd.compSemantic(0).rangeMax == doctest::Approx(1.0));
+        }
+}
+
+// ============================================================================
+// RGB10A2
+// ============================================================================
+
+TEST_CASE("PixelDesc: RGB10A2_LE_sRGB") {
+        SUBCASE("10-bit RGB with 2-bit alpha") {
+                PixelDesc pd(PixelDesc::RGB10A2_LE_sRGB);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).rangeMax == doctest::Approx(1023));
+                CHECK(pd.compSemantic(3).rangeMax == doctest::Approx(3));
+                CHECK(pd.hasAlpha());
+        }
+}
+
+// ============================================================================
+// YCbCr 4:4:4
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV8_Rec709 (4:4:4)") {
+        SUBCASE("4:4:4 YCbCr properties") {
+                PixelDesc pd(PixelDesc::YUV8_Rec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).abbrev == "Y");
+                CHECK(pd.colorModel().id() == ColorModel::YCbCr_Rec709);
+        }
+}
+
+// ============================================================================
+// Rec.2020
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV10_422_UYVY_LE_Rec2020") {
+        SUBCASE("Rec.2020 color model") {
+                PixelDesc pd(PixelDesc::YUV10_422_UYVY_LE_Rec2020);
+                CHECK(pd.isValid());
+                CHECK(pd.colorModel().id() == ColorModel::YCbCr_Rec2020);
+        }
+}
+
+// ============================================================================
+// Rec.601
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV8_422_Rec601") {
+        SUBCASE("Rec.601 color model") {
+                PixelDesc pd(PixelDesc::YUV8_422_Rec601);
+                CHECK(pd.isValid());
+                CHECK(pd.colorModel().id() == ColorModel::YCbCr_Rec601);
+        }
+}
+
+// ============================================================================
+// NV21
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV8_420_NV21_Rec709") {
+        SUBCASE("NV21 validity and semantics") {
+                PixelDesc pd(PixelDesc::YUV8_420_NV21_Rec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compCount() == 3);
+                CHECK(pd.planeCount() == 2);
+                CHECK(pd.compSemantic(0).abbrev == "Y");
+        }
+}
+
+// ============================================================================
+// NV16 (semi-planar 4:2:2)
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV8_422_SemiPlanar_Rec709") {
+        SUBCASE("NV16 validity") {
+                PixelDesc pd(PixelDesc::YUV8_422_SemiPlanar_Rec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compCount() == 3);
+                CHECK(pd.planeCount() == 2);
+        }
+}
+
+// ============================================================================
+// 4:1:1 planar
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV8_411_Planar_Rec709") {
+        SUBCASE("4:1:1 planar validity") {
+                PixelDesc pd(PixelDesc::YUV8_411_Planar_Rec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).abbrev == "Y");
+        }
+}
+
+// ============================================================================
+// 16-bit YCbCr
+// ============================================================================
+
+TEST_CASE("PixelDesc: YUV16_LE_Rec709") {
+        SUBCASE("16-bit limited range") {
+                PixelDesc pd(PixelDesc::YUV16_LE_Rec709);
+                CHECK(pd.isValid());
+                CHECK(pd.compSemantic(0).rangeMin == doctest::Approx(4096));
+                CHECK(pd.compSemantic(0).rangeMax == doctest::Approx(60160));
+        }
 }

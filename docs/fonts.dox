@@ -80,7 +80,7 @@
  *
  * @subsection font_example_fast FastFont: Timecode Overlay
  * @code
- * Image img(1920, 1080, PixelFormat::RGB8);
+ * Image img(1920, 1080, PixelDesc::RGB8_sRGB);
  * FastFont ff(img.createPaintEngine());
  * ff.setFontFilename("/path/to/font.ttf");
  * ff.setFontSize(48);
@@ -94,7 +94,7 @@
  *
  * @subsection font_example_basic BasicFont: Transparent Overlay
  * @code
- * Image img(1920, 1080, PixelFormat::RGBA8);
+ * Image img(1920, 1080, PixelDesc::RGBA8_sRGB);
  * BasicFont bf(img.createPaintEngine());
  * bf.setFontFilename("/path/to/font.ttf");
  * bf.setFontSize(24);

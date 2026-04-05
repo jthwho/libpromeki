@@ -38,10 +38,10 @@ static PixelDesc::Data makeInvalid() {
 
 static PixelDesc::Data makeRGBA8() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::RGBA8_sRGB_Full;
-        d.name                  = "RGBA8_sRGB_Full";
+        d.id                    = PixelDesc::RGBA8_sRGB;
+        d.name                  = "RGBA8_sRGB";
         d.desc                  = "8-bit RGBA, sRGB, full range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_4x8);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_4x8);
         d.colorModel            = ColorModel(ColorModel::sRGB);
         d.hasAlpha              = true;
         d.alphaCompIndex        = 3;
@@ -55,10 +55,10 @@ static PixelDesc::Data makeRGBA8() {
 
 static PixelDesc::Data makeRGB8() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::RGB8_sRGB_Full;
-        d.name                  = "RGB8_sRGB_Full";
+        d.id                    = PixelDesc::RGB8_sRGB;
+        d.name                  = "RGB8_sRGB";
         d.desc                  = "8-bit RGB, sRGB, full range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_3x8);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_3x8);
         d.colorModel            = ColorModel(ColorModel::sRGB);
         d.fourccList            = { "RGB2" };
         d.compSemantics[0]      = { "Red",   "R", 0, 255 };
@@ -69,10 +69,10 @@ static PixelDesc::Data makeRGB8() {
 
 static PixelDesc::Data makeRGB10() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::RGB10_sRGB_Full;
-        d.name                  = "RGB10_sRGB_Full";
+        d.id                    = PixelDesc::RGB10_DPX_sRGB;
+        d.name                  = "RGB10_DPX_sRGB";
         d.desc                  = "10-bit RGB, sRGB, full range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_3x10);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_3x10_DPX);
         d.colorModel            = ColorModel(ColorModel::sRGB);
         d.compSemantics[0]      = { "Red",   "R", 0, 1023 };
         d.compSemantics[1]      = { "Green", "G", 0, 1023 };
@@ -82,10 +82,10 @@ static PixelDesc::Data makeRGB10() {
 
 static PixelDesc::Data makeYUV8_422() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV8_422_Rec709_Limited;
-        d.name                  = "YUV8_422_Rec709_Limited";
+        d.id                    = PixelDesc::YUV8_422_Rec709;
+        d.name                  = "YUV8_422_Rec709";
         d.desc                  = "8-bit YCbCr 4:2:2 YUYV, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_3x8);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_3x8);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.fourccList            = { "YUY2", "YUYV" };
         d.compSemantics[0]      = { "Luma",           "Y",  16, 235 };
@@ -96,10 +96,10 @@ static PixelDesc::Data makeYUV8_422() {
 
 static PixelDesc::Data makeYUV10_422() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV10_422_Rec709_Limited;
-        d.name                  = "YUV10_422_Rec709_Limited";
+        d.id                    = PixelDesc::YUV10_422_Rec709;
+        d.name                  = "YUV10_422_Rec709";
         d.desc                  = "10-bit YCbCr 4:2:2, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_3x10);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_3x10);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.compSemantics[0]      = { "Luma",           "Y",  64,  940 };
         d.compSemantics[1]      = { "Chroma Blue",    "Cb", 64,  960 };
@@ -109,17 +109,17 @@ static PixelDesc::Data makeYUV10_422() {
 
 static PixelDesc::Data makeJPEG_RGBA8() {
         PixelDesc::Data d;
-        d.id                        = PixelDesc::JPEG_RGBA8_sRGB_Full;
-        d.name                      = "JPEG_RGBA8_sRGB_Full";
+        d.id                        = PixelDesc::JPEG_RGBA8_sRGB;
+        d.name                      = "JPEG_RGBA8_sRGB";
         d.desc                      = "JPEG-compressed 8-bit RGBA";
-        d.pixelFormat               = PixelFormat(PixelFormat::Interleaved_4x8);
+        d.pixelFormat               = PixelFormat(PixelFormat::I_4x8);
         d.colorModel                = ColorModel(ColorModel::sRGB);
         d.hasAlpha                  = true;
         d.alphaCompIndex            = 3;
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGBA8_sRGB_Full };
-        d.decodeTargets             = { PixelDesc::RGBA8_sRGB_Full };
+        d.encodeSources             = { PixelDesc::RGBA8_sRGB };
+        d.decodeTargets             = { PixelDesc::RGBA8_sRGB };
         d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
         d.compSemantics[0]          = { "Red",   "R", 0, 255 };
         d.compSemantics[1]          = { "Green", "G", 0, 255 };
@@ -130,15 +130,15 @@ static PixelDesc::Data makeJPEG_RGBA8() {
 
 static PixelDesc::Data makeJPEG_RGB8() {
         PixelDesc::Data d;
-        d.id                        = PixelDesc::JPEG_RGB8_sRGB_Full;
-        d.name                      = "JPEG_RGB8_sRGB_Full";
+        d.id                        = PixelDesc::JPEG_RGB8_sRGB;
+        d.name                      = "JPEG_RGB8_sRGB";
         d.desc                      = "JPEG-compressed 8-bit RGB";
-        d.pixelFormat               = PixelFormat(PixelFormat::Interleaved_3x8);
+        d.pixelFormat               = PixelFormat(PixelFormat::I_3x8);
         d.colorModel                = ColorModel(ColorModel::sRGB);
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGB8_sRGB_Full, PixelDesc::RGBA8_sRGB_Full };
-        d.decodeTargets             = { PixelDesc::RGB8_sRGB_Full };
+        d.encodeSources             = { PixelDesc::RGB8_sRGB, PixelDesc::RGBA8_sRGB };
+        d.decodeTargets             = { PixelDesc::RGB8_sRGB };
         d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
         d.compSemantics[0]          = { "Red",   "R", 0, 255 };
         d.compSemantics[1]          = { "Green", "G", 0, 255 };
@@ -148,22 +148,22 @@ static PixelDesc::Data makeJPEG_RGB8() {
 
 static PixelDesc::Data makeJPEG_YUV8_422() {
         PixelDesc::Data d;
-        d.id                        = PixelDesc::JPEG_YUV8_422_Rec709_Limited;
-        d.name                      = "JPEG_YUV8_422_Rec709_Limited";
+        d.id                        = PixelDesc::JPEG_YUV8_422_Rec709;
+        d.name                      = "JPEG_YUV8_422_Rec709";
         d.desc                      = "JPEG-compressed 8-bit YCbCr 4:2:2";
-        d.pixelFormat               = PixelFormat(PixelFormat::Interleaved_422_3x8);
+        d.pixelFormat               = PixelFormat(PixelFormat::I_422_3x8);
         d.colorModel                = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGB8_sRGB_Full, PixelDesc::RGBA8_sRGB_Full,
-                                        PixelDesc::YUV8_422_Rec709_Limited,
-                                        PixelDesc::YUV8_422_UYVY_Rec709_Limited,
-                                        PixelDesc::YUV8_422_Planar_Rec709_Limited };
-        d.decodeTargets             = { PixelDesc::YUV8_422_Rec709_Limited,
-                                        PixelDesc::YUV8_422_UYVY_Rec709_Limited,
-                                        PixelDesc::YUV8_422_Planar_Rec709_Limited,
-                                        PixelDesc::RGB8_sRGB_Full,
-                                        PixelDesc::RGBA8_sRGB_Full };
+        d.encodeSources             = { PixelDesc::RGB8_sRGB, PixelDesc::RGBA8_sRGB,
+                                        PixelDesc::YUV8_422_Rec709,
+                                        PixelDesc::YUV8_422_UYVY_Rec709,
+                                        PixelDesc::YUV8_422_Planar_Rec709 };
+        d.decodeTargets             = { PixelDesc::YUV8_422_Rec709,
+                                        PixelDesc::YUV8_422_UYVY_Rec709,
+                                        PixelDesc::YUV8_422_Planar_Rec709,
+                                        PixelDesc::RGB8_sRGB,
+                                        PixelDesc::RGBA8_sRGB };
         d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
         d.compSemantics[0]          = { "Luma",           "Y",  16, 235 };
         d.compSemantics[1]          = { "Chroma Blue",    "Cb", 16, 240 };
@@ -173,22 +173,22 @@ static PixelDesc::Data makeJPEG_YUV8_422() {
 
 static PixelDesc::Data makeJPEG_YUV8_420() {
         PixelDesc::Data d;
-        d.id                        = PixelDesc::JPEG_YUV8_420_Rec709_Limited;
-        d.name                      = "JPEG_YUV8_420_Rec709_Limited";
+        d.id                        = PixelDesc::JPEG_YUV8_420_Rec709;
+        d.name                      = "JPEG_YUV8_420_Rec709";
         d.desc                      = "JPEG-compressed 8-bit YCbCr 4:2:0";
-        d.pixelFormat               = PixelFormat(PixelFormat::Planar_420_3x8);
+        d.pixelFormat               = PixelFormat(PixelFormat::P_420_3x8);
         d.colorModel                = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGB8_sRGB_Full, PixelDesc::RGBA8_sRGB_Full,
-                                        PixelDesc::YUV8_420_Planar_Rec709_Limited,
-                                        PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited };
-        d.decodeTargets             = { PixelDesc::YUV8_420_Planar_Rec709_Limited,
-                                        PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited,
-                                        PixelDesc::YUV8_422_UYVY_Rec709_Limited,
-                                        PixelDesc::YUV8_422_Rec709_Limited,
-                                        PixelDesc::RGB8_sRGB_Full,
-                                        PixelDesc::RGBA8_sRGB_Full };
+        d.encodeSources             = { PixelDesc::RGB8_sRGB, PixelDesc::RGBA8_sRGB,
+                                        PixelDesc::YUV8_420_Planar_Rec709,
+                                        PixelDesc::YUV8_420_SemiPlanar_Rec709 };
+        d.decodeTargets             = { PixelDesc::YUV8_420_Planar_Rec709,
+                                        PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                                        PixelDesc::YUV8_422_UYVY_Rec709,
+                                        PixelDesc::YUV8_422_Rec709,
+                                        PixelDesc::RGB8_sRGB,
+                                        PixelDesc::RGBA8_sRGB };
         d.fourccList                = { "jpeg", "mjpg" };
         d.compSemantics[0]          = { "Luma",           "Y",  16, 235 };
         d.compSemantics[1]          = { "Chroma Blue",    "Cb", 16, 240 };
@@ -198,10 +198,10 @@ static PixelDesc::Data makeJPEG_YUV8_420() {
 
 static PixelDesc::Data makeYUV8_422_UYVY() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV8_422_UYVY_Rec709_Limited;
-        d.name                  = "YUV8_422_UYVY_Rec709_Limited";
+        d.id                    = PixelDesc::YUV8_422_UYVY_Rec709;
+        d.name                  = "YUV8_422_UYVY_Rec709";
         d.desc                  = "8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_UYVY_3x8);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_UYVY_3x8);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.fourccList            = { "UYVY" };
         d.compSemantics[0]      = { "Luma",           "Y",  16, 235 };
@@ -212,10 +212,10 @@ static PixelDesc::Data makeYUV8_422_UYVY() {
 
 static PixelDesc::Data makeYUV10_422_UYVY_LE() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV10_422_UYVY_LE_Rec709_Limited;
-        d.name                  = "YUV10_422_UYVY_LE_Rec709_Limited";
+        d.id                    = PixelDesc::YUV10_422_UYVY_LE_Rec709;
+        d.name                  = "YUV10_422_UYVY_LE_Rec709";
         d.desc                  = "10-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_UYVY_3x10_LE);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_UYVY_3x10_LE);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.compSemantics[0]      = { "Luma",           "Y",  64,  940 };
         d.compSemantics[1]      = { "Chroma Blue",    "Cb", 64,  960 };
@@ -225,10 +225,10 @@ static PixelDesc::Data makeYUV10_422_UYVY_LE() {
 
 static PixelDesc::Data makeYUV10_422_UYVY_BE() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV10_422_UYVY_BE_Rec709_Limited;
-        d.name                  = "YUV10_422_UYVY_BE_Rec709_Limited";
+        d.id                    = PixelDesc::YUV10_422_UYVY_BE_Rec709;
+        d.name                  = "YUV10_422_UYVY_BE_Rec709";
         d.desc                  = "10-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_UYVY_3x10_BE);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_UYVY_3x10_BE);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.compSemantics[0]      = { "Luma",           "Y",  64,  940 };
         d.compSemantics[1]      = { "Chroma Blue",    "Cb", 64,  960 };
@@ -238,10 +238,10 @@ static PixelDesc::Data makeYUV10_422_UYVY_BE() {
 
 static PixelDesc::Data makeYUV12_422_UYVY_LE() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV12_422_UYVY_LE_Rec709_Limited;
-        d.name                  = "YUV12_422_UYVY_LE_Rec709_Limited";
+        d.id                    = PixelDesc::YUV12_422_UYVY_LE_Rec709;
+        d.name                  = "YUV12_422_UYVY_LE_Rec709";
         d.desc                  = "12-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_UYVY_3x12_LE);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_UYVY_3x12_LE);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.compSemantics[0]      = { "Luma",           "Y",  256, 3760 };
         d.compSemantics[1]      = { "Chroma Blue",    "Cb", 256, 3840 };
@@ -251,10 +251,10 @@ static PixelDesc::Data makeYUV12_422_UYVY_LE() {
 
 static PixelDesc::Data makeYUV12_422_UYVY_BE() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV12_422_UYVY_BE_Rec709_Limited;
-        d.name                  = "YUV12_422_UYVY_BE_Rec709_Limited";
+        d.id                    = PixelDesc::YUV12_422_UYVY_BE_Rec709;
+        d.name                  = "YUV12_422_UYVY_BE_Rec709";
         d.desc                  = "12-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_UYVY_3x12_BE);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_UYVY_3x12_BE);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.compSemantics[0]      = { "Luma",           "Y",  256, 3760 };
         d.compSemantics[1]      = { "Chroma Blue",    "Cb", 256, 3840 };
@@ -264,10 +264,10 @@ static PixelDesc::Data makeYUV12_422_UYVY_BE() {
 
 static PixelDesc::Data makeYUV10_422_v210() {
         PixelDesc::Data d;
-        d.id                    = PixelDesc::YUV10_422_v210_Rec709_Limited;
-        d.name                  = "YUV10_422_v210_Rec709_Limited";
+        d.id                    = PixelDesc::YUV10_422_v210_Rec709;
+        d.name                  = "YUV10_422_v210_Rec709";
         d.desc                  = "10-bit YCbCr 4:2:2 v210 packed, Rec.709, limited range";
-        d.pixelFormat           = PixelFormat(PixelFormat::Interleaved_422_v210);
+        d.pixelFormat           = PixelFormat(PixelFormat::I_422_v210);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
         d.fourccList            = { "v210" };
         d.compSemantics[0]      = { "Luma",           "Y",  64,  940 };
@@ -283,6 +283,7 @@ static PixelDesc::Data makeYUV10_422_v210() {
 static const PixelDesc::CompSemantic ycbcrSem8[]  = { {"Luma","Y",16,235}, {"Chroma Blue","Cb",16,240}, {"Chroma Red","Cr",16,240} };
 static const PixelDesc::CompSemantic ycbcrSem10[] = { {"Luma","Y",64,940}, {"Chroma Blue","Cb",64,960}, {"Chroma Red","Cr",64,960} };
 static const PixelDesc::CompSemantic ycbcrSem12[] = { {"Luma","Y",256,3760}, {"Chroma Blue","Cb",256,3840}, {"Chroma Red","Cr",256,3840} };
+static const PixelDesc::CompSemantic ycbcrSem16[] = { {"Luma","Y",4096,60160}, {"Chroma Blue","Cb",4096,61440}, {"Chroma Red","Cr",4096,61440} };
 
 static PixelDesc::Data makeYCbCrDesc(PixelDesc::ID id, const char *name, const char *desc,
                                      PixelFormat::ID pfId, const PixelDesc::CompSemantic *sem) {
@@ -298,36 +299,131 @@ static PixelDesc::Data makeYCbCrDesc(PixelDesc::ID id, const char *name, const c
         return d;
 }
 
+static PixelDesc::Data makeYCbCrDescWithModel(PixelDesc::ID id, const char *name, const char *desc,
+                                              PixelFormat::ID pfId, const PixelDesc::CompSemantic *sem,
+                                              ColorModel::ID colorModelId) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(colorModelId);
+        d.compSemantics[0] = sem[0];
+        d.compSemantics[1] = sem[1];
+        d.compSemantics[2] = sem[2];
+        return d;
+}
+
+static PixelDesc::Data makeBGRDesc(PixelDesc::ID id, const char *name, const char *desc,
+                                   PixelFormat::ID pfId, bool alpha, float rangeMax) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = alpha;
+        d.alphaCompIndex  = alpha ? 3 : -1;
+        d.compSemantics[0] = { "Blue",  "B", 0, rangeMax };
+        d.compSemantics[1] = { "Green", "G", 0, rangeMax };
+        d.compSemantics[2] = { "Red",   "R", 0, rangeMax };
+        if(alpha) d.compSemantics[3] = { "Alpha", "A", 0, rangeMax };
+        return d;
+}
+
+static PixelDesc::Data makeARGBDesc(PixelDesc::ID id, const char *name, const char *desc,
+                                    PixelFormat::ID pfId, float rangeMax) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = true;
+        d.alphaCompIndex  = 0;
+        d.compSemantics[0] = { "Alpha", "A", 0, rangeMax };
+        d.compSemantics[1] = { "Red",   "R", 0, rangeMax };
+        d.compSemantics[2] = { "Green", "G", 0, rangeMax };
+        d.compSemantics[3] = { "Blue",  "B", 0, rangeMax };
+        return d;
+}
+
+static PixelDesc::Data makeABGRDesc(PixelDesc::ID id, const char *name, const char *desc,
+                                    PixelFormat::ID pfId, float rangeMax) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = true;
+        d.alphaCompIndex  = 0;
+        d.compSemantics[0] = { "Alpha", "A", 0, rangeMax };
+        d.compSemantics[1] = { "Blue",  "B", 0, rangeMax };
+        d.compSemantics[2] = { "Green", "G", 0, rangeMax };
+        d.compSemantics[3] = { "Red",   "R", 0, rangeMax };
+        return d;
+}
+
+static PixelDesc::Data makeMonoDesc(PixelDesc::ID id, const char *name, const char *desc,
+                                    PixelFormat::ID pfId, ColorModel::ID colorModelId, float rangeMax) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(colorModelId);
+        d.compSemantics[0] = { "Luminance", "L", 0, rangeMax };
+        return d;
+}
+
+static PixelDesc::Data makeFloatRGBDesc(PixelDesc::ID id, const char *name, const char *desc,
+                                        PixelFormat::ID pfId, bool alpha, ColorModel::ID colorModelId) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(colorModelId);
+        d.hasAlpha        = alpha;
+        d.alphaCompIndex  = alpha ? 3 : -1;
+        d.compSemantics[0] = { "Red",   "R", 0.0, 1.0 };
+        d.compSemantics[1] = { "Green", "G", 0.0, 1.0 };
+        d.compSemantics[2] = { "Blue",  "B", 0.0, 1.0 };
+        if(alpha) d.compSemantics[3] = { "Alpha", "A", 0.0, 1.0 };
+        return d;
+}
+
 static PixelDesc::Data makeYUV8_422_Planar() {
-        auto d = makeYCbCrDesc(PixelDesc::YUV8_422_Planar_Rec709_Limited,
-                "YUV8_422_Planar_Rec709_Limited", "8-bit YCbCr 4:2:2 planar, Rec.709, limited range",
-                PixelFormat::Planar_422_3x8, ycbcrSem8);
+        auto d = makeYCbCrDesc(PixelDesc::YUV8_422_Planar_Rec709,
+                "YUV8_422_Planar_Rec709", "8-bit YCbCr 4:2:2 planar, Rec.709, limited range",
+                PixelFormat::P_422_3x8, ycbcrSem8);
         d.fourccList = { "I422" };
         return d;
 }
 
 static PixelDesc::Data makeYUV10_422_Planar_LE() {
-        return makeYCbCrDesc(PixelDesc::YUV10_422_Planar_LE_Rec709_Limited,
-                "YUV10_422_Planar_LE_Rec709_Limited", "10-bit YCbCr 4:2:2 planar LE, Rec.709, limited range",
-                PixelFormat::Planar_422_3x10_LE, ycbcrSem10);
+        return makeYCbCrDesc(PixelDesc::YUV10_422_Planar_LE_Rec709,
+                "YUV10_422_Planar_LE_Rec709", "10-bit YCbCr 4:2:2 planar LE, Rec.709, limited range",
+                PixelFormat::P_422_3x10_LE, ycbcrSem10);
 }
 
 static PixelDesc::Data makeYUV10_422_Planar_BE() {
-        return makeYCbCrDesc(PixelDesc::YUV10_422_Planar_BE_Rec709_Limited,
-                "YUV10_422_Planar_BE_Rec709_Limited", "10-bit YCbCr 4:2:2 planar BE, Rec.709, limited range",
-                PixelFormat::Planar_422_3x10_BE, ycbcrSem10);
+        return makeYCbCrDesc(PixelDesc::YUV10_422_Planar_BE_Rec709,
+                "YUV10_422_Planar_BE_Rec709", "10-bit YCbCr 4:2:2 planar BE, Rec.709, limited range",
+                PixelFormat::P_422_3x10_BE, ycbcrSem10);
 }
 
 static PixelDesc::Data makeYUV12_422_Planar_LE() {
-        return makeYCbCrDesc(PixelDesc::YUV12_422_Planar_LE_Rec709_Limited,
-                "YUV12_422_Planar_LE_Rec709_Limited", "12-bit YCbCr 4:2:2 planar LE, Rec.709, limited range",
-                PixelFormat::Planar_422_3x12_LE, ycbcrSem12);
+        return makeYCbCrDesc(PixelDesc::YUV12_422_Planar_LE_Rec709,
+                "YUV12_422_Planar_LE_Rec709", "12-bit YCbCr 4:2:2 planar LE, Rec.709, limited range",
+                PixelFormat::P_422_3x12_LE, ycbcrSem12);
 }
 
 static PixelDesc::Data makeYUV12_422_Planar_BE() {
-        return makeYCbCrDesc(PixelDesc::YUV12_422_Planar_BE_Rec709_Limited,
-                "YUV12_422_Planar_BE_Rec709_Limited", "12-bit YCbCr 4:2:2 planar BE, Rec.709, limited range",
-                PixelFormat::Planar_422_3x12_BE, ycbcrSem12);
+        return makeYCbCrDesc(PixelDesc::YUV12_422_Planar_BE_Rec709,
+                "YUV12_422_Planar_BE_Rec709", "12-bit YCbCr 4:2:2 planar BE, Rec.709, limited range",
+                PixelFormat::P_422_3x12_BE, ycbcrSem12);
 }
 
 // ---------------------------------------------------------------------------
@@ -335,35 +431,35 @@ static PixelDesc::Data makeYUV12_422_Planar_BE() {
 // ---------------------------------------------------------------------------
 
 static PixelDesc::Data makeYUV8_420_Planar() {
-        auto d = makeYCbCrDesc(PixelDesc::YUV8_420_Planar_Rec709_Limited,
-                "YUV8_420_Planar_Rec709_Limited", "8-bit YCbCr 4:2:0 planar, Rec.709, limited range",
-                PixelFormat::Planar_420_3x8, ycbcrSem8);
+        auto d = makeYCbCrDesc(PixelDesc::YUV8_420_Planar_Rec709,
+                "YUV8_420_Planar_Rec709", "8-bit YCbCr 4:2:0 planar, Rec.709, limited range",
+                PixelFormat::P_420_3x8, ycbcrSem8);
         d.fourccList = { "I420" };
         return d;
 }
 
 static PixelDesc::Data makeYUV10_420_Planar_LE() {
-        return makeYCbCrDesc(PixelDesc::YUV10_420_Planar_LE_Rec709_Limited,
-                "YUV10_420_Planar_LE_Rec709_Limited", "10-bit YCbCr 4:2:0 planar LE, Rec.709, limited range",
-                PixelFormat::Planar_420_3x10_LE, ycbcrSem10);
+        return makeYCbCrDesc(PixelDesc::YUV10_420_Planar_LE_Rec709,
+                "YUV10_420_Planar_LE_Rec709", "10-bit YCbCr 4:2:0 planar LE, Rec.709, limited range",
+                PixelFormat::P_420_3x10_LE, ycbcrSem10);
 }
 
 static PixelDesc::Data makeYUV10_420_Planar_BE() {
-        return makeYCbCrDesc(PixelDesc::YUV10_420_Planar_BE_Rec709_Limited,
-                "YUV10_420_Planar_BE_Rec709_Limited", "10-bit YCbCr 4:2:0 planar BE, Rec.709, limited range",
-                PixelFormat::Planar_420_3x10_BE, ycbcrSem10);
+        return makeYCbCrDesc(PixelDesc::YUV10_420_Planar_BE_Rec709,
+                "YUV10_420_Planar_BE_Rec709", "10-bit YCbCr 4:2:0 planar BE, Rec.709, limited range",
+                PixelFormat::P_420_3x10_BE, ycbcrSem10);
 }
 
 static PixelDesc::Data makeYUV12_420_Planar_LE() {
-        return makeYCbCrDesc(PixelDesc::YUV12_420_Planar_LE_Rec709_Limited,
-                "YUV12_420_Planar_LE_Rec709_Limited", "12-bit YCbCr 4:2:0 planar LE, Rec.709, limited range",
-                PixelFormat::Planar_420_3x12_LE, ycbcrSem12);
+        return makeYCbCrDesc(PixelDesc::YUV12_420_Planar_LE_Rec709,
+                "YUV12_420_Planar_LE_Rec709", "12-bit YCbCr 4:2:0 planar LE, Rec.709, limited range",
+                PixelFormat::P_420_3x12_LE, ycbcrSem12);
 }
 
 static PixelDesc::Data makeYUV12_420_Planar_BE() {
-        return makeYCbCrDesc(PixelDesc::YUV12_420_Planar_BE_Rec709_Limited,
-                "YUV12_420_Planar_BE_Rec709_Limited", "12-bit YCbCr 4:2:0 planar BE, Rec.709, limited range",
-                PixelFormat::Planar_420_3x12_BE, ycbcrSem12);
+        return makeYCbCrDesc(PixelDesc::YUV12_420_Planar_BE_Rec709,
+                "YUV12_420_Planar_BE_Rec709", "12-bit YCbCr 4:2:0 planar BE, Rec.709, limited range",
+                PixelFormat::P_420_3x12_BE, ycbcrSem12);
 }
 
 // ---------------------------------------------------------------------------
@@ -371,35 +467,768 @@ static PixelDesc::Data makeYUV12_420_Planar_BE() {
 // ---------------------------------------------------------------------------
 
 static PixelDesc::Data makeYUV8_420_SemiPlanar() {
-        auto d = makeYCbCrDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited,
-                "YUV8_420_SemiPlanar_Rec709_Limited", "8-bit YCbCr 4:2:0 NV12, Rec.709, limited range",
-                PixelFormat::SemiPlanar_420_8, ycbcrSem8);
+        auto d = makeYCbCrDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                "YUV8_420_SemiPlanar_Rec709", "8-bit YCbCr 4:2:0 NV12, Rec.709, limited range",
+                PixelFormat::SP_420_8, ycbcrSem8);
         d.fourccList = { "NV12" };
         return d;
 }
 
 static PixelDesc::Data makeYUV10_420_SemiPlanar_LE() {
-        return makeYCbCrDesc(PixelDesc::YUV10_420_SemiPlanar_LE_Rec709_Limited,
-                "YUV10_420_SemiPlanar_LE_Rec709_Limited", "10-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range",
-                PixelFormat::SemiPlanar_420_10_LE, ycbcrSem10);
+        return makeYCbCrDesc(PixelDesc::YUV10_420_SemiPlanar_LE_Rec709,
+                "YUV10_420_SemiPlanar_LE_Rec709", "10-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range",
+                PixelFormat::SP_420_10_LE, ycbcrSem10);
 }
 
 static PixelDesc::Data makeYUV10_420_SemiPlanar_BE() {
-        return makeYCbCrDesc(PixelDesc::YUV10_420_SemiPlanar_BE_Rec709_Limited,
-                "YUV10_420_SemiPlanar_BE_Rec709_Limited", "10-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range",
-                PixelFormat::SemiPlanar_420_10_BE, ycbcrSem10);
+        return makeYCbCrDesc(PixelDesc::YUV10_420_SemiPlanar_BE_Rec709,
+                "YUV10_420_SemiPlanar_BE_Rec709", "10-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range",
+                PixelFormat::SP_420_10_BE, ycbcrSem10);
 }
 
 static PixelDesc::Data makeYUV12_420_SemiPlanar_LE() {
-        return makeYCbCrDesc(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709_Limited,
-                "YUV12_420_SemiPlanar_LE_Rec709_Limited", "12-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range",
-                PixelFormat::SemiPlanar_420_12_LE, ycbcrSem12);
+        return makeYCbCrDesc(PixelDesc::YUV12_420_SemiPlanar_LE_Rec709,
+                "YUV12_420_SemiPlanar_LE_Rec709", "12-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range",
+                PixelFormat::SP_420_12_LE, ycbcrSem12);
 }
 
 static PixelDesc::Data makeYUV12_420_SemiPlanar_BE() {
-        return makeYCbCrDesc(PixelDesc::YUV12_420_SemiPlanar_BE_Rec709_Limited,
-                "YUV12_420_SemiPlanar_BE_Rec709_Limited", "12-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range",
-                PixelFormat::SemiPlanar_420_12_BE, ycbcrSem12);
+        return makeYCbCrDesc(PixelDesc::YUV12_420_SemiPlanar_BE_Rec709,
+                "YUV12_420_SemiPlanar_BE_Rec709", "12-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range",
+                PixelFormat::SP_420_12_BE, ycbcrSem12);
+}
+
+// ---------------------------------------------------------------------------
+// RGB/RGBA 10/12/16-bit PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeRGBDesc(PixelDesc::ID id, const char *name, const char *desc,
+                                   PixelFormat::ID pfId, bool alpha, float rangeMax) {
+        PixelDesc::Data d;
+        d.id              = id;
+        d.name            = name;
+        d.desc            = desc;
+        d.pixelFormat     = PixelFormat(pfId);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = alpha;
+        d.alphaCompIndex  = alpha ? 3 : -1;
+        d.compSemantics[0] = { "Red",   "R", 0, rangeMax };
+        d.compSemantics[1] = { "Green", "G", 0, rangeMax };
+        d.compSemantics[2] = { "Blue",  "B", 0, rangeMax };
+        if(alpha) d.compSemantics[3] = { "Alpha", "A", 0, rangeMax };
+        return d;
+}
+
+static PixelDesc::Data makeRGBA10_LE() {
+        return makeRGBDesc(PixelDesc::RGBA10_LE_sRGB,
+                "RGBA10_LE_sRGB", "10-bit RGBA in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x10_LE, true, 1023);
+}
+
+static PixelDesc::Data makeRGBA10_BE() {
+        return makeRGBDesc(PixelDesc::RGBA10_BE_sRGB,
+                "RGBA10_BE_sRGB", "10-bit RGBA in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x10_BE, true, 1023);
+}
+
+static PixelDesc::Data makeRGB10_LE() {
+        return makeRGBDesc(PixelDesc::RGB10_LE_sRGB,
+                "RGB10_LE_sRGB", "10-bit RGB in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_3x10_LE, false, 1023);
+}
+
+static PixelDesc::Data makeRGB10_BE() {
+        return makeRGBDesc(PixelDesc::RGB10_BE_sRGB,
+                "RGB10_BE_sRGB", "10-bit RGB in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_3x10_BE, false, 1023);
+}
+
+static PixelDesc::Data makeRGBA12_LE() {
+        return makeRGBDesc(PixelDesc::RGBA12_LE_sRGB,
+                "RGBA12_LE_sRGB", "12-bit RGBA in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x12_LE, true, 4095);
+}
+
+static PixelDesc::Data makeRGBA12_BE() {
+        return makeRGBDesc(PixelDesc::RGBA12_BE_sRGB,
+                "RGBA12_BE_sRGB", "12-bit RGBA in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x12_BE, true, 4095);
+}
+
+static PixelDesc::Data makeRGB12_LE() {
+        return makeRGBDesc(PixelDesc::RGB12_LE_sRGB,
+                "RGB12_LE_sRGB", "12-bit RGB in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_3x12_LE, false, 4095);
+}
+
+static PixelDesc::Data makeRGB12_BE() {
+        return makeRGBDesc(PixelDesc::RGB12_BE_sRGB,
+                "RGB12_BE_sRGB", "12-bit RGB in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_3x12_BE, false, 4095);
+}
+
+static PixelDesc::Data makeRGBA16_LE() {
+        return makeRGBDesc(PixelDesc::RGBA16_LE_sRGB,
+                "RGBA16_LE_sRGB", "16-bit RGBA LE, sRGB, full range",
+                PixelFormat::I_4x16_LE, true, 65535);
+}
+
+static PixelDesc::Data makeRGBA16_BE() {
+        return makeRGBDesc(PixelDesc::RGBA16_BE_sRGB,
+                "RGBA16_BE_sRGB", "16-bit RGBA BE, sRGB, full range",
+                PixelFormat::I_4x16_BE, true, 65535);
+}
+
+static PixelDesc::Data makeRGB16_LE() {
+        return makeRGBDesc(PixelDesc::RGB16_LE_sRGB,
+                "RGB16_LE_sRGB", "16-bit RGB LE, sRGB, full range",
+                PixelFormat::I_3x16_LE, false, 65535);
+}
+
+static PixelDesc::Data makeRGB16_BE() {
+        return makeRGBDesc(PixelDesc::RGB16_BE_sRGB,
+                "RGB16_BE_sRGB", "16-bit RGB BE, sRGB, full range",
+                PixelFormat::I_3x16_BE, false, 65535);
+}
+
+// ---------------------------------------------------------------------------
+// YCbCr 4:4:4 DPX packed PixelDesc factory function
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV10_DPX() {
+        return makeYCbCrDesc(PixelDesc::YUV10_DPX_Rec709,
+                "YUV10_DPX_Rec709", "10-bit YCbCr 4:4:4 DPX packed, Rec.709, limited range",
+                PixelFormat::I_3x10_DPX, ycbcrSem10);
+}
+
+// ---------------------------------------------------------------------------
+// BGRA/BGR PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeBGRA8() {
+        return makeBGRDesc(PixelDesc::BGRA8_sRGB,
+                "BGRA8_sRGB", "8-bit BGRA, sRGB, full range",
+                PixelFormat::I_4x8, true, 255);
+}
+
+static PixelDesc::Data makeBGR8() {
+        return makeBGRDesc(PixelDesc::BGR8_sRGB,
+                "BGR8_sRGB", "8-bit BGR, sRGB, full range",
+                PixelFormat::I_3x8, false, 255);
+}
+
+static PixelDesc::Data makeBGRA10_LE() {
+        return makeBGRDesc(PixelDesc::BGRA10_LE_sRGB,
+                "BGRA10_LE_sRGB", "10-bit BGRA in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x10_LE, true, 1023);
+}
+
+static PixelDesc::Data makeBGRA10_BE() {
+        return makeBGRDesc(PixelDesc::BGRA10_BE_sRGB,
+                "BGRA10_BE_sRGB", "10-bit BGRA in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x10_BE, true, 1023);
+}
+
+static PixelDesc::Data makeBGR10_LE() {
+        return makeBGRDesc(PixelDesc::BGR10_LE_sRGB,
+                "BGR10_LE_sRGB", "10-bit BGR in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_3x10_LE, false, 1023);
+}
+
+static PixelDesc::Data makeBGR10_BE() {
+        return makeBGRDesc(PixelDesc::BGR10_BE_sRGB,
+                "BGR10_BE_sRGB", "10-bit BGR in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_3x10_BE, false, 1023);
+}
+
+static PixelDesc::Data makeBGRA12_LE() {
+        return makeBGRDesc(PixelDesc::BGRA12_LE_sRGB,
+                "BGRA12_LE_sRGB", "12-bit BGRA in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x12_LE, true, 4095);
+}
+
+static PixelDesc::Data makeBGRA12_BE() {
+        return makeBGRDesc(PixelDesc::BGRA12_BE_sRGB,
+                "BGRA12_BE_sRGB", "12-bit BGRA in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x12_BE, true, 4095);
+}
+
+static PixelDesc::Data makeBGR12_LE() {
+        return makeBGRDesc(PixelDesc::BGR12_LE_sRGB,
+                "BGR12_LE_sRGB", "12-bit BGR in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_3x12_LE, false, 4095);
+}
+
+static PixelDesc::Data makeBGR12_BE() {
+        return makeBGRDesc(PixelDesc::BGR12_BE_sRGB,
+                "BGR12_BE_sRGB", "12-bit BGR in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_3x12_BE, false, 4095);
+}
+
+static PixelDesc::Data makeBGRA16_LE() {
+        return makeBGRDesc(PixelDesc::BGRA16_LE_sRGB,
+                "BGRA16_LE_sRGB", "16-bit BGRA LE, sRGB, full range",
+                PixelFormat::I_4x16_LE, true, 65535);
+}
+
+static PixelDesc::Data makeBGRA16_BE() {
+        return makeBGRDesc(PixelDesc::BGRA16_BE_sRGB,
+                "BGRA16_BE_sRGB", "16-bit BGRA BE, sRGB, full range",
+                PixelFormat::I_4x16_BE, true, 65535);
+}
+
+static PixelDesc::Data makeBGR16_LE() {
+        return makeBGRDesc(PixelDesc::BGR16_LE_sRGB,
+                "BGR16_LE_sRGB", "16-bit BGR LE, sRGB, full range",
+                PixelFormat::I_3x16_LE, false, 65535);
+}
+
+static PixelDesc::Data makeBGR16_BE() {
+        return makeBGRDesc(PixelDesc::BGR16_BE_sRGB,
+                "BGR16_BE_sRGB", "16-bit BGR BE, sRGB, full range",
+                PixelFormat::I_3x16_BE, false, 65535);
+}
+
+// ---------------------------------------------------------------------------
+// ARGB PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeARGB8() {
+        return makeARGBDesc(PixelDesc::ARGB8_sRGB,
+                "ARGB8_sRGB", "8-bit ARGB, sRGB, full range",
+                PixelFormat::I_4x8, 255);
+}
+
+static PixelDesc::Data makeARGB10_LE() {
+        return makeARGBDesc(PixelDesc::ARGB10_LE_sRGB,
+                "ARGB10_LE_sRGB", "10-bit ARGB in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x10_LE, 1023);
+}
+
+static PixelDesc::Data makeARGB10_BE() {
+        return makeARGBDesc(PixelDesc::ARGB10_BE_sRGB,
+                "ARGB10_BE_sRGB", "10-bit ARGB in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x10_BE, 1023);
+}
+
+static PixelDesc::Data makeARGB12_LE() {
+        return makeARGBDesc(PixelDesc::ARGB12_LE_sRGB,
+                "ARGB12_LE_sRGB", "12-bit ARGB in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x12_LE, 4095);
+}
+
+static PixelDesc::Data makeARGB12_BE() {
+        return makeARGBDesc(PixelDesc::ARGB12_BE_sRGB,
+                "ARGB12_BE_sRGB", "12-bit ARGB in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x12_BE, 4095);
+}
+
+static PixelDesc::Data makeARGB16_LE() {
+        return makeARGBDesc(PixelDesc::ARGB16_LE_sRGB,
+                "ARGB16_LE_sRGB", "16-bit ARGB LE, sRGB, full range",
+                PixelFormat::I_4x16_LE, 65535);
+}
+
+static PixelDesc::Data makeARGB16_BE() {
+        return makeARGBDesc(PixelDesc::ARGB16_BE_sRGB,
+                "ARGB16_BE_sRGB", "16-bit ARGB BE, sRGB, full range",
+                PixelFormat::I_4x16_BE, 65535);
+}
+
+// ---------------------------------------------------------------------------
+// ABGR PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeABGR8() {
+        return makeABGRDesc(PixelDesc::ABGR8_sRGB,
+                "ABGR8_sRGB", "8-bit ABGR, sRGB, full range",
+                PixelFormat::I_4x8, 255);
+}
+
+static PixelDesc::Data makeABGR10_LE() {
+        return makeABGRDesc(PixelDesc::ABGR10_LE_sRGB,
+                "ABGR10_LE_sRGB", "10-bit ABGR in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x10_LE, 1023);
+}
+
+static PixelDesc::Data makeABGR10_BE() {
+        return makeABGRDesc(PixelDesc::ABGR10_BE_sRGB,
+                "ABGR10_BE_sRGB", "10-bit ABGR in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x10_BE, 1023);
+}
+
+static PixelDesc::Data makeABGR12_LE() {
+        return makeABGRDesc(PixelDesc::ABGR12_LE_sRGB,
+                "ABGR12_LE_sRGB", "12-bit ABGR in 16-bit LE words, sRGB, full range",
+                PixelFormat::I_4x12_LE, 4095);
+}
+
+static PixelDesc::Data makeABGR12_BE() {
+        return makeABGRDesc(PixelDesc::ABGR12_BE_sRGB,
+                "ABGR12_BE_sRGB", "12-bit ABGR in 16-bit BE words, sRGB, full range",
+                PixelFormat::I_4x12_BE, 4095);
+}
+
+static PixelDesc::Data makeABGR16_LE() {
+        return makeABGRDesc(PixelDesc::ABGR16_LE_sRGB,
+                "ABGR16_LE_sRGB", "16-bit ABGR LE, sRGB, full range",
+                PixelFormat::I_4x16_LE, 65535);
+}
+
+static PixelDesc::Data makeABGR16_BE() {
+        return makeABGRDesc(PixelDesc::ABGR16_BE_sRGB,
+                "ABGR16_BE_sRGB", "16-bit ABGR BE, sRGB, full range",
+                PixelFormat::I_4x16_BE, 65535);
+}
+
+// ---------------------------------------------------------------------------
+// Monochrome sRGB PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeMono8_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono8_sRGB,
+                "Mono8_sRGB", "8-bit grayscale, sRGB",
+                PixelFormat::I_1x8, ColorModel::sRGB, 255);
+}
+
+static PixelDesc::Data makeMono10_LE_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono10_LE_sRGB,
+                "Mono10_LE_sRGB", "10-bit grayscale in 16-bit LE word, sRGB",
+                PixelFormat::I_1x10_LE, ColorModel::sRGB, 1023);
+}
+
+static PixelDesc::Data makeMono10_BE_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono10_BE_sRGB,
+                "Mono10_BE_sRGB", "10-bit grayscale in 16-bit BE word, sRGB",
+                PixelFormat::I_1x10_BE, ColorModel::sRGB, 1023);
+}
+
+static PixelDesc::Data makeMono12_LE_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono12_LE_sRGB,
+                "Mono12_LE_sRGB", "12-bit grayscale in 16-bit LE word, sRGB",
+                PixelFormat::I_1x12_LE, ColorModel::sRGB, 4095);
+}
+
+static PixelDesc::Data makeMono12_BE_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono12_BE_sRGB,
+                "Mono12_BE_sRGB", "12-bit grayscale in 16-bit BE word, sRGB",
+                PixelFormat::I_1x12_BE, ColorModel::sRGB, 4095);
+}
+
+static PixelDesc::Data makeMono16_LE_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono16_LE_sRGB,
+                "Mono16_LE_sRGB", "16-bit grayscale LE, sRGB",
+                PixelFormat::I_1x16_LE, ColorModel::sRGB, 65535);
+}
+
+static PixelDesc::Data makeMono16_BE_sRGB() {
+        return makeMonoDesc(PixelDesc::Mono16_BE_sRGB,
+                "Mono16_BE_sRGB", "16-bit grayscale BE, sRGB",
+                PixelFormat::I_1x16_BE, ColorModel::sRGB, 65535);
+}
+
+// ---------------------------------------------------------------------------
+// Float RGBA/RGB/Mono LinearRec709 PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeRGBAF16_LE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBAF16_LE_LinearRec709,
+                "RGBAF16_LE_LinearRec709", "Half-float RGBA LE, linear Rec.709",
+                PixelFormat::I_4xF16_LE, true, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeRGBAF16_BE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBAF16_BE_LinearRec709,
+                "RGBAF16_BE_LinearRec709", "Half-float RGBA BE, linear Rec.709",
+                PixelFormat::I_4xF16_BE, true, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeRGBF16_LE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBF16_LE_LinearRec709,
+                "RGBF16_LE_LinearRec709", "Half-float RGB LE, linear Rec.709",
+                PixelFormat::I_3xF16_LE, false, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeRGBF16_BE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBF16_BE_LinearRec709,
+                "RGBF16_BE_LinearRec709", "Half-float RGB BE, linear Rec.709",
+                PixelFormat::I_3xF16_BE, false, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeMonoF16_LE_LinearRec709() {
+        return makeMonoDesc(PixelDesc::MonoF16_LE_LinearRec709,
+                "MonoF16_LE_LinearRec709", "Half-float mono LE, linear Rec.709",
+                PixelFormat::I_1xF16_LE, ColorModel::LinearRec709, 1.0);
+}
+
+static PixelDesc::Data makeMonoF16_BE_LinearRec709() {
+        return makeMonoDesc(PixelDesc::MonoF16_BE_LinearRec709,
+                "MonoF16_BE_LinearRec709", "Half-float mono BE, linear Rec.709",
+                PixelFormat::I_1xF16_BE, ColorModel::LinearRec709, 1.0);
+}
+
+static PixelDesc::Data makeRGBAF32_LE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBAF32_LE_LinearRec709,
+                "RGBAF32_LE_LinearRec709", "Float RGBA LE, linear Rec.709",
+                PixelFormat::I_4xF32_LE, true, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeRGBAF32_BE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBAF32_BE_LinearRec709,
+                "RGBAF32_BE_LinearRec709", "Float RGBA BE, linear Rec.709",
+                PixelFormat::I_4xF32_BE, true, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeRGBF32_LE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBF32_LE_LinearRec709,
+                "RGBF32_LE_LinearRec709", "Float RGB LE, linear Rec.709",
+                PixelFormat::I_3xF32_LE, false, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeRGBF32_BE_LinearRec709() {
+        return makeFloatRGBDesc(PixelDesc::RGBF32_BE_LinearRec709,
+                "RGBF32_BE_LinearRec709", "Float RGB BE, linear Rec.709",
+                PixelFormat::I_3xF32_BE, false, ColorModel::LinearRec709);
+}
+
+static PixelDesc::Data makeMonoF32_LE_LinearRec709() {
+        return makeMonoDesc(PixelDesc::MonoF32_LE_LinearRec709,
+                "MonoF32_LE_LinearRec709", "Float mono LE, linear Rec.709",
+                PixelFormat::I_1xF32_LE, ColorModel::LinearRec709, 1.0);
+}
+
+static PixelDesc::Data makeMonoF32_BE_LinearRec709() {
+        return makeMonoDesc(PixelDesc::MonoF32_BE_LinearRec709,
+                "MonoF32_BE_LinearRec709", "Float mono BE, linear Rec.709",
+                PixelFormat::I_1xF32_BE, ColorModel::LinearRec709, 1.0);
+}
+
+// ---------------------------------------------------------------------------
+// 10:10:10:2 packed sRGB PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeRGB10A2_LE() {
+        PixelDesc::Data d;
+        d.id              = PixelDesc::RGB10A2_LE_sRGB;
+        d.name            = "RGB10A2_LE_sRGB";
+        d.desc            = "RGB 10-bit + Alpha 2-bit in 32-bit LE, sRGB, full range";
+        d.pixelFormat     = PixelFormat(PixelFormat::I_10_10_10_2_LE);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = true;
+        d.alphaCompIndex  = 3;
+        d.compSemantics[0] = { "Red",   "R", 0, 1023 };
+        d.compSemantics[1] = { "Green", "G", 0, 1023 };
+        d.compSemantics[2] = { "Blue",  "B", 0, 1023 };
+        d.compSemantics[3] = { "Alpha", "A", 0, 3 };
+        return d;
+}
+
+static PixelDesc::Data makeRGB10A2_BE() {
+        PixelDesc::Data d;
+        d.id              = PixelDesc::RGB10A2_BE_sRGB;
+        d.name            = "RGB10A2_BE_sRGB";
+        d.desc            = "RGB 10-bit + Alpha 2-bit in 32-bit BE, sRGB, full range";
+        d.pixelFormat     = PixelFormat(PixelFormat::I_10_10_10_2_BE);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = true;
+        d.alphaCompIndex  = 3;
+        d.compSemantics[0] = { "Red",   "R", 0, 1023 };
+        d.compSemantics[1] = { "Green", "G", 0, 1023 };
+        d.compSemantics[2] = { "Blue",  "B", 0, 1023 };
+        d.compSemantics[3] = { "Alpha", "A", 0, 3 };
+        return d;
+}
+
+static PixelDesc::Data makeBGR10A2_LE() {
+        PixelDesc::Data d;
+        d.id              = PixelDesc::BGR10A2_LE_sRGB;
+        d.name            = "BGR10A2_LE_sRGB";
+        d.desc            = "BGR 10-bit + Alpha 2-bit in 32-bit LE, sRGB, full range";
+        d.pixelFormat     = PixelFormat(PixelFormat::I_10_10_10_2_LE);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = true;
+        d.alphaCompIndex  = 3;
+        d.compSemantics[0] = { "Blue",  "B", 0, 1023 };
+        d.compSemantics[1] = { "Green", "G", 0, 1023 };
+        d.compSemantics[2] = { "Red",   "R", 0, 1023 };
+        d.compSemantics[3] = { "Alpha", "A", 0, 3 };
+        return d;
+}
+
+static PixelDesc::Data makeBGR10A2_BE() {
+        PixelDesc::Data d;
+        d.id              = PixelDesc::BGR10A2_BE_sRGB;
+        d.name            = "BGR10A2_BE_sRGB";
+        d.desc            = "BGR 10-bit + Alpha 2-bit in 32-bit BE, sRGB, full range";
+        d.pixelFormat     = PixelFormat(PixelFormat::I_10_10_10_2_BE);
+        d.colorModel      = ColorModel(ColorModel::sRGB);
+        d.hasAlpha        = true;
+        d.alphaCompIndex  = 3;
+        d.compSemantics[0] = { "Blue",  "B", 0, 1023 };
+        d.compSemantics[1] = { "Green", "G", 0, 1023 };
+        d.compSemantics[2] = { "Red",   "R", 0, 1023 };
+        d.compSemantics[3] = { "Alpha", "A", 0, 3 };
+        return d;
+}
+
+// ---------------------------------------------------------------------------
+// 4:4:4 YCbCr Rec.709 PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV8_444() {
+        return makeYCbCrDesc(PixelDesc::YUV8_Rec709,
+                "YUV8_Rec709", "8-bit YCbCr 4:4:4, Rec.709, limited range",
+                PixelFormat::I_3x8, ycbcrSem8);
+}
+
+static PixelDesc::Data makeYUV10_LE_444() {
+        return makeYCbCrDesc(PixelDesc::YUV10_LE_Rec709,
+                "YUV10_LE_Rec709", "10-bit YCbCr 4:4:4 LE, Rec.709, limited range",
+                PixelFormat::I_3x10_LE, ycbcrSem10);
+}
+
+static PixelDesc::Data makeYUV10_BE_444() {
+        return makeYCbCrDesc(PixelDesc::YUV10_BE_Rec709,
+                "YUV10_BE_Rec709", "10-bit YCbCr 4:4:4 BE, Rec.709, limited range",
+                PixelFormat::I_3x10_BE, ycbcrSem10);
+}
+
+static PixelDesc::Data makeYUV12_LE_444() {
+        return makeYCbCrDesc(PixelDesc::YUV12_LE_Rec709,
+                "YUV12_LE_Rec709", "12-bit YCbCr 4:4:4 LE, Rec.709, limited range",
+                PixelFormat::I_3x12_LE, ycbcrSem12);
+}
+
+static PixelDesc::Data makeYUV12_BE_444() {
+        return makeYCbCrDesc(PixelDesc::YUV12_BE_Rec709,
+                "YUV12_BE_Rec709", "12-bit YCbCr 4:4:4 BE, Rec.709, limited range",
+                PixelFormat::I_3x12_BE, ycbcrSem12);
+}
+
+static PixelDesc::Data makeYUV16_LE_444() {
+        return makeYCbCrDesc(PixelDesc::YUV16_LE_Rec709,
+                "YUV16_LE_Rec709", "16-bit YCbCr 4:4:4 LE, Rec.709, limited range",
+                PixelFormat::I_3x16_LE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_BE_444() {
+        return makeYCbCrDesc(PixelDesc::YUV16_BE_Rec709,
+                "YUV16_BE_Rec709", "16-bit YCbCr 4:4:4 BE, Rec.709, limited range",
+                PixelFormat::I_3x16_BE, ycbcrSem16);
+}
+
+// ---------------------------------------------------------------------------
+// Rec.2020 YCbCr PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV10_422_UYVY_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV10_422_UYVY_LE_Rec2020,
+                "YUV10_422_UYVY_LE_Rec2020", "10-bit YCbCr 4:2:2 UYVY LE, Rec.2020, limited range",
+                PixelFormat::I_422_UYVY_3x10_LE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV10_422_UYVY_BE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV10_422_UYVY_BE_Rec2020,
+                "YUV10_422_UYVY_BE_Rec2020", "10-bit YCbCr 4:2:2 UYVY BE, Rec.2020, limited range",
+                PixelFormat::I_422_UYVY_3x10_BE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV12_422_UYVY_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV12_422_UYVY_LE_Rec2020,
+                "YUV12_422_UYVY_LE_Rec2020", "12-bit YCbCr 4:2:2 UYVY LE, Rec.2020, limited range",
+                PixelFormat::I_422_UYVY_3x12_LE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV12_422_UYVY_BE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV12_422_UYVY_BE_Rec2020,
+                "YUV12_422_UYVY_BE_Rec2020", "12-bit YCbCr 4:2:2 UYVY BE, Rec.2020, limited range",
+                PixelFormat::I_422_UYVY_3x12_BE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV10_420_Planar_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV10_420_Planar_LE_Rec2020,
+                "YUV10_420_Planar_LE_Rec2020", "10-bit YCbCr 4:2:0 planar LE, Rec.2020, limited range",
+                PixelFormat::P_420_3x10_LE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV10_420_Planar_BE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV10_420_Planar_BE_Rec2020,
+                "YUV10_420_Planar_BE_Rec2020", "10-bit YCbCr 4:2:0 planar BE, Rec.2020, limited range",
+                PixelFormat::P_420_3x10_BE, ycbcrSem10, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV12_420_Planar_LE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV12_420_Planar_LE_Rec2020,
+                "YUV12_420_Planar_LE_Rec2020", "12-bit YCbCr 4:2:0 planar LE, Rec.2020, limited range",
+                PixelFormat::P_420_3x12_LE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+}
+
+static PixelDesc::Data makeYUV12_420_Planar_BE_Rec2020() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV12_420_Planar_BE_Rec2020,
+                "YUV12_420_Planar_BE_Rec2020", "12-bit YCbCr 4:2:0 planar BE, Rec.2020, limited range",
+                PixelFormat::P_420_3x12_BE, ycbcrSem12, ColorModel::YCbCr_Rec2020);
+}
+
+// ---------------------------------------------------------------------------
+// Rec.601 YCbCr PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV8_422_Rec601() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_422_Rec601,
+                "YUV8_422_Rec601", "8-bit YCbCr 4:2:2, Rec.601, limited range",
+                PixelFormat::I_422_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+}
+
+static PixelDesc::Data makeYUV8_422_UYVY_Rec601() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_422_UYVY_Rec601,
+                "YUV8_422_UYVY_Rec601", "8-bit YCbCr 4:2:2 UYVY, Rec.601, limited range",
+                PixelFormat::I_422_UYVY_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+}
+
+static PixelDesc::Data makeYUV8_420_Planar_Rec601() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_420_Planar_Rec601,
+                "YUV8_420_Planar_Rec601", "8-bit YCbCr 4:2:0 planar, Rec.601, limited range",
+                PixelFormat::P_420_3x8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+}
+
+static PixelDesc::Data makeYUV8_420_SemiPlanar_Rec601() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_420_SemiPlanar_Rec601,
+                "YUV8_420_SemiPlanar_Rec601", "8-bit YCbCr 4:2:0 NV12, Rec.601, limited range",
+                PixelFormat::SP_420_8, ycbcrSem8, ColorModel::YCbCr_Rec601);
+}
+
+// ---------------------------------------------------------------------------
+// NV21 Rec.709 PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV8_420_NV21() {
+        auto d = makeYCbCrDesc(PixelDesc::YUV8_420_NV21_Rec709,
+                "YUV8_420_NV21_Rec709", "8-bit YCbCr 4:2:0 NV21, Rec.709, limited range",
+                PixelFormat::SP_420_NV21_8, ycbcrSem8);
+        d.fourccList = { "NV21" };
+        return d;
+}
+
+static PixelDesc::Data makeYUV10_420_NV21_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV10_420_NV21_LE_Rec709,
+                "YUV10_420_NV21_LE_Rec709", "10-bit YCbCr 4:2:0 NV21 LE, Rec.709, limited range",
+                PixelFormat::SP_420_NV21_10_LE, ycbcrSem10);
+}
+
+static PixelDesc::Data makeYUV10_420_NV21_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV10_420_NV21_BE_Rec709,
+                "YUV10_420_NV21_BE_Rec709", "10-bit YCbCr 4:2:0 NV21 BE, Rec.709, limited range",
+                PixelFormat::SP_420_NV21_10_BE, ycbcrSem10);
+}
+
+static PixelDesc::Data makeYUV12_420_NV21_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV12_420_NV21_LE_Rec709,
+                "YUV12_420_NV21_LE_Rec709", "12-bit YCbCr 4:2:0 NV21 LE, Rec.709, limited range",
+                PixelFormat::SP_420_NV21_12_LE, ycbcrSem12);
+}
+
+static PixelDesc::Data makeYUV12_420_NV21_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV12_420_NV21_BE_Rec709,
+                "YUV12_420_NV21_BE_Rec709", "12-bit YCbCr 4:2:0 NV21 BE, Rec.709, limited range",
+                PixelFormat::SP_420_NV21_12_BE, ycbcrSem12);
+}
+
+// ---------------------------------------------------------------------------
+// NV16 semi-planar 4:2:2 Rec.709 PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV8_422_SemiPlanar() {
+        auto d = makeYCbCrDesc(PixelDesc::YUV8_422_SemiPlanar_Rec709,
+                "YUV8_422_SemiPlanar_Rec709", "8-bit YCbCr 4:2:2 NV16, Rec.709, limited range",
+                PixelFormat::SP_422_8, ycbcrSem8);
+        d.fourccList = { "NV16" };
+        return d;
+}
+
+static PixelDesc::Data makeYUV10_422_SemiPlanar_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV10_422_SemiPlanar_LE_Rec709,
+                "YUV10_422_SemiPlanar_LE_Rec709", "10-bit YCbCr 4:2:2 NV16 LE, Rec.709, limited range",
+                PixelFormat::SP_422_10_LE, ycbcrSem10);
+}
+
+static PixelDesc::Data makeYUV10_422_SemiPlanar_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV10_422_SemiPlanar_BE_Rec709,
+                "YUV10_422_SemiPlanar_BE_Rec709", "10-bit YCbCr 4:2:2 NV16 BE, Rec.709, limited range",
+                PixelFormat::SP_422_10_BE, ycbcrSem10);
+}
+
+static PixelDesc::Data makeYUV12_422_SemiPlanar_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV12_422_SemiPlanar_LE_Rec709,
+                "YUV12_422_SemiPlanar_LE_Rec709", "12-bit YCbCr 4:2:2 NV16 LE, Rec.709, limited range",
+                PixelFormat::SP_422_12_LE, ycbcrSem12);
+}
+
+static PixelDesc::Data makeYUV12_422_SemiPlanar_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV12_422_SemiPlanar_BE_Rec709,
+                "YUV12_422_SemiPlanar_BE_Rec709", "12-bit YCbCr 4:2:2 NV16 BE, Rec.709, limited range",
+                PixelFormat::SP_422_12_BE, ycbcrSem12);
+}
+
+// ---------------------------------------------------------------------------
+// 4:1:1 Rec.709 PixelDesc factory function
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV8_411_Planar() {
+        return makeYCbCrDesc(PixelDesc::YUV8_411_Planar_Rec709,
+                "YUV8_411_Planar_Rec709", "8-bit YCbCr 4:1:1 planar, Rec.709, limited range",
+                PixelFormat::P_411_3x8, ycbcrSem8);
+}
+
+// ---------------------------------------------------------------------------
+// 16-bit YCbCr Rec.709 PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeYUV16_422_UYVY_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_422_UYVY_LE_Rec709,
+                "YUV16_422_UYVY_LE_Rec709", "16-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range",
+                PixelFormat::I_422_UYVY_3x16_LE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_422_UYVY_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_422_UYVY_BE_Rec709,
+                "YUV16_422_UYVY_BE_Rec709", "16-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range",
+                PixelFormat::I_422_UYVY_3x16_BE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_422_Planar_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_422_Planar_LE_Rec709,
+                "YUV16_422_Planar_LE_Rec709", "16-bit YCbCr 4:2:2 planar LE, Rec.709, limited range",
+                PixelFormat::P_422_3x16_LE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_422_Planar_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_422_Planar_BE_Rec709,
+                "YUV16_422_Planar_BE_Rec709", "16-bit YCbCr 4:2:2 planar BE, Rec.709, limited range",
+                PixelFormat::P_422_3x16_BE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_420_Planar_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_420_Planar_LE_Rec709,
+                "YUV16_420_Planar_LE_Rec709", "16-bit YCbCr 4:2:0 planar LE, Rec.709, limited range",
+                PixelFormat::P_420_3x16_LE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_420_Planar_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_420_Planar_BE_Rec709,
+                "YUV16_420_Planar_BE_Rec709", "16-bit YCbCr 4:2:0 planar BE, Rec.709, limited range",
+                PixelFormat::P_420_3x16_BE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_420_SemiPlanar_LE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_420_SemiPlanar_LE_Rec709,
+                "YUV16_420_SemiPlanar_LE_Rec709", "16-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range",
+                PixelFormat::SP_420_16_LE, ycbcrSem16);
+}
+
+static PixelDesc::Data makeYUV16_420_SemiPlanar_BE() {
+        return makeYCbCrDesc(PixelDesc::YUV16_420_SemiPlanar_BE_Rec709,
+                "YUV16_420_SemiPlanar_BE_Rec709", "16-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range",
+                PixelFormat::SP_420_16_BE, ycbcrSem16);
 }
 
 // ---------------------------------------------------------------------------
@@ -442,6 +1271,134 @@ struct PixelDescRegistry {
                 add(makeYUV10_420_SemiPlanar_BE());
                 add(makeYUV12_420_SemiPlanar_LE());
                 add(makeYUV12_420_SemiPlanar_BE());
+                add(makeRGBA10_LE());
+                add(makeRGBA10_BE());
+                add(makeRGB10_LE());
+                add(makeRGB10_BE());
+                add(makeRGBA12_LE());
+                add(makeRGBA12_BE());
+                add(makeRGB12_LE());
+                add(makeRGB12_BE());
+                add(makeRGBA16_LE());
+                add(makeRGBA16_BE());
+                add(makeRGB16_LE());
+                add(makeRGB16_BE());
+                add(makeYUV10_DPX());
+
+                // BGRA/BGR
+                add(makeBGRA8());
+                add(makeBGR8());
+                add(makeBGRA10_LE());
+                add(makeBGRA10_BE());
+                add(makeBGR10_LE());
+                add(makeBGR10_BE());
+                add(makeBGRA12_LE());
+                add(makeBGRA12_BE());
+                add(makeBGR12_LE());
+                add(makeBGR12_BE());
+                add(makeBGRA16_LE());
+                add(makeBGRA16_BE());
+                add(makeBGR16_LE());
+                add(makeBGR16_BE());
+
+                // ARGB
+                add(makeARGB8());
+                add(makeARGB10_LE());
+                add(makeARGB10_BE());
+                add(makeARGB12_LE());
+                add(makeARGB12_BE());
+                add(makeARGB16_LE());
+                add(makeARGB16_BE());
+
+                // ABGR
+                add(makeABGR8());
+                add(makeABGR10_LE());
+                add(makeABGR10_BE());
+                add(makeABGR12_LE());
+                add(makeABGR12_BE());
+                add(makeABGR16_LE());
+                add(makeABGR16_BE());
+
+                // Monochrome sRGB
+                add(makeMono8_sRGB());
+                add(makeMono10_LE_sRGB());
+                add(makeMono10_BE_sRGB());
+                add(makeMono12_LE_sRGB());
+                add(makeMono12_BE_sRGB());
+                add(makeMono16_LE_sRGB());
+                add(makeMono16_BE_sRGB());
+
+                // Float RGBA/RGB/Mono LinearRec709
+                add(makeRGBAF16_LE_LinearRec709());
+                add(makeRGBAF16_BE_LinearRec709());
+                add(makeRGBF16_LE_LinearRec709());
+                add(makeRGBF16_BE_LinearRec709());
+                add(makeMonoF16_LE_LinearRec709());
+                add(makeMonoF16_BE_LinearRec709());
+                add(makeRGBAF32_LE_LinearRec709());
+                add(makeRGBAF32_BE_LinearRec709());
+                add(makeRGBF32_LE_LinearRec709());
+                add(makeRGBF32_BE_LinearRec709());
+                add(makeMonoF32_LE_LinearRec709());
+                add(makeMonoF32_BE_LinearRec709());
+
+                // 10:10:10:2 packed sRGB
+                add(makeRGB10A2_LE());
+                add(makeRGB10A2_BE());
+                add(makeBGR10A2_LE());
+                add(makeBGR10A2_BE());
+
+                // 4:4:4 YCbCr Rec.709
+                add(makeYUV8_444());
+                add(makeYUV10_LE_444());
+                add(makeYUV10_BE_444());
+                add(makeYUV12_LE_444());
+                add(makeYUV12_BE_444());
+                add(makeYUV16_LE_444());
+                add(makeYUV16_BE_444());
+
+                // Rec.2020 YCbCr
+                add(makeYUV10_422_UYVY_LE_Rec2020());
+                add(makeYUV10_422_UYVY_BE_Rec2020());
+                add(makeYUV12_422_UYVY_LE_Rec2020());
+                add(makeYUV12_422_UYVY_BE_Rec2020());
+                add(makeYUV10_420_Planar_LE_Rec2020());
+                add(makeYUV10_420_Planar_BE_Rec2020());
+                add(makeYUV12_420_Planar_LE_Rec2020());
+                add(makeYUV12_420_Planar_BE_Rec2020());
+
+                // Rec.601 YCbCr
+                add(makeYUV8_422_Rec601());
+                add(makeYUV8_422_UYVY_Rec601());
+                add(makeYUV8_420_Planar_Rec601());
+                add(makeYUV8_420_SemiPlanar_Rec601());
+
+                // NV21 Rec.709
+                add(makeYUV8_420_NV21());
+                add(makeYUV10_420_NV21_LE());
+                add(makeYUV10_420_NV21_BE());
+                add(makeYUV12_420_NV21_LE());
+                add(makeYUV12_420_NV21_BE());
+
+                // NV16 semi-planar 4:2:2 Rec.709
+                add(makeYUV8_422_SemiPlanar());
+                add(makeYUV10_422_SemiPlanar_LE());
+                add(makeYUV10_422_SemiPlanar_BE());
+                add(makeYUV12_422_SemiPlanar_LE());
+                add(makeYUV12_422_SemiPlanar_BE());
+
+                // 4:1:1 Rec.709
+                add(makeYUV8_411_Planar());
+
+                // 16-bit YCbCr Rec.709
+                add(makeYUV16_422_UYVY_LE());
+                add(makeYUV16_422_UYVY_BE());
+                add(makeYUV16_422_Planar_LE());
+                add(makeYUV16_422_Planar_BE());
+                add(makeYUV16_420_Planar_LE());
+                add(makeYUV16_420_Planar_BE());
+                add(makeYUV16_420_SemiPlanar_LE());
+                add(makeYUV16_420_SemiPlanar_BE());
         }
 
         void add(PixelDesc::Data d) {
@@ -508,8 +1465,8 @@ static struct PixelDescPaintEngineInit {
                         d.createPaintEngineFunc = func;
                         PixelDesc::registerData(std::move(d));
                 };
-                patch(PixelDesc::RGBA8_sRGB_Full, createPaintEngine_RGBA8);
-                patch(PixelDesc::RGB8_sRGB_Full, createPaintEngine_RGB8);
+                patch(PixelDesc::RGBA8_sRGB, createPaintEngine_RGBA8);
+                patch(PixelDesc::RGB8_sRGB, createPaintEngine_RGB8);
         }
 } __pixelDescPaintEngineInit;
 
