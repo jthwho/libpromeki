@@ -40,8 +40,7 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
         if(renderer == nullptr) return;
 
         // Upload the image to a texture
-        PixelDesc::ID promekiPd = _currentImage.pixelDesc().id();
-        uint32_t sdlFmt = mapPixelDesc(promekiPd);
+        uint32_t sdlFmt = mapPixelDesc(_currentImage.pixelDesc());
 
         if(sdlFmt != 0) {
                 ensureTexture(_currentImage.width(), _currentImage.height(), sdlFmt);
@@ -97,15 +96,15 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
         return;
 }
 
-uint32_t SDLVideoWidget::mapPixelDesc(PixelDesc::ID pd) {
-        switch(pd) {
+uint32_t SDLVideoWidget::mapPixelDesc(const PixelDesc &pd) {
+        switch(pd.id()) {
                 case PixelDesc::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA8888;
                 case PixelDesc::RGB8_sRGB:      return SDL_PIXELFORMAT_RGB24;
-                default:                   return 0;
+                default:                        return 0;
         }
 }
 
-bool SDLVideoWidget::isDirectlyMappable(PixelDesc::ID pd) {
+bool SDLVideoWidget::isDirectlyMappable(const PixelDesc &pd) {
         return mapPixelDesc(pd) != 0;
 }
 

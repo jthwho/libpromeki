@@ -91,7 +91,19 @@
  *
  * - **The wrapper is the API type.**  Function parameters, return
  *   values, and member variables should use the wrapper class, not
- *   the ID enum.
+ *   the ID enum.  Pass wrappers by `const` reference:
+ *   @code
+ *   // WRONG -- forces a registry lookup at every call site
+ *   Image(size_t w, size_t h, PixelDesc::ID pd);
+ *
+ *   // RIGHT -- the caller already has a resolved wrapper (or the
+ *   // compiler inserts the implicit conversion once)
+ *   Image(size_t w, size_t h, const PixelDesc &pd);
+ *   @endcode
+ *   Because every wrapper has an implicit constructor from its ID
+ *   enum, changing a parameter from `ID` to `const Wrapper &` is
+ *   source-compatible: callers that pass an enum constant like
+ *   `PixelDesc::RGBA8_sRGB` compile unchanged.
  *
  * - **Data is immutable.**  Once registered, a Data record must not
  *   be modified.  This guarantees that concurrent reads from multiple
@@ -101,6 +113,30 @@
  *   in the header so the compiler can see through the abstraction.
  *   The wrapper should compile away to the same code as accessing
  *   the Data struct directly.
+ *
+ * @section tr_disambiguation ID Disambiguation Guards
+ *
+ * TypeRegistry ID enums are unscoped, so the compiler treats them as
+ * integers in overload resolution.  When a class has another
+ * constructor whose first parameter is an integer-compatible type
+ * (e.g. `uint8_t`), the ID may silently match the wrong overload.
+ *
+ * In this situation, provide an explicit ID overload as a
+ * **disambiguation guard** -- a constructor that accepts the ID type
+ * directly and forwards to the wrapper overload:
+ *
+ * @code
+ * // Primary constructor -- takes the wrapper
+ * Color(const ColorModel &model, float c0, float c1, float c2, float c3 = 1.0f);
+ *
+ * // Disambiguation guard -- prevents ColorModel::sRGB (an int-like
+ * // enum) from matching Color(uint8_t, uint8_t, uint8_t, uint8_t)
+ * Color(ColorModel::ID id, float c0, float c1, float c2, float c3 = 1.0f);
+ * @endcode
+ *
+ * This is the **only** case where an ID should appear in a public
+ * parameter list.  Document the overload with a comment explaining
+ * why it exists so it is not removed during future cleanup.
  *
  * @section tr_classes Classes Using This Pattern
  *

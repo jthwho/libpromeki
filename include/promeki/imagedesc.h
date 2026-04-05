@@ -40,20 +40,20 @@ class ImageDesc {
                 ImageDesc() { }
 
                 /**
-                 * @brief Constructs an image description from a size and pixel description ID.
+                 * @brief Constructs an image description from a size and pixel description.
                  * @param sz The image dimensions.
-                 * @param pd The pixel description identifier.
+                 * @param pd The pixel description.
                  */
-                ImageDesc(const Size2Du32 &sz, PixelDesc::ID pd) :
+                ImageDesc(const Size2Du32 &sz, const PixelDesc &pd) :
                         _size(sz), _pixelDesc(pd) { }
 
                 /**
-                 * @brief Constructs an image description from width, height, and pixel description ID.
+                 * @brief Constructs an image description from width, height, and pixel description.
                  * @param w  The image width in pixels.
                  * @param h  The image height in pixels.
-                 * @param pd The pixel description identifier.
+                 * @param pd The pixel description.
                  */
-                ImageDesc(size_t w, size_t h, PixelDesc::ID pd) :
+                ImageDesc(size_t w, size_t h, const PixelDesc &pd) :
                         _size(Size2Du32(w, h)), _pixelDesc(pd) { }
 
                 /**
@@ -70,14 +70,6 @@ class ImageDesc {
                  */
                 const PixelDesc &pixelDesc() const {
                         return _pixelDesc;
-                }
-
-                /**
-                 * @brief Sets the pixel description by ID.
-                 * @param pd The pixel description identifier.
-                 */
-                void setPixelDesc(PixelDesc::ID pd) {
-                        _pixelDesc = PixelDesc(pd);
                 }
 
                 /**

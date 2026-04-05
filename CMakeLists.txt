@@ -34,6 +34,7 @@ option(PROMEKI_ENABLE_PNG      "Include PNG image I/O"                  ON)
 option(PROMEKI_ENABLE_JPEG     "Include JPEG codec"                     ON)
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
+option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 
 # Vendored vs system dependency options
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored"           OFF)
@@ -43,6 +44,7 @@ option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored"        OFF)
 
 # Dependency validation ########################################################
 
@@ -60,6 +62,9 @@ if(PROMEKI_ENABLE_FREETYPE AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AUDIO requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_CSC AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_CSC requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_BUILD_SDL AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_BUILD_SDL requires PROMEKI_ENABLE_PROAV")
@@ -147,6 +152,24 @@ else()
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     add_subdirectory(thirdparty/libvtc EXCLUDE_FROM_ALL)
     set(PROMEKI_VTC_TARGET vtc_static)
+endif()
+
+# --- Google Highway (SIMD, needed by CSC) ---
+if(PROMEKI_ENABLE_CSC)
+    if(PROMEKI_USE_SYSTEM_HIGHWAY)
+        find_package(HWY REQUIRED)
+        set(PROMEKI_HWY_TARGET hwy::hwy)
+    else()
+        set(HWY_ENABLE_TESTS OFF CACHE INTERNAL "")
+        set(HWY_ENABLE_EXAMPLES OFF CACHE INTERNAL "")
+        set(HWY_ENABLE_CONTRIB OFF CACHE INTERNAL "")
+        set(HWY_ENABLE_INSTALL OFF CACHE INTERNAL "")
+        set(BUILD_SHARED_LIBS_SAVED ${BUILD_SHARED_LIBS})
+        set(BUILD_SHARED_LIBS OFF)
+        add_subdirectory(thirdparty/highway EXCLUDE_FROM_ALL)
+        set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVED})
+        set(PROMEKI_HWY_TARGET hwy)
+    endif()
 endif()
 
 # --- zlib (needed by libpng and freetype) ---
@@ -619,6 +642,25 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         list(APPEND PROMEKI_SOURCES src/proav/audiofile_libsndfile.cpp)
     endif()
+    if(PROMEKI_ENABLE_CSC)
+        list(APPEND PROMEKI_HEADERS
+            include/promeki/cscpipeline.h
+            include/promeki/csccontext.h
+            include/promeki/cscregistry.h
+        )
+        list(APPEND PROMEKI_SOURCES
+            src/proav/csc/cscpipeline.cpp
+            src/proav/csc/csccontext.cpp
+            src/proav/csc/cscregistry.cpp
+            src/proav/csc/unpack.cpp
+            src/proav/csc/pack.cpp
+            src/proav/csc/transfer.cpp
+            src/proav/csc/matrix.cpp
+            src/proav/csc/chroma.cpp
+            src/proav/csc/alpha.cpp
+            src/proav/csc/fastpath.cpp
+        )
+    endif()
 endif()
 
 # Music sources
@@ -713,6 +755,12 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
+    endif()
+    if(PROMEKI_ENABLE_CSC)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_HWY_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_CSC)
+        # Highway foreach_target needs to resolve includes relative to source root
+        target_include_directories(promeki PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 endif()
 
@@ -1110,6 +1158,11 @@ if(PROMEKI_BUILD_TESTS)
             list(APPEND UNITTEST_SOURCES
                 tests/rtpaudiosinknode.cpp
                 tests/rtpvideosinknode.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_CSC)
+            list(APPEND UNITTEST_SOURCES
+                tests/cscpipeline.cpp
             )
         endif()
     endif()

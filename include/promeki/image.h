@@ -11,6 +11,7 @@
 #include <promeki/sharedptr.h>
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
+#include <promeki/medianodeconfig.h>
 #include <promeki/paintengine.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -67,22 +68,22 @@ class Image {
                 Image(const ImageDesc &desc, const MemSpace &ms = MemSpace::Default);
 
                 /**
-                 * @brief Constructs an image from a size and pixel description ID.
+                 * @brief Constructs an image from a size and pixel description.
                  * @param s  Image dimensions.
-                 * @param pd Pixel description identifier.
+                 * @param pd Pixel description.
                  * @param ms Memory space to allocate from.
                  */
-                Image(const Size2Du32 &s, PixelDesc::ID pd, const MemSpace &ms = MemSpace::Default) :
+                Image(const Size2Du32 &s, const PixelDesc &pd, const MemSpace &ms = MemSpace::Default) :
                         Image(ImageDesc(s, pd), ms) { }
 
                 /**
-                 * @brief Constructs an image from width, height, and pixel description ID.
+                 * @brief Constructs an image from width, height, and pixel description.
                  * @param w  Image width in pixels.
                  * @param h  Image height in pixels.
-                 * @param pd Pixel description identifier.
+                 * @param pd Pixel description.
                  * @param ms Memory space to allocate from.
                  */
-                Image(size_t w, size_t h, PixelDesc::ID pd, const MemSpace &ms = MemSpace::Default) :
+                Image(size_t w, size_t h, const PixelDesc &pd, const MemSpace &ms = MemSpace::Default) :
                         Image(ImageDesc(w, h, pd), ms) { }
 
                 /**
@@ -246,12 +247,12 @@ class Image {
                  * @param size       Size of the compressed data in bytes.
                  * @param width      Original image width in pixels.
                  * @param height     Original image height in pixels.
-                 * @param pd         Compressed pixel description ID (e.g. PixelDesc::JPEG_RGB8_sRGB).
+                 * @param pd         Compressed pixel description (e.g. PixelDesc::JPEG_RGB8_sRGB).
                  * @param metadata   Optional metadata to attach (e.g. timecode).
                  * @return A valid compressed Image, or an invalid Image on failure.
                  */
                 static Image fromCompressedData(const void *data, size_t size,
-                                                size_t width, size_t height, PixelDesc::ID pd,
+                                                size_t width, size_t height, const PixelDesc &pd,
                                                 const Metadata &metadata = Metadata());
 
                 /**
@@ -264,11 +265,26 @@ class Image {
 
                 /**
                  * @brief Converts this image to a different pixel description.
-                 * @param pd       The target pixel description ID.
+                 *
+                 * Creates a CSCPipeline for this image's pixel description and
+                 * the target, then executes the conversion.  For common
+                 * broadcast pairs (e.g. RGBA8 ↔ YUV8 Rec.709), a registered
+                 * fast-path kernel is used automatically.
+                 *
+                 * Set `CSCPipeline::KeyPath` to `"scalar"` in @p config to
+                 * force the generic float pipeline (useful for debugging or
+                 * reference comparison against Color::convert()).
+                 *
+                 * @param pd       The target pixel description.
                  * @param metadata Metadata to attach to the converted image.
-                 * @return A new Image in the target pixel description.
+                 * @param config   Optional CSC pipeline configuration hints.
+                 * @return A new Image in the target pixel description, or an
+                 *         invalid Image on failure.
+                 *
+                 * @see CSCPipeline, @ref csc "CSC Framework"
                  */
-                Image convert(PixelDesc::ID pd, const Metadata &metadata) const;
+                Image convert(const PixelDesc &pd, const Metadata &metadata,
+                              const MediaNodeConfig &config = MediaNodeConfig()) const;
 
         private:
                 ImageDesc       _desc;

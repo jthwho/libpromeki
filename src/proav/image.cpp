@@ -6,8 +6,12 @@
  */
 
 #include <promeki/image.h>
+#include <promeki/config.h>
 #include <promeki/logger.h>
 #include <promeki/util.h>
+#if PROMEKI_ENABLE_CSC
+#include <promeki/cscpipeline.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -34,7 +38,7 @@ bool Image::allocate(const MemSpace &ms) {
 }
 
 Image Image::fromCompressedData(const void *data, size_t size,
-                                size_t width, size_t height, PixelDesc::ID pd,
+                                size_t width, size_t height, const PixelDesc &pd,
                                 const Metadata &metadata) {
         ImageDesc desc(width, height, pd);
         desc.metadata() = metadata;
@@ -46,8 +50,27 @@ Image Image::fromCompressedData(const void *data, size_t size,
         return img;
 }
 
-Image Image::convert(PixelDesc::ID pd, const Metadata &metadata) const {
+Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
+                     const MediaNodeConfig &config) const {
+#if PROMEKI_ENABLE_CSC
+        if(!isValid() || isCompressed()) return Image();
+        if(!pd.isValid() || pd.isCompressed()) return Image();
+        if(pixelDesc() == pd) return *this;
+
+        ImageDesc dstDesc(size(), pd);
+        dstDesc.metadata() = metadata;
+        Image dst(dstDesc);
+        if(!dst.isValid()) return Image();
+
+        CSCPipeline pipeline(pixelDesc(), pd, config);
+        if(!pipeline.isValid()) return Image();
+
+        Error err = pipeline.execute(*this, dst);
+        if(err.isError()) return Image();
+        return dst;
+#else
         return Image();
+#endif
 }
 
 PROMEKI_NAMESPACE_END

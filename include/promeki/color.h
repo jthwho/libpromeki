@@ -229,7 +229,14 @@ class Color {
                 Color(const ColorModel &model, float c0, float c1, float c2, float c3 = 1.0f)
                         : _c{c0, c1, c2, c3}, _model(model) {}
 
-                /** @brief Constructs a color from a ColorModel::ID and float components. */
+                /**
+                 * @brief Disambiguation guard: constructs a color from a ColorModel::ID.
+                 *
+                 * This overload prevents the unscoped ColorModel::ID enum (which
+                 * is integer-compatible) from silently matching the
+                 * Color(uint8_t, uint8_t, uint8_t, uint8_t) constructor.
+                 * See @ref tr_disambiguation "ID Disambiguation Guards".
+                 */
                 Color(ColorModel::ID id, float c0, float c1, float c2, float c3 = 1.0f)
                         : _c{c0, c1, c2, c3}, _model(id) {}
 

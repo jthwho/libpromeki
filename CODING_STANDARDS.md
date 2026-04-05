@@ -465,6 +465,44 @@ if(mlock(ptr, size) != 0) {
 
 ---
 
+## TypeRegistry Types
+
+ColorModel, MemSpace, PixelFormat, and PixelDesc use the [TypeRegistry pattern](@ref typeregistry). Each is a lightweight wrapper around a `const Data *` pointer, resolved once from an ID via a construct-on-first-use registry. Copying is a pointer copy; comparison is a pointer comparison.
+
+### Pass the Wrapper, Not the ID
+
+IDs exist only for two purposes: constructing a wrapper, and registering new types. **All function parameters, return values, and member variables must use the wrapper class**, not the ID enum. This avoids redundant registry lookups:
+
+```cpp
+// WRONG — every caller pays for a registry lookup
+Image(size_t w, size_t h, PixelDesc::ID pd);
+
+// RIGHT — caller passes a resolved wrapper (or the compiler
+// inserts the implicit conversion from ID once automatically)
+Image(size_t w, size_t h, const PixelDesc &pd);
+```
+
+Because every wrapper has an **implicit** constructor from its ID enum, changing a parameter from `ID` to `const Wrapper &` is source-compatible — callers that pass an enum constant like `PixelDesc::RGBA8_sRGB` compile unchanged.
+
+Do **not** create `static const` wrapper objects for well-known IDs, as this introduces static initialization order uncertainty. Instead, pass the ID enum constant directly and let the implicit conversion happen at the call site.
+
+### ID Disambiguation Guards
+
+TypeRegistry ID enums are unscoped, so the compiler treats them as integer-compatible in overload resolution. When a class has another constructor whose leading parameters are integer-compatible types (e.g. `uint8_t`), the ID may silently match the wrong overload. In this case, provide an explicit ID overload as a **disambiguation guard**:
+
+```cpp
+// Primary constructor
+Color(const ColorModel &model, float c0, float c1, float c2, float c3 = 1.0f);
+
+// Disambiguation guard — prevents ColorModel::sRGB (int-like enum)
+// from matching Color(uint8_t, uint8_t, uint8_t, uint8_t)
+Color(ColorModel::ID id, float c0, float c1, float c2, float c3 = 1.0f);
+```
+
+This is the **only** case where an ID should appear in a public parameter list. Always document the guard with a comment explaining why it exists.
+
+---
+
 ## ObjectBase and Signals/Slots
 
 Functional objects (see [Object Categories](#object-categories)) derive from `ObjectBase` to gain identity, parent/child ownership, and signal/slot communication.
