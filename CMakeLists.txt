@@ -569,6 +569,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagedesc.cpp
         src/proav/imagefile.cpp
         src/proav/imagefileio.cpp
+        src/proav/imagefileio_rawyuv.cpp
         src/proav/jpegimagecodec.cpp
         src/proav/jpegencodernode.cpp
         src/proav/ltcdecoder.cpp

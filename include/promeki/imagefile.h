@@ -29,7 +29,8 @@ class ImageFile {
                 /** @brief Identifiers for supported image file formats. */
                 enum ID {
                         Invalid = 0, ///< @brief No format / invalid.
-                        PNG          ///< @brief PNG image format.
+                        PNG,         ///< @brief PNG image format.
+                        RawYUV       ///< @brief Raw YUV image format (headerless).
                 };
 
                 /**

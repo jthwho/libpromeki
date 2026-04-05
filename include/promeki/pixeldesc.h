@@ -65,6 +65,28 @@ class PixelDesc {
                         JPEG_RGBA8_sRGB_Full         = 6,    ///< JPEG-compressed 8-bit RGBA, sRGB, full range.
                         JPEG_RGB8_sRGB_Full          = 7,    ///< JPEG-compressed 8-bit RGB, sRGB, full range.
                         JPEG_YUV8_422_Rec709_Limited = 8,    ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_YUV8_420_Rec709_Limited = 9,    ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709, limited range.
+                        YUV8_422_UYVY_Rec709_Limited = 10,     ///< 8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range.
+                        YUV10_422_UYVY_LE_Rec709_Limited = 11, ///< 10-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range.
+                        YUV10_422_UYVY_BE_Rec709_Limited = 12, ///< 10-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range.
+                        YUV12_422_UYVY_LE_Rec709_Limited = 13, ///< 12-bit YCbCr 4:2:2 UYVY LE, Rec.709, limited range.
+                        YUV12_422_UYVY_BE_Rec709_Limited = 14, ///< 12-bit YCbCr 4:2:2 UYVY BE, Rec.709, limited range.
+                        YUV10_422_v210_Rec709_Limited = 15,    ///< 10-bit YCbCr 4:2:2 v210 packed, Rec.709, limited range.
+                        YUV8_422_Planar_Rec709_Limited = 16,       ///< 8-bit YCbCr 4:2:2 planar, Rec.709, limited range.
+                        YUV10_422_Planar_LE_Rec709_Limited = 17,   ///< 10-bit YCbCr 4:2:2 planar LE, Rec.709, limited range.
+                        YUV10_422_Planar_BE_Rec709_Limited = 18,   ///< 10-bit YCbCr 4:2:2 planar BE, Rec.709, limited range.
+                        YUV12_422_Planar_LE_Rec709_Limited = 19,   ///< 12-bit YCbCr 4:2:2 planar LE, Rec.709, limited range.
+                        YUV12_422_Planar_BE_Rec709_Limited = 20,   ///< 12-bit YCbCr 4:2:2 planar BE, Rec.709, limited range.
+                        YUV8_420_Planar_Rec709_Limited = 21,       ///< 8-bit YCbCr 4:2:0 planar, Rec.709, limited range.
+                        YUV10_420_Planar_LE_Rec709_Limited = 22,   ///< 10-bit YCbCr 4:2:0 planar LE, Rec.709, limited range.
+                        YUV10_420_Planar_BE_Rec709_Limited = 23,   ///< 10-bit YCbCr 4:2:0 planar BE, Rec.709, limited range.
+                        YUV12_420_Planar_LE_Rec709_Limited = 24,   ///< 12-bit YCbCr 4:2:0 planar LE, Rec.709, limited range.
+                        YUV12_420_Planar_BE_Rec709_Limited = 25,   ///< 12-bit YCbCr 4:2:0 planar BE, Rec.709, limited range.
+                        YUV8_420_SemiPlanar_Rec709_Limited = 26,   ///< 8-bit YCbCr 4:2:0 NV12, Rec.709, limited range.
+                        YUV10_420_SemiPlanar_LE_Rec709_Limited = 27, ///< 10-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range.
+                        YUV10_420_SemiPlanar_BE_Rec709_Limited = 28, ///< 10-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range.
+                        YUV12_420_SemiPlanar_LE_Rec709_Limited = 29, ///< 12-bit YCbCr 4:2:0 NV12 LE, Rec.709, limited range.
+                        YUV12_420_SemiPlanar_BE_Rec709_Limited = 30, ///< 12-bit YCbCr 4:2:0 NV12 BE, Rec.709, limited range.
                         UserDefined                  = 1024  ///< First ID available for user-registered types.
                 };
 

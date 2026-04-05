@@ -54,8 +54,29 @@ class PixelFormat {
                         Interleaved_4x8     = 1,    ///< 4 components, 8 bits each, 1 interleaved plane.
                         Interleaved_3x8     = 2,    ///< 3 components, 8 bits each, 1 interleaved plane.
                         Interleaved_3x10    = 3,    ///< 3 components, 10 bits each, 1 interleaved plane.
-                        Interleaved_422_3x8 = 4,    ///< 3 components, 8 bits, 4:2:2 subsampled, 1 interleaved plane.
-                        Interleaved_422_3x10 = 5,   ///< 3 components, 10 bits, 4:2:2 subsampled, 1 interleaved plane.
+                        Interleaved_422_3x8 = 4,    ///< 3 components, 8 bits, 4:2:2 YUYV, 1 interleaved plane.
+                        Interleaved_422_3x10 = 5,   ///< 3 components, 10 bits, 4:2:2 YUYV, 1 interleaved plane.
+                        Interleaved_422_UYVY_3x8 = 6,      ///< 3 components, 8 bits, 4:2:2 UYVY, 1 interleaved plane.
+                        Interleaved_422_UYVY_3x10_LE = 7,  ///< 3 components, 10 bits in 16-bit LE words, 4:2:2 UYVY.
+                        Interleaved_422_UYVY_3x10_BE = 8,  ///< 3 components, 10 bits in 16-bit BE words, 4:2:2 UYVY.
+                        Interleaved_422_UYVY_3x12_LE = 9,  ///< 3 components, 12 bits in 16-bit LE words, 4:2:2 UYVY.
+                        Interleaved_422_UYVY_3x12_BE = 10, ///< 3 components, 12 bits in 16-bit BE words, 4:2:2 UYVY.
+                        Interleaved_422_v210 = 11,          ///< 3 components, 10 bits, 4:2:2 v210 packed (3x10 in 32-bit words).
+                        Planar_422_3x8       = 12,  ///< 3 planes, 8-bit, 4:2:2 (Y + Cb half-width + Cr half-width).
+                        Planar_422_3x10_LE   = 13,  ///< 3 planes, 10-bit in 16-bit LE words, 4:2:2.
+                        Planar_422_3x10_BE   = 14,  ///< 3 planes, 10-bit in 16-bit BE words, 4:2:2.
+                        Planar_422_3x12_LE   = 15,  ///< 3 planes, 12-bit in 16-bit LE words, 4:2:2.
+                        Planar_422_3x12_BE   = 16,  ///< 3 planes, 12-bit in 16-bit BE words, 4:2:2.
+                        Planar_420_3x8       = 17,  ///< 3 planes, 8-bit, 4:2:0 (Y + Cb quarter + Cr quarter).
+                        Planar_420_3x10_LE   = 18,  ///< 3 planes, 10-bit in 16-bit LE words, 4:2:0.
+                        Planar_420_3x10_BE   = 19,  ///< 3 planes, 10-bit in 16-bit BE words, 4:2:0.
+                        Planar_420_3x12_LE   = 20,  ///< 3 planes, 12-bit in 16-bit LE words, 4:2:0.
+                        Planar_420_3x12_BE   = 21,  ///< 3 planes, 12-bit in 16-bit BE words, 4:2:0.
+                        SemiPlanar_420_8     = 22,  ///< 2 planes, 8-bit, 4:2:0 NV12 (Y + interleaved CbCr).
+                        SemiPlanar_420_10_LE = 23,  ///< 2 planes, 10-bit in 16-bit LE words, 4:2:0 NV12.
+                        SemiPlanar_420_10_BE = 24,  ///< 2 planes, 10-bit in 16-bit BE words, 4:2:0 NV12.
+                        SemiPlanar_420_12_LE = 25,  ///< 2 planes, 12-bit in 16-bit LE words, 4:2:0 NV12.
+                        SemiPlanar_420_12_BE = 26,  ///< 2 planes, 12-bit in 16-bit BE words, 4:2:0 NV12.
                         UserDefined         = 1024  ///< First ID available for user-registered types.
                 };
 
@@ -66,6 +87,20 @@ class PixelFormat {
                         Sampling422,           ///< 4:2:2 (horizontal chroma subsampling by 2).
                         Sampling411,           ///< 4:1:1 (horizontal chroma subsampling by 4).
                         Sampling420            ///< 4:2:0 (horizontal and vertical chroma subsampling by 2).
+                };
+
+                /** @brief Horizontal chroma sample siting relative to luma. */
+                enum ChromaSitingH {
+                        ChromaHUndefined = 0, ///< Undefined (not subsampled or unspecified).
+                        ChromaHLeft,          ///< Co-sited with left luma sample.
+                        ChromaHCenter         ///< Centered between luma samples.
+                };
+
+                /** @brief Vertical chroma sample siting relative to luma. */
+                enum ChromaSitingV {
+                        ChromaVUndefined = 0, ///< Undefined (not subsampled or unspecified).
+                        ChromaVTop,           ///< Co-sited with top luma row.
+                        ChromaVCenter         ///< Centered between luma rows.
                 };
 
                 /** @brief List of PixelFormat IDs. */
@@ -80,7 +115,10 @@ class PixelFormat {
 
                 /** @brief Describes a single image plane. */
                 struct PlaneDesc {
-                        String name; ///< Human-readable name for the plane.
+                        String name;              ///< Human-readable name for the plane.
+                        size_t hSubsampling = 1;  ///< Horizontal subsampling (1 = full, 2 = half width).
+                        size_t vSubsampling = 1;  ///< Vertical subsampling (1 = full, 2 = half height).
+                        size_t bytesPerSample = 0;///< Bytes per sample in this plane (0 = use block math).
                 };
 
                 /** @brief Immutable data record for a pixel format. */
@@ -95,6 +133,8 @@ class PixelFormat {
                         CompDesc        comps[MaxComps] = {};           ///< Component descriptors.
                         size_t          planeCount = 0;                 ///< Number of planes.
                         PlaneDesc       planes[MaxPlanes] = {};         ///< Plane descriptors.
+                        ChromaSitingH   chromaSitingH = ChromaHUndefined; ///< Horizontal chroma siting.
+                        ChromaSitingV   chromaSitingV = ChromaVUndefined; ///< Vertical chroma siting.
 
                         /**
                          * @brief Computes the line stride for a given plane.
@@ -180,6 +220,12 @@ class PixelFormat {
 
                 /** @brief Returns the chroma subsampling mode. */
                 Sampling sampling() const { return d->sampling; }
+
+                /** @brief Returns the horizontal chroma sample siting. */
+                ChromaSitingH chromaSitingH() const { return d->chromaSitingH; }
+
+                /** @brief Returns the vertical chroma sample siting. */
+                ChromaSitingV chromaSitingV() const { return d->chromaSitingV; }
 
                 /** @brief Returns the number of pixels in one encoded block. */
                 size_t pixelsPerBlock() const { return d->pixelsPerBlock; }

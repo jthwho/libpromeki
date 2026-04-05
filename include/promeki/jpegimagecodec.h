@@ -16,8 +16,9 @@ PROMEKI_NAMESPACE_BEGIN
  * @brief JPEG image codec using libjpeg-turbo.
  * @ingroup proav
  *
- * Encodes uncompressed images (RGB8, RGBA8) to JPEG compressed format.
- * Decoding support is not yet implemented.
+ * Encodes uncompressed images (RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar,
+ * YCbCr 4:2:0 planar/NV12) to JPEG compressed format.  Decodes JPEG to
+ * RGB8, RGBA8, YCbCr 4:2:2 YUYV/UYVY/planar, or YCbCr 4:2:0 planar/NV12.
  *
  * Configuration (quality, subsampling) is set once after construction
  * and applies to all subsequent encode() calls.
@@ -56,7 +57,9 @@ class JpegImageCodec : public ImageCodec {
 
                 /**
                  * @brief Encodes an uncompressed image to JPEG.
-                 * @param input Source image (RGB8 or RGBA8).
+                 * @param input Source image. Accepted formats: RGB8, RGBA8,
+                 *              YCbCr 4:2:2 YUYV/UYVY/planar,
+                 *              YCbCr 4:2:0 planar (I420), or YCbCr 4:2:0 NV12.
                  * @return Compressed image, or an invalid Image on failure.
                  *
                  * @par Example
@@ -64,17 +67,26 @@ class JpegImageCodec : public ImageCodec {
                  * JpegImageCodec codec;
                  * Image jpeg = codec.encode(rawImage);
                  * if(!jpeg.isValid()) {
-                 *         qWarning() << codec.lastErrorMessage();
+                 *         promekiErr("%s", codec.lastErrorMessage().cstr());
                  * }
                  * @endcode
                  */
                 Image encode(const Image &input) override;
 
                 /**
-                 * @brief Decode is not yet implemented — always returns an invalid Image.
-                 * @param input Compressed image (unused).
-                 * @param outputFormat Desired pixel format (unused).
-                 * @return An invalid Image; lastError() will be Error::NotImplemented.
+                 * @brief Decodes a JPEG image to an uncompressed format.
+                 * @param input Compressed JPEG image.
+                 * @param outputFormat Target PixelDesc::ID (0 for codec default).
+                 * @return Decoded image, or an invalid Image on failure.
+                 *
+                 * @par Example
+                 * @code
+                 * JpegImageCodec codec;
+                 * Image rgb  = codec.decode(jpegImage, PixelDesc::RGB8_sRGB_Full);
+                 * Image uyvy = codec.decode(jpegImage, PixelDesc::YUV8_422_UYVY_Rec709_Limited);
+                 * Image i420 = codec.decode(jpegImage, PixelDesc::YUV8_420_Planar_Rec709_Limited);
+                 * Image nv12 = codec.decode(jpegImage, PixelDesc::YUV8_420_SemiPlanar_Rec709_Limited);
+                 * @endcode
                  */
                 Image decode(const Image &input, int outputFormat = 0) override;
 

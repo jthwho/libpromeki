@@ -22,7 +22,7 @@
 - **TestPatternNode**: End-to-end LTC round-trip test via LtcDecoder (encoder→decoder tested separately in ltcdecoder.cpp)
 - **LtcEncoder**: Multi-format `encode(tc, AudioDesc)` and int8_t→target format conversion
 - **LtcDecoder**: `forward` field in DecodedTimecode (pending libvtc callback direction support), Audio→int8_t conversion, chunked decoding test
-- **JpegEncoderNode**: YUV input format support (currently only RGB8/RGBA8); decompression round-trip test not included (would need JpegDecoderNode or ImageFile). Now forces 4:2:2 subsampling for RFC 2435 type 1 compatibility.
+- **JpegEncoderNode**: Forces 4:2:2 subsampling for RFC 2435 type 1 compatibility. YUV input format support (YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12) is now resolved — JpegImageCodec::encode() handles all these formats and JpegEncoderNode delegates to it automatically.
 
 ---
 

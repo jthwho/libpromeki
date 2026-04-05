@@ -50,8 +50,6 @@ class TimerEvent;
         int SLOTNAME##SlotID = registerSlot(&SLOTNAME##Slot);
  
 
-PROMEKI_DEBUG(ObjectBase)
-
 class ObjectBase;
 
 using ObjectBaseList = List<ObjectBase *>;

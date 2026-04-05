@@ -8,7 +8,7 @@
 
 This document covers four areas: font rendering (complete), video codec abstraction (partially complete), automatic node processing, and batch UDP transmission with kernel-side packet pacing.
 
-**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec, VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`).
+**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec (encode + decode for RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12), VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`).
 
 **Remaining:** VideoEncoder/VideoDecoder (temporal codec abstraction), automatic node processing, batch UDP (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE`/`SO_TXTIME`), PacketTransport abstraction (DPDK-readiness).
 
@@ -22,7 +22,7 @@ Font/FastFont/BasicFont class hierarchy implemented. `Font` is the abstract base
 
 ## Video Codec System
 
-**Partially complete:** `ImageCodec`/`AudioCodec` abstract bases, `JpegImageCodec`, `VideoTestPattern`, `AudioTestPattern` all implemented and tested. `JpegEncoderNode` and `TestPatternNode` refactored to delegate to these classes.
+**Partially complete:** `ImageCodec`/`AudioCodec` abstract bases, `JpegImageCodec` (encode + decode for all YCbCr interleaved, planar, and semi-planar formats), `VideoTestPattern`, `AudioTestPattern` all implemented and tested. `JpegEncoderNode` and `TestPatternNode` refactored to delegate to these classes.
 
 **Remaining — VideoEncoder/VideoDecoder pipeline abstraction:**
 
@@ -59,13 +59,12 @@ Generic pipeline nodes that delegate to a VideoEncoder/VideoDecoder instance.
 - [ ] `include/promeki/videoencodernode.h` / `src/proav/videoencodernode.cpp`
 - [ ] `include/promeki/videodecodernode.h` / `src/proav/videodecodernode.cpp`
 
-### JpegDecoder (still planned)
+### JpegDecoder — COMPLETE
 
-- [ ] `JpegImageCodec::decode()` — currently returns `Error::NotImplemented`. Implement using `jpeg_mem_src()`.
+`JpegImageCodec::decode()` implemented using `jpeg_mem_src()`. Supports decoding to: RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0 (I420), and semi-planar 4:2:0 (NV12).
 
 ### Doctest (remaining)
 
-- [ ] JpegImageCodec: decode round-trip (encode then decode, verify dimensions and pixel format match)
 - [ ] VideoEncoder/VideoDecoder: once implemented
 
 ---
