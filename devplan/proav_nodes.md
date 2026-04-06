@@ -12,6 +12,46 @@ All nodes derive from `MediaNode`, implement `processFrame()`, and declare their
 
 ---
 
+## MediaIO Framework — COMPLETE
+
+Generic abstract media I/O framework providing a uniform interface for reading and writing media (video frames, audio, metadata) from containers, image sequences, and hardware I/O devices.
+
+**Files:**
+- [x] `include/promeki/mediaio.h`
+- [x] `src/proav/mediaio.cpp`
+- [x] `tests/mediaio.cpp`
+
+**Design:**
+- `MediaIO` derives from `ObjectBase`, uses `PROMEKI_OBJECT`
+- Config-driven factory: `MediaIO::create(Config)`, `createForFileRead()`, `createForFileWrite()`
+- Backends self-register via `PROMEKI_REGISTER_MEDIAIO(ClassName)` at static init
+- `FormatDesc` struct: name, description, extensions, canRead, canWrite, factory lambda
+- Open modes: `NotOpen`, `Reader`, `Writer`
+- Virtual API: `open()`, `close()`, `videoDesc()`, `setVideoDesc()`, `metadata()`, `setMetadata()`, `readFrame()`, `writeFrame()`, `canSeek()`, `seekToFrame()`, `frameCount()`, `currentFrame()`
+- `errorOccurred(Error)` signal for async error reporting
+- 16 test cases covering registry, factory, all TPG modes, error paths, seeking
+
+---
+
+## MediaIO_TPG Backend — COMPLETE
+
+Read-only MediaIO source that generates synchronized test pattern frames.
+
+**Files:**
+- [x] `include/promeki/mediaio_tpg.h`
+- [x] `src/proav/mediaio_tpg.cpp`
+- (tests in `tests/mediaio.cpp`)
+
+**Design:**
+- Derives from `MediaIO`, registered as "TPG" (no file extensions — generator source)
+- Video: delegates to `VideoTestPattern`; static patterns cached after first render; motion applies per-frame offset
+- Audio: delegates to `AudioTestPattern` (tone, silence, ltc modes)
+- Timecode: delegates to `TimecodeGenerator`; TC stamped on both `Frame::metadata()` and `Image::metadata()` (required by TimecodeOverlayNode)
+- Infinite source: `frameCount()` == 0, `canSeek()` == false
+- All config via `MediaIO::Config` (VariantDatabase); all ConfigID constants declared as static members
+
+---
+
 ## AudioSourceNode
 
 Reads audio from AudioFile and outputs frames.

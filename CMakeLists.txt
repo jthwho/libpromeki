@@ -563,6 +563,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/jpegencodernode.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
+        include/promeki/mediaio.h
+        include/promeki/mediaio_tpg.h
         include/promeki/medianode.h
         include/promeki/medianodeconfig.h
         include/promeki/mediapipeline.h
@@ -602,6 +604,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/jpegencodernode.cpp
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
+        src/proav/mediaio.cpp
+        src/proav/mediaio_tpg.cpp
         src/proav/medianode.cpp
         src/proav/medianodeconfig.cpp
         src/proav/mediapipeline.cpp
@@ -1150,6 +1154,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp
             tests/ltcencoder.cpp
+            tests/mediaio.cpp
             tests/medianode.cpp
             tests/medianodeconfig.cpp
             tests/mediapipeline.cpp

@@ -8,16 +8,10 @@
 #pragma once
 
 #include <promeki/namespace.h>
-#include <promeki/audiolevel.h>
 #include <promeki/mutex.h>
-#include <promeki/timecodegenerator.h>
 #include <promeki/medianode.h>
-#include <promeki/videodesc.h>
-#include <promeki/imagedesc.h>
-#include <promeki/audiodesc.h>
-#include <promeki/image.h>
-#include <promeki/videotestpattern.h>
-#include <promeki/audiotestpattern.h>
+#include <promeki/mediaio_tpg.h>
+#include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -26,13 +20,10 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup pipeline
  *
  * Produces complete Frame objects with synchronized video, audio, and
- * timecode metadata on each process cycle. The video pattern, audio mode,
- * and timecode are all configurable via build().
+ * timecode metadata on each process cycle.  Delegates all generation
+ * to a MediaIO_TPG instance.
  *
  * This is a source node: no inputs, one Frame output.
- *
- * Video pattern generation is delegated to VideoTestPattern and audio
- * generation to AudioTestPattern.
  *
  * @par Config options
  * - `Pattern` (String): Test pattern name (default: "colorbars").
@@ -93,29 +84,12 @@ class TestPatternNode : public MediaNode {
                 void stop() override;
 
         private:
-                // Video
-                VideoTestPattern        _videoPattern;
-                VideoDesc               _videoDesc;
-                ImageDesc               _imageDesc;
-                double                  _motion = 0.0;
-                double                  _motionOffset = 0.0;
-                Image                   _cachedImage;
-
-                // Timecode
-                TimecodeGenerator       _tcGen;
-                uint64_t                _frameCount = 0;
-
-                // Audio
-                AudioTestPattern        *_audioPattern = nullptr;
-                AudioDesc               _audioDesc;
-                bool                    _audioEnabled = true;
-                size_t                  _samplesPerFrame = 0;
+                MediaIO_TPG             *_tpg = nullptr;
 
                 // Thread safety for extendedStats()
                 mutable Mutex           _statsMutex;
                 uint64_t                _statsFrameCount = 0;
                 Timecode                _statsTimecode;
-
 };
 
 PROMEKI_NAMESPACE_END

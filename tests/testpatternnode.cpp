@@ -227,8 +227,17 @@ TEST_CASE("TestPatternNode_TimecodeIncrements") {
         CHECK(frameCount >= 5);
 
         REQUIRE(frame.isValid());
+
+        // Frame-level timecode metadata
         Timecode tc = frame->metadata().get(Metadata::Timecode).get<Timecode>();
         CHECK(tc.hour() == 1);
+
+        // Image-level timecode metadata (required by TimecodeOverlayNode)
+        REQUIRE(frame->imageList().size() >= 1);
+        Image::Ptr img = frame->imageList()[0];
+        REQUIRE(img->metadata().contains(Metadata::Timecode));
+        Timecode imgTc = img->metadata().get(Metadata::Timecode).get<Timecode>();
+        CHECK(imgTc.hour() == 1);
 }
 
 // ============================================================================

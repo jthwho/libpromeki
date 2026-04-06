@@ -18,7 +18,7 @@
 - **MediaNode**: Fatal messages propagating to MediaPipeline to stop the pipeline (requires pipeline processing loop integration)
 - **MediaNode**: MediaSink/MediaSource connection lists are unprotected — safe only if the pipeline graph is never mutated while running. Read-write lock needed for hot-reconfiguration.
 - **TestPatternNode**: `setSamplesPerFrame()` override (current auto-computation works; LTC mode uses LtcEncoder's own sample count)
-- **TestPatternNode**: Pre-render optimization for static patterns (current impl renders fresh each frame)
+- **TestPatternNode**: Pre-render optimization for static patterns — **DONE** (MediaIO_TPG caches the first rendered image for non-motion, non-noise patterns and reuses it on subsequent readFrame() calls)
 - **TestPatternNode**: End-to-end LTC round-trip test via LtcDecoder (encoder→decoder tested separately in ltcdecoder.cpp)
 - **LtcEncoder**: Multi-format `encode(tc, AudioDesc)` and int8_t→target format conversion
 - **LtcDecoder**: `forward` field in DecodedTimecode (pending libvtc callback direction support), Audio→int8_t conversion, chunked decoding test
