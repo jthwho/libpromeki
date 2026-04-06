@@ -593,6 +593,11 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagefile.cpp
         src/proav/imagefileio.cpp
         src/proav/imagefileio_rawyuv.cpp
+        src/proav/imagefileio_dpx.cpp
+        src/proav/imagefileio_cin.cpp
+        src/proav/imagefileio_tga.cpp
+        src/proav/imagefileio_sgi.cpp
+        src/proav/imagefileio_pnm.cpp
         src/proav/jpegimagecodec.cpp
         src/proav/jpegencodernode.cpp
         src/proav/ltcdecoder.cpp
@@ -1136,6 +1141,11 @@ if(PROMEKI_BUILD_TESTS)
             tests/imagedesc.cpp
             tests/imagefile.cpp
             tests/imagefileio.cpp
+            tests/imagefileio_dpx.cpp
+            tests/imagefileio_cin.cpp
+            tests/imagefileio_tga.cpp
+            tests/imagefileio_sgi.cpp
+            tests/imagefileio_pnm.cpp
             tests/jpegimagecodec.cpp
             tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp

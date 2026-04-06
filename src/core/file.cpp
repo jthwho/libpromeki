@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -97,6 +98,18 @@ Result<int64_t> File::seekFromEnd(int64_t offset) const {
 }
 
 Error File::truncate(int64_t offset) const {
+        return Error(Error::NotImplemented);
+}
+
+int64_t File::writev(const IOVec *iov, int count) {
+        (void)iov;
+        (void)count;
+        return -1;
+}
+
+Error File::preallocate(int64_t offset, int64_t length) {
+        (void)offset;
+        (void)length;
         return Error(Error::NotImplemented);
 }
 
@@ -259,6 +272,30 @@ Error File::truncate(int64_t offset) const {
         if(!isOpen()) return Error(Error::NotOpen);
         int val = ::ftruncate64(_handle, offset);
         return val == -1 ? Error::syserr() : Error();
+}
+
+int64_t File::writev(const IOVec *iov, int count) {
+        if(!isOpen()) return -1;
+        // Convert platform-neutral IOVec to POSIX iovec
+        struct iovec posixIov[count];
+        for(int i = 0; i < count; ++i) {
+                posixIov[i].iov_base = const_cast<void *>(iov[i].data);
+                posixIov[i].iov_len  = iov[i].size;
+        }
+        ssize_t n = ::writev(_handle, posixIov, count);
+        if(n < 0) {
+                setError(Error::syserr());
+                return -1;
+        }
+        bytesWrittenSignal.emit(static_cast<int64_t>(n));
+        return static_cast<int64_t>(n);
+}
+
+Error File::preallocate(int64_t offset, int64_t length) {
+        if(!isOpen()) return Error(Error::NotOpen);
+        int ret = ::posix_fallocate(_handle, offset, length);
+        if(ret != 0) return Error::syserr(ret);
+        return Error();
 }
 
 Result<size_t> File::directIOAlignment() const {

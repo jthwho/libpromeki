@@ -8,7 +8,7 @@
 
 This document covers four areas: font rendering (complete), video codec abstraction (partially complete), automatic node processing, and batch UDP transmission with kernel-side packet pacing.
 
-**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec (encode + decode for RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12), VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`), PaintEngine interleaved overhaul (see below).
+**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec (encode + decode for RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12), VideoTestPattern/AudioTestPattern, userspace packet pacing (`RtpSession::sendPacketsPaced()`), PaintEngine interleaved overhaul (see below). CSC pack/unpack bug fixes: ARGB8 double-remapping eliminated (semBufMap handles all component routing; inner pack/unpack no longer re-applies alpha index logic), DPX 10-bit big-endian pack/unpack fast paths added to pack-inl.h and unpack-inl.h.
 
 **Remaining:** VideoEncoder/VideoDecoder (temporal codec abstraction), automatic node processing, batch UDP (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE`/`SO_TXTIME`), PacketTransport abstraction (DPDK-readiness).
 

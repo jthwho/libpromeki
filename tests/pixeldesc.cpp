@@ -483,3 +483,41 @@ TEST_CASE("PixelDesc: YUV16_LE_Rec709") {
                 CHECK(pd.compSemantic(0).rangeMax == doctest::Approx(60160));
         }
 }
+
+// ============================================================================
+// DPX additional packed formats
+// ============================================================================
+
+TEST_CASE("PixelDesc: RGB10_DPX_LE_sRGB") {
+        SUBCASE("validity and pixel format") {
+                PixelDesc pd(PixelDesc::RGB10_DPX_LE_sRGB);
+                CHECK(pd.isValid());
+                CHECK(pd.id() == PixelDesc::RGB10_DPX_LE_sRGB);
+                CHECK(pd.name() == "RGB10_DPX_LE_sRGB");
+                CHECK(pd.pixelFormat().id() == PixelFormat::I_3x10_DPX);
+        }
+        SUBCASE("component range is 10-bit full") {
+                PixelDesc pd(PixelDesc::RGB10_DPX_LE_sRGB);
+                CHECK(pd.compSemantic(0).rangeMin == doctest::Approx(0));
+                CHECK(pd.compSemantic(0).rangeMax == doctest::Approx(1023));
+                CHECK(pd.compSemantic(0).abbrev == "R");
+                CHECK(pd.compSemantic(1).abbrev == "G");
+                CHECK(pd.compSemantic(2).abbrev == "B");
+        }
+}
+
+TEST_CASE("PixelDesc: YUV10_DPX_B_Rec709") {
+        SUBCASE("validity and pixel format") {
+                PixelDesc pd(PixelDesc::YUV10_DPX_B_Rec709);
+                CHECK(pd.isValid());
+                CHECK(pd.id() == PixelDesc::YUV10_DPX_B_Rec709);
+                CHECK(pd.name() == "YUV10_DPX_B_Rec709");
+                CHECK(pd.pixelFormat().id() == PixelFormat::I_3x10_DPX);
+        }
+        SUBCASE("component semantics are YCbCr") {
+                PixelDesc pd(PixelDesc::YUV10_DPX_B_Rec709);
+                CHECK(pd.compSemantic(0).abbrev == "Y");
+                CHECK(pd.compSemantic(1).abbrev == "Cb");
+                CHECK(pd.compSemantic(2).abbrev == "Cr");
+        }
+}

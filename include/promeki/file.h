@@ -52,6 +52,18 @@ class File : public BufferedIODevice {
                         Exclusive       = 0x08   ///< @brief Fail if the file already exists (with Create).
                 };
 
+                /**
+                 * @brief Scatter/gather buffer descriptor for vectored I/O.
+                 *
+                 * Platform-neutral alternative to POSIX struct iovec.
+                 * Used with writev() to write multiple disjoint buffers
+                 * in a single system call.
+                 */
+                struct IOVec {
+                        const void *data;  ///< @brief Pointer to buffer.
+                        size_t      size;  ///< @brief Size of buffer in bytes.
+                };
+
 #if defined(PROMEKI_PLATFORM_WINDOWS)
                 /** @brief Platform-specific file handle type (Windows). */
                 using FileHandle = HANDLE;
@@ -206,6 +218,35 @@ class File : public BufferedIODevice {
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error truncate(int64_t offset) const;
+
+                /**
+                 * @brief Writes multiple buffers to the file in a single system call.
+                 *
+                 * Uses the platform's scatter/gather I/O (writev on POSIX) to
+                 * write all buffers atomically from the application's perspective.
+                 * This avoids the overhead of multiple write() calls and ensures
+                 * that header + payload are written in one kernel transition,
+                 * which is important for direct I/O writes where each transfer
+                 * must be aligned.
+                 *
+                 * @param iov   Array of IOVec structures describing buffers.
+                 * @param count Number of IOVec entries.
+                 * @return The total number of bytes written, or -1 on error.
+                 */
+                int64_t writev(const IOVec *iov, int count);
+
+                /**
+                 * @brief Preallocates file space without writing data.
+                 *
+                 * Uses posix_fallocate() to ensure that the requested disk
+                 * space is available, avoiding ENOSPC during subsequent writes.
+                 * This is a best-effort operation; the file size is not changed.
+                 *
+                 * @param offset Starting byte offset for the allocation.
+                 * @param length Number of bytes to preallocate.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error preallocate(int64_t offset, int64_t length);
 
                 /**
                  * @brief Returns the direct I/O alignment requirement for this file.

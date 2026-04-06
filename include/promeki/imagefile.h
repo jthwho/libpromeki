@@ -10,19 +10,20 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
-#include <promeki/image.h>
+#include <promeki/frame.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class ImageFileIO;
 
 /**
- * @brief Image file loader and saver.
+ * @brief Media file loader and saver.
  * @ingroup proav
  *
- * Provides a simple interface for loading and saving image files.
+ * Provides a simple interface for loading and saving media files.
  * The file format is determined by the ID passed at construction,
- * which selects the corresponding ImageFileIO backend.
+ * which selects the corresponding ImageFileIO backend. Internally
+ * holds a Frame which can carry images, audio, and metadata.
  */
 class ImageFile {
         public:
@@ -30,7 +31,12 @@ class ImageFile {
                 enum ID {
                         Invalid = 0, ///< @brief No format / invalid.
                         PNG,         ///< @brief PNG image format.
-                        RawYUV       ///< @brief Raw YUV image format (headerless).
+                        RawYUV,      ///< @brief Raw YUV image format (headerless).
+                        DPX,         ///< @brief SMPTE 268M DPX image format.
+                        Cineon,      ///< @brief Kodak Cineon image format.
+                        TGA,         ///< @brief Targa image format.
+                        SGI,         ///< @brief Silicon Graphics image format.
+                        PNM          ///< @brief Portable AnyMap (PPM/PGM/PBM).
                 };
 
                 /**
@@ -57,37 +63,85 @@ class ImageFile {
                 }
 
                 /**
-                 * @brief Returns the image data.
-                 * @return A const reference to the Image object.
+                 * @brief Returns a const reference to the frame.
+                 * @return The frame containing images, audio, and metadata.
                  */
-                const Image &image() const {
-                        return _image;
+                const Frame &frame() const {
+                        return _frame;
                 }
 
                 /**
-                 * @brief Sets the image data for saving.
-                 * @param val The Image to set.
+                 * @brief Returns a mutable reference to the frame.
+                 * @return The frame containing images, audio, and metadata.
                  */
-                void setImage(const Image &val) {
-                        _image = val;
+                Frame &frame() {
+                        return _frame;
+                }
+
+                /**
+                 * @brief Sets the frame.
+                 * @param val The Frame to set.
+                 */
+                void setFrame(const Frame &val) {
+                        _frame = val;
                         return;
                 }
 
                 /**
-                 * @brief Loads an image from the file specified by filename().
+                 * @brief Returns the first image from the frame, or an invalid Image if empty.
+                 *
+                 * Convenience accessor for formats that carry a single image.
+                 * @return The first image by value.
+                 */
+                Image image() const {
+                        if(_frame.imageList().isEmpty()) return Image();
+                        return *_frame.imageList()[0];
+                }
+
+                /**
+                 * @brief Sets the frame to contain a single image.
+                 *
+                 * Convenience setter for formats that carry a single image.
+                 * Clears any existing images and audio in the frame.
+                 * @param val The Image to set.
+                 */
+                void setImage(const Image &val) {
+                        _frame.imageList().clear();
+                        _frame.imageList().pushToBack(Image::Ptr::create(val));
+                        return;
+                }
+
+                /**
+                 * @brief Returns a const reference to the frame metadata.
+                 * @return The metadata container.
+                 */
+                const Metadata &metadata() const {
+                        return _frame.metadata();
+                }
+
+                /**
+                 * @brief Returns a mutable reference to the frame metadata.
+                 * @return The metadata container.
+                 */
+                Metadata &metadata() {
+                        return _frame.metadata();
+                }
+
+                /**
+                 * @brief Loads media from the file specified by filename().
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error load();
 
                 /**
-                 * @brief Saves the image to the file specified by filename().
+                 * @brief Saves media to the file specified by filename().
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error save();
 
         private:
                 String                  _filename;
-                Image                   _image;
+                Frame                   _frame;
                 const ImageFileIO       *_io;
 };
 

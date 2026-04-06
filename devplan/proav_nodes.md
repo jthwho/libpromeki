@@ -72,6 +72,8 @@ Writes audio frames to AudioFile.
 
 Reads image sequences and outputs video frames.
 
+**Note:** Image file backends are now available — DPX (read+write, all pixel formats, embedded audio+metadata, DIO), Cineon (read-only, 10-bit RGB), TGA (read+write, RGBA8), SGI (read+write, 6 formats, RLE), PNM (read+write, PPM/PGM P5/P6). `ImageFile` now carries `Frame` (image+audio+metadata). These backends are the foundation for this node.
+
 **Files:**
 - [ ] `include/promeki/imagesourcenode.h`
 - [ ] `src/proav/imagesourcenode.cpp`
@@ -84,12 +86,11 @@ Reads image sequences and outputs video frames.
 - [ ] `void setFrameRange(FrameNumber start, FrameNumber end)`
 - [ ] `void setLooping(bool loop)`
 - [ ] Override `build()`:
-  - [ ] Detect image format from first frame
+  - [ ] Detect image format from first frame (use `ImageFile::lookupByExtension()` or `ImageFileIO::probe()`)
   - [ ] Set output port VideoDesc/ImageDesc
 - [ ] Override `processFrame()`:
-  - [ ] Read next image in sequence
-  - [ ] Create `Frame::Ptr` with `Image` data
-  - [ ] Push to output port
+  - [ ] Read next image in sequence via `ImageFile::load()`
+  - [ ] Push `frame()` from `ImageFile` to output port
   - [ ] Handle end of sequence
 - [ ] Override `stop()`
 - [ ] `PROMEKI_SIGNAL(endOfSequence)`
@@ -114,7 +115,7 @@ Writes video frames as image sequences.
 - [ ] Override `build()`: validate output path, create directory if needed
 - [ ] Override `processFrame()`:
   - [ ] Pull `Frame::Ptr` from input
-  - [ ] Extract `Image` data
+  - [ ] Wrap in `ImageFile`, call `save()`
   - [ ] Write to numbered file
 - [ ] Override `stop()`
 - [ ] Doctest: write image sequence, verify files

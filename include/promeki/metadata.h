@@ -103,6 +103,56 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 /// @brief Frame sequence number within a stream.
                 static inline const ID FrameNumber{"FrameNumber"};
 
+                // -- DPX file info --
+
+                /// @brief Original source filename (from previous save).
+                static inline const ID FileOrigName{"FileOrigName"};
+                /// @brief Project name.
+                static inline const ID Project{"Project"};
+                /// @brief Reel or input device name.
+                static inline const ID Reel{"Reel"};
+
+                // -- DPX film info --
+
+                /// @brief Film manufacturer ID code (2 chars).
+                static inline const ID FilmMfgID{"FilmMfgID"};
+                /// @brief Film type (2 chars).
+                static inline const ID FilmType{"FilmType"};
+                /// @brief Film offset in perfs (2 chars).
+                static inline const ID FilmOffset{"FilmOffset"};
+                /// @brief Film prefix (6 chars).
+                static inline const ID FilmPrefix{"FilmPrefix"};
+                /// @brief Film count (4 chars).
+                static inline const ID FilmCount{"FilmCount"};
+                /// @brief Film format (e.g. "Academy").
+                static inline const ID FilmFormat{"FilmFormat"};
+                /// @brief Sequence position (frame number in sequence).
+                static inline const ID FilmSeqPos{"FilmSeqPos"};
+                /// @brief Sequence length (total frames in sequence).
+                static inline const ID FilmSeqLen{"FilmSeqLen"};
+                /// @brief Held count (1 = default, >1 = repeated frame).
+                static inline const ID FilmHoldCount{"FilmHoldCount"};
+                /// @brief Film shutter angle in degrees.
+                static inline const ID FilmShutter{"FilmShutter"};
+                /// @brief Film frame identification (e.g. keycode).
+                static inline const ID FilmFrameID{"FilmFrameID"};
+                /// @brief Film slate information.
+                static inline const ID FilmSlate{"FilmSlate"};
+
+                // -- DPX TV info --
+
+                /// @brief Field number within an interlaced frame (0 or 1).
+                static inline const ID FieldID{"FieldID"};
+
+                // -- DPX image element info --
+
+                /// @brief SMPTE 268M transfer characteristic code.
+                static inline const ID TransferCharacteristic{"TransferCharacteristic"};
+                /// @brief SMPTE 268M colorimetric specification code.
+                static inline const ID Colorimetric{"Colorimetric"};
+                /// @brief Image orientation code (0 = left-to-right, top-to-bottom).
+                static inline const ID Orientation{"Orientation"};
+
                 /**
                  * @brief Converts a metadata ID to its string name.
                  * @param id The metadata ID.

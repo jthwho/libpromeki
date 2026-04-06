@@ -313,6 +313,10 @@ class PixelDesc {
                         YUV16_420_SemiPlanar_LE_Rec709     = 131,  ///< 16-bit YCbCr 4:2:0 NV12 LE, Rec.709.
                         YUV16_420_SemiPlanar_BE_Rec709     = 132,  ///< 16-bit YCbCr 4:2:0 NV12 BE, Rec.709.
 
+                        // -- DPX additional packed formats --
+                        RGB10_DPX_LE_sRGB                  = 133,  ///< 10-bit RGB, DPX packed LE, sRGB, full range.
+                        YUV10_DPX_B_Rec709                 = 134,  ///< 10-bit YCbCr 4:4:4 DPX packed method B, Rec.709.
+
                         UserDefined                        = 1024  ///< First ID available for user-registered types.
                 };
 

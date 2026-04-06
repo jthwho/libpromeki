@@ -22,6 +22,7 @@ endif()
 add_subdirectory(promeki-info)
 
 if(PROMEKI_ENABLE_PROAV)
+    add_subdirectory(imgtest)
     add_subdirectory(testrender)
     if(PROMEKI_ENABLE_NETWORK)
         add_subdirectory(vidgen)

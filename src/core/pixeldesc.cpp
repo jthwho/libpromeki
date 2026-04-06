@@ -602,6 +602,29 @@ static PixelDesc::Data makeYUV10_DPX() {
 }
 
 // ---------------------------------------------------------------------------
+// DPX additional packed PixelDesc factory functions
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeRGB10_DPX_LE() {
+        PixelDesc::Data d;
+        d.id                    = PixelDesc::RGB10_DPX_LE_sRGB;
+        d.name                  = "RGB10_DPX_LE_sRGB";
+        d.desc                  = "10-bit RGB, DPX packed LE, sRGB, full range";
+        d.pixelFormat           = PixelFormat(PixelFormat::I_3x10_DPX);
+        d.colorModel            = ColorModel(ColorModel::sRGB);
+        d.compSemantics[0]      = { "Red",   "R", 0, 1023 };
+        d.compSemantics[1]      = { "Green", "G", 0, 1023 };
+        d.compSemantics[2]      = { "Blue",  "B", 0, 1023 };
+        return d;
+}
+
+static PixelDesc::Data makeYUV10_DPX_B() {
+        return makeYCbCrDesc(PixelDesc::YUV10_DPX_B_Rec709,
+                "YUV10_DPX_B_Rec709", "10-bit YCbCr 4:4:4 DPX packed method B, Rec.709, limited range",
+                PixelFormat::I_3x10_DPX, ycbcrSem10);
+}
+
+// ---------------------------------------------------------------------------
 // BGRA/BGR PixelDesc factory functions
 // ---------------------------------------------------------------------------
 
@@ -1284,6 +1307,8 @@ struct PixelDescRegistry {
                 add(makeRGB16_LE());
                 add(makeRGB16_BE());
                 add(makeYUV10_DPX());
+                add(makeRGB10_DPX_LE());
+                add(makeYUV10_DPX_B());
 
                 // BGRA/BGR
                 add(makeBGRA8());

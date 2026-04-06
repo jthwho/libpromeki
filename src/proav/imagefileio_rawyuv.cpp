@@ -129,7 +129,7 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile) const {
         // Determine dimensions: use caller-provided image if valid, else guess
         size_t width = 0;
         size_t height = 0;
-        const Image &hint = imageFile.image();
+        const Image hint = imageFile.image();
         if(hint.isValid()) {
                 width  = hint.width();
                 height = hint.height();
@@ -202,7 +202,7 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile) const {
 }
 
 Error ImageFileIO_RawYUV::save(ImageFile &imageFile) const {
-        const Image &image = imageFile.image();
+        const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
         if(!image.isValid()) {

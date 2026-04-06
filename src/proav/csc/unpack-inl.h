@@ -103,23 +103,15 @@ void UnpackInterleavedImpl(const void *src, float *const *buffers,
                            bool hasAlpha, int alphaCompIndex, bool useSimd) {
         const uint8_t *p = static_cast<const uint8_t *>(src);
 
-        // Fast path: 4-component 8-bit interleaved (RGBA8, BGRA8, etc.)
+        // Fast path: 4-component 8-bit interleaved (RGBA8, BGRA8, ARGB8, etc.)
+        // Note: the caller (kernelUnpackInterleaved) already applies semBufMap
+        // to route each component to the correct semantic buffer, so no
+        // additional alpha remapping is needed here.
         if(useSimd && pixelsPerBlock == 1 && compCount == 4 && bitsPerComp == 8 &&
            bytesPerBlock == 4 &&
            compByteOffset[0] == 0 && compByteOffset[1] == 1 &&
            compByteOffset[2] == 2 && compByteOffset[3] == 3) {
-                // Map components to the correct buffer indices
-                // (accounting for alpha position)
-                float *mapped[4];
-                for(int c = 0; c < 4; c++) {
-                        if(c == alphaCompIndex) {
-                                mapped[c] = buffers[3];
-                        } else {
-                                int bufIdx = (c < alphaCompIndex || alphaCompIndex < 0) ? c : c - 1;
-                                mapped[c] = buffers[bufIdx];
-                        }
-                }
-                unpackI4x8(p, mapped, width);
+                unpackI4x8(p, buffers, width);
                 return;
         }
 
@@ -129,6 +121,23 @@ void UnpackInterleavedImpl(const void *src, float *const *buffers,
            compByteOffset[0] == 0 && compByteOffset[1] == 1 &&
            compByteOffset[2] == 2) {
                 unpackI3x8(p, buffers, width);
+                return;
+        }
+
+        // DPX 10-bit packed: 3 x 10-bit in a 32-bit word (big-endian byte order).
+        // Layout: R[9:0] at bits 31-22, G[9:0] at bits 21-12, B[9:0] at bits 11-2, pad at 1-0.
+        if(pixelsPerBlock == 1 && compCount == 3 && bitsPerComp == 10 && bytesPerBlock == 4) {
+                for(size_t x = 0; x < width; x++) {
+                        const uint8_t *px = p + x * 4;
+                        // Read as big-endian 32-bit word
+                        uint32_t word = (static_cast<uint32_t>(px[0]) << 24)
+                                      | (static_cast<uint32_t>(px[1]) << 16)
+                                      | (static_cast<uint32_t>(px[2]) <<  8)
+                                      |  static_cast<uint32_t>(px[3]);
+                        buffers[0][x] = static_cast<float>((word >> 22) & 0x3FF);
+                        buffers[1][x] = static_cast<float>((word >> 12) & 0x3FF);
+                        buffers[2][x] = static_cast<float>((word >>  2) & 0x3FF);
+                }
                 return;
         }
 
@@ -147,12 +156,7 @@ void UnpackInterleavedImpl(const void *src, float *const *buffers,
                                 } else {
                                         val = 0.0f;
                                 }
-                                if(c == alphaCompIndex) {
-                                        buffers[3][x] = val;
-                                } else {
-                                        int bufIdx = (c < alphaCompIndex || alphaCompIndex < 0) ? c : c - 1;
-                                        buffers[bufIdx][x] = val;
-                                }
+                                buffers[c][x] = val;
                         }
                 }
         } else {

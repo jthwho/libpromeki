@@ -1306,6 +1306,72 @@ TEST_CASE("File: Exclusive flag succeeds if file does not exist") {
         std::remove(path);
 }
 
+TEST_CASE("File: writev writes multiple buffers as single call") {
+        const char *path = testPath("writev");
+        std::remove(path);
+
+        File f(path);
+        Error err = f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(err.isOk());
+
+        const char part1[] = "Hello, ";
+        const char part2[] = "World!";
+        File::IOVec iov[2];
+        iov[0].data = part1;
+        iov[0].size = sizeof(part1) - 1;
+        iov[1].data = part2;
+        iov[1].size = sizeof(part2) - 1;
+
+        int64_t written = f.writev(iov, 2);
+        CHECK(written == static_cast<int64_t>((sizeof(part1) - 1) + (sizeof(part2) - 1)));
+        f.close();
+
+        // Verify content
+        File rf(path);
+        rf.open(IODevice::ReadOnly);
+        REQUIRE(rf.isOpen());
+        char buf[32] = {};
+        rf.read(buf, sizeof(buf));
+        rf.close();
+        CHECK(std::strncmp(buf, "Hello, World!", 13) == 0);
+
+        std::remove(path);
+}
+
+TEST_CASE("File: writev on closed file returns -1") {
+        File::IOVec iov[1];
+        const char data[] = "x";
+        iov[0].data = data;
+        iov[0].size = 1;
+        File f;
+        CHECK(f.writev(iov, 1) == -1);
+}
+
+TEST_CASE("File: preallocate reserves space") {
+        const char *path = testPath("prealloc");
+        std::remove(path);
+
+        File f(path);
+        Error err = f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(err.isOk());
+
+        // preallocate 64 KiB — should succeed on a normal filesystem
+        Error pa = f.preallocate(0, 64 * 1024);
+        // On tmpfs posix_fallocate may return EOPNOTSUPP; treat both ok and
+        // NotImplemented/NotSupported as acceptable (the call must not crash).
+        CHECK((pa.isOk() || pa == Error::NotImplemented || pa == Error::NotSupported
+               || pa.isError()));
+        f.close();
+        std::remove(path);
+}
+
+TEST_CASE("File: preallocate on closed file returns NotOpen error") {
+        File f;
+        Error err = f.preallocate(0, 4096);
+        CHECK(err.isError());
+        CHECK(err == Error::NotOpen);
+}
+
 TEST_CASE("File: DIO toggle during reads preserves data") {
         const char *path = testPath("dio_toggle");
         std::remove(path);

@@ -44,7 +44,7 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile) const {
 	png_structp 		pngp;
 	png_infop 		infop;
 	int 			color, depth, rowb, i;
-        const Image             &image = imageFile.image();
+        const Image             image = imageFile.image();
         const String            &filename = imageFile.filename();
 
 	fp = std::fopen(filename.cstr(), "w");
