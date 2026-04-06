@@ -51,6 +51,14 @@ static const MediaIO::FormatDesc *findFormatByExtension(const String &filename) 
         return nullptr;
 }
 
+MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
+        const FormatDesc *desc = findFormatByName(typeName);
+        if(desc == nullptr || !desc->defaultConfig) return Config();
+        Config cfg = desc->defaultConfig();
+        cfg.set(ConfigType, typeName);
+        return cfg;
+}
+
 MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         const FormatDesc *desc = nullptr;
 

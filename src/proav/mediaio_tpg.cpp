@@ -29,9 +29,7 @@ const MediaIO::ConfigID MediaIO_TPG::ConfigVideoPattern("VideoPattern");
 const MediaIO::ConfigID MediaIO_TPG::ConfigVideoWidth("VideoWidth");
 const MediaIO::ConfigID MediaIO_TPG::ConfigVideoHeight("VideoHeight");
 const MediaIO::ConfigID MediaIO_TPG::ConfigVideoPixelFormat("VideoPixelFormat");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoSolidColorR("VideoSolidColorR");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoSolidColorG("VideoSolidColorG");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoSolidColorB("VideoSolidColorB");
+const MediaIO::ConfigID MediaIO_TPG::ConfigVideoSolidColor("VideoSolidColor");
 const MediaIO::ConfigID MediaIO_TPG::ConfigVideoMotion("VideoMotion");
 
 // Audio
@@ -59,6 +57,33 @@ MediaIO::FormatDesc MediaIO_TPG::formatDesc() {
                 false,  // canWrite
                 [](ObjectBase *parent) -> MediaIO * {
                         return new MediaIO_TPG(parent);
+                },
+                []() -> MediaIO::Config {
+                        MediaIO::Config cfg;
+                        // General
+                        cfg.set(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
+                        // Video
+                        cfg.set(ConfigVideoEnabled, false);
+                        cfg.set(ConfigVideoPattern, "colorbars");
+                        cfg.set(ConfigVideoWidth, 1920);
+                        cfg.set(ConfigVideoHeight, 1080);
+                        cfg.set(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
+                        cfg.set(ConfigVideoSolidColor, Color::Black);
+                        cfg.set(ConfigVideoMotion, 0.0);
+                        // Audio
+                        cfg.set(ConfigAudioEnabled, false);
+                        cfg.set(ConfigAudioMode, "tone");
+                        cfg.set(ConfigAudioRate, 48000.0f);
+                        cfg.set(ConfigAudioChannels, 2);
+                        cfg.set(ConfigAudioToneFrequency, 1000.0);
+                        cfg.set(ConfigAudioToneLevel, -20.0);
+                        cfg.set(ConfigAudioLtcLevel, -20.0);
+                        cfg.set(ConfigAudioLtcChannel, 0);
+                        // Timecode
+                        cfg.set(ConfigTimecodeEnabled, false);
+                        cfg.set(ConfigTimecodeStart, "00:00:00:00");
+                        cfg.set(ConfigTimecodeDropFrame, false);
+                        return cfg;
                 }
         };
 }
@@ -105,10 +130,8 @@ Error MediaIO_TPG::open(Mode mode) {
                 _imageDesc = ImageDesc(width, height, pd.id());
                 _videoDesc.imageList().pushToBack(_imageDesc);
 
-                uint16_t solidR = cfg.getAs<uint16_t>(ConfigVideoSolidColorR, uint16_t(0));
-                uint16_t solidG = cfg.getAs<uint16_t>(ConfigVideoSolidColorG, uint16_t(0));
-                uint16_t solidB = cfg.getAs<uint16_t>(ConfigVideoSolidColorB, uint16_t(0));
-                _videoPattern.setSolidColor(solidR, solidG, solidB);
+                Color solidColor = cfg.getAs<Color>(ConfigVideoSolidColor, Color::Black);
+                _videoPattern.setSolidColor(solidColor);
 
                 _motion = cfg.getAs<double>(ConfigVideoMotion, 0.0);
                 _motionOffset = 0.0;

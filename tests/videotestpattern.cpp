@@ -10,6 +10,7 @@
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixeldesc.h>
+#include <promeki/color.h>
 
 using namespace promeki;
 
@@ -24,9 +25,7 @@ static ImageDesc testDesc(int w = 320, int h = 240, PixelDesc::ID fmt = PixelDes
 TEST_CASE("VideoTestPattern_Defaults") {
         VideoTestPattern gen;
         CHECK(gen.pattern() == VideoTestPattern::ColorBars);
-        CHECK(gen.solidColorR() == 0);
-        CHECK(gen.solidColorG() == 0);
-        CHECK(gen.solidColorB() == 0);
+        CHECK_FALSE(gen.solidColor().isValid());
 }
 
 // ============================================================================
@@ -114,17 +113,17 @@ TEST_CASE("VideoTestPattern_MotionOffset") {
 TEST_CASE("VideoTestPattern_SolidColor") {
         VideoTestPattern gen;
         gen.setPattern(VideoTestPattern::SolidColor);
-        gen.setSolidColor(65535, 0, 32768);
+        gen.setSolidColor(Color::Red);
 
         ImageDesc desc = testDesc(8, 8);
         Image img = gen.create(desc);
         CHECK(img.isValid());
 
-        // First pixel should be R=255, G=0, B=128 (16-bit mapped to 8-bit)
+        // First pixel should be pure red in RGB8
         const uint8_t *data = static_cast<const uint8_t *>(img.data());
         CHECK(data[0] == 255);
         CHECK(data[1] == 0);
-        CHECK(data[2] == 128);
+        CHECK(data[2] == 0);
 }
 
 // ============================================================================

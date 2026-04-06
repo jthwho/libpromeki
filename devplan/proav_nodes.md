@@ -23,13 +23,13 @@ Generic abstract media I/O framework providing a uniform interface for reading a
 
 **Design:**
 - `MediaIO` derives from `ObjectBase`, uses `PROMEKI_OBJECT`
-- Config-driven factory: `MediaIO::create(Config)`, `createForFileRead()`, `createForFileWrite()`
+- Config-driven factory: `MediaIO::create(Config)`, `createForFileRead()`, `createForFileWrite()`, `defaultConfig(typeName)`
 - Backends self-register via `PROMEKI_REGISTER_MEDIAIO(ClassName)` at static init
 - `FormatDesc` struct: name, description, extensions, canRead, canWrite, factory lambda
 - Open modes: `NotOpen`, `Reader`, `Writer`
 - Virtual API: `open()`, `close()`, `videoDesc()`, `setVideoDesc()`, `metadata()`, `setMetadata()`, `readFrame()`, `writeFrame()`, `canSeek()`, `seekToFrame()`, `frameCount()`, `currentFrame()`
 - `errorOccurred(Error)` signal for async error reporting
-- 16 test cases covering registry, factory, all TPG modes, error paths, seeking
+- 18 test cases covering registry, factory, all TPG modes, error paths, seeking, and defaultConfig()
 
 ---
 
@@ -44,11 +44,12 @@ Read-only MediaIO source that generates synchronized test pattern frames.
 
 **Design:**
 - Derives from `MediaIO`, registered as "TPG" (no file extensions — generator source)
-- Video: delegates to `VideoTestPattern`; static patterns cached after first render; motion applies per-frame offset
+- Video: delegates to `VideoTestPattern`; solid color configured via `Color` object (single `ConfigVideoSolidColor` key, replaces former R/G/B uint16_t triple); static patterns cached after first render; motion applies per-frame offset
 - Audio: delegates to `AudioTestPattern` (tone, silence, ltc modes)
 - Timecode: delegates to `TimecodeGenerator`; TC stamped on both `Frame::metadata()` and `Image::metadata()` (required by TimecodeOverlayNode)
 - Infinite source: `frameCount()` == 0, `canSeek()` == false
 - All config via `MediaIO::Config` (VariantDatabase); all ConfigID constants declared as static members
+- `FormatDesc::defaultConfig` lambda returns fully-populated default Config (all keys, including video/audio/timecode groups, all disabled by default)
 
 ---
 

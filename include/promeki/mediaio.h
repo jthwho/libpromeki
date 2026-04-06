@@ -112,6 +112,8 @@ class MediaIO : public ObjectBase {
                         bool        canWrite;    ///< @brief Whether the backend supports writing.
                         /** @brief Factory function that creates a new instance of the backend. */
                         std::function<MediaIO *(ObjectBase *)> create;
+                        /** @brief Returns the default configuration for this backend. */
+                        std::function<Config ()> defaultConfig;
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -128,6 +130,24 @@ class MediaIO : public ObjectBase {
                  * @return A const reference to the registry list.
                  */
                 static const FormatDescList &registeredFormats();
+
+                /**
+                 * @brief Returns the default configuration for the named backend.
+                 *
+                 * Looks up the backend by name and calls its defaultConfig
+                 * function.  Returns an empty Config if the name is not found.
+                 *
+                 * @param typeName The registered backend name (e.g. "TPG").
+                 * @return A Config populated with default values.
+                 *
+                 * @par Example
+                 * @code
+                 * MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
+                 * cfg.set(MediaIO_TPG::ConfigVideoEnabled, true);
+                 * MediaIO *io = MediaIO::create(cfg);
+                 * @endcode
+                 */
+                static Config defaultConfig(const String &typeName);
 
                 /**
                  * @brief Creates a MediaIO instance from a configuration.

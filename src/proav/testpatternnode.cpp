@@ -79,9 +79,7 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         PixelDesc pd = config.get("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB)).get<PixelDesc>();
         tpgCfg.set(MediaIO_TPG::ConfigVideoPixelFormat, pd);
 
-        tpgCfg.set(MediaIO_TPG::ConfigVideoSolidColorR, config.get("SolidColorR", uint16_t(0)).get<uint16_t>());
-        tpgCfg.set(MediaIO_TPG::ConfigVideoSolidColorG, config.get("SolidColorG", uint16_t(0)).get<uint16_t>());
-        tpgCfg.set(MediaIO_TPG::ConfigVideoSolidColorB, config.get("SolidColorB", uint16_t(0)).get<uint16_t>());
+        tpgCfg.set(MediaIO_TPG::ConfigVideoSolidColor, config.get("SolidColor", Color::Black).get<Color>());
         tpgCfg.set(MediaIO_TPG::ConfigVideoMotion, config.get("Motion", 0.0).get<double>());
 
         // Audio

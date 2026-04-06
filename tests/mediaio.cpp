@@ -60,6 +60,43 @@ TEST_CASE("MediaIO_CreateEmptyConfigReturnsNull") {
         CHECK(io == nullptr);
 }
 
+TEST_CASE("MediaIO_DefaultConfigUnknownTypeReturnsEmpty") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("NonexistentFormat");
+        CHECK(cfg.isEmpty());
+}
+
+TEST_CASE("MediaIO_DefaultConfigTPG") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
+        CHECK_FALSE(cfg.isEmpty());
+
+        // Should have the Type key set
+        CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "TPG");
+
+        // Check some defaults
+        CHECK(cfg.getAs<FrameRate>(MediaIO_TPG::ConfigFrameRate).isValid());
+        CHECK(cfg.getAs<bool>(MediaIO_TPG::ConfigVideoEnabled) == false);
+        CHECK(cfg.getAs<int>(MediaIO_TPG::ConfigVideoWidth) == 1920);
+        CHECK(cfg.getAs<int>(MediaIO_TPG::ConfigVideoHeight) == 1080);
+        CHECK(cfg.getAs<bool>(MediaIO_TPG::ConfigAudioEnabled) == false);
+        CHECK(cfg.getAs<String>(MediaIO_TPG::ConfigAudioMode) == "tone");
+        CHECK(cfg.getAs<bool>(MediaIO_TPG::ConfigTimecodeEnabled) == false);
+
+        // Should be usable for creation after enabling a component
+        cfg.set(MediaIO_TPG::ConfigVideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+        CHECK(io->videoDesc().isValid());
+
+        Frame frame;
+        CHECK(io->readFrame(frame).isOk());
+        CHECK(frame.imageList().size() == 1);
+        CHECK(frame.imageList()[0]->width() == 1920);
+
+        io->close();
+        delete io;
+}
+
 // ============================================================================
 // Video + Audio + Timecode
 // ============================================================================

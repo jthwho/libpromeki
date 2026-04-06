@@ -28,9 +28,9 @@ void VideoTestPattern::render(Image &img, double motionOffset) const {
                 case Grid:           renderGrid(img, motionOffset); break;
                 case Crosshatch:     renderCrosshatch(img, motionOffset); break;
                 case Checkerboard:   renderCheckerboard(img, motionOffset); break;
-                case SolidColor:     renderSolid(img, _solidR, _solidG, _solidB); break;
-                case White:          renderSolid(img, 65535, 65535, 65535); break;
-                case Black:          renderSolid(img, 0, 0, 0); break;
+                case SolidColor:     renderSolid(img, _solidColor); break;
+                case White:          renderSolid(img, Color::White); break;
+                case Black:          renderSolid(img, Color::Black); break;
                 case Noise:          renderNoise(img); break;
                 case ZonePlate:      renderZonePlate(img, motionOffset); break;
         }
@@ -247,9 +247,9 @@ void VideoTestPattern::renderNoise(Image &img) const {
         }
 }
 
-void VideoTestPattern::renderSolid(Image &img, uint16_t r, uint16_t g, uint16_t b) const {
+void VideoTestPattern::renderSolid(Image &img, const Color &color) const {
         PaintEngine pe = img.createPaintEngine();
-        auto pixel = pe.createPixel(r, g, b);
+        auto pixel = pe.createPixel(color);
         pe.fill(pixel);
 }
 

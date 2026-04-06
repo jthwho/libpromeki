@@ -11,6 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/color.h>
 #include <promeki/imagedesc.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -83,31 +84,21 @@ class VideoTestPattern {
                  */
                 void setPattern(Pattern pattern) { _pattern = pattern; }
 
-                /** @brief Returns the solid color red component (0-65535). */
-                uint16_t solidColorR() const { return _solidR; }
-
-                /** @brief Returns the solid color green component (0-65535). */
-                uint16_t solidColorG() const { return _solidG; }
-
-                /** @brief Returns the solid color blue component (0-65535). */
-                uint16_t solidColorB() const { return _solidB; }
+                /** @brief Returns the solid color. */
+                const Color &solidColor() const { return _solidColor; }
 
                 /**
                  * @brief Sets the solid color (used when pattern is SolidColor).
-                 * @param r Red component (0-65535).
-                 * @param g Green component (0-65535).
-                 * @param b Blue component (0-65535).
+                 * @param color The fill color.
                  *
                  * @par Example
                  * @code
                  * gen.setPattern(VideoTestPattern::SolidColor);
-                 * gen.setSolidColor(32768, 0, 65535); // purple
+                 * gen.setSolidColor(Color::Magenta);
                  * @endcode
                  */
-                void setSolidColor(uint16_t r, uint16_t g, uint16_t b) {
-                        _solidR = r;
-                        _solidG = g;
-                        _solidB = b;
+                void setSolidColor(const Color &color) {
+                        _solidColor = color;
                 }
 
                 /**
@@ -167,9 +158,7 @@ class VideoTestPattern {
 
         private:
                 Pattern         _pattern = ColorBars;
-                uint16_t        _solidR = 0;
-                uint16_t        _solidG = 0;
-                uint16_t        _solidB = 0;
+                Color           _solidColor;
 
                 void renderColorBars(Image &img, double offset, bool full) const;
                 void renderRamp(Image &img, double offset) const;
@@ -178,7 +167,7 @@ class VideoTestPattern {
                 void renderCheckerboard(Image &img, double offset) const;
                 void renderZonePlate(Image &img, double phase) const;
                 void renderNoise(Image &img) const;
-                void renderSolid(Image &img, uint16_t r, uint16_t g, uint16_t b) const;
+                void renderSolid(Image &img, const Color &color) const;
 };
 
 PROMEKI_NAMESPACE_END

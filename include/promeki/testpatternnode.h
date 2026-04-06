@@ -33,9 +33,7 @@ PROMEKI_NAMESPACE_BEGIN
  * - `Height` (uint32_t): Frame height (required).
  * - `PixelFormat` (PixelDesc): Pixel description (default: PixelDesc::RGB8_sRGB).
  * - `FrameRate` (String): Frame rate string (required). E.g. "24", "29.97".
- * - `SolidColorR` (uint16_t): Red for SolidColor pattern (0-65535).
- * - `SolidColorG` (uint16_t): Green for SolidColor pattern.
- * - `SolidColorB` (uint16_t): Blue for SolidColor pattern.
+ * - `SolidColor` (Color): Fill color for SolidColor pattern (default: black).
  * - `Motion` (double): Pattern motion speed (default: 0.0).
  * - `StartTimecode` (String): Starting timecode (default: "00:00:00:00").
  * - `DropFrame` (bool): Enable drop-frame timecode.

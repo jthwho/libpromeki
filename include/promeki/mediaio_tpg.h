@@ -44,9 +44,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | ConfigVideoWidth | int | 1920 | Frame width. |
  * | ConfigVideoHeight | int | 1080 | Frame height. |
  * | ConfigVideoPixelFormat | PixelDesc | RGB8_sRGB | Pixel description. |
- * | ConfigVideoSolidColorR | uint16_t | 0 | Red for SolidColor (0-65535). |
- * | ConfigVideoSolidColorG | uint16_t | 0 | Green for SolidColor. |
- * | ConfigVideoSolidColorB | uint16_t | 0 | Blue for SolidColor. |
+ * | ConfigVideoSolidColor | Color | Black | Fill color for SolidColor pattern. |
  * | ConfigVideoMotion | double | 0.0 | Motion speed. |
  *
  * @par Config keys — Audio (omit ConfigAudioEnabled or set false to disable)
@@ -111,9 +109,7 @@ class MediaIO_TPG : public MediaIO {
                 static const ConfigID ConfigVideoWidth;          ///< @brief Frame width (int).
                 static const ConfigID ConfigVideoHeight;         ///< @brief Frame height (int).
                 static const ConfigID ConfigVideoPixelFormat;    ///< @brief Pixel format (PixelDesc).
-                static const ConfigID ConfigVideoSolidColorR;    ///< @brief Solid color red (uint16_t).
-                static const ConfigID ConfigVideoSolidColorG;    ///< @brief Solid color green (uint16_t).
-                static const ConfigID ConfigVideoSolidColorB;    ///< @brief Solid color blue (uint16_t).
+                static const ConfigID ConfigVideoSolidColor;     ///< @brief Fill color for SolidColor pattern (Color).
                 static const ConfigID ConfigVideoMotion;         ///< @brief Motion speed (double).
 
                 // Audio

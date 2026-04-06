@@ -18,6 +18,7 @@
 #include <promeki/pixeldesc.h>
 #include <promeki/ltcdecoder.h>
 #include <promeki/audiolevel.h>
+#include <promeki/color.h>
 
 using namespace promeki;
 
@@ -533,9 +534,7 @@ TEST_CASE("TestPatternNode_SolidColor") {
 
         MediaNodeConfig cfg = makeTestConfig();
         cfg.set("Pattern", "solidcolor");
-        cfg.set("SolidColorR", uint16_t(65535));
-        cfg.set("SolidColorG", uint16_t(0));
-        cfg.set("SolidColorB", uint16_t(0));
+        cfg.set("SolidColor", Color::Red);
         cfg.set("AudioEnabled", false);
         src->build(cfg);
 
