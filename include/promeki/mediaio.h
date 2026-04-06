@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <functional>
 #include <promeki/namespace.h>
 #include <promeki/objectbase.h>
@@ -15,8 +16,10 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/frame.h>
-#include <promeki/videodesc.h>
+#include <promeki/mediadesc.h>
+#include <promeki/audiodesc.h>
 #include <promeki/metadata.h>
+#include <promeki/framerate.h>
 #include <promeki/variantdatabase.h>
 
 /**
@@ -33,6 +36,8 @@
                 MediaIO::registerFormat(ClassName::formatDesc());
 
 PROMEKI_NAMESPACE_BEGIN
+
+class IODevice;
 
 /**
  * @brief Abstract base class for media I/O backends.
@@ -52,6 +57,39 @@ PROMEKI_NAMESPACE_BEGIN
  * it override canSeek() and seekToFrame().
  *
  * @par Lifecycle
+ *
+ * The base class centralizes open/close bookkeeping.  open() checks
+ * state, calls onOpen(), and sets the mode on success.  close() calls
+ * onClose() and resets the mode.  Backends override onOpen() and
+ * onClose() instead of open()/close().
+ *
+ * Each backend destructor must call close() if still open, because
+ * by the time ~MediaIO() runs the derived members are already
+ * destroyed.  The base destructor asserts !isOpen() in debug builds
+ * to catch missing cleanup.
+ *
+ * @par Step control
+ *
+ * The step property (default 1) controls how readFrame() advances
+ * after each read.  Set to -1 for reverse, 2 for 2x forward, 0 to
+ * re-read the same position indefinitely.  Backends override
+ * setStep() to react to direction or speed changes (e.g. switching
+ * a hardware device to reverse mode, or adjusting cache prefetch
+ * direction).
+ *
+ * @par Frame count semantics
+ *
+ * frameCount() returns:
+ * - A positive value for the total number of frames available (readers)
+ *   or frames written so far (writers).
+ * - 0 for zero frames.
+ * - FrameCountUnknown (-1) when the length is not yet known.
+ * - FrameCountInfinite (-2) for unbounded sources (generators, live).
+ * - FrameCountError (-3) when the count is unavailable due to error.
+ *
+ * currentFrame() returns the number of frames read or written so far,
+ * starting at 0.  seekToFrame() sets it to the target position.
+ *
  * @code
  * MediaIO *io = MediaIO::createForFileRead("clip.mxf");
  * if(io) {
@@ -65,14 +103,6 @@ PROMEKI_NAMESPACE_BEGIN
  *         }
  *         delete io;
  * }
- * @endcode
- *
- * @par Config-driven creation
- * @code
- * MediaIO::Config cfg;
- * cfg.set(MediaIO::ConfigType, "MXF");
- * cfg.set(MediaIO::ConfigFilename, "/path/to/clip.mxf");
- * MediaIO *io = MediaIO::create(cfg);
  * @endcode
  */
 class MediaIO : public ObjectBase {
@@ -90,6 +120,15 @@ class MediaIO : public ObjectBase {
                         Reader,      ///< @brief Open for reading.
                         Writer       ///< @brief Open for writing.
                 };
+
+                /** @brief Frame count is not yet known (e.g. file not fully scanned). */
+                static constexpr int64_t FrameCountUnknown  = -1;
+
+                /** @brief Source is unbounded (generators, live devices). */
+                static constexpr int64_t FrameCountInfinite = -2;
+
+                /** @brief Frame count unavailable due to error. */
+                static constexpr int64_t FrameCountError    = -3;
 
                 /** @brief Config ID for the filename. */
                 static const ConfigID ConfigFilename;
@@ -114,6 +153,21 @@ class MediaIO : public ObjectBase {
                         std::function<MediaIO *(ObjectBase *)> create;
                         /** @brief Returns the default configuration for this backend. */
                         std::function<Config ()> defaultConfig;
+                        /**
+                         * @brief Optional content probe via IODevice.
+                         *
+                         * When provided, the factory calls this to verify that
+                         * a device's content can be handled by this backend.
+                         * The device is seeked to position 0 before each call.
+                         * Used by createForFileRead() as a content-based
+                         * fallback when no extension matches.  May be null for
+                         * backends that cannot probe (e.g. headerless formats,
+                         * generators).
+                         *
+                         * @param device An open, seekable IODevice positioned at 0.
+                         * @return true if this backend can handle the content.
+                         */
+                        std::function<bool(IODevice *device)> canHandleDevice;
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -159,14 +213,6 @@ class MediaIO : public ObjectBase {
                  * @param config The configuration describing the desired backend and its options.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr if no matching backend was found.
-                 *
-                 * @par Example
-                 * @code
-                 * MediaIO::Config cfg;
-                 * cfg.set(MediaIO::ConfigType, "DPXSequence");
-                 * cfg.set(MediaIO::ConfigFilename, "/path/to/frame.%06d.dpx");
-                 * MediaIO *io = MediaIO::create(cfg);
-                 * @endcode
                  */
                 static MediaIO *create(const Config &config, ObjectBase *parent = nullptr);
 
@@ -180,15 +226,6 @@ class MediaIO : public ObjectBase {
                  * @param filename The path to the media file.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
-                 *
-                 * @par Example
-                 * @code
-                 * MediaIO *io = MediaIO::createForFileRead("clip.mxf");
-                 * if(io) {
-                 *         io->open(MediaIO::Reader);
-                 *         // ...
-                 * }
-                 * @endcode
                  */
                 static MediaIO *createForFileRead(const String &filename, ObjectBase *parent = nullptr);
 
@@ -202,16 +239,6 @@ class MediaIO : public ObjectBase {
                  * @param filename The path to the media file.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
-                 *
-                 * @par Example
-                 * @code
-                 * MediaIO *io = MediaIO::createForFileWrite("output.mxf");
-                 * if(io) {
-                 *         io->setVideoDesc(myDesc);
-                 *         io->open(MediaIO::Writer);
-                 *         // ...
-                 * }
-                 * @endcode
                  */
                 static MediaIO *createForFileWrite(const String &filename, ObjectBase *parent = nullptr);
 
@@ -221,8 +248,13 @@ class MediaIO : public ObjectBase {
                  */
                 MediaIO(ObjectBase *parent = nullptr) : ObjectBase(parent) {}
 
-                /** @brief Virtual destructor. */
-                virtual ~MediaIO();
+                /**
+                 * @brief Destructor.  Asserts that the resource is closed.
+                 *
+                 * Backends must call close() in their own destructor since
+                 * derived members are destroyed before ~MediaIO() runs.
+                 */
+                ~MediaIO() override;
 
                 /**
                  * @brief Returns the configuration used to create this instance.
@@ -251,40 +283,77 @@ class MediaIO : public ObjectBase {
                 /**
                  * @brief Opens the media resource.
                  *
-                 * For readers, media description is available after a successful
-                 * open.  For writers, setVideoDesc() and setMetadata() should be
-                 * called before open().
+                 * Checks lifecycle state, delegates to onOpen(), and sets the
+                 * mode on success.  Do not override — implement onOpen() instead.
                  *
                  * @param mode Reader or Writer.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error open(Mode mode);
+                Error open(Mode mode);
 
                 /**
                  * @brief Closes the media resource.
+                 *
+                 * Delegates to onClose() and resets the mode.  Do not override —
+                 * implement onClose() instead.
+                 *
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error close();
+                Error close();
+
+                // ---- Descriptors ----
 
                 /**
-                 * @brief Returns the video description of the media.
+                 * @brief Returns the media description.
                  *
-                 * Valid after open() for readers.  Returns an invalid VideoDesc
+                 * Valid after open() for readers.  Returns an invalid MediaDesc
                  * by default.
                  *
-                 * @return The video description.
+                 * @return The media description.
                  */
-                virtual VideoDesc videoDesc() const;
+                virtual MediaDesc mediaDesc() const;
 
                 /**
-                 * @brief Sets the video description for writing.
+                 * @brief Sets the media description for writing.
                  *
                  * Call before open() for writers.
                  *
-                 * @param desc The video description.
+                 * @param desc The media description.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error setVideoDesc(const VideoDesc &desc);
+                virtual Error setMediaDesc(const MediaDesc &desc);
+
+                /**
+                 * @brief Returns the frame rate.
+                 *
+                 * Defaults to mediaDesc().frameRate().  Override for backends
+                 * that know their frame rate independent of the media descriptor.
+                 *
+                 * @return The frame rate.
+                 */
+                virtual FrameRate frameRate() const;
+
+                /**
+                 * @brief Returns the primary audio description.
+                 *
+                 * Returns the first entry from mediaDesc().audioList(), or an
+                 * invalid AudioDesc if none.  Override for backends that manage
+                 * audio description independently.
+                 *
+                 * @return The primary audio description.
+                 */
+                virtual AudioDesc audioDesc() const;
+
+                /**
+                 * @brief Sets the audio description for writing.
+                 *
+                 * Convenience for setting the primary audio stream.  The default
+                 * implementation is a no-op returning NotSupported.
+                 *
+                 * @param desc The audio description.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                virtual Error setAudioDesc(const AudioDesc &desc);
 
                 /**
                  * @brief Returns the container-level metadata.
@@ -306,25 +375,33 @@ class MediaIO : public ObjectBase {
                  */
                 virtual Error setMetadata(const Metadata &meta);
 
+                // ---- Frame I/O ----
+
                 /**
                  * @brief Reads the next synchronized frame.
                  *
-                 * Fills @p frame with all video and audio content for the
-                 * current position.  Returns Error::EndOfFile when no more
-                 * frames are available.
+                 * Checks that the resource is open in Reader mode, then
+                 * delegates to onReadFrame().  Do not override — implement
+                 * onReadFrame() instead.
                  *
                  * @param frame The Frame to fill.
                  * @return Error::Ok on success, Error::EndOfFile at end, or an error.
                  */
-                virtual Error readFrame(Frame &frame);
+                Error readFrame(Frame &frame);
 
                 /**
                  * @brief Writes a frame to the media resource.
                  *
+                 * Checks that the resource is open in Writer mode, then
+                 * delegates to onWriteFrame().  Do not override — implement
+                 * onWriteFrame() instead.
+                 *
                  * @param frame The Frame containing video and audio to write.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error writeFrame(const Frame &frame);
+                Error writeFrame(const Frame &frame);
+
+                // ---- Navigation ----
 
                 /**
                  * @brief Returns true if this backend supports seeking.
@@ -340,22 +417,61 @@ class MediaIO : public ObjectBase {
                  * @param frameNumber The zero-based frame number to seek to.
                  * @return Error::Ok on success, or Error::IllegalSeek if not supported.
                  */
-                virtual Error seekToFrame(uint64_t frameNumber);
+                virtual Error seekToFrame(int64_t frameNumber);
 
                 /**
-                 * @brief Returns the total number of frames in the media.
+                 * @brief Returns the total number of frames.
                  *
-                 * May return 0 for live or unknown-length sources.
+                 * For readers, returns the total frames available.
+                 * For writers, returns the number of frames written so far.
+                 * Returns a negative sentinel (FrameCountUnknown, FrameCountInfinite,
+                 * FrameCountError) for special cases.  0 means zero frames.
                  *
-                 * @return The frame count.
+                 * @return The frame count or a negative sentinel.
                  */
-                virtual uint64_t frameCount() const;
+                virtual int64_t frameCount() const;
 
                 /**
-                 * @brief Returns the current frame position.
-                 * @return The zero-based frame number of the next frame to be read or written.
+                 * @brief Returns the number of frames read or written so far.
+                 *
+                 * Starts at 0, incremented after each successful readFrame()
+                 * or writeFrame().  seekToFrame() sets it to the target.
+                 *
+                 * @return The frame counter.
                  */
                 virtual uint64_t currentFrame() const;
+
+                /**
+                 * @brief Returns the current step increment.
+                 *
+                 * Controls how readFrame() advances the position after each
+                 * read.  Defaults to 1 (forward playback).
+                 *
+                 * @return The step value.
+                 */
+                int step() const {
+                        return _step;
+                }
+
+                /**
+                 * @brief Sets the step increment.
+                 *
+                 * Controls how readFrame() advances the position.  Common values:
+                 * - 1: normal forward playback (default).
+                 * - -1: reverse playback.
+                 * - 2: 2x fast-forward.
+                 * - 0: re-read the same frame (hold).
+                 *
+                 * Override this to react to direction or speed changes
+                 * (e.g. switching a hardware device to reverse mode, or
+                 * adjusting cache prefetch direction).
+                 *
+                 * @param val The new step value.
+                 */
+                virtual void setStep(int val) {
+                        _step = val;
+                        return;
+                }
 
                 /** @brief Emitted when an error occurs. @signal */
                 PROMEKI_SIGNAL(errorOccurred, Error);
@@ -374,19 +490,52 @@ class MediaIO : public ObjectBase {
 
         protected:
                 /**
-                 * @brief Sets the open mode.
+                 * @brief Backend-specific open implementation.
                  *
-                 * Call from subclass open() and close() implementations.
-                 * @param mode The mode to set.
+                 * Called by open() after lifecycle checks pass.  The mode
+                 * is already validated (not NotOpen, not already open).
+                 * Return Error::Ok on success.
+                 *
+                 * @param mode Reader or Writer.
+                 * @return Error::Ok on success, or an error on failure.
                  */
-                void setMode(Mode mode) {
-                        _mode = mode;
-                        return;
-                }
+                virtual Error onOpen(Mode mode);
+
+                /**
+                 * @brief Backend-specific close implementation.
+                 *
+                 * Called by close() before the mode is reset.
+                 *
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                virtual Error onClose();
+
+                /**
+                 * @brief Backend-specific read implementation.
+                 *
+                 * Called by readFrame() after verifying the resource is open
+                 * in Reader mode.
+                 *
+                 * @param frame The Frame to fill.
+                 * @return Error::Ok on success, Error::EndOfFile at end, or an error.
+                 */
+                virtual Error onReadFrame(Frame &frame);
+
+                /**
+                 * @brief Backend-specific write implementation.
+                 *
+                 * Called by writeFrame() after verifying the resource is open
+                 * in Writer mode.
+                 *
+                 * @param frame The Frame containing video and audio to write.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                virtual Error onWriteFrame(const Frame &frame);
 
         private:
                 Config          _config;
                 Mode            _mode = NotOpen;
+                int             _step = 1;
 };
 
 PROMEKI_NAMESPACE_END

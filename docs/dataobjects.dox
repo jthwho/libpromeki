@@ -63,7 +63,7 @@
  * | @ref Buffer | Aligned memory buffer |
  * | @ref AudioDesc | Audio format descriptor |
  * | @ref ImageDesc | Image format descriptor |
- * | @ref VideoDesc | Video format descriptor |
+ * | @ref MediaDesc | Media format descriptor |
  * | @ref Metadata | Typed key-value metadata |
  * | @ref JsonObject | JSON object wrapper |
  * | @ref JsonArray | JSON array wrapper |

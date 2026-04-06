@@ -21,7 +21,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * ImageDesc encapsulates image dimensions (Size2Du32), pixel description,
  * line padding and alignment, interlace mode, and associated metadata.
- * It is used by Image and VideoDesc to define the properties of image data.
+ * It is used by Image and MediaDesc to define the properties of image data.
  *
  * @par Example
  * @code

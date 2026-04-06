@@ -89,11 +89,11 @@ MediaIO::FormatDesc MediaIO_TPG::formatDesc() {
 }
 
 MediaIO_TPG::~MediaIO_TPG() {
+        if(isOpen()) close();
         delete _audioPattern;
 }
 
-Error MediaIO_TPG::open(Mode mode) {
-        if(isOpen()) return Error::AlreadyOpen;
+Error MediaIO_TPG::onOpen(Mode mode) {
         if(mode != Reader) return Error::NotSupported;
 
         const Config &cfg = config();
@@ -105,8 +105,8 @@ Error MediaIO_TPG::open(Mode mode) {
                 return Error::InvalidArgument;
         }
 
-        _videoDesc = VideoDesc();
-        _videoDesc.setFrameRate(fps);
+        _mediaDesc = MediaDesc();
+        _mediaDesc.setFrameRate(fps);
 
         // -- Video --
         _videoEnabled = cfg.getAs<bool>(ConfigVideoEnabled, false);
@@ -128,7 +128,7 @@ Error MediaIO_TPG::open(Mode mode) {
                 }
 
                 _imageDesc = ImageDesc(width, height, pd.id());
-                _videoDesc.imageList().pushToBack(_imageDesc);
+                _mediaDesc.imageList().pushToBack(_imageDesc);
 
                 Color solidColor = cfg.getAs<Color>(ConfigVideoSolidColor, Color::Black);
                 _videoPattern.setSolidColor(solidColor);
@@ -155,7 +155,7 @@ Error MediaIO_TPG::open(Mode mode) {
                         return Error::InvalidArgument;
                 }
 
-                _videoDesc.audioList().pushToBack(_audioDesc);
+                _mediaDesc.audioList().pushToBack(_audioDesc);
 
                 double fpsVal = fps.toDouble();
                 _samplesPerFrame = (fpsVal > 0.0)
@@ -220,18 +220,15 @@ Error MediaIO_TPG::open(Mode mode) {
         }
 
         _frameCount = 0;
-        setMode(Reader);
         return Error::Ok;
 }
 
-Error MediaIO_TPG::close() {
-        if(!isOpen()) return Error::NotOpen;
-
+Error MediaIO_TPG::onClose() {
         delete _audioPattern;
         _audioPattern = nullptr;
         _cachedImage = Image();
         _imageDesc = ImageDesc();
-        _videoDesc = VideoDesc();
+        _mediaDesc = MediaDesc();
         _audioDesc = AudioDesc();
         _tcGen.reset();
         _frameCount = 0;
@@ -239,28 +236,44 @@ Error MediaIO_TPG::close() {
         _videoEnabled = false;
         _audioEnabled = false;
         _timecodeEnabled = false;
-
-        setMode(NotOpen);
         return Error::Ok;
 }
 
-VideoDesc MediaIO_TPG::videoDesc() const {
-        return _videoDesc;
+void MediaIO_TPG::setStep(int val) {
+        MediaIO::setStep(val);
+        if(_timecodeEnabled) {
+                if(val > 0)      _tcGen.setRunMode(TimecodeGenerator::Forward);
+                else if(val < 0) _tcGen.setRunMode(TimecodeGenerator::Reverse);
+                else             _tcGen.setRunMode(TimecodeGenerator::Still);
+        }
+        return;
 }
 
-Error MediaIO_TPG::readFrame(Frame &frame) {
-        if(!isOpen()) return Error::NotOpen;
+MediaDesc MediaIO_TPG::mediaDesc() const {
+        return _mediaDesc;
+}
 
-        // Advance timecode if enabled
+Error MediaIO_TPG::onReadFrame(Frame &frame) {
+        int s = step();
+
+        // Advance timecode by |step| frames (or hold at step=0).
+        // The first advance() returns the TC for the current frame;
+        // subsequent advances skip ahead for the next readFrame.
         Timecode tc;
         if(_timecodeEnabled) {
-                tc = _tcGen.advance();
+                int advances = (s >= 0) ? s : -s;
+                if(advances == 0) {
+                        tc = _tcGen.timecode();
+                } else {
+                        tc = _tcGen.advance();
+                        for(int i = 1; i < advances; i++) _tcGen.advance();
+                }
         }
 
         // Video
         if(_videoEnabled) {
                 Image img;
-                if(_cachedImage.isValid()) {
+                if(_cachedImage.isValid() && s == 0) {
                         img = _cachedImage;
                 } else {
                         img = _videoPattern.create(_imageDesc, _motionOffset);
@@ -286,11 +299,11 @@ Error MediaIO_TPG::readFrame(Frame &frame) {
                 frame.metadata().set(Metadata::Timecode, tc);
         }
 
-        // Advance motion
-        if(_videoEnabled && _motion != 0.0) {
-                double fpsVal = _videoDesc.frameRate().toDouble();
+        // Advance motion by step (negative step reverses direction)
+        if(_videoEnabled && _motion != 0.0 && s != 0) {
+                double fpsVal = _mediaDesc.frameRate().toDouble();
                 if(fpsVal > 0.0) {
-                        _motionOffset += _motion * (double)_imageDesc.size().width() / fpsVal;
+                        _motionOffset += _motion * (double)s * (double)_imageDesc.size().width() / fpsVal;
                         double period = (double)_imageDesc.size().width();
                         if(period > 0.0) {
                                 while(_motionOffset >= period) _motionOffset -= period;
@@ -305,6 +318,10 @@ Error MediaIO_TPG::readFrame(Frame &frame) {
 
 uint64_t MediaIO_TPG::currentFrame() const {
         return _frameCount;
+}
+
+int64_t MediaIO_TPG::frameCount() const {
+        return FrameCountInfinite;
 }
 
 PROMEKI_NAMESPACE_END

@@ -143,10 +143,12 @@ class MediaIO_TPG : public MediaIO {
                 /** @brief Destructor. */
                 ~MediaIO_TPG() override;
 
-                Error open(Mode mode) override;
-                Error close() override;
-                VideoDesc videoDesc() const override;
-                Error readFrame(Frame &frame) override;
+                Error onOpen(Mode mode) override;
+                Error onClose() override;
+                void setStep(int val) override;
+                MediaDesc mediaDesc() const override;
+                Error onReadFrame(Frame &frame) override;
+                int64_t frameCount() const override;
                 uint64_t currentFrame() const override;
 
         private:
@@ -169,7 +171,7 @@ class MediaIO_TPG : public MediaIO {
                 bool                    _timecodeEnabled = false;
 
                 // General state
-                VideoDesc               _videoDesc;
+                MediaDesc               _mediaDesc;
                 uint64_t                _frameCount = 0;
 };
 

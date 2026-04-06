@@ -6,6 +6,7 @@
  */
 
 #include <promeki/mediaio.h>
+#include <promeki/file.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -38,10 +39,15 @@ static const MediaIO::FormatDesc *findFormatByName(const String &name) {
         return nullptr;
 }
 
-static const MediaIO::FormatDesc *findFormatByExtension(const String &filename) {
+static String extractExtension(const String &filename) {
         size_t dot = filename.rfind('.');
-        if(dot == String::npos || dot + 1 >= filename.size()) return nullptr;
-        String ext = filename.mid(dot + 1).toLower();
+        if(dot == String::npos || dot + 1 >= filename.size()) return String();
+        return filename.mid(dot + 1).toLower();
+}
+
+static const MediaIO::FormatDesc *findFormatByExtension(const String &filename) {
+        String ext = extractExtension(filename);
+        if(ext.isEmpty()) return nullptr;
         const MediaIO::FormatDescList &list = formatRegistry();
         for(const auto &desc : list) {
                 for(const auto &e : desc.extensions) {
@@ -49,6 +55,37 @@ static const MediaIO::FormatDesc *findFormatByExtension(const String &filename) 
                 }
         }
         return nullptr;
+}
+
+static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) {
+        String ext = extractExtension(filename);
+        const MediaIO::FormatDescList &list = formatRegistry();
+
+        // Pass 1: extension match (fast path, always trusts the extension)
+        if(!ext.isEmpty()) {
+                for(const auto &desc : list) {
+                        if(!desc.canRead) continue;
+                        for(const auto &e : desc.extensions) {
+                                if(ext == e) return &desc;
+                        }
+                }
+        }
+
+        // Pass 2: content-based probe via IODevice (for missing/wrong extensions)
+        File probeFile(filename);
+        if(probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
+        const MediaIO::FormatDesc *result = nullptr;
+        for(const auto &desc : list) {
+                if(!desc.canRead) continue;
+                if(!desc.canHandleDevice) continue;
+                probeFile.seek(0);
+                if(desc.canHandleDevice(&probeFile)) {
+                        result = &desc;
+                        break;
+                }
+        }
+        probeFile.close();
+        return result;
 }
 
 MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
@@ -97,7 +134,7 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
 }
 
 MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) {
-        const FormatDesc *desc = findFormatByExtension(filename);
+        const FormatDesc *desc = findFormatForFileRead(filename);
         if(desc == nullptr) {
                 promekiWarn("MediaIO::createForFileRead: no backend for '%s'", filename.cstr());
                 return nullptr;
@@ -133,21 +170,51 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
 }
 
 MediaIO::~MediaIO() {
+        assert(!isOpen() && "MediaIO destroyed while still open — backend must call close() in its destructor");
 }
 
 Error MediaIO::open(Mode mode) {
-        return Error::NotImplemented;
+        if(isOpen()) return Error::AlreadyOpen;
+        if(mode == NotOpen) return Error::InvalidArgument;
+        Error err = onOpen(mode);
+        if(err.isOk()) _mode = mode;
+        return err;
 }
 
 Error MediaIO::close() {
+        if(!isOpen()) return Error::NotOpen;
+        Error err = onClose();
+        _mode = NotOpen;
+        return err;
+}
+
+Error MediaIO::onOpen(Mode mode) {
+        return Error::NotImplemented;
+}
+
+Error MediaIO::onClose() {
         return Error::Ok;
 }
 
-VideoDesc MediaIO::videoDesc() const {
-        return VideoDesc();
+MediaDesc MediaIO::mediaDesc() const {
+        return MediaDesc();
 }
 
-Error MediaIO::setVideoDesc(const VideoDesc &desc) {
+Error MediaIO::setMediaDesc(const MediaDesc &desc) {
+        return Error::NotSupported;
+}
+
+FrameRate MediaIO::frameRate() const {
+        return mediaDesc().frameRate();
+}
+
+AudioDesc MediaIO::audioDesc() const {
+        MediaDesc md = mediaDesc();
+        if(md.audioList().isEmpty()) return AudioDesc();
+        return md.audioList()[0];
+}
+
+Error MediaIO::setAudioDesc(const AudioDesc &desc) {
         return Error::NotSupported;
 }
 
@@ -160,10 +227,22 @@ Error MediaIO::setMetadata(const Metadata &meta) {
 }
 
 Error MediaIO::readFrame(Frame &frame) {
-        return Error::NotSupported;
+        if(!isOpen()) return Error::NotOpen;
+        if(_mode != Reader) return Error::NotSupported;
+        return onReadFrame(frame);
 }
 
 Error MediaIO::writeFrame(const Frame &frame) {
+        if(!isOpen()) return Error::NotOpen;
+        if(_mode != Writer) return Error::NotSupported;
+        return onWriteFrame(frame);
+}
+
+Error MediaIO::onReadFrame(Frame &frame) {
+        return Error::NotSupported;
+}
+
+Error MediaIO::onWriteFrame(const Frame &frame) {
         return Error::NotSupported;
 }
 
@@ -171,11 +250,11 @@ bool MediaIO::canSeek() const {
         return false;
 }
 
-Error MediaIO::seekToFrame(uint64_t frameNumber) {
+Error MediaIO::seekToFrame(int64_t frameNumber) {
         return Error::IllegalSeek;
 }
 
-uint64_t MediaIO::frameCount() const {
+int64_t MediaIO::frameCount() const {
         return 0;
 }
 

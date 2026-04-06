@@ -7,7 +7,7 @@
  */
 
 #include <doctest/doctest.h>
-#include <promeki/videodesc.h>
+#include <promeki/mediadesc.h>
 
 using namespace promeki;
 
@@ -15,8 +15,8 @@ using namespace promeki;
 // Default construction
 // ============================================================================
 
-TEST_CASE("VideoDesc_Default") {
-    VideoDesc vd;
+TEST_CASE("MediaDesc_Default") {
+    MediaDesc vd;
     CHECK(!vd.isValid());
 }
 
@@ -24,8 +24,8 @@ TEST_CASE("VideoDesc_Default") {
 // Set frame rate
 // ============================================================================
 
-TEST_CASE("VideoDesc_SetFrameRate") {
-    VideoDesc vd;
+TEST_CASE("MediaDesc_SetFrameRate") {
+    MediaDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_2997));
     CHECK(vd.frameRate().isValid());
     CHECK(vd.frameRate().numerator() == 30000);
@@ -36,8 +36,8 @@ TEST_CASE("VideoDesc_SetFrameRate") {
 // Valid with image
 // ============================================================================
 
-TEST_CASE("VideoDesc_ValidWithImage") {
-    VideoDesc vd;
+TEST_CASE("MediaDesc_ValidWithImage") {
+    MediaDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_24));
     CHECK(!vd.isValid());
 
@@ -50,8 +50,8 @@ TEST_CASE("VideoDesc_ValidWithImage") {
 // Valid with audio
 // ============================================================================
 
-TEST_CASE("VideoDesc_ValidWithAudio") {
-    VideoDesc vd;
+TEST_CASE("MediaDesc_ValidWithAudio") {
+    MediaDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_25));
     vd.audioList().pushToBack(AudioDesc(48000.0f, 2));
     CHECK(vd.isValid());
@@ -62,12 +62,12 @@ TEST_CASE("VideoDesc_ValidWithAudio") {
 // Copy semantics (plain value, no internal COW)
 // ============================================================================
 
-TEST_CASE("VideoDesc_CopyIsIndependent") {
-    VideoDesc v1;
+TEST_CASE("MediaDesc_CopyIsIndependent") {
+    MediaDesc v1;
     v1.setFrameRate(FrameRate(FrameRate::FPS_24));
     v1.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
 
-    VideoDesc v2 = v1;
+    MediaDesc v2 = v1;
 
     v2.setFrameRate(FrameRate(FrameRate::FPS_30));
     CHECK(v1.frameRate().numerator() == 24);
@@ -78,8 +78,8 @@ TEST_CASE("VideoDesc_CopyIsIndependent") {
 // Metadata
 // ============================================================================
 
-TEST_CASE("VideoDesc_Metadata") {
-    VideoDesc vd;
+TEST_CASE("MediaDesc_Metadata") {
+    MediaDesc vd;
     CHECK(vd.metadata().isEmpty());
     vd.metadata().set(Metadata::Title, String("Test Video"));
     CHECK(!vd.metadata().isEmpty());
@@ -89,8 +89,8 @@ TEST_CASE("VideoDesc_Metadata") {
 // Multiple images and audio
 // ============================================================================
 
-TEST_CASE("VideoDesc_MultipleStreams") {
-    VideoDesc vd;
+TEST_CASE("MediaDesc_MultipleStreams") {
+    MediaDesc vd;
     vd.setFrameRate(FrameRate(FrameRate::FPS_2398));
     vd.imageList().pushToBack(ImageDesc(1920, 1080, PixelDesc::RGBA8_sRGB));
     vd.imageList().pushToBack(ImageDesc(3840, 2160, PixelDesc::RGB8_sRGB));

@@ -564,6 +564,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
+        include/promeki/mediaio_imagefile.h
         include/promeki/mediaio_tpg.h
         include/promeki/medianode.h
         include/promeki/medianodeconfig.h
@@ -574,6 +575,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/paintengine.h
         include/promeki/testpatternnode.h
         include/promeki/timecodeoverlaynode.h
+        include/promeki/mediadesc.h
         include/promeki/videodesc.h
         include/promeki/videotestpattern.h
     )
@@ -605,6 +607,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
+        src/proav/mediaio_imagefile.cpp
         src/proav/mediaio_tpg.cpp
         src/proav/medianode.cpp
         src/proav/medianodeconfig.cpp
@@ -616,6 +619,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/paintengine_interleaved.cpp
         src/proav/testpatternnode.cpp
         src/proav/timecodeoverlaynode.cpp
+        src/proav/mediadesc.cpp
         src/proav/videodesc.cpp
         src/proav/videotestpattern.cpp
     )
@@ -648,7 +652,11 @@ if(PROMEKI_ENABLE_PROAV)
         )
     endif()
     if(PROMEKI_ENABLE_AUDIO)
-        list(APPEND PROMEKI_SOURCES src/proav/audiofile_libsndfile.cpp)
+        list(APPEND PROMEKI_HEADERS include/promeki/mediaio_audiofile.h)
+        list(APPEND PROMEKI_SOURCES
+            src/proav/audiofile_libsndfile.cpp
+            src/proav/mediaio_audiofile.cpp
+        )
     endif()
     if(PROMEKI_ENABLE_CSC)
         list(APPEND PROMEKI_HEADERS

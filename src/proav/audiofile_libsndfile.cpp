@@ -292,6 +292,13 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         return _info.frames;
                 }
 
+                Error seekToSample(size_t sample) override {
+                        if(_file == nullptr) return Error::NotOpen;
+                        sf_count_t ret = sf_seek(_file, static_cast<sf_count_t>(sample), SEEK_SET);
+                        if(ret < 0) return Error::IllegalSeek;
+                        return Error::Ok;
+                }
+
                 Error open() override {
                         if(_file != nullptr) {
                                 promekiWarn("open: Attempt to open again");

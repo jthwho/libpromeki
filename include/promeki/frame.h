@@ -27,8 +27,8 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * VideoDesc vdesc;
- * Frame::Ptr frame = Frame::Ptr::create(vdesc);
+ * MediaDesc mdesc;
+ * Frame::Ptr frame = Frame::Ptr::create(mdesc);
  * frame->setTimecode(Timecode(Timecode::NDF24, 1, 0, 0, 0));
  * Image img = frame->image(0);
  * @endcode
