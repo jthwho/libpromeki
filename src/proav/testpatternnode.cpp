@@ -29,8 +29,7 @@ TestPatternNode::~TestPatternNode() {
 MediaNodeConfig TestPatternNode::defaultConfig() const {
         MediaNodeConfig cfg("TestPatternNode", "");
         cfg.set("Pattern", "colorbars");
-        cfg.set("Width", uint32_t(1920));
-        cfg.set("Height", uint32_t(1080));
+        cfg.set("Size", Size2Du32(1920, 1080));
         cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB));
         cfg.set("FrameRate", FrameRate(FrameRate::FPS_2997));
         cfg.set("Motion", 0.0);
@@ -71,10 +70,8 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         String patStr = config.get("Pattern", "colorbars").get<String>();
         tpgCfg.set(MediaIOTask_TPG::ConfigVideoPattern, patStr);
 
-        uint32_t width = config.get("Width", uint32_t(0)).get<uint32_t>();
-        uint32_t height = config.get("Height", uint32_t(0)).get<uint32_t>();
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoWidth, (int)width);
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoHeight, (int)height);
+        Size2Du32 size = config.get("Size", Size2Du32()).get<Size2Du32>();
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoSize, size);
 
         PixelDesc pd = config.get("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB)).get<PixelDesc>();
         tpgCfg.set(MediaIOTask_TPG::ConfigVideoPixelFormat, pd);

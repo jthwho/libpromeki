@@ -231,6 +231,26 @@ static void kernelAlphaFill(const CSCPipeline::Stage *stage,
         csc::alphaFill(ctx.buffer(3), width, stage->alphaValue, stage->useSimd);
 }
 
+// Broadcast the luma buffer (buffer 0) into buffers 1 and 2 so that
+// downstream stages which operate on all three color components see
+// valid grayscale data in each channel.  Used when converting a mono
+// source to a multi-component destination.
+static void kernelMonoExpand(const CSCPipeline::Stage *stage,
+                             const void *const *srcPlanes,
+                             const size_t *srcStrides,
+                             void *const *dstPlanes,
+                             const size_t *dstStrides,
+                             size_t width, size_t y,
+                             CSCContext &ctx) {
+        (void)stage; (void)srcPlanes; (void)srcStrides;
+        (void)dstPlanes; (void)dstStrides; (void)y;
+        const float *src = ctx.buffer(0);
+        float *g = ctx.buffer(1);
+        float *b = ctx.buffer(2);
+        std::memcpy(g, src, width * sizeof(float));
+        std::memcpy(b, src, width * sizeof(float));
+}
+
 // --- Pipeline compiler ---
 
 // Compute semantic buffer mapping: maps component index to SoA buffer
@@ -584,6 +604,28 @@ void CSCPipeline::compile() {
                 Stage s;
                 buildRangeStage(_srcDesc, s, true);
                 _stages.pushToBack(std::move(s));
+        }
+
+        // --- Stage 3b: Mono expansion ---
+        //
+        // When the source is a single-color-component (mono / grayscale)
+        // format and the destination needs more color components, the
+        // unpack stage leaves buffers 1 and 2 untouched — so without
+        // this stage, later stages (gamut, OETF, range-out, pack) would
+        // read zero/garbage for G and B and produce an all-red image.
+        // Broadcast the normalized luma from buffer[0] into buffers 1
+        // and 2 so every downstream stage sees three identical grays.
+        {
+                int srcCC = static_cast<int>(_srcDesc.pixelFormat().compCount());
+                int srcColorComps = _srcDesc.hasAlpha() ? srcCC - 1 : srcCC;
+                int dstCC = static_cast<int>(_dstDesc.pixelFormat().compCount());
+                int dstColorComps = _dstDesc.hasAlpha() ? dstCC - 1 : dstCC;
+                if(srcColorComps == 1 && dstColorComps >= 3) {
+                        Stage s;
+                        s.type = StageMonoExpand;
+                        s.func = kernelMonoExpand;
+                        _stages.pushToBack(std::move(s));
+                }
         }
 
         // --- Stage 4: YCbCr -> encoded RGB (if source is YCbCr) ---

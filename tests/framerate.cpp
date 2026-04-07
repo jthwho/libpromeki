@@ -250,3 +250,124 @@ TEST_CASE("FrameRate: fromString invalid") {
                 CHECK(e.isError());
         }
 }
+
+// =========================================================================
+// Audio sample cadence (samplesPerFrame)
+//
+// Verifies that fractional NTSC rates produce a per-frame sample count
+// whose cumulative total stays exactly aligned with wall-clock time.
+// =========================================================================
+
+TEST_CASE("FrameRate: samplesPerFrame integer cadences are constant") {
+        struct Case { FrameRate::WellKnownRate rate; int64_t expected; };
+        Case cases[] = {
+                { FrameRate::FPS_24, 2000 },  // 48000 / 24
+                { FrameRate::FPS_25, 1920 },  // 48000 / 25
+                { FrameRate::FPS_30, 1600 },  // 48000 / 30
+                { FrameRate::FPS_50,  960 },  // 48000 / 50
+                { FrameRate::FPS_60,  800 },  // 48000 / 60
+        };
+        for(const auto &c : cases) {
+                FrameRate fps(c.rate);
+                for(int64_t f = 0; f < 32; f++) {
+                        CHECK(fps.samplesPerFrame(48000, f) == (size_t)c.expected);
+                }
+        }
+}
+
+TEST_CASE("FrameRate: samplesPerFrame 23.976 @ 48k is constant 2002") {
+        // 48000 * 1001 / 24000 = 2002 exactly — no cadence needed.
+        FrameRate fps(FrameRate::FPS_2398);
+        for(int64_t f = 0; f < 32; f++) {
+                CHECK(fps.samplesPerFrame(48000, f) == 2002u);
+        }
+}
+
+TEST_CASE("FrameRate: samplesPerFrame 29.97 @ 48k is cadenced and exact") {
+        FrameRate fps(FrameRate::FPS_2997);
+        // Five frames must sum to exactly 8008 (= 48000 * 5 * 1001 / 30000).
+        int64_t sum = 0;
+        for(int64_t f = 0; f < 5; f++) {
+                size_t s = fps.samplesPerFrame(48000, f);
+                CHECK((s == 1601u || s == 1602u));
+                sum += s;
+        }
+        CHECK(sum == 8008);
+
+        // The cadence must be cyclic with period 5: frame N and frame
+        // N+5 emit the same count.
+        for(int64_t f = 0; f < 25; f++) {
+                CHECK(fps.samplesPerFrame(48000, f)
+                      == fps.samplesPerFrame(48000, f + 5));
+        }
+
+        // Every five-frame cycle (the natural cadence period) must sum
+        // to exactly 8008 samples, no matter how far into the run we
+        // are.  Verifying this over 1000 cycles (~166 seconds at
+        // 29.97 fps) demonstrates that the cumulative count never
+        // drifts by even one sample.
+        for(int64_t cycle = 0; cycle < 1000; cycle++) {
+                int64_t cycleSum = 0;
+                for(int i = 0; i < 5; i++) {
+                        cycleSum += (int64_t)fps.samplesPerFrame(
+                                48000, cycle * 5 + i);
+                }
+                CHECK(cycleSum == 8008);
+        }
+
+        // Spot-check the running cumulative against the closed-form
+        // expression.  After N frames the total samples must equal
+        // floor(N * sampleRate * den / num) — i.e. exactly the
+        // wall-clock-aligned integer sample count.
+        const int64_t N = 30000; // = 1000 * 30 = exactly 1001 seconds
+        int64_t cum = 0;
+        for(int64_t f = 0; f < N; f++) {
+                cum += (int64_t)fps.samplesPerFrame(48000, f);
+        }
+        const int64_t expected = (N * INT64_C(48000) * INT64_C(1001)) / INT64_C(30000);
+        CHECK(cum == expected);
+        CHECK(cum == INT64_C(48048000));
+}
+
+TEST_CASE("FrameRate: samplesPerFrame 59.94 @ 48k is cadenced and exact") {
+        FrameRate fps(FrameRate::FPS_5994);
+        // Five frames must sum to exactly 4004 (= 48000 * 5 * 1001 / 60000).
+        int64_t sum = 0;
+        for(int64_t f = 0; f < 5; f++) {
+                size_t s = fps.samplesPerFrame(48000, f);
+                CHECK((s == 800u || s == 801u));
+                sum += s;
+        }
+        CHECK(sum == 4004);
+}
+
+TEST_CASE("FrameRate: samplesPerFrame 119.88 @ 48k is cadenced and exact") {
+        FrameRate fps(FrameRate::FPS_11988);
+        int64_t sum = 0;
+        for(int64_t f = 0; f < 5; f++) {
+                sum += (int64_t)fps.samplesPerFrame(48000, f);
+        }
+        // 48000 * 5 * 1001 / 120000 = 2002
+        CHECK(sum == 2002);
+}
+
+TEST_CASE("FrameRate: samplesPerFrame respects sample rate") {
+        FrameRate fps(FrameRate::FPS_30);
+        CHECK(fps.samplesPerFrame(44100, 0)  ==  1470u);
+        CHECK(fps.samplesPerFrame(48000, 0)  ==  1600u);
+        CHECK(fps.samplesPerFrame(96000, 0)  ==  3200u);
+        CHECK(fps.samplesPerFrame(192000, 0) ==  6400u);
+}
+
+TEST_CASE("FrameRate: samplesPerFrame on invalid frame rate returns 0") {
+        FrameRate fps;
+        CHECK_FALSE(fps.isValid());
+        CHECK(fps.samplesPerFrame(48000, 0) == 0u);
+}
+
+TEST_CASE("FrameRate: samplesPerFrame on bad inputs returns 0") {
+        FrameRate fps(FrameRate::FPS_30);
+        CHECK(fps.samplesPerFrame(0, 0) == 0u);
+        CHECK(fps.samplesPerFrame(-1, 0) == 0u);
+        CHECK(fps.samplesPerFrame(48000, -1) == 0u);
+}

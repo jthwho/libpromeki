@@ -75,11 +75,13 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         // Check some defaults
         CHECK(cfg.getAs<FrameRate>(MediaIOTask_TPG::ConfigFrameRate).isValid());
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigVideoEnabled) == false);
-        CHECK(cfg.getAs<int>(MediaIOTask_TPG::ConfigVideoWidth) == 1920);
-        CHECK(cfg.getAs<int>(MediaIOTask_TPG::ConfigVideoHeight) == 1080);
+        CHECK(cfg.getAs<Size2Du32>(MediaIOTask_TPG::ConfigVideoSize)
+              == Size2Du32(1920, 1080));
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigAudioEnabled) == false);
         CHECK(cfg.getAs<String>(MediaIOTask_TPG::ConfigAudioMode) == "tone");
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeEnabled) == false);
+        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeEnabled) == true);
+        CHECK(cfg.getAs<String>(MediaIOTask_TPG::ConfigTimecodeStart) == "01:00:00:00");
+        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeDropFrame) == false);
 
         // Should be usable for creation after enabling a component
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
@@ -106,8 +108,7 @@ TEST_CASE("MediaIO_TPG_FullGeneration") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 320);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 240);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(320, 240));
         cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "colorbars");
         cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
         cfg.set(MediaIOTask_TPG::ConfigAudioMode, "tone");
@@ -174,8 +175,7 @@ TEST_CASE("MediaIO_TPG_VideoOnly") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_25));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 64);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 64);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(64, 64));
         cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "ramp");
 
         MediaIO *io = MediaIO::create(cfg);
@@ -221,6 +221,65 @@ TEST_CASE("MediaIO_TPG_AudioOnly") {
         CHECK(io->readFrame(frame).isOk());
         CHECK(frame->imageList().isEmpty());
         CHECK(frame->audioList().size() == 1);
+
+        io->close();
+        delete io;
+}
+
+TEST_CASE("MediaIO_TPG_AudioCadence_29_97_48k") {
+        // Verify TPG hands the audio pattern the correct cadenced sample
+        // count for fractional NTSC: 5 frames of 29.97 @ 48 kHz must
+        // sum to exactly 8008 samples and emit only 1601 / 1602 per
+        // frame (no constant-1602 drift).
+        MediaIO::Config cfg;
+        cfg.set(MediaIO::ConfigType, "TPG");
+        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
+        cfg.set(MediaIOTask_TPG::ConfigAudioMode, "silence");
+        cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
+        cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 2);
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        size_t total = 0;
+        for(int i = 0; i < 5; i++) {
+                Frame::Ptr frame;
+                REQUIRE(io->readFrame(frame).isOk());
+                REQUIRE(frame->audioList().size() == 1);
+                size_t s = frame->audioList()[0]->samples();
+                INFO("frame " << i << " samples=" << s);
+                CHECK((s == 1601 || s == 1602));
+                total += s;
+        }
+        CHECK(total == 8008);
+
+        io->close();
+        delete io;
+}
+
+TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
+        // Sanity: integer-cadence rates still emit a constant per-frame
+        // sample count.
+        MediaIO::Config cfg;
+        cfg.set(MediaIO::ConfigType, "TPG");
+        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
+        cfg.set(MediaIOTask_TPG::ConfigAudioMode, "silence");
+        cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
+        cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 2);
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        for(int i = 0; i < 10; i++) {
+                Frame::Ptr frame;
+                REQUIRE(io->readFrame(frame).isOk());
+                REQUIRE(frame->audioList().size() == 1);
+                CHECK(frame->audioList()[0]->samples() == 1600);
+        }
 
         io->close();
         delete io;
@@ -352,8 +411,7 @@ TEST_CASE("MediaIO_TPG_Motion") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 64);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 64);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(64, 64));
         cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "colorbars");
         cfg.set(MediaIOTask_TPG::ConfigVideoMotion, 2.0);
 
@@ -435,6 +493,10 @@ TEST_CASE("MediaIO_ImageFile_DefaultConfig") {
         MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
         CHECK_FALSE(cfg.isEmpty());
         CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "ImageFile");
+        CHECK(cfg.contains(MediaIOTask_ImageFile::ConfigFrameRate));
+        FrameRate defRate = cfg.getAs<FrameRate>(MediaIOTask_ImageFile::ConfigFrameRate);
+        CHECK(defRate == MediaIOTask_ImageFile::DefaultFrameRate);
+        CHECK(defRate.isValid());
 }
 
 static void fillTestPattern(Image &img) {
@@ -445,6 +507,66 @@ static void fillTestPattern(Image &img) {
                         data[i] = static_cast<uint8_t>((i * 7 + p * 37) & 0xFF);
                 }
         }
+}
+
+TEST_CASE("MediaIO_ImageFile_DefaultFrameRateOnRead") {
+        // Default config: reading a still image reports DefaultFrameRate.
+        const char *fn = "/tmp/promeki_test_mediaio_fps_default.tga";
+        {
+                Image src(16, 16, PixelDesc::RGBA8_sRGB);
+                REQUIRE(src.isValid());
+                fillTestPattern(src);
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
+                MediaIO *io = MediaIO::createForFileWrite(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                CHECK(io->writeFrame(wf).isOk());
+                io->close();
+                delete io;
+        }
+        {
+                MediaIO *io = MediaIO::createForFileRead(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Reader).isOk());
+                CHECK(io->frameRate() == MediaIOTask_ImageFile::DefaultFrameRate);
+                CHECK(io->mediaDesc().frameRate() == MediaIOTask_ImageFile::DefaultFrameRate);
+                io->close();
+                delete io;
+        }
+        std::remove(fn);
+}
+
+TEST_CASE("MediaIO_ImageFile_ConfigFrameRateOverride") {
+        // Explicit ConfigFrameRate overrides the default on read.
+        const char *fn = "/tmp/promeki_test_mediaio_fps_override.tga";
+        {
+                Image src(16, 16, PixelDesc::RGBA8_sRGB);
+                REQUIRE(src.isValid());
+                fillTestPattern(src);
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
+                MediaIO *io = MediaIO::createForFileWrite(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                CHECK(io->writeFrame(wf).isOk());
+                io->close();
+                delete io;
+        }
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaIO::ConfigFilename, String(fn));
+                FrameRate wanted(FrameRate::FPS_2997);
+                cfg.set(MediaIOTask_ImageFile::ConfigFrameRate, wanted);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Reader).isOk());
+                CHECK(io->frameRate() == wanted);
+                CHECK(io->mediaDesc().frameRate() == wanted);
+                io->close();
+                delete io;
+        }
+        std::remove(fn);
 }
 
 TEST_CASE("MediaIO_ImageFile_DPXRoundTrip") {
@@ -711,8 +833,7 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_DefaultIsTaskValue") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 32);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 32);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -728,8 +849,7 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_UserOverride") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 32);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 32);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         io->setPrefetchDepth(4);
@@ -888,8 +1008,7 @@ TEST_CASE("MediaIO_TPG_ReopenSameInstance") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 32);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 32);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -1123,8 +1242,7 @@ TEST_CASE("MediaIO_TPG_CancelPendingDropsReadResults") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoWidth, 32);
-        cfg.set(MediaIOTask_TPG::ConfigVideoHeight, 32);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());

@@ -859,6 +859,7 @@ if(PROMEKI_BUILD_SDL)
         include/promeki/sdl/sdlaudiooutput.h
         include/promeki/sdl/sdldisplaynode.h
         include/promeki/sdl/sdleventpump.h
+        include/promeki/sdl/sdlplayer.h
         include/promeki/sdl/sdlvideowidget.h
         include/promeki/sdl/sdlwindow.h
     )
@@ -868,6 +869,7 @@ if(PROMEKI_BUILD_SDL)
         src/sdl/sdlaudiooutput.cpp
         src/sdl/sdldisplaynode.cpp
         src/sdl/sdleventpump.cpp
+        src/sdl/sdlplayer.cpp
         src/sdl/sdlvideowidget.cpp
         src/sdl/sdlwindow.cpp
     )

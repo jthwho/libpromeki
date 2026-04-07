@@ -130,3 +130,51 @@ TEST_CASE("Size2Di32: equality") {
         CHECK(a == b);
         CHECK(a != c);
 }
+
+// =========================================================================
+// fromString
+// =========================================================================
+
+TEST_CASE("Size2Du32: fromString lowercase x") {
+        auto [s, e] = Size2Du32::fromString("1920x1080");
+        REQUIRE(e.isOk());
+        CHECK(s == Size2Du32(1920, 1080));
+}
+
+TEST_CASE("Size2Du32: fromString uppercase X") {
+        auto [s, e] = Size2Du32::fromString("1280X720");
+        REQUIRE(e.isOk());
+        CHECK(s == Size2Du32(1280, 720));
+}
+
+TEST_CASE("Size2Du32: fromString round-trips toString") {
+        Size2Du32 sizes[] = {
+                Size2Du32(64, 64),
+                Size2Du32(320, 240),
+                Size2Du32(1920, 1080),
+                Size2Du32(3840, 2160),
+                Size2Du32(1, 1),
+        };
+        for(const auto &orig : sizes) {
+                auto [parsed, err] = Size2Du32::fromString(orig.toString());
+                CHECK(err.isOk());
+                CHECK(parsed == orig);
+        }
+}
+
+TEST_CASE("Size2Du32: fromString rejects garbage") {
+        CHECK(Size2Du32::fromString("").second().isError());
+        CHECK(Size2Du32::fromString("1920").second().isError());
+        CHECK(Size2Du32::fromString("1920x").second().isError());
+        CHECK(Size2Du32::fromString("x1080").second().isError());
+        CHECK(Size2Du32::fromString("1920y1080").second().isError());
+        CHECK(Size2Du32::fromString("1920x1080x720").second().isError());
+        CHECK(Size2Du32::fromString("hello").second().isError());
+        CHECK(Size2Du32::fromString("1920 x 1080").second().isError());
+}
+
+TEST_CASE("Size2Di32: fromString works the same way") {
+        auto [s, e] = Size2Di32::fromString("640x480");
+        REQUIRE(e.isOk());
+        CHECK(s == Size2Di32(640, 480));
+}

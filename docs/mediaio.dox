@@ -206,9 +206,9 @@
  *
  * @subsection mediaio_authoring_setup Setup
  *
- * 1. Create a header in @c include/promeki/mediaiotask_<name>.h that
+ * 1. Create a header in @c include/promeki/mediaiotask_\<name\>.h that
  *    declares your subclass of @c MediaIOTask.
- * 2. Create a source in @c src/proav/mediaiotask_<name>.cpp.
+ * 2. Create a source in @c src/proav/mediaiotask_\<name\>.cpp.
  * 3. Add both to @c CMakeLists.txt.
  * 4. Provide a static @c formatDesc() returning @c MediaIO::FormatDesc
  *    and register with @c PROMEKI_REGISTER_MEDIAIO(YourClass).

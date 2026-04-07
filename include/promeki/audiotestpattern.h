@@ -13,10 +13,11 @@
 #include <promeki/result.h>
 #include <promeki/audiolevel.h>
 #include <promeki/audiodesc.h>
+#include <promeki/audio.h>
+#include <promeki/map.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-class Audio;
 class AudioGen;
 class LtcEncoder;
 class Timecode;
@@ -52,7 +53,8 @@ class AudioTestPattern {
                 enum Mode {
                         Tone,           ///< @brief Sine tone (configurable frequency).
                         Silence,        ///< @brief Silence.
-                        LTC             ///< @brief LTC timecode audio.
+                        LTC,            ///< @brief LTC timecode audio.
+                        AvSync          ///< @brief Tone on tc.frame()==0, silence otherwise.
                 };
 
                 /**
@@ -215,6 +217,18 @@ class AudioTestPattern {
                 int             _ltcChannel = 0;
                 AudioGen        *_audioGen = nullptr;
                 LtcEncoder      *_ltcEncoder = nullptr;
+
+                // AvSync caches: built lazily per requested sample count
+                // so the cadenced rates (29.97, 59.94) which alternate
+                // between two sizes don't thrash the cache.  Each entry
+                // is a one-shot tone burst (phase reset to zero so every
+                // marker frame is byte-identical) or a pre-zeroed
+                // silence buffer of the matching size.
+                mutable Map<size_t, Audio>      _avSyncToneCache;
+                mutable Map<size_t, Audio>      _avSyncSilenceCache;
+
+                const Audio &avSyncTone(size_t samples) const;
+                const Audio &avSyncSilence(size_t samples) const;
 };
 
 PROMEKI_NAMESPACE_END

@@ -18,9 +18,9 @@ PROMEKI_NAMESPACE_BEGIN
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_ImageFile)
 
 const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigImageFileID("ImageFileID");
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigVideoWidth("VideoWidth");
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigVideoHeight("VideoHeight");
+const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigVideoSize("VideoSize");
 const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigPixelDesc("PixelDesc");
+const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigFrameRate("FrameRate");
 
 // ============================================================================
 // Extension-to-ImageFile::ID mapping
@@ -126,6 +126,7 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
                         cfg.set(MediaIO::ConfigType, "ImageFile");
+                        cfg.set(ConfigFrameRate, DefaultFrameRate);
                         return cfg;
                 },
                 probeImageDevice
@@ -175,19 +176,32 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         _filename = cfg.getAs<String>(MediaIO::ConfigFilename);
         _mode = cmd.mode;
 
+        // Resolve the reported frame rate.  Precedence:
+        //   1. Writer with a valid pendingMediaDesc frame rate (caller
+        //      already knows what they want to tag the file with)
+        //   2. Config override (ConfigFrameRate)
+        //   3. DefaultFrameRate (FPS_30)
+        FrameRate fps = DefaultFrameRate;
+        if(cmd.mode == MediaIO::Writer && cmd.pendingMediaDesc.frameRate().isValid()) {
+                fps = cmd.pendingMediaDesc.frameRate();
+        } else if(cfg.contains(ConfigFrameRate)) {
+                FrameRate fromCfg = cfg.getAs<FrameRate>(ConfigFrameRate);
+                if(fromCfg.isValid()) fps = fromCfg;
+        }
+
         MediaDesc mediaDesc;
+        mediaDesc.setFrameRate(fps);
 
         if(cmd.mode == MediaIO::Reader) {
                 ImageFile imgFile(_imageFileID);
                 imgFile.setFilename(_filename);
 
                 // For headerless formats, set hint image from config
-                int hintW = cfg.getAs<int>(ConfigVideoWidth, 0);
-                int hintH = cfg.getAs<int>(ConfigVideoHeight, 0);
-                if(hintW > 0 && hintH > 0) {
+                Size2Du32 hintSize = cfg.getAs<Size2Du32>(ConfigVideoSize, Size2Du32());
+                if(hintSize.isValid()) {
                         PixelDesc pd = cfg.getAs<PixelDesc>(ConfigPixelDesc, PixelDesc());
                         if(pd.isValid()) {
-                                Image hint(hintW, hintH, pd.id());
+                                Image hint(hintSize.width(), hintSize.height(), pd.id());
                                 imgFile.setImage(hint);
                         }
                 }
@@ -211,14 +225,20 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
                 cmd.frameCount = 1;
                 _loaded = false;
         } else {
-                // Writer: use the pending mediaDesc/metadata if provided
+                // Writer: use the pending mediaDesc/metadata if provided.
+                // If the caller didn't set a frame rate on it, fall back
+                // to our resolved fps so the output is always tagged.
                 mediaDesc = cmd.pendingMediaDesc;
+                if(!mediaDesc.frameRate().isValid()) {
+                        mediaDesc.setFrameRate(fps);
+                }
                 cmd.metadata = cmd.pendingMetadata;
                 _writeCount = 0;
                 cmd.frameCount = 0;
         }
 
         cmd.mediaDesc = mediaDesc;
+        cmd.frameRate = mediaDesc.frameRate();
         cmd.canSeek = false;
         cmd.defaultStep = 0;  // ImageFile re-reads the same single frame by default
         return Error::Ok;

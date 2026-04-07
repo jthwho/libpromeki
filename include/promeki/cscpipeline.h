@@ -103,6 +103,7 @@ class CSCPipeline {
                         StageUnpack,            ///< Unpack source pixels to float SoA.
                         StageChromaUpsample,    ///< Upsample chroma to full resolution.
                         StageRangeIn,           ///< Map input range to 0.0-1.0.
+                        StageMonoExpand,        ///< Broadcast buffer[0] to buffers[1] and [2] (mono -> RGB).
                         StageEOTF,              ///< Remove source transfer function.
                         StageMatrix,            ///< 3x3 color matrix multiply.
                         StageOETF,              ///< Apply target transfer function.

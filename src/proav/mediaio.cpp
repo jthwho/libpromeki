@@ -196,6 +196,14 @@ StringList MediaIO::enumerate(const String &typeName) {
 
 MediaIO::MediaIO(ObjectBase *parent) : ObjectBase(parent) {}
 
+Error MediaIO::adoptTask(MediaIOTask *task) {
+        if(isOpen()) return Error::AlreadyOpen;
+        if(task == nullptr) return Error::Invalid;
+        if(_task != nullptr) return Error::Invalid;
+        _task = task;
+        return Error::Ok;
+}
+
 MediaIO::~MediaIO() {
         if(isOpen()) close();
         // Wait for any in-flight strand task to complete before deleting

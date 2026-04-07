@@ -21,12 +21,26 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup sdl_core
  *
  * SDLVideoWidget manages an SDL_Texture and renders a promeki Image
- * within its widget geometry.  It handles pixel format conversion
- * (unsupported formats are converted to RGBA8) and aspect-ratio-
- * preserving scaling with letterbox/pillarbox bars.
+ * within its widget geometry.  It handles aspect-ratio-preserving
+ * scaling with letterbox/pillarbox bars.
  *
  * The widget obtains the SDL_Renderer from its ancestor SDLWindow.
  * It must be a child (direct or indirect) of an SDLWindow to render.
+ *
+ * @par Supported pixel formats
+ *
+ * Every uncompressed @c PixelDesc the library supports can be
+ * displayed.  Formats with a direct SDL equivalent (8-bit RGB/BGR/
+ * RGBA/BGRA/ARGB/ABGR and the host-endian 16-bit variants of those)
+ * are uploaded to an SDL texture as-is.  Everything else — DPX
+ * packings, v210, 10/12-bit words, YUV, float, linear, non-host
+ * endian — is routed through @c Image::convert() and displayed as
+ * RGBA8_sRGB via the CSC pipeline.  @c isDirectlyMappable() reports
+ * only the fast path: non-directly-mappable formats still render
+ * correctly, just via an extra conversion step.
+ *
+ * Compressed pixel descriptions (e.g. @c JPEG_RGB8_sRGB) are not
+ * supported — the caller must decode them first.
  *
  * @par Example
  * @code
@@ -81,13 +95,29 @@ class SDLVideoWidget : public Widget {
 
                 /**
                  * @brief Maps a promeki PixelDesc to an SDL pixel format.
+                 *
+                 * Returns a direct SDL format for uncompressed 8-bit
+                 * RGB/BGR/RGBA/BGRA/ARGB/ABGR formats and the
+                 * host-endian 16-bit variants of those.  Returns 0 for
+                 * formats without a direct SDL equivalent (DPX, v210,
+                 * YUV, float, linear-light, non-host-endian 16-bit,
+                 * 10/12-bit-in-16-bit-word formats, compressed, etc).
+                 * Formats that return 0 are still displayable — the
+                 * widget falls back to CSC conversion to RGBA8_sRGB.
+                 *
                  * @param pd The promeki pixel description.
                  * @return The SDL pixel format enum value, or 0 if no direct mapping.
                  */
                 static uint32_t mapPixelDesc(const PixelDesc &pd);
 
                 /**
-                 * @brief Returns whether a promeki pixel description can be directly uploaded.
+                 * @brief Returns whether a format can skip CSC conversion on upload.
+                 *
+                 * This is the fast-path predicate — it does NOT tell you
+                 * whether the widget can display the format (it can
+                 * display every uncompressed format via the fallback
+                 * path).
+                 *
                  * @param pd The promeki pixel description.
                  * @return true if the format maps directly to an SDL format.
                  */
@@ -105,6 +135,7 @@ class SDLVideoWidget : public Widget {
 
                 void ensureTexture(int w, int h, uint32_t sdlPixFmt);
                 void uploadImage(const Image &image, uint32_t sdlPixFmt);
+                bool uploadCurrentImage();
                 SDL_Renderer *findRenderer() const;
 };
 

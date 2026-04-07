@@ -846,3 +846,121 @@ TEST_CASE("CSC fast-path cross-validation") {
                 CHECK(maxDiff <= p.tolerance);
         }
 }
+
+// =========================================================================
+// Mono source expansion
+// =========================================================================
+//
+// Converting a single-component (grayscale / mono) PixelDesc to a
+// multi-component RGB target needs to broadcast the luma into every
+// color channel — otherwise the unused buffers 1 and 2 leak zeros into
+// G and B and the image displays entirely in the red channel.
+
+static Image makeMonoRamp8(size_t w = 32, size_t h = 2) {
+        Image img(w, h, PixelDesc::Mono8_sRGB);
+        if(!img.isValid()) return img;
+        uint8_t *data = static_cast<uint8_t *>(img.data());
+        for(size_t y = 0; y < h; y++) {
+                for(size_t x = 0; x < w; x++) {
+                        data[y * img.lineStride(0) + x] =
+                                static_cast<uint8_t>((x * 255) / (w - 1));
+                }
+        }
+        return img;
+}
+
+TEST_CASE("CSC Mono8_sRGB -> RGBA8_sRGB round-trips as gray") {
+        Image src = makeMonoRamp8();
+        REQUIRE(src.isValid());
+
+        Image dst = src.convert(PixelDesc(PixelDesc::RGBA8_sRGB), src.metadata());
+        REQUIRE(dst.isValid());
+        REQUIRE(dst.pixelDesc().id() == PixelDesc::RGBA8_sRGB);
+        CHECK(dst.width() == src.width());
+        CHECK(dst.height() == src.height());
+
+        const uint8_t *srcData = static_cast<const uint8_t *>(src.data());
+        const uint8_t *dstData = static_cast<const uint8_t *>(dst.data());
+        for(size_t y = 0; y < dst.height(); y++) {
+                for(size_t x = 0; x < dst.width(); x++) {
+                        uint8_t luma = srcData[y * src.lineStride(0) + x];
+                        const uint8_t *px = dstData + y * dst.lineStride(0) + x * 4;
+                        INFO("pixel x=" << x << " y=" << y
+                             << "  luma=" << (int)luma
+                             << "  rgba=(" << (int)px[0] << "," << (int)px[1]
+                             << "," << (int)px[2] << "," << (int)px[3] << ")");
+                        // Allow +/-1 LSB for any rounding through the float
+                        // pipeline.  R, G, B must all be within the
+                        // tolerance of the source luma, and they must
+                        // match each other (true grayscale, not red).
+                        CHECK(std::abs(int(px[0]) - int(luma)) <= 1);
+                        CHECK(std::abs(int(px[1]) - int(luma)) <= 1);
+                        CHECK(std::abs(int(px[2]) - int(luma)) <= 1);
+                        CHECK(px[0] == px[1]);
+                        CHECK(px[1] == px[2]);
+                        CHECK(px[3] == 255);
+                }
+        }
+}
+
+TEST_CASE("CSC Mono8_sRGB -> RGB8_sRGB round-trips as gray") {
+        // Same behavior without an alpha channel on the destination.
+        Image src = makeMonoRamp8();
+        REQUIRE(src.isValid());
+
+        Image dst = src.convert(PixelDesc(PixelDesc::RGB8_sRGB), src.metadata());
+        REQUIRE(dst.isValid());
+        REQUIRE(dst.pixelDesc().id() == PixelDesc::RGB8_sRGB);
+
+        const uint8_t *srcData = static_cast<const uint8_t *>(src.data());
+        const uint8_t *dstData = static_cast<const uint8_t *>(dst.data());
+        for(size_t y = 0; y < dst.height(); y++) {
+                for(size_t x = 0; x < dst.width(); x++) {
+                        uint8_t luma = srcData[y * src.lineStride(0) + x];
+                        const uint8_t *px = dstData + y * dst.lineStride(0) + x * 3;
+                        CHECK(std::abs(int(px[0]) - int(luma)) <= 1);
+                        CHECK(std::abs(int(px[1]) - int(luma)) <= 1);
+                        CHECK(std::abs(int(px[2]) - int(luma)) <= 1);
+                        CHECK(px[0] == px[1]);
+                        CHECK(px[1] == px[2]);
+                }
+        }
+}
+
+TEST_CASE("CSC Mono8_sRGB -> YUV8_422_Rec709 produces neutral chroma") {
+        // The key property under test is that a grayscale input
+        // produces a grayscale output — i.e. strictly neutral chroma
+        // (Cb = Cr = 128 in limited range) across the full luma ramp.
+        // The exact Y mapping depends on the sRGB <-> Rec.709 gamma
+        // difference, so we just check monotonicity and endpoint
+        // coverage rather than pinning an exact value.
+        Image src = makeMonoRamp8(/*w=*/32, /*h=*/2);
+        REQUIRE(src.isValid());
+
+        Image dst = src.convert(PixelDesc(PixelDesc::YUV8_422_Rec709),
+                                src.metadata(), scalarConfig());
+        REQUIRE(dst.isValid());
+        REQUIRE(dst.pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+
+        int prevY = -1;
+        int minY = 255, maxY = 0;
+        for(size_t x = 0; x < dst.width(); x++) {
+                int yv, cb, cr;
+                readYUYV8(dst, static_cast<int>(x), yv, cb, cr);
+                INFO("x=" << x << " Y=" << yv << " Cb=" << cb << " Cr=" << cr);
+                // Neutral chroma, tolerate +/-1 LSB for rounding through
+                // the float pipeline.
+                CHECK(std::abs(cb - 128) <= 1);
+                CHECK(std::abs(cr - 128) <= 1);
+                // Y must be monotonically non-decreasing for a luma ramp.
+                CHECK(yv >= prevY);
+                prevY = yv;
+                if(yv < minY) minY = yv;
+                if(yv > maxY) maxY = yv;
+        }
+        // Black input should land on the limited-range floor (around 16)
+        // and white input should land on the ceiling (around 235), with
+        // a couple of LSB of slop for pipeline rounding.
+        CHECK(minY <= 18);
+        CHECK(maxY >= 233);
+}

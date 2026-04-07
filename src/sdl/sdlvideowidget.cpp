@@ -8,6 +8,7 @@
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
 #include <promeki/pixeldesc.h>
+#include <promeki/system.h>
 #include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
@@ -39,23 +40,7 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
         SDL_Renderer *renderer = findRenderer();
         if(renderer == nullptr) return;
 
-        // Upload the image to a texture
-        uint32_t sdlFmt = mapPixelDesc(_currentImage.pixelDesc());
-
-        if(sdlFmt != 0) {
-                ensureTexture(_currentImage.width(), _currentImage.height(), sdlFmt);
-                uploadImage(_currentImage, sdlFmt);
-        } else {
-                Image converted = _currentImage.convert(PixelDesc::RGBA8_sRGB, _currentImage.metadata());
-                if(!converted.isValid()) {
-                        promekiErr("SDLVideoWidget: format conversion to RGBA8 failed");
-                        return;
-                }
-                uint32_t rgba8Fmt = mapPixelDesc(PixelDesc::RGBA8_sRGB);
-                ensureTexture(converted.width(), converted.height(), rgba8Fmt);
-                uploadImage(converted, rgba8Fmt);
-        }
-
+        if(!uploadCurrentImage()) return;
         if(_texture == nullptr) return;
 
         // Calculate destination rect within our widget geometry
@@ -97,15 +82,104 @@ void SDLVideoWidget::paintEvent(PaintEvent *) {
 }
 
 uint32_t SDLVideoWidget::mapPixelDesc(const PixelDesc &pd) {
+        // SDL3 ARRAY formats (RGB24, BGR24, the *32 aliases, RGB48,
+        // BGR48, RGBA64, ARGB64, BGRA64, ABGR64, RGB48_FLOAT,
+        // RGBA64_FLOAT, etc.) store components in memory in the order
+        // their name implies, regardless of host endianness — so the
+        // byte layout always matches the matching libpromeki "array"
+        // PixelDesc for that component order.
+        //
+        // SDL3's ARRAYU16 / ARRAYF16 / ARRAYF32 formats, however, pack
+        // their 16- or 32-bit components in *host* byte order.  We can
+        // therefore direct-map libpromeki's LE variants only on a
+        // little-endian host and the BE variants only on a big-endian
+        // host.
+        //
+        // Formats omitted below (10-bit-in-16-bit-word, 12-bit, DPX,
+        // v210, YUV, linear-light float) either have no direct SDL
+        // equivalent or carry semantics (bit scaling, color model)
+        // that SDL won't interpret correctly.  Those fall through to
+        // the CSC fallback in uploadCurrentImage().
+        constexpr bool LE = System::isLittleEndian();
+        constexpr bool BE = System::isBigEndian();
+
         switch(pd.id()) {
-                case PixelDesc::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA8888;
+                // 8-bit, array-ordered, sRGB
                 case PixelDesc::RGB8_sRGB:      return SDL_PIXELFORMAT_RGB24;
+                case PixelDesc::BGR8_sRGB:      return SDL_PIXELFORMAT_BGR24;
+                case PixelDesc::RGBA8_sRGB:     return SDL_PIXELFORMAT_RGBA32;
+                case PixelDesc::BGRA8_sRGB:     return SDL_PIXELFORMAT_BGRA32;
+                case PixelDesc::ARGB8_sRGB:     return SDL_PIXELFORMAT_ARGB32;
+                case PixelDesc::ABGR8_sRGB:     return SDL_PIXELFORMAT_ABGR32;
+
+                // 16-bit per channel, sRGB — LE variants map directly
+                // on a little-endian host.
+                case PixelDesc::RGB16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_RGB48 : 0;
+                case PixelDesc::BGR16_LE_sRGB:   return LE ? SDL_PIXELFORMAT_BGR48 : 0;
+                case PixelDesc::RGBA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_RGBA64 : 0;
+                case PixelDesc::BGRA16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_BGRA64 : 0;
+                case PixelDesc::ARGB16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ARGB64 : 0;
+                case PixelDesc::ABGR16_LE_sRGB:  return LE ? SDL_PIXELFORMAT_ABGR64 : 0;
+
+                // ... and BE variants map directly on a big-endian host.
+                case PixelDesc::RGB16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_RGB48 : 0;
+                case PixelDesc::BGR16_BE_sRGB:   return BE ? SDL_PIXELFORMAT_BGR48 : 0;
+                case PixelDesc::RGBA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_RGBA64 : 0;
+                case PixelDesc::BGRA16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_BGRA64 : 0;
+                case PixelDesc::ARGB16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ARGB64 : 0;
+                case PixelDesc::ABGR16_BE_sRGB:  return BE ? SDL_PIXELFORMAT_ABGR64 : 0;
+
                 default:                        return 0;
         }
 }
 
 bool SDLVideoWidget::isDirectlyMappable(const PixelDesc &pd) {
         return mapPixelDesc(pd) != 0;
+}
+
+bool SDLVideoWidget::uploadCurrentImage() {
+        if(!_currentImage.isValid()) return false;
+
+        const PixelDesc &srcPd = _currentImage.pixelDesc();
+
+        // Compressed formats can't be uploaded — they need to be
+        // decoded first by an ImageCodec or similar.  Report clearly
+        // rather than silently failing inside convert().
+        if(srcPd.isCompressed()) {
+                promekiErr("SDLVideoWidget: compressed pixel format '%s' "
+                           "cannot be displayed — decode it first",
+                           srcPd.name().cstr());
+                return false;
+        }
+
+        // Fast path: direct SDL format — upload as-is with no CSC.
+        uint32_t sdlFmt = mapPixelDesc(srcPd);
+        if(sdlFmt != 0) {
+                ensureTexture(_currentImage.width(),
+                              _currentImage.height(), sdlFmt);
+                if(_texture == nullptr) return false;
+                uploadImage(_currentImage, sdlFmt);
+                return true;
+        }
+
+        // Fallback: run the image through the CSC pipeline into
+        // RGBA8_sRGB, which every backend can display.  This handles
+        // YUV, linear float, DPX, v210, non-host-endian and 10/12-bit
+        // formats, and any user-registered PixelDesc the CSC pipeline
+        // knows how to convert.
+        Image converted = _currentImage.convert(
+                PixelDesc(PixelDesc::RGBA8_sRGB), _currentImage.metadata());
+        if(!converted.isValid()) {
+                promekiErr("SDLVideoWidget: CSC from '%s' to RGBA8_sRGB failed",
+                           srcPd.name().cstr());
+                return false;
+        }
+
+        uint32_t rgba8Fmt = mapPixelDesc(PixelDesc(PixelDesc::RGBA8_sRGB));
+        ensureTexture(converted.width(), converted.height(), rgba8Fmt);
+        if(_texture == nullptr) return false;
+        uploadImage(converted, rgba8Fmt);
+        return true;
 }
 
 void SDLVideoWidget::ensureTexture(int w, int h, uint32_t sdlPixFmt) {

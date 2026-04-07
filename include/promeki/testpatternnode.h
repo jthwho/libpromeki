@@ -30,8 +30,7 @@ PROMEKI_NAMESPACE_BEGIN
  * - `Pattern` (String): Test pattern name (default: "colorbars").
  *   Values: colorbars, colorbars75, ramp, grid, crosshatch, checkerboard,
  *   solidcolor, white, black, noise, zoneplate.
- * - `Width` (uint32_t): Frame width (required).
- * - `Height` (uint32_t): Frame height (required).
+ * - `Size` (Size2Du32): Frame size (default: 1920x1080).
  * - `PixelFormat` (PixelDesc): Pixel description (default: PixelDesc::RGB8_sRGB).
  * - `FrameRate` (String): Frame rate string (required). E.g. "24", "29.97".
  * - `SolidColor` (Color): Fill color for SolidColor pattern (default: black).
@@ -51,8 +50,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @code
  * MediaNodeConfig cfg("TestPatternNode", "source");
  * cfg.set("Pattern", "colorbars");
- * cfg.set("Width", uint32_t(1920));
- * cfg.set("Height", uint32_t(1080));
+ * cfg.set("Size", Size2Du32(1920, 1080));
  * cfg.set("FrameRate", "29.97");
  * @endcode
  */

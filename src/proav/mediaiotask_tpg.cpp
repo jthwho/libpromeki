@@ -26,11 +26,20 @@ const MediaIO::ConfigID MediaIOTask_TPG::ConfigFrameRate("FrameRate");
 // Video
 const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoEnabled("VideoEnabled");
 const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoPattern("VideoPattern");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoWidth("VideoWidth");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoHeight("VideoHeight");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoSize("VideoSize");
 const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoPixelFormat("VideoPixelFormat");
 const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoSolidColor("VideoSolidColor");
 const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoMotion("VideoMotion");
+
+// Video burn-in
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnEnabled("VideoBurnEnabled");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnFontPath("VideoBurnFontPath");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnFontSize("VideoBurnFontSize");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnText("VideoBurnText");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnPosition("VideoBurnPosition");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnTextColor("VideoBurnTextColor");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnBgColor("VideoBurnBgColor");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnDrawBg("VideoBurnDrawBg");
 
 // Audio
 const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioEnabled("AudioEnabled");
@@ -66,11 +75,19 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         // Video
                         cfg.set(ConfigVideoEnabled, false);
                         cfg.set(ConfigVideoPattern, "colorbars");
-                        cfg.set(ConfigVideoWidth, 1920);
-                        cfg.set(ConfigVideoHeight, 1080);
+                        cfg.set(ConfigVideoSize, Size2Du32(1920, 1080));
                         cfg.set(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                         cfg.set(ConfigVideoSolidColor, Color::Black);
                         cfg.set(ConfigVideoMotion, 0.0);
+                        // Video burn-in
+                        cfg.set(ConfigVideoBurnEnabled, false);
+                        cfg.set(ConfigVideoBurnFontPath, String());
+                        cfg.set(ConfigVideoBurnFontSize, 36);
+                        cfg.set(ConfigVideoBurnText, String());
+                        cfg.set(ConfigVideoBurnPosition, "bottomcenter");
+                        cfg.set(ConfigVideoBurnTextColor, Color::White);
+                        cfg.set(ConfigVideoBurnBgColor, Color::Black);
+                        cfg.set(ConfigVideoBurnDrawBg, true);
                         // Audio
                         cfg.set(ConfigAudioEnabled, false);
                         cfg.set(ConfigAudioMode, "tone");
@@ -81,8 +98,8 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         cfg.set(ConfigAudioLtcLevel, -20.0);
                         cfg.set(ConfigAudioLtcChannel, 0);
                         // Timecode
-                        cfg.set(ConfigTimecodeEnabled, false);
-                        cfg.set(ConfigTimecodeStart, "00:00:00:00");
+                        cfg.set(ConfigTimecodeEnabled, true);
+                        cfg.set(ConfigTimecodeStart, "01:00:00:00");
                         cfg.set(ConfigTimecodeDropFrame, false);
                         return cfg;
                 }
@@ -120,15 +137,15 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 }
                 _videoPattern.setPattern(pat);
 
-                int width = cfg.getAs<int>(ConfigVideoWidth, 1920);
-                int height = cfg.getAs<int>(ConfigVideoHeight, 1080);
+                Size2Du32 size = cfg.getAs<Size2Du32>(ConfigVideoSize, Size2Du32(1920, 1080));
                 PixelDesc pd = cfg.getAs<PixelDesc>(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
-                if(width <= 0 || height <= 0) {
-                        promekiErr("MediaIOTask_TPG: invalid dimensions %dx%d", width, height);
+                if(!size.isValid()) {
+                        promekiErr("MediaIOTask_TPG: invalid dimensions %s",
+                                   size.toString().cstr());
                         return Error::InvalidDimension;
                 }
 
-                _imageDesc = ImageDesc(width, height, pd.id());
+                _imageDesc = ImageDesc(size.width(), size.height(), pd.id());
                 mediaDesc.imageList().pushToBack(_imageDesc);
 
                 Color solidColor = cfg.getAs<Color>(ConfigVideoSolidColor, Color::Black);
@@ -137,11 +154,34 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 _motion = cfg.getAs<double>(ConfigVideoMotion, 0.0);
                 _motionOffset = 0.0;
 
-                // Pre-render for static patterns
-                if(_motion == 0.0 && _videoPattern.pattern() != VideoTestPattern::Noise) {
-                        _cachedImage = _videoPattern.create(_imageDesc);
-                } else {
-                        _cachedImage = Image();
+                // Burn-in configuration.  VideoTestPattern owns the
+                // cached background and applies the burn on a copy, so
+                // there's no pre-render pass needed here.
+                bool burnEnabled = cfg.getAs<bool>(ConfigVideoBurnEnabled, false);
+                _videoPattern.setBurnEnabled(burnEnabled);
+                if(burnEnabled) {
+                        _videoPattern.setBurnFontFilename(
+                                cfg.getAs<String>(ConfigVideoBurnFontPath, String()));
+                        _videoPattern.setBurnFontSize(
+                                cfg.getAs<int>(ConfigVideoBurnFontSize, 36));
+                        _videoPattern.setBurnText(
+                                cfg.getAs<String>(ConfigVideoBurnText, String()));
+                        _videoPattern.setBurnTextColor(
+                                cfg.getAs<Color>(ConfigVideoBurnTextColor, Color::White));
+                        _videoPattern.setBurnBackgroundColor(
+                                cfg.getAs<Color>(ConfigVideoBurnBgColor, Color::Black));
+                        _videoPattern.setBurnDrawBackground(
+                                cfg.getAs<bool>(ConfigVideoBurnDrawBg, true));
+                        String posStr = cfg.getAs<String>(
+                                ConfigVideoBurnPosition, "bottomcenter");
+                        auto [pos, posErr] =
+                                VideoTestPattern::burnPositionFromString(posStr);
+                        if(posErr.isError()) {
+                                promekiErr("MediaIOTask_TPG: unknown burn position '%s'",
+                                           posStr.cstr());
+                                return Error::InvalidArgument;
+                        }
+                        _videoPattern.setBurnPosition(pos);
                 }
         }
 
@@ -157,11 +197,6 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 }
 
                 mediaDesc.audioList().pushToBack(_audioDesc);
-
-                double fpsVal = fps.toDouble();
-                _samplesPerFrame = (fpsVal > 0.0)
-                        ? (size_t)std::round(_audioDesc.sampleRate() / fpsVal)
-                        : 1600;
 
                 delete _audioPattern;
                 _audioPattern = new AudioTestPattern(_audioDesc);
@@ -231,7 +266,6 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
         delete _audioPattern;
         _audioPattern = nullptr;
-        _cachedImage = Image();
         _imageDesc = ImageDesc();
         _audioDesc = AudioDesc();
         _frameRate = FrameRate();
@@ -241,6 +275,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
         _videoEnabled = false;
         _audioEnabled = false;
         _timecodeEnabled = false;
+        _videoPattern.setBurnEnabled(false);
         return Error::Ok;
 }
 
@@ -271,25 +306,29 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 }
         }
 
-        // Video
+        // Video.  VideoTestPattern manages static-background caching
+        // internally — we just hand it the current timecode so the
+        // burn-in stage (if enabled) can draw the top line.
         if(_videoEnabled) {
-                Image img;
-                if(_cachedImage.isValid() && s == 0) {
-                        img = _cachedImage;
-                } else {
-                        img = _videoPattern.create(_imageDesc, _motionOffset);
-                }
+                Image img = _videoPattern.create(_imageDesc, _motionOffset,
+                                                 _timecodeEnabled ? tc : Timecode());
                 if(_timecodeEnabled) {
                         img.metadata().set(Metadata::Timecode, tc);
                 }
                 frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         }
 
-        // Audio
+        // Audio.  Compute the per-frame sample count via the rational
+        // cadence in FrameRate so fractional NTSC rates (29.97, 59.94,
+        // ...) emit alternating sample counts whose cumulative total
+        // matches wall-clock time exactly.  The tc may be invalid
+        // (timecode generation disabled) — the audio pattern handles
+        // that gracefully (LTC and AvSync degrade to silence).
         if(_audioEnabled && _audioPattern != nullptr) {
-                Audio audio = (_timecodeEnabled)
-                        ? _audioPattern->create(_samplesPerFrame, tc)
-                        : _audioPattern->create(_samplesPerFrame);
+                size_t samples = _frameRate.samplesPerFrame(
+                        static_cast<int64_t>(_audioDesc.sampleRate()),
+                        _frameCount);
+                Audio audio = _audioPattern->create(samples, tc);
                 if(audio.isValid()) {
                         frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
                 }

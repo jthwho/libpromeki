@@ -7,9 +7,13 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <cerrno>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/point.h>
+#include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -86,6 +90,45 @@ template<typename T> class Size2DTemplate {
                 /** @brief Converts to a String using toString(). */
                 operator String() const {
                         return toString();
+                }
+
+                /**
+                 * @brief Parses a size from a "WxH" string.
+                 *
+                 * Accepts decimal width and height separated by a
+                 * lowercase or uppercase 'x' (e.g. @c "1920x1080" or
+                 * @c "1280X720").  Whitespace is not tolerated.
+                 *
+                 * @param str The string to parse.
+                 * @return A @c Result containing the parsed size on
+                 *         success, or @c Error::Invalid on a malformed
+                 *         input.
+                 */
+                static Result<Size2DTemplate<T>> fromString(const String &str) {
+                        const char *s = str.cstr();
+                        if(s == nullptr || *s == '\0') {
+                                return makeError<Size2DTemplate<T>>(Error::Invalid);
+                        }
+                        char *end = nullptr;
+                        errno = 0;
+                        unsigned long long w = std::strtoull(s, &end, 10);
+                        if(end == s || errno != 0) {
+                                return makeError<Size2DTemplate<T>>(Error::Invalid);
+                        }
+                        if(*end != 'x' && *end != 'X') {
+                                return makeError<Size2DTemplate<T>>(Error::Invalid);
+                        }
+                        const char *rest = end + 1;
+                        if(*rest == '\0') {
+                                return makeError<Size2DTemplate<T>>(Error::Invalid);
+                        }
+                        errno = 0;
+                        unsigned long long h = std::strtoull(rest, &end, 10);
+                        if(end == rest || errno != 0 || *end != '\0') {
+                                return makeError<Size2DTemplate<T>>(Error::Invalid);
+                        }
+                        return makeResult(Size2DTemplate<T>(static_cast<T>(w),
+                                                            static_cast<T>(h)));
                 }
 
                 /** @brief Returns true if both sizes have equal width and height. */

@@ -19,6 +19,7 @@
 #include <promeki/rational.h>
 #include <promeki/filepath.h>
 #include <promeki/audiolevel.h>
+#include <promeki/size2d.h>
 
 #include <promeki/mediapipeline.h>
 #include <promeki/medianode.h>
@@ -496,8 +497,7 @@ int main(int argc, char *argv[]) {
                 cfg.set("Motion", opts.motion);
                 cfg.set("StartTimecode", opts.tcStart);
                 cfg.set("DropFrame", opts.tcDf && fps.wellKnownRate() == FrameRate::FPS_2997);
-                cfg.set("Width", uint32_t(opts.width));
-                cfg.set("Height", uint32_t(opts.height));
+                cfg.set("Size", Size2Du32(opts.width, opts.height));
                 cfg.set("PixelFormat", int(pixFmtId));
                 cfg.set("FrameRate", fps);
                 if(!opts.noAudio) {

@@ -25,6 +25,8 @@ Generic abstract media I/O framework providing a uniform interface for reading a
 - [x] `include/promeki/mediadesc.h` (renamed from VideoDesc)
 - [x] `src/proav/mediadesc.cpp`
 - [x] `include/promeki/videodesc.h` (deprecated alias: `using VideoDesc = MediaDesc`)
+- [x] `include/promeki/sdl/sdlplayer.h` + `src/sdl/sdlplayer.cpp` (SDLPlayerTask write backend + createSDLPlayer factory)
+- [x] `utils/mediaplay/main.cpp` (mediaplay utility: pumps any MediaIO source into SDL player)
 - [x] `tests/mediaio.cpp`
 - [x] `tests/strand.cpp`
 - [x] `docs/mediaio.dox` (subsystem and backend authoring guide)
@@ -49,6 +51,7 @@ Generic abstract media I/O framework providing a uniform interface for reading a
 - Config-driven factory: `MediaIO::create(Config)`, `createForFileRead()`, `createForFileWrite()`, `defaultConfig(typeName)`, `enumerate(typeName)`
 - Backends self-register via `PROMEKI_REGISTER_MEDIAIO(ClassName)` at static init
 - `FormatDesc` struct: name, description, extensions, canRead, canWrite, canReadWrite, factory lambda, `defaultConfig` lambda, optional `canHandleDevice` content-probe callback, optional `enumerate` callback
+- `MediaIO::adoptTask(MediaIOTask *)` — inject an externally-constructed task (for backends like SDLPlayerTask whose constructor args can't be expressed in a Config); transfers ownership; MediaIO must not be open and must not already own a task
 
 **Design — Three distinct VariantDatabase types:**
 - `MediaIOConfig` (tag: `MediaIOConfigTag`) — open-time configuration; keys: `ConfigFilename`, `ConfigType`, plus backend-specific IDs
@@ -98,9 +101,9 @@ Generic abstract media I/O framework providing a uniform interface for reading a
 - If CmdOpen returns an error, MediaIO automatically dispatches CmdClose on the same task instance; backends must tolerate close from failed-open state
 
 **Test coverage:**
-- 58 test cases in `tests/mediaio.cpp`, 10 test cases in `tests/strand.cpp`
+- 60+ test cases in `tests/mediaio.cpp`, 10 test cases in `tests/strand.cpp`
 - Strand: serial order, no overlap, void tasks, multiple strands concurrent, isBusy, destructor, cancelPending, cancel-empty-queue, cancel-hook-runs
-- MediaIO: registry, factory (create/createForFileRead/createForFileWrite/defaultConfig/enumerate), all TPG modes (video-only, audio-only, timecode-only, full generation), error paths (writer-not-supported, nothing-enabled, invalid-pattern, read-before-open, double-open), seeking, canSeek/frameCount, step control, prefetch depth (default/user-override/clamped), defaultSeekMode, track selection, frameAvailable, reopen-same-instance, sendParams, cancelPending, stats, EOF latching, mid-stream descriptor, ImageFile round-trips (DPX/TGA), AudioFile round-trips (WAV), AudioFile seeking, AudioFile step/EOF, device enumeration, cancellation
+- MediaIO: registry, factory (create/createForFileRead/createForFileWrite/defaultConfig/enumerate), all TPG modes (video-only, audio-only, timecode-only, full generation), error paths (writer-not-supported, nothing-enabled, invalid-pattern, read-before-open, double-open), seeking, canSeek/frameCount, step control, prefetch depth (default/user-override/clamped), defaultSeekMode, track selection, frameAvailable, reopen-same-instance, sendParams, cancelPending, stats, EOF latching, mid-stream descriptor, ImageFile round-trips (DPX/TGA), ImageFile default/override frame rate, AudioFile round-trips (WAV), AudioFile seeking, AudioFile step/EOF, AudioFile missing frame rate, device enumeration, cancellation, TPG audio cadence at 29.97/48k and 30/48k
 
 ---
 
@@ -116,9 +119,11 @@ Read-only MediaIOTask that generates synchronized test pattern frames.
 **Design:**
 - Derives from `MediaIOTask`, registered as "TPG" (no file extensions — generator source)
 - Overrides `executeCmd(Open)` / `executeCmd(Close)` / `executeCmd(Read)`; base implementations handle all other commands
-- Video: delegates to `VideoTestPattern`; solid color configured via `Color` object (`ConfigVideoSolidColor`); static patterns cached after first generate when step=0; motion applies per-frame offset scaled by step
-- Audio: delegates to `AudioTestPattern` (tone, silence, ltc modes)
-- Timecode: delegates to `TimecodeGenerator`; TC advances by `|step|` frames per CmdRead; TC stamped on both `Frame::metadata()` and `Image::metadata()` (required by TimecodeOverlayNode)
+- Video: delegates to `VideoTestPattern`; solid color configured via `Color` object (`ConfigVideoSolidColor`); static patterns cached after first generate when step=0; motion applies per-frame offset scaled by step; text burn-in (timecode overlay + custom text via `ConfigVideoText`); AvSync pattern available; bundled FiraCode font is default font for overlay rendering
+- `ConfigVideoSize` (Size2Du32, replaces separate Width/Height keys): parsed via `Size2D::fromString()` from config
+- Audio: delegates to `AudioTestPattern` (tone, silence, LTC, and new AvSync modes)
+- Audio cadence: uses `FrameRate::samplesPerFrame()` for exact NTSC cadence — 29.97/48k emits 1601/1602 pattern summing to 8008 per 5 frames (not constant 1602)
+- Timecode: delegates to `TimecodeGenerator`; TC advances by `|step|` frames per CmdRead; TC stamped on both `Frame::metadata()` and `Image::metadata()` (required by TimecodeOverlayNode); default start TC is `01:00:00:00` NDF
 - Infinite source: `cmd.frameCount = MediaIO::FrameCountInfinite`, `cmd.canSeek = false`
 - All config via `MediaIO::Config` (VariantDatabase); all ConfigID constants declared as static members
 - `FormatDesc::defaultConfig` lambda returns fully-populated default Config (all keys, video/audio/timecode groups all disabled by default)
@@ -141,6 +146,7 @@ MediaIOTask backend wrapping the ImageFile / ImageFileIO subsystem for single-im
 - Default step=0 (set via `cmd.defaultStep = 0` in Open): CmdRead re-delivers the same loaded image indefinitely (hold semantics for still images in a pipeline); step≠0 for single-delivery then EndOfFile
 - `cmd.frameCount = 1` for Reader, tracks write count for Writer
 - `executeCmd(Open/Reader)` loads the full image immediately and builds mediaDesc; `executeCmd(Close)` releases the cached frame
+- Default frame rate: `ConfigFrameRate` key (FrameRate) in Config; if not set, defaults to 24 fps; MediaDesc.frameRate is set from this so downstream consumers (e.g. audio-led pacing in SDLPlayerTask) have a valid rate
 
 ---
 
@@ -165,6 +171,24 @@ MediaIOTask backend wrapping the AudioFile subsystem (libsndfile) for frame-base
 - Conditionally compiled under `PROMEKI_ENABLE_AUDIO`
 
 ---
+
+## SDLPlayerTask Backend — COMPLETE
+
+Write-only MediaIOTask that plays frames through SDL (video widget + audio output).
+
+**Files:**
+- [x] `include/promeki/sdl/sdlplayer.h`
+- [x] `src/sdl/sdlplayer.cpp`
+- [x] `utils/mediaplay/main.cpp` (reference integration — pumps any MediaIO source into the player)
+- (tested via integration: mediaplay utility; not unit-testable headlessly due to SDL hardware requirement)
+
+**Design:**
+- Derives from `MediaIOTask`; not registered in the format registry — instantiated via `createSDLPlayer()` free factory and injected via `MediaIO::adoptTask()`
+- Paced mode (default): audio-led pacing — audio output's `waitForBuffer()` gates the write loop to keep A/V in sync; video rendered on the main thread via queued callables
+- Fast mode: no pacing — writes as fast as the backend can consume (for offline rendering or benchmarks)
+- Notification throttle: avoids flooding the main thread with render callables when it falls behind; drops video frames (counted in `framesDropped()`) rather than blocking the write thread
+- `renderPending()`: called from the main thread event loop to flush any queued video frame to the SDL widget
+- `SDLVideoWidget::mapPixelDesc()` expanded with direct 8/16-bit RGB/BGR/RGBA/BGRA/ARGB/ABGR mappings; RGBA8→SDL_PIXELFORMAT_RGBA32 bug fixed; fallback path refactored through `uploadCurrentImage()` helper
 
 ## AudioSourceNode
 

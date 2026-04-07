@@ -73,8 +73,7 @@ static MediaNodeConfig makeTestConfig(
         const String &fps = "24"
 ) {
         MediaNodeConfig cfg("TestPatternNode", name);
-        cfg.set("Width", uint32_t(w));
-        cfg.set("Height", uint32_t(h));
+        cfg.set("Size", Size2Du32(w, h));
         cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB));
         cfg.set("FrameRate", fps);
         return cfg;
@@ -740,10 +739,9 @@ TEST_CASE("TestPatternNode_ConfigureNoImageLayers") {
         TestPatternNode *node = new TestPatternNode();
         CaptureSinkNode *sink = new CaptureSinkNode();
 
-        // Width/height of 0 means no valid video desc
+        // Zero size means no valid video desc
         MediaNodeConfig cfg("TestPatternNode", "node");
-        cfg.set("Width", uint32_t(0));
-        cfg.set("Height", uint32_t(0));
+        cfg.set("Size", Size2Du32(0, 0));
         cfg.set("FrameRate", "24");
         BuildResult result = node->build(cfg);
         CHECK(result.isError());
@@ -767,8 +765,7 @@ TEST_CASE("TestPatternNode_DefaultConfig") {
         MediaNodeConfig cfg = node.defaultConfig();
 
         CHECK(cfg.type() == "TestPatternNode");
-        CHECK(cfg.get("Width").get<uint32_t>() == 1920);
-        CHECK(cfg.get("Height").get<uint32_t>() == 1080);
+        CHECK(cfg.get("Size").get<Size2Du32>() == Size2Du32(1920, 1080));
         CHECK(cfg.get("FrameRate").get<FrameRate>() == FrameRate(FrameRate::FPS_2997));
         CHECK(cfg.get("Pattern").get<String>() == "colorbars");
         CHECK(cfg.get("AudioEnabled").get<bool>() == true);

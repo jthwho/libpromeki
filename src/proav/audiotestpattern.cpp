@@ -27,9 +27,14 @@ Error AudioTestPattern::configure() {
         delete _ltcEncoder;
         _ltcEncoder = nullptr;
 
+        // Drop any AvSync caches so the next create() rebuilds with the
+        // current settings (e.g. tone freq / level changes).
+        _avSyncToneCache.clear();
+        _avSyncSilenceCache.clear();
+
         if(_mode == LTC) {
                 _ltcEncoder = new LtcEncoder((int)_desc.sampleRate(), _ltcLevel.toLinearFloat());
-        } else {
+        } else if(_mode == Tone || _mode == Silence) {
                 _audioGen = new AudioGen(_desc);
                 for(size_t ch = 0; ch < _desc.channels(); ch++) {
                         AudioGen::Config cfg;
@@ -49,10 +54,49 @@ Error AudioTestPattern::configure() {
                         _audioGen->setConfig(ch, cfg);
                 }
         }
+        // AvSync requires no eager setup — buildAvSyncCache() runs on
+        // the first create() call once the per-frame sample count is
+        // known.
         return Error::Ok;
 }
 
+const Audio &AudioTestPattern::avSyncTone(size_t samples) const {
+        auto it = _avSyncToneCache.find(samples);
+        if(it != _avSyncToneCache.end()) return it->second;
+
+        // Tone buffer: a one-shot AudioGen so its phase doesn't get
+        // tangled up with anything else.  Each "marker" frame returns
+        // the same identical tone burst.
+        AudioGen burst(_desc);
+        for(size_t ch = 0; ch < _desc.channels(); ch++) {
+                AudioGen::Config cfg;
+                cfg.type = AudioGen::Sine;
+                cfg.freq = (float)_toneFreq;
+                cfg.level = _toneLevel;
+                cfg.phase = 0.0f;
+                cfg.dutyCycle = 0.0f;
+                burst.setConfig(ch, cfg);
+        }
+        _avSyncToneCache.insert(samples, burst.generate(samples));
+        return _avSyncToneCache.find(samples)->second;
+}
+
+const Audio &AudioTestPattern::avSyncSilence(size_t samples) const {
+        auto it = _avSyncSilenceCache.find(samples);
+        if(it != _avSyncSilenceCache.end()) return it->second;
+
+        Audio silence(_desc, samples);
+        if(silence.isValid()) silence.zero();
+        _avSyncSilenceCache.insert(samples, silence);
+        return _avSyncSilenceCache.find(samples)->second;
+}
+
 Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
+        if(_mode == AvSync) {
+                const bool marker = tc.isValid() && tc.frame() == 0;
+                return marker ? avSyncTone(samples) : avSyncSilence(samples);
+        }
+
         if(_mode == LTC && _ltcEncoder != nullptr) {
                 Audio ltcAudio = _ltcEncoder->encode(tc);
                 if(!ltcAudio.isValid()) return Audio();
@@ -103,6 +147,7 @@ Result<AudioTestPattern::Mode> AudioTestPattern::fromString(const String &name) 
         if(name == "tone")    return makeResult(Tone);
         if(name == "silence") return makeResult(Silence);
         if(name == "ltc")     return makeResult(LTC);
+        if(name == "avsync")  return makeResult(AvSync);
         return makeError<Mode>(Error::Invalid);
 }
 
@@ -111,6 +156,7 @@ String AudioTestPattern::toString(Mode mode) {
                 case Tone:    return "tone";
                 case Silence: return "silence";
                 case LTC:     return "ltc";
+                case AvSync:  return "avsync";
         }
         return "unknown";
 }

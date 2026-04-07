@@ -592,6 +592,31 @@ class MediaIO : public ObjectBase {
                  */
                 ~MediaIO() override;
 
+                /**
+                 * @brief Injects an externally constructed backend task.
+                 *
+                 * Normally MediaIO obtains its task from the registered
+                 * factory via @c create().  Some backends, however, need
+                 * constructor arguments that can't be expressed in a
+                 * Config — for example, the SDL player task needs raw
+                 * pointers to an SDLVideoWidget and an SDLAudioOutput
+                 * supplied by the application.  For those cases the
+                 * caller constructs the task directly (via a free
+                 * factory function in the backend's library) and hands
+                 * it to MediaIO via this method.
+                 *
+                 * The MediaIO must not be open when this is called, and
+                 * must not already own a task.  Ownership of @p task
+                 * transfers to the MediaIO, which will delete it in the
+                 * destructor.  Passing @c nullptr is an error.
+                 *
+                 * @param task The pre-constructed backend task.
+                 * @return Error::Ok on success, Error::AlreadyOpen if the
+                 *         resource is open, or Error::Invalid if a task
+                 *         is already adopted or @p task is null.
+                 */
+                Error adoptTask(MediaIOTask *task);
+
                 /** @brief Returns the configuration. */
                 const Config &config() const { return _config; }
 

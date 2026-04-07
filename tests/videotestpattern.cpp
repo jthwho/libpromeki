@@ -47,7 +47,8 @@ TEST_CASE("VideoTestPattern_CreateAllPatterns") {
                 VideoTestPattern::White,
                 VideoTestPattern::Black,
                 VideoTestPattern::Noise,
-                VideoTestPattern::ZonePlate
+                VideoTestPattern::ZonePlate,
+                VideoTestPattern::AvSync
         };
 
         for(auto pat : patterns) {
@@ -156,7 +157,8 @@ TEST_CASE("VideoTestPattern_StringRoundTrip") {
                 VideoTestPattern::White,
                 VideoTestPattern::Black,
                 VideoTestPattern::Noise,
-                VideoTestPattern::ZonePlate
+                VideoTestPattern::ZonePlate,
+                VideoTestPattern::AvSync
         };
 
         for(auto pat : patterns) {
@@ -171,4 +173,70 @@ TEST_CASE("VideoTestPattern_StringRoundTrip") {
 TEST_CASE("VideoTestPattern_FromStringInvalid") {
         auto [pat, err] = VideoTestPattern::fromString("bogus");
         CHECK(err.isError());
+}
+
+#include <promeki/timecode.h>
+
+static bool imagePixelMatches(const Image &img, uint8_t r, uint8_t g, uint8_t b) {
+        const uint8_t *data = static_cast<const uint8_t *>(img.data());
+        return data[0] == r && data[1] == g && data[2] == b;
+}
+
+TEST_CASE("VideoTestPattern_AvSyncCachedWhiteAndBlack") {
+        VideoTestPattern gen;
+        gen.setPattern(VideoTestPattern::AvSync);
+        ImageDesc desc(64, 32, PixelDesc::RGB8_sRGB);
+
+        // tc.frame() == 0 -> white marker frame
+        Timecode marker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 0);
+        REQUIRE(marker.isValid());
+        REQUIRE(marker.frame() == 0);
+        Image white = gen.create(desc, 0.0, marker);
+        REQUIRE(white.isValid());
+        CHECK(imagePixelMatches(white, 255, 255, 255));
+
+        // tc.frame() != 0 -> black non-marker frame
+        Timecode nonMarker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 5);
+        REQUIRE(nonMarker.isValid());
+        REQUIRE(nonMarker.frame() == 5);
+        Image black = gen.create(desc, 0.0, nonMarker);
+        REQUIRE(black.isValid());
+        CHECK(imagePixelMatches(black, 0, 0, 0));
+
+        // Repeated calls reuse the cached planes — the returned Image
+        // should share the same underlying buffer as the first one.
+        Image white2 = gen.create(desc, 0.0, marker);
+        REQUIRE(white2.isValid());
+        CHECK(white2.data() == white.data());
+
+        Image black2 = gen.create(desc, 0.0, nonMarker);
+        REQUIRE(black2.isValid());
+        CHECK(black2.data() == black.data());
+
+        // Default-constructed (invalid) timecode falls back to the
+        // non-marker (black) frame so the pattern degrades gracefully
+        // when no timecode is supplied.
+        Image fallback = gen.create(desc, 0.0, Timecode());
+        REQUIRE(fallback.isValid());
+        CHECK(imagePixelMatches(fallback, 0, 0, 0));
+}
+
+TEST_CASE("VideoTestPattern_AvSyncCacheRebuildsOnDescChange") {
+        VideoTestPattern gen;
+        gen.setPattern(VideoTestPattern::AvSync);
+        Timecode marker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 0);
+
+        Image a = gen.create(ImageDesc(32, 16, PixelDesc::RGB8_sRGB), 0.0, marker);
+        REQUIRE(a.isValid());
+        CHECK(a.width() == 32);
+        CHECK(a.height() == 16);
+        CHECK(imagePixelMatches(a, 255, 255, 255));
+
+        Image b = gen.create(ImageDesc(64, 32, PixelDesc::RGB8_sRGB), 0.0, marker);
+        REQUIRE(b.isValid());
+        CHECK(b.width() == 64);
+        CHECK(b.height() == 32);
+        CHECK(imagePixelMatches(b, 255, 255, 255));
+        // Different desc => different cache backing => different pointer
+        CHECK(b.data() != a.data());
 }

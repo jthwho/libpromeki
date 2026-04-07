@@ -9,6 +9,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/duration.h>
 #include <promeki/rational.h>
 #include <promeki/result.h>
 #include <promeki/string.h>
@@ -142,6 +143,77 @@ class FrameRate {
                  * @return The frame rate in frames per second.
                  */
                 double toDouble() const { return _fps.toDouble(); }
+
+                /**
+                 * @brief Returns the period of one frame as a Duration.
+                 *
+                 * Computed from the exact rational form as
+                 * @c denominator / @c numerator seconds, rounded to the
+                 * nearest nanosecond.  Returns a zero Duration if the
+                 * frame rate is invalid.
+                 *
+                 * @par Example
+                 * @code
+                 * FrameRate fps(FrameRate::FPS_2997);     // 30000/1001
+                 * Duration  d = fps.frameDuration();      // ~33_366_666 ns
+                 * @endcode
+                 *
+                 * @return The frame period as a Duration.
+                 */
+                Duration frameDuration() const {
+                        if(!isValid()) return Duration();
+                        // Period in ns = denom * 1e9 / num.  Use 64-bit
+                        // math so 1001 * 1e9 doesn't overflow.
+                        int64_t num = static_cast<int64_t>(_fps.numerator());
+                        int64_t den = static_cast<int64_t>(_fps.denominator());
+                        int64_t ns  = (den * INT64_C(1'000'000'000) + num / 2) / num;
+                        return Duration::fromNanoseconds(ns);
+                }
+
+                /**
+                 * @brief Returns the number of audio samples for the given frame index.
+                 *
+                 * Uses exact rational arithmetic so the cumulative
+                 * sample count stays perfectly aligned with wall-clock
+                 * time over arbitrary durations — including for
+                 * fractional NTSC rates where the per-frame count must
+                 * alternate.  For 48 kHz @ 29.97 fps the function emits
+                 * the standard cadence of 1601/1602/1601/1602/1602
+                 * (which sums to exactly 8008 every 5 frames), instead
+                 * of the constant 1602 you would get from a naive
+                 * @c round(sampleRate/fps).
+                 *
+                 * The implementation is:
+                 *
+                 * @code
+                 * cumulative(n) = (n * sampleRate * denominator) / numerator   // integer div
+                 * samplesPerFrame(n) = cumulative(n + 1) - cumulative(n)
+                 * @endcode
+                 *
+                 * For integer-cadence rates (24, 25, 30, 50, 60) every
+                 * frame returns the same constant value.  For fractional
+                 * rates the result alternates in a fixed cycle whose
+                 * period equals the @c denominator (e.g. 1001 for NTSC
+                 * — though the visible pattern repeats every 5 frames).
+                 *
+                 * @param sampleRate Audio sample rate in Hz (e.g. 48000).
+                 * @param frameIndex Zero-based frame index since the start of the run.
+                 * @return Number of samples to emit for that frame, or 0 if the
+                 *         frame rate is invalid or @p sampleRate is non-positive.
+                 */
+                size_t samplesPerFrame(int64_t sampleRate, int64_t frameIndex) const {
+                        if(!isValid() || sampleRate <= 0 || frameIndex < 0) return 0;
+                        const int64_t num = static_cast<int64_t>(_fps.numerator());
+                        const int64_t den = static_cast<int64_t>(_fps.denominator());
+                        // Cumulative samples through end of frame N = N * sr * den / num.
+                        // Cast to __int128 would be overkill — for any plausible
+                        // sample rate (<= 768 kHz) and fps numerator (<= 120000),
+                        // sr * den fits in 60 bits and a multiply by frameIndex up
+                        // to 2^31 still fits in int64_t.
+                        const int64_t cumNext = ((frameIndex + 1) * sampleRate * den) / num;
+                        const int64_t cumNow  = (frameIndex * sampleRate * den) / num;
+                        return static_cast<size_t>(cumNext - cumNow);
+                }
 
                 /**
                  * @brief Returns a string representation of the frame rate.
