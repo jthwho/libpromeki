@@ -7,12 +7,6 @@
 [submodule "thirdparty/libsndfile"]
 	path = thirdparty/libsndfile
 	url = https://github.com/libsndfile/libsndfile.git
-[submodule "thirdparty/zlib"]
-	path = thirdparty/zlib
-	url = https://github.com/madler/zlib.git
-[submodule "thirdparty/libpng"]
-	path = thirdparty/libpng
-	url = https://github.com/glennrp/libpng.git
 [submodule "thirdparty/freetype"]
 	path = thirdparty/freetype
 	url = https://gitlab.freedesktop.org/freetype/freetype.git
@@ -25,3 +19,9 @@
 [submodule "thirdparty/highway"]
 	path = thirdparty/highway
 	url = https://github.com/google/highway.git
+[submodule "thirdparty/libspng"]
+	path = thirdparty/libspng
+	url = https://github.com/randy408/libspng.git
+[submodule "thirdparty/zlib-ng"]
+	path = thirdparty/zlib-ng
+	url = https://github.com/zlib-ng/zlib-ng.git

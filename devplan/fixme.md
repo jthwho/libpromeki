@@ -53,8 +53,6 @@ Library classes should use the library's own container/type wrappers (`List`, `M
 ### std::vector → List\<T\>
 
 - **`src/core/bufferediodevice.cpp:149,167,211,227,240`** — Multiple `std::vector<uint8_t>` used as temporary read/collect buffers.
-- **`src/proav/imagefileio_png.cpp:105`** — `std::vector<png_bytep>` for PNG row pointers.
-
 ### std::map → Map\<K,V\>
 
 - **`src/core/string.cpp:283`** — `static const std::map<std::string, int64_t> numberWords` lookup table.
@@ -70,7 +68,6 @@ Library classes should use the library's own container/type wrappers (`List`, `M
 ### Tasks
 
 - [ ] Replace `std::vector` with `List<T>` in `src/core/bufferediodevice.cpp`
-- [ ] Replace `std::vector` with `List<T>` in `src/proav/imagefileio_png.cpp`
 - [ ] Replace `std::map` with `Map<K,V>` in `src/core/string.cpp` and `src/core/datetime.cpp`
 - [ ] Replace `std::array` with `Array<T,N>` in `macaddress.h`, `musicalscale.h`
 - [ ] Replace `std::array` with `Array<T,N>` in `util.h` template functions

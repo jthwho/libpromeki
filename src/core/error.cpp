@@ -85,7 +85,10 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(IdNotFound, NONE, "Requested ID was not found in the database"),
         DEFINE_ERROR(ConversionFailed, NONE, "Type conversion could not be performed"),
         DEFINE_ERROR(Stopped, NONE, "Operation interrupted because the object is stopping"),
-        DEFINE_ERROR(Cancelled, NONE, "Operation was cancelled before completion")
+        DEFINE_ERROR(Cancelled, NONE, "Operation was cancelled before completion"),
+        DEFINE_ERROR(DecodeFailed, NONE, "Codec decoder reported a failure"),
+        DEFINE_ERROR(EncodeFailed, NONE, "Codec encoder reported a failure"),
+        DEFINE_ERROR(CorruptData, NONE, "Stored data is structurally corrupt")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

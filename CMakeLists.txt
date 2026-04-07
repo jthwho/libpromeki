@@ -37,8 +37,8 @@ option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 
 # Vendored vs system dependency options
-option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored"           OFF)
-option(PROMEKI_USE_SYSTEM_LIBPNG        "Use system libpng instead of vendored"         OFF)
+option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
+option(PROMEKI_USE_SYSTEM_LIBSPNG       "Use system libspng instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_LIBJPEG       "Use system libjpeg instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
@@ -172,7 +172,11 @@ if(PROMEKI_ENABLE_CSC)
     endif()
 endif()
 
-# --- zlib (needed by libpng and freetype) ---
+# --- zlib (vendored as zlib-ng in zlib-compat mode; needed by libspng and freetype) ---
+# zlib-ng is a drop-in replacement for stock zlib with significantly faster
+# deflate/inflate performance on modern x86_64 / ARM. With ZLIB_COMPAT=ON it
+# installs as libz.a with the standard zlib.h ABI, so all consumers
+# (libspng, freetype, anything else) link against it unchanged.
 if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
     if(PROMEKI_USE_SYSTEM_ZLIB)
         find_package(ZLIB REQUIRED)
@@ -180,17 +184,21 @@ if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
         set(PROMEKI_ZLIB_INCLUDE ${ZLIB_INCLUDE_DIRS})
         set(PROMEKI_ZLIB_LIBRARY ${ZLIB_LIBRARIES})
     else()
-        set(PROMEKI_ZLIB_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/zlib)
+        set(PROMEKI_ZLIB_SRC_COPY ${CMAKE_CURRENT_BINARY_DIR}/thirdparty-src/zlib-ng)
         ExternalProject_Add(
-            zlib-ep
+            zlib-ng-ep
             DOWNLOAD_COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zlib
+                ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/zlib-ng
                 ${PROMEKI_ZLIB_SRC_COPY}
             SOURCE_DIR ${PROMEKI_ZLIB_SRC_COPY}
             CMAKE_ARGS
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DZLIB_BUILD_EXAMPLES=OFF
+                -DZLIB_COMPAT=ON
+                -DZLIB_ENABLE_TESTS=OFF
+                -DZLIBNG_ENABLE_TESTS=OFF
+                -DBUILD_SHARED_LIBS=OFF
+                -DWITH_GTEST=OFF
         )
         set(PROMEKI_ZLIB_INCLUDE ${PROMEKI_THIRDPARTY_PREFIX}/include)
         set(PROMEKI_ZLIB_LIBRARY ${PROMEKI_THIRDPARTY_PREFIX}/lib/libz.a)
@@ -199,7 +207,7 @@ if(PROMEKI_ENABLE_PNG OR PROMEKI_ENABLE_FREETYPE)
             IMPORTED_LOCATION ${PROMEKI_ZLIB_LIBRARY}
             INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_ZLIB_INCLUDE}
         )
-        add_dependencies(promeki_zlib_vendored zlib-ep)
+        add_dependencies(promeki_zlib_vendored zlib-ng-ep)
         set(PROMEKI_ZLIB_TARGET promeki_zlib_vendored)
     endif()
 endif()
@@ -229,32 +237,38 @@ if(PROMEKI_ENABLE_JPEG)
     endif()
 endif()
 
-# --- libpng ---
+# --- libspng ---
+# libspng is used in place of libpng. It's a single-file PNG codec with a
+# clean stream/buffer API and no setjmp/longjmp, sized for media-pipeline
+# usage (image sequences, realtime decode/encode).
 if(PROMEKI_ENABLE_PNG)
-    if(PROMEKI_USE_SYSTEM_LIBPNG)
-        find_package(PNG REQUIRED)
-        set(PROMEKI_PNG_TARGET PNG::PNG)
+    if(PROMEKI_USE_SYSTEM_LIBSPNG)
+        find_package(SPNG REQUIRED)
+        set(PROMEKI_SPNG_TARGET spng::spng)
     else()
         ExternalProject_Add(
-            libpng-ep
-            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libpng
-            DEPENDS zlib-ep
+            libspng-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libspng
+            DEPENDS zlib-ng-ep
             CMAKE_ARGS
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DCMAKE_PREFIX_PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DZLIB_ROOT=${PROMEKI_THIRDPARTY_PREFIX}
                 -DZLIB_INCLUDE_DIR=${PROMEKI_ZLIB_INCLUDE}
                 -DZLIB_LIBRARY=${PROMEKI_ZLIB_LIBRARY}
-                -DPNG_SHARED=OFF
-                -DPNG_STATIC=ON
-                -DPNG_TESTS=OFF
-                -DPNG_TOOLS=OFF
+                -DSPNG_SHARED=OFF
+                -DSPNG_STATIC=ON
+                -DBUILD_EXAMPLES=OFF
         )
-        add_library(promeki_png_vendored STATIC IMPORTED)
-        set_target_properties(promeki_png_vendored PROPERTIES
-            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libpng.a
+        add_library(promeki_spng_vendored STATIC IMPORTED)
+        set_target_properties(promeki_spng_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libspng_static.a
+            INTERFACE_INCLUDE_DIRECTORIES ${PROMEKI_THIRDPARTY_PREFIX}/include
+            INTERFACE_COMPILE_DEFINITIONS SPNG_STATIC
         )
-        add_dependencies(promeki_png_vendored libpng-ep)
-        set(PROMEKI_PNG_TARGET promeki_png_vendored)
+        add_dependencies(promeki_spng_vendored libspng-ep)
+        set(PROMEKI_SPNG_TARGET promeki_spng_vendored)
     endif()
 endif()
 
@@ -295,7 +309,7 @@ if(PROMEKI_ENABLE_FREETYPE)
         ExternalProject_Add(
             freetype-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/freetype
-            DEPENDS zlib-ep
+            DEPENDS zlib-ng-ep
             CMAKE_ARGS
                 -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
@@ -746,7 +760,7 @@ if(PROMEKI_ENABLE_PROAV)
     if(NOT PROMEKI_USE_SYSTEM_LIBJPEG AND PROMEKI_ENABLE_JPEG)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
-    if(NOT PROMEKI_USE_SYSTEM_LIBPNG AND PROMEKI_ENABLE_PNG)
+    if(NOT PROMEKI_USE_SYSTEM_LIBSPNG AND PROMEKI_ENABLE_PNG)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
     if(NOT PROMEKI_USE_SYSTEM_SNDFILE AND PROMEKI_ENABLE_AUDIO)
@@ -764,8 +778,8 @@ if(PROMEKI_ENABLE_PROAV)
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_JPEG)
     endif()
     if(PROMEKI_ENABLE_PNG)
-        target_link_libraries(promeki PRIVATE ${PROMEKI_PNG_TARGET} ${PROMEKI_ZLIB_TARGET})
-        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_PNG)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_SPNG_TARGET} ${PROMEKI_ZLIB_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_PNG SPNG_STATIC)
     endif()
     if(PROMEKI_ENABLE_FREETYPE)
         target_link_libraries(promeki PRIVATE ${PROMEKI_FREETYPE_TARGET} ${PROMEKI_ZLIB_TARGET})
@@ -1191,6 +1205,11 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_CSC)
             list(APPEND UNITTEST_SOURCES
                 tests/cscpipeline.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_PNG)
+            list(APPEND UNITTEST_SOURCES
+                tests/imagefileio_png.cpp
             )
         endif()
     endif()

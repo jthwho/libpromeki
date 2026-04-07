@@ -90,7 +90,10 @@ class Error {
                         IdNotFound,              ///< Requested ID was not found in the database.
                         ConversionFailed,        ///< Type conversion could not be performed.
                         Stopped,                 ///< Operation interrupted because the object is stopping.
-                        Cancelled                ///< Operation was cancelled before completion.
+                        Cancelled,               ///< Operation was cancelled before completion.
+                        DecodeFailed,            ///< Codec decoder reported a failure.
+                        EncodeFailed,            ///< Codec encoder reported a failure.
+                        CorruptData              ///< Stored data is structurally corrupt.
                 };
 
                 /**

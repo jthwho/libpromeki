@@ -142,6 +142,7 @@ MediaIOTask backend wrapping the ImageFile / ImageFileIO subsystem for single-im
 **Design:**
 - Derives from `MediaIOTask`, registered as "ImageFile"
 - Supports DPX, Cineon, TGA, SGI, RGB, PNM, PPM, PGM, PNG, RawYUV variants
+- PNG backend (`ImageFileIO_PNG`) overhauled: libpng+zlib replaced with libspng+zlib-ng; load now fully implemented; supports Mono8/Mono16-BE/LE, RGB8/16-BE/LE, RGBA8/16-BE/LE; O_DIRECT save path; gAMA metadata round-trip; no setjmp/longjmp; 17 unit tests in `tests/imagefileio_png.cpp`
 - Content probing via magic-number inspection (DPX/Cineon/PNG/SGI/PNM); `FormatDesc::canHandleDevice` populated
 - Default step=0 (set via `cmd.defaultStep = 0` in Open): CmdRead re-delivers the same loaded image indefinitely (hold semantics for still images in a pipeline); step≠0 for single-delivery then EndOfFile
 - `cmd.frameCount = 1` for Reader, tracks write count for Writer
