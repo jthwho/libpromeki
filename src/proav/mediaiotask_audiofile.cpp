@@ -1,5 +1,5 @@
 /**
- * @file      mediaio_audiofile.cpp
+ * @file      mediaiotask_audiofile.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
@@ -7,19 +7,20 @@
 
 #include <cmath>
 #include <cstdint>
-#include <promeki/mediaio_audiofile.h>
+#include <promeki/mediaiotask_audiofile.h>
 #include <promeki/iodevice.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
+#include <promeki/mediadesc.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_REGISTER_MEDIAIO(MediaIO_AudioFile)
+PROMEKI_REGISTER_MEDIAIO(MediaIOTask_AudioFile)
 
-const MediaIO::ConfigID MediaIO_AudioFile::ConfigFrameRate("FrameRate");
-const MediaIO::ConfigID MediaIO_AudioFile::ConfigAudioRate("AudioRate");
-const MediaIO::ConfigID MediaIO_AudioFile::ConfigAudioChannels("AudioChannels");
+const MediaIO::ConfigID MediaIOTask_AudioFile::ConfigFrameRate("FrameRate");
+const MediaIO::ConfigID MediaIOTask_AudioFile::ConfigAudioRate("AudioRate");
+const MediaIO::ConfigID MediaIOTask_AudioFile::ConfigAudioChannels("AudioChannels");
 
 // ============================================================================
 // Magic number probing
@@ -51,15 +52,16 @@ static bool probeAudioDevice(IODevice *device) {
 // FormatDesc
 // ============================================================================
 
-MediaIO::FormatDesc MediaIO_AudioFile::formatDesc() {
+MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
         return {
                 "AudioFile",
                 "Audio file formats via libsndfile (WAV, BWF, AIFF, OGG)",
                 {"wav", "bwf", "aiff", "aif", "ogg"},
                 true,   // canRead
                 true,   // canWrite
-                [](ObjectBase *parent) -> MediaIO * {
-                        return new MediaIO_AudioFile(parent);
+                false,  // canReadWrite
+                []() -> MediaIOTask * {
+                        return new MediaIOTask_AudioFile();
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
@@ -77,44 +79,45 @@ MediaIO::FormatDesc MediaIO_AudioFile::formatDesc() {
 // Lifecycle
 // ============================================================================
 
-MediaIO_AudioFile::~MediaIO_AudioFile() {
-        if(isOpen()) close();
-}
+MediaIOTask_AudioFile::~MediaIOTask_AudioFile() = default;
 
-Error MediaIO_AudioFile::onOpen(Mode mode) {
-        const Config &cfg = config();
+Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
+        const MediaIO::Config &cfg = cmd.config;
 
         // Frame rate is required
         _frameRate = cfg.getAs<FrameRate>(ConfigFrameRate, FrameRate());
         if(!_frameRate.isValid()) {
-                promekiErr("MediaIO_AudioFile: frame rate is required");
+                promekiErr("MediaIOTask_AudioFile: frame rate is required");
                 return Error::InvalidArgument;
         }
 
         String filename = cfg.getAs<String>(MediaIO::ConfigFilename);
         if(filename.isEmpty()) {
-                promekiErr("MediaIO_AudioFile: filename is required");
+                promekiErr("MediaIOTask_AudioFile: filename is required");
                 return Error::InvalidArgument;
         }
 
-        if(mode == Reader) {
+        _mode = cmd.mode;
+        MediaDesc mediaDesc;
+
+        if(cmd.mode == MediaIO::Reader) {
                 _audioFile = AudioFile::createReader(filename);
                 if(!_audioFile.isValid()) {
-                        promekiErr("MediaIO_AudioFile: failed to create reader for '%s'",
+                        promekiErr("MediaIOTask_AudioFile: failed to create reader for '%s'",
                                 filename.cstr());
                         return Error::NotSupported;
                 }
 
                 Error err = _audioFile.open();
                 if(err.isError()) {
-                        promekiErr("MediaIO_AudioFile: open '%s' failed: %s",
+                        promekiErr("MediaIOTask_AudioFile: open '%s' failed: %s",
                                 filename.cstr(), err.name().cstr());
                         return err;
                 }
 
                 _audioDesc = _audioFile.desc();
                 if(!_audioDesc.isValid()) {
-                        promekiErr("MediaIO_AudioFile: invalid audio desc from '%s'",
+                        promekiErr("MediaIOTask_AudioFile: invalid audio desc from '%s'",
                                 filename.cstr());
                         _audioFile.close();
                         return Error::NotSupported;
@@ -128,15 +131,17 @@ Error MediaIO_AudioFile::onOpen(Mode mode) {
                         ? (totalSamples + _samplesPerFrame - 1) / _samplesPerFrame
                         : 0;
 
-                // Build MediaDesc: no images, one audio entry
-                _mediaDesc = MediaDesc();
-                _mediaDesc.setFrameRate(_frameRate);
-                _mediaDesc.audioList().pushToBack(_audioDesc);
+                mediaDesc.setFrameRate(_frameRate);
+                mediaDesc.audioList().pushToBack(_audioDesc);
 
+                cmd.frameCount = _totalFrames;
+                cmd.canSeek = true;
         } else { // Writer
-                // Get AudioDesc from config fields or previously set MediaDesc
-                if(!_mediaDesc.audioList().isEmpty()) {
-                        _audioDesc = _mediaDesc.audioList()[0];
+                // Get AudioDesc from pendingAudioDesc, pendingMediaDesc, or config fields
+                if(cmd.pendingAudioDesc.isValid()) {
+                        _audioDesc = cmd.pendingAudioDesc;
+                } else if(!cmd.pendingMediaDesc.audioList().isEmpty()) {
+                        _audioDesc = cmd.pendingMediaDesc.audioList()[0];
                 } else {
                         float rate = cfg.getAs<float>(ConfigAudioRate, 0.0f);
                         unsigned int channels = cfg.getAs<unsigned int>(ConfigAudioChannels, 0u);
@@ -146,13 +151,13 @@ Error MediaIO_AudioFile::onOpen(Mode mode) {
                 }
 
                 if(!_audioDesc.isValid()) {
-                        promekiErr("MediaIO_AudioFile: audio desc required for writing");
+                        promekiErr("MediaIOTask_AudioFile: audio desc required for writing");
                         return Error::InvalidArgument;
                 }
 
                 _audioFile = AudioFile::createWriter(filename);
                 if(!_audioFile.isValid()) {
-                        promekiErr("MediaIO_AudioFile: failed to create writer for '%s'",
+                        promekiErr("MediaIOTask_AudioFile: failed to create writer for '%s'",
                                 filename.cstr());
                         return Error::NotSupported;
                 }
@@ -160,7 +165,7 @@ Error MediaIO_AudioFile::onOpen(Mode mode) {
                 _audioFile.setDesc(_audioDesc);
                 Error err = _audioFile.open();
                 if(err.isError()) {
-                        promekiErr("MediaIO_AudioFile: open '%s' for write failed: %s",
+                        promekiErr("MediaIOTask_AudioFile: open '%s' for write failed: %s",
                                 filename.cstr(), err.name().cstr());
                         return err;
                 }
@@ -168,105 +173,76 @@ Error MediaIO_AudioFile::onOpen(Mode mode) {
                 double fpsVal = _frameRate.toDouble();
                 _samplesPerFrame = (size_t)std::round(_audioDesc.sampleRate() / fpsVal);
 
-                _mediaDesc = MediaDesc();
-                _mediaDesc.setFrameRate(_frameRate);
-                _mediaDesc.audioList().pushToBack(_audioDesc);
+                mediaDesc.setFrameRate(_frameRate);
+                mediaDesc.audioList().pushToBack(_audioDesc);
+
+                cmd.frameCount = 0;
+                cmd.canSeek = false;
         }
 
         _currentFrame = 0;
+        cmd.mediaDesc = mediaDesc;
+        cmd.audioDesc = _audioDesc;
+        cmd.frameRate = _frameRate;
         return Error::Ok;
 }
 
-Error MediaIO_AudioFile::onClose() {
+Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandClose &cmd) {
         _audioFile.close();
         _audioFile = AudioFile();
         _audioDesc = AudioDesc();
-        _mediaDesc = MediaDesc();
         _frameRate = FrameRate();
+        _mode = MediaIO_NotOpen;
         _samplesPerFrame = 0;
         _currentFrame = 0;
         _totalFrames = 0;
         return Error::Ok;
 }
 
-// ============================================================================
-// Descriptors
-// ============================================================================
-
-MediaDesc MediaIO_AudioFile::mediaDesc() const {
-        return _mediaDesc;
-}
-
-Error MediaIO_AudioFile::setMediaDesc(const MediaDesc &desc) {
-        if(isOpen()) return Error::AlreadyOpen;
-        _mediaDesc = desc;
-        return Error::Ok;
-}
-
-// ============================================================================
-// Frame I/O
-// ============================================================================
-
-Error MediaIO_AudioFile::onReadFrame(Frame &frame) {
+Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
         Audio audio;
         Error err = _audioFile.read(audio, _samplesPerFrame);
         if(err.isError()) return err;
 
-        frame.audioList().pushToBack(Audio::Ptr::create(audio));
+        cmd.frame = Frame::Ptr::create();
+        cmd.frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
         _currentFrame++;
 
         // Advance by step.  The read already moved forward by 1 frame,
         // so we seek by (step - 1) additional frames.
-        int s = step();
+        int s = cmd.step;
         if(s != 1) {
-                int64_t target = (int64_t)_currentFrame + (s - 1);
+                int64_t target = _currentFrame + (s - 1);
                 if(target < 0) target = 0;
                 _audioFile.seekToSample((size_t)target * _samplesPerFrame);
-                _currentFrame = (uint64_t)target;
+                _currentFrame = target;
         }
+        cmd.currentFrame = _currentFrame;
         return Error::Ok;
 }
 
-Error MediaIO_AudioFile::onWriteFrame(const Frame &frame) {
-        if(frame.audioList().isEmpty()) {
-                promekiWarn("MediaIO_AudioFile: writeFrame called with no audio");
+Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
+        if(cmd.frame->audioList().isEmpty()) {
+                promekiWarn("MediaIOTask_AudioFile: write with no audio");
                 return Error::InvalidArgument;
         }
-
-        const Audio &audio = *frame.audioList()[0];
+        const Audio &audio = *cmd.frame->audioList()[0];
         Error err = _audioFile.write(audio);
         if(err.isError()) return err;
-
         _currentFrame++;
+        cmd.currentFrame = _currentFrame;
+        cmd.frameCount = _currentFrame;
         return Error::Ok;
 }
 
-// ============================================================================
-// Seeking
-// ============================================================================
-
-bool MediaIO_AudioFile::canSeek() const {
-        return isOpen() && mode() == Reader;
-}
-
-Error MediaIO_AudioFile::seekToFrame(int64_t frameNumber) {
-        if(!isOpen()) return Error::NotOpen;
-        if(mode() != Reader) return Error::IllegalSeek;
-        size_t targetSample = frameNumber * _samplesPerFrame;
+Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandSeek &cmd) {
+        if(_mode != MediaIO::Reader) return Error::IllegalSeek;
+        size_t targetSample = cmd.frameNumber * _samplesPerFrame;
         Error err = _audioFile.seekToSample(targetSample);
         if(err.isError()) return err;
-        _currentFrame = frameNumber;
+        _currentFrame = cmd.frameNumber;
+        cmd.currentFrame = _currentFrame;
         return Error::Ok;
-}
-
-int64_t MediaIO_AudioFile::frameCount() const {
-        if(!isOpen()) return 0;
-        if(mode() == Writer) return _currentFrame;
-        return _totalFrames;
-}
-
-uint64_t MediaIO_AudioFile::currentFrame() const {
-        return _currentFrame;
 }
 
 PROMEKI_NAMESPACE_END

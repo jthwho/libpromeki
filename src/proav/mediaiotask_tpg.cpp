@@ -1,12 +1,12 @@
 /**
- * @file      mediaio_tpg.cpp
+ * @file      mediaiotask_tpg.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
  */
 
 #include <cmath>
-#include <promeki/mediaio_tpg.h>
+#include <promeki/mediaiotask_tpg.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
@@ -18,45 +18,46 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_REGISTER_MEDIAIO(MediaIO_TPG)
+PROMEKI_REGISTER_MEDIAIO(MediaIOTask_TPG)
 
 // General
-const MediaIO::ConfigID MediaIO_TPG::ConfigFrameRate("FrameRate");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigFrameRate("FrameRate");
 
 // Video
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoEnabled("VideoEnabled");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoPattern("VideoPattern");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoWidth("VideoWidth");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoHeight("VideoHeight");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoPixelFormat("VideoPixelFormat");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoSolidColor("VideoSolidColor");
-const MediaIO::ConfigID MediaIO_TPG::ConfigVideoMotion("VideoMotion");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoEnabled("VideoEnabled");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoPattern("VideoPattern");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoWidth("VideoWidth");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoHeight("VideoHeight");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoPixelFormat("VideoPixelFormat");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoSolidColor("VideoSolidColor");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoMotion("VideoMotion");
 
 // Audio
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioEnabled("AudioEnabled");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioMode("AudioMode");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioRate("AudioRate");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioChannels("AudioChannels");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioToneFrequency("AudioToneFrequency");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioToneLevel("AudioToneLevel");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioLtcLevel("AudioLtcLevel");
-const MediaIO::ConfigID MediaIO_TPG::ConfigAudioLtcChannel("AudioLtcChannel");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioEnabled("AudioEnabled");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioMode("AudioMode");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioRate("AudioRate");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioChannels("AudioChannels");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioToneFrequency("AudioToneFrequency");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioToneLevel("AudioToneLevel");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioLtcLevel("AudioLtcLevel");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioLtcChannel("AudioLtcChannel");
 
 // Timecode
-const MediaIO::ConfigID MediaIO_TPG::ConfigTimecodeEnabled("TimecodeEnabled");
-const MediaIO::ConfigID MediaIO_TPG::ConfigTimecodeStart("TimecodeStart");
-const MediaIO::ConfigID MediaIO_TPG::ConfigTimecodeValue("TimecodeValue");
-const MediaIO::ConfigID MediaIO_TPG::ConfigTimecodeDropFrame("TimecodeDropFrame");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeEnabled("TimecodeEnabled");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeStart("TimecodeStart");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeValue("TimecodeValue");
+const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeDropFrame("TimecodeDropFrame");
 
-MediaIO::FormatDesc MediaIO_TPG::formatDesc() {
+MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
         return {
                 "TPG",
                 "Video/audio/timecode test pattern generator",
                 {},     // No file extensions — this is a generator
                 true,   // canRead
                 false,  // canWrite
-                [](ObjectBase *parent) -> MediaIO * {
-                        return new MediaIO_TPG(parent);
+                false,  // canReadWrite
+                []() -> MediaIOTask * {
+                        return new MediaIOTask_TPG();
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
@@ -88,25 +89,25 @@ MediaIO::FormatDesc MediaIO_TPG::formatDesc() {
         };
 }
 
-MediaIO_TPG::~MediaIO_TPG() {
-        if(isOpen()) close();
+MediaIOTask_TPG::~MediaIOTask_TPG() {
         delete _audioPattern;
 }
 
-Error MediaIO_TPG::onOpen(Mode mode) {
-        if(mode != Reader) return Error::NotSupported;
+Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
+        if(cmd.mode != MediaIO::Reader) return Error::NotSupported;
 
-        const Config &cfg = config();
+        const MediaIO::Config &cfg = cmd.config;
 
         // -- Frame rate (required) --
         FrameRate fps = cfg.getAs<FrameRate>(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
         if(!fps.isValid()) {
-                promekiErr("MediaIO_TPG: invalid frame rate");
+                promekiErr("MediaIOTask_TPG: invalid frame rate");
                 return Error::InvalidArgument;
         }
+        _frameRate = fps;
 
-        _mediaDesc = MediaDesc();
-        _mediaDesc.setFrameRate(fps);
+        MediaDesc mediaDesc;
+        mediaDesc.setFrameRate(fps);
 
         // -- Video --
         _videoEnabled = cfg.getAs<bool>(ConfigVideoEnabled, false);
@@ -114,7 +115,7 @@ Error MediaIO_TPG::onOpen(Mode mode) {
                 String patStr = cfg.getAs<String>(ConfigVideoPattern, "colorbars");
                 auto [pat, patErr] = VideoTestPattern::fromString(patStr);
                 if(patErr.isError()) {
-                        promekiErr("MediaIO_TPG: unknown pattern '%s'", patStr.cstr());
+                        promekiErr("MediaIOTask_TPG: unknown pattern '%s'", patStr.cstr());
                         return Error::InvalidArgument;
                 }
                 _videoPattern.setPattern(pat);
@@ -123,12 +124,12 @@ Error MediaIO_TPG::onOpen(Mode mode) {
                 int height = cfg.getAs<int>(ConfigVideoHeight, 1080);
                 PixelDesc pd = cfg.getAs<PixelDesc>(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                 if(width <= 0 || height <= 0) {
-                        promekiErr("MediaIO_TPG: invalid dimensions %dx%d", width, height);
+                        promekiErr("MediaIOTask_TPG: invalid dimensions %dx%d", width, height);
                         return Error::InvalidDimension;
                 }
 
                 _imageDesc = ImageDesc(width, height, pd.id());
-                _mediaDesc.imageList().pushToBack(_imageDesc);
+                mediaDesc.imageList().pushToBack(_imageDesc);
 
                 Color solidColor = cfg.getAs<Color>(ConfigVideoSolidColor, Color::Black);
                 _videoPattern.setSolidColor(solidColor);
@@ -151,11 +152,11 @@ Error MediaIO_TPG::onOpen(Mode mode) {
                 int audioChannels = cfg.getAs<int>(ConfigAudioChannels, 2);
                 _audioDesc = AudioDesc(audioRate, audioChannels);
                 if(!_audioDesc.isValid()) {
-                        promekiErr("MediaIO_TPG: invalid audio desc");
+                        promekiErr("MediaIOTask_TPG: invalid audio desc");
                         return Error::InvalidArgument;
                 }
 
-                _mediaDesc.audioList().pushToBack(_audioDesc);
+                mediaDesc.audioList().pushToBack(_audioDesc);
 
                 double fpsVal = fps.toDouble();
                 _samplesPerFrame = (fpsVal > 0.0)
@@ -168,7 +169,7 @@ Error MediaIO_TPG::onOpen(Mode mode) {
                 String audioModeStr = cfg.getAs<String>(ConfigAudioMode, "tone");
                 auto [audioMode, modeErr] = AudioTestPattern::fromString(audioModeStr);
                 if(modeErr.isError()) {
-                        promekiErr("MediaIO_TPG: unknown audio mode '%s'", audioModeStr.cstr());
+                        promekiErr("MediaIOTask_TPG: unknown audio mode '%s'", audioModeStr.cstr());
                         delete _audioPattern;
                         _audioPattern = nullptr;
                         return Error::InvalidArgument;
@@ -192,9 +193,6 @@ Error MediaIO_TPG::onOpen(Mode mode) {
         if(_timecodeEnabled) {
                 _tcGen = TimecodeGenerator();
 
-                // Set the timecode value BEFORE frame rate, because
-                // setFrameRate() calls applyMode() which stamps the
-                // derived mode onto the stored timecode.
                 Variant tcVar = cfg.get(ConfigTimecodeValue);
                 if(tcVar.isValid()) {
                         _tcGen.setTimecode(tcVar.get<Timecode>());
@@ -215,21 +213,28 @@ Error MediaIO_TPG::onOpen(Mode mode) {
 
         // Must have at least one component enabled
         if(!_videoEnabled && !_audioEnabled && !_timecodeEnabled) {
-                promekiErr("MediaIO_TPG: no components enabled");
+                promekiErr("MediaIOTask_TPG: no components enabled");
                 return Error::InvalidArgument;
         }
 
         _frameCount = 0;
+
+        // Fill output fields
+        cmd.mediaDesc = mediaDesc;
+        if(_audioEnabled) cmd.audioDesc = _audioDesc;
+        cmd.frameRate = fps;
+        cmd.canSeek = false;
+        cmd.frameCount = MediaIO::FrameCountInfinite;
         return Error::Ok;
 }
 
-Error MediaIO_TPG::onClose() {
+Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
         delete _audioPattern;
         _audioPattern = nullptr;
         _cachedImage = Image();
         _imageDesc = ImageDesc();
-        _mediaDesc = MediaDesc();
         _audioDesc = AudioDesc();
+        _frameRate = FrameRate();
         _tcGen.reset();
         _frameCount = 0;
         _motionOffset = 0.0;
@@ -239,26 +244,22 @@ Error MediaIO_TPG::onClose() {
         return Error::Ok;
 }
 
-void MediaIO_TPG::setStep(int val) {
-        MediaIO::setStep(val);
+Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
+        int s = cmd.step;
+
+        // The TPG ignores step direction for the timecode generator's run mode;
+        // each read processes |step| advances.  (Previously the TPG cached this
+        // via setStep on the base class — now it's per-read so the task is
+        // stateless from MediaIO's perspective.)
         if(_timecodeEnabled) {
-                if(val > 0)      _tcGen.setRunMode(TimecodeGenerator::Forward);
-                else if(val < 0) _tcGen.setRunMode(TimecodeGenerator::Reverse);
-                else             _tcGen.setRunMode(TimecodeGenerator::Still);
+                if(s > 0)      _tcGen.setRunMode(TimecodeGenerator::Forward);
+                else if(s < 0) _tcGen.setRunMode(TimecodeGenerator::Reverse);
+                else           _tcGen.setRunMode(TimecodeGenerator::Still);
         }
-        return;
-}
 
-MediaDesc MediaIO_TPG::mediaDesc() const {
-        return _mediaDesc;
-}
-
-Error MediaIO_TPG::onReadFrame(Frame &frame) {
-        int s = step();
+        Frame::Ptr frame = Frame::Ptr::create();
 
         // Advance timecode by |step| frames (or hold at step=0).
-        // The first advance() returns the TC for the current frame;
-        // subsequent advances skip ahead for the next readFrame.
         Timecode tc;
         if(_timecodeEnabled) {
                 int advances = (s >= 0) ? s : -s;
@@ -281,7 +282,7 @@ Error MediaIO_TPG::onReadFrame(Frame &frame) {
                 if(_timecodeEnabled) {
                         img.metadata().set(Metadata::Timecode, tc);
                 }
-                frame.imageList().pushToBack(Image::Ptr::create(img));
+                frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         }
 
         // Audio
@@ -290,18 +291,18 @@ Error MediaIO_TPG::onReadFrame(Frame &frame) {
                         ? _audioPattern->create(_samplesPerFrame, tc)
                         : _audioPattern->create(_samplesPerFrame);
                 if(audio.isValid()) {
-                        frame.audioList().pushToBack(Audio::Ptr::create(audio));
+                        frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
                 }
         }
 
         // Frame-level timecode metadata
         if(_timecodeEnabled) {
-                frame.metadata().set(Metadata::Timecode, tc);
+                frame.modify()->metadata().set(Metadata::Timecode, tc);
         }
 
         // Advance motion by step (negative step reverses direction)
         if(_videoEnabled && _motion != 0.0 && s != 0) {
-                double fpsVal = _mediaDesc.frameRate().toDouble();
+                double fpsVal = _frameRate.toDouble();
                 if(fpsVal > 0.0) {
                         _motionOffset += _motion * (double)s * (double)_imageDesc.size().width() / fpsVal;
                         double period = (double)_imageDesc.size().width();
@@ -313,15 +314,9 @@ Error MediaIO_TPG::onReadFrame(Frame &frame) {
         }
 
         _frameCount++;
+        cmd.frame = std::move(frame);
+        cmd.currentFrame = _frameCount;
         return Error::Ok;
-}
-
-uint64_t MediaIO_TPG::currentFrame() const {
-        return _frameCount;
-}
-
-int64_t MediaIO_TPG::frameCount() const {
-        return FrameCountInfinite;
 }
 
 PROMEKI_NAMESPACE_END

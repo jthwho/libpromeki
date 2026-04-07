@@ -23,7 +23,7 @@ TestPatternNode::TestPatternNode(ObjectBase *parent) : MediaNode(parent) {
 }
 
 TestPatternNode::~TestPatternNode() {
-        delete _tpg;
+        delete _io;
 }
 
 MediaNodeConfig TestPatternNode::defaultConfig() const {
@@ -63,63 +63,67 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
                 result.addError("Invalid or missing frame rate");
                 return result;
         }
-        tpgCfg.set(MediaIO_TPG::ConfigFrameRate, fps);
+        tpgCfg.set(MediaIOTask_TPG::ConfigFrameRate, fps);
 
         // Video — always enabled for TestPatternNode
-        tpgCfg.set(MediaIO_TPG::ConfigVideoEnabled, true);
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
 
         String patStr = config.get("Pattern", "colorbars").get<String>();
-        tpgCfg.set(MediaIO_TPG::ConfigVideoPattern, patStr);
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoPattern, patStr);
 
         uint32_t width = config.get("Width", uint32_t(0)).get<uint32_t>();
         uint32_t height = config.get("Height", uint32_t(0)).get<uint32_t>();
-        tpgCfg.set(MediaIO_TPG::ConfigVideoWidth, (int)width);
-        tpgCfg.set(MediaIO_TPG::ConfigVideoHeight, (int)height);
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoWidth, (int)width);
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoHeight, (int)height);
 
         PixelDesc pd = config.get("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB)).get<PixelDesc>();
-        tpgCfg.set(MediaIO_TPG::ConfigVideoPixelFormat, pd);
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoPixelFormat, pd);
 
-        tpgCfg.set(MediaIO_TPG::ConfigVideoSolidColor, config.get("SolidColor", Color::Black).get<Color>());
-        tpgCfg.set(MediaIO_TPG::ConfigVideoMotion, config.get("Motion", 0.0).get<double>());
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoSolidColor, config.get("SolidColor", Color::Black).get<Color>());
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoMotion, config.get("Motion", 0.0).get<double>());
 
         // Audio
         bool audioEnabled = config.get("AudioEnabled", true).get<bool>();
-        tpgCfg.set(MediaIO_TPG::ConfigAudioEnabled, audioEnabled);
+        tpgCfg.set(MediaIOTask_TPG::ConfigAudioEnabled, audioEnabled);
         if(audioEnabled) {
-                tpgCfg.set(MediaIO_TPG::ConfigAudioMode, config.get("AudioMode", "tone").get<String>());
-                tpgCfg.set(MediaIO_TPG::ConfigAudioRate, config.get("AudioRate", 48000.0f).get<float>());
-                tpgCfg.set(MediaIO_TPG::ConfigAudioChannels, config.get("AudioChannels", 2).get<int>());
-                tpgCfg.set(MediaIO_TPG::ConfigAudioToneFrequency, config.get("ToneFrequency", 1000.0).get<double>());
-                tpgCfg.set(MediaIO_TPG::ConfigAudioToneLevel, config.get("ToneLevel", -20.0).get<double>());
-                tpgCfg.set(MediaIO_TPG::ConfigAudioLtcLevel, config.get("LtcLevel", -20.0).get<double>());
-                tpgCfg.set(MediaIO_TPG::ConfigAudioLtcChannel, config.get("LtcChannel", 0).get<int>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioMode, config.get("AudioMode", "tone").get<String>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioRate, config.get("AudioRate", 48000.0f).get<float>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioChannels, config.get("AudioChannels", 2).get<int>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioToneFrequency, config.get("ToneFrequency", 1000.0).get<double>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioToneLevel, config.get("ToneLevel", -20.0).get<double>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioLtcLevel, config.get("LtcLevel", -20.0).get<double>());
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioLtcChannel, config.get("LtcChannel", 0).get<int>());
         }
 
         // Timecode — always enabled for TestPatternNode
-        tpgCfg.set(MediaIO_TPG::ConfigTimecodeEnabled, true);
-        tpgCfg.set(MediaIO_TPG::ConfigTimecodeDropFrame, config.get("DropFrame", false).get<bool>());
+        tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
+        tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeDropFrame, config.get("DropFrame", false).get<bool>());
 
         String tcStr = config.get("StartTimecode", String()).get<String>();
         if(!tcStr.isEmpty()) {
-                tpgCfg.set(MediaIO_TPG::ConfigTimecodeStart, tcStr);
+                tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeStart, tcStr);
         }
 
         // Accept a pre-built Timecode via Variant
         Variant tcVar = config.get("Timecode");
         if(tcVar.isValid()) {
-                tpgCfg.set(MediaIO_TPG::ConfigTimecodeValue, tcVar);
+                tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeValue, tcVar);
         }
 
-        // Create and open the TPG
-        delete _tpg;
-        _tpg = new MediaIO_TPG(this);
-        _tpg->setConfig(tpgCfg);
+        // Create and open the TPG via the MediaIO factory
+        tpgCfg.set(MediaIO::ConfigType, "TPG");
+        delete _io;
+        _io = MediaIO::create(tpgCfg, this);
+        if(_io == nullptr) {
+                result.addError("Failed to create TPG MediaIO");
+                return result;
+        }
 
-        Error err = _tpg->open(MediaIO::Reader);
+        Error err = _io->open(MediaIO::Reader);
         if(err.isError()) {
                 result.addError("Failed to open TPG: " + err.name());
-                delete _tpg;
-                _tpg = nullptr;
+                delete _io;
+                _io = nullptr;
                 return result;
         }
 
@@ -135,8 +139,8 @@ void TestPatternNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryLi
         (void)frame;
         (void)inputIndex;
 
-        Frame::Ptr outFrame = Frame::Ptr::create();
-        Error err = _tpg->readFrame(*outFrame.modify());
+        Frame::Ptr outFrame;
+        Error err = _io->readFrame(outFrame);
         if(err.isError()) return;
 
         // Deliver to all outputs
@@ -145,7 +149,7 @@ void TestPatternNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryLi
         // Update thread-safe stats snapshot
         {
                 Mutex::Locker lock(_statsMutex);
-                _statsFrameCount = _tpg->currentFrame();
+                _statsFrameCount = _io->currentFrame();
                 Variant tcVar = outFrame->metadata().get(Metadata::Timecode);
                 if(tcVar.isValid()) {
                         _statsTimecode = tcVar.get<Timecode>();
@@ -155,10 +159,10 @@ void TestPatternNode::processFrame(Frame::Ptr &frame, int inputIndex, DeliveryLi
 
 void TestPatternNode::stop() {
         MediaNode::stop();
-        if(_tpg != nullptr) {
-                _tpg->close();
-                delete _tpg;
-                _tpg = nullptr;
+        if(_io != nullptr) {
+                _io->close();
+                delete _io;
+                _io = nullptr;
         }
         {
                 Mutex::Locker lock(_statsMutex);

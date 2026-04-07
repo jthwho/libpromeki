@@ -6,6 +6,8 @@
  */
 
 #include <promeki/mediaio.h>
+#include <promeki/mediaiotask.h>
+#include <promeki/threadpool.h>
 #include <promeki/file.h>
 #include <promeki/logger.h>
 
@@ -14,9 +16,18 @@ PROMEKI_NAMESPACE_BEGIN
 const MediaIO::ConfigID MediaIO::ConfigFilename("Filename");
 const MediaIO::ConfigID MediaIO::ConfigType("Type");
 
+// ============================================================================
+// Format registry
+// ============================================================================
+
 static MediaIO::FormatDescList &formatRegistry() {
         static MediaIO::FormatDescList list;
         return list;
+}
+
+ThreadPool &MediaIO::pool() {
+        static ThreadPool p;
+        return p;
 }
 
 int MediaIO::registerFormat(const FormatDesc &desc) {
@@ -61,7 +72,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         String ext = extractExtension(filename);
         const MediaIO::FormatDescList &list = formatRegistry();
 
-        // Pass 1: extension match (fast path, always trusts the extension)
+        // Pass 1: extension match (fast path)
         if(!ext.isEmpty()) {
                 for(const auto &desc : list) {
                         if(!desc.canRead) continue;
@@ -71,7 +82,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
                 }
         }
 
-        // Pass 2: content-based probe via IODevice (for missing/wrong extensions)
+        // Pass 2: content-based probe
         File probeFile(filename);
         if(probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
         const MediaIO::FormatDesc *result = nullptr;
@@ -88,6 +99,10 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         return result;
 }
 
+// ============================================================================
+// Factory
+// ============================================================================
+
 MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
         if(desc == nullptr || !desc->defaultConfig) return Config();
@@ -99,7 +114,6 @@ MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
 MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         const FormatDesc *desc = nullptr;
 
-        // Try explicit type first
         if(config.contains(ConfigType)) {
                 String typeName = config.getAs<String>(ConfigType);
                 desc = findFormatByName(typeName);
@@ -109,7 +123,6 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
                 }
         }
 
-        // Fall back to filename extension
         if(desc == nullptr && config.contains(ConfigFilename)) {
                 String filename = config.getAs<String>(ConfigFilename);
                 desc = findFormatByExtension(filename);
@@ -124,12 +137,14 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
                 return nullptr;
         }
 
-        MediaIO *io = desc->create(parent);
-        if(io == nullptr) {
+        MediaIOTask *task = desc->create();
+        if(task == nullptr) {
                 promekiWarn("MediaIO::create: factory for '%s' returned null", desc->name.cstr());
                 return nullptr;
         }
-        io->setConfig(config);
+        MediaIO *io = new MediaIO(parent);
+        io->_task = task;
+        io->_config = config;
         return io;
 }
 
@@ -143,11 +158,11 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
                 promekiWarn("MediaIO::createForFileRead: '%s' does not support reading", desc->name.cstr());
                 return nullptr;
         }
-        MediaIO *io = desc->create(parent);
-        if(io == nullptr) return nullptr;
-        Config config;
-        config.set(ConfigFilename, filename);
-        io->setConfig(config);
+        MediaIOTask *task = desc->create();
+        if(task == nullptr) return nullptr;
+        MediaIO *io = new MediaIO(parent);
+        io->_task = task;
+        io->_config.set(ConfigFilename, filename);
         return io;
 }
 
@@ -161,105 +176,414 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
                 promekiWarn("MediaIO::createForFileWrite: '%s' does not support writing", desc->name.cstr());
                 return nullptr;
         }
-        MediaIO *io = desc->create(parent);
-        if(io == nullptr) return nullptr;
-        Config config;
-        config.set(ConfigFilename, filename);
-        io->setConfig(config);
+        MediaIOTask *task = desc->create();
+        if(task == nullptr) return nullptr;
+        MediaIO *io = new MediaIO(parent);
+        io->_task = task;
+        io->_config.set(ConfigFilename, filename);
         return io;
 }
 
-MediaIO::~MediaIO() {
-        assert(!isOpen() && "MediaIO destroyed while still open — backend must call close() in its destructor");
+StringList MediaIO::enumerate(const String &typeName) {
+        const FormatDesc *desc = findFormatByName(typeName);
+        if(desc == nullptr || !desc->enumerate) return StringList();
+        return desc->enumerate();
 }
+
+// ============================================================================
+// Lifecycle
+// ============================================================================
+
+MediaIO::MediaIO(ObjectBase *parent) : ObjectBase(parent) {}
+
+MediaIO::~MediaIO() {
+        if(isOpen()) close();
+        // Wait for any in-flight strand task to complete before deleting
+        // the task.  The Strand destructor would also wait, but doing it
+        // here makes the order explicit: drain the strand first, then
+        // delete the task.
+        _strand.waitForIdle();
+        delete _task;
+}
+
+// ============================================================================
+// Command dispatch
+// ============================================================================
+
+Error MediaIO::dispatchCommand(MediaIOCommand::Ptr cmd) {
+        MediaIOCommand *raw = cmd.modify();
+        switch(raw->type()) {
+                case MediaIOCommand::Open:
+                        return _task->executeCmd(*static_cast<MediaIOCommandOpen *>(raw));
+                case MediaIOCommand::Close:
+                        return _task->executeCmd(*static_cast<MediaIOCommandClose *>(raw));
+                case MediaIOCommand::Read:
+                        return _task->executeCmd(*static_cast<MediaIOCommandRead *>(raw));
+                case MediaIOCommand::Write:
+                        return _task->executeCmd(*static_cast<MediaIOCommandWrite *>(raw));
+                case MediaIOCommand::Seek:
+                        return _task->executeCmd(*static_cast<MediaIOCommandSeek *>(raw));
+                case MediaIOCommand::Params:
+                        return _task->executeCmd(*static_cast<MediaIOCommandParams *>(raw));
+                case MediaIOCommand::Stats:
+                        return _task->executeCmd(*static_cast<MediaIOCommandStats *>(raw));
+        }
+        return Error::NotSupported;
+}
+
+Error MediaIO::submitAndWait(MediaIOCommand::Ptr cmd) {
+        // Submit to the strand for serialized execution and wait for the
+        // result.  The strand returns a Future<Error> for the dispatched
+        // call's return value.
+        Future<Error> future = _strand.submit([this, cmd]() mutable {
+                return dispatchCommand(cmd);
+        });
+        auto r = future.result();
+        if(r.second().isError()) return r.second();
+        return r.first();
+}
+
+void MediaIO::submitReadCommand() {
+        // Atomically claim a prefetch slot.  fetchAndAdd is the
+        // single-step counterpart to the loop check in readFrame() —
+        // by the time we own the slot, no other code path can race
+        // past the depth limit.
+        _pendingReadCount.fetchAndAdd(1);
+
+        auto *cmdRead = new MediaIOCommandRead();
+        cmdRead->step = _step;
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdRead);
+
+        // Fire-and-forget: dispatch on the strand, push the result onto the
+        // read result queue when done.  readFrame() consumes from there.
+        _strand.submit(
+                [this, cmd]() mutable {
+                        MediaIOCommand *raw = cmd.modify();
+                        auto *cr = static_cast<MediaIOCommandRead *>(raw);
+                        cr->result = _task->executeCmd(*cr);
+                        _readResultQueue.push(cmd);
+                        _pendingReadCount.fetchAndSub(1);
+                        if(cr->result.isOk()) frameReadySignal.emit();
+                },
+                [this]() {
+                        // Cancellation cleanup: release the slot we
+                        // claimed above so the in-flight count stays
+                        // accurate.
+                        _pendingReadCount.fetchAndSub(1);
+                });
+}
+
+// ============================================================================
+// Open / Close
+// ============================================================================
 
 Error MediaIO::open(Mode mode) {
         if(isOpen()) return Error::AlreadyOpen;
         if(mode == NotOpen) return Error::InvalidArgument;
-        Error err = onOpen(mode);
-        if(err.isOk()) _mode = mode;
+        if(_task == nullptr) return Error::Invalid;
+
+        auto *cmdOpen = new MediaIOCommandOpen();
+        cmdOpen->mode = mode;
+        cmdOpen->config = _config;
+        cmdOpen->pendingMediaDesc = _pendingMediaDesc;
+        cmdOpen->pendingMetadata = _pendingMetadata;
+        cmdOpen->pendingAudioDesc = _pendingAudioDesc;
+        cmdOpen->videoTracks = _pendingVideoTracks;
+        cmdOpen->audioTracks = _pendingAudioTracks;
+
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdOpen);
+        Error err = submitAndWait(cmd);
+        if(err.isOk()) {
+                _mode = mode;
+                _mediaDesc = cmdOpen->mediaDesc;
+                _audioDesc = cmdOpen->audioDesc;
+                _metadata = cmdOpen->metadata;
+                _frameRate = cmdOpen->frameRate;
+                _canSeek = cmdOpen->canSeek;
+                _frameCount = cmdOpen->frameCount;
+                _currentFrame = 0;
+                _step = cmdOpen->defaultStep;
+                _defaultSeekMode = cmdOpen->defaultSeekMode;
+                if(!_prefetchDepthExplicit) {
+                        _prefetchDepth = cmdOpen->defaultPrefetchDepth;
+                        if(_prefetchDepth < 1) _prefetchDepth = 1;
+                }
+        } else {
+                // Open failed — give the task a chance to clean up any
+                // partially-allocated resources via its Close handler.
+                // Backends must tolerate Close from a failed-open state.
+                auto *cmdClose = new MediaIOCommandClose();
+                MediaIOCommand::Ptr closeCmd = MediaIOCommand::Ptr::takeOwnership(cmdClose);
+                submitAndWait(closeCmd);  // ignore close error
+        }
         return err;
 }
 
 Error MediaIO::close() {
         if(!isOpen()) return Error::NotOpen;
-        Error err = onClose();
+
+        auto *cmdClose = new MediaIOCommandClose();
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdClose);
+        Error err = submitAndWait(cmd);
+
+        // Wait for any in-flight strand tasks (e.g. trailing reads) to drain
+        // before resetting state.
+        _strand.waitForIdle();
+
+        // Drain any unconsumed read results
+        _readResultQueue.clear();
+        _pendingReadCount.setValue(0);
+
+        // Reset cache regardless of close result
         _mode = NotOpen;
+        _mediaDesc = MediaDesc();
+        _audioDesc = AudioDesc();
+        _metadata = Metadata();
+        _frameRate = FrameRate();
+        _canSeek = false;
+        _frameCount = 0;
+        _currentFrame = 0;
+        _defaultSeekMode = SeekExact;
+        _prefetchDepth = 1;
+        _prefetchDepthExplicit = false;
+        _atEnd = false;
         return err;
 }
 
-Error MediaIO::onOpen(Mode mode) {
-        return Error::NotImplemented;
-}
+// ============================================================================
+// Pre-open setters
+// ============================================================================
 
-Error MediaIO::onClose() {
+Error MediaIO::setMediaDesc(const MediaDesc &desc) {
+        if(isOpen()) return Error::AlreadyOpen;
+        _pendingMediaDesc = desc;
         return Error::Ok;
 }
 
-MediaDesc MediaIO::mediaDesc() const {
-        return MediaDesc();
-}
-
-Error MediaIO::setMediaDesc(const MediaDesc &desc) {
-        return Error::NotSupported;
-}
-
-FrameRate MediaIO::frameRate() const {
-        return mediaDesc().frameRate();
-}
-
-AudioDesc MediaIO::audioDesc() const {
-        MediaDesc md = mediaDesc();
-        if(md.audioList().isEmpty()) return AudioDesc();
-        return md.audioList()[0];
-}
-
 Error MediaIO::setAudioDesc(const AudioDesc &desc) {
-        return Error::NotSupported;
-}
-
-Metadata MediaIO::metadata() const {
-        return Metadata();
+        if(isOpen()) return Error::AlreadyOpen;
+        _pendingAudioDesc = desc;
+        return Error::Ok;
 }
 
 Error MediaIO::setMetadata(const Metadata &meta) {
-        return Error::NotSupported;
+        if(isOpen()) return Error::AlreadyOpen;
+        _pendingMetadata = meta;
+        return Error::Ok;
 }
 
-Error MediaIO::readFrame(Frame &frame) {
+Error MediaIO::setVideoTracks(const List<int> &tracks) {
+        if(isOpen()) return Error::AlreadyOpen;
+        _pendingVideoTracks = tracks;
+        return Error::Ok;
+}
+
+Error MediaIO::setAudioTracks(const List<int> &tracks) {
+        if(isOpen()) return Error::AlreadyOpen;
+        _pendingAudioTracks = tracks;
+        return Error::Ok;
+}
+
+void MediaIO::setPrefetchDepth(int n) {
+        if(n < 1) n = 1;
+        _prefetchDepth = n;
+        _prefetchDepthExplicit = true;
+}
+
+// ============================================================================
+// Frame I/O
+// ============================================================================
+
+bool MediaIO::frameAvailable() const {
+        // True when there's a result waiting to be consumed.
+        return !_readResultQueue.isEmpty();
+}
+
+Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
         if(!isOpen()) return Error::NotOpen;
-        if(_mode != Reader) return Error::NotSupported;
-        return onReadFrame(frame);
+        if(_mode != Reader && _mode != ReadWrite) return Error::NotSupported;
+
+        // Once EOF has been hit, every subsequent read returns EOF
+        // without going down to the backend.  Cleared on seek/close.
+        if(_atEnd) return Error::EndOfFile;
+
+        MediaIOCommand::Ptr resultCmd;
+        bool gotResult = _readResultQueue.popOrFail(resultCmd);
+        if(!gotResult) {
+                // Top up the in-flight read queue to the desired depth.
+                while(_pendingReadCount.value() < _prefetchDepth) {
+                        submitReadCommand();
+                }
+                if(!block) return Error::TryAgain;
+                // Block on the result queue until something arrives.
+                auto [popped, popErr] = _readResultQueue.pop();
+                if(popErr.isError()) return popErr;
+                resultCmd = popped;
+        } else {
+                // We just consumed a prefetched result; top up again so
+                // the next call has work waiting.
+                while(_pendingReadCount.value() < _prefetchDepth) {
+                        submitReadCommand();
+                }
+        }
+
+        auto *cmdRead = static_cast<MediaIOCommandRead *>(resultCmd.modify());
+
+        // If the backend pushed a mid-stream descriptor change, update
+        // our cache and notify listeners.  We do this BEFORE handing the
+        // frame back so the user sees the new descriptors immediately.
+        if(cmdRead->mediaDescChanged) {
+                _mediaDesc = cmdRead->updatedMediaDesc;
+                _frameRate = _mediaDesc.frameRate();
+                if(!_mediaDesc.audioList().isEmpty()) {
+                        _audioDesc = _mediaDesc.audioList()[0];
+                }
+                _metadata = _mediaDesc.metadata();
+                descriptorChangedSignal.emit();
+        }
+
+        if(cmdRead->result.isOk()) {
+                frame = std::move(cmdRead->frame);
+                _currentFrame = cmdRead->currentFrame;
+                // Stamp the current frame number into the frame's metadata
+                // so downstream consumers know which frame it is.
+                if(frame.isValid()) {
+                        frame.modify()->metadata().set(
+                                Metadata::FrameNumber, _currentFrame);
+                        if(cmdRead->mediaDescChanged) {
+                                frame.modify()->metadata().set(
+                                        Metadata::MediaDescChanged, true);
+                        }
+                }
+        } else if(cmdRead->result == Error::EndOfFile) {
+                // Latch EOF — stop submitting prefetches.  Drain any
+                // already-queued results so we don't return them after
+                // signalling EOF (the backend has said it's done).
+                _atEnd = true;
+                _strand.cancelPending();
+                MediaIOCommand::Ptr drop;
+                while(_readResultQueue.popOrFail(drop)) {}
+        }
+        return cmdRead->result;
 }
 
-Error MediaIO::writeFrame(const Frame &frame) {
+bool MediaIO::isIdle() const {
+        return !_strand.isBusy();
+}
+
+size_t MediaIO::cancelPending() {
+        if(!isOpen()) return 0;
+        // Cancel anything queued in the strand (the Strand's per-task
+        // cancel callbacks balance any reference counts on our side,
+        // such as _pendingReadCount).  Any prefetched read results that
+        // the worker already pushed are also discarded so the next
+        // readFrame() submits fresh work.
+        size_t cancelled = _strand.cancelPending();
+        size_t dropped = 0;
+        MediaIOCommand::Ptr drop;
+        while(_readResultQueue.popOrFail(drop)) dropped++;
+        return cancelled + dropped;
+}
+
+Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         if(!isOpen()) return Error::NotOpen;
-        if(_mode != Writer) return Error::NotSupported;
-        return onWriteFrame(frame);
+        if(_mode != Writer && _mode != ReadWrite) return Error::NotSupported;
+
+        auto *cmdWrite = new MediaIOCommandWrite();
+        cmdWrite->frame = frame;
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdWrite);
+
+        Future<Error> future = _strand.submit([this, cmd]() mutable {
+                MediaIOCommand *raw = cmd.modify();
+                auto *cw = static_cast<MediaIOCommandWrite *>(raw);
+                Error err = _task->executeCmd(*cw);
+                if(err.isOk()) frameWantedSignal.emit();
+                else            writeErrorSignal.emit(err);
+                return err;
+        });
+
+        if(!block) return Error::TryAgain;
+
+        auto r = future.result();
+        if(r.second().isError()) return r.second();
+        Error err = r.first();
+        if(err.isOk()) {
+                _currentFrame = cmdWrite->currentFrame;
+                _frameCount = cmdWrite->frameCount;
+        }
+        return err;
 }
 
-Error MediaIO::onReadFrame(Frame &frame) {
-        return Error::NotSupported;
+Error MediaIO::sendParams(const String &name, const MediaIOParams &params, MediaIOParams *result) {
+        if(!isOpen()) return Error::NotOpen;
+
+        auto *cmdParams = new MediaIOCommandParams();
+        cmdParams->name = name;
+        cmdParams->params = params;
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdParams);
+        Error err = submitAndWait(cmd);
+        if(result != nullptr) {
+                *result = std::move(cmdParams->result);
+        }
+        return err;
 }
 
-Error MediaIO::onWriteFrame(const Frame &frame) {
-        return Error::NotSupported;
+MediaIOStats MediaIO::stats() {
+        if(!isOpen()) return MediaIOStats();
+        auto *cmdStats = new MediaIOCommandStats();
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdStats);
+        Error err = submitAndWait(cmd);
+        if(err.isError()) return MediaIOStats();
+        return std::move(cmdStats->stats);
 }
 
-bool MediaIO::canSeek() const {
-        return false;
+// ============================================================================
+// Navigation
+// ============================================================================
+
+void MediaIO::setStep(int val) {
+        if(val == _step) return;
+        // Outstanding prefetched reads were submitted with the old step;
+        // they're stale relative to the new direction/speed.  Cancel them
+        // and discard any results that already came back.  Also clear
+        // the EOF latch — the new direction may make more frames available
+        // (e.g. flipping from forward-EOF to reverse).
+        if(isOpen()) {
+                _strand.cancelPending();
+                MediaIOCommand::Ptr drop;
+                while(_readResultQueue.popOrFail(drop)) {}
+                _atEnd = false;
+        }
+        _step = val;
 }
 
-Error MediaIO::seekToFrame(int64_t frameNumber) {
-        return Error::IllegalSeek;
-}
+Error MediaIO::seekToFrame(int64_t frameNumber, SeekMode mode) {
+        if(!isOpen()) return Error::NotOpen;
+        if(!_canSeek) return Error::IllegalSeek;
 
-int64_t MediaIO::frameCount() const {
-        return 0;
-}
+        // Cancel any prefetched reads from the old position before
+        // submitting the seek.  Otherwise the next read would return
+        // a stale frame from the pre-seek queue.
+        _strand.cancelPending();
+        MediaIOCommand::Ptr drop;
+        while(_readResultQueue.popOrFail(drop)) {}
+        // Seeking past EOF clears the EOF latch — the new position may
+        // be re-readable.
+        _atEnd = false;
 
-uint64_t MediaIO::currentFrame() const {
-        return 0;
+        // Resolve Default to the task's preferred mode so the backend
+        // always sees a concrete mode.
+        if(mode == SeekDefault) mode = _defaultSeekMode;
+
+        auto *cmdSeek = new MediaIOCommandSeek();
+        cmdSeek->frameNumber = frameNumber;
+        cmdSeek->mode = mode;
+        MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdSeek);
+        Error err = submitAndWait(cmd);
+        if(err.isOk()) {
+                _currentFrame = cmdSeek->currentFrame;
+        }
+        return err;
 }
 
 PROMEKI_NAMESPACE_END

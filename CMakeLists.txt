@@ -404,6 +404,7 @@ set(PROMEKI_HEADERS
     include/promeki/structdatabase.h
     include/promeki/system.h
     include/promeki/terminal.h
+    include/promeki/strand.h
     include/promeki/thread.h
     include/promeki/threadpool.h
     include/promeki/timecode.h
@@ -564,8 +565,9 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
-        include/promeki/mediaio_imagefile.h
-        include/promeki/mediaio_tpg.h
+        include/promeki/mediaiotask.h
+        include/promeki/mediaiotask_imagefile.h
+        include/promeki/mediaiotask_tpg.h
         include/promeki/medianode.h
         include/promeki/medianodeconfig.h
         include/promeki/mediapipeline.h
@@ -607,8 +609,9 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
-        src/proav/mediaio_imagefile.cpp
-        src/proav/mediaio_tpg.cpp
+        src/proav/mediaiotask.cpp
+        src/proav/mediaiotask_imagefile.cpp
+        src/proav/mediaiotask_tpg.cpp
         src/proav/medianode.cpp
         src/proav/medianodeconfig.cpp
         src/proav/mediapipeline.cpp
@@ -652,10 +655,10 @@ if(PROMEKI_ENABLE_PROAV)
         )
     endif()
     if(PROMEKI_ENABLE_AUDIO)
-        list(APPEND PROMEKI_HEADERS include/promeki/mediaio_audiofile.h)
+        list(APPEND PROMEKI_HEADERS include/promeki/mediaiotask_audiofile.h)
         list(APPEND PROMEKI_SOURCES
             src/proav/audiofile_libsndfile.cpp
-            src/proav/mediaio_audiofile.cpp
+            src/proav/mediaiotask_audiofile.cpp
         )
     endif()
     if(PROMEKI_ENABLE_CSC)
@@ -1099,6 +1102,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/stringiodevice.cpp
         tests/stringlist.cpp
         tests/stringregistry.cpp
+        tests/strand.cpp
         tests/structdatabase.cpp
         tests/system.cpp
         tests/terminal.cpp

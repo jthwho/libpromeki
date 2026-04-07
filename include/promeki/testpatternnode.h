@@ -10,7 +10,8 @@
 #include <promeki/namespace.h>
 #include <promeki/mutex.h>
 #include <promeki/medianode.h>
-#include <promeki/mediaio_tpg.h>
+#include <promeki/mediaio.h>
+#include <promeki/mediaiotask_tpg.h>
 #include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -82,11 +83,11 @@ class TestPatternNode : public MediaNode {
                 void stop() override;
 
         private:
-                MediaIO_TPG             *_tpg = nullptr;
+                MediaIO                 *_io = nullptr;
 
                 // Thread safety for extendedStats()
                 mutable Mutex           _statsMutex;
-                uint64_t                _statsFrameCount = 0;
+                int64_t                 _statsFrameCount = 0;
                 Timecode                _statsTimecode;
 };
 

@@ -52,8 +52,9 @@ class Promise {
                 /**
                  * @brief Sets an error on the promise.
                  *
-                 * The associated Future will receive a default-constructed T.
-                 * The error is communicated via an exception internally.
+                 * The error is propagated through the future via the
+                 * PromiseError exception.  Future::result() catches it
+                 * and returns the error in the Result's error field.
                  *
                  * @param error The error to set.
                  */
@@ -71,14 +72,6 @@ class Promise {
                 }
 
         private:
-                /**
-                 * @brief Internal exception type for error propagation.
-                 */
-                struct PromiseError {
-                        Error error;
-                        PromiseError(Error e) : error(e) {}
-                };
-
                 std::promise<T> _promise;
 };
 
@@ -108,6 +101,10 @@ class Promise<void> {
 
                 /**
                  * @brief Sets an error on the promise.
+                 *
+                 * The error is propagated through the future via the
+                 * PromiseError exception.
+                 *
                  * @param error The error to set.
                  */
                 void setError(Error error) {
@@ -124,11 +121,6 @@ class Promise<void> {
                 }
 
         private:
-                struct PromiseError {
-                        Error error;
-                        PromiseError(Error e) : error(e) {}
-                };
-
                 std::promise<void> _promise;
 };
 

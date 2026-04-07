@@ -15,6 +15,21 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
+ * @brief Internal exception type used by Promise to propagate errors
+ *        through std::future.
+ * @ingroup concurrency
+ *
+ * Promise::setError() throws an instance of this through the future's
+ * shared state.  Future::result() catches it and returns the wrapped
+ * Error in the Result's error field, so callers see a normal error
+ * code rather than an unhandled exception.
+ */
+struct PromiseError {
+        Error error;
+        explicit PromiseError(Error e) : error(e) {}
+};
+
+/**
  * @brief Asynchronous result wrapping std::future\<T\>.
  * @ingroup concurrency
  *
@@ -71,18 +86,27 @@ class Future {
                  * @param timeoutMs Maximum time to wait in milliseconds.
                  *        A value of 0 (the default) waits indefinitely.
                  * @return A Result containing the value and Error::Ok, or a
-                 *         default-constructed T and Error::Timeout on timeout.
+                 *         default-constructed T and an error code on failure
+                 *         (Error::Invalid, Error::Timeout, Error::Cancelled,
+                 *         or another error set via Promise::setError).
                  */
                 Result<T> result(unsigned int timeoutMs = 0) {
                         if(!_future.valid()) return Result<T>(T{}, Error::Invalid);
-                        if(timeoutMs == 0) {
-                                return Result<T>(_future.get(), Error::Ok);
+                        if(timeoutMs != 0) {
+                                if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) !=
+                                        std::future_status::ready) {
+                                        return Result<T>(T{}, Error::Timeout);
+                                }
                         }
-                        if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) ==
-                                std::future_status::ready) {
+                        try {
                                 return Result<T>(_future.get(), Error::Ok);
+                        } catch(const PromiseError &pe) {
+                                return Result<T>(T{}, pe.error);
+                        } catch(const std::future_error &) {
+                                return Result<T>(T{}, Error::Invalid);
+                        } catch(...) {
+                                return Result<T>(T{}, Error::LibraryFailure);
                         }
-                        return Result<T>(T{}, Error::Timeout);
                 }
 
                 /**
@@ -153,20 +177,27 @@ class Future<void> {
                  * @brief Waits for completion and returns the status.
                  * @param timeoutMs Maximum time to wait in milliseconds.
                  *        A value of 0 (the default) waits indefinitely.
-                 * @return Error::Ok on completion, Error::Timeout on timeout.
+                 * @return Error::Ok on completion, or an error code (Timeout,
+                 *         Invalid, Cancelled, or one set via setError).
                  */
                 Error result(unsigned int timeoutMs = 0) {
                         if(!_future.valid()) return Error::Invalid;
-                        if(timeoutMs == 0) {
+                        if(timeoutMs != 0) {
+                                if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) !=
+                                        std::future_status::ready) {
+                                        return Error::Timeout;
+                                }
+                        }
+                        try {
                                 _future.get();
                                 return Error::Ok;
+                        } catch(const PromiseError &pe) {
+                                return pe.error;
+                        } catch(const std::future_error &) {
+                                return Error::Invalid;
+                        } catch(...) {
+                                return Error::LibraryFailure;
                         }
-                        if(_future.wait_for(std::chrono::milliseconds(timeoutMs)) ==
-                                std::future_status::ready) {
-                                _future.get();
-                                return Error::Ok;
-                        }
-                        return Error::Timeout;
                 }
 
                 /**

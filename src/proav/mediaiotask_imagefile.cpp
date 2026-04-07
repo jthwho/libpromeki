@@ -1,12 +1,12 @@
 /**
- * @file      mediaio_imagefile.cpp
+ * @file      mediaiotask_imagefile.cpp
  * @copyright Howard Logic. All rights reserved.
  *
  * See LICENSE file in the project root folder for license information.
  */
 
 #include <cstdint>
-#include <promeki/mediaio_imagefile.h>
+#include <promeki/mediaiotask_imagefile.h>
 #include <promeki/imagefileio.h>
 #include <promeki/iodevice.h>
 #include <promeki/image.h>
@@ -15,12 +15,12 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-PROMEKI_REGISTER_MEDIAIO(MediaIO_ImageFile)
+PROMEKI_REGISTER_MEDIAIO(MediaIOTask_ImageFile)
 
-const MediaIO::ConfigID MediaIO_ImageFile::ConfigImageFileID("ImageFileID");
-const MediaIO::ConfigID MediaIO_ImageFile::ConfigVideoWidth("VideoWidth");
-const MediaIO::ConfigID MediaIO_ImageFile::ConfigVideoHeight("VideoHeight");
-const MediaIO::ConfigID MediaIO_ImageFile::ConfigPixelDesc("PixelDesc");
+const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigImageFileID("ImageFileID");
+const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigVideoWidth("VideoWidth");
+const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigVideoHeight("VideoHeight");
+const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigPixelDesc("PixelDesc");
 
 // ============================================================================
 // Extension-to-ImageFile::ID mapping
@@ -103,7 +103,6 @@ static bool probeImageDevice(IODevice *device) {
 static StringList buildExtensions() {
         StringList exts;
         for(const auto &m : extMap) {
-                // Avoid duplicates (SGI has sgi+rgb, PNM has pnm+ppm+pgm, etc.)
                 bool dup = false;
                 for(const auto &e : exts) {
                         if(e == m.ext) { dup = true; break; }
@@ -113,15 +112,16 @@ static StringList buildExtensions() {
         return exts;
 }
 
-MediaIO::FormatDesc MediaIO_ImageFile::formatDesc() {
+MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
         return {
                 "ImageFile",
                 "Single-image file formats (DPX, Cineon, TGA, SGI, PNM, PNG, RawYUV)",
                 buildExtensions(),
                 true,   // canRead
                 true,   // canWrite
-                [](ObjectBase *parent) -> MediaIO * {
-                        return new MediaIO_ImageFile(parent);
+                false,  // canReadWrite
+                []() -> MediaIOTask * {
+                        return new MediaIOTask_ImageFile();
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
@@ -136,48 +136,50 @@ MediaIO::FormatDesc MediaIO_ImageFile::formatDesc() {
 // Lifecycle
 // ============================================================================
 
-MediaIO_ImageFile::~MediaIO_ImageFile() {
-        if(isOpen()) close();
-}
+MediaIOTask_ImageFile::~MediaIOTask_ImageFile() = default;
 
-Error MediaIO_ImageFile::onOpen(Mode mode) {
-        const Config &cfg = config();
+Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
+        const MediaIO::Config &cfg = cmd.config;
 
         // Determine the ImageFile format ID
         if(cfg.contains(ConfigImageFileID)) {
                 _imageFileID = cfg.getAs<int>(ConfigImageFileID);
         } else {
-                String filename = cfg.getAs<String>(MediaIO::ConfigFilename);
-                _imageFileID = imageFileIDFromExtension(filename);
+                String fn = cfg.getAs<String>(MediaIO::ConfigFilename);
+                _imageFileID = imageFileIDFromExtension(fn);
         }
 
         if(_imageFileID == ImageFile::Invalid) {
-                promekiErr("MediaIO_ImageFile: cannot determine image format");
+                promekiErr("MediaIOTask_ImageFile: cannot determine image format");
                 return Error::NotSupported;
         }
 
         // Validate that the backend exists and supports the requested mode
         const ImageFileIO *io = ImageFileIO::lookup(_imageFileID);
         if(!io->isValid()) {
-                promekiErr("MediaIO_ImageFile: no ImageFileIO backend for ID %d", _imageFileID);
+                promekiErr("MediaIOTask_ImageFile: no ImageFileIO backend for ID %d", _imageFileID);
                 return Error::NotSupported;
         }
 
-        if(mode == Reader && !io->canLoad()) {
-                promekiErr("MediaIO_ImageFile: backend '%s' does not support loading",
+        if(cmd.mode == MediaIO::Reader && !io->canLoad()) {
+                promekiErr("MediaIOTask_ImageFile: backend '%s' does not support loading",
                         io->name().cstr());
                 return Error::NotSupported;
         }
-        if(mode == Writer && !io->canSave()) {
-                promekiErr("MediaIO_ImageFile: backend '%s' does not support saving",
+        if(cmd.mode == MediaIO::Writer && !io->canSave()) {
+                promekiErr("MediaIOTask_ImageFile: backend '%s' does not support saving",
                         io->name().cstr());
                 return Error::NotSupported;
         }
 
-        if(mode == Reader) {
-                String filename = cfg.getAs<String>(MediaIO::ConfigFilename);
+        _filename = cfg.getAs<String>(MediaIO::ConfigFilename);
+        _mode = cmd.mode;
+
+        MediaDesc mediaDesc;
+
+        if(cmd.mode == MediaIO::Reader) {
                 ImageFile imgFile(_imageFileID);
-                imgFile.setFilename(filename);
+                imgFile.setFilename(_filename);
 
                 // For headerless formats, set hint image from config
                 int hintW = cfg.getAs<int>(ConfigVideoWidth, 0);
@@ -192,58 +194,44 @@ Error MediaIO_ImageFile::onOpen(Mode mode) {
 
                 Error err = imgFile.load();
                 if(err.isError()) {
-                        promekiErr("MediaIO_ImageFile: load '%s' failed: %s",
-                                filename.cstr(), err.name().cstr());
+                        promekiErr("MediaIOTask_ImageFile: load '%s' failed: %s",
+                                _filename.cstr(), err.name().cstr());
                         return err;
                 }
 
-                _frame = imgFile.frame();
+                _frame = Frame::Ptr::create(imgFile.frame());
 
                 // Build MediaDesc from the loaded image
-                if(!_frame.imageList().isEmpty()) {
-                        const Image &img = *_frame.imageList()[0];
+                if(!_frame->imageList().isEmpty()) {
+                        const Image &img = *_frame->imageList()[0];
                         ImageDesc idesc(img.width(), img.height(), img.pixelDesc().id());
-                        _mediaDesc.imageList().pushToBack(idesc);
+                        mediaDesc.imageList().pushToBack(idesc);
                 }
-                _metadata = _frame.metadata();
+                cmd.metadata = _frame->metadata();
+                cmd.frameCount = 1;
                 _loaded = false;
-                _currentFrame = 0;
+        } else {
+                // Writer: use the pending mediaDesc/metadata if provided
+                mediaDesc = cmd.pendingMediaDesc;
+                cmd.metadata = cmd.pendingMetadata;
+                _writeCount = 0;
+                cmd.frameCount = 0;
         }
 
+        cmd.mediaDesc = mediaDesc;
+        cmd.canSeek = false;
+        cmd.defaultStep = 0;  // ImageFile re-reads the same single frame by default
         return Error::Ok;
 }
 
-Error MediaIO_ImageFile::onClose() {
-        _frame = Frame();
-        _mediaDesc = MediaDesc();
-        _metadata = Metadata();
+Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
+        _frame = {};
+        _filename = String();
         _imageFileID = ImageFile::Invalid;
-        _currentFrame = 0;
+        _mode = MediaIO_NotOpen;
+        _readCount = 0;
+        _writeCount = 0;
         _loaded = false;
-        return Error::Ok;
-}
-
-// ============================================================================
-// Descriptors
-// ============================================================================
-
-MediaDesc MediaIO_ImageFile::mediaDesc() const {
-        return _mediaDesc;
-}
-
-Metadata MediaIO_ImageFile::metadata() const {
-        return _metadata;
-}
-
-Error MediaIO_ImageFile::setMediaDesc(const MediaDesc &desc) {
-        if(isOpen()) return Error::AlreadyOpen;
-        _mediaDesc = desc;
-        return Error::Ok;
-}
-
-Error MediaIO_ImageFile::setMetadata(const Metadata &meta) {
-        if(isOpen()) return Error::AlreadyOpen;
-        _metadata = meta;
         return Error::Ok;
 }
 
@@ -251,44 +239,31 @@ Error MediaIO_ImageFile::setMetadata(const Metadata &meta) {
 // Frame I/O
 // ============================================================================
 
-Error MediaIO_ImageFile::onReadFrame(Frame &frame) {
-        // With step 0 (default), re-read indefinitely.
+Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandRead &cmd) {
+        // ImageFile is single-frame.  With step 0, deliver indefinitely.
         // With step != 0, deliver once then EOF.
-        if(_loaded && step() != 0) return Error::EndOfFile;
-        frame = _frame;
+        if(_loaded && cmd.step != 0) return Error::EndOfFile;
+        cmd.frame = _frame;
         _loaded = true;
-        _currentFrame++;
+        _readCount++;
+        cmd.currentFrame = _readCount;
         return Error::Ok;
 }
 
-Error MediaIO_ImageFile::onWriteFrame(const Frame &frame) {
-        String filename = config().getAs<String>(MediaIO::ConfigFilename);
+Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandWrite &cmd) {
         ImageFile imgFile(_imageFileID);
-        imgFile.setFilename(filename);
-        imgFile.setFrame(frame);
-
+        imgFile.setFilename(_filename);
+        imgFile.setFrame(*cmd.frame);
         Error err = imgFile.save();
         if(err.isError()) {
-                promekiErr("MediaIO_ImageFile: save '%s' failed: %s",
-                        filename.cstr(), err.name().cstr());
+                promekiErr("MediaIOTask_ImageFile: save '%s' failed: %s",
+                        _filename.cstr(), err.name().cstr());
                 return err;
         }
-        _currentFrame++;
+        _writeCount++;
+        cmd.currentFrame = _writeCount;
+        cmd.frameCount = _writeCount;
         return Error::Ok;
-}
-
-// ============================================================================
-// Navigation
-// ============================================================================
-
-int64_t MediaIO_ImageFile::frameCount() const {
-        if(isOpen() && mode() == Reader) return 1;
-        if(isOpen() && mode() == Writer) return _currentFrame;
-        return 0;
-}
-
-uint64_t MediaIO_ImageFile::currentFrame() const {
-        return _currentFrame;
 }
 
 PROMEKI_NAMESPACE_END

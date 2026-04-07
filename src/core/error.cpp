@@ -83,7 +83,9 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(NotHostAccessible, NONE, "Memory is not host-accessible"),
         DEFINE_ERROR(BufferTooSmall, NONE, "Buffer is too small for the operation"),
         DEFINE_ERROR(IdNotFound, NONE, "Requested ID was not found in the database"),
-        DEFINE_ERROR(ConversionFailed, NONE, "Type conversion could not be performed")
+        DEFINE_ERROR(ConversionFailed, NONE, "Type conversion could not be performed"),
+        DEFINE_ERROR(Stopped, NONE, "Operation interrupted because the object is stopping"),
+        DEFINE_ERROR(Cancelled, NONE, "Operation was cancelled before completion")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

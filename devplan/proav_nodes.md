@@ -19,87 +19,150 @@ Generic abstract media I/O framework providing a uniform interface for reading a
 **Files:**
 - [x] `include/promeki/mediaio.h`
 - [x] `src/proav/mediaio.cpp`
+- [x] `include/promeki/mediaiotask.h`
+- [x] `src/proav/mediaiotask.cpp`
+- [x] `include/promeki/strand.h` (header-only)
 - [x] `include/promeki/mediadesc.h` (renamed from VideoDesc)
 - [x] `src/proav/mediadesc.cpp`
 - [x] `include/promeki/videodesc.h` (deprecated alias: `using VideoDesc = MediaDesc`)
 - [x] `tests/mediaio.cpp`
+- [x] `tests/strand.cpp`
+- [x] `docs/mediaio.dox` (subsystem and backend authoring guide)
 
-**Design:**
-- `MediaIO` derives from `ObjectBase`, uses `PROMEKI_OBJECT`
-- Config-driven factory: `MediaIO::create(Config)`, `createForFileRead()`, `createForFileWrite()`, `defaultConfig(typeName)`
+**Design — Controller/Task split:**
+- `MediaIO` is the public controller: derives from `ObjectBase`, uses `PROMEKI_OBJECT`, is **not** subclassed by backends
+- `MediaIOTask` is the backend interface: plain class (no ObjectBase), pure abstract virtuals are `private`, `MediaIO` is `friend`; derived classes override private virtuals (NVI pattern enforces dispatch-only-through-MediaIO contract)
+- All interaction between MediaIO and its task flows through `MediaIOCommand` objects; the task never sees MediaIO directly
+
+**Design — Command hierarchy:**
+- `MediaIOCommand` base: holds `Promise<Error>`, `RefCount`, and `Type` enum; shared via `SharedPtr<MediaIOCommand, false>` (COW disabled — polymorphic proxy path only, never cloned)
+- `PROMEKI_MEDIAIO_COMMAND(NAME, TYPE_TAG)` macro injects `type()` override and an asserting `_promeki_clone()`
+- Concrete commands: `MediaIOCommandOpen`, `MediaIOCommandClose`, `MediaIOCommandRead`, `MediaIOCommandWrite`, `MediaIOCommandSeek`, `MediaIOCommandParams`, `MediaIOCommandStats`
+- Each command struct carries typed input fields (set by MediaIO) and output fields (set by the task)
+
+**Design — Strand and threading:**
+- `Strand` (new class): serialized executor backed by `ThreadPool`; tasks submit to a `std::deque<Entry>` under a `Mutex`; only one task runs at a time per strand, but pool threads are returned between tasks; `cancelPending()` drains the queue and fulfills each future with `Error::Cancelled`; `waitForIdle()` / `isBusy()` for idle detection; destructor waits for idle; 10 unit tests in `tests/strand.cpp`
+- Each `MediaIO` instance holds a `Strand _strand{pool()}` — per-instance serialization, cross-instance concurrency on the shared `ThreadPool`
+- All commands (open, close, read, write, seek, params, stats) are submitted to the strand; the calling thread blocks on the future or returns `Error::TryAgain`
+
+**Design — Factory and registration:**
+- Config-driven factory: `MediaIO::create(Config)`, `createForFileRead()`, `createForFileWrite()`, `defaultConfig(typeName)`, `enumerate(typeName)`
 - Backends self-register via `PROMEKI_REGISTER_MEDIAIO(ClassName)` at static init
-- `FormatDesc` struct: name, description, extensions, canRead, canWrite, factory lambda, optional `canHandleDevice` content-probe callback (used by `createForFileRead()` as extension-miss fallback)
-- Open modes: `NotOpen`, `Reader`, `Writer`
-- Base-class open/close lifecycle: `open()` calls `onOpen()`, `close()` calls `onClose()`; backends override `onOpen()`/`onClose()` (not `open()`/`close()`)
-- Base-class frame I/O: `readFrame()` calls `onReadFrame()`, `writeFrame()` calls `onWriteFrame()`; both guard for open state and correct mode
-- Debug assert in `~MediaIO()` catches backends that fail to call `close()` in their destructor
-- Virtual API: `mediaDesc()`, `setMediaDesc()`, `frameRate()`, `audioDesc()`, `setAudioDesc()`, `metadata()`, `setMetadata()`, `readFrame()`, `writeFrame()`, `canSeek()`, `seekToFrame()`, `frameCount()` (`int64_t` with sentinel constants `FrameCountUnknown`/`FrameCountInfinite`/`FrameCountError`), `currentFrame()`
-- Step control: `step()` / `setStep(int)` (default 1); backends override `setStep()` to react to direction/speed changes; 0 = hold/re-read, negative = reverse
-- `errorOccurred(Error)` signal for async error reporting
-- 40 test cases covering registry, factory, all TPG modes, error paths, seeking, base-class accessors, step control, FrameCountInfinite, ImageFile round-trips, AudioFile round-trips, and content probing
+- `FormatDesc` struct: name, description, extensions, canRead, canWrite, canReadWrite, factory lambda, `defaultConfig` lambda, optional `canHandleDevice` content-probe callback, optional `enumerate` callback
+
+**Design — Three distinct VariantDatabase types:**
+- `MediaIOConfig` (tag: `MediaIOConfigTag`) — open-time configuration; keys: `ConfigFilename`, `ConfigType`, plus backend-specific IDs
+- `MediaIOStats` (tag: `MediaIOStatsTag`, subclass of `VariantDatabase`) — runtime metrics from `executeCmd(MediaIOCommandStats&)`; standard static IDs: `FramesDropped`, `FramesRepeated`, `FramesLate`, `QueueDepth`, `QueueCapacity`, `BytesPerSecond`, `AverageLatencyMs`, `PeakLatencyMs`, `LastErrorMessage`
+- `MediaIOParams` (tag: `MediaIOParamsTag`) — parameterized command params/result; keys entirely backend-defined
+
+**Design — Cached state and non-blocking I/O:**
+- MediaIO caches: `_mediaDesc`, `_audioDesc`, `_metadata`, `_frameRate`, `_canSeek`, `_frameCount`, `_currentFrame`, `_defaultSeekMode` — only read/written on user thread after future resolves; no mutexes needed
+- `_pendingReadCount` (Atomic) tracks in-flight CmdReads to control prefetch submission
+- `_readResultQueue` (Queue) holds completed CmdRead results for non-blocking delivery
+- `readFrame(frame, block=true)` / `writeFrame(frame, block=true)` — blocking or `Error::TryAgain`
+- `frameAvailable()` — polls whether a completed read result is queued
+- `isIdle()` — delegates to `strand.isBusy()`
+- `cancelPending()` — cancels strand queue + drains `_readResultQueue`
+
+**Design — EOF latching:**
+- Once any CmdRead returns `Error::EndOfFile`, `_atEnd` is set; subsequent `readFrame()` calls return EOF immediately without re-submitting to the strand
+- Latch cleared by `seekToFrame()`, `setStep()` (direction change), or `close()`
+
+**Design — Step and prefetch:**
+- `setStep(int)` — changing step cancels pending reads and drains stale results; step=0 holds, step<0 reverse, step>1 fast-forward
+- `setPrefetchDepth(int n)` / `prefetchDepth()` — user-settable; task's `defaultPrefetchDepth` from CmdOpen is used unless user overrides before open; override is reset on close
+- `defaultSeekMode()` — resolved from task's `MediaIOCommandOpen::defaultSeekMode`; `SeekDefault` at call site resolves to this before dispatch
+
+**Design — Mid-stream descriptor updates:**
+- Backend sets `cmd.mediaDescChanged = true` and fills `cmd.updatedMediaDesc` in a CmdRead
+- MediaIO copies to cache, stamps `Metadata::MediaDescChanged` on frame, emits `descriptorChanged` signal
+
+**Design — Track selection:**
+- `setVideoTracks(List<int>)` / `setAudioTracks(List<int>)` — pre-open only, returns `Error::AlreadyOpen` if called while open; passed to CmdOpen for backends with multi-track sources
+
+**Design — Signals:**
+- `errorOccurred(Error)` — generic error
+- `frameReady` — emitted when a CmdRead completes on the worker
+- `frameWanted` — emitted when a CmdWrite completes on the worker
+- `writeError(Error)` — only way to observe async (non-blocking) write errors
+- `descriptorChanged` — MediaDesc changed mid-stream
+
+**Design — Error additions:**
+- `Error::Cancelled` — new code, returned by Strand/Future when a task is cancelled
+- `PromiseError` moved to top-level in `future.h` (was nested); `Future<T>::result()` and `Future<void>::result()` both wrap `future.get()` in try/catch and convert exceptions to Error return values
+
+**Design — Frame metadata IDs (new in Metadata):**
+- `FrameNumber`, `CaptureTime`, `PresentationTime`, `FrameRepeated`, `FrameDropped`, `FrameLate`, `FrameKeyframe`, `MediaDescChanged`
+
+**Design — Open-failure cleanup contract:**
+- If CmdOpen returns an error, MediaIO automatically dispatches CmdClose on the same task instance; backends must tolerate close from failed-open state
+
+**Test coverage:**
+- 58 test cases in `tests/mediaio.cpp`, 10 test cases in `tests/strand.cpp`
+- Strand: serial order, no overlap, void tasks, multiple strands concurrent, isBusy, destructor, cancelPending, cancel-empty-queue, cancel-hook-runs
+- MediaIO: registry, factory (create/createForFileRead/createForFileWrite/defaultConfig/enumerate), all TPG modes (video-only, audio-only, timecode-only, full generation), error paths (writer-not-supported, nothing-enabled, invalid-pattern, read-before-open, double-open), seeking, canSeek/frameCount, step control, prefetch depth (default/user-override/clamped), defaultSeekMode, track selection, frameAvailable, reopen-same-instance, sendParams, cancelPending, stats, EOF latching, mid-stream descriptor, ImageFile round-trips (DPX/TGA), AudioFile round-trips (WAV), AudioFile seeking, AudioFile step/EOF, device enumeration, cancellation
 
 ---
 
-## MediaIO_TPG Backend — COMPLETE
+## MediaIOTask_TPG Backend — COMPLETE
 
-Read-only MediaIO source that generates synchronized test pattern frames.
+Read-only MediaIOTask that generates synchronized test pattern frames.
 
 **Files:**
-- [x] `include/promeki/mediaio_tpg.h`
-- [x] `src/proav/mediaio_tpg.cpp`
+- [x] `include/promeki/mediaiotask_tpg.h` (renamed from `mediaio_tpg.h`)
+- [x] `src/proav/mediaiotask_tpg.cpp` (renamed from `mediaio_tpg.cpp`)
 - (tests in `tests/mediaio.cpp`)
 
 **Design:**
-- Derives from `MediaIO`, registered as "TPG" (no file extensions — generator source)
-- Overrides `onOpen()`/`onClose()` (base class manages lifecycle); destructor calls `close()` before member cleanup
-- Video: delegates to `VideoTestPattern`; solid color configured via `Color` object (single `ConfigVideoSolidColor` key, replaces former R/G/B uint16_t triple); static patterns cached after first render when step=0; motion applies per-frame offset scaled by step
+- Derives from `MediaIOTask`, registered as "TPG" (no file extensions — generator source)
+- Overrides `executeCmd(Open)` / `executeCmd(Close)` / `executeCmd(Read)`; base implementations handle all other commands
+- Video: delegates to `VideoTestPattern`; solid color configured via `Color` object (`ConfigVideoSolidColor`); static patterns cached after first generate when step=0; motion applies per-frame offset scaled by step
 - Audio: delegates to `AudioTestPattern` (tone, silence, ltc modes)
-- Timecode: delegates to `TimecodeGenerator`; TC advances by `|step|` frames per read (step=0 holds); TC stamped on both `Frame::metadata()` and `Image::metadata()` (required by TimecodeOverlayNode)
-- Infinite source: `frameCount()` == `FrameCountInfinite`, `canSeek()` == false
-- `setStep()` overridden to control timecode advance rate and cache invalidation
+- Timecode: delegates to `TimecodeGenerator`; TC advances by `|step|` frames per CmdRead; TC stamped on both `Frame::metadata()` and `Image::metadata()` (required by TimecodeOverlayNode)
+- Infinite source: `cmd.frameCount = MediaIO::FrameCountInfinite`, `cmd.canSeek = false`
 - All config via `MediaIO::Config` (VariantDatabase); all ConfigID constants declared as static members
-- `FormatDesc::defaultConfig` lambda returns fully-populated default Config (all keys, including video/audio/timecode groups, all disabled by default)
+- `FormatDesc::defaultConfig` lambda returns fully-populated default Config (all keys, video/audio/timecode groups all disabled by default)
 
 ---
 
-## MediaIO_ImageFile Backend — COMPLETE
+## MediaIOTask_ImageFile Backend — COMPLETE
 
-MediaIO backend wrapping the ImageFile / ImageFileIO subsystem for single-image file formats.
+MediaIOTask backend wrapping the ImageFile / ImageFileIO subsystem for single-image file formats.
 
 **Files:**
-- [x] `include/promeki/mediaio_imagefile.h`
-- [x] `src/proav/mediaio_imagefile.cpp`
+- [x] `include/promeki/mediaiotask_imagefile.h` (renamed from `mediaio_imagefile.h`)
+- [x] `src/proav/mediaiotask_imagefile.cpp` (renamed from `mediaio_imagefile.cpp`)
 - (tests in `tests/mediaio.cpp`)
 
 **Design:**
-- Derives from `MediaIO`, registered as "ImageFile"
+- Derives from `MediaIOTask`, registered as "ImageFile"
 - Supports DPX, Cineon, TGA, SGI, RGB, PNM, PPM, PGM, PNG, RawYUV variants
 - Content probing via magic-number inspection (DPX/Cineon/PNG/SGI/PNM); `FormatDesc::canHandleDevice` populated
-- Default step=0: `readFrame()` re-delivers the same loaded image indefinitely (hold semantics for still images in a pipeline); set step≠0 for single-delivery then EOF
-- `frameCount()` returns 1 while open as Reader, `_currentFrame` while Writer, 0 when closed
-- `onOpen(Reader)` loads the full image immediately and builds `_mediaDesc` from it
-- Destructor calls `close()` before member cleanup
+- Default step=0 (set via `cmd.defaultStep = 0` in Open): CmdRead re-delivers the same loaded image indefinitely (hold semantics for still images in a pipeline); step≠0 for single-delivery then EndOfFile
+- `cmd.frameCount = 1` for Reader, tracks write count for Writer
+- `executeCmd(Open/Reader)` loads the full image immediately and builds mediaDesc; `executeCmd(Close)` releases the cached frame
 
 ---
 
-## MediaIO_AudioFile Backend — COMPLETE
+## MediaIOTask_AudioFile Backend — COMPLETE
 
-MediaIO backend wrapping the AudioFile subsystem (libsndfile) for frame-based audio file I/O.
+MediaIOTask backend wrapping the AudioFile subsystem (libsndfile) for frame-based audio file I/O.
 
 **Files:**
-- [x] `include/promeki/mediaio_audiofile.h`
-- [x] `src/proav/mediaio_audiofile.cpp`
+- [x] `include/promeki/mediaiotask_audiofile.h` (renamed from `mediaio_audiofile.h`)
+- [x] `src/proav/mediaiotask_audiofile.cpp` (renamed from `mediaio_audiofile.cpp`)
 - (tests in `tests/mediaio.cpp`)
 
 **Design:**
-- Derives from `MediaIO`, registered as "AudioFile"
+- Derives from `MediaIOTask`, registered as "AudioFile"
 - Supports WAV, BWF, AIFF, OGG; content probing via RIFF/FORM/OggS magic
 - Frame chunking: samples per frame = `round(sampleRate / fps)`
-- `canSeek()` returns true for open readers; `seekToFrame()` delegates to `AudioFile::seekToSample()`
-- `frameCount()` is derived from total samples / samples-per-frame (ceiling division)
+- `cmd.canSeek = true` for open readers; `executeCmd(Seek)` delegates to `AudioFile::seekToSample()`
+- `cmd.frameCount` derived from total samples / samples-per-frame (ceiling division) in CmdOpen
 - Step control: after reading 1 frame worth of samples, seeks by `(step - 1)` additional frames if step≠1
-- AudioDesc sourced from config keys (`ConfigAudioRate`, `ConfigAudioChannels`) or a pre-set `setMediaDesc()` call
-- Destructor calls `close()` before member cleanup
+- AudioDesc sourced from config keys (`ConfigAudioRate`, `ConfigAudioChannels`) on Writer; discovered from file on Reader
+- `cmd.defaultSeekMode = MediaIO_SeekExact` (sample-accurate source)
+- Conditionally compiled under `PROMEKI_ENABLE_AUDIO`
 
 ---
 

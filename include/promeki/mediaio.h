@@ -15,6 +15,12 @@
 #include <promeki/stringlist.h>
 #include <promeki/error.h>
 #include <promeki/list.h>
+#include <promeki/queue.h>
+#include <promeki/atomic.h>
+#include <promeki/sharedptr.h>
+#include <promeki/promise.h>
+#include <promeki/future.h>
+#include <promeki/strand.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>
 #include <promeki/audiodesc.h>
@@ -29,7 +35,7 @@
  * The backend class must provide a static `formatDesc()` method returning
  * a MediaIO::FormatDesc.
  *
- * @param ClassName The MediaIO subclass to register.
+ * @param ClassName The MediaIOTask subclass to register.
  */
 #define PROMEKI_REGISTER_MEDIAIO(ClassName) \
         [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_mediaio_, PROMEKI_UNIQUE_ID) = \
@@ -38,90 +44,404 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class IODevice;
+class ThreadPool;
+class MediaIOTask;
+
+// ============================================================================
+// Free types — used by both commands and MediaIO so commands can be
+// defined before MediaIO without circular dependencies.
+// ============================================================================
+
+/** @brief Open mode for a media resource. */
+enum MediaIOMode {
+        MediaIO_NotOpen = 0, ///< @brief Resource is not open.
+        MediaIO_Reader,      ///< @brief Open for reading.
+        MediaIO_Writer,      ///< @brief Open for writing.
+        MediaIO_ReadWrite    ///< @brief Open for both reading and writing.
+};
 
 /**
- * @brief Abstract base class for media I/O backends.
+ * @brief Seek-mode hint for seekToFrame().
+ *
+ * Use the @c MediaIO::Seek* constants (e.g. @c MediaIO::SeekExact) at
+ * call sites — the free enum exists so commands defined before
+ * MediaIO can reference the type.  Most backends interpret these to
+ * decide whether to land on an exact frame or the nearest keyframe.
+ * Default lets the task pick the most efficient mode (Exact for
+ * sample-accurate sources, KeyframeBefore for compressed streams with
+ * B-frames, etc.).
+ */
+enum MediaIOSeekMode {
+        MediaIO_SeekDefault = 0,        ///< @brief Backend picks (resolved per task).
+        MediaIO_SeekExact,              ///< @brief Land on the exact requested frame.
+        MediaIO_SeekNearestKeyframe,    ///< @brief Land on the nearest keyframe in either direction.
+        MediaIO_SeekKeyframeBefore,     ///< @brief Land on the closest keyframe at or before.
+        MediaIO_SeekKeyframeAfter       ///< @brief Land on the closest keyframe at or after.
+};
+
+/** @brief Phantom tag for the MediaIO config StringRegistry. */
+struct MediaIOConfigTag {};
+
+/** @brief Configuration database for MediaIO. */
+using MediaIOConfig = VariantDatabase<MediaIOConfigTag>;
+
+/** @brief Configuration ID type. */
+using MediaIOConfigID = MediaIOConfig::ID;
+
+/** @brief Phantom tag for the MediaIO stats StringRegistry. */
+struct MediaIOStatsTag {};
+
+/**
+ * @brief Statistics container for MediaIO backends.
  * @ingroup proav
  *
- * MediaIO provides a uniform interface for reading and writing media
- * content (video frames, audio, metadata) from container files, image
- * sequences, and hardware video I/O devices.  All MediaIO subclasses
- * derive from ObjectBase.
+ * A distinct VariantDatabase type for runtime stats reported by
+ * backends.  Has its own StringRegistry so stats keys don't collide
+ * with config or param keys.  Backends populate instances
+ * of this in @c executeCmd(MediaIOCommandStats&); users receive them
+ * from @c MediaIO::stats().
+ *
+ * Standard key names are defined as static members; backends are
+ * free to add their own backend-specific keys for data not covered
+ * by the standard set.
+ */
+class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
+        public:
+                using Base = VariantDatabase<MediaIOStatsTag>;
+                using Base::Base;
+
+                /// @brief int64_t — total frames dropped since open.
+                static inline const ID FramesDropped{"FramesDropped"};
+                /// @brief int64_t — total frames repeated due to underrun.
+                static inline const ID FramesRepeated{"FramesRepeated"};
+                /// @brief int64_t — total frames that arrived late.
+                static inline const ID FramesLate{"FramesLate"};
+                /// @brief int64_t — current depth of internal buffer.
+                static inline const ID QueueDepth{"QueueDepth"};
+                /// @brief int64_t — capacity of internal buffer.
+                static inline const ID QueueCapacity{"QueueCapacity"};
+                /// @brief double — current data rate.
+                static inline const ID BytesPerSecond{"BytesPerSecond"};
+                /// @brief double — average end-to-end latency.
+                static inline const ID AverageLatencyMs{"AverageLatencyMs"};
+                /// @brief double — peak observed latency.
+                static inline const ID PeakLatencyMs{"PeakLatencyMs"};
+                /// @brief String — most recent error description.
+                static inline const ID LastErrorMessage{"LastErrorMessage"};
+};
+
+/** @brief Phantom tag for the MediaIO parameterized-command StringRegistry. */
+struct MediaIOParamsTag {};
+
+/**
+ * @brief Parameter / result container for MediaIO parameterized commands.
+ *
+ * A distinct VariantDatabase type for backend-specific parameterized
+ * command payloads.  Has its own StringRegistry so param keys don't
+ * collide with config or stats keys.  Has no predefined keys — the
+ * key set is entirely backend-defined.  Backends that want to expose
+ * named parameters typically define static const IDs on their task
+ * class.
+ */
+using MediaIOParams = VariantDatabase<MediaIOParamsTag>;
+
+/** @brief Parameterized command ID type. */
+using MediaIOParamsID = MediaIOParams::ID;
+
+// ============================================================================
+// Command hierarchy — all I/O operations are submitted as commands to the
+// MediaIO worker thread.  Each command carries inputs (set by MediaIO) and
+// outputs (set by the task) so that all data flow is lock-free.
+// ============================================================================
+
+/**
+ * @brief Boilerplate for derived MediaIOCommand classes.
+ * @ingroup proav
+ *
+ * Injects the `type()` override and an asserting `_promeki_clone()`
+ * required by the SharedPtr proxy machinery.  Use it as the first
+ * line of every concrete command class.
+ *
+ * @param NAME      The class name.
+ * @param TYPE_TAG  The MediaIOCommand::Type enum value.
+ */
+#define PROMEKI_MEDIAIO_COMMAND(NAME, TYPE_TAG)                       \
+        public:                                                       \
+                Type type() const override { return TYPE_TAG; }       \
+                NAME *_promeki_clone() const {                        \
+                        assert(false && #NAME " should not be cloned"); \
+                        return nullptr;                               \
+                }
+
+/**
+ * @brief Base class for MediaIO commands.
+ * @ingroup proav
+ *
+ * Commands are shared via SharedPtr<MediaIOCommand, false> with COW
+ * disabled — derived types are owned via the proxy path and never
+ * cloned.  The Promise is fulfilled by the worker thread when the
+ * command completes; the caller waits on the associated Future.
+ */
+class MediaIOCommand {
+        public:
+                /** @brief Concrete command type. */
+                enum Type {
+                        Open,   ///< @brief MediaIOCommandOpen
+                        Close,  ///< @brief MediaIOCommandClose
+                        Read,   ///< @brief MediaIOCommandRead
+                        Write,  ///< @brief MediaIOCommandWrite
+                        Seek,   ///< @brief MediaIOCommandSeek
+                        Params, ///< @brief MediaIOCommandParams
+                        Stats   ///< @brief MediaIOCommandStats
+                };
+
+                /** @brief Shared pointer type for command sharing. */
+                using Ptr = SharedPtr<MediaIOCommand, false>;
+
+                /** @brief Reference count (managed by SharedPtrProxy). */
+                RefCount _promeki_refct;
+
+                /**
+                 * @brief Clone hook required by SharedPtr machinery.
+                 *
+                 * Commands are never cloned (COW is disabled).  The
+                 * implementation asserts to catch accidental clone calls.
+                 */
+                MediaIOCommand *_promeki_clone() const {
+                        assert(false && "MediaIOCommand should never be cloned");
+                        return nullptr;
+                }
+
+                /** @brief Constructs an empty command. */
+                MediaIOCommand() = default;
+
+                /** @brief Virtual destructor for polymorphic ownership. */
+                virtual ~MediaIOCommand() = default;
+
+                /**
+                 * @brief Returns the concrete command type.
+                 * @return The Type enum value.
+                 */
+                virtual Type type() const = 0;
+
+                /** @brief Promise fulfilled by the worker when the command completes. */
+                Promise<Error> promise;
+};
+
+/**
+ * @brief Command to open a media resource.
+ * @ingroup proav
+ */
+class MediaIOCommandOpen : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandOpen, Open)
+        public:
+                // ---- Inputs ----
+                MediaIOMode             mode = MediaIO_NotOpen;
+                MediaIOConfig           config;
+                MediaDesc               pendingMediaDesc;
+                Metadata                pendingMetadata;
+                AudioDesc               pendingAudioDesc;
+                List<int>               videoTracks;     ///< @brief Empty = task default (first video track).
+                List<int>               audioTracks;     ///< @brief Empty = task default (first audio track).
+
+                // ---- Outputs ----
+                MediaDesc               mediaDesc;
+                AudioDesc               audioDesc;
+                Metadata                metadata;
+                FrameRate               frameRate;
+                bool                    canSeek = false;
+                int64_t                 frameCount = 0;
+                int                     defaultStep = 1;             ///< @brief Backend's preferred default step.
+                int                     defaultPrefetchDepth = 1;    ///< @brief Backend's preferred prefetch depth.
+                MediaIOSeekMode         defaultSeekMode = MediaIO_SeekExact; ///< @brief Backend's resolution of @c SeekDefault.
+};
+
+/**
+ * @brief Command to close a media resource.
+ * @ingroup proav
+ */
+class MediaIOCommandClose : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandClose, Close)
+};
+
+/**
+ * @brief Command to read the next frame.
+ * @ingroup proav
+ */
+class MediaIOCommandRead : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandRead, Read)
+        public:
+                // ---- Input ----
+                int                     step = 1;
+
+                // ---- Outputs ----
+                Frame::Ptr              frame;
+                int64_t                 currentFrame = 0;
+                Error                   result;       ///< @brief Set by worker; carries success/error/EOF.
+
+                // ---- Optional outputs (mid-stream descriptor change) ----
+                /**
+                 * @brief Set true when the backend wants to update the
+                 * MediaDesc that MediaIO caches.
+                 *
+                 * Used for variable-frame-rate or segmented streams whose
+                 * format changes mid-playback.  When true, MediaIO copies
+                 * @c updatedMediaDesc into its cache, stamps
+                 * @c Metadata::MediaDescChanged on the returned frame,
+                 * and emits the @c descriptorChanged signal.
+                 */
+                bool                    mediaDescChanged = false;
+                /** @brief New MediaDesc — only valid when @c mediaDescChanged is true. */
+                MediaDesc               updatedMediaDesc;
+};
+
+/**
+ * @brief Command to write a frame.
+ * @ingroup proav
+ */
+class MediaIOCommandWrite : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandWrite, Write)
+        public:
+                // ---- Input ----
+                Frame::Ptr              frame;
+
+                // ---- Outputs ----
+                int64_t                 currentFrame = 0;
+                int64_t                 frameCount = 0;
+};
+
+/**
+ * @brief Command to seek to a frame position.
+ * @ingroup proav
+ */
+class MediaIOCommandSeek : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandSeek, Seek)
+        public:
+                // ---- Inputs ----
+                int64_t                 frameNumber = 0;
+                MediaIOSeekMode         mode = MediaIO_SeekDefault;
+
+                // ---- Output ----
+                int64_t                 currentFrame = 0;
+};
+
+/**
+ * @brief Backend-specific parameterized command.
+ * @ingroup proav
+ *
+ * Carries an arbitrary operation name plus parameter and result
+ * containers, allowing backends to expose operations beyond the
+ * standard open/close/read/write/seek set.  Examples: setting
+ * device gain, querying device temperature, triggering a one-shot
+ * capture, retrieving codec parameters.
+ *
+ * Backends override @c executeCmd(MediaIOCommandParams &) and
+ * dispatch on @c name.  Unrecognized names should return
+ * @c Error::NotSupported.  Default implementation returns
+ * @c Error::NotSupported.
+ */
+class MediaIOCommandParams : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandParams, Params)
+        public:
+                // ---- Inputs ----
+                String                  name;       ///< @brief Operation name (backend-defined).
+                MediaIOParams            params;     ///< @brief Operation parameters.
+
+                // ---- Output ----
+                MediaIOParams            result;     ///< @brief Operation result fields.
+};
+
+/**
+ * @brief Backend statistics query command.
+ * @ingroup proav
+ *
+ * Backends populate @c stats with whatever runtime metrics they
+ * track (frames dropped, queue depth, bytes/sec, latency, last
+ * error, etc.).  See @c MediaIOStats for the standard key
+ * conventions.  Backends are free to add backend-specific keys.
+ *
+ * The default implementation returns Error::Ok with an empty
+ * @c stats.
+ */
+class MediaIOCommandStats : public MediaIOCommand {
+        PROMEKI_MEDIAIO_COMMAND(MediaIOCommandStats, Stats)
+        public:
+                // ---- Output ----
+                MediaIOStats            stats;      ///< @brief Stats keys/values populated by the backend.
+};
+
+// ============================================================================
+// MediaIO controller class
+// ============================================================================
+
+/**
+ * @brief Controller for media I/O backends.
+ * @ingroup proav
+ *
+ * MediaIO drives a MediaIOTask backend through a serialized command
+ * queue running on a shared ThreadPool.  All operations — open, close,
+ * read, write, seek — are dispatched as MediaIOCommand instances.
+ * The task implements only the executeCmd virtuals; MediaIO handles
+ * threading, signals, and result caching.
  *
  * Backends register themselves via PROMEKI_REGISTER_MEDIAIO and are
  * instantiated through the config-driven factory create() or the
  * convenience helpers createForFileRead() / createForFileWrite().
  *
- * readFrame() fills a synchronized Frame containing all video and audio
- * for the current position.  Seeking is optional; backends that support
- * it override canSeek() and seekToFrame().
+ * @par Cached state
  *
- * @par Lifecycle
+ * MediaIO caches the descriptor and navigation state reported by the
+ * task (mediaDesc, audioDesc, metadata, frameRate, canSeek, frameCount,
+ * currentFrame).  The cache is updated only on the user thread after
+ * a command's future resolves, eliminating the need for mutexes around
+ * task data.
  *
- * The base class centralizes open/close bookkeeping.  open() checks
- * state, calls onOpen(), and sets the mode on success.  close() calls
- * onClose() and resets the mode.  Backends override onOpen() and
- * onClose() instead of open()/close().
+ * @par Non-blocking I/O
  *
- * Each backend destructor must call close() if still open, because
- * by the time ~MediaIO() runs the derived members are already
- * destroyed.  The base destructor asserts !isOpen() in debug builds
- * to catch missing cleanup.
+ * readFrame() and writeFrame() take an optional @p block parameter
+ * (default true).  When false, the command is enqueued and the call
+ * returns Error::TryAgain immediately.  Use frameAvailable() to poll
+ * for ready frames and isIdle() to check whether the strand is busy.
  *
- * @par Step control
+ * @par Threading model
  *
- * The step property (default 1) controls how readFrame() advances
- * after each read.  Set to -1 for reverse, 2 for 2x forward, 0 to
- * re-read the same position indefinitely.  Backends override
- * setStep() to react to direction or speed changes (e.g. switching
- * a hardware device to reverse mode, or adjusting cache prefetch
- * direction).
- *
- * @par Frame count semantics
- *
- * frameCount() returns:
- * - A positive value for the total number of frames available (readers)
- *   or frames written so far (writers).
- * - 0 for zero frames.
- * - FrameCountUnknown (-1) when the length is not yet known.
- * - FrameCountInfinite (-2) for unbounded sources (generators, live).
- * - FrameCountError (-3) when the count is unavailable due to error.
- *
- * currentFrame() returns the number of frames read or written so far,
- * starting at 0.  seekToFrame() sets it to the target position.
- *
- * @code
- * MediaIO *io = MediaIO::createForFileRead("clip.mxf");
- * if(io) {
- *         Error err = io->open(MediaIO::Reader);
- *         if(err.isOk()) {
- *                 Frame frame;
- *                 while(io->readFrame(frame).isOk()) {
- *                         // process frame
- *                 }
- *                 io->close();
- *         }
- *         delete io;
- * }
- * @endcode
+ * MediaIO is intended to be driven from a single user thread.
+ * Public methods (open/close/readFrame/writeFrame/seekToFrame/setStep
+ * etc.) are not safe to call concurrently from multiple threads.
+ * The cached state (mediaDesc, frameCount, currentFrame, ...) is
+ * read and written only from the user thread; backend execution
+ * happens on the strand worker thread.  Cross-thread notifications
+ * use signals (@c frameAvailable, @c frameWanted, @c writeError),
+ * which the signal/slot system marshals via the receiver's
+ * EventLoop.
  */
 class MediaIO : public ObjectBase {
         PROMEKI_OBJECT(MediaIO, ObjectBase)
         public:
-                /** @brief Configuration database type for MediaIO instances. */
-                using Config = VariantDatabase<MediaIO>;
+                /** @brief Open mode (alias for MediaIOMode). */
+                using Mode = MediaIOMode;
 
-                /** @brief Shorthand for Config::ID. */
-                using ConfigID = Config::ID;
+                static constexpr Mode NotOpen   = MediaIO_NotOpen;
+                static constexpr Mode Reader    = MediaIO_Reader;
+                static constexpr Mode Writer    = MediaIO_Writer;
+                static constexpr Mode ReadWrite = MediaIO_ReadWrite;
 
-                /** @brief Open mode for the media resource. */
-                enum Mode {
-                        NotOpen = 0, ///< @brief Resource is not open.
-                        Reader,      ///< @brief Open for reading.
-                        Writer       ///< @brief Open for writing.
-                };
+                /** @brief Seek mode (alias for MediaIOSeekMode). */
+                using SeekMode = MediaIOSeekMode;
 
-                /** @brief Frame count is not yet known (e.g. file not fully scanned). */
+                static constexpr SeekMode SeekDefault         = MediaIO_SeekDefault;
+                static constexpr SeekMode SeekExact           = MediaIO_SeekExact;
+                static constexpr SeekMode SeekNearestKeyframe = MediaIO_SeekNearestKeyframe;
+                static constexpr SeekMode SeekKeyframeBefore  = MediaIO_SeekKeyframeBefore;
+                static constexpr SeekMode SeekKeyframeAfter   = MediaIO_SeekKeyframeAfter;
+
+                /** @brief Configuration database type. */
+                using Config = MediaIOConfig;
+
+                /** @brief Configuration ID type. */
+                using ConfigID = MediaIOConfigID;
+
+                /** @brief Frame count is not yet known. */
                 static constexpr int64_t FrameCountUnknown  = -1;
 
                 /** @brief Source is unbounded (generators, live devices). */
@@ -138,36 +458,40 @@ class MediaIO : public ObjectBase {
 
                 /**
                  * @brief Describes a registered media I/O backend.
-                 *
-                 * Each backend provides a static formatDesc() method returning
-                 * one of these.  The factory functions use the registry to match
-                 * a request to the right backend.
                  */
                 struct FormatDesc {
-                        String      name;        ///< @brief Backend name (e.g. "MXF", "DeckLink").
-                        String      description; ///< @brief Human-readable description.
-                        StringList  extensions;  ///< @brief Supported file extensions (no dots). Empty for devices.
-                        bool        canRead;     ///< @brief Whether the backend supports reading.
-                        bool        canWrite;    ///< @brief Whether the backend supports writing.
-                        /** @brief Factory function that creates a new instance of the backend. */
-                        std::function<MediaIO *(ObjectBase *)> create;
+                        /** @brief Factory function that creates a new task instance. */
+                        using CreateFunc = std::function<MediaIOTask *()>;
                         /** @brief Returns the default configuration for this backend. */
-                        std::function<Config ()> defaultConfig;
+                        using DefaultConfigFunc = std::function<Config ()>;
                         /**
                          * @brief Optional content probe via IODevice.
-                         *
-                         * When provided, the factory calls this to verify that
-                         * a device's content can be handled by this backend.
-                         * The device is seeked to position 0 before each call.
-                         * Used by createForFileRead() as a content-based
-                         * fallback when no extension matches.  May be null for
-                         * backends that cannot probe (e.g. headerless formats,
-                         * generators).
                          *
                          * @param device An open, seekable IODevice positioned at 0.
                          * @return true if this backend can handle the content.
                          */
-                        std::function<bool(IODevice *device)> canHandleDevice;
+                        using ProbeFunc = std::function<bool(IODevice *device)>;
+                        /**
+                         * @brief Optional callback that lists available device instances.
+                         *
+                         * Returns the locator strings (suitable for use as
+                         * @c MediaIO::ConfigFilename) for each available
+                         * instance of this backend.  File-based backends
+                         * generally leave this null; device backends
+                         * provide an implementation that scans the system.
+                         */
+                        using EnumerateFunc = std::function<StringList()>;
+
+                        String              name;          ///< @brief Backend name (e.g. "MXF", "VideoDevice").
+                        String              description;   ///< @brief Human-readable description.
+                        StringList          extensions;    ///< @brief Supported file extensions (no dots).
+                        bool                canRead;       ///< @brief Whether the backend supports reading.
+                        bool                canWrite;      ///< @brief Whether the backend supports writing.
+                        bool                canReadWrite;  ///< @brief Whether the backend supports bidirectional mode.
+                        CreateFunc          create;          ///< @brief Backend factory.
+                        DefaultConfigFunc   defaultConfig;   ///< @brief Default configuration provider.
+                        ProbeFunc           canHandleDevice; ///< @brief Content-based probe.
+                        EnumerateFunc       enumerate;       ///< @brief Instance enumerator.
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -187,42 +511,21 @@ class MediaIO : public ObjectBase {
 
                 /**
                  * @brief Returns the default configuration for the named backend.
-                 *
-                 * Looks up the backend by name and calls its defaultConfig
-                 * function.  Returns an empty Config if the name is not found.
-                 *
                  * @param typeName The registered backend name (e.g. "TPG").
                  * @return A Config populated with default values.
-                 *
-                 * @par Example
-                 * @code
-                 * MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
-                 * cfg.set(MediaIO_TPG::ConfigVideoEnabled, true);
-                 * MediaIO *io = MediaIO::create(cfg);
-                 * @endcode
                  */
                 static Config defaultConfig(const String &typeName);
 
                 /**
                  * @brief Creates a MediaIO instance from a configuration.
-                 *
-                 * Looks up the backend by the ConfigType key in the config.
-                 * If no type is present but ConfigFilename is, the backend is
-                 * inferred from the file extension.
-                 *
-                 * @param config The configuration describing the desired backend and its options.
+                 * @param config The configuration describing the desired backend.
                  * @param parent Optional parent object.
-                 * @return A new MediaIO instance, or nullptr if no matching backend was found.
+                 * @return A new MediaIO instance, or nullptr on failure.
                  */
                 static MediaIO *create(const Config &config, ObjectBase *parent = nullptr);
 
                 /**
                  * @brief Creates a MediaIO reader for the given filename.
-                 *
-                 * Convenience helper that builds a config from the filename,
-                 * infers the backend from the file extension, and verifies
-                 * that the backend supports reading.
-                 *
                  * @param filename The path to the media file.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
@@ -231,11 +534,6 @@ class MediaIO : public ObjectBase {
 
                 /**
                  * @brief Creates a MediaIO writer for the given filename.
-                 *
-                 * Convenience helper that builds a config from the filename,
-                 * infers the backend from the file extension, and verifies
-                 * that the backend supports writing.
-                 *
                  * @param filename The path to the media file.
                  * @param parent Optional parent object.
                  * @return A new MediaIO instance, or nullptr on failure.
@@ -243,299 +541,455 @@ class MediaIO : public ObjectBase {
                 static MediaIO *createForFileWrite(const String &filename, ObjectBase *parent = nullptr);
 
                 /**
+                 * @brief Returns the shared thread pool used for the worker.
+                 *
+                 * All MediaIO instances share a single static ThreadPool.
+                 * Each instance has its own Strand on top of the pool, so
+                 * different MediaIOs run concurrently while their own
+                 * commands stay serialized.
+                 *
+                 * @par Sizing
+                 *
+                 * The default thread count is
+                 * @c std::thread::hardware_concurrency().  Backends that
+                 * block in @c executeCmd (e.g. live capture devices
+                 * waiting for the next frame) hold a pool thread for the
+                 * duration of the read.  If you have many such backends
+                 * active simultaneously, the pool can starve.  Resize
+                 * before opening the first MediaIO via:
+                 *
+                 * @code
+                 * MediaIO::pool().setThreadCount(N);
+                 * @endcode
+                 *
+                 * @return A reference to the static ThreadPool instance.
+                 */
+                static ThreadPool &pool();
+
+                /**
+                 * @brief Lists available instances for the named backend.
+                 *
+                 * For device-style backends (capture cards, video cameras),
+                 * this returns the locator strings (e.g. @c "video0",
+                 * @c "video1") that can be used as
+                 * @c MediaIO::ConfigFilename.  Returns an empty list if
+                 * the backend doesn't support enumeration or the type is
+                 * unknown.
+                 *
+                 * @param typeName The registered backend name.
+                 * @return A list of available instance locators.
+                 */
+                static StringList enumerate(const String &typeName);
+
+                /**
                  * @brief Constructs a MediaIO with an optional parent.
                  * @param parent The parent object, or nullptr.
                  */
-                MediaIO(ObjectBase *parent = nullptr) : ObjectBase(parent) {}
+                MediaIO(ObjectBase *parent = nullptr);
 
                 /**
-                 * @brief Destructor.  Asserts that the resource is closed.
-                 *
-                 * Backends must call close() in their own destructor since
-                 * derived members are destroyed before ~MediaIO() runs.
+                 * @brief Destructor.  Closes if still open and deletes the task.
                  */
                 ~MediaIO() override;
 
-                /**
-                 * @brief Returns the configuration used to create this instance.
-                 * @return A const reference to the config.
-                 */
-                const Config &config() const {
-                        return _config;
-                }
+                /** @brief Returns the configuration. */
+                const Config &config() const { return _config; }
+
+                /** @brief Returns true if the resource is open. */
+                bool isOpen() const { return _mode != NotOpen; }
+
+                /** @brief Returns the current open mode. */
+                Mode mode() const { return _mode; }
+
+                /** @brief Returns the current step increment. */
+                int step() const { return _step; }
 
                 /**
-                 * @brief Returns true if the resource is open.
-                 * @return true if mode() is not NotOpen.
+                 * @brief Sets the step increment.
+                 *
+                 * The step value is copied into each CmdRead so the task
+                 * can advance position accordingly.  Common values:
+                 * - 1: normal forward (default)
+                 * - -1: reverse
+                 * - 2: 2x fast-forward
+                 * - 0: hold (re-read same frame)
+                 *
+                 * If the new step differs from the old, any prefetched
+                 * read commands (which were submitted with the old step)
+                 * are cancelled and any pending read results are
+                 * discarded.  Subsequent reads will use the new step.
+                 *
+                 * @param val The new step value.
                  */
-                bool isOpen() const {
-                        return _mode != NotOpen;
-                }
+                void setStep(int val);
 
                 /**
-                 * @brief Returns the current open mode.
-                 * @return The Mode value.
+                 * @brief Returns the current read prefetch depth.
+                 *
+                 * Reflects the task's preferred default after open(),
+                 * or whatever the user set via setPrefetchDepth() if
+                 * called explicitly.
+                 *
+                 * @return The current prefetch depth (≥ 1).
                  */
-                Mode mode() const {
-                        return _mode;
-                }
+                int prefetchDepth() const { return _prefetchDepth; }
+
+                /**
+                 * @brief Sets the number of read commands to keep in flight.
+                 *
+                 * MediaIO will top up the strand queue to this many
+                 * outstanding CmdReads in @c readFrame().  Larger values
+                 * give the user thread more headroom for high-throughput
+                 * sources (e.g. capture devices); a value of 1 is fine
+                 * for files and lightweight sources.
+                 *
+                 * Calling this marks the depth as user-set; subsequent
+                 * @c open() calls will not overwrite it with the task's
+                 * default until @c close() resets the override.
+                 *
+                 * @param n New depth, clamped to ≥ 1.
+                 */
+                void setPrefetchDepth(int n);
+
+                /**
+                 * @brief Returns the task's preferred default seek mode.
+                 *
+                 * Captured from the backend during open().  Used to
+                 * resolve @c MediaIO::SeekDefault into a concrete mode
+                 * for each seekToFrame() call.
+                 *
+                 * @return The default seek mode for the current backend.
+                 */
+                SeekMode defaultSeekMode() const { return _defaultSeekMode; }
+
+                /**
+                 * @brief Selects which video tracks to decode (pre-open).
+                 *
+                 * An empty list means the backend uses its default
+                 * (typically the first video track).  Backends without
+                 * a track concept ignore this setting.
+                 *
+                 * @param tracks Track indices to decode.
+                 * @return Error::Ok or Error::AlreadyOpen.
+                 */
+                Error setVideoTracks(const List<int> &tracks);
+
+                /**
+                 * @brief Selects which audio tracks to decode (pre-open).
+                 *
+                 * An empty list means the backend uses its default
+                 * (typically the first audio track).  Backends without
+                 * a track concept ignore this setting.
+                 *
+                 * @param tracks Track indices to decode.
+                 * @return Error::Ok or Error::AlreadyOpen.
+                 */
+                Error setAudioTracks(const List<int> &tracks);
 
                 /**
                  * @brief Opens the media resource.
                  *
-                 * Checks lifecycle state, delegates to onOpen(), and sets the
-                 * mode on success.  Do not override — implement onOpen() instead.
+                 * Starts the worker thread, enqueues a CmdOpen, and blocks
+                 * until it completes.  On success, copies descriptor and
+                 * navigation state from the command into the cache.
                  *
-                 * @param mode Reader or Writer.
-                 * @return Error::Ok on success, or an error on failure.
+                 * @param mode Reader, Writer, or ReadWrite.
+                 * @return Error::Ok on success, or an error.
                  */
                 Error open(Mode mode);
 
                 /**
                  * @brief Closes the media resource.
                  *
-                 * Delegates to onClose() and resets the mode.  Do not override —
-                 * implement onClose() instead.
+                 * Enqueues a CmdClose and blocks until the worker exits.
                  *
-                 * @return Error::Ok on success, or an error on failure.
+                 * @return Error::Ok on success, or an error.
                  */
                 Error close();
 
-                // ---- Descriptors ----
+                // ---- Cached descriptor accessors ----
 
                 /**
-                 * @brief Returns the media description.
+                 * @brief Returns the cached media description.
                  *
-                 * Valid after open() for readers.  Returns an invalid MediaDesc
-                 * by default.
-                 *
-                 * @return The media description.
+                 * The reference is valid until the next call to
+                 * @c open(), @c close(), or destruction.
                  */
-                virtual MediaDesc mediaDesc() const;
+                const MediaDesc &mediaDesc() const { return _mediaDesc; }
+
+                /**
+                 * @brief Returns the cached frame rate.
+                 *
+                 * Reference lifetime is the same as @c mediaDesc().
+                 */
+                const FrameRate &frameRate() const { return _frameRate; }
+
+                /**
+                 * @brief Returns the cached primary audio description.
+                 *
+                 * Reference lifetime is the same as @c mediaDesc().
+                 */
+                const AudioDesc &audioDesc() const { return _audioDesc; }
+
+                /**
+                 * @brief Returns the cached container metadata.
+                 *
+                 * Reference lifetime is the same as @c mediaDesc().
+                 */
+                const Metadata &metadata() const { return _metadata; }
 
                 /**
                  * @brief Sets the media description for writing.
                  *
-                 * Call before open() for writers.
+                 * Stored locally and passed to the task in the next CmdOpen.
                  *
                  * @param desc The media description.
-                 * @return Error::Ok on success, or an error on failure.
+                 * @return Error::Ok on success, or AlreadyOpen if open.
                  */
-                virtual Error setMediaDesc(const MediaDesc &desc);
-
-                /**
-                 * @brief Returns the frame rate.
-                 *
-                 * Defaults to mediaDesc().frameRate().  Override for backends
-                 * that know their frame rate independent of the media descriptor.
-                 *
-                 * @return The frame rate.
-                 */
-                virtual FrameRate frameRate() const;
-
-                /**
-                 * @brief Returns the primary audio description.
-                 *
-                 * Returns the first entry from mediaDesc().audioList(), or an
-                 * invalid AudioDesc if none.  Override for backends that manage
-                 * audio description independently.
-                 *
-                 * @return The primary audio description.
-                 */
-                virtual AudioDesc audioDesc() const;
+                Error setMediaDesc(const MediaDesc &desc);
 
                 /**
                  * @brief Sets the audio description for writing.
                  *
-                 * Convenience for setting the primary audio stream.  The default
-                 * implementation is a no-op returning NotSupported.
-                 *
                  * @param desc The audio description.
-                 * @return Error::Ok on success, or an error on failure.
+                 * @return Error::Ok on success, or AlreadyOpen if open.
                  */
-                virtual Error setAudioDesc(const AudioDesc &desc);
-
-                /**
-                 * @brief Returns the container-level metadata.
-                 *
-                 * Valid after open() for readers.  Returns empty Metadata by
-                 * default.
-                 *
-                 * @return The metadata.
-                 */
-                virtual Metadata metadata() const;
+                Error setAudioDesc(const AudioDesc &desc);
 
                 /**
                  * @brief Sets the container-level metadata for writing.
                  *
-                 * Call before open() for writers.
-                 *
                  * @param meta The metadata.
-                 * @return Error::Ok on success, or an error on failure.
+                 * @return Error::Ok on success, or AlreadyOpen if open.
                  */
-                virtual Error setMetadata(const Metadata &meta);
+                Error setMetadata(const Metadata &meta);
 
                 // ---- Frame I/O ----
 
                 /**
+                 * @brief Returns true if a read result is waiting to be consumed.
+                 *
+                 * Specifically: a previously-submitted CmdRead has
+                 * completed and its frame is sitting in the read result
+                 * queue.  When true, @c readFrame() returns immediately
+                 * without blocking.  When false, @c readFrame() will
+                 * either block on the next prefetch or return
+                 * @c Error::TryAgain in non-blocking mode.
+                 *
+                 * @return true if a frame is ready to be picked up.
+                 */
+                bool frameAvailable() const;
+
+                /**
                  * @brief Reads the next synchronized frame.
                  *
-                 * Checks that the resource is open in Reader mode, then
-                 * delegates to onReadFrame().  Do not override — implement
-                 * onReadFrame() instead.
+                 * Submits a CmdRead with the current step, then either
+                 * blocks waiting for the result or returns
+                 * Error::TryAgain immediately.
                  *
-                 * @param frame The Frame to fill.
-                 * @return Error::Ok on success, Error::EndOfFile at end, or an error.
+                 * @par EOF semantics
+                 *
+                 * Once a read returns Error::EndOfFile, MediaIO marks
+                 * the stream as exhausted and stops issuing further
+                 * prefetch reads.  Subsequent @c readFrame() calls
+                 * keep returning Error::EndOfFile (without going down
+                 * to the backend) until the user calls @c seekToFrame
+                 * or @c close to reset the state.  This avoids
+                 * spamming the backend with reads it has already said
+                 * are done.
+                 *
+                 * @param frame Receives the frame on success.
+                 * @param block If true (default), blocks until ready.
+                 * @return Error::Ok, Error::TryAgain, Error::EndOfFile, or another error.
                  */
-                Error readFrame(Frame &frame);
+                Error readFrame(Frame::Ptr &frame, bool block = true);
+
+                /**
+                 * @brief Returns true if the strand has no pending or
+                 *        in-flight commands.
+                 *
+                 * Useful as a general "is this MediaIO doing anything?"
+                 * check — for example, before submitting a non-blocking
+                 * write to know whether it'll be queued behind other work.
+                 *
+                 * @return true if the underlying strand is idle.
+                 */
+                bool isIdle() const;
+
+                /**
+                 * @brief Cancels all pending (not-yet-running) commands.
+                 *
+                 * Each cancelled command's Future is fulfilled with
+                 * Error::Cancelled, so any blocking caller unblocks
+                 * cleanly.  Pending read results sitting in the read
+                 * result queue (already completed by the worker) are
+                 * also discarded.  Any command currently in flight is
+                 * left to complete normally.
+                 *
+                 * @return The number of pending commands that were cancelled.
+                 */
+                size_t cancelPending();
 
                 /**
                  * @brief Writes a frame to the media resource.
                  *
-                 * Checks that the resource is open in Writer mode, then
-                 * delegates to onWriteFrame().  Do not override — implement
-                 * onWriteFrame() instead.
+                 * Submits a CmdWrite, then either blocks for the result or
+                 * returns Error::TryAgain.
                  *
-                 * @param frame The Frame containing video and audio to write.
-                 * @return Error::Ok on success, or an error on failure.
+                 * @param frame The Frame to write.
+                 * @param block If true (default), blocks until the write completes.
+                 * @return Error::Ok, Error::TryAgain, or an error.
                  */
-                Error writeFrame(const Frame &frame);
+                Error writeFrame(const Frame::Ptr &frame, bool block = true);
 
                 // ---- Navigation ----
 
-                /**
-                 * @brief Returns true if this backend supports seeking.
-                 * @return true if seekToFrame() is available. Default: false.
-                 */
-                virtual bool canSeek() const;
+                /** @brief Returns the cached canSeek flag. */
+                bool canSeek() const { return _canSeek; }
 
                 /**
                  * @brief Seeks to the given frame number.
                  *
-                 * Only valid when canSeek() returns true.
+                 * Cancels any pending strand work and discards prefetched
+                 * read results (they're stale relative to the new
+                 * position), then submits a CmdSeek and blocks until it
+                 * completes.  @c SeekDefault is resolved to the task's
+                 * preferred mode (see @c defaultSeekMode()) before
+                 * dispatch, so the backend always sees a concrete seek
+                 * mode.
                  *
-                 * @param frameNumber The zero-based frame number to seek to.
-                 * @return Error::Ok on success, or Error::IllegalSeek if not supported.
+                 * @param frameNumber The zero-based frame number.
+                 * @param mode How to interpret the seek target.
+                 * @return Error::Ok or Error::IllegalSeek.
                  */
-                virtual Error seekToFrame(int64_t frameNumber);
+                Error seekToFrame(int64_t frameNumber, SeekMode mode = SeekDefault);
+
+                /** @brief Returns the cached frame count. */
+                int64_t frameCount() const { return _frameCount; }
+
+                /** @brief Returns the cached current frame. */
+                int64_t currentFrame() const { return _currentFrame; }
+
+                /** @brief Sets the configuration. */
+                void setConfig(const Config &config) { _config = config; }
 
                 /**
-                 * @brief Returns the total number of frames.
+                 * @brief Sends a backend-specific parameterized command.
                  *
-                 * For readers, returns the total frames available.
-                 * For writers, returns the number of frames written so far.
-                 * Returns a negative sentinel (FrameCountUnknown, FrameCountInfinite,
-                 * FrameCountError) for special cases.  0 means zero frames.
+                 * Parameterized commands let backends expose operations
+                 * beyond the standard open/close/read/write/seek set —
+                 * for example, setting device gain, querying device
+                 * temperature, or retrieving codec parameters.  The
+                 * meaning of @p name and the contents of @p params /
+                 * @p result are entirely backend-defined.
                  *
-                 * @return The frame count or a negative sentinel.
+                 * The command is dispatched on the strand and blocks
+                 * until the backend completes it.  Backends that don't
+                 * recognize @p name return @c Error::NotSupported.
+                 *
+                 * @param name   Operation name.
+                 * @param params Input parameters (may be empty).
+                 * @param result Optional output to receive results.
+                 * @return Error::Ok on success, NotSupported if the
+                 *         backend doesn't recognize the name, or another
+                 *         error from the backend.
                  */
-                virtual int64_t frameCount() const;
+                Error sendParams(const String &name,
+                                 const MediaIOParams &params = MediaIOParams(),
+                                 MediaIOParams *result = nullptr);
 
                 /**
-                 * @brief Returns the number of frames read or written so far.
+                 * @brief Queries backend runtime statistics.
                  *
-                 * Starts at 0, incremented after each successful readFrame()
-                 * or writeFrame().  seekToFrame() sets it to the target.
+                 * Dispatches @c MediaIOCommandStats on the strand and
+                 * returns the populated stats.  See @c MediaIOStats for
+                 * the standard key conventions.  Backends with no stats
+                 * return an empty result.  Returns an empty result if
+                 * not open.
                  *
-                 * @return The frame counter.
+                 * @return A MediaIOStats containing whatever metrics
+                 *         the backend reports (may be empty).
                  */
-                virtual uint64_t currentFrame() const;
-
-                /**
-                 * @brief Returns the current step increment.
-                 *
-                 * Controls how readFrame() advances the position after each
-                 * read.  Defaults to 1 (forward playback).
-                 *
-                 * @return The step value.
-                 */
-                int step() const {
-                        return _step;
-                }
-
-                /**
-                 * @brief Sets the step increment.
-                 *
-                 * Controls how readFrame() advances the position.  Common values:
-                 * - 1: normal forward playback (default).
-                 * - -1: reverse playback.
-                 * - 2: 2x fast-forward.
-                 * - 0: re-read the same frame (hold).
-                 *
-                 * Override this to react to direction or speed changes
-                 * (e.g. switching a hardware device to reverse mode, or
-                 * adjusting cache prefetch direction).
-                 *
-                 * @param val The new step value.
-                 */
-                virtual void setStep(int val) {
-                        _step = val;
-                        return;
-                }
+                MediaIOStats stats();
 
                 /** @brief Emitted when an error occurs. @signal */
                 PROMEKI_SIGNAL(errorOccurred, Error);
 
-                /**
-                 * @brief Sets the configuration.
-                 *
-                 * Called by the factory before returning the new instance,
-                 * or by external code that constructs a MediaIO directly.
-                 * @param config The configuration to store.
-                 */
-                void setConfig(const Config &config) {
-                        _config = config;
-                        return;
-                }
+                /** @brief Emitted when a frame is available for reading. @signal */
+                PROMEKI_SIGNAL(frameReady);
 
-        protected:
-                /**
-                 * @brief Backend-specific open implementation.
-                 *
-                 * Called by open() after lifecycle checks pass.  The mode
-                 * is already validated (not NotOpen, not already open).
-                 * Return Error::Ok on success.
-                 *
-                 * @param mode Reader or Writer.
-                 * @return Error::Ok on success, or an error on failure.
-                 */
-                virtual Error onOpen(Mode mode);
+                /** @brief Emitted when the backend is ready for another frame. @signal */
+                PROMEKI_SIGNAL(frameWanted);
 
                 /**
-                 * @brief Backend-specific close implementation.
+                 * @brief Emitted when a non-blocking write completes with an error.
+                 * @signal
                  *
-                 * Called by close() before the mode is reset.
-                 *
-                 * @return Error::Ok on success, or an error on failure.
+                 * Non-blocking writes (writeFrame(frame, false)) discard
+                 * their direct result; this signal is the only way for
+                 * the user to learn about write errors that happen on
+                 * the strand worker thread.
                  */
-                virtual Error onClose();
+                PROMEKI_SIGNAL(writeError, Error);
 
                 /**
-                 * @brief Backend-specific read implementation.
+                 * @brief Emitted when the cached MediaDesc has changed mid-stream.
+                 * @signal
                  *
-                 * Called by readFrame() after verifying the resource is open
-                 * in Reader mode.
-                 *
-                 * @param frame The Frame to fill.
-                 * @return Error::Ok on success, Error::EndOfFile at end, or an error.
+                 * Fires when a backend reports a descriptor change in
+                 * @c MediaIOCommandRead and MediaIO updates its cache.
+                 * Listeners can call @c mediaDesc() / @c frameRate() to
+                 * get the new values.  The triggering frame also has
+                 * @c Metadata::MediaDescChanged stamped on it.
                  */
-                virtual Error onReadFrame(Frame &frame);
-
-                /**
-                 * @brief Backend-specific write implementation.
-                 *
-                 * Called by writeFrame() after verifying the resource is open
-                 * in Writer mode.
-                 *
-                 * @param frame The Frame containing video and audio to write.
-                 * @return Error::Ok on success, or an error on failure.
-                 */
-                virtual Error onWriteFrame(const Frame &frame);
+                PROMEKI_SIGNAL(descriptorChanged);
 
         private:
-                Config          _config;
-                Mode            _mode = NotOpen;
-                int             _step = 1;
+                Error dispatchCommand(MediaIOCommand::Ptr cmd);
+                Error submitAndWait(MediaIOCommand::Ptr cmd);
+                void  submitReadCommand();
+
+                MediaIOTask                *_task = nullptr;
+                Config                      _config;
+                Mode                        _mode = NotOpen;
+                int                         _step = 1;
+                int                         _prefetchDepth = 1;
+                bool                        _prefetchDepthExplicit = false;
+                bool                        _atEnd = false;
+
+                // Cached state — only read/written by the user thread
+                MediaDesc                   _mediaDesc;
+                AudioDesc                   _audioDesc;
+                Metadata                    _metadata;
+                FrameRate                   _frameRate;
+                bool                        _canSeek = false;
+                int64_t                     _frameCount = 0;
+                int64_t                     _currentFrame = 0;
+                SeekMode                    _defaultSeekMode = SeekExact;
+
+                // Pre-open settings (passed into CmdOpen)
+                MediaDesc                   _pendingMediaDesc;
+                Metadata                    _pendingMetadata;
+                AudioDesc                   _pendingAudioDesc;
+                List<int>                   _pendingVideoTracks;
+                List<int>                   _pendingAudioTracks;
+
+                // Strand serializes all backend command execution onto
+                // the shared ThreadPool.  Each command is a separate task
+                // submitted to the strand; the strand ensures only one
+                // runs at a time per MediaIO instance, while returning
+                // pool threads between tasks.
+                Strand                      _strand{pool()};
+
+                // Inbound read results (worker pushes, user pops).
+                // Filled by the strand task when a CmdRead completes.
+                Queue<MediaIOCommand::Ptr>  _readResultQueue;
+
+                // Number of CmdRead commands currently in flight (queued
+                // or being processed).  Used to avoid duplicate submissions
+                // when readFrame() is called repeatedly while a read is
+                // pending.
+                Atomic<int>                 _pendingReadCount;
 };
 
 PROMEKI_NAMESPACE_END

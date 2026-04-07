@@ -89,7 +89,8 @@ class Error {
                         BufferTooSmall,          ///< Buffer is too small for the operation.
                         IdNotFound,              ///< Requested ID was not found in the database.
                         ConversionFailed,        ///< Type conversion could not be performed.
-                        Stopped                  ///< Operation interrupted because the object is stopping.
+                        Stopped,                 ///< Operation interrupted because the object is stopping.
+                        Cancelled                ///< Operation was cancelled before completion.
                 };
 
                 /**

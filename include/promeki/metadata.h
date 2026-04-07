@@ -102,6 +102,22 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 static inline const ID EndOfStream{"EndOfStream"};
                 /// @brief Frame sequence number within a stream.
                 static inline const ID FrameNumber{"FrameNumber"};
+                /// @brief Wall-clock timestamp of when a frame was captured (TimeStamp).
+                static inline const ID CaptureTime{"CaptureTime"};
+                /// @brief Timestamp at which a frame should be presented (TimeStamp).
+                static inline const ID PresentationTime{"PresentationTime"};
+                /// @brief Number of times this frame was repeated due to underrun (int).
+                static inline const ID FrameRepeated{"FrameRepeated"};
+                /// @brief Number of frames dropped immediately before this one (int).
+                static inline const ID FrameDropped{"FrameDropped"};
+                /// @brief This frame arrived later than its scheduled time (bool).
+                static inline const ID FrameLate{"FrameLate"};
+                /// @brief This frame is a keyframe / intra frame (bool).
+                static inline const ID FrameKeyframe{"FrameKeyframe"};
+                /// @brief This frame's MediaDesc differs from the previously
+                /// reported one (bool).  When set, MediaIO has updated its
+                /// cached descriptor and emitted the descriptorChanged signal.
+                static inline const ID MediaDescChanged{"MediaDescChanged"};
 
                 // -- DPX file info --
 
