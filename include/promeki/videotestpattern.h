@@ -404,6 +404,20 @@ class VideoTestPattern {
                                          int textW, int totalH, int ascender,
                                          int &x, int &y) const;
 
+                /**
+                 * @brief Returns an @c ImageDesc at @p target's size in
+                 *        the RGB16_LE_sRGB format used as the internal
+                 *        paintable scratch for non-paintable targets.
+                 *
+                 * Pattern rendering and burn-in both go through @c PaintEngine,
+                 * which is only registered for RGB-style formats.  When the
+                 * caller asks for a non-paintable target (e.g. any YUV/YCbCr
+                 * layout), we render into RGB16 at the same size and convert
+                 * to the target format via @c Image::convert() (which pulls
+                 * a cached @c CSCPipeline from the global registry).
+                 */
+                ImageDesc rgbScratchDesc(const ImageDesc &target) const;
+
                 void renderColorBars(Image &img, double offset, bool full) const;
                 void renderRamp(Image &img, double offset) const;
                 void renderGrid(Image &img, double offset) const;

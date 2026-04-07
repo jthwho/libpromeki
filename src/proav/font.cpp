@@ -46,9 +46,20 @@ void Font::setBackgroundColor(const Color &color) {
 }
 
 void Font::setPaintEngine(const PaintEngine &pe) {
-        PaintEngine old = _paintEngine;
+        // Only trip the state-changed hook when something the font
+        // subclasses actually care about has changed.  For FastFont
+        // (and any other cache-heavy subclass) the glyph cache stores
+        // pre-rendered cells in the target pixel format — the cache
+        // stays valid across different PaintEngine *instances* as long
+        // as the pixel format is the same.  Callers that rebind the
+        // font to a fresh engine every frame (e.g. the TPG burn-in
+        // path, which creates a new PaintEngine on each detached
+        // image copy) would otherwise thrash the glyph cache on every
+        // frame even though nothing observable has changed.
+        const bool formatChanged =
+                (_paintEngine.pixelDesc() != pe.pixelDesc());
         _paintEngine = pe;
-        onStateChanged();
+        if(formatChanged) onStateChanged();
 }
 
 void Font::setKerningEnabled(bool val) {

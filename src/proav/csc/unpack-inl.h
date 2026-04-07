@@ -160,17 +160,45 @@ void UnpackInterleavedImpl(const void *src, float *const *buffers,
                         }
                 }
         } else {
-                // Multi-pixel block (YUYV etc.) -- scalar only
+                // Multi-pixel block (YUYV / UYVY, 8- or 10-bit) — scalar.
+                //
+                // Each block carries @c pixelsPerBlock luma samples
+                // and one chroma pair, laid out so that Y1 is a fixed
+                // distance (one "luma slot") past Y0.  For a 4:2:2
+                // block with two luma samples and one Cb+Cr pair,
+                // that slot is exactly @c bytesPerBlock /
+                // @c pixelsPerBlock bytes — 2 bytes for 8-bit YUYV
+                // and 4 bytes for 10-bit YUYV (each luma sample is
+                // stored as a 16-bit LE word at 10 bits).  The old
+                // hardcoded @c px*2 only worked for 8-bit.
+                //
+                // Similarly, each component read must use the right
+                // sample width: 1 byte for 8-bit, 2 bytes for 10/16.
+                // The previous code always read a single byte, so for
+                // 10-bit 4:2:2 only the low 8 bits of each component
+                // survived — producing near-zero chroma and a flat,
+                // very dark luma channel (the "green with vague bars"
+                // failure mode).
+                auto readSample = [](const uint8_t *base, int byteOffset,
+                                     int bits) -> float {
+                        if(bits <= 8) {
+                                return static_cast<float>(base[byteOffset]);
+                        }
+                        uint16_t v;
+                        std::memcpy(&v, base + byteOffset, sizeof(v));
+                        return static_cast<float>(v);
+                };
+                const int lumaSlot = bytesPerBlock / pixelsPerBlock;
                 size_t blockCount = (width + pixelsPerBlock - 1) / pixelsPerBlock;
                 for(size_t b = 0; b < blockCount; b++) {
                         const uint8_t *block = p + b * bytesPerBlock;
                         for(int px = 0; px < pixelsPerBlock; px++) {
                                 size_t x = b * pixelsPerBlock + px;
                                 if(x >= width) break;
-                                int lumaOffset = compByteOffset[0] + px * 2;
-                                buffers[0][x] = static_cast<float>(block[lumaOffset]);
-                                buffers[1][x] = static_cast<float>(block[compByteOffset[1]]);
-                                buffers[2][x] = static_cast<float>(block[compByteOffset[2]]);
+                                int lumaOffset = compByteOffset[0] + px * lumaSlot;
+                                buffers[0][x] = readSample(block, lumaOffset, compBits[0]);
+                                buffers[1][x] = readSample(block, compByteOffset[1], compBits[1]);
+                                buffers[2][x] = readSample(block, compByteOffset[2], compBits[2]);
                         }
                 }
         }

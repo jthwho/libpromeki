@@ -60,6 +60,8 @@ HWY_EXPORT(FastPathNV12_10LEtoRGBA10LE);
 HWY_EXPORT(FastPathRGBA10LEtoNV12_10LE);
 HWY_EXPORT(FastPathV210toRGBA10LE);
 HWY_EXPORT(FastPathRGBA10LEtoV210);
+HWY_EXPORT(FastPathV210toRGBA8);
+HWY_EXPORT(FastPathRGBA8toV210);
 HWY_EXPORT(FastPathUYVY12LE_709toRGBA12LE);
 HWY_EXPORT(FastPathRGBA12LEtoUYVY12LE_709);
 HWY_EXPORT(FastPathPlanar12LE422_709toRGBA12LE);
@@ -121,6 +123,8 @@ CSC_DISPATCH(FastPathNV12_10LEtoRGBA10LE)
 CSC_DISPATCH(FastPathRGBA10LEtoNV12_10LE)
 CSC_DISPATCH(FastPathV210toRGBA10LE)
 CSC_DISPATCH(FastPathRGBA10LEtoV210)
+CSC_DISPATCH(FastPathV210toRGBA8)
+CSC_DISPATCH(FastPathRGBA8toV210)
 CSC_DISPATCH(FastPathUYVY12LE_709toRGBA12LE)
 CSC_DISPATCH(FastPathRGBA12LEtoUYVY12LE_709)
 CSC_DISPATCH(FastPathPlanar12LE422_709toRGBA12LE)
@@ -211,9 +215,15 @@ static struct FastPathRegistrar {
                 reg(PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathNV12_10LEtoRGBA10LE);
                 reg(PixelDesc::RGBA10_LE_sRGB,                 PixelDesc::YUV10_420_SemiPlanar_LE_Rec709, dispatch_FastPathRGBA10LEtoNV12_10LE);
 
-                // v210
+                // v210 <-> RGBA10_LE
                 reg(PixelDesc::YUV10_422_v210_Rec709, PixelDesc::RGBA10_LE_sRGB, dispatch_FastPathV210toRGBA10LE);
                 reg(PixelDesc::RGBA10_LE_sRGB,        PixelDesc::YUV10_422_v210_Rec709, dispatch_FastPathRGBA10LEtoV210);
+
+                // v210 <-> RGBA8 (wraps the 10-bit path with an
+                // inline bit-depth conversion — the generic pipeline
+                // can't handle v210's bit packing).
+                reg(PixelDesc::YUV10_422_v210_Rec709, PixelDesc::RGBA8_sRGB, dispatch_FastPathV210toRGBA8);
+                reg(PixelDesc::RGBA8_sRGB,            PixelDesc::YUV10_422_v210_Rec709, dispatch_FastPathRGBA8toV210);
 
                 // --- Rec.2020 10-bit LE fast paths ---
 

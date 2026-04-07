@@ -62,10 +62,14 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
         Image dst(dstDesc);
         if(!dst.isValid()) return Image();
 
-        CSCPipeline pipeline(pixelDesc(), pd, config);
-        if(!pipeline.isValid()) return Image();
+        // Pull a shared, pre-compiled pipeline from the global cache.
+        // For repeat conversions between the same format pair, this
+        // skips CSCPipeline::compile() entirely on every call after
+        // the first.
+        CSCPipeline::Ptr pipeline = CSCPipeline::cached(pixelDesc(), pd, config);
+        if(!pipeline.isValid() || !pipeline->isValid()) return Image();
 
-        Error err = pipeline.execute(*this, dst);
+        Error err = pipeline->execute(*this, dst);
         if(err.isError()) return Image();
         return dst;
 #else

@@ -493,6 +493,23 @@ class PixelDesc {
                  */
                 PaintEngine createPaintEngine(const Image &img) const;
 
+                /**
+                 * @brief Returns whether this pixel format has a registered
+                 *        paint engine.
+                 *
+                 * Formats without a paint engine (e.g. YUV/YCbCr, compressed)
+                 * will return an invalid no-op engine from @c createPaintEngine
+                 * rather than a working one.  Callers that need to draw
+                 * directly can use this to decide whether to render via an
+                 * RGB scratch image followed by @c Image::convert().
+                 *
+                 * @return @c true if @c createPaintEngine would return a
+                 *         working engine, @c false otherwise.
+                 */
+                bool hasPaintEngine() const {
+                        return d != nullptr && d->createPaintEngineFunc != nullptr;
+                }
+
                 /** @brief Equality comparison (identity-based). */
                 bool operator==(const PixelDesc &o) const { return d == o.d; }
 

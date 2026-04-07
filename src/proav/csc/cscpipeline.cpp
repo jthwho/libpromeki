@@ -9,8 +9,11 @@
 #include <promeki/image.h>
 #include <promeki/colormodel.h>
 #include <promeki/logger.h>
+#include <promeki/map.h>
+#include <promeki/mutex.h>
 #include <cstring>
 #include <cmath>
+#include <tuple>
 #include "csc_kernels.h"
 
 PROMEKI_NAMESPACE_BEGIN
@@ -80,6 +83,65 @@ CSCPipeline::CSCPipeline(const PixelDesc &src, const PixelDesc &dst,
         String path = _config.get(KeyPath, "optimized").get<String>();
         _useSimd = (path != "scalar");
         compile();
+}
+
+// --- Global pipeline cache ---
+//
+// A compiled CSCPipeline is a pure function of (srcDesc, dstDesc,
+// useSimd): no image-specific state is ever stored, and execute() is
+// documented as thread-safe to call concurrently from multiple threads.
+// That makes it safe to share compiled pipelines process-wide via a
+// mutex-protected lookup table.  The alternative — constructing a
+// fresh CSCPipeline on every Image::convert() call — pays compile()'s
+// stage-building cost every frame even when the conversion target
+// never changes.
+
+namespace {
+
+using CacheKey = std::tuple<const PixelDesc::Data *,
+                            const PixelDesc::Data *,
+                            bool>;
+
+struct CacheEntry {
+        CSCPipeline::Ptr pipeline;
+};
+
+static Mutex                    g_cacheMutex;
+static Map<CacheKey, CacheEntry> g_cache;
+
+} // anonymous
+
+CSCPipeline::Ptr CSCPipeline::cached(const PixelDesc &src, const PixelDesc &dst,
+                                     const MediaNodeConfig &config) {
+        // Mirror the useSimd derivation from the instance constructor
+        // so cache keys line up with actual pipeline behavior.
+        String path = config.get(KeyPath, "optimized").get<String>();
+        const bool useSimd = (path != "scalar");
+        CacheKey key{src.data(), dst.data(), useSimd};
+
+        {
+                Mutex::Locker lock(g_cacheMutex);
+                auto it = g_cache.find(key);
+                if(it != g_cache.end()) {
+                        return it->second.pipeline;
+                }
+        }
+
+        // Compile outside the lock so concurrent callers requesting
+        // different format pairs don't serialize on each other.  The
+        // second-lookup-and-insert below handles the race where two
+        // callers ask for the same pair at the same time — the loser
+        // drops its freshly-compiled pipeline and returns the winner's.
+        Ptr fresh = Ptr::create(src, dst, config);
+        if(!fresh.isValid()) return Ptr();
+
+        Mutex::Locker lock(g_cacheMutex);
+        auto it = g_cache.find(key);
+        if(it != g_cache.end()) {
+                return it->second.pipeline;
+        }
+        g_cache.insert(key, CacheEntry{fresh});
+        return fresh;
 }
 
 // --- Stage kernel wrappers ---

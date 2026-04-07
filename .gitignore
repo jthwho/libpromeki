@@ -1,4 +1,5 @@
 build/
+build-*/
 .cache/
 .claude/
 COMMIT_MSG

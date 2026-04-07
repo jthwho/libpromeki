@@ -521,3 +521,30 @@ TEST_CASE("PixelDesc: YUV10_DPX_B_Rec709") {
                 CHECK(pd.compSemantic(2).abbrev == "Cr");
         }
 }
+
+// ============================================================================
+// hasPaintEngine()
+// ============================================================================
+
+TEST_CASE("PixelDesc: hasPaintEngine") {
+        SUBCASE("default (invalid) PixelDesc returns false") {
+                PixelDesc pd;
+                CHECK_FALSE(pd.hasPaintEngine());
+        }
+
+        SUBCASE("RGB formats with a registered paint engine return true") {
+                // The library ships a PaintEngine for interleaved 8-bit RGB/RGBA sRGB formats.
+                CHECK(PixelDesc(PixelDesc::RGBA8_sRGB).hasPaintEngine());
+                CHECK(PixelDesc(PixelDesc::RGB8_sRGB).hasPaintEngine());
+        }
+
+        SUBCASE("YUV formats have no registered paint engine") {
+                // YCbCr / YUV layouts have no PaintEngine — callers must
+                // render into an RGB scratch and convert.
+                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_422_Rec709).hasPaintEngine());
+                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709).hasPaintEngine());
+                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_420_SemiPlanar_Rec709).hasPaintEngine());
+                CHECK_FALSE(PixelDesc(PixelDesc::YUV8_420_Planar_Rec709).hasPaintEngine());
+                CHECK_FALSE(PixelDesc(PixelDesc::YUV10_422_Rec709).hasPaintEngine());
+        }
+}

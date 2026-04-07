@@ -238,6 +238,51 @@ class CSCPipeline {
                             const MediaNodeConfig &config = MediaNodeConfig());
 
                 /**
+                 * @brief Returns a shared, compiled pipeline from a global cache.
+                 *
+                 * Since a compiled @c CSCPipeline is a pure function of
+                 * @c (srcDesc, dstDesc, useSimd) — it stores no
+                 * image-specific state and @c execute() is documented
+                 * as thread-safe to call concurrently — the library
+                 * keeps a process-wide cache of compiled pipelines.
+                 * The first call for a given key compiles a pipeline;
+                 * subsequent calls return the same shared instance.
+                 *
+                 * Callers that repeatedly convert between the same
+                 * formats should prefer this over constructing a fresh
+                 * @c CSCPipeline each time, since @c compile() builds
+                 * all the stages from scratch (allocating LUTs,
+                 * computing matrices, etc.) for the general pipeline.
+                 *
+                 * @par Thread safety
+                 * The cache itself is mutex-protected.  The returned
+                 * pipeline is safe to execute from any thread; each
+                 * call to @c execute() allocates its own scratch
+                 * @c CSCContext.
+                 *
+                 * @par Example
+                 * @code
+                 * auto p = CSCPipeline::cached(srcDesc, dstDesc);
+                 * if(p && p->isValid()) {
+                 *     p->execute(srcImage, dstImage);
+                 * }
+                 * @endcode
+                 *
+                 * @param src    Source pixel description.
+                 * @param dst    Target pixel description.
+                 * @param config Optional configuration hints.  Only
+                 *               @c KeyPath currently affects the cache
+                 *               key; other keys are ignored for the
+                 *               purposes of lookup.
+                 * @return A shared pipeline, or a null @c Ptr on
+                 *         allocation failure.  The pipeline may still
+                 *         be invalid (e.g. unsupported format pair) —
+                 *         check @c isValid() before executing.
+                 */
+                static Ptr cached(const PixelDesc &src, const PixelDesc &dst,
+                                  const MediaNodeConfig &config = MediaNodeConfig());
+
+                /**
                  * @brief Returns true if the pipeline was compiled successfully.
                  * @return true if the pipeline is ready to execute.
                  */

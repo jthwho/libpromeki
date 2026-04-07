@@ -174,13 +174,20 @@ void PackInterleavedImpl(const float *const *buffers, void *dst,
                         }
                 }
         } else {
+                // Multi-pixel block (YUYV / UYVY, 8- or 10-bit).  Y1
+                // is one "luma slot" past Y0, and that slot is
+                // @c bytesPerBlock / @c pixelsPerBlock bytes wide —
+                // 2 for 8-bit YUYV, 4 for 10-bit YUYV (each luma
+                // sample takes a 16-bit LE word at 10 bits).  The old
+                // hardcoded @c px*2 only worked for 8-bit.
+                const int lumaSlot = bytesPerBlock / pixelsPerBlock;
                 size_t blockCount = (width + pixelsPerBlock - 1) / pixelsPerBlock;
                 for(size_t b = 0; b < blockCount; b++) {
                         uint8_t *block = p + b * bytesPerBlock;
                         for(int px = 0; px < pixelsPerBlock; px++) {
                                 size_t x = b * pixelsPerBlock + px;
                                 if(x >= width) break;
-                                int lumaOffset = compByteOffset[0] + px * 2;
+                                int lumaOffset = compByteOffset[0] + px * lumaSlot;
                                 packSample(block, lumaOffset, compBits[0], buffers[0][x]);
                         }
                         float cb = 0.0f, cr = 0.0f;

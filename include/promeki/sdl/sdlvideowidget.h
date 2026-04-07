@@ -96,19 +96,51 @@ class SDLVideoWidget : public Widget {
                 /**
                  * @brief Maps a promeki PixelDesc to an SDL pixel format.
                  *
-                 * Returns a direct SDL format for uncompressed 8-bit
-                 * RGB/BGR/RGBA/BGRA/ARGB/ABGR formats and the
-                 * host-endian 16-bit variants of those.  Returns 0 for
-                 * formats without a direct SDL equivalent (DPX, v210,
-                 * YUV, float, linear-light, non-host-endian 16-bit,
-                 * 10/12-bit-in-16-bit-word formats, compressed, etc).
-                 * Formats that return 0 are still displayable — the
-                 * widget falls back to CSC conversion to RGBA8_sRGB.
+                 * Returns a direct SDL format for:
+                 *   - Uncompressed 8-bit RGB/BGR/RGBA/BGRA/ARGB/ABGR.
+                 *   - Host-endian 16-bit variants of the above.
+                 *   - 8-bit YUV 4:2:2 packed (YUY2 / UYVY) in Rec.709 or
+                 *     Rec.601.
+                 *   - 8-bit YUV 4:2:0 NV12 / NV21 semi-planar in Rec.709
+                 *     or Rec.601.
+                 *   - 8-bit YUV 4:2:0 I420 (3-plane Y,U,V) in Rec.709 or
+                 *     Rec.601.
+                 *
+                 * YUV formats are uploaded via SDL's direct YUV path —
+                 * SDL performs the YCbCr→RGB conversion on the GPU when
+                 * the texture is rendered, with the color matrix and
+                 * range taken from the texture's colorspace property
+                 * (see @c mapColorspace()).
+                 *
+                 * Returns 0 for formats without a direct SDL equivalent
+                 * (DPX, v210, linear-light float, non-host-endian 16-bit,
+                 * 10/12-bit-in-16-bit-word, 422 planar, 422 NV16,
+                 * compressed, etc).  Formats that return 0 are still
+                 * displayable — the widget falls back to CSC conversion
+                 * to RGBA8_sRGB.
                  *
                  * @param pd The promeki pixel description.
                  * @return The SDL pixel format enum value, or 0 if no direct mapping.
                  */
                 static uint32_t mapPixelDesc(const PixelDesc &pd);
+
+                /**
+                 * @brief Maps a promeki PixelDesc to an SDL_Colorspace.
+                 *
+                 * Used for YUV formats that @c mapPixelDesc() returns
+                 * a direct SDL YUV format for.  The colorspace property
+                 * tells SDL which YCbCr→RGB matrix and which range
+                 * (limited / full) to use when rendering the texture.
+                 *
+                 * Returns 0 for RGB and for unsupported YUV formats —
+                 * in the RGB case the caller should just let SDL use
+                 * its default (sRGB).
+                 *
+                 * @param pd The promeki pixel description.
+                 * @return An SDL_Colorspace value, or 0 if no colorspace
+                 *         override is needed.
+                 */
+                static uint32_t mapColorspace(const PixelDesc &pd);
 
                 /**
                  * @brief Returns whether a format can skip CSC conversion on upload.
@@ -130,10 +162,12 @@ class SDLVideoWidget : public Widget {
                 SDL_Texture    *_texture = nullptr;
                 Size2Di32       _textureSize{0, 0};
                 uint32_t        _texturePixFmt = 0;
+                uint32_t        _textureColorspace = 0;
                 ScaleMode       _scaleMode = ScaleFit;
                 Image           _currentImage;
 
-                void ensureTexture(int w, int h, uint32_t sdlPixFmt);
+                void ensureTexture(int w, int h, uint32_t sdlPixFmt,
+                                   uint32_t sdlColorspace);
                 void uploadImage(const Image &image, uint32_t sdlPixFmt);
                 bool uploadCurrentImage();
                 SDL_Renderer *findRenderer() const;

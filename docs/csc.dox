@@ -60,12 +60,13 @@
  * that converts one scanline from source to target format, bypassing
  * all pipeline stages.
  *
- * Registered fast paths (56 total):
+ * Registered fast paths (54 total):
  *
  * | Standard | Bit Depth | Formats |
  * |----------|-----------|---------|
  * | BT.709   | 8-bit     | YUYV, UYVY, NV12, NV21, NV16, Planar 422/420 ↔ RGBA8 |
  * | BT.709   | 10-bit LE | UYVY, Planar 422/420, NV12, v210 ↔ RGBA10 LE |
+ * | BT.709   | 8-bit     | v210 ↔ RGBA8 (inline 8↔10-bit step around v210 math) |
  * | BT.709   | 12-bit LE | UYVY, Planar 422/420, NV12 ↔ RGBA12 LE |
  * | BT.601   | 8-bit     | YUYV, UYVY, NV12, Planar 420 ↔ RGBA8 |
  * | BT.2020  | 10-bit LE | UYVY, Planar 420 ↔ RGBA10 LE |
@@ -134,6 +135,14 @@
  * own CSCContext for scratch storage.  Image::convert() creates a
  * temporary context internally, so no manual context management is
  * needed for the high-level API.
+ *
+ * @par Pipeline caching
+ * Callers that repeatedly convert between the same format pairs should
+ * use CSCPipeline::cached() instead of constructing a new CSCPipeline
+ * each call.  The cache is a process-wide mutex-protected map keyed on
+ * (srcDesc, dstDesc, path).  compile() runs exactly once per unique
+ * triple; subsequent calls return the same shared pipeline.  The
+ * Image::convert() high-level API uses the cache automatically.
  *
  * @section csc_extending Adding Custom Fast Paths
  *

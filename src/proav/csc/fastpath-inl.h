@@ -134,17 +134,48 @@ void FastPathRGB8toRGBA8(const void *const *srcPlanes,
 }
 
 // =========================================================================
-// YUV8_422 (YUYV) -> RGBA8_sRGB  (BT.709 fixed-point)
+// BT.709 8-bit YCbCr <-> RGBA8 fast paths (limited range)
 // =========================================================================
 //
-// BT.709 limited-range integer conversion:
+// BT.709 limited-range (Kr=0.2126, Kg=0.7152, Kb=0.0722), 8-bit fixed point:
+//
+// RGB -> YCbCr:
+//   Y  = (( 47*R + 157*G +  16*B + 128) >> 8) + 16
+//   Cb = ((-26*R -  87*G + 112*B + 128) >> 8) + 128
+//   Cr = ((112*R - 102*G -  10*B + 128) >> 8) + 128
+//
+// YCbCr -> RGB:
 //   C = Y - 16,  D = Cb - 128,  E = Cr - 128
-//   R = clip((298*C + 409*E + 128) >> 8)
-//   G = clip((298*C - 100*D - 208*E + 128) >> 8)
-//   B = clip((298*C + 516*D + 128) >> 8)
+//   R = clip((298*C + 459*E + 128) >> 8)
+//   G = clip((298*C -  55*D - 136*E + 128) >> 8)
+//   B = clip((298*C + 541*D + 128) >> 8)
+//
+// An earlier revision of these kernels accidentally used the BT.601
+// coefficients (66/129/25 for Y, 409/100/208/516 for the decode
+// matrix, etc.).  Because both the encode and decode sides used the
+// same (wrong) matrix, round-trip YUV<->RGB conversions through
+// libpromeki looked correct — but YUV data produced through the
+// "Rec.709" kernels was actually BT.601-encoded, so anything that
+// decoded the data with a real BT.709 matrix (e.g. SDL's GPU shader
+// when the texture is tagged SDL_COLORSPACE_BT709_LIMITED) got a
+// subtle hue shift on saturated primaries.
 
 static inline uint8_t clipU8(int v) {
         return static_cast<uint8_t>(v < 0 ? 0 : (v > 255 ? 255 : v));
+}
+
+static inline void yuv709ToRgba8(int y, int cb, int cr, uint8_t *dst) {
+        int c = y - 16, d = cb - 128, e = cr - 128;
+        dst[0] = clipU8((298*c + 459*e + 128) >> 8);
+        dst[1] = clipU8((298*c -  55*d - 136*e + 128) >> 8);
+        dst[2] = clipU8((298*c + 541*d + 128) >> 8);
+        dst[3] = 255;
+}
+
+static inline void rgba8ToYCbCr709(int r, int g, int b, int *y, int *cb, int *cr) {
+        *y  = (( 47*r + 157*g +  16*b + 128) >> 8) + 16;
+        *cb = ((-26*r -  87*g + 112*b + 128) >> 8) + 128;
+        *cr = ((112*r - 102*g -  10*b + 128) >> 8) + 128;
 }
 
 void FastPathYUYV8toRGBA8(const void *const *srcPlanes,
@@ -162,21 +193,8 @@ void FastPathYUYV8toRGBA8(const void *const *srcPlanes,
                 int cb = src[i * 4 + 1];
                 int y1 = src[i * 4 + 2];
                 int cr = src[i * 4 + 3];
-
-                int c0 = y0 - 16;
-                int c1 = y1 - 16;
-                int d  = cb - 128;
-                int e  = cr - 128;
-
-                dst[i * 8 + 0] = clipU8((298 * c0 + 409 * e + 128) >> 8);
-                dst[i * 8 + 1] = clipU8((298 * c0 - 100 * d - 208 * e + 128) >> 8);
-                dst[i * 8 + 2] = clipU8((298 * c0 + 516 * d + 128) >> 8);
-                dst[i * 8 + 3] = 255;
-
-                dst[i * 8 + 4] = clipU8((298 * c1 + 409 * e + 128) >> 8);
-                dst[i * 8 + 5] = clipU8((298 * c1 - 100 * d - 208 * e + 128) >> 8);
-                dst[i * 8 + 6] = clipU8((298 * c1 + 516 * d + 128) >> 8);
-                dst[i * 8 + 7] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+                yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         // Handle odd trailing pixel
         if(width & 1) {
@@ -184,11 +202,7 @@ void FastPathYUYV8toRGBA8(const void *const *srcPlanes,
                 int y0 = src[i * 4 + 0];
                 int cb = src[i * 4 + 1];
                 int cr = src[i * 4 + 3];
-                int c0 = y0 - 16; int d = cb - 128; int e = cr - 128;
-                dst[i * 8 + 0] = clipU8((298 * c0 + 409 * e + 128) >> 8);
-                dst[i * 8 + 1] = clipU8((298 * c0 - 100 * d - 208 * e + 128) >> 8);
-                dst[i * 8 + 2] = clipU8((298 * c0 + 516 * d + 128) >> 8);
-                dst[i * 8 + 3] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
         }
         return;
 }
@@ -196,11 +210,6 @@ void FastPathYUYV8toRGBA8(const void *const *srcPlanes,
 // =========================================================================
 // RGBA8_sRGB -> YUV8_422 (YUYV) Rec.709  (BT.709 fixed-point)
 // =========================================================================
-//
-// BT.709 limited-range:
-//   Y  = clip(( 66*R + 129*G +  25*B + 128) >> 8) + 16
-//   Cb = clip((-38*R -  74*G + 112*B + 128) >> 8) + 128
-//   Cr = clip((112*R -  94*G -  18*B + 128) >> 8) + 128
 
 void FastPathRGBA8toYUYV8(const void *const *srcPlanes,
                            const size_t *srcStrides,
@@ -214,29 +223,24 @@ void FastPathRGBA8toYUYV8(const void *const *srcPlanes,
         for(size_t i = 0; i < pairs; i++) {
                 int r0 = src[i * 8 + 0], g0 = src[i * 8 + 1], b0 = src[i * 8 + 2];
                 int r1 = src[i * 8 + 4], g1 = src[i * 8 + 5], b1 = src[i * 8 + 6];
-
-                int y0 = (( 66 * r0 + 129 * g0 +  25 * b0 + 128) >> 8) + 16;
-                int y1 = (( 66 * r1 + 129 * g1 +  25 * b1 + 128) >> 8) + 16;
-
-                // Average chroma across the pair
-                int ra = (r0 + r1 + 1) >> 1;
-                int ga = (g0 + g1 + 1) >> 1;
-                int ba = (b0 + b1 + 1) >> 1;
-                int cb = ((-38 * ra -  74 * ga + 112 * ba + 128) >> 8) + 128;
-                int cr = ((112 * ra -  94 * ga -  18 * ba + 128) >> 8) + 128;
+                int y0, cb0, cr0, y1, cb1, cr1;
+                rgba8ToYCbCr709(r0, g0, b0, &y0, &cb0, &cr0);
+                rgba8ToYCbCr709(r1, g1, b1, &y1, &cb1, &cr1);
 
                 dst[i * 4 + 0] = clipU8(y0);
-                dst[i * 4 + 1] = clipU8(cb);
+                dst[i * 4 + 1] = clipU8((cb0 + cb1 + 1) >> 1);
                 dst[i * 4 + 2] = clipU8(y1);
-                dst[i * 4 + 3] = clipU8(cr);
+                dst[i * 4 + 3] = clipU8((cr0 + cr1 + 1) >> 1);
         }
         if(width & 1) {
                 size_t i = pairs;
                 int r = src[i * 8 + 0], g = src[i * 8 + 1], b = src[i * 8 + 2];
-                dst[i * 4 + 0] = clipU8((( 66 * r + 129 * g +  25 * b + 128) >> 8) + 16);
-                dst[i * 4 + 1] = clipU8(((-38 * r -  74 * g + 112 * b + 128) >> 8) + 128);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                dst[i * 4 + 0] = clipU8(y);
+                dst[i * 4 + 1] = clipU8(cb);
                 dst[i * 4 + 2] = dst[i * 4 + 0]; // duplicate Y
-                dst[i * 4 + 3] = clipU8(((112 * r -  94 * g -  18 * b + 128) >> 8) + 128);
+                dst[i * 4 + 3] = clipU8(cr);
         }
         return;
 }
@@ -260,31 +264,15 @@ void FastPathNV12toRGBA8(const void *const *srcPlanes,
                 int y1 = lumaLine[i * 2 + 1];
                 int cb = chromaLine[i * 2];
                 int cr = chromaLine[i * 2 + 1];
-
-                int c0 = y0 - 16;
-                int c1 = y1 - 16;
-                int d  = cb - 128;
-                int e  = cr - 128;
-
-                dst[i * 8 + 0] = clipU8((298 * c0 + 409 * e + 128) >> 8);
-                dst[i * 8 + 1] = clipU8((298 * c0 - 100 * d - 208 * e + 128) >> 8);
-                dst[i * 8 + 2] = clipU8((298 * c0 + 516 * d + 128) >> 8);
-                dst[i * 8 + 3] = 255;
-
-                dst[i * 8 + 4] = clipU8((298 * c1 + 409 * e + 128) >> 8);
-                dst[i * 8 + 5] = clipU8((298 * c1 - 100 * d - 208 * e + 128) >> 8);
-                dst[i * 8 + 6] = clipU8((298 * c1 + 516 * d + 128) >> 8);
-                dst[i * 8 + 7] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+                yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         if(width & 1) {
                 size_t i = pairs;
-                int c = lumaLine[width - 1] - 16;
-                int d = chromaLine[i * 2] - 128;
-                int e = chromaLine[i * 2 + 1] - 128;
-                dst[(width - 1) * 4 + 0] = clipU8((298 * c + 409 * e + 128) >> 8);
-                dst[(width - 1) * 4 + 1] = clipU8((298 * c - 100 * d - 208 * e + 128) >> 8);
-                dst[(width - 1) * 4 + 2] = clipU8((298 * c + 516 * d + 128) >> 8);
-                dst[(width - 1) * 4 + 3] = 255;
+                int y0 = lumaLine[width - 1];
+                int cb = chromaLine[i * 2];
+                int cr = chromaLine[i * 2 + 1];
+                yuv709ToRgba8(y0, cb, cr, dst + (width - 1) * 4);
         }
         return;
 }
@@ -305,7 +293,9 @@ void FastPathRGBA8toNV12(const void *const *srcPlanes,
         // Luma: every pixel
         for(size_t x = 0; x < width; x++) {
                 int r = src[x * 4 + 0], g = src[x * 4 + 1], b = src[x * 4 + 2];
-                lumaLine[x] = clipU8(((66 * r + 129 * g + 25 * b + 128) >> 8) + 16);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                lumaLine[x] = clipU8(y);
         }
 
         // Chroma: average pairs horizontally
@@ -314,14 +304,18 @@ void FastPathRGBA8toNV12(const void *const *srcPlanes,
                 int r = (src[i * 8 + 0] + src[i * 8 + 4] + 1) >> 1;
                 int g = (src[i * 8 + 1] + src[i * 8 + 5] + 1) >> 1;
                 int b = (src[i * 8 + 2] + src[i * 8 + 6] + 1) >> 1;
-                chromaLine[i * 2]     = clipU8(((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128);
-                chromaLine[i * 2 + 1] = clipU8(((112 * r - 94 * g -  18 * b + 128) >> 8) + 128);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chromaLine[i * 2]     = clipU8(cb);
+                chromaLine[i * 2 + 1] = clipU8(cr);
         }
         if(width & 1) {
                 size_t x = width - 1;
                 int r = src[x * 4 + 0], g = src[x * 4 + 1], b = src[x * 4 + 2];
-                chromaLine[pairs * 2]     = clipU8(((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128);
-                chromaLine[pairs * 2 + 1] = clipU8(((112 * r - 94 * g -  18 * b + 128) >> 8) + 128);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chromaLine[pairs * 2]     = clipU8(cb);
+                chromaLine[pairs * 2 + 1] = clipU8(cr);
         }
         return;
 }
@@ -345,16 +339,8 @@ void FastPathUYVY8toRGBA8(const void *const *srcPlanes,
                 int y0 = src[i * 4 + 1];
                 int cr = src[i * 4 + 2];
                 int y1 = src[i * 4 + 3];
-                int c0 = y0 - 16, c1 = y1 - 16, d = cb - 128, e = cr - 128;
-
-                dst[i * 8 + 0] = clipU8((298*c0 + 409*e + 128) >> 8);
-                dst[i * 8 + 1] = clipU8((298*c0 - 100*d - 208*e + 128) >> 8);
-                dst[i * 8 + 2] = clipU8((298*c0 + 516*d + 128) >> 8);
-                dst[i * 8 + 3] = 255;
-                dst[i * 8 + 4] = clipU8((298*c1 + 409*e + 128) >> 8);
-                dst[i * 8 + 5] = clipU8((298*c1 - 100*d - 208*e + 128) >> 8);
-                dst[i * 8 + 6] = clipU8((298*c1 + 516*d + 128) >> 8);
-                dst[i * 8 + 7] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+                yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         return;
 }
@@ -371,14 +357,12 @@ void FastPathRGBA8toUYVY8(const void *const *srcPlanes,
         for(size_t i = 0; i < pairs; i++) {
                 int r0 = src[i*8+0], g0 = src[i*8+1], b0 = src[i*8+2];
                 int r1 = src[i*8+4], g1 = src[i*8+5], b1 = src[i*8+6];
-                int y0 = ((66*r0 + 129*g0 + 25*b0 + 128) >> 8) + 16;
-                int y1 = ((66*r1 + 129*g1 + 25*b1 + 128) >> 8) + 16;
-                int ra = (r0+r1+1)>>1, ga = (g0+g1+1)>>1, ba = (b0+b1+1)>>1;
-                int cb = ((-38*ra - 74*ga + 112*ba + 128) >> 8) + 128;
-                int cr = ((112*ra - 94*ga - 18*ba + 128) >> 8) + 128;
-                dst[i*4+0] = clipU8(cb);
+                int y0, cb0, cr0, y1, cb1, cr1;
+                rgba8ToYCbCr709(r0, g0, b0, &y0, &cb0, &cr0);
+                rgba8ToYCbCr709(r1, g1, b1, &y1, &cb1, &cr1);
+                dst[i*4+0] = clipU8((cb0 + cb1 + 1) >> 1);
                 dst[i*4+1] = clipU8(y0);
-                dst[i*4+2] = clipU8(cr);
+                dst[i*4+2] = clipU8((cr0 + cr1 + 1) >> 1);
                 dst[i*4+3] = clipU8(y1);
         }
         return;
@@ -402,16 +386,8 @@ void FastPathNV21toRGBA8(const void *const *srcPlanes,
                 int y0 = luma[i*2], y1 = luma[i*2+1];
                 int cr = chroma[i*2];      // NV21: Cr first
                 int cb = chroma[i*2+1];    // NV21: Cb second
-                int c0 = y0-16, c1 = y1-16, d = cb-128, e = cr-128;
-
-                dst[i*8+0] = clipU8((298*c0 + 409*e + 128) >> 8);
-                dst[i*8+1] = clipU8((298*c0 - 100*d - 208*e + 128) >> 8);
-                dst[i*8+2] = clipU8((298*c0 + 516*d + 128) >> 8);
-                dst[i*8+3] = 255;
-                dst[i*8+4] = clipU8((298*c1 + 409*e + 128) >> 8);
-                dst[i*8+5] = clipU8((298*c1 - 100*d - 208*e + 128) >> 8);
-                dst[i*8+6] = clipU8((298*c1 + 516*d + 128) >> 8);
-                dst[i*8+7] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+                yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         return;
 }
@@ -427,15 +403,19 @@ void FastPathRGBA8toNV21(const void *const *srcPlanes,
 
         for(size_t x = 0; x < width; x++) {
                 int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
-                luma[x] = clipU8(((66*r + 129*g + 25*b + 128) >> 8) + 16);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                luma[x] = clipU8(y);
         }
         size_t pairs = width / 2;
         for(size_t i = 0; i < pairs; i++) {
                 int r = (src[i*8+0]+src[i*8+4]+1)>>1;
                 int g = (src[i*8+1]+src[i*8+5]+1)>>1;
                 int b = (src[i*8+2]+src[i*8+6]+1)>>1;
-                chroma[i*2]   = clipU8(((112*r - 94*g - 18*b + 128) >> 8) + 128); // Cr first
-                chroma[i*2+1] = clipU8(((-38*r - 74*g + 112*b + 128) >> 8) + 128); // Cb second
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chroma[i*2]   = clipU8(cr); // Cr first
+                chroma[i*2+1] = clipU8(cb); // Cb second
         }
         return;
 }
@@ -458,16 +438,8 @@ void FastPathNV16toRGBA8(const void *const *srcPlanes,
         for(size_t i = 0; i < pairs; i++) {
                 int y0 = luma[i*2], y1 = luma[i*2+1];
                 int cb = chroma[i*2], cr = chroma[i*2+1];
-                int c0 = y0-16, c1 = y1-16, d = cb-128, e = cr-128;
-
-                dst[i*8+0] = clipU8((298*c0 + 409*e + 128) >> 8);
-                dst[i*8+1] = clipU8((298*c0 - 100*d - 208*e + 128) >> 8);
-                dst[i*8+2] = clipU8((298*c0 + 516*d + 128) >> 8);
-                dst[i*8+3] = 255;
-                dst[i*8+4] = clipU8((298*c1 + 409*e + 128) >> 8);
-                dst[i*8+5] = clipU8((298*c1 - 100*d - 208*e + 128) >> 8);
-                dst[i*8+6] = clipU8((298*c1 + 516*d + 128) >> 8);
-                dst[i*8+7] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+                yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         return;
 }
@@ -483,15 +455,19 @@ void FastPathRGBA8toNV16(const void *const *srcPlanes,
 
         for(size_t x = 0; x < width; x++) {
                 int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
-                luma[x] = clipU8(((66*r + 129*g + 25*b + 128) >> 8) + 16);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                luma[x] = clipU8(y);
         }
         size_t pairs = width / 2;
         for(size_t i = 0; i < pairs; i++) {
                 int r = (src[i*8+0]+src[i*8+4]+1)>>1;
                 int g = (src[i*8+1]+src[i*8+5]+1)>>1;
                 int b = (src[i*8+2]+src[i*8+6]+1)>>1;
-                chroma[i*2]   = clipU8(((-38*r - 74*g + 112*b + 128) >> 8) + 128);
-                chroma[i*2+1] = clipU8(((112*r - 94*g - 18*b + 128) >> 8) + 128);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                chroma[i*2]   = clipU8(cb);
+                chroma[i*2+1] = clipU8(cr);
         }
         return;
 }
@@ -514,16 +490,8 @@ void FastPathPlanar422toRGBA8(const void *const *srcPlanes,
         for(size_t i = 0; i < pairs; i++) {
                 int y0 = yp[i*2], y1 = yp[i*2+1];
                 int cb = cbp[i], cr = crp[i];
-                int c0 = y0-16, c1 = y1-16, d = cb-128, e = cr-128;
-
-                dst[i*8+0] = clipU8((298*c0 + 409*e + 128) >> 8);
-                dst[i*8+1] = clipU8((298*c0 - 100*d - 208*e + 128) >> 8);
-                dst[i*8+2] = clipU8((298*c0 + 516*d + 128) >> 8);
-                dst[i*8+3] = 255;
-                dst[i*8+4] = clipU8((298*c1 + 409*e + 128) >> 8);
-                dst[i*8+5] = clipU8((298*c1 - 100*d - 208*e + 128) >> 8);
-                dst[i*8+6] = clipU8((298*c1 + 516*d + 128) >> 8);
-                dst[i*8+7] = 255;
+                yuv709ToRgba8(y0, cb, cr, dst + i * 8);
+                yuv709ToRgba8(y1, cb, cr, dst + i * 8 + 4);
         }
         return;
 }
@@ -540,15 +508,19 @@ void FastPathRGBA8toPlanar422(const void *const *srcPlanes,
 
         for(size_t x = 0; x < width; x++) {
                 int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
-                yp[x] = clipU8(((66*r + 129*g + 25*b + 128) >> 8) + 16);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                yp[x] = clipU8(y);
         }
         size_t pairs = width / 2;
         for(size_t i = 0; i < pairs; i++) {
                 int r = (src[i*8+0]+src[i*8+4]+1)>>1;
                 int g = (src[i*8+1]+src[i*8+5]+1)>>1;
                 int b = (src[i*8+2]+src[i*8+6]+1)>>1;
-                cbp[i] = clipU8(((-38*r - 74*g + 112*b + 128) >> 8) + 128);
-                crp[i] = clipU8(((112*r - 94*g - 18*b + 128) >> 8) + 128);
+                int y, cb, cr;
+                rgba8ToYCbCr709(r, g, b, &y, &cb, &cr);
+                cbp[i] = clipU8(cb);
+                crp[i] = clipU8(cr);
         }
         return;
 }
@@ -590,31 +562,40 @@ static inline uint16_t clip10(int v) {
 // BT.601 8-bit YCbCr <-> RGBA8 fast paths
 // =========================================================================
 //
-// BT.601 luma: Y = 0.299*R + 0.587*G + 0.114*B  (different from BT.709!)
+// BT.601 limited-range (Kr=0.299, Kg=0.587, Kb=0.114), 8-bit fixed point:
 //
-// RGB -> YCbCr (BT.601 limited range):
-//   Y  = (( 77*R + 150*G +  29*B + 128) >> 8) + 16
-//   Cb = ((-43*R -  85*G + 128*B + 128) >> 8) + 128
-//   Cr = ((128*R - 107*G -  21*B + 128) >> 8) + 128
+// RGB -> YCbCr:
+//   Y  = (( 66*R + 129*G +  25*B + 128) >> 8) + 16
+//   Cb = ((-38*R -  74*G + 112*B + 128) >> 8) + 128
+//   Cr = ((112*R -  94*G -  18*B + 128) >> 8) + 128
 //
-// YCbCr -> RGB (BT.601 limited range):
+// YCbCr -> RGB:
 //   C = Y - 16,  D = Cb - 128,  E = Cr - 128
-//   R = clip((298*C + 179*E + 128) >> 8)
-//   G = clip((298*C -  44*D -  91*E + 128) >> 8)
-//   B = clip((298*C + 227*D + 128) >> 8)
+//   R = clip((298*C + 409*E + 128) >> 8)
+//   G = clip((298*C - 100*D - 208*E + 128) >> 8)
+//   B = clip((298*C + 516*D + 128) >> 8)
+//
+// The previous version of this file mixed *full-range* 601 RGB->YCbCr
+// coefficients with *limited-range* offsets (so +16 / +128 were added
+// to values that were already full-range), and the decode side mixed
+// <<8 luma scaling (298 for 1.164) with <<7 chroma scaling (179 for
+// 1.402 * 128, etc.).  The result round-tripped very poorly: pure
+// primaries decoded to roughly (178, 52, 52) style desaturated colors.
+// These coefficients match the canonical BT.601 limited-range
+// derivation and round-trip primaries to within a single LSB.
 
 static inline void yuv601ToRgba8(int y, int cb, int cr, uint8_t *dst) {
         int c = y - 16, d = cb - 128, e = cr - 128;
-        dst[0] = clipU8((298*c + 179*e + 128) >> 8);
-        dst[1] = clipU8((298*c -  44*d -  91*e + 128) >> 8);
-        dst[2] = clipU8((298*c + 227*d + 128) >> 8);
+        dst[0] = clipU8((298*c + 409*e + 128) >> 8);
+        dst[1] = clipU8((298*c - 100*d - 208*e + 128) >> 8);
+        dst[2] = clipU8((298*c + 516*d + 128) >> 8);
         dst[3] = 255;
 }
 
 static inline void rgba8ToYCbCr601(int r, int g, int b, int *y, int *cb, int *cr) {
-        *y  = (( 77*r + 150*g +  29*b + 128) >> 8) + 16;
-        *cb = ((-43*r -  85*g + 128*b + 128) >> 8) + 128;
-        *cr = ((128*r - 107*g -  21*b + 128) >> 8) + 128;
+        *y  = (( 66*r + 129*g +  25*b + 128) >> 8) + 16;
+        *cb = ((-38*r -  74*g + 112*b + 128) >> 8) + 128;
+        *cr = ((112*r -  94*g -  18*b + 128) >> 8) + 128;
 }
 
 void FastPathYUYV601toRGBA8(const void *const *srcPlanes,
@@ -721,15 +702,15 @@ void FastPathRGBA8toNV12_601(const void *const *srcPlanes,
         uint8_t *chroma = static_cast<uint8_t *>(dstPlanes[1]);
         for(size_t x = 0; x < width; x++) {
                 int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
-                luma[x] = clipU8(((77*r + 150*g + 29*b + 128) >> 8) + 16);
+                luma[x] = clipU8((( 66*r + 129*g +  25*b + 128) >> 8) + 16);
         }
         size_t pairs = width / 2;
         for(size_t i = 0; i < pairs; i++) {
                 int r = (src[i*8+0]+src[i*8+4]+1)>>1;
                 int g = (src[i*8+1]+src[i*8+5]+1)>>1;
                 int b = (src[i*8+2]+src[i*8+6]+1)>>1;
-                chroma[i*2]   = clipU8(((-43*r - 85*g + 128*b + 128) >> 8) + 128);
-                chroma[i*2+1] = clipU8(((128*r - 107*g - 21*b + 128) >> 8) + 128);
+                chroma[i*2]   = clipU8(((-38*r -  74*g + 112*b + 128) >> 8) + 128);
+                chroma[i*2+1] = clipU8(((112*r -  94*g -  18*b + 128) >> 8) + 128);
         }
         return;
 }
@@ -762,15 +743,15 @@ void FastPathRGBA8toPlanar601_420(const void *const *srcPlanes,
         uint8_t *crp = static_cast<uint8_t *>(dstPlanes[2]);
         for(size_t x = 0; x < width; x++) {
                 int r = src[x*4+0], g = src[x*4+1], b = src[x*4+2];
-                yp[x] = clipU8(((77*r + 150*g + 29*b + 128) >> 8) + 16);
+                yp[x] = clipU8((( 66*r + 129*g +  25*b + 128) >> 8) + 16);
         }
         size_t pairs = width / 2;
         for(size_t i = 0; i < pairs; i++) {
                 int r = (src[i*8+0]+src[i*8+4]+1)>>1;
                 int g = (src[i*8+1]+src[i*8+5]+1)>>1;
                 int b = (src[i*8+2]+src[i*8+6]+1)>>1;
-                cbp[i] = clipU8(((-43*r - 85*g + 128*b + 128) >> 8) + 128);
-                crp[i] = clipU8(((128*r - 107*g - 21*b + 128) >> 8) + 128);
+                cbp[i] = clipU8(((-38*r -  74*g + 112*b + 128) >> 8) + 128);
+                crp[i] = clipU8(((112*r -  94*g -  18*b + 128) >> 8) + 128);
         }
         return;
 }
@@ -894,35 +875,41 @@ void FastPathRGBA10LEtoPlanar10LE420_2020(const void *const *srcPlanes,
 }
 
 // =========================================================================
-// BT.709 10-bit helpers
+// BT.709 10-bit helpers (limited range)
 // =========================================================================
 //
-// BT.709 10-bit limited range:
+// BT.709 10-bit limited range (Kr=0.2126, Kg=0.7152, Kb=0.0722):
 //   Y: 64-940,  Cb/Cr: 64-960  (out of 0-1023)
 //
 // YCbCr -> RGB:
 //   C = Y - 64,  D = Cb - 512,  E = Cr - 512
-//   R = clip10((1192*C + 1634*E + 512) >> 10)
-//   G = clip10((1192*C -  401*D -  833*E + 512) >> 10)
-//   B = clip10((1192*C + 2066*D + 512) >> 10)
+//   R = clip10((1196*C + 1842*E + 512) >> 10)
+//   G = clip10((1196*C -  219*D - 547*E + 512) >> 10)
+//   B = clip10((1196*C + 2170*D + 512) >> 10)
 //
 // RGB -> YCbCr:
-//   Y  = clip10(( 263*R + 516*G + 100*B + 512) >> 10) + 64
-//   Cb = clip10((-152*R - 298*G + 450*B + 512) >> 10) + 512
-//   Cr = clip10(( 450*R - 377*G -  73*B + 512) >> 10) + 512
+//   Y  = clip10(( 186*R + 627*G +  63*B + 512) >> 10) + 64
+//   Cb = clip10((-103*R - 346*G + 448*B + 512) >> 10) + 512
+//   Cr = clip10(( 448*R - 407*G -  41*B + 512) >> 10) + 512
+//
+// The previous coefficients here (263/516/100 for Y, 1634/401/833/2066
+// for decode) were actually the BT.601 10-bit coefficients — same
+// mislabeling bug as the 8-bit kernels.  Fixed to use the canonical
+// BT.709 weights so that round-tripping RGBA10 <-> YUV10_422_*_Rec709
+// produces true BT.709 data.
 
 static inline void yuv10ToRgba10(int y, int cb, int cr, uint16_t *dst) {
         int c = y - 64, d = cb - 512, e = cr - 512;
-        dst[0] = clip10((1192*c + 1634*e + 512) >> 10);
-        dst[1] = clip10((1192*c - 401*d - 833*e + 512) >> 10);
-        dst[2] = clip10((1192*c + 2066*d + 512) >> 10);
+        dst[0] = clip10((1196*c + 1842*e + 512) >> 10);
+        dst[1] = clip10((1196*c -  219*d - 547*e + 512) >> 10);
+        dst[2] = clip10((1196*c + 2170*d + 512) >> 10);
         dst[3] = 1023;
 }
 
 static inline void rgba10ToYCbCr(int r, int g, int b, int *y, int *cb, int *cr) {
-        *y  = (( 263*r + 516*g + 100*b + 512) >> 10) + 64;
-        *cb = ((-152*r - 298*g + 450*b + 512) >> 10) + 512;
-        *cr = (( 450*r - 377*g -  73*b + 512) >> 10) + 512;
+        *y  = (( 186*r + 627*g +  63*b + 512) >> 10) + 64;
+        *cb = ((-103*r - 346*g + 448*b + 512) >> 10) + 512;
+        *cr = (( 448*r - 407*g -  41*b + 512) >> 10) + 512;
 }
 
 // =========================================================================
@@ -1199,6 +1186,185 @@ void FastPathRGBA10LEtoV210(const void *const *srcPlanes,
                 w[3] = (static_cast<uint32_t>(clip10(y[4])))
                      | (static_cast<uint32_t>(clip10(cr2))  << 10)
                      | (static_cast<uint32_t>(clip10(y[5])) << 20);
+        }
+        return;
+}
+
+// =========================================================================
+// v210 <-> RGBA8  (BT.709 fixed-point)
+// =========================================================================
+//
+// v210 has a specialized bit-packing layout that the generic CSC
+// pipeline's unpack/pack can't handle (6 pixels in 16 bytes with
+// chroma subsampling and 128-byte line alignment).  There are fast
+// paths for v210 <-> RGBA10_LE_sRGB, but Image::convert() between
+// RGBA8 and v210 has no direct entry, and the general pipeline
+// silently produces garbage because UnpackInterleavedImpl treats v210
+// as a generic 3x10 interleaved 4:2:2 format.  These wrapper kernels
+// fill the 8-bit gap by inlining an RGBA8<->RGBA10 bit-depth step
+// around the existing v210 <-> RGBA10 math.
+
+// Bit-replication scaling: 8-bit -> 10-bit (v << 2) | (v >> 6)
+// gives the full [0,1023] range (vs a plain <<2 which maxes at 1020).
+static inline int rgb8to10(int v) {
+        return (v << 2) | (v >> 6);
+}
+
+// 10-bit -> 8-bit with rounding: (v + 2) >> 2, clamped.
+static inline uint8_t rgb10to8(int v) {
+        int r = (v + 2) >> 2;
+        return clipU8(r);
+}
+
+void FastPathV210toRGBA8(const void *const *srcPlanes,
+                          const size_t *srcStrides,
+                          void *const *dstPlanes,
+                          const size_t *dstStrides,
+                          size_t width, CSCContext &ctx) {
+        const uint32_t *src = static_cast<const uint32_t *>(srcPlanes[0]);
+        uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
+
+        auto emit = [&](int y, int cb, int cr, uint8_t *out) {
+                uint16_t tmp[4];
+                yuv10ToRgba10(y, cb, cr, tmp);
+                out[0] = rgb10to8(tmp[0]);
+                out[1] = rgb10to8(tmp[1]);
+                out[2] = rgb10to8(tmp[2]);
+                out[3] = 255;
+        };
+
+        size_t blocks = width / 6;
+        for(size_t b = 0; b < blocks; b++) {
+                const uint32_t *w = src + b * 4;
+                uint8_t *out = dst + b * 6 * 4;
+
+                int cb0 = (w[0])       & 0x3FF;
+                int y0  = (w[0] >> 10) & 0x3FF;
+                int cr0 = (w[0] >> 20) & 0x3FF;
+                int y1  = (w[1])       & 0x3FF;
+                int cb1 = (w[1] >> 10) & 0x3FF;
+                int y2  = (w[1] >> 20) & 0x3FF;
+                int cr1 = (w[2])       & 0x3FF;
+                int y3  = (w[2] >> 10) & 0x3FF;
+                int cb2 = (w[2] >> 20) & 0x3FF;
+                int y4  = (w[3])       & 0x3FF;
+                int cr2 = (w[3] >> 10) & 0x3FF;
+                int y5  = (w[3] >> 20) & 0x3FF;
+
+                emit(y0, cb0, cr0, out);
+                emit(y1, cb0, cr0, out + 4);
+                emit(y2, cb1, cr1, out + 8);
+                emit(y3, cb1, cr1, out + 12);
+                emit(y4, cb2, cr2, out + 16);
+                emit(y5, cb2, cr2, out + 20);
+        }
+
+        // Trailing 1-5 pixels
+        size_t done = blocks * 6;
+        if(done < width) {
+                const uint32_t *w = src + blocks * 4;
+                int samples[6][3];
+                int cb0 = (w[0])       & 0x3FF;
+                int y0  = (w[0] >> 10) & 0x3FF;
+                int cr0 = (w[0] >> 20) & 0x3FF;
+                int y1  = (w[1])       & 0x3FF;
+                int cb1 = (w[1] >> 10) & 0x3FF;
+                int y2  = (w[1] >> 20) & 0x3FF;
+                int cr1 = (w[2])       & 0x3FF;
+                int y3  = (w[2] >> 10) & 0x3FF;
+                int cb2 = (w[2] >> 20) & 0x3FF;
+                int y4  = (w[3])       & 0x3FF;
+                int cr2 = (w[3] >> 10) & 0x3FF;
+                int y5  = (w[3] >> 20) & 0x3FF;
+                samples[0][0]=y0; samples[0][1]=cb0; samples[0][2]=cr0;
+                samples[1][0]=y1; samples[1][1]=cb0; samples[1][2]=cr0;
+                samples[2][0]=y2; samples[2][1]=cb1; samples[2][2]=cr1;
+                samples[3][0]=y3; samples[3][1]=cb1; samples[3][2]=cr1;
+                samples[4][0]=y4; samples[4][1]=cb2; samples[4][2]=cr2;
+                samples[5][0]=y5; samples[5][1]=cb2; samples[5][2]=cr2;
+                for(size_t i = 0; i < width - done && i < 6; i++) {
+                        emit(samples[i][0], samples[i][1], samples[i][2],
+                             dst + (done + i) * 4);
+                }
+        }
+        return;
+}
+
+void FastPathRGBA8toV210(const void *const *srcPlanes,
+                          const size_t *srcStrides,
+                          void *const *dstPlanes,
+                          const size_t *dstStrides,
+                          size_t width, CSCContext &ctx) {
+        const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+        uint32_t *dst = static_cast<uint32_t *>(dstPlanes[0]);
+
+        size_t blocks = width / 6;
+        for(size_t b = 0; b < blocks; b++) {
+                const uint8_t *in = src + b * 6 * 4;
+                uint32_t *w = dst + b * 4;
+
+                int y[6], cb[6], cr[6];
+                for(int p = 0; p < 6; p++) {
+                        int r = rgb8to10(in[p*4 + 0]);
+                        int g = rgb8to10(in[p*4 + 1]);
+                        int bl= rgb8to10(in[p*4 + 2]);
+                        rgba10ToYCbCr(r, g, bl, &y[p], &cb[p], &cr[p]);
+                }
+
+                int cb0 = (cb[0]+cb[1]+1)>>1, cr0 = (cr[0]+cr[1]+1)>>1;
+                int cb1 = (cb[2]+cb[3]+1)>>1, cr1 = (cr[2]+cr[3]+1)>>1;
+                int cb2 = (cb[4]+cb[5]+1)>>1, cr2 = (cr[4]+cr[5]+1)>>1;
+
+                w[0] = (static_cast<uint32_t>(clip10(cb0)))
+                     | (static_cast<uint32_t>(clip10(y[0])) << 10)
+                     | (static_cast<uint32_t>(clip10(cr0))  << 20);
+                w[1] = (static_cast<uint32_t>(clip10(y[1])))
+                     | (static_cast<uint32_t>(clip10(cb1))  << 10)
+                     | (static_cast<uint32_t>(clip10(y[2])) << 20);
+                w[2] = (static_cast<uint32_t>(clip10(cr1)))
+                     | (static_cast<uint32_t>(clip10(y[3])) << 10)
+                     | (static_cast<uint32_t>(clip10(cb2))  << 20);
+                w[3] = (static_cast<uint32_t>(clip10(y[4])))
+                     | (static_cast<uint32_t>(clip10(cr2))  << 10)
+                     | (static_cast<uint32_t>(clip10(y[5])) << 20);
+        }
+
+        // Trailing 1-5 pixels (partial block)
+        size_t done = blocks * 6;
+        if(done < width) {
+                const uint8_t *in = src + done * 4;
+                uint32_t *w = dst + blocks * 4;
+                size_t rem = width - done;
+
+                // Compute YCbCr for the remaining pixels; pad missing
+                // slots with the last valid pixel's values.
+                int y[6] = {}, cb[6] = {}, cr[6] = {};
+                for(size_t p = 0; p < rem; p++) {
+                        int r = rgb8to10(in[p*4 + 0]);
+                        int g = rgb8to10(in[p*4 + 1]);
+                        int bl= rgb8to10(in[p*4 + 2]);
+                        rgba10ToYCbCr(r, g, bl, &y[p], &cb[p], &cr[p]);
+                }
+                for(size_t p = rem; p < 6; p++) {
+                        y[p] = y[rem-1]; cb[p] = cb[rem-1]; cr[p] = cr[rem-1];
+                }
+
+                int cb0t = (cb[0]+cb[1]+1)>>1, cr0t = (cr[0]+cr[1]+1)>>1;
+                int cb1t = (cb[2]+cb[3]+1)>>1, cr1t = (cr[2]+cr[3]+1)>>1;
+                int cb2t = (cb[4]+cb[5]+1)>>1, cr2t = (cr[4]+cr[5]+1)>>1;
+
+                w[0] = (static_cast<uint32_t>(clip10(cb0t)))
+                     | (static_cast<uint32_t>(clip10(y[0]))  << 10)
+                     | (static_cast<uint32_t>(clip10(cr0t))  << 20);
+                w[1] = (static_cast<uint32_t>(clip10(y[1])))
+                     | (static_cast<uint32_t>(clip10(cb1t))  << 10)
+                     | (static_cast<uint32_t>(clip10(y[2]))  << 20);
+                w[2] = (static_cast<uint32_t>(clip10(cr1t)))
+                     | (static_cast<uint32_t>(clip10(y[3]))  << 10)
+                     | (static_cast<uint32_t>(clip10(cb2t))  << 20);
+                w[3] = (static_cast<uint32_t>(clip10(y[4])))
+                     | (static_cast<uint32_t>(clip10(cr2t))  << 10)
+                     | (static_cast<uint32_t>(clip10(y[5]))  << 20);
         }
         return;
 }

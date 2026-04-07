@@ -101,51 +101,140 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset) const
         return create(desc, motionOffset, Timecode());
 }
 
+ImageDesc VideoTestPattern::rgbScratchDesc(const ImageDesc &target) const {
+        // Use RGBA8_sRGB as the scratch format rather than RGB16 so
+        // the fallback scratch -> target CSC lands on an already-
+        // registered Highway fast path (e.g. RGBA8_sRGB ->
+        // YUV8_422_Rec709) rather than the generic unpack/matrix/pack
+        // pipeline.  All the current VideoTestPattern patterns and
+        // the FastFont burn-in cache look identical at 8 vs 16 bits
+        // (the patterns emit 16-bit component values that the
+        // interleaved paint engine already truncates on write), and
+        // benchmarks show this swap dropping the YUV burn-in/motion
+        // cost by roughly the same factor the fast path is faster
+        // than the scalar pipeline.
+        ImageDesc rd(target.width(), target.height(),
+                     PixelDesc(PixelDesc::RGBA8_sRGB));
+        rd.metadata() = target.metadata();
+        return rd;
+}
+
 Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
                                const Timecode &currentTimecode) const {
+        const bool directPaint = desc.pixelDesc().hasPaintEngine();
+        const bool wantTc = _burnEnabled && currentTimecode.isValid();
+        const bool wantText = _burnEnabled && !_burnText.isEmpty();
+        const bool wantBurn = wantTc || wantText;
+
+        // Decide which format the cache should hold.
+        //
+        // 1. Paintable target (RGB, BGR, ...): cache holds the target
+        //    format directly.  Burn (if any) happens on a detached
+        //    copy, no conversion ever runs.
+        //
+        // 2. Non-paintable target (YUV, YCbCr, ...) with no burn:
+        //    cache holds the *already-converted* target-format image.
+        //    We do the one-time RGB16->target conversion inside the
+        //    cache builder, then every subsequent create() call is a
+        //    shallow copy with zero CSC work.
+        //
+        // 3. Non-paintable target with burn: cache must hold a
+        //    paintable RGB16 background so we can burn onto a detached
+        //    copy each frame.  We then convert to the target format
+        //    after burn, via the cached CSCPipeline.
+        //
+        // The cache key includes the pixel desc ID, so toggling burn
+        // on/off automatically invalidates when the cache format
+        // changes between (2) and (3).
+        const bool cacheInRGBBackground = !directPaint && wantBurn;
+        const ImageDesc cacheDesc = cacheInRGBBackground
+                ? rgbScratchDesc(desc)
+                : desc;
+
+        // Renders @p dst in place (paintable formats) or via an RGB16
+        // scratch + Image::convert() (non-paintable).  The convert()
+        // path pulls a compiled pipeline from the global CSC cache, so
+        // repeated calls for the same format pair don't recompile.
+        auto renderInto = [this, directPaint, cacheInRGBBackground,
+                           &desc](Image &dst, double mo,
+                                  const Color *solidColor) {
+                auto runPattern = [this, mo, solidColor](Image &t) {
+                        if(solidColor != nullptr) {
+                                renderSolid(t, *solidColor);
+                        } else {
+                                render(t, mo);
+                        }
+                };
+                if(directPaint || cacheInRGBBackground) {
+                        // dst is in a paintable format (target or RGB16).
+                        runPattern(dst);
+                        return;
+                }
+                // Non-paintable target with no burn: render into an
+                // RGB16 scratch, then convert into the cache slot.
+                ImageDesc rgbDesc = rgbScratchDesc(desc);
+                Image scratch(rgbDesc);
+                if(!scratch.isValid()) return;
+                runPattern(scratch);
+                Image conv = scratch.convert(desc.pixelDesc(),
+                                             desc.metadata());
+                if(conv.isValid()) dst = conv;
+        };
+
         Image out;
 
         if(_pattern == AvSync) {
-                // AvSync: slot 0 = solid white "marker" frame,
-                // slot 1 = solid black "non-marker" frame.  Both are
-                // cached so subsequent frames are a single map-free
-                // shallow copy.
+                // AvSync: slot 0 = marker (white), slot 1 = non-marker
+                // (black).  Each slot is cached once in cacheDesc format
+                // and reused on every subsequent call.
                 const bool marker = currentTimecode.isValid()
                                     && currentTimecode.frame() == 0;
                 if(marker) {
-                        out = cachedImage(0, desc,
-                                [this](Image &img) { renderSolid(img, Color::White); });
+                        out = cachedImage(0, cacheDesc, [&](Image &img) {
+                                renderInto(img, 0.0, &Color::White);
+                        });
                 } else {
-                        out = cachedImage(1, desc,
-                                [this](Image &img) { renderSolid(img, Color::Black); });
+                        out = cachedImage(1, cacheDesc, [&](Image &img) {
+                                renderInto(img, 0.0, &Color::Black);
+                        });
                 }
         } else if(isStaticPattern() && motionOffset == 0.0) {
                 // Static pattern at offset 0 — render once into slot 0
                 // and reuse on subsequent calls.  setPattern() and
                 // setSolidColor() dump the cache, so the slot is
                 // always consistent with _pattern / _solidColor.
-                out = cachedImage(0, desc,
-                        [this](Image &img) { render(img, 0.0); });
+                out = cachedImage(0, cacheDesc, [&](Image &img) {
+                        renderInto(img, 0.0, nullptr);
+                });
         } else {
                 // Dynamic pattern (Noise, or any non-zero motion offset)
                 // — render fresh every call, no caching.
-                out = Image(desc);
-                if(out.isValid()) render(out, motionOffset);
+                out = Image(cacheDesc);
+                if(out.isValid()) {
+                        renderInto(out, motionOffset, nullptr);
+                }
         }
 
         if(!out.isValid()) return out;
 
-        // Determine whether the burn stage would actually draw anything.
-        const bool wantTc = _burnEnabled && currentTimecode.isValid();
-        const bool wantText = _burnEnabled && !_burnText.isEmpty();
-        if(!wantTc && !wantText) {
-                return out;
+        if(wantBurn) {
+                // Burn on a detached copy so the cached background (if
+                // any) stays pristine for the next frame.  `out` is in
+                // a paintable format here: either the target (case 1)
+                // or the RGB16 background (case 3).
+                out.ensureExclusive();
+                renderBurn(out, currentTimecode);
+
+                // Case 3: convert the burn-in RGB16 image to the
+                // caller's target format.  The global CSC cache keeps
+                // the compiled pipeline alive between calls so this
+                // doesn't pay compile() cost every frame.
+                if(cacheInRGBBackground) {
+                        out = out.convert(desc.pixelDesc(),
+                                          desc.metadata());
+                }
         }
 
-        // Burn on a detached copy so the cached background (if any)
-        // stays pristine for the next frame.
-        out.ensureExclusive();
-        renderBurn(out, currentTimecode);
         return out;
 }
 
