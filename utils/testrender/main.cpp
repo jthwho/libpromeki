@@ -120,7 +120,7 @@ static void usage() {
                 "                    crosshatch, checkerboard, black, white, noise,\n"
                 "                    zoneplate (default: colorbars)\n"
                 "  --tc <HH:MM:SS:FF>  Timecode to burn (default: 01:00:00:00)\n"
-                "  --font <PATH>     Font file (default: bundled FiraCode)\n"
+                "  --font <PATH>     Font file (default: library's bundled font)\n"
                 "  --fontsize <PTS>  Font size (default: 48)\n"
                 "  --no-tc           Don't burn timecode\n"
                 "  --text <TEXT>     Custom text to render\n"
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         int height = 1080;
         String patternStr = "ColorBars";
         String tcStr = "01:00:00:00";
-        String fontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
+        String fontPath;            // empty → library's bundled default
         int fontSize = 48;
         bool burnTc = true;
         String customText;
@@ -210,6 +210,7 @@ int main(int argc, char *argv[]) {
         if(burnTc) {
                 overlay = new PumpableOverlay();
                 MediaNodeConfig cfg("TimecodeOverlayNode", "Overlay");
+                // Empty fontPath → node uses the library's bundled default.
                 cfg.set("FontPath", fontPath);
                 cfg.set("FontSize", fontSize);
                 cfg.set("Position", "bottomcenter");

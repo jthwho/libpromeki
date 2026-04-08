@@ -20,14 +20,18 @@
 #include <promeki/timecode.h>
 #include <promeki/color.h>
 #include <promeki/filepath.h>
+#include <promeki/fastfont.h>
 
 using namespace promeki;
 
-// Bundled monospace font for tests
-static const String testFontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
-
+// Probes the library's bundled default font so tests that render
+// text can skip themselves if the library was built without the
+// compiled-in resource filesystem.
 static bool fontAvailable() {
-        return FilePath(testFontPath).exists();
+        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        FastFont probe(img.createPaintEngine());
+        probe.setFontSize(12);
+        return probe.measureText("A") > 0;
 }
 
 // ============================================================================
@@ -137,31 +141,18 @@ TEST_CASE("TimecodeOverlayNode_Construct") {
 }
 
 // ============================================================================
-// Configure fails without font path
+// Configure succeeds without an explicit font path (uses bundled default)
 // ============================================================================
 
-TEST_CASE("TimecodeOverlayNode_ConfigureNoFont") {
-        MediaPipeline pipeline;
-        ImageSourceNode *src = new ImageSourceNode();
+TEST_CASE("TimecodeOverlayNode_ConfigureDefaultFont") {
+        if(!fontAvailable()) return;
         TimecodeOverlayNode *overlay = new TimecodeOverlayNode();
-        ImageCaptureSink *sink = new ImageCaptureSink();
-
-        src->build(MediaNodeConfig());
-        // Build without fontPath — should fail
+        // Build without FontPath — empty path means "use the
+        // library's bundled default font".
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
         BuildResult result = overlay->build(overlayCfg);
-        CHECK(result.isError());
-
-        pipeline.addNode(src);
-        pipeline.addNode(overlay);
-        pipeline.addNode(sink);
-        pipeline.connect(src, 0, overlay, 0);
-        pipeline.connect(overlay, 0, sink, 0);
-
-        sink->build(MediaNodeConfig());
-
-        Error err = pipeline.start();
-        CHECK(err.isError());
+        CHECK(result.isOk());
+        delete overlay;
 }
 
 // ============================================================================
@@ -207,7 +198,6 @@ TEST_CASE("TimecodeOverlayNode_ConfigureOk") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -237,7 +227,6 @@ TEST_CASE("TimecodeOverlayNode_OverlayModifiesPixels") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlayCfg.set("FontSize", 36);
         overlayCfg.set("Position", "bottomcenter");
         overlay->build(overlayCfg);
@@ -306,7 +295,6 @@ TEST_CASE("TimecodeOverlayNode_MetadataPreserved") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -365,7 +353,6 @@ TEST_CASE("TimecodeOverlayNode_ConfigureNotIdleReturnsError") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -398,7 +385,6 @@ TEST_CASE("TimecodeOverlayNode_EmptyFramePassthrough") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlay->build(overlayCfg);
 
         sink->build(MediaNodeConfig());
@@ -440,7 +426,6 @@ TEST_CASE("TimecodeOverlayNode_NoTimecodeMetadata") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlayCfg.set("FontSize", 24);
         overlay->build(overlayCfg);
 
@@ -492,8 +477,7 @@ TEST_CASE("TimecodeOverlayNode_CustomText") {
         // custom text adds more drawn pixels.
         auto renderAndSum = [](const String &customText) -> uint64_t {
                 MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-                overlayCfg.set("FontPath", testFontPath);
-                overlayCfg.set("FontSize", 24);
+                        overlayCfg.set("FontSize", 24);
                 overlayCfg.set("Position", "topleft");
                 if(!customText.isEmpty()) overlayCfg.set("CustomText", customText);
 
@@ -525,8 +509,7 @@ TEST_CASE("TimecodeOverlayNode_NoBackground") {
 
         auto renderAndSum = [](bool drawBg) -> uint64_t {
                 MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-                overlayCfg.set("FontPath", testFontPath);
-                overlayCfg.set("FontSize", 24);
+                        overlayCfg.set("FontSize", 24);
                 overlayCfg.set("DrawBackground", drawBg);
 
                 ImageDesc idesc(320, 240, PixelDesc::RGB8_sRGB);
@@ -569,7 +552,6 @@ TEST_CASE("TimecodeOverlayNode_TopLeftPosition") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlayCfg.set("FontSize", 24);
         overlayCfg.set("Position", "topleft");
         overlay->build(overlayCfg);
@@ -632,7 +614,6 @@ TEST_CASE("TimecodeOverlayNode_BottomRightPosition") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlayCfg.set("FontSize", 24);
         overlayCfg.set("Position", "bottomright");
         overlay->build(overlayCfg);
@@ -699,7 +680,6 @@ TEST_CASE("TimecodeOverlayNode_MultipleFrames") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlayCfg.set("FontSize", 24);
         overlay->build(overlayCfg);
 
@@ -748,7 +728,6 @@ TEST_CASE("TimecodeOverlayNode_RGBA8") {
         src->build(MediaNodeConfig());
 
         MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-        overlayCfg.set("FontPath", testFontPath);
         overlayCfg.set("FontSize", 36);
         overlay->build(overlayCfg);
 
@@ -810,8 +789,7 @@ TEST_CASE("TimecodeOverlayNode_CustomColors") {
         // from default white on black.
         auto renderAndSum = [](Color textColor, Color bgColor) -> uint64_t {
                 MediaNodeConfig overlayCfg("TimecodeOverlayNode", "overlay");
-                overlayCfg.set("FontPath", testFontPath);
-                overlayCfg.set("FontSize", 24);
+                        overlayCfg.set("FontSize", 24);
                 overlayCfg.set("Position", "topleft");
                 overlayCfg.set("TextColor", textColor);
                 overlayCfg.set("BackgroundColor", bgColor);

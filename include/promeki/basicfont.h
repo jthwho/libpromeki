@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/font.h>
+#include <promeki/buffer.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -72,6 +73,7 @@ class BasicFont : public Font {
 
                 void    *_ftLibrary = nullptr;
                 void    *_ftFace = nullptr;
+                Buffer  _fontData;        ///< Owns the font bytes for the lifetime of _ftFace.
                 int     _ascender = 0;
                 int     _descender = 0;
                 int     _lineHeight = 0;

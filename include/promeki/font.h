@@ -42,7 +42,12 @@ class Font {
 
                 /**
                  * @brief Sets the path to the TrueType font file.
-                 * @param val Path to the font file.
+                 * @param val Path to the font file. May be either a
+                 *            filesystem path or a @c ":/..." resource
+                 *            path. Passing an empty string resets the
+                 *            font to the library's bundled default —
+                 *            the actual default path is an internal
+                 *            detail and may change between releases.
                  */
                 void setFontFilename(const String &val);
 
@@ -197,6 +202,19 @@ class Font {
                  *       as the current one.
                  */
                 virtual void onStateChanged();
+
+                /**
+                 * @brief Returns the filename subclasses should actually load.
+                 *
+                 * When the caller set an explicit filename (filesystem
+                 * path or @c ":/..." resource path), that is returned
+                 * verbatim. When the filename is empty this returns
+                 * the library's bundled default font path — an
+                 * internal detail that subclasses consume through this
+                 * method rather than by touching @c _fontFilename
+                 * directly.
+                 */
+                String effectiveFilename() const;
 
                 String          _fontFilename;
                 int             _fontSize = 12;

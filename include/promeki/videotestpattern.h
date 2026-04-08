@@ -74,8 +74,8 @@ class FastFont;
  * Image a = gen.create(desc);  // renders colorbars
  * Image b = gen.create(desc);  // returns cache
  *
- * // Add a burn-in timecode line.
- * gen.setBurnFontFilename("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf");
+ * // Add a burn-in timecode line. A call to setBurnFontFilename() is
+ * // optional — without it the library's bundled default font is used.
  * gen.setBurnFontSize(48);
  * gen.setBurnText("mediaplay");
  * gen.setBurnEnabled(true);

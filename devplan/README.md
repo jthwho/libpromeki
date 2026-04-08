@@ -67,7 +67,7 @@ Phase 1A (containers), 1B (concurrency), 1C (API consistency), and 1D (utilities
 **Prerequisites:** Phase 1 (complete)
 **Documents:** `core_io.md`, `core_streams.md`
 
-IO abstractions, filesystem utilities, DataStream, and TextStream all implemented. StreamString migrated to use TextStream/IODevice (no remaining std:: stream usage in the library). See `core_io.md` and `core_streams.md` for remaining extension work (TextStream/DataStream type operator extensions, ObjectBase serialization).
+IO abstractions, filesystem utilities, DataStream, and TextStream all implemented. StreamString migrated to use TextStream/IODevice (no remaining std:: stream usage in the library). **Resource filesystem (cirf) integrated:** `File`, `FileIODevice`, and `Dir` transparently accept `:/...` resource paths served from the compiled-in cirf resource set; new `Resource` class wraps the cirf runtime mount API; libpromeki ships `:/.PROMEKI/` built-in resources (bundled FiraCode font). See `core_io.md` and `core_streams.md` for remaining extension work (TextStream/DataStream type operator extensions, ObjectBase serialization).
 
 ### Phase 3: Network Library — IN PROGRESS
 **Prerequisites:** Phase 1 (complete), Phase 2 (IODevice)

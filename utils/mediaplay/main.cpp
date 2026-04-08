@@ -206,10 +206,10 @@ static void usage() {
                 "  --burn                   Enable text burn-in on the pattern.\n"
                 "                           Includes the current timecode when\n"
                 "                           --no-tpg-tc is not set.  Uses the\n"
-                "                           bundled FiraCode font unless\n"
+                "                           library's bundled font unless\n"
                 "                           --burn-font is also given.\n"
                 "  --burn-font <PATH>       TrueType font file path\n"
-                "                           (default: etc/fonts/FiraCodeNerdFontMono-Regular.ttf)\n"
+                "                           (default: library's bundled font)\n"
                 "  --burn-size <PX>         Burn font size in pixels (default: 36)\n"
                 "  --burn-text <TEXT>       Static custom burn text below timecode\n"
                 "  --burn-position <POS|list>\n"
@@ -537,15 +537,10 @@ static MediaIO *buildTpgSource(const Options &opts) {
 
         cfg.set(MediaIOTask_TPG::ConfigVideoBurnEnabled, opts.burnEnabled);
         if(opts.burnEnabled) {
-                String fontPath = opts.burnFontPath;
-                if(fontPath.isEmpty()) {
-                        // Fall back to the bundled FiraCode font shipped
-                        // in etc/fonts.  Matches the behavior of vidgen,
-                        // imgtest, and testrender.
-                        fontPath = String(PROMEKI_SOURCE_DIR)
-                                 + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
-                }
-                cfg.set(MediaIOTask_TPG::ConfigVideoBurnFontPath, fontPath);
+                // An empty burnFontPath is passed through verbatim —
+                // MediaIOTask_TPG / VideoTestPattern / FastFont
+                // substitute the library's bundled default internally.
+                cfg.set(MediaIOTask_TPG::ConfigVideoBurnFontPath, opts.burnFontPath);
                 cfg.set(MediaIOTask_TPG::ConfigVideoBurnFontSize, opts.burnFontSize);
                 cfg.set(MediaIOTask_TPG::ConfigVideoBurnText, opts.burnText);
                 cfg.set(MediaIOTask_TPG::ConfigVideoBurnPosition, opts.burnPosition);

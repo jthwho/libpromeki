@@ -10,15 +10,42 @@
 #include <fnmatch.h>
 #include <promeki/dir.h>
 #include <promeki/stringlist.h>
+#include <promeki/resource.h>
+
+#include <cirf/types.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
+namespace {
+
+/// Builds the full ":/<dir>/<name>" path used for entries returned
+/// from a resource-mode Dir listing.
+FilePath resourceChild(const String &dirPath, const char *childName) {
+        String dir = dirPath;
+        if(!dir.isEmpty() && dir.endsWith(String("/"))) {
+                dir = dir.left(dir.length() - 1);
+        }
+        return FilePath(dir + "/" + childName);
+}
+
+} // namespace
+
 bool Dir::exists() const {
+        const String pathStr = _path.toString();
+        if(Resource::isResourcePath(pathStr)) {
+                return Resource::findFolder(pathStr) != nullptr;
+        }
         std::error_code ec;
         return std::filesystem::is_directory(_path.toStdPath(), ec);
 }
 
 bool Dir::isEmpty() const {
+        const String pathStr = _path.toString();
+        if(Resource::isResourcePath(pathStr)) {
+                const cirf_folder_t *f = Resource::findFolder(pathStr);
+                if(f == nullptr) return true;
+                return f->child_count == 0 && f->file_count == 0;
+        }
         std::error_code ec;
         if(!std::filesystem::is_directory(_path.toStdPath(), ec)) return true;
         auto it = std::filesystem::directory_iterator(_path.toStdPath(), ec);
@@ -27,6 +54,18 @@ bool Dir::isEmpty() const {
 
 List<FilePath> Dir::entryList() const {
         List<FilePath> result;
+        const String pathStr = _path.toString();
+        if(Resource::isResourcePath(pathStr)) {
+                const cirf_folder_t *f = Resource::findFolder(pathStr);
+                if(f == nullptr) return result;
+                for(size_t i = 0; i < f->child_count; ++i) {
+                        result += resourceChild(pathStr, f->children[i].name);
+                }
+                for(size_t i = 0; i < f->file_count; ++i) {
+                        result += resourceChild(pathStr, f->files[i].name);
+                }
+                return result;
+        }
         std::error_code ec;
         for(const auto &entry : std::filesystem::directory_iterator(_path.toStdPath(), ec)) {
                 result += FilePath(entry.path());
@@ -36,6 +75,25 @@ List<FilePath> Dir::entryList() const {
 
 List<FilePath> Dir::entryList(const String &filter) const {
         List<FilePath> result;
+        const String pathStr = _path.toString();
+        if(Resource::isResourcePath(pathStr)) {
+                const cirf_folder_t *f = Resource::findFolder(pathStr);
+                if(f == nullptr) return result;
+                const char *filterCstr = filter.str().c_str();
+                for(size_t i = 0; i < f->child_count; ++i) {
+                        if(fnmatch(filterCstr, f->children[i].name, 0) == 0) {
+                                result += resourceChild(pathStr,
+                                                        f->children[i].name);
+                        }
+                }
+                for(size_t i = 0; i < f->file_count; ++i) {
+                        if(fnmatch(filterCstr, f->files[i].name, 0) == 0) {
+                                result += resourceChild(pathStr,
+                                                        f->files[i].name);
+                        }
+                }
+                return result;
+        }
         std::error_code ec;
         for(const auto &entry : std::filesystem::directory_iterator(_path.toStdPath(), ec)) {
                 std::string fn = entry.path().filename().string();
@@ -48,6 +106,15 @@ List<FilePath> Dir::entryList(const String &filter) const {
 
 NumNameSeq::List Dir::numberedSequences() const {
         StringList names;
+        const String pathStr = _path.toString();
+        if(Resource::isResourcePath(pathStr)) {
+                const cirf_folder_t *f = Resource::findFolder(pathStr);
+                if(f == nullptr) return NumNameSeq::List();
+                for(size_t i = 0; i < f->file_count; ++i) {
+                        names.pushToBack(String(f->files[i].name));
+                }
+                return NumNameSeq::parseList(names);
+        }
         std::error_code ec;
         auto it = std::filesystem::directory_iterator(_path.toStdPath(), ec);
         if(ec) return NumNameSeq::List();
@@ -60,6 +127,7 @@ NumNameSeq::List Dir::numberedSequences() const {
 }
 
 Error Dir::mkdir() const {
+        if(Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
         std::error_code ec;
         if(std::filesystem::create_directory(_path.toStdPath(), ec)) return Error();
         if(ec) return Error::syserr(ec);
@@ -67,6 +135,7 @@ Error Dir::mkdir() const {
 }
 
 Error Dir::mkpath() const {
+        if(Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
         std::error_code ec;
         std::filesystem::create_directories(_path.toStdPath(), ec);
         if(ec) return Error::syserr(ec);
@@ -74,6 +143,7 @@ Error Dir::mkpath() const {
 }
 
 Error Dir::remove() const {
+        if(Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
         std::error_code ec;
         if(std::filesystem::remove(_path.toStdPath(), ec)) return Error();
         if(ec) return Error::syserr(ec);
@@ -81,6 +151,7 @@ Error Dir::remove() const {
 }
 
 Error Dir::removeRecursively() const {
+        if(Resource::isResourcePath(_path.toString())) return Error(Error::ReadOnly);
         std::error_code ec;
         std::filesystem::remove_all(_path.toStdPath(), ec);
         if(ec) return Error::syserr(ec);

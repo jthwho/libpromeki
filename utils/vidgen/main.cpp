@@ -87,7 +87,7 @@ struct Options {
         String          tcStart         = "01:00:00:00";
         bool            tcDf            = false;
         bool            tcBurn          = false;
-        String          tcFont;
+        String          tcFont;         // empty → library's bundled default
         int             tcSize          = 36;
         String          tcPosition      = "bottomcenter";
 
@@ -143,7 +143,8 @@ static void usage() {
                 "  --tc-start <TC>          Starting timecode (default: 01:00:00:00)\n"
                 "  --tc-df                  Use drop-frame timecode (only at 29.97 fps)\n"
                 "  --tc-burn                Burn timecode into video\n"
-                "  --tc-font <PATH>         Font file for TC burn (required with --tc-burn)\n"
+                "  --tc-font <PATH>         Font file for TC burn\n"
+                "                           (default: library's bundled font)\n"
                 "  --tc-size <PTS>          Font size in points (default: 36)\n"
                 "  --tc-position <POS>      Position: topleft, topcenter, topright,\n"
                 "                           bottomleft, bottomcenter, bottomright\n"
@@ -456,12 +457,6 @@ int main(int argc, char *argv[]) {
                                 audioDest.setPort(audioPort);
                         }
                 }
-        }
-
-        // Validate TC burn options
-        if(opts.tcBurn && opts.tcFont.isEmpty()) {
-                // Try bundled font
-                opts.tcFont = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
         }
 
         // Install signal handlers

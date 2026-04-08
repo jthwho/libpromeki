@@ -53,7 +53,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
  * | ConfigVideoBurnEnabled | bool | false | Enable text burn-in on the pattern. |
- * | ConfigVideoBurnFontPath | String | "" | TrueType font path (required when enabled). |
+ * | ConfigVideoBurnFontPath | String | "" | TrueType font path. Empty = use the library's bundled default font. |
  * | ConfigVideoBurnFontSize | int | 36 | Font size in pixels. |
  * | ConfigVideoBurnText | String | "" | Static custom burn text (shown below timecode). |
  * | ConfigVideoBurnPosition | String | "bottomcenter" | Position preset. |

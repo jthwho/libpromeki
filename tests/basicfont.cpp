@@ -15,10 +15,16 @@
 
 using namespace promeki;
 
-static const String testFontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
-
+// Probes the library's bundled default font by asking a freshly
+// constructed BasicFont (with no explicit filename set) whether it
+// can measure a character. When the library is built without the
+// compiled-in resource filesystem the default load will fail and
+// the dependent tests skip themselves.
 static bool fontAvailable() {
-        return FilePath(testFontPath).exists();
+        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        BasicFont probe(img.createPaintEngine());
+        probe.setFontSize(12);
+        return probe.measureText("A") > 0;
 }
 
 // ============================================================================
@@ -29,18 +35,30 @@ TEST_CASE("BasicFont: construction with default PaintEngine") {
         BasicFont bf{PaintEngine()};
         CHECK(bf.fontFilename().isEmpty());
         CHECK(bf.fontSize() == 12);
-        CHECK(bf.lineHeight() == 0);
-        CHECK(bf.ascender() == 0);
-        CHECK(bf.descender() == 0);
         CHECK_FALSE(bf.kerningEnabled());
+        // isValid() is false here because the default PaintEngine
+        // has no pixel format — not because the filename is empty.
+        // An empty filename is valid and resolves to the library's
+        // bundled default font at load time.
         CHECK_FALSE(bf.isValid());
+        // lineHeight/ascender/descender lazily trigger font loading
+        // against the bundled default, so they come back populated
+        // even without an explicit PaintEngine.
+        if(fontAvailable()) {
+                CHECK(bf.lineHeight() > 0);
+                CHECK(bf.ascender() > 0);
+                CHECK(bf.descender() > 0);
+        }
 }
 
 TEST_CASE("BasicFont: construction with real PaintEngine") {
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
         CHECK(bf.fontFilename().isEmpty());
-        CHECK_FALSE(bf.isValid());
+        // A real PaintEngine + positive font size + empty filename
+        // is valid: empty filename resolves to the bundled default
+        // internally.
+        CHECK(bf.isValid());
 }
 
 // ============================================================================
@@ -72,20 +90,40 @@ TEST_CASE("BasicFont: setKerningEnabled") {
 }
 
 // ============================================================================
-// drawText / measureText without font loaded
+// Default font (empty filename → library's bundled default)
 // ============================================================================
 
-TEST_CASE("BasicFont: drawText fails without font") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+TEST_CASE("BasicFont: drawText works without explicit filename") {
+        if(!fontAvailable()) return;
+
+        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        img.fill(0);
         BasicFont bf(img.createPaintEngine());
-        CHECK_FALSE(bf.drawText("test", 0, 0));
+        // Intentionally no setFontFilename() — exercise the
+        // library's bundled default font.
+        bf.setFontSize(24);
+        bf.setForegroundColor(Color::White);
+        CHECK(bf.drawText("default", 10, 40));
+
+        const uint8_t *data = static_cast<const uint8_t *>(img.data());
+        size_t total = img.lineStride() * img.height();
+        uint64_t sum = 0;
+        for(size_t i = 0; i < total; i++) sum += data[i];
+        CHECK(sum > 0);
 }
 
-TEST_CASE("BasicFont: measureText returns 0 without font") {
+TEST_CASE("BasicFont: measureText works without explicit filename") {
+        if(!fontAvailable()) return;
+
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        CHECK(bf.measureText("test") == 0);
+        bf.setFontSize(24);
+        CHECK(bf.measureText("A") > 0);
 }
+
+// ============================================================================
+// Bad font path
+// ============================================================================
 
 TEST_CASE("BasicFont: drawText fails with bad font path") {
         Image img(64, 64, PixelDesc::RGB8_sRGB);
@@ -103,7 +141,6 @@ TEST_CASE("BasicFont: font metrics after loading") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
 
         int w = bf.measureText("A");
@@ -123,7 +160,6 @@ TEST_CASE("BasicFont: measureText empty string") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
 
         CHECK(bf.measureText("") == 0);
@@ -134,7 +170,6 @@ TEST_CASE("BasicFont: measureText longer string is wider") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
 
         int w1 = bf.measureText("A");
@@ -152,7 +187,6 @@ TEST_CASE("BasicFont: drawText renders pixels") {
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         img.fill(0);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
 
@@ -173,7 +207,6 @@ TEST_CASE("BasicFont: drawText uses foreground color") {
                 Image img(256, 64, PixelDesc::RGB8_sRGB);
                 img.fill(0);
                 BasicFont bf(img.createPaintEngine());
-                bf.setFontFilename(testFontPath);
                 bf.setFontSize(24);
                 bf.setForegroundColor(fg);
                 bf.drawText("ABC", 10, 40);
@@ -199,7 +232,6 @@ TEST_CASE("BasicFont: drawText on RGBA8") {
         Image img(256, 64, PixelDesc::RGBA8_sRGB);
         img.fill(0);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
 
@@ -222,7 +254,6 @@ TEST_CASE("BasicFont: changing font size works") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(12);
 
         int w12 = bf.measureText("ABC");
@@ -240,7 +271,6 @@ TEST_CASE("BasicFont: changing font filename works") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
 
         int w = bf.measureText("ABC");
@@ -262,7 +292,6 @@ TEST_CASE("BasicFont: deferred PaintEngine on RGB8") {
         img.fill(0);
 
         BasicFont bf{PaintEngine()};
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
         bf.setPaintEngine(img.createPaintEngine());
@@ -284,7 +313,6 @@ TEST_CASE("BasicFont: deferred PaintEngine on RGBA8") {
         img.fill(0);
 
         BasicFont bf{PaintEngine()};
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
         bf.setForegroundColor(Color::White);
         bf.setPaintEngine(img.createPaintEngine());
@@ -310,7 +338,6 @@ TEST_CASE("BasicFont: drawText at bottom of large RGBA8 image") {
         img.fill(0);
 
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(48);
         bf.setForegroundColor(Color::White);
 
@@ -331,7 +358,6 @@ TEST_CASE("BasicFont: drawText at bottom of large RGB8 image") {
         img.fill(0);
 
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(48);
         bf.setForegroundColor(Color::White);
 
@@ -354,7 +380,6 @@ TEST_CASE("BasicFont: lineHeight equals ascender plus descender") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         BasicFont bf(img.createPaintEngine());
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(48);
 
         bf.measureText("A");
@@ -369,12 +394,10 @@ TEST_CASE("BasicFont: metrics match FastFont for same font and size") {
         PaintEngine pe = img.createPaintEngine();
 
         FastFont ff(pe);
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(48);
         ff.measureText("A");
 
         BasicFont bf(pe);
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(48);
         bf.measureText("A");
 
@@ -390,11 +413,9 @@ TEST_CASE("BasicFont: measureText matches FastFont") {
         PaintEngine pe = img.createPaintEngine();
 
         FastFont ff(pe);
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         BasicFont bf(pe);
-        bf.setFontFilename(testFontPath);
         bf.setFontSize(24);
 
         CHECK(ff.measureText("01:00:00:00") == bf.measureText("01:00:00:00"));

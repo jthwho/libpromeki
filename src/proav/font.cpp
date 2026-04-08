@@ -9,6 +9,19 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+namespace {
+
+// libpromeki ships a FiraCode monospace font through its compiled-in
+// resource filesystem (see Resource). Font subclasses that call
+// effectiveFilename() with an empty _fontFilename get this path
+// back. It is deliberately kept out of the public header so that
+// the exact bundled default is an internal implementation detail
+// that can be moved or renamed without touching the Font API.
+constexpr const char *kDefaultFontFilename =
+        ":/.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf";
+
+} // namespace
+
 Font::Font(const PaintEngine &pe) : _paintEngine(pe) {
 
 }
@@ -69,7 +82,16 @@ void Font::setKerningEnabled(bool val) {
 }
 
 bool Font::isValid() const {
-        return !_fontFilename.isEmpty() && _fontSize > 0;
+        // An empty _fontFilename is valid because effectiveFilename()
+        // falls back to the bundled default, which is always present.
+        // What we do require is a positive font size and a paint
+        // engine bound to a real pixel format — without those the
+        // font cannot actually render anything.
+        return _fontSize > 0 && _paintEngine.pixelDesc().isValid();
+}
+
+String Font::effectiveFilename() const {
+        return _fontFilename.isEmpty() ? String(kDefaultFontFilename) : _fontFilename;
 }
 
 PROMEKI_NAMESPACE_END

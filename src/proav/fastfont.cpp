@@ -11,6 +11,7 @@
 #include FT_BITMAP_H
 
 #include <promeki/fastfont.h>
+#include <promeki/file.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -38,6 +39,10 @@ void FastFont::invalidateFont() {
                 FT_Done_Face(static_cast<FT_Face>(_ftFace));
                 _ftFace = nullptr;
         }
+        // Free the font byte buffer only after the FT_Face has been
+        // destroyed — FT_New_Memory_Face borrows the bytes and reads
+        // from them on demand.
+        _fontData = Buffer();
         _ascender = 0;
         _descender = 0;
         _lineHeight = 0;
@@ -63,10 +68,34 @@ bool FastFont::ensureFontLoaded() {
                 _ftLibrary = ft;
         }
 
+        // Load the font bytes via promeki::File so the same code path
+        // serves filesystem fonts and ":/.PROMEKI/fonts/..." resources.
+        // When _fontFilename is empty the base Font class hands us
+        // the bundled default via effectiveFilename(). The buffer is
+        // held on the FastFont so it outlives the FT_Face that
+        // borrows it.
+        const String path = effectiveFilename();
+        File f(path);
+        Error openErr = f.open(File::ReadOnly);
+        if(openErr.isError()) {
+                promekiErr("Could not open font '%s': %s",
+                        path.cstr(), openErr.name().cstr());
+                return false;
+        }
+        _fontData = f.readAll();
+        f.close();
+        if(!_fontData.isValid() || _fontData.size() == 0) {
+                promekiErr("Font '%s' is empty", path.cstr());
+                return false;
+        }
+
         FT_Library ft = static_cast<FT_Library>(_ftLibrary);
         FT_Face face;
-        if(FT_New_Face(ft, _fontFilename.cstr(), 0, &face)) {
-                promekiErr("Could not open font '%s'", _fontFilename.cstr());
+        if(FT_New_Memory_Face(ft,
+                              static_cast<const FT_Byte *>(_fontData.data()),
+                              static_cast<FT_Long>(_fontData.size()),
+                              0, &face)) {
+                promekiErr("Could not parse font '%s'", path.cstr());
                 return false;
         }
         _ftFace = face;
@@ -95,7 +124,7 @@ const FastFont::CachedGlyph *FastFont::getGlyph(uint32_t codepoint) {
         FT_Face face = static_cast<FT_Face>(_ftFace);
         if(FT_Load_Char(face, codepoint, FT_LOAD_RENDER)) {
                 promekiWarn("Could not load character 0x%X in '%s'",
-                        (unsigned int)codepoint, _fontFilename.cstr());
+                        (unsigned int)codepoint, effectiveFilename().cstr());
                 return nullptr;
         }
 

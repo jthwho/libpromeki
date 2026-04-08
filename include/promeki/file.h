@@ -16,6 +16,13 @@
 #include <promeki/result.h>
 #include <promeki/bufferediodevice.h>
 
+// Forward-declared so file.h does not need to pull <cirf/types.h>
+// into every consumer of File. The pointer is only ever stored as
+// a member; methods that need to dereference it include
+// <cirf/types.h> in file.cpp.
+struct cirf_file;
+typedef struct cirf_file cirf_file_t;
+
 PROMEKI_NAMESPACE_BEGIN
 
 /**
@@ -363,6 +370,17 @@ class File : public BufferedIODevice {
                  */
                 bool isNonBlocking() const { return _nonBlocking; }
 
+                /**
+                 * @brief Returns true if this File is currently serving a compiled-in resource.
+                 *
+                 * Resource-mode files are opened by passing a path that
+                 * begins with @c ":/" — see @ref Resource. They behave
+                 * like read-only memory-backed files: write operations,
+                 * preallocate, truncate and direct-I/O knobs are no-ops
+                 * or report @c Error::ReadOnly.
+                 */
+                bool isResource() const { return _resourceFile != nullptr; }
+
         protected:
 
                 /** @brief Reads raw data from the file descriptor. */
@@ -372,13 +390,15 @@ class File : public BufferedIODevice {
                 int64_t deviceBytesAvailable() const override;
 
         private:
-                bool            _directIO = false;         ///< Direct I/O mode.
-                bool            _synchronous = false;      ///< Synchronous write mode.
-                bool            _nonBlocking = false;      ///< Non-blocking mode.
-                String          _filename;
-                int             _fileFlags = NoFlags;
-                FileHandle      _handle = FileHandleClosedValue;
-                bool            _savedUnbuffered = false;  ///< Unbuffered state saved before DirectIO forced it.
+                bool                _directIO = false;         ///< Direct I/O mode.
+                bool                _synchronous = false;      ///< Synchronous write mode.
+                bool                _nonBlocking = false;      ///< Non-blocking mode.
+                String              _filename;
+                int                 _fileFlags = NoFlags;
+                FileHandle          _handle = FileHandleClosedValue;
+                bool                _savedUnbuffered = false;  ///< Unbuffered state saved before DirectIO forced it.
+                const cirf_file_t  *_resourceFile = nullptr;   ///< Non-null when serving a ":/..." resource path.
+                int64_t             _resourcePos = 0;          ///< Read cursor for resource-mode files.
 };
 
 PROMEKI_NAMESPACE_END

@@ -35,6 +35,7 @@ option(PROMEKI_ENABLE_JPEG     "Include JPEG codec"                     ON)
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
+option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" ON)
 
 # Vendored vs system dependency options
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
@@ -45,6 +46,7 @@ option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendor
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_CIRF          "Use system cirf instead of vendored"           OFF)
 
 # Dependency validation ########################################################
 
@@ -152,6 +154,79 @@ else()
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     add_subdirectory(thirdparty/libvtc EXCLUDE_FROM_ALL)
     set(PROMEKI_VTC_TARGET vtc_static)
+endif()
+
+# --- cirf (compiled-in resource filesystem) ---
+# cirf is a small C99 utility that compiles arbitrary files into a
+# const cirf_folder_t tree. We use it as the storage backend for the
+# Qt-style ":/" resource path scheme exposed by the Resource class
+# and consumed transparently by File / FileIODevice / Dir.
+#
+# Rather than add_subdirectory(thirdparty/cirf), we build cirf's
+# targets directly here. This avoids pulling in cirf's CMakeLists.txt
+# side effects (notably the unscoped `format` and `format-check`
+# custom targets, which collide with libvtc's same-named targets).
+# The three targets we need are:
+#
+#   cirf_runtime  — static lib, single file, linked into promeki
+#   cirf_lib      — static lib, backing the code-generator binary
+#   cirf          — host executable, runs at build time to emit the
+#                   generated resource C source from a JSON config
+#
+# CIRFAddResources.cmake is included directly so the
+# `cirf_add_resources()` function is in scope for the call below.
+if(PROMEKI_USE_SYSTEM_CIRF)
+    find_package(CIRF REQUIRED)
+    set(PROMEKI_CIRF_RUNTIME_TARGET CIRF::cirf_runtime)
+else()
+    set(PROMEKI_CIRF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/cirf)
+
+    add_library(cirf_runtime STATIC ${PROMEKI_CIRF_DIR}/src/runtime.c)
+    target_include_directories(cirf_runtime PUBLIC
+        $<BUILD_INTERFACE:${PROMEKI_CIRF_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
+    )
+    set_target_properties(cirf_runtime PROPERTIES
+        C_STANDARD 99
+        C_STANDARD_REQUIRED ON
+        POSITION_INDEPENDENT_CODE ON
+        OUTPUT_NAME cirf_runtime
+    )
+
+    add_library(cirf_lib STATIC
+        ${PROMEKI_CIRF_DIR}/src/error.c
+        ${PROMEKI_CIRF_DIR}/src/json.c
+        ${PROMEKI_CIRF_DIR}/src/mime.c
+        ${PROMEKI_CIRF_DIR}/src/vfs.c
+        ${PROMEKI_CIRF_DIR}/src/glob.c
+        ${PROMEKI_CIRF_DIR}/src/config.c
+        ${PROMEKI_CIRF_DIR}/src/codegen.c
+        ${PROMEKI_CIRF_DIR}/src/writer.c
+    )
+    target_include_directories(cirf_lib PUBLIC
+        $<BUILD_INTERFACE:${PROMEKI_CIRF_DIR}/include>
+    )
+    set_target_properties(cirf_lib PROPERTIES
+        C_STANDARD 99
+        C_STANDARD_REQUIRED ON
+        POSITION_INDEPENDENT_CODE ON
+        OUTPUT_NAME cirf
+    )
+
+    add_executable(cirf ${PROMEKI_CIRF_DIR}/src/main.c)
+    target_link_libraries(cirf PRIVATE cirf_lib)
+    target_include_directories(cirf PRIVATE ${PROMEKI_CIRF_DIR}/include)
+    set_target_properties(cirf PROPERTIES
+        C_STANDARD 99
+        C_STANDARD_REQUIRED ON
+    )
+
+    # Bring cirf_add_resources() into scope. CIRFAddResources.cmake
+    # is self-contained and looks up the `cirf` / `cirf_runtime` /
+    # `cirf_lib` targets by name — which we have just defined.
+    include(${PROMEKI_CIRF_DIR}/cmake/CIRFAddResources.cmake)
+
+    set(PROMEKI_CIRF_RUNTIME_TARGET cirf_runtime)
 endif()
 
 # --- Google Highway (SIMD, needed by CSC) ---
@@ -405,6 +480,7 @@ set(PROMEKI_HEADERS
     include/promeki/readwritelock.h
     include/promeki/rect.h
     include/promeki/regex.h
+    include/promeki/resource.h
     include/promeki/securemem.h
     include/promeki/set.h
     include/promeki/sha1.h
@@ -492,6 +568,7 @@ set(PROMEKI_SOURCES
     src/core/rational.cpp
     src/core/rect.cpp
     src/core/regex.cpp
+    src/core/resource.cpp
     src/core/set.cpp
     src/core/sha1.cpp
     src/core/sharedptr.cpp
@@ -753,6 +830,29 @@ else()
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/promeki/thirdparty>
     )
     target_link_libraries(promeki PRIVATE ${PROMEKI_VTC_TARGET})
+endif()
+
+# cirf is a purely internal implementation detail: resource.h
+# forward-declares the cirf types it exposes, so consumers of
+# libpromeki do not need cirf headers on their include path and
+# the cirf_runtime static archive does not need to participate
+# in the promeki export set. Both links stay PRIVATE.
+target_link_libraries(promeki PRIVATE ${PROMEKI_CIRF_RUNTIME_TARGET})
+
+# Built-in :/.PROMEKI/ resource set. cirf_add_resources() was brought
+# into scope above. The static library it creates is whole-archive
+# linked into promeki via the explicit reference to
+# &promeki_resources_root in builtinresources.cpp, which keeps the
+# .o (and therefore the resource data) reachable.
+if(PROMEKI_ENABLE_CIRF)
+    cirf_add_resources(promeki_resources
+        CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/res/resources.json
+        OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/promeki_resources)
+    target_link_libraries(promeki PRIVATE promeki_resources)
+    target_include_directories(promeki PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/promeki_resources)
+    target_compile_definitions(promeki PRIVATE PROMEKI_HAVE_BUILTIN_RESOURCES)
+    target_sources(promeki PRIVATE src/core/builtinresources.cpp)
 endif()
 
 target_link_libraries(promeki PUBLIC stdc++fs)
@@ -1111,6 +1211,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/readwritelock.cpp
         tests/rect.cpp
         tests/regex.cpp
+        tests/resource.cpp
         tests/result.cpp
         tests/securebuffer.cpp
         tests/set.cpp

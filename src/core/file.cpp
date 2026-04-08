@@ -6,6 +6,12 @@
  */
 
 #include <promeki/file.h>
+#include <promeki/resource.h>
+
+#include <cirf/types.h>
+
+#include <algorithm>
+#include <cstring>
 
 #if defined(PROMEKI_PLATFORM_WINDOWS)
 #include <Windows.h>
@@ -157,7 +163,7 @@ static int buildPosixFlags(IODevice::OpenMode mode, int fileFlags) {
 }
 
 bool File::isOpen() const {
-        return _handle != FileHandleClosedValue;
+        return _handle != FileHandleClosedValue || _resourceFile != nullptr;
 }
 
 Error File::open(OpenMode mode) {
@@ -166,6 +172,26 @@ Error File::open(OpenMode mode) {
 
 Error File::open(OpenMode mode, int fileFlags) {
         if(isOpen()) return Error(Error::AlreadyOpen);
+
+        // Resource paths (":/...") map to compiled-in cirf data and
+        // are served from memory. Only ReadOnly access is supported
+        // — there is no writable backing store. Direct-I/O / sync /
+        // non-blocking flags are silently ignored: the bytes are
+        // already in RAM, so they are meaningless here.
+        if(Resource::isResourcePath(_filename)) {
+                if(mode != ReadOnly) return Error(Error::ReadOnly);
+                _resourceFile = Resource::findFile(_filename);
+                if(_resourceFile == nullptr) return Error(Error::NotExist);
+                _resourcePos = 0;
+                _fileFlags = fileFlags;
+                setOpenMode(mode);
+                // The buffered read path would just copy bytes that
+                // are already in memory, so go unbuffered to keep
+                // resource reads truly zero-copy from .rodata.
+                setUnbuffered(true);
+                return Error();
+        }
+
         int posixFlags = buildPosixFlags(mode, fileFlags);
 
         // Apply current option state to open flags
@@ -188,9 +214,15 @@ Error File::open(OpenMode mode, int fileFlags) {
 Error File::close() {
         if(!isOpen()) return Error();
         aboutToCloseSignal.emit();
-        int ret = ::close(_handle);
-        Error err = (ret != 0) ? Error::syserr() : Error();
-        _handle = FileHandleClosedValue;
+        Error err;
+        if(_resourceFile != nullptr) {
+                _resourceFile = nullptr;
+                _resourcePos = 0;
+        } else {
+                int ret = ::close(_handle);
+                err = (ret != 0) ? Error::syserr() : Error();
+                _handle = FileHandleClosedValue;
+        }
         _fileFlags = NoFlags;
         setOpenMode(NotOpen);
         resetReadBuffer();
@@ -198,6 +230,10 @@ Error File::close() {
 }
 
 int64_t File::write(const void *data, int64_t maxSize) {
+        if(_resourceFile != nullptr) {
+                setError(Error(Error::ReadOnly));
+                return -1;
+        }
         if(!isOpen() || !isWritable()) return -1;
         ssize_t n = ::write(_handle, data, static_cast<size_t>(maxSize));
         if(n > 0) bytesWrittenSignal.emit(static_cast<int64_t>(n));
@@ -206,12 +242,25 @@ int64_t File::write(const void *data, int64_t maxSize) {
 }
 
 int64_t File::readFromDevice(void *data, int64_t maxSize) {
+        if(_resourceFile != nullptr) {
+                int64_t remaining =
+                        static_cast<int64_t>(_resourceFile->size) - _resourcePos;
+                if(remaining <= 0) return 0;
+                int64_t n = std::min<int64_t>(maxSize, remaining);
+                ::memcpy(data, _resourceFile->data + _resourcePos,
+                         static_cast<size_t>(n));
+                _resourcePos += n;
+                return n;
+        }
         ssize_t n = ::read(_handle, data, static_cast<size_t>(maxSize));
         if(n < 0) setError(Error::syserr());
         return static_cast<int64_t>(n);
 }
 
 int64_t File::deviceBytesAvailable() const {
+        if(_resourceFile != nullptr) {
+                return static_cast<int64_t>(_resourceFile->size) - _resourcePos;
+        }
         if(!isOpen()) return 0;
         int64_t cur = ::lseek64(_handle, 0, SEEK_CUR);
         int64_t end = ::lseek64(_handle, 0, SEEK_END);
@@ -227,12 +276,21 @@ bool File::isSequential() const {
 Error File::seek(int64_t offset) {
         if(!isOpen()) return Error(Error::NotOpen);
         resetReadBuffer();
+        if(_resourceFile != nullptr) {
+                if(offset < 0 ||
+                   offset > static_cast<int64_t>(_resourceFile->size)) {
+                        return Error(Error::IllegalSeek);
+                }
+                _resourcePos = offset;
+                return Error();
+        }
         off64_t result = ::lseek64(_handle, offset, SEEK_SET);
         if(result < 0) return Error::syserr();
         return Error();
 }
 
 int64_t File::pos() const {
+        if(_resourceFile != nullptr) return _resourcePos;
         if(!isOpen()) return 0;
         int64_t rawPos = ::lseek64(_handle, 0, SEEK_CUR);
         // Subtract any bytes that the read buffer has consumed from
@@ -242,6 +300,9 @@ int64_t File::pos() const {
 }
 
 Result<int64_t> File::size() const {
+        if(_resourceFile != nullptr) {
+                return makeResult<int64_t>(static_cast<int64_t>(_resourceFile->size));
+        }
         if(!isOpen()) return makeResult<int64_t>(0);
         struct stat64 st;
         if(::fstat64(_handle, &st) != 0) return makeError<int64_t>(Error::syserr());
@@ -255,6 +316,19 @@ bool File::atEnd() const {
 }
 
 Result<int64_t> File::seekFromCurrent(int64_t offset) const {
+        if(_resourceFile != nullptr) {
+                int64_t target = _resourcePos + offset;
+                if(target < 0 ||
+                   target > static_cast<int64_t>(_resourceFile->size)) {
+                        return makeError<int64_t>(Error::IllegalSeek);
+                }
+                // const_cast because _resourcePos is logically mutable
+                // for resource-mode lookups; the underlying class is
+                // not actually const-correct around its read cursor
+                // (matching the existing pattern with lseek above).
+                const_cast<File *>(this)->_resourcePos = target;
+                return makeResult<int64_t>(target);
+        }
         if(!isOpen()) return makeError<int64_t>(Error::NotOpen);
         int64_t result = ::lseek64(_handle, offset, SEEK_CUR);
         if(result < 0) return makeError<int64_t>(Error::syserr());
@@ -262,6 +336,15 @@ Result<int64_t> File::seekFromCurrent(int64_t offset) const {
 }
 
 Result<int64_t> File::seekFromEnd(int64_t offset) const {
+        if(_resourceFile != nullptr) {
+                int64_t target = static_cast<int64_t>(_resourceFile->size) + offset;
+                if(target < 0 ||
+                   target > static_cast<int64_t>(_resourceFile->size)) {
+                        return makeError<int64_t>(Error::IllegalSeek);
+                }
+                const_cast<File *>(this)->_resourcePos = target;
+                return makeResult<int64_t>(target);
+        }
         if(!isOpen()) return makeError<int64_t>(Error::NotOpen);
         int64_t result = ::lseek64(_handle, offset, SEEK_END);
         if(result < 0) return makeError<int64_t>(Error::syserr());
@@ -269,12 +352,17 @@ Result<int64_t> File::seekFromEnd(int64_t offset) const {
 }
 
 Error File::truncate(int64_t offset) const {
+        if(_resourceFile != nullptr) return Error(Error::ReadOnly);
         if(!isOpen()) return Error(Error::NotOpen);
         int val = ::ftruncate64(_handle, offset);
         return val == -1 ? Error::syserr() : Error();
 }
 
 int64_t File::writev(const IOVec *iov, int count) {
+        if(_resourceFile != nullptr) {
+                setError(Error(Error::ReadOnly));
+                return -1;
+        }
         if(!isOpen()) return -1;
         // Convert platform-neutral IOVec to POSIX iovec
         struct iovec posixIov[count];
@@ -292,6 +380,7 @@ int64_t File::writev(const IOVec *iov, int count) {
 }
 
 Error File::preallocate(int64_t offset, int64_t length) {
+        if(_resourceFile != nullptr) return Error(Error::ReadOnly);
         if(!isOpen()) return Error(Error::NotOpen);
         int ret = ::posix_fallocate(_handle, offset, length);
         if(ret != 0) return Error::syserr(ret);
@@ -299,6 +388,7 @@ Error File::preallocate(int64_t offset, int64_t length) {
 }
 
 Result<size_t> File::directIOAlignment() const {
+        if(_resourceFile != nullptr) return makeResult<size_t>(0);
         if(!isOpen()) return makeError<size_t>(Error::NotOpen);
         struct stat64 st;
         if(::fstat64(_handle, &st) != 0) return makeError<size_t>(Error::syserr());
@@ -326,6 +416,21 @@ Error File::readBulk(Buffer &buf, int64_t size) {
         if(!isOpen() || !isReadable()) return Error(Error::NotOpen);
         if(size <= 0) return Error(Error::InvalidArgument);
         if(!buf.isHostAccessible()) return Error(Error::NotHostAccessible);
+
+        // Resource-mode reads have no fd, no alignment requirement,
+        // and the bytes are already in RAM. Drop straight into a
+        // simple memcpy via readFromDevice() — no DIO trickery, no
+        // shiftData().
+        if(_resourceFile != nullptr) {
+                if(buf.allocSize() < static_cast<size_t>(size)) {
+                        return Error(Error::BufferTooSmall);
+                }
+                buf.shiftData(0);
+                int64_t n = readFromDevice(buf.data(), size);
+                if(n < 0) return Error::syserr();
+                buf.setSize(static_cast<size_t>(n));
+                return Error();
+        }
 
         int64_t fileOffset = pos();
         auto [align, alignErr] = directIOAlignment();
@@ -417,6 +522,10 @@ Error File::setDirectIO(bool enable) {
                 setUnbuffered(_savedUnbuffered);
         }
         _directIO = enable;
+        // Resource-mode files have no kernel fd to fcntl. Track the
+        // option flag (so isDirectIO() reports the user's setting)
+        // but skip the fcntl entirely.
+        if(_resourceFile != nullptr) return Error();
         if(isOpen()) {
                 int flags = ::fcntl(_handle, F_GETFL);
                 if(flags == -1) return Error::syserr();
@@ -428,6 +537,7 @@ Error File::setDirectIO(bool enable) {
 
 Error File::setSynchronous(bool enable) {
         _synchronous = enable;
+        if(_resourceFile != nullptr) return Error();
         if(isOpen()) {
                 int flags = ::fcntl(_handle, F_GETFL);
                 if(flags == -1) return Error::syserr();
@@ -439,6 +549,7 @@ Error File::setSynchronous(bool enable) {
 
 Error File::setNonBlocking(bool enable) {
         _nonBlocking = enable;
+        if(_resourceFile != nullptr) return Error();
         if(isOpen()) {
                 int flags = ::fcntl(_handle, F_GETFL);
                 if(flags == -1) return Error::syserr();

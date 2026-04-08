@@ -250,11 +250,8 @@ void VideoTestPattern::applyBurnFontConfig() const {
 }
 
 void VideoTestPattern::renderBurn(Image &img, const Timecode &tc) const {
-        if(_burnFontFilename.isEmpty()) {
-                promekiWarn("VideoTestPattern: burn enabled but no font filename set");
-                return;
-        }
-
+        // An empty _burnFontFilename is intentional: FastFont falls
+        // back to the library's bundled default font internally.
         // Build the text lines we'll actually draw.
         String tcLine;
         if(tc.isValid()) {

@@ -13,6 +13,7 @@
 #include <promeki/color.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
+#include <promeki/resource.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -37,6 +38,7 @@ bool TimecodeOverlayNode::parsePosition(const String &str, Position &out) {
 
 MediaNodeConfig TimecodeOverlayNode::defaultConfig() const {
         MediaNodeConfig cfg("TimecodeOverlayNode", "");
+        cfg.set("FontPath", String());
         cfg.set("FontSize", 36);
         cfg.set("Position", "bottomcenter");
         cfg.set("TextColor", Color::White);
@@ -52,7 +54,9 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
                 return result;
         }
 
-        // Read config
+        // Read config. FontPath is optional — an empty or unset value
+        // is passed through to FastFont, which falls back to the
+        // library's bundled default font internally.
         _fontPath = FilePath(config.get("FontPath", String()).get<String>());
         _fontSize = config.get("FontSize", 36).get<int>();
         _drawBackground = config.get("DrawBackground", true).get<bool>();
@@ -73,17 +77,26 @@ BuildResult TimecodeOverlayNode::build(const MediaNodeConfig &config) {
                 _customY = config.get("CustomY", 0).get<int>();
         }
 
-        // Validate font path
-        if(_fontPath.isEmpty()) {
-                result.addError("Font path is not set");
-                return result;
-        }
-        if(!_fontPath.exists()) {
-                result.addError("Font file does not exist: " + _fontPath.toString());
-                return result;
+        // Validate font path only when the caller supplied one.
+        // An empty path is valid: FastFont falls back to the
+        // library's bundled default font internally. When a path
+        // is given we still check that it exists, and since resource
+        // paths (":/...") never appear on the host filesystem we
+        // have to consult the resource registry separately.
+        if(!_fontPath.isEmpty()) {
+                const String fontPathStr = _fontPath.toString();
+                const bool isResource = Resource::isResourcePath(fontPathStr);
+                const bool found = isResource
+                        ? Resource::exists(fontPathStr)
+                        : _fontPath.exists();
+                if(!found) {
+                        result.addError("Font file does not exist: " + fontPathStr);
+                        return result;
+                }
         }
 
-        // Initialize FastFont
+        // Initialize FastFont (empty path is fine — FastFont uses the
+        // library default).
         _fastFont.setFontFilename(_fontPath.toString());
         _fastFont.setFontSize(_fontSize);
         _fastFont.setForegroundColor(_textColor);

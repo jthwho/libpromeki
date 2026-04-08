@@ -11,6 +11,7 @@
 #include FT_BITMAP_H
 
 #include <promeki/basicfont.h>
+#include <promeki/file.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -36,6 +37,10 @@ void BasicFont::releaseFont() {
                 FT_Done_FreeType(static_cast<FT_Library>(_ftLibrary));
                 _ftLibrary = nullptr;
         }
+        // Drop the font byte buffer only after the FT_Face is gone —
+        // FreeType holds a pointer into _fontData when using
+        // FT_New_Memory_Face, so the buffer must outlive the face.
+        _fontData = Buffer();
         _ascender = 0;
         _descender = 0;
         _lineHeight = 0;
@@ -46,6 +51,27 @@ bool BasicFont::ensureFontLoaded() {
 
         releaseFont();
 
+        // Load the font bytes through promeki::File so that resource
+        // paths (":/.PROMEKI/fonts/...") and ordinary filesystem paths
+        // both work uniformly. When _fontFilename is empty the base
+        // Font class hands us the bundled default via
+        // effectiveFilename(). The Buffer is stored on the BasicFont
+        // and outlives the FT_Face it backs.
+        const String path = effectiveFilename();
+        File f(path);
+        Error openErr = f.open(File::ReadOnly);
+        if(openErr.isError()) {
+                promekiErr("Could not open font '%s': %s",
+                        path.cstr(), openErr.name().cstr());
+                return false;
+        }
+        _fontData = f.readAll();
+        f.close();
+        if(!_fontData.isValid() || _fontData.size() == 0) {
+                promekiErr("Font '%s' is empty", path.cstr());
+                return false;
+        }
+
         FT_Library ft;
         if(FT_Init_FreeType(&ft)) {
                 promekiErr("Could not init FreeType library");
@@ -54,8 +80,11 @@ bool BasicFont::ensureFontLoaded() {
         _ftLibrary = ft;
 
         FT_Face face;
-        if(FT_New_Face(ft, _fontFilename.cstr(), 0, &face)) {
-                promekiErr("Could not open font '%s'", _fontFilename.cstr());
+        if(FT_New_Memory_Face(ft,
+                              static_cast<const FT_Byte *>(_fontData.data()),
+                              static_cast<FT_Long>(_fontData.size()),
+                              0, &face)) {
+                promekiErr("Could not parse font '%s'", path.cstr());
                 return false;
         }
         _ftFace = face;
@@ -96,7 +125,8 @@ bool BasicFont::drawText(const String &text, int x, int y) {
 
                 if(FT_Load_Char(face, c.codepoint(), FT_LOAD_RENDER)) {
                         promekiWarn("Could not load character 0x%X in '%s'",
-                                (unsigned int)c.codepoint(), _fontFilename.cstr());
+                                (unsigned int)c.codepoint(),
+                                effectiveFilename().cstr());
                         continue;
                 }
 

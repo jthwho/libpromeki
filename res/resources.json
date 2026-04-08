@@ -1,0 +1,19 @@
+{
+    "metadata": {
+        "library": "libpromeki",
+        "description": "Built-in compiled-in resources for libpromeki, exposed under :/.PROMEKI/"
+    },
+    "entries": [
+        {
+            "type": "folder",
+            "path": ".PROMEKI/fonts",
+            "entries": [
+                {
+                    "type": "file",
+                    "path": "FiraCodeNerdFontMono-Regular.ttf",
+                    "source": "./.PROMEKI/fonts/FiraCodeNerdFontMono-Regular.ttf"
+                }
+            ]
+        }
+    ]
+}

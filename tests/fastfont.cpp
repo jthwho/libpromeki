@@ -14,10 +14,16 @@
 
 using namespace promeki;
 
-static const String testFontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
-
+// Probes the library's bundled default font by asking a freshly
+// constructed FastFont (with no explicit filename set) whether it
+// can measure a character. When the library is built without the
+// compiled-in resource filesystem the default load will fail and
+// the dependent tests skip themselves.
 static bool fontAvailable() {
-        return FilePath(testFontPath).exists();
+        Image img(16, 16, PixelDesc::RGB8_sRGB);
+        FastFont probe(img.createPaintEngine());
+        probe.setFontSize(12);
+        return probe.measureText("A") > 0;
 }
 
 // ============================================================================
@@ -28,11 +34,20 @@ TEST_CASE("FastFont: construction with default PaintEngine") {
         FastFont ff{PaintEngine()};
         CHECK(ff.fontFilename().isEmpty());
         CHECK(ff.fontSize() == 12);
-        CHECK(ff.lineHeight() == 0);
-        CHECK(ff.ascender() == 0);
-        CHECK(ff.descender() == 0);
         CHECK_FALSE(ff.kerningEnabled());
+        // isValid() is false here because the default PaintEngine
+        // has no pixel format — not because the filename is empty.
+        // An empty filename is valid and resolves to the library's
+        // bundled default font at load time.
         CHECK_FALSE(ff.isValid());
+        // lineHeight/ascender/descender lazily trigger font loading
+        // against the bundled default, so they come back populated
+        // even without an explicit PaintEngine.
+        if(fontAvailable()) {
+                CHECK(ff.lineHeight() > 0);
+                CHECK(ff.ascender() > 0);
+                CHECK(ff.descender() > 0);
+        }
 }
 
 TEST_CASE("FastFont: construction with real PaintEngine") {
@@ -40,7 +55,10 @@ TEST_CASE("FastFont: construction with real PaintEngine") {
         FastFont ff(img.createPaintEngine());
         CHECK(ff.fontFilename().isEmpty());
         CHECK(ff.fontSize() == 12);
-        CHECK_FALSE(ff.isValid());
+        // A real PaintEngine + positive font size + empty filename
+        // is valid: empty filename resolves to the bundled default
+        // internally.
+        CHECK(ff.isValid());
 }
 
 // ============================================================================
@@ -72,33 +90,54 @@ TEST_CASE("FastFont: setFontSize same value no-op") {
         CHECK(ff.fontSize() == 12);
 }
 
-TEST_CASE("FastFont: isValid requires all properties") {
+TEST_CASE("FastFont: isValid requires paint engine and positive size") {
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        CHECK_FALSE(ff.isValid());
-
-        ff.setFontFilename(testFontPath);
+        // Empty filename is OK — effectiveFilename() falls back to
+        // the bundled default internally.
         CHECK(ff.isValid());
 
+        // A zero font size is still invalid.
         ff.setFontSize(0);
         CHECK_FALSE(ff.isValid());
 }
 
 // ============================================================================
-// drawText / measureText without font loaded
+// Default font (empty filename → library's bundled default)
 // ============================================================================
 
-TEST_CASE("FastFont: drawText fails without font") {
-        Image img(64, 64, PixelDesc::RGB8_sRGB);
+TEST_CASE("FastFont: drawText works without explicit filename") {
+        if(!fontAvailable()) return;
+
+        Image img(256, 64, PixelDesc::RGB8_sRGB);
+        img.fill(0);
         FastFont ff(img.createPaintEngine());
-        CHECK_FALSE(ff.drawText("test", 0, 0));
+        // Intentionally no setFontFilename() — exercise the
+        // library's bundled default font.
+        ff.setFontSize(24);
+        ff.setForegroundColor(Color::White);
+        ff.setBackgroundColor(Color::Black);
+        CHECK(ff.drawText("default", 10, 40));
+
+        const uint8_t *data = static_cast<const uint8_t *>(img.data());
+        size_t total = img.lineStride() * img.height();
+        uint64_t sum = 0;
+        for(size_t i = 0; i < total; i++) sum += data[i];
+        CHECK(sum > 0);
 }
 
-TEST_CASE("FastFont: measureText returns 0 without font") {
+TEST_CASE("FastFont: measureText works without explicit filename") {
+        if(!fontAvailable()) return;
+
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        CHECK(ff.measureText("test") == 0);
+        ff.setFontSize(24);
+        CHECK(ff.measureText("A") > 0);
 }
+
+// ============================================================================
+// Bad font path
+// ============================================================================
 
 TEST_CASE("FastFont: drawText fails with bad font path") {
         Image img(64, 64, PixelDesc::RGB8_sRGB);
@@ -123,7 +162,6 @@ TEST_CASE("FastFont: font metrics after loading") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         // Trigger font loading via measureText
@@ -144,7 +182,6 @@ TEST_CASE("FastFont: measureText empty string") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         CHECK(ff.measureText("") == 0);
@@ -155,7 +192,6 @@ TEST_CASE("FastFont: measureText single character") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         int w = ff.measureText("A");
@@ -167,7 +203,6 @@ TEST_CASE("FastFont: measureText longer string is wider") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         int w1 = ff.measureText("A");
@@ -180,7 +215,6 @@ TEST_CASE("FastFont: measureText monospace characters same width") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         // Fira Code is monospace, so all characters should be same width
@@ -201,7 +235,6 @@ TEST_CASE("FastFont: drawText renders pixels") {
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         img.fill(128);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
         ff.setForegroundColor(Color::White);
         ff.setBackgroundColor(Color::Black);
@@ -226,8 +259,7 @@ TEST_CASE("FastFont: drawText with different colors") {
                 Image img(256, 64, PixelDesc::RGB8_sRGB);
                 img.fill(0);
                 FastFont ff(img.createPaintEngine());
-                ff.setFontFilename(testFontPath);
-                ff.setFontSize(24);
+                        ff.setFontSize(24);
                 ff.setForegroundColor(fg);
                 ff.setBackgroundColor(bg);
                 ff.drawText("ABC", 10, 40);
@@ -253,7 +285,6 @@ TEST_CASE("FastFont: drawText on RGBA8") {
         Image img(256, 64, PixelDesc::RGBA8_sRGB);
         img.fill(0);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
         ff.setForegroundColor(Color::White);
         ff.setBackgroundColor(Color::Black);
@@ -277,7 +308,6 @@ TEST_CASE("FastFont: changing font size invalidates cache") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(12);
 
         int w12 = ff.measureText("ABC");
@@ -295,7 +325,6 @@ TEST_CASE("FastFont: changing font filename invalidates cache") {
 
         Image img(256, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         int w = ff.measureText("ABC");
@@ -313,7 +342,6 @@ TEST_CASE("FastFont: setPaintEngine same pixel format preserves cache") {
         Image img1(256, 64, PixelDesc::RGB8_sRGB);
         Image img2(256, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img1.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
 
         // Load font and cache glyphs
@@ -340,7 +368,6 @@ TEST_CASE("FastFont: deferred PaintEngine on RGB8") {
 
         // Construct with no-op PaintEngine, configure, then switch
         FastFont ff{PaintEngine()};
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
         ff.setForegroundColor(Color::White);
         ff.setBackgroundColor(Color::Black);
@@ -365,7 +392,6 @@ TEST_CASE("FastFont: deferred PaintEngine on RGBA8") {
         img.fill(128);
 
         FastFont ff{PaintEngine()};
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(24);
         ff.setForegroundColor(Color::White);
         ff.setBackgroundColor(Color::Black);
@@ -390,13 +416,11 @@ TEST_CASE("FastFont: deferred PaintEngine measures correctly") {
 
         // Direct construction for reference
         FastFont direct(img.createPaintEngine());
-        direct.setFontFilename(testFontPath);
         direct.setFontSize(24);
         int wDirect = direct.measureText("ABC");
 
         // Deferred pattern
         FastFont deferred{PaintEngine()};
-        deferred.setFontFilename(testFontPath);
         deferred.setFontSize(24);
         deferred.setPaintEngine(img.createPaintEngine());
         int wDeferred = deferred.measureText("ABC");
@@ -416,7 +440,6 @@ TEST_CASE("FastFont: drawText at bottom of large RGBA8 image") {
         img.fill(128);
 
         FastFont ff{PaintEngine()};
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(48);
         ff.setForegroundColor(Color::White);
         ff.setBackgroundColor(Color::Black);
@@ -449,7 +472,6 @@ TEST_CASE("FastFont: drawText at bottom of large RGB8 image") {
         img.fill(128);
 
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(48);
         ff.setForegroundColor(Color::White);
         ff.setBackgroundColor(Color::Black);
@@ -481,7 +503,6 @@ TEST_CASE("FastFont: lineHeight equals ascender plus descender") {
 
         Image img(64, 64, PixelDesc::RGB8_sRGB);
         FastFont ff(img.createPaintEngine());
-        ff.setFontFilename(testFontPath);
         ff.setFontSize(48);
 
         // Trigger lazy loading
@@ -496,12 +517,10 @@ TEST_CASE("FastFont: metrics scale with font size") {
         Image img(64, 64, PixelDesc::RGB8_sRGB);
 
         FastFont small(img.createPaintEngine());
-        small.setFontFilename(testFontPath);
         small.setFontSize(12);
         small.measureText("A");
 
         FastFont large(img.createPaintEngine());
-        large.setFontFilename(testFontPath);
         large.setFontSize(48);
         large.measureText("A");
 
@@ -517,12 +536,10 @@ TEST_CASE("FastFont: metrics match between deferred and direct construction") {
         PaintEngine pe = img.createPaintEngine();
 
         FastFont direct(pe);
-        direct.setFontFilename(testFontPath);
         direct.setFontSize(48);
         direct.measureText("A");
 
         FastFont deferred{PaintEngine()};
-        deferred.setFontFilename(testFontPath);
         deferred.setFontSize(48);
         deferred.setPaintEngine(pe);
         deferred.measureText("A");

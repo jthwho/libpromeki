@@ -28,8 +28,6 @@
 
 using namespace promeki;
 
-static const String fontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
-
 // Draw centered text, returns the Y advance for the next line.
 static int drawCenteredText(BasicFont &font, const String &text, int cx, int y) {
         int tw = font.measureText(text);
@@ -129,7 +127,6 @@ static Image buildTestImage(size_t w, size_t h) {
         pe.fillRect(black, Rect<int32_t>(0, textY - 4, iw, ih - textY + 4));
 
         BasicFont font(pe);
-        font.setFontFilename(fontPath);
 
         // "Red  Green  Blue" in their respective colors
         font.setFontSize(36);

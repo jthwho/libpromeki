@@ -6,6 +6,9 @@
  */
 
 #include <promeki/fileiodevice.h>
+#include <promeki/resource.h>
+
+#include <cirf/runtime.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -80,6 +83,19 @@ FILE *FileIODevice::takeFile() {
 Error FileIODevice::open(OpenMode mode) {
         if(isOpen()) return Error(Error::AlreadyOpen);
         if(_filename.isEmpty()) return Error(Error::Invalid);
+
+        // Resource paths (":/...") are served from compiled-in cirf
+        // data via cirf_fopen() which wraps the bytes in a memory
+        // FILE* (POSIX fmemopen). Only ReadOnly is supported.
+        if(Resource::isResourcePath(_filename)) {
+                if(mode != ReadOnly) return Error(Error::ReadOnly);
+                String virt = Resource::stripPrefix(_filename);
+                _file = cirf_resolve_fopen(virt.cstr());
+                if(_file == nullptr) return Error(Error::NotExist);
+                _ownsFile = true;
+                setOpenMode(mode);
+                return Error();
+        }
 
         const char *fmode = nullptr;
         switch(mode) {

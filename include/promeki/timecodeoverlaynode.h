@@ -24,7 +24,9 @@ PROMEKI_NAMESPACE_BEGIN
  * the image buffer. Optionally renders additional custom text.
  *
  * @par Config options
- * - `FontPath` (String): Path to a TrueType font file (required).
+ * - `FontPath` (String): Path to a TrueType font file. May be either
+ *   a filesystem path or a @c ":/..." resource path. Optional —
+ *   when empty or unset, the library's bundled default font is used.
  * - `FontSize` (int): Font size in points (default: 36).
  * - `Position` (String): Position preset (default: "bottomcenter").
  *   Values: topleft, topcenter, topright, bottomleft, bottomcenter, bottomright.
