@@ -30,6 +30,33 @@ class NumName {
                  */
                 static NumName parse(const String &str, int *val = nullptr);
 
+                /**
+                 * @brief Parses a mask pattern into a NumName.
+                 *
+                 * Accepts either hash-style (@c "seq_####.dpx", @c "seq_#.dpx")
+                 * or printf-style (@c "seq_%04d.dpx", @c "seq_%d.dpx") patterns.
+                 *
+                 * Hash and printf styles are equivalent:
+                 * - @c "#"       == @c "%d"    → non-padded, 1-digit
+                 * - @c "####"    == @c "%04d"  → padded, 4-digit
+                 * - @c "#####"   == @c "%05d"  → padded, 5-digit
+                 *
+                 * Note that in the @c #-style a single @c # is non-padded
+                 * (the number of @c # characters only constrains padding
+                 * width, not the minimum digit count), which matches
+                 * @c %d (non-padded).  Multiple @c # characters indicate
+                 * zero-padded output (like @c %0Nd).
+                 *
+                 * Only the first token encountered (scanning from the left)
+                 * is treated as the number placeholder; any other numeric
+                 * runs in the prefix/suffix are left as literal text.
+                 *
+                 * @param mask The mask string to parse.
+                 * @return A NumName matching the mask, or an invalid NumName if
+                 *         the mask contains no recognized placeholder.
+                 */
+                static NumName fromMask(const String &mask);
+
                 /** @brief Constructs an invalid (empty) NumName. */
                 NumName() = default;
 

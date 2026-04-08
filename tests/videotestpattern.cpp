@@ -175,6 +175,48 @@ TEST_CASE("VideoTestPattern_FromStringInvalid") {
         CHECK(err.isError());
 }
 
+// ============================================================================
+// BurnPosition string round-trip — covers all positions including BurnCenter
+// ============================================================================
+
+TEST_CASE("VideoTestPattern_BurnPositionRoundTrip") {
+        using VP = VideoTestPattern;
+        struct Case { VP::BurnPosition pos; const char *name; };
+        Case cases[] = {
+                { VP::BurnTopLeft,      "topleft"      },
+                { VP::BurnTopCenter,    "topcenter"    },
+                { VP::BurnTopRight,     "topright"     },
+                { VP::BurnBottomLeft,   "bottomleft"   },
+                { VP::BurnBottomCenter, "bottomcenter" },
+                { VP::BurnBottomRight,  "bottomright"  },
+                { VP::BurnCenter,       "center"       },
+        };
+
+        for(auto &c : cases) {
+                // toString produces the expected lowercase name
+                CHECK(VP::burnPositionToString(c.pos) == String(c.name));
+
+                // fromString recovers the original enum value
+                auto [pos, err] = VP::burnPositionFromString(String(c.name));
+                CHECK(err.isOk());
+                CHECK(pos == c.pos);
+        }
+}
+
+TEST_CASE("VideoTestPattern_BurnPositionFromStringInvalid") {
+        auto [pos, err] = VideoTestPattern::burnPositionFromString("bogus");
+        CHECK(err.isError());
+}
+
+// ============================================================================
+// BurnCenter enum value is stable at 6
+// ============================================================================
+
+TEST_CASE("VideoTestPattern_BurnCenterValue") {
+        // Value 6 must not change; enums.h BurnPosition::Center relies on it.
+        CHECK(static_cast<int>(VideoTestPattern::BurnCenter) == 6);
+}
+
 #include <promeki/timecode.h>
 
 static bool imagePixelMatches(const Image &img, uint8_t r, uint8_t g, uint8_t b) {

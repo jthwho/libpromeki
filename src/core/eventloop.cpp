@@ -97,16 +97,39 @@ void EventLoop::processEvents(uint32_t flags, unsigned int timeoutMs) {
 
 void EventLoop::quit(int returnCode) {
         _queue.push(Item{QuitItem{returnCode}});
+        notifyWake();
         return;
 }
 
 void EventLoop::postCallable(std::function<void()> func) {
         _queue.push(Item{CallableItem{std::move(func)}});
+        notifyWake();
         return;
 }
 
 void EventLoop::postEvent(ObjectBase *receiver, Event *event) {
         _queue.push(Item{EventItem{receiver, event}});
+        notifyWake();
+        return;
+}
+
+void EventLoop::setWakeCallback(std::function<void()> cb) {
+        Mutex::Locker lock(_wakeMutex);
+        _wakeCallback = std::move(cb);
+        return;
+}
+
+void EventLoop::notifyWake() {
+        // Grab a local copy so we can invoke outside the lock.  The
+        // wake callback pushes an SDL event (or similar) which is
+        // cheap but shouldn't be held under the wake mutex in case
+        // some future callback grows teeth.
+        std::function<void()> cb;
+        {
+                Mutex::Locker lock(_wakeMutex);
+                cb = _wakeCallback;
+        }
+        if(cb) cb();
         return;
 }
 

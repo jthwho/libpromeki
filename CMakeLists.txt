@@ -357,6 +357,8 @@ set(PROMEKI_HEADERS
     include/promeki/dir.h
     include/promeki/duration.h
     include/promeki/elapsedtimer.h
+    include/promeki/enum.h
+    include/promeki/enums.h
     include/promeki/env.h
     include/promeki/error.h
     include/promeki/event.h
@@ -453,6 +455,7 @@ set(PROMEKI_SOURCES
     src/core/datetime.cpp
     src/core/dir.cpp
     src/core/duration.cpp
+    src/core/enum.cpp
     src/core/env.cpp
     src/core/error.cpp
     src/core/event.cpp
@@ -574,6 +577,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagedesc.h
         include/promeki/imagefile.h
         include/promeki/imagefileio.h
+        include/promeki/imgseq.h
         include/promeki/jpegimagecodec.h
         include/promeki/jpegencodernode.h
         include/promeki/ltcdecoder.h
@@ -612,6 +616,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagedesc.cpp
         src/proav/imagefile.cpp
         src/proav/imagefileio.cpp
+        src/proav/imgseq.cpp
         src/proav/imagefileio_rawyuv.cpp
         src/proav/imagefileio_dpx.cpp
         src/proav/imagefileio_cin.cpp
@@ -1060,6 +1065,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/dir.cpp
         tests/duration.cpp
         tests/elapsedtimer.cpp
+        tests/enum.cpp
         tests/env.cpp
         tests/error.cpp
         tests/event.cpp
@@ -1178,6 +1184,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/imagefileio_tga.cpp
             tests/imagefileio_sgi.cpp
             tests/imagefileio_pnm.cpp
+            tests/imgseq.cpp
             tests/jpegimagecodec.cpp
             tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp

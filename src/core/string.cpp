@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <limits>
 #include <map>
+#include <type_traits>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/error.h>
@@ -46,25 +47,43 @@ static String num(T val,
         bool isNegative = false;
         bool isPaddingNegative = false;
 
-        if(val < 0) {
-                isNegative = true;
-                val = -val;
+        // Compute the absolute value in the corresponding unsigned type.
+        // Naively doing "val = -val" is UB for INT_MIN of the signed type
+        // (e.g. int8_t(-128)), so we negate in unsigned space instead.
+        using UT = std::make_unsigned_t<T>;
+        UT uval;
+        if constexpr (std::is_signed_v<T>) {
+                if(val < 0) {
+                        isNegative = true;
+                        uval = static_cast<UT>(0) - static_cast<UT>(val);
+                } else {
+                        uval = static_cast<UT>(val);
+                }
+        } else {
+                uval = val;
         }
+
         if(padding < 0) {
                 isPaddingNegative = true;
                 padding = -padding;
         }
 
         int index = 0;
-        if(val == 0) {
+        if(uval == 0) {
                 buf[index++] = '0';
         } else {
-                T remainder;
-                while(val > 0) {
-                        T r = val % base;
+                UT ubase = static_cast<UT>(base);
+                while(uval > 0) {
+                        UT r = uval % ubase;
                         buf[index++] = digits[r];
-                        val /= base;
+                        uval /= ubase;
                 }
+        }
+        // Emit the minus sign for negatives.  Digits are being built in
+        // reverse order, so appending here places the '-' at the start of
+        // the final string after the reversal step below.
+        if(isNegative) {
+                buf[index++] = '-';
         }
         int digitEnd = index;
 

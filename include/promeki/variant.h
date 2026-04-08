@@ -26,6 +26,7 @@
 #include <promeki/memspace.h>
 #include <promeki/pixelformat.h>
 #include <promeki/pixeldesc.h>
+#include <promeki/enum.h>
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -71,6 +72,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeMemSpace  | `MemSpace`          |
  * | TypePixelFormat | `PixelFormat`     |
  * | TypePixelDesc | `PixelDesc`         |
+ * | TypeEnum      | `Enum`              |
  */
 #define PROMEKI_VARIANT_TYPES           \
         X(TypeInvalid, std::monostate)  \
@@ -98,7 +100,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeColorModel, ColorModel)   \
         X(TypeMemSpace, MemSpace)       \
         X(TypePixelFormat, PixelFormat) \
-        X(TypePixelDesc, PixelDesc)
+        X(TypePixelDesc, PixelDesc)     \
+        X(TypeEnum, Enum)
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
@@ -252,6 +255,7 @@ template <typename... Types> class VariantImpl {
                                                 std::is_floating_point<From>::value) return promekiConvert<To>(arg, err);
                                         if constexpr (std::is_same_v<From, String>) return arg.template to<To>(err);
                                         if constexpr (detail::is_type_registry_v<From>) return static_cast<To>(arg.id());
+                                        if constexpr (std::is_same_v<From, Enum>) return static_cast<To>(arg.value());
 
                                 } else if constexpr (std::is_same_v<To, float>) {
                                         if constexpr (std::is_same_v<From, bool>) return !!arg;
@@ -331,6 +335,21 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, String>) return PixelDesc::lookup(arg);
                                         if constexpr (std::is_integral<From>::value) return PixelDesc(static_cast<PixelDesc::ID>(arg));
 
+                                } else if constexpr (std::is_same_v<To, Enum>) {
+                                        // Only String->Enum is supported; integer->Enum is intentionally
+                                        // disallowed because an Enum needs its type context, which a bare
+                                        // integer does not carry.  The consumer of the Variant must build
+                                        // the Enum themselves when they know the intended type.
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                Error e;
+                                                Enum ret = Enum::lookup(arg, &e);
+                                                if(e.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return Enum();
+                                                }
+                                                return ret;
+                                        }
+
                                 } else if constexpr (std::is_same_v<To, String>) {
                                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -353,6 +372,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
                                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
                                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
+                                        if constexpr (std::is_same_v<From, Enum>) return arg.toString();
 
                                 }
                                 if(err != nullptr) *err = Error::Invalid;
@@ -396,10 +416,135 @@ template <typename... Types> class VariantImpl {
                                 case TypeMemSpace:
                                 case TypePixelFormat:
                                 case TypePixelDesc:
+                                case TypeEnum:
                                         return get<String>();
                                         break;
                         }
                         return *this;
+                }
+
+                /**
+                 * @brief Resolves the stored value to an Enum of the given type.
+                 *
+                 * Unlike @c get<Enum>(), which has no context about the
+                 * intended enum kind and therefore requires a fully qualified
+                 * @c "TypeName::ValueName" string, this method takes a target
+                 * @ref Enum::Type handle and uses it to resolve several more
+                 * flexible forms.  Accepted inputs:
+                 *
+                 * - @c TypeInvalid (default-constructed / missing config
+                 *   key) → returns @c Enum(enumType), i.e. the type's
+                 *   registered default value, with @c Error::Ok.  This
+                 *   makes the registered default double as the config
+                 *   fallback so callers don't need to repeat it.
+                 * - @c TypeEnum holding an @ref Enum of @p enumType → returned
+                 *   directly.
+                 * - @c TypeEnum holding an @ref Enum of a @em different type
+                 *   → error, returns an invalid @ref Enum.
+                 * - @c TypeString @c "TypeName::ValueName" (qualified) →
+                 *   parsed via @ref Enum::lookup; must match @p enumType.
+                 * - @c TypeString @c "ValueName" (unqualified) → resolved by
+                 *   name against @p enumType.
+                 * - @c TypeString decimal integer (e.g. @c "100", @c "-1")
+                 *   → wrapped as @c Enum(enumType, int).  The result may be
+                 *   out-of-list but is still valid and round-trippable.
+                 * - Any integer @c Type (bool/u8..s64) → wrapped as
+                 *   @c Enum(enumType, int).
+                 * - Anything else → error, returns an invalid @ref Enum.
+                 *
+                 * This is the canonical way to pull a typed Enum out of a
+                 * config value that may have been authored as a string,
+                 * an integer, or a typed Enum.
+                 *
+                 * @par Example
+                 * @code
+                 * Variant v = cfg.get(ConfigVideoPattern);
+                 * Error err;
+                 * Enum pat = v.asEnum(VideoPattern::Type, &err);
+                 * if(err.isError() || !pat.isValid()) pat = VideoPattern::ColorBars;
+                 * @endcode
+                 *
+                 * @param enumType  Target @ref Enum type handle.
+                 * @param err       Optional error output; set to
+                 *                  @c Error::InvalidArgument if @p enumType
+                 *                  is invalid, @c Error::Invalid on any
+                 *                  other conversion failure, or
+                 *                  @c Error::Ok on success.
+                 * @return The converted @ref Enum, or a default-constructed
+                 *         (invalid) @ref Enum on failure.
+                 */
+                Enum asEnum(Enum::Type enumType, Error *err = nullptr) const {
+                        if(!enumType.isValid()) {
+                                if(err != nullptr) *err = Error::InvalidArgument;
+                                return Enum();
+                        }
+                        auto setOk = [err]() { if(err != nullptr) *err = Error::Ok; };
+                        auto setErr = [err]() { if(err != nullptr) *err = Error::Invalid; };
+                        switch(type()) {
+                                case TypeInvalid:
+                                        setOk();
+                                        return Enum(enumType);
+                                case TypeEnum: {
+                                        Enum e = get<Enum>();
+                                        if(e.type() != enumType) {
+                                                setErr();
+                                                return Enum();
+                                        }
+                                        setOk();
+                                        return e;
+                                }
+                                case TypeString: {
+                                        String s = get<String>();
+                                        // Qualified "TypeName::ValueName"?
+                                        if(s.contains("::")) {
+                                                Error parseErr;
+                                                Enum e = Enum::lookup(s, &parseErr);
+                                                if(parseErr.isOk() && e.type() == enumType) {
+                                                        setOk();
+                                                        return e;
+                                                }
+                                                setErr();
+                                                return Enum();
+                                        }
+                                        // Unqualified value name against the target type.
+                                        Enum byName(enumType, s);
+                                        if(byName.hasListedValue()) {
+                                                setOk();
+                                                return byName;
+                                        }
+                                        // Last resort: signed decimal integer.
+                                        Error intErr;
+                                        int iv = s.template to<int>(&intErr);
+                                        if(intErr.isOk()) {
+                                                setOk();
+                                                return Enum(enumType, iv);
+                                        }
+                                        setErr();
+                                        return Enum();
+                                }
+                                case TypeBool:
+                                case TypeU8:
+                                case TypeS8:
+                                case TypeU16:
+                                case TypeS16:
+                                case TypeU32:
+                                case TypeS32:
+                                case TypeU64:
+                                case TypeS64: {
+                                        Error ge;
+                                        int iv = get<int32_t>(&ge);
+                                        if(ge.isError()) {
+                                                setErr();
+                                                return Enum();
+                                        }
+                                        setOk();
+                                        return Enum(enumType, iv);
+                                }
+                                default:
+                                        break;
+                        }
+                        setErr();
+                        return Enum();
                 }
 
                 /**

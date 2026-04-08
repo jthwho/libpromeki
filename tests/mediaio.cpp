@@ -8,12 +8,18 @@
 #include <doctest/doctest.h>
 #include <promeki/mediaio.h>
 #include <promeki/mediaiotask_tpg.h>
+#include <promeki/mediaiotask_imagefile.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
 #include <promeki/timecode.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/framerate.h>
+#include <promeki/dir.h>
+#include <promeki/imgseq.h>
+#include <promeki/file.h>
+#include <promeki/metadata.h>
+#include <promeki/enums.h>
 
 using namespace promeki;
 
@@ -78,7 +84,8 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         CHECK(cfg.getAs<Size2Du32>(MediaIOTask_TPG::ConfigVideoSize)
               == Size2Du32(1920, 1080));
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigAudioEnabled) == false);
-        CHECK(cfg.getAs<String>(MediaIOTask_TPG::ConfigAudioMode) == "tone");
+        CHECK(cfg.get(MediaIOTask_TPG::ConfigAudioMode)
+                .asEnum(AudioPattern::Type) == AudioPattern::Tone);
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeEnabled) == true);
         CHECK(cfg.getAs<String>(MediaIOTask_TPG::ConfigTimecodeStart) == "01:00:00:00");
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeDropFrame) == false);
@@ -109,9 +116,9 @@ TEST_CASE("MediaIO_TPG_FullGeneration") {
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
         cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(320, 240));
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "colorbars");
+        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::ColorBars);
         cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, "tone");
+        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Tone);
         cfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
         cfg.set(MediaIOTask_TPG::ConfigTimecodeStart, "01:00:00:00");
 
@@ -176,7 +183,7 @@ TEST_CASE("MediaIO_TPG_VideoOnly") {
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_25));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
         cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(64, 64));
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "ramp");
+        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::Ramp);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -205,7 +212,7 @@ TEST_CASE("MediaIO_TPG_AudioOnly") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
         cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, "silence");
+        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Silence);
         cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 4);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -235,7 +242,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_29_97_48k") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
         cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, "silence");
+        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Silence);
         cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
         cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 2);
 
@@ -266,7 +273,7 @@ TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
         cfg.set(MediaIO::ConfigType, "TPG");
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
         cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, "silence");
+        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Silence);
         cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
         cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 2);
 
@@ -412,7 +419,7 @@ TEST_CASE("MediaIO_TPG_Motion") {
         cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
         cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
         cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(64, 64));
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "colorbars");
+        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::ColorBars);
         cfg.set(MediaIOTask_TPG::ConfigVideoMotion, 2.0);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -1296,6 +1303,553 @@ TEST_CASE("MediaIO_ImageFile_FrameCountAfterClose") {
                 io->close();
                 CHECK(io->frameCount() == 0);
                 CHECK(io->currentFrame() == 0);
+                delete io;
+        }
+        std::remove(fn);
+}
+
+// ============================================================================
+// MediaIO_ImageFile sequence tests
+// ============================================================================
+
+// Small helper that creates an image-sequence test scratch directory
+// with a set of DPX files spanning a given head..tail range.  Returns
+// the path of the created directory (must be removed by the caller).
+static FilePath makeImageSequenceDir(const String &subdir,
+                                     const String &prefix,
+                                     int head,
+                                     int tail,
+                                     int digits = 4) {
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / subdir;
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        for(int i = head; i <= tail; i++) {
+                char buf[64];
+                std::snprintf(buf, sizeof(buf), "%s%0*d.dpx",
+                              prefix.cstr(), digits, i);
+                FilePath fp = dir / String(buf);
+
+                Image src(16, 8, PixelDesc::RGB8_sRGB);
+                REQUIRE(src.isValid());
+                // Fill with a frame-number-dependent pattern so we can
+                // verify which frame was read.
+                uint8_t *data = static_cast<uint8_t *>(src.data(0));
+                size_t bytes = src.pixelDesc().pixelFormat().planeSize(
+                        0, src.width(), src.height());
+                for(size_t b = 0; b < bytes; b++) {
+                        data[b] = static_cast<uint8_t>((b + i * 13) & 0xFF);
+                }
+
+                MediaIO *io = MediaIO::createForFileWrite(fp.toString());
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
+                REQUIRE(io->writeFrame(wf).isOk());
+                io->close();
+                delete io;
+        }
+
+        return dir;
+}
+
+TEST_CASE("MediaIO_ImageSequence_ReadBasic") {
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_read_basic",
+                                            "frame_", 1, 5);
+        String mask = (dir / "frame_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        CHECK(io->canSeek());
+        CHECK(io->frameCount() == 5);
+        CHECK(io->step() == 1);  // sequences default to step=1
+
+        for(int i = 0; i < 5; i++) {
+                Frame::Ptr f;
+                CHECK(io->readFrame(f).isOk());
+                REQUIRE(f.isValid());
+                REQUIRE(f->imageList().size() == 1);
+        }
+
+        // After reading all frames, next read is EOF.
+        Frame::Ptr eof;
+        CHECK(io->readFrame(eof) == Error::EndOfFile);
+
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_ReadPrintfMask") {
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_printf",
+                                            "shot_", 10, 14);
+        String mask = (dir / "shot_%04d.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        CHECK(io->frameCount() == 5);
+        CHECK(io->canSeek());
+
+        Frame::Ptr f;
+        CHECK(io->readFrame(f).isOk());
+        REQUIRE(f.isValid());
+
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_HeadTailDetection") {
+        // Files numbered 100..105 — head/tail should reflect the actual range.
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_detect",
+                                            "render.", 100, 105);
+        String mask = (dir / "render.####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+        CHECK(io->frameCount() == 6);
+        io->close();
+        delete io;
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_Seek") {
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_seek",
+                                            "fr_", 1, 10);
+        String mask = (dir / "fr_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->canSeek());
+        CHECK(io->frameCount() == 10);
+
+        CHECK(io->seekToFrame(4).isOk());
+        Frame::Ptr f;
+        CHECK(io->readFrame(f).isOk());
+        REQUIRE(f.isValid());
+
+        // Seek back to start, read again.
+        CHECK(io->seekToFrame(0).isOk());
+        Frame::Ptr g;
+        CHECK(io->readFrame(g).isOk());
+
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_Reverse") {
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_reverse",
+                                            "rv_", 1, 5);
+        String mask = (dir / "rv_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        // Seek to the last frame then play in reverse.
+        CHECK(io->seekToFrame(4).isOk());
+        io->setStep(-1);
+
+        int ok = 0;
+        for(int i = 0; i < 10; i++) {
+                Frame::Ptr f;
+                Error err = io->readFrame(f);
+                if(err == Error::EndOfFile) break;
+                if(err.isOk()) ok++;
+        }
+        // 5 frames available when playing backwards from the tail
+        CHECK(ok == 5);
+
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_WriteBasic") {
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_write_basic";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "out_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileWrite(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Writer).isOk());
+
+        for(int i = 0; i < 4; i++) {
+                Image img(8, 8, PixelDesc::RGB8_sRGB);
+                REQUIRE(img.isValid());
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                CHECK(io->writeFrame(wf).isOk());
+        }
+        CHECK(io->frameCount() == 4);
+        io->close();
+        delete io;
+
+        // Verify the four files exist on disk with the expected names.
+        CHECK(FilePath(dir / "out_0001.dpx").exists());
+        CHECK(FilePath(dir / "out_0002.dpx").exists());
+        CHECK(FilePath(dir / "out_0003.dpx").exists());
+        CHECK(FilePath(dir / "out_0004.dpx").exists());
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_WriteCustomHead") {
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_write_head";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "out_####.dpx").toString();
+
+        MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+        cfg.set(MediaIO::ConfigFilename, mask);
+        cfg.set(MediaIOTask_ImageFile::ConfigSequenceHead, 1001);
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Writer).isOk());
+
+        for(int i = 0; i < 3; i++) {
+                Image img(8, 8, PixelDesc::RGB8_sRGB);
+                REQUIRE(img.isValid());
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                CHECK(io->writeFrame(wf).isOk());
+        }
+        io->close();
+        delete io;
+
+        CHECK(FilePath(dir / "out_1001.dpx").exists());
+        CHECK(FilePath(dir / "out_1002.dpx").exists());
+        CHECK(FilePath(dir / "out_1003.dpx").exists());
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_RoundTrip") {
+        // Write a sequence, then read it back through the same API.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_roundtrip";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "rt_####.dpx").toString();
+
+        {
+                MediaIO *io = MediaIO::createForFileWrite(mask);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                for(int i = 0; i < 6; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        REQUIRE(img.isValid());
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+        {
+                MediaIO *io = MediaIO::createForFileRead(mask);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Reader).isOk());
+                CHECK(io->frameCount() == 6);
+                for(int i = 0; i < 6; i++) {
+                        Frame::Ptr f;
+                        CHECK(io->readFrame(f).isOk());
+                        REQUIRE(f.isValid());
+                }
+                Frame::Ptr eof;
+                CHECK(io->readFrame(eof) == Error::EndOfFile);
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_AudioRoundTrip") {
+        // DPX carries an optional embedded audio block.  When a
+        // sequence is written with audio in each frame, reading the
+        // sequence back should surface an AudioDesc on the MediaIO's
+        // cached MediaDesc and deliver the audio with every frame.
+        // Regression for the bug where openSequence populated the
+        // image list from the head frame but forgot the audio list,
+        // causing downstream consumers (e.g. SDL player) to skip
+        // audio output entirely.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_audio";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "au_####.dpx").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        const size_t samplesPerFrame = 800;  // 48000/60
+
+        {
+                MediaIO *io = MediaIO::createForFileWrite(mask);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                for(int i = 0; i < 4; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        REQUIRE(img.isValid());
+                        Audio audio(adesc, samplesPerFrame);
+                        REQUIRE(audio.isValid());
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+        {
+                MediaIO *io = MediaIO::createForFileRead(mask);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Reader).isOk());
+                CHECK(io->frameCount() == 4);
+
+                // The MediaDesc should report one audio track and the
+                // audioDesc() accessor should return a valid descriptor
+                // matching what we wrote.
+                MediaDesc md = io->mediaDesc();
+                REQUIRE(md.audioList().size() == 1);
+                CHECK(md.audioList()[0].sampleRate() == 48000.0f);
+                CHECK(md.audioList()[0].channels() == 2);
+                CHECK(io->audioDesc().isValid());
+                CHECK(io->audioDesc().sampleRate() == 48000.0f);
+                CHECK(io->audioDesc().channels() == 2);
+
+                // Reading any frame should deliver both video and audio.
+                Frame::Ptr f;
+                REQUIRE(io->readFrame(f).isOk());
+                REQUIRE(f.isValid());
+                REQUIRE(f->imageList().size() == 1);
+                REQUIRE(f->audioList().size() == 1);
+                CHECK(f->audioList()[0]->samples() == samplesPerFrame);
+                CHECK(f->audioList()[0]->desc().channels() == 2);
+
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_ImgSeqSidecarRead") {
+        // Create a directory with image files and an .imgseq JSON
+        // sidecar alongside them, then open the sidecar.
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_sidecar",
+                                            "clip.", 1, 3);
+
+        ImgSeq seq;
+        seq.setName(NumName::fromMask("clip.####.dpx"));
+        seq.setHead(1);
+        seq.setTail(3);
+        seq.setFrameRate(FrameRate(FrameRate::FPS_24));
+        FilePath sidecar = dir / "clip.imgseq";
+        CHECK(seq.save(sidecar).isOk());
+
+        MediaIO *io = MediaIO::createForFileRead(sidecar.toString());
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        CHECK(io->frameCount() == 3);
+        // Sidecar supplied the frame rate, so it's a "file" source.
+        CHECK(io->frameRate() == FrameRate(FrameRate::FPS_24));
+        const Metadata &md = io->metadata();
+        CHECK(md.contains(Metadata::FrameRateSource));
+        CHECK(md.getAs<String>(Metadata::FrameRateSource) == "file");
+
+        Frame::Ptr f;
+        CHECK(io->readFrame(f).isOk());
+        REQUIRE(f.isValid());
+
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_ImgSeqSidecarAutoDetectRange") {
+        // Sidecar with no head/tail should trigger a directory scan.
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_sidecar_autorange",
+                                            "auto_", 5, 8);
+
+        ImgSeq seq;
+        seq.setName(NumName::fromMask("auto_####.dpx"));
+        // Deliberately leave head/tail at 0 so the task has to detect them.
+        FilePath sidecar = dir / "auto.imgseq";
+        CHECK(seq.save(sidecar).isOk());
+
+        MediaIO *io = MediaIO::createForFileRead(sidecar.toString());
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+        CHECK(io->frameCount() == 4);  // 5,6,7,8
+        io->close();
+        delete io;
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_FrameRateSourceDefault") {
+        // No config, no sidecar — reading a plain mask should report
+        // FrameRateSource = "default".
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_frdefault",
+                                            "fr_", 1, 2);
+        String mask = (dir / "fr_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+        const Metadata &md = io->metadata();
+        CHECK(md.getAs<String>(Metadata::FrameRateSource) == "default");
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfig") {
+        FilePath dir = makeImageSequenceDir("promeki_test_imgseq_frconfig",
+                                            "fr_", 1, 2);
+        String mask = (dir / "fr_####.dpx").toString();
+
+        MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+        cfg.set(MediaIO::ConfigFilename, mask);
+        cfg.set(MediaIOTask_ImageFile::ConfigFrameRate,
+                FrameRate(FrameRate::FPS_2997));
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+        CHECK(io->frameRate() == FrameRate(FrameRate::FPS_2997));
+        const Metadata &md = io->metadata();
+        CHECK(md.getAs<String>(Metadata::FrameRateSource) == "config");
+        io->close();
+        delete io;
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageFile_SingleFileStillReportsFrameRateSource") {
+        // Regression: single-image reads should also populate
+        // FrameRateSource so downstream code can tell the difference
+        // between a known rate and a guessed one.
+        const char *fn = "/tmp/promeki_test_single_frsource.dpx";
+        {
+                Image src(16, 16, PixelDesc::RGB8_sRGB);
+                REQUIRE(src.isValid());
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
+                MediaIO *io = MediaIO::createForFileWrite(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                io->writeFrame(wf);
+                io->close();
+                delete io;
+        }
+        {
+                MediaIO *io = MediaIO::createForFileRead(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Reader).isOk());
+                const Metadata &md = io->metadata();
+                CHECK(md.contains(Metadata::FrameRateSource));
+                // No sidecar and no config override — default.
+                CHECK(md.getAs<String>(Metadata::FrameRateSource) == "default");
+                io->close();
+                delete io;
+        }
+        std::remove(fn);
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarMissingFiles") {
+        // Sidecar with head/tail that do not match any files on disk
+        // should fail to load the head frame cleanly.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_missing";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        ImgSeq seq;
+        seq.setName(NumName::fromMask("nope_####.dpx"));
+        seq.setHead(1);
+        seq.setTail(5);
+        FilePath sidecar = dir / "nope.imgseq";
+        CHECK(seq.save(sidecar).isOk());
+
+        MediaIO *io = MediaIO::createForFileRead(sidecar.toString());
+        REQUIRE(io != nullptr);
+        Error err = io->open(MediaIO::Reader);
+        CHECK(err.isError());
+        delete io;
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_MaskNoMatch") {
+        // Supplying a mask whose directory contains no matching files
+        // should cleanly fail open(), not crash or hang.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_nomatch";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "nothing_####.dpx").toString();
+        MediaIO *io = MediaIO::createForFileRead(mask);
+        REQUIRE(io != nullptr);
+        CHECK(io->open(MediaIO::Reader).isError());
+        delete io;
+
+        Dir(dir).removeRecursively();
+}
+
+// Regression: a plain single image path still uses the existing
+// single-file behavior unchanged (no auto-promotion to a sequence).
+TEST_CASE("MediaIO_ImageFile_SingleFileUnchanged") {
+        const char *fn = "/tmp/promeki_test_single_unchanged.dpx";
+        {
+                Image src(16, 16, PixelDesc::RGB8_sRGB);
+                REQUIRE(src.isValid());
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(src));
+                MediaIO *io = MediaIO::createForFileWrite(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Writer).isOk());
+                io->writeFrame(wf);
+                io->close();
+                delete io;
+        }
+        {
+                MediaIO *io = MediaIO::createForFileRead(fn);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Reader).isOk());
+                CHECK_FALSE(io->canSeek());
+                CHECK(io->frameCount() == 1);
+                CHECK(io->step() == 0);  // single-file default step
+                // step=0 means re-read the same frame indefinitely.
+                Frame::Ptr f1, f2;
+                CHECK(io->readFrame(f1).isOk());
+                CHECK(io->readFrame(f2).isOk());
+                io->close();
                 delete io;
         }
         std::remove(fn);

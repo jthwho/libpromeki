@@ -12,6 +12,7 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
+#include <promeki/numnameseq.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -88,6 +89,32 @@ class Dir {
                  * @return A List of matching FilePath entries.
                  */
                 List<FilePath> entryList(const String &filter) const;
+
+                /**
+                 * @brief Returns all numbered file sequences found in the directory.
+                 *
+                 * Performs a single directory scan and runs every regular
+                 * filename through @c NumNameSeq::parseList to group
+                 * matching files into sequences.  A sequence may consist
+                 * of a single file.  Files whose names contain no numeric
+                 * run are not returned in any sequence.  Ordering within
+                 * each sequence is determined by @c NumNameSeq — the
+                 * returned head and tail are the minimum and maximum
+                 * numeric values observed, regardless of scan order.
+                 *
+                 * This is the fast path for detecting image sequences in
+                 * a folder: @code
+                 * Dir d("/project/shot01");
+                 * NumNameSeq::List seqs = d.numberedSequences();
+                 * @endcode
+                 *
+                 * Sub-directories are ignored — only regular files are
+                 * considered.  Files that cannot be parsed (no digit run)
+                 * are silently dropped.
+                 *
+                 * @return A list of detected sequences (possibly empty).
+                 */
+                NumNameSeq::List numberedSequences() const;
 
                 /**
                  * @brief Creates this directory.

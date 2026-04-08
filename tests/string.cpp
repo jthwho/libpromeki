@@ -242,6 +242,20 @@ TEST_CASE("String_Operations") {
         CHECK(String::number(12345, 10, -10) == "12345     ");
         CHECK(String::number(12345, 20, 10, ' ', true) == "  b20:1AH5");
         CHECK(String::number(12345, 4, 6, ' ', true) == "b4:3000321");
+        // Negative integers get a leading minus sign.
+        CHECK(String::number(static_cast<int32_t>(-42)) == "-42");
+        CHECK(String::number(static_cast<int64_t>(-1)) == "-1");
+        CHECK(String::number(static_cast<int16_t>(-1000)) == "-1000");
+        CHECK(String::number(static_cast<int8_t>(-128)) == "-128");
+        // INT_MIN edge case: naive "val = -val" is UB for INT_MIN since the
+        // magnitude is unrepresentable in the signed type, so the absolute
+        // value is computed in unsigned space.
+        CHECK(String::number(std::numeric_limits<int8_t>::min()) == "-128");
+        CHECK(String::number(std::numeric_limits<int16_t>::min()) == "-32768");
+        CHECK(String::number(std::numeric_limits<int32_t>::min()) == "-2147483648");
+        CHECK(String::number(std::numeric_limits<int64_t>::min()) == "-9223372036854775808");
+        // Space-padded negatives right-align like printf("%5d", -42).
+        CHECK(String::number(static_cast<int32_t>(-42), 10, 5) == "  -42");
         CHECK(String("%3 %2 %1").arg(3).arg(2).arg(1) == "1 2 3");
         CHECK(String("Two hundred and twenty-six billion, four hundred eighty-three million, One Hundred And Thirty-Four Thousand Two Hundred and Ninety-Six").parseNumberWords() == 226483134296);
 }

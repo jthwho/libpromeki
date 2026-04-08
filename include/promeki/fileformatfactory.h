@@ -70,7 +70,7 @@ class FileFormatFactory {
                         auto &list = factoryList();
                         int ret = list.size();
                         list += factory;
-                        promekiInfo("Registered FileFormatFactory %s",
+                        promekiLog(Logger::LogLevel::Debug, "Registered FileFormatFactory %s",
                                 factory->name().cstr());
                         return ret;
                 }

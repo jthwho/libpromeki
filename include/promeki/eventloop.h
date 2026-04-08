@@ -11,6 +11,7 @@
 #include <functional>
 #include <promeki/namespace.h>
 #include <promeki/atomic.h>
+#include <promeki/mutex.h>
 #include <promeki/queue.h>
 #include <promeki/list.h>
 #include <promeki/timestamp.h>
@@ -129,6 +130,26 @@ class EventLoop {
                 void postCallable(std::function<void()> func);
 
                 /**
+                 * @brief Sets a wake callback invoked whenever new work is posted.
+                 *
+                 * The callback is invoked from inside @c postCallable,
+                 * @c postEvent, and @c quit after the item has been
+                 * pushed to the queue.  It is intended for use by an
+                 * external blocking mechanism (for example, the SDL
+                 * event pump blocked on @c SDL_WaitEvent) that must be
+                 * woken so it can return and let the owning event loop
+                 * drain its queue.
+                 *
+                 * The callback runs on the posting thread, which may be
+                 * any thread, so it must be thread-safe.  Only one wake
+                 * callback may be registered at a time; passing an
+                 * empty function removes the current callback.
+                 *
+                 * @param cb The wake callback, or an empty function to clear.
+                 */
+                void setWakeCallback(std::function<void()> cb);
+
+                /**
                  * @brief Posts an Event to this EventLoop for delivery to a receiver.
                  *
                  * Takes ownership of @p event.  Thread-safe.  The event will be
@@ -210,6 +231,17 @@ class EventLoop {
                 Atomic<int>                     _exitCode;
                 List<TimerInfo>                 _timers;
                 Atomic<int>                     _nextTimerId{1};
+
+                // Optional wake callback, invoked after any post.  The
+                // common use case (SDLApplication) sets this once at
+                // startup and never changes it, so a plain function
+                // with a mutex around mutation is sufficient; the
+                // read/invoke path happens on every post but the
+                // mutex is uncontended in practice.
+                mutable Mutex                   _wakeMutex;
+                std::function<void()>           _wakeCallback;
+
+                void notifyWake();
 
                 bool dispatchItem(Item &item);
                 void processTimers();

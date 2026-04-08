@@ -14,6 +14,7 @@
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
 #include <promeki/audiolevel.h>
+#include <promeki/enums.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -74,7 +75,7 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         cfg.set(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
                         // Video
                         cfg.set(ConfigVideoEnabled, false);
-                        cfg.set(ConfigVideoPattern, "colorbars");
+                        cfg.set(ConfigVideoPattern, VideoPattern::ColorBars);
                         cfg.set(ConfigVideoSize, Size2Du32(1920, 1080));
                         cfg.set(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                         cfg.set(ConfigVideoSolidColor, Color::Black);
@@ -84,13 +85,13 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         cfg.set(ConfigVideoBurnFontPath, String());
                         cfg.set(ConfigVideoBurnFontSize, 36);
                         cfg.set(ConfigVideoBurnText, String());
-                        cfg.set(ConfigVideoBurnPosition, "bottomcenter");
+                        cfg.set(ConfigVideoBurnPosition, BurnPosition::BottomCenter);
                         cfg.set(ConfigVideoBurnTextColor, Color::White);
                         cfg.set(ConfigVideoBurnBgColor, Color::Black);
                         cfg.set(ConfigVideoBurnDrawBg, true);
                         // Audio
                         cfg.set(ConfigAudioEnabled, false);
-                        cfg.set(ConfigAudioMode, "tone");
+                        cfg.set(ConfigAudioMode, AudioPattern::Tone);
                         cfg.set(ConfigAudioRate, 48000.0f);
                         cfg.set(ConfigAudioChannels, 2);
                         cfg.set(ConfigAudioToneFrequency, 1000.0);
@@ -129,13 +130,15 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         // -- Video --
         _videoEnabled = cfg.getAs<bool>(ConfigVideoEnabled, false);
         if(_videoEnabled) {
-                String patStr = cfg.getAs<String>(ConfigVideoPattern, "colorbars");
-                auto [pat, patErr] = VideoTestPattern::fromString(patStr);
-                if(patErr.isError()) {
-                        promekiErr("MediaIOTask_TPG: unknown pattern '%s'", patStr.cstr());
+                Error patErr;
+                Enum patEnum = cfg.get(ConfigVideoPattern).asEnum(VideoPattern::Type, &patErr);
+                if(patErr.isError() || !patEnum.hasListedValue()) {
+                        promekiErr("MediaIOTask_TPG: unknown pattern '%s'",
+                                   cfg.get(ConfigVideoPattern).get<String>().cstr());
                         return Error::InvalidArgument;
                 }
-                _videoPattern.setPattern(pat);
+                _videoPattern.setPattern(
+                        static_cast<VideoTestPattern::Pattern>(patEnum.value()));
 
                 Size2Du32 size = cfg.getAs<Size2Du32>(ConfigVideoSize, Size2Du32(1920, 1080));
                 PixelDesc pd = cfg.getAs<PixelDesc>(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
@@ -172,16 +175,17 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                                 cfg.getAs<Color>(ConfigVideoBurnBgColor, Color::Black));
                         _videoPattern.setBurnDrawBackground(
                                 cfg.getAs<bool>(ConfigVideoBurnDrawBg, true));
-                        String posStr = cfg.getAs<String>(
-                                ConfigVideoBurnPosition, "bottomcenter");
-                        auto [pos, posErr] =
-                                VideoTestPattern::burnPositionFromString(posStr);
-                        if(posErr.isError()) {
+                        Error posErr;
+                        Enum posEnum = cfg.get(ConfigVideoBurnPosition)
+                                           .asEnum(BurnPosition::Type, &posErr);
+                        if(posErr.isError() || !posEnum.hasListedValue()) {
                                 promekiErr("MediaIOTask_TPG: unknown burn position '%s'",
-                                           posStr.cstr());
+                                           cfg.get(ConfigVideoBurnPosition)
+                                                   .get<String>().cstr());
                                 return Error::InvalidArgument;
                         }
-                        _videoPattern.setBurnPosition(pos);
+                        _videoPattern.setBurnPosition(
+                                static_cast<VideoTestPattern::BurnPosition>(posEnum.value()));
                 }
         }
 
@@ -201,15 +205,18 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 delete _audioPattern;
                 _audioPattern = new AudioTestPattern(_audioDesc);
 
-                String audioModeStr = cfg.getAs<String>(ConfigAudioMode, "tone");
-                auto [audioMode, modeErr] = AudioTestPattern::fromString(audioModeStr);
-                if(modeErr.isError()) {
-                        promekiErr("MediaIOTask_TPG: unknown audio mode '%s'", audioModeStr.cstr());
+                Error modeErr;
+                Enum audioModeEnum = cfg.get(ConfigAudioMode)
+                                         .asEnum(AudioPattern::Type, &modeErr);
+                if(modeErr.isError() || !audioModeEnum.hasListedValue()) {
+                        promekiErr("MediaIOTask_TPG: unknown audio mode '%s'",
+                                   cfg.get(ConfigAudioMode).get<String>().cstr());
                         delete _audioPattern;
                         _audioPattern = nullptr;
                         return Error::InvalidArgument;
                 }
-                _audioPattern->setMode(audioMode);
+                _audioPattern->setMode(
+                        static_cast<AudioTestPattern::Mode>(audioModeEnum.value()));
 
                 double toneFreq = cfg.getAs<double>(ConfigAudioToneFrequency, 1000.0);
                 double toneLevel = cfg.getAs<double>(ConfigAudioToneLevel, -20.0);

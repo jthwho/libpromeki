@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fnmatch.h>
 #include <promeki/dir.h>
+#include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -43,6 +44,19 @@ List<FilePath> Dir::entryList(const String &filter) const {
                 }
         }
         return result;
+}
+
+NumNameSeq::List Dir::numberedSequences() const {
+        StringList names;
+        std::error_code ec;
+        auto it = std::filesystem::directory_iterator(_path.toStdPath(), ec);
+        if(ec) return NumNameSeq::List();
+        for(const auto &entry : it) {
+                std::error_code fec;
+                if(!entry.is_regular_file(fec)) continue;
+                names.pushToBack(String(entry.path().filename().string()));
+        }
+        return NumNameSeq::parseList(names);
 }
 
 Error Dir::mkdir() const {

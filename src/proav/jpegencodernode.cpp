@@ -11,6 +11,7 @@
 #include <promeki/frame.h>
 #include <promeki/image.h>
 #include <promeki/metadata.h>
+#include <promeki/enums.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -29,7 +30,7 @@ JpegEncoderNode::~JpegEncoderNode() {
 MediaNodeConfig JpegEncoderNode::defaultConfig() const {
         MediaNodeConfig cfg("JpegEncoderNode", "");
         cfg.set("Quality", 85);
-        cfg.set("Subsampling", "422");
+        cfg.set("Subsampling", ChromaSubsampling::YUV422);
         return cfg;
 }
 
@@ -49,14 +50,15 @@ BuildResult JpegEncoderNode::build(const MediaNodeConfig &config) {
         }
         _codec->setQuality(quality);
 
-        String subsampStr = config.get("Subsampling", "422").get<String>();
-        if(subsampStr == "444") {
-                _codec->setSubsampling(JpegImageCodec::Subsampling444);
-        } else if(subsampStr == "420") {
-                _codec->setSubsampling(JpegImageCodec::Subsampling420);
-        } else {
-                _codec->setSubsampling(JpegImageCodec::Subsampling422);
+        Error subErr;
+        Enum subEnum = config.get("Subsampling")
+                             .asEnum(ChromaSubsampling::Type, &subErr);
+        if(subErr.isError() || !subEnum.hasListedValue()) {
+                result.addWarning("Subsampling not recognized, defaulting to YUV422");
+                subEnum = ChromaSubsampling::YUV422;
         }
+        _codec->setSubsampling(
+                static_cast<JpegImageCodec::Subsampling>(subEnum.value()));
 
         _framesEncoded = 0;
         _totalCompressedBytes = 0;

@@ -427,6 +427,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeTimecode:
                 case Variant::TypeRational:
                 case Variant::TypeColor:
+                case Variant::TypeEnum:
                         writeStringData(val.get<String>());
                         break;
         }
@@ -605,6 +606,16 @@ DataStream &DataStream::operator>>(Variant &val) {
                 case Variant::TypeColor: {
                         String v = readStringData();
                         if(_status == Ok) val = Color::fromString(v);
+                        break;
+                }
+                case Variant::TypeEnum: {
+                        String v = readStringData();
+                        if(_status == Ok) {
+                                Error err;
+                                Enum e = Enum::lookup(v, &err);
+                                if(err.isError()) val = v;
+                                else val = e;
+                        }
                         break;
                 }
                 default:

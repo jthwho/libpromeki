@@ -24,6 +24,7 @@
 #include <promeki/mediapipeline.h>
 #include <promeki/medianode.h>
 #include <promeki/medianodeconfig.h>
+#include <promeki/enums.h>
 #include <promeki/testpatternnode.h>
 #include <promeki/videotestpattern.h>
 #include <promeki/framedemuxnode.h>
@@ -65,7 +66,7 @@ struct Options {
         int             width           = 1920;
         int             height          = 1080;
         String          framerateStr    = "29.97";
-        String          patternStr      = "colorbars";
+        String          patternStr      = "ColorBars";
         String          pixelFormatStr  = "rgb8";
 
         // Motion
@@ -224,27 +225,27 @@ static bool parseOptions(int argc, char *argv[], Options &opts) {
 // --------------------------------------------------------------------
 
 struct PatternEntry {
-        const char                      *name;
-        VideoTestPattern::Pattern       pattern;
+        const char      *name;   ///< Lowercase CLI alias.
+        Enum            pattern; ///< Corresponding VideoPattern Enum value.
 };
 
 static const PatternEntry g_patterns[] = {
-        { "colorbars",    VideoTestPattern::ColorBars },
-        { "colorbars75",  VideoTestPattern::ColorBars75 },
-        { "ramp",         VideoTestPattern::Ramp },
-        { "grid",         VideoTestPattern::Grid },
-        { "crosshatch",   VideoTestPattern::Crosshatch },
-        { "checkerboard", VideoTestPattern::Checkerboard },
-        { "black",        VideoTestPattern::Black },
-        { "white",        VideoTestPattern::White },
-        { "noise",        VideoTestPattern::Noise },
-        { "zoneplate",    VideoTestPattern::ZonePlate },
-        { nullptr,        VideoTestPattern::ColorBars }
+        { "ColorBars",    VideoPattern::ColorBars },
+        { "ColorBars75",  VideoPattern::ColorBars75 },
+        { "Ramp",         VideoPattern::Ramp },
+        { "Grid",         VideoPattern::Grid },
+        { "Crosshatch",   VideoPattern::Crosshatch },
+        { "Checkerboard", VideoPattern::Checkerboard },
+        { "Black",        VideoPattern::Black },
+        { "White",        VideoPattern::White },
+        { "Noise",        VideoPattern::Noise },
+        { "ZonePlate",    VideoPattern::ZonePlate },
+        { nullptr,        VideoPattern::ColorBars }
 };
 
-static bool lookupPattern(const String &name, String &out) {
+static bool lookupPattern(const String &name, Enum &out) {
         for(const auto *p = g_patterns; p->name; p++) {
-                if(name == p->name) { out = name; return true; }
+                if(name == p->name) { out = p->pattern; return true; }
         }
         return false;
 }
@@ -395,8 +396,8 @@ int main(int argc, char *argv[]) {
         }
 
         // Validate pattern name
-        String patternStr;
-        if(!lookupPattern(opts.patternStr, patternStr)) {
+        Enum patternEnum;
+        if(!lookupPattern(opts.patternStr, patternEnum)) {
                 fprintf(stderr, "Error: unknown pattern: %s\n", opts.patternStr.cstr());
                 fprintf(stderr, "Use --list-patterns to see available patterns\n");
                 return 1;
@@ -493,7 +494,7 @@ int main(int argc, char *argv[]) {
         TestPatternNode *src = new TestPatternNode();
         {
                 MediaNodeConfig cfg("TestPatternNode", "Source");
-                cfg.set("Pattern", patternStr);
+                cfg.set("Pattern", patternEnum);
                 cfg.set("Motion", opts.motion);
                 cfg.set("StartTimecode", opts.tcStart);
                 cfg.set("DropFrame", opts.tcDf && fps.wellKnownRate() == FrameRate::FPS_2997);
@@ -505,13 +506,13 @@ int main(int argc, char *argv[]) {
                         cfg.set("AudioRate", float(opts.audioRate));
                         cfg.set("AudioChannels", opts.audioChannels);
                         if(opts.audioSilence) {
-                                cfg.set("AudioMode", "silence");
+                                cfg.set("AudioMode", AudioPattern::Silence);
                         } else if(opts.audioLtc) {
-                                cfg.set("AudioMode", "ltc");
+                                cfg.set("AudioMode", AudioPattern::LTC);
                                 cfg.set("LtcLevel", opts.ltcLevel);
                                 cfg.set("LtcChannel", opts.ltcChannel);
                         } else {
-                                cfg.set("AudioMode", "tone");
+                                cfg.set("AudioMode", AudioPattern::Tone);
                                 cfg.set("ToneFrequency", opts.audioTone);
                                 cfg.set("ToneLevel", opts.audioLevel);
                         }

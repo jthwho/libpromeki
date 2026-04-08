@@ -13,6 +13,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(MediaIO)
+
 const MediaIO::ConfigID MediaIO::ConfigFilename("Filename");
 const MediaIO::ConfigID MediaIO::ConfigType("Type");
 
@@ -34,7 +36,7 @@ int MediaIO::registerFormat(const FormatDesc &desc) {
         FormatDescList &list = formatRegistry();
         int ret = list.size();
         list.pushToBack(desc);
-        promekiInfo("Registered MediaIO '%s'", desc.name.cstr());
+        promekiDebug("Registered MediaIO '%s'", desc.name.cstr());
         return ret;
 }
 
@@ -271,7 +273,14 @@ void MediaIO::submitReadCommand() {
                         cr->result = _task->executeCmd(*cr);
                         _readResultQueue.push(cmd);
                         _pendingReadCount.fetchAndSub(1);
-                        if(cr->result.isOk()) frameReadySignal.emit();
+                        // Fire on every completion — success, EOF, or
+                        // error.  Signal-driven consumers need the
+                        // signal for terminal results too so they can
+                        // observe EOF/errors via a subsequent
+                        // readFrame(..., false) call that pops the
+                        // queued result.  The signal is "a read
+                        // finished", not "a frame is available".
+                        frameReadySignal.emit();
                 },
                 [this]() {
                         // Cancellation cleanup: release the slot we

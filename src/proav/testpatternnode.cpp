@@ -11,6 +11,7 @@
 #include <promeki/pixeldesc.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
+#include <promeki/enums.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -28,7 +29,7 @@ TestPatternNode::~TestPatternNode() {
 
 MediaNodeConfig TestPatternNode::defaultConfig() const {
         MediaNodeConfig cfg("TestPatternNode", "");
-        cfg.set("Pattern", "colorbars");
+        cfg.set("Pattern", VideoPattern::ColorBars);
         cfg.set("Size", Size2Du32(1920, 1080));
         cfg.set("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB));
         cfg.set("FrameRate", FrameRate(FrameRate::FPS_2997));
@@ -36,7 +37,7 @@ MediaNodeConfig TestPatternNode::defaultConfig() const {
         cfg.set("StartTimecode", "00:00:00:00");
         cfg.set("DropFrame", false);
         cfg.set("AudioEnabled", true);
-        cfg.set("AudioMode", "tone");
+        cfg.set("AudioMode", AudioPattern::Tone);
         cfg.set("AudioRate", 48000.0f);
         cfg.set("AudioChannels", 2);
         cfg.set("ToneFrequency", 1000.0);
@@ -67,8 +68,11 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         // Video — always enabled for TestPatternNode
         tpgCfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
 
-        String patStr = config.get("Pattern", "colorbars").get<String>();
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoPattern, patStr);
+        // Forward the Pattern variant as-is; MediaIOTask_TPG resolves it
+        // via Variant::asEnum(VideoPattern::Type) so strings and Enums
+        // both work.
+        tpgCfg.set(MediaIOTask_TPG::ConfigVideoPattern,
+                   config.get("Pattern", VideoPattern::ColorBars));
 
         Size2Du32 size = config.get("Size", Size2Du32()).get<Size2Du32>();
         tpgCfg.set(MediaIOTask_TPG::ConfigVideoSize, size);
@@ -83,7 +87,9 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
         bool audioEnabled = config.get("AudioEnabled", true).get<bool>();
         tpgCfg.set(MediaIOTask_TPG::ConfigAudioEnabled, audioEnabled);
         if(audioEnabled) {
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioMode, config.get("AudioMode", "tone").get<String>());
+                // Forward as Variant; MediaIOTask_TPG calls asEnum() on it.
+                tpgCfg.set(MediaIOTask_TPG::ConfigAudioMode,
+                           config.get("AudioMode", AudioPattern::Tone));
                 tpgCfg.set(MediaIOTask_TPG::ConfigAudioRate, config.get("AudioRate", 48000.0f).get<float>());
                 tpgCfg.set(MediaIOTask_TPG::ConfigAudioChannels, config.get("AudioChannels", 2).get<int>());
                 tpgCfg.set(MediaIOTask_TPG::ConfigAudioToneFrequency, config.get("ToneFrequency", 1000.0).get<double>());

@@ -85,6 +85,14 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 static inline const ID OriginationDateTime{"OriginationDateTime"};
                 /// @brief Frame rate of the associated video.
                 static inline const ID FrameRate{"FrameRate"};
+                /// @brief Source that supplied the associated FrameRate (String).
+                /// One of: @c "file" (read from the container/sidecar),
+                /// @c "config" (caller-supplied override), or @c "default"
+                /// (backend fell back to its built-in default).  Set by
+                /// backends whose intrinsic frame rate isn't known and
+                /// must be guessed or overridden (image sequences, still
+                /// images, etc.).
+                static inline const ID FrameRateSource{"FrameRateSource"};
                 /// @brief SMPTE UMID (Unique Material Identifier).
                 static inline const ID UMID{"UMID"};
                 /// @brief BWF coding history string.

@@ -14,6 +14,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(Logger)
+
 struct DebugDatabaseItem {
         bool    *enabler;
         String  name;
@@ -201,11 +203,13 @@ void Logger::worker() {
                                 arg.promise->setValue();
                         } else if constexpr (std::is_same_v<T, CmdTerminate>) {
                                 running = false;
-                                LogEntry logentry{DateTime::now(), Debug, "LOGGER", 0,
-                                        cachedThreadId(),
-                                        String::sprintf("Logger %p terminated, %llu total commands",
-                                                this, (unsigned long long)cmdct)};
-                                writeLog(logentry, logFile);
+                                if(_promeki_debug_enabled) {
+                                        LogEntry logentry{DateTime::now(), Debug, "LOGGER", 0,
+                                                cachedThreadId(),
+                                                String::sprintf("Logger %p terminated, %llu total commands",
+                                                        this, (unsigned long long)cmdct)};
+                                        writeLog(logentry, logFile);
+                                }
                         }
                 }, cmd);
         }

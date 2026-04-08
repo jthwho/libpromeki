@@ -164,6 +164,142 @@ TEST_CASE("NumName_ParseMultipleNumberRuns") {
 }
 
 // ============================================================================
+// NumName::fromMask - hash and printf patterns
+// ============================================================================
+
+TEST_CASE("NumName_FromMaskHashPadded") {
+        NumName n = NumName::fromMask("seq_####.dpx");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "seq_");
+        CHECK(n.suffix() == ".dpx");
+        CHECK(n.digits() == 4);
+        CHECK(n.isPadded());
+        CHECK(n.name(42) == "seq_0042.dpx");
+}
+
+TEST_CASE("NumName_FromMaskHashSingle") {
+        // A single '#' is equivalent to %d — non-padded, 1-digit.
+        NumName n = NumName::fromMask("seq_#.dpx");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "seq_");
+        CHECK(n.suffix() == ".dpx");
+        CHECK(n.digits() == 1);
+        CHECK_FALSE(n.isPadded());
+        CHECK(n.name(7) == "seq_7.dpx");
+        CHECK(n.name(123) == "seq_123.dpx");
+}
+
+TEST_CASE("NumName_FromMaskPrintfPadded") {
+        NumName n = NumName::fromMask("seq_%04d.dpx");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "seq_");
+        CHECK(n.suffix() == ".dpx");
+        CHECK(n.digits() == 4);
+        CHECK(n.isPadded());
+        CHECK(n.name(42) == "seq_0042.dpx");
+}
+
+TEST_CASE("NumName_FromMaskPrintfNonPadded") {
+        NumName n = NumName::fromMask("seq_%d.dpx");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "seq_");
+        CHECK(n.suffix() == ".dpx");
+        CHECK(n.digits() == 1);
+        CHECK_FALSE(n.isPadded());
+        CHECK(n.name(7) == "seq_7.dpx");
+        CHECK(n.name(123) == "seq_123.dpx");
+}
+
+TEST_CASE("NumName_FromMaskHashAndPrintfEquivalent") {
+        // "####" should produce the same NumName as "%04d".
+        NumName a = NumName::fromMask("render.####.exr");
+        NumName b = NumName::fromMask("render.%04d.exr");
+        CHECK(a == b);
+        CHECK(a.isInSequence(b));
+
+        // "#" should produce the same NumName as "%d".
+        NumName c = NumName::fromMask("render.#.exr");
+        NumName d = NumName::fromMask("render.%d.exr");
+        CHECK(c == d);
+        CHECK(c.isInSequence(d));
+}
+
+TEST_CASE("NumName_FromMaskEmptyPrefix") {
+        NumName n = NumName::fromMask("####.dpx");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "");
+        CHECK(n.suffix() == ".dpx");
+        CHECK(n.digits() == 4);
+        CHECK(n.isPadded());
+}
+
+TEST_CASE("NumName_FromMaskEmptySuffix") {
+        NumName n = NumName::fromMask("frame_%05d");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "frame_");
+        CHECK(n.suffix() == "");
+        CHECK(n.digits() == 5);
+        CHECK(n.isPadded());
+}
+
+TEST_CASE("NumName_FromMaskNoPlaceholder") {
+        // No '#' and no '%d' — not a mask.
+        NumName n = NumName::fromMask("plain.dpx");
+        CHECK_FALSE(n.isValid());
+}
+
+TEST_CASE("NumName_FromMaskEmpty") {
+        NumName n = NumName::fromMask("");
+        CHECK_FALSE(n.isValid());
+}
+
+TEST_CASE("NumName_FromMaskBigPadding") {
+        NumName n = NumName::fromMask("shot_%08d.exr");
+        CHECK(n.isValid());
+        CHECK(n.digits() == 8);
+        CHECK(n.isPadded());
+        CHECK(n.name(1) == "shot_00000001.exr");
+}
+
+TEST_CASE("NumName_FromMaskLongHashRun") {
+        NumName n = NumName::fromMask("shot_########.exr");
+        CHECK(n.isValid());
+        CHECK(n.digits() == 8);
+        CHECK(n.isPadded());
+        CHECK(n.name(1) == "shot_00000001.exr");
+}
+
+TEST_CASE("NumName_FromMaskStrayPercent") {
+        // '%' not followed by [0]?N?d — not a placeholder, skip past it.
+        NumName n = NumName::fromMask("100% done%04d.exr");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "100% done");
+        CHECK(n.suffix() == ".exr");
+        CHECK(n.digits() == 4);
+        CHECK(n.isPadded());
+}
+
+TEST_CASE("NumName_FromMaskFirstPlaceholderWins") {
+        // Only the first placeholder is treated as the number field.
+        NumName n = NumName::fromMask("shot_####_take_##.exr");
+        CHECK(n.isValid());
+        CHECK(n.prefix() == "shot_");
+        CHECK(n.suffix() == "_take_##.exr");
+        CHECK(n.digits() == 4);
+        CHECK(n.isPadded());
+}
+
+TEST_CASE("NumName_FromMaskPrintfSpacePad") {
+        // "%4d" (no leading zero) means space-padded in printf, which
+        // doesn't make sense for filenames.  We take the digit count
+        // but mark it as non-padded.
+        NumName n = NumName::fromMask("shot_%4d.exr");
+        CHECK(n.isValid());
+        CHECK(n.digits() == 4);
+        CHECK_FALSE(n.isPadded());
+}
+
+// ============================================================================
 // NumName::name - reconstruction
 // ============================================================================
 

@@ -19,6 +19,7 @@
 #include <promeki/ltcdecoder.h>
 #include <promeki/audiolevel.h>
 #include <promeki/color.h>
+#include <promeki/enums.h>
 
 using namespace promeki;
 
@@ -142,27 +143,27 @@ TEST_CASE("TestPatternNode_ConfigureNoVideo") {
 // ============================================================================
 
 TEST_CASE("TestPatternNode_AllPatterns") {
-        String patternNames[] = {
-                "colorbars",
-                "colorbars75",
-                "ramp",
-                "grid",
-                "crosshatch",
-                "checkerboard",
-                "solidcolor",
-                "white",
-                "black",
-                "noise",
-                "zoneplate"
+        const Enum patterns[] = {
+                VideoPattern::ColorBars,
+                VideoPattern::ColorBars75,
+                VideoPattern::Ramp,
+                VideoPattern::Grid,
+                VideoPattern::Crosshatch,
+                VideoPattern::Checkerboard,
+                VideoPattern::SolidColor,
+                VideoPattern::White,
+                VideoPattern::Black,
+                VideoPattern::Noise,
+                VideoPattern::ZonePlate
         };
 
-        for(const auto &patName : patternNames) {
+        for(const auto &pat : patterns) {
                 MediaPipeline pipeline;
                 TestPatternNode *src = new TestPatternNode();
                 CaptureSinkNode *sink = new CaptureSinkNode();
 
                 MediaNodeConfig cfg = makeTestConfig();
-                cfg.set("Pattern", patName);
+                cfg.set("Pattern", pat);
                 cfg.set("AudioEnabled", false);
                 cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
                 src->build(cfg);
@@ -250,7 +251,7 @@ TEST_CASE("TestPatternNode_AudioTone") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("AudioMode", "tone");
+        cfg.set("AudioMode", AudioPattern::Tone);
         cfg.set("ToneFrequency", 1000.0);
         src->build(cfg);
 
@@ -284,7 +285,7 @@ TEST_CASE("TestPatternNode_AudioSilence") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("AudioMode", "silence");
+        cfg.set("AudioMode", AudioPattern::Silence);
         src->build(cfg);
 
         pipeline.addNode(src);
@@ -346,7 +347,7 @@ TEST_CASE("TestPatternNode_AudioLTC") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("AudioMode", "ltc");
+        cfg.set("AudioMode", AudioPattern::LTC);
         cfg.set("AudioRate", 48000.0f);
         cfg.set("AudioChannels", 1);
         cfg.set("Timecode", Timecode(Timecode::NDF24, 1, 0, 0, 0));
@@ -382,7 +383,7 @@ TEST_CASE("TestPatternNode_MotionDiffers") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("Pattern", "ramp");
+        cfg.set("Pattern", VideoPattern::Ramp);
         cfg.set("Motion", 1.0);
         cfg.set("AudioEnabled", false);
         src->build(cfg);
@@ -422,7 +423,7 @@ TEST_CASE("TestPatternNode_StaticUnchanged") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("Pattern", "white");
+        cfg.set("Pattern", VideoPattern::White);
         cfg.set("Motion", 1.0);
         cfg.set("AudioEnabled", false);
         src->build(cfg);
@@ -532,7 +533,7 @@ TEST_CASE("TestPatternNode_SolidColor") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("Pattern", "solidcolor");
+        cfg.set("Pattern", VideoPattern::SolidColor);
         cfg.set("SolidColor", Color::Red);
         cfg.set("AudioEnabled", false);
         src->build(cfg);
@@ -570,7 +571,7 @@ TEST_CASE("TestPatternNode_SetChannelConfig") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("AudioMode", "tone");
+        cfg.set("AudioMode", AudioPattern::Tone);
         cfg.set("AudioRate", 48000.0f);
         cfg.set("AudioChannels", 2);
         cfg.set("ToneFrequency", 440.0);
@@ -607,7 +608,7 @@ TEST_CASE("TestPatternNode_MultiChannelLTC") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("AudioMode", "ltc");
+        cfg.set("AudioMode", AudioPattern::LTC);
         cfg.set("AudioRate", 48000.0f);
         cfg.set("AudioChannels", 4);
         cfg.set("LtcChannel", 2);
@@ -645,7 +646,7 @@ TEST_CASE("TestPatternNode_SetToneLevel") {
         CaptureSinkNode *sink = new CaptureSinkNode();
 
         MediaNodeConfig cfg = makeTestConfig();
-        cfg.set("AudioMode", "tone");
+        cfg.set("AudioMode", AudioPattern::Tone);
         cfg.set("AudioRate", 48000.0f);
         cfg.set("AudioChannels", 2);
         cfg.set("ToneFrequency", 440.0);
@@ -767,9 +768,9 @@ TEST_CASE("TestPatternNode_DefaultConfig") {
         CHECK(cfg.type() == "TestPatternNode");
         CHECK(cfg.get("Size").get<Size2Du32>() == Size2Du32(1920, 1080));
         CHECK(cfg.get("FrameRate").get<FrameRate>() == FrameRate(FrameRate::FPS_2997));
-        CHECK(cfg.get("Pattern").get<String>() == "colorbars");
+        CHECK(cfg.get("Pattern").asEnum(VideoPattern::Type) == VideoPattern::ColorBars);
         CHECK(cfg.get("AudioEnabled").get<bool>() == true);
-        CHECK(cfg.get("AudioMode").get<String>() == "tone");
+        CHECK(cfg.get("AudioMode").asEnum(AudioPattern::Type) == AudioPattern::Tone);
         CHECK(cfg.get("ToneFrequency").get<double>() == 1000.0);
 
         // Should build successfully with just the defaults

@@ -23,6 +23,12 @@ SDLApplication::SDLApplication(int argc, char **argv) : Application(argc, argv) 
         if(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO)) {
                 promekiErr("SDLApplication: SDL_Init failed: %s", SDL_GetError());
         }
+        // Wire the promeki EventLoop's wake callback so that any
+        // cross-thread post (signals, events, quit) pushed onto the
+        // main loop automatically wakes SDL_WaitEvent().  This is
+        // what lets signal-driven pipelines work without any caller
+        // knowledge of the SDL event pump.
+        _eventLoop.setWakeCallback([]() { SDLApplication::wakeUp(); });
         return;
 }
 
@@ -48,7 +54,25 @@ void SDLApplication::quit(int ec) {
         Application::quit(ec);
 #if defined(PROMEKI_PLATFORM_EMSCRIPTEN)
         emscripten_cancel_main_loop();
+#else
+        // Wake the SDL_WaitEvent() blocked in processFrame() so the
+        // exec() loop can observe shouldQuit() and return.  Without
+        // this, a quit() call from a worker thread in a headless
+        // configuration (no window, no player sink) would hang the
+        // main loop forever because nothing else posts SDL events.
+        wakeUp();
 #endif
+        return;
+}
+
+void SDLApplication::wakeUp() {
+        // Safe to call from any thread and before/after SDL is
+        // initialized — SDL_PushEvent returns an error when the
+        // event subsystem isn't up, which we intentionally ignore.
+        if(_instance == nullptr) return;
+        SDL_Event event = {};
+        event.type = SDL_EVENT_USER;
+        SDL_PushEvent(&event);
         return;
 }
 

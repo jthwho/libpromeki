@@ -69,6 +69,7 @@ VideoTestPattern::burnPositionFromString(const String &name) {
         if(name == "bottomleft")   return makeResult(BurnBottomLeft);
         if(name == "bottomcenter") return makeResult(BurnBottomCenter);
         if(name == "bottomright")  return makeResult(BurnBottomRight);
+        if(name == "center")       return makeResult(BurnCenter);
         return makeError<BurnPosition>(Error::Invalid);
 }
 
@@ -80,6 +81,7 @@ String VideoTestPattern::burnPositionToString(BurnPosition pos) {
                 case BurnBottomLeft:   return "bottomleft";
                 case BurnBottomCenter: return "bottomcenter";
                 case BurnBottomRight:  return "bottomright";
+                case BurnCenter:       return "center";
         }
         return "bottomcenter";
 }
@@ -342,6 +344,10 @@ void VideoTestPattern::computeBurnPosition(int frameW, int frameH,
                 case BurnBottomRight:
                         x = frameW - textW - margin;
                         y = frameH - margin - totalH + ascender;
+                        break;
+                case BurnCenter:
+                        x = (frameW - textW) / 2;
+                        y = (frameH - totalH) / 2 + ascender;
                         break;
         }
 }

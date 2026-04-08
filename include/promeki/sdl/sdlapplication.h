@@ -89,6 +89,26 @@ class SDLApplication : public Application {
                  */
                 void quit(int exitCode = 0);
 
+                /**
+                 * @brief Wakes the main event loop from a worker thread.
+                 *
+                 * Posts a harmless SDL user event so that
+                 * @c SDL_WaitEvent() inside @c processFrame() returns
+                 * immediately.  The next iteration of @c exec() then
+                 * observes any pending state (for example a
+                 * @c shouldQuit() set from a background thread) and
+                 * exits cleanly.
+                 *
+                 * Use this from worker threads that change application
+                 * state in ways the event pump would otherwise miss —
+                 * e.g. calling @c Application::quit() from a pumper
+                 * when there is no SDL window producing its own events.
+                 * Safe to call from any thread and at any time.  When
+                 * called via the static entry point with no
+                 * SDLApplication instance active, the call is a no-op.
+                 */
+                static void wakeUp();
+
         private:
                 static SDLApplication  *_instance;
 

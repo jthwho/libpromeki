@@ -12,6 +12,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(ImageFileIO)
+
 using ImageFileIOMap = Map<int, ImageFileIO *>;
 
 static ImageFileIOMap &imageFileIOMap() {
@@ -32,7 +34,7 @@ int ImageFileIO::registerImageFileIO(ImageFileIO *p) {
         ImageFileIOMap &map = imageFileIOMap();
         int ret = map.size();
         map[p->id()] = p;
-        promekiInfo("Registered ImageFileIO %d '%s'", p->id(), p->name().cstr());
+        promekiDebug("Registered ImageFileIO %d '%s'", p->id(), p->name().cstr());
         return ret;
 }
 

@@ -940,7 +940,20 @@ class MediaIO : public ObjectBase {
                 /** @brief Emitted when an error occurs. @signal */
                 PROMEKI_SIGNAL(errorOccurred, Error);
 
-                /** @brief Emitted when a frame is available for reading. @signal */
+                /**
+                 * @brief Emitted whenever a read command completes.
+                 * @signal
+                 *
+                 * Fires after every @c CmdRead completion — success,
+                 * end-of-file, or error.  Signal-driven consumers
+                 * should respond by draining the ready queue with
+                 * repeated @c readFrame(frame, false) calls until it
+                 * returns @c Error::TryAgain (no more data available
+                 * yet), @c Error::EndOfFile (stream exhausted), or
+                 * another error.  The signal intentionally does not
+                 * distinguish success from failure: consumers always
+                 * discover the outcome by reading from the queue.
+                 */
                 PROMEKI_SIGNAL(frameReady);
 
                 /** @brief Emitted when the backend is ready for another frame. @signal */

@@ -109,7 +109,8 @@ class VideoTestPattern {
                         BurnTopRight,       ///< @brief Top-right corner.
                         BurnBottomLeft,     ///< @brief Bottom-left corner.
                         BurnBottomCenter,   ///< @brief Bottom center (default).
-                        BurnBottomRight     ///< @brief Bottom-right corner.
+                        BurnBottomRight,    ///< @brief Bottom-right corner.
+                        BurnCenter          ///< @brief Center of frame.
                 };
 
                 /** @brief Constructs a VideoTestPattern with default settings (ColorBars). */
@@ -222,7 +223,7 @@ class VideoTestPattern {
                 /**
                  * @brief Parses a burn position name (lowercase) to enum.
                  * @param name One of: topleft, topcenter, topright,
-                 *             bottomleft, bottomcenter, bottomright.
+                 *             bottomleft, bottomcenter, bottomright, center.
                  */
                 static Result<BurnPosition> burnPositionFromString(const String &name);
 

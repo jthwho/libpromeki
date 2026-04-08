@@ -101,7 +101,10 @@
  *
  * Cross-thread notifications use the signal/slot system, which
  * automatically marshals signals to the receiver's @c EventLoop:
- * - @c frameReady — emitted by the worker when a CmdRead succeeds
+ * - @c frameReady — emitted whenever a CmdRead completes (success,
+ *   EOF, or error).  Consumers drain the ready queue with repeated
+ *   @c readFrame(frame, false) calls; the queued result carries
+ *   whatever error code the backend returned.
  * - @c frameWanted — emitted by the worker when a CmdWrite succeeds
  * - @c writeError — emitted by the worker when an async CmdWrite fails
  *   (the only way to learn about non-blocking write errors)

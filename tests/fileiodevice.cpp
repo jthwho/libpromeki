@@ -260,7 +260,8 @@ TEST_CASE("FileIODevice: takeFile transfers ownership") {
         std::fwrite("ok", 1, 2, taken);
         std::rewind(taken);
         char buf[2] = {};
-        std::fread(buf, 1, 2, taken);
+        size_t rn = std::fread(buf, 1, 2, taken);
+        CHECK(rn == 2);
         CHECK(std::memcmp(buf, "ok", 2) == 0);
         std::fclose(taken);
 }
@@ -282,7 +283,8 @@ TEST_CASE("FileIODevice: takeFile on filename-opened device") {
         FILE *verify = std::fopen(path, "rb");
         REQUIRE(verify != nullptr);
         char buf[5] = {};
-        std::fread(buf, 1, 5, verify);
+        size_t rn = std::fread(buf, 1, 5, verify);
+        CHECK(rn == 5);
         CHECK(std::memcmp(buf, "taken", 5) == 0);
         std::fclose(verify);
         std::remove(path);

@@ -130,22 +130,22 @@ static void usage() {
 
 static String parsePattern(const char *name) {
         String s(name);
-        // Validate against known patterns
+        // Validate against known patterns (CamelCase, matching VideoPattern).
         const char *valid[] = {
-                "colorbars", "colorbars75", "ramp", "grid", "crosshatch",
-                "checkerboard", "black", "white", "noise", "zoneplate", nullptr
+                "ColorBars", "ColorBars75", "Ramp", "Grid", "Crosshatch",
+                "Checkerboard", "Black", "White", "Noise", "ZonePlate", nullptr
         };
         for(const char **p = valid; *p; p++) {
                 if(s == *p) return s;
         }
         fprintf(stderr, "Unknown pattern: %s\n", name);
-        return "colorbars";
+        return "ColorBars";
 }
 
 int main(int argc, char *argv[]) {
         int width = 1920;
         int height = 1080;
-        String patternStr = "colorbars";
+        String patternStr = "ColorBars";
         String tcStr = "01:00:00:00";
         String fontPath = String(PROMEKI_SOURCE_DIR) + "/etc/fonts/FiraCodeNerdFontMono-Regular.ttf";
         int fontSize = 48;

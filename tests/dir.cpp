@@ -10,6 +10,7 @@
 #include <doctest/doctest.h>
 #include <promeki/dir.h>
 #include <promeki/file.h>
+#include <promeki/numnameseq.h>
 
 using namespace promeki;
 
@@ -162,4 +163,108 @@ TEST_CASE("Dir: construction from FilePath") {
         FilePath fp("/tmp");
         Dir d(fp);
         CHECK(d.path().toString() == "/tmp");
+}
+
+// ============================================================================
+// Dir::numberedSequences
+// ============================================================================
+
+TEST_CASE("Dir: numberedSequences single sequence") {
+        Dir t = Dir::temp();
+        FilePath testDir = t.path() / "promeki_dir_test_numseq_single";
+        Dir d(testDir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        createTestFile(testDir.toStdPath() / "render.0001.exr", 'a');
+        createTestFile(testDir.toStdPath() / "render.0002.exr", 'b');
+        createTestFile(testDir.toStdPath() / "render.0003.exr", 'c');
+        createTestFile(testDir.toStdPath() / "render.0005.exr", 'e');
+
+        NumNameSeq::List seqs = d.numberedSequences();
+        REQUIRE(seqs.size() == 1);
+        CHECK(seqs[0].name().prefix() == "render.");
+        CHECK(seqs[0].name().suffix() == ".exr");
+        CHECK(seqs[0].name().digits() == 4);
+        CHECK(seqs[0].name().isPadded());
+        CHECK(seqs[0].head() == 1);
+        CHECK(seqs[0].tail() == 5);
+        CHECK(seqs[0].length() == 5);
+
+        d.removeRecursively();
+}
+
+TEST_CASE("Dir: numberedSequences multiple sequences") {
+        Dir t = Dir::temp();
+        FilePath testDir = t.path() / "promeki_dir_test_numseq_multi";
+        Dir d(testDir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        createTestFile(testDir.toStdPath() / "shotA.001.exr", 'a');
+        createTestFile(testDir.toStdPath() / "shotA.002.exr", 'b');
+        createTestFile(testDir.toStdPath() / "shotA.003.exr", 'c');
+        createTestFile(testDir.toStdPath() / "shotB.0100.dpx", 'd');
+        createTestFile(testDir.toStdPath() / "shotB.0200.dpx", 'e');
+        createTestFile(testDir.toStdPath() / "readme.txt", 'f');
+
+        NumNameSeq::List seqs = d.numberedSequences();
+        // Expect 2 image sequences.  "readme.txt" is not a numname.
+        CHECK(seqs.size() == 2);
+
+        // Find each sequence by prefix
+        int idxA = -1, idxB = -1;
+        for(size_t i = 0; i < seqs.size(); i++) {
+                if(seqs[i].name().prefix() == "shotA.") idxA = (int)i;
+                if(seqs[i].name().prefix() == "shotB.") idxB = (int)i;
+        }
+        REQUIRE(idxA >= 0);
+        REQUIRE(idxB >= 0);
+
+        CHECK(seqs[idxA].head() == 1);
+        CHECK(seqs[idxA].tail() == 3);
+        CHECK(seqs[idxA].length() == 3);
+        CHECK(seqs[idxA].name().digits() == 3);
+
+        CHECK(seqs[idxB].head() == 100);
+        CHECK(seqs[idxB].tail() == 200);
+        CHECK(seqs[idxB].length() == 101);
+        CHECK(seqs[idxB].name().digits() == 4);
+
+        d.removeRecursively();
+}
+
+TEST_CASE("Dir: numberedSequences empty directory") {
+        Dir t = Dir::temp();
+        FilePath testDir = t.path() / "promeki_dir_test_numseq_empty";
+        Dir d(testDir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        NumNameSeq::List seqs = d.numberedSequences();
+        CHECK(seqs.isEmpty());
+
+        d.removeRecursively();
+}
+
+TEST_CASE("Dir: numberedSequences only non-numname files") {
+        Dir t = Dir::temp();
+        FilePath testDir = t.path() / "promeki_dir_test_numseq_nonames";
+        Dir d(testDir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        createTestFile(testDir.toStdPath() / "readme.txt", 'a');
+        createTestFile(testDir.toStdPath() / "notes.md",   'b');
+
+        NumNameSeq::List seqs = d.numberedSequences();
+        CHECK(seqs.isEmpty());
+
+        d.removeRecursively();
+}
+
+TEST_CASE("Dir: numberedSequences nonexistent directory") {
+        Dir d("/nonexistent_promeki_numseq_path_98765");
+        NumNameSeq::List seqs = d.numberedSequences();
+        CHECK(seqs.isEmpty());
 }
