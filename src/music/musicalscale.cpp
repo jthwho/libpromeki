@@ -35,8 +35,8 @@ MusicalScale::MusicalScale(int rootPitchClass, Mode mode)
         return;
 }
 
-std::pair<MusicalScale, Error> MusicalScale::fromName(const String &name) {
-        if(name.isEmpty()) return {MusicalScale(), Error::Invalid};
+Result<MusicalScale> MusicalScale::fromName(const String &name) {
+        if(name.isEmpty()) return makeError<MusicalScale>(Error::Invalid);
 
         const std::string &s = name.str();
 
@@ -47,7 +47,7 @@ std::pair<MusicalScale, Error> MusicalScale::fromName(const String &name) {
 
         String rootStr = String(s.substr(0, modeStart));
         int root = pitchClassFromName(rootStr);
-        if(root < 0) return {MusicalScale(), Error::Invalid};
+        if(root < 0) return makeError<MusicalScale>(Error::Invalid);
 
         // Extract mode string, trimming leading whitespace.
         Mode mode = Chromatic;
@@ -57,12 +57,12 @@ std::pair<MusicalScale, Error> MusicalScale::fromName(const String &name) {
                 if(first != std::string::npos) {
                         modeStr = modeStr.substr(first);
                         auto [m, err] = modeFromName(String(modeStr));
-                        if(err.isError()) return {MusicalScale(), err};
+                        if(err.isError()) return makeError<MusicalScale>(err);
                         mode = m;
                 }
         }
 
-        return {MusicalScale(root, mode), Error::Ok};
+        return makeResult(MusicalScale(root, mode));
 }
 
 float MusicalScale::midiNoteForDegree(int degree, int octave) const {
@@ -156,19 +156,19 @@ const char *MusicalScale::pitchClassName(int pitchClass) {
         return kNames[((pitchClass % 12) + 12) % 12];
 }
 
-std::pair<MusicalScale::Mode, Error> MusicalScale::modeFromName(const String &name) {
+Result<MusicalScale::Mode> MusicalScale::modeFromName(const String &name) {
         std::string lower = name.str();
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
-        if(lower == "chromatic")                                           return {Chromatic, Error::Ok};
-        if(lower == "major" || lower == "ionian")                          return {Major, Error::Ok};
-        if(lower == "minor" || lower == "natural minor" || lower == "aeolian") return {NaturalMinor, Error::Ok};
-        if(lower == "harmonic minor")                                      return {HarmonicMinor, Error::Ok};
-        if(lower == "melodic minor")                                       return {MelodicMinor, Error::Ok};
-        if(lower == "pentatonic" || lower == "major pentatonic")           return {Pentatonic, Error::Ok};
-        if(lower == "blues")                                               return {Blues, Error::Ok};
+        if(lower == "chromatic")                                           return makeResult(Chromatic);
+        if(lower == "major" || lower == "ionian")                          return makeResult(Major);
+        if(lower == "minor" || lower == "natural minor" || lower == "aeolian") return makeResult(NaturalMinor);
+        if(lower == "harmonic minor")                                      return makeResult(HarmonicMinor);
+        if(lower == "melodic minor")                                       return makeResult(MelodicMinor);
+        if(lower == "pentatonic" || lower == "major pentatonic")           return makeResult(Pentatonic);
+        if(lower == "blues")                                               return makeResult(Blues);
 
-        return {Chromatic, Error::Invalid};
+        return makeError<Mode>(Error::Invalid);
 }
 
 const char *MusicalScale::modeName(Mode mode) {

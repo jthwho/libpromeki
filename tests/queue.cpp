@@ -33,9 +33,9 @@ TEST_CASE("Queue_PushPopOrdering") {
     q.push(1);
     q.push(2);
     q.push(3);
-    CHECK(q.pop().first == 1);
-    CHECK(q.pop().first == 2);
-    CHECK(q.pop().first == 3);
+    CHECK(q.pop().first() == 1);
+    CHECK(q.pop().first() == 2);
+    CHECK(q.pop().first() == 3);
 }
 
 // ============================================================================
@@ -57,6 +57,10 @@ TEST_CASE("Queue_RvaluePush") {
 // ============================================================================
 
 TEST_CASE("Queue_Emplace") {
+    // The element type itself is a std::pair (the queue is storing pairs);
+    // that's a legitimate use of std::pair as a generic 2-tuple.  Only the
+    // queue's own pop() return type was changed from std::pair<T, Error>
+    // to Result<T> in the std::pair → Result migration.
     Queue<std::pair<int, std::string>> q;
     q.emplace(42, "answer");
     CHECK(q.size() == 1);
@@ -75,10 +79,10 @@ TEST_CASE("Queue_ListPush") {
     List<int> items = {10, 20, 30, 40};
     q.push(items);
     CHECK(q.size() == 4);
-    CHECK(q.pop().first == 10);
-    CHECK(q.pop().first == 20);
-    CHECK(q.pop().first == 30);
-    CHECK(q.pop().first == 40);
+    CHECK(q.pop().first() == 10);
+    CHECK(q.pop().first() == 20);
+    CHECK(q.pop().first() == 30);
+    CHECK(q.pop().first() == 40);
 }
 
 // ============================================================================

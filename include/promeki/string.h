@@ -8,10 +8,13 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <format>
+#include <utility>
 #include <promeki/namespace.h>
 #include <promeki/util.h>
 #include <promeki/error.h>
@@ -31,6 +34,23 @@ class StringList;
  * Copy is a refcount increment; mutation triggers COW. Latin1 is
  * the fast path (byte == character). Unicode strings store decoded
  * codepoints for O(1) indexed access.
+ *
+ * @par Formatting
+ * New code should prefer @ref String::format (a thin wrapper over
+ * C++20 @c std::format) over the older @ref String::sprintf and
+ * @ref String::arg helpers.  @c format gives compile-time format string
+ * checking, type-safe argument handling, and an extensible mechanism
+ * for adding format support to user-defined types via the standard
+ * @c std::formatter customization point.  String and Char already have
+ * formatter specializations, so they compose with @c std::format
+ * directly:
+ * @code
+ *   String name = "Alice";
+ *   String s = String::format("hello, {}!", name);
+ *   String s2 = String::format("{:>8}", 42);
+ * @endcode
+ * @c sprintf and @c arg are not deprecated yet, but expect them to be
+ * phased out as call sites are migrated.
  */
 class String {
         public:
@@ -206,17 +226,88 @@ class String {
                  * @brief Creates a formatted string using printf-style syntax.
                  * @param fmt The printf format string.
                  * @return The formatted string.
+                 *
+                 * @note New code should prefer @ref format, which gives
+                 *       compile-time format string checking and type-safe
+                 *       argument handling via C++20 @c std::format.
                  */
                 PROMEKI_PRINTF_FUNC(1, 2) static String sprintf(const char *fmt, ...);
+
+                /**
+                 * @brief Creates a formatted string using C++20 @c std::format syntax.
+                 *
+                 * Thin wrapper around @c std::format that returns a promeki
+                 * String.  The format string is checked at compile time
+                 * (malformed specs fail to compile), and arguments are
+                 * type-safe via the standard @c std::formatter customization
+                 * point.  @ref String and @ref Char already have formatter
+                 * specializations, so they may be used as arguments directly.
+                 *
+                 * @code
+                 *   String name = "Alice";
+                 *   String s  = String::format("hello, {}!", name);
+                 *   String s2 = String::format("{:>8}", 42);          // right-justified, width 8
+                 *   String s3 = String::format("{:.3f}", 3.14159);    // "3.142"
+                 * @endcode
+                 *
+                 * The result is wrapped via @ref fromUtf8, so a pure-ASCII
+                 * format result lands in cheap Latin1 storage and a result
+                 * with multi-byte UTF-8 sequences lands in Unicode storage.
+                 *
+                 * @tparam Args Argument types deduced from the call.
+                 * @param fmt   Compile-time @c std::format format string.
+                 * @param args  Arguments to substitute into @p fmt.
+                 * @return A new String containing the formatted text.
+                 *
+                 * @sa vformat for runtime format strings.
+                 */
+                template <typename... Args>
+                static String format(std::format_string<Args...> fmt, Args &&... args) {
+                        std::string s = std::format(fmt, std::forward<Args>(args)...);
+                        return fromUtf8(s.data(), s.size());
+                }
+
+                /**
+                 * @brief Runtime-format-string variant of @ref format.
+                 *
+                 * Use when the format string is not known at compile time
+                 * (e.g. loaded from a translation table or user input).
+                 * Compile-time format string checking is not available in
+                 * this case — a malformed format string throws
+                 * @c std::format_error at runtime.
+                 *
+                 * @code
+                 *   std::string fmt = loadFormat();
+                 *   String s = String::vformat(fmt, std::make_format_args(value));
+                 * @endcode
+                 *
+                 * @param fmt  Runtime format string.
+                 * @param args Pre-erased argument pack from @c std::make_format_args.
+                 * @return A new String containing the formatted text.
+                 */
+                static String vformat(std::string_view fmt, std::format_args args) {
+                        std::string s = std::vformat(fmt, args);
+                        return fromUtf8(s.data(), s.size());
+                }
 
                 /**
                  * @brief Creates a String by decoding UTF-8 data.
                  * @param data Pointer to UTF-8 bytes.
                  * @param len  Number of bytes.
-                 * @return A Unicode-encoded String.
+                 * @return The most compact valid representation: a Latin1-encoded
+                 *         String when @p data is pure ASCII (every byte < 0x80,
+                 *         which is also valid UTF-8 with one codepoint per byte),
+                 *         otherwise a Unicode-encoded String with codepoints
+                 *         decoded from the UTF-8 sequence.
                  */
                 static String fromUtf8(const char *data, size_t len) {
-                        return String(StringUnicodeData::fromUtf8(data, len));
+                        // Pure ASCII fast path: every byte is its own codepoint and
+                        // fits trivially in the cheaper Latin1 storage.
+                        for(size_t i = 0; i < len; ++i) {
+                                if(static_cast<unsigned char>(data[i]) > 0x7F)
+                                        return String(StringUnicodeData::fromUtf8(data, len));
+                        }
+                        return String(data, len);
                 }
 
                 /**
@@ -361,8 +452,19 @@ class String {
                 size_t find(char val, size_t from = 0) const { return d->find(Char(val), from); }
                 /// @copydoc find(char,size_t) const
                 size_t find(Char val, size_t from = 0) const { return d->find(val, from); }
-                /// @copydoc find(char,size_t) const
-                size_t find(const char *val, size_t from = 0) const { return d->find(*String(val).d, from); }
+                /**
+                 * @brief Finds the first occurrence of a UTF-8 encoded substring.
+                 *
+                 * The C-string argument is decoded as UTF-8 (matching
+                 * @ref operator==(const char *) const and @ref String::fromUtf8),
+                 * not as a Latin1 byte sequence.
+                 */
+                size_t find(const char *val, size_t from = 0) const {
+                        if(val == nullptr) return npos;
+                        size_t len = 0;
+                        while(val[len]) ++len;
+                        return d->find(*String::fromUtf8(val, len).d, from);
+                }
                 /// @copydoc find(char,size_t) const
                 size_t find(const String &val, size_t from = 0) const { return d->find(*val.d, from); }
 
@@ -375,8 +477,17 @@ class String {
                 size_t rfind(char val, size_t from = npos) const { return d->rfind(Char(val), from); }
                 /// @copydoc rfind(char,size_t) const
                 size_t rfind(Char val, size_t from = npos) const { return d->rfind(val, from); }
-                /// @copydoc rfind(char,size_t) const
-                size_t rfind(const char *val, size_t from = npos) const { return d->rfind(*String(val).d, from); }
+                /**
+                 * @brief Finds the last occurrence of a UTF-8 encoded substring.
+                 *
+                 * The C-string argument is decoded as UTF-8.
+                 */
+                size_t rfind(const char *val, size_t from = npos) const {
+                        if(val == nullptr) return npos;
+                        size_t len = 0;
+                        while(val[len]) ++len;
+                        return d->rfind(*String::fromUtf8(val, len).d, from);
+                }
                 /// @copydoc rfind(char,size_t) const
                 size_t rfind(const String &val, size_t from = npos) const { return d->rfind(*val.d, from); }
 
@@ -390,8 +501,12 @@ class String {
                 bool contains(Char val) const { return d->find(val) != npos; }
                 /// @copydoc contains(char) const
                 bool contains(const String &val) const { return d->find(*val.d) != npos; }
-                /// @copydoc contains(char) const
-                bool contains(const char *val) const { return contains(String(val)); }
+                /**
+                 * @brief Returns true if the string contains a UTF-8 encoded substring.
+                 *
+                 * The C-string argument is decoded as UTF-8.
+                 */
+                bool contains(const char *val) const { return find(val) != npos; }
 
                 /**
                  * @brief Counts non-overlapping occurrences of a substring.
@@ -571,8 +686,31 @@ class String {
                         return true;
                 }
 
-                /// @copydoc operator==(const String &) const
-                bool operator==(const char *val) const { return d->str() == val; }
+                /**
+                 * @brief Equality comparison with a UTF-8 C string.
+                 *
+                 * The argument is interpreted as UTF-8 (matching the
+                 * convention used by @ref String::fromUtf8 and the @c _ps
+                 * literal): each codepoint is decoded from @p val and
+                 * compared against the corresponding character of this
+                 * string.  Pure-ASCII inputs work the same as a byte-level
+                 * compare; multi-byte UTF-8 sequences match the Unicode
+                 * codepoints they encode.
+                 */
+                bool operator==(const char *val) const {
+                        if(val == nullptr) return d->length() == 0;
+                        const size_t len = d->length();
+                        size_t i = 0;
+                        while(*val) {
+                                if(i >= len) return false;
+                                size_t bytesRead = 0;
+                                Char vc = Char::fromUtf8(val, &bytesRead);
+                                if(d->charAt(i) != vc) return false;
+                                val += bytesRead;
+                                ++i;
+                        }
+                        return i == len;
+                }
                 /// @copydoc operator==(const String &) const
                 bool operator==(char val) const { return d->length() == 1 && d->charAt(0) == val; }
 
@@ -583,9 +721,35 @@ class String {
                 /// @copydoc operator!=(const String &) const
                 bool operator!=(char val) const { return !(*this == val); }
 
-                /** @brief Less-than comparison (lexicographic on the encoded bytes). */
+                /**
+                 * @brief Less-than comparison (lexicographic on Unicode codepoints).
+                 *
+                 * The result is consistent with @ref operator==(const String &) const:
+                 * two strings are equal iff neither is less than the other.  Same
+                 * encoding on both sides takes a fast byte-level path (Latin1 byte
+                 * order matches codepoint order, and UTF-8 is designed so that
+                 * byte-level lexicographic order equals codepoint order); mixed
+                 * encodings fall back to a codepoint-by-codepoint walk.
+                 */
                 friend bool operator<(const String &lhs, const String &rhs) {
-                        return lhs.str() < rhs.str();
+                        if(lhs.d->isLatin1() == rhs.d->isLatin1()) {
+                                // Same encoding: byte-level comparison is correct.
+                                // - Latin1 vs Latin1: byte order == codepoint order.
+                                // - Unicode vs Unicode: UTF-8 byte order == codepoint order.
+                                return lhs.d->str() < rhs.d->str();
+                        }
+                        // Mixed encodings: walk codepoint-by-codepoint so that
+                        // logically equal strings (e.g. Latin1 0xE9 and Unicode
+                        // U+00E9) compare as equal under operator<.
+                        const size_t llen = lhs.d->length();
+                        const size_t rlen = rhs.d->length();
+                        const size_t n = std::min(llen, rlen);
+                        for(size_t i = 0; i < n; ++i) {
+                                char32_t a = lhs.d->charAt(i).codepoint();
+                                char32_t b = rhs.d->charAt(i).codepoint();
+                                if(a != b) return a < b;
+                        }
+                        return llen < rlen;
                 }
 
                 /** @brief Less-than-or-equal comparison. */
@@ -607,27 +771,53 @@ class String {
                 // Case / whitespace
                 // ============================================================
 
-                /** @brief Returns an uppercase copy of this string. */
+                /**
+                 * @brief Returns an uppercase copy of this string.
+                 *
+                 * Case folding goes through @ref Char::toUpper for both the
+                 * Latin1 and Unicode storage paths so the result is
+                 * locale-independent and consistent across encodings.
+                 */
                 String toUpper() const {
                         if(d->isLatin1()) {
-                                std::string s = d->str();
-                                std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+                                const std::string &src = d->str();
+                                std::string s;
+                                s.resize(src.size());
+                                for(size_t i = 0; i < src.size(); ++i) {
+                                        char32_t cp = Char(src[i]).toUpper().codepoint();
+                                        // Latin1 toUpper stays within the
+                                        // 0x00–0xFF range, so this is lossless.
+                                        s[i] = static_cast<char>(cp);
+                                }
                                 return String(std::move(s));
                         }
                         promeki::List<Char> chars;
+                        chars.reserve(d->length());
                         for(size_t i = 0; i < d->length(); ++i)
                                 chars.pushToBack(d->charAt(i).toUpper());
                         return String(new StringUnicodeData(std::move(chars)));
                 }
 
-                /** @brief Returns a lowercase copy of this string. */
+                /**
+                 * @brief Returns a lowercase copy of this string.
+                 *
+                 * Case folding goes through @ref Char::toLower for both the
+                 * Latin1 and Unicode storage paths so the result is
+                 * locale-independent and consistent across encodings.
+                 */
                 String toLower() const {
                         if(d->isLatin1()) {
-                                std::string s = d->str();
-                                std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+                                const std::string &src = d->str();
+                                std::string s;
+                                s.resize(src.size());
+                                for(size_t i = 0; i < src.size(); ++i) {
+                                        char32_t cp = Char(src[i]).toLower().codepoint();
+                                        s[i] = static_cast<char>(cp);
+                                }
                                 return String(std::move(s));
                         }
                         promeki::List<Char> chars;
+                        chars.reserve(d->length());
                         for(size_t i = 0; i < d->length(); ++i)
                                 chars.pushToBack(d->charAt(i).toLower());
                         return String(new StringUnicodeData(std::move(chars)));
@@ -923,6 +1113,110 @@ struct std::hash<promeki::String> {
 };
 /// @endcond
 
+/**
+ * @brief @c std::formatter specialization for @ref promeki::String.
+ *
+ * Inherits from @c std::formatter<std::string_view> so that the full set
+ * of standard string format specifiers (width, fill, alignment, precision)
+ * is available for free.  The String's byte representation is exposed as
+ * a @c string_view via @c cstr() / @c byteCount() — for Unicode-encoded
+ * Strings this is the cached UTF-8 byte sequence, which is the right
+ * thing to feed into @c std::format.
+ */
+template<>
+struct std::formatter<promeki::String> : std::formatter<std::string_view> {
+        using Base = std::formatter<std::string_view>;
+        template <typename FormatContext>
+        auto format(const promeki::String &s, FormatContext &ctx) const {
+                return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
+        }
+};
+
+/**
+ * @brief @c std::formatter specialization for @ref promeki::Char.
+ *
+ * Renders the character as its UTF-8 byte sequence (1–4 bytes).  All
+ * standard string format specifiers (width, fill, alignment) are
+ * supported via inheritance from @c std::formatter<std::string_view>.
+ * To format the integer codepoint instead, pass @c c.codepoint() as
+ * an unsigned integer.
+ */
+template<>
+struct std::formatter<promeki::Char> : std::formatter<std::string_view> {
+        using Base = std::formatter<std::string_view>;
+        template <typename FormatContext>
+        auto format(const promeki::Char &c, FormatContext &ctx) const {
+                char buf[4];
+                size_t n = c.toUtf8(buf);
+                return Base::format(std::string_view(buf, n), ctx);
+        }
+};
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief @c std::formatter helper that renders any type with a no-arg
+ *        @c toString() returning a @ref String.
+ *
+ * Inherit a @c std::formatter specialization from this template to give
+ * a library type out-of-the-box support as a @ref String::format
+ * argument.  All standard string format specifiers (width, fill,
+ * alignment, precision) are inherited from
+ * @c std::formatter<std::string_view>, so users can write
+ * @code
+ *   String::format("[{:>16}]", uuid);          // right-justified, width 16
+ *   String::format("ratio = {}", aspectRatio);
+ * @endcode
+ *
+ * Use the @ref PROMEKI_FORMAT_VIA_TOSTRING convenience macro to
+ * register a type in one line:
+ * @code
+ *   PROMEKI_FORMAT_VIA_TOSTRING(promeki::UUID);
+ * @endcode
+ *
+ * Types with parameterized @c toString() (e.g. @ref Color or @ref Json)
+ * or with non-@c String return types (e.g. @ref Timecode, which returns
+ * @c Result<String>) need a hand-written
+ * @c std::formatter specialization that parses the format spec
+ * directly — see the @ref Timecode formatter in @c timecode.h for an
+ * example.
+ *
+ * @tparam T The promeki type to render via its @c toString() method.
+ */
+template <typename T>
+struct ToStringFormatter : std::formatter<std::string_view> {
+        using Base = std::formatter<std::string_view>;
+        template <typename FormatContext>
+        auto format(const T &v, FormatContext &ctx) const {
+                String s = v.toString();
+                return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
+        }
+};
+
+PROMEKI_NAMESPACE_END
+
+/**
+ * @def PROMEKI_FORMAT_VIA_TOSTRING(...)
+ * @brief Registers a @c std::formatter specialization that delegates to
+ *        the type's no-arg @c toString() method.
+ *
+ * Place this macro at namespace scope, after the type definition and
+ * with @c <promeki/string.h> already included.  Standard string format
+ * specifiers (width, fill, alignment) work automatically via inheritance
+ * from @ref promeki::ToStringFormatter.
+ *
+ * @code
+ *   PROMEKI_FORMAT_VIA_TOSTRING(promeki::UUID);
+ *   PROMEKI_FORMAT_VIA_TOSTRING(promeki::Rational);
+ * @endcode
+ *
+ * Variadic so qualified template names containing commas can be passed.
+ */
+#define PROMEKI_FORMAT_VIA_TOSTRING(...)                                        \
+        template <>                                                             \
+        struct std::formatter<__VA_ARGS__>                                      \
+            : ::promeki::ToStringFormatter<__VA_ARGS__> {}
+
 PROMEKI_NAMESPACE_BEGIN
 
 /**
@@ -964,10 +1258,17 @@ class CompiledString {
                 constexpr const char *bytes() const { return _bytes; }
                 constexpr const char32_t *codepoints() const { return _codepoints; }
 
-                /** @brief Compile-time FNV-1a hash of the native storage. */
+                /**
+                 * @brief Compile-time encoding-agnostic FNV-1a hash.
+                 *
+                 * Mixes each codepoint into the hash as four little-endian
+                 * bytes so the result is independent of host endianness and
+                 * matches the runtime hash for both Latin1 and Unicode
+                 * String storage with the same logical content.
+                 */
                 constexpr uint64_t hash() const {
-                        if(_isAscii) return fnv1aData(_bytes, N - 1);
-                        return fnv1aData(_codepoints, _charCount * sizeof(char32_t));
+                        if(_isAscii) return fnv1aLatin1AsCodepoints(_bytes, N - 1);
+                        return fnv1aCodepoints(_codepoints, _charCount);
                 }
 
         private:
@@ -1003,22 +1304,19 @@ class CompiledCodepoints {
 /**
  * @brief User-defined literal for convenient String construction.
  *
- * Auto-detects encoding: if any byte is > 0x7F the literal is
- * decoded as UTF-8, otherwise it is treated as Latin1.
+ * Treats the literal as UTF-8.  Pure-ASCII inputs land in cheap Latin1
+ * storage and inputs containing multi-byte sequences are decoded into
+ * Unicode storage — the choice is made by @ref String::fromUtf8.
  *
  * @code
  *   using namespace promeki::literals;
- *   String s = "Hello"_ps;          // Latin1
- *   String u = "café"_ps;           // auto-detected as UTF-8
+ *   String s = "Hello"_ps;          // Latin1 storage (ASCII fast path)
+ *   String u = "café"_ps;           // Unicode storage (UTF-8 decoded)
  * @endcode
  */
 namespace literals {
         inline String operator""_ps(const char *str, size_t len) {
-                for(size_t i = 0; i < len; ++i) {
-                        if(static_cast<unsigned char>(str[i]) > 0x7F)
-                                return String::fromUtf8(str, len);
-                }
-                return String(str, len);
+                return String::fromUtf8(str, len);
         }
 } // namespace literals
 

@@ -41,18 +41,28 @@ class Pair {
                 Pair() = default;
 
                 /**
-                 * @brief Constructs a pair from two values.
-                 * @param a First element.
-                 * @param b Second element.
+                 * @brief Constructs a pair from two values, perfect-forwarded.
+                 *
+                 * Accepts any combination of lvalue and rvalue arguments and
+                 * forwards them into the underlying @c std::pair, so move-only
+                 * element types like @c std::unique_ptr work seamlessly.
+                 * SFINAE-guarded to only participate in overload resolution
+                 * when both A and B are actually constructible from the
+                 * supplied argument types — this keeps unrelated single-arg
+                 * constructors like the @c std::pair conversion overload from
+                 * being shadowed by accidental two-arg matches.
+                 *
+                 * @tparam A2 First argument type (deduced).
+                 * @tparam B2 Second argument type (deduced).
+                 * @param  a  First element.
+                 * @param  b  Second element.
                  */
-                Pair(const A &a, const B &b) : d(a, b) {}
-
-                /**
-                 * @brief Constructs a pair by moving two values.
-                 * @param a First element (moved).
-                 * @param b Second element (moved).
-                 */
-                Pair(A &&a, B &&b) : d(std::move(a), std::move(b)) {}
+                template <typename A2, typename B2,
+                          typename = std::enable_if_t<
+                              std::is_constructible_v<A, A2&&> &&
+                              std::is_constructible_v<B, B2&&>>>
+                Pair(A2 &&a, B2 &&b)
+                        : d(std::forward<A2>(a), std::forward<B2>(b)) {}
 
                 /**
                  * @brief Constructs from an existing std::pair.

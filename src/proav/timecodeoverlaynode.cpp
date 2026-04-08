@@ -127,7 +127,7 @@ void TimecodeOverlayNode::processFrame(Frame::Ptr &frame, int inputIndex, Delive
         String tcStr;
         if(img->metadata().contains(Metadata::Timecode)) {
                 Timecode tc = img->metadata().get(Metadata::Timecode).get<Timecode>();
-                tcStr = tc.toString().first;
+                tcStr = tc.toString().first();
         } else {
                 tcStr = "--:--:--:--";
         }

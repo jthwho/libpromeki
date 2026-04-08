@@ -11,6 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -57,10 +58,11 @@ class MusicalScale {
                 /**
                  * @brief Parses a scale name such as "C Major" or "Eb Blues".
                  * @param name Scale name string.
-                 * @return A pair of the parsed scale and an error code.
-                 *         Returns Error::Invalid if the name cannot be parsed.
+                 * @return A @ref Result holding the parsed scale on success, or
+                 *         a default-constructed scale and @c Error::Invalid on
+                 *         failure.
                  */
-                static std::pair<MusicalScale, Error> fromName(const String &name);
+                static Result<MusicalScale> fromName(const String &name);
 
                 /** @brief Returns the root pitch class (0–11). */
                 int rootPitchClass() const { return _rootPitchClass; }
@@ -111,9 +113,11 @@ class MusicalScale {
                 /**
                  * @brief Parses a mode name to the Mode enum.
                  * @param name Mode name (case-insensitive).
-                 * @return A pair of the parsed mode and an error code.
+                 * @return A @ref Result holding the parsed mode on success, or
+                 *         a default-constructed Mode and an error code on
+                 *         failure.
                  */
-                static std::pair<Mode, Error> modeFromName(const String &name);
+                static Result<Mode> modeFromName(const String &name);
 
                 /**
                  * @brief Returns the human-readable name for a mode.

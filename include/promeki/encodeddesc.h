@@ -174,3 +174,5 @@ class EncodedDesc {
 };
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::EncodedDesc);

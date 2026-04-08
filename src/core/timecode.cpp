@@ -65,41 +65,41 @@ Timecode Timecode::fromFrameNumber(const Mode &mode, FrameNumber frameNumber) {
         return tc;
 }
 
-std::pair<Timecode, Error> Timecode::fromString(const String &str) {
+Result<Timecode> Timecode::fromString(const String &str) {
         VtcTimecode vtc;
         VtcError err = vtc_timecode_from_string(&vtc, str.cstr());
         if(err != VTC_ERR_OK) {
                 promekiErr("Failed to parse timecode from '%s': %s", str.cstr(), vtc_error_string(err));
-                return { Timecode(), Error::Invalid };
+                return makeError<Timecode>(Error::Invalid);
         }
         Timecode tc;
         tc.fromVtc(vtc);
-        return { tc, Error() };
+        return makeResult(tc);
 }
 
-std::pair<String, Error> Timecode::toString(const VtcStringFormat *fmt) const {
-        if(!isValid()) return { String(), Error::Invalid };
-        if(!_mode.hasFormat()) return { String(), Error::NoFrameRate };
+Result<String> Timecode::toString(const VtcStringFormat *fmt) const {
+        if(!isValid()) return makeError<String>(Error::Invalid);
+        if(!_mode.hasFormat()) return makeError<String>(Error::NoFrameRate);
         VtcTimecode vtc = toVtc();
         char buf[64];
         VtcError err = vtc_timecode_to_string(&vtc, fmt, buf, sizeof(buf));
         if(err != VTC_ERR_OK) {
-                return { String(), Error::Invalid };
+                return makeError<String>(Error::Invalid);
         }
-        return { String(buf), Error() };
+        return makeResult(String(buf));
 }
 
-std::pair<Timecode::FrameNumber, Error> Timecode::toFrameNumber() const {
-        if(!isValid()) return { 0, Error::Invalid };
-        if(!_mode.hasFormat()) return { 0, Error::NoFrameRate };
+Result<Timecode::FrameNumber> Timecode::toFrameNumber() const {
+        if(!isValid()) return makeError<FrameNumber>(Error::Invalid);
+        if(!_mode.hasFormat()) return makeError<FrameNumber>(Error::NoFrameRate);
         VtcTimecode vtc = toVtc();
         uint64_t frameNum;
         VtcError err = vtc_timecode_to_frames(&vtc, &frameNum);
         if(err != VTC_ERR_OK) {
-                if(err == VTC_ERR_NO_FRAME_RATE) return { 0, Error::NoFrameRate };
-                return { 0, Error::Invalid };
+                if(err == VTC_ERR_NO_FRAME_RATE) return makeError<FrameNumber>(Error::NoFrameRate);
+                return makeError<FrameNumber>(Error::Invalid);
         }
-        return { frameNum, Error() };
+        return makeResult(static_cast<FrameNumber>(frameNum));
 }
 
 PROMEKI_NAMESPACE_END

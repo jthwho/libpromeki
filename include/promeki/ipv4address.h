@@ -227,3 +227,5 @@ class Ipv4Address {
 TextStream &operator<<(TextStream &stream, const Ipv4Address &addr);
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::Ipv4Address);

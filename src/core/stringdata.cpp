@@ -37,8 +37,31 @@ size_t StringLatin1Data::find(Char ch, size_t from) const {
 }
 
 size_t StringLatin1Data::find(const StringData &s, size_t from) const {
-        size_t r = _s.find(s.cstr(), from);
-        return r == std::string::npos ? npos : r;
+        size_t slen = s.length();
+        if(slen == 0) return from <= _s.size() ? from : npos;
+        if(slen > _s.size() || from > _s.size() - slen) return npos;
+        if(s.isLatin1()) {
+                // Fast path: byte-level search using the std::string overload,
+                // which respects the explicit length (so embedded NULs in the
+                // needle are not silently truncated by C-string semantics).
+                size_t r = _s.find(s.str(), from);
+                return r == std::string::npos ? npos : r;
+        }
+        // Cross-encoding: the needle is a Unicode-encoded StringData whose
+        // cstr() would be UTF-8 bytes that do not match Latin1 storage byte
+        // for byte.  Walk codepoint-by-codepoint instead.
+        for(size_t i = from; i + slen <= _s.size(); ++i) {
+                bool match = true;
+                for(size_t j = 0; j < slen; ++j) {
+                        char32_t haystackCp = static_cast<unsigned char>(_s[i + j]);
+                        if(haystackCp != s.charAt(j).codepoint()) {
+                                match = false;
+                                break;
+                        }
+                }
+                if(match) return i;
+        }
+        return npos;
 }
 
 size_t StringLatin1Data::rfind(Char ch, size_t from) const {
@@ -48,8 +71,30 @@ size_t StringLatin1Data::rfind(Char ch, size_t from) const {
 }
 
 size_t StringLatin1Data::rfind(const StringData &s, size_t from) const {
-        size_t r = _s.rfind(s.cstr(), from == npos ? std::string::npos : from);
-        return r == std::string::npos ? npos : r;
+        size_t slen = s.length();
+        if(slen == 0) return (from == npos || from >= _s.size()) ? _s.size() : from;
+        if(slen > _s.size()) return npos;
+        if(s.isLatin1()) {
+                // Fast path: byte-level rfind using the std::string overload.
+                size_t r = _s.rfind(s.str(), from == npos ? std::string::npos : from);
+                return r == std::string::npos ? npos : r;
+        }
+        // Cross-encoding: walk codepoint-by-codepoint from the right.
+        size_t maxStart = _s.size() - slen;
+        size_t start = (from == npos || from > maxStart) ? maxStart : from;
+        for(size_t i = start + 1; i > 0; --i) {
+                size_t idx = i - 1;
+                bool match = true;
+                for(size_t j = 0; j < slen; ++j) {
+                        char32_t haystackCp = static_cast<unsigned char>(_s[idx + j]);
+                        if(haystackCp != s.charAt(j).codepoint()) {
+                                match = false;
+                                break;
+                        }
+                }
+                if(match) return idx;
+        }
+        return npos;
 }
 
 StringData *StringLatin1Data::createSubstr(size_t pos, size_t len) const {
@@ -61,13 +106,32 @@ void StringLatin1Data::reverseInPlace() {
 }
 
 size_t StringLatin1Data::count(const StringData &substr) const {
+        size_t slen = substr.length();
+        if(slen == 0 || slen > _s.size()) return 0;
+        if(substr.isLatin1()) {
+                // Fast path: byte-level scan using the std::string overload.
+                size_t ct = 0;
+                size_t pos = 0;
+                const std::string &sub = substr.str();
+                while((pos = _s.find(sub, pos)) != std::string::npos) {
+                        ++ct;
+                        pos += sub.size();
+                }
+                return ct;
+        }
+        // Cross-encoding: codepoint-by-codepoint scan.
         size_t ct = 0;
-        size_t pos = 0;
-        const std::string &sub = substr.str();
-        if(sub.empty()) return 0;
-        while((pos = _s.find(sub, pos)) != std::string::npos) {
-                ++ct;
-                pos += sub.size();
+        size_t i = 0;
+        while(i + slen <= _s.size()) {
+                bool match = true;
+                for(size_t j = 0; j < slen; ++j) {
+                        char32_t haystackCp = static_cast<unsigned char>(_s[i + j]);
+                        if(haystackCp != substr.charAt(j).codepoint()) {
+                                match = false;
+                                break;
+                        }
+                }
+                if(match) { ++ct; i += slen; } else { ++i; }
         }
         return ct;
 }
@@ -176,9 +240,26 @@ size_t StringUnicodeData::rfind(const StringData &s, size_t from) const {
 }
 
 StringData *StringUnicodeData::createSubstr(size_t pos, size_t len) const {
-        auto *ud = new StringUnicodeData();
         size_t end = pos + len;
         if(end > _chars.size()) end = _chars.size();
+        // If every codepoint in the slice fits in Latin1, return the cheaper
+        // Latin1 backend instead of cloning into another Unicode codepoint
+        // list.  This shrinks substrings of mostly-ASCII Unicode strings
+        // (e.g. PROMEKI_STRING("café lait").substr(5)) back down to one byte
+        // per character.
+        bool allLatin1 = true;
+        for(size_t i = pos; i < end; ++i) {
+                if(_chars[i].codepoint() > 0xFF) { allLatin1 = false; break; }
+        }
+        if(allLatin1) {
+                std::string s;
+                s.reserve(end - pos);
+                for(size_t i = pos; i < end; ++i) {
+                        s.push_back(static_cast<char>(_chars[i].codepoint()));
+                }
+                return new StringLatin1Data(std::move(s));
+        }
+        auto *ud = new StringUnicodeData();
         ud->_chars.reserve(end - pos);
         for(size_t i = pos; i < end; ++i) {
                 ud->_chars.pushToBack(_chars[i]);
@@ -246,7 +327,14 @@ void StringUnicodeData::resize(size_t len, Char fill) {
 }
 
 uint64_t StringUnicodeData::hash() const {
-        return fnv1aData(_chars.data(), _chars.size() * sizeof(Char));
+        // Use the endian-independent codepoint mixer so a Unicode-encoded
+        // string hashes identically to a Latin1-encoded string with the
+        // same logical content.
+        uint64_t seed = 0xcbf29ce484222325ULL;
+        for(size_t i = 0; i < _chars.size(); ++i) {
+                seed = fnv1aMixCodepoint(seed, _chars[i].codepoint());
+        }
+        return seed;
 }
 
 void StringUnicodeData::ensureEncoded() const {
@@ -294,14 +382,31 @@ size_t StringLiteralData::find(Char ch, size_t from) const {
 }
 
 size_t StringLiteralData::find(const StringData &s, size_t from) const {
-        size_t slen = s.byteCount();
+        size_t slen = s.length();
         if(slen == 0) return from <= _len ? from : npos;
-        if(slen > _len) return npos;
-        const char *needle = s.cstr();
+        if(slen > _len || from > _len - slen) return npos;
+        if(s.isLatin1()) {
+                // Fast byte-level path: literal storage is one byte per char.
+                const char *needle = s.cstr();
+                for(size_t i = from; i + slen <= _len; ++i) {
+                        bool match = true;
+                        for(size_t j = 0; j < slen; ++j) {
+                                if(_s[i + j] != needle[j]) {
+                                        match = false;
+                                        break;
+                                }
+                        }
+                        if(match) return i;
+                }
+                return npos;
+        }
+        // Cross-encoding: walk codepoint-by-codepoint so a Unicode needle's
+        // logical characters are matched against the Latin1 literal bytes.
         for(size_t i = from; i + slen <= _len; ++i) {
                 bool match = true;
                 for(size_t j = 0; j < slen; ++j) {
-                        if(_s[i + j] != needle[j]) {
+                        char32_t haystackCp = static_cast<unsigned char>(_s[i + j]);
+                        if(haystackCp != s.charAt(j).codepoint()) {
                                 match = false;
                                 break;
                         }
@@ -322,16 +427,33 @@ size_t StringLiteralData::rfind(Char ch, size_t from) const {
 }
 
 size_t StringLiteralData::rfind(const StringData &s, size_t from) const {
-        size_t slen = s.byteCount();
+        size_t slen = s.length();
         if(slen == 0) return (from == npos || from >= _len) ? _len : from;
         if(slen > _len) return npos;
-        const char *needle = s.cstr();
-        size_t start = (from == npos || from + slen > _len) ? _len - slen : from;
+        size_t maxStart = _len - slen;
+        size_t start = (from == npos || from > maxStart) ? maxStart : from;
+        if(s.isLatin1()) {
+                const char *needle = s.cstr();
+                for(size_t i = start + 1; i > 0; --i) {
+                        size_t idx = i - 1;
+                        bool match = true;
+                        for(size_t j = 0; j < slen; ++j) {
+                                if(_s[idx + j] != needle[j]) { match = false; break; }
+                        }
+                        if(match) return idx;
+                }
+                return npos;
+        }
+        // Cross-encoding: codepoint-by-codepoint scan from the right.
         for(size_t i = start + 1; i > 0; --i) {
                 size_t idx = i - 1;
                 bool match = true;
                 for(size_t j = 0; j < slen; ++j) {
-                        if(_s[idx + j] != needle[j]) { match = false; break; }
+                        char32_t haystackCp = static_cast<unsigned char>(_s[idx + j]);
+                        if(haystackCp != s.charAt(j).codepoint()) {
+                                match = false;
+                                break;
+                        }
                 }
                 if(match) return idx;
         }
@@ -344,24 +466,31 @@ StringData *StringLiteralData::createSubstr(size_t pos, size_t len) const {
 }
 
 size_t StringLiteralData::count(const StringData &substr) const {
-        size_t slen = substr.byteCount();
-        if(slen == 0) return 0;
-        const char *needle = substr.cstr();
+        size_t slen = substr.length();
+        if(slen == 0 || slen > _len) return 0;
         size_t ct = 0;
+        if(substr.isLatin1()) {
+                const char *needle = substr.cstr();
+                for(size_t i = 0; i + slen <= _len; ) {
+                        bool match = true;
+                        for(size_t j = 0; j < slen; ++j) {
+                                if(_s[i + j] != needle[j]) { match = false; break; }
+                        }
+                        if(match) { ++ct; i += slen; } else { ++i; }
+                }
+                return ct;
+        }
+        // Cross-encoding: codepoint-by-codepoint scan.
         for(size_t i = 0; i + slen <= _len; ) {
                 bool match = true;
                 for(size_t j = 0; j < slen; ++j) {
-                        if(_s[i + j] != needle[j]) {
+                        char32_t haystackCp = static_cast<unsigned char>(_s[i + j]);
+                        if(haystackCp != substr.charAt(j).codepoint()) {
                                 match = false;
                                 break;
                         }
                 }
-                if(match) {
-                        ++ct;
-                        i += slen;
-                } else {
-                        ++i;
-                }
+                if(match) { ++ct; i += slen; } else { ++i; }
         }
         return ct;
 }
@@ -436,6 +565,20 @@ size_t StringUnicodeLiteralData::rfind(const StringData &s, size_t from) const {
 
 StringData *StringUnicodeLiteralData::createSubstr(size_t pos, size_t len) const {
         if(pos + len > _charCount) len = _charCount - pos;
+        // If the slice is all Latin1-fittable, return the cheaper Latin1
+        // backend instead of cloning into a Unicode codepoint list.
+        bool allLatin1 = true;
+        for(size_t i = pos; i < pos + len; ++i) {
+                if(_codepoints[i] > 0xFF) { allLatin1 = false; break; }
+        }
+        if(allLatin1) {
+                std::string s;
+                s.reserve(len);
+                for(size_t i = pos; i < pos + len; ++i) {
+                        s.push_back(static_cast<char>(_codepoints[i]));
+                }
+                return new StringLatin1Data(std::move(s));
+        }
         List<Char> chars;
         chars.reserve(len);
         for(size_t i = pos; i < pos + len; ++i) {

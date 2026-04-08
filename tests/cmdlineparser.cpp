@@ -109,6 +109,45 @@ TEST_CASE("CmdLineParser: generateUsage") {
         CHECK(usage.size() > 0);
 }
 
+TEST_CASE("CmdLineParser: parseMain decodes argv as UTF-8") {
+        // argv on POSIX systems is conventionally UTF-8.  parseMain() must
+        // decode multi-byte sequences into single codepoints, not stash them
+        // as a Latin1 byte sequence — otherwise downstream consumers (e.g.
+        // FreeType-based text rendering) get the wrong codepoint.
+        //
+        // Regression: --burn-text 'U+E238' (UTF-8 EE 88 B8) used to land in
+        // the option callback as a 3-codepoint Latin1 string (0xEE, 0x88,
+        // 0xB8) instead of a single Char with codepoint 0xE238.
+        CmdLineParser parser;
+        String captured;
+        parser.registerOptions({
+                {0, "text", "UTF-8 text",
+                 CmdLineParser::OptionStringCallback([&](const String &val) {
+                         captured = val;
+                         return 0;
+                 })}
+        });
+
+        // Build an argv that includes a Private Use Area codepoint (U+E238)
+        // and a Basic Multilingual Plane character (é, U+00E9) so we exercise
+        // both 3-byte and 2-byte UTF-8 decoding.
+        const char *argv[] = {
+                "prog",
+                "--text",
+                "caf\xc3\xa9\xee\x88\xb8",  // "café" + U+E238
+        };
+        int argc = sizeof(argv) / sizeof(argv[0]);
+        int ret = parser.parseMain(argc, const_cast<char **>(argv));
+        CHECK(ret == 0);
+
+        REQUIRE(captured.length() == 5);
+        CHECK(captured.charAt(0).codepoint() == 'c');
+        CHECK(captured.charAt(1).codepoint() == 'a');
+        CHECK(captured.charAt(2).codepoint() == 'f');
+        CHECK(captured.charAt(3).codepoint() == 0x00E9);
+        CHECK(captured.charAt(4).codepoint() == 0xE238);
+}
+
 TEST_CASE("CmdLineParser: Option argType") {
         CmdLineParser::Option opt;
         opt.callback = CmdLineParser::OptionCallback([]() { return 0; });

@@ -11,6 +11,7 @@
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
 #include <vtc/vtc.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -142,9 +143,11 @@ class Timecode {
                 /**
                  * @brief Parses a Timecode from its string representation.
                  * @param str The string to parse (e.g. "01:00:00:00").
-                 * @return A pair of the parsed Timecode and an Error indicating success or failure.
+                 * @return A @ref Result holding the parsed Timecode on success
+                 *         or a default-constructed Timecode and an error code
+                 *         on failure.
                  */
-                static std::pair<Timecode, Error> fromString(const String &str);
+                static Result<Timecode> fromString(const String &str);
 
                 /** @brief Constructs a default (invalid) timecode. */
                 Timecode() = default;
@@ -186,19 +189,19 @@ class Timecode {
                 }
 
                 bool operator>(const Timecode &other) const {
-                        return toFrameNumber() > other.toFrameNumber();
+                        return toFrameNumber().first() > other.toFrameNumber().first();
                 }
 
                 bool operator<(const Timecode &other) const {
-                        return toFrameNumber() < other.toFrameNumber();
+                        return toFrameNumber().first() < other.toFrameNumber().first();
                 }
 
                 bool operator>=(const Timecode &other) const {
-                        return toFrameNumber() >= other.toFrameNumber();
+                        return toFrameNumber().first() >= other.toFrameNumber().first();
                 }
 
                 bool operator<=(const Timecode &other) const {
-                        return toFrameNumber() <= other.toFrameNumber();
+                        return toFrameNumber().first() <= other.toFrameNumber().first();
                 }
 
                 /** @brief Returns true if the timecode mode is valid. */
@@ -259,18 +262,20 @@ class Timecode {
                 const VtcFormat *vtcFormat() const { return _mode.vtcFormat(); }
 
                 /** @brief Implicit conversion to String using SMPTE format. */
-                operator String() const { return toString().first; }
+                operator String() const { return toString().first(); }
                 /**
                  * @brief Converts the timecode to a string.
                  * @param fmt The string format to use (default: SMPTE).
-                 * @return A pair of the formatted string and an Error.
+                 * @return A @ref Result holding the formatted string on success
+                 *         or an empty String and an error code on failure.
                  */
-                std::pair<String, Error> toString(const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE) const;
+                Result<String> toString(const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE) const;
                 /**
                  * @brief Converts the timecode to an absolute frame number.
-                 * @return A pair of the frame number and an Error.
+                 * @return A @ref Result holding the frame number on success or
+                 *         zero and an error code on failure.
                  */
-                std::pair<FrameNumber, Error> toFrameNumber() const;
+                Result<FrameNumber> toFrameNumber() const;
 
         private:
                 VtcTimecode toVtc() const;
@@ -286,3 +291,95 @@ class Timecode {
 
 
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief @c std::formatter specialization for @ref promeki::Timecode.
+ *
+ * Demonstrates the bespoke-formatter pattern for a library type whose
+ * @c toString() takes a parameter and returns a non-@c String type
+ * (here, @c Result<String>).
+ *
+ * @par Format spec syntax
+ * @code
+ *   {}                  // default SMPTE  e.g. "01:00:00:00"
+ *   {:smpte}            // explicit SMPTE
+ *   {:smpte-fps}        // SMPTE with frame rate, e.g. "01:00:00:00/24"
+ *   {:smpte-space}      // SMPTE with space-separated frame rate
+ *   {:field}            // field-style separator, e.g. "01:00:00.00"
+ * @endcode
+ *
+ * The hint may be followed by a colon and a standard string format spec
+ * to apply width / fill / alignment to the rendered timecode:
+ * @code
+ *   {:smpte:>16}        // right-justified, width 16
+ *   {:>16}              // default SMPTE, right-justified width 16
+ *   {:smpte:*<16}       // left-justified, width 16, '*' fill
+ * @endcode
+ *
+ * Unrecognized hints fall through to the standard string format parser,
+ * so a stray spec like @c {:>16} still works.
+ */
+template <>
+struct std::formatter<promeki::Timecode> {
+        enum class Style {
+                Smpte,         ///< @c VTC_STR_FMT_SMPTE (default).
+                SmpteWithFps,  ///< @c VTC_STR_FMT_SMPTE_WITH_FPS.
+                SmpteSpaceFps, ///< @c VTC_STR_FMT_SMPTE_SPACE_FPS.
+                Field          ///< @c VTC_STR_FMT_FIELD.
+        };
+
+        Style _style = Style::Smpte;
+        std::formatter<std::string_view> _base;
+
+        constexpr auto parse(std::format_parse_context &ctx) {
+                auto it = ctx.begin();
+                auto end = ctx.end();
+
+                // Try to match a recognised style keyword at the start of
+                // the spec.  Each candidate is checked in longest-first
+                // order so prefixes do not collide ("smpte-fps" must beat
+                // "smpte").  On match, advance past the keyword.
+                auto tryKeyword = [&](const char *kw, Style s) {
+                        auto p = it;
+                        while(*kw && p != end && *p == *kw) { ++p; ++kw; }
+                        if(*kw == 0 && (p == end || *p == '}' || *p == ':')) {
+                                it = p;
+                                _style = s;
+                                return true;
+                        }
+                        return false;
+                };
+
+                if(!tryKeyword("smpte-fps",   Style::SmpteWithFps)
+                   && !tryKeyword("smpte-space", Style::SmpteSpaceFps)
+                   && !tryKeyword("smpte",       Style::Smpte)
+                   && !tryKeyword("field",       Style::Field)) {
+                        // No keyword — leave _style at its default and let
+                        // the base parser consume the entire remaining spec.
+                }
+
+                // A separating ':' between the hint and a standard string
+                // format spec is consumed here so the base parser sees a
+                // bare ">16" rather than ":>16".
+                if(it != end && *it == ':') ++it;
+
+                // Forward whatever remains to the standard string format
+                // parser so width / fill / alignment / precision still work.
+                ctx.advance_to(it);
+                return _base.parse(ctx);
+        }
+
+        template <typename FormatContext>
+        auto format(const promeki::Timecode &tc, FormatContext &ctx) const {
+                const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE;
+                switch(_style) {
+                        case Style::Smpte:         fmt = &VTC_STR_FMT_SMPTE; break;
+                        case Style::SmpteWithFps:  fmt = &VTC_STR_FMT_SMPTE_WITH_FPS; break;
+                        case Style::SmpteSpaceFps: fmt = &VTC_STR_FMT_SMPTE_SPACE_FPS; break;
+                        case Style::Field:         fmt = &VTC_STR_FMT_FIELD; break;
+                }
+                auto [s, err] = tc.toString(fmt);
+                (void)err;  // Formatter consumers do not get the error path.
+                return _base.format(std::string_view(s.cstr(), s.byteCount()), ctx);
+        }
+};

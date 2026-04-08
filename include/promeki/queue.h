@@ -12,6 +12,7 @@
 #include <promeki/error.h>
 #include <promeki/list.h>
 #include <promeki/mutex.h>
+#include <promeki/result.h>
 #include <promeki/waitcondition.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -98,18 +99,18 @@ class Queue {
                  *        one is available or the timeout expires.
                  * @param timeoutMs Maximum time to wait in milliseconds.  A value
                  *        of zero (the default) waits indefinitely.
-                 * @return A pair of the dequeued element (default-constructed on
-                 *         timeout) and Error::Ok or Error::Timeout.
+                 * @return A @ref Result holding the dequeued element on success,
+                 *         or a default-constructed value with @c Error::Timeout.
                  */
-                std::pair<T, Error> pop(unsigned int timeoutMs = 0) {
+                Result<T> pop(unsigned int timeoutMs = 0) {
                         Mutex::Locker locker(_mutex);
                         Error err = _cv.wait(_mutex,
                                 [this] { return !_queue.empty(); }, timeoutMs);
-                        if(err != Error::Ok) return {T{}, err};
+                        if(err != Error::Ok) return Result<T>(T{}, err);
                         T ret = std::move(_queue.front());
                         _queue.pop();
                         if(_queue.empty()) _cv.wakeAll();
-                        return {std::move(ret), Error::Ok};
+                        return makeResult(std::move(ret));
                 }
 
                 /**
@@ -131,16 +132,16 @@ class Queue {
                  *        blocking until one is available or the timeout expires.
                  * @param timeoutMs Maximum time to wait in milliseconds.  A value
                  *        of zero (the default) waits indefinitely.
-                 * @return A pair of the front element (default-constructed on
-                 *         timeout) and Error::Ok or Error::Timeout.
+                 * @return A @ref Result holding a copy of the front element on
+                 *         success, or a default-constructed value with
+                 *         @c Error::Timeout.
                  */
-                std::pair<T, Error> peek(unsigned int timeoutMs = 0) {
+                Result<T> peek(unsigned int timeoutMs = 0) {
                         Mutex::Locker locker(_mutex);
                         Error err = _cv.wait(_mutex,
                                 [this] { return !_queue.empty(); }, timeoutMs);
-                        if(err != Error::Ok) return {T{}, err};
-                        T ret = _queue.front();
-                        return {std::move(ret), Error::Ok};
+                        if(err != Error::Ok) return Result<T>(T{}, err);
+                        return makeResult(T(_queue.front()));
                 }
 
                 /**

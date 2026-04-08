@@ -165,3 +165,15 @@ using Size2Dd = Size2DTemplate<double>;
 
 PROMEKI_NAMESPACE_END
 
+/**
+ * @brief @c std::formatter partial specialization for @ref promeki::Size2DTemplate.
+ *
+ * Class templates need a hand-written partial specialization rather than
+ * the @ref PROMEKI_FORMAT_VIA_TOSTRING macro.  Inherits from
+ * @ref promeki::ToStringFormatter so the standard string format
+ * specifiers (width, fill, alignment) work automatically.
+ */
+template <typename T>
+struct std::formatter<promeki::Size2DTemplate<T>>
+        : promeki::ToStringFormatter<promeki::Size2DTemplate<T>> {};
+

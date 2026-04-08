@@ -258,7 +258,10 @@ class StringLatin1Data : public StringData {
                 const std::string &str() const override { return _s; }
 
                 uint64_t hash() const override {
-                        return fnv1aData(_s.data(), _s.size());
+                        // Hash each Latin1 byte as a 4-byte little-endian
+                        // codepoint so the result matches StringUnicodeData
+                        // for the same logical characters.
+                        return fnv1aLatin1AsCodepoints(_s.data(), _s.size());
                 }
 
                 /** @brief Direct access to the underlying std::string. */
@@ -361,7 +364,11 @@ class StringLiteralData : public StringData {
                  */
                 StringLiteralData(const char *s, size_t len, uint64_t precomputedHash = 0)
                         : _s(s), _len(len), _hash(precomputedHash) {
-                        if(_hash == 0 && _len > 0) _hash = fnv1aData(_s, _len);
+                        // Hash each Latin1 byte as a 4-byte little-endian
+                        // codepoint so the result matches StringUnicodeData
+                        // for the same logical characters.
+                        if(_hash == 0 && _len > 0)
+                                _hash = fnv1aLatin1AsCodepoints(_s, _len);
                         _promeki_refct.setImmortal();
                 }
 
@@ -437,8 +444,11 @@ class StringUnicodeLiteralData : public StringData {
                         : _codepoints(codepoints), _charCount(charCount),
                           _bytes(bytes), _byteLen(byteLen),
                           _hash(precomputedHash) {
+                        // Endian-independent codepoint mixing so the result
+                        // matches StringLatin1Data and StringUnicodeData for
+                        // the same logical characters.
                         if(_hash == 0 && _charCount > 0)
-                                _hash = fnv1aData(_codepoints, _charCount * sizeof(char32_t));
+                                _hash = fnv1aCodepoints(_codepoints, _charCount);
                         _promeki_refct.setImmortal();
                 }
 

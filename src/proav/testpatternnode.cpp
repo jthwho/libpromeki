@@ -178,7 +178,7 @@ Map<String, Variant> TestPatternNode::extendedStats() const {
         Mutex::Locker lock(_statsMutex);
         Map<String, Variant> ret;
         ret.insert("FramesGenerated", Variant(_statsFrameCount));
-        ret.insert("CurrentTimecode", Variant(_statsTimecode.toString().first));
+        ret.insert("CurrentTimecode", Variant(_statsTimecode.toString().first()));
         return ret;
 }
 

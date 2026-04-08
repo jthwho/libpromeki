@@ -12,6 +12,7 @@
 #include <promeki/namespace.h>
 #include <promeki/sharedptr.h>
 #include <promeki/list.h>
+#include <promeki/pair.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -183,20 +184,23 @@ class Set {
                 /**
                  * @brief Inserts a value into the set.
                  * @param value The value to insert.
-                 * @return A pair of iterator and bool. The bool is true if insertion
-                 *         took place, false if the element already existed.
+                 * @return A @ref Pair of @c (iterator, bool).  The bool is
+                 *         @c true if insertion took place, @c false if the
+                 *         element already existed; the iterator points at the
+                 *         element either way.
                  */
-                std::pair<Iterator, bool> insert(const T &value) {
-                        return d.insert(value);
+                Pair<Iterator, bool> insert(const T &value) {
+                        return Pair<Iterator, bool>(d.insert(value));
                 }
 
                 /**
                  * @brief Inserts a value into the set (move overload).
                  * @param value The value to insert (moved).
-                 * @return A pair of iterator and bool.
+                 * @return A @ref Pair of @c (iterator, bool); see
+                 *         @ref insert(const T&) for the bool semantics.
                  */
-                std::pair<Iterator, bool> insert(T &&value) {
-                        return d.insert(std::move(value));
+                Pair<Iterator, bool> insert(T &&value) {
+                        return Pair<Iterator, bool>(d.insert(std::move(value)));
                 }
 
                 /**

@@ -363,3 +363,5 @@ class Enum {
 
 PROMEKI_NAMESPACE_END
 
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::Enum);
+

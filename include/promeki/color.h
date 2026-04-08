@@ -480,3 +480,5 @@ inline const Color Color::Transparent{(uint8_t)0, (uint8_t)0, (uint8_t)0, (uint8
 inline const Color Color::Ignored{};
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::Color);

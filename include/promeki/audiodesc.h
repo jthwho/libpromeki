@@ -510,3 +510,5 @@ inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
 
 PROMEKI_NAMESPACE_END
 
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioDesc);
+

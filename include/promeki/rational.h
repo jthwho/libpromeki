@@ -146,3 +146,15 @@ template <typename T = int> class Rational {
 };
 
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief @c std::formatter partial specialization for @ref promeki::Rational.
+ *
+ * Class templates need a hand-written partial specialization rather than
+ * the @ref PROMEKI_FORMAT_VIA_TOSTRING macro (which only handles concrete
+ * types).  Inherits from @ref promeki::ToStringFormatter so the standard
+ * string format specifiers (width, fill, alignment) work automatically.
+ */
+template <typename T>
+struct std::formatter<promeki::Rational<T>>
+        : promeki::ToStringFormatter<promeki::Rational<T>> {};

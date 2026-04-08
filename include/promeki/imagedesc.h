@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 #include <promeki/sharedptr.h>
 #include <promeki/size2d.h>
 #include <promeki/pixeldesc.h>
@@ -277,3 +278,5 @@ inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
 }
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::ImageDesc);

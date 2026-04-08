@@ -545,7 +545,7 @@ TEST_CASE("Timecode NDF round trips") {
                 CAPTURE(fps);
 
                 Timecode tc(mode);
-                CHECK(tc.toFrameNumber().first == 0);
+                CHECK(tc.toFrameNumber().first() == 0);
 
                 bool correct = true;
                 for(int i = 0; i < framesPerHour; i++) {
@@ -568,7 +568,7 @@ TEST_CASE("Timecode NDF round trips") {
                 CHECK(tc.min() == 0);
                 CHECK(tc.sec() == 0);
                 CHECK(tc.frame() == 0);
-                CHECK(tc.toFrameNumber().first == (uint64_t)framesPerHour);
+                CHECK(tc.toFrameNumber().first() == (uint64_t)framesPerHour);
         }
 }
 
@@ -576,13 +576,13 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
         const int framesToTest = 24 * 60 * 60 * 30;
 
         Timecode tc(Timecode::DF30);
-        CHECK(tc.toFrameNumber().first == 0);
+        CHECK(tc.toFrameNumber().first() == 0);
 
         bool fnumCorrect = true;
         int last = 0;
         for(int i = 0; i < framesToTest; i++) {
                 tc++;
-                int fnum = tc.toFrameNumber().first;
+                int fnum = tc.toFrameNumber().first();
                 if(fnum != i + 1 || last + 1 != fnum) {
                         fnumCorrect = false;
                         break;
@@ -595,11 +595,11 @@ TEST_CASE("Timecode DF30 full 24h round trip") {
                 last = fnum;
         }
         CHECK(fnumCorrect);
-        CHECK(tc.toFrameNumber().first == (uint64_t)framesToTest);
+        CHECK(tc.toFrameNumber().first() == (uint64_t)framesToTest);
 
         // Decrement all the way back
         for(int i = 0; i < framesToTest; i++) tc--;
-        CHECK(tc.toFrameNumber().first == 0);
+        CHECK(tc.toFrameNumber().first() == 0);
         CHECK(tc.hour() == 0);
         CHECK(tc.min() == 0);
         CHECK(tc.sec() == 0);

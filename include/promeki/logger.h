@@ -90,7 +90,7 @@ bool promekiRegisterDebug(bool *enabler, const char *name, const char *file, int
  * @code
  * // Use convenience macros (most common)
  * promekiInfo("Processing frame %d", frameNum);
- * promekiWarn("Buffer underrun at %s", tc.toString().first.cStr());
+ * promekiWarn("Buffer underrun at %s", tc.toString().first().cstr());
  * promekiErr("Failed to open %s", path.cStr());
  *
  * // Configure the logger

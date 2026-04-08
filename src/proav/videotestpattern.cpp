@@ -256,7 +256,7 @@ void VideoTestPattern::renderBurn(Image &img, const Timecode &tc) const {
         String tcLine;
         if(tc.isValid()) {
                 auto tcResult = tc.toString();
-                tcLine = tcResult.first;
+                tcLine = tcResult.first();
         }
         const String &textLine = _burnText;
         const bool hasTc = !tcLine.isEmpty();

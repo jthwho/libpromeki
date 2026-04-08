@@ -247,3 +247,5 @@ inline TimeStamp operator-(const TimeStamp& ts, const TimeStamp::Duration& durat
 
 PROMEKI_NAMESPACE_END
 
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::TimeStamp);
+

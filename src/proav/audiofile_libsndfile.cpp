@@ -158,7 +158,7 @@ class AudioFile_LibSndFile : public AudioFile::Impl {
                         SF_BROADCAST_INFO bcinfo;
                         Timecode tc = _desc.metadata().get(Metadata::Timecode).get<Timecode>();
                         double frameRate = _desc.metadata().get(Metadata::FrameRate).get<double>();
-                        uint64_t timeref = tc.toFrameNumber().first * frameRate * _desc.sampleRate();
+                        uint64_t timeref = tc.toFrameNumber().first() * frameRate * _desc.sampleRate();
                         DateTime datetime = _desc.metadata().contains(Metadata::OriginationDateTime) ?
                                 _desc.metadata().get(Metadata::OriginationDateTime).get<DateTime>() :
                                 DateTime::now();

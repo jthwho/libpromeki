@@ -129,13 +129,13 @@ void MemPool::free(void* ptr) {
         // position.  That'll allow us to check the block before and after to see if it
         // should be coalesced
         auto insret = _freeBlocks.insert(block);
-        if(!insret.second) {
-                promekiErr("MemPool '%s': free %p (%p) failed to insert block", 
+        if(!insret.second()) {
+                promekiErr("MemPool '%s': free %p (%p) failed to insert block",
                         _name.cstr(), ptr, (void *)block.address);
                 return;
         }
 
-        auto itf = insret.first;
+        auto itf = insret.first();
         auto itfPrev = std::prev(itf);
         auto itfNext = std::next(itf);
         bool update = false;
@@ -156,8 +156,8 @@ void MemPool::free(void* ptr) {
         if(update) {
                 _freeBlocks.remove(itf);
                 insret = _freeBlocks.insert(block);
-                if(!insret.second) {
-                        promekiErr("MemPool '%s': free %p (%p) failed to insert updated block", 
+                if(!insret.second()) {
+                        promekiErr("MemPool '%s': free %p (%p) failed to insert updated block",
                                 _name.cstr(), ptr, (void *)block.address);
                         return;
                 }

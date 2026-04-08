@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cstdint>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -189,3 +190,5 @@ class Duration {
 };
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::Duration);

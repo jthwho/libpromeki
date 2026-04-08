@@ -347,7 +347,7 @@ void DataStream::writeTimecodeData(const Timecode &val) {
         // Timecode carries a mode (format) plus digits; the canonical
         // toString() form preserves all information and round-trips through
         // Timecode::fromString().
-        writeStringData(val.toString().first);
+        writeStringData(val.toString().first());
 }
 
 void DataStream::writeColorData(const Color &val) {

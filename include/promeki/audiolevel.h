@@ -10,6 +10,7 @@
 #include <cmath>
 #include <limits>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -110,3 +111,5 @@ class AudioLevel {
 };
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::AudioLevel);

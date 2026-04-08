@@ -292,3 +292,15 @@ using Point4Dd = Point<double, 4>;
 
 PROMEKI_NAMESPACE_END
 
+/**
+ * @brief @c std::formatter partial specialization for @ref promeki::Point.
+ *
+ * Class templates need a hand-written partial specialization rather than
+ * the @ref PROMEKI_FORMAT_VIA_TOSTRING macro.  Inherits from
+ * @ref promeki::ToStringFormatter so the standard string format
+ * specifiers (width, fill, alignment) work automatically.
+ */
+template <typename T, std::size_t NumValues>
+struct std::formatter<promeki::Point<T, NumValues>>
+        : promeki::ToStringFormatter<promeki::Point<T, NumValues>> {};
+

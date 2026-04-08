@@ -157,15 +157,24 @@ class CmdLineParser {
                  * @brief Parses command-line arguments from main().
                  *
                  * Wraps parse() for convenience, converting argc/argv and stripping
-                 * the program name (argv[0]).
+                 * the program name (argv[0]).  Each argv element is decoded as
+                 * UTF-8 (the conventional encoding of argv on POSIX systems with
+                 * a UTF-8 locale) rather than treated as Latin1, so multi-byte
+                 * characters survive intact for downstream consumers.
                  *
                  * @param argc Argument count from main().
                  * @param argv Argument vector from main().
                  * @return 0 on success, or a non-zero value returned by an option callback.
                  */
                 int parseMain(int argc, char **argv) {
-                        StringList args(argc, (const char **)argv);
-                        args.remove(0);
+                        StringList args;
+                        if(argc > 1) args.reserve(static_cast<size_t>(argc - 1));
+                        for(int i = 1; i < argc; ++i) {
+                                const char *a = argv[i] ? argv[i] : "";
+                                size_t len = 0;
+                                while(a[len]) ++len;
+                                args.pushToBack(String::fromUtf8(a, len));
+                        }
                         return parse(args);
                 }
 

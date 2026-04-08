@@ -217,3 +217,5 @@ class NetworkAddress {
 TextStream &operator<<(TextStream &stream, const NetworkAddress &addr);
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::NetworkAddress);

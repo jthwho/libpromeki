@@ -7,11 +7,23 @@
 
 #include <thread>
 #include <vector>
+#include <map>
+#include <set>
 #include <unordered_map>
 #include <doctest/doctest.h>
 #include <promeki/char.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
+#include <promeki/uuid.h>
+#include <promeki/rational.h>
+#include <promeki/timecode.h>
+#include <promeki/size2d.h>
+#include <promeki/point.h>
+#include <promeki/duration.h>
+#include <promeki/audiolevel.h>
+#include <promeki/framerate.h>
+#include <promeki/ipv4address.h>
+#include <promeki/variant.h>
 
 using namespace promeki;
 
@@ -532,6 +544,37 @@ TEST_CASE("String_CaseConversion") {
         CHECK(lower == "hello world");
 }
 
+TEST_CASE("String_CaseConversionLatin1HighBytes") {
+        // Regression: the Latin1 toUpper/toLower fast path used to call
+        // ::toupper / ::tolower from <cctype>, which is locale-dependent.
+        // In modern UTF-8 locales those functions leave high bytes unchanged,
+        // so 'é' (0xE9) stayed lowercase even though Char::toUpper would
+        // correctly fold it to 'É' (0xC9).  The fix routes both Latin1 and
+        // Unicode storage through Char::toUpper/Char::toLower for consistent,
+        // locale-independent results.
+        String latin1Lower(1, '\xe9');  // 'é' as a single Latin1 byte
+        REQUIRE(latin1Lower.encoding() == String::Latin1);
+        REQUIRE(latin1Lower.length() == 1);
+        REQUIRE(latin1Lower.charAt(0).codepoint() == 0xE9);
+
+        String latin1Upper = latin1Lower.toUpper();
+        CHECK(latin1Upper.length() == 1);
+        CHECK(latin1Upper.charAt(0).codepoint() == 0xC9);  // 'É'
+
+        String latin1RoundTrip = latin1Upper.toLower();
+        CHECK(latin1RoundTrip.charAt(0).codepoint() == 0xE9);
+
+        // Unicode storage with the same logical content folds identically.
+        String unicodeLower = String::fromUtf8("\xc3\xa9", 2);
+        REQUIRE(unicodeLower.encoding() == String::Unicode);
+        String unicodeUpper = unicodeLower.toUpper();
+        CHECK(unicodeUpper.length() == 1);
+        CHECK(unicodeUpper.charAt(0).codepoint() == 0xC9);
+
+        // Cross-encoding equality after case folding.
+        CHECK(latin1Upper == unicodeUpper);
+}
+
 // ============================================================================
 // trim edge cases
 // ============================================================================
@@ -553,6 +596,218 @@ TEST_CASE("String_Sprintf") {
 
         String s2 = String::sprintf("%05d", 42);
         CHECK(s2 == "00042");
+}
+
+// ============================================================================
+// format / vformat (C++20 std::format wrapper)
+// ============================================================================
+
+TEST_CASE("String_Format_Basic") {
+        // Basic positional substitution.
+        CHECK(String::format("hello, {}!", "world") == "hello, world!");
+
+        // Multiple arguments of different types.
+        CHECK(String::format("{} + {} = {}", 2, 3, 5) == "2 + 3 = 5");
+
+        // Numeric format specifiers (precision, width, fill).
+        CHECK(String::format("{:.3f}", 3.14159) == "3.142");
+        CHECK(String::format("{:>8}", 42) == "      42");
+        CHECK(String::format("{:0>5}", 7) == "00007");
+        CHECK(String::format("{:#x}", 255) == "0xff");
+
+        // Empty format string.
+        CHECK(String::format("") == "");
+
+        // Format string with no arguments.
+        CHECK(String::format("static text") == "static text");
+
+        // Result for a pure-ASCII format takes the Latin1 fast path.
+        String ascii = String::format("count = {}", 5);
+        CHECK(ascii.encoding() == String::Latin1);
+}
+
+TEST_CASE("String_Format_PromekiTypes") {
+        // promeki::String can be passed as a format argument via the
+        // std::formatter<promeki::String> specialization.
+        String name = "Alice";
+        CHECK(String::format("hello, {}!", name) == "hello, Alice!");
+
+        // Standard string-format specifiers (width / alignment / fill) work
+        // because the formatter inherits from std::formatter<string_view>.
+        CHECK(String::format("[{:>10}]", String("hi")) == "[        hi]");
+        CHECK(String::format("[{:*<6}]", String("ab")) == "[ab****]");
+
+        // Multiple promeki::String arguments.
+        String greet = "hello";
+        String who   = "world";
+        CHECK(String::format("{}, {}!", greet, who) == "hello, world!");
+
+        // promeki::Char formats as its UTF-8 byte sequence.
+        Char a('A');
+        CHECK(String::format("char = {}", a) == "char = A");
+
+        // Multi-byte Char (U+00E9 'é') round-trips correctly.
+        Char eAcute(static_cast<char32_t>(0xE9));
+        String formatted = String::format("char = {}", eAcute);
+        // The result contains the UTF-8 bytes of 'é'.
+        CHECK(formatted == String::fromUtf8("char = \xc3\xa9", 9));
+}
+
+TEST_CASE("String_Format_UnicodeContent") {
+        // A format result containing multi-byte UTF-8 sequences should land
+        // in Unicode storage (via fromUtf8), and round-trip cleanly through
+        // operator==.
+        String name = String::fromUtf8("caf\xc3\xa9", 5);  // "café"
+        String s = String::format("name = {}", name);
+        CHECK(s.encoding() == String::Unicode);
+        CHECK(s == String::fromUtf8("name = caf\xc3\xa9", 12));
+}
+
+TEST_CASE("String_Format_LibraryTypes") {
+        // Library types with no-arg toString() returning a String can be
+        // passed to format() directly via PROMEKI_FORMAT_VIA_TOSTRING.
+        UUID id("00112233-4455-6677-8899-aabbccddeeff");
+        String s = String::format("id = {}", id);
+        CHECK(s == "id = 00112233-4455-6677-8899-aabbccddeeff");
+
+        // Standard string format specs (width, fill, alignment) are
+        // inherited from the std::formatter<string_view> base.
+        CHECK(String::format("[{:>40}]", id)
+              == "[    00112233-4455-6677-8899-aabbccddeeff]");
+        CHECK(String::format("[{:.<40}]", id)
+              == "[00112233-4455-6677-8899-aabbccddeeff....]");
+
+        // Class templates work via partial specialization (rational.h).
+        Rational<int> r(24000, 1001);
+        CHECK(String::format("rate = {}", r) == "rate = 24000/1001");
+}
+
+TEST_CASE("String_Format_Timecode") {
+        // Bespoke std::formatter<Timecode> with custom format hint syntax.
+        Timecode tc(Timecode::NDF24, 1, 0, 0, 0);  // 01:00:00:00 @ 24fps
+
+        // Default — equivalent to {:smpte}.
+        CHECK(String::format("{}", tc) == "01:00:00:00");
+        CHECK(String::format("{:smpte}", tc) == "01:00:00:00");
+
+        // SMPTE with appended frame rate (separator '/').
+        CHECK(String::format("{:smpte-fps}", tc) == "01:00:00:00/24");
+
+        // SMPTE with space-separated frame rate.
+        CHECK(String::format("{:smpte-space}", tc) == "01:00:00:00 24");
+
+        // Field separator style — VTC_STR_FMT_FIELD only diverges from
+        // SMPTE when the timecode has field-1 interlace flags set, which
+        // a plain progressive 24fps timecode does not.  Just verify the
+        // hint is recognised and produces a valid string.
+        CHECK_FALSE(String::format("{:field}", tc).isEmpty());
+
+        // Format hint combined with a standard string format spec.
+        // The hint and the std spec are separated by a colon.
+        CHECK(String::format("[{:smpte:>16}]", tc) == "[     01:00:00:00]");
+        CHECK(String::format("[{:smpte:*<16}]", tc) == "[01:00:00:00*****]");
+
+        // Std-spec only (no hint) still works — defaults to SMPTE.
+        CHECK(String::format("[{:>16}]", tc) == "[     01:00:00:00]");
+}
+
+TEST_CASE("String_Format_TemplateTypes") {
+        // Class templates (Size2D, Point) registered via partial
+        // specialisation rather than the macro.
+
+        Size2Du32 sz(1920, 1080);
+        String s = String::format("size = {}", sz);
+        // Don't pin the exact stringification — just verify it round-trips
+        // through the same toString() the formatter calls.
+        CHECK(s == String("size = ") + sz.toString());
+
+        Point2Di32 p(10, 20);
+        String s2 = String::format("at {}", p);
+        CHECK(s2 == String("at ") + p.toString());
+
+        // Width / fill / alignment specifiers still work via the inherited
+        // string_view formatter.
+        CHECK(String::format("[{:>20}]", sz)
+              == String("[") + String(20 - sz.toString().length(), ' ')
+                 + sz.toString() + String("]"));
+}
+
+TEST_CASE("String_Format_PrimitiveLibraryTypes") {
+        // Sanity check that PROMEKI_FORMAT_VIA_TOSTRING reaches the simple
+        // value types in their respective headers.
+        Duration  d  = Duration::fromSeconds(2.5);
+        AudioLevel al = AudioLevel::fromDbfs(-12.0);
+        FrameRate  fr(FrameRate::RationalType(24000, 1001));
+        Ipv4Address ip(192, 168, 1, 100);
+
+        // Each test verifies the format result equals the type's own
+        // toString() output (with optional surrounding text), so we don't
+        // need to know the exact stringification syntax.
+        CHECK(String::format("{}", d)  == d.toString());
+        CHECK(String::format("{}", al) == al.toString());
+        CHECK(String::format("{}", fr) == fr.toString());
+        CHECK(String::format("{}", ip) == ip.toString());
+
+        // Combined with surrounding text and standard specs.
+        CHECK(String::format("rate = {:>12}", fr)
+              == String("rate = ") + String(12 - fr.toString().length(), ' ')
+                 + fr.toString());
+}
+
+TEST_CASE("String_Format_Variant") {
+        // Variant routes through VariantImpl::get<String>(), which already
+        // knows how to convert every alternative.  This means *any* held
+        // type formats correctly without per-type plumbing.
+        Variant v;
+
+        // Integer.
+        v.set(static_cast<int32_t>(42));
+        CHECK(String::format("v = {}", v) == "v = 42");
+
+        // Floating point.
+        v.set(3.5);
+        CHECK(String::format("v = {}", v) == "v = 3.500000000");
+
+        // Boolean.
+        v.set(true);
+        CHECK(String::format("v = {}", v) == "v = true");
+
+        // String.
+        v.set(String("hello"));
+        CHECK(String::format("v = {}", v) == "v = hello");
+
+        // UUID.
+        UUID id("00112233-4455-6677-8899-aabbccddeeff");
+        v.set(id);
+        CHECK(String::format("v = {}", v)
+              == "v = 00112233-4455-6677-8899-aabbccddeeff");
+
+        // Standard string format specifiers still apply on the rendered
+        // string regardless of which alternative is held.
+        v.set(static_cast<int32_t>(7));
+        CHECK(String::format("[{:>5}]", v) == "[    7]");
+}
+
+TEST_CASE("String_VFormat") {
+        // Runtime format string path: format string is not a constexpr,
+        // so we use std::make_format_args at the call site.
+        std::string fmt = "value = {} ({:#x})";
+        int v = 255;
+        String s = String::vformat(fmt, std::make_format_args(v, v));
+        CHECK(s == "value = 255 (0xff)");
+
+        // Empty runtime format string.
+        std::string emptyFmt;
+        CHECK(String::vformat(emptyFmt, std::make_format_args()) == "");
+
+        // Malformed format strings throw std::format_error at runtime
+        // (this is the documented behavior of std::vformat — we don't
+        // catch or transform).
+        std::string badFmt = "{:Q}";
+        int dummy = 0;
+        CHECK_THROWS_AS(
+                String::vformat(badFmt, std::make_format_args(dummy)),
+                std::format_error);
 }
 
 // ============================================================================
@@ -689,7 +944,7 @@ TEST_CASE("String_Encoding") {
         CHECK(ascii.length() == 5);
         CHECK(ascii.byteCount() == 5);
 
-        // fromUtf8 creates Unicode string
+        // fromUtf8 with non-ASCII input creates Unicode string
         const char *utf8 = "caf\xc3\xa9";
         String unicode = String::fromUtf8(utf8, 5);
         CHECK(unicode.encoding() == String::Unicode);
@@ -705,6 +960,20 @@ TEST_CASE("String_Encoding") {
         String jpStr = String::fromUtf8(jp, 6);
         CHECK(jpStr.length() == 2);
         CHECK(jpStr.byteCount() == 6);
+
+        // fromUtf8 with pure-ASCII input takes the cheap Latin1 fast path
+        // (ASCII is a subset of valid UTF-8 and each byte is its own
+        // codepoint, so the heavier Unicode storage is unnecessary).
+        String asciiUtf8 = String::fromUtf8("Hello", 5);
+        CHECK(asciiUtf8.encoding() == String::Latin1);
+        CHECK(asciiUtf8.length() == 5);
+        CHECK(asciiUtf8.byteCount() == 5);
+        CHECK(asciiUtf8 == "Hello");
+
+        // Empty input also takes the Latin1 path (no non-ASCII bytes).
+        String emptyUtf8 = String::fromUtf8("", 0);
+        CHECK(emptyUtf8.encoding() == String::Latin1);
+        CHECK(emptyUtf8.isEmpty());
 }
 
 TEST_CASE("String_EncodingPromotion") {
@@ -1587,8 +1856,8 @@ TEST_CASE("String_Unicode_Trim") {
         CHECK(trimmed.charAt(0) == Char('c'));
         CHECK(trimmed.charAt(3).codepoint() == 0xE9);
 
-        // Trim preserves encoding
-        CHECK(trimmed.encoding() == String::Unicode);
+        // (Encoding may narrow to Latin1 since 'é' fits — that's an
+        //  optimization detail.  What matters is the logical content.)
 
         // Trim all-whitespace Unicode string
         String ws = String::fromUtf8("   ", 3);
@@ -1767,6 +2036,120 @@ TEST_CASE("String_Rfind") {
 }
 
 // ============================================================================
+// Cross-encoding find / count / contains
+// ============================================================================
+
+TEST_CASE("String_CrossEncodingFind") {
+        // A Latin1 haystack containing 'é' as the raw byte 0xE9.
+        String latin1Haystack(reinterpret_cast<const char *>("caf\xe9 caf\xe9"), 9);
+        REQUIRE(latin1Haystack.encoding() == String::Latin1);
+        REQUIRE(latin1Haystack.length() == 9);
+        REQUIRE(latin1Haystack.charAt(3).codepoint() == 0xE9);
+
+        // A Unicode needle containing the same 'é' codepoint, decoded from UTF-8.
+        String unicodeNeedle = String::fromUtf8("caf\xc3\xa9", 5);
+        REQUIRE(unicodeNeedle.encoding() == String::Unicode);
+        REQUIRE(unicodeNeedle.length() == 4);
+        REQUIRE(unicodeNeedle.charAt(3).codepoint() == 0xE9);
+
+        // Logical equality across encodings.
+        CHECK(latin1Haystack.charAt(3) == unicodeNeedle.charAt(3));
+
+        // Regression: Latin1 haystack with a Unicode needle used to do a
+        // byte-level find of the UTF-8 bytes (0xC3 0xA9) inside the Latin1
+        // storage (which only contains 0xE9), so this returned npos.
+        CHECK(latin1Haystack.find(unicodeNeedle) == 0);
+        CHECK(latin1Haystack.find(unicodeNeedle, 1) == 5);
+        CHECK(latin1Haystack.rfind(unicodeNeedle) == 5);
+        CHECK(latin1Haystack.contains(unicodeNeedle));
+        CHECK(latin1Haystack.count(unicodeNeedle) == 2);
+
+        // (StringLiteralData has the same fix applied as defense-in-depth,
+        //  but it is unreachable through the public API: PROMEKI_STRING
+        //  always interprets its literal as UTF-8, so a literal containing
+        //  raw Latin1 high bytes ends up in StringUnicodeLiteralData rather
+        //  than StringLiteralData.  The runtime String("...") path used here
+        //  for latin1Haystack covers the practical case.)
+
+        // The reverse direction (Unicode haystack, Latin1 needle) was already
+        // correct because StringUnicodeData::find walks codepoint-by-codepoint;
+        // pin it down so it stays that way.
+        String unicodeHaystack = String::fromUtf8("caf\xc3\xa9 caf\xc3\xa9", 11);
+        REQUIRE(unicodeHaystack.encoding() == String::Unicode);
+        String latin1Needle(reinterpret_cast<const char *>("caf\xe9"), 4);
+        REQUIRE(latin1Needle.encoding() == String::Latin1);
+        CHECK(unicodeHaystack.find(latin1Needle) == 0);
+        CHECK(unicodeHaystack.rfind(latin1Needle) == 5);
+        CHECK(unicodeHaystack.count(latin1Needle) == 2);
+
+        // replace() also relies on find() — verify it now works across encodings.
+        String replaced = latin1Haystack.replace(unicodeNeedle, String("X"));
+        CHECK(replaced == String("X X"));
+}
+
+TEST_CASE("String_FindEmbeddedNul") {
+        // std::string::find(const char *) is null-terminated and would
+        // truncate the needle at the first embedded NUL.  Our find() takes
+        // an explicit length, so embedded NULs in the needle must work.
+        std::string haystack;
+        haystack.append("abc", 3);
+        haystack.push_back('\0');
+        haystack.append("def", 3);
+        String h(haystack);
+        REQUIRE(h.length() == 7);
+
+        std::string needle;
+        needle.push_back('\0');
+        needle.append("def", 3);
+        String n(needle);
+        REQUIRE(n.length() == 4);
+
+        CHECK(h.find(n) == 3);
+        CHECK(h.rfind(n) == 3);
+        CHECK(h.count(n) == 1);
+        CHECK(h.contains(n));
+}
+
+// ============================================================================
+// substr storage narrowing
+// ============================================================================
+
+TEST_CASE("String_SubstrShrinksToLatin1") {
+        // Slicing the ASCII tail of a Unicode string should drop back to
+        // Latin1 storage rather than re-cloning into a Unicode codepoint list.
+        // "caf<é> lait" → 9 codepoints; substr(5) is "lait", pure ASCII.
+        String mixed = String::fromUtf8("caf\xc3\xa9 lait", 10);
+        REQUIRE(mixed.encoding() == String::Unicode);
+        REQUIRE(mixed.length() == 9);
+
+        String tail = mixed.substr(5);
+        CHECK(tail == String("lait"));
+        CHECK(tail.encoding() == String::Latin1);
+
+        // The "café" prefix also narrows: 'é' (0xE9) fits in Latin1.
+        String head = mixed.substr(0, 4);
+        CHECK(head.encoding() == String::Latin1);
+        CHECK(head.length() == 4);
+        CHECK(head.charAt(3).codepoint() == 0xE9);
+
+        // A slice containing a non-Latin1 codepoint must stay Unicode.
+        String jp = String::fromUtf8("a\xe6\x97\xa5", 4);  // "a日"
+        REQUIRE(jp.encoding() == String::Unicode);
+        REQUIRE(jp.length() == 2);
+        String jpSlice = jp.substr(0, 2);
+        CHECK(jpSlice.encoding() == String::Unicode);
+        CHECK(jpSlice.charAt(1).codepoint() == 0x65E5);
+
+        // Same optimization for the Unicode literal backend.
+        String litMixed = PROMEKI_STRING("caf\xc3\xa9 lait");
+        REQUIRE(litMixed.encoding() == String::Unicode);
+        REQUIRE(litMixed.isLiteral());
+        String litTail = litMixed.substr(5);
+        CHECK(litTail.encoding() == String::Latin1);
+        CHECK(litTail == String("lait"));
+}
+
+// ============================================================================
 // replace
 // ============================================================================
 
@@ -1867,6 +2250,138 @@ TEST_CASE("String_Hash") {
         String u1 = String::fromUtf8("caf\xc3\xa9", 5);
         String u2 = String::fromUtf8("caf\xc3\xa9", 5);
         CHECK(u1.hash() == u2.hash());
+}
+
+TEST_CASE("String_HashCrossEncoding") {
+        // Regression: Latin1 and Unicode storage of the same logical
+        // characters used to hash to different values, which silently broke
+        // std::unordered_map<String, T> lookups whenever a lookup key arrived
+        // in a different encoding from the stored key.  Equal strings must
+        // hash equally regardless of backend storage.
+
+        // Pure ASCII: Latin1 ctor vs Unicode (forced via toUnicode).
+        String asciiLatin1 = "Hello";
+        String asciiUnicode = String("Hello").toUnicode();
+        REQUIRE(asciiLatin1.encoding() == String::Latin1);
+        REQUIRE(asciiUnicode.encoding() == String::Unicode);
+        CHECK(asciiLatin1 == asciiUnicode);
+        CHECK(asciiLatin1.hash() == asciiUnicode.hash());
+
+        // Latin1 with high bytes vs Unicode of the same logical chars.
+        String latin1Cafe(reinterpret_cast<const char *>("caf\xe9"), 4);
+        String unicodeCafe = String::fromUtf8("caf\xc3\xa9", 5);
+        REQUIRE(latin1Cafe.encoding() == String::Latin1);
+        REQUIRE(unicodeCafe.encoding() == String::Unicode);
+        CHECK(latin1Cafe == unicodeCafe);
+        CHECK(latin1Cafe.hash() == unicodeCafe.hash());
+
+        // Compile-time literal hashes also stay consistent across the
+        // ASCII and Unicode literal backends.
+        String asciiLit = PROMEKI_STRING("Hello");
+        String unicodeLit = PROMEKI_STRING("caf\xc3\xa9");
+        CHECK(asciiLit.hash() == String("Hello").hash());
+        CHECK(asciiLit.hash() == String("Hello").toUnicode().hash());
+        CHECK(unicodeLit.hash() == String::fromUtf8("caf\xc3\xa9", 5).hash());
+
+        // unordered_map lookups must work across encodings.
+        std::unordered_map<String, int> map;
+        map[latin1Cafe] = 7;
+        CHECK(map.count(unicodeCafe) == 1);
+        CHECK(map[unicodeCafe] == 7);
+}
+
+TEST_CASE("String_LessThanCrossEncoding") {
+        // Regression: operator< used to do a raw byte compare on the encoded
+        // representation, which mixed Latin1 bytes with UTF-8 bytes for
+        // mixed-encoding pairs.  For "é" that meant Latin1(0xE9) compared
+        // less-than-or-greater-than Unicode(0xC3 0xA9) — even though both are
+        // operator==-equal — which broke std::map<String, T> and
+        // std::set<String> invariants whenever a key arrived in a different
+        // encoding from a stored key.
+        String latin1Cafe(reinterpret_cast<const char *>("caf\xe9"), 4);
+        String unicodeCafe = String::fromUtf8("caf\xc3\xa9", 5);
+        REQUIRE(latin1Cafe.encoding() == String::Latin1);
+        REQUIRE(unicodeCafe.encoding() == String::Unicode);
+        REQUIRE(latin1Cafe == unicodeCafe);
+
+        // Strict-weak-ordering: equal under == means neither is less.
+        CHECK_FALSE(latin1Cafe < unicodeCafe);
+        CHECK_FALSE(unicodeCafe < latin1Cafe);
+
+        // operator< must agree with codepoint order across encodings.
+        String latin1A(reinterpret_cast<const char *>("\xe0"), 1);  // U+00E0 'à'
+        String unicodeB = String::fromUtf8("\xc3\xa9", 2);          // U+00E9 'é'
+        REQUIRE(latin1A.charAt(0).codepoint() < unicodeB.charAt(0).codepoint());
+        CHECK(latin1A < unicodeB);
+        CHECK_FALSE(unicodeB < latin1A);
+
+        // std::set sanity: inserting both encodings of the same logical
+        // string must not produce two distinct entries.
+        std::set<String> s;
+        s.insert(latin1Cafe);
+        s.insert(unicodeCafe);
+        CHECK(s.size() == 1);
+
+        // std::map sanity: lookup with a different encoding finds the entry.
+        std::map<String, int> m;
+        m[latin1Cafe] = 11;
+        CHECK(m.find(unicodeCafe) != m.end());
+        CHECK(m[unicodeCafe] == 11);
+}
+
+TEST_CASE("String_FindCStrIsUtf8") {
+        // find/rfind/contains C-string overloads must interpret their argument
+        // as UTF-8 (matching operator==(const char*) and the _ps literal),
+        // not as a Latin1 byte sequence.  Previously the C-string overloads
+        // built a Latin1 needle via String(const char*), so a multi-byte
+        // UTF-8 literal was treated as several distinct Latin1 chars and
+        // never matched the corresponding logical character in the haystack.
+
+        // Latin1 haystack with high byte 'é' (0xE9), UTF-8 needle "é".
+        String latin1Haystack(reinterpret_cast<const char *>("caf\xe9 caf\xe9"), 9);
+        REQUIRE(latin1Haystack.encoding() == String::Latin1);
+        CHECK(latin1Haystack.find("caf\xc3\xa9") == 0);
+        CHECK(latin1Haystack.rfind("caf\xc3\xa9") == 5);
+        CHECK(latin1Haystack.contains("caf\xc3\xa9"));
+
+        // Unicode haystack, UTF-8 needle.
+        String unicodeHaystack = String::fromUtf8("caf\xc3\xa9 caf\xc3\xa9", 11);
+        REQUIRE(unicodeHaystack.encoding() == String::Unicode);
+        CHECK(unicodeHaystack.find("caf\xc3\xa9") == 0);
+        CHECK(unicodeHaystack.rfind("caf\xc3\xa9") == 5);
+        CHECK(unicodeHaystack.contains("caf\xc3\xa9"));
+
+        // Pure-ASCII C-string needles still work the same way they used to,
+        // because the ASCII fast path produces a Latin1 needle either way.
+        CHECK(latin1Haystack.find("caf") == 0);
+        CHECK(unicodeHaystack.find("caf") == 0);
+        CHECK_FALSE(latin1Haystack.contains("xyz"));
+}
+
+TEST_CASE("String_EqualsCStrIsUtf8") {
+        // operator==(const char *) interprets the C-string argument as UTF-8,
+        // matching String::fromUtf8 / the _ps literal convention.  This is
+        // independent of how *this is stored.
+
+        // Latin1 storage matching ASCII C-string.
+        CHECK(String("Hello") == "Hello");
+
+        // Unicode storage matching the UTF-8 bytes of its content.
+        CHECK(String::fromUtf8("caf\xc3\xa9", 5) == "caf\xc3\xa9");
+
+        // Latin1 storage compared to a UTF-8 literal of the same logical
+        // characters (matches via codepoint comparison after UTF-8 decode).
+        String latin1Cafe(reinterpret_cast<const char *>("caf\xe9"), 4);
+        CHECK(latin1Cafe == "caf\xc3\xa9");
+
+        // Length mismatches still fail correctly.
+        CHECK_FALSE(String("Hello") == "Hell");
+        CHECK_FALSE(String("Hello") == "Hello!");
+
+        // Empty cases.
+        CHECK(String() == "");
+        CHECK(String() == static_cast<const char *>(nullptr));
+        CHECK_FALSE(String("x") == "");
 }
 
 // ============================================================================

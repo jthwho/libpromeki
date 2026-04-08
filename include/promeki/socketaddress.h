@@ -180,3 +180,5 @@ class SocketAddress {
 TextStream &operator<<(TextStream &stream, const SocketAddress &addr);
 
 PROMEKI_NAMESPACE_END
+
+PROMEKI_FORMAT_VIA_TOSTRING(promeki::SocketAddress);

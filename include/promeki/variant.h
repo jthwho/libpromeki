@@ -290,12 +290,12 @@ template <typename... Types> class VariantImpl {
 
                                 } else if constexpr (std::is_same_v<To, Timecode>) {
                                         if constexpr (std::is_same_v<From, String>) {
-                                                std::pair<Timecode, Error> ret = Timecode::fromString(arg);
-                                                if(ret.second.isError()) {
+                                                Result<Timecode> ret = Timecode::fromString(arg);
+                                                if(ret.second().isError()) {
                                                         if(err != nullptr) *err = Error::Invalid;
                                                         return Timecode();
                                                 }
-                                                return ret.first;
+                                                return ret.first();
                                         }
 
 
@@ -366,7 +366,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, TimeStamp>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Size2Du32>) return arg.toString();
                                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
-                                        if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first;
+                                        if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first();
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
                                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
                                         if constexpr (std::is_same_v<From, StringList>) return arg.join(",");
@@ -621,4 +621,37 @@ using Variant = VariantImpl< PROMEKI_VARIANT_TYPES detail::VariantEnd >;
 using VariantList = List<Variant>;
 
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief @c std::formatter partial specialization for @ref promeki::VariantImpl.
+ *
+ * Routes the held value through @c VariantImpl::get<String>(), which
+ * already knows how to convert every variant alternative to a String
+ * (numbers via @c String::number, library types via their @c toString,
+ * collections like @c StringList via @c join, etc.).  This means
+ * @ref promeki::Variant — and any other @c VariantImpl instantiation —
+ * is usable as a @ref promeki::String::format argument out of the box,
+ * regardless of what type it currently holds.
+ *
+ * Standard string format specifiers (width, fill, alignment) are
+ * inherited from @c std::formatter<std::string_view>.
+ *
+ * @code
+ *   Variant v;
+ *   v.set(42);                              // holds int
+ *   String s = String::format("v = {}", v); // "v = 42"
+ *   v.set(promeki::UUID::generate());       // now holds UUID
+ *   s = String::format("v = {}", v);        // "v = <uuid>"
+ * @endcode
+ */
+template <typename... Types>
+struct std::formatter<promeki::VariantImpl<Types...>>
+        : std::formatter<std::string_view> {
+        using Base = std::formatter<std::string_view>;
+        template <typename FormatContext>
+        auto format(const promeki::VariantImpl<Types...> &v, FormatContext &ctx) const {
+                promeki::String s = v.template get<promeki::String>();
+                return Base::format(std::string_view(s.cstr(), s.byteCount()), ctx);
+        }
+};
 
