@@ -474,5 +474,39 @@ class AudioDesc {
                 const Format            *_format = nullptr;
 };
 
+/**
+ * @brief Writes an AudioDesc as tag + dataType + sampleRate + channels + metadata.
+ * @param stream The stream to write to.
+ * @param desc   The AudioDesc to serialize.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator<<(DataStream &stream, const AudioDesc &desc) {
+        stream.writeTag(DataStream::TypeAudioDesc);
+        stream << static_cast<int32_t>(desc.dataType());
+        stream << desc.sampleRate();
+        stream << static_cast<uint32_t>(desc.channels());
+        stream << desc.metadata();
+        return stream;
+}
+
+/**
+ * @brief Reads an AudioDesc from its tagged wire format.
+ * @param stream The stream to read from.
+ * @param desc   The AudioDesc to populate.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator>>(DataStream &stream, AudioDesc &desc) {
+        if(!stream.readTag(DataStream::TypeAudioDesc)) { desc = AudioDesc(); return stream; }
+        int32_t dt = 0;
+        float sr = 0.0f;
+        uint32_t ch = 0;
+        Metadata meta;
+        stream >> dt >> sr >> ch >> meta;
+        if(stream.status() != DataStream::Ok) { desc = AudioDesc(); return stream; }
+        desc = AudioDesc(static_cast<AudioDesc::DataType>(dt), sr, ch);
+        desc.metadata() = std::move(meta);
+        return stream;
+}
+
 PROMEKI_NAMESPACE_END
 

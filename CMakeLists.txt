@@ -1060,6 +1060,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/colormodel.cpp
         tests/configoption.cpp
         tests/datastream.cpp
+        tests/datastream_include_chain.cpp
         tests/datetime.cpp
         tests/deque.cpp
         tests/dir.cpp

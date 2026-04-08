@@ -12,6 +12,7 @@
 #include <promeki/string.h>
 #include <promeki/variant.h>
 #include <promeki/sharedptr.h>
+#include <promeki/datastream.h>
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -547,6 +548,73 @@ inline JsonArray JsonObject::getArray(const String &key, Error *err) const {
 
 inline void JsonObject::set(const String &key, const JsonArray &val) {
     _j[key.str()] = val._j;
+}
+
+// ============================================================================
+// DataStream serialization
+// ============================================================================
+//
+// JsonObject and JsonArray are serialized as their compact JSON text form.
+// This keeps the wire format stable across nlohmann::json upgrades and makes
+// cross-reading with json text-based tools trivial. Readers that see a
+// truncated or malformed payload are marked as ReadCorruptData.
+
+/**
+ * @brief Writes a JsonObject as a tagged, length-prefixed JSON string.
+ * @param stream The DataStream to write to.
+ * @param obj    The JsonObject to serialize.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator<<(DataStream &stream, const JsonObject &obj) {
+    stream.writeTag(DataStream::TypeJsonObject);
+    stream << obj.toString(0);
+    return stream;
+}
+
+/**
+ * @brief Reads a JsonObject from a tagged, length-prefixed JSON string.
+ * @param stream The DataStream to read from.
+ * @param obj    The JsonObject to populate.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator>>(DataStream &stream, JsonObject &obj) {
+    if(!stream.readTag(DataStream::TypeJsonObject)) { obj = JsonObject(); return stream; }
+    String text;
+    stream >> text;
+    if(stream.status() != DataStream::Ok) { obj = JsonObject(); return stream; }
+    Error err;
+    obj = JsonObject::parse(text, &err);
+    if(err.isError()) {
+        stream.setError(DataStream::ReadCorruptData,
+            String("JsonObject::parse failed"));
+    }
+    return stream;
+}
+
+/**
+ * @brief Writes a JsonArray as a tagged, length-prefixed JSON string.
+ */
+inline DataStream &operator<<(DataStream &stream, const JsonArray &arr) {
+    stream.writeTag(DataStream::TypeJsonArray);
+    stream << arr.toString(0);
+    return stream;
+}
+
+/**
+ * @brief Reads a JsonArray from a tagged, length-prefixed JSON string.
+ */
+inline DataStream &operator>>(DataStream &stream, JsonArray &arr) {
+    if(!stream.readTag(DataStream::TypeJsonArray)) { arr = JsonArray(); return stream; }
+    String text;
+    stream >> text;
+    if(stream.status() != DataStream::Ok) { arr = JsonArray(); return stream; }
+    Error err;
+    arr = JsonArray::parse(text, &err);
+    if(err.isError()) {
+        stream.setError(DataStream::ReadCorruptData,
+            String("JsonArray::parse failed"));
+    }
+    return stream;
 }
 
 PROMEKI_NAMESPACE_END

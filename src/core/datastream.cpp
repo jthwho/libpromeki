@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <chrono>
 #include <cstring>
 #include <promeki/datastream.h>
 
@@ -14,9 +15,10 @@ PROMEKI_NAMESPACE_BEGIN
 // Factory methods
 // ============================================================================
 
-DataStream DataStream::createWriter(IODevice *device) {
+DataStream DataStream::createWriter(IODevice *device, ByteOrder order) {
         DataStream ds(device);
         ds._version = CurrentVersion;
+        ds._byteOrder = order;
         ds.writeHeader();
         return ds;
 }
@@ -38,26 +40,79 @@ DataStream::DataStream(IODevice *device) : _device(device) { }
 // ============================================================================
 
 void DataStream::writeHeader() {
-        writeBytes(Magic, sizeof(Magic));
-        // Version is always written big-endian regardless of stream byte order
-        uint16_t ver = _version;
-        uint8_t buf[2] = {
-                static_cast<uint8_t>(ver >> 8),
-                static_cast<uint8_t>(ver & 0xFF)
-        };
-        writeBytes(buf, 2);
+        // 16-byte fixed header: 4 magic + 2 version + 1 byte-order + 9 reserved
+        uint8_t buf[HeaderSize] = {};
+        std::memcpy(buf, Magic, sizeof(Magic));
+        // Version is always written big-endian regardless of stream byte order.
+        buf[4] = static_cast<uint8_t>(_version >> 8);
+        buf[5] = static_cast<uint8_t>(_version & 0xFF);
+        // Byte-order marker: 'B' for big-endian, 'L' for little-endian.
+        buf[6] = static_cast<uint8_t>(_byteOrder == BigEndian ? 'B' : 'L');
+        // Bytes 7-15 are already zero from the aggregate initializer.
+        writeBytes(buf, HeaderSize);
 }
 
 void DataStream::readHeader() {
-        uint8_t magic[4];
-        if(!readBytes(magic, sizeof(magic))) return;
-        if(std::memcmp(magic, Magic, sizeof(Magic)) != 0) {
-                _status = ReadCorruptData;
+        uint8_t buf[HeaderSize];
+        if(!readBytes(buf, HeaderSize)) return;
+        if(std::memcmp(buf, Magic, sizeof(Magic)) != 0) {
+                setError(ReadCorruptData, String("bad magic bytes in header"));
                 return;
         }
-        uint8_t buf[2];
-        if(!readBytes(buf, 2)) return;
-        _version = static_cast<uint16_t>((buf[0] << 8) | buf[1]);
+        _version = static_cast<uint16_t>((buf[4] << 8) | buf[5]);
+        switch(buf[6]) {
+                case 'B': _byteOrder = BigEndian; break;
+                case 'L': _byteOrder = LittleEndian; break;
+                default:
+                        setError(ReadCorruptData,
+                                String::sprintf(
+                                        "invalid byte-order marker 0x%02X in header",
+                                        static_cast<unsigned>(buf[6])));
+                        return;
+        }
+        // Reserved bytes must be zero. Any non-zero value indicates a
+        // future header extension this reader doesn't understand, so we
+        // fail loudly rather than silently mis-parse.
+        for(size_t i = 7; i < HeaderSize; ++i) {
+                if(buf[i] != 0) {
+                        setError(ReadCorruptData,
+                                String::sprintf(
+                                        "non-zero reserved byte 0x%02X at header offset %zu",
+                                        static_cast<unsigned>(buf[i]), i));
+                        return;
+                }
+        }
+}
+
+// ============================================================================
+// Status
+// ============================================================================
+
+void DataStream::setError(Status s, String ctx) {
+        // First error wins — preserve the earliest failure context.
+        if(_status != Ok) return;
+        _status = s;
+        _errorContext = std::move(ctx);
+}
+
+void DataStream::resetStatus() {
+        _status = Ok;
+        _errorContext = String();
+}
+
+Error DataStream::toError() const {
+        switch(_status) {
+                case Ok:              return Error::Ok;
+                case ReadPastEnd:     return Error::EndOfFile;
+                case ReadCorruptData: return Error::CorruptData;
+                case WriteFailed:     return Error::IOError;
+        }
+        return Error::Invalid;
+}
+
+bool DataStream::atEnd() const {
+        if(_device != nullptr) return _device->atEnd();
+        return true;
 }
 
 // ============================================================================
@@ -70,22 +125,24 @@ void DataStream::writeTag(TypeId id) {
 }
 
 bool DataStream::readTag(TypeId expected) {
+        if(_status != Ok) return false;
         uint8_t tag = 0;
         if(!readBytes(&tag, 1)) return false;
         if(tag != static_cast<uint8_t>(expected)) {
-                _status = ReadCorruptData;
+                setError(ReadCorruptData,
+                        String::sprintf("expected tag 0x%02X, got 0x%02X",
+                                static_cast<unsigned>(expected),
+                                static_cast<unsigned>(tag)));
                 return false;
         }
         return true;
 }
 
-// ============================================================================
-// Status
-// ============================================================================
-
-bool DataStream::atEnd() const {
-        if(_device != nullptr) return _device->atEnd();
-        return true;
+uint8_t DataStream::readAnyTag() {
+        if(_status != Ok) return 0;
+        uint8_t tag = 0;
+        if(!readBytes(&tag, 1)) return 0;
+        return tag;
 }
 
 // ============================================================================
@@ -95,13 +152,18 @@ bool DataStream::atEnd() const {
 bool DataStream::readBytes(void *buf, size_t len) {
         if(_status != Ok) return false;
         if(len == 0) return true;
-        if(_device == nullptr) { _status = ReadPastEnd; return false; }
+        if(_device == nullptr) {
+                setError(ReadPastEnd, String("no device attached"));
+                return false;
+        }
         size_t total = 0;
         uint8_t *dst = static_cast<uint8_t *>(buf);
         while(total < len) {
                 int64_t n = _device->read(dst + total, static_cast<int64_t>(len - total));
                 if(n <= 0) {
-                        _status = ReadPastEnd;
+                        setError(ReadPastEnd,
+                                String::sprintf("short read: wanted %zu bytes, got %zu",
+                                        len, total));
                         return false;
                 }
                 total += static_cast<size_t>(n);
@@ -112,13 +174,18 @@ bool DataStream::readBytes(void *buf, size_t len) {
 bool DataStream::writeBytes(const void *buf, size_t len) {
         if(_status != Ok) return false;
         if(len == 0) return true;
-        if(_device == nullptr) { _status = WriteFailed; return false; }
+        if(_device == nullptr) {
+                setError(WriteFailed, String("no device attached"));
+                return false;
+        }
         size_t total = 0;
         const uint8_t *src = static_cast<const uint8_t *>(buf);
         while(total < len) {
                 int64_t n = _device->write(src + total, static_cast<int64_t>(len - total));
                 if(n <= 0) {
-                        _status = WriteFailed;
+                        setError(WriteFailed,
+                                String::sprintf("short write: wanted %zu bytes, wrote %zu",
+                                        len, total));
                         return false;
                 }
                 total += static_cast<size_t>(n);
@@ -133,29 +200,47 @@ bool DataStream::writeBytes(const void *buf, size_t len) {
 ssize_t DataStream::readRawData(void *buf, size_t len) {
         if(_status != Ok) return -1;
         if(len == 0) return 0;
-        if(_device == nullptr) { _status = ReadPastEnd; return -1; }
+        if(_device == nullptr) {
+                setError(ReadPastEnd, String("no device attached"));
+                return -1;
+        }
         int64_t n = _device->read(buf, static_cast<int64_t>(len));
-        if(n < 0) { _status = ReadPastEnd; return -1; }
+        if(n < 0) {
+                setError(ReadPastEnd, String("device read returned error"));
+                return -1;
+        }
         return static_cast<ssize_t>(n);
 }
 
 ssize_t DataStream::writeRawData(const void *buf, size_t len) {
         if(_status != Ok) return -1;
         if(len == 0) return 0;
-        if(_device == nullptr) { _status = WriteFailed; return -1; }
+        if(_device == nullptr) {
+                setError(WriteFailed, String("no device attached"));
+                return -1;
+        }
         int64_t n = _device->write(buf, static_cast<int64_t>(len));
-        if(n < 0) { _status = WriteFailed; return -1; }
+        if(n < 0) {
+                setError(WriteFailed, String("device write returned error"));
+                return -1;
+        }
         return static_cast<ssize_t>(n);
 }
 
 ssize_t DataStream::skipRawData(size_t len) {
         if(_status != Ok) return -1;
         if(len == 0) return 0;
-        if(_device == nullptr) { _status = ReadPastEnd; return -1; }
+        if(_device == nullptr) {
+                setError(ReadPastEnd, String("no device attached"));
+                return -1;
+        }
         if(!_device->isSequential()) {
                 int64_t cur = _device->pos();
                 Error err = _device->seek(cur + static_cast<int64_t>(len));
-                if(err.isError()) { _status = ReadPastEnd; return -1; }
+                if(err.isError()) {
+                        setError(ReadPastEnd, String("seek failed in skipRawData"));
+                        return -1;
+                }
                 return static_cast<ssize_t>(len);
         }
         // Sequential: read and discard
@@ -165,7 +250,10 @@ ssize_t DataStream::skipRawData(size_t len) {
                 size_t chunk = len - total;
                 if(chunk > sizeof(tmp)) chunk = sizeof(tmp);
                 int64_t n = _device->read(tmp, static_cast<int64_t>(chunk));
-                if(n <= 0) { _status = ReadPastEnd; return total > 0 ? static_cast<ssize_t>(total) : -1; }
+                if(n <= 0) {
+                        setError(ReadPastEnd, String("short read in skipRawData"));
+                        return total > 0 ? static_cast<ssize_t>(total) : -1;
+                }
                 total += static_cast<size_t>(n);
         }
         return static_cast<ssize_t>(total);
@@ -173,7 +261,7 @@ ssize_t DataStream::skipRawData(size_t len) {
 
 // ============================================================================
 // Internal helpers for writing/reading values without type tags.
-// Used by Variant serialization to avoid double-tagging.
+// Used both by direct operators and by Variant serialization.
 // ============================================================================
 
 void DataStream::writeInt8(int8_t val)   { writeBytes(&val, 1); }
@@ -230,6 +318,78 @@ void DataStream::writeStringData(const String &val) {
         writeBytes(src->cstr(), len);
 }
 
+void DataStream::writeBufferData(const Buffer &val) {
+        uint32_t len = static_cast<uint32_t>(val.size());
+        writeUInt32(len);
+        if(len > 0) writeBytes(val.data(), len);
+}
+
+void DataStream::writeUUIDData(const UUID &val) {
+        writeBytes(val.raw(), 16);
+}
+
+void DataStream::writeDateTimeData(const DateTime &val) {
+        int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                val.value().time_since_epoch()).count();
+        *this << ns;
+}
+
+void DataStream::writeTimeStampData(const TimeStamp &val) {
+        *this << val.nanoseconds();
+}
+
+void DataStream::writeFrameRateData(const FrameRate &val) {
+        *this << static_cast<uint32_t>(val.numerator());
+        *this << static_cast<uint32_t>(val.denominator());
+}
+
+void DataStream::writeTimecodeData(const Timecode &val) {
+        // Timecode carries a mode (format) plus digits; the canonical
+        // toString() form preserves all information and round-trips through
+        // Timecode::fromString().
+        writeStringData(val.toString().first);
+}
+
+void DataStream::writeColorData(const Color &val) {
+        // Color::toString() produces a lossless ModelFormat representation
+        // that round-trips through fromString().
+        writeStringData(val.toString());
+}
+
+void DataStream::writeColorModelData(const ColorModel &val) {
+        writeStringData(val.name());
+}
+
+void DataStream::writeMemSpaceData(const MemSpace &val) {
+        // MemSpace has no name->ID lookup; use the numeric ID. Tagged
+        // for consistency with the other structured types' inner values.
+        *this << static_cast<uint32_t>(val.id());
+}
+
+void DataStream::writePixelFormatData(const PixelFormat &val) {
+        writeStringData(val.name());
+}
+
+void DataStream::writePixelDescData(const PixelDesc &val) {
+        writeStringData(val.name());
+}
+
+void DataStream::writeEnumData(const Enum &val) {
+        // Enum's qualified "TypeName::ValueName" form is the canonical
+        // serialization consumed by Enum::lookup().
+        writeStringData(val.toString());
+}
+
+void DataStream::writeStringListData(const StringList &val) {
+        // Use a tagged uint32_t count to match the List/Map/Set convention.
+        *this << static_cast<uint32_t>(val.size());
+        for(const String &s : val) writeStringData(s);
+}
+
+// ---------------------------------------------------------------------------
+// Untagged read helpers
+// ---------------------------------------------------------------------------
+
 int8_t   DataStream::readInt8()   { int8_t   v = 0; readBytes(&v, 1); return v; }
 uint8_t  DataStream::readUInt8()  { uint8_t  v = 0; readBytes(&v, 1); return v; }
 
@@ -273,7 +433,7 @@ String DataStream::readStringData() {
         if(_status != Ok) return String();
         if(len == 0) return String();
         if(len > 256 * 1024 * 1024) {
-                _status = ReadCorruptData;
+                setError(ReadCorruptData, String("String length exceeds sanity limit"));
                 return String();
         }
         std::string buf(len, '\0');
@@ -287,6 +447,130 @@ String DataStream::readStringData() {
         }
         if(allAscii) return String(buf.c_str(), len);
         return String::fromUtf8(buf.c_str(), len);
+}
+
+Buffer DataStream::readBufferData() {
+        uint32_t len = readUInt32();
+        if(_status != Ok) return Buffer();
+        if(len == 0) return Buffer();
+        if(len > 256 * 1024 * 1024) {
+                setError(ReadCorruptData, String("Buffer length exceeds sanity limit"));
+                return Buffer();
+        }
+        Buffer buf(len);
+        if(!readBytes(buf.data(), len)) return Buffer();
+        buf.setSize(len);
+        return buf;
+}
+
+UUID DataStream::readUUIDData() {
+        UUID::DataFormat raw;
+        if(!readBytes(raw.data(), 16)) return UUID();
+        return UUID(raw);
+}
+
+DateTime DataStream::readDateTimeData() {
+        int64_t ns = 0;
+        *this >> ns;
+        if(_status != Ok) return DateTime();
+        DateTime::Value tp{std::chrono::duration_cast<
+                std::chrono::system_clock::duration>(
+                std::chrono::nanoseconds(ns))};
+        return DateTime(tp);
+}
+
+TimeStamp DataStream::readTimeStampData() {
+        int64_t ns = 0;
+        *this >> ns;
+        if(_status != Ok) return TimeStamp();
+        TimeStamp::Value tp{std::chrono::duration_cast<
+                TimeStamp::Clock::duration>(
+                std::chrono::nanoseconds(ns))};
+        return TimeStamp(tp);
+}
+
+FrameRate DataStream::readFrameRateData() {
+        uint32_t num = 0, den = 0;
+        *this >> num >> den;
+        if(_status != Ok) return FrameRate();
+        return FrameRate(FrameRate::RationalType(num, den));
+}
+
+Timecode DataStream::readTimecodeData() {
+        String s = readStringData();
+        if(_status != Ok) return Timecode();
+        auto [tc, err] = Timecode::fromString(s);
+        if(err.isError()) {
+                // Preserve the parse failure as corrupt data rather than
+                // silently yielding an empty Timecode — callers need to
+                // know their on-disk data is unparseable.
+                setError(ReadCorruptData,
+                        String("Timecode::fromString failed: ") + s);
+                return Timecode();
+        }
+        return tc;
+}
+
+Color DataStream::readColorData() {
+        String s = readStringData();
+        if(_status != Ok) return Color();
+        return Color::fromString(s);
+}
+
+ColorModel DataStream::readColorModelData() {
+        String s = readStringData();
+        if(_status != Ok) return ColorModel();
+        return ColorModel::lookup(s);
+}
+
+MemSpace DataStream::readMemSpaceData() {
+        uint32_t id = 0;
+        *this >> id;
+        if(_status != Ok) return MemSpace();
+        return MemSpace(static_cast<MemSpace::ID>(id));
+}
+
+PixelFormat DataStream::readPixelFormatData() {
+        String s = readStringData();
+        if(_status != Ok) return PixelFormat();
+        return PixelFormat::lookup(s);
+}
+
+PixelDesc DataStream::readPixelDescData() {
+        String s = readStringData();
+        if(_status != Ok) return PixelDesc();
+        return PixelDesc::lookup(s);
+}
+
+Enum DataStream::readEnumData() {
+        String s = readStringData();
+        if(_status != Ok) return Enum();
+        Error err;
+        Enum e = Enum::lookup(s, &err);
+        if(err.isError()) {
+                setError(ReadCorruptData,
+                        String("Enum::lookup failed: ") + s);
+                return Enum();
+        }
+        return e;
+}
+
+StringList DataStream::readStringListData() {
+        uint32_t count = 0;
+        *this >> count; // tagged read, matches writeStringListData
+        if(_status != Ok) return StringList();
+        if(count > 256 * 1024 * 1024) {
+                setError(ReadCorruptData, String("StringList count exceeds sanity limit"));
+                return StringList();
+        }
+        StringList list;
+        list.reserve(count);
+        for(uint32_t i = 0; i < count; ++i) {
+                String s = readStringData();
+                if(_status != Ok) return StringList();
+                list.pushToBack(std::move(s));
+        }
+        return list;
 }
 
 // ============================================================================
@@ -371,64 +655,139 @@ DataStream &DataStream::operator<<(const String &val) {
 
 DataStream &DataStream::operator<<(const Buffer &val) {
         writeTag(TypeBuffer);
-        uint32_t len = static_cast<uint32_t>(val.size());
-        writeUInt32(len);
-        if(len > 0) writeBytes(val.data(), len);
+        writeBufferData(val);
         return *this;
 }
 
+DataStream &DataStream::operator<<(const Buffer::Ptr &val) {
+        // Null Buffer::Ptr is encoded as a TypeInvalid marker so it
+        // round-trips as null (not as an empty Buffer). Non-null uses
+        // the same TypeBuffer framing as direct Buffer, so interop with
+        // a direct Buffer read still works for the non-null case.
+        if(!val) {
+                writeTag(TypeInvalid);
+                return *this;
+        }
+        writeTag(TypeBuffer);
+        writeBufferData(*val);
+        return *this;
+}
+
+// ============================================================================
+// Write operators — data objects
+// ============================================================================
+
+DataStream &DataStream::operator<<(const UUID &val) {
+        writeTag(TypeUUID);
+        writeUUIDData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const DateTime &val) {
+        writeTag(TypeDateTime);
+        writeDateTimeData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const TimeStamp &val) {
+        writeTag(TypeTimeStamp);
+        writeTimeStampData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const FrameRate &val) {
+        writeTag(TypeFrameRate);
+        writeFrameRateData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const Timecode &val) {
+        writeTag(TypeTimecode);
+        writeTimecodeData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const Color &val) {
+        writeTag(TypeColor);
+        writeColorData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const ColorModel &val) {
+        writeTag(TypeColorModel);
+        writeColorModelData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const MemSpace &val) {
+        writeTag(TypeMemSpace);
+        writeMemSpaceData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const PixelFormat &val) {
+        writeTag(TypePixelFormat);
+        writePixelFormatData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const PixelDesc &val) {
+        writeTag(TypePixelDesc);
+        writePixelDescData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const Enum &val) {
+        writeTag(TypeEnum);
+        writeEnumData(val);
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const StringList &val) {
+        writeTag(TypeStringList);
+        writeStringListData(val);
+        return *this;
+}
+
+// ============================================================================
+// Variant write — dispatches by the Variant's current type
+// ============================================================================
+
 DataStream &DataStream::operator<<(const Variant &val) {
-        writeTag(TypeVariant);
-        // Variant-internal type byte (Variant::Type enum value)
-        writeUInt8(static_cast<uint8_t>(val.type()));
         switch(val.type()) {
                 case Variant::TypeInvalid:
+                        writeTag(TypeInvalid);
                         break;
-                case Variant::TypeBool:
-                        writeBool(val.get<bool>());
-                        break;
-                case Variant::TypeU8:
-                        writeUInt8(val.get<uint8_t>());
-                        break;
-                case Variant::TypeS8:
-                        writeInt8(val.get<int8_t>());
-                        break;
-                case Variant::TypeU16:
-                        writeUInt16(val.get<uint16_t>());
-                        break;
-                case Variant::TypeS16:
-                        writeInt16(val.get<int16_t>());
-                        break;
-                case Variant::TypeU32:
-                        writeUInt32(val.get<uint32_t>());
-                        break;
-                case Variant::TypeS32:
-                        writeInt32(val.get<int32_t>());
-                        break;
-                case Variant::TypeU64:
-                        writeUInt64(val.get<uint64_t>());
-                        break;
-                case Variant::TypeS64:
-                        writeInt64(val.get<int64_t>());
-                        break;
-                case Variant::TypeFloat:
-                        writeFloat(val.get<float>());
-                        break;
-                case Variant::TypeDouble:
-                        writeDouble(val.get<double>());
-                        break;
-                case Variant::TypeString:
-                        writeStringData(val.get<String>());
-                        break;
-                case Variant::TypeDateTime:
-                case Variant::TypeTimeStamp:
-                case Variant::TypeSize2D:
-                case Variant::TypeUUID:
-                case Variant::TypeTimecode:
-                case Variant::TypeRational:
-                case Variant::TypeColor:
-                case Variant::TypeEnum:
-                        writeStringData(val.get<String>());
+                case Variant::TypeBool:   *this << val.get<bool>(); break;
+                case Variant::TypeU8:     *this << val.get<uint8_t>(); break;
+                case Variant::TypeS8:     *this << val.get<int8_t>(); break;
+                case Variant::TypeU16:    *this << val.get<uint16_t>(); break;
+                case Variant::TypeS16:    *this << val.get<int16_t>(); break;
+                case Variant::TypeU32:    *this << val.get<uint32_t>(); break;
+                case Variant::TypeS32:    *this << val.get<int32_t>(); break;
+                case Variant::TypeU64:    *this << val.get<uint64_t>(); break;
+                case Variant::TypeS64:    *this << val.get<int64_t>(); break;
+                case Variant::TypeFloat:  *this << val.get<float>(); break;
+                case Variant::TypeDouble: *this << val.get<double>(); break;
+                case Variant::TypeString: *this << val.get<String>(); break;
+                case Variant::TypeDateTime:   *this << val.get<DateTime>(); break;
+                case Variant::TypeTimeStamp:  *this << val.get<TimeStamp>(); break;
+                case Variant::TypeSize2D:     *this << val.get<Size2Du32>(); break;
+                case Variant::TypeUUID:       *this << val.get<UUID>(); break;
+                case Variant::TypeTimecode:   *this << val.get<Timecode>(); break;
+                case Variant::TypeRational:   *this << val.get<Rational<int>>(); break;
+                case Variant::TypeFrameRate:  *this << val.get<FrameRate>(); break;
+                case Variant::TypeStringList: *this << val.get<StringList>(); break;
+                case Variant::TypeColor:      *this << val.get<Color>(); break;
+                case Variant::TypeColorModel: *this << val.get<ColorModel>(); break;
+                case Variant::TypeMemSpace:   *this << val.get<MemSpace>(); break;
+                case Variant::TypePixelFormat: *this << val.get<PixelFormat>(); break;
+                case Variant::TypePixelDesc:  *this << val.get<PixelDesc>(); break;
+                case Variant::TypeEnum:       *this << val.get<Enum>(); break;
+                default:
+                        setError(WriteFailed,
+                                String::sprintf("Variant::write: unknown type %d",
+                                        static_cast<int>(val.type())));
                         break;
         }
         return *this;
@@ -516,113 +875,172 @@ DataStream &DataStream::operator>>(String &val) {
 
 DataStream &DataStream::operator>>(Buffer &val) {
         if(!readTag(TypeBuffer)) { val = Buffer(); return *this; }
-        uint32_t len = readUInt32();
-        if(_status != Ok) { val = Buffer(); return *this; }
-        if(len == 0) { val = Buffer(); return *this; }
-        if(len > 256 * 1024 * 1024) {
-                _status = ReadCorruptData;
-                val = Buffer();
-                return *this;
-        }
-        Buffer buf(len);
-        if(readBytes(buf.data(), len)) {
-                buf.setSize(len);
-                val = std::move(buf);
-        } else {
-                val = Buffer();
-        }
+        val = readBufferData();
         return *this;
 }
 
-DataStream &DataStream::operator>>(Variant &val) {
-        if(!readTag(TypeVariant)) { val = Variant(); return *this; }
-        uint8_t variantType = readUInt8();
-        if(_status != Ok) { val = Variant(); return *this; }
+DataStream &DataStream::operator>>(Buffer::Ptr &val) {
+        // Peek the tag: TypeInvalid → null Ptr, TypeBuffer → allocated Ptr,
+        // anything else → ReadCorruptData.
+        uint8_t tag = readAnyTag();
+        if(_status != Ok) { val = Buffer::Ptr(); return *this; }
+        if(tag == TypeInvalid) {
+                val = Buffer::Ptr();
+                return *this;
+        }
+        if(tag != TypeBuffer) {
+                setError(ReadCorruptData,
+                        String::sprintf(
+                                "expected tag 0x%02X (TypeBuffer) or 0x%02X (TypeInvalid), got 0x%02X",
+                                static_cast<unsigned>(TypeBuffer),
+                                static_cast<unsigned>(TypeInvalid),
+                                static_cast<unsigned>(tag)));
+                val = Buffer::Ptr();
+                return *this;
+        }
+        Buffer buf = readBufferData();
+        if(_status != Ok) { val = Buffer::Ptr(); return *this; }
+        val = Buffer::Ptr::create(std::move(buf));
+        return *this;
+}
 
-        switch(static_cast<Variant::Type>(variantType)) {
-                case Variant::TypeInvalid:
-                        val = Variant();
-                        break;
-                case Variant::TypeBool:
-                        val = readBoolValue();
-                        break;
-                case Variant::TypeU8:
-                        val = readUInt8();
-                        break;
-                case Variant::TypeS8:
-                        val = readInt8();
-                        break;
-                case Variant::TypeU16:
-                        val = readUInt16();
-                        break;
-                case Variant::TypeS16:
-                        val = readInt16();
-                        break;
-                case Variant::TypeU32:
-                        val = readUInt32();
-                        break;
-                case Variant::TypeS32:
-                        val = readInt32();
-                        break;
-                case Variant::TypeU64:
-                        val = readUInt64();
-                        break;
-                case Variant::TypeS64:
-                        val = readInt64();
-                        break;
-                case Variant::TypeFloat:
-                        val = readFloat();
-                        break;
-                case Variant::TypeDouble:
-                        val = readDouble();
-                        break;
-                case Variant::TypeString:
-                        val = readStringData();
-                        break;
-                case Variant::TypeDateTime: {
-                        String v = readStringData();
-                        if(_status == Ok) val = DateTime::fromString(v);
+// ============================================================================
+// Read operators — data objects
+// ============================================================================
+
+DataStream &DataStream::operator>>(UUID &val) {
+        if(!readTag(TypeUUID)) { val = UUID(); return *this; }
+        val = readUUIDData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(DateTime &val) {
+        if(!readTag(TypeDateTime)) { val = DateTime(); return *this; }
+        val = readDateTimeData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(TimeStamp &val) {
+        if(!readTag(TypeTimeStamp)) { val = TimeStamp(); return *this; }
+        val = readTimeStampData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(FrameRate &val) {
+        if(!readTag(TypeFrameRate)) { val = FrameRate(); return *this; }
+        val = readFrameRateData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(Timecode &val) {
+        if(!readTag(TypeTimecode)) { val = Timecode(); return *this; }
+        val = readTimecodeData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(Color &val) {
+        if(!readTag(TypeColor)) { val = Color(); return *this; }
+        val = readColorData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(ColorModel &val) {
+        if(!readTag(TypeColorModel)) { val = ColorModel(); return *this; }
+        val = readColorModelData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(MemSpace &val) {
+        if(!readTag(TypeMemSpace)) { val = MemSpace(); return *this; }
+        val = readMemSpaceData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(PixelFormat &val) {
+        if(!readTag(TypePixelFormat)) { val = PixelFormat(); return *this; }
+        val = readPixelFormatData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(PixelDesc &val) {
+        if(!readTag(TypePixelDesc)) { val = PixelDesc(); return *this; }
+        val = readPixelDescData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(Enum &val) {
+        if(!readTag(TypeEnum)) { val = Enum(); return *this; }
+        val = readEnumData();
+        return *this;
+}
+
+DataStream &DataStream::operator>>(StringList &val) {
+        if(!readTag(TypeStringList)) { val = StringList(); return *this; }
+        val = readStringListData();
+        return *this;
+}
+
+// ============================================================================
+// Variant read — peeks the tag and dispatches to the right type
+// ============================================================================
+
+void DataStream::readVariantPayload(TypeId id, Variant &val) {
+        switch(id) {
+                case TypeInvalid:     val = Variant(); break;
+                case TypeBool:        val = readBoolValue(); break;
+                case TypeUInt8:       val = readUInt8(); break;
+                case TypeInt8:        val = readInt8(); break;
+                case TypeUInt16:      val = readUInt16(); break;
+                case TypeInt16:       val = readInt16(); break;
+                case TypeUInt32:      val = readUInt32(); break;
+                case TypeInt32:       val = readInt32(); break;
+                case TypeUInt64:      val = readUInt64(); break;
+                case TypeInt64:       val = readInt64(); break;
+                case TypeFloat:       val = readFloat(); break;
+                case TypeDouble:      val = readDouble(); break;
+                case TypeString:      val = readStringData(); break;
+                case TypeUUID:        val = readUUIDData(); break;
+                case TypeDateTime:    val = readDateTimeData(); break;
+                case TypeTimeStamp:   val = readTimeStampData(); break;
+                case TypeSize2D: {
+                        // Outer tag already consumed; inner values are
+                        // tagged primitives read via operator>>.
+                        uint32_t w = 0, h = 0;
+                        *this >> w >> h;
+                        if(_status != Ok) { val = Variant(); break; }
+                        val = Size2Du32(w, h);
                         break;
                 }
-                case Variant::TypeTimeStamp:
-                case Variant::TypeSize2D:
-                case Variant::TypeRational:
-                        val = readStringData();
-                        break;
-                case Variant::TypeUUID: {
-                        String v = readStringData();
-                        if(_status == Ok) val = UUID::fromString(v);
+                case TypeRational: {
+                        int32_t num = 0, den = 1;
+                        *this >> num >> den;
+                        if(_status != Ok) { val = Variant(); break; }
+                        val = Rational<int>(num, den);
                         break;
                 }
-                case Variant::TypeTimecode: {
-                        String v = readStringData();
-                        if(_status == Ok) {
-                                auto [tc, err] = Timecode::fromString(v);
-                                if(err.isError()) val = v;
-                                else val = tc;
-                        }
-                        break;
-                }
-                case Variant::TypeColor: {
-                        String v = readStringData();
-                        if(_status == Ok) val = Color::fromString(v);
-                        break;
-                }
-                case Variant::TypeEnum: {
-                        String v = readStringData();
-                        if(_status == Ok) {
-                                Error err;
-                                Enum e = Enum::lookup(v, &err);
-                                if(err.isError()) val = v;
-                                else val = e;
-                        }
-                        break;
-                }
+                case TypeFrameRate:   val = readFrameRateData(); break;
+                case TypeTimecode:    val = readTimecodeData(); break;
+                case TypeColor:       val = readColorData(); break;
+                case TypeColorModel:  val = readColorModelData(); break;
+                case TypeMemSpace:    val = readMemSpaceData(); break;
+                case TypePixelFormat: val = readPixelFormatData(); break;
+                case TypePixelDesc:   val = readPixelDescData(); break;
+                case TypeEnum:        val = readEnumData(); break;
+                case TypeStringList:  val = readStringListData(); break;
                 default:
-                        _status = ReadCorruptData;
+                        setError(ReadCorruptData,
+                                String::sprintf(
+                                        "Variant::read: tag 0x%02X is not Variant-representable",
+                                        static_cast<unsigned>(id)));
                         val = Variant();
                         break;
         }
+}
+
+DataStream &DataStream::operator>>(Variant &val) {
+        uint8_t tag = readAnyTag();
+        if(_status != Ok) { val = Variant(); return *this; }
+        readVariantPayload(static_cast<TypeId>(tag), val);
         return *this;
 }
 

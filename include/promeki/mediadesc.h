@@ -73,4 +73,41 @@ class MediaDesc {
         Metadata            _metadata;
 };
 
+/**
+ * @brief Writes a MediaDesc as tag + frameRate + imageList + audioList + metadata.
+ * @param stream The stream to write to.
+ * @param desc   The MediaDesc to serialize.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator<<(DataStream &stream, const MediaDesc &desc) {
+        stream.writeTag(DataStream::TypeMediaDesc);
+        stream << desc.frameRate();
+        stream << desc.imageList();
+        stream << desc.audioList();
+        stream << desc.metadata();
+        return stream;
+}
+
+/**
+ * @brief Reads a MediaDesc from its tagged wire format.
+ * @param stream The stream to read from.
+ * @param desc   The MediaDesc to populate.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator>>(DataStream &stream, MediaDesc &desc) {
+        if(!stream.readTag(DataStream::TypeMediaDesc)) { desc = MediaDesc(); return stream; }
+        FrameRate fr;
+        MediaDesc::ImageDescList imgs;
+        MediaDesc::AudioDescList auds;
+        Metadata meta;
+        stream >> fr >> imgs >> auds >> meta;
+        if(stream.status() != DataStream::Ok) { desc = MediaDesc(); return stream; }
+        desc = MediaDesc();
+        desc.setFrameRate(fr);
+        desc.imageList() = std::move(imgs);
+        desc.audioList() = std::move(auds);
+        desc.metadata() = std::move(meta);
+        return stream;
+}
+
 PROMEKI_NAMESPACE_END

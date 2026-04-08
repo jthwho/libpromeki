@@ -235,4 +235,45 @@ class ImageDesc {
                 Metadata                _metadata;
 };
 
+/**
+ * @brief Writes an ImageDesc as tag + size + pixelDesc + linePad + lineAlign
+ *        + interlaced + metadata.
+ * @param stream The stream to write to.
+ * @param desc   The ImageDesc to serialize.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
+        stream.writeTag(DataStream::TypeImageDesc);
+        stream << desc.size();
+        stream << desc.pixelDesc();
+        stream << static_cast<uint64_t>(desc.linePad());
+        stream << static_cast<uint64_t>(desc.lineAlign());
+        stream << desc.interlaced();
+        stream << desc.metadata();
+        return stream;
+}
+
+/**
+ * @brief Reads an ImageDesc from its tagged wire format.
+ * @param stream The stream to read from.
+ * @param desc   The ImageDesc to populate.
+ * @return The stream, for chaining.
+ */
+inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
+        if(!stream.readTag(DataStream::TypeImageDesc)) { desc = ImageDesc(); return stream; }
+        Size2Du32 size;
+        PixelDesc pd;
+        uint64_t linePad = 0, lineAlign = 1;
+        bool interlaced = false;
+        Metadata meta;
+        stream >> size >> pd >> linePad >> lineAlign >> interlaced >> meta;
+        if(stream.status() != DataStream::Ok) { desc = ImageDesc(); return stream; }
+        desc = ImageDesc(size, pd);
+        desc.setLinePad(static_cast<size_t>(linePad));
+        desc.setLineAlign(static_cast<size_t>(lineAlign));
+        desc.setInterlaced(interlaced);
+        desc.metadata() = std::move(meta);
+        return stream;
+}
+
 PROMEKI_NAMESPACE_END
