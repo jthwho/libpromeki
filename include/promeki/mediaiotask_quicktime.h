@@ -1,0 +1,117 @@
+/**
+ * @file      mediaiotask_quicktime.h
+ * @copyright Howard Logic. All rights reserved.
+ *
+ * See LICENSE file in the project root folder for license information.
+ */
+
+#pragma once
+
+#include <promeki/namespace.h>
+#include <promeki/mediaiotask.h>
+#include <promeki/quicktime.h>
+#include <promeki/audiobuffer.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+/**
+ * @brief MediaIOTask backend for QuickTime / ISO-BMFF container files.
+ * @ingroup proav
+ *
+ * Wraps the @c QuickTime engine to provide read and write access to
+ * @c .mov / @c .mp4 / @c .m4v container files through the MediaIO
+ * interface. Compressed sample bytes flow through the @c Frame as
+ * compressed @c Image objects (created via @c Image::fromCompressedData),
+ * with downstream consumers responsible for decoding via whichever
+ * codec implementation they prefer. Uncompressed video tracks
+ * (@c 2vuy / @c v210 / etc.) are wrapped as raster @c Image objects.
+ *
+ * @par Audio
+ *
+ * PCM audio tracks are read and written. On read, each @c Frame carries
+ * an @c Audio object containing the PCM samples that correspond to the
+ * video frame duration; compressed (e.g. AAC) audio tracks are surfaced
+ * as compressed @c Audio objects created via @c Audio::fromCompressedData.
+ * On write, @c Frame audio is accumulated in an @c AudioBuffer FIFO and
+ * flushed to the engine writer in per-video-frame-aligned chunks. Source
+ * audio that differs from the on-disk storage format (e.g. float32 input
+ * → s16 little-endian on disk) is converted by the FIFO on push. The
+ * compressed audio write path is not yet implemented.
+ *
+ * @par Probe
+ *
+ * The format probe checks for an @c ftyp box in the first 16 bytes of
+ * the device and verifies the major brand against a small set of
+ * recognized values (@c qt, @c isom, @c mp41, @c mp42, @c iso2 — @c iso8,
+ * @c f4v).
+ *
+ * @par Config keys
+ * | Key | Type | Default | Description |
+ * |-----|------|---------|-------------|
+ * | ConfigFilename     | String | — | Path to the .mov / .mp4 file. |
+ * | ConfigVideoTrack   | int    | 0 | Index of the video track to read. |
+ * | ConfigAudioTrack   | int    | 0 | Index of the audio track to read. |
+ */
+class MediaIOTask_QuickTime : public MediaIOTask {
+        public:
+                static const MediaIO::ConfigID ConfigVideoTrack;      ///< @brief 0-based index of the video track to use.
+                static const MediaIO::ConfigID ConfigAudioTrack;      ///< @brief 0-based index of the audio track to use.
+                static const MediaIO::ConfigID ConfigLayout;          ///< @brief "classic" or "fragmented" (string).
+                static const MediaIO::ConfigID ConfigFragmentFrames;  ///< @brief Video frames per fragment (int, default 30).
+                static const MediaIO::ConfigID ConfigFlushSync;       ///< @brief Call fdatasync after each flush (bool, default false).
+
+                /** @brief Default number of video frames per fragment. */
+                static inline constexpr int DefaultFragmentFrames = 30;
+
+                /** @brief Returns the format descriptor for this backend. */
+                static MediaIO::FormatDesc formatDesc();
+
+                /** @brief Constructs a MediaIOTask_QuickTime. */
+                MediaIOTask_QuickTime() = default;
+
+                /** @brief Destructor. */
+                ~MediaIOTask_QuickTime() override;
+
+        private:
+                Error executeCmd(MediaIOCommandOpen &cmd) override;
+                Error executeCmd(MediaIOCommandClose &cmd) override;
+                Error executeCmd(MediaIOCommandRead &cmd) override;
+                Error executeCmd(MediaIOCommandWrite &cmd) override;
+                Error executeCmd(MediaIOCommandSeek &cmd) override;
+
+                /** @brief Build a Frame for the requested video sample. */
+                Error readVideoFrame(uint64_t frameIndex, Frame::Ptr &outFrame);
+
+                /** @brief Pulls @p samples samples for the current audio track into @p out. */
+                Error readAudioSlice(uint64_t startSample, size_t samples, Audio &out);
+
+                /** @brief Lazily registers writer tracks from the supplied frame. */
+                Error setupWriterFromFrame(const Frame &frame);
+
+                /** @brief Drains pending audio from the FIFO into the engine writer. */
+                Error drainWriterAudio(bool flush);
+
+                QuickTime    _qt;
+                MediaIOMode  _mode = MediaIO_NotOpen;
+                String       _filename;
+                int          _videoTrackIndex = -1;   ///< Selected video track in the engine.
+                int          _audioTrackIndex = -1;   ///< Selected audio track in the engine.
+                int64_t      _currentFrame = 0;
+                int64_t      _frameCount = 0;
+                FrameRate    _frameRate;
+                Timecode     _anchorTimecode;
+                uint64_t     _audioSampleCursor = 0;  ///< Next audio sample index to read.
+                AudioDesc    _audioDesc;              ///< Selected audio track descriptor.
+
+                bool         _writerTracksRegistered = false;
+                uint32_t     _writerVideoTrackId = 0;
+                uint32_t     _writerAudioTrackId = 0;
+                uint32_t     _writerTimecodeTrackId = 0;
+                uint64_t     _writerFrameCount = 0;
+                int          _writerFragmentFrames = DefaultFragmentFrames;
+                uint64_t     _writerFramesSinceFlush = 0;
+                AudioBuffer  _writerAudioFifo;        ///< Bridges Frame audio to per-video-frame audio chunks.
+                AudioDesc    _writerAudioStorage;     ///< Storage format for the audio track.
+};
+
+PROMEKI_NAMESPACE_END

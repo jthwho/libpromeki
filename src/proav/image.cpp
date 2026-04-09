@@ -50,6 +50,36 @@ Image Image::fromCompressedData(const void *data, size_t size,
         return img;
 }
 
+Image Image::fromBuffer(const Buffer::Ptr &buffer,
+                        size_t width, size_t height, const PixelDesc &pd,
+                        const Metadata &metadata) {
+        if(!buffer.isValid() || buffer->size() == 0) return Image();
+        // Compressed codecs always have a single contiguous bitstream
+        // regardless of what their semantic plane count suggests (ProRes
+        // for example uses planar YCbCr for its *decoded* format hint,
+        // but the encoded sample in a file is always one blob). For
+        // uncompressed (raster) formats, multi-plane layouts would need
+        // one Buffer per plane — fromBuffer refuses those since it only
+        // knows about one buffer.
+        if(!pd.isCompressed() && pd.planeCount() != 1) {
+                promekiWarn("Image::fromBuffer: uncompressed pixel description '%s' has %d planes; "
+                            "fromBuffer only supports single-plane uncompressed formats",
+                            pd.name().cstr(), pd.planeCount());
+                return Image();
+        }
+
+        Image img;
+        img._desc = ImageDesc(width, height, pd);
+        img._desc.metadata() = metadata;
+        if(pd.isCompressed()) {
+                img._desc.metadata().set(Metadata::CompressedSize,
+                                         static_cast<int>(buffer->size()));
+        }
+        // Adopt the buffer directly as plane 0 — no allocation, no copy.
+        img._planeList.pushToBack(buffer);
+        return img;
+}
+
 Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
                      const MediaNodeConfig &config) const {
 #if PROMEKI_ENABLE_CSC

@@ -317,6 +317,16 @@ class PixelDesc {
                         RGB10_DPX_LE_sRGB                  = 133,  ///< 10-bit RGB, DPX packed LE, sRGB, full range.
                         YUV10_DPX_B_Rec709                 = 134,  ///< 10-bit YCbCr 4:4:4 DPX packed method B, Rec.709.
 
+                        // ----- Video codec compressed formats (QuickTime/MP4 family) ------------
+                        H264                               = 135,  ///< H.264 / AVC compressed video (avc1/avc3).
+                        HEVC                               = 136,  ///< H.265 / HEVC compressed video (hvc1/hev1).
+                        ProRes_422_Proxy                   = 137,  ///< Apple ProRes 422 Proxy (apco).
+                        ProRes_422_LT                      = 138,  ///< Apple ProRes 422 LT (apcs).
+                        ProRes_422                         = 139,  ///< Apple ProRes 422 (apcn).
+                        ProRes_422_HQ                      = 140,  ///< Apple ProRes 422 HQ (apch).
+                        ProRes_4444                        = 141,  ///< Apple ProRes 4444 (ap4h).
+                        ProRes_4444_XQ                     = 142,  ///< Apple ProRes 4444 XQ (ap4x).
+
                         UserDefined                        = 1024  ///< First ID available for user-registered types.
                 };
 

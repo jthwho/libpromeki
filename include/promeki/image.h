@@ -256,6 +256,39 @@ class Image {
                                                 const Metadata &metadata = Metadata());
 
                 /**
+                 * @brief Creates an Image that adopts an existing @c Buffer::Ptr as plane 0.
+                 *
+                 * Zero-copy factory — the supplied @p buffer becomes the
+                 * image's first plane directly, with no allocation or
+                 * memcpy. Works for both compressed and uncompressed
+                 * pixel descriptions: for compressed formats the buffer
+                 * holds the encoded bitstream, for uncompressed formats
+                 * it holds the raw pixel data.
+                 *
+                 * This is the preferred path for wrapping sample data
+                 * that a container reader has already brought into
+                 * memory — flows like
+                 *   @c File::readBulk → @c Buffer → @c Image::fromBuffer
+                 * are fully zero-copy from disk to image.
+                 *
+                 * @param buffer   The existing buffer to adopt. Must be
+                 *                 non-null and valid. Its @c size() must
+                 *                 be at least @c pd.planeSize(0, ImageDesc{...}).
+                 *                 For uncompressed formats, @p buffer's
+                 *                 contents are expected to match the
+                 *                 pixel description's layout.
+                 * @param width    Image width in pixels.
+                 * @param height   Image height in pixels.
+                 * @param pd       Pixel description (compressed or raster).
+                 * @param metadata Optional metadata to attach.
+                 * @return A valid Image that shares @p buffer, or an
+                 *         invalid Image on failure.
+                 */
+                static Image fromBuffer(const Buffer::Ptr &buffer,
+                                        size_t width, size_t height, const PixelDesc &pd,
+                                        const Metadata &metadata = Metadata());
+
+                /**
                  * @brief Creates a paint engine for drawing on this image.
                  * @return A PaintEngine configured for this image's pixel description.
                  */

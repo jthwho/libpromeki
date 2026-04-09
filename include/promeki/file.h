@@ -321,6 +321,61 @@ class File : public BufferedIODevice {
                 Error readBulk(Buffer &buf, int64_t size);
 
                 /**
+                 * @brief Writes bulk data to the current file position using direct I/O.
+                 *
+                 * Symmetric to @c readBulk(). Writes @p size bytes from
+                 * @p data to the file starting at the current write
+                 * position, using direct I/O for the aligned interior
+                 * of the region and normal I/O for any unaligned head
+                 * and tail bytes. This is the optimal strategy for
+                 * writing large media payloads (image data, audio
+                 * samples) to container files, bypassing the OS page
+                 * cache for the bulk transfer so sustained captures
+                 * don't thrash other applications' cached pages.
+                 *
+                 * Unlike @c readBulk() which receives a Buffer and uses
+                 * @c shiftData() to land the payload on an aligned
+                 * address, @c writeBulk() takes a raw pointer + size.
+                 * For O_DIRECT writes to succeed, the source pointer
+                 * must be aligned to @c directIOAlignment(); if it is
+                 * not, @c writeBulk() falls back to non-DIO writes for
+                 * the entire region. Passing the @c data() pointer of
+                 * a page-aligned @c Buffer (e.g. the default) satisfies
+                 * this requirement.
+                 *
+                 * If alignment cannot be determined, the DIO portion
+                 * is below one alignment block, or the DIO write fails
+                 * at runtime, @c writeBulk() falls back to a normal
+                 * write automatically.
+                 *
+                 * @param data Source pointer, should be directIOAlignment()-aligned
+                 *             for the aligned interior to go through DIO.
+                 * @param size Number of bytes to write.
+                 * @return The number of bytes written (equal to @p size on
+                 *         success) or -1 on hard I/O failure.
+                 */
+                int64_t writeBulk(const void *data, int64_t size);
+
+                /**
+                 * @brief Forces any buffered writes to stable storage.
+                 *
+                 * Calls @c fdatasync() (or @c fsync() if @p dataOnly is
+                 * false) on the underlying file descriptor. Blocks until
+                 * the kernel confirms the data is durable — expensive,
+                 * but required for crash-consistent checkpoints.
+                 *
+                 * @c fdatasync() only flushes file data + metadata that
+                 * the data depends on (e.g. file size). @c fsync() also
+                 * flushes inode metadata (timestamps, etc.) — rarely
+                 * needed for media workloads.
+                 *
+                 * @param dataOnly  If true (default), use fdatasync; if
+                 *                  false, use fsync.
+                 * @return Error::Ok on success, or a system error.
+                 */
+                Error sync(bool dataOnly = true);
+
+                /**
                  * @brief Enables or disables direct I/O (bypass OS page cache).
                  *
                  * When enabled, unbuffered mode is automatically forced on.

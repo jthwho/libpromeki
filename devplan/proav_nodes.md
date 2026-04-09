@@ -191,6 +191,60 @@ Write-only MediaIOTask that plays frames through SDL (video widget + audio outpu
 - `renderPending()`: called from the main thread event loop to flush any queued video frame to the SDL widget
 - `SDLVideoWidget::mapPixelDesc()` expanded with direct 8/16-bit RGB/BGR/RGBA/BGRA/ARGB/ABGR mappings; RGBA8→SDL_PIXELFORMAT_RGBA32 bug fixed; fallback path refactored through `uploadCurrentImage()` helper
 
+## MediaIOTask_QuickTime Backend — COMPLETE
+
+Read/write MediaIOTask for QuickTime (.mov), MP4, and ISO-BMFF containers. Built on a self-contained `QuickTime` engine comprising a shared atom parser, a classic `.mov` reader, a fragmented MP4 reader (moof/traf/trun walking), a classic `.mov` writer, and a fragmented MP4 writer (moof+mdat fragments with per-fragment crash-safety boundaries).
+
+**Files (all new, untracked → committed this session):**
+- [x] `include/promeki/quicktime.h` — Public QuickTime engine facade (Operation, TrackType, Layout, Track, Sample, Impl, factory methods)
+- [x] `src/proav/quicktime.cpp` — Factory implementations, Impl base vtable
+- [x] `src/proav/quicktime_atom.h` / `quicktime_atom.cpp` — Atom parser (size/type/children; 4CC utilities)
+- [x] `src/proav/quicktime_reader.h` / `quicktime_reader.cpp` — Classic + fragmented reader
+- [x] `src/proav/quicktime_writer.h` / `quicktime_writer.cpp` — Classic + fragmented writer
+- [x] `include/promeki/mediaiotask_quicktime.h` — MediaIOTask_QuickTime class declaration
+- [x] `src/proav/mediaiotask_quicktime.cpp` — Backend implementation
+- [x] `include/promeki/audiobuffer.h` / `src/proav/audiobuffer.cpp` — Ring-buffered audio FIFO with on-push format conversion
+- [x] `include/promeki/bufferpool.h` / `src/core/bufferpool.cpp` — Fixed-geometry buffer pool (available, not yet wired into any hot path)
+- [x] `tests/quicktime.cpp` — 818-line test file covering default construction, fixture-based reader (UYVY, ProRes, H.264+PCM, fragmented MP4), sample reads, writer round-trips (uncompressed, ProRes pass-through, variable-duration stts, keyframe flags), fragmented writer (video-only, A+V, crash-recovery), and timecode track
+- [x] `tests/mediaiotask_quicktime.cpp` — 458-line test file covering registration, factory, reader (UYVY, ProRes, H.264+PCM, AAC-in-MP4, timecode, seek), and writer round-trips (video-only, video+audio, ProRes pass-through) via MediaIO interface
+- [x] `tests/audiobuffer.cpp` — 268-line test file covering construction, push/pop same-format, ring wraparound, Audio push/pop, format conversion (float32→s16), error paths (NoSpace, NotSupported), drop/peek/clear, grow, move semantics
+- [x] `tests/bufferpool.cpp` — 111-line test file covering construction, reserve, acquire/release, empty-pool allocation, memory reuse, size mismatch rejection, clear, and view reset
+
+**Supporting PixelDesc entries added (pixeldesc.cpp + pixeldesc.h):**
+- ProRes 422 Proxy/LT/Normal/HQ (apco/apcs/apcn/apch), ProRes 4444 (ap4h), ProRes 4444 XQ (ap4x)
+- H.264 / AVC (avc1/avc3), H.265 / HEVC (hvc1/hev1)
+- All tested in `tests/pixeldesc.cpp` additions.
+
+**Supporting Audio/Image/AudioDesc additions (modified files):**
+- `Audio::fromBuffer()`, `Audio::fromCompressedData()` — zero-copy and copy-from-raw compressed audio factories
+- `Audio::isCompressed()`, `Audio::compressedSize()` — predicates for compressed audio objects
+- `Image::fromBuffer()` — zero-copy image factory adopting an existing Buffer::Ptr as plane 0
+- `AudioDesc::isCompressed()`, `AudioDesc::codecFourCC()`, `AudioDesc::setCodecFourCC()` — codec FourCC support for compressed audio descriptors
+- `AudioDesc::isValid()` updated to accept compressed (non-zero FourCC) as valid even with `DataType == 0`
+
+**QuickTime reader design:**
+- Classic reader: parses ftyp, moov, mvhd, trak (tkhd, mdia, minf, stbl: stts/stsc/stsz/stss/stco/co64/ctts/elst), tmcd, udta. Resolves fourcc→PixelDesc/AudioDesc via PixelDesc/AudioDesc type registries.
+- Fragmented reader: scans for moof/traf/tfhd/tfdt/trun boxes after moov; per-fragment sample entries merged into the track's flat sample index. Incomplete tail fragments are silently discarded (crash-recovery).
+- `readBulk` DIO path used for all sample data reads above 4×alignment.
+
+**QuickTime writer design:**
+- Classic layout: writes mdat payload first (each sample appended at current file offset), then at `finalize()` builds moov with stts (run-length encoded), stsc (all-in-one-chunk), stsz, stco (absolute offsets patched), stss (sync-sample list). mdat size patched by seeking back to the size field after moov is complete.
+- Fragmented layout: writes ftyp + init-moov (minimal moov with mvex/trex) at open; each `flush()` emits a moof+mdat pair; `finalize()` flushes any residual fragment and closes the file. Each fragment is self-describing: default_base_is_moof flag in tfhd so sample offsets are relative to the moof atom, not the file start.
+- Audio compression in trun: for fragmented audio (PCM), emits one trun entry per chunk rather than per sample (audio-trun compression). For classic PCM audio, emits one stsc/stco/stsz entry per chunk.
+
+**Known issues / FIXMEs (all tracked in fixme.md):**
+- Little-endian float audio storage is lossy (promoted to s16 at write time)
+- `raw ` 24-bit BGR/RGB byte-order player disagreement (mplayer vs VLC/ffmpeg)
+- CMake incremental-rebuild gap for SDL library when core headers change ABI
+- BufferPool available but not wired into QuickTimeReader hot path
+- Fragmented reader ignores `trex` defaults fallback (only reads `tfhd` overrides)
+- Compressed audio pull-rate drifts (one packet per video frame, not dts-aligned)
+- Compressed audio write path is missing (remux-style workflows blocked)
+
+**Verified end-to-end:** `mediaplay --burn --size 1920x1080 --pattern ColorBars --audio-mode AvSync --duration 5 --output /tmp/test.mov` produces a fragmented MP4 that plays in VLC and ffprobes cleanly with video (`rawvideo`) and audio (`pcm_s16le`).
+
+---
+
 ## AudioSourceNode
 
 Reads audio from AudioFile and outputs frames.

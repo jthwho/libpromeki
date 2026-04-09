@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <promeki/audio.h>
 #include <promeki/logger.h>
@@ -16,6 +17,37 @@ PROMEKI_NAMESPACE_BEGIN
 Audio::Audio(const AudioDesc &desc, size_t samples, const MemSpace &ms) :
         _desc(desc), _samples(samples), _maxSamples(samples) {
         allocate(ms);
+}
+
+Audio Audio::fromBuffer(const Buffer::Ptr &buffer, const AudioDesc &desc) {
+        if(!buffer.isValid() || !desc.isValid()) return Audio();
+
+        Audio out;
+        out._desc = desc;
+        out._buffer = buffer;
+        if(desc.isCompressed()) {
+                // For compressed audio we don't know "sample count" in PCM
+                // terms — leave _samples = 0 and report the byte count
+                // via compressedSize().
+                out._samples    = 0;
+                out._maxSamples = 0;
+        } else {
+                size_t stride = desc.bytesPerSampleStride();
+                if(stride == 0) return Audio();
+                size_t total = buffer->size() / stride;
+                out._samples    = total;
+                out._maxSamples = total;
+        }
+        return out;
+}
+
+Audio Audio::fromCompressedData(const void *data, size_t size, const AudioDesc &desc) {
+        if(!data || size == 0 || !desc.isCompressed()) return Audio();
+        Buffer buf(size);
+        if(!buf.isValid()) return Audio();
+        std::memcpy(buf.data(), data, size);
+        buf.setSize(size);
+        return fromBuffer(Buffer::Ptr::create(std::move(buf)), desc);
 }
 
 Audio Audio::convertTo(AudioDesc::DataType format) const {

@@ -60,7 +60,15 @@ static PixelDesc::Data makeRGB8() {
         d.desc                  = "8-bit RGB, sRGB, full range";
         d.pixelFormat           = PixelFormat(PixelFormat::I_3x8);
         d.colorModel            = ColorModel(ColorModel::sRGB);
-        d.fourccList            = { "RGB2" };
+        // "raw " — QuickTime canonical FourCC for packed 24-bit.
+        //          FIXME: players disagree on byte order. The historical
+        //          QuickTime spec says 'raw ' + depth 24 is B,G,R, but
+        //          ffmpeg/VLC/our reader treat it as R,G,B (matching what
+        //          ffmpeg's rawvideo encoder emits). mplayer follows the
+        //          spec and swaps red/blue on our files. See
+        //          devplan/fixme.md → "QuickTime: 'raw ' Codec Byte Order".
+        // "RGB2" — historical/AVI alias for the same byte layout.
+        d.fourccList            = { "raw ", "RGB2" };
         d.compSemantics[0]      = { "Red",   "R", 0, 255 };
         d.compSemantics[1]      = { "Green", "G", 0, 255 };
         d.compSemantics[2]      = { "Blue",  "B", 0, 255 };
@@ -203,7 +211,11 @@ static PixelDesc::Data makeYUV8_422_UYVY() {
         d.desc                  = "8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range";
         d.pixelFormat           = PixelFormat(PixelFormat::I_422_UYVY_3x8);
         d.colorModel            = ColorModel(ColorModel::YCbCr_Rec709);
-        d.fourccList            = { "UYVY" };
+        // "2vuy" — QuickTime sample-entry FourCC for 8-bit 4:2:2 UYVY (canonical).
+        // "UYVY" — generic / AVI / FFmpeg name for the same byte layout.
+        // The first entry is the writer-preferred FourCC; QuickTime files
+        // written by us emit "2vuy".
+        d.fourccList            = { "2vuy", "UYVY" };
         d.compSemantics[0]      = { "Luma",           "Y",  16, 235 };
         d.compSemantics[1]      = { "Chroma Blue",    "Cb", 16, 240 };
         d.compSemantics[2]      = { "Chroma Red",     "Cr", 16, 240 };
@@ -1255,6 +1267,127 @@ static PixelDesc::Data makeYUV16_420_SemiPlanar_BE() {
 }
 
 // ---------------------------------------------------------------------------
+// Video codec compressed formats (QuickTime / MP4 / ISO-BMFF)
+//
+// These entries describe compressed bitstreams by codec. The pixelFormat
+// field is a semantic hint at the "natural" decoded layout for the codec;
+// actual decoded output formats belong in decodeTargets (added when a
+// real decoder is wired up). The fourccList carries every FourCC code
+// that identifies this codec across containers — the first entry is the
+// preferred code used by writers.
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeH264() {
+        PixelDesc::Data d;
+        d.id               = PixelDesc::H264;
+        d.name             = "H264";
+        d.desc             = "H.264 / AVC compressed video";
+        d.pixelFormat      = PixelFormat(PixelFormat::P_420_3x8);
+        d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed       = true;
+        d.codecName        = "h264";
+        d.fourccList       = { "avc1", "avc3" };
+        d.compSemantics[0] = ycbcrSem8[0];
+        d.compSemantics[1] = ycbcrSem8[1];
+        d.compSemantics[2] = ycbcrSem8[2];
+        return d;
+}
+
+static PixelDesc::Data makeHEVC() {
+        PixelDesc::Data d;
+        d.id               = PixelDesc::HEVC;
+        d.name             = "HEVC";
+        d.desc             = "H.265 / HEVC compressed video";
+        d.pixelFormat      = PixelFormat(PixelFormat::P_420_3x10_LE);
+        d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed       = true;
+        d.codecName        = "hevc";
+        d.fourccList       = { "hvc1", "hev1" };
+        d.compSemantics[0] = ycbcrSem10[0];
+        d.compSemantics[1] = ycbcrSem10[1];
+        d.compSemantics[2] = ycbcrSem10[2];
+        return d;
+}
+
+static PixelDesc::Data makeProRes422Desc(PixelDesc::ID id, const char *name, const char *desc,
+                                         FourCC fourcc) {
+        PixelDesc::Data d;
+        d.id               = id;
+        d.name             = name;
+        d.desc             = desc;
+        // ProRes 422 family decodes to 10-bit YCbCr 4:2:2.
+        d.pixelFormat      = PixelFormat(PixelFormat::P_422_3x10_LE);
+        d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed       = true;
+        d.codecName        = "prores";
+        d.fourccList       = { fourcc };
+        d.compSemantics[0] = ycbcrSem10[0];
+        d.compSemantics[1] = ycbcrSem10[1];
+        d.compSemantics[2] = ycbcrSem10[2];
+        return d;
+}
+
+static PixelDesc::Data makeProRes_422_Proxy() {
+        return makeProRes422Desc(PixelDesc::ProRes_422_Proxy,
+                                 "ProRes_422_Proxy", "Apple ProRes 422 Proxy", FourCC("apco"));
+}
+
+static PixelDesc::Data makeProRes_422_LT() {
+        return makeProRes422Desc(PixelDesc::ProRes_422_LT,
+                                 "ProRes_422_LT", "Apple ProRes 422 LT", FourCC("apcs"));
+}
+
+static PixelDesc::Data makeProRes_422() {
+        return makeProRes422Desc(PixelDesc::ProRes_422,
+                                 "ProRes_422", "Apple ProRes 422", FourCC("apcn"));
+}
+
+static PixelDesc::Data makeProRes_422_HQ() {
+        return makeProRes422Desc(PixelDesc::ProRes_422_HQ,
+                                 "ProRes_422_HQ", "Apple ProRes 422 HQ", FourCC("apch"));
+}
+
+static PixelDesc::Data makeProRes_4444() {
+        PixelDesc::Data d;
+        d.id               = PixelDesc::ProRes_4444;
+        d.name             = "ProRes_4444";
+        d.desc             = "Apple ProRes 4444";
+        // ProRes 4444 decodes to 10-bit 4:4:4 with optional alpha.
+        d.pixelFormat      = PixelFormat(PixelFormat::I_4x10_LE);
+        d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed       = true;
+        d.hasAlpha         = true;
+        d.alphaCompIndex   = 3;
+        d.codecName        = "prores";
+        d.fourccList       = { "ap4h" };
+        d.compSemantics[0] = ycbcrSem10[0];
+        d.compSemantics[1] = ycbcrSem10[1];
+        d.compSemantics[2] = ycbcrSem10[2];
+        d.compSemantics[3] = { "Alpha", "A", 0, 1023 };
+        return d;
+}
+
+static PixelDesc::Data makeProRes_4444_XQ() {
+        PixelDesc::Data d;
+        d.id               = PixelDesc::ProRes_4444_XQ;
+        d.name             = "ProRes_4444_XQ";
+        d.desc             = "Apple ProRes 4444 XQ";
+        // ProRes 4444 XQ decodes to 12-bit 4:4:4 with optional alpha.
+        d.pixelFormat      = PixelFormat(PixelFormat::I_4x12_LE);
+        d.colorModel       = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed       = true;
+        d.hasAlpha         = true;
+        d.alphaCompIndex   = 3;
+        d.codecName        = "prores";
+        d.fourccList       = { "ap4x" };
+        d.compSemantics[0] = ycbcrSem12[0];
+        d.compSemantics[1] = ycbcrSem12[1];
+        d.compSemantics[2] = ycbcrSem12[2];
+        d.compSemantics[3] = { "Alpha", "A", 0, 4095 };
+        return d;
+}
+
+// ---------------------------------------------------------------------------
 // Construct-on-first-use registry
 // ---------------------------------------------------------------------------
 
@@ -1424,6 +1557,16 @@ struct PixelDescRegistry {
                 add(makeYUV16_420_Planar_BE());
                 add(makeYUV16_420_SemiPlanar_LE());
                 add(makeYUV16_420_SemiPlanar_BE());
+
+                // Video codec compressed formats (QuickTime / MP4 / ISO-BMFF)
+                add(makeH264());
+                add(makeHEVC());
+                add(makeProRes_422_Proxy());
+                add(makeProRes_422_LT());
+                add(makeProRes_422());
+                add(makeProRes_422_HQ());
+                add(makeProRes_4444());
+                add(makeProRes_4444_XQ());
         }
 
         void add(PixelDesc::Data d) {

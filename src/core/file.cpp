@@ -129,6 +129,17 @@ Error File::readBulk(Buffer &buf, int64_t size) {
         return Error(Error::NotImplemented);
 }
 
+int64_t File::writeBulk(const void *data, int64_t size) {
+        (void)data;
+        (void)size;
+        return -1;
+}
+
+Error File::sync(bool dataOnly) {
+        (void)dataOnly;
+        return Error(Error::NotImplemented);
+}
+
 Error File::setDirectIO(bool enable) {
         (void)enable;
         return Error(Error::NotImplemented);
@@ -514,24 +525,165 @@ Error File::readBulk(Buffer &buf, int64_t size) {
         return Error();
 }
 
+/**
+ * @brief Writes @p size bytes from @p p to @p fd, looping on partial writes.
+ * Returns bytes actually written or -1 on error.
+ */
+static int64_t writeFull(int fd, const void *p, int64_t size) {
+        const uint8_t *src = static_cast<const uint8_t *>(p);
+        int64_t total = 0;
+        while(total < size) {
+                ssize_t n = ::write(fd, src + total, static_cast<size_t>(size - total));
+                if(n < 0) return -1;
+                if(n == 0) break;
+                total += n;
+        }
+        return total;
+}
+
+int64_t File::writeBulk(const void *data, int64_t size) {
+        if(!isOpen() || !isWritable()) { setError(Error(Error::NotOpen)); return -1; }
+        if(size <= 0) { setError(Error(Error::InvalidArgument)); return -1; }
+        if(data == nullptr) { setError(Error(Error::InvalidArgument)); return -1; }
+
+        // Resource-mode writers don't exist (resources are read-only),
+        // but guard anyway.
+        if(_resourceFile != nullptr) {
+                setError(Error(Error::ReadOnly));
+                return -1;
+        }
+
+        int64_t fileOffset = ::lseek64(_handle, 0, SEEK_CUR);
+        if(fileOffset < 0) { setError(Error::syserr()); return -1; }
+
+        auto [align, alignErr] = directIOAlignment();
+
+        // If we don't know the alignment, or the source pointer isn't
+        // aligned to it, we can't do DIO. Fall back to a normal write.
+        uintptr_t srcAddr = reinterpret_cast<uintptr_t>(data);
+        bool srcAligned = (align > 0) && (srcAddr % align == 0);
+        if(alignErr.isError() || align == 0 || !srcAligned) {
+                int64_t n = writeFull(_handle, data, size);
+                if(n < 0) { setError(Error::syserr()); return -1; }
+                if(n > 0) bytesWrittenSignal.emit(n);
+                return n;
+        }
+
+        int64_t A = static_cast<int64_t>(align);
+        int64_t alignedStart = (fileOffset + A - 1) & ~(A - 1);
+        int64_t alignedEnd   = (fileOffset + size) & ~(A - 1);
+        int64_t dioBytes     = alignedEnd - alignedStart;
+
+        size_t headBytes = static_cast<size_t>(alignedStart - fileOffset);
+        size_t tailBytes = static_cast<size_t>((fileOffset + size) - alignedEnd);
+
+        // Not enough aligned interior to be worth DIO — just write normally.
+        if(dioBytes <= 0) {
+                int64_t n = writeFull(_handle, data, size);
+                if(n < 0) { setError(Error::syserr()); return -1; }
+                if(n > 0) bytesWrittenSignal.emit(n);
+                return n;
+        }
+
+        const uint8_t *src = static_cast<const uint8_t *>(data);
+        int64_t totalWritten = 0;
+
+        // Head: unaligned, normal write.
+        if(headBytes > 0) {
+                int64_t n = writeFull(_handle, src, static_cast<int64_t>(headBytes));
+                if(n < 0) { setError(Error::syserr()); return -1; }
+                totalWritten += n;
+                if(n < static_cast<int64_t>(headBytes)) {
+                        // Short write — return what we managed.
+                        if(totalWritten > 0) bytesWrittenSignal.emit(totalWritten);
+                        return totalWritten;
+                }
+        }
+
+        // Middle: aligned DIO write. Toggle O_DIRECT on the fd for this
+        // portion only, so head/tail fall-through writes continue to work.
+        setDirectIO(true);
+        int64_t n = writeFull(_handle, src + headBytes, dioBytes);
+        setDirectIO(false);
+        if(n < 0) {
+                // DIO failed at runtime (e.g. filesystem or page cache
+                // weirdness). Seek back and retry with normal I/O.
+                off64_t seekResult = ::lseek64(_handle, alignedStart, SEEK_SET);
+                if(seekResult < 0) { setError(Error::syserr()); return -1; }
+                n = writeFull(_handle, src + headBytes, dioBytes);
+                if(n < 0) { setError(Error::syserr()); return -1; }
+        }
+        totalWritten += n;
+        if(n < dioBytes) {
+                if(totalWritten > 0) bytesWrittenSignal.emit(totalWritten);
+                return totalWritten;
+        }
+
+        // Tail: unaligned, normal write.
+        if(tailBytes > 0) {
+                n = writeFull(_handle, src + headBytes + static_cast<size_t>(dioBytes),
+                              static_cast<int64_t>(tailBytes));
+                if(n < 0) { setError(Error::syserr()); return -1; }
+                totalWritten += n;
+        }
+
+        if(totalWritten > 0) bytesWrittenSignal.emit(totalWritten);
+        return totalWritten;
+}
+
+Error File::sync(bool dataOnly) {
+        if(!isOpen()) return Error(Error::NotOpen);
+        if(_resourceFile != nullptr) return Error();  // read-only, nothing to sync
+        int rc;
+        if(dataOnly) {
+#if defined(__linux__) || defined(_POSIX_SYNCHRONIZED_IO)
+                rc = ::fdatasync(_handle);
+#else
+                rc = ::fsync(_handle);
+#endif
+        } else {
+                rc = ::fsync(_handle);
+        }
+        if(rc == -1) return Error::syserr();
+        return Error();
+}
+
 Error File::setDirectIO(bool enable) {
+        // Snapshot the previous unbuffered state so we can restore it if
+        // the fcntl below fails — the old implementation left _directIO
+        // out of sync with the fd state on failure.
+        bool prevUnbuffered = isUnbuffered();
+        bool prevSavedUnbuffered = _savedUnbuffered;
         if(enable) {
-                _savedUnbuffered = isUnbuffered();
+                _savedUnbuffered = prevUnbuffered;
                 setUnbuffered(true);
         } else {
                 setUnbuffered(_savedUnbuffered);
         }
-        _directIO = enable;
+
         // Resource-mode files have no kernel fd to fcntl. Track the
         // option flag (so isDirectIO() reports the user's setting)
         // but skip the fcntl entirely.
-        if(_resourceFile != nullptr) return Error();
+        if(_resourceFile != nullptr) {
+                _directIO = enable;
+                return Error();
+        }
         if(isOpen()) {
                 int flags = ::fcntl(_handle, F_GETFL);
-                if(flags == -1) return Error::syserr();
-                flags = enable ? flags | O_DIRECT : flags & ~O_DIRECT;
-                if(::fcntl(_handle, F_SETFL, flags) == -1) return Error::syserr();
+                if(flags == -1) {
+                        // Restore buffered state on failure.
+                        setUnbuffered(prevUnbuffered);
+                        _savedUnbuffered = prevSavedUnbuffered;
+                        return Error::syserr();
+                }
+                int newFlags = enable ? flags | O_DIRECT : flags & ~O_DIRECT;
+                if(::fcntl(_handle, F_SETFL, newFlags) == -1) {
+                        setUnbuffered(prevUnbuffered);
+                        _savedUnbuffered = prevSavedUnbuffered;
+                        return Error::syserr();
+                }
         }
+        _directIO = enable;
         return Error();
 }
 

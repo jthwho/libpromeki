@@ -112,6 +112,87 @@ TEST_CASE("PixelDesc: JPEG_YUV8_422 encodeSources and decodeTargets") {
 }
 
 // ============================================================================
+// Video codec compressed formats (QuickTime / MP4 family)
+// ============================================================================
+
+TEST_CASE("PixelDesc: H264 is compressed with avc1 FourCC") {
+        PixelDesc pd(PixelDesc::H264);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "h264");
+        CHECK(pd.fourccList().size() == 2);
+        CHECK(pd.fourccList()[0] == FourCC("avc1"));
+        CHECK(pd.fourccList()[1] == FourCC("avc3"));
+}
+
+TEST_CASE("PixelDesc: HEVC is compressed with hvc1 FourCC") {
+        PixelDesc pd(PixelDesc::HEVC);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "hevc");
+        CHECK(pd.fourccList().size() == 2);
+        CHECK(pd.fourccList()[0] == FourCC("hvc1"));
+        CHECK(pd.fourccList()[1] == FourCC("hev1"));
+}
+
+TEST_CASE("PixelDesc: ProRes 422 family has correct FourCCs") {
+        struct Entry { PixelDesc::ID id; const char *fourcc; };
+        Entry entries[] = {
+                { PixelDesc::ProRes_422_Proxy, "apco" },
+                { PixelDesc::ProRes_422_LT,    "apcs" },
+                { PixelDesc::ProRes_422,       "apcn" },
+                { PixelDesc::ProRes_422_HQ,    "apch" }
+        };
+        for(const auto &e : entries) {
+                PixelDesc pd(e.id);
+                CHECK(pd.isValid());
+                CHECK(pd.isCompressed());
+                CHECK(pd.codecName() == "prores");
+                CHECK_FALSE(pd.hasAlpha());
+                REQUIRE(pd.fourccList().size() == 1);
+                CHECK(pd.fourccList()[0] == FourCC(e.fourcc[0], e.fourcc[1], e.fourcc[2], e.fourcc[3]));
+                CHECK(pd.pixelFormat().id() == PixelFormat::P_422_3x10_LE);
+        }
+}
+
+TEST_CASE("PixelDesc: ProRes 4444 has alpha and 10-bit") {
+        PixelDesc pd(PixelDesc::ProRes_4444);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "prores");
+        CHECK(pd.hasAlpha());
+        CHECK(pd.alphaCompIndex() == 3);
+        REQUIRE(pd.fourccList().size() == 1);
+        CHECK(pd.fourccList()[0] == FourCC("ap4h"));
+        CHECK(pd.pixelFormat().id() == PixelFormat::I_4x10_LE);
+}
+
+TEST_CASE("PixelDesc: ProRes 4444 XQ has alpha and 12-bit") {
+        PixelDesc pd(PixelDesc::ProRes_4444_XQ);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "prores");
+        CHECK(pd.hasAlpha());
+        CHECK(pd.alphaCompIndex() == 3);
+        REQUIRE(pd.fourccList().size() == 1);
+        CHECK(pd.fourccList()[0] == FourCC("ap4x"));
+        CHECK(pd.pixelFormat().id() == PixelFormat::I_4x12_LE);
+}
+
+TEST_CASE("PixelDesc: new codec entries are each uniquely lookupable by name") {
+        const char *names[] = {
+                "H264", "HEVC",
+                "ProRes_422_Proxy", "ProRes_422_LT", "ProRes_422", "ProRes_422_HQ",
+                "ProRes_4444", "ProRes_4444_XQ"
+        };
+        for(const char *name : names) {
+                PixelDesc pd = PixelDesc::lookup(name);
+                CHECK(pd.isValid());
+                CHECK(pd.name() == name);
+        }
+}
+
+// ============================================================================
 // lineStride and planeSize delegation
 // ============================================================================
 
@@ -157,9 +238,12 @@ TEST_CASE("PixelDesc: YUV8_422_UYVY is valid") {
         CHECK(pd.colorModel().id() == ColorModel::YCbCr_Rec709);
 }
 
-TEST_CASE("PixelDesc: YUV8_422_UYVY has UYVY FourCC") {
+TEST_CASE("PixelDesc: YUV8_422_UYVY has both 2vuy and UYVY FourCCs") {
         PixelDesc pd(PixelDesc::YUV8_422_UYVY_Rec709);
-        CHECK(pd.fourccList()[0] == FourCC("UYVY"));
+        // QuickTime canonical name comes first (the writer preference).
+        REQUIRE(pd.fourccList().size() == 2);
+        CHECK(pd.fourccList()[0] == FourCC("2vuy"));
+        CHECK(pd.fourccList()[1] == FourCC("UYVY"));
 }
 
 TEST_CASE("PixelDesc: YUV8_422_UYVY limited range") {

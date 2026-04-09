@@ -23,6 +23,16 @@ PROMEKI_NAMESPACE_BEGIN
  * described by an AudioDesc. The sample data is stored in a
  * shared Buffer. When shared ownership is needed, use Audio::Ptr.
  *
+ * @par Compressed audio
+ * An Audio object can also carry a compressed bitstream such as
+ * AAC, Opus, or MP3. A compressed Audio uses an AudioDesc whose
+ * @c codecFourCC() is non-zero (and whose @c dataType() is typically
+ * @c Invalid since the encoded stream has no single bit depth). The
+ * raw encoded bytes live in the object's single buffer. Use
+ * @c isCompressed() to test, @c compressedSize() to get the byte
+ * count, and @c Audio::fromBuffer() to adopt an existing
+ * @c Buffer::Ptr without copying.
+ *
  * @par Example
  * @code
  * AudioDesc desc(48000, 2, AudioDesc::Float32);
@@ -57,11 +67,51 @@ class Audio {
                       const MemSpace &ms = MemSpace::Default);
 
                 /**
+                 * @brief Zero-copy factory: adopts @p buffer as the audio's data.
+                 *
+                 * Used for both compressed bitstreams and PCM where the
+                 * caller already has the bytes in a @c Buffer::Ptr (e.g.
+                 * from @c File::readBulk). For compressed audio,
+                 * @p desc must have a non-zero @c codecFourCC(); for
+                 * PCM audio, the buffer size must be a whole multiple
+                 * of the PCM frame size (channels × bytesPerSample).
+                 *
+                 * @param buffer The buffer to adopt.
+                 * @param desc   The audio format descriptor (compressed or PCM).
+                 * @return A valid @c Audio sharing @p buffer, or an
+                 *         invalid @c Audio on failure.
+                 */
+                static Audio fromBuffer(const Buffer::Ptr &buffer, const AudioDesc &desc);
+
+                /**
+                 * @brief Creates a compressed audio object from pre-encoded data.
+                 *
+                 * Allocates a buffer and copies @p data into it. Mirror
+                 * of @c Image::fromCompressedData for audio. Prefer
+                 * @c fromBuffer() when the data is already in a
+                 * @c Buffer::Ptr to avoid the copy.
+                 */
+                static Audio fromCompressedData(const void *data, size_t size,
+                                                const AudioDesc &desc);
+
+                /**
                  * @brief Returns true if the object is valid.
                  * @return true if the audio descriptor is valid.
                  */
                 bool isValid() const {
                         return _desc.isValid();
+                }
+
+                /** @brief Returns true if this Audio carries a compressed bitstream. */
+                bool isCompressed() const { return _desc.isCompressed(); }
+
+                /**
+                 * @brief Returns the number of bytes in the compressed bitstream.
+                 * @return The encoded byte count, or 0 if this is PCM audio.
+                 */
+                size_t compressedSize() const {
+                        if(!isCompressed() || !_buffer.isValid()) return 0;
+                        return _buffer->size();
                 }
 
                 /**

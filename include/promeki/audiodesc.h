@@ -13,6 +13,7 @@
 #include <promeki/string.h>
 #include <promeki/system.h>
 #include <promeki/json.h>
+#include <promeki/fourcc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -291,12 +292,42 @@ class AudioDesc {
                 }
 
                 /**
-                 * @brief Returns true if this audio description has a valid data type, sample rate, and channel count.
-                 * @return true if valid.
+                 * @brief Returns true if this audio description is valid.
+                 *
+                 * Valid when the sample rate and channel count are set
+                 * AND either a PCM data type or a compressed codec FourCC
+                 * is present.
                  */
                 bool isValid() const {
-                        return _dataType != 0 && _sampleRate > 0.0f && _channels > 0;
+                        if(_sampleRate <= 0.0f || _channels == 0) return false;
+                        return _dataType != 0 || _codecFourCC.value() != 0;
                 }
+
+                /**
+                 * @brief Returns true if this description identifies a compressed audio codec
+                 *        (as opposed to raw PCM).
+                 *
+                 * Compressed audio has a non-zero @c codecFourCC() and
+                 * typically an @c Invalid @c dataType (since the encoded
+                 * bitstream has no single bit-depth).
+                 */
+                bool isCompressed() const { return _codecFourCC.value() != 0; }
+
+                /**
+                 * @brief Returns the four-character code identifying the compressed codec,
+                 *        or an all-zero FourCC for PCM audio.
+                 */
+                FourCC codecFourCC() const { return _codecFourCC; }
+
+                /**
+                 * @brief Sets the compressed codec FourCC.
+                 *
+                 * Setting a non-zero FourCC marks this description as
+                 * compressed; setting zero clears the compressed flag.
+                 * Does not modify @c dataType, @c sampleRate, or
+                 * @c channels.
+                 */
+                void setCodecFourCC(FourCC code) { _codecFourCC = code; }
 
                 /**
                  * @brief Returns true if the data type is the platform's native float format.
@@ -470,6 +501,7 @@ class AudioDesc {
                 int                     _dataType = 0;
                 float                   _sampleRate = 0.0f;
                 unsigned int            _channels = 0;
+                FourCC                  _codecFourCC{'\0','\0','\0','\0'};
                 Metadata                _metadata;
                 const Format            *_format = nullptr;
 };

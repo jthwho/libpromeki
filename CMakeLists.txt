@@ -418,6 +418,7 @@ set(PROMEKI_HEADERS
     include/promeki/buffer.h
     include/promeki/bufferediodevice.h
     include/promeki/bufferiodevice.h
+    include/promeki/bufferpool.h
     include/promeki/bufferview.h
     include/promeki/buildinfo.h
     include/promeki/bytearray.h
@@ -522,6 +523,7 @@ set(PROMEKI_SOURCES
     src/core/buffer.cpp
     src/core/bufferediodevice.cpp
     src/core/bufferiodevice.cpp
+    src/core/bufferpool.cpp
     src/core/char.cpp
     src/core/ciepoint.cpp
     src/core/cmdlineparser.cpp
@@ -638,6 +640,7 @@ if(PROMEKI_ENABLE_PROAV)
     list(APPEND PROMEKI_HEADERS
         include/promeki/audio.h
         include/promeki/audioblock.h
+        include/promeki/audiobuffer.h
         include/promeki/audiodesc.h
         include/promeki/audiofile.h
         include/promeki/audiofilefactory.h
@@ -662,6 +665,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediaio.h
         include/promeki/mediaiotask.h
         include/promeki/mediaiotask_imagefile.h
+        include/promeki/mediaiotask_quicktime.h
         include/promeki/mediaiotask_tpg.h
         include/promeki/medianode.h
         include/promeki/medianodeconfig.h
@@ -670,6 +674,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediasink.h
         include/promeki/mediasource.h
         include/promeki/paintengine.h
+        include/promeki/quicktime.h
         include/promeki/testpatternnode.h
         include/promeki/timecodeoverlaynode.h
         include/promeki/mediadesc.h
@@ -679,6 +684,7 @@ if(PROMEKI_ENABLE_PROAV)
     list(APPEND PROMEKI_SOURCES
         src/proav/audio.cpp
         src/proav/audioblock.cpp
+        src/proav/audiobuffer.cpp
         src/proav/audiodesc.cpp
         src/proav/audiofile.cpp
         src/proav/audiofilefactory.cpp
@@ -707,6 +713,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaio.cpp
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_imagefile.cpp
+        src/proav/mediaiotask_quicktime.cpp
         src/proav/mediaiotask_tpg.cpp
         src/proav/medianode.cpp
         src/proav/medianodeconfig.cpp
@@ -716,6 +723,10 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediasource.cpp
         src/proav/paintengine.cpp
         src/proav/paintengine_interleaved.cpp
+        src/proav/quicktime.cpp
+        src/proav/quicktime_atom.cpp
+        src/proav/quicktime_reader.cpp
+        src/proav/quicktime_writer.cpp
         src/proav/testpatternnode.cpp
         src/proav/timecodeoverlaynode.cpp
         src/proav/mediadesc.cpp
@@ -1150,6 +1161,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/buffer.cpp
         tests/bufferediodevice.cpp
         tests/bufferiodevice.cpp
+        tests/bufferpool.cpp
         tests/bufferview.cpp
         tests/buildinfo.cpp
         tests/bytearray.cpp
@@ -1268,6 +1280,7 @@ if(PROMEKI_BUILD_TESTS)
         list(APPEND UNITTEST_SOURCES
             tests/audio.cpp
             tests/audioblock.cpp
+            tests/audiobuffer.cpp
             tests/audiodesc.cpp
             tests/audiofilefactory.cpp
             tests/audiotestpattern.cpp
@@ -1298,8 +1311,10 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediapipelineconfig.cpp
             tests/mediasink.cpp
             tests/mediasource.cpp
+            tests/mediaiotask_quicktime.cpp
             tests/paintengine.cpp
             tests/pixeldesc.cpp
+            tests/quicktime.cpp
             tests/testpatternnode.cpp
             tests/timecodeoverlaynode.cpp
             tests/videodesc.cpp

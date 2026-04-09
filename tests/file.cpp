@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <vector>
 #include <doctest/doctest.h>
 #include <promeki/file.h>
 #include <promeki/result.h>
@@ -1137,6 +1138,163 @@ TEST_CASE("File: readBulk with invalid size returns error") {
         err = f.readBulk(buf, -1);
         CHECK(err.isError());
         CHECK(err.code() == Error::InvalidArgument);
+
+        f.close();
+        std::remove(path);
+}
+
+// ============================================================================
+// writeBulk tests (DIO write path)
+// ============================================================================
+
+TEST_CASE("File: writeBulk aligned position and size with aligned buffer") {
+        const char *path = testPath("wbulk_aligned");
+        std::remove(path);
+
+        File f(path);
+        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(f.isOpen());
+
+        auto [align, alignErr] = f.directIOAlignment();
+        REQUIRE(alignErr.isOk());
+        REQUIRE(align > 0);
+
+        // Allocate an aligned buffer via the Buffer class (page-aligned by default)
+        const size_t payloadSize = align * 4;
+        Buffer buf(payloadSize, align);
+        REQUIRE(buf.isValid());
+        uint8_t *p = static_cast<uint8_t *>(buf.data());
+        for(size_t i = 0; i < payloadSize; ++i) p[i] = static_cast<uint8_t>(i & 0xff);
+
+        int64_t n = f.writeBulk(buf.data(), static_cast<int64_t>(payloadSize));
+        CHECK(n == static_cast<int64_t>(payloadSize));
+        f.close();
+
+        // Verify what we wrote
+        f.open(IODevice::ReadOnly);
+        uint8_t check[payloadSize] = {};
+        int64_t r = f.read(check, static_cast<int64_t>(payloadSize));
+        CHECK(r == static_cast<int64_t>(payloadSize));
+        for(size_t i = 0; i < payloadSize; ++i) CHECK(check[i] == static_cast<uint8_t>(i & 0xff));
+        f.close();
+        std::remove(path);
+}
+
+TEST_CASE("File: writeBulk unaligned source pointer falls back to normal write") {
+        const char *path = testPath("wbulk_unalign_src");
+        std::remove(path);
+
+        File f(path);
+        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(f.isOpen());
+
+        // Unaligned source (offset by 3 bytes into an allocated buffer)
+        const size_t payloadSize = 4096;
+        uint8_t raw[payloadSize + 16];
+        uint8_t *unaligned = raw + 3;
+        for(size_t i = 0; i < payloadSize; ++i) unaligned[i] = static_cast<uint8_t>((i + 1) & 0xff);
+
+        int64_t n = f.writeBulk(unaligned, static_cast<int64_t>(payloadSize));
+        CHECK(n == static_cast<int64_t>(payloadSize));
+        f.close();
+
+        // Verify bytes round-trip
+        f.open(IODevice::ReadOnly);
+        uint8_t check[payloadSize] = {};
+        int64_t r = f.read(check, static_cast<int64_t>(payloadSize));
+        CHECK(r == static_cast<int64_t>(payloadSize));
+        for(size_t i = 0; i < payloadSize; ++i) {
+                CHECK(check[i] == static_cast<uint8_t>((i + 1) & 0xff));
+        }
+        f.close();
+        std::remove(path);
+}
+
+TEST_CASE("File: writeBulk region smaller than alignment block") {
+        const char *path = testPath("wbulk_tiny");
+        std::remove(path);
+
+        File f(path);
+        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(f.isOpen());
+
+        Buffer buf(4096, 4096);
+        uint8_t *p = static_cast<uint8_t *>(buf.data());
+        for(size_t i = 0; i < 100; ++i) p[i] = static_cast<uint8_t>(0x55);
+
+        // Write only 100 bytes — smaller than one alignment block, so
+        // writeBulk should fall back to normal I/O entirely.
+        int64_t n = f.writeBulk(buf.data(), 100);
+        CHECK(n == 100);
+        f.close();
+
+        // Verify
+        f.open(IODevice::ReadOnly);
+        uint8_t check[100] = {};
+        int64_t r = f.read(check, 100);
+        CHECK(r == 100);
+        for(int i = 0; i < 100; ++i) CHECK(check[i] == 0x55);
+        f.close();
+        std::remove(path);
+}
+
+TEST_CASE("File: writeBulk unaligned position") {
+        const char *path = testPath("wbulk_uoff");
+        std::remove(path);
+
+        File f(path);
+        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(f.isOpen());
+
+        auto [align, alignErr] = f.directIOAlignment();
+        REQUIRE(alignErr.isOk());
+
+        // Pre-write some bytes to advance the position off-alignment,
+        // then writeBulk a larger chunk spanning into the aligned region.
+        char prefix[7] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G' };
+        f.write(prefix, 7);
+
+        const size_t payloadSize = align * 3 + 5;
+        Buffer buf(payloadSize + align, align);
+        uint8_t *p = static_cast<uint8_t *>(buf.data());
+        for(size_t i = 0; i < payloadSize; ++i) p[i] = static_cast<uint8_t>((i + 0xC0) & 0xff);
+
+        int64_t n = f.writeBulk(buf.data(), static_cast<int64_t>(payloadSize));
+        CHECK(n == static_cast<int64_t>(payloadSize));
+        f.close();
+
+        // Read back and verify
+        f.open(IODevice::ReadOnly);
+        char got_prefix[7];
+        f.read(got_prefix, 7);
+        for(int i = 0; i < 7; ++i) CHECK(got_prefix[i] == prefix[i]);
+
+        std::vector<uint8_t> check(payloadSize);
+        f.read(check.data(), static_cast<int64_t>(payloadSize));
+        for(size_t i = 0; i < payloadSize; ++i) {
+                CHECK(check[i] == static_cast<uint8_t>((i + 0xC0) & 0xff));
+        }
+        f.close();
+        std::remove(path);
+}
+
+TEST_CASE("File: writeBulk on closed file returns -1") {
+        File f;
+        int64_t n = f.writeBulk("hello", 5);
+        CHECK(n == -1);
+}
+
+TEST_CASE("File: writeBulk with invalid size returns -1") {
+        const char *path = testPath("wbulk_badsize");
+        std::remove(path);
+
+        File f(path);
+        f.open(IODevice::WriteOnly, File::Create | File::Truncate);
+        REQUIRE(f.isOpen());
+
+        CHECK(f.writeBulk("x", 0) == -1);
+        CHECK(f.writeBulk("x", -1) == -1);
+        CHECK(f.writeBulk(nullptr, 100) == -1);
 
         f.close();
         std::remove(path);
