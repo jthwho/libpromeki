@@ -16,7 +16,9 @@
 #include <promeki/dir.h>
 #include <promeki/filepath.h>
 #include <promeki/buffer.h>
+#include <promeki/metadata.h>
 #include <promeki/stringlist.h>
+#include <promeki/timecode.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -31,10 +33,16 @@ const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigSequenceHead("SequenceHead"
 // ============================================================================
 // Frame-rate source tags (values for Metadata::FrameRateSource)
 // ============================================================================
-
+//
+// The backend's defaultConfig() pre-populates ConfigFrameRate, so the
+// "user explicitly set it" distinction is gone by design — every open
+// call sees a valid config-supplied frame rate.  There are now only
+// two distinct origins worth tracking: the frame rate came from a
+// sidecar or the upstream MediaDesc (authoritative), or it came from
+// the MediaIOConfig (either the caller's override or the backend
+// default — both behave identically downstream).
 static const char *const kFrameRateSourceFile    = "file";
 static const char *const kFrameRateSourceConfig  = "config";
-static const char *const kFrameRateSourceDefault = "default";
 
 // ============================================================================
 // Extension-to-ImageFile::ID mapping
@@ -194,8 +202,58 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
                         cfg.set(MediaIO::ConfigType, "ImageFile");
+                        // 0 == ImageFile::Invalid — the Open handler
+                        // treats this as "infer the backend from the
+                        // filename extension or the content probe".
+                        cfg.set(ConfigImageFileID, 0);
+                        // Empty size hint: only used by headerless
+                        // formats (RawYUV) that can't derive the
+                        // geometry from the file itself.
+                        cfg.set(ConfigVideoSize, Size2Du32());
+                        cfg.set(ConfigPixelDesc, PixelDesc());
                         cfg.set(ConfigFrameRate, DefaultFrameRate);
+                        cfg.set(ConfigSequenceHead, DefaultSequenceHead);
                         return cfg;
+                },
+                []() -> Metadata {
+                        // Image file formats consume different subsets
+                        // of the Metadata namespace: DPX honors the
+                        // biggest set (file info + film info + TV
+                        // info), PNG honors Gamma, Cineon honors most
+                        // of the DPX film set minus project/copyright,
+                        // etc.  The union is small enough that
+                        // advertising it in one place is simpler than
+                        // a per-format schema.
+                        Metadata m;
+                        // Common (write-to-DPX-header) fields.
+                        m.set(Metadata::FileOrigName, String());
+                        m.set(Metadata::Date,         String());
+                        m.set(Metadata::Software,     String());
+                        m.set(Metadata::Project,      String());
+                        m.set(Metadata::Copyright,    String());
+                        m.set(Metadata::Reel,         String());
+                        m.set(Metadata::Timecode,     Timecode());
+                        m.set(Metadata::Gamma,        double(0.0));
+                        m.set(Metadata::FrameRate,    double(0.0));
+                        // Film information block.
+                        m.set(Metadata::FilmMfgID,    String());
+                        m.set(Metadata::FilmType,     String());
+                        m.set(Metadata::FilmOffset,   String());
+                        m.set(Metadata::FilmPrefix,   String());
+                        m.set(Metadata::FilmCount,    String());
+                        m.set(Metadata::FilmFormat,   String());
+                        m.set(Metadata::FilmSeqPos,   int(0));
+                        m.set(Metadata::FilmSeqLen,   int(0));
+                        m.set(Metadata::FilmHoldCount,int(1));
+                        m.set(Metadata::FilmShutter,  double(0.0));
+                        m.set(Metadata::FilmFrameID,  String());
+                        m.set(Metadata::FilmSlate,    String());
+                        // TV / image element block.
+                        m.set(Metadata::FieldID,                int(0));
+                        m.set(Metadata::TransferCharacteristic, int(0));
+                        m.set(Metadata::Colorimetric,           int(0));
+                        m.set(Metadata::Orientation,            int(0));
+                        return m;
                 },
                 probeImageDevice
         };
@@ -217,20 +275,15 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         // Resolve the reported frame rate with a documented priority:
         //   1. Writer with a valid pendingMediaDesc frame rate
         //   2. .imgseq sidecar frameRate (resolved below, reader only)
-        //   3. Config override (ConfigFrameRate)
-        //   4. DefaultFrameRate
-        FrameRate fps = DefaultFrameRate;
-        String frSource = kFrameRateSourceDefault;
+        //   3. Config value (ConfigFrameRate — always present since the
+        //      backend's defaultConfig pre-populates it)
+        FrameRate fps = cfg.getAs<FrameRate>(ConfigFrameRate, DefaultFrameRate);
+        if(!fps.isValid()) fps = DefaultFrameRate;
+        String frSource = kFrameRateSourceConfig;
 
         if(cmd.mode == MediaIO::Writer && cmd.pendingMediaDesc.frameRate().isValid()) {
                 fps = cmd.pendingMediaDesc.frameRate();
                 frSource = kFrameRateSourceFile;
-        } else if(cfg.contains(ConfigFrameRate)) {
-                FrameRate fromCfg = cfg.getAs<FrameRate>(ConfigFrameRate);
-                if(fromCfg.isValid()) {
-                        fps = fromCfg;
-                        frSource = kFrameRateSourceConfig;
-                }
         }
 
         MediaDesc mediaDesc;
@@ -273,10 +326,13 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                                         const String &frSource) {
         const MediaIO::Config &cfg = cmd.config;
 
-        // Determine the ImageFile format ID
-        if(cfg.contains(ConfigImageFileID)) {
-                _imageFileID = cfg.getAs<int>(ConfigImageFileID);
-        } else {
+        // Determine the ImageFile format ID.  ConfigImageFileID
+        // lives in the default config as 0 (ImageFile::Invalid) to
+        // document the knob; any non-zero value from the caller is
+        // taken as an explicit override, otherwise we fall back to
+        // auto-detection from the filename extension.
+        _imageFileID = cfg.getAs<int>(ConfigImageFileID, ImageFile::Invalid);
+        if(_imageFileID == ImageFile::Invalid) {
                 _imageFileID = imageFileIDFromExtension(_filename);
         }
 
@@ -450,10 +506,12 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
         _seqSize      = hintSize;
         _seqPixelDesc = hintPixel;
 
-        // Determine the per-file ImageFile::ID from the pattern suffix.
-        if(cfg.contains(ConfigImageFileID)) {
-                _imageFileID = cfg.getAs<int>(ConfigImageFileID);
-        } else {
+        // Determine the per-file ImageFile::ID from the pattern
+        // suffix; ConfigImageFileID = 0 (ImageFile::Invalid) in the
+        // default config triggers auto-detection, a non-zero caller
+        // override wins.
+        _imageFileID = cfg.getAs<int>(ConfigImageFileID, ImageFile::Invalid);
+        if(_imageFileID == ImageFile::Invalid) {
                 // NumName's suffix starts with '.' (e.g. ".dpx"), so
                 // imageFileIDFromExtension() works directly.
                 _imageFileID = imageFileIDFromExtension(pattern.suffix());

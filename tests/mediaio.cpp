@@ -9,6 +9,7 @@
 #include <promeki/mediaio.h>
 #include <promeki/mediaiotask_tpg.h>
 #include <promeki/mediaiotask_imagefile.h>
+#include <promeki/mediaiotask_converter.h>
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/frame.h>
@@ -78,20 +79,22 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         // Should have the Type key set
         CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "TPG");
 
-        // Check some defaults
+        // Plain defaults: video, audio, and timecode are all enabled
+        // so an unconfigured TPG produces a ready-to-use reference
+        // stream (1080p59.94 colour bars, 1 kHz stereo tone, timecode
+        // starting at 01:00:00:00).
         CHECK(cfg.getAs<FrameRate>(MediaIOTask_TPG::ConfigFrameRate).isValid());
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigVideoEnabled) == false);
+        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigVideoEnabled) == true);
         CHECK(cfg.getAs<Size2Du32>(MediaIOTask_TPG::ConfigVideoSize)
               == Size2Du32(1920, 1080));
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigAudioEnabled) == false);
+        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigAudioEnabled) == true);
         CHECK(cfg.get(MediaIOTask_TPG::ConfigAudioMode)
                 .asEnum(AudioPattern::Type) == AudioPattern::Tone);
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeEnabled) == true);
         CHECK(cfg.getAs<String>(MediaIOTask_TPG::ConfigTimecodeStart) == "01:00:00:00");
         CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeDropFrame) == false);
 
-        // Should be usable for creation after enabling a component
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        // Should be usable for creation straight from the defaults.
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -101,6 +104,109 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         CHECK(io->readFrame(frame).isOk());
         CHECK(frame->imageList().size() == 1);
         CHECK(frame->imageList()[0]->width() == 1920);
+        CHECK(frame->audioList().size() == 1);
+        CHECK(frame->metadata().contains(Metadata::Timecode));
+
+        io->close();
+        delete io;
+}
+
+// ============================================================================
+// Introspection: readyReads / pendingReads / pendingWrites
+// ============================================================================
+
+TEST_CASE("MediaIO_Introspection_ClosedStateIsZero") {
+        MediaIO::Config cfg;
+        cfg.set(MediaIO::ConfigType, "TPG");
+        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        CHECK(io->readyReads() == 0);
+        CHECK(io->pendingReads() == 0);
+        CHECK(io->pendingWrites() == 0);
+        CHECK_FALSE(io->frameAvailable());
+        delete io;
+}
+
+TEST_CASE("MediaIO_Introspection_ReadPrefetchCounts") {
+        // The TPG generator's executeCmd(Read) always succeeds immediately,
+        // so after a blocking readFrame() the result queue should be empty
+        // and pendingReads() reflects the in-flight prefetch that was
+        // submitted on the way out.
+        MediaIO::Config cfg;
+        cfg.set(MediaIO::ConfigType, "TPG");
+        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(16, 16));
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        CHECK(io->pendingWrites() == 0);
+
+        // First read causes prefetch to kick off.  Because prefetch
+        // depth is 1 and the prefetched read may or may not have
+        // finished by the time the user thread checks, we assert only
+        // an invariant: readyReads() + pendingReads() >= 0.
+        Frame::Ptr frame;
+        CHECK(io->readFrame(frame).isOk());
+        CHECK(frame.isValid());
+        CHECK(io->readyReads() >= 0);
+        CHECK(io->pendingReads() >= 0);
+        CHECK(io->readyReads() + io->pendingReads() <= io->prefetchDepth() + 1);
+
+        io->close();
+        // After close, all counters are reset.
+        CHECK(io->readyReads() == 0);
+        CHECK(io->pendingReads() == 0);
+        CHECK(io->pendingWrites() == 0);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Introspection_PendingWritesDrainAfterClose") {
+        MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
+        cfg.set(MediaIOTask_Converter::ConfigCapacity, 4);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+
+        // Submit several blocking writes — each one runs to completion
+        // before writeFrame() returns, so pendingWrites() is 0 again
+        // at every observation point between calls.
+        Image img(8, 8, PixelDesc(PixelDesc::RGB8_sRGB));
+        img.fill(0);
+        Frame::Ptr f = Frame::Ptr::create();
+        f.modify()->imageList().pushToBack(Image::Ptr::create(std::move(img)));
+
+        CHECK(io->pendingWrites() == 0);
+        CHECK(io->writeFrame(f).isOk());
+        CHECK(io->pendingWrites() == 0);
+        CHECK(io->writeFrame(f).isOk());
+        CHECK(io->pendingWrites() == 0);
+
+        // Close resets the counter whether or not writes were pending.
+        io->close();
+        CHECK(io->pendingWrites() == 0);
+        delete io;
+}
+
+TEST_CASE("MediaIO_Introspection_FrameAvailableMatchesReadyReads") {
+        MediaIO::Config cfg;
+        cfg.set(MediaIO::ConfigType, "TPG");
+        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(16, 16));
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        // frameAvailable() and readyReads() > 0 must always agree.
+        for(int i = 0; i < 5; i++) {
+                CHECK(io->frameAvailable() == (io->readyReads() > 0));
+                Frame::Ptr frame;
+                io->readFrame(frame, /*block=*/false);
+        }
 
         io->close();
         delete io;
@@ -1710,9 +1816,10 @@ TEST_CASE("MediaIO_ImageSequence_ImgSeqSidecarAutoDetectRange") {
         Dir(dir).removeRecursively();
 }
 
-TEST_CASE("MediaIO_ImageSequence_FrameRateSourceDefault") {
-        // No config, no sidecar — reading a plain mask should report
-        // FrameRateSource = "default".
+TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfigFromDefault") {
+        // No sidecar and no explicit --incfg FrameRate — the backend's
+        // default config still pre-populates ConfigFrameRate with
+        // DefaultFrameRate, so FrameRateSource is "config".
         FilePath dir = makeImageSequenceDir("promeki_test_imgseq_frdefault",
                                             "fr_", 1, 2);
         String mask = (dir / "fr_####.dpx").toString();
@@ -1721,7 +1828,8 @@ TEST_CASE("MediaIO_ImageSequence_FrameRateSourceDefault") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
         const Metadata &md = io->metadata();
-        CHECK(md.getAs<String>(Metadata::FrameRateSource) == "default");
+        CHECK(md.getAs<String>(Metadata::FrameRateSource) == "config");
+        CHECK(io->frameRate() == MediaIOTask_ImageFile::DefaultFrameRate);
         io->close();
         delete io;
         Dir(dir).removeRecursively();
@@ -1771,8 +1879,9 @@ TEST_CASE("MediaIO_ImageFile_SingleFileStillReportsFrameRateSource") {
                 REQUIRE(io->open(MediaIO::Reader).isOk());
                 const Metadata &md = io->metadata();
                 CHECK(md.contains(Metadata::FrameRateSource));
-                // No sidecar and no config override — default.
-                CHECK(md.getAs<String>(Metadata::FrameRateSource) == "default");
+                // No sidecar — the rate came from the config entry
+                // the backend default pre-populated.
+                CHECK(md.getAs<String>(Metadata::FrameRateSource) == "config");
                 io->close();
                 delete io;
         }

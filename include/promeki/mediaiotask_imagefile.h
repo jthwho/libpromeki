@@ -82,15 +82,16 @@ PROMEKI_NAMESPACE_BEGIN
  *
  *   1. Writer: @c cmd.pendingMediaDesc.frameRate() if valid.
  *   2. @c ImgSeq sidecar @c frameRate (reader only).
- *   3. @c ConfigFrameRate.
- *   4. @c DefaultFrameRate (@c FPS_30).
+ *   3. @c ConfigFrameRate (always populated — the backend's default
+ *      config pre-seeds it with @c DefaultFrameRate).
  *
  * The resolved source is recorded in the returned metadata under
  * @c Metadata::FrameRateSource as one of @c "file" (from a sidecar
- * or writer-supplied @c MediaDesc), @c "config" (from
- * @c ConfigFrameRate), or @c "default" (fell back to
- * @c DefaultFrameRate).  Callers that care about whether a real
- * frame rate was available can inspect that metadata entry.
+ * or writer-supplied @c MediaDesc) or @c "config" (from the
+ * @c ConfigFrameRate entry in the MediaIOConfig, whether it came
+ * from the backend default or a caller override).  Callers that
+ * care about whether a real frame rate was available can inspect
+ * that metadata entry.
  *
  * @par Config keys
  * | Key | Type | Default | Description |

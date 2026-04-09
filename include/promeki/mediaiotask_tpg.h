@@ -42,7 +42,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys — Video
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigVideoEnabled | bool | false | Enable video generation. |
+ * | ConfigVideoEnabled | bool | true | Enable video generation. |
  * | ConfigVideoPattern | String | "colorbars" | Pattern name. |
  * | ConfigVideoSize | Size2Du32 | 1920x1080 | Frame size. |
  * | ConfigVideoPixelFormat | PixelDesc | RGB8_sRGB | Pixel description. |
@@ -70,7 +70,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys — Audio
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigAudioEnabled | bool | false | Enable audio generation. |
+ * | ConfigAudioEnabled | bool | true | Enable audio generation. |
  * | ConfigAudioMode | String | "tone" | "tone", "silence", or "ltc". |
  * | ConfigAudioRate | float | 48000 | Sample rate in Hz. |
  * | ConfigAudioChannels | int | 2 | Channel count. |
@@ -89,10 +89,9 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * MediaIO::Config cfg;
- * cfg.set(MediaIO::ConfigType, "TPG");
- * cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
- * cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+ * // The default config enables video+audio+timecode, so the plain
+ * // form is enough for a ready-to-use TPG source.
+ * MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
  * MediaIO *io = MediaIO::create(cfg);
  * io->open(MediaIO::Reader);
  * Frame::Ptr frame;

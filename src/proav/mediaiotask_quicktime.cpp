@@ -8,10 +8,13 @@
 #include <cstdint>
 #include <cstring>
 #include <promeki/mediaiotask_quicktime.h>
+#include <promeki/enums.h>
 #include <promeki/iodevice.h>
 #include <promeki/image.h>
 #include <promeki/frame.h>
 #include <promeki/audio.h>
+#include <promeki/metadata.h>
+#include <promeki/timecode.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -120,7 +123,44 @@ MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
                         cfg.set(MediaIO::ConfigType, "QuickTime");
+                        // -1 sentinel = "let the reader pick the
+                        // first video / audio track it finds".
+                        cfg.set(ConfigVideoTrack, -1);
+                        cfg.set(ConfigAudioTrack, -1);
+                        // Writer defaults — fragmented layout is the
+                        // crash-safe choice for live capture, classic
+                        // is only appropriate for offline rendering.
+                        cfg.set(ConfigLayout, QuickTimeLayout::Fragmented);
+                        cfg.set(ConfigFragmentFrames, DefaultFragmentFrames);
+                        cfg.set(ConfigFlushSync, false);
                         return cfg;
+                },
+                []() -> Metadata {
+                        // udta ©-atom set written via addIfPresent()
+                        // in quicktime_writer.cpp, plus the BWF-style
+                        // extension fields the writer stamps at open
+                        // time (Originator, OriginatorReference,
+                        // OriginationDateTime, UMID).  Timecode comes
+                        // off each frame rather than the container,
+                        // but it's listed here too so callers can set
+                        // an initial timecode if the producer doesn't
+                        // stamp one.
+                        Metadata m;
+                        m.set(Metadata::Title,               String());
+                        m.set(Metadata::Comment,             String());
+                        m.set(Metadata::Date,                String());
+                        m.set(Metadata::Artist,              String());
+                        m.set(Metadata::Copyright,           String());
+                        m.set(Metadata::Software,            String());
+                        m.set(Metadata::Album,               String());
+                        m.set(Metadata::Genre,               String());
+                        m.set(Metadata::Description,         String());
+                        m.set(Metadata::Originator,          String());
+                        m.set(Metadata::OriginatorReference, String());
+                        m.set(Metadata::OriginationDateTime, String());
+                        m.set(Metadata::UMID,                String());
+                        m.set(Metadata::Timecode,            Timecode());
+                        return m;
                 },
                 probeQuickTimeDevice
         };
@@ -235,11 +275,17 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         // ---- Writer ----
         _qt = QuickTime::createWriter(_filename);
 
-        // Pick a layout. Default is fragmented for crash safety; the
-        // caller can force classic via ConfigLayout = "classic".
-        String layoutStr = cfg.getAs<String>(ConfigLayout, String("fragmented"));
-        QuickTime::Layout layout = QuickTime::LayoutFragmented;
-        if(layoutStr == "classic") layout = QuickTime::LayoutClassic;
+        // Pick a layout. Default is fragmented for crash safety.
+        // The QuickTimeLayout Enum integer values match
+        // QuickTime::Layout by construction so we can cast directly.
+        Error layoutErr;
+        Enum layoutEnum = cfg.get(ConfigLayout)
+                             .asEnum(QuickTimeLayout::Type, &layoutErr);
+        if(layoutErr.isError() || !layoutEnum.hasListedValue()) {
+                promekiErr("MediaIOTask_QuickTime: unknown Layout value");
+                return Error::InvalidArgument;
+        }
+        QuickTime::Layout layout = static_cast<QuickTime::Layout>(layoutEnum.value());
         Error err = _qt.setLayout(layout);
         if(err.isError()) return err;
 

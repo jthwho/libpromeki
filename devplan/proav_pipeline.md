@@ -1,165 +1,245 @@
-# ProAV Pipeline Framework Core
+# MediaPipeline (MediaIO-based)
 
 **Phase:** 4A
-**Dependencies:** Phase 1 (Mutex, WaitCondition, Future, PriorityQueue, ThreadPool), Phase 2 (IODevice)
+**Dependencies:** MediaIO framework (`proav_nodes.md`), VariantDatabase, JsonObject
 **Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-Generalizes the existing source/sink pattern in AudioBlock. Nodes own their own threads; the pipeline manages topology and lifecycle.
+This document describes the **new** `MediaPipeline` class — a data-driven pipeline builder that instantiates and wires together `MediaIO` instances from a declarative configuration. It is unrelated to the legacy `MediaNode`/`MediaPipeline` classes (see "Deprecated: MediaNode/MediaPipeline legacy" at the bottom of this file).
 
 ---
 
-## Progress
+## Overview
 
-**Completed:** MediaSink, MediaSource, MediaNodeConfig, MediaPipelineConfig, MediaNode (node registry, NodeStats, BuildResult, PROMEKI_REGISTER_NODE, benchmark infrastructure, `defaultConfig()`), MediaPipeline (topological sort, cycle detection, build-from-config, start/stop/pause/resume, benchmarkSummary), Benchmark, BenchmarkReporter, EncodedDesc, Image::ensureExclusive()/isExclusive(), Audio::convertTo(), all vidgen concrete nodes (TestPatternNode, FrameDemuxNode, JpegEncoderNode, TimecodeOverlayNode, RtpVideoSinkNode, RtpAudioSinkNode). `MediaNode::stop()` race condition fixed. See git history for details.
+`MediaPipeline` takes a hierarchical configuration describing a full media pipeline — the set of `MediaIO` stages, each stage's `MediaIOConfig`, and how frames flow between stages — and builds a running pipeline out of `MediaIO` objects. The same configuration can be expressed as a live in-memory data object or as a JSON document; round-tripping either form produces the same pipeline.
 
-**Architecture:** Direct MediaSink/MediaSource connection model. MediaNode owns sinks and sources; MediaPipeline owns nodes and manages connections. Config flows through MediaNodeConfig → MediaNode::build(). Concrete nodes override `processFrame()` — base class `process()` handles dequeuing, benchmark stamping, delivery, and timing.
-
-**String key naming convention:** All string keys in `Map<String, Variant>` dictionaries use UpperCamelCase (CamelCaps), starting with an upper-case letter. This applies to config option keys (`Name`, `Type`, `FrameRate`, `PayloadType`), `extendedStats()` keys (`PacketsSent`, `BytesSent`, `FramesGenerated`), and any other string-keyed maps in the node API. Acronyms are treated as single words with only the first letter capitalised: `Dscp`, `RtpPayload`, `LtcChannel`.
-
-**Remaining:**
-- Audio::ensureExclusive() / Audio::isExclusive() — not yet implemented (Image has it)
-- MemSpace::Stats — not yet implemented
-- MemSpacePool — not yet implemented
+**Why this class exists:**
+- All the real work already lives in `MediaIO` and its backends. The pipeline's only job is wiring.
+- `mediaplay` and every future media tool should be driven by a config description rather than hard-coded MediaIO plumbing.
+- A single JSON document can describe a complete end-to-end pipeline (e.g. TPG → CSC converter → RTP video sink + QuickTime file sink), which is the foundation for GUIs, presets, and automation.
+- Keeps MediaIO itself simple: the controller/task split stays unchanged, and the pipeline is a thin composition layer on top.
 
 ---
 
-### Design Constraint: JSON-Serializable Graphs
+## Design Goals
 
-An eventual goal is defining media pipelines via a data structure that can be converted to/from JSON. This is **not** an initial deliverable, but it must influence how we build things now. The node type registry and MediaNodeConfig options map are already in place to support this.
-
-**What this enables later (not now):**
-- `MediaPipelineConfig::toJson()` / `MediaPipelineConfig::fromJson()` — serialize the full pipeline config
-- A JSON document fully describes a pipeline that can be instantiated at runtime
-- External tools (GUIs, web interfaces) can construct pipelines without C++ code
-- Pipeline templates / presets stored as JSON files
-
-**What we do NOT build now:**
-- The actual `toJson()`/`fromJson()` methods
-- JSON schema definition
-- Any graph editor or external tooling
-- Variant conversions for complex types (AudioDesc, VideoDesc, etc. — these can be added incrementally when JSON serialization is implemented)
+- **MediaIO is the atomic unit.** Every stage in a MediaPipeline is a `MediaIO` instance. No "node" wrapper type.
+- **Declarative topology.** The pipeline config describes stages and routes; the builder resolves the DAG and runs it.
+- **Fan-out and fan-in supported.** One source can feed multiple sinks; multiple sources can feed one converter/mixer (once converter stages support multi-input).
+- **JSON symmetry.** `toJson()` / `fromJson()` are first-class, not afterthoughts. `Variant`-based configs make this free for leaf values.
+- **Lifecycle mirrors MediaIO.** `open()`/`close()`/`start()`/`stop()` on the pipeline fans out to every owned MediaIO on its Strand.
+- **Signal-driven frame movement.** Stages push frames via the `frameReady` signal; no dedicated pumper thread. The pipeline connects `frameReady` from each producer to `writeFrame` on each connected consumer.
+- **Error propagation.** Any MediaIO error surfaces on the pipeline as a single aggregated signal, with the offending stage name attached.
 
 ---
 
-### Design Constraint: Copy-on-Write Mutation Safety
+## Configuration Data Model
 
-In a pipelined system with queues and fan-out, multiple nodes may hold references to the same `Buffer::Ptr` simultaneously. Mutating a shared buffer would corrupt data for other consumers.
+### `MediaPipelineConfig`
 
-**Solution: Leverage existing SharedPtr COW + `ensureExclusive()` on Image/Audio.**
-
-`SharedPtr` already implements copy-on-write via `modify()` / `detach()`. The gap is that `Image::Ptr::modify()` clones the Image object but the underlying `Buffer::Ptr` plane data still points to the same memory. Image already has `ensureExclusive()` for deep detach; Audio still needs it (see remaining work below).
-
-**Audio additions:**
-- [ ] `bool isExclusive() const` — returns true if the buffer has `referenceCount() <= 1`
-- [ ] `void ensureExclusive()` — calls `_buffer.modify()` to trigger COW detach if shared
-
-**Convention (enforced by code review):**
-- **Source nodes** allocate fresh buffers and render into them.
-- **Read-only nodes** (RTP sinks, analyzers) never write to image/audio buffers.
-- **Mutating nodes** call `ensureExclusive()` before modifying buffer data (no-op in linear pipelines).
-- **Fan-out** delivers the same `Frame::Ptr` to all sinks — no copy. Mutating consumers detach via `ensureExclusive()`.
-
-**Buffer allocation and the MemSpace layer:**
-
-All buffer allocation (including COW clones) goes through the buffer's `MemSpace`. The Buffer copy constructor allocates from the source's MemSpace, so COW clones inherit the same allocation strategy. Buffer pooling is implemented as a `MemSpace` — not as a pipeline-level concept.
-
-See the MemSpace Statistics and MemSpacePool sections below for the allocation-level enhancements.
-
----
-
-### MemSpace Statistics
-
-MemSpace currently provides allocation, release, copy, and fill operations but no visibility into allocation behavior. For pipeline debugging and performance analysis, per-space statistics are essential.
-
-**Files:** existing `include/promeki/memspace.h`, `src/core/memspace.cpp`
-
-**Statistics struct:**
-- [ ] `struct MemSpace::Stats` — snapshot of allocation statistics for a memory space:
-  - [ ] `uint64_t allocCount` — total allocations since reset
-  - [ ] `uint64_t releaseCount` — total releases since reset
-  - [ ] `uint64_t allocBytes` — total bytes allocated since reset
-  - [ ] `uint64_t releaseBytes` — total bytes released since reset
-  - [ ] `uint64_t activeCount` — currently active allocations (`allocCount - releaseCount`)
-  - [ ] `uint64_t activeBytes` — currently active bytes (`allocBytes - releaseBytes`)
-  - [ ] `uint64_t peakCount` — peak simultaneous active allocations
-  - [ ] `uint64_t peakBytes` — peak simultaneous active bytes
-  - [ ] `uint64_t cowDetachCount` — COW detach copies triggered (tracked by Buffer clone path)
-  - [ ] `uint64_t cowDetachBytes` — bytes copied due to COW detach
-
-**MemSpace API additions:**
-- [ ] `Stats stats() const` — return current statistics for this memory space ID
-- [ ] `static Stats stats(ID id)` — return statistics for a specific space
-- [ ] `static void resetStats(ID id)` — reset counters for a space
-- [ ] `static void resetAllStats()` — reset all spaces
-
-**Implementation:**
-- [ ] Per-ID atomic counters (alongside existing registry `Map<ID, Ops>`)
-- [ ] `alloc()` increments allocCount, allocBytes, updates activeCount/activeBytes/peaks
-- [ ] `release()` increments releaseCount, releaseBytes, decrements activeCount/activeBytes
-- [ ] Peak tracking: `peakCount = max(peakCount, activeCount)` (atomic compare-exchange)
-- [ ] COW tracking: Buffer's `_promeki_clone()` increments cowDetachCount/cowDetachBytes on the source MemSpace
-
-**Doctest:**
-- [ ] Allocate N buffers, verify allocCount/allocBytes
-- [ ] Release some, verify releaseCount/activeCount
-- [ ] Verify peak tracking across alloc/release cycles
-- [ ] Reset stats, verify zeroed
-- [ ] COW detach: create shared Buffer::Ptr, call modify(), verify cowDetachCount increments
-
----
-
-### MemSpacePool — Pooling Memory Space
-
-A MemSpace implementation that recycles fixed-size allocations instead of going to the system allocator on every alloc/release. Buffers allocated from a pool MemSpace are transparently recycled — Buffer, Image, and Audio never know the difference. COW clones of pool-allocated buffers also come from the pool (since Buffer's copy constructor uses the source's MemSpace).
+New shareable data object that describes a complete pipeline. Round-trips through `DataStream` and `JsonObject`.
 
 **Files:**
-- [ ] `include/promeki/memspacepool.h`
-- [ ] `src/core/memspacepool.cpp`
-- [ ] `tests/memspacepool.cpp`
+- [ ] `include/promeki/mediapipelineconfig.h`
+- [ ] `src/proav/mediapipelineconfig.cpp`
+- [ ] `tests/mediapipelineconfig.cpp`
 
-**Implementation checklist:**
-- [ ] `MemSpacePool(size_t bufferSize, size_t align = Buffer::DefaultAlign, int preallocate = 0)` — create a pool for buffers of a fixed size. Optionally pre-allocate `preallocate` buffers.
-- [ ] `MemSpace memSpace() const` — returns the MemSpace that routes through this pool. Pass this to Buffer/Image/Audio constructors.
-- [ ] Pool `alloc()`: return a recycled buffer if available (LIFO stack for cache locality), otherwise allocate from system. Size must match pool's bufferSize (assert on mismatch — pool is for fixed-size buffers).
-- [ ] Pool `release()`: push buffer back to recycle stack instead of freeing. Optionally cap recycle stack size to bound memory.
-- [ ] `void setMaxRecycled(int max)` — cap on recycled buffers held (0 = unlimited, default: unlimited). Excess buffers are freed to the system.
-- [ ] `int recycledCount() const` — buffers currently in the recycle stack
-- [ ] `size_t bufferSize() const` — the fixed buffer size this pool manages
-- [ ] Thread-safe: lock-free recycle stack (atomic LIFO) for concurrent alloc/release
-- [ ] Inherits MemSpace statistics automatically (alloc/release counters track pool hits and system fallbacks)
-- [ ] Pool-specific statistics (in addition to base MemSpace::Stats):
-  - [ ] `uint64_t poolHitCount` — allocations served from recycle stack
-  - [ ] `uint64_t poolMissCount` — allocations that required system alloc (pool empty)
+**Shape:**
+- [ ] `List<StageConfig> stages` — one entry per MediaIO instance
+- [ ] `List<Route> routes` — explicit `from` → `to` edges referencing stages by name
+- [ ] `Metadata metadata` — pipeline-wide metadata (name, author, description)
 
-**MemSpace extensibility:**
-- [ ] Add `MemSpace(const Ops *ops)` constructor — allows custom MemSpace implementations to provide their own Ops table without registering a global ID
-- [ ] MemSpacePool creates its own Ops struct with custom alloc/release that route through the pool, and copy/fill/isHostAccessible that delegate to System
+**`StageConfig`** — describes one MediaIO instance:
+- [ ] `String name` — unique identifier used by routes; also used in error messages
+- [ ] `String type` — MediaIO format name (e.g. `"TPG"`, `"QuickTime"`, `"RtpVideo"`, `"ImageFile"`, `"Converter"`)
+- [ ] `MediaIO::Mode mode` — Reader / Writer / ReadWrite
+- [ ] `MediaIOConfig config` — full `VariantDatabase` passed to `MediaIO::create`
 
-**Pipeline usage pattern:**
-```cpp
-// During pipeline build():
-MemSpacePool videoPool(imageDesc.planeSize(0), Buffer::DefaultAlign, 4);  // pre-allocate 4
-MemSpacePool audioPool(audioDesc.bytesPerFrame(), Buffer::DefaultAlign, 4);
+**`Route`** — describes one frame-flow edge:
+- [ ] `String from` — source stage name
+- [ ] `String to` — sink stage name
+- [ ] `String fromTrack = ""` — optional source sub-stream selector (video/audio/timecode) for future multi-output stages
+- [ ] `String toTrack = ""` — optional sink sub-stream selector
 
-// Source node allocates from pool:
-Image img(desc, videoPool.memSpace());
+**Operations:**
+- [ ] `Error validate() const` — checks that all route endpoints reference existing stage names, detects cycles, verifies every non-source stage has at least one incoming route, verifies every non-sink stage has at least one outgoing route
+- [ ] `JsonObject toJson() const`
+- [ ] `static Result<MediaPipelineConfig> fromJson(const JsonObject &obj)`
+- [ ] `Error saveToFile(const FilePath &path) const` — writes JSON
+- [ ] `static Result<MediaPipelineConfig> loadFromFile(const FilePath &path)` — reads JSON
+- [ ] DataStream operators via the existing `VariantDatabase` framework
+- [ ] Doctest: round-trip through JSON, round-trip through DataStream, validation errors, cycle detection
 
-// Mutating node's ensureExclusive() triggers COW → clone allocates from same pool
-img->ensureExclusive();  // if copy needed, new buffer comes from videoPool
+### JSON Representation
+
+A pipeline that pulls the TPG, runs it through a colorspace converter, and fans the result into both an SDL player and a QuickTime writer:
+
+```json
+{
+  "metadata": { "Name": "TPG to MOV + display", "Author": "libpromeki" },
+  "stages": [
+    {
+      "name": "source",
+      "type": "TPG",
+      "mode": "Reader",
+      "config": {
+        "ConfigVideoEnable": true,
+        "ConfigVideoPattern": "ColorBars",
+        "ConfigVideoSize": "1920x1080",
+        "ConfigVideoPixelDesc": "YUV422_10_BT709_Limited",
+        "ConfigAudioEnable": true,
+        "ConfigAudioMode": "Tone"
+      }
+    },
+    {
+      "name": "csc",
+      "type": "Converter",
+      "mode": "ReadWrite",
+      "config": {
+        "ConfigOutputPixelDesc": "RGBA8_sRGB"
+      }
+    },
+    {
+      "name": "display",
+      "type": "SDLPlayer",
+      "mode": "Writer",
+      "config": {}
+    },
+    {
+      "name": "recorder",
+      "type": "QuickTime",
+      "mode": "Writer",
+      "config": { "ConfigFilename": "/tmp/out.mov" }
+    }
+  ],
+  "routes": [
+    { "from": "source",   "to": "csc" },
+    { "from": "csc",      "to": "display" },
+    { "from": "csc",      "to": "recorder" }
+  ]
+}
 ```
-
-**Doctest:**
-- [ ] Create pool, allocate buffer, release, allocate again — verify same pointer (recycled)
-- [ ] Verify pool hit/miss statistics
-- [ ] Exceed pool → verify system fallback works
-- [ ] COW detach from pool buffer → verify clone comes from same pool
-- [ ] maxRecycled cap: verify excess buffers are freed
-- [ ] Concurrent alloc/release from multiple threads
 
 ---
 
-## EncodedDesc — COMPLETE
+## MediaPipeline Class
 
-Data object describing compressed/encoded media. Implemented, tested, and merged.
+**Files:**
+- [ ] `include/promeki/mediapipeline.h`
+- [ ] `src/proav/mediapipeline.cpp`
+- [ ] `tests/mediapipeline.cpp`
+- [ ] `docs/mediapipeline.dox` (authoring guide + JSON schema + worked examples)
+
+**Note:** This replaces the deprecated `include/promeki/mediapipeline.h` / `src/proav/mediapipeline.cpp`. Those files must be deleted (along with all `MediaNode`/`MediaPipelineConfig` legacy files) as the final step of this phase, once the new class is built and `mediaplay` + tests are migrated. See "Deprecated legacy" below.
+
+**Class responsibilities:**
+- [ ] Derive from `ObjectBase`, `PROMEKI_OBJECT`
+- [ ] Owns a `MediaPipelineConfig`
+- [ ] Owns one `MediaIO *` per stage (map keyed by stage name)
+- [ ] `Error build(const MediaPipelineConfig &config)` — validates config, instantiates each MediaIO via `MediaIO::create`, calls `adoptTask()` for backends that require external construction (SDLPlayer), stores stages in topological order
+- [ ] `Error open(unsigned int timeoutMs = 0)` — opens every stage in topological order; on any failure closes all already-opened stages and returns the error
+- [ ] `Error close(unsigned int timeoutMs = 0)` — closes every stage in reverse topological order
+- [ ] `Error start(unsigned int timeoutMs = 0)` — begins frame movement; connects signals (see below) and kicks off source-stage reads
+- [ ] `Error stop(unsigned int timeoutMs = 0)` — stops frame movement, cancels pending MediaIO commands
+- [ ] `MediaIO *stage(const String &name) const` — direct access for tests or dynamic re-config
+- [ ] `List<String> stageNames() const`
+- [ ] `MediaPipelineConfig config() const`
+- [ ] Accessors for pipeline-wide stats (aggregated from each stage's `MediaIOStats`)
+
+**Signal plumbing:**
+- [ ] For each route `from → to`: connect `from->frameReadySignal` to a slot that calls `to->writeFrame(frame, /*block=*/false)`; if `writeFrame` returns `Error::TryAgain`, emit a back-pressure signal and leave the frame pending on the producer until the consumer emits `frameWanted`
+- [ ] Fan-out: one producer's `frameReadySignal` connects to N consumers; each consumer independently back-pressures
+- [ ] Fan-in (future): one consumer accepts multiple producers; dispatch policy declared in the consumer's StageConfig (mix / interleave / select)
+- [ ] Propagate `writeError` and other MediaIO error signals into a single `pipelineError(String stageName, Error err)` signal
+- [ ] Emit `stageOpened(String)`, `stageClosed(String)`, `stageStarted(String)`, `stageStopped(String)` lifecycle signals for observers (mediaplay stats, TUI, etc.)
+
+**Topology:**
+- [ ] Build a DAG from the routes, topologically sort stages, reject cycles during `build()`
+- [ ] Source stages (no incoming routes) are started last so that their first `frameReady` has somewhere to go
+- [ ] Sink stages (no outgoing routes) are opened first so they are ready when the first frame arrives
+- [ ] Validation: converter stages (ReadWrite) must have exactly one incoming and one outgoing route in the initial implementation; fan-in on converters is deferred
+
+**Implementation checklist:**
+- [ ] Build → open → start → stop → close lifecycle verified against multi-stage integration tests
+- [ ] Fan-out pipeline test: TPG → { ImageFile seq, QuickTime writer } — both sinks receive all frames
+- [ ] Fan-through test: TPG → Converter → ImageFile — converted pixels verified at sink
+- [ ] Error propagation test: writer with invalid path emits `pipelineError` during `open()`, leaves pipeline in closed state
+- [ ] Cancellation test: `stop()` while frames are flowing cancels pending MediaIO commands cleanly, no stuck futures
+- [ ] JSON round-trip test: load a multi-stage pipeline from JSON, run it, verify frame count on sinks
+- [ ] Stats aggregation test: run a short pipeline, verify per-stage and aggregated stats are populated
+
+---
+
+## Dependencies and Enabling Work
+
+### Converter MediaIO Backend — REQUIRED
+
+This pipeline class assumes a `"Converter"` backend exists (ReadWrite MediaIO that takes a frame on `writeFrame()` and produces a transformed frame on `readFrame()`). That backend is specified in `proav_nodes.md` under **MediaIOTask_Converter**. The pipeline cannot express pass-through CSC / codec transcode without it.
+
+### RTP MediaIO Backends — REQUIRED for networked pipelines
+
+See `proav_nodes.md` under **MediaIOTask_RtpVideo** and **MediaIOTask_RtpAudio**. Needed to replicate vidgen-style RTP streaming through the new pipeline. Until they exist, only file/container-based pipelines are expressible.
+
+### JPEG ImageFile Backend — NICE-TO-HAVE
+
+See `proav_nodes.md` under **MediaIOTask_ImageFile** (JPEG extension). Needed for JPEG still-image pipelines to work without transcoding round-trips.
+
+### MediaIOConfig Variant type coverage
+
+For JSON `fromJson` to work on every stage's config, every Variant type used in a `MediaIOConfig` must have `toJson()`/`fromJson()` wiring. Most existing primitives and `VariantDatabase` fields already do. New types (PixelDesc, MediaDesc, FrameRate, Color, etc.) may need Variant JSON conversion added — this work is tracked in `core_utilities.md` (Variant Enhancements) and should be completed alongside the pipeline.
+
+---
+
+## Deprecated: MediaNode / MediaPipeline Legacy
+
+**Status: DEPRECATED but retained until migration is complete.**
+
+The original `MediaNode`, `MediaPipeline`, `MediaNodeConfig`, `MediaPipelineConfig`, `MediaSink`, `MediaSource`, and all the concrete `*Node` classes (`TestPatternNode`, `JpegEncoderNode`, `RtpVideoSinkNode`, `RtpAudioSinkNode`, `FrameDemuxNode`, `TimecodeOverlayNode`) are deprecated. They will be removed once:
+
+1. MediaIO backends exist for every capability they provided (see `proav_nodes.md`: Converter, RTP video, RTP audio, JPEG ImageFile extension)
+2. The new `MediaPipeline` described above is built and tested
+3. Utilities that depend on them are ported or deleted:
+   - `utils/vidgen/` — will be removed (replaced by `mediaplay` with an appropriate pipeline config)
+   - `utils/mediaplay/` — will be updated to build a `MediaPipeline` from a config instead of hand-plumbing MediaIOs
+   - `utils/imgtest/`, `utils/testrender/` — audit and either port or remove
+4. Tests that exercise the legacy classes are migrated to exercise the new pipeline
+
+**Do not extend the deprecated classes.** Bug fixes in the deprecated path are acceptable only if they unblock migration; otherwise, the fix belongs in the new MediaIO backend or the new MediaPipeline.
+
+**Files that will be removed:**
+- `include/promeki/medianode.h`, `src/proav/medianode.cpp`
+- `include/promeki/medianodeconfig.h`
+- `include/promeki/mediapipeline.h`, `src/proav/mediapipeline.cpp` (old)
+- `include/promeki/mediapipelineconfig.h`, `src/proav/mediapipelineconfig.cpp` (old)
+- `include/promeki/mediasink.h`, `include/promeki/mediasource.h`
+- All `*node.h` / `*node.cpp` pairs under `include/promeki/` and `src/proav/`
+- `tests/medianode.cpp`, `tests/mediapipeline.cpp`, `tests/*node.cpp`
+
+The final removal is a single large deletion commit once the migration is verified.
+
+---
+
+## Design Notes retained from legacy (still valid)
+
+### Copy-on-write mutation safety
+
+Multiple stages may hold references to the same `Buffer::Ptr` (shared via `SharedPtr` COW) when the pipeline fans out. Mutating consumers must call `ensureExclusive()` on `Image` and `Audio` before writing buffer data. `Image::ensureExclusive()` / `isExclusive()` exist; `Audio::ensureExclusive()` / `isExclusive()` still need to be added (tracked in the remaining-work list below). Buffer allocation (including COW clones) goes through the buffer's `MemSpace`, so pooled allocation is a MemSpace-level concern.
+
+### Memory space statistics
+
+MemSpace has no visibility into allocation behaviour. For pipeline debugging and performance analysis, per-space statistics and a pool implementation are still useful. This work is independent of the pipeline class itself and can land whenever needed — the pipeline will pick up pooled allocation automatically via the MemSpace layer.
+
+---
+
+## Remaining Work Checklist
+
+- [ ] `Audio::ensureExclusive()` / `Audio::isExclusive()` — parity with `Image`
+- [ ] `MemSpace::Stats` — per-space counters, `stats()` accessor, `resetStats()`, `peakCount`/`peakBytes`, COW detach tracking
+- [ ] `MemSpacePool` — recycling `MemSpace` for fixed-size buffers, optional pre-allocation, LIFO recycle stack, pool hit/miss metrics
+- [ ] `MediaPipelineConfig` data object (JSON + DataStream round-trip)
+- [ ] `MediaPipeline` class (build/open/start/stop/close, signal plumbing, fan-out, validation)
+- [ ] `docs/mediapipeline.dox` — authoring guide, JSON schema, worked examples
+- [ ] Integration tests covering fan-out, converter pass-through, error propagation, cancellation, JSON round-trip, stats aggregation
+- [ ] Migration of `mediaplay` to build its pipeline via `MediaPipeline::build()` from a config composed from CLI options
+- [ ] Deletion of all deprecated `MediaNode`/`MediaPipeline` legacy files and their tests (final step)

@@ -666,6 +666,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
         include/promeki/mediaiotask.h
+        include/promeki/mediaiotask_converter.h
         include/promeki/mediaiotask_imagefile.h
         include/promeki/mediaiotask_quicktime.h
         include/promeki/mediaiotask_tpg.h
@@ -714,6 +715,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
         src/proav/mediaiotask.cpp
+        src/proav/mediaiotask_converter.cpp
         src/proav/mediaiotask_imagefile.cpp
         src/proav/mediaiotask_quicktime.cpp
         src/proav/mediaiotask_tpg.cpp
@@ -1314,6 +1316,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediapipelineconfig.cpp
             tests/mediasink.cpp
             tests/mediasource.cpp
+            tests/mediaiotask_converter.cpp
             tests/mediaiotask_quicktime.cpp
             tests/paintengine.cpp
             tests/pixeldesc.cpp

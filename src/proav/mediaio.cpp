@@ -113,6 +113,12 @@ MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
         return cfg;
 }
 
+Metadata MediaIO::defaultMetadata(const String &typeName) {
+        const FormatDesc *desc = findFormatByName(typeName);
+        if(desc == nullptr || !desc->defaultMetadata) return Metadata();
+        return desc->defaultMetadata();
+}
+
 MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         const FormatDesc *desc = nullptr;
 
@@ -164,6 +170,12 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         io->_task = task;
+        // Seed the live config with the resolved backend name + the
+        // file the caller passed in, so downstream consumers that
+        // need to know "which backend is this?" can read it back
+        // from io->config() without a second registry walk.
+        io->_config = desc->defaultConfig ? desc->defaultConfig() : Config();
+        io->_config.set(ConfigType, desc->name);
         io->_config.set(ConfigFilename, filename);
         return io;
 }
@@ -182,6 +194,12 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         io->_task = task;
+        // Same rationale as createForFileRead: seed the live config
+        // with the backend's full default schema plus the type and
+        // filename so callers that read io->config() back out see a
+        // complete, discoverable picture.
+        io->_config = desc->defaultConfig ? desc->defaultConfig() : Config();
+        io->_config.set(ConfigType, desc->name);
         io->_config.set(ConfigFilename, filename);
         return io;
 }
@@ -363,6 +381,7 @@ Error MediaIO::close() {
         // Drain any unconsumed read results
         _readResultQueue.clear();
         _pendingReadCount.setValue(0);
+        _pendingWriteCount.setValue(0);
 
         // Reset cache regardless of close result
         _mode = NotOpen;
@@ -427,6 +446,18 @@ void MediaIO::setPrefetchDepth(int n) {
 bool MediaIO::frameAvailable() const {
         // True when there's a result waiting to be consumed.
         return !_readResultQueue.isEmpty();
+}
+
+int MediaIO::readyReads() const {
+        return static_cast<int>(_readResultQueue.size());
+}
+
+int MediaIO::pendingReads() const {
+        return _pendingReadCount.value();
+}
+
+int MediaIO::pendingWrites() const {
+        return _pendingWriteCount.value();
 }
 
 Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
@@ -523,14 +554,30 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         cmdWrite->frame = frame;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdWrite);
 
-        Future<Error> future = _strand.submit([this, cmd]() mutable {
-                MediaIOCommand *raw = cmd.modify();
-                auto *cw = static_cast<MediaIOCommandWrite *>(raw);
-                Error err = _task->executeCmd(*cw);
-                if(err.isOk()) frameWantedSignal.emit();
-                else            writeErrorSignal.emit(err);
-                return err;
-        });
+        // Claim a pending-write slot before submit so pendingWrites()
+        // reflects the new command immediately.  The strand task
+        // releases the slot on completion, and the cancellation
+        // callback releases it if the command is cancelled before it
+        // runs.
+        _pendingWriteCount.fetchAndAdd(1);
+
+        Future<Error> future = _strand.submit(
+                [this, cmd]() mutable {
+                        MediaIOCommand *raw = cmd.modify();
+                        auto *cw = static_cast<MediaIOCommandWrite *>(raw);
+                        Error err = _task->executeCmd(*cw);
+                        if(err.isOk()) frameWantedSignal.emit();
+                        else            writeErrorSignal.emit(err);
+                        _pendingWriteCount.fetchAndSub(1);
+                        return err;
+                },
+                [this]() {
+                        // Cancellation cleanup: balance the slot we
+                        // claimed above so pendingWrites() stays
+                        // accurate if the command is dropped before
+                        // running.
+                        _pendingWriteCount.fetchAndSub(1);
+                });
 
         if(!block) return Error::TryAgain;
 

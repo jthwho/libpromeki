@@ -3,18 +3,16 @@
 **Phase:** 2
 **Dependencies:** Phase 1
 
-All IO abstractions, filesystem utilities, and in-memory IO implemented, tested, and merged. See git history for details.
+All IO abstractions, filesystem utilities, in-memory IO, the resource filesystem (cirf with `:/.PROMEKI/` built-in set), and the File DIO helpers (`writeBulk`, `sync`, `writev`, `preallocate`, `setDirectIO` consistency fix) are implemented, tested, and merged. See git history for details.
 
-**Resource filesystem extension (cirf) — COMPLETE.** `File`, `FileIODevice`, and `Dir` transparently accept paths beginning with `:/` and serve them from the compiled-in cirf resource set. New `Resource` class (`include/promeki/resource.h`, `src/core/resource.cpp`) is the thin C++ wrapper over the cirf runtime mount API. libpromeki ships a built-in resource set under `:/.PROMEKI/` (auto-registered at static-init via `src/core/builtinresources.cpp`) containing the bundled FiraCode font. The `PROMEKI_REGISTER_RESOURCES` macro lets consuming applications mount their own cirf roots. Full coverage in `tests/resource.cpp` (Resource, File resource paths, Dir resource paths). cirf vendored as `thirdparty/cirf` git submodule.
+---
 
-### File DIO efficiency batch additions (Phase 6, complete)
+## Known Issues
 
-- `File::writeBulk(const void*, int64_t)` — symmetric to `readBulk`; attempts O_DIRECT write if buffer and position are aligned, falls back to normal write otherwise. Tested in `tests/file.cpp` (aligned, unaligned pointer, unaligned position, sub-block, closed file, invalid size).
-- `File::sync(bool dataOnly = true)` — thin wrapper over `fdatasync()` (default) or `fsync()`. Used by `QuickTimeWriter` when `FlushSync` is enabled to make fragment boundaries durable.
-- `File::writev(IOVec[], int)` — single scatter-gather `writev(2)` call for multiple buffers. Used by the fragmented writer to emit `moof` header + `mdat` payload in one system call.
-- `File::preallocate(offset, length)` — thin wrapper over `posix_fallocate(2)` for pre-reserving disk space.
-- `setDirectIO(bool)` flag consistency fix: `setDirectIO()` now re-opens the fd with `O_DIRECT` when toggling on an already-open file, not just at open time.
+- **`readBulk` and non-blocking file descriptors.** The `readFull()` helper loops on partial reads but treats EAGAIN as a fatal error (returns -1). On a non-blocking fd this means (1) the read fails instead of indicating "try again", and (2) if EAGAIN occurs after some bytes have already been read in a multi-portion transfer (head/DIO/tail), those bytes are lost. The `readFromDevice()` and `write()` paths handle this correctly. A fix would require `readFull()` to distinguish EAGAIN from real errors and to track partial progress across portions.
 
-### Known Issues
+---
 
-- **FIXME: readBulk and non-blocking file descriptors.** The `readFull()` helper used by `readBulk()` loops on partial reads but treats EAGAIN as a fatal error (returns -1). On a non-blocking fd, this means: (1) the read fails instead of indicating "try again", and (2) if EAGAIN occurs after some bytes have already been read in a multi-portion transfer (head/DIO/tail), those bytes are lost. The `readFromDevice()` and `write()` paths handle this correctly (they report the real errno via `Error::syserr()`), so callers can detect `TryAgain` and retry. A fix for `readBulk` would require `readFull()` to distinguish EAGAIN from real errors and to track partial progress across portions so nothing is lost on retry.
+## Windows File stub
+
+Tracked in `fixme.md`. The Windows `#ifdef` branch of `src/core/file.cpp` is a stub and needs a real `CreateFile`/`ReadFile`/`WriteFile` implementation.

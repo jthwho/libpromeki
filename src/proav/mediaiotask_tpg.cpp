@@ -73,8 +73,10 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         MediaIO::Config cfg;
                         // General
                         cfg.set(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
-                        // Video
-                        cfg.set(ConfigVideoEnabled, false);
+                        // Video — enabled by default so an unconfigured
+                        // TPG produces a usable 1080p59.94 colour-bars
+                        // stream out of the box.
+                        cfg.set(ConfigVideoEnabled, true);
                         cfg.set(ConfigVideoPattern, VideoPattern::ColorBars);
                         cfg.set(ConfigVideoSize, Size2Du32(1920, 1080));
                         cfg.set(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
@@ -89,8 +91,11 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         cfg.set(ConfigVideoBurnTextColor, Color::White);
                         cfg.set(ConfigVideoBurnBgColor, Color::Black);
                         cfg.set(ConfigVideoBurnDrawBg, true);
-                        // Audio
-                        cfg.set(ConfigAudioEnabled, false);
+                        // Audio — also enabled by default so the plain
+                        // TPG stream ships with a 1 kHz tone on stereo
+                        // 48 kHz PCM, matching the "visible + audible
+                        // reference" expectation.
+                        cfg.set(ConfigAudioEnabled, true);
                         cfg.set(ConfigAudioMode, AudioPattern::Tone);
                         cfg.set(ConfigAudioRate, 48000.0f);
                         cfg.set(ConfigAudioChannels, 2);
@@ -103,6 +108,20 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         cfg.set(ConfigTimecodeStart, "01:00:00:00");
                         cfg.set(ConfigTimecodeDropFrame, false);
                         return cfg;
+                },
+                []() -> Metadata {
+                        // TPG is a pure generator — it does not
+                        // consume container-level metadata.  The only
+                        // metadata key it *produces* on every frame is
+                        // Timecode; everything else a caller stamps
+                        // via setMetadata() flows through unchanged to
+                        // downstream consumers (the SDL player ignores
+                        // it; a file sink picks it up).  Return the
+                        // Timecode key so the schema dump shows it as
+                        // the one well-known slot.
+                        Metadata m;
+                        m.set(Metadata::Timecode, Timecode());
+                        return m;
                 }
         };
 }

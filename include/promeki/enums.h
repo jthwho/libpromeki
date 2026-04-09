@@ -165,6 +165,83 @@ struct ChromaSubsampling {
         static inline const Enum YUV420 { Type, 2 };
 };
 
+/**
+ * @brief Well-known Enum type for audio sample formats.
+ *
+ * Mirrors @c AudioDesc::DataType in value and order.  Used as the value
+ * type for any config key that selects an audio sample format (e.g.
+ * @c MediaIOTask_Converter::ConfigOutputAudioDataType).
+ *
+ * The integer values match the @c AudioDesc::DataType enumeration so
+ * callers can convert in either direction via a plain @c static_cast
+ * on @c Enum::value().  The string names also match — e.g.
+ * @c "PCMI_S16LE", @c "PCMI_Float32LE" — so legacy code that still
+ * passes strings through @c AudioDesc::stringToDataType keeps working
+ * when the same string is fed through the Enum lookup path.
+ */
+struct AudioDataType {
+        static inline const Enum::Type Type = Enum::registerType("AudioDataType",
+                {
+                        { "Invalid",        0  },
+                        { "PCMI_Float32LE", 1  },
+                        { "PCMI_Float32BE", 2  },
+                        { "PCMI_S8",        3  },
+                        { "PCMI_U8",        4  },
+                        { "PCMI_S16LE",     5  },
+                        { "PCMI_U16LE",     6  },
+                        { "PCMI_S16BE",     7  },
+                        { "PCMI_U16BE",     8  },
+                        { "PCMI_S24LE",     9  },
+                        { "PCMI_U24LE",     10 },
+                        { "PCMI_S24BE",     11 },
+                        { "PCMI_U24BE",     12 },
+                        { "PCMI_S32LE",     13 },
+                        { "PCMI_U32LE",     14 },
+                        { "PCMI_S32BE",     15 },
+                        { "PCMI_U32BE",     16 }
+                },
+                1);  // default: PCMI_Float32LE
+
+        static inline const Enum Invalid        { Type, 0  };
+        static inline const Enum PCMI_Float32LE { Type, 1  };
+        static inline const Enum PCMI_Float32BE { Type, 2  };
+        static inline const Enum PCMI_S8        { Type, 3  };
+        static inline const Enum PCMI_U8        { Type, 4  };
+        static inline const Enum PCMI_S16LE     { Type, 5  };
+        static inline const Enum PCMI_U16LE     { Type, 6  };
+        static inline const Enum PCMI_S16BE     { Type, 7  };
+        static inline const Enum PCMI_U16BE     { Type, 8  };
+        static inline const Enum PCMI_S24LE     { Type, 9  };
+        static inline const Enum PCMI_U24LE     { Type, 10 };
+        static inline const Enum PCMI_S24BE     { Type, 11 };
+        static inline const Enum PCMI_U24BE     { Type, 12 };
+        static inline const Enum PCMI_S32LE     { Type, 13 };
+        static inline const Enum PCMI_U32LE     { Type, 14 };
+        static inline const Enum PCMI_S32BE     { Type, 15 };
+        static inline const Enum PCMI_U32BE     { Type, 16 };
+};
+
+/**
+ * @brief Well-known Enum type for QuickTime / ISO-BMFF container layout.
+ *
+ * Used as the value type for the @c MediaIOTask_QuickTime @c ConfigLayout
+ * config key.  @c Classic writes a traditional movie atom ending in a
+ * single moov atom; @c Fragmented writes an initial moov followed by a
+ * series of moof / mdat fragment pairs, which is what streaming and live
+ * ingest pipelines need.
+ */
+struct QuickTimeLayout {
+        static inline const Enum::Type Type = Enum::registerType("QuickTimeLayout",
+                {
+                        { "Classic",    0 },
+                        { "Fragmented", 1 }
+                },
+                1);  // default: Fragmented
+
+        static inline const Enum Classic    { Type, 0 };
+        static inline const Enum Fragmented { Type, 1 };
+};
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

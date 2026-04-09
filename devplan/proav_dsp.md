@@ -1,115 +1,50 @@
-# ProAV DSP and Effects
+# ProAV DSP and Effects (future)
 
 **Phase:** 4C
-**Dependencies:** Phase 4A (MediaNode), Phase 4B (audio node conventions)
+**Dependencies:** `MediaIOTask_Converter` (see `proav_nodes.md`)
 **Library:** `promeki`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
----
+Audio DSP (filters, resampler, format converter) was originally scoped as a set of `MediaNode`-based classes. That approach is **dropped**. DSP capabilities will instead land as MediaIO backends — either specialised `MediaIOTask_Converter` configurations or dedicated converter subclasses.
 
-## AudioFilter
-
-Base for audio filters. Derives from MediaNode.
-
-**Files:**
-- [ ] `include/promeki/audiofilter.h`
-- [ ] `src/proav/audiofilter.cpp`
-- [ ] `tests/audiofilter.cpp`
-
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one audio input, one audio output
-- [ ] `enum FilterType { LowPass, HighPass, BandPass, BandStop, Notch, AllPass, LowShelf, HighShelf, Peaking }`
-- [ ] `void setFilterType(FilterType type)`
-- [ ] `FilterType filterType() const`
-- [ ] `void setFrequency(double hz)` — center/cutoff frequency
-- [ ] `double frequency() const`
-- [ ] `void setQ(double q)` — quality factor / resonance
-- [ ] `double q() const`
-- [ ] `void setGainDb(double db)` — for shelf and peaking filters
-- [ ] `double gainDb() const`
-- [ ] Override `build()`:
-  - [ ] Compute biquad coefficients based on type, frequency, Q, gain, sample rate
-  - [ ] Allocate per-channel state buffers
-- [ ] Override `processFrame()`:
-  - [ ] Apply biquad filter to each channel
-  - [ ] Direct Form II Transposed implementation (numerically stable)
-- [ ] `void recalculate()` — recompute coefficients when parameters change at runtime
-- [ ] Internal: biquad coefficient calculation (Robert Bristow-Johnson's Audio EQ Cookbook formulas)
-- [ ] Doctest: LowPass at known frequency, verify frequency response (simple: sine above cutoff should be attenuated)
+Nothing in this phase is actively in progress. It is listed here so the capability is not forgotten.
 
 ---
 
-## AudioResampler
+## Planned DSP MediaIO Backends
 
-Sample rate conversion.
+All implemented as `MediaIOTask` subclasses (or configurations of `MediaIOTask_Converter`). Each takes frames on `writeFrame()` and emits processed frames on `readFrame()` / `frameReadySignal`.
 
-**Files:**
-- [ ] `include/promeki/audioresampler.h`
-- [ ] `src/proav/audioresampler.cpp`
-- [ ] `tests/audioresampler.cpp`
+### AudioFilter backend
 
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one audio input, one audio output
-- [ ] `enum Quality { Fast, Medium, Best }`
-- [ ] `void setOutputSampleRate(uint32_t sampleRate)`
-- [ ] `uint32_t outputSampleRate() const`
-- [ ] `void setQuality(Quality quality)` — controls filter length
-- [ ] Override `build()`:
-  - [ ] Read input sample rate from input port AudioDesc
-  - [ ] Compute resampling ratio
-  - [ ] Design anti-aliasing filter based on quality setting
-  - [ ] Set output port AudioDesc with new sample rate
-- [ ] Override `processFrame()`:
-  - [ ] Pull input frame
-  - [ ] Apply polyphase interpolation/decimation
-  - [ ] Handle fractional ratios (e.g., 44100 -> 48000)
-  - [ ] Push resampled frame to output
-- [ ] Internal: polyphase filter bank
-  - [ ] Precompute filter coefficients at configure time
-  - [ ] Quality settings map to filter lengths (e.g., Fast=16, Medium=64, Best=256 taps)
-- [ ] Handle arbitrary ratios (not just integer multiples)
-- [ ] Preserve channel count
-- [ ] Doctest: resample 44100->48000, verify output sample count, basic signal integrity
+Biquad EQ filter (low/high-pass, band-pass/stop, notch, shelf, peaking) using Robert Bristow-Johnson's Audio EQ Cookbook formulas. Direct Form II Transposed. Stateful per-channel.
+
+- Config keys: `ConfigFilterType`, `ConfigFrequency`, `ConfigQ`, `ConfigGainDb`
+- `setParams` at runtime allows parameter changes without reconstruction
+- Reuses `MediaIOTask_Converter` scaffolding for audio routing; may live as a dedicated subclass if it needs custom state layout
+
+### AudioResampler backend
+
+Polyphase sample-rate conversion with configurable quality (fast/medium/best → filter length). Handles arbitrary rational ratios.
+
+- Config keys: `ConfigOutputSampleRate`, `ConfigQuality`
+- Precompute filter bank at open time
+- Preserves channel count
+
+### AudioFormatConverter backend
+
+Sample format conversion (int16/int24/int32/float32/float64 interconversion), with TPDF dithering for int downconversion. Much of this functionality already exists via `Audio::convertTo()` — the backend is a thin MediaIO wrapper.
+
+- Config keys: `ConfigOutputAudioDataType`, `ConfigDitherType`
+- For the initial cut, just delegate to `Audio::convertTo()` inside a Converter configuration
 
 ---
 
-## AudioFormatConverter
+## Why This Is Deferred
 
-Sample format conversion (int16 <-> float32, etc.).
+DSP is not on the critical path for the current user workload. It becomes interesting once:
 
-**Files:**
-- [ ] `include/promeki/audioformatconverter.h`
-- [ ] `src/proav/audioformatconverter.cpp`
-- [ ] `tests/audioformatconverter.cpp`
+1. `MediaIOTask_Converter` exists and proves out the "writeFrame → readFrame" contract for intra-frame transforms
+2. A real use case needs biquad filtering or sample-rate conversion inside a `MediaPipeline`
 
-**Implementation checklist:**
-- [ ] Derive from `MediaNode`, use `PROMEKI_OBJECT`
-- [ ] Constructor: one audio input, one audio output
-- [ ] `void setOutputFormat(AudioDesc::SampleFormat format)`
-- [ ] `AudioDesc::SampleFormat outputFormat() const`
-- [ ] Supported format conversions:
-  - [ ] int16 <-> int32
-  - [ ] int16 <-> float32
-  - [ ] int16 <-> float64
-  - [ ] int32 <-> float32
-  - [ ] int32 <-> float64
-  - [ ] float32 <-> float64
-  - [ ] int24 (packed) <-> int32
-  - [ ] int24 (packed) <-> float32
-- [ ] Override `build()`:
-  - [ ] Set output port AudioDesc with new format
-  - [ ] Select appropriate conversion function
-- [ ] Override `processFrame()`:
-  - [ ] Pull input frame
-  - [ ] Convert sample format
-  - [ ] Push converted frame to output
-- [ ] Dithering:
-  - [ ] `void setDitheringEnabled(bool enable)` — for int->int downconversion
-  - [ ] `enum DitherType { NoDither, RPDF, TPDF, NoiseShaping }`
-  - [ ] `void setDitherType(DitherType type)`
-  - [ ] TPDF dithering for int16 output (standard practice)
-- [ ] Clipping/saturation handling for float -> int conversion
-- [ ] Preserve channel count and sample rate
-- [ ] Doctest: convert float32->int16->float32 round-trip, verify values within dither noise floor
+When those conditions are met, the backends above are straightforward to build on top of the Converter framework. Until then, no implementation work happens here.

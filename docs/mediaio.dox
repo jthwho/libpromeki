@@ -117,9 +117,10 @@
  * Three factory methods, depending on what you know:
  *
  * @code
- * // 1. By type and config (most flexible)
+ * // 1. By type and config (most flexible).  TPG's default config
+ * // already enables video, audio, and timecode, so the plain form
+ * // is enough for a ready-to-use reference stream.
  * MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
- * cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
  * MediaIO *io = MediaIO::create(cfg);
  *
  * // 2. From a filename, for reading (extension or content probe)

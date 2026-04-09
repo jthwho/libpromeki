@@ -465,6 +465,22 @@ class MediaIO : public ObjectBase {
                         /** @brief Returns the default configuration for this backend. */
                         using DefaultConfigFunc = std::function<Config ()>;
                         /**
+                         * @brief Returns the metadata schema this backend honors.
+                         *
+                         * The returned @ref Metadata lists every
+                         * @ref Metadata::ID the backend understands, pre-populated
+                         * with empty / default values.  It is the metadata
+                         * counterpart to @ref DefaultConfigFunc — callers that
+                         * want to know which metadata keys are honored (for
+                         * @c --help dumps, GUI editors, etc.) can walk the
+                         * returned container without having to hard-code a
+                         * per-backend list.  Backends that do not consume
+                         * any container-level metadata may leave this
+                         * callable null — @ref MediaIO::defaultMetadata
+                         * then returns an empty @ref Metadata.
+                         */
+                        using DefaultMetadataFunc = std::function<Metadata ()>;
+                        /**
                          * @brief Optional content probe via IODevice.
                          *
                          * @param device An open, seekable IODevice positioned at 0.
@@ -482,14 +498,15 @@ class MediaIO : public ObjectBase {
                          */
                         using EnumerateFunc = std::function<StringList()>;
 
-                        String              name;          ///< @brief Backend name (e.g. "MXF", "VideoDevice").
-                        String              description;   ///< @brief Human-readable description.
-                        StringList          extensions;    ///< @brief Supported file extensions (no dots).
-                        bool                canRead;       ///< @brief Whether the backend supports reading.
-                        bool                canWrite;      ///< @brief Whether the backend supports writing.
-                        bool                canReadWrite;  ///< @brief Whether the backend supports bidirectional mode.
+                        String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
+                        String              description;     ///< @brief Human-readable description.
+                        StringList          extensions;      ///< @brief Supported file extensions (no dots).
+                        bool                canRead;         ///< @brief Whether the backend supports reading.
+                        bool                canWrite;        ///< @brief Whether the backend supports writing.
+                        bool                canReadWrite;    ///< @brief Whether the backend supports bidirectional mode.
                         CreateFunc          create;          ///< @brief Backend factory.
                         DefaultConfigFunc   defaultConfig;   ///< @brief Default configuration provider.
+                        DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
                         ProbeFunc           canHandleDevice; ///< @brief Content-based probe.
                         EnumerateFunc       enumerate;       ///< @brief Instance enumerator.
                 };
@@ -515,6 +532,23 @@ class MediaIO : public ObjectBase {
                  * @return A Config populated with default values.
                  */
                 static Config defaultConfig(const String &typeName);
+
+                /**
+                 * @brief Returns the metadata schema the named backend honors.
+                 *
+                 * The returned @ref Metadata contains one entry per
+                 * @ref Metadata::ID the backend knows how to consume,
+                 * each populated with an empty / default value.  Use
+                 * it to discover which metadata keys a backend accepts
+                 * (for example when building a @c --help dump or a
+                 * config GUI) without having to hard-code a per-backend
+                 * list.  Backends that do not consume any metadata
+                 * return an empty container.
+                 *
+                 * @param typeName The registered backend name.
+                 * @return A @ref Metadata listing the honored keys.
+                 */
+                static Metadata defaultMetadata(const String &typeName);
 
                 /**
                  * @brief Creates a MediaIO instance from a configuration.
@@ -801,9 +835,54 @@ class MediaIO : public ObjectBase {
                  * either block on the next prefetch or return
                  * @c Error::TryAgain in non-blocking mode.
                  *
+                 * Equivalent to @c readyReads() @c > 0.
+                 *
                  * @return true if a frame is ready to be picked up.
                  */
                 bool frameAvailable() const;
+
+                /**
+                 * @brief Returns the number of completed read results
+                 *        waiting in the result queue.
+                 *
+                 * Each entry is an already-executed @c CmdRead whose
+                 * outcome (success, @c TryAgain, @c EndOfFile, or
+                 * another error) will be returned verbatim by the next
+                 * @c readFrame() call.  A non-zero value means
+                 * @c readFrame() will not block; it does @em not
+                 * guarantee that the next pop carries a valid frame —
+                 * callers must still check the returned @c Error.
+                 *
+                 * @return The number of queued read results (>= 0).
+                 */
+                int readyReads() const;
+
+                /**
+                 * @brief Returns the number of @c CmdRead commands in
+                 *        flight on the strand (queued or running).
+                 *
+                 * Counts commands submitted via prefetch that have not
+                 * yet pushed a result onto the ready queue.  Useful for
+                 * signal-driven consumers that want to know whether the
+                 * next read is already on its way or whether they need
+                 * to issue a fresh @c readFrame() to kick prefetch.
+                 *
+                 * @return The number of read commands in flight (>= 0).
+                 */
+                int pendingReads() const;
+
+                /**
+                 * @brief Returns the number of @c CmdWrite commands in
+                 *        flight on the strand (queued or running).
+                 *
+                 * Incremented when @c writeFrame() submits a write and
+                 * decremented when the write completes (or is
+                 * cancelled).  Producers can use this to throttle
+                 * themselves without relying on blocking writes.
+                 *
+                 * @return The number of write commands in flight (>= 0).
+                 */
+                int pendingWrites() const;
 
                 /**
                  * @brief Reads the next synchronized frame.
@@ -1028,6 +1107,14 @@ class MediaIO : public ObjectBase {
                 // when readFrame() is called repeatedly while a read is
                 // pending.
                 Atomic<int>                 _pendingReadCount;
+
+                // Number of CmdWrite commands currently in flight
+                // (queued or being processed).  Incremented in
+                // writeFrame() before strand submit; decremented in
+                // the strand task and the cancellation callback so
+                // the count stays accurate whether writes succeed,
+                // fail, or are cancelled.
+                Atomic<int>                 _pendingWriteCount;
 };
 
 PROMEKI_NAMESPACE_END

@@ -48,15 +48,18 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigFilename     | String | — | Path to the .mov / .mp4 file. |
- * | ConfigVideoTrack   | int    | 0 | Index of the video track to read. |
- * | ConfigAudioTrack   | int    | 0 | Index of the audio track to read. |
+ * | ConfigFilename       | String                 | — | Path to the .mov / .mp4 file. |
+ * | ConfigVideoTrack     | int                    | -1 (auto) | 0-based index of the video track to read. |
+ * | ConfigAudioTrack     | int                    | -1 (auto) | 0-based index of the audio track to read. |
+ * | ConfigLayout         | Enum (QuickTimeLayout) | Fragmented | Writer on-disk layout. |
+ * | ConfigFragmentFrames | int                    | 30 | Video frames per fragment (Fragmented layout only). |
+ * | ConfigFlushSync      | bool                   | false | fdatasync after every flush. |
  */
 class MediaIOTask_QuickTime : public MediaIOTask {
         public:
-                static const MediaIO::ConfigID ConfigVideoTrack;      ///< @brief 0-based index of the video track to use.
-                static const MediaIO::ConfigID ConfigAudioTrack;      ///< @brief 0-based index of the audio track to use.
-                static const MediaIO::ConfigID ConfigLayout;          ///< @brief "classic" or "fragmented" (string).
+                static const MediaIO::ConfigID ConfigVideoTrack;      ///< @brief 0-based index of the video track to use (-1 = auto).
+                static const MediaIO::ConfigID ConfigAudioTrack;      ///< @brief 0-based index of the audio track to use (-1 = auto).
+                static const MediaIO::ConfigID ConfigLayout;          ///< @brief Writer on-disk layout (Enum QuickTimeLayout).
                 static const MediaIO::ConfigID ConfigFragmentFrames;  ///< @brief Video frames per fragment (int, default 30).
                 static const MediaIO::ConfigID ConfigFlushSync;       ///< @brief Call fdatasync after each flush (bool, default false).
 

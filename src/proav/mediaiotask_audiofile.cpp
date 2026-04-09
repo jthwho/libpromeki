@@ -12,6 +12,8 @@
 #include <promeki/audio.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>
+#include <promeki/metadata.h>
+#include <promeki/timecode.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -70,6 +72,35 @@ MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
                         cfg.set(ConfigAudioRate, 48000.0f);
                         cfg.set(ConfigAudioChannels, 2u);
                         return cfg;
+                },
+                []() -> Metadata {
+                        // libsndfile INFO chunk keys (WAV/AIFF/OGG)
+                        // plus the BWF extension block the backend
+                        // emits when EnableBWF is true.  Values are
+                        // empty strings / false / Invalid by default;
+                        // callers fill in whatever they care about via
+                        // MediaIO::setMetadata().
+                        Metadata m;
+                        m.set(Metadata::Title,               String());
+                        m.set(Metadata::Copyright,           String());
+                        m.set(Metadata::Software,            String());
+                        m.set(Metadata::Artist,              String());
+                        m.set(Metadata::Comment,             String());
+                        m.set(Metadata::Date,                String());
+                        m.set(Metadata::Album,               String());
+                        m.set(Metadata::License,             String());
+                        m.set(Metadata::TrackNumber,         String());
+                        m.set(Metadata::Genre,               String());
+                        // BWF extension (opt-in via EnableBWF).
+                        m.set(Metadata::EnableBWF,           false);
+                        m.set(Metadata::Description,         String());
+                        m.set(Metadata::Originator,          String());
+                        m.set(Metadata::OriginatorReference, String());
+                        m.set(Metadata::OriginationDateTime, String());
+                        m.set(Metadata::CodingHistory,       String());
+                        m.set(Metadata::UMID,                String());
+                        m.set(Metadata::Timecode,            Timecode());
+                        return m;
                 },
                 probeAudioDevice
         };
