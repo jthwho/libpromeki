@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['quality_0',['quality',['../classEncodedDesc.html#a73916cf87b47965a0d3645513a0b027b',1,'EncodedDesc::quality()'],['../classJpegImageCodec.html#a0cd39bef6cf4c1c5c889e8d83e9453b3',1,'JpegImageCodec::quality()'],['../classRtpPayloadJpeg.html#a21e5ec5bba6acc1d54c32e9090c9b150',1,'RtpPayloadJpeg::quality()']]],
+  ['quality_0',['quality',['../classRtpPayloadJpeg.html#a21e5ec5bba6acc1d54c32e9090c9b150',1,'RtpPayloadJpeg::quality()'],['../classJpegImageCodec.html#a0cd39bef6cf4c1c5c889e8d83e9453b3',1,'JpegImageCodec::quality()'],['../classEncodedDesc.html#a73916cf87b47965a0d3645513a0b027b',1,'EncodedDesc::quality()']]],
   ['queue_1',['Queue',['../classQueue.html',1,'']]],
   ['queue_2eh_2',['queue.h',['../queue_8h.html',1,'']]],
   ['queue_3c_20command_20_3e_3',['Queue&lt; Command &gt;',['../classQueue.html',1,'']]],
@@ -14,5 +14,6 @@ var searchData=
   ['quick_20start_11',['Quick Start',['../color_science.html#cs_usage',1,'']]],
   ['quicktime_12',['quicktime',['../classQuickTime.html',1,'QuickTime'],['../classQuickTime.html#ae3f663058b6fcff8e13adc5c42867c3f',1,'QuickTime::QuickTime()'],['../classQuickTime.html#a6cd6abffb7b30c81e4c0c50bd27f0155',1,'QuickTime::QuickTime(Impl *impl)']]],
   ['quicktime_2eh_13',['quicktime.h',['../quicktime_8h.html',1,'']]],
-  ['quit_14',['quit',['../classEvent.html#a8e54f2a42eb81c7f3860409c21e81c39',1,'Event::Quit'],['../classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa',1,'Application::quit()'],['../classEventLoop.html#a9e126989d057c302e18f20061f93deb5',1,'EventLoop::quit()'],['../classSDLApplication.html#a917e4aa49a4b17d72831e2cee9857292',1,'SDLApplication::quit()'],['../classThread.html#a9ceed5ebb61769c94e5929871b0af3bc',1,'Thread::quit()'],['../classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf',1,'TuiApplication::quit()']]]
+  ['quicktimelayout_14',['QuickTimeLayout',['../structQuickTimeLayout.html',1,'']]],
+  ['quit_15',['quit',['../classEvent.html#a8e54f2a42eb81c7f3860409c21e81c39',1,'Event::Quit'],['../classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa',1,'Application::quit()'],['../classEventLoop.html#a9e126989d057c302e18f20061f93deb5',1,'EventLoop::quit()'],['../classSDLApplication.html#a917e4aa49a4b17d72831e2cee9857292',1,'SDLApplication::quit()'],['../classThread.html#a9ceed5ebb61769c94e5929871b0af3bc',1,'Thread::quit()'],['../classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf',1,'TuiApplication::quit()']]]
 ];

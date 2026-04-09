@@ -9,12 +9,15 @@ var searchData=
   ['shortname_6',['shortName',['../classCmdLineParser_1_1Option.html#acd6fb27d0952461033fd5007b1804a1a',1,'CmdLineParser::Option']]],
   ['signalevent_7',['SignalEvent',['../classEvent.html#ae3986f17fb15604c5d23639f8b8d05ac',1,'Event']]],
   ['sinkchannels_8',['sinkChannels',['../classAudioBlock_1_1Config.html#a5da22db09e876427e48d1864b7976164',1,'AudioBlock::Config']]],
-  ['size_9',['size',['../structFile_1_1IOVec.html#a709b98ebf60e2ecf958eb35f42a525c7',1,'File::IOVec::size'],['../structMemAllocation.html#a8ae99c16b3d333fc422acc0c1acc9609',1,'MemAllocation::size'],['../classMemPool_1_1Block.html#a27bc0ce0ebdb21e3a70159bccf6975ff',1,'MemPool::Block::size']]],
+  ['size_9',['size',['../structMemAllocation.html#a8ae99c16b3d333fc422acc0c1acc9609',1,'MemAllocation::size'],['../classMemPool_1_1Block.html#a27bc0ce0ebdb21e3a70159bccf6975ff',1,'MemPool::Block::size'],['../structFile_1_1IOVec.html#a709b98ebf60e2ecf958eb35f42a525c7',1,'File::IOVec::size']]],
   ['software_10',['Software',['../classMetadata.html#a121b2c33d6b23d806b28b7de4c772eda',1,'Metadata']]],
   ['sourcechannels_11',['sourceChannels',['../classAudioBlock_1_1Config.html#ac2bbfaabf008f8f84e8c255ef05c64d1',1,'AudioBlock::Config']]],
   ['sourceindex_12',['sourceindex',['../structDelivery.html#a804b5f54939d740598cc3f7bb7cbd80c',1,'Delivery::sourceIndex'],['../structMediaNodeConfig_1_1ParsedConnection.html#a9acd7efe0988ff7cd3d26ec2bfa4bb90',1,'MediaNodeConfig::ParsedConnection::sourceIndex']]],
   ['sourcename_13',['sourceName',['../structMediaNodeConfig_1_1ParsedConnection.html#ae83fe6bd8dda865b7fae9747a87f2a2a',1,'MediaNodeConfig::ParsedConnection']]],
   ['stats_14',['stats',['../classMediaIOCommandStats.html#add913729d484e4d64e4725b7729852cc',1,'MediaIOCommandStats']]],
-  ['stddev_15',['stddev',['../structBenchmarkReporter_1_1StepStats.html#adf63bfe72ddb6d5fc886d53a29a148ae',1,'BenchmarkReporter::StepStats']]],
-  ['style_16',['style',['../structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1',1,'TuiCell']]]
+  ['statsbytesin_15',['StatsBytesIn',['../classMediaIOTask__Converter.html#ad200eae9fa437be1600fff789607b8f3',1,'MediaIOTask_Converter']]],
+  ['statsbytesout_16',['StatsBytesOut',['../classMediaIOTask__Converter.html#a46f6f28b3521c5b908011d4f0bb8489b',1,'MediaIOTask_Converter']]],
+  ['statsframesconverted_17',['StatsFramesConverted',['../classMediaIOTask__Converter.html#a324d97b22ec702ec49babd128c4f062f',1,'MediaIOTask_Converter']]],
+  ['stddev_18',['stddev',['../structBenchmarkReporter_1_1StepStats.html#adf63bfe72ddb6d5fc886d53a29a148ae',1,'BenchmarkReporter::StepStats']]],
+  ['style_19',['style',['../structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1',1,'TuiCell']]]
 ];

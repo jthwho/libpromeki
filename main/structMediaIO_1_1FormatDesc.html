@@ -136,6 +136,9 @@ Public Types</h2></td></tr>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DefaultConfigFunc</b> = std::function&lt; <a class="el" href="classMediaIO.html#a4571e9b5125ab3fef2fc1bf26f383229">Config</a>()&gt;</td></tr>
 <tr class="memdesc:a164084af396b01be58b5a5e2402b55ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the default configuration for this backend. <br /></td></tr>
 <tr class="separator:a164084af396b01be58b5a5e2402b55ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a056449f66cbbb6f4276f6c2ce9598f2e" id="r_a056449f66cbbb6f4276f6c2ce9598f2e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e">DefaultMetadataFunc</a> = std::function&lt; <a class="el" href="classMetadata.html">Metadata</a>()&gt;</td></tr>
+<tr class="memdesc:a056449f66cbbb6f4276f6c2ce9598f2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metadata schema this backend honors.  <br /></td></tr>
+<tr class="separator:a056449f66cbbb6f4276f6c2ce9598f2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e385efad181e8f44c6369104c832f54" id="r_a2e385efad181e8f44c6369104c832f54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54">ProbeFunc</a> = std::function&lt; <a class="el" href="classList.html">bool</a>(<a class="el" href="classIODevice.html">IODevice</a> *device)&gt;</td></tr>
 <tr class="memdesc:a2e385efad181e8f44c6369104c832f54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional content probe via <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a>.  <br /></td></tr>
 <tr class="separator:a2e385efad181e8f44c6369104c832f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -177,6 +180,10 @@ Public Attributes</h2></td></tr>
 <a class="el" href="structMediaIO_1_1FormatDesc.html#a164084af396b01be58b5a5e2402b55ab">DefaultConfigFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>defaultConfig</b></td></tr>
 <tr class="memdesc:ad07d2975cd2e5d4af142ed0b52aa0496"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default configuration provider. <br /></td></tr>
 <tr class="separator:ad07d2975cd2e5d4af142ed0b52aa0496"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad88fec58f6ccda8f746cf04ca2b9a470" id="r_ad88fec58f6ccda8f746cf04ca2b9a470"><td class="memItemLeft" align="right" valign="top"><a id="ad88fec58f6ccda8f746cf04ca2b9a470" name="ad88fec58f6ccda8f746cf04ca2b9a470"></a>
+<a class="el" href="structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e">DefaultMetadataFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>defaultMetadata</b></td></tr>
+<tr class="memdesc:ad88fec58f6ccda8f746cf04ca2b9a470"><td class="mdescLeft">&#160;</td><td class="mdescRight">Honored metadata schema (may be null). <br /></td></tr>
+<tr class="separator:ad88fec58f6ccda8f746cf04ca2b9a470"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8cb05daaef47af69482f1e5c30a244b9" id="r_a8cb05daaef47af69482f1e5c30a244b9"><td class="memItemLeft" align="right" valign="top"><a id="a8cb05daaef47af69482f1e5c30a244b9" name="a8cb05daaef47af69482f1e5c30a244b9"></a>
 <a class="el" href="structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54">ProbeFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canHandleDevice</b></td></tr>
 <tr class="memdesc:a8cb05daaef47af69482f1e5c30a244b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Content-based probe. <br /></td></tr>
@@ -189,6 +196,23 @@ Public Attributes</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes a registered media I/O backend. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a056449f66cbbb6f4276f6c2ce9598f2e" name="a056449f66cbbb6f4276f6c2ce9598f2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a056449f66cbbb6f4276f6c2ce9598f2e">&#9670;&#160;</a></span>DefaultMetadataFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e">MediaIO::FormatDesc::DefaultMetadataFunc</a> =  std::function&lt;<a class="el" href="classMetadata.html">Metadata</a> ()&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the metadata schema this backend honors. </p>
+<p>The returned <a class="el" href="classMetadata.html">Metadata</a> lists every <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Metadata::ID</a> the backend understands, pre-populated with empty / default values. It is the metadata counterpart to <a class="el" href="structMediaIO_1_1FormatDesc.html#a164084af396b01be58b5a5e2402b55ab">DefaultConfigFunc</a> — callers that want to know which metadata keys are honored (for <code>--help</code> dumps, GUI editors, etc.) can walk the returned container without having to hard-code a per-backend list. Backends that do not consume any container-level metadata may leave this callable null — <a class="el" href="classMediaIO.html#a2bf93a4db4de6830764ee938a80b54ac">MediaIO::defaultMetadata</a> then returns an empty <a class="el" href="classMetadata.html">Metadata</a>. </p>
+
+</div>
+</div>
 <a id="a2149dbe59cbb4e01b85ac4ea67a06576" name="a2149dbe59cbb4e01b85ac4ea67a06576"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2149dbe59cbb4e01b85ac4ea67a06576">&#9670;&#160;</a></span>EnumerateFunc</h2>
 
@@ -239,7 +263,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li><li class="navelem"><a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a></li>
-    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
   </ul>
 </div>
 </body>

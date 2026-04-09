@@ -1,7 +1,7 @@
 var searchData=
 [
   ['time_0',['time',['../structBuildInfo.html#a481d627e0e866d0d31b97cd3e01aa2a2',1,'BuildInfo']]],
-  ['timecode_1',['timecode',['../structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf',1,'LtcDecoder::DecodedTimecode::timecode'],['../classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a',1,'Metadata::Timecode']]],
+  ['timecode_1',['timecode',['../classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a',1,'Metadata::Timecode'],['../structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf',1,'LtcDecoder::DecodedTimecode::timecode']]],
   ['timer_2',['Timer',['../classEvent.html#abbd71fc79e6f9eebd54ce2209177c040',1,'Event']]],
   ['timestamp_3',['timestamp',['../structBenchmark_1_1Entry.html#adb505cc24627637c66d49f4392096f3b',1,'Benchmark::Entry::timestamp'],['../structNodeMessage.html#aa8796677024aa5e8d64180dfa4be27de',1,'NodeMessage::timestamp']]],
   ['title_4',['Title',['../classMetadata.html#aff99fcd1fd3fb4c681442f7d1c0d8f83',1,'Metadata']]],

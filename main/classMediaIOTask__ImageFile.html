@@ -229,10 +229,9 @@ Static Public Attributes</h2></td></tr>
 <ol type="1">
 <li>Writer: <code>cmd.pendingMediaDesc.frameRate()</code> if valid.</li>
 <li><code><a class="el" href="classImgSeq.html" title="Describes a numbered image sequence on disk.">ImgSeq</a></code> sidecar <code>frameRate</code> (reader only).</li>
-<li><code>ConfigFrameRate</code>.</li>
-<li><code>DefaultFrameRate</code> (<code>FPS_30</code>).</li>
+<li><code>ConfigFrameRate</code> (always populated — the backend's default config pre-seeds it with <code>DefaultFrameRate</code>).</li>
 </ol>
-<p>The resolved source is recorded in the returned metadata under <code><a class="el" href="classMetadata.html#afe8072f24ffa0c7cd6c65bc72fe1a9e8" title="Source that supplied the associated FrameRate (String). One of: &quot;file&quot; (read from the container/sidec...">Metadata::FrameRateSource</a></code> as one of <code>"file"</code> (from a sidecar or writer-supplied <code><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a></code>), <code>"config"</code> (from <code>ConfigFrameRate</code>), or <code>"default"</code> (fell back to <code>DefaultFrameRate</code>). Callers that care about whether a real frame rate was available can inspect that metadata entry.</p>
+<p>The resolved source is recorded in the returned metadata under <code><a class="el" href="classMetadata.html#afe8072f24ffa0c7cd6c65bc72fe1a9e8" title="Source that supplied the associated FrameRate (String). One of: &quot;file&quot; (read from the container/sidec...">Metadata::FrameRateSource</a></code> as one of <code>"file"</code> (from a sidecar or writer-supplied <code><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a></code>) or <code>"config"</code> (from the <code>ConfigFrameRate</code> entry in the MediaIOConfig, whether it came from the backend default or a caller override). Callers that care about whether a real frame rate was available can inspect that metadata entry.</p>
 <dl class="section user"><dt>Config keys</dt><dd><table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Key   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
@@ -289,7 +288,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__ImageFile.html">MediaIOTask_ImageFile</a></li>
-    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
   </ul>
 </div>
 </body>

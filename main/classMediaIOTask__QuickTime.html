@@ -176,15 +176,15 @@ Static Public Member Functions</h2></td></tr>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a99b1252fa43c723aecae74b6ea43fc98" id="r_a99b1252fa43c723aecae74b6ea43fc98"><td class="memItemLeft" align="right" valign="top"><a id="a99b1252fa43c723aecae74b6ea43fc98" name="a99b1252fa43c723aecae74b6ea43fc98"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigVideoTrack</b></td></tr>
-<tr class="memdesc:a99b1252fa43c723aecae74b6ea43fc98"><td class="mdescLeft">&#160;</td><td class="mdescRight">0-based index of the video track to use. <br /></td></tr>
+<tr class="memdesc:a99b1252fa43c723aecae74b6ea43fc98"><td class="mdescLeft">&#160;</td><td class="mdescRight">0-based index of the video track to use (-1 = auto). <br /></td></tr>
 <tr class="separator:a99b1252fa43c723aecae74b6ea43fc98"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8cd765f7faabcf975e468c2cae21fb4" id="r_ab8cd765f7faabcf975e468c2cae21fb4"><td class="memItemLeft" align="right" valign="top"><a id="ab8cd765f7faabcf975e468c2cae21fb4" name="ab8cd765f7faabcf975e468c2cae21fb4"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigAudioTrack</b></td></tr>
-<tr class="memdesc:ab8cd765f7faabcf975e468c2cae21fb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">0-based index of the audio track to use. <br /></td></tr>
+<tr class="memdesc:ab8cd765f7faabcf975e468c2cae21fb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">0-based index of the audio track to use (-1 = auto). <br /></td></tr>
 <tr class="separator:ab8cd765f7faabcf975e468c2cae21fb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b7f30aecd8ecaa2bc76d176926d7d58" id="r_a0b7f30aecd8ecaa2bc76d176926d7d58"><td class="memItemLeft" align="right" valign="top"><a id="a0b7f30aecd8ecaa2bc76d176926d7d58" name="a0b7f30aecd8ecaa2bc76d176926d7d58"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigLayout</b></td></tr>
-<tr class="memdesc:a0b7f30aecd8ecaa2bc76d176926d7d58"><td class="mdescLeft">&#160;</td><td class="mdescRight">"classic" or "fragmented" (string). <br /></td></tr>
+<tr class="memdesc:a0b7f30aecd8ecaa2bc76d176926d7d58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writer on-disk layout (<a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="structQuickTimeLayout.html" title="Well-known Enum type for QuickTime / ISO-BMFF container layout.">QuickTimeLayout</a>). <br /></td></tr>
 <tr class="separator:a0b7f30aecd8ecaa2bc76d176926d7d58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a887f15b00ed9cdc2d7b413b25f81ddea" id="r_a887f15b00ed9cdc2d7b413b25f81ddea"><td class="memItemLeft" align="right" valign="top"><a id="a887f15b00ed9cdc2d7b413b25f81ddea" name="a887f15b00ed9cdc2d7b413b25f81ddea"></a>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigFragmentFrames</b></td></tr>
@@ -212,9 +212,15 @@ Static Public Attributes</h2></td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">ConfigFilename   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">Path to the .mov / .mp4 file.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">ConfigVideoTrack   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone">Index of the video track to read.    </td></tr>
+<td class="markdownTableBodyNone">ConfigVideoTrack   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">-1 (auto)   </td><td class="markdownTableBodyNone">0-based index of the video track to read.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">ConfigAudioTrack   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">0   </td><td class="markdownTableBodyNone">Index of the audio track to read.   </td></tr>
+<td class="markdownTableBodyNone">ConfigAudioTrack   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">-1 (auto)   </td><td class="markdownTableBodyNone">0-based index of the audio track to read.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">ConfigLayout   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> (<a class="el" href="structQuickTimeLayout.html" title="Well-known Enum type for QuickTime / ISO-BMFF container layout.">QuickTimeLayout</a>)   </td><td class="markdownTableBodyNone">Fragmented   </td><td class="markdownTableBodyNone">Writer on-disk layout.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">ConfigFragmentFrames   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">30   </td><td class="markdownTableBodyNone">Video frames per fragment (Fragmented layout only).    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">ConfigFlushSync   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">false   </td><td class="markdownTableBodyNone">fdatasync after every flush.   </td></tr>
 </table>
 </dd></dl>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
@@ -227,7 +233,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__QuickTime.html">MediaIOTask_QuickTime</a></li>
-    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
   </ul>
 </div>
 </body>

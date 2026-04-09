@@ -1,3 +1,15 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structMediaNodeConfig_1_1ParsedConnection.html" title="Result of parsing a connection string." alt="" coords="5,5,267,31"/>
+<area shape="rect" id="Node000000" href="$classMediaIOTask.html" title="Backend interface for media I/O." alt="" coords="5,129,111,155"/>
+<area shape="rect" id="Node000001" href="$classMediaIOTask__AudioFile.html" title="MediaIOTask backend for audio file formats." alt="" coords="164,5,336,31"/>
+<area shape="poly" id="edge20_Node000000_Node000001" title=" " alt="" coords="75,117,110,77,133,57,157,40,183,28,185,33,160,44,136,61,114,81,79,120"/>
+<area shape="rect" id="Node000002" href="$classMediaIOTask__Converter.html" title="MediaIOTask backend that transforms media frames." alt="" coords="162,55,338,80"/>
+<area shape="poly" id="edge21_Node000000_Node000002" title=" " alt="" coords="92,120,158,89,193,78,194,83,160,94,94,125"/>
+<area shape="rect" id="Node000003" href="$classMediaIOTask__ImageFile.html" title="MediaIOTask backend for image files and image sequences." alt="" coords="162,104,338,129"/>
+<area shape="poly" id="edge22_Node000000_Node000003" title=" " alt="" coords="124,131,161,126,162,131,125,136"/>
+<area shape="rect" id="Node000004" href="$classMediaIOTask__QuickTime.html" title="MediaIOTask backend for QuickTime / ISO&#45;BMFF container files." alt="" coords="159,153,341,179"/>
+<area shape="poly" id="edge23_Node000000_Node000004" title=" " alt="" coords="125,148,159,152,158,157,124,153"/>
+<area shape="rect" id="Node000005" href="$classMediaIOTask__TPG.html" title="MediaIOTask backend that generates test patterns." alt="" coords="181,203,319,228"/>
+<area shape="poly" id="edge24_Node000000_Node000005" title=" " alt="" coords="96,159,160,188,198,200,196,205,158,192,94,164"/>
+<area shape="rect" id="Node000006" href="$classSDLPlayerTask.html" title="MediaIOTask writer that plays frames through SDL." alt="" coords="191,252,309,277"/>
+<area shape="poly" id="edge25_Node000000_Node000006" title=" " alt="" coords="79,163,114,201,160,237,192,251,190,256,157,242,111,205,75,167"/>
 </map>

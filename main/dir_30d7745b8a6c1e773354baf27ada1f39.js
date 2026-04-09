@@ -93,6 +93,7 @@ var dir_30d7745b8a6c1e773354baf27ada1f39 =
     [ "mediaio.h", "mediaio_8h.html", "mediaio_8h" ],
     [ "mediaiotask.h", "mediaiotask_8h.html", null ],
     [ "mediaiotask_audiofile.h", "mediaiotask__audiofile_8h.html", null ],
+    [ "mediaiotask_converter.h", "mediaiotask__converter_8h.html", null ],
     [ "mediaiotask_imagefile.h", "mediaiotask__imagefile_8h.html", null ],
     [ "mediaiotask_quicktime.h", "mediaiotask__quicktime_8h.html", null ],
     [ "mediaiotask_tpg.h", "mediaiotask__tpg_8h.html", null ],

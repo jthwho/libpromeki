@@ -562,6 +562,7 @@ var group__proav =
       [ "FormatDesc", "structMediaIO_1_1FormatDesc.html", [
         [ "CreateFunc", "structMediaIO_1_1FormatDesc.html#a040ef25827914e55c2e8209c77033a33", null ],
         [ "DefaultConfigFunc", "structMediaIO_1_1FormatDesc.html#a164084af396b01be58b5a5e2402b55ab", null ],
+        [ "DefaultMetadataFunc", "structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e", null ],
         [ "EnumerateFunc", "structMediaIO_1_1FormatDesc.html#a2149dbe59cbb4e01b85ac4ea67a06576", null ],
         [ "ProbeFunc", "structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54", null ],
         [ "canHandleDevice", "structMediaIO_1_1FormatDesc.html#a8cb05daaef47af69482f1e5c30a244b9", null ],
@@ -570,6 +571,7 @@ var group__proav =
         [ "canWrite", "structMediaIO_1_1FormatDesc.html#a4e86af46648e6cbe5c97606f002c3444", null ],
         [ "create", "structMediaIO_1_1FormatDesc.html#af6eff6b05d298393e15a22e0f742c295", null ],
         [ "defaultConfig", "structMediaIO_1_1FormatDesc.html#ad07d2975cd2e5d4af142ed0b52aa0496", null ],
+        [ "defaultMetadata", "structMediaIO_1_1FormatDesc.html#ad88fec58f6ccda8f746cf04ca2b9a470", null ],
         [ "description", "structMediaIO_1_1FormatDesc.html#a351b863c1f26e0652c764c806d276e14", null ],
         [ "enumerate", "structMediaIO_1_1FormatDesc.html#aa766150e2cf030dbca33a410334594c1", null ],
         [ "extensions", "structMediaIO_1_1FormatDesc.html#a3a4e3a7d574e1195b535b9f13e583aaa", null ],
@@ -598,6 +600,8 @@ var group__proav =
       [ "metadata", "classMediaIO.html#aadd8c85c375a9a81a5d0b45730444b1c", null ],
       [ "mode", "classMediaIO.html#a620ffa469a1531a177a4f642b98b83a9", null ],
       [ "open", "classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3", null ],
+      [ "pendingReads", "classMediaIO.html#ab97dbd1a4a293727b49f6bbb307d1a97", null ],
+      [ "pendingWrites", "classMediaIO.html#a8d6077a1817f66954ffa588b664f3f63", null ],
       [ "prefetchDepth", "classMediaIO.html#aaf1ea27a191795c10a61cbdc97397f56", null ],
       [ "PROMEKI_SIGNAL", "classMediaIO.html#af8a7c23e819e3eb161ccc2fda2796003", null ],
       [ "PROMEKI_SIGNAL", "classMediaIO.html#a532036c268a925fd298bfcd9141c7957", null ],
@@ -605,6 +609,7 @@ var group__proav =
       [ "PROMEKI_SIGNAL", "classMediaIO.html#a93c306d7c76a36e66a3696d17901221f", null ],
       [ "PROMEKI_SIGNAL", "classMediaIO.html#a7b219c7a074ab860a4f6b4cd61e3a406", null ],
       [ "readFrame", "classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813", null ],
+      [ "readyReads", "classMediaIO.html#a19830022e30b5943b7885047fd34cfc6", null ],
       [ "seekToFrame", "classMediaIO.html#a4b2216ffe65f522fdb1d1e44d9053557", null ],
       [ "sendParams", "classMediaIO.html#a2e5ae6fcfa20997a48b85b4e91a77169", null ],
       [ "setAudioDesc", "classMediaIO.html#a1c7f478adb932c62c48be77442bf1718", null ],
@@ -626,6 +631,10 @@ var group__proav =
     [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", [
       [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html#a60af0a1cceb4782dfdd5c2f19cda6dc2", null ],
       [ "~MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html#ae8bb53b31c3564166bc58896db5b23d8", null ]
+    ] ],
+    [ "MediaIOTask_Converter", "classMediaIOTask__Converter.html", [
+      [ "MediaIOTask_Converter", "classMediaIOTask__Converter.html#a99910812d10d62821b35b10dd4c28c0a", null ],
+      [ "~MediaIOTask_Converter", "classMediaIOTask__Converter.html#a64ac1ca0aee81cd30cf3285b9e4330f1", null ]
     ] ],
     [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", [
       [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html#af4f06377303c84c45c73803e88a07599", null ],

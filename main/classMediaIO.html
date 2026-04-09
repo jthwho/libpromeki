@@ -248,6 +248,15 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> () <a class="
 <tr class="memitem:ae00ff63286f09a393d871c17e1538036" id="r_ae00ff63286f09a393d871c17e1538036"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#ae00ff63286f09a393d871c17e1538036">frameAvailable</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ae00ff63286f09a393d871c17e1538036"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if a read result is waiting to be consumed.  <br /></td></tr>
 <tr class="separator:ae00ff63286f09a393d871c17e1538036"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19830022e30b5943b7885047fd34cfc6" id="r_a19830022e30b5943b7885047fd34cfc6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a19830022e30b5943b7885047fd34cfc6">readyReads</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a19830022e30b5943b7885047fd34cfc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of completed read results waiting in the result queue.  <br /></td></tr>
+<tr class="separator:a19830022e30b5943b7885047fd34cfc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab97dbd1a4a293727b49f6bbb307d1a97" id="r_ab97dbd1a4a293727b49f6bbb307d1a97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#ab97dbd1a4a293727b49f6bbb307d1a97">pendingReads</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab97dbd1a4a293727b49f6bbb307d1a97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of <code>CmdRead</code> commands in flight on the strand (queued or running).  <br /></td></tr>
+<tr class="separator:ab97dbd1a4a293727b49f6bbb307d1a97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d6077a1817f66954ffa588b664f3f63" id="r_a8d6077a1817f66954ffa588b664f3f63"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a8d6077a1817f66954ffa588b664f3f63">pendingWrites</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8d6077a1817f66954ffa588b664f3f63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of <code>CmdWrite</code> commands in flight on the strand (queued or running).  <br /></td></tr>
+<tr class="separator:a8d6077a1817f66954ffa588b664f3f63"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3fa425ad0f171274e3c9013d14dd813" id="r_ad3fa425ad0f171274e3c9013d14dd813"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813">readFrame</a> (<a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> &amp;frame, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">block</a>=<a class="el" href="classList.html">true</a>)</td></tr>
 <tr class="memdesc:ad3fa425ad0f171274e3c9013d14dd813"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads the next synchronized frame.  <br /></td></tr>
 <tr class="separator:ad3fa425ad0f171274e3c9013d14dd813"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -350,6 +359,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a0cb498ce63da62e06f5f463c0b046d74" id="r_a0cb498ce63da62e06f5f463c0b046d74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaIO.html#a4571e9b5125ab3fef2fc1bf26f383229">Config</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">defaultConfig</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName)</td></tr>
 <tr class="memdesc:a0cb498ce63da62e06f5f463c0b046d74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the default configuration for the named backend.  <br /></td></tr>
 <tr class="separator:a0cb498ce63da62e06f5f463c0b046d74"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bf93a4db4de6830764ee938a80b54ac" id="r_a2bf93a4db4de6830764ee938a80b54ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMetadata.html">Metadata</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a2bf93a4db4de6830764ee938a80b54ac">defaultMetadata</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName)</td></tr>
+<tr class="memdesc:a2bf93a4db4de6830764ee938a80b54ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metadata schema the named backend honors.  <br /></td></tr>
+<tr class="separator:a2bf93a4db4de6830764ee938a80b54ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a594b8b55ae788efe104c871248d73808" id="r_a594b8b55ae788efe104c871248d73808"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaIO.html">MediaIO</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">create</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a4571e9b5125ab3fef2fc1bf26f383229">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>, <a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a594b8b55ae788efe104c871248d73808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> instance from a configuration.  <br /></td></tr>
 <tr class="separator:a594b8b55ae788efe104c871248d73808"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -760,6 +772,42 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a2bf93a4db4de6830764ee938a80b54ac" name="a2bf93a4db4de6830764ee938a80b54ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bf93a4db4de6830764ee938a80b54ac">&#9670;&#160;</a></span>defaultMetadata()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classMetadata.html">Metadata</a> MediaIO::defaultMetadata </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the metadata schema the named backend honors. </p>
+<p>The returned <a class="el" href="classMetadata.html">Metadata</a> contains one entry per <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Metadata::ID</a> the backend knows how to consume, each populated with an empty / default value. Use it to discover which metadata keys a backend accepts (for example when building a <code>--help</code> dump or a config GUI) without having to hard-code a per-backend list. Backends that do not consume any metadata return an empty container.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>The registered backend name. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classMetadata.html">Metadata</a> listing the honored keys. </dd></dl>
+
+</div>
+</div>
 <a id="a4f03c7498e34562a1a3a0c8f5a24e925" name="a4f03c7498e34562a1a3a0c8f5a24e925"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4f03c7498e34562a1a3a0c8f5a24e925">&#9670;&#160;</a></span>defaultSeekMode()</h2>
 
@@ -842,6 +890,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Returns true if a read result is waiting to be consumed. </p>
 <p>Specifically: a previously-submitted CmdRead has completed and its frame is sitting in the read result queue. When true, <code><a class="el" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813" title="Reads the next synchronized frame.">readFrame()</a></code> returns immediately without blocking. When false, <code><a class="el" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813" title="Reads the next synchronized frame.">readFrame()</a></code> will either block on the next prefetch or return <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a></code> in non-blocking mode.</p>
+<p>Equivalent to <code><a class="el" href="classMediaIO.html#a19830022e30b5943b7885047fd34cfc6" title="Returns the number of completed read results waiting in the result queue.">readyReads()</a></code> <code>&gt;</code> 0.</p>
 <dl class="section return"><dt>Returns</dt><dd>true if a frame is ready to be picked up. </dd></dl>
 
 </div>
@@ -976,6 +1025,48 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error. </dd></dl>
+
+</div>
+</div>
+<a id="ab97dbd1a4a293727b49f6bbb307d1a97" name="ab97dbd1a4a293727b49f6bbb307d1a97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab97dbd1a4a293727b49f6bbb307d1a97">&#9670;&#160;</a></span>pendingReads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MediaIO::pendingReads </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the number of <code>CmdRead</code> commands in flight on the strand (queued or running). </p>
+<p>Counts commands submitted via prefetch that have not yet pushed a result onto the ready queue. Useful for signal-driven consumers that want to know whether the next read is already on its way or whether they need to issue a fresh <code><a class="el" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813" title="Reads the next synchronized frame.">readFrame()</a></code> to kick prefetch.</p>
+<dl class="section return"><dt>Returns</dt><dd>The number of read commands in flight (&gt;= 0). </dd></dl>
+
+</div>
+</div>
+<a id="a8d6077a1817f66954ffa588b664f3f63" name="a8d6077a1817f66954ffa588b664f3f63"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d6077a1817f66954ffa588b664f3f63">&#9670;&#160;</a></span>pendingWrites()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MediaIO::pendingWrites </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the number of <code>CmdWrite</code> commands in flight on the strand (queued or running). </p>
+<p>Incremented when <code><a class="el" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60" title="Writes a frame to the media resource.">writeFrame()</a></code> submits a write and decremented when the write completes (or is cancelled). Producers can use this to throttle themselves without relying on blocking writes.</p>
+<dl class="section return"><dt>Returns</dt><dd>The number of write commands in flight (&gt;= 0). </dd></dl>
 
 </div>
 </div>
@@ -1208,6 +1299,27 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a>, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a47ebde87a9587fbdf7b0d5a2c5a443d0" title="End of file reached.">Error::EndOfFile</a>, or another error. </dd></dl>
+
+</div>
+</div>
+<a id="a19830022e30b5943b7885047fd34cfc6" name="a19830022e30b5943b7885047fd34cfc6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19830022e30b5943b7885047fd34cfc6">&#9670;&#160;</a></span>readyReads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MediaIO::readyReads </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the number of completed read results waiting in the result queue. </p>
+<p>Each entry is an already-executed <code>CmdRead</code> whose outcome (success, <code>TryAgain</code>, <code>EndOfFile</code>, or another error) will be returned verbatim by the next <code><a class="el" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813" title="Reads the next synchronized frame.">readFrame()</a></code> call. A non-zero value means <code><a class="el" href="classMediaIO.html#ad3fa425ad0f171274e3c9013d14dd813" title="Reads the next synchronized frame.">readFrame()</a></code> will not block; it does <em>not</em> guarantee that the next pop carries a valid frame — callers must still check the returned <code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code>.</p>
+<dl class="section return"><dt>Returns</dt><dd>The number of queued read results (&gt;= 0). </dd></dl>
 
 </div>
 </div>
@@ -1629,7 +1741,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
   </ul>
 </div>
 </body>
