@@ -680,3 +680,43 @@ TEST_CASE("Variant_ColorModel_FromInt64") {
     Variant v(int64_t(ColorModel::Rec2020));
     CHECK(v.get<ColorModel>().id() == ColorModel::Rec2020);
 }
+
+#if PROMEKI_ENABLE_NETWORK
+
+TEST_CASE("Variant_SocketAddress_TypedRoundtrip") {
+    SocketAddress addr(Ipv4Address(239, 1, 2, 3), 5004);
+    Variant v(addr);
+    CHECK(v.type() == Variant::TypeSocketAddress);
+    SocketAddress back = v.get<SocketAddress>();
+    CHECK(back == addr);
+}
+
+TEST_CASE("Variant_SocketAddress_ToString") {
+    SocketAddress addr(Ipv4Address(239, 1, 2, 3), 5004);
+    Variant v(addr);
+    CHECK(v.get<String>() == "239.1.2.3:5004");
+}
+
+TEST_CASE("Variant_SocketAddress_FromString") {
+    Variant v(String("192.168.10.20:5006"));
+    SocketAddress addr = v.get<SocketAddress>();
+    CHECK(addr.address().toIpv4() == Ipv4Address(192, 168, 10, 20));
+    CHECK(addr.port() == 5006);
+}
+
+TEST_CASE("Variant_SocketAddress_FromStringInvalid") {
+    Variant v(String("not-a-socket-address"));
+    Error err;
+    SocketAddress addr = v.get<SocketAddress>(&err);
+    CHECK(err.isError());
+    CHECK(addr.isNull());
+}
+
+TEST_CASE("Variant_SocketAddress_TypeName") {
+    Variant v(SocketAddress(Ipv4Address::loopback(), 80));
+    // The type name is whatever the X-macro stringified.
+    String name = String(v.typeName());
+    CHECK(name == "SocketAddress");
+}
+
+#endif // PROMEKI_ENABLE_NETWORK

@@ -366,3 +366,113 @@ TEST_CASE("RtpPayloadJpeg") {
                 CHECK(result.size() == 0);
         }
 }
+
+TEST_CASE("RtpPayloadJson") {
+
+        SUBCASE("construction defaults") {
+                RtpPayloadJson payload;
+                CHECK(payload.payloadType() == 98);
+                CHECK(payload.clockRate() == 90000);
+                CHECK(payload.maxPayloadSize() == 1200);
+        }
+
+        SUBCASE("custom payload type and clock rate") {
+                RtpPayloadJson payload(100, 48000);
+                CHECK(payload.payloadType() == 100);
+                CHECK(payload.clockRate() == 48000);
+        }
+
+        SUBCASE("setPayloadType / setClockRate") {
+                RtpPayloadJson payload;
+                payload.setPayloadType(110);
+                payload.setClockRate(44100);
+                CHECK(payload.payloadType() == 110);
+                CHECK(payload.clockRate() == 44100);
+        }
+
+        SUBCASE("pack empty data") {
+                RtpPayloadJson payload;
+                auto packets = payload.pack(nullptr, 0);
+                CHECK(packets.isEmpty());
+        }
+
+        SUBCASE("pack small JSON fits in one packet") {
+                RtpPayloadJson payload;
+                const char *json = "{\"ts\":1234,\"fn\":42}";
+                size_t len = std::strlen(json);
+
+                auto packets = payload.pack(json, len);
+                REQUIRE(packets.size() == 1);
+                CHECK(packets[0].payloadSize() == len);
+                CHECK(std::memcmp(packets[0].payload(), json, len) == 0);
+        }
+
+        SUBCASE("pack large JSON fragments") {
+                RtpPayloadJson payload;
+                // 3500 bytes of synthetic JSON — exceeds the default
+                // 1200-byte payload size so fragmentation kicks in.
+                std::string bigJson = "{\"data\":\"";
+                while(bigJson.size() < 3500) bigJson += "abcdefghij";
+                bigJson += "\"}";
+
+                auto packets = payload.pack(bigJson.data(), bigJson.size());
+                REQUIRE(packets.size() > 1);
+
+                // Every packet but the last should be full; the last
+                // holds the remainder.
+                size_t total = 0;
+                for(const auto &pkt : packets) total += pkt.payloadSize();
+                CHECK(total == bigJson.size());
+        }
+
+        SUBCASE("pack/unpack round-trip small") {
+                RtpPayloadJson payload;
+                const char *json = "{\"timecode\":\"01:00:00:00\",\"dropFrame\":false}";
+                size_t len = std::strlen(json);
+
+                auto packets = payload.pack(json, len);
+                Buffer out = payload.unpack(packets);
+                CHECK(out.size() == len);
+                CHECK(std::memcmp(out.data(), json, len) == 0);
+        }
+
+        SUBCASE("pack/unpack round-trip large") {
+                RtpPayloadJson payload;
+                std::string bigJson;
+                bigJson.reserve(5000);
+                bigJson += "{\"lut\":[";
+                for(int i = 0; i < 500; i++) {
+                        if(i > 0) bigJson += ",";
+                        bigJson += "0.";
+                        bigJson += std::to_string(i);
+                }
+                bigJson += "]}";
+
+                auto packets = payload.pack(bigJson.data(), bigJson.size());
+                REQUIRE(packets.size() > 1);
+
+                Buffer out = payload.unpack(packets);
+                CHECK(out.size() == bigJson.size());
+                CHECK(std::memcmp(out.data(), bigJson.data(), bigJson.size()) == 0);
+        }
+
+        SUBCASE("unpack empty packet list") {
+                RtpPayloadJson payload;
+                RtpPacket::List empty;
+                Buffer result = payload.unpack(empty);
+                CHECK(result.size() == 0);
+        }
+
+        SUBCASE("packets share a single backing buffer") {
+                RtpPayloadJson payload;
+                std::string bigJson(3000, 'x');
+                auto packets = payload.pack(bigJson.data(), bigJson.size());
+                REQUIRE(packets.size() > 1);
+                // All packets allocated in one shared Buffer — the
+                // first packet's data pointer is the base, subsequent
+                // ones point into the same arena at growing offsets.
+                for(size_t i = 1; i < packets.size(); i++) {
+                        CHECK(packets[i].data() > packets[0].data());
+                }
+        }
+}

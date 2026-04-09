@@ -7,6 +7,9 @@
 
 #include <promeki/udpsocket.h>
 #include <promeki/platform.h>
+#include <promeki/list.h>
+#include <cstring>
+#include <cerrno>
 
 #if !defined(PROMEKI_PLATFORM_EMSCRIPTEN)
 
@@ -18,6 +21,19 @@
 #       include <sys/ioctl.h>
 #       include <netinet/in.h>
 #       include <net/if.h>
+#endif
+
+#if defined(PROMEKI_PLATFORM_LINUX)
+#       include <linux/net_tstamp.h>
+#       ifndef SO_TXTIME
+#               define SO_TXTIME 61
+#       endif
+#       ifndef SCM_TXTIME
+#               define SCM_TXTIME SO_TXTIME
+#       endif
+#       ifndef SO_MAX_PACING_RATE
+#               define SO_MAX_PACING_RATE 47
+#       endif
 #endif
 
 PROMEKI_NAMESPACE_BEGIN
@@ -100,6 +116,134 @@ ssize_t UdpSocket::writeDatagram(const void *data, size_t size, const SocketAddr
 
 ssize_t UdpSocket::writeDatagram(const Buffer &data, const SocketAddress &dest) {
         return writeDatagram(data.data(), data.size(), dest);
+}
+
+int UdpSocket::writeDatagrams(const DatagramList &datagrams) {
+        if(_fd < 0) return -1;
+        if(datagrams.isEmpty()) return 0;
+
+#if defined(PROMEKI_PLATFORM_LINUX)
+        // Scratch storage for the per-datagram descriptors.  Held as
+        // parallel arrays so the msghdr entries can reference them by
+        // pointer without aliasing bugs on vector resize.
+        const size_t count = datagrams.size();
+        List<struct mmsghdr>        msgs;
+        List<struct iovec>          iovs;
+        List<struct sockaddr_storage> addrs;
+        // Control buffer for an optional SCM_TXTIME cmsg per datagram.
+        // Allocated whether or not any datagram actually uses txTime
+        // because the per-message pointer into the shared control
+        // block must be stable.
+        static constexpr size_t kCmsgSpace = CMSG_SPACE(sizeof(uint64_t));
+        List<uint8_t>               ctrl;
+        msgs.resize(count);
+        iovs.resize(count);
+        addrs.resize(count);
+        ctrl.resize(count * kCmsgSpace);
+        std::memset(msgs.data(), 0, count * sizeof(struct mmsghdr));
+        std::memset(ctrl.data(), 0, count * kCmsgSpace);
+
+        bool anyTxTime = false;
+        for(size_t i = 0; i < count; i++) {
+                const Datagram &d = datagrams[i];
+                if(d.data == nullptr || d.size == 0) return -1;
+
+                size_t addrLen = d.dest.toSockAddr(&addrs[i]);
+                if(addrLen == 0) return -1;
+
+                iovs[i].iov_base = const_cast<void *>(d.data);
+                iovs[i].iov_len  = d.size;
+
+                struct msghdr &mh = msgs[i].msg_hdr;
+                mh.msg_name    = &addrs[i];
+                mh.msg_namelen = static_cast<socklen_t>(addrLen);
+                mh.msg_iov     = &iovs[i];
+                mh.msg_iovlen  = 1;
+
+                if(d.txTimeNs != 0) {
+                        anyTxTime = true;
+                        uint8_t *cb = ctrl.data() + i * kCmsgSpace;
+                        mh.msg_control    = cb;
+                        mh.msg_controllen = kCmsgSpace;
+                        struct cmsghdr *cm = CMSG_FIRSTHDR(&mh);
+                        cm->cmsg_level = SOL_SOCKET;
+                        cm->cmsg_type  = SCM_TXTIME;
+                        cm->cmsg_len   = CMSG_LEN(sizeof(uint64_t));
+                        uint64_t v = d.txTimeNs;
+                        std::memcpy(CMSG_DATA(cm), &v, sizeof(v));
+                }
+        }
+        (void)anyTxTime;
+
+        int sent = ::sendmmsg(_fd, msgs.data(),
+                              static_cast<unsigned int>(count), 0);
+        if(sent < 0) {
+                setError(Error::syserr());
+                return -1;
+        }
+        return sent;
+#else
+        // Portable fallback: loop on writeDatagram().  Returns the
+        // count of datagrams accepted before the first failure.
+        int sent = 0;
+        for(size_t i = 0; i < datagrams.size(); i++) {
+                const Datagram &d = datagrams[i];
+                ssize_t n = writeDatagram(d.data, d.size, d.dest);
+                if(n < 0) {
+                        return sent > 0 ? sent : -1;
+                }
+                sent++;
+        }
+        return sent;
+#endif
+}
+
+Error UdpSocket::setPacingRate(uint64_t bytesPerSec) {
+        if(_fd < 0) return Error::NotOpen;
+#if defined(PROMEKI_PLATFORM_LINUX)
+        // Kernel caps at 32 Gbps via a 32-bit setsockopt argument
+        // before ~5.x; clamp to UINT32_MAX to match the older ABI.
+        uint32_t rate = bytesPerSec > 0xFFFFFFFFu
+                ? 0xFFFFFFFFu
+                : static_cast<uint32_t>(bytesPerSec);
+        if(::setsockopt(_fd, SOL_SOCKET, SO_MAX_PACING_RATE,
+                        &rate, sizeof(rate)) < 0) {
+                return Error::syserr();
+        }
+        return Error::Ok;
+#else
+        (void)bytesPerSec;
+        return Error::NotSupported;
+#endif
+}
+
+Error UdpSocket::clearPacingRate() {
+        return setPacingRate(PacingRateUnlimited);
+}
+
+Error UdpSocket::setTxTime(bool enable, int clockId) {
+        if(_fd < 0) return Error::NotOpen;
+#if defined(PROMEKI_PLATFORM_LINUX)
+        // Disabling is a no-op: a socket that was never configured
+        // for SO_TXTIME (or that stops passing SCM_TXTIME cmsgs)
+        // behaves identically to a plain UDP socket.  There is no
+        // kernel-level "off" switch, so we just skip the setsockopt
+        // and report success.
+        if(!enable) return Error::Ok;
+        struct sock_txtime cfg;
+        std::memset(&cfg, 0, sizeof(cfg));
+        cfg.clockid = static_cast<clockid_t>(clockId);
+        cfg.flags   = 0;
+        if(::setsockopt(_fd, SOL_SOCKET, SO_TXTIME,
+                        &cfg, sizeof(cfg)) < 0) {
+                return Error::syserr();
+        }
+        return Error::Ok;
+#else
+        (void)enable;
+        (void)clockId;
+        return Error::NotSupported;
+#endif
 }
 
 ssize_t UdpSocket::readDatagram(void *data, size_t maxSize, SocketAddress *sender) {

@@ -81,15 +81,17 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
 
         // Plain defaults: video, audio, and timecode are all enabled
         // so an unconfigured TPG produces a ready-to-use reference
-        // stream (1080p59.94 colour bars, 1 kHz stereo tone, timecode
-        // starting at 01:00:00:00).
+        // stream (1080p29.97 colour bars with burn-in, stereo AvSync
+        // audio marker on 48 kHz PCM, timecode starting at 01:00:00:00).
         CHECK(cfg.getAs<FrameRate>(MediaConfig::FrameRate).isValid());
         CHECK(cfg.getAs<bool>(MediaConfig::VideoEnabled) == true);
         CHECK(cfg.getAs<Size2Du32>(MediaConfig::VideoSize)
               == Size2Du32(1920, 1080));
+        CHECK(cfg.getAs<bool>(MediaConfig::VideoBurnEnabled) == true);
+        CHECK(cfg.getAs<int>(MediaConfig::VideoBurnFontSize) == 0);
         CHECK(cfg.getAs<bool>(MediaConfig::AudioEnabled) == true);
         CHECK(cfg.get(MediaConfig::AudioMode)
-                .asEnum(AudioPattern::Type) == AudioPattern::Tone);
+                .asEnum(AudioPattern::Type) == AudioPattern::AvSync);
         CHECK(cfg.getAs<bool>(MediaConfig::TimecodeEnabled) == true);
         CHECK(cfg.getAs<String>(MediaConfig::TimecodeStart) == "01:00:00:00");
         CHECK(cfg.getAs<bool>(MediaConfig::TimecodeDropFrame) == false);

@@ -147,8 +147,8 @@ class PixelDesc {
                         // -- JPEG compressed --
                         JPEG_RGBA8_sRGB                    = 6,    ///< JPEG-compressed 8-bit RGBA, sRGB, full range.
                         JPEG_RGB8_sRGB                     = 7,    ///< JPEG-compressed 8-bit RGB, sRGB, full range.
-                        JPEG_YUV8_422_Rec709               = 8,    ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709.
-                        JPEG_YUV8_420_Rec709               = 9,    ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709.
+                        JPEG_YUV8_422_Rec709               = 8,    ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709 matrix, limited range (broadcast).
+                        JPEG_YUV8_420_Rec709               = 9,    ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, limited range (broadcast).
 
                         // -- YCbCr 4:2:2 UYVY --
                         YUV8_422_UYVY_Rec709               = 10,   ///< 8-bit YCbCr 4:2:2 UYVY, Rec.709, limited range.
@@ -326,6 +326,53 @@ class PixelDesc {
                         ProRes_422_HQ                      = 140,  ///< Apple ProRes 422 HQ (apch).
                         ProRes_4444                        = 141,  ///< Apple ProRes 4444 (ap4h).
                         ProRes_4444_XQ                     = 142,  ///< Apple ProRes 4444 XQ (ap4x).
+
+                        // -- Full-range uncompressed YCbCr --
+                        //
+                        // The library-wide YCbCr naming convention is that
+                        // the unsuffixed form (e.g. YUV8_422_Rec709) is
+                        // limited-range (16..235 Y, 16..240 Cb/Cr) to match
+                        // broadcast / SDI / ST 2110 defaults.  The explicit
+                        // "_Full" suffix opts in to full-range 0..255 Y and
+                        // 0..255 Cb/Cr, which is what JPEG / JFIF uses and
+                        // what most consumer video decoders (ffplay,
+                        // browsers, libjpeg-turbo) expect.  These
+                        // PixelDescs exist both as general-purpose
+                        // full-range YCbCr storage and as encode-source
+                        // intermediates for the full-range JPEG variants
+                        // below.
+                        YUV8_422_Rec709_Full               = 143,  ///< 8-bit YCbCr 4:2:2 YUYV, Rec.709 matrix, full range.
+                        YUV8_422_Rec601_Full               = 144,  ///< 8-bit YCbCr 4:2:2 YUYV, Rec.601 matrix, full range.
+                        YUV8_420_Planar_Rec709_Full        = 145,  ///< 8-bit YCbCr 4:2:0 planar, Rec.709 matrix, full range.
+                        YUV8_420_Planar_Rec601_Full        = 146,  ///< 8-bit YCbCr 4:2:0 planar, Rec.601 matrix, full range.
+
+                        // -- Full complement of JPEG YCbCr variants (matrix × range) --
+                        //
+                        // Following the library-wide YCbCr convention: the
+                        // unsuffixed JPEG names (existing
+                        // JPEG_YUV8_422_Rec709 / JPEG_YUV8_420_Rec709) are
+                        // limited-range to stay consistent with the
+                        // uncompressed YCbCr defaults.  Full-range variants
+                        // take the explicit "_Full" suffix.  All eight
+                        // combinations (matrix × range × subsampling) are
+                        // provided; pick the one that matches what the
+                        // downstream decoder expects to interpret:
+                        //
+                        //   - Rec.601 + full range (strict JFIF) → ffplay,
+                        //     browsers, libjpeg-turbo, most consumer apps
+                        //   - Rec.709 + full range → modern cameras with
+                        //     an ICC profile; good for high-quality still
+                        //     storage that a colour-managed viewer honours
+                        //   - Rec.709 + limited range (existing default) →
+                        //     broadcast / SDI JPEG pipelines (ST 2110 JPEG XS
+                        //     style)
+                        //   - Rec.601 + limited range → legacy broadcast
+                        JPEG_YUV8_422_Rec601               = 147,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, limited range.
+                        JPEG_YUV8_420_Rec601               = 148,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, limited range.
+                        JPEG_YUV8_422_Rec709_Full          = 149,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.709 matrix, full range.
+                        JPEG_YUV8_420_Rec709_Full          = 150,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, full range.
+                        JPEG_YUV8_422_Rec601_Full          = 151,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, full range (strict JFIF).
+                        JPEG_YUV8_420_Rec601_Full          = 152,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, full range (strict JFIF).
 
                         UserDefined                        = 1024  ///< First ID available for user-registered types.
                 };

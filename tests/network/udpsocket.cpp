@@ -370,4 +370,139 @@ TEST_CASE("UdpSocket") {
                 Error err = sock.setMulticastLoopback(true);
                 CHECK(err.isOk());
         }
+
+        SUBCASE("writeDatagrams batch loopback") {
+                UdpSocket sender;
+                UdpSocket receiver;
+
+                sender.open(IODevice::ReadWrite);
+                receiver.open(IODevice::ReadWrite);
+                receiver.setReceiveTimeout(2000);
+                receiver.bind(SocketAddress::any(0));
+                uint16_t port = receiver.localAddress().port();
+
+                SocketAddress dest(Ipv4Address::loopback(), port);
+
+                // Build a batch of five distinct datagrams.  The
+                // payload pointers must remain valid for the duration
+                // of the call, so we keep them in local storage.
+                char msgs[5][32];
+                for(int i = 0; i < 5; i++) {
+                        std::snprintf(msgs[i], sizeof(msgs[i]), "batch %d", i);
+                }
+                UdpSocket::DatagramList batch;
+                for(int i = 0; i < 5; i++) {
+                        UdpSocket::Datagram d;
+                        d.data = msgs[i];
+                        d.size = std::strlen(msgs[i]);
+                        d.dest = dest;
+                        batch.pushToBack(d);
+                }
+
+                int sent = sender.writeDatagrams(batch);
+                CHECK(sent == 5);
+
+                // Receive all five and verify content.
+                for(int i = 0; i < 5; i++) {
+                        char buf[64];
+                        ssize_t n = receiver.readDatagram(buf, sizeof(buf));
+                        REQUIRE(n > 0);
+                        char expected[32];
+                        int elen = std::snprintf(expected, sizeof(expected), "batch %d", i);
+                        CHECK(n == elen);
+                        CHECK(std::memcmp(buf, expected, n) == 0);
+                }
+        }
+
+        SUBCASE("writeDatagrams empty list") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                UdpSocket::DatagramList empty;
+                CHECK(sock.writeDatagrams(empty) == 0);
+        }
+
+        SUBCASE("writeDatagrams on closed socket") {
+                UdpSocket sock;
+                UdpSocket::DatagramList batch;
+                UdpSocket::Datagram d;
+                d.data = "x";
+                d.size = 1;
+                d.dest = SocketAddress::localhost(5004);
+                batch.pushToBack(d);
+                CHECK(sock.writeDatagrams(batch) == -1);
+        }
+
+        SUBCASE("writeDatagrams rejects invalid entries") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                UdpSocket::DatagramList batch;
+                UdpSocket::Datagram d;
+                d.data = nullptr;
+                d.size = 0;
+                d.dest = SocketAddress::localhost(5004);
+                batch.pushToBack(d);
+                CHECK(sock.writeDatagrams(batch) == -1);
+        }
+
+        SUBCASE("setPacingRate on open socket") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                // 100 Mbps => 12.5 MB/s.  The fq qdisc enforces the
+                // cap, but we can only verify the setsockopt accepts
+                // the value.
+                Error err = sock.setPacingRate(12'500'000);
+#if defined(PROMEKI_PLATFORM_LINUX)
+                CHECK(err.isOk());
+#else
+                CHECK(err == Error::NotSupported);
+#endif
+        }
+
+        SUBCASE("clearPacingRate on open socket") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                sock.setPacingRate(1'000'000);
+                Error err = sock.clearPacingRate();
+#if defined(PROMEKI_PLATFORM_LINUX)
+                CHECK(err.isOk());
+#else
+                CHECK(err == Error::NotSupported);
+#endif
+        }
+
+        SUBCASE("setPacingRate on closed socket fails") {
+                UdpSocket sock;
+                CHECK(sock.setPacingRate(1'000'000).isError());
+        }
+
+        SUBCASE("setPacingRate saturates huge values") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                // Value above UINT32_MAX should clamp, not underflow.
+                Error err = sock.setPacingRate(0xFFFFFFFFFFull);
+#if defined(PROMEKI_PLATFORM_LINUX)
+                CHECK(err.isOk());
+#else
+                CHECK(err == Error::NotSupported);
+#endif
+        }
+
+        SUBCASE("setTxTime disable on closed socket fails") {
+                UdpSocket sock;
+                CHECK(sock.setTxTime(false).isError());
+        }
+
+        SUBCASE("setTxTime disable is always safe") {
+                UdpSocket sock;
+                sock.open(IODevice::ReadWrite);
+                // Disabling should succeed on Linux; elsewhere it's
+                // NotSupported.  Either is fine as long as it doesn't
+                // corrupt anything.
+                Error err = sock.setTxTime(false);
+#if defined(PROMEKI_PLATFORM_LINUX)
+                CHECK(err.isOk());
+#else
+                CHECK(err == Error::NotSupported);
+#endif
+        }
 }

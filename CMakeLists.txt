@@ -604,9 +604,11 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/abstractsocket.h
         include/promeki/ipv4address.h
         include/promeki/ipv6address.h
+        include/promeki/loopbacktransport.h
         include/promeki/macaddress.h
         include/promeki/multicastmanager.h
         include/promeki/networkaddress.h
+        include/promeki/packettransport.h
         include/promeki/prioritysocket.h
         include/promeki/rawsocket.h
         include/promeki/rtppacket.h
@@ -617,14 +619,17 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/tcpserver.h
         include/promeki/tcpsocket.h
         include/promeki/udpsocket.h
+        include/promeki/udpsockettransport.h
     )
     list(APPEND PROMEKI_SOURCES
         src/network/abstractsocket.cpp
         src/network/ipv4address.cpp
         src/network/ipv6address.cpp
+        src/network/loopbacktransport.cpp
         src/network/macaddress.cpp
         src/network/multicastmanager.cpp
         src/network/networkaddress.cpp
+        src/network/packettransport.cpp
         src/network/prioritysocket.cpp
         src/network/rawsocket.cpp
         src/network/rtppayload.cpp
@@ -634,6 +639,7 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/tcpserver.cpp
         src/network/tcpsocket.cpp
         src/network/udpsocket.cpp
+        src/network/udpsockettransport.cpp
     )
 endif()
 
@@ -668,6 +674,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediaiotask_converter.h
         include/promeki/mediaiotask_imagefile.h
         include/promeki/mediaiotask_quicktime.h
+        include/promeki/mediaiotask_rtp.h
         include/promeki/mediaiotask_tpg.h
         include/promeki/paintengine.h
         include/promeki/quicktime.h
@@ -707,6 +714,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaiotask_converter.cpp
         src/proav/mediaiotask_imagefile.cpp
         src/proav/mediaiotask_quicktime.cpp
+        src/proav/mediaiotask_rtp.cpp
         src/proav/mediaiotask_tpg.cpp
         src/proav/paintengine.cpp
         src/proav/paintengine_interleaved.cpp
@@ -1233,6 +1241,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/network/abstractsocket.cpp
             tests/network/ipv4address.cpp
             tests/network/ipv6address.cpp
+            tests/network/loopbacktransport.cpp
             tests/network/macaddress.cpp
             tests/network/multicastmanager.cpp
             tests/network/networkaddress.cpp
@@ -1246,6 +1255,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/network/tcpserver.cpp
             tests/network/tcpsocket.cpp
             tests/network/udpsocket.cpp
+            tests/network/udpsockettransport.cpp
         )
     endif()
 
@@ -1278,6 +1288,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediaio.cpp
             tests/mediaiotask_converter.cpp
             tests/mediaiotask_quicktime.cpp
+            tests/mediaiotask_rtp.cpp
             tests/paintengine.cpp
             tests/pixeldesc.cpp
             tests/quicktime.cpp

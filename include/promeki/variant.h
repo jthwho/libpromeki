@@ -9,6 +9,7 @@
 
 #include <variant>
 #include <cstdint>
+#include <promeki/config.h>
 #include <promeki/namespace.h>
 #include <promeki/util.h>
 #include <promeki/string.h>
@@ -28,6 +29,9 @@
 #include <promeki/pixelformat.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/enum.h>
+#if PROMEKI_ENABLE_NETWORK
+#include <promeki/socketaddress.h>
+#endif
 #include <nlohmann/json.hpp>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -76,6 +80,13 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypePixelDesc | `PixelDesc`         |
  * | TypeEnum      | `Enum`              |
  */
+#if PROMEKI_ENABLE_NETWORK
+#       define PROMEKI_VARIANT_TYPES_NETWORK    \
+                X(TypeSocketAddress, SocketAddress)
+#else
+#       define PROMEKI_VARIANT_TYPES_NETWORK
+#endif
+
 #define PROMEKI_VARIANT_TYPES           \
         X(TypeInvalid, std::monostate)  \
         X(TypeBool, bool)               \
@@ -104,7 +115,8 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeMemSpace, MemSpace)       \
         X(TypePixelFormat, PixelFormat) \
         X(TypePixelDesc, PixelDesc)     \
-        X(TypeEnum, Enum)
+        X(TypeEnum, Enum)               \
+        PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {
         /** @brief Sentinel type used to absorb the trailing comma from X-macro expansion. */
@@ -388,8 +400,23 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
                                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
                                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
+#if PROMEKI_ENABLE_NETWORK
+                                        if constexpr (std::is_same_v<From, SocketAddress>) return arg.toString();
+#endif
 
                                 }
+#if PROMEKI_ENABLE_NETWORK
+                                else if constexpr (std::is_same_v<To, SocketAddress>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [addr, parseErr] = SocketAddress::fromString(arg);
+                                                if(parseErr.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return SocketAddress{};
+                                                }
+                                                return addr;
+                                        }
+                                }
+#endif
                                 if(err != nullptr) *err = Error::Invalid;
                                 return To{};
                         }, v);
@@ -433,6 +460,9 @@ template <typename... Types> class VariantImpl {
                                 case TypePixelFormat:
                                 case TypePixelDesc:
                                 case TypeEnum:
+#if PROMEKI_ENABLE_NETWORK
+                                case TypeSocketAddress:
+#endif
                                         return get<String>();
                                         break;
                         }

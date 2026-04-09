@@ -171,30 +171,80 @@ class FrameRate {
                 }
 
                 /**
+                 * @brief Returns the cumulative tick count at the start of frame N.
+                 *
+                 * Computes @c (frameIndex @c × @c tickRate @c ×
+                 * @c denominator) @c / @c numerator using exact 64-bit
+                 * integer arithmetic.  The result is the number of
+                 * ticks of a clock running at @p tickRate that have
+                 * elapsed between the start of the stream and the
+                 * start of frame @p frameIndex.  This is the primitive
+                 * that every "time-at-frame" computation in libpromeki
+                 * should build on:
+                 *
+                 * - **Audio sample accounting** — pass the audio
+                 *   sample rate.  @ref samplesPerFrame delegates here
+                 *   and subtracts two consecutive calls to get the
+                 *   exact per-frame sample count, producing the NTSC
+                 *   1601/1602 cadence without drift.
+                 * - **RTP timestamps** — pass the RTP clock rate
+                 *   (typically 90000 for video, the sample rate for
+                 *   AES67 audio).  The 64-bit result can be truncated
+                 *   to 32 bits for the wire representation; drift is
+                 *   bounded by the 1/@c numerator rational precision,
+                 *   which is exact for well-known rates.
+                 * - **Wall-clock scheduling** — pass a 1 GHz
+                 *   "nanosecond tick" rate and the result is the
+                 *   frame's start time in nanoseconds.
+                 *
+                 * For integer-cadence rates (24, 25, 30, 50, 60) the
+                 * stride between consecutive frames is constant.  For
+                 * fractional rates (29.97 = 30000/1001, 23.976 =
+                 * 24000/1001) the stride alternates in a fixed
+                 * period (1001 frames for NTSC) so the cumulative
+                 * count stays aligned with wall-clock time across
+                 * arbitrary durations.
+                 *
+                 * Int64 range notes: for any plausible tickRate
+                 * (≤ 2 GHz) and @c denominator (≤ 1001) and frame
+                 * index (≤ 2^30), the intermediate product fits in
+                 * int64 with a wide margin.  Streams longer than
+                 * 2^30 frames at > 24 fps last longer than a year,
+                 * which is well beyond the relevant use cases.
+                 *
+                 * @param tickRate   Ticks per second (e.g. 48000 for
+                 *                   audio sample accounting, 90000
+                 *                   for standard video RTP).
+                 * @param frameIndex Zero-based frame index since the
+                 *                   start of the run.
+                 * @return Cumulative tick count at the start of
+                 *         @p frameIndex, or 0 if the frame rate is
+                 *         invalid or @p tickRate is non-positive.
+                 */
+                int64_t cumulativeTicks(int64_t tickRate, int64_t frameIndex) const {
+                        if(!isValid() || tickRate <= 0 || frameIndex < 0) return 0;
+                        const int64_t num = static_cast<int64_t>(_fps.numerator());
+                        const int64_t den = static_cast<int64_t>(_fps.denominator());
+                        return (frameIndex * tickRate * den) / num;
+                }
+
+                /**
                  * @brief Returns the number of audio samples for the given frame index.
                  *
-                 * Uses exact rational arithmetic so the cumulative
-                 * sample count stays perfectly aligned with wall-clock
-                 * time over arbitrary durations — including for
-                 * fractional NTSC rates where the per-frame count must
-                 * alternate.  For 48 kHz @ 29.97 fps the function emits
-                 * the standard cadence of 1601/1602/1601/1602/1602
-                 * (which sums to exactly 8008 every 5 frames), instead
-                 * of the constant 1602 you would get from a naive
-                 * @c round(sampleRate/fps).
+                 * Thin wrapper around @ref cumulativeTicks that
+                 * returns @c cumulative(frameIndex+1) @c -
+                 * @c cumulative(frameIndex), i.e. the exact number of
+                 * audio samples belonging to frame N.  For 48 kHz @
+                 * 29.97 fps this yields the standard
+                 * 1601/1602/1601/1602/1602 cadence summing to exactly
+                 * 8008 every 5 frames.
                  *
-                 * The implementation is:
-                 *
-                 * @code
-                 * cumulative(n) = (n * sampleRate * denominator) / numerator   // integer div
-                 * samplesPerFrame(n) = cumulative(n + 1) - cumulative(n)
-                 * @endcode
-                 *
-                 * For integer-cadence rates (24, 25, 30, 50, 60) every
-                 * frame returns the same constant value.  For fractional
-                 * rates the result alternates in a fixed cycle whose
-                 * period equals the @c denominator (e.g. 1001 for NTSC
-                 * — though the visible pattern repeats every 5 frames).
+                 * For integer-cadence rates (24, 25, 30, 50, 60)
+                 * every frame returns the same constant value.  For
+                 * fractional rates the result alternates in a fixed
+                 * cycle whose period equals the @c denominator (e.g.
+                 * 1001 for NTSC — though the visible pattern repeats
+                 * every 5 frames).
                  *
                  * @param sampleRate Audio sample rate in Hz (e.g. 48000).
                  * @param frameIndex Zero-based frame index since the start of the run.
@@ -203,15 +253,8 @@ class FrameRate {
                  */
                 size_t samplesPerFrame(int64_t sampleRate, int64_t frameIndex) const {
                         if(!isValid() || sampleRate <= 0 || frameIndex < 0) return 0;
-                        const int64_t num = static_cast<int64_t>(_fps.numerator());
-                        const int64_t den = static_cast<int64_t>(_fps.denominator());
-                        // Cumulative samples through end of frame N = N * sr * den / num.
-                        // Cast to __int128 would be overkill — for any plausible
-                        // sample rate (<= 768 kHz) and fps numerator (<= 120000),
-                        // sr * den fits in 60 bits and a multiply by frameIndex up
-                        // to 2^31 still fits in int64_t.
-                        const int64_t cumNext = ((frameIndex + 1) * sampleRate * den) / num;
-                        const int64_t cumNow  = (frameIndex * sampleRate * den) / num;
+                        const int64_t cumNow  = cumulativeTicks(sampleRate, frameIndex);
+                        const int64_t cumNext = cumulativeTicks(sampleRate, frameIndex + 1);
                         return static_cast<size_t>(cumNext - cumNow);
                 }
 

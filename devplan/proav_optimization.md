@@ -8,35 +8,25 @@
 
 This document tracks optimization work for the network transmit path (batch send, kernel pacing, PacketTransport abstraction, DPDK-readiness). Font rendering, codec/CSC framework, and userspace packet pacing are complete — see git history.
 
-**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec, VideoTestPattern/AudioTestPattern, userspace packet pacing via `RtpSession::sendPacketsPaced()`, PaintEngine interleaved template overhaul, CSC framework and pipeline bug fixes.
+**Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec, VideoTestPattern/AudioTestPattern, userspace packet pacing via `RtpSession::sendPacketsPaced()`, PaintEngine interleaved template overhaul, CSC framework and pipeline bug fixes, **kernel batch send (`sendmmsg` via `UdpSocket::writeDatagrams()`)**, **kernel pacing (`SO_MAX_PACING_RATE` via `UdpSocket::setPacingRate()`)**, **`SO_TXTIME` enable path**, **`PacketTransport` abstraction with `UdpSocketTransport` and `LoopbackTransport`**, **`RtpSession` migrated to `PacketTransport`** (with `setRemote()` at start time, batched send via the transport, and `setPacingRate()` wrapper for kernel pacing).
 
-**Remaining:** kernel-level batch send (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE` / `SO_TXTIME`), `PacketTransport` abstraction for DPDK-readiness. The new `MediaPipeline` (see `proav_pipeline.md`) is signal-driven end to end, so there is no separate pipeline-scheduler problem to solve in this document.
+**Remaining:** per-packet `SCM_TXTIME` cmsg scheduling on top of the existing `setTxTime()` enable path (sender-side deadline computation), and future DPDK transport backend.  The new `MediaPipeline` (see `proav_pipeline.md`) is signal-driven end to end, so there is no separate pipeline-scheduler problem to solve in this document.
 
 ---
 
-## Batch UDP Transmission: `sendmmsg()`
+## Batch UDP Transmission: `sendmmsg()` — SHIPPED
 
-`RtpSession` currently sends packets one `sendto()` per packet. For a 1080p JPEG fragmented into ~60 RTP packets at 30 fps that is 1800 syscalls/sec just for video, plus the micro-burst the NIC sees each frame interval. `sendmmsg()` hands the kernel the whole batch in one syscall.
+`UdpSocket::writeDatagrams()` batches outbound datagrams through a single `sendmmsg()` call on Linux, with a portable `sendto()` fallback on other platforms.  `RtpSession::sendPackets()` builds the parallel datagram list and hands it to the transport in one shot, which is the path `MediaIOTask_Rtp` uses on every frame.
 
-**UdpSocket additions:**
+Shipped:
+- `UdpSocket::Datagram { const void *data; size_t size; SocketAddress dest; uint64_t txTimeNs; }` and `UdpSocket::DatagramList = List<Datagram>`.
+- `int UdpSocket::writeDatagrams(const DatagramList &)` — one `sendmmsg()` on Linux, `sendto()` fallback elsewhere.  Per-datagram `txTimeNs` fields produce `SCM_TXTIME` cmsgs when non-zero.
+- `RtpSession::sendPackets()` goes through `PacketTransport::sendPackets()`, which in the UDP case delegates to `writeDatagrams()`.
+- Doctest coverage in `tests/network/udpsocket.cpp`: loopback batch send (5 packets), empty list, closed-socket error, invalid entries.
 
-Files: existing `include/promeki/udpsocket.h`, `src/network/udpsocket.cpp`
-
-- [ ] `struct Datagram { const void *data; size_t size; SocketAddress dest; }`
-- [ ] `using DatagramList = List<Datagram>`
-- [ ] `int writeDatagrams(const DatagramList &datagrams)` — one `sendmmsg()` call; returns datagrams sent or -1
-- [ ] Fallback to `sendto()` loop on platforms without `sendmmsg()` (compile-time `#ifdef`)
-- [ ] Convenience overload for many-packets-to-same-destination: `int writeDatagrams(const void * const *data, const size_t *sizes, int count, const SocketAddress &dest)`
-
-**RtpSession changes:**
-
-- [ ] `sendPackets()` builds a `DatagramList` and calls `_socket->writeDatagrams()` in one shot
-- [ ] Single-packet `sendPacket()` keeps using `writeDatagram()`
-
-**Doctest:**
-- [ ] Loopback batch send, verify count and contents
-- [ ] Single-datagram degenerate case
-- [ ] Performance benchmark (optional): compare wall time and syscall count for 100 packets via the old loop vs batch
+Still on the wishlist but not blocking:
+- [ ] Performance benchmark comparing syscall counts / wall time for N packets via the old `writeDatagram` loop vs batch — belongs in the future `benchmark-promeki` target.
+- [ ] Convenience overload for many-packets-to-same-destination: `int writeDatagrams(const void * const *data, const size_t *sizes, int count, const SocketAddress &dest)`.  Low priority — the generic `DatagramList` form already serves `RtpSession::sendPackets()`.
 
 ---
 
@@ -44,26 +34,28 @@ Files: existing `include/promeki/udpsocket.h`, `src/network/udpsocket.cpp`
 
 Batching cuts syscalls, but the real goal is to let the kernel (or NIC) space packets out over time instead of bursting them. Three mechanisms are worth supporting, in order of complexity:
 
-### Option A: `SO_MAX_PACING_RATE` (fq qdisc) — default/recommended
+### Option A: `SO_MAX_PACING_RATE` (fq qdisc) — SHIPPED
 
 Per-socket rate limit enforced by the `fq` qdisc. Modern Linux default; no per-packet overhead; works out of the box on any interface using `fq`.
 
-- [ ] `Error UdpSocket::setPacingRate(uint64_t bytesPerSec)` — `setsockopt(SOL_SOCKET, SO_MAX_PACING_RATE)`
-- [ ] `Error UdpSocket::clearPacingRate()` — sets to `~0U`
-- [ ] `RtpSession::setTargetBitrate(uint64_t bitsPerSec)` — called from sink stages / MediaIO backends at configure time; computes pacing rate (bitrate/8 + headroom) and pushes it to the socket in `start()`
+Shipped:
+- `Error UdpSocket::setPacingRate(uint64_t bytesPerSec)` — `setsockopt(SOL_SOCKET, SO_MAX_PACING_RATE)`, clamped to `UINT32_MAX`.
+- `Error UdpSocket::clearPacingRate()` sets the rate to `PacingRateUnlimited`.
+- `PacketTransport::setPacingRate()` virtual with `UdpSocketTransport` delegation.
+- `RtpSession::setPacingRate()` convenience wrapper that forwards to the transport — used by `MediaIOTask_Rtp` in `KernelFq` mode to derive bytes/sec from the configured `VideoRtpTargetBitrate` (or from the descriptor as a fallback) at open time.
 
-**Verdict:** Simplest option, ~15 lines of code in UdpSocket. Should be the default for any sink that knows its target bitrate.
-
-### Option B: `SO_TXTIME` + ETF qdisc — precise pacing for ST 2110-grade deployments
+### Option B: `SO_TXTIME` + ETF qdisc — PARTIALLY SHIPPED
 
 Per-packet transmit timestamp. Requires ETF qdisc and (for best results) NIC hardware TX scheduling (e.g. Intel i210/i225). Each packet carries a `SCM_TXTIME` cmsg on its `sendmsg()` or per-entry on `sendmmsg()`.
 
-- [ ] `Error UdpSocket::setTxTime(bool enable)`
-- [ ] Extend `Datagram` with an optional `uint64_t txTimeNs`
-- [ ] `writeDatagrams()` sets a per-message `cmsg` with `SCM_TXTIME` when the datagram has a non-zero `txTimeNs`
-- [ ] Probe NIC support at configure time; log degradation if only software ETF is available
+Shipped:
+- `Error UdpSocket::setTxTime(bool enable, int clockId = CLOCK_TAI)` — `setsockopt(SOL_SOCKET, SO_TXTIME, struct sock_txtime)` on Linux.  Disabling is a no-op because a plain send() still works after the socket was configured for SO_TXTIME.
+- `UdpSocket::Datagram::txTimeNs` field on the batch-send datagram struct.  When non-zero, `writeDatagrams()` attaches an `SCM_TXTIME` cmsg per datagram via a per-message control buffer (`CMSG_SPACE(sizeof(uint64_t))` slots stored in a parallel scratch `List<uint8_t>`).
+- `PacketTransport::setTxTime()` virtual with `UdpSocketTransport` delegation.
 
-**Verdict:** Significant setup cost (kernel config, NIC support), but the only way to get truly precise pacing for ST 2110-21. Add after Option A and `sendmmsg()` are working.
+Remaining:
+- [ ] Wire `RtpPacingMode::TxTime` through `MediaIOTask_Rtp` so the backend computes per-packet deadlines from the frame rate and stamps them onto the `Datagram::txTimeNs` fields before handing to `sendPackets()`.  Currently `TxTime` mode still falls through to the `KernelFq` path.
+- [ ] Probe NIC / qdisc support at configure time and log a warning when only software ETF is available (not hardware TX scheduling).
 
 ### Option C: Userspace pacing — DONE
 
@@ -75,52 +67,27 @@ See the DPDK-Readiness section below. Not being built now, but `PacketTransport`
 
 ---
 
-## PacketTransport — Abstract Packet I/O Interface
+## PacketTransport — Abstract Packet I/O Interface — SHIPPED
 
-`RtpSession` currently talks directly to `UdpSocket`. That couples every RTP code path to kernel sockets. A thin transport abstraction breaks that coupling and lets future backends (DPDK, AF_XDP, loopback testing) drop in without touching the RTP/media layer.
+`RtpSession` previously talked directly to `UdpSocket`.  That coupling has been broken by `PacketTransport`, a thin abstract interface that sits between RTP/media code and the kernel (or future DPDK / AF_XDP / loopback test paths).
 
-**Files:**
-- [ ] `include/promeki/packettransport.h`
-- [ ] `include/promeki/udpsockettransport.h` / `src/network/udpsockettransport.cpp`
-- [ ] `include/promeki/loopbacktransport.h` / `src/network/loopbacktransport.cpp`
+Shipped:
+- `include/promeki/packettransport.h` — abstract base with `open`/`close`/`isOpen`, `sendPacket`, `sendPackets(const DatagramList &)`, `receivePacket`, `setPacingRate`, `setTxTime`.  `Datagram` struct matches `UdpSocket::Datagram` shape (data pointer, size, dest, optional `txTimeNs`).
+- `include/promeki/udpsockettransport.h` + `src/network/udpsockettransport.cpp` — owns a `UdpSocket`, applies DSCP / multicast TTL / multicast interface / multicast loopback / reuseAddress at `open()` time.  `sendPackets()` translates the `PacketTransport::DatagramList` into `UdpSocket::DatagramList` and calls `writeDatagrams()` (sendmmsg) in one shot.  `setPacingRate()` / `setTxTime()` delegate to the underlying socket.
+- `include/promeki/loopbacktransport.h` + `src/network/loopbacktransport.cpp` — in-process paired transport for tests.  `LoopbackTransport::pair(&a, &b)` links two instances so a send on one enqueues into the other's receive queue (buffered in a `List<QueueEntry>`).  Used by `tests/network/rtpsession.cpp` to exercise RtpSession end-to-end without touching the kernel network stack.
+- `RtpSession` migrated onto `PacketTransport`:
+  - `Error start(const SocketAddress &localAddr)` still exists and internally builds a `UdpSocketTransport`.
+  - New `Error start(PacketTransport *transport)` lets callers hand in their own (already-open) transport — used by the RtpSession loopback tests and usable by future cases where multiple streams share a transport.
+  - Destination-per-call overloads were removed; callers `setRemote()` once before sending.
+  - `sendPackets()` builds a `PacketTransport::DatagramList` over the shared `RtpPacket` buffer and hands it to `_transport->sendPackets()`.
+  - `setPacingRate()` wraps `_transport->setPacingRate()` so the task layer can set kernel pacing without knowing the concrete transport type.
+- Test coverage:
+  - `tests/network/udpsockettransport.cpp` — construction defaults, open/close, double-open Busy, double-close safe, sendPacket loopback, sendPackets batch loopback, receivePacket path, DSCP/multicast TTL applied at open, setPacingRate, error paths on closed transport.
+  - `tests/network/loopbacktransport.cpp` — pairing, single/batch send, bidirectional, empty receive returns -1, close clears queue, setPacingRate/setTxTime accepted, destructor unhooks peer.
+  - `tests/network/rtpsession.cpp` — every existing test migrated plus new cases for `start(PacketTransport *)`, `start(unopened transport) == NotOpen`, `start(nullptr) == InvalidArgument`, and `sendPackets via LoopbackTransport` verifying SSRC / sequence number / marker bits across a 4-packet batch.
 
-**Interface:**
-
-- [ ] `class PacketTransport` (abstract)
-  - [ ] `virtual Error open() = 0`
-  - [ ] `virtual void close() = 0`
-  - [ ] `virtual bool isOpen() const = 0`
-  - [ ] `virtual ssize_t sendPacket(const void *data, size_t size, const SocketAddress &dest) = 0`
-  - [ ] `virtual int sendPackets(const Datagram *datagrams, int count) = 0`
-  - [ ] `virtual ssize_t receivePacket(void *data, size_t maxSize, SocketAddress *sender = nullptr) = 0`
-  - [ ] `virtual Error setPacingRate(uint64_t bytesPerSec)` — default `NotSupported`
-  - [ ] `virtual Error setTxTime(bool enable)` — default `NotSupported`
-  - [ ] `virtual ~PacketTransport() = default`
-
-**Backends:**
-
-| Backend | `sendPackets()` impl | Pacing | When |
-|---|---|---|---|
-| `UdpSocketTransport` | `sendmmsg()` via `UdpSocket::writeDatagrams()` | `SO_MAX_PACING_RATE` / `SO_TXTIME` | Now |
-| `LoopbackTransport` | Direct memory copy to paired instance | None | For tests |
-| `DpdkTransport` | `rte_eth_tx_burst()` on mbuf ring | Hardware TX scheduling / userspace ring pacing | Future |
-
-**UdpSocketTransport:**
-- [ ] Owns a `UdpSocket`, delegates every method
-- [ ] `sendPackets()` calls `UdpSocket::writeDatagrams()`
-- [ ] `setPacingRate()` / `setTxTime()` delegate to the socket
-- [ ] Constructor takes bind address and optional multicast config
-
-**LoopbackTransport:**
-- [ ] Two paired instances share a `Queue<Buffer>`; one sends, the other receives
-- [ ] Zero-copy: sender's buffer is enqueued directly for the receiver
-- [ ] Lets `MediaIOTask_RtpVideo` / `RtpAudio` integration tests run entirely in-process
-
-**RtpSession migration:**
-- [ ] `RtpSession(PacketTransport *transport, ObjectBase *parent = nullptr)` — new primary constructor
-- [ ] Convenience constructor that internally builds a `UdpSocketTransport` — preserves existing usage sites
-- [ ] `sendPackets()` calls `_transport->sendPackets()` instead of looping `_socket->writeDatagram()`
-- [ ] `start()` / `stop()` dispatch to the transport instead of raw socket calls
+Remaining (not blocking any current work):
+- [ ] DPDK transport backend — the `PacketTransport` interface is ready; the concrete implementation lands when a first customer actually needs it.  `rte_eth_tx_burst()` on an mbuf ring, hardware TX scheduling for pacing where available, userspace ring spacing otherwise.
 
 ---
 
@@ -138,9 +105,9 @@ To keep the DPDK door open:
 
 ## Implementation Order
 
-1. **`UdpSocket::setPacingRate()`** — one small commit, huge impact
-2. **`UdpSocket::writeDatagrams()` via `sendmmsg()`** + `RtpSession::sendPackets()` migration
-3. **`PacketTransport` + `UdpSocketTransport` + `LoopbackTransport`** — lay the abstraction and migrate `RtpSession`
-4. **`MediaIOTask_RtpVideo` / `MediaIOTask_RtpAudio`** — build against `PacketTransport`, not `UdpSocket`
-5. **`SO_TXTIME`** — precise pacing for ST 2110-grade deployments
+1. **`UdpSocket::setPacingRate()`** — SHIPPED
+2. **`UdpSocket::writeDatagrams()` via `sendmmsg()`** + `RtpSession::sendPackets()` migration — SHIPPED
+3. **`PacketTransport` + `UdpSocketTransport` + `LoopbackTransport`** — SHIPPED
+4. **Unified `MediaIOTask_Rtp`** — SHIPPED (writer only; reader mode deferred, see `proav_nodes.md`)
+5. **`SO_TXTIME` per-packet deadlines** — enable path and `Datagram::txTimeNs` shipped; the sender-side per-packet deadline computation in `MediaIOTask_Rtp` is the remaining piece
 6. **DPDK backend** — future phase, once the transport abstraction has shipped and the first customer needs it

@@ -65,84 +65,65 @@ Tracking items that came out of the `Image::convert` / `ImageCodec::configure` r
 
 ---
 
-## MediaIOTask_RtpVideo — NEW
+## MediaIOTask_Rtp — UNIFIED WRITER (SHIPPED, WRITER ONLY)
 
-Bidirectional RTP video transport. Reader mode receives an RTP video stream into frames; Writer mode transmits frames as RTP packets. This backend is new — the old library had a send-only `RtpVideoSinkNode` that was removed with the rest of the MediaNode layer; this reintroduces the send path in the MediaIO framework and adds the receive path that was previously missing.
+Unified RTP video + audio + metadata transmitter.  One MediaIO
+instance carries one SDP session with up to three `m=` sections
+(video / audio / data), each backed by its own `RtpSession`,
+`RtpPayload`, and `UdpSocketTransport` so per-stream DSCP, SSRC,
+and destination can be set independently.  This factoring mirrors
+how SMPTE ST 2110 and AES67 deployments group streams and lets the
+sink publish a single SDP file that a downstream receiver can
+consume as one bundle.
 
-**Files:**
-- [ ] `include/promeki/mediaiotask_rtpvideo.h`
-- [ ] `src/proav/mediaiotask_rtpvideo.cpp`
-- [ ] `tests/mediaiotask_rtpvideo.cpp`
+The old devplan split this into separate `MediaIOTask_RtpVideo`
+and `MediaIOTask_RtpAudio` backends; that split has been merged
+into a single unified task.  The old `RtpVideoSinkNode` /
+`RtpAudioSinkNode` utilities from the deleted MediaNode layer are
+now reintroduced via this task's writer path; reader mode is new
+work and is deferred below.
 
-**Design:**
+**Files (shipped):**
+- `include/promeki/mediaiotask_rtp.h`
+- `src/proav/mediaiotask_rtp.cpp`
+- `tests/mediaiotask_rtp.cpp`
 
-- [ ] Registered as `"RtpVideo"` with `canRead = true`, `canWrite = true`, `canReadWrite = false` (a single instance is a single direction)
-- [ ] Builds on the existing `RtpSession` / `RtpPacket` / `RtpPayload` stack (already complete for the write path)
-- [ ] Uses `PacketTransport` once that abstraction lands (see `proav_optimization.md`); until then, directly wraps `RtpSession` + `UdpSocket`
-- [ ] Config keys:
-  - [ ] `ConfigLocalAddress` / `ConfigLocalPort` — bind address (required)
-  - [ ] `ConfigRemoteAddress` / `ConfigRemotePort` — send target (writer) or expected sender (reader, optional)
-  - [ ] `ConfigMulticastGroup` — optional multicast group + TTL
-  - [ ] `ConfigPayloadType` — RTP payload type (integer, 0-127)
-  - [ ] `ConfigRtpPayload` — payload format name: `"RawVideo"` (ST 2110-20), `"Jpeg"` (RFC 2435), future `"H264"`, `"HEVC"`
-  - [ ] `ConfigClockRate` — RTP clock rate in Hz (90000 for standard video)
-  - [ ] `ConfigDscp` — DSCP marking for QoS
-  - [ ] `ConfigPacingMode` — `"None"` / `"Userspace"` / `"KernelFq"` / `"TxTime"` — selects the pacing mechanism (see `proav_optimization.md`)
-  - [ ] `ConfigTargetBitrate` — used to compute pacing rate
-  - [ ] `ConfigSsrc` — optional fixed SSRC
-- [ ] Reader mode:
-  - [ ] Receives packets, reassembles fragmented frames, emits complete `Frame::Ptr` on CmdRead completion
-  - [ ] Handles packet loss (gaps), timestamp wrap, out-of-order arrival within the reorder window
-  - [ ] Discovers stream parameters from the first-received packets and exposes them via `MediaDesc` in `cmd.mediaDesc` (resolution, pixel format, frame rate) — for uncompressed the SDP configuration drives this; for MJPEG the payload headers carry enough
-  - [ ] `cmd.canSeek = false`, `cmd.frameCount = MediaIO::FrameCountInfinite`
-  - [ ] Supports mid-stream descriptor change via `cmd.mediaDescChanged`
-- [ ] Writer mode:
-  - [ ] Serializes each input frame into RTP packets via the appropriate `RtpPayload`
-  - [ ] Uses `RtpSession::sendPackets()` / `sendPacketsPaced()` based on `ConfigPacingMode`
-  - [ ] Emits `cmd.framesSent`, `cmd.bytesSent`, `cmd.packetsSent` via `MediaIOStats`
-  - [ ] SDP description available via a parameterized command (`executeCmd(MediaIOCommandParams&)` with key `GetSdp`)
-- [ ] PTP lock optional: if `PtpClock` exists and is set via `setParams`, RTP timestamps are derived from PTP; otherwise from a local steady clock
+**Shipped in the writer-mode first pass:**
 
-**Implementation checklist:**
-- [ ] Factory + registration
-- [ ] Sender path tested against loopback using an `MediaIOTask_RtpVideo` reader
-- [ ] Receiver path handles packet reordering and fragment reassembly correctly
-- [ ] Payload format dispatch (RawVideo vs JPEG) based on config
-- [ ] Config error paths (invalid address, unsupported payload)
-- [ ] Back-pressure: writer blocks / `TryAgain` when UDP send buffer is full
-- [ ] Doctest: loopback round-trip for uncompressed, loopback round-trip for MJPEG, packet loss recovery, SDP export
+- Registered as `"Rtp"` with `canWrite = true` only (`canRead` and `canReadWrite` are both false).  Reader mode is rejected at open time.
+- Built on the completed `PacketTransport` / `UdpSocketTransport` stack: every stream owns its own transport so destinations, DSCPs, and bind ports stay independent.
+- Supported payload classes (inferred from the media descriptor, no manual `RtpPayload` config key required):
+  - Video MJPEG via `RtpPayloadJpeg` when the input `PixelDesc` is in the JPEG family.
+  - Video RFC 4175 raw via `RtpPayloadRawVideo` for 8-bit interleaved uncompressed formats.  (Proper ST 2110-20 pgroup sizing for 10/12-bit YCbCr is deferred; the first pass supports RGB8/RGBA8/YUV422 8-bit.)
+  - Audio L16 via `RtpPayloadL16` when the input is `PCMI_S16LE` or `PCMI_S16BE` (`S16LE` is byte-swapped into big-endian wire order inside the task).
+  - Metadata JSON via `RtpPayloadJson` selected by `MediaConfig::DataRtpFormat = JsonMetadata`.
+- Config keys (all in `mediaconfig.h`):
+  - Media descriptor keys are reused from the existing shared catalog: `VideoSize`, `VideoPixelFormat`, `AudioRate`, `AudioChannels`, `FrameRate`.
+  - Transport-global: `RtpLocalAddress` (SocketAddress), `RtpSessionName`, `RtpSessionOrigin`, `RtpPacingMode` (Enum: `None`/`Userspace`/`KernelFq`/`TxTime`), `RtpMulticastTTL`, `RtpMulticastInterface`, `RtpSaveSdpPath`.
+  - Per-stream (Video/Audio/Data prefixed): `RtpDestination` (SocketAddress; empty = stream disabled), `RtpPayloadType`, `RtpClockRate`, `RtpSsrc` (uint32), `RtpDscp`, plus video `RtpTargetBitrate`, audio `RtpPacketTimeUs`, and data `RtpFormat` (Enum: `JsonMetadata` / `St2110_40` placeholder).
+- Pacing modes:
+  - `None` — burst all packets (loopback / LAN only).
+  - `Userspace` — `RtpSession::sendPacketsPaced()` sleeps between packets, spread across one frame interval.
+  - `KernelFq` — `RtpSession::setPacingRate()` maps to `SO_MAX_PACING_RATE` via the `fq` qdisc.  The target rate is drawn from `VideoRtpTargetBitrate` if set, or computed from the descriptor (`width × height × bpp × fps` for uncompressed, 200 Mbps fallback for compressed, `sample_rate × channels × bytes_per_sample × 8` for audio).
+  - `TxTime` — reserved for ST 2110-21-grade per-packet pacing via `SCM_TXTIME`; currently falls back to `KernelFq`.
+- SDP export via two paths:
+  - `MediaConfig::RtpSaveSdpPath` — when non-empty, the generated SDP is written to that file at open time.  Verified end-to-end: `mediaplay -i TPG -c --cc OutputPixelDesc:JPEG_YUV8_422_Rec709 -o Rtp --oc VideoRtpDestination:127.0.0.1:5004 --oc RtpSaveSdpPath:/tmp/stream.sdp` produces a valid `v=0` / `m=video` / `a=rtpmap:26 JPEG/90000` SDP.
+  - `executeCmd(MediaIOCommandParams&)` with `name == "GetSdp"` — returns the SDP text under `result["Sdp"]` for callers that want the live session description without a file round-trip.
+- Stats: `FramesSent`, `PacketsSent`, `BytesSent`, `FramesDropped` via `MediaIOCommandStats`.
+- RTP timestamps: `frame_count × (clock_rate / frame_rate)` from a local steady clock.  PTP-locked timestamps are deferred until `PtpClock` lands (see `network_avoverip.md`).
+- Tests (`tests/mediaiotask_rtp.cpp`, 10 cases, 59 assertions): registry, default config, reader/ReadWrite mode rejection, no-active-streams failure, video loopback with RTP header verification, audio PCMI_S16LE loopback with SSRC verification, metadata JSON loopback, SDP file export, SDP via GetSdp params command.
+- `mediaplay` integration: `stage.cpp` parses `SocketAddress` config values via `SocketAddress::fromString()` so `--oc VideoRtpDestination:239.0.0.1:5004` works straight from the CLI.
+- A convenience script `scripts/rtp-rx-ffplay.sh` launches `ffplay` on an existing SDP file or synthesizes one from command-line parameters for MJPEG / raw / L16 / L24 streams.
 
----
+**Deferred for a follow-up pass:**
 
-## MediaIOTask_RtpAudio — NEW
-
-Bidirectional RTP audio transport (AES67-compatible L16 / L24). New backend; same story as `MediaIOTask_RtpVideo` — the old send-only `RtpAudioSinkNode` was removed with the rest of the MediaNode layer and this reintroduces the send path and adds receive.
-
-**Files:**
-- [ ] `include/promeki/mediaiotask_rtpaudio.h`
-- [ ] `src/proav/mediaiotask_rtpaudio.cpp`
-- [ ] `tests/mediaiotask_rtpaudio.cpp`
-
-**Design:**
-
-- [ ] Registered as `"RtpAudio"`; single-direction per instance (`canRead = true`, `canWrite = true`, `canReadWrite = false`)
-- [ ] Config keys mirror `"RtpVideo"` for network/transport options plus:
-  - [ ] `ConfigSampleRate` — 48000 for AES67, custom for other profiles
-  - [ ] `ConfigChannels`
-  - [ ] `ConfigRtpPayload` — `"L16"` or `"L24"` (maps to the existing `RtpPayloadL16` / `RtpPayloadL24`)
-  - [ ] `ConfigPacketTimeUs` — AES67 standard is 1000µs; configurable 125/250/333/1000 µs
-- [ ] Reader mode:
-  - [ ] Extracts PCM samples from RTP packets, emits whole-frame-sized chunks as `Audio` / `Frame::Ptr`
-  - [ ] Late/missing packet handling via silence fill (logged in `MediaIOStats`)
-- [ ] Writer mode:
-  - [ ] Packs incoming `Audio` into AES67-sized packets and transmits
-  - [ ] Pacing: for AES67 the packet interval is tight (1 ms typical); userspace pacing via `RtpSession::sendPacketsPaced()` is the default; kernel pacing is available via `PacketTransport` when it lands
-
-**Implementation checklist:**
-- [ ] Loopback round-trip test (TPG-generated audio through RtpAudio writer → RtpAudio reader → verify samples)
-- [ ] Multiple packet-time settings
-- [ ] Channel count handling (mono through 8-channel)
-- [ ] Late-packet silence fill
+- [ ] Reader mode (`MediaIOTask_Rtp` as a Reader).  The reassembly bookkeeping for fragmented video frames, timestamp wrap handling, and mid-stream descriptor discovery all need to land before this backend can run bidirectionally.  `cmd.canSeek = false`, `cmd.frameCount = MediaIO::FrameCountInfinite`, and mid-stream descriptor changes via `cmd.mediaDescChanged` when the stream reports a new resolution / pixel format mid-playback.
+- [ ] Proper ST 2110-20 pgroup sizing for 10/12-bit YCbCr in `RtpPayloadRawVideo`.  The current implementation uses a simple `bitsPerPixel` model that works for 8-bit interleaved formats only.
+- [ ] L24 audio support via `RtpPayloadL24`.  The existing payload class handles 3-byte-packed big-endian samples, but `AudioDesc::PCMI_S24LE` stores samples in 4-byte int32 slots — the task needs a pack-and-swap step (or a Converter stage that lands in 3-byte packed form).
+- [ ] SMPTE ST 2110-40 Ancillary Data payload class for the metadata stream.  The `MetadataRtpFormat::St2110_40` enum entry exists but the backend rejects it at configure time until RFC 8331 packet handling is implemented (ST 291 ANC packet parsing, DID/SDID/DBN handling, field/line placement, BCH ECC).
+- [ ] `SO_TXTIME` per-packet deadlines wired through `RtpPacingMode::TxTime` and `PacketTransport::setTxTime()`.  The transport interface is ready; the sender just needs to compute per-packet deadlines from the frame rate.
+- [ ] PTP-locked RTP timestamps once `PtpClock` lands (see `network_avoverip.md`).
+- [ ] Back-pressure: writer should return `Error::TryAgain` when the underlying UDP send buffer is full instead of blocking.  Not a problem at current rates but will matter for ST 2110 uncompressed.
 
 ---
 

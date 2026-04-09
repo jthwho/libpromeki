@@ -170,10 +170,21 @@ class VideoTestPattern {
                  */
                 void setBurnFontFilename(const String &path);
 
-                /** @brief Returns the burn font size in pixels. */
+                /**
+                 * @brief Returns the configured burn font size in pixels.
+                 *
+                 * A value of @c 0 indicates automatic sizing — the
+                 * effective pixel size is computed from the rendered
+                 * image height (36 px at 1080 lines, scaling linearly).
+                 */
                 int burnFontSize() const { return _burnFontSize; }
 
-                /** @brief Sets the burn font size in pixels. */
+                /**
+                 * @brief Sets the burn font size in pixels.
+                 * @param px Font size in pixels, or @c 0 to auto-scale
+                 *           from the rendered image height using the
+                 *           reference of 36 px at 1080 lines.
+                 */
                 void setBurnFontSize(int px);
 
                 /** @brief Returns the static burn text (the custom-text line). */
@@ -320,6 +331,13 @@ class VideoTestPattern {
                 bool            _burnEnabled = false;
                 String          _burnFontFilename;
                 int             _burnFontSize = 36;
+                // Effective font size actually passed to FastFont.
+                // Equals _burnFontSize when that is > 0; when
+                // _burnFontSize is 0 (auto) it is computed from the
+                // rendered image height at renderBurn() time.  Tracked
+                // separately so image-size changes can trigger a font
+                // reconfigure via _burnFontConfigDirty.
+                mutable int     _burnEffectiveFontSize = 36;
                 String          _burnText;
                 Color           _burnTextColor = Color::White;
                 Color           _burnBackgroundColor = Color::Black;

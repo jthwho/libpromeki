@@ -243,7 +243,7 @@ Image VideoTestPattern::create(const ImageDesc &desc, double motionOffset,
 void VideoTestPattern::applyBurnFontConfig() const {
         if(_burnFont == nullptr) return;
         _burnFont->setFontFilename(_burnFontFilename);
-        _burnFont->setFontSize(_burnFontSize);
+        _burnFont->setFontSize(_burnEffectiveFontSize);
         _burnFont->setForegroundColor(_burnTextColor);
         _burnFont->setBackgroundColor(_burnBackgroundColor);
         _burnFontConfigDirty = false;
@@ -262,6 +262,24 @@ void VideoTestPattern::renderBurn(Image &img, const Timecode &tc) const {
         const bool hasTc = !tcLine.isEmpty();
         const bool hasText = !textLine.isEmpty();
         if(!hasTc && !hasText) return;
+
+        // Resolve the effective font size.  A configured size of 0
+        // (auto) scales from the rendered image height using 36 px at
+        // 1080 lines as the reference; explicit non-zero values pass
+        // through unchanged.  When the effective size differs from the
+        // last applied value (either because the config changed or
+        // because the image height changed under auto mode) the font
+        // config gets marked dirty so FastFont is reconfigured below.
+        int effectiveSize = _burnFontSize;
+        if(effectiveSize <= 0) {
+                const int h = static_cast<int>(img.height());
+                effectiveSize = (h * 36 + 540) / 1080;
+                if(effectiveSize < 1) effectiveSize = 1;
+        }
+        if(effectiveSize != _burnEffectiveFontSize) {
+                _burnEffectiveFontSize = effectiveSize;
+                _burnFontConfigDirty = true;
+        }
 
         // Lazy-create the FastFont bound to this image's paint engine.
         PaintEngine pe = img.createPaintEngine();

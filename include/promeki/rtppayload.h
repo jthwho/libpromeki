@@ -65,15 +65,38 @@ class RtpPayload {
                  * @brief Returns the maximum payload size per packet.
                  *
                  * Default is 1200 bytes (MTU-safe, accounts for IP/UDP
-                 * headers within a 1500-byte Ethernet MTU).
+                 * headers within a 1500-byte Ethernet MTU).  Callers
+                 * that need tight per-packet sizing (e.g. AES67 audio
+                 * where each packet must carry exactly one packet-time
+                 * interval worth of samples) can override this via
+                 * @ref setMaxPayloadSize().
                  *
                  * @return Maximum payload bytes per packet.
                  */
-                virtual size_t maxPayloadSize() const { return 1200; }
+                virtual size_t maxPayloadSize() const {
+                        return _maxPayloadSize;
+                }
+
+                /**
+                 * @brief Overrides the maximum payload size per packet.
+                 *
+                 * Used by the audio RTP path to force exact AES67 packet
+                 * sizes (e.g. 192 bytes for stereo L16 @ 1ms at 48 kHz).
+                 * Must be called before @ref pack().  Passing 0 restores
+                 * the default MTU-safe size.
+                 *
+                 * @param bytes Maximum payload bytes per packet (0 = default).
+                 */
+                void setMaxPayloadSize(size_t bytes) {
+                        _maxPayloadSize = (bytes == 0) ? 1200 : bytes;
+                }
 
         protected:
                 /** @brief Default constructor (protected; use a concrete subclass). */
                 RtpPayload() = default;
+
+                /** @brief Maximum bytes per RTP payload (default: 1200, MTU-safe). */
+                size_t _maxPayloadSize = 1200;
 };
 
 /**
@@ -235,6 +258,67 @@ class RtpPayloadRawVideo : public RtpPayload {
                 int      _height;
                 int      _bitsPerPixel;
                 uint8_t  _payloadType = 96;
+};
+
+/**
+ * @brief RTP payload handler for JSON blobs.
+ * @ingroup network
+ *
+ * Implements packing/unpacking of arbitrary JSON-serialized
+ * messages over RTP.  This is the fallback metadata-stream payload
+ * used by @ref MediaIOTask_Rtp when the user wants to ship the
+ * per-frame @ref Metadata object as-is without committing to the
+ * SMPTE ST 2110-40 Ancillary Data wire format.  It is deliberately
+ * simple: each RTP packet carries a raw fragment of the JSON bytes,
+ * in order, and the RTP marker bit on the last packet of each
+ * message signals end-of-message to the receiver.
+ *
+ * No custom in-payload header is added — the only framing is the
+ * RTP sequence number (for ordering) and the marker bit (for
+ * message boundaries).  A full message is reassembled by
+ * concatenating the payloads of consecutive packets sharing the
+ * same RTP timestamp, terminated by the marker bit.
+ *
+ * @par Wire format
+ * @code
+ * +--12 bytes--+------ up to maxPayloadSize bytes ------+
+ * | RTP Header | JSON bytes (fragment of the message)    |
+ * +------------+----------------------------------------+
+ * @endcode
+ *
+ * Since there is no payload-level header, the RTP payload type
+ * must be a dynamic type (96-127); the default is 98.  The clock
+ * rate matches the video reference clock (90000 Hz) so the
+ * metadata stream timestamps can be cross-correlated with a video
+ * RTP stream.
+ */
+class RtpPayloadJson : public RtpPayload {
+        public:
+                /**
+                 * @brief Constructs a JSON payload handler.
+                 * @param payloadType Dynamic payload type (96-127, default 98).
+                 * @param clockRate   RTP clock rate in Hz (default 90000).
+                 */
+                RtpPayloadJson(uint8_t payloadType = 98, uint32_t clockRate = 90000);
+
+                /** @copydoc RtpPayload::payloadType() */
+                uint8_t payloadType() const override { return _payloadType; }
+                /** @copydoc RtpPayload::clockRate() */
+                uint32_t clockRate() const override { return _clockRate; }
+                /** @copydoc RtpPayload::pack() */
+                RtpPacket::List pack(const void *mediaData, size_t size) override;
+                /** @copydoc RtpPayload::unpack() */
+                Buffer unpack(const RtpPacket::List &packets) override;
+
+                /** @brief Sets the RTP payload type number. */
+                void setPayloadType(uint8_t pt) { _payloadType = pt; }
+
+                /** @brief Sets the RTP clock rate. */
+                void setClockRate(uint32_t hz) { _clockRate = hz; }
+
+        private:
+                uint8_t  _payloadType;
+                uint32_t _clockRate;
 };
 
 /**

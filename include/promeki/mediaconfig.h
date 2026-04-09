@@ -226,6 +226,79 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 static inline const ID SdlWindowSize{"SdlWindowSize"};
                 /// @brief String — SDL window title bar text.
                 static inline const ID SdlWindowTitle{"SdlWindowTitle"};
+
+                // ============================================================
+                // RTP sink (MediaIOTask_Rtp)
+                //
+                // Media descriptor keys (VideoSize, VideoPixelFormat,
+                // AudioRate, AudioChannels, FrameRate, etc.) are
+                // reused from the sections above.  The keys below are
+                // specifically the RTP transport and per-stream
+                // endpoint plumbing.  An empty / null destination on
+                // a given stream means that stream is not
+                // transmitted.
+                // ============================================================
+
+                // --- Transport-global ---
+                /// @brief SocketAddress — local bind address for all RTP streams in this sink.
+                static inline const ID RtpLocalAddress{"RtpLocalAddress"};
+                /// @brief String — SDP @c s= line (session name).
+                static inline const ID RtpSessionName{"RtpSessionName"};
+                /// @brief String — SDP @c o= originator username.
+                static inline const ID RtpSessionOrigin{"RtpSessionOrigin"};
+                /// @brief Enum @ref RtpPacingMode — pacing mechanism used for all streams.
+                static inline const ID RtpPacingMode{"RtpPacingMode"};
+                /// @brief int — multicast TTL applied to the transport.
+                static inline const ID RtpMulticastTTL{"RtpMulticastTTL"};
+                /// @brief String — multicast outgoing interface name (empty = default).
+                static inline const ID RtpMulticastInterface{"RtpMulticastInterface"};
+                /// @brief String — if non-empty, the MediaIO opens this file and
+                /// writes the generated SDP session description to it at open time.
+                static inline const ID RtpSaveSdpPath{"RtpSaveSdpPath"};
+
+                // --- Video stream ---
+                /// @brief SocketAddress — destination for the video stream. Empty = disabled.
+                static inline const ID VideoRtpDestination{"VideoRtpDestination"};
+                /// @brief int — RTP payload type (0-127).
+                static inline const ID VideoRtpPayloadType{"VideoRtpPayloadType"};
+                /// @brief int — RTP timestamp clock rate in Hz (default 90000).
+                static inline const ID VideoRtpClockRate{"VideoRtpClockRate"};
+                /// @brief int — fixed SSRC, or 0 to auto-generate.
+                static inline const ID VideoRtpSsrc{"VideoRtpSsrc"};
+                /// @brief int — DSCP marking for the video stream (default 46 / EF).
+                static inline const ID VideoRtpDscp{"VideoRtpDscp"};
+                /// @brief int — target bitrate in bits/sec (0 = compute from descriptor).
+                static inline const ID VideoRtpTargetBitrate{"VideoRtpTargetBitrate"};
+
+                // --- Audio stream ---
+                /// @brief SocketAddress — destination for the audio stream. Empty = disabled.
+                static inline const ID AudioRtpDestination{"AudioRtpDestination"};
+                /// @brief int — RTP payload type (0-127).
+                static inline const ID AudioRtpPayloadType{"AudioRtpPayloadType"};
+                /// @brief int — RTP clock rate in Hz (default matches @c AudioRate).
+                static inline const ID AudioRtpClockRate{"AudioRtpClockRate"};
+                /// @brief int — fixed SSRC, or 0 to auto-generate.
+                static inline const ID AudioRtpSsrc{"AudioRtpSsrc"};
+                /// @brief int — DSCP marking for the audio stream (default 34 / AF41).
+                static inline const ID AudioRtpDscp{"AudioRtpDscp"};
+                /// @brief int — packet time in microseconds (AES67 default 1000).
+                static inline const ID AudioRtpPacketTimeUs{"AudioRtpPacketTimeUs"};
+
+                // --- Data / metadata stream ---
+                /// @brief bool — enable transmission of per-frame Metadata.
+                static inline const ID DataEnabled{"DataEnabled"};
+                /// @brief SocketAddress — destination for the metadata stream. Empty = disabled.
+                static inline const ID DataRtpDestination{"DataRtpDestination"};
+                /// @brief int — RTP payload type (0-127).
+                static inline const ID DataRtpPayloadType{"DataRtpPayloadType"};
+                /// @brief int — RTP clock rate in Hz (default 90000).
+                static inline const ID DataRtpClockRate{"DataRtpClockRate"};
+                /// @brief int — fixed SSRC, or 0 to auto-generate.
+                static inline const ID DataRtpSsrc{"DataRtpSsrc"};
+                /// @brief int — DSCP marking for the metadata stream.
+                static inline const ID DataRtpDscp{"DataRtpDscp"};
+                /// @brief Enum @ref MetadataRtpFormat — wire format for the metadata stream.
+                static inline const ID DataRtpFormat{"DataRtpFormat"};
 };
 
 /**

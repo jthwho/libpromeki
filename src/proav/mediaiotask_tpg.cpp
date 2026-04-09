@@ -45,21 +45,24 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         cfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                         cfg.set(MediaConfig::VideoSolidColor, Color::Black);
                         cfg.set(MediaConfig::VideoMotion, 0.0);
-                        // Video burn-in
-                        cfg.set(MediaConfig::VideoBurnEnabled, false);
+                        // Video burn-in — on by default so the plain
+                        // TPG stream shows timecode out of the box.
+                        // Font size 0 means "auto": VideoTestPattern
+                        // scales from image height (36px at 1080p).
+                        cfg.set(MediaConfig::VideoBurnEnabled, true);
                         cfg.set(MediaConfig::VideoBurnFontPath, String());
-                        cfg.set(MediaConfig::VideoBurnFontSize, 36);
+                        cfg.set(MediaConfig::VideoBurnFontSize, 0);
                         cfg.set(MediaConfig::VideoBurnText, String());
                         cfg.set(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
                         cfg.set(MediaConfig::VideoBurnTextColor, Color::White);
                         cfg.set(MediaConfig::VideoBurnBgColor, Color::Black);
                         cfg.set(MediaConfig::VideoBurnDrawBg, true);
-                        // Audio — also enabled by default so the plain
-                        // TPG stream ships with a 1 kHz tone on stereo
-                        // 48 kHz PCM, matching the "visible + audible
-                        // reference" expectation.
+                        // Audio — enabled by default, defaulting to
+                        // the AvSync pattern so the plain TPG stream
+                        // emits a per-frame A/V sync marker that pairs
+                        // with the video AvSync pattern and the burn.
                         cfg.set(MediaConfig::AudioEnabled, true);
-                        cfg.set(MediaConfig::AudioMode, AudioPattern::Tone);
+                        cfg.set(MediaConfig::AudioMode, AudioPattern::AvSync);
                         cfg.set(MediaConfig::AudioRate, 48000.0f);
                         cfg.set(MediaConfig::AudioChannels, 2);
                         cfg.set(MediaConfig::AudioToneFrequency, 1000.0);
@@ -142,13 +145,13 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 // Burn-in configuration.  VideoTestPattern owns the
                 // cached background and applies the burn on a copy, so
                 // there's no pre-render pass needed here.
-                bool burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, false);
+                bool burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, true);
                 _videoPattern.setBurnEnabled(burnEnabled);
                 if(burnEnabled) {
                         _videoPattern.setBurnFontFilename(
                                 cfg.getAs<String>(MediaConfig::VideoBurnFontPath, String()));
                         _videoPattern.setBurnFontSize(
-                                cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 36));
+                                cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 0));
                         _videoPattern.setBurnText(
                                 cfg.getAs<String>(MediaConfig::VideoBurnText, String()));
                         _videoPattern.setBurnTextColor(

@@ -159,59 +159,206 @@ static PixelDesc::Data makeJPEG_RGB8() {
         return d;
 }
 
-static PixelDesc::Data makeJPEG_YUV8_422() {
+// ---------------------------------------------------------------------------
+// JPEG YCbCr factory helper
+// ---------------------------------------------------------------------------
+//
+// Builds one entry from the full complement of JPEG YCbCr variants
+// (matrix × range × subsampling).  Every variant has the same
+// general shape — a compressed PixelDesc with the "jpeg" codec, a
+// matching colour model, and encodeSources / decodeTargets lists
+// drawn from the uncompressed YCbCr family that matches its own
+// (matrix, range) pair — so a single helper keeps the eight
+// definitions (2 subsampling × 2 matrix × 2 range) short and
+// consistent.  The helper sets compSemantics and a default
+// descriptor string automatically so all variants stay in sync.
+struct JpegYuvEntry {
+        PixelDesc::ID         id;
+        const char           *name;
+        PixelFormat::ID       pixelFormat;  // I_422_3x8 or P_420_3x8
+        ColorModel::ID        colorModel;   // YCbCr_Rec709 or YCbCr_Rec601
+        bool                  limited;      // true = [16..235]/[16..240], false = [0..255]
+        bool                  is420;        // true = 4:2:0, false = 4:2:2
+        List<PixelDesc::ID>   encodeSources;
+        List<PixelDesc::ID>   decodeTargets;
+};
+
+static PixelDesc::Data makeJPEG_YUV(const JpegYuvEntry &e) {
         PixelDesc::Data d;
-        d.id                        = PixelDesc::JPEG_YUV8_422_Rec709;
-        d.name                      = "JPEG_YUV8_422_Rec709";
-        d.desc                      = "JPEG-compressed 8-bit YCbCr 4:2:2";
-        d.pixelFormat               = PixelFormat(PixelFormat::I_422_3x8);
-        d.colorModel                = ColorModel(ColorModel::YCbCr_Rec709);
-        d.compressed                = true;
-        d.codecName                 = "jpeg";
-        // Only the natural YUV 4:2:2 family — RGB inputs produce
-        // JPEG_RGB8_sRGB from the codec, not JPEG_YUV8_422_Rec709, so
-        // they must CSC through YUV8_422_Rec709 (the first listed
-        // source) before encoding.  Image::convert() handles that hop
-        // automatically.
-        d.encodeSources             = { PixelDesc::YUV8_422_Rec709,
-                                        PixelDesc::YUV8_422_UYVY_Rec709,
-                                        PixelDesc::YUV8_422_Planar_Rec709 };
-        d.decodeTargets             = { PixelDesc::YUV8_422_Rec709,
-                                        PixelDesc::YUV8_422_UYVY_Rec709,
-                                        PixelDesc::YUV8_422_Planar_Rec709,
-                                        PixelDesc::RGB8_sRGB,
-                                        PixelDesc::RGBA8_sRGB };
-        d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
-        d.compSemantics[0]          = { "Luma",           "Y",  16, 235 };
-        d.compSemantics[1]          = { "Chroma Blue",    "Cb", 16, 240 };
-        d.compSemantics[2]          = { "Chroma Red",     "Cr", 16, 240 };
+        d.id            = e.id;
+        d.name          = e.name;
+        // Build a short, consistent description string.
+        const char *matrixName = (e.colorModel == ColorModel::YCbCr_Rec709)
+                                ? "Rec.709" : "Rec.601";
+        const char *rangeName  = e.limited ? "limited range" : "full range";
+        const char *subsampling = e.is420 ? "4:2:0" : "4:2:2";
+        d.desc = String("JPEG-compressed 8-bit YCbCr ") + String(subsampling) +
+                 String(" (") + String(matrixName) + String(" matrix, ") +
+                 String(rangeName) + String(")");
+        d.pixelFormat   = PixelFormat(e.pixelFormat);
+        d.colorModel    = ColorModel(e.colorModel);
+        d.compressed    = true;
+        d.codecName     = "jpeg";
+        d.encodeSources = e.encodeSources;
+        d.decodeTargets = e.decodeTargets;
+        d.fourccList    = e.is420
+                ? List<FourCC>{ "jpeg", "mjpg" }
+                : List<FourCC>{ "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
+
+        if(e.limited) {
+                d.compSemantics[0] = { "Luma",        "Y",  16, 235 };
+                d.compSemantics[1] = { "Chroma Blue", "Cb", 16, 240 };
+                d.compSemantics[2] = { "Chroma Red",  "Cr", 16, 240 };
+        } else {
+                // Full range per JFIF convention.  libjpeg writes the
+                // input bytes verbatim into the JPEG bitstream, so the
+                // comp semantics must match the byte range the CSC
+                // pipeline produces on the input side.  A JFIF-assuming
+                // decoder (ffplay, browsers, libjpeg-turbo) interprets
+                // the decoded bytes as full range regardless — using
+                // limited range here would make black (Y=16) display as
+                // dark grey on the receiver.
+                d.compSemantics[0] = { "Luma",        "Y",  0, 255 };
+                d.compSemantics[1] = { "Chroma Blue", "Cb", 0, 255 };
+                d.compSemantics[2] = { "Chroma Red",  "Cr", 0, 255 };
+        }
         return d;
 }
 
+// -- Rec.709 limited (the default YCbCr convention — existing IDs) --
+
+static PixelDesc::Data makeJPEG_YUV8_422_Rec709() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_422_Rec709,
+                "JPEG_YUV8_422_Rec709",
+                PixelFormat::I_422_3x8, ColorModel::YCbCr_Rec709,
+                /*limited*/ true, /*is420*/ false,
+                { PixelDesc::YUV8_422_Rec709,
+                  PixelDesc::YUV8_422_UYVY_Rec709,
+                  PixelDesc::YUV8_422_Planar_Rec709 },
+                { PixelDesc::YUV8_422_Rec709,
+                  PixelDesc::YUV8_422_UYVY_Rec709,
+                  PixelDesc::YUV8_422_Planar_Rec709,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+static PixelDesc::Data makeJPEG_YUV8_420_Rec709() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_420_Rec709,
+                "JPEG_YUV8_420_Rec709",
+                PixelFormat::P_420_3x8, ColorModel::YCbCr_Rec709,
+                /*limited*/ true, /*is420*/ true,
+                { PixelDesc::YUV8_420_Planar_Rec709,
+                  PixelDesc::YUV8_420_SemiPlanar_Rec709 },
+                { PixelDesc::YUV8_420_Planar_Rec709,
+                  PixelDesc::YUV8_420_SemiPlanar_Rec709,
+                  PixelDesc::YUV8_422_UYVY_Rec709,
+                  PixelDesc::YUV8_422_Rec709,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+// -- Rec.601 limited --
+
+static PixelDesc::Data makeJPEG_YUV8_422_Rec601() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_422_Rec601,
+                "JPEG_YUV8_422_Rec601",
+                PixelFormat::I_422_3x8, ColorModel::YCbCr_Rec601,
+                /*limited*/ true, /*is420*/ false,
+                { PixelDesc::YUV8_422_Rec601,
+                  PixelDesc::YUV8_422_UYVY_Rec601 },
+                { PixelDesc::YUV8_422_Rec601,
+                  PixelDesc::YUV8_422_UYVY_Rec601,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+static PixelDesc::Data makeJPEG_YUV8_420_Rec601() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_420_Rec601,
+                "JPEG_YUV8_420_Rec601",
+                PixelFormat::P_420_3x8, ColorModel::YCbCr_Rec601,
+                /*limited*/ true, /*is420*/ true,
+                { PixelDesc::YUV8_420_Planar_Rec601,
+                  PixelDesc::YUV8_420_SemiPlanar_Rec601 },
+                { PixelDesc::YUV8_420_Planar_Rec601,
+                  PixelDesc::YUV8_420_SemiPlanar_Rec601,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+// -- Rec.709 full (encode sources are the new full-range uncompressed intermediates) --
+
+static PixelDesc::Data makeJPEG_YUV8_422_Rec709_Full() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_422_Rec709_Full,
+                "JPEG_YUV8_422_Rec709_Full",
+                PixelFormat::I_422_3x8, ColorModel::YCbCr_Rec709,
+                /*limited*/ false, /*is420*/ false,
+                { PixelDesc::YUV8_422_Rec709_Full },
+                { PixelDesc::YUV8_422_Rec709_Full,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+static PixelDesc::Data makeJPEG_YUV8_420_Rec709_Full() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_420_Rec709_Full,
+                "JPEG_YUV8_420_Rec709_Full",
+                PixelFormat::P_420_3x8, ColorModel::YCbCr_Rec709,
+                /*limited*/ false, /*is420*/ true,
+                { PixelDesc::YUV8_420_Planar_Rec709_Full },
+                { PixelDesc::YUV8_420_Planar_Rec709_Full,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+// -- Rec.601 full (the strict JFIF-compatible variants) --
+
+static PixelDesc::Data makeJPEG_YUV8_422_Rec601_Full() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_422_Rec601_Full,
+                "JPEG_YUV8_422_Rec601_Full",
+                PixelFormat::I_422_3x8, ColorModel::YCbCr_Rec601,
+                /*limited*/ false, /*is420*/ false,
+                { PixelDesc::YUV8_422_Rec601_Full },
+                { PixelDesc::YUV8_422_Rec601_Full,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+static PixelDesc::Data makeJPEG_YUV8_420_Rec601_Full() {
+        return makeJPEG_YUV({
+                PixelDesc::JPEG_YUV8_420_Rec601_Full,
+                "JPEG_YUV8_420_Rec601_Full",
+                PixelFormat::P_420_3x8, ColorModel::YCbCr_Rec601,
+                /*limited*/ false, /*is420*/ true,
+                { PixelDesc::YUV8_420_Planar_Rec601_Full },
+                { PixelDesc::YUV8_420_Planar_Rec601_Full,
+                  PixelDesc::RGB8_sRGB,
+                  PixelDesc::RGBA8_sRGB }
+        });
+}
+
+// ---------------------------------------------------------------------------
+// Legacy single-entry wrappers used by the registry init block
+// ---------------------------------------------------------------------------
+
+static PixelDesc::Data makeJPEG_YUV8_422() {
+        return makeJPEG_YUV8_422_Rec709();
+}
+
 static PixelDesc::Data makeJPEG_YUV8_420() {
-        PixelDesc::Data d;
-        d.id                        = PixelDesc::JPEG_YUV8_420_Rec709;
-        d.name                      = "JPEG_YUV8_420_Rec709";
-        d.desc                      = "JPEG-compressed 8-bit YCbCr 4:2:0";
-        d.pixelFormat               = PixelFormat(PixelFormat::P_420_3x8);
-        d.colorModel                = ColorModel(ColorModel::YCbCr_Rec709);
-        d.compressed                = true;
-        d.codecName                 = "jpeg";
-        // Only the natural YUV 4:2:0 family — see JPEG_YUV8_422_Rec709
-        // for the rationale.  RGB inputs CSC through YUV8_420_Planar_Rec709.
-        d.encodeSources             = { PixelDesc::YUV8_420_Planar_Rec709,
-                                        PixelDesc::YUV8_420_SemiPlanar_Rec709 };
-        d.decodeTargets             = { PixelDesc::YUV8_420_Planar_Rec709,
-                                        PixelDesc::YUV8_420_SemiPlanar_Rec709,
-                                        PixelDesc::YUV8_422_UYVY_Rec709,
-                                        PixelDesc::YUV8_422_Rec709,
-                                        PixelDesc::RGB8_sRGB,
-                                        PixelDesc::RGBA8_sRGB };
-        d.fourccList                = { "jpeg", "mjpg" };
-        d.compSemantics[0]          = { "Luma",           "Y",  16, 235 };
-        d.compSemantics[1]          = { "Chroma Blue",    "Cb", 16, 240 };
-        d.compSemantics[2]          = { "Chroma Red",     "Cr", 16, 240 };
-        return d;
+        return makeJPEG_YUV8_420_Rec709();
 }
 
 static PixelDesc::Data makeYUV8_422_UYVY() {
@@ -307,6 +454,16 @@ static const PixelDesc::CompSemantic ycbcrSem10[] = { {"Luma","Y",64,940}, {"Chr
 static const PixelDesc::CompSemantic ycbcrSem12[] = { {"Luma","Y",256,3760}, {"Chroma Blue","Cb",256,3840}, {"Chroma Red","Cr",256,3840} };
 static const PixelDesc::CompSemantic ycbcrSem16[] = { {"Luma","Y",4096,60160}, {"Chroma Blue","Cb",4096,61440}, {"Chroma Red","Cr",4096,61440} };
 
+// Full-range (0..255 / 0..1023 / 0..4095 / 0..65535) YCbCr comp
+// semantics.  The library-wide YCbCr default is limited range (the
+// unsuffixed sem arrays above) because broadcast / SDI / ST 2110
+// pipelines are overwhelmingly limited-range.  These "_Full"
+// variants are the explicit full-range opt-in, used by JPEG / JFIF
+// interop paths and by any future pipeline that needs a full-range
+// YCbCr intermediate (e.g. a CSC fast-path into a JFIF-compatible
+// JPEG encode).
+static const PixelDesc::CompSemantic ycbcrSem8Full[]  = { {"Luma","Y",0,255}, {"Chroma Blue","Cb",0,255}, {"Chroma Red","Cr",0,255} };
+
 static PixelDesc::Data makeYCbCrDesc(PixelDesc::ID id, const char *name, const char *desc,
                                      PixelFormat::ID pfId, const PixelDesc::CompSemantic *sem) {
         PixelDesc::Data d;
@@ -334,6 +491,49 @@ static PixelDesc::Data makeYCbCrDescWithModel(PixelDesc::ID id, const char *name
         d.compSemantics[1] = sem[1];
         d.compSemantics[2] = sem[2];
         return d;
+}
+
+// -- Full-range uncompressed YCbCr 4:2:2 / 4:2:0 --
+//
+// The default YCbCr variants are limited range per the library
+// convention; these "_Full" entries are the explicit full-range
+// opt-in.  They exist primarily as encode-source intermediates
+// for the full-range JPEG PixelDescs so the CSC pipeline can land
+// in a byte range that matches what the JPEG codec will write
+// verbatim into the JFIF bitstream.  General pipeline code is
+// also free to use them any time a full-range YCbCr
+// representation is more appropriate than the broadcast default.
+
+static PixelDesc::Data makeYUV8_422_Rec709_Full() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_422_Rec709_Full,
+                "YUV8_422_Rec709_Full",
+                "8-bit YCbCr 4:2:2 YUYV, Rec.709, full range",
+                PixelFormat::I_422_3x8, ycbcrSem8Full,
+                ColorModel::YCbCr_Rec709);
+}
+
+static PixelDesc::Data makeYUV8_422_Rec601_Full() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_422_Rec601_Full,
+                "YUV8_422_Rec601_Full",
+                "8-bit YCbCr 4:2:2 YUYV, Rec.601, full range",
+                PixelFormat::I_422_3x8, ycbcrSem8Full,
+                ColorModel::YCbCr_Rec601);
+}
+
+static PixelDesc::Data makeYUV8_420_Planar_Rec709_Full() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_420_Planar_Rec709_Full,
+                "YUV8_420_Planar_Rec709_Full",
+                "8-bit YCbCr 4:2:0 planar, Rec.709, full range",
+                PixelFormat::P_420_3x8, ycbcrSem8Full,
+                ColorModel::YCbCr_Rec709);
+}
+
+static PixelDesc::Data makeYUV8_420_Planar_Rec601_Full() {
+        return makeYCbCrDescWithModel(PixelDesc::YUV8_420_Planar_Rec601_Full,
+                "YUV8_420_Planar_Rec601_Full",
+                "8-bit YCbCr 4:2:0 planar, Rec.601, full range",
+                PixelFormat::P_420_3x8, ycbcrSem8Full,
+                ColorModel::YCbCr_Rec601);
 }
 
 static PixelDesc::Data makeBGRDesc(PixelDesc::ID id, const char *name, const char *desc,
@@ -1577,6 +1777,26 @@ struct PixelDescRegistry {
                 add(makeProRes_422_HQ());
                 add(makeProRes_4444());
                 add(makeProRes_4444_XQ());
+
+                // Full-range uncompressed YCbCr intermediates (used by
+                // the full-range JPEG encode path and any other
+                // pipeline that needs full-range YCbCr).
+                add(makeYUV8_422_Rec709_Full());
+                add(makeYUV8_422_Rec601_Full());
+                add(makeYUV8_420_Planar_Rec709_Full());
+                add(makeYUV8_420_Planar_Rec601_Full());
+
+                // Full complement of JPEG YCbCr variants.  The two
+                // Rec.709 limited-range entries are already registered
+                // earlier in this block via the legacy
+                // makeJPEG_YUV8_422 / makeJPEG_YUV8_420 wrappers; these
+                // are the six additional (matrix × range) cells.
+                add(makeJPEG_YUV8_422_Rec601());
+                add(makeJPEG_YUV8_420_Rec601());
+                add(makeJPEG_YUV8_422_Rec709_Full());
+                add(makeJPEG_YUV8_420_Rec709_Full());
+                add(makeJPEG_YUV8_422_Rec601_Full());
+                add(makeJPEG_YUV8_420_Rec601_Full());
         }
 
         void add(PixelDesc::Data d) {

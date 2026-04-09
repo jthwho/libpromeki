@@ -8,6 +8,7 @@
 #pragma once
 
 #include <promeki/buffer.h>
+#include <promeki/list.h>
 #include <promeki/abstractsocket.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -47,6 +48,29 @@ PROMEKI_NAMESPACE_BEGIN
 class UdpSocket : public AbstractSocket {
         PROMEKI_OBJECT(UdpSocket, AbstractSocket)
         public:
+                /**
+                 * @brief Describes a single datagram for batch-send APIs.
+                 *
+                 * Used by @ref writeDatagrams() to submit many datagrams
+                 * in one syscall.  The @c data pointer must remain valid
+                 * until the call returns.  When @c txTimeNs is non-zero
+                 * and the socket has transmit-time enabled, the kernel
+                 * (via the ETF qdisc) will hold the packet until the
+                 * requested send time.
+                 */
+                struct Datagram {
+                        const void     *data = nullptr; ///< @brief Pointer to the packet bytes (caller-owned).
+                        size_t          size = 0;       ///< @brief Number of bytes to send.
+                        SocketAddress   dest;           ///< @brief Destination address and port.
+                        uint64_t        txTimeNs = 0;   ///< @brief Optional SCM_TXTIME nanoseconds since epoch (0 = immediate).
+                };
+
+                /** @brief List of datagrams for batch send. */
+                using DatagramList = List<Datagram>;
+
+                /** @brief Value returned by @ref setPacingRate() to disable pacing. */
+                static constexpr uint64_t PacingRateUnlimited = ~static_cast<uint64_t>(0);
+
                 /**
                  * @brief Constructs a UdpSocket.
                  * @param parent The parent object, or nullptr.
@@ -131,6 +155,87 @@ class UdpSocket : public AbstractSocket {
                  * @return Bytes sent, or -1 on error.
                  */
                 ssize_t writeDatagram(const Buffer &data, const SocketAddress &dest);
+
+                /**
+                 * @brief Sends a batch of datagrams in one syscall.
+                 *
+                 * On Linux this uses @c sendmmsg(), which hands the
+                 * kernel the entire batch in a single system call and
+                 * avoids the per-packet context-switch cost of looping
+                 * on @c sendto().  On platforms without @c sendmmsg()
+                 * the implementation falls back to a @c sendto() loop
+                 * with equivalent semantics.
+                 *
+                 * Each datagram's @c data pointer must remain valid
+                 * until this call returns.  The kernel copies into its
+                 * own buffers before this function returns; callers do
+                 * not need to keep the data alive afterwards.
+                 *
+                 * If @c txTimeNs is non-zero and transmit-time is
+                 * enabled (see @ref setTxTime()), the datagram carries
+                 * a @c SCM_TXTIME cmsg and is held by the ETF qdisc
+                 * until the target time.
+                 *
+                 * On partial failure the kernel reports how many
+                 * datagrams it accepted before erroring; this call
+                 * returns that count.  Callers that care about
+                 * completeness should compare against
+                 * @c datagrams.size().
+                 *
+                 * @param datagrams The list of datagrams to send.
+                 * @return The number of datagrams accepted by the
+                 *         kernel, or -1 if none were sent.
+                 */
+                int writeDatagrams(const DatagramList &datagrams);
+
+                /**
+                 * @brief Sets a per-socket transmit rate limit.
+                 *
+                 * Uses @c SO_MAX_PACING_RATE, which is enforced by the
+                 * @c fq qdisc on Linux (default on modern kernels).
+                 * Packets submitted via @c writeDatagram() or
+                 * @c writeDatagrams() beyond the configured rate are
+                 * held by the qdisc and released on schedule, with
+                 * zero per-packet CPU cost.
+                 *
+                 * Pass @ref PacingRateUnlimited to disable pacing.
+                 *
+                 * @param bytesPerSec Maximum transmit rate in bytes/sec.
+                 * @return Error::Ok on success, Error::NotSupported if
+                 *         the platform does not implement it, or
+                 *         another error on failure.
+                 */
+                Error setPacingRate(uint64_t bytesPerSec);
+
+                /**
+                 * @brief Clears the transmit rate limit set by @ref setPacingRate().
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error clearPacingRate();
+
+                /**
+                 * @brief Enables per-packet transmit-time scheduling.
+                 *
+                 * Sets @c SO_TXTIME on Linux, which lets individual
+                 * datagrams carry a @c SCM_TXTIME nanosecond deadline
+                 * via @ref Datagram::txTimeNs.  Requires the ETF qdisc;
+                 * works best with NICs that support hardware TX
+                 * scheduling (Intel i210, i225).  Used by ST 2110-21
+                 * sender pacing and by precise AES67 pacing.
+                 *
+                 * Disabling is a no-op — once the caller stops passing
+                 * a non-zero @ref Datagram::txTimeNs, subsequent sends
+                 * behave like plain UDP without reconfiguring the
+                 * socket.
+                 *
+                 * @param enable True to enable, false to disable.
+                 * @param clockId Clock ID for the deadlines (defaults
+                 *                to @c CLOCK_TAI to match PTP).
+                 * @return Error::Ok on success, Error::NotSupported if
+                 *         the platform does not implement it, or
+                 *         another error on failure.
+                 */
+                Error setTxTime(bool enable, int clockId = 11 /* CLOCK_TAI */);
 
                 /**
                  * @brief Receives a datagram.

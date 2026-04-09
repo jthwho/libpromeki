@@ -492,4 +492,70 @@ Buffer RtpPayloadJpeg::unpack(const RtpPacket::List &packets) {
         return result;
 }
 
+// ============================================================================
+// RtpPayloadJson
+// ============================================================================
+
+RtpPayloadJson::RtpPayloadJson(uint8_t payloadType, uint32_t clockRate)
+        : _payloadType(payloadType), _clockRate(clockRate) { }
+
+RtpPacket::List RtpPayloadJson::pack(const void *mediaData, size_t size) {
+        RtpPacket::List packets;
+        if(size == 0 || mediaData == nullptr) return packets;
+
+        const size_t maxPayload = maxPayloadSize();
+        if(maxPayload == 0) return packets;
+
+        const size_t numPackets = packetCount(size, maxPayload);
+        // Each packet gets space for the 12-byte RTP header plus up
+        // to maxPayload of JSON bytes.  A single shared buffer holds
+        // the whole batch.
+        const size_t totalBufSize = numPackets * (RtpPacket::HeaderSize + maxPayload);
+        auto buf = Buffer::Ptr::create(totalBufSize);
+        buf->setSize(totalBufSize);
+
+        const uint8_t *src = static_cast<const uint8_t *>(mediaData);
+        size_t remaining   = size;
+        size_t bufOffset   = 0;
+        uint8_t *bufData   = static_cast<uint8_t *>(buf->data());
+
+        for(size_t i = 0; i < numPackets; i++) {
+                const size_t chunk  = std::min(maxPayload, remaining);
+                const size_t pktLen = RtpPacket::HeaderSize + chunk;
+
+                // Clear the header slot; the RtpSession fills it in
+                // before transmission.
+                std::memset(bufData + bufOffset, 0, RtpPacket::HeaderSize);
+                // Payload fragment.
+                std::memcpy(bufData + bufOffset + RtpPacket::HeaderSize, src, chunk);
+
+                packets.pushToBack(RtpPacket(buf, bufOffset, pktLen));
+                bufOffset += pktLen;
+                src       += chunk;
+                remaining -= chunk;
+        }
+        return packets;
+}
+
+Buffer RtpPayloadJson::unpack(const RtpPacket::List &packets) {
+        // Calculate total payload size across all fragments.
+        size_t totalSize = 0;
+        for(const auto &pkt : packets) {
+                if(!pkt.isNull() && pkt.payloadSize() > 0) {
+                        totalSize += pkt.payloadSize();
+                }
+        }
+        Buffer result(totalSize);
+        result.setSize(totalSize);
+        if(totalSize == 0) return result;
+        uint8_t *dst = static_cast<uint8_t *>(result.data());
+        for(const auto &pkt : packets) {
+                if(!pkt.isNull() && pkt.payloadSize() > 0) {
+                        std::memcpy(dst, pkt.payload(), pkt.payloadSize());
+                        dst += pkt.payloadSize();
+                }
+        }
+        return result;
+}
+
 PROMEKI_NAMESPACE_END

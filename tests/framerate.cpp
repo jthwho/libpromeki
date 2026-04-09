@@ -371,3 +371,86 @@ TEST_CASE("FrameRate: samplesPerFrame on bad inputs returns 0") {
         CHECK(fps.samplesPerFrame(-1, 0) == 0u);
         CHECK(fps.samplesPerFrame(48000, -1) == 0u);
 }
+
+// ============================================================================
+// cumulativeTicks (exact rational clock at frame N)
+// ============================================================================
+
+TEST_CASE("FrameRate: cumulativeTicks zero frame is always zero") {
+        FrameRate fps(FrameRate::FPS_2997);
+        CHECK(fps.cumulativeTicks(90000, 0) == 0);
+        CHECK(fps.cumulativeTicks(48000, 0) == 0);
+}
+
+TEST_CASE("FrameRate: cumulativeTicks integer rate stride is exact") {
+        // 30 fps @ 90000 Hz → exactly 3000 ticks per frame.
+        FrameRate fps(FrameRate::FPS_30);
+        for(int64_t n = 0; n < 100; ++n) {
+                CHECK(fps.cumulativeTicks(90000, n) == n * 3000);
+        }
+}
+
+TEST_CASE("FrameRate: cumulativeTicks 29.97 @ 90000 is exact integer") {
+        // 29.97 = 30000/1001.  Per-frame stride = 90000 * 1001 / 30000 = 3003
+        // (integer, because 1001 divides evenly).
+        FrameRate fps(FrameRate::FPS_2997);
+        for(int64_t n = 0; n < 100; ++n) {
+                CHECK(fps.cumulativeTicks(90000, n) == n * 3003);
+        }
+}
+
+TEST_CASE("FrameRate: cumulativeTicks 23.976 @ 90000 matches rational truncation") {
+        // 23.976 = 24000/1001.  Per-frame stride at 90 kHz is
+        // 90000 × 1001 / 24000 = 3753.75, so the cumulative count
+        // is a truncation of the exact rational value — consecutive
+        // stride values alternate between 3753 and 3754 (in a
+        // pattern that sums correctly to 3753.75 × N over the full
+        // period).  The assertion is just that cumulativeTicks
+        // matches the same rational truncation the caller would do
+        // by hand.
+        FrameRate fps(FrameRate::FPS_2398);
+        for(int64_t n = 0; n <= 1001; ++n) {
+                int64_t expected = (n * 90000 * 1001) / 24000;
+                CHECK(fps.cumulativeTicks(90000, n) == expected);
+        }
+}
+
+TEST_CASE("FrameRate: cumulativeTicks monotonic under fractional rates") {
+        // The cumulative tick count must never go backwards.  Even
+        // when the per-frame stride alternates, cumulative(n+1) >=
+        // cumulative(n) holds for every frame.
+        FrameRate fps(FrameRate::FPS_2997);
+        int64_t prev = 0;
+        for(int64_t n = 1; n < 1000; ++n) {
+                int64_t cur = fps.cumulativeTicks(48000, n);
+                CHECK(cur >= prev);
+                prev = cur;
+        }
+}
+
+TEST_CASE("FrameRate: cumulativeTicks matches samplesPerFrame cumulative sum") {
+        // The cumulative sum of samplesPerFrame(n) for n in [0..N-1]
+        // must equal cumulativeTicks(N) since samplesPerFrame is
+        // defined as the difference between consecutive cumulative
+        // values.  Validates that the refactor kept the two in sync
+        // for fractional NTSC audio cadences.
+        FrameRate fps(FrameRate::FPS_2997);
+        int64_t sum = 0;
+        for(int64_t n = 0; n < 500; ++n) {
+                sum += static_cast<int64_t>(fps.samplesPerFrame(48000, n));
+                CHECK(sum == fps.cumulativeTicks(48000, n + 1));
+        }
+}
+
+TEST_CASE("FrameRate: cumulativeTicks on invalid frame rate returns 0") {
+        FrameRate fps;
+        CHECK_FALSE(fps.isValid());
+        CHECK(fps.cumulativeTicks(90000, 100) == 0);
+}
+
+TEST_CASE("FrameRate: cumulativeTicks on bad inputs returns 0") {
+        FrameRate fps(FrameRate::FPS_30);
+        CHECK(fps.cumulativeTicks(0, 100) == 0);
+        CHECK(fps.cumulativeTicks(-1, 100) == 0);
+        CHECK(fps.cumulativeTicks(90000, -1) == 0);
+}

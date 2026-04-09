@@ -114,6 +114,88 @@ TEST_CASE("PixelDesc: JPEG_YUV8_422 encodeSources and decodeTargets") {
         CHECK(pd.decodeTargets().contains(PixelDesc::RGBA8_sRGB));
 }
 
+TEST_CASE("PixelDesc: JPEG YCbCr complement — matrix × range grid") {
+        // The library offers all 8 combinations of
+        // subsampling (4:2:2 / 4:2:0) × matrix (Rec.709 / Rec.601) ×
+        // range (limited / full) as first-class JPEG PixelDescs.
+        // The unsuffixed names are limited-range (matching the
+        // library-wide YCbCr default), and "_Full" is the explicit
+        // full-range opt-in.  For strict JFIF interop (ffplay,
+        // browsers, libjpeg-turbo's own decode path) use the
+        // Rec.601 _Full variants.
+
+        struct Case {
+                PixelDesc::ID id;
+                bool          limitedRange;
+                bool          rec709;
+                bool          is420;
+        };
+        const Case cases[] = {
+                // Limited-range entries.
+                { PixelDesc::JPEG_YUV8_422_Rec709,       true,  true,  false },
+                { PixelDesc::JPEG_YUV8_420_Rec709,       true,  true,  true  },
+                { PixelDesc::JPEG_YUV8_422_Rec601,       true,  false, false },
+                { PixelDesc::JPEG_YUV8_420_Rec601,       true,  false, true  },
+                // Full-range entries.
+                { PixelDesc::JPEG_YUV8_422_Rec709_Full,  false, true,  false },
+                { PixelDesc::JPEG_YUV8_420_Rec709_Full,  false, true,  true  },
+                { PixelDesc::JPEG_YUV8_422_Rec601_Full,  false, false, false },
+                { PixelDesc::JPEG_YUV8_420_Rec601_Full,  false, false, true  },
+        };
+        for(const auto &c : cases) {
+                PixelDesc pd(c.id);
+                CAPTURE(pd.name());
+                REQUIRE(pd.isValid());
+                CHECK(pd.isCompressed());
+                CHECK(pd.codecName() == "jpeg");
+                const ColorModel::ID expectedModel = c.rec709
+                        ? ColorModel::YCbCr_Rec709
+                        : ColorModel::YCbCr_Rec601;
+                CHECK(pd.colorModel().id() == expectedModel);
+                if(c.limitedRange) {
+                        CHECK(pd.compSemantic(0).rangeMin == 16);
+                        CHECK(pd.compSemantic(0).rangeMax == 235);
+                        CHECK(pd.compSemantic(1).rangeMin == 16);
+                        CHECK(pd.compSemantic(1).rangeMax == 240);
+                        CHECK(pd.compSemantic(2).rangeMin == 16);
+                        CHECK(pd.compSemantic(2).rangeMax == 240);
+                } else {
+                        CHECK(pd.compSemantic(0).rangeMin == 0);
+                        CHECK(pd.compSemantic(0).rangeMax == 255);
+                        CHECK(pd.compSemantic(1).rangeMin == 0);
+                        CHECK(pd.compSemantic(1).rangeMax == 255);
+                        CHECK(pd.compSemantic(2).rangeMin == 0);
+                        CHECK(pd.compSemantic(2).rangeMax == 255);
+                }
+        }
+}
+
+TEST_CASE("PixelDesc: full-range uncompressed YCbCr intermediates") {
+        // The encode-source intermediates for the full-range JPEG
+        // variants live as first-class PixelDescs so Image::convert
+        // can CSC into them before the codec copies bytes verbatim
+        // into the JFIF bitstream.
+        const PixelDesc::ID ids[] = {
+                PixelDesc::YUV8_422_Rec709_Full,
+                PixelDesc::YUV8_422_Rec601_Full,
+                PixelDesc::YUV8_420_Planar_Rec709_Full,
+                PixelDesc::YUV8_420_Planar_Rec601_Full,
+        };
+        for(PixelDesc::ID id : ids) {
+                PixelDesc pd(id);
+                CAPTURE(pd.name());
+                REQUIRE(pd.isValid());
+                CHECK_FALSE(pd.isCompressed());
+                // Full-range semantics: every channel spans 0..255.
+                CHECK(pd.compSemantic(0).rangeMin == 0);
+                CHECK(pd.compSemantic(0).rangeMax == 255);
+                CHECK(pd.compSemantic(1).rangeMin == 0);
+                CHECK(pd.compSemantic(1).rangeMax == 255);
+                CHECK(pd.compSemantic(2).rangeMin == 0);
+                CHECK(pd.compSemantic(2).rangeMax == 255);
+        }
+}
+
 // ============================================================================
 // Video codec compressed formats (QuickTime / MP4 family)
 // ============================================================================

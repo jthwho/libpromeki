@@ -12,18 +12,17 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 
 **Primary work queue (in rough order):**
 
-1. **Remaining MediaIO backends** (see `proav_nodes.md`):
-   - `MediaIOTask_RtpVideo` — bidirectional RTP video TX/RX. The receive path is new work; the send path replaces the capability previously carried by `vidgen`.
-   - `MediaIOTask_RtpAudio` — bidirectional RTP audio TX/RX. Same story.
+1. **MediaIOTask_Rtp reader mode** (see `proav_nodes.md`):
+   - Writer path is SHIPPED — unified video + audio + metadata sink with MJPEG / L16 / JSON payloads, SDP export via `RtpSaveSdpPath` config key and the `GetSdp` params command, kernel pacing via `SO_MAX_PACING_RATE`, and end-to-end verified through `mediaplay -o Rtp`.
+   - Reader mode is the next milestone: reassembling fragmented frames, handling packet loss / reorder within a jitter window, and mid-stream descriptor discovery.
 2. **New `MediaPipeline` class** (see `proav_pipeline.md`):
    - `MediaPipelineConfig` data object describing stages + routes, with JSON `toJson()`/`fromJson()`.
    - `MediaPipeline` class that builds, opens, starts, stops, and closes a pipeline of MediaIO instances.
 3. **mediaplay JSON pipeline support** (see `proav_nodes.md` → mediaplay section):
    - `--pipeline <file.json>` / `--save-pipeline` — blocked on new `MediaPipelineConfig`.
-4. **Network optimization** (see `proav_optimization.md`):
-   - `UdpSocket::setPacingRate()` (kernel pacing via `SO_MAX_PACING_RATE`).
-   - `UdpSocket::writeDatagrams()` (batch send via `sendmmsg`).
-   - `PacketTransport` abstraction (prereq for `MediaIOTask_RtpVideo`/`RtpAudio` and future DPDK).
+4. **Network optimization follow-ups** (see `proav_optimization.md`):
+   - Core prerequisites SHIPPED: `UdpSocket::setPacingRate()`, `UdpSocket::writeDatagrams()` (sendmmsg batch send), `PacketTransport` abstraction with `UdpSocketTransport` and `LoopbackTransport`, `RtpSession` migrated to `PacketTransport`, `SO_TXTIME` enable path.
+   - Remaining: wire `RtpPacingMode::TxTime` through `MediaIOTask_Rtp` so per-packet `SCM_TXTIME` deadlines actually get stamped onto each datagram.  DPDK transport backend as a later phase.
 
 ## Documents
 
@@ -84,14 +83,14 @@ Delivered: List, Map, Set, HashMap, HashSet, Deque, Stack, PriorityQueue, Span, 
 IO abstractions, filesystem utilities, DataStream, and TextStream all implemented. Resource filesystem (cirf) integrated: `File`, `FileIODevice`, and `Dir` transparently accept `:/` resource paths. libpromeki ships `:/.PROMEKI/` built-in resources (bundled FiraCode font). Remaining extension work lives in `core_streams.md` (TextStream type operators, ObjectBase serialization).
 
 ### Phase 3: Network Library — IN PROGRESS
-**Phase 3A (Sockets) COMPLETE.** Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) mostly complete** — PrioritySocket, RtpSession (incl. `sendPacketsPaced()`), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing), SdpSession, MulticastManager. PtpClock remaining.
+**Phase 3A (Sockets) COMPLETE** — including `UdpSocket::writeDatagrams()` (sendmmsg), `setPacingRate()`, and `setTxTime()`. Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) mostly complete** — PrioritySocket, `PacketTransport` + `UdpSocketTransport` + `LoopbackTransport`, RtpSession (migrated to PacketTransport, incl. `sendPacketsPaced()`, `setRemote()`, `setPacingRate()`), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing, plus new `RtpPayloadJson` for metadata streams), SdpSession, MulticastManager. PtpClock remaining.
 
 ### Phase 4: ProAV — MediaIO-Based Pipeline
-**MediaIO framework complete.** Five backends complete: `MediaIOTask_TPG`, `MediaIOTask_ImageFile` (DPX/Cineon/TGA/SGI/PNM/PNG/JPEG/RawYUV), `MediaIOTask_AudioFile`, `MediaIOTask_QuickTime`, `MediaIOTask_Converter`, plus `SDLPlayerTask` for display sink. The `mediaplay` utility exercises all of them end-to-end.
+**MediaIO framework complete.** Six backends complete: `MediaIOTask_TPG`, `MediaIOTask_ImageFile` (DPX/Cineon/TGA/SGI/PNM/PNG/JPEG/RawYUV), `MediaIOTask_AudioFile`, `MediaIOTask_QuickTime`, `MediaIOTask_Converter`, and the new unified **`MediaIOTask_Rtp`** (writer mode, MJPEG / L16 / JSON metadata), plus `SDLPlayerTask` for display sink. The `mediaplay` utility exercises all of them end-to-end, including the RTP sink with SDP export.
 
-The legacy `MediaNode` / `MediaPipeline` / concrete `*Node` classes and their two dedicated utilities (`vidgen`, `testrender`) have been deleted. The new `MediaPipeline` class (see `proav_pipeline.md`) and the missing RTP backends (see `proav_nodes.md`) are the remaining work in this phase.
+The legacy `MediaNode` / `MediaPipeline` / concrete `*Node` classes and their two dedicated utilities (`vidgen`, `testrender`) have been deleted. The new `MediaPipeline` class (see `proav_pipeline.md`) and the RTP reader path (see `proav_nodes.md`) are the remaining work in this phase.
 
-Network optimization (batch `sendmmsg`, kernel pacing, `PacketTransport` abstraction) is tracked in `proav_optimization.md` and is a prereq for the new RTP backends.
+Network optimization core prerequisites — batch `sendmmsg`, kernel pacing (`SO_MAX_PACING_RATE`), `SO_TXTIME` enable path, `PacketTransport` abstraction, `RtpSession` migration — are all shipped (see `proav_optimization.md`).  Remaining optimization work is the per-packet `SCM_TXTIME` deadline computation inside `MediaIOTask_Rtp` and a future DPDK transport backend.
 
 DSP (audio filters, resampler, format converter) is deferred — it will land later as `MediaIOTask_Converter` subclasses. See `proav_dsp.md`.
 

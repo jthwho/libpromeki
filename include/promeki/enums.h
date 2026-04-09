@@ -264,6 +264,84 @@ struct QuickTimeLayout {
         static inline const Enum Fragmented { Type, 1 };
 };
 
+/**
+ * @brief Well-known Enum type for RTP sender pacing mode.
+ *
+ * Selects how the RTP sink stages space packets out over time.
+ * Drives the @ref MediaConfig::RtpPacingMode config key and the
+ * equivalent runtime path inside @c MediaIOTask_Rtp.
+ *
+ * - @c Auto     — pick the best available mechanism at open time.
+ *                 On Linux this resolves to @c KernelFq; on other
+ *                 platforms it falls back to @c Userspace.  This
+ *                 is the default — callers only need to set an
+ *                 explicit mode when they want to override the
+ *                 platform default (e.g. @c None for loopback /
+ *                 LAN tests, @c TxTime for ST 2110-21 deployments).
+ * - @c None     — burst all packets at once.  Appropriate only
+ *                 for loopback / LAN tests or when the downstream
+ *                 network is guaranteed to absorb the burst.
+ * - @c Userspace — pace by sleeping between sends (the
+ *                 @c RtpSession::sendPacketsPaced() path).  Works
+ *                 everywhere without kernel configuration but ties
+ *                 up the worker thread during the pacing window.
+ * - @c KernelFq — push the rate to @c SO_MAX_PACING_RATE and let
+ *                 the @c fq qdisc space the packets with zero
+ *                 per-packet CPU cost.
+ * - @c TxTime   — per-packet @c SCM_TXTIME deadlines via the ETF
+ *                 qdisc.  Only enabled when the transport and
+ *                 kernel both support it; falls back to @c KernelFq
+ *                 otherwise.  Used for ST 2110-21-grade pacing.
+ */
+struct RtpPacingMode {
+        static inline const Enum::Type Type = Enum::registerType("RtpPacingMode",
+                {
+                        { "None",      0 },
+                        { "Userspace", 1 },
+                        { "KernelFq",  2 },
+                        { "TxTime",    3 },
+                        { "Auto",      4 }
+                },
+                4);  // default: Auto
+
+        static inline const Enum None      { Type, 0 };
+        static inline const Enum Userspace { Type, 1 };
+        static inline const Enum KernelFq  { Type, 2 };
+        static inline const Enum TxTime    { Type, 3 };
+        static inline const Enum Auto      { Type, 4 };
+};
+
+/**
+ * @brief Well-known Enum type for the metadata-stream wire format over RTP.
+ *
+ * Selects how the @c MediaIOTask_Rtp metadata stream serializes
+ * per-frame @ref Metadata objects onto the wire.
+ *
+ * - @c JsonMetadata — serialize the @ref Metadata container via
+ *                     its JSON toJson representation and ship the
+ *                     resulting bytes as a dynamic-PT RTP payload
+ *                     (see @ref RtpPayloadJson).  Simple, not
+ *                     interoperable, useful for intra-promeki
+ *                     round-trips and bring-up.
+ * - @c St2110_40    — SMPTE ST 2110-40 / RFC 8331 Ancillary Data
+ *                     over RTP.  Carries SMPTE ST 291 ANC packets
+ *                     (closed captions, AFD, SCTE-104, VITC, etc.).
+ *                     Placeholder entry — not yet implemented; the
+ *                     backend rejects this value until the ANC
+ *                     payload class lands.
+ */
+struct MetadataRtpFormat {
+        static inline const Enum::Type Type = Enum::registerType("MetadataRtpFormat",
+                {
+                        { "JsonMetadata", 0 },
+                        { "St2110_40",    1 }
+                },
+                0);  // default: JsonMetadata
+
+        static inline const Enum JsonMetadata { Type, 0 };
+        static inline const Enum St2110_40    { Type, 1 };
+};
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

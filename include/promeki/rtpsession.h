@@ -17,32 +17,54 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-class UdpSocket;
+class PacketTransport;
 
 /**
  * @brief RTP session for sending and receiving packets (RFC 3550).
  * @ingroup network
  *
  * RtpSession manages the RTP protocol state for a single
- * synchronization source (SSRC). It handles RTP header construction,
- * sequence number management, and timestamp tracking.
+ * synchronization source (SSRC).  It handles RTP header
+ * construction, sequence number management, timestamp tracking,
+ * and packet transmission via a @ref PacketTransport.
  *
- * The session operates on pre-built RtpPacket lists from RtpPayload
- * handlers. It fills in the RTP header fields (version, payload type,
- * sequence number, timestamp, SSRC, marker bit) and transmits
- * via a UdpSocket.
+ * The session operates on pre-built @ref RtpPacket lists from
+ * @ref RtpPayload handlers: it fills in the RTP header fields
+ * (version, payload type, sequence number, timestamp, SSRC, marker
+ * bit) and hands the packets to the transport for delivery.
+ *
+ * @par Transport ownership
+ *
+ * RtpSession can either own its transport (when started via
+ * @ref start(const SocketAddress&), which creates an internal
+ * @ref UdpSocketTransport) or borrow a caller-owned transport
+ * (when started via @ref start(PacketTransport*)).  Borrowing is
+ * the right pattern when the caller needs to configure the
+ * transport with options RtpSession doesn't expose, or when the
+ * same transport is being shared across multiple RTP streams (not
+ * currently supported, but forward-compatible with future DPDK
+ * multiplexing).
+ *
+ * @par Destination
+ *
+ * The destination address is set once via @ref setRemote() before
+ * sending any packets.  RTP streams have a single peer (unicast
+ * address or multicast group), so per-send destination arguments
+ * would only invite inconsistency.  To send to a multicast group,
+ * pass the group address to @c setRemote() and configure the
+ * transport (TTL, outgoing interface) before @c start().
  *
  * @par Example
  * @code
  * RtpSession session;
  * session.setPayloadType(96);
  * session.setClockRate(90000);
- * Error err = session.start(SocketAddress::any(0));
+ * session.setRemote(SocketAddress(Ipv4Address(239, 0, 0, 1), 5004));
+ * session.start(SocketAddress::any(0));
  *
- * // Send pre-packed RTP packets
  * RtpPayloadJpeg payload(1920, 1080);
  * auto packets = payload.pack(jpegData, jpegSize);
- * session.sendPackets(packets, timestamp, dest, true);
+ * session.sendPackets(packets, timestamp, true);
  * @endcode
  */
 class RtpSession : public ObjectBase {
@@ -58,77 +80,151 @@ class RtpSession : public ObjectBase {
                 ~RtpSession() override;
 
                 /**
-                 * @brief Starts the session, binding to a local address.
+                 * @brief Starts the session with an internally-owned UDP transport.
                  *
-                 * Creates and opens the internal UDP socket, then binds
-                 * it to the specified local address. Use port 0 to let
-                 * the OS assign a port.
+                 * Creates a @ref UdpSocketTransport bound to the given
+                 * local address, opens it, and takes ownership.  The
+                 * transport is automatically closed and destroyed by
+                 * @ref stop() or the destructor.
                  *
                  * @param localAddr The local address and port to bind to.
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error start(const SocketAddress &localAddr);
 
-                /** @brief Stops the session and closes the socket. */
+                /**
+                 * @brief Starts the session with a caller-owned transport.
+                 *
+                 * The transport must be @ref PacketTransport::open "open"
+                 * before this call.  RtpSession does not take ownership
+                 * of the transport; the caller is responsible for
+                 * closing and destroying it after @ref stop().
+                 *
+                 * @param transport The caller-owned, already-open transport.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error start(PacketTransport *transport);
+
+                /** @brief Stops the session and closes any owned transport. */
                 void stop();
 
                 /** @brief Returns true if the session is started. */
                 bool isRunning() const { return _running; }
 
                 /**
-                 * @brief Sends a single RTP packet with raw payload data.
+                 * @brief Sets the destination address for all subsequent sends.
                  *
-                 * Constructs a complete RTP packet with header and sends it.
+                 * Can be called before or after @ref start().  Unicast
+                 * and multicast addresses are both accepted; multicast
+                 * TTL and outgoing interface are configured on the
+                 * transport, not here.
+                 *
+                 * @param dest The destination address and port.
+                 */
+                void setRemote(const SocketAddress &dest) { _remote = dest; }
+
+                /** @brief Returns the current destination address. */
+                const SocketAddress &remote() const { return _remote; }
+
+                /**
+                 * @brief Sends a single RTP packet with raw payload data.
                  *
                  * @param payload The payload data.
                  * @param timestamp The RTP timestamp for this packet.
                  * @param payloadType The RTP payload type.
-                 * @param dest The destination address.
                  * @param marker If true, the marker bit is set.
                  * @return Error::Ok on success, or an error on failure.
                  */
                 Error sendPacket(const Buffer &payload, uint32_t timestamp,
-                                 uint8_t payloadType, const SocketAddress &dest,
-                                 bool marker = false);
+                                 uint8_t payloadType, bool marker = false);
 
                 /**
                  * @brief Sends pre-packed RTP packets from a payload handler.
                  *
-                 * Fills in the RTP header fields on each packet and transmits.
-                 * The marker bit is set on the last packet in the list (end of
+                 * Fills in the RTP header fields on each packet and
+                 * transmits them in one batch through the transport.
+                 * The marker bit is set on the last packet in the
+                 * list when @p markerOnLast is true (end of
                  * frame/access unit).
                  *
-                 * @param packets The pre-packed packet list. Modified in-place:
-                 *                RTP header fields are overwritten before transmission.
+                 * @param packets The pre-packed packet list.  Modified
+                 *                in-place: RTP header fields are
+                 *                overwritten before transmission.
                  * @param timestamp The RTP timestamp for this frame.
-                 * @param dest The destination address.
-                 * @param markerOnLast If true, set marker bit on the last packet.
-                 * @return Error::Ok on success, or an error on first failure.
+                 * @param markerOnLast If true, set marker bit on the
+                 *                     last packet.
+                 * @return Error::Ok on success, or an error on failure.
                  */
                 Error sendPackets(RtpPacket::List &packets, uint32_t timestamp,
-                                  const SocketAddress &dest, bool markerOnLast = true);
+                                  bool markerOnLast = true);
 
                 /**
-                 * @brief Sends pre-packed RTP packets with even inter-packet pacing.
+                 * @brief Sends a list of packets with per-packet timestamps.
                  *
-                 * Spreads packet transmission evenly across the given duration,
-                 * sleeping between packets to maintain a steady send rate. This
-                 * implements ST 2110-21 style sender pacing to avoid bursting
-                 * all packets at once and overflowing receiver jitter buffers.
+                 * Each packet is stamped with @c startTimestamp @c +
+                 * @c i @c * @c timestampStride so consecutive packets
+                 * carry monotonically advancing RTP timestamps.  This
+                 * is the AES67 / ST 2110-30 audio path, where every
+                 * packet-time interval gets its own timestamp
+                 * reflecting the exact sample index at the start of
+                 * that packet.
                  *
-                 * @param packets The pre-packed packet list. Modified in-place.
+                 * Sequence numbers still come from the session's
+                 * monotonic counter and the marker bit is applied
+                 * uniformly (audio streams should pass @p marker =
+                 * @c false).  Packets are handed to the transport as
+                 * a single batch via @ref PacketTransport::sendPackets().
+                 *
+                 * @param packets The pre-packed packet list, modified
+                 *                in-place.
+                 * @param startTimestamp The RTP timestamp for the
+                 *                       first packet's first sample.
+                 * @param timestampStride Increment applied per
+                 *                        successive packet.
+                 * @param marker Marker bit applied to every packet.
+                 * @return Error::Ok on success, or an error on failure.
+                 */
+                Error sendPackets(RtpPacket::List &packets,
+                                  uint32_t startTimestamp,
+                                  uint32_t timestampStride,
+                                  bool marker = false);
+
+                /**
+                 * @brief Sends pre-packed RTP packets with userspace pacing.
+                 *
+                 * Spreads packet transmission evenly across the given
+                 * duration by sleeping between sends.  Implements
+                 * ST 2110-21-style userspace sender pacing and is the
+                 * fallback when kernel pacing is unavailable.  For
+                 * kernel pacing, prefer @ref setPacingRate().
+                 *
+                 * @param packets The pre-packed packet list.  Modified
+                 *                in-place.
                  * @param timestamp The RTP timestamp for this frame.
-                 * @param dest The destination address.
-                 * @param spreadInterval The total duration over which to spread
-                 *        packet transmission. Packets are sent at evenly spaced
-                 *        intervals within this window.
-                 * @param markerOnLast If true, set marker bit on the last packet.
-                 * @return Error::Ok on success, or an error on first failure.
+                 * @param spreadInterval The total duration over which
+                 *        to spread packet transmission.
+                 * @param markerOnLast If true, set marker bit on the
+                 *                     last packet.
+                 * @return Error::Ok on success, or an error on failure.
                  */
                 Error sendPacketsPaced(RtpPacket::List &packets, uint32_t timestamp,
-                                       const SocketAddress &dest,
                                        const Duration &spreadInterval,
                                        bool markerOnLast = true);
+
+                /**
+                 * @brief Applies a transmit-rate cap to the transport.
+                 *
+                 * Convenience wrapper around
+                 * @ref PacketTransport::setPacingRate() that works
+                 * whether the transport is internally or externally
+                 * owned.  For UDP sockets this maps to the kernel
+                 * @c SO_MAX_PACING_RATE option, i.e. true
+                 * kernel pacing with no per-packet CPU cost.
+                 *
+                 * @param bytesPerSec Maximum transmit rate in bytes/sec.
+                 * @return Error::Ok on success, an error otherwise.
+                 */
+                Error setPacingRate(uint64_t bytesPerSec);
 
                 /** @brief Returns the locally generated SSRC. */
                 uint32_t ssrc() const { return _ssrc; }
@@ -152,14 +248,17 @@ class RtpSession : public ObjectBase {
                 uint32_t clockRate() const { return _clockRate; }
 
                 /**
-                 * @brief Returns the internal UDP socket.
+                 * @brief Returns the active packet transport.
                  *
-                 * Use this to configure socket options (DSCP, multicast, etc.)
-                 * after calling start().
+                 * This is the transport the session is currently
+                 * using — either the one created internally by
+                 * @ref start(const SocketAddress&), or the one passed
+                 * to @ref start(PacketTransport*).
                  *
-                 * @return Pointer to the socket, or nullptr if not started.
+                 * @return Pointer to the transport, or nullptr if the
+                 *         session is not running.
                  */
-                UdpSocket *socket() const { return _socket; }
+                PacketTransport *transport() const { return _transport; }
 
                 /**
                  * @brief Emitted when a packet is received.
@@ -179,12 +278,14 @@ class RtpSession : public ObjectBase {
                                 uint32_t timestamp);
                 void generateSsrc();
 
-                UdpSocket      *_socket = nullptr;
-                bool            _running = false;
-                uint32_t        _ssrc = 0;
-                uint16_t        _sequenceNumber = 0;
-                uint8_t         _payloadType = 96;
-                uint32_t        _clockRate = 90000;
+                PacketTransport *_transport = nullptr;
+                bool             _ownsTransport = false;
+                bool             _running = false;
+                SocketAddress    _remote;
+                uint32_t         _ssrc = 0;
+                uint16_t         _sequenceNumber = 0;
+                uint8_t          _payloadType = 96;
+                uint32_t         _clockRate = 90000;
 };
 
 PROMEKI_NAMESPACE_END

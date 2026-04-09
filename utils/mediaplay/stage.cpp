@@ -12,6 +12,7 @@
 
 #include <promeki/color.h>
 #include <promeki/colormodel.h>
+#include <promeki/config.h>
 #include <promeki/datetime.h>
 #include <promeki/framerate.h>
 #include <promeki/mediaiotask_imagefile.h>
@@ -19,6 +20,9 @@
 #include <promeki/pixelformat.h>
 #include <promeki/rational.h>
 #include <promeki/size2d.h>
+#if PROMEKI_ENABLE_NETWORK
+#include <promeki/socketaddress.h>
+#endif
 #include <promeki/timecode.h>
 
 using namespace promeki;
@@ -254,6 +258,14 @@ Variant parseConfigValue(const String &keyLabel,
                 case Variant::TypeStringList: {
                         return Variant(str.split(","));
                 }
+#if PROMEKI_ENABLE_NETWORK
+                case Variant::TypeSocketAddress: {
+                        auto r = SocketAddress::fromString(str);
+                        if(r.second().isError() || r.first().isNull())
+                                return fail(Error::Invalid, "expected host:port");
+                        return Variant(r.first());
+                }
+#endif
                 default:
                         break;
         }

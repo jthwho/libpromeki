@@ -52,32 +52,86 @@ struct YCbCrInfo {
 
 static YCbCrInfo classifyYCbCr(PixelDesc::ID id) {
         switch(id) {
-                case PixelDesc::YUV8_422_UYVY_Rec709:
-                        return { LayoutInterleavedUYVY, false };
+                // 4:2:2 interleaved YUYV (all matrix × range variants).
                 case PixelDesc::YUV8_422_Rec709:
+                case PixelDesc::YUV8_422_Rec709_Full:
+                case PixelDesc::YUV8_422_Rec601:
+                case PixelDesc::YUV8_422_Rec601_Full:
                         return { LayoutInterleavedYUYV, false };
+                // 4:2:2 interleaved UYVY (Rec.601 / Rec.709 limited variants only).
+                case PixelDesc::YUV8_422_UYVY_Rec709:
+                case PixelDesc::YUV8_422_UYVY_Rec601:
+                        return { LayoutInterleavedUYVY, false };
+                // 4:2:2 planar (Rec.709 limited only; no other planar
+                // variants exist as independent IDs).
                 case PixelDesc::YUV8_422_Planar_Rec709:
                         return { LayoutPlanar422, false };
+                // 4:2:0 planar (all matrix × range variants).
                 case PixelDesc::YUV8_420_Planar_Rec709:
+                case PixelDesc::YUV8_420_Planar_Rec709_Full:
+                case PixelDesc::YUV8_420_Planar_Rec601:
+                case PixelDesc::YUV8_420_Planar_Rec601_Full:
                         return { LayoutPlanar420, true };
+                // 4:2:0 semi-planar (NV12, Rec.709 / Rec.601 limited only).
                 case PixelDesc::YUV8_420_SemiPlanar_Rec709:
+                case PixelDesc::YUV8_420_SemiPlanar_Rec601:
                         return { LayoutSemiPlanar420, true };
                 default:
                         return { LayoutNone, false };
         }
 }
 
+// Maps an uncompressed input PixelDesc to the matching compressed
+// JPEG output PixelDesc.  "Matching" means subsampling (4:2:2 vs
+// 4:2:0), matrix (Rec.709 vs Rec.601), and range (limited vs full)
+// all come from the same cell of the 2 × 2 × 2 grid.  When the
+// input is full-range uncompressed YCbCr, the output tag is the
+// full-range JPEG sub-format; when the input is limited-range
+// uncompressed YCbCr, the output is the limited-range sub-format,
+// etc.  Keeps the encoder honest about what's actually inside the
+// resulting JFIF bitstream.
 static PixelDesc::ID jpegPixelDescFor(PixelDesc::ID srcDesc) {
         switch(srcDesc) {
                 case PixelDesc::RGB8_sRGB:   return PixelDesc::JPEG_RGB8_sRGB;
                 case PixelDesc::RGBA8_sRGB:  return PixelDesc::JPEG_RGBA8_sRGB;
+
+                // 4:2:2 Rec.709 limited — legacy default.
                 case PixelDesc::YUV8_422_Rec709:
                 case PixelDesc::YUV8_422_UYVY_Rec709:
                 case PixelDesc::YUV8_422_Planar_Rec709:
                         return PixelDesc::JPEG_YUV8_422_Rec709;
+
+                // 4:2:0 Rec.709 limited.
                 case PixelDesc::YUV8_420_Planar_Rec709:
                 case PixelDesc::YUV8_420_SemiPlanar_Rec709:
                         return PixelDesc::JPEG_YUV8_420_Rec709;
+
+                // 4:2:2 Rec.601 limited.
+                case PixelDesc::YUV8_422_Rec601:
+                case PixelDesc::YUV8_422_UYVY_Rec601:
+                        return PixelDesc::JPEG_YUV8_422_Rec601;
+
+                // 4:2:0 Rec.601 limited.
+                case PixelDesc::YUV8_420_Planar_Rec601:
+                case PixelDesc::YUV8_420_SemiPlanar_Rec601:
+                        return PixelDesc::JPEG_YUV8_420_Rec601;
+
+                // 4:2:2 Rec.709 full.
+                case PixelDesc::YUV8_422_Rec709_Full:
+                        return PixelDesc::JPEG_YUV8_422_Rec709_Full;
+
+                // 4:2:0 Rec.709 full.
+                case PixelDesc::YUV8_420_Planar_Rec709_Full:
+                        return PixelDesc::JPEG_YUV8_420_Rec709_Full;
+
+                // 4:2:2 Rec.601 full (strict JFIF).
+                case PixelDesc::YUV8_422_Rec601_Full:
+                        return PixelDesc::JPEG_YUV8_422_Rec601_Full;
+
+                // 4:2:0 Rec.601 full (strict JFIF).
+                case PixelDesc::YUV8_420_Planar_Rec601_Full:
+                        return PixelDesc::JPEG_YUV8_420_Rec601_Full;
+
                 default: return PixelDesc::JPEG_RGB8_sRGB;
         }
 }

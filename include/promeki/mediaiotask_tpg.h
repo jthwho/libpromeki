@@ -52,9 +52,9 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys — Video burn-in
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | @ref MediaConfig::VideoBurnEnabled   | bool      | false      | Enable text burn-in on the pattern. |
+ * | @ref MediaConfig::VideoBurnEnabled   | bool      | true       | Enable text burn-in on the pattern. |
  * | @ref MediaConfig::VideoBurnFontPath  | String    | ""         | TrueType font path. Empty = bundled default font. |
- * | @ref MediaConfig::VideoBurnFontSize  | int       | 36         | Font size in pixels. |
+ * | @ref MediaConfig::VideoBurnFontSize  | int       | 0          | Font size in pixels. 0 = auto-scale from image height (36px at 1080p). |
  * | @ref MediaConfig::VideoBurnText      | String    | ""         | Static custom burn text (shown below timecode). |
  * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition | BottomCenter | Position preset. |
  * | @ref MediaConfig::VideoBurnTextColor | Color     | White      | Burn text foreground color. |
@@ -71,7 +71,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
  * | @ref MediaConfig::AudioEnabled       | bool   | true   | Enable audio generation. |
- * | @ref MediaConfig::AudioMode          | Enum @ref AudioPattern | Tone | Audio pattern selector. |
+ * | @ref MediaConfig::AudioMode          | Enum @ref AudioPattern | AvSync | Audio pattern selector. |
  * | @ref MediaConfig::AudioRate          | float  | 48000  | Sample rate in Hz. |
  * | @ref MediaConfig::AudioChannels      | int    | 2      | Channel count. |
  * | @ref MediaConfig::AudioToneFrequency | double | 1000.0 | Tone frequency in Hz. |
