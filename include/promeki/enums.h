@@ -148,8 +148,8 @@ struct AudioPattern {
  * @brief Well-known Enum type for chroma subsampling modes.
  *
  * Mirrors @c JpegImageCodec::Subsampling in value and order.  Used as the
- * value type for the @c JpegEncoderNode "Subsampling" config key and
- * anywhere else a simple 4:4:4 / 4:2:2 / 4:2:0 selection is needed.
+ * value type for @ref MediaConfig::JpegSubsampling and anywhere else a
+ * simple 4:4:4 / 4:2:2 / 4:2:0 selection is needed.
  */
 struct ChromaSubsampling {
         static inline const Enum::Type Type = Enum::registerType("ChromaSubsampling",

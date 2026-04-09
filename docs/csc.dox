@@ -115,16 +115,16 @@
  *
  * @section csc_config Configuration
  *
- * CSCPipeline accepts a MediaNodeConfig for runtime hints:
+ * CSCPipeline accepts a @ref MediaConfig for runtime hints:
  *
- * | Key      | Type   | Default       | Description |
- * |----------|--------|---------------|-------------|
- * | `"Path"` | String | `"optimized"` | `"optimized"` enables SIMD and fast paths. `"scalar"` forces the generic float pipeline with no SIMD. |
+ * | Key                      | Type   | Default       | Description |
+ * |--------------------------|--------|---------------|-------------|
+ * | @ref MediaConfig::CscPath | String | `"optimized"` | `"optimized"` enables SIMD and fast paths. `"scalar"` forces the generic float pipeline with no SIMD. |
  *
  * @code
  * // Force scalar path for debugging / reference comparison
- * MediaNodeConfig cfg;
- * cfg.set(CSCPipeline::KeyPath, "scalar");
+ * MediaConfig cfg;
+ * cfg.set(MediaConfig::CscPath, String("scalar"));
  * Image dst = src.convert(PixelDesc::YUV8_422_Rec709, metadata, cfg);
  * @endcode
  *

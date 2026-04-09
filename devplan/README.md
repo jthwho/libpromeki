@@ -8,26 +8,22 @@ This plan builds out the consolidated `promeki` library (core, network, proav, m
 
 ## Current Focus
 
-The `MediaNode` / old `MediaPipeline` framework is **deprecated**. All new media work happens in the `MediaIO` framework and its backends. Once the new capabilities exist (see below), a new `MediaPipeline` class builds on top of MediaIO to describe and run full pipelines from a data object (or JSON). The legacy `MediaNode` classes, `vidgen` utility, and any `*Node` sources stay in the tree only until migration is complete, then are deleted in a single sweep.
+All media work happens in the `MediaIO` framework and its backends. The legacy `MediaNode` / `MediaPipeline` / `*Node` layer and its two dedicated utilities (`vidgen`, `testrender`) have been deleted; the tree is clean. The next major milestone is a new `MediaPipeline` class that builds on MediaIO to describe and run full pipelines from a data object (or JSON).
 
 **Primary work queue (in rough order):**
 
-1. **New MediaIO backends** (see `proav_nodes.md`):
-   - `MediaIOTask_Converter` — **complete**: every video transform (CSC, JPEG encode, JPEG decode, JPEG↔JPEG transcode) now routes through a single `Image::convert()` call; the converter forwards its open-time `MediaConfig` (including `JpegQuality`, `JpegSubsampling`, `CscPath`) directly to `Image::convert()` and the codec layer.  Audio sample-format conversion via `Audio::convertTo()`.  Stateful temporal codecs and explicit ColorModel/sample-rate knobs remain future work.
-   - `MediaIOTask_RtpVideo` — bidirectional RTP video TX/RX. Replaces `RtpVideoSinkNode`, adds receive.
-   - `MediaIOTask_RtpAudio` — bidirectional RTP audio TX/RX. Replaces `RtpAudioSinkNode`, adds receive.
-   - `ImageFileIO_JPEG` — **complete**: JPEG read/write in the existing `ImageFile` backend. Load keeps the bitstream compressed (zero decode); save pass-throughs existing JPEG payloads byte-for-byte and encodes uncompressed inputs via `Image::convert()`. `.jpg`/`.jpeg`/`.jfif` extensions and the `FF D8 FF` magic probe are wired into `MediaIOTask_ImageFile`.
+1. **Remaining MediaIO backends** (see `proav_nodes.md`):
+   - `MediaIOTask_RtpVideo` — bidirectional RTP video TX/RX. The receive path is new work; the send path replaces the capability previously carried by `vidgen`.
+   - `MediaIOTask_RtpAudio` — bidirectional RTP audio TX/RX. Same story.
 2. **New `MediaPipeline` class** (see `proav_pipeline.md`):
    - `MediaPipelineConfig` data object describing stages + routes, with JSON `toJson()`/`fromJson()`.
    - `MediaPipeline` class that builds, opens, starts, stops, and closes a pipeline of MediaIO instances.
-3. **mediaplay overhaul** (see `proav_nodes.md` → mediaplay section):
-   - **Landed:** `--in` / `--incfg` / `--convert` / `--convertcfg` / `--out` / `--outcfg Key:Value` grammar with type-aware parsing against each backend's `defaultConfig`.  `list` sentinel works automatically for any `Enum` or `PixelDesc` key.  `--help` autogenerates every backend's key schema from the live MediaIO registry.  Positional `mediaplay <in> <out>` shortcuts work when `<in>` is an existing file (sequence masks and non-existent paths are treated as outputs).  Fan-out via repeated `--out`.
-   - Pending: `--pipeline <file.json>` / `--save-pipeline` — blocked on new `MediaPipelineConfig`.
+3. **mediaplay JSON pipeline support** (see `proav_nodes.md` → mediaplay section):
+   - `--pipeline <file.json>` / `--save-pipeline` — blocked on new `MediaPipelineConfig`.
 4. **Network optimization** (see `proav_optimization.md`):
    - `UdpSocket::setPacingRate()` (kernel pacing via `SO_MAX_PACING_RATE`).
    - `UdpSocket::writeDatagrams()` (batch send via `sendmmsg`).
    - `PacketTransport` abstraction (prereq for `MediaIOTask_RtpVideo`/`RtpAudio` and future DPDK).
-5. **Legacy removal:** Delete `utils/vidgen/`, every `*Node` class, the old `MediaPipeline`/`MediaNode` files, and their tests — one large cleanup commit after migration is verified.
 
 ## Documents
 
@@ -39,11 +35,10 @@ The `MediaNode` / old `MediaPipeline` framework is **deprecated**. All new media
 | [network_sockets.md](network_sockets.md) | 3A | Socket layer (Abstract, TCP, UDP, Raw, TLS) — COMPLETE |
 | [network_protocols.md](network_protocols.md) | 3B | HTTP, WebSocket, higher-level protocols |
 | [network_avoverip.md](network_avoverip.md) | 3C | AV-over-IP building blocks (RTP, PTP, SDP, multicast) |
-| [proav_pipeline.md](proav_pipeline.md) | 4A | **NEW** `MediaPipeline` class (MediaIO-based, JSON-definable) |
-| [proav_nodes.md](proav_nodes.md) | 4B | MediaIO backends (existing + new: Converter, RtpVideo, RtpAudio, JPEG ImageFile) |
+| [proav_pipeline.md](proav_pipeline.md) | 4A | `MediaPipeline` class (MediaIO-based, JSON-definable) |
+| [proav_nodes.md](proav_nodes.md) | 4B | MediaIO backends (existing + new: RtpVideo, RtpAudio) |
 | [proav_dsp.md](proav_dsp.md) | 4C | DSP and effects (future, as Converter subclasses) |
 | [proav_optimization.md](proav_optimization.md) | 4D | Network optimization (sendmmsg, kernel pacing, PacketTransport) |
-| [vidgen.md](vidgen.md) | 3-4 | **DEPRECATED** (to be removed with the rest of the MediaNode era) |
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
@@ -58,14 +53,12 @@ Phase 1 (COMPLETE) ──┬─► Phase 2 (COMPLETE)
                      │     │                                                      │
                      │     ├─► Phase 4 (MediaIO framework complete)               │
                      │     │     │                                                │
-                     │     │     ├─► MediaIO backends: Converter, RtpVideo, ◄─────┘
-                     │     │     │   RtpAudio, JPEG ImageFile
+                     │     │     ├─► Remaining MediaIO backends: RtpVideo, ◄──────┘
+                     │     │     │   RtpAudio
                      │     │     │
-                     │     │     ├─► Phase 4A: new MediaPipeline (MediaIO-based)
+                     │     │     ├─► Phase 4A: MediaPipeline (MediaIO-based)
                      │     │     │
-                     │     │     ├─► mediaplay CLI overhaul
-                     │     │     │
-                     │     │     └─► Legacy MediaNode / vidgen removal
+                     │     │     └─► mediaplay --pipeline JSON support
                      │     │
                      │     ├─► Phase 4D (network optimization)
                      │     │     │
@@ -94,9 +87,9 @@ IO abstractions, filesystem utilities, DataStream, and TextStream all implemente
 **Phase 3A (Sockets) COMPLETE.** Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) mostly complete** — PrioritySocket, RtpSession (incl. `sendPacketsPaced()`), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing), SdpSession, MulticastManager. PtpClock remaining.
 
 ### Phase 4: ProAV — MediaIO-Based Pipeline
-**MediaIO framework complete.** Four backends complete: `MediaIOTask_TPG`, `MediaIOTask_ImageFile`, `MediaIOTask_AudioFile`, `MediaIOTask_QuickTime`, plus `SDLPlayerTask` for display sink. The `mediaplay` utility exercises all of them end-to-end.
+**MediaIO framework complete.** Five backends complete: `MediaIOTask_TPG`, `MediaIOTask_ImageFile` (DPX/Cineon/TGA/SGI/PNM/PNG/JPEG/RawYUV), `MediaIOTask_AudioFile`, `MediaIOTask_QuickTime`, `MediaIOTask_Converter`, plus `SDLPlayerTask` for display sink. The `mediaplay` utility exercises all of them end-to-end.
 
-**The old `MediaNode` / `MediaPipeline` / concrete `*Node` classes are deprecated** — they still work and `vidgen` still uses them, but no new work targets them. The new `MediaPipeline` class is being built on top of MediaIO (see `proav_pipeline.md`), and the missing MediaIO backends (`Converter`, `RtpVideo`, `RtpAudio`, JPEG ImageFile extension) are queued up in `proav_nodes.md`.
+The legacy `MediaNode` / `MediaPipeline` / concrete `*Node` classes and their two dedicated utilities (`vidgen`, `testrender`) have been deleted. The new `MediaPipeline` class (see `proav_pipeline.md`) and the missing RTP backends (see `proav_nodes.md`) are the remaining work in this phase.
 
 Network optimization (batch `sendmmsg`, kernel pacing, `PacketTransport` abstraction) is tracked in `proav_optimization.md` and is a prereq for the new RTP backends.
 

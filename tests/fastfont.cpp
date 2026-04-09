@@ -445,7 +445,7 @@ TEST_CASE("FastFont: drawText at bottom of large RGBA8 image") {
         ff.setBackgroundColor(Color::Black);
         ff.setPaintEngine(img.createPaintEngine());
 
-        // Draw near the bottom (simulates TimecodeOverlayNode's BottomCenter)
+        // Draw near the bottom (simulates a BottomCenter burn-in position)
         int baseline = 1040;
         bool ok = ff.drawText("01:00:00:00", 795, baseline);
         CHECK(ok);

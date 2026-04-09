@@ -10,7 +10,7 @@ This document tracks optimization work for the network transmit path (batch send
 
 **Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec, VideoTestPattern/AudioTestPattern, userspace packet pacing via `RtpSession::sendPacketsPaced()`, PaintEngine interleaved template overhaul, CSC framework and pipeline bug fixes.
 
-**Remaining:** kernel-level batch send (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE` / `SO_TXTIME`), `PacketTransport` abstraction for DPDK-readiness. The automatic node-processing section from the previous revision is dropped — it was tied to the deprecated `MediaNode` pipeline. The new `MediaPipeline` (see `proav_pipeline.md`) is signal-driven end to end and has no equivalent scheduling problem.
+**Remaining:** kernel-level batch send (`sendmmsg`), kernel pacing (`SO_MAX_PACING_RATE` / `SO_TXTIME`), `PacketTransport` abstraction for DPDK-readiness. The new `MediaPipeline` (see `proav_pipeline.md`) is signal-driven end to end, so there is no separate pipeline-scheduler problem to solve in this document.
 
 ---
 

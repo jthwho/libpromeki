@@ -225,19 +225,17 @@
  * not capture raw pointers to ObjectBase instances -- use signals
  * instead to communicate results back.
  *
- * @section thread_pipeline Pipeline Threading
+ * @section thread_pipeline MediaIO Threading
  *
- * The MediaPipeline schedules MediaNode::process() calls
- * across a thread pool.  Each node can specify its threading policy:
+ * Each @ref MediaIO instance owns a @ref Strand that serializes its
+ * commands on a shared @ref ThreadPool.  Backends never manage their
+ * own threads — the Strand guarantees that every @ref MediaIOTask
+ * callback runs on a single logical worker at a time, while still
+ * sharing the pool across the whole application.
  *
- * - **UseGraphPool** (default): scheduled on the pipeline's shared
- *   ThreadPool.
- * - **DedicatedThread**: gets its own thread for deterministic
- *   scheduling (e.g., real-time audio nodes).
- * - **CustomPool**: uses a separate ThreadPool instance.
- *
- * Data flows between nodes through MediaSink/MediaSource connections,
- * which use a thread-safe @ref Queue internally.  Nodes receive data
- * via their sinks and produce data via their sources -- both are
- * safe to call from the node's processing thread.
+ * Frames move between @ref MediaIO stages via signals.  A producer
+ * emits @c frameReady when a new frame is available; connected
+ * consumers call @c writeFrame() (non-blocking) on their own Strand.
+ * Back-pressure is reported through @c Error::TryAgain and a matching
+ * @c frameWanted signal when the consumer drains again.
  */

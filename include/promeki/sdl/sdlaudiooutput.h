@@ -26,7 +26,7 @@ PROMEKI_NAMESPACE_BEGIN
  * buffering automatically.
  *
  * pushAudio() is thread-safe — it can be called from any thread
- * (e.g. a MediaNode worker thread) while the SDL audio device
+ * (e.g. a MediaIO Strand worker) while the SDL audio device
  * plays on its own thread.
  *
  * @par Example

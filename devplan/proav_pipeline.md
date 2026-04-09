@@ -6,7 +6,7 @@
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-This document describes the **new** `MediaPipeline` class — a data-driven pipeline builder that instantiates and wires together `MediaIO` instances from a declarative configuration. It is unrelated to the legacy `MediaNode`/`MediaPipeline` classes (see "Deprecated: MediaNode/MediaPipeline legacy" at the bottom of this file).
+This document describes the `MediaPipeline` class — a data-driven pipeline builder that instantiates and wires together `MediaIO` instances from a declarative configuration. (An older `MediaNode` / `MediaPipeline` layer existed in the tree; it has been deleted and this new class takes the name.)
 
 **Foundation in place:** the `MediaConfig` consolidation (all well-known config keys live as `static inline const ID` members on a single class inheriting `VariantDatabase<MediaConfigTag>`) is the substrate this pipeline plugs into.  Every stage's `MediaConfig` round-trips to JSON via `VariantDatabase::toJson()` / `fromJson()` for free, and a key set on a `Converter` stage flows unchanged into the codec layer (e.g. `MediaConfig::JpegQuality` already wires from a `mediaplay --oc` flag through `MediaIOTask_ImageFile` → `ImageFileIO_JPEG` → `Image::convert` → `JpegImageCodec::configure` with no per-layer translation).  The follow-up below is the next consumer.
 
@@ -133,8 +133,6 @@ A pipeline that pulls the TPG, runs it through a colorspace converter, and fans 
 - [ ] `tests/mediapipeline.cpp`
 - [ ] `docs/mediapipeline.dox` (authoring guide + JSON schema + worked examples)
 
-**Note:** This replaces the deprecated `include/promeki/mediapipeline.h` / `src/proav/mediapipeline.cpp`. Those files must be deleted (along with all `MediaNode`/`MediaPipelineConfig` legacy files) as the final step of this phase, once the new class is built and `mediaplay` + tests are migrated. See "Deprecated legacy" below.
-
 **Class responsibilities:**
 - [ ] Derive from `ObjectBase`, `PROMEKI_OBJECT`
 - [ ] Owns a `MediaPipelineConfig`
@@ -175,17 +173,13 @@ A pipeline that pulls the TPG, runs it through a colorspace converter, and fans 
 
 ## Dependencies and Enabling Work
 
-### Converter MediaIO Backend — REQUIRED
+### Converter MediaIO Backend — COMPLETE
 
-This pipeline class assumes a `"Converter"` backend exists (ReadWrite MediaIO that takes a frame on `writeFrame()` and produces a transformed frame on `readFrame()`). That backend is specified in `proav_nodes.md` under **MediaIOTask_Converter**. The pipeline cannot express pass-through CSC / codec transcode without it.
+The pipeline leans on the `"Converter"` backend (ReadWrite MediaIO that takes a frame on `writeFrame()` and produces a transformed frame on `readFrame()`) for every CSC / codec / audio-format transform. See `proav_nodes.md` under **MediaIOTask_Converter**.
 
 ### RTP MediaIO Backends — REQUIRED for networked pipelines
 
-See `proav_nodes.md` under **MediaIOTask_RtpVideo** and **MediaIOTask_RtpAudio**. Needed to replicate vidgen-style RTP streaming through the new pipeline. Until they exist, only file/container-based pipelines are expressible.
-
-### JPEG ImageFile Backend — NICE-TO-HAVE
-
-See `proav_nodes.md` under **MediaIOTask_ImageFile** (JPEG extension). Needed for JPEG still-image pipelines to work without transcoding round-trips.
+See `proav_nodes.md` under **MediaIOTask_RtpVideo** and **MediaIOTask_RtpAudio**. Needed for any RTP streaming pipeline. Until they exist, only file/container-based pipelines are expressible.
 
 ### MediaConfig Variant type coverage
 
@@ -213,36 +207,7 @@ The interesting next consumer is `mediaplay --save-pipeline`: with `MediaConfig:
 
 ---
 
-## Deprecated: MediaNode / MediaPipeline Legacy
-
-**Status: DEPRECATED but retained until migration is complete.**
-
-The original `MediaNode`, `MediaPipeline`, `MediaNodeConfig`, `MediaPipelineConfig`, `MediaSink`, `MediaSource`, and all the concrete `*Node` classes (`TestPatternNode`, `JpegEncoderNode`, `RtpVideoSinkNode`, `RtpAudioSinkNode`, `FrameDemuxNode`, `TimecodeOverlayNode`) are deprecated. They will be removed once:
-
-1. MediaIO backends exist for every capability they provided (see `proav_nodes.md`: Converter, RTP video, RTP audio, JPEG ImageFile extension)
-2. The new `MediaPipeline` described above is built and tested
-3. Utilities that depend on them are ported or deleted:
-   - `utils/vidgen/` — will be removed (replaced by `mediaplay` with an appropriate pipeline config)
-   - `utils/mediaplay/` — will be updated to build a `MediaPipeline` from a config instead of hand-plumbing MediaIOs
-   - `utils/imgtest/`, `utils/testrender/` — audit and either port or remove
-4. Tests that exercise the legacy classes are migrated to exercise the new pipeline
-
-**Do not extend the deprecated classes.** Bug fixes in the deprecated path are acceptable only if they unblock migration; otherwise, the fix belongs in the new MediaIO backend or the new MediaPipeline.
-
-**Files that will be removed:**
-- `include/promeki/medianode.h`, `src/proav/medianode.cpp`
-- `include/promeki/medianodeconfig.h`
-- `include/promeki/mediapipeline.h`, `src/proav/mediapipeline.cpp` (old)
-- `include/promeki/mediapipelineconfig.h`, `src/proav/mediapipelineconfig.cpp` (old)
-- `include/promeki/mediasink.h`, `include/promeki/mediasource.h`
-- All `*node.h` / `*node.cpp` pairs under `include/promeki/` and `src/proav/`
-- `tests/medianode.cpp`, `tests/mediapipeline.cpp`, `tests/*node.cpp`
-
-The final removal is a single large deletion commit once the migration is verified.
-
----
-
-## Design Notes retained from legacy (still valid)
+## Design Notes
 
 ### Copy-on-write mutation safety
 
@@ -264,4 +229,3 @@ MemSpace has no visibility into allocation behaviour. For pipeline debugging and
 - [ ] `docs/mediapipeline.dox` — authoring guide, JSON schema, worked examples
 - [ ] Integration tests covering fan-out, converter pass-through, error propagation, cancellation, JSON round-trip, stats aggregation
 - [ ] Migration of `mediaplay` to build its pipeline via `MediaPipeline::build()` from a config composed from CLI options
-- [ ] Deletion of all deprecated `MediaNode`/`MediaPipeline` legacy files and their tests (final step)

@@ -139,11 +139,13 @@
 
 /**
  * @defgroup pipeline Pipeline
- * @brief Media processing pipeline: graph, nodes, and scheduling.
+ * @brief MediaIO-based media pipeline and its backends.
  *
- * MediaNode and MediaPipeline framework for constructing audio/video
- * processing pipelines.  Includes concrete nodes such as
- * TestPatternNode, FrameDemuxNode, and TimecodeOverlayNode.
+ * @ref MediaIO controller, @ref MediaIOTask backends, and the
+ * per-instance @ref Strand executor that moves frames between
+ * stages.  Concrete backends include @ref MediaIOTask_TPG,
+ * @ref MediaIOTask_ImageFile, @ref MediaIOTask_AudioFile,
+ * @ref MediaIOTask_QuickTime, and @ref MediaIOTask_Converter.
  */
 
 /**

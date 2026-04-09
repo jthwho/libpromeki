@@ -661,7 +661,6 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefileio.h
         include/promeki/imgseq.h
         include/promeki/jpegimagecodec.h
-        include/promeki/jpegencodernode.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
@@ -670,16 +669,8 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/mediaiotask_imagefile.h
         include/promeki/mediaiotask_quicktime.h
         include/promeki/mediaiotask_tpg.h
-        include/promeki/medianode.h
-        include/promeki/medianodeconfig.h
-        include/promeki/mediapipeline.h
-        include/promeki/mediapipelineconfig.h
-        include/promeki/mediasink.h
-        include/promeki/mediasource.h
         include/promeki/paintengine.h
         include/promeki/quicktime.h
-        include/promeki/testpatternnode.h
-        include/promeki/timecodeoverlaynode.h
         include/promeki/mediadesc.h
         include/promeki/videodesc.h
         include/promeki/videotestpattern.h
@@ -697,7 +688,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/codec.cpp
         src/proav/encodeddesc.cpp
         src/proav/frame.cpp
-        src/proav/framedemuxnode.cpp
         src/proav/image.cpp
         src/proav/imagedesc.cpp
         src/proav/imagefile.cpp
@@ -710,7 +700,6 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/imagefileio_sgi.cpp
         src/proav/imagefileio_pnm.cpp
         src/proav/jpegimagecodec.cpp
-        src/proav/jpegencodernode.cpp
         src/proav/ltcdecoder.cpp
         src/proav/ltcencoder.cpp
         src/proav/mediaio.cpp
@@ -719,36 +708,16 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaiotask_imagefile.cpp
         src/proav/mediaiotask_quicktime.cpp
         src/proav/mediaiotask_tpg.cpp
-        src/proav/medianode.cpp
-        src/proav/medianodeconfig.cpp
-        src/proav/mediapipeline.cpp
-        src/proav/mediapipelineconfig.cpp
-        src/proav/mediasink.cpp
-        src/proav/mediasource.cpp
         src/proav/paintengine.cpp
         src/proav/paintengine_interleaved.cpp
         src/proav/quicktime.cpp
         src/proav/quicktime_atom.cpp
         src/proav/quicktime_reader.cpp
         src/proav/quicktime_writer.cpp
-        src/proav/testpatternnode.cpp
-        src/proav/timecodeoverlaynode.cpp
         src/proav/mediadesc.cpp
         src/proav/videodesc.cpp
         src/proav/videotestpattern.cpp
     )
-
-    # RTP sink nodes require networking
-    if(PROMEKI_ENABLE_NETWORK)
-        list(APPEND PROMEKI_HEADERS
-            include/promeki/rtpaudiosinknode.h
-            include/promeki/rtpvideosinknode.h
-        )
-        list(APPEND PROMEKI_SOURCES
-            src/proav/rtpaudiosinknode.cpp
-            src/proav/rtpvideosinknode.cpp
-        )
-    endif()
 
     # Feature-gated proav sources
     if(PROMEKI_ENABLE_JPEG)
@@ -992,7 +961,6 @@ if(PROMEKI_BUILD_SDL)
     set(PROMEKI_SDL_HEADERS
         include/promeki/sdl/sdlapplication.h
         include/promeki/sdl/sdlaudiooutput.h
-        include/promeki/sdl/sdldisplaynode.h
         include/promeki/sdl/sdleventpump.h
         include/promeki/sdl/sdlplayer.h
         include/promeki/sdl/sdlvideowidget.h
@@ -1002,7 +970,6 @@ if(PROMEKI_BUILD_SDL)
     set(PROMEKI_SDL_SOURCES
         src/sdl/sdlapplication.cpp
         src/sdl/sdlaudiooutput.cpp
-        src/sdl/sdldisplaynode.cpp
         src/sdl/sdleventpump.cpp
         src/sdl/sdlplayer.cpp
         src/sdl/sdlvideowidget.cpp
@@ -1295,7 +1262,6 @@ if(PROMEKI_BUILD_TESTS)
             tests/fastfont.cpp
             tests/basicfont.cpp
             tests/frame.cpp
-            tests/framedemuxnode.cpp
             tests/image.cpp
             tests/imagedesc.cpp
             tests/imagefile.cpp
@@ -1307,32 +1273,17 @@ if(PROMEKI_BUILD_TESTS)
             tests/imagefileio_pnm.cpp
             tests/imgseq.cpp
             tests/jpegimagecodec.cpp
-            tests/jpegencodernode.cpp
             tests/ltcdecoder.cpp
             tests/ltcencoder.cpp
             tests/mediaio.cpp
-            tests/medianode.cpp
-            tests/medianodeconfig.cpp
-            tests/mediapipeline.cpp
-            tests/mediapipelineconfig.cpp
-            tests/mediasink.cpp
-            tests/mediasource.cpp
             tests/mediaiotask_converter.cpp
             tests/mediaiotask_quicktime.cpp
             tests/paintengine.cpp
             tests/pixeldesc.cpp
             tests/quicktime.cpp
-            tests/testpatternnode.cpp
-            tests/timecodeoverlaynode.cpp
             tests/videodesc.cpp
             tests/videotestpattern.cpp
         )
-        if(PROMEKI_ENABLE_NETWORK)
-            list(APPEND UNITTEST_SOURCES
-                tests/rtpaudiosinknode.cpp
-                tests/rtpvideosinknode.cpp
-            )
-        endif()
         if(PROMEKI_ENABLE_CSC)
             list(APPEND UNITTEST_SOURCES
                 tests/cscpipeline.cpp

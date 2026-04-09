@@ -265,7 +265,7 @@ TEST_CASE("MediaIO_TPG_FullGeneration") {
                 // Timecode on frame
                 CHECK(frame->metadata().contains(Metadata::Timecode));
 
-                // Timecode on image (required by TimecodeOverlayNode)
+                // Timecode on image (needed for burn-in overlays)
                 CHECK(img.metadata().contains(Metadata::Timecode));
                 Timecode tc = img.metadata().get(Metadata::Timecode).get<Timecode>();
                 CHECK(tc.hour() == 1);

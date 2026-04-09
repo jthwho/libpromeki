@@ -5,7 +5,7 @@
 **Library:** `promeki`
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-Audio DSP (filters, resampler, format converter) was originally scoped as a set of `MediaNode`-based classes. That approach is **dropped**. DSP capabilities will instead land as MediaIO backends — either specialised `MediaIOTask_Converter` configurations or dedicated converter subclasses.
+Audio DSP (filters, resampler, format converter) lands as MediaIO backends — either specialised `MediaIOTask_Converter` configurations or dedicated converter subclasses.
 
 Nothing in this phase is actively in progress. It is listed here so the capability is not forgotten.
 
@@ -42,9 +42,4 @@ Sample format conversion (int16/int24/int32/float32/float64 interconversion), wi
 
 ## Why This Is Deferred
 
-DSP is not on the critical path for the current user workload. It becomes interesting once:
-
-1. `MediaIOTask_Converter` exists and proves out the "writeFrame → readFrame" contract for intra-frame transforms
-2. A real use case needs biquad filtering or sample-rate conversion inside a `MediaPipeline`
-
-When those conditions are met, the backends above are straightforward to build on top of the Converter framework. Until then, no implementation work happens here.
+DSP is not on the critical path for the current user workload. `MediaIOTask_Converter` already proves out the "writeFrame → readFrame" contract for intra-frame transforms, so the backends above are straightforward to build on top of the Converter framework as soon as a real use case needs biquad filtering or sample-rate conversion inside a `MediaPipeline`. Until then, no implementation work happens here.

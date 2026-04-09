@@ -6,7 +6,7 @@
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-This document tracks the `MediaIOTask` backends that plug into the `MediaIO` framework. Each backend is a subclass of `MediaIOTask`, registered with `PROMEKI_REGISTER_MEDIAIO`, and self-describes through a `FormatDesc`. All new media capabilities go here — there is no longer a separate "MediaNode" layer (see `proav_pipeline.md` for the history on the deprecated MediaNode/MediaPipeline).
+This document tracks the `MediaIOTask` backends that plug into the `MediaIO` framework. Each backend is a subclass of `MediaIOTask`, registered with `PROMEKI_REGISTER_MEDIAIO`, and self-describes through a `FormatDesc`. All media capabilities go here — there is no "MediaNode" layer; the legacy one has been removed.
 
 ---
 
@@ -26,7 +26,7 @@ All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/me
 
 ## MediaIOTask_Converter
 
-Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it, and emits the result on `readFrame()`. Replaces the deprecated `JpegEncoderNode`, `ColorModelConvertNode`, `FrameDemuxNode`, and any other single-input / single-output transformation "node" in the legacy pipeline.
+Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it, and emits the result on `readFrame()`. Covers every single-input / single-output transform (CSC, codec encode/decode, audio sample-format conversion).
 
 **Files (complete):**
 - `include/promeki/mediaiotask_converter.h`
@@ -37,7 +37,7 @@ Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it,
 
 - Registered as `"Converter"` with `canReadWrite = true`; Reader/Writer-only modes are rejected.
 - Config keys: `ConfigOutputPixelDesc` (PixelDesc), `ConfigJpegQuality` (int), `ConfigJpegSubsampling` (Enum `ChromaSubsampling`), `ConfigOutputAudioDataType` (Enum `AudioDataType`; `Invalid` = pass-through), `ConfigCapacity` (int, default 4).
-- Video transforms all go through a single `Image::convert()` call.  The converter parses its config keys at open time and threads them through a per-frame `MediaNodeConfig` (via the well-known `Image::KeyJpegQuality` / `Image::KeyJpegSubsampling` keys); `Image::convert()` then dispatches uncompressed↔uncompressed CSC, JPEG encode, JPEG decode, and JPEG↔JPEG transcode internally.  Pass-through when no output pixel desc is set, or when source and target match.
+- Video transforms all go through a single `Image::convert()` call.  The converter parses its config keys at open time and forwards them as a `MediaConfig` to `Image::convert()`, which dispatches uncompressed↔uncompressed CSC, JPEG encode, JPEG decode, and JPEG↔JPEG transcode internally.  Pass-through when no output pixel desc is set, or when source and target match.
 - Audio transform: `Audio::convertTo()` whenever `ConfigOutputAudioDataType` is set and differs from the input data type; otherwise pass-through.
 - Output `MediaDesc` is computed from `pendingMediaDesc` at open so downstream consumers see the post-conversion descriptor before the first frame.
 - Internal FIFO with configurable capacity. `executeCmd(Write)` returns `Error::TryAgain` when full; `executeCmd(Read)` returns `Error::TryAgain` when empty. Queue is drained on `close()`.
@@ -67,7 +67,7 @@ Tracking items that came out of the `Image::convert` / `ImageCodec::configure` r
 
 ## MediaIOTask_RtpVideo — NEW
 
-Bidirectional RTP video transport. Reader mode receives an RTP video stream into frames; Writer mode transmits frames as RTP packets. Replaces the deprecated `RtpVideoSinkNode` and introduces the previously missing receive path.
+Bidirectional RTP video transport. Reader mode receives an RTP video stream into frames; Writer mode transmits frames as RTP packets. This backend is new — the old library had a send-only `RtpVideoSinkNode` that was removed with the rest of the MediaNode layer; this reintroduces the send path in the MediaIO framework and adds the receive path that was previously missing.
 
 **Files:**
 - [ ] `include/promeki/mediaiotask_rtpvideo.h`
@@ -116,7 +116,7 @@ Bidirectional RTP video transport. Reader mode receives an RTP video stream into
 
 ## MediaIOTask_RtpAudio — NEW
 
-Bidirectional RTP audio transport (AES67-compatible L16 / L24). Replaces the deprecated `RtpAudioSinkNode` and adds the receive path.
+Bidirectional RTP audio transport (AES67-compatible L16 / L24). New backend; same story as `MediaIOTask_RtpVideo` — the old send-only `RtpAudioSinkNode` was removed with the rest of the MediaNode layer and this reintroduces the send path and adds receive.
 
 **Files:**
 - [ ] `include/promeki/mediaiotask_rtpaudio.h`
@@ -214,24 +214,6 @@ Grammar built on `MediaConfig`: type-aware `Key:Value` parsing against each back
 - [ ] Per-stage stats aggregation for `--verbose` via the future `MediaPipeline::stats()`.
 - [ ] Integration tests covering known CLI invocations against golden data files.
 - [ ] `docs/mediaplay.dox` covering the grammar with worked examples.
-
----
-
-## Deprecated MediaNode-based Concrete Nodes
-
-The following classes live in the codebase but are **deprecated**. They will be deleted in the final migration sweep (see `proav_pipeline.md`). No new development should target them; bug fixes are acceptable only when they unblock migration.
-
-- `TestPatternNode` — replaced by `MediaIOTask_TPG` (already complete)
-- `JpegEncoderNode` — replaced by `MediaIOTask_Converter` with JPEG codec config
-- `FrameDemuxNode` — replaced by the pipeline's native fan-out / routing
-- `TimecodeOverlayNode` — will become a `MediaIOTask_Converter` with text-burn config, or a dedicated text-overlay converter backend
-- `RtpVideoSinkNode` / `RtpAudioSinkNode` — replaced by `MediaIOTask_RtpVideo` / `MediaIOTask_RtpAudio`
-- `AudioSourceNode` / `AudioSinkNode` — replaced by `MediaIOTask_AudioFile` (already complete)
-- `ImageSourceNode` / `ImageSinkNode` — replaced by `MediaIOTask_ImageFile` (complete, including JPEG backend)
-- `AudioMixerNode` — will become a `MediaIOTask_Converter` (fan-in) once converter supports multi-input
-- `AudioGainNode` — will become a simple converter backend
-- `ColorModelConvertNode` — replaced by `MediaIOTask_Converter` with ColorModel config
-- `FrameSyncNode` — audio/video sync via timecode; will become a specialised converter backend
 
 ---
 

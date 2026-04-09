@@ -19,8 +19,7 @@ PROMEKI_NAMESPACE_BEGIN
  * Every class that consumes configuration in the media subsystem shares
  * this tag so a single key name resolves to the same @ref MediaConfig::ID
  * everywhere: @ref MediaIO backends, @ref Image::convert,
- * @ref CSCPipeline, the @c MediaPipeline config stages, and any future
- * media component that exposes knobs.
+ * @ref CSCPipeline, and any future media component that exposes knobs.
  */
 struct MediaConfigTag {};
 
@@ -31,8 +30,8 @@ struct MediaConfigTag {};
  * Thin subclass of @ref VariantDatabase "VariantDatabase<MediaConfigTag>"
  * that adds a canonical catalog of well-known @ref ID constants for every
  * configurable knob in libpromeki.  All media components — @ref MediaIO
- * backends, @ref Image::convert, @ref CSCPipeline, the in-progress
- * @c MediaPipeline — share this single registry so:
+ * backends, @ref Image::convert, @ref CSCPipeline — share this single
+ * registry so:
  *
  * - A key set at one layer can be forwarded to another without any
  *   translation or key mapping.

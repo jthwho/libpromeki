@@ -24,9 +24,10 @@ command-line parsing, file I/O, typed serialization streams (DataStream,
 TextStream), memory spaces, TCP/UDP/raw sockets, RTP/SDP, color models
 and color science, pixel format/descriptor registries, image and audio
 descriptors, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG),
-font rendering (cached and alpha-compositing), codecs, a media processing
-pipeline (MediaNode, MediaPipeline), test pattern generation, LTC
-encoding/decoding, frame/video descriptors, MIDI notes, musical scales,
+font rendering (cached and alpha-compositing), codecs, a MediaIO-based
+media I/O framework with TPG, ImageFile, AudioFile, QuickTime, and
+Converter backends, LTC encoding/decoding, frame/video descriptors,
+MIDI notes, musical scales,
 and a note-sequence parser.
 
 **promeki-tui** — Terminal UI widget library (optional).
