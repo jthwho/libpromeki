@@ -82,35 +82,28 @@ PROMEKI_NAMESPACE_BEGIN
  *
  *   1. Writer: @c cmd.pendingMediaDesc.frameRate() if valid.
  *   2. @c ImgSeq sidecar @c frameRate (reader only).
- *   3. @c ConfigFrameRate (always populated — the backend's default
- *      config pre-seeds it with @c DefaultFrameRate).
+ *   3. @ref MediaConfig::FrameRate (always populated — the backend's
+ *      default config pre-seeds it with @c DefaultFrameRate).
  *
  * The resolved source is recorded in the returned metadata under
  * @c Metadata::FrameRateSource as one of @c "file" (from a sidecar
  * or writer-supplied @c MediaDesc) or @c "config" (from the
- * @c ConfigFrameRate entry in the MediaIOConfig, whether it came
- * from the backend default or a caller override).  Callers that
- * care about whether a real frame rate was available can inspect
- * that metadata entry.
+ * @ref MediaConfig::FrameRate entry, whether it came from the backend
+ * default or a caller override).  Callers that care about whether a
+ * real frame rate was available can inspect that metadata entry.
  *
  * @par Config keys
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigFilename | String | — | File path, mask, or @c .imgseq sidecar. |
- * | ConfigImageFileID | int | Invalid | Explicit ImageFile::ID override. |
- * | ConfigVideoSize | Size2Du32 | 0x0 | Image size hint for headerless formats. |
- * | ConfigPixelDesc | PixelDesc | — | Pixel description for headerless formats. |
- * | ConfigFrameRate | FrameRate | 30/1 | Reported frame rate for the still image or sequence. |
- * | ConfigSequenceHead | int | 1 | First frame number for a sequence writer. |
+ * | @ref MediaConfig::Filename         | String    | — | File path, mask, or @c .imgseq sidecar. |
+ * | @ref MediaConfig::ImageFileID      | int       | Invalid | Explicit ImageFile::ID override. |
+ * | @ref MediaConfig::VideoSize        | Size2Du32 | 0x0 | Image size hint for headerless formats. |
+ * | @ref MediaConfig::VideoPixelFormat | PixelDesc | — | Pixel description for headerless formats. |
+ * | @ref MediaConfig::FrameRate        | FrameRate | 30/1 | Reported frame rate for the still image or sequence. |
+ * | @ref MediaConfig::SequenceHead     | int       | 1 | First frame number for a sequence writer. |
  */
 class MediaIOTask_ImageFile : public MediaIOTask {
         public:
-                static const MediaIO::ConfigID ConfigImageFileID;   ///< @brief Explicit ImageFile::ID (int).
-                static const MediaIO::ConfigID ConfigVideoSize;     ///< @brief Image size hint for headerless formats (Size2Du32).
-                static const MediaIO::ConfigID ConfigPixelDesc;     ///< @brief Pixel description for headerless formats.
-                static const MediaIO::ConfigID ConfigFrameRate;     ///< @brief Reported frame rate (FrameRate).
-                static const MediaIO::ConfigID ConfigSequenceHead;  ///< @brief First frame index for a sequence writer (int).
-
                 /** @brief Default frame rate when no config or caller override is supplied. */
                 static inline const FrameRate DefaultFrameRate{FrameRate::FPS_30};
 
@@ -151,6 +144,7 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 MediaIOMode     _mode = MediaIO_NotOpen;
                 bool            _sequenceMode = false;
                 Metadata        _writeContainerMetadata; ///< @brief Container metadata merged into each written frame (writer only).
+                MediaConfig     _ioConfig;          ///< @brief Open-time MediaConfig forwarded to ImageFileIO load/save calls.
 
                 // Single-file state
                 Frame::Ptr      _frame;

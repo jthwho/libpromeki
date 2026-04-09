@@ -734,8 +734,8 @@ class ImageFileIO_DPX : public ImageFileIO {
                         _canSave = true;
                         _name = "DPX";
                 }
-                Error load(ImageFile &imageFile) const override;
-                Error save(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
+                Error save(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_DPX);
 
@@ -743,7 +743,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_DPX);
 // Load
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_DPX::load(ImageFile &imageFile) const {
+Error ImageFileIO_DPX::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         File file(filename);
@@ -872,7 +873,8 @@ Error ImageFileIO_DPX::load(ImageFile &imageFile) const {
 // Save
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_DPX::save(ImageFile &imageFile) const {
+Error ImageFileIO_DPX::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const Frame &frame = imageFile.frame();
         if(frame.imageList().isEmpty()) {
                 promekiErr("DPX save: no image in frame");

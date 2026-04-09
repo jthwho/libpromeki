@@ -15,6 +15,12 @@ PROMEKI_NAMESPACE_BEGIN
 
 ImageCodec::~ImageCodec() = default;
 
+void ImageCodec::configure(const MediaConfig &config) {
+        // Default no-op: codecs without configurable knobs accept any
+        // MediaConfig and pick none of its keys.
+        (void)config;
+}
+
 void ImageCodec::setError(Error err, const String &msg) {
         _lastError = err;
         _lastErrorMessage = msg;

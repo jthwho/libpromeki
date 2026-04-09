@@ -754,6 +754,7 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_JPEG)
         # jpegimagecodec is always included when proav is on; this gate
         # controls linking against libjpeg (codec uses it internally)
+        list(APPEND PROMEKI_SOURCES src/proav/imagefileio_jpeg.cpp)
     endif()
     if(PROMEKI_ENABLE_PNG)
         list(APPEND PROMEKI_SOURCES src/proav/imagefileio_png.cpp)
@@ -1340,6 +1341,11 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_PNG)
             list(APPEND UNITTEST_SOURCES
                 tests/imagefileio_png.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_JPEG)
+            list(APPEND UNITTEST_SOURCES
+                tests/imagefileio_jpeg.cpp
             )
         endif()
     endif()

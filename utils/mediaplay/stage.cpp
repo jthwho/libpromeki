@@ -32,31 +32,28 @@ const char *const kStageFile = "__file__";
 // SDL pseudo-backend schema
 // --------------------------------------------------------------------------
 
-// SDL player config IDs — declared inline so the key names live in
-// one place and the schema helpers below can reference them without
-// forward-declaring a class.  The names show up in --help and
-// --oc Key:Value CLI strings so they need to be stable.
-static const MediaIO::ConfigID kSdlConfigPaced       ("Paced");
-static const MediaIO::ConfigID kSdlConfigAudio       ("Audio");
-static const MediaIO::ConfigID kSdlConfigWindowSize  ("WindowSize");
-static const MediaIO::ConfigID kSdlConfigWindowTitle ("WindowTitle");
+// SDL player config IDs live on @ref MediaConfig (SdlPaced /
+// SdlAudioEnabled / SdlWindowSize / SdlWindowTitle).  The CLI surfaces
+// the unprefixed string aliases below in --help text, but the actual
+// MediaConfig keys carry the Sdl prefix to avoid colliding with
+// non-SDL audio/paced/window options.
 
 MediaIO::Config sdlDefaultConfig() {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, String(kStageSdl));
+        cfg.set(MediaConfig::Type, String(kStageSdl));
         // Paced: when true the player uses audio-led pacing (audio
         // clock drives video presentation) with a wall-clock fallback
         // for video-only streams.  When false the player runs as
         // fast as possible with audio dropped entirely.
-        cfg.set(kSdlConfigPaced, true);
+        cfg.set(MediaConfig::SdlPaced, true);
         // Audio: when true the player opens an SDL audio device and
         // plays the stream's first audio track.  When false the audio
         // device is never opened.  Implicitly false when Paced=false.
-        cfg.set(kSdlConfigAudio, true);
+        cfg.set(MediaConfig::SdlAudioEnabled, true);
         // WindowSize / WindowTitle control the SDLWindow that mediaplay
         // allocates before adopting the SDLPlayerTask.
-        cfg.set(kSdlConfigWindowSize,  Size2Du32(1280, 720));
-        cfg.set(kSdlConfigWindowTitle, String("mediaplay"));
+        cfg.set(MediaConfig::SdlWindowSize,  Size2Du32(1280, 720));
+        cfg.set(MediaConfig::SdlWindowTitle, String("mediaplay"));
         return cfg;
 }
 
@@ -375,10 +372,10 @@ MediaIO *buildSource(const StageSpec &spec) {
                                 working.path.cstr());
                         return nullptr;
                 }
-                resolvedType = io->config().getAs<String>(MediaIO::ConfigType);
+                resolvedType = io->config().getAs<String>(MediaConfig::Type);
         } else {
                 MediaIO::Config cfg = MediaIO::defaultConfig(working.type);
-                cfg.set(MediaIO::ConfigType, working.type);
+                cfg.set(MediaConfig::Type, working.type);
                 working.config = cfg;
                 io = MediaIO::create(working.config);
                 if(io == nullptr) {
@@ -413,7 +410,7 @@ MediaIO *buildSource(const StageSpec &spec) {
 
 MediaIO *buildConverter(const StageSpec &spec) {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaIO::ConfigType, String("Converter"));
+        cfg.set(MediaConfig::Type, String("Converter"));
         StageSpec applyStage;
         applyStage.type             = "Converter";
         applyStage.rawKeyValues     = spec.rawKeyValues;
@@ -460,10 +457,10 @@ MediaIO *buildFileSink(const StageSpec &spec,
                         return nullptr;
                 }
                 labelOut = String("file:") + spec.path;
-                resolvedType = io->config().getAs<String>(MediaIO::ConfigType);
+                resolvedType = io->config().getAs<String>(MediaConfig::Type);
         } else {
                 MediaIO::Config cfg = MediaIO::defaultConfig(spec.type);
-                cfg.set(MediaIO::ConfigType, spec.type);
+                cfg.set(MediaConfig::Type, spec.type);
                 io = MediaIO::create(cfg);
                 if(io == nullptr) {
                         fprintf(stderr, "Error: failed to create output backend '%s'\n",
@@ -481,7 +478,7 @@ MediaIO *buildFileSink(const StageSpec &spec,
         // The "FrameRate" ConfigID string is shared across backends
         // via the registry.
         if(srcDesc.frameRate().isValid()) {
-                cfg.set(MediaIOTask_ImageFile::ConfigFrameRate, srcDesc.frameRate());
+                cfg.set(MediaConfig::FrameRate, srcDesc.frameRate());
         }
         StageSpec applyStage;
         applyStage.type             = resolvedType.isEmpty() ? spec.type : resolvedType;

@@ -248,7 +248,7 @@ class ImageFileIO_Cineon : public ImageFileIO {
                         _canSave = false;
                         _name = "Cineon";
                 }
-                Error load(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_Cineon);
 
@@ -256,7 +256,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_Cineon);
 // Load
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_Cineon::load(ImageFile &imageFile) const {
+Error ImageFileIO_Cineon::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         File file(filename);

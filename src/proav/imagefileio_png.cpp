@@ -142,8 +142,8 @@ class ImageFileIO_PNG : public ImageFileIO {
                         _name = "PNG";
                 }
 
-                Error load(ImageFile &imageFile) const override;
-                Error save(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
+                Error save(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_PNG);
 
@@ -151,7 +151,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_PNG);
 // Save
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_PNG::save(ImageFile &imageFile) const {
+Error ImageFileIO_PNG::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 
@@ -320,7 +321,8 @@ Error ImageFileIO_PNG::save(ImageFile &imageFile) const {
 // Load
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_PNG::load(ImageFile &imageFile) const {
+Error ImageFileIO_PNG::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         // Read the entire file in one shot via the bulk-direct-I/O pattern.

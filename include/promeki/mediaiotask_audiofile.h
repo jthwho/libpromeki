@@ -29,17 +29,13 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigFilename | String | — | File path (inherited from MediaIO). |
- * | ConfigFrameRate | FrameRate | 29.97 | Frame rate for sample chunking (required). |
- * | ConfigAudioRate | float | 48000 | Audio sample rate Hz (required for writer). |
- * | ConfigAudioChannels | int | 2 | Audio channel count (required for writer). |
+ * | @ref MediaConfig::Filename      | String    | — | File path. |
+ * | @ref MediaConfig::FrameRate     | FrameRate | 29.97 | Frame rate for sample chunking. |
+ * | @ref MediaConfig::AudioRate     | float     | 48000 | Audio sample rate Hz (required for writer). |
+ * | @ref MediaConfig::AudioChannels | int       | 2     | Audio channel count (required for writer). |
  */
 class MediaIOTask_AudioFile : public MediaIOTask {
         public:
-                static const MediaIO::ConfigID ConfigFrameRate;      ///< @brief Frame rate (FrameRate, required).
-                static const MediaIO::ConfigID ConfigAudioRate;      ///< @brief Sample rate Hz (float, required for writer).
-                static const MediaIO::ConfigID ConfigAudioChannels;  ///< @brief Channel count (int, required for writer).
-
                 /**
                  * @brief Returns the format descriptor for this backend.
                  * @return A FormatDesc covering supported audio file extensions.

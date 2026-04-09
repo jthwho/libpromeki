@@ -1,18 +1,20 @@
 # MediaPipeline (MediaIO-based)
 
 **Phase:** 4A
-**Dependencies:** MediaIO framework (`proav_nodes.md`), VariantDatabase, JsonObject
+**Dependencies:** MediaIO framework (`proav_nodes.md`), `MediaConfig` (consolidated catalog of well-known config keys, complete), VariantDatabase, JsonObject
 **Library:** `promeki`
 
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
 This document describes the **new** `MediaPipeline` class — a data-driven pipeline builder that instantiates and wires together `MediaIO` instances from a declarative configuration. It is unrelated to the legacy `MediaNode`/`MediaPipeline` classes (see "Deprecated: MediaNode/MediaPipeline legacy" at the bottom of this file).
 
+**Foundation in place:** the `MediaConfig` consolidation (all well-known config keys live as `static inline const ID` members on a single class inheriting `VariantDatabase<MediaConfigTag>`) is the substrate this pipeline plugs into.  Every stage's `MediaConfig` round-trips to JSON via `VariantDatabase::toJson()` / `fromJson()` for free, and a key set on a `Converter` stage flows unchanged into the codec layer (e.g. `MediaConfig::JpegQuality` already wires from a `mediaplay --oc` flag through `MediaIOTask_ImageFile` → `ImageFileIO_JPEG` → `Image::convert` → `JpegImageCodec::configure` with no per-layer translation).  The follow-up below is the next consumer.
+
 ---
 
 ## Overview
 
-`MediaPipeline` takes a hierarchical configuration describing a full media pipeline — the set of `MediaIO` stages, each stage's `MediaIOConfig`, and how frames flow between stages — and builds a running pipeline out of `MediaIO` objects. The same configuration can be expressed as a live in-memory data object or as a JSON document; round-tripping either form produces the same pipeline.
+`MediaPipeline` takes a hierarchical configuration describing a full media pipeline — the set of `MediaIO` stages, each stage's `MediaConfig`, and how frames flow between stages — and builds a running pipeline out of `MediaIO` objects. The same configuration can be expressed as a live in-memory data object or as a JSON document; round-tripping either form produces the same pipeline.
 
 **Why this class exists:**
 - All the real work already lives in `MediaIO` and its backends. The pipeline's only job is wiring.
@@ -54,7 +56,7 @@ New shareable data object that describes a complete pipeline. Round-trips throug
 - [ ] `String name` — unique identifier used by routes; also used in error messages
 - [ ] `String type` — MediaIO format name (e.g. `"TPG"`, `"QuickTime"`, `"RtpVideo"`, `"ImageFile"`, `"Converter"`)
 - [ ] `MediaIO::Mode mode` — Reader / Writer / ReadWrite
-- [ ] `MediaIOConfig config` — full `VariantDatabase` passed to `MediaIO::create`
+- [ ] `MediaConfig config` — full `VariantDatabase` passed to `MediaIO::create`
 
 **`Route`** — describes one frame-flow edge:
 - [ ] `String from` — source stage name
@@ -185,9 +187,29 @@ See `proav_nodes.md` under **MediaIOTask_RtpVideo** and **MediaIOTask_RtpAudio**
 
 See `proav_nodes.md` under **MediaIOTask_ImageFile** (JPEG extension). Needed for JPEG still-image pipelines to work without transcoding round-trips.
 
-### MediaIOConfig Variant type coverage
+### MediaConfig Variant type coverage
 
-For JSON `fromJson` to work on every stage's config, every Variant type used in a `MediaIOConfig` must have `toJson()`/`fromJson()` wiring. Most existing primitives and `VariantDatabase` fields already do. New types (PixelDesc, MediaDesc, FrameRate, Color, etc.) may need Variant JSON conversion added — this work is tracked in `core_utilities.md` (Variant Enhancements) and should be completed alongside the pipeline.
+For JSON `fromJson` to work on every stage's config, every Variant type used in a `MediaConfig` must have `toJson()`/`fromJson()` wiring. Most existing primitives and `VariantDatabase` fields already do. New types (PixelDesc, MediaDesc, FrameRate, Color, etc.) may need Variant JSON conversion added — this work is tracked in `core_utilities.md` (Variant Enhancements) and should be completed alongside the pipeline.
+
+### Per-stage MediaConfig forwarding — FOLLOW-ON
+
+**Status: foundation complete, pipeline work pending.**
+
+The `MediaConfig` consolidation that landed alongside the codec abstraction means a single `MediaConfig` now spans every layer that touches a frame:
+
+- A `MediaPipelineConfig::StageConfig` already carries a `MediaConfig` per stage (see [Configuration Data Model](#configuration-data-model)).
+- `MediaIO::create(...)` consumes that `MediaConfig` directly — no per-backend translation step.
+- Inside the converter / file backends, the same `MediaConfig` is forwarded to `Image::convert()` and `ImageFileIO::save()/load()` so codec knobs (`MediaConfig::JpegQuality`, `MediaConfig::JpegSubsampling`, future `MediaConfig::*Bitrate`, …) flow end-to-end without any key mapping.
+- Doctest coverage in `tests/jpegimagecodec.cpp` (`JpegImageCodec_ConfigureFromMediaConfig`) and `tests/imagefileio_jpeg.cpp` (`ImageFileIO JPEG: save honours MediaConfig::JpegQuality`) locks the dispatch in.
+
+This unblocks the following pipeline-level work and removes a lot of speculation from the original plan:
+
+- [ ] `MediaPipelineConfig::StageConfig::config` is the single in-memory + JSON representation of every stage's settings — no per-backend `Map<String, Variant>` translation needed.
+- [ ] `MediaPipeline::build()` can hand each stage's `MediaConfig` straight to `MediaIO::create()` once and never touch it again.
+- [ ] CLI tooling (`mediaplay --pipeline`, future GUI editors) walks `MediaConfig` keys via `forEach()` to render schema; the keys autodiscover from `MediaConfig`'s static catalog plus per-backend `defaultConfig()` snapshots.
+- [ ] When the `ImageCodec::configKeys()` accessor lands (see `proav_nodes.md` → "Codec abstraction follow-ups"), pipeline tooling can render per-codec key documentation alongside per-backend schema.
+
+The interesting next consumer is `mediaplay --save-pipeline`: with `MediaConfig::toJson()` already in place, exporting a running pipeline to disk is "for each stage, dump its live `MediaConfig`" with no other plumbing.
 
 ---
 

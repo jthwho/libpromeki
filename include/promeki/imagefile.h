@@ -11,6 +11,7 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/frame.h>
+#include <promeki/mediaconfig.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -36,7 +37,8 @@ class ImageFile {
                         Cineon,      ///< @brief Kodak Cineon image format.
                         TGA,         ///< @brief Targa image format.
                         SGI,         ///< @brief Silicon Graphics image format.
-                        PNM          ///< @brief Portable AnyMap (PPM/PGM/PBM).
+                        PNM,         ///< @brief Portable AnyMap (PPM/PGM/PBM).
+                        JPEG         ///< @brief JPEG / JFIF image format.
                 };
 
                 /**
@@ -129,15 +131,20 @@ class ImageFile {
 
                 /**
                  * @brief Loads media from the file specified by filename().
+                 * @param config Optional configuration hints forwarded to
+                 *               the resolved @ref ImageFileIO backend.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error load();
+                Error load(const MediaConfig &config = MediaConfig());
 
                 /**
                  * @brief Saves media to the file specified by filename().
+                 * @param config Optional configuration hints forwarded to
+                 *               the resolved @ref ImageFileIO backend
+                 *               (e.g. JpegQuality, JpegSubsampling).
                  * @return Error::Ok on success, or an error on failure.
                  */
-                Error save();
+                Error save(const MediaConfig &config = MediaConfig());
 
         private:
                 String                  _filename;

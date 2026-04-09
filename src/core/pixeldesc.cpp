@@ -145,7 +145,12 @@ static PixelDesc::Data makeJPEG_RGB8() {
         d.colorModel                = ColorModel(ColorModel::sRGB);
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGB8_sRGB, PixelDesc::RGBA8_sRGB };
+        // Only formats from the natural RGB family belong here — see
+        // JpegImageCodec::encode(), which tags the output based on the
+        // input component order.  A different family (e.g. RGBA or YUV)
+        // as input would produce a different JPEG sub-format and
+        // contradict this PixelDesc's identity.
+        d.encodeSources             = { PixelDesc::RGB8_sRGB };
         d.decodeTargets             = { PixelDesc::RGB8_sRGB };
         d.fourccList                = { "jpeg", "mjpa", "mjpb", "mjpg", "AVRn", "AVDJ", "ADJV" };
         d.compSemantics[0]          = { "Red",   "R", 0, 255 };
@@ -163,8 +168,12 @@ static PixelDesc::Data makeJPEG_YUV8_422() {
         d.colorModel                = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGB8_sRGB, PixelDesc::RGBA8_sRGB,
-                                        PixelDesc::YUV8_422_Rec709,
+        // Only the natural YUV 4:2:2 family — RGB inputs produce
+        // JPEG_RGB8_sRGB from the codec, not JPEG_YUV8_422_Rec709, so
+        // they must CSC through YUV8_422_Rec709 (the first listed
+        // source) before encoding.  Image::convert() handles that hop
+        // automatically.
+        d.encodeSources             = { PixelDesc::YUV8_422_Rec709,
                                         PixelDesc::YUV8_422_UYVY_Rec709,
                                         PixelDesc::YUV8_422_Planar_Rec709 };
         d.decodeTargets             = { PixelDesc::YUV8_422_Rec709,
@@ -188,8 +197,9 @@ static PixelDesc::Data makeJPEG_YUV8_420() {
         d.colorModel                = ColorModel(ColorModel::YCbCr_Rec709);
         d.compressed                = true;
         d.codecName                 = "jpeg";
-        d.encodeSources             = { PixelDesc::RGB8_sRGB, PixelDesc::RGBA8_sRGB,
-                                        PixelDesc::YUV8_420_Planar_Rec709,
+        // Only the natural YUV 4:2:0 family — see JPEG_YUV8_422_Rec709
+        // for the rationale.  RGB inputs CSC through YUV8_420_Planar_Rec709.
+        d.encodeSources             = { PixelDesc::YUV8_420_Planar_Rec709,
                                         PixelDesc::YUV8_420_SemiPlanar_Rec709 };
         d.decodeTargets             = { PixelDesc::YUV8_420_Planar_Rec709,
                                         PixelDesc::YUV8_420_SemiPlanar_Rec709,

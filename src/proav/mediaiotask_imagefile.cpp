@@ -24,22 +24,16 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_ImageFile)
 
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigImageFileID("ImageFileID");
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigVideoSize("VideoSize");
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigPixelDesc("PixelDesc");
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigFrameRate("FrameRate");
-const MediaIO::ConfigID MediaIOTask_ImageFile::ConfigSequenceHead("SequenceHead");
-
 // ============================================================================
 // Frame-rate source tags (values for Metadata::FrameRateSource)
 // ============================================================================
 //
-// The backend's defaultConfig() pre-populates ConfigFrameRate, so the
+// The backend's defaultConfig() pre-populates MediaConfig::FrameRate, so the
 // "user explicitly set it" distinction is gone by design — every open
 // call sees a valid config-supplied frame rate.  There are now only
 // two distinct origins worth tracking: the frame rate came from a
 // sidecar or the upstream MediaDesc (authoritative), or it came from
-// the MediaIOConfig (either the caller's override or the backend
+// the MediaConfig (either the caller's override or the backend
 // default — both behave identically downstream).
 static const char *const kFrameRateSourceFile    = "file";
 static const char *const kFrameRateSourceConfig  = "config";
@@ -63,6 +57,9 @@ static const ExtMap extMap[] = {
         { "ppm",     ImageFile::PNM },
         { "pgm",     ImageFile::PNM },
         { "png",     ImageFile::PNG },
+        { "jpg",     ImageFile::JPEG },
+        { "jpeg",    ImageFile::JPEG },
+        { "jfif",    ImageFile::JPEG },
         { "uyvy",    ImageFile::RawYUV },
         { "yuyv",    ImageFile::RawYUV },
         { "yuy2",    ImageFile::RawYUV },
@@ -139,6 +136,10 @@ static bool probeImageDevice(IODevice *device) {
         // PNG: first 4 bytes of 8-byte signature
         if(magic32 == 0x89504E47) return true;
 
+        // JPEG (JFIF / Exif / raw JPEG): SOI marker FF D8 followed by
+        // any marker (FF xx).  Matches all conforming JPEG streams.
+        if(buf[0] == 0xFF && buf[1] == 0xD8 && buf[2] == 0xFF) return true;
+
         // SGI: first 2 bytes = 0x01DA
         uint16_t magic16 = (uint16_t(buf[0]) << 8) | uint16_t(buf[1]);
         if(magic16 == 0x01DA) return true;
@@ -191,7 +192,7 @@ static StringList buildExtensions() {
 MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
         return {
                 "ImageFile",
-                "Single-image files and image sequences (DPX, Cineon, TGA, SGI, PNM, PNG, RawYUV, .imgseq)",
+                "Single-image files and image sequences (DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, RawYUV, .imgseq)",
                 buildExtensions(),
                 true,   // canRead
                 true,   // canWrite
@@ -201,18 +202,18 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
-                        cfg.set(MediaIO::ConfigType, "ImageFile");
+                        cfg.set(MediaConfig::Type, "ImageFile");
                         // 0 == ImageFile::Invalid — the Open handler
                         // treats this as "infer the backend from the
                         // filename extension or the content probe".
-                        cfg.set(ConfigImageFileID, 0);
+                        cfg.set(MediaConfig::ImageFileID, 0);
                         // Empty size hint: only used by headerless
                         // formats (RawYUV) that can't derive the
                         // geometry from the file itself.
-                        cfg.set(ConfigVideoSize, Size2Du32());
-                        cfg.set(ConfigPixelDesc, PixelDesc());
-                        cfg.set(ConfigFrameRate, DefaultFrameRate);
-                        cfg.set(ConfigSequenceHead, DefaultSequenceHead);
+                        cfg.set(MediaConfig::VideoSize, Size2Du32());
+                        cfg.set(MediaConfig::VideoPixelFormat, PixelDesc());
+                        cfg.set(MediaConfig::FrameRate, DefaultFrameRate);
+                        cfg.set(MediaConfig::SequenceHead, DefaultSequenceHead);
                         return cfg;
                 },
                 []() -> Metadata {
@@ -268,16 +269,21 @@ MediaIOTask_ImageFile::~MediaIOTask_ImageFile() = default;
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
-        _filename = cfg.getAs<String>(MediaIO::ConfigFilename);
+        // Stash a copy of the open-time config so every read / write
+        // command forwards the same hints to the resolved
+        // @ref ImageFileIO backend.  Codec-specific knobs (JpegQuality,
+        // JpegSubsampling, …) on @p cfg flow through unchanged.
+        _ioConfig = cfg;
+        _filename = cfg.getAs<String>(MediaConfig::Filename);
         _mode = cmd.mode;
         _sequenceMode = false;
 
         // Resolve the reported frame rate with a documented priority:
         //   1. Writer with a valid pendingMediaDesc frame rate
         //   2. .imgseq sidecar frameRate (resolved below, reader only)
-        //   3. Config value (ConfigFrameRate — always present since the
+        //   3. Config value (MediaConfig::FrameRate — always present since the
         //      backend's defaultConfig pre-populates it)
-        FrameRate fps = cfg.getAs<FrameRate>(ConfigFrameRate, DefaultFrameRate);
+        FrameRate fps = cfg.getAs<FrameRate>(MediaConfig::FrameRate, DefaultFrameRate);
         if(!fps.isValid()) fps = DefaultFrameRate;
         String frSource = kFrameRateSourceConfig;
 
@@ -301,7 +307,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
 
         if(isSidecar || hasMask) {
                 _sequenceMode = true;
-                // If the caller set ConfigFrameRate, keep frSource as
+                // If the caller set MediaConfig::FrameRate, keep frSource as
                 // "config" for now — openSequence() may upgrade it to
                 // "file" if the sidecar supplies a rate.  If nothing is
                 // configured yet, leave it at "default".
@@ -326,12 +332,12 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                                         const String &frSource) {
         const MediaIO::Config &cfg = cmd.config;
 
-        // Determine the ImageFile format ID.  ConfigImageFileID
+        // Determine the ImageFile format ID.  MediaConfig::ImageFileID
         // lives in the default config as 0 (ImageFile::Invalid) to
         // document the knob; any non-zero value from the caller is
         // taken as an explicit override, otherwise we fall back to
         // auto-detection from the filename extension.
-        _imageFileID = cfg.getAs<int>(ConfigImageFileID, ImageFile::Invalid);
+        _imageFileID = cfg.getAs<int>(MediaConfig::ImageFileID, ImageFile::Invalid);
         if(_imageFileID == ImageFile::Invalid) {
                 _imageFileID = imageFileIDFromExtension(_filename);
         }
@@ -364,16 +370,16 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 imgFile.setFilename(_filename);
 
                 // For headerless formats, set hint image from config
-                Size2Du32 hintSize = cfg.getAs<Size2Du32>(ConfigVideoSize, Size2Du32());
+                Size2Du32 hintSize = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
                 if(hintSize.width() > 0 && hintSize.height() > 0) {
-                        PixelDesc pd = cfg.getAs<PixelDesc>(ConfigPixelDesc, PixelDesc());
+                        PixelDesc pd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc());
                         if(pd.isValid()) {
                                 Image hint(hintSize.width(), hintSize.height(), pd.id());
                                 imgFile.setImage(hint);
                         }
                 }
 
-                Error err = imgFile.load();
+                Error err = imgFile.load(_ioConfig);
                 if(err.isError()) {
                         promekiErr("MediaIOTask_ImageFile: load '%s' failed: %s",
                                 _filename.cstr(), err.name().cstr());
@@ -447,8 +453,8 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
         FilePath dir;
         int64_t head = -1;
         int64_t tail = -1;
-        Size2Du32 hintSize  = cfg.getAs<Size2Du32>(ConfigVideoSize, Size2Du32());
-        PixelDesc hintPixel = cfg.getAs<PixelDesc>(ConfigPixelDesc, PixelDesc());
+        Size2Du32 hintSize  = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32());
+        PixelDesc hintPixel = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc());
         Metadata  sidecarMeta;
         FrameRate sidecarFps;
 
@@ -507,10 +513,10 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
         _seqPixelDesc = hintPixel;
 
         // Determine the per-file ImageFile::ID from the pattern
-        // suffix; ConfigImageFileID = 0 (ImageFile::Invalid) in the
+        // suffix; MediaConfig::ImageFileID = 0 (ImageFile::Invalid) in the
         // default config triggers auto-detection, a non-zero caller
         // override wins.
-        _imageFileID = cfg.getAs<int>(ConfigImageFileID, ImageFile::Invalid);
+        _imageFileID = cfg.getAs<int>(MediaConfig::ImageFileID, ImageFile::Invalid);
         if(_imageFileID == ImageFile::Invalid) {
                 // NumName's suffix starts with '.' (e.g. ".dpx"), so
                 // imageFileIDFromExtension() works directly.
@@ -590,7 +596,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                         Image hint(_seqSize.width(), _seqSize.height(), _seqPixelDesc.id());
                         imgFile.setImage(hint);
                 }
-                Error err = imgFile.load();
+                Error err = imgFile.load(_ioConfig);
                 if(err.isError()) {
                         promekiErr("MediaIOTask_ImageFile: failed to load head frame '%s': %s",
                                 firstPath.cstr(), err.name().cstr());
@@ -628,7 +634,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 // Writer: start at either the configured head or the
                 // default.  The writer hasn't written anything yet, so
                 // frameCount is 0 and will be updated after each write.
-                int64_t writeHead = cfg.getAs<int>(ConfigSequenceHead, DefaultSequenceHead);
+                int64_t writeHead = cfg.getAs<int>(MediaConfig::SequenceHead, DefaultSequenceHead);
                 if(head >= 0) writeHead = head;  // sidecar had explicit head
                 _seqHead = writeHead;
                 _seqTail = (tail >= 0) ? tail : _seqHead;  // tail grows on write if unset
@@ -666,6 +672,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         _writeCount = 0;
         _loaded = false;
         _writeContainerMetadata = Metadata();
+        _ioConfig = MediaConfig();
 
         _sequenceMode = false;
         _seqName = NumName();
@@ -722,7 +729,7 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
                 Image hint(_seqSize.width(), _seqSize.height(), _seqPixelDesc.id());
                 imgFile.setImage(hint);
         }
-        Error err = imgFile.load();
+        Error err = imgFile.load(_ioConfig);
         if(err.isError()) {
                 promekiErr("MediaIOTask_ImageFile: failed to load sequence frame '%s': %s",
                         fn.cstr(), err.name().cstr());
@@ -768,7 +775,7 @@ Error MediaIOTask_ImageFile::writeSingle(MediaIOCommandWrite &cmd) {
         ImageFile imgFile(_imageFileID);
         imgFile.setFilename(_filename);
         imgFile.setFrame(frame);
-        Error err = imgFile.save();
+        Error err = imgFile.save(_ioConfig);
         if(err.isError()) {
                 promekiErr("MediaIOTask_ImageFile: save '%s' failed: %s",
                         _filename.cstr(), err.name().cstr());
@@ -797,7 +804,7 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
         ImageFile imgFile(_imageFileID);
         imgFile.setFilename(fn);
         imgFile.setFrame(frame);
-        Error err = imgFile.save();
+        Error err = imgFile.save(_ioConfig);
         if(err.isError()) {
                 promekiErr("MediaIOTask_ImageFile: save sequence frame '%s' failed: %s",
                         fn.cstr(), err.name().cstr());

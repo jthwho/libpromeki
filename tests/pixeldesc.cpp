@@ -88,18 +88,21 @@ TEST_CASE("PixelDesc: JPEG_RGBA8 encodeSources and decodeTargets") {
         CHECK(pd.decodeTargets()[0] == PixelDesc::RGBA8_sRGB);
 }
 
-TEST_CASE("PixelDesc: JPEG_RGB8 encodeSources includes RGB8 and RGBA8") {
+TEST_CASE("PixelDesc: JPEG_RGB8 encodeSources is strictly RGB8") {
+        // Only the natural RGB family is listed — see
+        // JpegImageCodec::encode() which tags the output based on the
+        // input component order.  Mixed-family inputs CSC through
+        // Image::convert() before hitting the codec.
         PixelDesc pd(PixelDesc::JPEG_RGB8_sRGB);
-        CHECK(pd.encodeSources().size() == 2);
+        REQUIRE(pd.encodeSources().size() == 1);
         CHECK(pd.encodeSources()[0] == PixelDesc::RGB8_sRGB);
-        CHECK(pd.encodeSources()[1] == PixelDesc::RGBA8_sRGB);
 }
 
 TEST_CASE("PixelDesc: JPEG_YUV8_422 encodeSources and decodeTargets") {
         PixelDesc pd(PixelDesc::JPEG_YUV8_422_Rec709);
-        CHECK(pd.encodeSources().size() == 5);
-        CHECK(pd.encodeSources().contains(PixelDesc::RGB8_sRGB));
-        CHECK(pd.encodeSources().contains(PixelDesc::RGBA8_sRGB));
+        // Only the natural YUV 4:2:2 family — RGB inputs CSC through
+        // Image::convert() before hitting the codec.
+        REQUIRE(pd.encodeSources().size() == 3);
         CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_Rec709));
         CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_UYVY_Rec709));
         CHECK(pd.encodeSources().contains(PixelDesc::YUV8_422_Planar_Rec709));

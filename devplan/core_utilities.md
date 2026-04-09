@@ -15,7 +15,7 @@ Opportunistic migration: any `std::pair<T, Error>` return still in the codebase 
 
 ## Variant Enhancements
 
-Needed to make `MediaIOConfig`/`MediaPipelineConfig` JSON round-trip work across every type a pipeline config might carry.
+Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across every type a pipeline config might carry.
 
 - [ ] `HashMap<String, Variant>` type support (map variant)
 - [ ] `List<Variant>` type support (list/array variant)

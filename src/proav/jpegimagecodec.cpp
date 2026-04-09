@@ -13,6 +13,9 @@
 #include <promeki/image.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/buffer.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/enum.h>
+#include <promeki/enums.h>
 #include <jpeglib.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -146,6 +149,27 @@ String JpegImageCodec::name() const { return "jpeg"; }
 String JpegImageCodec::description() const { return "JPEG image codec (libjpeg-turbo)"; }
 bool JpegImageCodec::canEncode() const { return true; }
 bool JpegImageCodec::canDecode() const { return true; }
+
+void JpegImageCodec::configure(const MediaConfig &config) {
+        // JpegQuality: clamped by setQuality to the 1-100 range, so we
+        // don't need to validate the integer ourselves.
+        if(config.contains(MediaConfig::JpegQuality)) {
+                Variant v = config.get(MediaConfig::JpegQuality);
+                if(v.isValid()) setQuality(v.get<int>());
+        }
+        // JpegSubsampling: accept any form Variant::asEnum can resolve
+        // (Enum, registered name string, or integer ordinal) so the
+        // same MediaConfig works whether it was authored programmatically
+        // or parsed from text.
+        if(config.contains(MediaConfig::JpegSubsampling)) {
+                Variant v = config.get(MediaConfig::JpegSubsampling);
+                Error subErr;
+                Enum e = v.asEnum(ChromaSubsampling::Type, &subErr);
+                if(!subErr.isError() && e.hasListedValue()) {
+                        setSubsampling(static_cast<Subsampling>(e.value()));
+                }
+        }
+}
 
 void JpegImageCodec::setQuality(int quality) {
         if(quality < 1) quality = 1;

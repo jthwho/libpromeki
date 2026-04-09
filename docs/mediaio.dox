@@ -187,7 +187,7 @@
  * For backend-specific operations (set device gain, query temperature,
  * trigger one-shot, ...), use @c sendParams.  The params and result
  * use the @c MediaIOParams VariantDatabase type (distinct from
- * MediaIOConfig and MediaIOStats so key names don't collide):
+ * MediaConfig and MediaIOStats so key names don't collide):
  *
  * @code
  * // Backend defines its own IDs as static members:
@@ -381,7 +381,7 @@
  * @endcode
  *
  * @c MediaIOStats is its own @c VariantDatabase type (distinct from
- * MediaIOConfig and MediaIOParams so key names don't collide).  It
+ * MediaConfig and MediaIOParams so key names don't collide).  It
  * defines standard key names as static members: FramesDropped,
  * FramesRepeated, FramesLate, QueueDepth, QueueCapacity,
  * BytesPerSecond, AverageLatencyMs, PeakLatencyMs, LastErrorMessage.

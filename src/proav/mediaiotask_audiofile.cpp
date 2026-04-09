@@ -20,10 +20,6 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_AudioFile)
 
-const MediaIO::ConfigID MediaIOTask_AudioFile::ConfigFrameRate("FrameRate");
-const MediaIO::ConfigID MediaIOTask_AudioFile::ConfigAudioRate("AudioRate");
-const MediaIO::ConfigID MediaIOTask_AudioFile::ConfigAudioChannels("AudioChannels");
-
 // ============================================================================
 // Magic number probing
 // ============================================================================
@@ -67,10 +63,10 @@ MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
-                        cfg.set(MediaIO::ConfigType, "AudioFile");
-                        cfg.set(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
-                        cfg.set(ConfigAudioRate, 48000.0f);
-                        cfg.set(ConfigAudioChannels, 2u);
+                        cfg.set(MediaConfig::Type, "AudioFile");
+                        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+                        cfg.set(MediaConfig::AudioRate, 48000.0f);
+                        cfg.set(MediaConfig::AudioChannels, 2u);
                         return cfg;
                 },
                 []() -> Metadata {
@@ -116,13 +112,13 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
         // Frame rate is required
-        _frameRate = cfg.getAs<FrameRate>(ConfigFrameRate, FrameRate());
+        _frameRate = cfg.getAs<FrameRate>(MediaConfig::FrameRate, FrameRate());
         if(!_frameRate.isValid()) {
                 promekiErr("MediaIOTask_AudioFile: frame rate is required");
                 return Error::InvalidArgument;
         }
 
-        String filename = cfg.getAs<String>(MediaIO::ConfigFilename);
+        String filename = cfg.getAs<String>(MediaConfig::Filename);
         if(filename.isEmpty()) {
                 promekiErr("MediaIOTask_AudioFile: filename is required");
                 return Error::InvalidArgument;
@@ -174,8 +170,8 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
                 } else if(!cmd.pendingMediaDesc.audioList().isEmpty()) {
                         _audioDesc = cmd.pendingMediaDesc.audioList()[0];
                 } else {
-                        float rate = cfg.getAs<float>(ConfigAudioRate, 0.0f);
-                        unsigned int channels = cfg.getAs<unsigned int>(ConfigAudioChannels, 0u);
+                        float rate = cfg.getAs<float>(MediaConfig::AudioRate, 0.0f);
+                        unsigned int channels = cfg.getAs<unsigned int>(MediaConfig::AudioChannels, 0u);
                         if(rate > 0.0f && channels > 0) {
                                 _audioDesc = AudioDesc(rate, channels);
                         }

@@ -275,8 +275,8 @@ class ImageFileIO_SGI : public ImageFileIO {
                         _canSave = true;
                         _name = "SGI";
                 }
-                Error load(ImageFile &imageFile) const override;
-                Error save(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
+                Error save(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_SGI);
 
@@ -284,7 +284,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_SGI);
 // Load
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_SGI::load(ImageFile &imageFile) const {
+Error ImageFileIO_SGI::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         File file(filename);
@@ -415,7 +416,8 @@ Error ImageFileIO_SGI::load(ImageFile &imageFile) const {
 // Save
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_SGI::save(ImageFile &imageFile) const {
+Error ImageFileIO_SGI::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 

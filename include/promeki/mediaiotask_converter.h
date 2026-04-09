@@ -13,7 +13,7 @@
 #include <promeki/audiodesc.h>
 #include <promeki/image.h>
 #include <promeki/list.h>
-#include <promeki/jpegimagecodec.h>
+#include <promeki/enum.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -25,21 +25,16 @@ PROMEKI_NAMESPACE_BEGIN
  * applies stateless intra-frame transforms, and emits the result on
  * @c readFrame().  Supported transforms in this initial version:
  *
- * - **Video colorspace conversion (CSC)** — delegated to
- *   @c Image::convert() via the CSC framework.  Applies whenever
- *   @c ConfigOutputPixelDesc is set and both source and target pixel
- *   descriptions are uncompressed.
- * - **JPEG encode** — delegated to @c JpegImageCodec::encode().
- *   Applies when @c ConfigOutputPixelDesc is a compressed JPEG pixel
- *   description and the source image is uncompressed.  Quality and
- *   chroma subsampling are taken from @c ConfigJpegQuality and
- *   @c ConfigJpegSubsampling.
- * - **JPEG decode** — delegated to @c JpegImageCodec::decode().
- *   Applies when the source image is a compressed JPEG and
- *   @c ConfigOutputPixelDesc is an uncompressed pixel description.
+ * - **Video conversion** — every video transform (uncompressed CSC,
+ *   JPEG encode, JPEG decode, compressed→compressed transcode) is
+ *   delegated to @ref Image::convert.  The converter just forwards
+ *   @ref MediaConfig::OutputPixelDesc as the target and threads
+ *   @ref MediaConfig::JpegQuality / @ref MediaConfig::JpegSubsampling
+ *   through the same @ref MediaConfig so the codec path honours them.
  * - **Audio sample-format conversion** — delegated to
- *   @c Audio::convertTo().  Applies whenever @c ConfigOutputAudioDataType
- *   is set and differs from the source data type.
+ *   @ref Audio::convertTo.  Applies whenever
+ *   @ref MediaConfig::OutputAudioDataType is set and differs from the
+ *   source data type.
  *
  * If no output keys are set, the Converter is a pass-through: the
  * input frame is delivered unchanged on the next @c readFrame().
@@ -64,17 +59,17 @@ PROMEKI_NAMESPACE_BEGIN
  * so the producer can back off.  When the FIFO is empty,
  * @c executeCmd(MediaIOCommandRead&) returns @c Error::TryAgain so
  * the consumer can wait for more input.  FIFO capacity is configurable
- * via @c ConfigCapacity (default 4).
+ * via @ref MediaConfig::Capacity (default 4).
  *
  * @par Config keys
  *
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigOutputPixelDesc | PixelDesc | Invalid (pass-through) | Target video pixel description. |
- * | ConfigJpegQuality | int | 85 | JPEG quality (1-100) for encode path. |
- * | ConfigJpegSubsampling | Enum (ChromaSubsampling) | YUV422 | JPEG chroma subsampling. |
- * | ConfigOutputAudioDataType | Enum (AudioDataType) | Invalid (pass-through) | Target audio sample format. |
- * | ConfigCapacity | int | 4 | Maximum output FIFO depth. |
+ * | @ref MediaConfig::OutputPixelDesc     | PixelDesc                       | Invalid (pass-through) | Target video pixel description. |
+ * | @ref MediaConfig::JpegQuality         | int                             | 85                     | JPEG quality (1-100) for encode path. |
+ * | @ref MediaConfig::JpegSubsampling     | Enum @ref ChromaSubsampling     | YUV422                 | JPEG chroma subsampling. |
+ * | @ref MediaConfig::OutputAudioDataType | Enum @ref AudioDataType         | Invalid (pass-through) | Target audio sample format. |
+ * | @ref MediaConfig::Capacity            | int                             | 4                      | Maximum output FIFO depth. |
  *
  * @par Stats keys
  *
@@ -89,8 +84,8 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * MediaIO::Config cfg;
- * cfg.set(MediaIO::ConfigType, "Converter");
- * cfg.set(MediaIOTask_Converter::ConfigOutputPixelDesc,
+ * cfg.set(MediaConfig::Type, "Converter");
+ * cfg.set(MediaConfig::OutputPixelDesc,
  *         PixelDesc(PixelDesc::RGBA8_sRGB));
  * MediaIO *io = MediaIO::create(cfg);
  * io->open(MediaIO::ReadWrite);
@@ -103,20 +98,10 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class MediaIOTask_Converter : public MediaIOTask {
         public:
-                /** @brief Target video pixel description (PixelDesc). */
-                static const MediaIO::ConfigID ConfigOutputPixelDesc;
-
-                /** @brief JPEG quality 1-100 (int). */
-                static const MediaIO::ConfigID ConfigJpegQuality;
-
-                /** @brief JPEG chroma subsampling (Enum ChromaSubsampling). */
-                static const MediaIO::ConfigID ConfigJpegSubsampling;
-
-                /** @brief Target audio sample format (Enum AudioDataType; Invalid = pass-through). */
-                static const MediaIO::ConfigID ConfigOutputAudioDataType;
-
-                /** @brief Maximum output FIFO depth (int, default 4). */
-                static const MediaIO::ConfigID ConfigCapacity;
+                // Config keys for this backend live in @ref MediaConfig:
+                // @c OutputPixelDesc, @c JpegQuality, @c JpegSubsampling,
+                // @c OutputAudioDataType, @c Capacity.  See @ref MediaConfig
+                // for the full catalog.
 
                 /** @brief int64_t — total frames successfully converted. */
                 static inline const MediaIOStats::ID StatsFramesConverted{"FramesConverted"};
@@ -156,11 +141,10 @@ class MediaIOTask_Converter : public MediaIOTask {
                 AudioDesc::DataType             _outputAudioDataType = AudioDesc::Invalid;
                 bool                            _outputAudioDataTypeSet = false;
                 int                             _jpegQuality = 85;
-                JpegImageCodec::Subsampling     _jpegSubsampling = JpegImageCodec::Subsampling422;
+                Enum                            _jpegSubsamplingEnum;
                 int                             _capacity = 4;
 
                 // Runtime state
-                JpegImageCodec                  _jpegCodec;
                 List<Frame::Ptr>                _outputQueue;
                 int64_t                         _frameCount = 0;
                 int64_t                         _readCount = 0;

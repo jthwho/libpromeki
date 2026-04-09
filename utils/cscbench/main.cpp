@@ -14,7 +14,8 @@
  */
 
 #include <promeki/cscpipeline.h>
-#include <promeki/medianodeconfig.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/enums.h>
 #include <promeki/image.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/elapsedtimer.h>
@@ -46,7 +47,7 @@ struct BenchResult {
 
 static BenchResult benchConversion(PixelDesc::ID srcId, PixelDesc::ID dstId,
                                    size_t width, size_t height, int iterations,
-                                   const MediaNodeConfig &config) {
+                                   const MediaConfig &config) {
         BenchResult result;
         result.srcName = PixelDesc(srcId).name();
         result.dstName = PixelDesc(dstId).name();
@@ -207,7 +208,7 @@ int main(int argc, char **argv) {
         bool list = false;
         StringList srcFormats;
         StringList dstFormats;
-        MediaNodeConfig config;
+        MediaConfig config;
 
         CmdLineParser parser;
         parser.registerOptions({
@@ -223,14 +224,17 @@ int main(int argc, char **argv) {
                  CmdLineParser::OptionStringCallback([&](const String &s) { srcFormats.pushToBack(s); return 0; })},
                 {'d', "dst",        "Target PixelDesc name (repeatable, cross with -s)",
                  CmdLineParser::OptionStringCallback([&](const String &s) { dstFormats.pushToBack(s); return 0; })},
-                {'c', "config",     "CSC config hint as key=value (repeatable, e.g. -c Path=scalar)",
+                {'c', "config",     "CSC config hint as key=value (repeatable, e.g. -c CscPath=Scalar)",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
                         size_t eq = s.find('=');
                         if(eq == String::npos) {
                                 std::fprintf(stderr, "Error: -c value must be key=value, got '%s'\n", s.cstr());
                                 return 1;
                         }
-                        config.set(s.left(eq), s.mid(eq + 1));
+                        // The value is stashed as a String — Variant::asEnum
+                        // converts it on the way out (so e.g. "Scalar" becomes
+                        // CscPath::Scalar inside CSCPipeline).
+                        config.set(MediaConfigID(s.left(eq)), s.mid(eq + 1));
                         return 0;
                  })},
                 {'l', "list",       "List all available PixelDesc names and exit",
@@ -293,8 +297,11 @@ int main(int argc, char **argv) {
         std::printf("  Image:      %dx%d (%.2f Mpix)\n", width, height, totalMpix);
         std::printf("  Iterations: %d\n", iterations);
         std::printf("  Pairs:      %d\n", static_cast<int>(pairs.size()));
-        String path = config.get(CSCPipeline::KeyPath, "optimized").get<String>();
-        std::printf("  Path:       %s\n\n", path.cstr());
+        Enum cscPath = config.get(MediaConfig::CscPath, CscPath::Optimized)
+                              .asEnum(CscPath::Type);
+        if(!cscPath.hasListedValue()) cscPath = CscPath::Optimized;
+        String pathName = cscPath.valueName();
+        std::printf("  Path:       %s\n\n", pathName.cstr());
 
         if(!quiet) {
                 std::printf("%-40s %-40s %8s %8s %6s %s\n",
@@ -331,7 +338,7 @@ int main(int argc, char **argv) {
         root.set("width", width);
         root.set("height", height);
         root.set("iterations", iterations);
-        root.set("path", path);
+        root.set("path", pathName);
 
         JsonArray benchmarks;
         for(const auto &r : results) {

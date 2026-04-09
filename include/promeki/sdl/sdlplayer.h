@@ -38,7 +38,7 @@ class SDLAudioOutput;
  * Unlike registered backends, SDLPlayerTask cannot be created via
  * @c MediaIO::create() because it needs raw pointers to the video
  * widget and audio output — values that can't be carried in a
- * @c MediaIOConfig.  Use the free factory function
+ * @c MediaConfig.  Use the free factory function
  * @c createSDLPlayer() to construct a ready-to-use @c MediaIO that
  * adopts a properly configured SDLPlayerTask.
  *

@@ -30,7 +30,7 @@ namespace {
 // Dumps every entry of a VariantDatabase<Tag> to stdout, sorted by
 // key name, with Enums rendered as just their valueName() so the
 // trailing [Enum] column isn't redundant.  Used for both the
-// MediaIOConfig schema and the Metadata schema dumps.
+// MediaConfig schema and the Metadata schema dumps.
 template <typename Tag>
 static void printDatabaseDump(const VariantDatabase<Tag> &db) {
         using DbID = typename VariantDatabase<Tag>::ID;
@@ -149,11 +149,11 @@ void usage() {
                 "                            Repeatable.\n"
                 "\n"
                 "SDL output (use -o SDL, configure via --oc):\n"
-                "  --oc Paced:false          Run the SDL sink as fast as\n"
-                "                            possible (disables audio).\n"
-                "  --oc Audio:false          Open the SDL window but no audio.\n"
-                "  --oc WindowSize:1920x1080 Initial SDL window size.\n"
-                "  --oc WindowTitle:Preview  Set the SDL window title bar.\n"
+                "  --oc SdlPaced:false          Run the SDL sink as fast as\n"
+                "                               possible (disables audio).\n"
+                "  --oc SdlAudioEnabled:false   Open the SDL window but no audio.\n"
+                "  --oc SdlWindowSize:1920x1080 Initial SDL window size.\n"
+                "  --oc SdlWindowTitle:Preview  Set the SDL window title bar.\n"
                 "\n"
                 "Positional shortcuts:\n"
                 "  mediaplay <input-file>            Read the file, play to SDL.\n"

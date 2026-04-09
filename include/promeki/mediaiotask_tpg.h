@@ -37,55 +37,55 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Config keys — General
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigFrameRate | FrameRate | 29.97 | Frame rate (required). |
+ * | @ref MediaConfig::FrameRate | FrameRate | 29.97 | Frame rate (required). |
  *
  * @par Config keys — Video
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigVideoEnabled | bool | true | Enable video generation. |
- * | ConfigVideoPattern | String | "colorbars" | Pattern name. |
- * | ConfigVideoSize | Size2Du32 | 1920x1080 | Frame size. |
- * | ConfigVideoPixelFormat | PixelDesc | RGB8_sRGB | Pixel description. |
- * | ConfigVideoSolidColor | Color | Black | Fill color for SolidColor pattern. |
- * | ConfigVideoMotion | double | 0.0 | Motion speed. |
+ * | @ref MediaConfig::VideoEnabled     | bool      | true       | Enable video generation. |
+ * | @ref MediaConfig::VideoPattern     | Enum @ref VideoPattern | ColorBars | Pattern selector. |
+ * | @ref MediaConfig::VideoSize        | Size2Du32 | 1920x1080  | Frame size. |
+ * | @ref MediaConfig::VideoPixelFormat | PixelDesc | RGB8_sRGB  | Pixel description. |
+ * | @ref MediaConfig::VideoSolidColor  | Color     | Black      | Fill color for SolidColor pattern. |
+ * | @ref MediaConfig::VideoMotion      | double    | 0.0        | Motion speed. |
  *
  * @par Config keys — Video burn-in
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigVideoBurnEnabled | bool | false | Enable text burn-in on the pattern. |
- * | ConfigVideoBurnFontPath | String | "" | TrueType font path. Empty = use the library's bundled default font. |
- * | ConfigVideoBurnFontSize | int | 36 | Font size in pixels. |
- * | ConfigVideoBurnText | String | "" | Static custom burn text (shown below timecode). |
- * | ConfigVideoBurnPosition | String | "bottomcenter" | Position preset. |
- * | ConfigVideoBurnTextColor | Color | White | Burn text foreground color. |
- * | ConfigVideoBurnBgColor | Color | Black | Burn text background color. |
- * | ConfigVideoBurnDrawBg | bool | true | Draw padded background rectangle behind the burn text. |
+ * | @ref MediaConfig::VideoBurnEnabled   | bool      | false      | Enable text burn-in on the pattern. |
+ * | @ref MediaConfig::VideoBurnFontPath  | String    | ""         | TrueType font path. Empty = bundled default font. |
+ * | @ref MediaConfig::VideoBurnFontSize  | int       | 36         | Font size in pixels. |
+ * | @ref MediaConfig::VideoBurnText      | String    | ""         | Static custom burn text (shown below timecode). |
+ * | @ref MediaConfig::VideoBurnPosition  | Enum @ref BurnPosition | BottomCenter | Position preset. |
+ * | @ref MediaConfig::VideoBurnTextColor | Color     | White      | Burn text foreground color. |
+ * | @ref MediaConfig::VideoBurnBgColor   | Color     | Black      | Burn text background color. |
+ * | @ref MediaConfig::VideoBurnDrawBg    | bool      | true       | Draw padded background rectangle behind the burn text. |
  *
  * The burn-in runs on top of the cached static background when the
  * pattern is non-moving, so turning burn on is effectively free on the
  * render side beyond one plane copy plus the text draw.  When the
- * timecode generator is also enabled, @c ConfigTimecodeEnabled, the
- * current timecode is drawn on the top line of the burn block.
+ * timecode generator is also enabled (@ref MediaConfig::TimecodeEnabled),
+ * the current timecode is drawn on the top line of the burn block.
  *
  * @par Config keys — Audio
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigAudioEnabled | bool | true | Enable audio generation. |
- * | ConfigAudioMode | String | "tone" | "tone", "silence", or "ltc". |
- * | ConfigAudioRate | float | 48000 | Sample rate in Hz. |
- * | ConfigAudioChannels | int | 2 | Channel count. |
- * | ConfigAudioToneFrequency | double | 1000.0 | Tone frequency in Hz. |
- * | ConfigAudioToneLevel | double | -20.0 | Tone level in dBFS. |
- * | ConfigAudioLtcLevel | double | -20.0 | LTC level in dBFS. |
- * | ConfigAudioLtcChannel | int | 0 | LTC channel (-1 = all). |
+ * | @ref MediaConfig::AudioEnabled       | bool   | true   | Enable audio generation. |
+ * | @ref MediaConfig::AudioMode          | Enum @ref AudioPattern | Tone | Audio pattern selector. |
+ * | @ref MediaConfig::AudioRate          | float  | 48000  | Sample rate in Hz. |
+ * | @ref MediaConfig::AudioChannels      | int    | 2      | Channel count. |
+ * | @ref MediaConfig::AudioToneFrequency | double | 1000.0 | Tone frequency in Hz. |
+ * | @ref MediaConfig::AudioToneLevel     | double | -20.0  | Tone level in dBFS. |
+ * | @ref MediaConfig::AudioLtcLevel      | double | -20.0  | LTC level in dBFS. |
+ * | @ref MediaConfig::AudioLtcChannel    | int    | 0      | LTC channel (-1 = all). |
  *
  * @par Config keys — Timecode
  * | Key | Type | Default | Description |
  * |-----|------|---------|-------------|
- * | ConfigTimecodeEnabled | bool | true | Enable timecode metadata. |
- * | ConfigTimecodeStart | String | "01:00:00:00" | Starting timecode string. |
- * | ConfigTimecodeValue | Timecode | — | Pre-built start Timecode. |
- * | ConfigTimecodeDropFrame | bool | false | Drop-frame counting. |
+ * | @ref MediaConfig::TimecodeEnabled   | bool     | true        | Enable timecode metadata. |
+ * | @ref MediaConfig::TimecodeStart     | String   | "01:00:00:00" | Starting timecode string. |
+ * | @ref MediaConfig::TimecodeValue     | Timecode | —           | Pre-built start Timecode. |
+ * | @ref MediaConfig::TimecodeDropFrame | bool     | false       | Drop-frame counting. |
  *
  * @par Example
  * @code
@@ -102,42 +102,10 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class MediaIOTask_TPG : public MediaIOTask {
         public:
-                // General
-                static const MediaIO::ConfigID ConfigFrameRate;           ///< @brief Frame rate (FrameRate, required).
-
-                // Video
-                static const MediaIO::ConfigID ConfigVideoEnabled;        ///< @brief Enable video (bool).
-                static const MediaIO::ConfigID ConfigVideoPattern;        ///< @brief Pattern name (String).
-                static const MediaIO::ConfigID ConfigVideoSize;           ///< @brief Frame size (Size2Du32).
-                static const MediaIO::ConfigID ConfigVideoPixelFormat;    ///< @brief Pixel format (PixelDesc).
-                static const MediaIO::ConfigID ConfigVideoSolidColor;     ///< @brief Fill color (Color).
-                static const MediaIO::ConfigID ConfigVideoMotion;         ///< @brief Motion speed (double).
-
-                // Video burn-in (text overlay on top of the pattern)
-                static const MediaIO::ConfigID ConfigVideoBurnEnabled;    ///< @brief Enable text burn-in (bool).
-                static const MediaIO::ConfigID ConfigVideoBurnFontPath;   ///< @brief Burn font file path (String).
-                static const MediaIO::ConfigID ConfigVideoBurnFontSize;   ///< @brief Burn font size in pixels (int).
-                static const MediaIO::ConfigID ConfigVideoBurnText;       ///< @brief Static custom burn text (String).
-                static const MediaIO::ConfigID ConfigVideoBurnPosition;   ///< @brief Burn position preset (String).
-                static const MediaIO::ConfigID ConfigVideoBurnTextColor;  ///< @brief Burn text color (Color).
-                static const MediaIO::ConfigID ConfigVideoBurnBgColor;    ///< @brief Burn background color (Color).
-                static const MediaIO::ConfigID ConfigVideoBurnDrawBg;     ///< @brief Draw background rect behind burn text (bool).
-
-                // Audio
-                static const MediaIO::ConfigID ConfigAudioEnabled;        ///< @brief Enable audio (bool).
-                static const MediaIO::ConfigID ConfigAudioMode;           ///< @brief Audio mode (String).
-                static const MediaIO::ConfigID ConfigAudioRate;           ///< @brief Sample rate Hz (float).
-                static const MediaIO::ConfigID ConfigAudioChannels;       ///< @brief Channel count (int).
-                static const MediaIO::ConfigID ConfigAudioToneFrequency;  ///< @brief Tone frequency Hz (double).
-                static const MediaIO::ConfigID ConfigAudioToneLevel;      ///< @brief Tone level dBFS (double).
-                static const MediaIO::ConfigID ConfigAudioLtcLevel;       ///< @brief LTC level dBFS (double).
-                static const MediaIO::ConfigID ConfigAudioLtcChannel;     ///< @brief LTC channel (int).
-
-                // Timecode
-                static const MediaIO::ConfigID ConfigTimecodeEnabled;     ///< @brief Enable timecode (bool).
-                static const MediaIO::ConfigID ConfigTimecodeStart;       ///< @brief Start timecode string (String).
-                static const MediaIO::ConfigID ConfigTimecodeValue;       ///< @brief Pre-built Timecode (Timecode).
-                static const MediaIO::ConfigID ConfigTimecodeDropFrame;   ///< @brief Drop-frame flag (bool).
+                // All config keys for this backend live in MediaConfig —
+                // use @c MediaConfig::FrameRate / @c MediaConfig::VideoSize
+                // / @c MediaConfig::VideoPattern / etc. directly.  See
+                // @ref MediaConfig for the full catalog.
 
                 /**
                  * @brief Returns the format descriptor for this backend.

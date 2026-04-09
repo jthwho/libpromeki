@@ -49,7 +49,7 @@ TEST_CASE("MediaIO_QuickTime: backend is registered") {
 
 TEST_CASE("MediaIO_QuickTime: defaultConfig has the QuickTime type tag") {
         MediaIO::Config cfg = MediaIO::defaultConfig("QuickTime");
-        CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "QuickTime");
+        CHECK(cfg.getAs<String>(MediaConfig::Type) == "QuickTime");
 }
 
 TEST_CASE("MediaIO_QuickTime: createForFileRead picks the QuickTime backend") {
@@ -232,8 +232,8 @@ TEST_CASE("MediaIO_QuickTime: round-trip uncompressed video via MediaIO") {
         // ---- write ----
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "QuickTime");
-                cfg.set(MediaIO::ConfigFilename, tmp);
+                cfg.set(MediaConfig::Type, "QuickTime");
+                cfg.set(MediaConfig::Filename, tmp);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
 
@@ -304,8 +304,8 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
         // writer stores as s16le ----
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "QuickTime");
-                cfg.set(MediaIO::ConfigFilename, tmp);
+                cfg.set(MediaConfig::Type, "QuickTime");
+                cfg.set(MediaConfig::Filename, tmp);
 
                 MediaDesc md;
                 md.setFrameRate(FrameRate(FrameRate::RationalType(24, 1)));
@@ -401,8 +401,8 @@ TEST_CASE("MediaIO_QuickTime: round-trip compressed (ProRes) bytes pass through"
         // ---- write: feed Image::fromCompressedData payloads ----
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "QuickTime");
-                cfg.set(MediaIO::ConfigFilename, tmp);
+                cfg.set(MediaConfig::Type, "QuickTime");
+                cfg.set(MediaConfig::Filename, tmp);
 
                 MediaDesc md;
                 md.setFrameRate(FrameRate(FrameRate::RationalType(25, 1)));

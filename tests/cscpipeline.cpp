@@ -28,7 +28,8 @@
 #include <promeki/image.h>
 #include <promeki/color.h>
 #include <promeki/colormodel.h>
-#include <promeki/medianodeconfig.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/enums.h>
 #include <promeki/videotestpattern.h>
 #include <cstring>
 #include <cmath>
@@ -39,10 +40,10 @@ using namespace promeki;
 // Helpers
 // =========================================================================
 
-static const MediaNodeConfig &scalarConfig() {
-        static MediaNodeConfig cfg;
+static const MediaConfig &scalarConfig() {
+        static MediaConfig cfg;
         static bool init = false;
-        if(!init) { cfg.set(CSCPipeline::KeyPath, "scalar"); init = true; }
+        if(!init) { cfg.set(MediaConfig::CscPath, CscPath::Scalar); init = true; }
         return cfg;
 }
 

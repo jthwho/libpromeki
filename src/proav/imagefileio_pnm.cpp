@@ -97,8 +97,8 @@ class ImageFileIO_PNM : public ImageFileIO {
                         _canSave = true;
                         _name = "PNM";
                 }
-                Error load(ImageFile &imageFile) const override;
-                Error save(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
+                Error save(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_PNM);
 
@@ -106,7 +106,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_PNM);
 // Load
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_PNM::load(ImageFile &imageFile) const {
+Error ImageFileIO_PNM::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         // Read entire file into memory for easy parsing
@@ -214,7 +215,8 @@ Error ImageFileIO_PNM::load(ImageFile &imageFile) const {
 // Save
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_PNM::save(ImageFile &imageFile) const {
+Error ImageFileIO_PNM::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 

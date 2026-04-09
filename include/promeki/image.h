@@ -11,7 +11,7 @@
 #include <promeki/sharedptr.h>
 #include <promeki/buffer.h>
 #include <promeki/imagedesc.h>
-#include <promeki/medianodeconfig.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/paintengine.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -299,25 +299,46 @@ class Image {
                 /**
                  * @brief Converts this image to a different pixel description.
                  *
-                 * Creates a CSCPipeline for this image's pixel description and
-                 * the target, then executes the conversion.  For common
-                 * broadcast pairs (e.g. RGBA8 ↔ YUV8 Rec.709), a registered
-                 * fast-path kernel is used automatically.
+                 * Handles every combination of compressed and uncompressed pixel
+                 * descriptions:
                  *
-                 * Set `CSCPipeline::KeyPath` to `"scalar"` in @p config to
-                 * force the generic float pipeline (useful for debugging or
-                 * reference comparison against Color::convert()).
+                 * - **Uncompressed → uncompressed:** Creates a @ref CSCPipeline
+                 *   for this image's pixel description and the target, then
+                 *   executes the conversion.  For common broadcast pairs
+                 *   (e.g. RGBA8 ↔ YUV8 Rec.709), a registered fast-path kernel
+                 *   is used automatically.  Set @ref MediaConfig::CscPath to
+                 *   ``"scalar"`` in @p config to force the generic float
+                 *   pipeline (useful for debugging or reference comparison
+                 *   against @ref Color::convert).
+                 * - **Uncompressed → compressed:** If the source format is not
+                 *   one of the target codec's @ref PixelDesc::encodeSources,
+                 *   a CSC is run first to land on one that is.  The codec
+                 *   (currently only JPEG) then encodes the intermediate.
+                 *   JPEG quality and chroma subsampling can be overridden via
+                 *   @ref MediaConfig::JpegQuality and
+                 *   @ref MediaConfig::JpegSubsampling in @p config.
+                 * - **Compressed → uncompressed:** The codec is asked to
+                 *   decode directly to the target format.  If the codec does
+                 *   not support that target natively, it decodes to one of its
+                 *   preferred @ref PixelDesc::decodeTargets and a CSC finishes
+                 *   the job.
+                 * - **Compressed → compressed:** Decodes to an uncompressed
+                 *   intermediate shared by both sides (or RGBA8_sRGB when
+                 *   there is no overlap) and re-encodes.
                  *
                  * @param pd       The target pixel description.
                  * @param metadata Metadata to attach to the converted image.
-                 * @param config   Optional CSC pipeline configuration hints.
+                 * @param config   Optional configuration hints
+                 *                 (@ref MediaConfig::CscPath,
+                 *                 @ref MediaConfig::JpegQuality,
+                 *                 @ref MediaConfig::JpegSubsampling).
                  * @return A new Image in the target pixel description, or an
                  *         invalid Image on failure.
                  *
-                 * @see CSCPipeline, @ref csc "CSC Framework"
+                 * @see CSCPipeline, ImageCodec, JpegImageCodec, @ref csc "CSC Framework"
                  */
                 Image convert(const PixelDesc &pd, const Metadata &metadata,
-                              const MediaNodeConfig &config = MediaNodeConfig()) const;
+                              const MediaConfig &config = MediaConfig()) const;
 
         private:
                 ImageDesc       _desc;

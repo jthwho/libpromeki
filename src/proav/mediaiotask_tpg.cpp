@@ -21,43 +21,6 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_TPG)
 
-// General
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigFrameRate("FrameRate");
-
-// Video
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoEnabled("VideoEnabled");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoPattern("VideoPattern");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoSize("VideoSize");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoPixelFormat("VideoPixelFormat");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoSolidColor("VideoSolidColor");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoMotion("VideoMotion");
-
-// Video burn-in
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnEnabled("VideoBurnEnabled");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnFontPath("VideoBurnFontPath");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnFontSize("VideoBurnFontSize");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnText("VideoBurnText");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnPosition("VideoBurnPosition");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnTextColor("VideoBurnTextColor");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnBgColor("VideoBurnBgColor");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigVideoBurnDrawBg("VideoBurnDrawBg");
-
-// Audio
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioEnabled("AudioEnabled");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioMode("AudioMode");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioRate("AudioRate");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioChannels("AudioChannels");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioToneFrequency("AudioToneFrequency");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioToneLevel("AudioToneLevel");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioLtcLevel("AudioLtcLevel");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigAudioLtcChannel("AudioLtcChannel");
-
-// Timecode
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeEnabled("TimecodeEnabled");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeStart("TimecodeStart");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeValue("TimecodeValue");
-const MediaIO::ConfigID MediaIOTask_TPG::ConfigTimecodeDropFrame("TimecodeDropFrame");
-
 MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
         return {
                 "TPG",
@@ -72,41 +35,41 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
                         // General
-                        cfg.set(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
+                        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
                         // Video — enabled by default so an unconfigured
                         // TPG produces a usable 1080p59.94 colour-bars
                         // stream out of the box.
-                        cfg.set(ConfigVideoEnabled, true);
-                        cfg.set(ConfigVideoPattern, VideoPattern::ColorBars);
-                        cfg.set(ConfigVideoSize, Size2Du32(1920, 1080));
-                        cfg.set(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
-                        cfg.set(ConfigVideoSolidColor, Color::Black);
-                        cfg.set(ConfigVideoMotion, 0.0);
+                        cfg.set(MediaConfig::VideoEnabled, true);
+                        cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
+                        cfg.set(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+                        cfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
+                        cfg.set(MediaConfig::VideoSolidColor, Color::Black);
+                        cfg.set(MediaConfig::VideoMotion, 0.0);
                         // Video burn-in
-                        cfg.set(ConfigVideoBurnEnabled, false);
-                        cfg.set(ConfigVideoBurnFontPath, String());
-                        cfg.set(ConfigVideoBurnFontSize, 36);
-                        cfg.set(ConfigVideoBurnText, String());
-                        cfg.set(ConfigVideoBurnPosition, BurnPosition::BottomCenter);
-                        cfg.set(ConfigVideoBurnTextColor, Color::White);
-                        cfg.set(ConfigVideoBurnBgColor, Color::Black);
-                        cfg.set(ConfigVideoBurnDrawBg, true);
+                        cfg.set(MediaConfig::VideoBurnEnabled, false);
+                        cfg.set(MediaConfig::VideoBurnFontPath, String());
+                        cfg.set(MediaConfig::VideoBurnFontSize, 36);
+                        cfg.set(MediaConfig::VideoBurnText, String());
+                        cfg.set(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
+                        cfg.set(MediaConfig::VideoBurnTextColor, Color::White);
+                        cfg.set(MediaConfig::VideoBurnBgColor, Color::Black);
+                        cfg.set(MediaConfig::VideoBurnDrawBg, true);
                         // Audio — also enabled by default so the plain
                         // TPG stream ships with a 1 kHz tone on stereo
                         // 48 kHz PCM, matching the "visible + audible
                         // reference" expectation.
-                        cfg.set(ConfigAudioEnabled, true);
-                        cfg.set(ConfigAudioMode, AudioPattern::Tone);
-                        cfg.set(ConfigAudioRate, 48000.0f);
-                        cfg.set(ConfigAudioChannels, 2);
-                        cfg.set(ConfigAudioToneFrequency, 1000.0);
-                        cfg.set(ConfigAudioToneLevel, -20.0);
-                        cfg.set(ConfigAudioLtcLevel, -20.0);
-                        cfg.set(ConfigAudioLtcChannel, 0);
+                        cfg.set(MediaConfig::AudioEnabled, true);
+                        cfg.set(MediaConfig::AudioMode, AudioPattern::Tone);
+                        cfg.set(MediaConfig::AudioRate, 48000.0f);
+                        cfg.set(MediaConfig::AudioChannels, 2);
+                        cfg.set(MediaConfig::AudioToneFrequency, 1000.0);
+                        cfg.set(MediaConfig::AudioToneLevel, -20.0);
+                        cfg.set(MediaConfig::AudioLtcLevel, -20.0);
+                        cfg.set(MediaConfig::AudioLtcChannel, 0);
                         // Timecode
-                        cfg.set(ConfigTimecodeEnabled, true);
-                        cfg.set(ConfigTimecodeStart, "01:00:00:00");
-                        cfg.set(ConfigTimecodeDropFrame, false);
+                        cfg.set(MediaConfig::TimecodeEnabled, true);
+                        cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
+                        cfg.set(MediaConfig::TimecodeDropFrame, false);
                         return cfg;
                 },
                 []() -> Metadata {
@@ -136,7 +99,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
         // -- Frame rate (required) --
-        FrameRate fps = cfg.getAs<FrameRate>(ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
+        FrameRate fps = cfg.getAs<FrameRate>(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
         if(!fps.isValid()) {
                 promekiErr("MediaIOTask_TPG: invalid frame rate");
                 return Error::InvalidArgument;
@@ -147,20 +110,20 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         mediaDesc.setFrameRate(fps);
 
         // -- Video --
-        _videoEnabled = cfg.getAs<bool>(ConfigVideoEnabled, false);
+        _videoEnabled = cfg.getAs<bool>(MediaConfig::VideoEnabled, false);
         if(_videoEnabled) {
                 Error patErr;
-                Enum patEnum = cfg.get(ConfigVideoPattern).asEnum(VideoPattern::Type, &patErr);
+                Enum patEnum = cfg.get(MediaConfig::VideoPattern).asEnum(VideoPattern::Type, &patErr);
                 if(patErr.isError() || !patEnum.hasListedValue()) {
                         promekiErr("MediaIOTask_TPG: unknown pattern '%s'",
-                                   cfg.get(ConfigVideoPattern).get<String>().cstr());
+                                   cfg.get(MediaConfig::VideoPattern).get<String>().cstr());
                         return Error::InvalidArgument;
                 }
                 _videoPattern.setPattern(
                         static_cast<VideoTestPattern::Pattern>(patEnum.value()));
 
-                Size2Du32 size = cfg.getAs<Size2Du32>(ConfigVideoSize, Size2Du32(1920, 1080));
-                PixelDesc pd = cfg.getAs<PixelDesc>(ConfigVideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
+                Size2Du32 size = cfg.getAs<Size2Du32>(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+                PixelDesc pd = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
                 if(!size.isValid()) {
                         promekiErr("MediaIOTask_TPG: invalid dimensions %s",
                                    size.toString().cstr());
@@ -170,36 +133,36 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 _imageDesc = ImageDesc(size.width(), size.height(), pd.id());
                 mediaDesc.imageList().pushToBack(_imageDesc);
 
-                Color solidColor = cfg.getAs<Color>(ConfigVideoSolidColor, Color::Black);
+                Color solidColor = cfg.getAs<Color>(MediaConfig::VideoSolidColor, Color::Black);
                 _videoPattern.setSolidColor(solidColor);
 
-                _motion = cfg.getAs<double>(ConfigVideoMotion, 0.0);
+                _motion = cfg.getAs<double>(MediaConfig::VideoMotion, 0.0);
                 _motionOffset = 0.0;
 
                 // Burn-in configuration.  VideoTestPattern owns the
                 // cached background and applies the burn on a copy, so
                 // there's no pre-render pass needed here.
-                bool burnEnabled = cfg.getAs<bool>(ConfigVideoBurnEnabled, false);
+                bool burnEnabled = cfg.getAs<bool>(MediaConfig::VideoBurnEnabled, false);
                 _videoPattern.setBurnEnabled(burnEnabled);
                 if(burnEnabled) {
                         _videoPattern.setBurnFontFilename(
-                                cfg.getAs<String>(ConfigVideoBurnFontPath, String()));
+                                cfg.getAs<String>(MediaConfig::VideoBurnFontPath, String()));
                         _videoPattern.setBurnFontSize(
-                                cfg.getAs<int>(ConfigVideoBurnFontSize, 36));
+                                cfg.getAs<int>(MediaConfig::VideoBurnFontSize, 36));
                         _videoPattern.setBurnText(
-                                cfg.getAs<String>(ConfigVideoBurnText, String()));
+                                cfg.getAs<String>(MediaConfig::VideoBurnText, String()));
                         _videoPattern.setBurnTextColor(
-                                cfg.getAs<Color>(ConfigVideoBurnTextColor, Color::White));
+                                cfg.getAs<Color>(MediaConfig::VideoBurnTextColor, Color::White));
                         _videoPattern.setBurnBackgroundColor(
-                                cfg.getAs<Color>(ConfigVideoBurnBgColor, Color::Black));
+                                cfg.getAs<Color>(MediaConfig::VideoBurnBgColor, Color::Black));
                         _videoPattern.setBurnDrawBackground(
-                                cfg.getAs<bool>(ConfigVideoBurnDrawBg, true));
+                                cfg.getAs<bool>(MediaConfig::VideoBurnDrawBg, true));
                         Error posErr;
-                        Enum posEnum = cfg.get(ConfigVideoBurnPosition)
+                        Enum posEnum = cfg.get(MediaConfig::VideoBurnPosition)
                                            .asEnum(BurnPosition::Type, &posErr);
                         if(posErr.isError() || !posEnum.hasListedValue()) {
                                 promekiErr("MediaIOTask_TPG: unknown burn position '%s'",
-                                           cfg.get(ConfigVideoBurnPosition)
+                                           cfg.get(MediaConfig::VideoBurnPosition)
                                                    .get<String>().cstr());
                                 return Error::InvalidArgument;
                         }
@@ -209,10 +172,10 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         // -- Audio --
-        _audioEnabled = cfg.getAs<bool>(ConfigAudioEnabled, false);
+        _audioEnabled = cfg.getAs<bool>(MediaConfig::AudioEnabled, false);
         if(_audioEnabled) {
-                float audioRate = cfg.getAs<float>(ConfigAudioRate, 48000.0f);
-                int audioChannels = cfg.getAs<int>(ConfigAudioChannels, 2);
+                float audioRate = cfg.getAs<float>(MediaConfig::AudioRate, 48000.0f);
+                int audioChannels = cfg.getAs<int>(MediaConfig::AudioChannels, 2);
                 _audioDesc = AudioDesc(audioRate, audioChannels);
                 if(!_audioDesc.isValid()) {
                         promekiErr("MediaIOTask_TPG: invalid audio desc");
@@ -225,11 +188,11 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 _audioPattern = new AudioTestPattern(_audioDesc);
 
                 Error modeErr;
-                Enum audioModeEnum = cfg.get(ConfigAudioMode)
+                Enum audioModeEnum = cfg.get(MediaConfig::AudioMode)
                                          .asEnum(AudioPattern::Type, &modeErr);
                 if(modeErr.isError() || !audioModeEnum.hasListedValue()) {
                         promekiErr("MediaIOTask_TPG: unknown audio mode '%s'",
-                                   cfg.get(ConfigAudioMode).get<String>().cstr());
+                                   cfg.get(MediaConfig::AudioMode).get<String>().cstr());
                         delete _audioPattern;
                         _audioPattern = nullptr;
                         return Error::InvalidArgument;
@@ -237,10 +200,10 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 _audioPattern->setMode(
                         static_cast<AudioTestPattern::Mode>(audioModeEnum.value()));
 
-                double toneFreq = cfg.getAs<double>(ConfigAudioToneFrequency, 1000.0);
-                double toneLevel = cfg.getAs<double>(ConfigAudioToneLevel, -20.0);
-                double ltcLevel = cfg.getAs<double>(ConfigAudioLtcLevel, -20.0);
-                int ltcChannel = cfg.getAs<int>(ConfigAudioLtcChannel, 0);
+                double toneFreq = cfg.getAs<double>(MediaConfig::AudioToneFrequency, 1000.0);
+                double toneLevel = cfg.getAs<double>(MediaConfig::AudioToneLevel, -20.0);
+                double ltcLevel = cfg.getAs<double>(MediaConfig::AudioLtcLevel, -20.0);
+                int ltcChannel = cfg.getAs<int>(MediaConfig::AudioLtcChannel, 0);
 
                 _audioPattern->setToneFrequency(toneFreq);
                 _audioPattern->setToneLevel(AudioLevel::fromDbfs(toneLevel));
@@ -250,15 +213,15 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         // -- Timecode --
-        _timecodeEnabled = cfg.getAs<bool>(ConfigTimecodeEnabled, false);
+        _timecodeEnabled = cfg.getAs<bool>(MediaConfig::TimecodeEnabled, false);
         if(_timecodeEnabled) {
                 _tcGen = TimecodeGenerator();
 
-                Variant tcVar = cfg.get(ConfigTimecodeValue);
+                Variant tcVar = cfg.get(MediaConfig::TimecodeValue);
                 if(tcVar.isValid()) {
                         _tcGen.setTimecode(tcVar.get<Timecode>());
                 } else {
-                        String tcStr = cfg.getAs<String>(ConfigTimecodeStart, "00:00:00:00");
+                        String tcStr = cfg.getAs<String>(MediaConfig::TimecodeStart, "00:00:00:00");
                         if(!tcStr.isEmpty()) {
                                 auto [tc, tcErr] = Timecode::fromString(tcStr);
                                 if(tcErr.isOk()) {
@@ -267,7 +230,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                         }
                 }
 
-                bool dropFrame = cfg.getAs<bool>(ConfigTimecodeDropFrame, false);
+                bool dropFrame = cfg.getAs<bool>(MediaConfig::TimecodeDropFrame, false);
                 _tcGen.setDropFrame(dropFrame);
                 _tcGen.setFrameRate(fps);
         }

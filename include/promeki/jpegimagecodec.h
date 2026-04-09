@@ -56,6 +56,19 @@ class JpegImageCodec : public ImageCodec {
                 bool canDecode() const override;
 
                 /**
+                 * @brief Reads JPEG-specific knobs from @p config.
+                 *
+                 * Honored keys:
+                 * - @ref MediaConfig::JpegQuality (int) — sets @ref setQuality.
+                 * - @ref MediaConfig::JpegSubsampling (Enum @ref ChromaSubsampling
+                 *   or its string / integer form) — sets @ref setSubsampling.
+                 *
+                 * Missing or malformed keys leave the corresponding setting
+                 * at its current value (the codec default after construction).
+                 */
+                void configure(const MediaConfig &config) override;
+
+                /**
                  * @brief Encodes an uncompressed image to JPEG.
                  * @param input Source image. Accepted formats: RGB8, RGBA8,
                  *              YCbCr 4:2:2 YUYV/UYVY/planar,

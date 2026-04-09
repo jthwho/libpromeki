@@ -24,7 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
  * - A set of @c static @c inline @c const @ref Enum constants, one per
  *   registered value, for ergonomic use at call sites:
  *   @code
- *   cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::ColorBars);
+ *   cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
  *   @endcode
  *
  * The integer values are stable and match the corresponding C++ `enum`
@@ -50,8 +50,8 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Example
  * @code
- * cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::ZonePlate);
- * Enum e = cfg.getAs<Enum>(MediaIOTask_TPG::ConfigVideoPattern,
+ * cfg.set(MediaConfig::VideoPattern, VideoPattern::ZonePlate);
+ * Enum e = cfg.getAs<Enum>(MediaConfig::VideoPattern,
  *                          VideoPattern::ColorBars);
  * VideoTestPattern::Pattern pat =
  *         static_cast<VideoTestPattern::Pattern>(e.value());
@@ -170,7 +170,7 @@ struct ChromaSubsampling {
  *
  * Mirrors @c AudioDesc::DataType in value and order.  Used as the value
  * type for any config key that selects an audio sample format (e.g.
- * @c MediaIOTask_Converter::ConfigOutputAudioDataType).
+ * @c MediaConfig::OutputAudioDataType).
  *
  * The integer values match the @c AudioDesc::DataType enumeration so
  * callers can convert in either direction via a plain @c static_cast
@@ -222,12 +222,34 @@ struct AudioDataType {
 };
 
 /**
+ * @brief Well-known Enum type for @ref CSCPipeline processing-path selection.
+ *
+ * Used as the value type for the @ref MediaConfig::CscPath config key.
+ * @c Optimized lets the pipeline pick the best registered fast-path
+ * kernel (or fall back to the SIMD-accelerated generic pipeline).
+ * @c Scalar forces the generic float pipeline with SIMD disabled —
+ * useful for debugging and as a reference for accuracy comparisons
+ * against @ref Color::convert.
+ */
+struct CscPath {
+        static inline const Enum::Type Type = Enum::registerType("CscPath",
+                {
+                        { "Optimized", 0 },
+                        { "Scalar",    1 }
+                },
+                0);  // default: Optimized
+
+        static inline const Enum Optimized { Type, 0 };
+        static inline const Enum Scalar    { Type, 1 };
+};
+
+/**
  * @brief Well-known Enum type for QuickTime / ISO-BMFF container layout.
  *
- * Used as the value type for the @c MediaIOTask_QuickTime @c ConfigLayout
- * config key.  @c Classic writes a traditional movie atom ending in a
- * single moov atom; @c Fragmented writes an initial moov followed by a
- * series of moof / mdat fragment pairs, which is what streaming and live
+ * Used as the value type for the @ref MediaConfig::QuickTimeLayout config
+ * key.  @c Classic writes a traditional movie atom ending in a single
+ * moov atom; @c Fragmented writes an initial moov followed by a series
+ * of moof / mdat fragment pairs, which is what streaming and live
  * ingest pipelines need.
  */
 struct QuickTimeLayout {

@@ -9,6 +9,7 @@
 
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/mediaconfig.h>
 
 /**
  * @brief Macro to register an ImageFileIO subclass at static initialization time.
@@ -97,16 +98,28 @@ class ImageFileIO {
                 /**
                  * @brief Loads an image from a file into the given ImageFile.
                  * @param imageFile The ImageFile to populate with the loaded image data.
+                 * @param config    Optional configuration hints (e.g. headerless
+                 *                  format size, codec preferences).  Backends
+                 *                  that don't read any keys can ignore the
+                 *                  parameter; the default value is an empty
+                 *                  @ref MediaConfig.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error load(ImageFile &imageFile) const;
+                virtual Error load(ImageFile &imageFile,
+                                   const MediaConfig &config = MediaConfig()) const;
 
                 /**
                  * @brief Saves the image from the given ImageFile to disk.
                  * @param imageFile The ImageFile containing the image data and filename.
+                 * @param config    Optional configuration hints honoured at write
+                 *                  time (codec quality, subsampling, sequence
+                 *                  head, etc.).  Backends that don't read any
+                 *                  keys can ignore the parameter; the default
+                 *                  value is an empty @ref MediaConfig.
                  * @return Error::Ok on success, or an error on failure.
                  */
-                virtual Error save(ImageFile &imageFile) const;
+                virtual Error save(ImageFile &imageFile,
+                                   const MediaConfig &config = MediaConfig()) const;
 
         protected:
                 int             _id = 0;         ///< @brief Format identifier.

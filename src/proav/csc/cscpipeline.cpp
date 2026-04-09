@@ -11,12 +11,28 @@
 #include <promeki/logger.h>
 #include <promeki/map.h>
 #include <promeki/mutex.h>
+#include <promeki/enums.h>
 #include <cstring>
 #include <cmath>
 #include <tuple>
 #include "csc_kernels.h"
 
 PROMEKI_NAMESPACE_BEGIN
+
+// Resolves the @ref MediaConfig::CscPath knob from a @ref MediaConfig
+// down to a single boolean: true = SIMD-optimized path, false = scalar.
+// Accepts the value as either a @ref CscPath @ref Enum, its string name
+// (``"Optimized"`` / ``"Scalar"``), or its integer ordinal — every form
+// the @ref Variant::asEnum dispatcher knows about.  Unknown values are
+// treated as @ref CscPath::Optimized so a malformed config never disables
+// SIMD silently for an unrelated downstream stage.
+static bool resolveUseSimd(const MediaConfig &config) {
+        if(!config.contains(MediaConfig::CscPath)) return true;
+        Variant v = config.get(MediaConfig::CscPath);
+        Enum e = v.asEnum(CscPath::Type);
+        if(!e.hasListedValue()) return true;
+        return e.value() != CscPath::Scalar.value();
+}
 
 // --- Stage copy/move ---
 
@@ -75,13 +91,10 @@ CSCPipeline::Stage &CSCPipeline::Stage::operator=(Stage &&other) noexcept {
 
 // --- Pipeline construction ---
 
-const String CSCPipeline::KeyPath("Path");
-
 CSCPipeline::CSCPipeline(const PixelDesc &src, const PixelDesc &dst,
-                         const MediaNodeConfig &config)
+                         const MediaConfig &config)
         : _srcDesc(src), _dstDesc(dst), _config(config) {
-        String path = _config.get(KeyPath, "optimized").get<String>();
-        _useSimd = (path != "scalar");
+        _useSimd = resolveUseSimd(_config);
         compile();
 }
 
@@ -112,11 +125,10 @@ static Map<CacheKey, CacheEntry> g_cache;
 } // anonymous
 
 CSCPipeline::Ptr CSCPipeline::cached(const PixelDesc &src, const PixelDesc &dst,
-                                     const MediaNodeConfig &config) {
+                                     const MediaConfig &config) {
         // Mirror the useSimd derivation from the instance constructor
         // so cache keys line up with actual pipeline behavior.
-        String path = config.get(KeyPath, "optimized").get<String>();
-        const bool useSimd = (path != "scalar");
+        const bool useSimd = resolveUseSimd(config);
         CacheKey key{src.data(), dst.data(), useSimd};
 
         {

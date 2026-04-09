@@ -55,8 +55,8 @@ class ImageFileIO_TGA : public ImageFileIO {
                         _canSave = true;
                         _name = "TGA";
                 }
-                Error load(ImageFile &imageFile) const override;
-                Error save(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
+                Error save(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_TGA);
 
@@ -64,7 +64,8 @@ PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_TGA);
 // Load
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_TGA::load(ImageFile &imageFile) const {
+Error ImageFileIO_TGA::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         File file(filename);
@@ -167,7 +168,8 @@ Error ImageFileIO_TGA::load(ImageFile &imageFile) const {
 // Save
 // ---------------------------------------------------------------------------
 
-Error ImageFileIO_TGA::save(ImageFile &imageFile) const {
+Error ImageFileIO_TGA::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 

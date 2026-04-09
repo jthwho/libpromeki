@@ -17,6 +17,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class Image;
+class MediaConfig;
 
 /**
  * @brief Abstract base class for image codecs.
@@ -65,6 +66,41 @@ class ImageCodec {
                  * @return true if decode() is implemented.
                  */
                 virtual bool canDecode() const = 0;
+
+                /**
+                 * @brief Applies caller-supplied options to this codec instance.
+                 *
+                 * Lets a caller (typically @ref Image::convert) hand a
+                 * @ref MediaConfig to a freshly-constructed codec without
+                 * having to know which keys the concrete subclass cares
+                 * about.  Each subclass overrides this to read its own
+                 * well-known @ref MediaConfig keys (e.g. @c JpegQuality,
+                 * @c JpegSubsampling) and updates its internal state.
+                 * Keys the codec doesn't recognize are ignored, so the
+                 * same @ref MediaConfig can be reused across pipeline
+                 * stages without filtering.
+                 *
+                 * The default implementation is a no-op so codecs that
+                 * have no configurable knobs don't need to override.
+                 *
+                 * Calling @c configure() between encode/decode operations
+                 * is allowed; the codec is expected to honor the new
+                 * settings on subsequent calls.
+                 *
+                 * @param config Caller-supplied configuration database.
+                 *               May be empty.
+                 *
+                 * @par Example
+                 * @code
+                 * ImageCodec *codec = ImageCodec::createCodec("jpeg");
+                 * MediaConfig cfg;
+                 * cfg.set(MediaConfig::JpegQuality, 95);
+                 * codec->configure(cfg);
+                 * Image jpeg = codec->encode(rgb);
+                 * delete codec;
+                 * @endcode
+                 */
+                virtual void configure(const MediaConfig &config);
 
                 /**
                  * @brief Encodes an uncompressed image to compressed form.

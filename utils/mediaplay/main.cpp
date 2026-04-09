@@ -5,7 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  *
  * General-purpose media pump built on the MediaIO framework.  The CLI
- * is a thin wrapper over `MediaIOConfig`: one `--in` picks the source
+ * is a thin wrapper over `MediaConfig`: one `--in` picks the source
  * backend, an optional `--convert` stage inserts a
  * `MediaIOTask_Converter` between input and outputs, and any number
  * of `--out` flags register sink backends.  Each stage is configured
@@ -346,7 +346,7 @@ int main(int argc, char **argv) {
                                 if(sink.isSeq) {
                                         MediaIO::Config cfg = sink.io->config();
                                         Variant v = cfg.get(
-                                                MediaIOTask_ImageFile::ConfigSequenceHead);
+                                                MediaConfig::SequenceHead);
                                         if(v.isValid()) seqHead = v.get<int32_t>();
                                         break;
                                 }

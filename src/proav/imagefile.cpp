@@ -17,12 +17,12 @@ ImageFile::ImageFile(int id) :
 
 }
 
-Error ImageFile::load() {
-        return _io->load(*this);
+Error ImageFile::load(const MediaConfig &config) {
+        return _io->load(*this, config);
 }
 
-Error ImageFile::save() {
-        return _io->save(*this);
+Error ImageFile::save(const MediaConfig &config) {
+        return _io->save(*this, config);
 }
 
 PROMEKI_NAMESPACE_END

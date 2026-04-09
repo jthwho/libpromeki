@@ -63,58 +63,58 @@ BuildResult TestPatternNode::build(const MediaNodeConfig &config) {
                 result.addError("Invalid or missing frame rate");
                 return result;
         }
-        tpgCfg.set(MediaIOTask_TPG::ConfigFrameRate, fps);
+        tpgCfg.set(MediaConfig::FrameRate, fps);
 
         // Video — always enabled for TestPatternNode
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        tpgCfg.set(MediaConfig::VideoEnabled, true);
 
         // Forward the Pattern variant as-is; MediaIOTask_TPG resolves it
         // via Variant::asEnum(VideoPattern::Type) so strings and Enums
         // both work.
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoPattern,
+        tpgCfg.set(MediaConfig::VideoPattern,
                    config.get("Pattern", VideoPattern::ColorBars));
 
         Size2Du32 size = config.get("Size", Size2Du32()).get<Size2Du32>();
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoSize, size);
+        tpgCfg.set(MediaConfig::VideoSize, size);
 
         PixelDesc pd = config.get("PixelFormat", PixelDesc(PixelDesc::RGB8_sRGB)).get<PixelDesc>();
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoPixelFormat, pd);
+        tpgCfg.set(MediaConfig::VideoPixelFormat, pd);
 
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoSolidColor, config.get("SolidColor", Color::Black).get<Color>());
-        tpgCfg.set(MediaIOTask_TPG::ConfigVideoMotion, config.get("Motion", 0.0).get<double>());
+        tpgCfg.set(MediaConfig::VideoSolidColor, config.get("SolidColor", Color::Black).get<Color>());
+        tpgCfg.set(MediaConfig::VideoMotion, config.get("Motion", 0.0).get<double>());
 
         // Audio
         bool audioEnabled = config.get("AudioEnabled", true).get<bool>();
-        tpgCfg.set(MediaIOTask_TPG::ConfigAudioEnabled, audioEnabled);
+        tpgCfg.set(MediaConfig::AudioEnabled, audioEnabled);
         if(audioEnabled) {
                 // Forward as Variant; MediaIOTask_TPG calls asEnum() on it.
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioMode,
+                tpgCfg.set(MediaConfig::AudioMode,
                            config.get("AudioMode", AudioPattern::Tone));
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioRate, config.get("AudioRate", 48000.0f).get<float>());
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioChannels, config.get("AudioChannels", 2).get<int>());
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioToneFrequency, config.get("ToneFrequency", 1000.0).get<double>());
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioToneLevel, config.get("ToneLevel", -20.0).get<double>());
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioLtcLevel, config.get("LtcLevel", -20.0).get<double>());
-                tpgCfg.set(MediaIOTask_TPG::ConfigAudioLtcChannel, config.get("LtcChannel", 0).get<int>());
+                tpgCfg.set(MediaConfig::AudioRate, config.get("AudioRate", 48000.0f).get<float>());
+                tpgCfg.set(MediaConfig::AudioChannels, config.get("AudioChannels", 2).get<int>());
+                tpgCfg.set(MediaConfig::AudioToneFrequency, config.get("ToneFrequency", 1000.0).get<double>());
+                tpgCfg.set(MediaConfig::AudioToneLevel, config.get("ToneLevel", -20.0).get<double>());
+                tpgCfg.set(MediaConfig::AudioLtcLevel, config.get("LtcLevel", -20.0).get<double>());
+                tpgCfg.set(MediaConfig::AudioLtcChannel, config.get("LtcChannel", 0).get<int>());
         }
 
         // Timecode — always enabled for TestPatternNode
-        tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
-        tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeDropFrame, config.get("DropFrame", false).get<bool>());
+        tpgCfg.set(MediaConfig::TimecodeEnabled, true);
+        tpgCfg.set(MediaConfig::TimecodeDropFrame, config.get("DropFrame", false).get<bool>());
 
         String tcStr = config.get("StartTimecode", String()).get<String>();
         if(!tcStr.isEmpty()) {
-                tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeStart, tcStr);
+                tpgCfg.set(MediaConfig::TimecodeStart, tcStr);
         }
 
         // Accept a pre-built Timecode via Variant
         Variant tcVar = config.get("Timecode");
         if(tcVar.isValid()) {
-                tpgCfg.set(MediaIOTask_TPG::ConfigTimecodeValue, tcVar);
+                tpgCfg.set(MediaConfig::TimecodeValue, tcVar);
         }
 
         // Create and open the TPG via the MediaIO factory
-        tpgCfg.set(MediaIO::ConfigType, "TPG");
+        tpgCfg.set(MediaConfig::Type, "TPG");
         delete _io;
         _io = MediaIO::create(tpgCfg, this);
         if(_io == nullptr) {

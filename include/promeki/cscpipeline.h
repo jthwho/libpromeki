@@ -12,7 +12,7 @@
 #include <promeki/list.h>
 #include <promeki/error.h>
 #include <promeki/pixeldesc.h>
-#include <promeki/medianodeconfig.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/csccontext.h>
 #include <promeki/cscregistry.h>
 
@@ -53,7 +53,7 @@ class Image;
  * 2. **SIMD generic** — float-domain multi-stage pipeline with Highway
  *    SIMD (200–1,300 Mpix/s).
  * 3. **Scalar generic** — same pipeline, SIMD disabled.  Selected by
- *    setting `KeyPath` to `"scalar"` in the config.
+ *    setting @ref MediaConfig::CscPath to @c CscPath::Scalar in the config.
  *
  * @par Accuracy
  * The scalar pipeline matches Color::convert() within ±2 LSB for 8-bit.
@@ -71,8 +71,8 @@ class Image;
  * }
  *
  * // Force scalar path for reference comparison:
- * MediaNodeConfig cfg;
- * cfg.set(CSCPipeline::KeyPath, "scalar");
+ * MediaConfig cfg;
+ * cfg.set(MediaConfig::CscPath, CscPath::Scalar);
  * CSCPipeline ref(src, dst, cfg);
  * @endcode
  *
@@ -86,15 +86,6 @@ class CSCPipeline {
 
                 /** @brief Maximum LUT size for transfer function tables. */
                 static constexpr size_t MaxLUTSize = 4096;
-
-                /**
-                 * @brief Config key: processing path selection.
-                 *
-                 * String value: `"optimized"` (default) uses SIMD-accelerated
-                 * kernels. `"scalar"` forces scalar-only processing for
-                 * debugging and benchmarking.
-                 */
-                static const String KeyPath;
 
                 /**
                  * @brief Identifies a single processing stage in the pipeline.
@@ -232,10 +223,11 @@ class CSCPipeline {
                  * @brief Compiles a pipeline from source to target pixel descriptions.
                  * @param src    Source pixel description.
                  * @param dst    Target pixel description.
-                 * @param config Optional configuration hints (e.g. KeyPath).
+                 * @param config Optional configuration hints
+                 *               (e.g. @ref MediaConfig::CscPath).
                  */
                 CSCPipeline(const PixelDesc &src, const PixelDesc &dst,
-                            const MediaNodeConfig &config = MediaNodeConfig());
+                            const MediaConfig &config = MediaConfig());
 
                 /**
                  * @brief Returns a shared, compiled pipeline from a global cache.
@@ -271,16 +263,16 @@ class CSCPipeline {
                  * @param src    Source pixel description.
                  * @param dst    Target pixel description.
                  * @param config Optional configuration hints.  Only
-                 *               @c KeyPath currently affects the cache
-                 *               key; other keys are ignored for the
-                 *               purposes of lookup.
+                 *               @ref MediaConfig::CscPath currently
+                 *               affects the cache key; other keys are
+                 *               ignored for the purposes of lookup.
                  * @return A shared pipeline, or a null @c Ptr on
                  *         allocation failure.  The pipeline may still
                  *         be invalid (e.g. unsupported format pair) —
                  *         check @c isValid() before executing.
                  */
                 static Ptr cached(const PixelDesc &src, const PixelDesc &dst,
-                                  const MediaNodeConfig &config = MediaNodeConfig());
+                                  const MediaConfig &config = MediaConfig());
 
                 /**
                  * @brief Returns true if the pipeline was compiled successfully.
@@ -354,7 +346,7 @@ class CSCPipeline {
         private:
                 PixelDesc               _srcDesc;
                 PixelDesc               _dstDesc;
-                MediaNodeConfig         _config;
+                MediaConfig             _config;
                 bool                    _valid = false;
                 bool                    _identity = false;
                 bool                    _useSimd = true;

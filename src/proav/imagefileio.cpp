@@ -44,11 +44,15 @@ const ImageFileIO *ImageFileIO::lookup(int id) {
         return it == map.end() ? &imageFileIOInvalid() : it->second;
 }
 
-Error ImageFileIO::load(ImageFile &imageFile) const {
+Error ImageFileIO::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)imageFile;
+        (void)config;
         return Error::NotImplemented;
 }
 
-Error ImageFileIO::save(ImageFile &imageFile) const {
+Error ImageFileIO::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)imageFile;
+        (void)config;
         return Error::NotImplemented;
 }
 

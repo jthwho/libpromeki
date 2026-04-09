@@ -15,9 +15,6 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_DEBUG(MediaIO)
 
-const MediaIO::ConfigID MediaIO::ConfigFilename("Filename");
-const MediaIO::ConfigID MediaIO::ConfigType("Type");
-
 // ============================================================================
 // Format registry
 // ============================================================================
@@ -109,7 +106,7 @@ MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
         if(desc == nullptr || !desc->defaultConfig) return Config();
         Config cfg = desc->defaultConfig();
-        cfg.set(ConfigType, typeName);
+        cfg.set(MediaConfig::Type, typeName);
         return cfg;
 }
 
@@ -122,8 +119,8 @@ Metadata MediaIO::defaultMetadata(const String &typeName) {
 MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         const FormatDesc *desc = nullptr;
 
-        if(config.contains(ConfigType)) {
-                String typeName = config.getAs<String>(ConfigType);
+        if(config.contains(MediaConfig::Type)) {
+                String typeName = config.getAs<String>(MediaConfig::Type);
                 desc = findFormatByName(typeName);
                 if(desc == nullptr) {
                         promekiWarn("MediaIO::create: unknown type '%s'", typeName.cstr());
@@ -131,8 +128,8 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
                 }
         }
 
-        if(desc == nullptr && config.contains(ConfigFilename)) {
-                String filename = config.getAs<String>(ConfigFilename);
+        if(desc == nullptr && config.contains(MediaConfig::Filename)) {
+                String filename = config.getAs<String>(MediaConfig::Filename);
                 desc = findFormatByExtension(filename);
                 if(desc == nullptr) {
                         promekiWarn("MediaIO::create: no backend for '%s'", filename.cstr());
@@ -175,8 +172,8 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         // need to know "which backend is this?" can read it back
         // from io->config() without a second registry walk.
         io->_config = desc->defaultConfig ? desc->defaultConfig() : Config();
-        io->_config.set(ConfigType, desc->name);
-        io->_config.set(ConfigFilename, filename);
+        io->_config.set(MediaConfig::Type, desc->name);
+        io->_config.set(MediaConfig::Filename, filename);
         return io;
 }
 
@@ -199,8 +196,8 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         // filename so callers that read io->config() back out see a
         // complete, discoverable picture.
         io->_config = desc->defaultConfig ? desc->defaultConfig() : Config();
-        io->_config.set(ConfigType, desc->name);
-        io->_config.set(ConfigFilename, filename);
+        io->_config.set(MediaConfig::Type, desc->name);
+        io->_config.set(MediaConfig::Filename, filename);
         return io;
 }
 

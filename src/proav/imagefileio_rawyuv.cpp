@@ -108,12 +108,13 @@ class ImageFileIO_RawYUV : public ImageFileIO {
                         _name = "RawYUV";
                 }
 
-                Error load(ImageFile &imageFile) const override;
-                Error save(ImageFile &imageFile) const override;
+                Error load(ImageFile &imageFile, const MediaConfig &config) const override;
+                Error save(ImageFile &imageFile, const MediaConfig &config) const override;
 };
 PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_RawYUV);
 
-Error ImageFileIO_RawYUV::load(ImageFile &imageFile) const {
+Error ImageFileIO_RawYUV::load(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const String &filename = imageFile.filename();
 
         // Determine pixel description from file extension
@@ -201,7 +202,8 @@ Error ImageFileIO_RawYUV::load(ImageFile &imageFile) const {
         return Error::Ok;
 }
 
-Error ImageFileIO_RawYUV::save(ImageFile &imageFile) const {
+Error ImageFileIO_RawYUV::save(ImageFile &imageFile, const MediaConfig &config) const {
+        (void)config;
         const Image image = imageFile.image();
         const String &filename = imageFile.filename();
 

@@ -12,18 +12,13 @@
 #include <promeki/frame.h>
 #include <promeki/imagedesc.h>
 #include <promeki/mediadesc.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/metadata.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_Converter)
-
-const MediaIO::ConfigID MediaIOTask_Converter::ConfigOutputPixelDesc("OutputPixelDesc");
-const MediaIO::ConfigID MediaIOTask_Converter::ConfigJpegQuality("JpegQuality");
-const MediaIO::ConfigID MediaIOTask_Converter::ConfigJpegSubsampling("JpegSubsampling");
-const MediaIO::ConfigID MediaIOTask_Converter::ConfigOutputAudioDataType("OutputAudioDataType");
-const MediaIO::ConfigID MediaIOTask_Converter::ConfigCapacity("Capacity");
 
 MediaIO::FormatDesc MediaIOTask_Converter::formatDesc() {
         return {
@@ -38,11 +33,11 @@ MediaIO::FormatDesc MediaIOTask_Converter::formatDesc() {
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
-                        cfg.set(ConfigOutputPixelDesc, PixelDesc());
-                        cfg.set(ConfigJpegQuality, 85);
-                        cfg.set(ConfigJpegSubsampling, ChromaSubsampling::YUV422);
-                        cfg.set(ConfigOutputAudioDataType, AudioDataType::Invalid);
-                        cfg.set(ConfigCapacity, 4);
+                        cfg.set(MediaConfig::OutputPixelDesc, PixelDesc());
+                        cfg.set(MediaConfig::JpegQuality, 85);
+                        cfg.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV422);
+                        cfg.set(MediaConfig::OutputAudioDataType, AudioDataType::Invalid);
+                        cfg.set(MediaConfig::Capacity, 4);
                         return cfg;
                 }
         };
@@ -59,33 +54,35 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
         // -- Video output pixel description --
-        _outputPixelDesc = cfg.getAs<PixelDesc>(ConfigOutputPixelDesc, PixelDesc());
+        _outputPixelDesc = cfg.getAs<PixelDesc>(MediaConfig::OutputPixelDesc, PixelDesc());
         _outputPixelDescSet = _outputPixelDesc.isValid();
 
         // -- JPEG encode parameters --
-        _jpegQuality = cfg.getAs<int>(ConfigJpegQuality, 85);
+        //
+        // Validated here but applied via the MediaConfig that we hand to
+        // Image::convert() on every frame.  Keeping them as plain fields
+        // (rather than a cached JpegImageCodec member) means
+        // Image::convert() stays the single dispatch point for every
+        // encode/decode decision in the library, and the JPEG codec only
+        // exists for the lifetime of one encode call.
+        _jpegQuality = cfg.getAs<int>(MediaConfig::JpegQuality, 85);
         if(_jpegQuality < 1) _jpegQuality = 1;
         if(_jpegQuality > 100) _jpegQuality = 100;
-        _jpegCodec.setQuality(_jpegQuality);
 
-        // ChromaSubsampling Enum integer values match
-        // JpegImageCodec::Subsampling by construction, so a plain cast
-        // is sufficient.
         Error subErr;
-        Enum subEnum = cfg.get(ConfigJpegSubsampling).asEnum(ChromaSubsampling::Type, &subErr);
-        if(subErr.isError() || !subEnum.hasListedValue()) {
+        _jpegSubsamplingEnum = cfg.get(MediaConfig::JpegSubsampling).asEnum(
+                                        ChromaSubsampling::Type, &subErr);
+        if(subErr.isError() || !_jpegSubsamplingEnum.hasListedValue()) {
                 promekiErr("MediaIOTask_Converter: unknown JPEG subsampling");
                 return Error::InvalidArgument;
         }
-        _jpegSubsampling = static_cast<JpegImageCodec::Subsampling>(subEnum.value());
-        _jpegCodec.setSubsampling(_jpegSubsampling);
 
         // -- Audio output data type --
         // AudioDataType Enum integer values mirror AudioDesc::DataType,
         // so a plain cast converts between the two.  The sentinel
         // "Invalid" (int 0) means "pass audio through unchanged".
         Error adtErr;
-        Enum adtEnum = cfg.get(ConfigOutputAudioDataType).asEnum(AudioDataType::Type, &adtErr);
+        Enum adtEnum = cfg.get(MediaConfig::OutputAudioDataType).asEnum(AudioDataType::Type, &adtErr);
         if(adtErr.isError()) {
                 promekiErr("MediaIOTask_Converter: unknown audio data type");
                 return Error::InvalidArgument;
@@ -94,7 +91,7 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandOpen &cmd) {
         _outputAudioDataTypeSet = (_outputAudioDataType != AudioDesc::Invalid);
 
         // -- FIFO capacity --
-        _capacity = cfg.getAs<int>(ConfigCapacity, 4);
+        _capacity = cfg.getAs<int>(MediaConfig::Capacity, 4);
         if(_capacity < 1) _capacity = 1;
 
         // -- Output MediaDesc --
@@ -147,6 +144,7 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandClose &cmd) {
         _outputPixelDescSet = false;
         _outputAudioDataType = AudioDesc::Invalid;
         _outputAudioDataTypeSet = false;
+        _jpegSubsamplingEnum = Enum();
         _frameCount = 0;
         _readCount = 0;
         _framesConverted = 0;
@@ -173,63 +171,25 @@ Error MediaIOTask_Converter::convertImage(const Image &input, Image &output) {
                 return Error::Ok;
         }
 
-        const bool srcCompressed = input.isCompressed();
-        const bool dstCompressed = _outputPixelDesc.isCompressed();
-
-        if(srcCompressed && !dstCompressed) {
-                // JPEG decode.  Accepts compressed JPEG input; produces
-                // the configured uncompressed output pixel desc.
-                if(input.pixelDesc().codecName() != "jpeg") {
-                        promekiErr("MediaIOTask_Converter: cannot decode non-JPEG "
-                                   "compressed format '%s'",
-                                   input.pixelDesc().name().cstr());
-                        return Error::NotSupported;
-                }
-                Image decoded = _jpegCodec.decode(input, _outputPixelDesc.id());
-                if(!decoded.isValid()) {
-                        promekiErr("MediaIOTask_Converter: JPEG decode failed: %s",
-                                   _jpegCodec.lastErrorMessage().cstr());
-                        Error codecErr = _jpegCodec.lastError();
-                        return codecErr.isError() ? codecErr : Error(Error::DecodeFailed);
-                }
-                decoded.metadata() = input.metadata();
-                output = std::move(decoded);
-                return Error::Ok;
+        // Build a MediaConfig so Image::convert() can honour the JPEG
+        // quality / subsampling knobs we parsed in executeCmd().
+        // Because MediaConfig is the same type the backend was
+        // configured with, this is a pure key re-tagging — no
+        // translation or temporary objects.  Image::convert()
+        // transparently dispatches to JpegImageCodec for compressed ↔
+        // uncompressed conversions and to CSCPipeline for uncompressed
+        // ↔ uncompressed, so a single call covers every path this
+        // backend supported in its earlier incarnation.
+        MediaConfig convertConfig;
+        convertConfig.set(MediaConfig::JpegQuality, _jpegQuality);
+        if(_jpegSubsamplingEnum.hasListedValue()) {
+                convertConfig.set(MediaConfig::JpegSubsampling, _jpegSubsamplingEnum);
         }
 
-        if(!srcCompressed && dstCompressed) {
-                // JPEG encode.  JpegImageCodec picks the JPEG sub-format
-                // from the input pixel desc, so the caller's
-                // ConfigOutputPixelDesc must be consistent with the
-                // input.  We leave that validation to the codec itself
-                // and only fail if encode fails.
-                if(_outputPixelDesc.codecName() != "jpeg") {
-                        promekiErr("MediaIOTask_Converter: only JPEG is supported "
-                                   "as a compressed output format");
-                        return Error::NotSupported;
-                }
-                Image encoded = _jpegCodec.encode(input);
-                if(!encoded.isValid()) {
-                        promekiErr("MediaIOTask_Converter: JPEG encode failed: %s",
-                                   _jpegCodec.lastErrorMessage().cstr());
-                        Error codecErr = _jpegCodec.lastError();
-                        return codecErr.isError() ? codecErr : Error(Error::EncodeFailed);
-                }
-                encoded.metadata() = input.metadata();
-                output = std::move(encoded);
-                return Error::Ok;
-        }
-
-        if(srcCompressed && dstCompressed) {
-                promekiErr("MediaIOTask_Converter: compressed->compressed transcode "
-                           "is not supported in this backend");
-                return Error::NotSupported;
-        }
-
-        // Uncompressed → uncompressed CSC.
-        Image converted = input.convert(_outputPixelDesc, input.metadata());
+        Image converted = input.convert(_outputPixelDesc, input.metadata(),
+                                        convertConfig);
         if(!converted.isValid()) {
-                promekiErr("MediaIOTask_Converter: CSC %s -> %s failed",
+                promekiErr("MediaIOTask_Converter: convert %s -> %s failed",
                            input.pixelDesc().name().cstr(),
                            _outputPixelDesc.name().cstr());
                 return Error::ConversionFailed;

@@ -140,7 +140,7 @@ bool splitKeyValue(const promeki::String &arg,
 
 /**
  * @brief Applies the raw `Key:Value` strings collected for @p stage
- *        onto its MediaIOConfig, resolving each value against the
+ *        onto its MediaConfig, resolving each value against the
  *        backend's default config.
  */
 promeki::Error applyStageConfig(StageSpec &stage,

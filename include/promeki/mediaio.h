@@ -27,6 +27,7 @@
 #include <promeki/metadata.h>
 #include <promeki/framerate.h>
 #include <promeki/variantdatabase.h>
+#include <promeki/mediaconfig.h>
 
 /**
  * @brief Macro to register a MediaIO backend at static initialization time.
@@ -78,15 +79,6 @@ enum MediaIOSeekMode {
         MediaIO_SeekKeyframeBefore,     ///< @brief Land on the closest keyframe at or before.
         MediaIO_SeekKeyframeAfter       ///< @brief Land on the closest keyframe at or after.
 };
-
-/** @brief Phantom tag for the MediaIO config StringRegistry. */
-struct MediaIOConfigTag {};
-
-/** @brief Configuration database for MediaIO. */
-using MediaIOConfig = VariantDatabase<MediaIOConfigTag>;
-
-/** @brief Configuration ID type. */
-using MediaIOConfigID = MediaIOConfig::ID;
 
 /** @brief Phantom tag for the MediaIO stats StringRegistry. */
 struct MediaIOStatsTag {};
@@ -237,7 +229,7 @@ class MediaIOCommandOpen : public MediaIOCommand {
         public:
                 // ---- Inputs ----
                 MediaIOMode             mode = MediaIO_NotOpen;
-                MediaIOConfig           config;
+                MediaConfig             config;
                 MediaDesc               pendingMediaDesc;
                 Metadata                pendingMetadata;
                 AudioDesc               pendingAudioDesc;
@@ -436,10 +428,10 @@ class MediaIO : public ObjectBase {
                 static constexpr SeekMode SeekKeyframeAfter   = MediaIO_SeekKeyframeAfter;
 
                 /** @brief Configuration database type. */
-                using Config = MediaIOConfig;
+                using Config = MediaConfig;
 
                 /** @brief Configuration ID type. */
-                using ConfigID = MediaIOConfigID;
+                using ConfigID = MediaConfigID;
 
                 /** @brief Frame count is not yet known. */
                 static constexpr int64_t FrameCountUnknown  = -1;
@@ -449,12 +441,6 @@ class MediaIO : public ObjectBase {
 
                 /** @brief Frame count unavailable due to error. */
                 static constexpr int64_t FrameCountError    = -3;
-
-                /** @brief Config ID for the filename. */
-                static const ConfigID ConfigFilename;
-
-                /** @brief Config ID for the format type name. */
-                static const ConfigID ConfigType;
 
                 /**
                  * @brief Describes a registered media I/O backend.
@@ -491,7 +477,7 @@ class MediaIO : public ObjectBase {
                          * @brief Optional callback that lists available device instances.
                          *
                          * Returns the locator strings (suitable for use as
-                         * @c MediaIO::ConfigFilename) for each available
+                         * @c MediaConfig::Filename) for each available
                          * instance of this backend.  File-based backends
                          * generally leave this null; device backends
                          * provide an implementation that scans the system.
@@ -606,7 +592,7 @@ class MediaIO : public ObjectBase {
                  * For device-style backends (capture cards, video cameras),
                  * this returns the locator strings (e.g. @c "video0",
                  * @c "video1") that can be used as
-                 * @c MediaIO::ConfigFilename.  Returns an empty list if
+                 * @c MediaConfig::Filename.  Returns an empty list if
                  * the backend doesn't support enumeration or the type is
                  * unknown.
                  *

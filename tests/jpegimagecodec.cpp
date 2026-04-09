@@ -9,6 +9,9 @@
 #include <cstring>
 #include <doctest/doctest.h>
 #include <promeki/jpegimagecodec.h>
+#include <promeki/codec.h>
+#include <promeki/mediaconfig.h>
+#include <promeki/enums.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/pixeldesc.h>
@@ -190,6 +193,100 @@ TEST_CASE("JpegImageCodec_Registry") {
         REQUIRE(codec != nullptr);
         CHECK(codec->canEncode()); CHECK(codec->canDecode());
         delete codec;
+}
+
+// ============================================================================
+// Generic ImageCodec::configure dispatch
+// ============================================================================
+//
+// JpegImageCodec inherits the configure() virtual from ImageCodec and
+// pulls JpegQuality / JpegSubsampling out of any MediaConfig handed to
+// it.  This locks the dispatch in so future codecs can't accidentally
+// regress the contract that Image::convert relies on.
+
+TEST_CASE("JpegImageCodec_ConfigureFromMediaConfig") {
+        Image img = createTestImage(320, 240);
+
+        SUBCASE("JpegQuality flows through configure()") {
+                // Pull the codec out of the registry exactly the way
+                // Image::convert does, hand it a MediaConfig with two
+                // different quality values, and verify the encoded
+                // output sizes track the setting.
+                ImageCodec *lo = ImageCodec::createCodec("jpeg");
+                ImageCodec *hi = ImageCodec::createCodec("jpeg");
+                REQUIRE(lo != nullptr);
+                REQUIRE(hi != nullptr);
+
+                MediaConfig loCfg;
+                loCfg.set(MediaConfig::JpegQuality, 10);
+                lo->configure(loCfg);
+
+                MediaConfig hiCfg;
+                hiCfg.set(MediaConfig::JpegQuality, 95);
+                hi->configure(hiCfg);
+
+                Image encLo = lo->encode(img);
+                Image encHi = hi->encode(img);
+                REQUIRE(encLo.isValid());
+                REQUIRE(encHi.isValid());
+                CHECK(encHi.compressedSize() > encLo.compressedSize());
+
+                delete lo;
+                delete hi;
+        }
+
+        SUBCASE("JpegSubsampling Enum flows through configure()") {
+                // YUV444 keeps full chroma resolution and produces a
+                // larger file than YUV420 for a chroma-rich gradient.
+                ImageCodec *c444 = ImageCodec::createCodec("jpeg");
+                ImageCodec *c420 = ImageCodec::createCodec("jpeg");
+                REQUIRE(c444 != nullptr);
+                REQUIRE(c420 != nullptr);
+
+                MediaConfig cfg444;
+                cfg444.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV444);
+                c444->configure(cfg444);
+
+                MediaConfig cfg420;
+                cfg420.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV420);
+                c420->configure(cfg420);
+
+                Image enc444 = c444->encode(img);
+                Image enc420 = c420->encode(img);
+                REQUIRE(enc444.isValid());
+                REQUIRE(enc420.isValid());
+                CHECK(enc444.compressedSize() > enc420.compressedSize());
+
+                delete c444;
+                delete c420;
+        }
+
+        SUBCASE("Empty MediaConfig leaves codec defaults intact") {
+                // configure() with no recognised keys must not change
+                // anything.  We compare against a freshly-constructed
+                // codec to make sure the round trip lands at the same
+                // 85/4:2:2 baseline.
+                JpegImageCodec configured;
+                configured.configure(MediaConfig());
+
+                JpegImageCodec baseline;
+                CHECK(configured.quality() == baseline.quality());
+                CHECK(configured.subsampling() == baseline.subsampling());
+        }
+
+        SUBCASE("Unknown subsampling string is ignored") {
+                // Variant::asEnum returns hasListedValue()==false for
+                // garbage strings; configure() must leave the previous
+                // setting alone instead of clobbering it.
+                JpegImageCodec codec;
+                codec.setSubsampling(JpegImageCodec::Subsampling444);
+
+                MediaConfig cfg;
+                cfg.set(MediaConfig::JpegSubsampling, String("YUV777"));
+                codec.configure(cfg);
+
+                CHECK(codec.subsampling() == JpegImageCodec::Subsampling444);
+        }
 }
 
 // ============================================================================

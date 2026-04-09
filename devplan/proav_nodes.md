@@ -15,7 +15,7 @@ This document tracks the `MediaIOTask` backends that plug into the `MediaIO` fra
 The framework itself (`MediaIO` controller, `MediaIOTask` interface, `Strand` per-instance executor, `MediaIOCommand` dispatch, three `VariantDatabase` types for Config/Stats/Params, factory + registration, cached state, EOF latching, step/prefetch/seek modes, track selection, mid-stream descriptor updates, `cancelPending()`, error/signal plumbing) is complete and documented in `docs/mediaio.dox`. The following backends are complete and tested:
 
 - **MediaIOTask_TPG** — Test pattern generator (video + audio + timecode). Static pattern caching, motion, text burn-in with FiraCode default, AvSync mode, NTSC audio cadence via `FrameRate::samplesPerFrame()`. `ConfigVideoSize` / `ConfigFrameRate` / full config key set.
-- **MediaIOTask_ImageFile** — DPX, Cineon, TGA, SGI, RGB, PNM/PPM/PGM, PNG, RawYUV. PNG backend uses libspng+zlib-ng with O_DIRECT save path. Default frame rate via `ConfigFrameRate`.
+- **MediaIOTask_ImageFile** — DPX, Cineon, TGA, SGI, RGB, PNM/PPM/PGM, PNG, JPEG, RawYUV. PNG backend uses libspng+zlib-ng with O_DIRECT save path. JPEG backend (libjpeg-turbo via `JpegImageCodec`) loads the bitstream compressed (zero decode), and saves pass-through bytes verbatim for already-JPEG inputs or routes uncompressed inputs through `Image::convert()`. Default frame rate via `ConfigFrameRate`.
 - **MediaIOTask_AudioFile** — WAV, BWF, AIFF, OGG via libsndfile. Frame chunking by samples/frame, seek delegation, step control, audiodesc from file on read / config on write.
 - **MediaIOTask_QuickTime** — Classic + fragmented reader and writer for `.mov` / `.mp4`. ProRes + H.264 + HEVC + PCM + AAC read; ProRes + PCM write. udta metadata including ©-atoms, XMP BWF extension, UMID, write-time defaults. BufferPool + AudioBuffer FIFO utilities in place.
 - **SDLPlayerTask** — Write-only display sink with audio-led pacing, fast mode, main-thread `renderPending()` dispatch. Injected via `MediaIO::adoptTask()`.
@@ -37,11 +37,7 @@ Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it,
 
 - Registered as `"Converter"` with `canReadWrite = true`; Reader/Writer-only modes are rejected.
 - Config keys: `ConfigOutputPixelDesc` (PixelDesc), `ConfigJpegQuality` (int), `ConfigJpegSubsampling` (Enum `ChromaSubsampling`), `ConfigOutputAudioDataType` (Enum `AudioDataType`; `Invalid` = pass-through), `ConfigCapacity` (int, default 4).
-- Video transforms:
-  - Uncompressed → uncompressed: `Image::convert()` (CSC framework, respects ColorModel baked into the target `PixelDesc`).
-  - JPEG encode: `JpegImageCodec::encode()` when the target `PixelDesc` has `codecName() == "jpeg"`.
-  - JPEG decode: `JpegImageCodec::decode()` when the source is a compressed JPEG.
-  - Pass-through when no output pixel desc is set, or when source and target match.
+- Video transforms all go through a single `Image::convert()` call.  The converter parses its config keys at open time and threads them through a per-frame `MediaNodeConfig` (via the well-known `Image::KeyJpegQuality` / `Image::KeyJpegSubsampling` keys); `Image::convert()` then dispatches uncompressed↔uncompressed CSC, JPEG encode, JPEG decode, and JPEG↔JPEG transcode internally.  Pass-through when no output pixel desc is set, or when source and target match.
 - Audio transform: `Audio::convertTo()` whenever `ConfigOutputAudioDataType` is set and differs from the input data type; otherwise pass-through.
 - Output `MediaDesc` is computed from `pendingMediaDesc` at open so downstream consumers see the post-conversion descriptor before the first frame.
 - Internal FIFO with configurable capacity. `executeCmd(Write)` returns `Error::TryAgain` when full; `executeCmd(Read)` returns `Error::TryAgain` when empty. Queue is drained on `close()`.
@@ -55,6 +51,17 @@ Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it,
 - [ ] `cancelPending()` hook that explicitly clears the in-progress FIFO (today it clears on `close()`).
 - [ ] Factory discovery of supported conversions via a `FormatDesc::enumerate()` callback.
 - [ ] Additional coverage: cancel-while-converting, multi-frame round-trip with pixel-equality tolerance for CSC, QuickTime-sourced ProRes decode through the Converter.
+
+---
+
+## Codec abstraction follow-ups
+
+Tracking items that came out of the `Image::convert` / `ImageCodec::configure` refactor.  None are blocking, but they should be picked up the next time the codec layer grows a second user.
+
+- [ ] **Promote the `CodecHandle` RAII guard.** Today it's a one-off file-local class inside `src/proav/image.cpp` that owns the raw `ImageCodec *` returned by `ImageCodec::createCodec()`.  When a second caller appears (e.g. a `MediaIOTask_VideoCodec` that needs to live across many frames, or a unit-test helper), promote it into a real type — either:
+  - Hand the codec registry an `ImageCodec::Ptr` factory and give `ImageCodec` `PROMEKI_SHARED_FINAL`, so callers stop juggling raw pointers entirely; or
+  - Lift the existing wrapper into `include/promeki/codec.h` as `ImageCodec::Owner` and reuse it from every call site.
+- [ ] **Generic codec config discovery.** `ImageCodec::configure(const MediaConfig &)` is opt-in: each codec subclass knows which `MediaConfig::*` keys it cares about, but there's no way for callers (e.g. a future `mediaplay --help`) to enumerate them.  Add a `defaultConfig()` / `configKeys()` accessor to `ImageCodec` so backends and CLIs can render the per-codec key schema without hard-coding it.
 
 ---
 
@@ -139,39 +146,30 @@ Bidirectional RTP audio transport (AES67-compatible L16 / L24). Replaces the dep
 
 ---
 
-## MediaIOTask_ImageFile — JPEG Extension (NEW)
+## MediaIOTask_ImageFile — JPEG Extension (COMPLETE)
 
-Add JPEG read/write to the existing `ImageFile` / `ImageFileIO` subsystem so the `"ImageFile"` MediaIO backend picks it up automatically.
+JPEG read/write is wired into the existing `ImageFile` / `ImageFileIO` subsystem so the `"ImageFile"` MediaIO backend handles `.jpg` / `.jpeg` / `.jfif` automatically.
 
-**Files:**
-- [ ] `include/promeki/imagefileio_jpeg.h`
-- [ ] `src/proav/imagefileio_jpeg.cpp`
-- [ ] `tests/imagefileio_jpeg.cpp`
+**Files (complete):**
+- `src/proav/imagefileio_jpeg.cpp`
+- `tests/imagefileio_jpeg.cpp`
+- Extension map and `FF D8 FF` magic-byte probe in `src/proav/mediaiotask_imagefile.cpp`
 
-**Design:**
+**Design (as shipped):**
 
-The existing `JpegImageCodec` already encodes and decodes JPEG frames to/from a `Buffer` (for RGB, RGBA, YUYV, UYVY, planar 4:2:2 and 4:2:0, NV12 formats). The `ImageFile` backend just needs to wrap that codec with the file I/O plumbing, plus a direct pass-through path for the case where the input frame is *already* a compressed JPEG (the payload can be written to disk verbatim without re-encoding).
+- Registered via `PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JPEG)` under `ImageFile::JPEG`.  Extensions `jpg` / `jpeg` / `jfif` map to it through `MediaIOTask_ImageFile::extMap`.
+- Magic-byte probe (`FF D8 FF`) wired into the existing `probeImageDevice()` path.
+- **Load keeps the bitstream compressed.**  `ImageFileIO_JPEG::load()` slurps the file, probes the JPEG header via libjpeg to pick the best-matching `JPEG_*` `PixelDesc` (`JPEG_RGB8_sRGB`, `JPEG_YUV8_422_Rec709`, or `JPEG_YUV8_420_Rec709` based on colour space + SOF sampling factors), then wraps the file `Buffer::Ptr` as plane 0 of a compressed `Image` via `Image::fromBuffer()`.  Zero decode on the load path; downstream consumers call `Image::convert()` (which now dispatches to `JpegImageCodec::decode()` automatically) when they need uncompressed pixels.
+- **Save has three paths** — all routed through the `Image::convert()` dispatcher that now handles codec encode/decode:
+  - Already-compressed JPEG input → write the payload bytes verbatim (pass-through; zero re-encode).
+  - Uncompressed input that the codec can encode directly → `Image::convert()` picks the right JPEG sub-format and hands the compressed bytes to the file writer.
+  - Uncompressed input outside the codec's `encodeSources` → `Image::convert()` inserts a preparatory CSC to land on one of the canonical encode sources before calling the codec.
+- The JPEG sub-format selected on save is chosen from the input `PixelDesc` family (RGB → `JPEG_RGB8_sRGB`, RGBA → `JPEG_RGBA8_sRGB`, YUV 4:2:2 → `JPEG_YUV8_422_Rec709`, YUV 4:2:0 → `JPEG_YUV8_420_Rec709`) to avoid an extra CSC hop.
+- **PixelDesc `encodeSources` cleanup** was part of this work: `JPEG_RGB8_sRGB`, `JPEG_YUV8_422_Rec709`, and `JPEG_YUV8_420_Rec709` no longer falsely advertise cross-family sources (RGB in YUV, RGBA in RGB).  The codec tags its output based on the input component order, so each JPEG `PixelDesc` now only lists the inputs whose natural family matches its own — `Image::convert()` handles any cross-family CSC before the codec runs.
 
-- [ ] Registered via `PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JPEG)`; file extensions `jpg` / `jpeg`
-- [ ] Magic-byte probe (`FF D8 FF`) for content detection — plugs into the existing `ImageFileIO::probe()` hook
-- [ ] Supported read output formats: whichever `JpegImageCodec::decode()` supports (RGB8, RGBA8, YUYV, UYVY, planar 4:2:2, planar 4:2:0, NV12)
-- [ ] Supported write input formats:
-  - [ ] Any uncompressed pixel format that `JpegImageCodec::encode()` accepts → encode as JPEG on write
-  - [ ] An already-compressed `EncodedDesc`-tagged frame carrying a JPEG payload → write the payload directly (no re-encode)
-- [ ] Config keys (added to the existing ImageFile config):
-  - [ ] `ConfigJpegQuality` — 1-100, default 85
-  - [ ] `ConfigJpegSubsampling` — `"4:4:4"`, `"4:2:2"`, `"4:2:0"` (or auto from input pixel format)
-  - [ ] `ConfigJpegProgressive` — bool
-- [ ] Audio / metadata: reuse existing `Frame` support so EXIF / IPTC can round-trip later (initial: lossless pass-through of raw metadata block, full parse deferred)
-
-**Implementation checklist:**
-- [ ] JpegImageCodec pass-through encode path — hook up in the new `ImageFileIO_JPEG::save()`
-- [ ] Pass-through (no re-encode) path when the incoming Frame is already compressed JPEG
-- [ ] Probe + extension registration
-- [ ] Round-trip test: RGB8 → save → load → RGB8 pixel tolerance
-- [ ] Pass-through test: read a JPEG, write it, verify bytes match (or at least decode to identical pixels)
-- [ ] Quality / subsampling config tests
-- [ ] Integration via MediaIO: `MediaIO::createForFileRead("foo.jpg")` returns an ImageFile MediaIO that delegates to `ImageFileIO_JPEG`
+**Remaining work (future):**
+- [ ] `MediaConfig::JpegQuality` / `MediaConfig::JpegSubsampling` / `MediaConfig::JpegProgressive` exposed as first-class `MediaIOTask_ImageFile` open-time config (today callers forward them through `ImageFile::save(config)` directly or via the Converter stage; the ImageFile backend itself does not advertise them in its `defaultConfig()`).
+- [ ] EXIF / IPTC metadata parsing (initial: lossless pass-through of the raw JPEG bitstream, no tag-level round-trip).
 
 ---
 
@@ -197,7 +195,7 @@ Also fixed sort-in-place bug in the help dumper: `List::sort()` returns a copy, 
 
 **Earlier shipped (previous session):**
 
-Grammar built on `MediaIOConfig`: type-aware `Key:Value` parsing against each backend's `defaultConfig()`; `list` sentinel for any `Enum` or `PixelDesc` key; `--help` autogenerates the full backend schema from the live registry.  Positional shortcuts.  `createForFileRead`/`createForFileWrite` now seed the live config with full `defaultConfig()` + `ConfigType` + `ConfigFilename`.
+Grammar built on `MediaConfig`: type-aware `Key:Value` parsing against each backend's `defaultConfig()`; `list` sentinel for any `Enum` or `PixelDesc` key; `--help` autogenerates the full backend schema from the live registry.  Positional shortcuts.  `createForFileRead`/`createForFileWrite` now seed the live config with full `defaultConfig()` + `ConfigType` + `ConfigFilename`.
 
 **Verified end-to-end:**
 - Plain `mediaplay` with no flags: TPG default config (video+audio+timecode all enabled) → SDL, no configuration needed.
@@ -229,7 +227,7 @@ The following classes live in the codebase but are **deprecated**. They will be 
 - `TimecodeOverlayNode` — will become a `MediaIOTask_Converter` with text-burn config, or a dedicated text-overlay converter backend
 - `RtpVideoSinkNode` / `RtpAudioSinkNode` — replaced by `MediaIOTask_RtpVideo` / `MediaIOTask_RtpAudio`
 - `AudioSourceNode` / `AudioSinkNode` — replaced by `MediaIOTask_AudioFile` (already complete)
-- `ImageSourceNode` / `ImageSinkNode` — replaced by `MediaIOTask_ImageFile` (already complete, JPEG extension pending)
+- `ImageSourceNode` / `ImageSinkNode` — replaced by `MediaIOTask_ImageFile` (complete, including JPEG backend)
 - `AudioMixerNode` — will become a `MediaIOTask_Converter` (fan-in) once converter supports multi-input
 - `AudioGainNode` — will become a simple converter backend
 - `ColorModelConvertNode` — replaced by `MediaIOTask_Converter` with ColorModel config

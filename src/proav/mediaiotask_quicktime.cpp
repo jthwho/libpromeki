@@ -21,12 +21,6 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_QuickTime)
 
-const MediaIO::ConfigID MediaIOTask_QuickTime::ConfigVideoTrack("VideoTrack");
-const MediaIO::ConfigID MediaIOTask_QuickTime::ConfigAudioTrack("AudioTrack");
-const MediaIO::ConfigID MediaIOTask_QuickTime::ConfigLayout("Layout");
-const MediaIO::ConfigID MediaIOTask_QuickTime::ConfigFragmentFrames("FragmentFrames");
-const MediaIO::ConfigID MediaIOTask_QuickTime::ConfigFlushSync("FlushSync");
-
 // ============================================================================
 // Probe — looks for an "ftyp" atom with a recognized brand in the first
 // 16 bytes of the device. Layout: [4B size][4B 'ftyp'][4B major brand]...
@@ -122,17 +116,17 @@ MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
                 },
                 []() -> MediaIO::Config {
                         MediaIO::Config cfg;
-                        cfg.set(MediaIO::ConfigType, "QuickTime");
+                        cfg.set(MediaConfig::Type, "QuickTime");
                         // -1 sentinel = "let the reader pick the
                         // first video / audio track it finds".
-                        cfg.set(ConfigVideoTrack, -1);
-                        cfg.set(ConfigAudioTrack, -1);
+                        cfg.set(MediaConfig::VideoTrack, -1);
+                        cfg.set(MediaConfig::AudioTrack, -1);
                         // Writer defaults — fragmented layout is the
                         // crash-safe choice for live capture, classic
                         // is only appropriate for offline rendering.
-                        cfg.set(ConfigLayout, QuickTimeLayout::Fragmented);
-                        cfg.set(ConfigFragmentFrames, DefaultFragmentFrames);
-                        cfg.set(ConfigFlushSync, false);
+                        cfg.set(MediaConfig::QuickTimeLayout, QuickTimeLayout::Fragmented);
+                        cfg.set(MediaConfig::QuickTimeFragmentFrames, DefaultFragmentFrames);
+                        cfg.set(MediaConfig::QuickTimeFlushSync, false);
                         return cfg;
                 },
                 []() -> Metadata {
@@ -175,7 +169,7 @@ MediaIOTask_QuickTime::~MediaIOTask_QuickTime() = default;
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         const MediaIO::Config &cfg = cmd.config;
 
-        _filename = cfg.getAs<String>(MediaIO::ConfigFilename);
+        _filename = cfg.getAs<String>(MediaConfig::Filename);
         if(_filename.isEmpty()) {
                 promekiErr("MediaIOTask_QuickTime: filename is required");
                 return Error::InvalidArgument;
@@ -192,8 +186,8 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
                 }
 
                 // Pick the primary video and audio track indices.
-                int videoIdx = cfg.getAs<int>(ConfigVideoTrack, -1);
-                int audioIdx = cfg.getAs<int>(ConfigAudioTrack, -1);
+                int videoIdx = cfg.getAs<int>(MediaConfig::VideoTrack, -1);
+                int audioIdx = cfg.getAs<int>(MediaConfig::AudioTrack, -1);
                 if(videoIdx < 0) {
                         for(size_t i = 0; i < _qt.tracks().size(); ++i) {
                                 if(_qt.tracks()[i].type() == QuickTime::Video) {
@@ -279,7 +273,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         // The QuickTimeLayout Enum integer values match
         // QuickTime::Layout by construction so we can cast directly.
         Error layoutErr;
-        Enum layoutEnum = cfg.get(ConfigLayout)
+        Enum layoutEnum = cfg.get(MediaConfig::QuickTimeLayout)
                              .asEnum(QuickTimeLayout::Type, &layoutErr);
         if(layoutErr.isError() || !layoutEnum.hasListedValue()) {
                 promekiErr("MediaIOTask_QuickTime: unknown Layout value");
@@ -289,12 +283,12 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         Error err = _qt.setLayout(layout);
         if(err.isError()) return err;
 
-        _writerFragmentFrames = cfg.getAs<int>(ConfigFragmentFrames, DefaultFragmentFrames);
+        _writerFragmentFrames = cfg.getAs<int>(MediaConfig::QuickTimeFragmentFrames, DefaultFragmentFrames);
         if(_writerFragmentFrames < 1) _writerFragmentFrames = DefaultFragmentFrames;
         _writerFramesSinceFlush = 0;
 
         // Optional durable-flush mode: fdatasync after every fragment.
-        _qt.setFlushSync(cfg.getAs<bool>(ConfigFlushSync, false));
+        _qt.setFlushSync(cfg.getAs<bool>(MediaConfig::QuickTimeFlushSync, false));
 
         err = _qt.open();
         if(err.isError()) {

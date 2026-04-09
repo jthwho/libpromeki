@@ -44,9 +44,9 @@ TEST_CASE("MediaIO_RegistryContainsTPG") {
 
 TEST_CASE("MediaIO_CreateByType") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         CHECK_FALSE(io->isOpen());
@@ -56,7 +56,7 @@ TEST_CASE("MediaIO_CreateByType") {
 
 TEST_CASE("MediaIO_CreateUnknownTypeReturnsNull") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "NonexistentFormat");
+        cfg.set(MediaConfig::Type, "NonexistentFormat");
         MediaIO *io = MediaIO::create(cfg);
         CHECK(io == nullptr);
 }
@@ -77,22 +77,22 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
         CHECK_FALSE(cfg.isEmpty());
 
         // Should have the Type key set
-        CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "TPG");
+        CHECK(cfg.getAs<String>(MediaConfig::Type) == "TPG");
 
         // Plain defaults: video, audio, and timecode are all enabled
         // so an unconfigured TPG produces a ready-to-use reference
         // stream (1080p59.94 colour bars, 1 kHz stereo tone, timecode
         // starting at 01:00:00:00).
-        CHECK(cfg.getAs<FrameRate>(MediaIOTask_TPG::ConfigFrameRate).isValid());
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigVideoEnabled) == true);
-        CHECK(cfg.getAs<Size2Du32>(MediaIOTask_TPG::ConfigVideoSize)
+        CHECK(cfg.getAs<FrameRate>(MediaConfig::FrameRate).isValid());
+        CHECK(cfg.getAs<bool>(MediaConfig::VideoEnabled) == true);
+        CHECK(cfg.getAs<Size2Du32>(MediaConfig::VideoSize)
               == Size2Du32(1920, 1080));
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigAudioEnabled) == true);
-        CHECK(cfg.get(MediaIOTask_TPG::ConfigAudioMode)
+        CHECK(cfg.getAs<bool>(MediaConfig::AudioEnabled) == true);
+        CHECK(cfg.get(MediaConfig::AudioMode)
                 .asEnum(AudioPattern::Type) == AudioPattern::Tone);
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeEnabled) == true);
-        CHECK(cfg.getAs<String>(MediaIOTask_TPG::ConfigTimecodeStart) == "01:00:00:00");
-        CHECK(cfg.getAs<bool>(MediaIOTask_TPG::ConfigTimecodeDropFrame) == false);
+        CHECK(cfg.getAs<bool>(MediaConfig::TimecodeEnabled) == true);
+        CHECK(cfg.getAs<String>(MediaConfig::TimecodeStart) == "01:00:00:00");
+        CHECK(cfg.getAs<bool>(MediaConfig::TimecodeDropFrame) == false);
 
         // Should be usable for creation straight from the defaults.
         MediaIO *io = MediaIO::create(cfg);
@@ -117,9 +117,9 @@ TEST_CASE("MediaIO_DefaultConfigTPG") {
 
 TEST_CASE("MediaIO_Introspection_ClosedStateIsZero") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         CHECK(io->readyReads() == 0);
@@ -135,10 +135,10 @@ TEST_CASE("MediaIO_Introspection_ReadPrefetchCounts") {
         // and pendingReads() reflects the in-flight prefetch that was
         // submitted on the way out.
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(16, 16));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(16, 16));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -166,7 +166,7 @@ TEST_CASE("MediaIO_Introspection_ReadPrefetchCounts") {
 
 TEST_CASE("MediaIO_Introspection_PendingWritesDrainAfterClose") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaIOTask_Converter::ConfigCapacity, 4);
+        cfg.set(MediaConfig::Capacity, 4);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::ReadWrite).isOk());
@@ -193,10 +193,10 @@ TEST_CASE("MediaIO_Introspection_PendingWritesDrainAfterClose") {
 
 TEST_CASE("MediaIO_Introspection_FrameAvailableMatchesReadyReads") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(16, 16));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(16, 16));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -218,15 +218,15 @@ TEST_CASE("MediaIO_Introspection_FrameAvailableMatchesReadyReads") {
 
 TEST_CASE("MediaIO_TPG_FullGeneration") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(320, 240));
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::ColorBars);
-        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Tone);
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeStart, "01:00:00:00");
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(320, 240));
+        cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
+        cfg.set(MediaConfig::AudioEnabled, true);
+        cfg.set(MediaConfig::AudioMode, AudioPattern::Tone);
+        cfg.set(MediaConfig::TimecodeEnabled, true);
+        cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -285,11 +285,11 @@ TEST_CASE("MediaIO_TPG_FullGeneration") {
 
 TEST_CASE("MediaIO_TPG_VideoOnly") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_25));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(64, 64));
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::Ramp);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_25));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(64, 64));
+        cfg.set(MediaConfig::VideoPattern, VideoPattern::Ramp);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -315,11 +315,11 @@ TEST_CASE("MediaIO_TPG_VideoOnly") {
 
 TEST_CASE("MediaIO_TPG_AudioOnly") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
-        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Silence);
-        cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 4);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::AudioEnabled, true);
+        cfg.set(MediaConfig::AudioMode, AudioPattern::Silence);
+        cfg.set(MediaConfig::AudioChannels, 4);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -345,12 +345,12 @@ TEST_CASE("MediaIO_TPG_AudioCadence_29_97_48k") {
         // sum to exactly 8008 samples and emit only 1601 / 1602 per
         // frame (no constant-1602 drift).
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
-        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Silence);
-        cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
-        cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 2);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::AudioEnabled, true);
+        cfg.set(MediaConfig::AudioMode, AudioPattern::Silence);
+        cfg.set(MediaConfig::AudioRate, 48000.0f);
+        cfg.set(MediaConfig::AudioChannels, 2);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -376,12 +376,12 @@ TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
         // Sanity: integer-cadence rates still emit a constant per-frame
         // sample count.
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_30));
-        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioMode, AudioPattern::Silence);
-        cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
-        cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 2);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+        cfg.set(MediaConfig::AudioEnabled, true);
+        cfg.set(MediaConfig::AudioMode, AudioPattern::Silence);
+        cfg.set(MediaConfig::AudioRate, 48000.0f);
+        cfg.set(MediaConfig::AudioChannels, 2);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -404,11 +404,11 @@ TEST_CASE("MediaIO_TPG_AudioCadence_30_48k_isConstant") {
 
 TEST_CASE("MediaIO_TPG_TimecodeOnly") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_2997));
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeDropFrame, true);
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeStart, "10:00:00;00");
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+        cfg.set(MediaConfig::TimecodeEnabled, true);
+        cfg.set(MediaConfig::TimecodeDropFrame, true);
+        cfg.set(MediaConfig::TimecodeStart, "10:00:00;00");
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -430,9 +430,9 @@ TEST_CASE("MediaIO_TPG_TimecodeOnly") {
 
 TEST_CASE("MediaIO_TPG_WriterNotSupported") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -442,8 +442,8 @@ TEST_CASE("MediaIO_TPG_WriterNotSupported") {
 
 TEST_CASE("MediaIO_TPG_NothingEnabledFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
         // No video, audio, or timecode enabled
 
         MediaIO *io = MediaIO::create(cfg);
@@ -454,10 +454,10 @@ TEST_CASE("MediaIO_TPG_NothingEnabledFails") {
 
 TEST_CASE("MediaIO_TPG_InvalidPatternFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, "bogus_pattern");
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoPattern, "bogus_pattern");
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -467,9 +467,9 @@ TEST_CASE("MediaIO_TPG_InvalidPatternFails") {
 
 TEST_CASE("MediaIO_TPG_ReadBeforeOpenFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -481,9 +481,9 @@ TEST_CASE("MediaIO_TPG_ReadBeforeOpenFails") {
 
 TEST_CASE("MediaIO_TPG_DoubleOpenFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -499,9 +499,9 @@ TEST_CASE("MediaIO_TPG_DoubleOpenFails") {
 
 TEST_CASE("MediaIO_TPG_NoSeek") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -521,12 +521,12 @@ TEST_CASE("MediaIO_TPG_NoSeek") {
 
 TEST_CASE("MediaIO_TPG_Motion") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(64, 64));
-        cfg.set(MediaIOTask_TPG::ConfigVideoPattern, VideoPattern::ColorBars);
-        cfg.set(MediaIOTask_TPG::ConfigVideoMotion, 2.0);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(64, 64));
+        cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
+        cfg.set(MediaConfig::VideoMotion, 2.0);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -605,9 +605,9 @@ TEST_CASE("MediaIO_ImageFile_CreateForFileWriteByExtension") {
 TEST_CASE("MediaIO_ImageFile_DefaultConfig") {
         MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
         CHECK_FALSE(cfg.isEmpty());
-        CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "ImageFile");
-        CHECK(cfg.contains(MediaIOTask_ImageFile::ConfigFrameRate));
-        FrameRate defRate = cfg.getAs<FrameRate>(MediaIOTask_ImageFile::ConfigFrameRate);
+        CHECK(cfg.getAs<String>(MediaConfig::Type) == "ImageFile");
+        CHECK(cfg.contains(MediaConfig::FrameRate));
+        FrameRate defRate = cfg.getAs<FrameRate>(MediaConfig::FrameRate);
         CHECK(defRate == MediaIOTask_ImageFile::DefaultFrameRate);
         CHECK(defRate.isValid());
 }
@@ -668,9 +668,9 @@ TEST_CASE("MediaIO_ImageFile_ConfigFrameRateOverride") {
         }
         {
                 MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
-                cfg.set(MediaIO::ConfigFilename, String(fn));
+                cfg.set(MediaConfig::Filename, String(fn));
                 FrameRate wanted(FrameRate::FPS_2997);
-                cfg.set(MediaIOTask_ImageFile::ConfigFrameRate, wanted);
+                cfg.set(MediaConfig::FrameRate, wanted);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -798,8 +798,8 @@ TEST_CASE("MediaIO_ImageFile_StepControl") {
 
 TEST_CASE("MediaIO_ImageFile_ReadBeforeOpenFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "ImageFile");
-        cfg.set(MediaIO::ConfigFilename, "/tmp/dummy.dpx");
+        cfg.set(MediaConfig::Type, "ImageFile");
+        cfg.set(MediaConfig::Filename, "/tmp/dummy.dpx");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         Frame::Ptr frame;
@@ -841,9 +841,9 @@ TEST_CASE("MediaIO_ImageFile_ProbeDetectsFormat") {
 
 TEST_CASE("MediaIO_BaseClass_FrameRateAccessor") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -854,11 +854,11 @@ TEST_CASE("MediaIO_BaseClass_FrameRateAccessor") {
 
 TEST_CASE("MediaIO_BaseClass_AudioDescAccessor") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigAudioEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigAudioRate, 48000.0f);
-        cfg.set(MediaIOTask_TPG::ConfigAudioChannels, 4);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::AudioEnabled, true);
+        cfg.set(MediaConfig::AudioRate, 48000.0f);
+        cfg.set(MediaConfig::AudioChannels, 4);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -872,9 +872,9 @@ TEST_CASE("MediaIO_BaseClass_AudioDescAccessor") {
 
 TEST_CASE("MediaIO_BaseClass_AudioDescEmpty") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         // No audio enabled
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -891,10 +891,10 @@ TEST_CASE("MediaIO_BaseClass_AudioDescEmpty") {
 
 TEST_CASE("MediaIO_TPG_StepZeroHoldsTimecode") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeStart, "01:00:00:00");
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::TimecodeEnabled, true);
+        cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -914,10 +914,10 @@ TEST_CASE("MediaIO_TPG_StepZeroHoldsTimecode") {
 
 TEST_CASE("MediaIO_TPG_StepForwardAdvancesTimecode") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigTimecodeStart, "01:00:00:00");
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::TimecodeEnabled, true);
+        cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -943,10 +943,10 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_DefaultIsTaskValue") {
         // After open(), prefetchDepth() should reflect the task's default
         // (1 for TPG since it doesn't override).
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -959,10 +959,10 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_UserOverride") {
         // Calling setPrefetchDepth() before open() makes the user's value
         // win — the task's default does not overwrite it.
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         io->setPrefetchDepth(4);
@@ -983,9 +983,9 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_UserOverride") {
 
 TEST_CASE("MediaIO_TPG_PrefetchDepth_ClampsToOne") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         io->setPrefetchDepth(0);
@@ -1001,9 +1001,9 @@ TEST_CASE("MediaIO_TPG_PrefetchDepth_ClampsToOne") {
 
 TEST_CASE("MediaIO_TPG_DefaultSeekMode_IsExact") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1022,11 +1022,11 @@ TEST_CASE("MediaIO_AudioFile_SeekDefault_ResolvesToExact") {
         size_t spf = (size_t)std::round(desc.sampleRate() / fps.toDouble());
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+                cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Writer).isOk());
@@ -1043,9 +1043,9 @@ TEST_CASE("MediaIO_AudioFile_SeekDefault_ResolvesToExact") {
         }
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1069,9 +1069,9 @@ TEST_CASE("MediaIO_AudioFile_SeekDefault_ResolvesToExact") {
 
 TEST_CASE("MediaIO_TrackSelection_PreOpenOnly") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -1097,9 +1097,9 @@ TEST_CASE("MediaIO_TrackSelection_PreOpenOnly") {
 
 TEST_CASE("MediaIO_TPG_FrameAvailable_AfterRead") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1118,10 +1118,10 @@ TEST_CASE("MediaIO_TPG_FrameAvailable_AfterRead") {
 
 TEST_CASE("MediaIO_TPG_ReopenSameInstance") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
 
@@ -1148,9 +1148,9 @@ TEST_CASE("MediaIO_SendParams_DefaultIsNotSupported") {
         // TPG doesn't override executeCmd(MediaIOCommandParams &), so the
         // default implementation returns NotSupported.
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1163,9 +1163,9 @@ TEST_CASE("MediaIO_SendParams_DefaultIsNotSupported") {
 
 TEST_CASE("MediaIO_SendParams_RequiresOpen") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         // Not open yet
@@ -1180,9 +1180,9 @@ TEST_CASE("MediaIO_SendParams_RequiresOpen") {
 
 TEST_CASE("MediaIO_CancelPending_NoOpWhenClosed") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         // Not open: cancelPending must return 0 cleanly.
@@ -1198,9 +1198,9 @@ TEST_CASE("MediaIO_Stats_DefaultIsEmpty") {
         // TPG doesn't override executeCmd(MediaIOCommandStats &), so the
         // default returns Ok with empty stats.
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1215,9 +1215,9 @@ TEST_CASE("MediaIO_Stats_DefaultIsEmpty") {
 
 TEST_CASE("MediaIO_Stats_RequiresOpen") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         // Not open: returns empty stats without erroring.
@@ -1283,11 +1283,11 @@ TEST_CASE("MediaIO_AudioFile_EOFLatchClearedBySeek") {
         // Write a short clip
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+                cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Writer).isOk());
@@ -1305,9 +1305,9 @@ TEST_CASE("MediaIO_AudioFile_EOFLatchClearedBySeek") {
         // Read past EOF, then seek and confirm reads work again
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1352,10 +1352,10 @@ TEST_CASE("MediaIO_TPG_CancelPendingDropsReadResults") {
         // After cancel, the read result queue should be drained and a
         // subsequent blocking read should still succeed (it submits fresh).
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "TPG");
-        cfg.set(MediaIOTask_TPG::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
-        cfg.set(MediaIOTask_TPG::ConfigVideoEnabled, true);
-        cfg.set(MediaIOTask_TPG::ConfigVideoSize, Size2Du32(32, 32));
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        cfg.set(MediaConfig::VideoSize, Size2Du32(32, 32));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -1625,8 +1625,8 @@ TEST_CASE("MediaIO_ImageSequence_WriteCustomHead") {
         String mask = (dir / "out_####.dpx").toString();
 
         MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
-        cfg.set(MediaIO::ConfigFilename, mask);
-        cfg.set(MediaIOTask_ImageFile::ConfigSequenceHead, 1001);
+        cfg.set(MediaConfig::Filename, mask);
+        cfg.set(MediaConfig::SequenceHead, 1001);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -1841,8 +1841,8 @@ TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfig") {
         String mask = (dir / "fr_####.dpx").toString();
 
         MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
-        cfg.set(MediaIO::ConfigFilename, mask);
-        cfg.set(MediaIOTask_ImageFile::ConfigFrameRate,
+        cfg.set(MediaConfig::Filename, mask);
+        cfg.set(MediaConfig::FrameRate,
                 FrameRate(FrameRate::FPS_2997));
 
         MediaIO *io = MediaIO::create(cfg);
@@ -1997,11 +1997,11 @@ TEST_CASE("MediaIO_AudioFile_WAVRoundTrip") {
 
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+                cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Writer).isOk());
@@ -2021,9 +2021,9 @@ TEST_CASE("MediaIO_AudioFile_WAVRoundTrip") {
         }
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -2053,11 +2053,11 @@ TEST_CASE("MediaIO_AudioFile_Seeking") {
         size_t spf = (size_t)std::round(desc.sampleRate() / fps.toDouble());
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+                cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Writer).isOk());
@@ -2074,9 +2074,9 @@ TEST_CASE("MediaIO_AudioFile_Seeking") {
         }
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -2097,8 +2097,8 @@ TEST_CASE("MediaIO_AudioFile_Seeking") {
 
 TEST_CASE("MediaIO_AudioFile_MissingFrameRateFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "AudioFile");
-        cfg.set(MediaIO::ConfigFilename, "/tmp/dummy.wav");
+        cfg.set(MediaConfig::Type, "AudioFile");
+        cfg.set(MediaConfig::Filename, "/tmp/dummy.wav");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         CHECK(io->open(MediaIO::Reader) == Error::InvalidArgument);
@@ -2107,9 +2107,9 @@ TEST_CASE("MediaIO_AudioFile_MissingFrameRateFails") {
 
 TEST_CASE("MediaIO_AudioFile_ReadBeforeOpenFails") {
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "AudioFile");
-        cfg.set(MediaIO::ConfigFilename, "/tmp/dummy.wav");
-        cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::Type, "AudioFile");
+        cfg.set(MediaConfig::Filename, "/tmp/dummy.wav");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         Frame::Ptr frame;
@@ -2126,11 +2126,11 @@ TEST_CASE("MediaIO_AudioFile_FrameCountAfterClose") {
         // Write 5 frames
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+                cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Writer).isOk());
@@ -2150,9 +2150,9 @@ TEST_CASE("MediaIO_AudioFile_FrameCountAfterClose") {
         // Read back and check post-close
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -2174,11 +2174,11 @@ TEST_CASE("MediaIO_AudioFile_StepZeroReReads") {
         // Write 10 frames
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-                cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+                cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Writer).isOk());
@@ -2197,9 +2197,9 @@ TEST_CASE("MediaIO_AudioFile_StepZeroReReads") {
         // Read with step=0 — should re-read frame 0 repeatedly
         {
                 MediaIO::Config cfg;
-                cfg.set(MediaIO::ConfigType, "AudioFile");
-                cfg.set(MediaIO::ConfigFilename, fn);
-                cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
+                cfg.set(MediaConfig::Type, "AudioFile");
+                cfg.set(MediaConfig::Filename, fn);
+                cfg.set(MediaConfig::FrameRate, fps);
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 REQUIRE(io->open(MediaIO::Reader).isOk());
@@ -2227,11 +2227,11 @@ TEST_CASE("MediaIO_AudioFile_WriterCannotSeek") {
         AudioDesc desc(48000.0f, 1);
 
         MediaIO::Config cfg;
-        cfg.set(MediaIO::ConfigType, "AudioFile");
-        cfg.set(MediaIO::ConfigFilename, fn);
-        cfg.set(MediaIOTask_AudioFile::ConfigFrameRate, fps);
-        cfg.set(MediaIOTask_AudioFile::ConfigAudioRate, desc.sampleRate());
-        cfg.set(MediaIOTask_AudioFile::ConfigAudioChannels, (unsigned int)desc.channels());
+        cfg.set(MediaConfig::Type, "AudioFile");
+        cfg.set(MediaConfig::Filename, fn);
+        cfg.set(MediaConfig::FrameRate, fps);
+        cfg.set(MediaConfig::AudioRate, desc.sampleRate());
+        cfg.set(MediaConfig::AudioChannels, (unsigned int)desc.channels());
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Writer).isOk());

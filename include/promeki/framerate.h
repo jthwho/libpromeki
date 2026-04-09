@@ -40,7 +40,7 @@ PROMEKI_NAMESPACE_BEGIN
  * well-known industry-standard frame rates.  A frame rate can be
  * constructed from a WellKnownRate enum or from an arbitrary
  * rational value.  FrameRate is a first-class Variant type and
- * can be stored directly in MediaNodeConfig and other Variant-based
+ * can be stored directly in MediaConfig and other Variant-based
  * containers.
  *
  * @par Why rational numbers?

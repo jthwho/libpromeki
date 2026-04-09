@@ -60,7 +60,7 @@ Frame::Ptr makeAudioFrame(AudioDesc::DataType dt, float rate,
  */
 MediaIO::Config converterConfig(const PixelDesc &outputPd) {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaIOTask_Converter::ConfigOutputPixelDesc, outputPd);
+        cfg.set(MediaConfig::OutputPixelDesc, outputPd);
         return cfg;
 }
 
@@ -89,21 +89,21 @@ TEST_CASE("MediaIOTask_Converter_Registry") {
 TEST_CASE("MediaIOTask_Converter_DefaultConfig") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
         CHECK_FALSE(cfg.isEmpty());
-        CHECK(cfg.getAs<String>(MediaIO::ConfigType) == "Converter");
-        CHECK(cfg.getAs<int>(MediaIOTask_Converter::ConfigJpegQuality) == 85);
+        CHECK(cfg.getAs<String>(MediaConfig::Type) == "Converter");
+        CHECK(cfg.getAs<int>(MediaConfig::JpegQuality) == 85);
 
         // JPEG subsampling now uses the ChromaSubsampling Enum.
-        Enum sub = cfg.get(MediaIOTask_Converter::ConfigJpegSubsampling)
+        Enum sub = cfg.get(MediaConfig::JpegSubsampling)
                       .asEnum(ChromaSubsampling::Type);
         CHECK(sub == ChromaSubsampling::YUV422);
 
         // Audio data type now uses the AudioDataType Enum, Invalid =
         // pass-through by default.
-        Enum adt = cfg.get(MediaIOTask_Converter::ConfigOutputAudioDataType)
+        Enum adt = cfg.get(MediaConfig::OutputAudioDataType)
                       .asEnum(AudioDataType::Type);
         CHECK(adt == AudioDataType::Invalid);
 
-        CHECK(cfg.getAs<int>(MediaIOTask_Converter::ConfigCapacity) == 4);
+        CHECK(cfg.getAs<int>(MediaConfig::Capacity) == 4);
 }
 
 // ============================================================================
@@ -302,7 +302,7 @@ TEST_CASE("MediaIOTask_Converter_JpegEncodeDecode") {
 
 TEST_CASE("MediaIOTask_Converter_AudioFormatConversion") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaIOTask_Converter::ConfigOutputAudioDataType,
+        cfg.set(MediaConfig::OutputAudioDataType,
                 AudioDataType::PCMI_S16LE);
 
         MediaIO *io = MediaIO::create(cfg);
@@ -330,7 +330,7 @@ TEST_CASE("MediaIOTask_Converter_UnknownAudioDataTypeRejected") {
         // String so the Variant::asEnum path rejects it just like an
         // out-of-list integer would.
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaIOTask_Converter::ConfigOutputAudioDataType,
+        cfg.set(MediaConfig::OutputAudioDataType,
                 String("NotARealFormat"));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -342,7 +342,7 @@ TEST_CASE("MediaIOTask_Converter_UnknownJpegSubsamplingRejected") {
         // Same idea: an unknown ChromaSubsampling name should fail
         // when asEnum() cannot find a match.
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
-        cfg.set(MediaIOTask_Converter::ConfigJpegSubsampling, String("YUV777"));
+        cfg.set(MediaConfig::JpegSubsampling, String("YUV777"));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         CHECK(io->open(MediaIO::ReadWrite).isError());
@@ -355,7 +355,7 @@ TEST_CASE("MediaIOTask_Converter_UnknownJpegSubsamplingRejected") {
 
 TEST_CASE("MediaIOTask_Converter_WriteBackPressure") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
-        cfg.set(MediaIOTask_Converter::ConfigCapacity, 2);
+        cfg.set(MediaConfig::Capacity, 2);
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
@@ -460,7 +460,7 @@ TEST_CASE("MediaIOTask_Converter_ReopenAfterClose") {
 
 TEST_CASE("MediaIOTask_Converter_PendingWritesNonBlocking") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
-        cfg.set(MediaIOTask_Converter::ConfigCapacity, 8);
+        cfg.set(MediaConfig::Capacity, 8);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::ReadWrite).isOk());

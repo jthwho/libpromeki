@@ -13,10 +13,10 @@ The `MediaNode` / old `MediaPipeline` framework is **deprecated**. All new media
 **Primary work queue (in rough order):**
 
 1. **New MediaIO backends** (see `proav_nodes.md`):
-   - `MediaIOTask_Converter` — **complete** (initial version): ReadWrite CSC, JPEG encode/decode, audio sample-format conversion via `Image::convert()` / `JpegImageCodec` / `Audio::convertTo()`. Stateful temporal codecs and explicit ColorModel/sample-rate knobs remain future work.
+   - `MediaIOTask_Converter` — **complete**: every video transform (CSC, JPEG encode, JPEG decode, JPEG↔JPEG transcode) now routes through a single `Image::convert()` call; the converter forwards its open-time `MediaConfig` (including `JpegQuality`, `JpegSubsampling`, `CscPath`) directly to `Image::convert()` and the codec layer.  Audio sample-format conversion via `Audio::convertTo()`.  Stateful temporal codecs and explicit ColorModel/sample-rate knobs remain future work.
    - `MediaIOTask_RtpVideo` — bidirectional RTP video TX/RX. Replaces `RtpVideoSinkNode`, adds receive.
    - `MediaIOTask_RtpAudio` — bidirectional RTP audio TX/RX. Replaces `RtpAudioSinkNode`, adds receive.
-   - `ImageFileIO_JPEG` — JPEG read/write for the existing `ImageFile` backend, with pass-through for already-compressed JPEG frames.
+   - `ImageFileIO_JPEG` — **complete**: JPEG read/write in the existing `ImageFile` backend. Load keeps the bitstream compressed (zero decode); save pass-throughs existing JPEG payloads byte-for-byte and encodes uncompressed inputs via `Image::convert()`. `.jpg`/`.jpeg`/`.jfif` extensions and the `FF D8 FF` magic probe are wired into `MediaIOTask_ImageFile`.
 2. **New `MediaPipeline` class** (see `proav_pipeline.md`):
    - `MediaPipelineConfig` data object describing stages + routes, with JSON `toJson()`/`fromJson()`.
    - `MediaPipeline` class that builds, opens, starts, stops, and closes a pipeline of MediaIO instances.
