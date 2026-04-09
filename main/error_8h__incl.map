@@ -1,9 +1,9 @@
-<map id="include/promeki/core/error.h" name="include/promeki/core/error.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="157,5,316,45"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,113,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,48,99,90,97,85,193,43"/>
-<area shape="rect" id="Node000003" href="$namespace_8h.html" title=" " alt="" coords="137,93,336,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,46,239,79,234,79,234,46"/>
-<area shape="rect" id="Node000004" href="$platform_8h.html" title=" " alt="" coords="360,93,540,119"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="289,43,406,86,405,91,287,48"/>
+<map id="include/promeki/error.h" name="include/promeki/error.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="134,5,307,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,113,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,33,99,75,97,71,194,28"/>
+<area shape="rect" id="Node000003" href="$namespace_8h.html" title=" " alt="" coords="137,79,304,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,31,223,65,218,65,218,31"/>
+<area shape="rect" id="Node000004" href="$platform_8h.html" title=" " alt="" coords="328,79,476,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="251,28,361,71,359,76,249,33"/>
 </map>

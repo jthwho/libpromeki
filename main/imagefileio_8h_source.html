@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/proav/imagefileio.h Source File</title>
+<title>libpromeki: include/promeki/imagefileio.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -105,11 +105,11 @@ $(document).ready(function(){initNavTree('imagefileio_8h_source.html',''); initR
 <a href="imagefileio_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/core/string.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="foldopen" id="foldopen00019" data-start="" data-end="">
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="group__proav__media.html#gaeb7193d3b1d2058212f4c97c3f24b271">   19</a></span><span class="preprocessor">#define PROMEKI_REGISTER_IMAGEFILEIO(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_imagefileio_, PROMEKI_UNIQUE_ID) = \</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="group__proav.html#gaeb7193d3b1d2058212f4c97c3f24b271">   19</a></span><span class="preprocessor">#define PROMEKI_REGISTER_IMAGEFILEIO(name) [[maybe_unused]] static int PROMEKI_CONCAT(__promeki_imagefileio_, PROMEKI_UNIQUE_ID) = \</span></div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">        ImageFileIO::registerImageFileIO(new name);</span></div>
 </div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
@@ -192,9 +192,9 @@ $(document).ready(function(){initNavTree('imagefileio_8h_source.html',''); initR
 <div class="ttc" id="aclassImageFileIO_html_adc5f74bb80165fbe7cc09478538efe95"><div class="ttname"><a href="classImageFileIO.html#adc5f74bb80165fbe7cc09478538efe95">ImageFileIO::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if this backend has a valid (non-zero) format ID.</div><div class="ttdef"><b>Definition</b> imagefileio.h:69</div></div>
 <div class="ttc" id="aclassImageFileIO_html_ae92ccf6c98b57e38d66878b71f9fd36a"><div class="ttname"><a href="classImageFileIO.html#ae92ccf6c98b57e38d66878b71f9fd36a">ImageFileIO::_name</a></div><div class="ttdeci">String _name</div><div class="ttdoc">Human-readable format name.</div><div class="ttdef"><b>Definition</b> imagefileio.h:115</div></div>
 <div class="ttc" id="aclassImageFileIO_html_af4118aa6733b199a3aff6e5fe837dd06"><div class="ttname"><a href="classImageFileIO.html#af4118aa6733b199a3aff6e5fe837dd06">ImageFileIO::lookup</a></div><div class="ttdeci">static const ImageFileIO * lookup(int id)</div><div class="ttdoc">Looks up a registered backend by format ID.</div></div>
-<div class="ttc" id="aclassImageFile_html"><div class="ttname"><a href="classImageFile.html">ImageFile</a></div><div class="ttdoc">Image file loader and saver.</div><div class="ttdef"><b>Definition</b> imagefile.h:27</div></div>
+<div class="ttc" id="aclassImageFile_html"><div class="ttname"><a href="classImageFile.html">ImageFile</a></div><div class="ttdoc">Media file loader and saver.</div><div class="ttdef"><b>Definition</b> imagefile.h:28</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
 <div class="ttc" id="anamespace_8h_html_a9a7eb1268c947a92a8cb60d369b8abf8"><div class="ttname"><a href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_END</div><div class="ttdoc">Ends a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:19</div></div>
@@ -205,8 +205,8 @@ $(document).ready(function(){initNavTree('imagefileio_8h_source.html',''); initR
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_3e52590fb02cdfb7976073298b2cac0a.html">proav</a></li><li class="navelem"><a class="el" href="imagefileio_8h.html">imagefileio.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="imagefileio_8h.html">imagefileio.h</a></li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

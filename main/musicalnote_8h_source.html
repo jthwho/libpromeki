@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/music/musicalnote.h Source File</title>
+<title>libpromeki: include/promeki/musicalnote.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -105,14 +105,14 @@ $(document).ready(function(){initNavTree('musicalnote_8h_source.html',''); initR
 <a href="musicalnote_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/core/list.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/list.h</a>&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="foldopen" id="foldopen00031" data-start="{" data-end="};">
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classMusicalNote.html">   31</a></span><span class="keyword">class </span><a class="code hl_class" href="classMusicalNote.html">MusicalNote</a> {</div>
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        <span class="keyword">public</span>:</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>                <span class="keyword">using </span><a class="code hl_class" href="classList.html">List</a> = <a class="code hl_function" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">promeki::List&lt;MusicalNote&gt;</a>;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>                <span class="keyword">using </span><a class="code hl_class" href="classList.html">List</a> = promeki::List&lt;MusicalNote&gt;;</div>
 <div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="classMusicalNote.html#a1350b5e26ac99e673632ee0e1fe118a7">   36</a></span>                <a class="code hl_function" href="classMusicalNote.html#a1350b5e26ac99e673632ee0e1fe118a7">MusicalNote</a>() = <span class="keywordflow">default</span>;</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
@@ -166,7 +166,6 @@ $(document).ready(function(){initNavTree('musicalnote_8h_source.html',''); initR
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
 <div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassList_html_a708769d50011e6bdadc6bed2a6468aec"><div class="ttname"><a href="classList.html#a708769d50011e6bdadc6bed2a6468aec">List::List</a></div><div class="ttdeci">List()=default</div><div class="ttdoc">Default constructor. Creates an empty list.</div></div>
 <div class="ttc" id="aclassMusicalNote_html"><div class="ttname"><a href="classMusicalNote.html">MusicalNote</a></div><div class="ttdoc">Represents a single musical note with timing and expression data.</div><div class="ttdef"><b>Definition</b> musicalnote.h:31</div></div>
 <div class="ttc" id="aclassMusicalNote_html_a1350b5e26ac99e673632ee0e1fe118a7"><div class="ttname"><a href="classMusicalNote.html#a1350b5e26ac99e673632ee0e1fe118a7">MusicalNote::MusicalNote</a></div><div class="ttdeci">MusicalNote()=default</div><div class="ttdoc">Default-constructs an invalid (rest) note.</div></div>
 <div class="ttc" id="aclassMusicalNote_html_a1ea91f45616a3d3aac0c7e367a584849"><div class="ttname"><a href="classMusicalNote.html#a1ea91f45616a3d3aac0c7e367a584849">MusicalNote::tremoloRate</a></div><div class="ttdeci">float tremoloRate() const</div><div class="ttdoc">Tremolo rate in Hz.</div><div class="ttdef"><b>Definition</b> musicalnote.h:84</div></div>
@@ -200,8 +199,8 @@ $(document).ready(function(){initNavTree('musicalnote_8h_source.html',''); initR
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_61998ef5ce756be5ad5e13fa93bb1dbe.html">music</a></li><li class="navelem"><a class="el" href="musicalnote_8h.html">musicalnote.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="musicalnote_8h.html">musicalnote.h</a></li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

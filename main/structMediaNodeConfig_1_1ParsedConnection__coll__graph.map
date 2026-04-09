@@ -1,0 +1,5 @@
+<map id="MediaNodeConfig::ParsedConnection" name="MediaNodeConfig::ParsedConnection">
+<area shape="rect" id="Node000001" title="Result of parsing a connection string." alt="" coords="5,108,267,133"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="106,5,166,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,45,139,108,133,108,133,45"/>
+</map>

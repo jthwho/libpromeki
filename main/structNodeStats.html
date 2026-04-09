@@ -102,7 +102,7 @@ $(document).ready(function(){initNavTree('structNodeStats.html',''); initResizab
   <div class="summary">
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="structNodeStats-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">NodeStats Struct Reference<div class="ingroups"><a class="el" href="group__proav__pipeline.html">ProAV Pipeline</a></div></div></div>
+  <div class="headertitle"><div class="title">NodeStats Struct Reference<div class="ingroups"><a class="el" href="group__pipeline.html">Pipeline</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -117,10 +117,6 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>processCount</b> = 0</td></tr>
 <tr class="memdesc:a6f46b38bcbb12cf61a6f1f5f07ce8958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total process() invocations. <br /></td></tr>
 <tr class="separator:a6f46b38bcbb12cf61a6f1f5f07ce8958"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a42a2c4f5c406fd8a25a6b364471b71ce" id="r_a42a2c4f5c406fd8a25a6b364471b71ce"><td class="memItemLeft" align="right" valign="top"><a id="a42a2c4f5c406fd8a25a6b364471b71ce" name="a42a2c4f5c406fd8a25a6b364471b71ce"></a>
-<a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>starvationCount</b> = 0</td></tr>
-<tr class="memdesc:a42a2c4f5c406fd8a25a6b364471b71ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total starvation() invocations. <br /></td></tr>
-<tr class="separator:a42a2c4f5c406fd8a25a6b364471b71ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9e1ff80125a8132304a0d0b6e6bcdb3" id="r_ae9e1ff80125a8132304a0d0b6e6bcdb3"><td class="memItemLeft" align="right" valign="top"><a id="ae9e1ff80125a8132304a0d0b6e6bcdb3" name="ae9e1ff80125a8132304a0d0b6e6bcdb3"></a>
 <a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>lastProcessDuration</b> = 0.0</td></tr>
 <tr class="memdesc:ae9e1ff80125a8132304a0d0b6e6bcdb3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock time of last process() call in seconds. <br /></td></tr>
@@ -135,17 +131,17 @@ Public Attributes</h2></td></tr>
 <tr class="separator:aeb619148d93416e12e4b1e17e60ad463"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af73718e7342f78556c066840aa7b83d9" id="r_af73718e7342f78556c066840aa7b83d9"><td class="memItemLeft" align="right" valign="top"><a id="af73718e7342f78556c066840aa7b83d9" name="af73718e7342f78556c066840aa7b83d9"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>currentQueueDepth</b> = 0</td></tr>
-<tr class="memdesc:af73718e7342f78556c066840aa7b83d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current input queue depth. <br /></td></tr>
+<tr class="memdesc:af73718e7342f78556c066840aa7b83d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregate input queue depth across all sinks. <br /></td></tr>
 <tr class="separator:af73718e7342f78556c066840aa7b83d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad3f81b3f8bd029b2211b29fe2d46744" id="r_aad3f81b3f8bd029b2211b29fe2d46744"><td class="memItemLeft" align="right" valign="top"><a id="aad3f81b3f8bd029b2211b29fe2d46744" name="aad3f81b3f8bd029b2211b29fe2d46744"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>peakQueueDepth</b> = 0</td></tr>
-<tr class="memdesc:aad3f81b3f8bd029b2211b29fe2d46744"><td class="mdescLeft">&#160;</td><td class="mdescRight">Peak input queue depth observed. <br /></td></tr>
+<tr class="memdesc:aad3f81b3f8bd029b2211b29fe2d46744"><td class="mdescLeft">&#160;</td><td class="mdescRight">Peak aggregate input queue depth observed. <br /></td></tr>
 <tr class="separator:aad3f81b3f8bd029b2211b29fe2d46744"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Snapshot of node performance statistics. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="medianode_8h_source.html">medianode.h</a></li>
+<li>include/promeki/<a class="el" href="medianode_8h_source.html">medianode.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -154,7 +150,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>peakQueueDepth</b> = 0
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structNodeStats.html">NodeStats</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

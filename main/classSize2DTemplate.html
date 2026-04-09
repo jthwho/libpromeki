@@ -101,8 +101,9 @@ $(document).ready(function(){initNavTree('classSize2DTemplate.html',''); initRes
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classSize2DTemplate-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Size2DTemplate&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__math.html">Core Math</a></div></div></div>
+  <div class="headertitle"><div class="title">Size2DTemplate&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__math.html">Math</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -126,7 +127,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ae8189cdfc84baffd497da522c42cb25e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both width and height are greater than zero. <br /></td></tr>
 <tr class="separator:ae8189cdfc84baffd497da522c42cb25e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a334f6a89eaa38219aac3b6a9b44c51fa" id="r_a334f6a89eaa38219aac3b6a9b44c51fa"><td class="memItemLeft" align="right" valign="top"><a id="a334f6a89eaa38219aac3b6a9b44c51fa" name="a334f6a89eaa38219aac3b6a9b44c51fa"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>set</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;<a class="el" href="classList.html">w</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;<a class="el" href="classList.html">h</a>)</td></tr>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>set</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;<a class="el" href="classList.html">w</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;h)</td></tr>
 <tr class="memdesc:a334f6a89eaa38219aac3b6a9b44c51fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets both width and height. <br /></td></tr>
 <tr class="separator:a334f6a89eaa38219aac3b6a9b44c51fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaec305c9337c460d079ffc84bfbd5254" id="r_aaec305c9337c460d079ffc84bfbd5254"><td class="memItemLeft" align="right" valign="top"><a id="aaec305c9337c460d079ffc84bfbd5254" name="aaec305c9337c460d079ffc84bfbd5254"></a>
@@ -157,11 +158,25 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>operator String</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad5c740383f223272239578d452ed5592"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts to a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> using <a class="el" href="classSize2DTemplate.html#a5dfd54d7c19944185beaa26f449f6bdc" title="Returns the size as a string in &quot;WxH&quot; format.">toString()</a>. <br /></td></tr>
 <tr class="separator:ad5c740383f223272239578d452ed5592"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68afa47eb76135697114f4d658ae61fb" id="r_a68afa47eb76135697114f4d658ae61fb"><td class="memItemLeft" align="right" valign="top"><a id="a68afa47eb76135697114f4d658ae61fb" name="a68afa47eb76135697114f4d658ae61fb"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classSize2DTemplate.html">Size2DTemplate</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a68afa47eb76135697114f4d658ae61fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both sizes have equal width and height. <br /></td></tr>
+<tr class="separator:a68afa47eb76135697114f4d658ae61fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0976be32f15a86e07ba87a1db87f6619" id="r_a0976be32f15a86e07ba87a1db87f6619"><td class="memItemLeft" align="right" valign="top"><a id="a0976be32f15a86e07ba87a1db87f6619" name="a0976be32f15a86e07ba87a1db87f6619"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classSize2DTemplate.html">Size2DTemplate</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0976be32f15a86e07ba87a1db87f6619"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the sizes differ. <br /></td></tr>
+<tr class="separator:a0976be32f15a86e07ba87a1db87f6619"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2628c972403429e0a06a9b1c7870ea6" id="r_ab2628c972403429e0a06a9b1c7870ea6"><td class="memTemplParams" colspan="2"><a id="ab2628c972403429e0a06a9b1c7870ea6" name="ab2628c972403429e0a06a9b1c7870ea6"></a>
 template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">N</a> &gt; </td></tr>
 <tr class="memitem:ab2628c972403429e0a06a9b1c7870ea6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>pointIsInside</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classPoint.html">Point</a>&lt; <a class="el" href="classList.html">N</a>, 2 &gt; &amp;p) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ab2628c972403429e0a06a9b1c7870ea6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the given 2D point lies within the size bounds. <br /></td></tr>
 <tr class="separator:ab2628c972403429e0a06a9b1c7870ea6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:aa40e6754ddc360f71aa775455a0cb121" id="r_aa40e6754ddc360f71aa775455a0cb121"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classSize2DTemplate.html">Size2DTemplate</a>&lt; <a class="el" href="classList.html">T</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSize2DTemplate.html#aa40e6754ddc360f71aa775455a0cb121">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str)</td></tr>
+<tr class="memdesc:aa40e6754ddc360f71aa775455a0cb121"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a size from a "WxH" string.  <br /></td></tr>
+<tr class="separator:aa40e6754ddc360f71aa775455a0cb121"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a>&gt;<br />
@@ -169,11 +184,11 @@ class Size2DTemplate&lt; T &gt;</div><p>Two-dimensional size (width and height).
 <p>A simple value type representing a 2D extent. Supports validity checks, area computation, point containment tests, and string serialization in</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classSize2DTemplate.html">Size2Du32</a> <a class="code hl_class" href="classList.html">hd</a>(1920, 1080);</div>
 <div class="line"><a class="code hl_class" href="classList.html">uint32_t</a> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">hd</a>.width();   <span class="comment">// 1920</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">uint32_t</a> <a class="code hl_class" href="classList.html">h</a> = <a class="code hl_class" href="classList.html">hd</a>.height();  <span class="comment">// 1080</span></div>
-<div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_class" href="classList.html">s</a> = <a class="code hl_class" href="classList.html">hd</a>.toString();  <span class="comment">// &quot;1920x1080&quot;</span></div>
+<div class="line"><a class="code hl_class" href="classList.html">uint32_t</a> h = <a class="code hl_class" href="classList.html">hd</a>.height();  <span class="comment">// 1080</span></div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_class" href="classList.html">hd</a>.toString();  <span class="comment">// &quot;1920x1080&quot;</span></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassSize2DTemplate_html"><div class="ttname"><a href="classSize2DTemplate.html">Size2DTemplate&lt; uint32_t &gt;</a></div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 </div><!-- fragment --> "WxH" format.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -181,8 +196,47 @@ class Size2DTemplate&lt; T &gt;</div><p>Two-dimensional size (width and height).
   </table>
   </dd>
 </dl>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="size2d_8h_source.html">size2d.h</a></li>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="aa40e6754ddc360f71aa775455a0cb121" name="aa40e6754ddc360f71aa775455a0cb121"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa40e6754ddc360f71aa775455a0cb121">&#9670;&#160;</a></span>fromString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">T</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classSize2DTemplate.html">Size2DTemplate</a>&lt; <a class="el" href="classList.html">T</a> &gt; &gt; <a class="el" href="classSize2DTemplate.html">Size2DTemplate</a>&lt; <a class="el" href="classList.html">T</a> &gt;::fromString </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Parses a size from a "WxH" string. </p>
+<p>Accepts decimal width and height separated by a lowercase or uppercase 'x' (e.g. <code>"1920x1080"</code> or <code>"1280X720"</code>). Whitespace is not tolerated.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>The string to parse. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code>Result</code> containing the parsed size on success, or <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a></code> on a malformed input. </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>include/promeki/<a class="el" href="size2d_8h_source.html">size2d.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -191,7 +245,7 @@ class Size2DTemplate&lt; T &gt;</div><p>Two-dimensional size (width and height).
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSize2DTemplate.html">Size2DTemplate</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

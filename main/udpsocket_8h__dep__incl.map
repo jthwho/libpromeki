@@ -1,5 +1,5 @@
-<map id="include/promeki/network/udpsocket.h" name="include/promeki/network/udpsocket.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,189,45"/>
-<area shape="rect" id="Node000002" href="$prioritysocket_8h.html" title=" " alt="" coords="5,93,189,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,59,100,93,95,93,95,59"/>
+<map id="include/promeki/udpsocket.h" name="include/promeki/udpsocket.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="17,5,226,31"/>
+<area shape="rect" id="Node000002" href="$prioritysocket_8h.html" title=" " alt="" coords="5,79,237,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,44,124,79,119,79,119,44"/>
 </map>

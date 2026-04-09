@@ -34,7 +34,8 @@ var classTimecode =
     [ "operator--", "classTimecode.html#aa8777347891f00c963ddb9b22ce6c5a3", null ],
     [ "sec", "classTimecode.html#a272c41e442d480433841f7ae450359fa", null ],
     [ "set", "classTimecode.html#aa0f3e6aa1cc6828116515cbbaa7f501f", null ],
-    [ "toFrameNumber", "classTimecode.html#ae5ae0132aeabd8cea656f58e689922dd", null ],
-    [ "toString", "classTimecode.html#ad100adf06bfaf56aadebfd1013e1047e", null ],
+    [ "setMode", "classTimecode.html#a52245e2b5d56982b35a08e533dacd53b", null ],
+    [ "toFrameNumber", "classTimecode.html#a20c98fe7a64fd1a5ee877ff976769c85", null ],
+    [ "toString", "classTimecode.html#ac3fe8478d926509d7c561d21b769e94c", null ],
     [ "vtcFormat", "classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b", null ]
 ];

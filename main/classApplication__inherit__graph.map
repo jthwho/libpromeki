@@ -1,5 +1,7 @@
 <map id="Application" name="Application">
-<area shape="rect" id="Node000001" title="Application&#45;wide state for the promeki library." alt="" coords="15,5,109,31"/>
-<area shape="rect" id="Node000002" href="$classTuiApplication.html" title="Application class for TUI programs." alt="" coords="5,79,119,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="65,44,65,79,59,79,59,44"/>
+<area shape="rect" id="Node000001" title="Application&#45;wide state for the promeki library." alt="" coords="89,5,184,31"/>
+<area shape="rect" id="Node000002" href="$classSDLApplication.html" title="Application class for SDL&#45;based programs." alt="" coords="5,79,127,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,43,79,80,76,77,113,39"/>
+<area shape="rect" id="Node000003" href="$classTuiApplication.html" title="Application class for TUI programs." alt="" coords="151,79,264,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="160,39,198,77,194,80,156,43"/>
 </map>

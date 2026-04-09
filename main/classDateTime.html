@@ -105,7 +105,7 @@ $(document).ready(function(){initNavTree('classDateTime.html',''); initResizable
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classDateTime-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">DateTime Class Reference<div class="ingroups"><a class="el" href="group__core__time.html">Core Time</a></div></div></div>
+  <div class="headertitle"><div class="title">DateTime Class Reference<div class="ingroups"><a class="el" href="group__time.html">Time</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -188,7 +188,7 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator&gt;=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classDateTime.html">DateTime</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a1a5bee66c8fa95e4390f1018d9a096a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> is later than or equal to <code>other</code>. <br /></td></tr>
 <tr class="separator:a1a5bee66c8fa95e4390f1018d9a096a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aebc1bbf747d2439f0323b3e684584938" id="r_aebc1bbf747d2439f0323b3e684584938"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#aebc1bbf747d2439f0323b3e684584938">toString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">format</a>=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aebc1bbf747d2439f0323b3e684584938" id="r_aebc1bbf747d2439f0323b3e684584938"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#aebc1bbf747d2439f0323b3e684584938">toString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *format=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aebc1bbf747d2439f0323b3e684584938"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formats the <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> as a string.  <br /></td></tr>
 <tr class="separator:aebc1bbf747d2439f0323b3e684584938"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ff78238ea811e3f50995c27518f3dcd" id="r_a2ff78238ea811e3f50995c27518f3dcd"><td class="memItemLeft" align="right" valign="top"><a id="a2ff78238ea811e3f50995c27518f3dcd" name="a2ff78238ea811e3f50995c27518f3dcd"></a>
@@ -214,10 +214,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ae6651c9ea2501773b8d66e6e6c4321a1" id="r_ae6651c9ea2501773b8d66e6e6c4321a1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#ae6651c9ea2501773b8d66e6e6c4321a1">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">fmt</a>=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:ae6651c9ea2501773b8d66e6e6c4321a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> from a formatted string.  <br /></td></tr>
 <tr class="separator:ae6651c9ea2501773b8d66e6e6c4321a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4624b8fdcc656bce5093ed99355541cd" id="r_a4624b8fdcc656bce5093ed99355541cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#a4624b8fdcc656bce5093ed99355541cd">fromNow</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">description</a>)</td></tr>
+<tr class="memitem:a4624b8fdcc656bce5093ed99355541cd" id="r_a4624b8fdcc656bce5093ed99355541cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classDateTime.html">DateTime</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#a4624b8fdcc656bce5093ed99355541cd">fromNow</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;description)</td></tr>
 <tr class="memdesc:a4624b8fdcc656bce5093ed99355541cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a> relative to the current time from a natural-language description.  <br /></td></tr>
 <tr class="separator:a4624b8fdcc656bce5093ed99355541cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40708bcc5680d884759b2fcdaa7e1ebb" id="r_a40708bcc5680d884759b2fcdaa7e1ebb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#a40708bcc5680d884759b2fcdaa7e1ebb">strftime</a> (<a class="el" href="classList.html">const</a> std::tm &amp;<a class="el" href="classList.html">tm</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">format</a>=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>)</td></tr>
+<tr class="memitem:a40708bcc5680d884759b2fcdaa7e1ebb" id="r_a40708bcc5680d884759b2fcdaa7e1ebb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDateTime.html#a40708bcc5680d884759b2fcdaa7e1ebb">strftime</a> (<a class="el" href="classList.html">const</a> std::tm &amp;<a class="el" href="classList.html">tm</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *format=<a class="el" href="classDateTime.html#a4997f988fa6ae31846f56f1bf9d6f9be">DefaultFormat</a>)</td></tr>
 <tr class="memdesc:a40708bcc5680d884759b2fcdaa7e1ebb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formats a std::tm value using a strftime-style format string.  <br /></td></tr>
 <tr class="separator:a40708bcc5680d884759b2fcdaa7e1ebb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -243,7 +243,7 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassDateTime_html_a5709c05071bafa055ec8f927aef765af"><div class="ttname"><a href="classDateTime.html#a5709c05071bafa055ec8f927aef765af">DateTime::now</a></div><div class="ttdeci">static DateTime now()</div><div class="ttdoc">Returns a DateTime representing the current wall-clock time.</div><div class="ttdef"><b>Definition</b> datetime.h:48</div></div>
 <div class="ttc" id="aclassDateTime_html_ae6651c9ea2501773b8d66e6e6c4321a1"><div class="ttname"><a href="classDateTime.html#ae6651c9ea2501773b8d66e6e6c4321a1">DateTime::fromString</a></div><div class="ttdeci">static DateTime fromString(const String &amp;str, const char *fmt=DefaultFormat, Error *err=nullptr)</div><div class="ttdoc">Parses a DateTime from a formatted string.</div><div class="ttdef"><b>Definition</b> datetime.h:59</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 </div><!-- fragment --> uses strftime-style format strings. </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="abd75d049678e2edf4d8f67f388bb578c" name="abd75d049678e2edf4d8f67f388bb578c"></a>
@@ -735,7 +735,7 @@ Static Public Attributes</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="datetime_8h_source.html">datetime.h</a></li>
+<li>include/promeki/<a class="el" href="datetime_8h_source.html">datetime.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -744,7 +744,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classDateTime.html">DateTime</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

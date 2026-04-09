@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['jpeg_5frgb8_0',['JPEG_RGB8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda91f1cc7339e696b2eac6f22471964b69',1,'PixelFormat']]],
-  ['jpeg_5frgba8_1',['JPEG_RGBA8',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda2770d6c4f4376a240d76e8903450107c',1,'PixelFormat']]],
-  ['jpeg_5fyuv8_5f422_2',['JPEG_YUV8_422',['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda8b65229cc236ec93bb3f2c8b7c6fd25e',1,'PixelFormat']]]
+  ['jpeg_5frgb8_5fsrgb_0',['JPEG_RGB8_sRGB',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e',1,'PixelDesc']]],
+  ['jpeg_5frgba8_5fsrgb_1',['JPEG_RGBA8_sRGB',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaab1d685f32d6f041a0ec30f93d755be4',1,'PixelDesc']]],
+  ['jpeg_5fyuv8_5f420_5frec709_2',['JPEG_YUV8_420_Rec709',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa8d823748ba840656f290abb3b8913be7',1,'PixelDesc']]],
+  ['jpeg_5fyuv8_5f422_5frec709_3',['JPEG_YUV8_422_Rec709',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa0e6ec62dd1a5078a0ba0f5e7a6787060',1,'PixelDesc']]]
 ];

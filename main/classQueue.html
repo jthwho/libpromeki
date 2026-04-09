@@ -102,7 +102,7 @@ $(document).ready(function(){initNavTree('classQueue.html',''); initResizable();
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classQueue-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Queue&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__containers.html">Core Containers</a></div></div></div>
+  <div class="headertitle"><div class="title">Queue&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__containers.html">Containers</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -126,15 +126,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:add9322795f540166b4c6b8f671b7653e" id="r_add9322795f540166b4c6b8f671b7653e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#add9322795f540166b4c6b8f671b7653e">push</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classList.html">T</a> &gt; &amp;<a class="el" href="classList.html">list</a>)</td></tr>
 <tr class="memdesc:add9322795f540166b4c6b8f671b7653e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes every element in <code>list</code> onto the back of the queue.  <br /></td></tr>
 <tr class="separator:add9322795f540166b4c6b8f671b7653e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a04d0e515fe32fcbb0a923e7edd070c9d" id="r_a04d0e515fe32fcbb0a923e7edd070c9d"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classError.html">Error</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#a04d0e515fe32fcbb0a923e7edd070c9d">pop</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
-<tr class="memdesc:a04d0e515fe32fcbb0a923e7edd070c9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes and returns the front element, blocking until one is available or the timeout expires.  <br /></td></tr>
-<tr class="separator:a04d0e515fe32fcbb0a923e7edd070c9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a554f6bc2dec3ed83ad0fe9a323c2e915" id="r_a554f6bc2dec3ed83ad0fe9a323c2e915"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#a554f6bc2dec3ed83ad0fe9a323c2e915">pop</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
+<tr class="memdesc:a554f6bc2dec3ed83ad0fe9a323c2e915"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes and returns the front element, blocking until one is available or the timeout expires.  <br /></td></tr>
+<tr class="separator:a554f6bc2dec3ed83ad0fe9a323c2e915"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aacab5ed955ed49d6b4d6d9e0aa3669a7" id="r_aacab5ed955ed49d6b4d6d9e0aa3669a7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#aacab5ed955ed49d6b4d6d9e0aa3669a7">popOrFail</a> (<a class="el" href="classList.html">T</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:aacab5ed955ed49d6b4d6d9e0aa3669a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to pop the front element without blocking.  <br /></td></tr>
 <tr class="separator:aacab5ed955ed49d6b4d6d9e0aa3669a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf6877bb933fe1ac957a69b2b31a8d26" id="r_adf6877bb933fe1ac957a69b2b31a8d26"><td class="memItemLeft" align="right" valign="top">std::pair&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classError.html">Error</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#adf6877bb933fe1ac957a69b2b31a8d26">peek</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
-<tr class="memdesc:adf6877bb933fe1ac957a69b2b31a8d26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the front element without removing it, blocking until one is available or the timeout expires.  <br /></td></tr>
-<tr class="separator:adf6877bb933fe1ac957a69b2b31a8d26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb2a13a32ef6adf616c2e69911e78dfa" id="r_adb2a13a32ef6adf616c2e69911e78dfa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#adb2a13a32ef6adf616c2e69911e78dfa">peek</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
+<tr class="memdesc:adb2a13a32ef6adf616c2e69911e78dfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the front element without removing it, blocking until one is available or the timeout expires.  <br /></td></tr>
+<tr class="separator:adb2a13a32ef6adf616c2e69911e78dfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adfbc15beb04668b47a56ed67e3ec3807" id="r_adfbc15beb04668b47a56ed67e3ec3807"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classQueue.html#adfbc15beb04668b47a56ed67e3ec3807">peekOrFail</a> (<a class="el" href="classList.html">T</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:adfbc15beb04668b47a56ed67e3ec3807"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tries to copy the front element without blocking or removing it.  <br /></td></tr>
 <tr class="separator:adfbc15beb04668b47a56ed67e3ec3807"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,8 +164,8 @@ class Queue&lt; T &gt;</div><p>Thread-safe FIFO queue. </p>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a683d6370957f79aba4bf57865db68965"><div class="ttname"><a href="classList.html#a683d6370957f79aba4bf57865db68965">List::emplace</a></div><div class="ttdeci">Iterator emplace(ConstIterator pos, Args &amp;&amp;...args)</div><div class="ttdoc">Emplaces an object right before the given position.</div><div class="ttdef"><b>Definition</b> list.h:382</div></div>
 <div class="ttc" id="aclassList_html_af3d391ef4c79dc222e1361613e831e5a"><div class="ttname"><a href="classList.html#af3d391ef4c79dc222e1361613e831e5a">List::isEmpty</a></div><div class="ttdeci">bool isEmpty() const noexcept</div><div class="ttdoc">Returns true if the list has no elements.</div><div class="ttdef"><b>Definition</b> list.h:296</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
-</div><!-- fragment --> Internally synchronized with a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a> and <a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a>. Blocking methods (<a class="el" href="classQueue.html#a04d0e515fe32fcbb0a923e7edd070c9d" title="Removes and returns the front element, blocking until one is available or the timeout expires.">pop()</a>, <a class="el" href="classQueue.html#adf6877bb933fe1ac957a69b2b31a8d26" title="Returns a copy of the front element without removing it, blocking until one is available or the timeo...">peek()</a>, <a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a>) will sleep until their condition is met rather than spinning or polling.</dd></dl>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
+</div><!-- fragment --> Internally synchronized with a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a> and <a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a>. Blocking methods (<a class="el" href="classQueue.html#a554f6bc2dec3ed83ad0fe9a323c2e915" title="Removes and returns the front element, blocking until one is available or the timeout expires.">pop()</a>, <a class="el" href="classQueue.html#adb2a13a32ef6adf616c2e69911e78dfa" title="Returns a copy of the front element without removing it, blocking until one is available or the timeo...">peek()</a>, <a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a>) will sleep until their condition is met rather than spinning or polling.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd><a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a> indicates that all items have been removed from the queue, not that they have been fully processed by the consumer. If you need a "processing complete" guarantee, use an out-of-band mechanism such as a promise/future handshake.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -248,8 +248,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
-<a id="adf6877bb933fe1ac957a69b2b31a8d26" name="adf6877bb933fe1ac957a69b2b31a8d26"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adf6877bb933fe1ac957a69b2b31a8d26">&#9670;&#160;</a></span>peek()</h2>
+<a id="adb2a13a32ef6adf616c2e69911e78dfa" name="adb2a13a32ef6adf616c2e69911e78dfa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb2a13a32ef6adf616c2e69911e78dfa">&#9670;&#160;</a></span>peek()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -260,7 +260,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classError.html">Error</a> &gt; <a class="el" href="classQueue.html">Queue</a>&lt; <a class="el" href="classList.html">T</a> &gt;::peek </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt; <a class="el" href="classQueue.html">Queue</a>&lt; <a class="el" href="classList.html">T</a> &gt;::peek </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
           <td class="paramname"><em>timeoutMs</em> = <code>0</code></td><td>)</td>
@@ -281,7 +281,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A pair of the front element (default-constructed on timeout) and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> or <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding a copy of the front element on success, or a default-constructed value with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a></code>. </dd></dl>
 
 </div>
 </div>
@@ -322,8 +322,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
-<a id="a04d0e515fe32fcbb0a923e7edd070c9d" name="a04d0e515fe32fcbb0a923e7edd070c9d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04d0e515fe32fcbb0a923e7edd070c9d">&#9670;&#160;</a></span>pop()</h2>
+<a id="a554f6bc2dec3ed83ad0fe9a323c2e915" name="a554f6bc2dec3ed83ad0fe9a323c2e915"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a554f6bc2dec3ed83ad0fe9a323c2e915">&#9670;&#160;</a></span>pop()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -334,7 +334,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::pair&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classError.html">Error</a> &gt; <a class="el" href="classQueue.html">Queue</a>&lt; <a class="el" href="classList.html">T</a> &gt;::pop </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt; <a class="el" href="classQueue.html">Queue</a>&lt; <a class="el" href="classList.html">T</a> &gt;::pop </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
           <td class="paramname"><em>timeoutMs</em> = <code>0</code></td><td>)</td>
@@ -355,7 +355,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A pair of the dequeued element (default-constructed on timeout) and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> or <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the dequeued element on success, or a default-constructed value with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a></code>. </dd></dl>
 
 </div>
 </div>
@@ -573,7 +573,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="queue_8h_source.html">queue.h</a></li>
+<li>include/promeki/<a class="el" href="queue_8h_source.html">queue.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -582,7 +582,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classQueue.html">Queue</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

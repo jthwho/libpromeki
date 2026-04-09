@@ -110,6 +110,16 @@ $(document).ready(function(){initNavTree('structAudioGen_1_1Config.html',''); in
  <a href="structAudioGen_1_1Config.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="audiogen_8h_source.html">audiogen.h</a>&gt;</code></p>
+<div class="dynheader">
+Collaboration diagram for AudioGen::Config:</div>
+<div class="dyncontent">
+<div class="center"><img src="structAudioGen_1_1Config__coll__graph.png" border="0" usemap="#aAudioGen_1_1Config_coll__map" alt="Collaboration graph"/></div>
+<map name="aAudioGen_1_1Config_coll__map" id="aAudioGen_1_1Config_coll__map">
+<area shape="rect" title="Per&#45;channel configuration for the audio generator." alt="" coords="5,93,140,119"/>
+<area shape="rect" href="classAudioLevel.html" title="Audio level in dBFS (decibels relative to full scale)." alt="" coords="25,5,120,31"/>
+<area shape="poly" title=" " alt="" coords="75,45,75,93,70,93,70,45"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -121,10 +131,10 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classList.html">float</a>&#160;</td><td class="memItemRight" valign="bottom"><b>freq</b></td></tr>
 <tr class="memdesc:a11b8635732e60f5c62990d69767f6d1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frequency in Hz. <br /></td></tr>
 <tr class="separator:a11b8635732e60f5c62990d69767f6d1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6d64e1e848e0fa31bfaa2083cd5d27a1" id="r_a6d64e1e848e0fa31bfaa2083cd5d27a1"><td class="memItemLeft" align="right" valign="top"><a id="a6d64e1e848e0fa31bfaa2083cd5d27a1" name="a6d64e1e848e0fa31bfaa2083cd5d27a1"></a>
-<a class="el" href="classList.html">float</a>&#160;</td><td class="memItemRight" valign="bottom"><b>amplitude</b></td></tr>
-<tr class="memdesc:a6d64e1e848e0fa31bfaa2083cd5d27a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Amplitude (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.0</a> to <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>). <br /></td></tr>
-<tr class="separator:a6d64e1e848e0fa31bfaa2083cd5d27a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f0b9fbb10fb92d510dff79e67e3f415" id="r_a0f0b9fbb10fb92d510dff79e67e3f415"><td class="memItemLeft" align="right" valign="top"><a id="a0f0b9fbb10fb92d510dff79e67e3f415" name="a0f0b9fbb10fb92d510dff79e67e3f415"></a>
+<a class="el" href="classAudioLevel.html">AudioLevel</a>&#160;</td><td class="memItemRight" valign="bottom"><b>level</b></td></tr>
+<tr class="memdesc:a0f0b9fbb10fb92d510dff79e67e3f415"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output level in dBFS. <br /></td></tr>
+<tr class="separator:a0f0b9fbb10fb92d510dff79e67e3f415"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab335b0a14e746c0ffcc5b62fe612f9b3" id="r_ab335b0a14e746c0ffcc5b62fe612f9b3"><td class="memItemLeft" align="right" valign="top"><a id="ab335b0a14e746c0ffcc5b62fe612f9b3" name="ab335b0a14e746c0ffcc5b62fe612f9b3"></a>
 <a class="el" href="classList.html">float</a>&#160;</td><td class="memItemRight" valign="bottom"><b>phase</b></td></tr>
 <tr class="memdesc:ab335b0a14e746c0ffcc5b62fe612f9b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phase offset in radians. <br /></td></tr>
@@ -133,11 +143,15 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classList.html">float</a>&#160;</td><td class="memItemRight" valign="bottom"><b>dutyCycle</b></td></tr>
 <tr class="memdesc:a4f4e5c81e5309842e1215728b32b06fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Duty cycle (reserved for future waveform types). <br /></td></tr>
 <tr class="separator:a4f4e5c81e5309842e1215728b32b06fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c4fb64b867087dad499e3064ebe1889" id="r_a1c4fb64b867087dad499e3064ebe1889"><td class="memItemLeft" align="right" valign="top"><a id="a1c4fb64b867087dad499e3064ebe1889" name="a1c4fb64b867087dad499e3064ebe1889"></a>
+<a class="el" href="classList.html">float</a>&#160;</td><td class="memItemRight" valign="bottom"><b>linearGain</b></td></tr>
+<tr class="memdesc:a1c4fb64b867087dad499e3064ebe1889"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cached linear gain from level. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> internally by <a class="el" href="classAudioGen.html#a6d4a4f382c4aeca00f5e5d123da5333b" title="Sets the configuration for the given channel.">setConfig()</a>. <br /></td></tr>
+<tr class="separator:a1c4fb64b867087dad499e3064ebe1889"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Per-channel configuration for the audio generator. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="audiogen_8h_source.html">audiogen.h</a></li>
+<li>include/promeki/<a class="el" href="audiogen_8h_source.html">audiogen.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -146,7 +160,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioGen.html">AudioGen</a></li><li class="navelem"><a class="el" href="structAudioGen_1_1Config.html">Config</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

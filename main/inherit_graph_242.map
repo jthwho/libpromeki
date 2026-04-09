@@ -1,0 +1,11 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classRtpPayload.html" title="Abstract base class for RTP payload type handlers." alt="" coords="5,80,100,105"/>
+<area shape="rect" id="Node000001" href="$classRtpPayloadJpeg.html" title="RTP payload handler for RFC 2435 JPEG (Motion JPEG)." alt="" coords="167,5,289,31"/>
+<area shape="poly" id="edge80_Node000000_Node000001" title=" " alt="" coords="85,71,147,40,179,28,180,33,149,44,88,75"/>
+<area shape="rect" id="Node000002" href="$classRtpPayloadL16.html" title="RTP payload handler for 16&#45;bit linear audio (L16)." alt="" coords="169,55,287,80"/>
+<area shape="poly" id="edge81_Node000000_Node000002" title=" " alt="" coords="113,81,168,73,169,79,114,87"/>
+<area shape="rect" id="Node000003" href="$classRtpPayloadL24.html" title="RTP payload handler for 24&#45;bit linear audio (L24)." alt="" coords="169,104,287,129"/>
+<area shape="poly" id="edge82_Node000000_Node000003" title=" " alt="" coords="114,98,169,106,168,111,113,104"/>
+<area shape="rect" id="Node000004" href="$classRtpPayloadRawVideo.html" title="RTP payload handler for RFC 4175 raw video (ST 2110&#45;20)." alt="" coords="148,153,308,179"/>
+<area shape="poly" id="edge83_Node000000_Node000004" title=" " alt="" coords="89,109,149,138,184,151,182,156,147,143,87,114"/>
+</map>

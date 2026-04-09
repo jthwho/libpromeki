@@ -101,7 +101,6 @@ $(document).ready(function(){initNavTree('classPaintEngine_1_1Impl.html',''); in
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classPaintEngine_1_1Impl-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">PaintEngine::Impl Class Reference</div></div>
 </div><!--header-->
@@ -111,24 +110,6 @@ $(document).ready(function(){initNavTree('classPaintEngine_1_1Impl.html',''); in
  <a href="classPaintEngine_1_1Impl.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="paintengine_8h_source.html">paintengine.h</a>&gt;</code></p>
-<div class="dynheader">
-Collaboration diagram for PaintEngine::Impl:</div>
-<div class="dyncontent">
-<div class="center"><img src="classPaintEngine_1_1Impl__coll__graph.png" border="0" usemap="#aPaintEngine_1_1Impl_coll__map" alt="Collaboration graph"/></div>
-<map name="aPaintEngine_1_1Impl_coll__map" id="aPaintEngine_1_1Impl_coll__map">
-<area shape="rect" title="Abstract implementation backend for PaintEngine." alt="" coords="161,211,296,236"/>
-<area shape="rect" href="classPixelFormat.html" title="Describes a pixel packing format and provides format&#45;specific operations." alt="" coords="179,123,278,148"/>
-<area shape="poly" title=" " alt="" coords="231,162,231,210,226,210,226,162"/>
-<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,13,65,38"/>
-<area shape="poly" title=" " alt="" coords="61,45,94,71,134,96,191,120,189,125,131,101,91,76,57,49"/>
-<area shape="rect" href="classList.html" title=" " alt="" coords="89,13,211,38"/>
-<area shape="poly" title=" " alt="" coords="169,48,222,121,218,124,164,51"/>
-<area shape="rect" href="classList.html" title=" " alt="" coords="235,5,380,45"/>
-<area shape="poly" title=" " alt="" coords="301,60,292,81,280,100,252,124,248,120,276,97,288,78,296,58"/>
-<area shape="rect" href="classList.html" title=" " alt="" coords="404,5,549,45"/>
-<area shape="poly" title=" " alt="" coords="444,56,409,80,370,101,324,117,279,128,278,123,322,112,368,96,406,75,441,52"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -136,56 +117,49 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~Impl</b> ()</td></tr>
 <tr class="memdesc:ab06c8a09dcd1356ed1603322ba6a2aa0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Virtual destructor. <br /></td></tr>
 <tr class="separator:ab06c8a09dcd1356ed1603322ba6a2aa0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a725e3e284243d7b565bb53f8f8e304b2" id="r_a725e3e284243d7b565bb53f8f8e304b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a725e3e284243d7b565bb53f8f8e304b2">pixelFormat</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a725e3e284243d7b565bb53f8f8e304b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel format used by this implementation.  <br /></td></tr>
-<tr class="separator:a725e3e284243d7b565bb53f8f8e304b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80e8266f5907fdb3a31b31d40f7e556b" id="r_a80e8266f5907fdb3a31b31d40f7e556b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a80e8266f5907fdb3a31b31d40f7e556b">blit</a> (<a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="classList.html">destTopLeft</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">src</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="classList.html">srcTopLeft</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;<a class="el" href="classList.html">srcSize</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a80e8266f5907fdb3a31b31d40f7e556b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blits a rectangular region from a source image onto the surface.  <br /></td></tr>
 <tr class="separator:a80e8266f5907fdb3a31b31d40f7e556b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a89ba9a79a5b727b39ae74aed6f5f9aea" id="r_a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a89ba9a79a5b727b39ae74aed6f5f9aea">createPixel</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint16_t</a> *comps, <a class="el" href="classList.html">size_t</a> compCount) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a Pixel value from component values.  <br /></td></tr>
+<tr class="memitem:a89ba9a79a5b727b39ae74aed6f5f9aea" id="r_a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a89ba9a79a5b727b39ae74aed6f5f9aea">createPixel</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint16_t</a> *comps, <a class="el" href="classList.html">size_t</a> compCount) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="structPaintEngine_1_1Pixel.html" title="Opaque pixel value with inline fixed-size storage.">Pixel</a> value from component values.  <br /></td></tr>
 <tr class="separator:a89ba9a79a5b727b39ae74aed6f5f9aea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa003f1a13308191f238379ade2ffd9f0" id="r_aa003f1a13308191f238379ade2ffd9f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#aa003f1a13308191f238379ade2ffd9f0">drawPoints</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> *<a class="el" href="classList.html">points</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">pointCount</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aa003f1a13308191f238379ade2ffd9f0" id="r_aa003f1a13308191f238379ade2ffd9f0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#aa003f1a13308191f238379ade2ffd9f0">drawPoints</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> *<a class="el" href="classList.html">points</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">pointCount</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa003f1a13308191f238379ade2ffd9f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws a set of points onto the surface.  <br /></td></tr>
 <tr class="separator:aa003f1a13308191f238379ade2ffd9f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab615fd9f0387e563e88fb355639ad8c" id="r_aab615fd9f0387e563e88fb355639ad8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#aab615fd9f0387e563e88fb355639ad8c">compositePoints</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> *<a class="el" href="classList.html">points</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">alphas</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">pointCount</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aab615fd9f0387e563e88fb355639ad8c" id="r_aab615fd9f0387e563e88fb355639ad8c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#aab615fd9f0387e563e88fb355639ad8c">compositePoints</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> *<a class="el" href="classList.html">points</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">float</a> *<a class="el" href="classList.html">alphas</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">pointCount</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aab615fd9f0387e563e88fb355639ad8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Composites a set of points onto the surface with per-point alpha.  <br /></td></tr>
 <tr class="separator:aab615fd9f0387e563e88fb355639ad8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52cd5e741add321ebc0ce56b23c09021" id="r_a52cd5e741add321ebc0ce56b23c09021"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a52cd5e741add321ebc0ce56b23c09021">fill</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a52cd5e741add321ebc0ce56b23c09021" id="r_a52cd5e741add321ebc0ce56b23c09021"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a52cd5e741add321ebc0ce56b23c09021">fill</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a52cd5e741add321ebc0ce56b23c09021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills the entire surface with a single pixel value.  <br /></td></tr>
 <tr class="separator:a52cd5e741add321ebc0ce56b23c09021"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6a9c072bb1b1acdaaf1784c64283aade" id="r_a6a9c072bb1b1acdaaf1784c64283aade"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a6a9c072bb1b1acdaaf1784c64283aade">drawLines</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="line_8h.html#a7a8fa44bfd41c89b35458c6ec1b2f5c1">Line2Di32</a> *<a class="el" href="classList.html">lines</a>, <a class="el" href="classList.html">size_t</a> count) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a6a9c072bb1b1acdaaf1784c64283aade" id="r_a6a9c072bb1b1acdaaf1784c64283aade"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a6a9c072bb1b1acdaaf1784c64283aade">drawLines</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="line_8h.html#a7a8fa44bfd41c89b35458c6ec1b2f5c1">Line2Di32</a> *<a class="el" href="classList.html">lines</a>, <a class="el" href="classList.html">size_t</a> count) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a6a9c072bb1b1acdaaf1784c64283aade"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws a set of line segments onto the surface.  <br /></td></tr>
 <tr class="separator:a6a9c072bb1b1acdaaf1784c64283aade"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d9e57976aeca367a10a51fde7611c78" id="r_a5d9e57976aeca367a10a51fde7611c78"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a5d9e57976aeca367a10a51fde7611c78">drawRect</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classRect.html">Rect</a>&lt; <a class="el" href="classList.html">int32_t</a> &gt; &amp;<a class="el" href="classList.html">rect</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a5d9e57976aeca367a10a51fde7611c78" id="r_a5d9e57976aeca367a10a51fde7611c78"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a5d9e57976aeca367a10a51fde7611c78">drawRect</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classRect.html">Rect</a>&lt; <a class="el" href="classList.html">int32_t</a> &gt; &amp;<a class="el" href="classList.html">rect</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a5d9e57976aeca367a10a51fde7611c78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws a rectangle outline.  <br /></td></tr>
 <tr class="separator:a5d9e57976aeca367a10a51fde7611c78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2745ee578e5d195adcca40f3a2f119e" id="r_aa2745ee578e5d195adcca40f3a2f119e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#aa2745ee578e5d195adcca40f3a2f119e">fillRect</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classRect.html">Rect</a>&lt; <a class="el" href="classList.html">int32_t</a> &gt; &amp;<a class="el" href="classList.html">rect</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:aa2745ee578e5d195adcca40f3a2f119e" id="r_aa2745ee578e5d195adcca40f3a2f119e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#aa2745ee578e5d195adcca40f3a2f119e">fillRect</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classRect.html">Rect</a>&lt; <a class="el" href="classList.html">int32_t</a> &gt; &amp;<a class="el" href="classList.html">rect</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa2745ee578e5d195adcca40f3a2f119e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills a rectangle with a solid color.  <br /></td></tr>
 <tr class="separator:aa2745ee578e5d195adcca40f3a2f119e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae654bda5da90ec0d104f88f74f174ffc" id="r_ae654bda5da90ec0d104f88f74f174ffc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#ae654bda5da90ec0d104f88f74f174ffc">drawCircle</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, int <a class="el" href="classList.html">radius</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ae654bda5da90ec0d104f88f74f174ffc" id="r_ae654bda5da90ec0d104f88f74f174ffc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#ae654bda5da90ec0d104f88f74f174ffc">drawCircle</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, int <a class="el" href="classList.html">radius</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ae654bda5da90ec0d104f88f74f174ffc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws a circle outline.  <br /></td></tr>
 <tr class="separator:ae654bda5da90ec0d104f88f74f174ffc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af750ffa3bcc7c6236df78da1e6b760a5" id="r_af750ffa3bcc7c6236df78da1e6b760a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#af750ffa3bcc7c6236df78da1e6b760a5">fillCircle</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, int <a class="el" href="classList.html">radius</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:af750ffa3bcc7c6236df78da1e6b760a5" id="r_af750ffa3bcc7c6236df78da1e6b760a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#af750ffa3bcc7c6236df78da1e6b760a5">fillCircle</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, int <a class="el" href="classList.html">radius</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:af750ffa3bcc7c6236df78da1e6b760a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills a circle with a solid color.  <br /></td></tr>
 <tr class="separator:af750ffa3bcc7c6236df78da1e6b760a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a82d7b6f149a4284649ce6e301e7abd54" id="r_a82d7b6f149a4284649ce6e301e7abd54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a82d7b6f149a4284649ce6e301e7abd54">drawEllipse</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;size) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a82d7b6f149a4284649ce6e301e7abd54" id="r_a82d7b6f149a4284649ce6e301e7abd54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a82d7b6f149a4284649ce6e301e7abd54">drawEllipse</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;size) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a82d7b6f149a4284649ce6e301e7abd54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Draws an ellipse outline.  <br /></td></tr>
 <tr class="separator:a82d7b6f149a4284649ce6e301e7abd54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf337a2874ecdde37f1a8fac0c8f26ab" id="r_adf337a2874ecdde37f1a8fac0c8f26ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#adf337a2874ecdde37f1a8fac0c8f26ab">fillEllipse</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;size) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:adf337a2874ecdde37f1a8fac0c8f26ab" id="r_adf337a2874ecdde37f1a8fac0c8f26ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#adf337a2874ecdde37f1a8fac0c8f26ab">fillEllipse</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;<a class="el" href="classList.html">pixel</a>, <a class="el" href="classList.html">const</a> <a class="el" href="point_8h.html#a559444f073d8a5f68fdebd61c5663f56">Point2Di32</a> &amp;<a class="el" href="textstream_8h.html#a65c3368133a343323aab71b735dba472">center</a>, <a class="el" href="classList.html">const</a> <a class="el" href="size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a">Size2Du32</a> &amp;size) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:adf337a2874ecdde37f1a8fac0c8f26ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fills an ellipse with a solid color.  <br /></td></tr>
 <tr class="separator:adf337a2874ecdde37f1a8fac0c8f26ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:a748922ddea4a668016197cd64a926043" id="r_a748922ddea4a668016197cd64a926043"><td class="memItemLeft" align="right" valign="top"><a id="a748922ddea4a668016197cd64a926043" name="a748922ddea4a668016197cd64a926043"></a>
-<a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>_pixelFormat</b> = <a class="el" href="classList.html">nullptr</a></td></tr>
-<tr class="memdesc:a748922ddea4a668016197cd64a926043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pixel format for this implementation. <br /></td></tr>
-<tr class="separator:a748922ddea4a668016197cd64a926043"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88e3389480c60f73ab310fa2ad6ae232" id="r_a88e3389480c60f73ab310fa2ad6ae232"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classPaintEngine_1_1Impl.html#a88e3389480c60f73ab310fa2ad6ae232">pixelDesc</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a88e3389480c60f73ab310fa2ad6ae232"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pixel description associated with this implementation.  <br /></td></tr>
+<tr class="separator:a88e3389480c60f73ab310fa2ad6ae232"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Abstract implementation backend for <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a>. </p>
-<p>Subclass this to provide pixel-format-specific drawing operations. The <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> facade delegates every call to the active <a class="el" href="classPaintEngine_1_1Impl.html" title="Abstract implementation backend for PaintEngine.">Impl</a> instance. </p>
+<p>Subclass this to provide pixel-description-specific drawing operations. The <a class="el" href="classPaintEngine.html" title="2D drawing engine for rendering primitives onto images.">PaintEngine</a> facade delegates every call to the active <a class="el" href="classPaintEngine_1_1Impl.html" title="Abstract implementation backend for PaintEngine.">Impl</a> instance. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a80e8266f5907fdb3a31b31d40f7e556b" name="a80e8266f5907fdb3a31b31d40f7e556b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a80e8266f5907fdb3a31b31d40f7e556b">&#9670;&#160;</a></span>blit()</h2>
@@ -259,7 +233,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::compositePoints </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -294,7 +268,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Composites a set of points onto the surface with per-point alpha. </p>
-<p>The default implementation simply calls <a class="el" href="classPaintEngine_1_1Impl.html#aa003f1a13308191f238379ade2ffd9f0" title="Draws a set of points onto the surface.">drawPoints()</a> without compositing. Reimplement in your surface-specific subclass to support true alpha compositing.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to composite. </td></tr>
@@ -318,7 +291,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> PaintEngine::Impl::createPixel </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> PaintEngine::Impl::createPixel </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">uint16_t</a> *&#160;</td>
           <td class="paramname"><em>comps</em>, </td>
@@ -342,8 +315,7 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Creates a Pixel value from component values. </p>
-<p>The returned Pixel is in a format specific to the underlying data layout and may contain pre-packed component values for fast drawing. Do not modify the returned Pixel unless you know the underlying packing format.</p>
+<p>Creates a <a class="el" href="structPaintEngine_1_1Pixel.html" title="Opaque pixel value with inline fixed-size storage.">Pixel</a> value from component values. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">comps</td><td><a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a> of component values. </td></tr>
@@ -351,7 +323,7 @@ Protected Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A Pixel suitable for use with this engine's draw calls. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="structPaintEngine_1_1Pixel.html" title="Opaque pixel value with inline fixed-size storage.">Pixel</a> suitable for use with this engine's draw calls. </dd></dl>
 
 </div>
 </div>
@@ -367,7 +339,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::drawCircle </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -396,7 +368,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Draws a circle outline. </p>
-<p>Default implementation uses the midpoint circle algorithm.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to draw with. </td></tr>
@@ -421,7 +392,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::drawEllipse </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -450,7 +421,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Draws an ellipse outline. </p>
-<p>Default implementation uses the midpoint ellipse algorithm.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to draw with. </td></tr>
@@ -475,7 +445,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::drawLines </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -504,7 +474,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Draws a set of line segments onto the surface. </p>
-<p>The default implementation rasterizes each line into a point list and calls <a class="el" href="classPaintEngine_1_1Impl.html#aa003f1a13308191f238379ade2ffd9f0" title="Draws a set of points onto the surface.">drawPoints()</a>. Reimplement for a natively faster line-drawing path.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to draw with. </td></tr>
@@ -529,7 +498,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::drawPoints </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -582,7 +551,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::drawRect </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -605,7 +574,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Draws a rectangle outline. </p>
-<p>Default implementation rasterizes the outline into a point list and calls <a class="el" href="classPaintEngine_1_1Impl.html#aa003f1a13308191f238379ade2ffd9f0" title="Draws a set of points onto the surface.">drawPoints()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to draw with. </td></tr>
@@ -629,7 +597,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a> PaintEngine::Impl::fill </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -664,7 +632,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::fillCircle </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -693,7 +661,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Fills a circle with a solid color. </p>
-<p>Default implementation uses the midpoint circle algorithm with horizontal scanline fill.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to fill with. </td></tr>
@@ -718,7 +685,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::fillEllipse </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -747,7 +714,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Fills an ellipse with a solid color. </p>
-<p>Default implementation uses the midpoint ellipse algorithm with horizontal scanline fill.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to fill with. </td></tr>
@@ -772,7 +738,7 @@ Protected Attributes</h2></td></tr>
         <tr>
           <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">size_t</a> PaintEngine::Impl::fillRect </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb">Pixel</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structPaintEngine_1_1Pixel.html">Pixel</a> &amp;&#160;</td>
           <td class="paramname"><em>pixel</em>, </td>
         </tr>
         <tr>
@@ -795,7 +761,6 @@ Protected Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Fills a rectangle with a solid color. </p>
-<p>Default implementation rasterizes all interior points.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pixel</td><td>The pixel value to fill with. </td></tr>
@@ -807,8 +772,8 @@ Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a725e3e284243d7b565bb53f8f8e304b2" name="a725e3e284243d7b565bb53f8f8e304b2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a725e3e284243d7b565bb53f8f8e304b2">&#9670;&#160;</a></span>pixelFormat()</h2>
+<a id="a88e3389480c60f73ab310fa2ad6ae232" name="a88e3389480c60f73ab310fa2ad6ae232"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88e3389480c60f73ab310fa2ad6ae232">&#9670;&#160;</a></span>pixelDesc()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -817,7 +782,7 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classPixelFormat.html">PixelFormat</a> * PaintEngine::Impl::pixelFormat </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp; PaintEngine::Impl::pixelDesc </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -825,18 +790,18 @@ Protected Attributes</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the pixel format used by this implementation. </p>
-<dl class="section return"><dt>Returns</dt><dd>Pointer to the <a class="el" href="classPixelFormat.html" title="Describes a pixel packing format and provides format-specific operations.">PixelFormat</a>, or nullptr if unset. </dd></dl>
+<p>Returns the pixel description associated with this implementation. </p>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a>, or an invalid <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> if unset. </dd></dl>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="paintengine_8h_source.html">paintengine.h</a></li>
+<li>include/promeki/<a class="el" href="paintengine_8h_source.html">paintengine.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -845,7 +810,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPaintEngine.html">PaintEngine</a></li><li class="navelem"><a class="el" href="classPaintEngine_1_1Impl.html">Impl</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

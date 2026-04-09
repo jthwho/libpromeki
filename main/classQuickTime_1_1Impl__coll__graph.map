@@ -1,0 +1,30 @@
+<map id="QuickTime::Impl" name="QuickTime::Impl">
+<area shape="rect" id="Node000001" title="Abstract backend for a QuickTime instance." alt="" coords="465,284,595,309"/>
+<area shape="rect" id="Node000002" href="$classLayout.html" title="Abstract base class for layout managers." alt="" coords="299,196,366,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="352,230,366,245,383,258,424,275,466,285,465,290,422,280,381,262,363,249,348,234"/>
+<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,101,247,126"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="228,131,318,194,315,198,225,136"/>
+<area shape="rect" id="Node000009" href="$classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="188,196,269,221"/>
+<area shape="poly" id="edge9_Node000009_Node000003" title=" " alt="" coords="210,138,228,195,222,197,205,140"/>
+<area shape="rect" id="Node000004" href="$classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="92,44,93,57,98,68,122,89,152,102,150,107,119,94,93,71,88,58,87,44"/>
+<area shape="rect" id="Node000005" href="$classSignal.html" title=" " alt="" coords="216,5,393,31"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="296,45,277,71,254,89,229,103,226,98,251,85,273,67,292,41"/>
+<area shape="rect" id="Node000006" href="$classList.html" title=" " alt="" coords="272,101,404,126"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="339,140,336,196,331,196,334,140"/>
+<area shape="rect" id="Node000007" href="$classList.html" title=" " alt="" coords="429,101,559,126"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="467,136,405,174,358,198,356,193,402,170,464,131"/>
+<area shape="rect" id="Node000008" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="391,196,451,221"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="435,232,457,258,477,271,498,282,495,286,474,276,454,262,431,235"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="254,228,278,244,304,258,345,271,387,280,465,290,465,295,386,285,343,276,302,262,275,249,251,232"/>
+<area shape="rect" id="Node000010" href="$classList.html" title=" " alt="" coords="475,196,585,221"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="533,235,533,283,527,283,527,235"/>
+<area shape="rect" id="Node000011" href="$classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata." alt="" coords="609,196,704,221"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="632,232,589,262,551,286,548,282,586,258,629,227"/>
+<area shape="rect" id="Node000012" href="$classMetadata.html" title="Key&#45;value metadata container using typed Variant values." alt="" coords="728,196,812,221"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="748,232,725,248,699,262,647,280,595,290,594,285,646,275,697,258,722,244,745,228"/>
+<area shape="rect" id="Node000013" href="$classVariantDatabase.html" title=" " alt="" coords="667,93,873,133"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="773,147,773,196,767,196,767,147"/>
+<area shape="rect" id="Node000014" href="$classTimecode.html" title="Class for holding and manipulating timecode." alt="" coords="871,196,957,221"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="899,234,883,249,863,262,813,276,743,286,595,296,595,291,742,281,812,271,861,258,880,245,895,230"/>
+</map>

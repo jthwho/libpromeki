@@ -131,9 +131,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a35b56f2406ce4853176c04d7a45cda36" id="r_a35b56f2406ce4853176c04d7a45cda36"><td class="memItemLeft" align="right" valign="top"><a id="a35b56f2406ce4853176c04d7a45cda36" name="a35b56f2406ce4853176c04d7a45cda36"></a>
 <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char32_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>codepoints</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="separator:a35b56f2406ce4853176c04d7a45cda36"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3887f51e1ea105291ebeef09fa065eb4" id="r_a3887f51e1ea105291ebeef09fa065eb4"><td class="memItemLeft" align="right" valign="top"><a id="a3887f51e1ea105291ebeef09fa065eb4" name="a3887f51e1ea105291ebeef09fa065eb4"></a>
-<a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>hash</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a3887f51e1ea105291ebeef09fa065eb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time FNV-1a hash of the native storage. <br /></td></tr>
+<tr class="memitem:a3887f51e1ea105291ebeef09fa065eb4" id="r_a3887f51e1ea105291ebeef09fa065eb4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCompiledString.html#a3887f51e1ea105291ebeef09fa065eb4">hash</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a3887f51e1ea105291ebeef09fa065eb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compile-time encoding-agnostic FNV-1a hash.  <br /></td></tr>
 <tr class="separator:a3887f51e1ea105291ebeef09fa065eb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -146,8 +145,39 @@ class CompiledString&lt; N &gt;</div><p>Compile-time string literal with encodin
   </table>
   </dd>
 </dl>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="string_8h_source.html">string.h</a></li>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a3887f51e1ea105291ebeef09fa065eb4" name="a3887f51e1ea105291ebeef09fa065eb4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3887f51e1ea105291ebeef09fa065eb4">&#9670;&#160;</a></span>hash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">size_t</a> N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">uint64_t</a> <a class="el" href="classCompiledString.html">CompiledString</a>&lt; <a class="el" href="classList.html">N</a> &gt;::hash </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Compile-time encoding-agnostic FNV-1a hash. </p>
+<p>Mixes each codepoint into the hash as four little-endian bytes so the result is independent of host endianness and matches the runtime hash for both Latin1 and Unicode <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> storage with the same logical content. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
+<li>include/promeki/<a class="el" href="string_8h_source.html">string.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -156,7 +186,7 @@ class CompiledString&lt; N &gt;</div><p>Compile-time string literal with encodin
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classCompiledString.html">CompiledString</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -10,6 +10,6 @@ var algorithm_8h =
     [ "maxElement", "algorithm_8h.html#a8a859747ebbb011e328a99944e325605", null ],
     [ "minElement", "algorithm_8h.html#a8fb4ec2dfc0315e6bd2e91d00693a144", null ],
     [ "noneOf", "algorithm_8h.html#aa13475acd5710827504b355af5cd3e73", null ],
-    [ "sorted", "group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d", null ],
+    [ "sorted", "group__util.html#gac27428ecfe86c08c467f57d7ab38308d", null ],
     [ "sorted", "algorithm_8h.html#a3d1f85599b2310eb633f46d1a0c114e2", null ]
 ];

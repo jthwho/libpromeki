@@ -1,8 +1,8 @@
 var classPaintEngine =
 [
     [ "Impl", "classPaintEngine_1_1Impl.html", "classPaintEngine_1_1Impl" ],
+    [ "Pixel", "structPaintEngine_1_1Pixel.html", "structPaintEngine_1_1Pixel" ],
     [ "AlphaList", "classPaintEngine.html#a8a5c11dd17dd3d3d1ef10a087dad5d9e", null ],
-    [ "Pixel", "classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb", null ],
     [ "PointList", "classPaintEngine.html#a936a65acce1f99cace70c3edf6e39a1f", null ],
     [ "Ptr", "classPaintEngine.html#a1eb384e7a73bcfe666294d023be9627f", null ],
     [ "PaintEngine", "classPaintEngine.html#ae28d83d1366150a6a7b6df117b509950", null ],
@@ -10,6 +10,7 @@ var classPaintEngine =
     [ "blit", "classPaintEngine.html#aef16c07f6556afced00c80a5cdddc8f0", null ],
     [ "compositePoints", "classPaintEngine.html#a7b08542594f5163edc45534a82ce0065", null ],
     [ "compositePoints", "classPaintEngine.html#a2f0e3d94b411bfcc69b958b5008ba925", null ],
+    [ "createPixel", "classPaintEngine.html#a2ee7b4265d5bd882301e790b8ce150c6", null ],
     [ "createPixel", "classPaintEngine.html#a2d037066c56a1ebf687b5959b987d3f0", null ],
     [ "createPixel", "classPaintEngine.html#a84793403f38f7dd5c4887b6c455cf551", null ],
     [ "createPixel", "classPaintEngine.html#a49ff472944aae8cff10c25944c07e60c", null ],
@@ -27,5 +28,5 @@ var classPaintEngine =
     [ "fillCircle", "classPaintEngine.html#a09ee73b28e43fbd785843d32121e64d5", null ],
     [ "fillEllipse", "classPaintEngine.html#a47860bee2d201a40204c7f6a9e9671f0", null ],
     [ "fillRect", "classPaintEngine.html#ab7ee459fa790ba346a045f5ff12c47a2", null ],
-    [ "pixelFormat", "classPaintEngine.html#a7aedea4f49607bfdffe1503711d4c050", null ]
+    [ "pixelDesc", "classPaintEngine.html#a9750c5b92a12fe5fc30b443bab1d8d48", null ]
 ];

@@ -1,9 +1,0 @@
-<map id="TuiHBoxLayout" name="TuiHBoxLayout">
-<area shape="rect" id="Node000001" title="Horizontal box layout (left to right)." alt="" coords="5,225,124,251"/>
-<area shape="rect" id="Node000002" href="$classTuiBoxLayout.html" title="Layout that arranges widgets in a horizontal or vertical line." alt="" coords="10,152,119,177"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="67,191,67,225,62,225,62,191"/>
-<area shape="rect" id="Node000003" href="$classTuiLayout.html" title="Abstract base class for TUI layout managers." alt="" coords="23,79,107,104"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="67,118,67,152,62,152,62,118"/>
-<area shape="rect" id="Node000004" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="17,5,113,31"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="67,44,67,79,62,79,62,44"/>
-</map>

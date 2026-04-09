@@ -1,13 +1,19 @@
 var searchData=
 [
   ['latin1_0',['Latin1',['../classString.html#a9c3c4c0e2ff486a3f2c6c7f92540d310acab6b436086a8ab0f93d7634731ca06b',1,'String']]],
-  ['left_1',['Left',['../classTextStream.html#a6bc874c130622f3c0c26808f33875853afb4a07c4b5a85cd6a4ecf32bb8e6585d',1,'TextStream']]],
-  ['libraryfailure_2',['LibraryFailure',['../classError.html#ab5980e13b879db253df802b0950d1708ad7cf29e5c28336196d31c8b72407a4b2',1,'Error']]],
-  ['lightgray_3',['LightGray',['../classAnsiStream.html#a338b08f6aae49641c1f62523260304dca4ea531d44426ae92412a3a5ef6f537b3',1,'AnsiStream']]],
-  ['linearrec601_5fntsc_4',['LinearRec601_NTSC',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfda2da2bc71aee5e1b0b7efe68e9a5f4b99',1,'ColorSpace']]],
-  ['linearrec601_5fpal_5',['LinearRec601_PAL',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfdaf52b7d72e5ae8de2b2d2ed94d33c9fd5',1,'ColorSpace']]],
-  ['linearrec709_6',['LinearRec709',['../classColorSpace.html#aff18979cfcb95321f53368c4cd40dbfda9506bda6a91dc901a6857e14fd83cb59',1,'ColorSpace']]],
-  ['listening_7',['Listening',['../classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca2696b803e44bbe723048736d9e4bba88',1,'AbstractSocket']]],
-  ['littleendian_8',['LittleEndian',['../classDataStream.html#a9a41a843631a3e871d84b6018058180facfa54586f7bf0993bc181b9e6b43f031',1,'DataStream']]],
-  ['ltc_9',['LTC',['../classTestPatternNode.html#a9eb83a19331145057fe6c8301c0fa622a5cff9163dbfbd54f4efa6db0532223b3',1,'TestPatternNode']]]
+  ['layoutclassic_1',['LayoutClassic',['../classQuickTime.html#ab16c0425cf3884e422747d39ca604b18a52da5efc3a28f23d6db65c3fc9cde612',1,'QuickTime']]],
+  ['layoutfragmented_2',['LayoutFragmented',['../classQuickTime.html#ab16c0425cf3884e422747d39ca604b18a74097ed428c2b0e576c5ede1749f82fa',1,'QuickTime']]],
+  ['left_3',['Left',['../classTextStream.html#a6bc874c130622f3c0c26808f33875853afb4a07c4b5a85cd6a4ecf32bb8e6585d',1,'TextStream']]],
+  ['libraryfailure_4',['LibraryFailure',['../classError.html#ab5980e13b879db253df802b0950d1708ad7cf29e5c28336196d31c8b72407a4b2',1,'Error']]],
+  ['lightgray_5',['LightGray',['../classAnsiStream.html#a338b08f6aae49641c1f62523260304dca4ea531d44426ae92412a3a5ef6f537b3',1,'AnsiStream']]],
+  ['linearadobergb_6',['LinearAdobeRGB',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab0b6ca442f63103534780e6c00c2220c',1,'ColorModel']]],
+  ['lineardci_5fp3_7',['LinearDCI_P3',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa7fa44cbcd8c4167fe90c1167cd489130',1,'ColorModel']]],
+  ['linearrec2020_8',['LinearRec2020',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa822ddafc4d5609b20093880fdf4b9923',1,'ColorModel']]],
+  ['linearrec601_5fntsc_9',['LinearRec601_NTSC',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa5b931ea969c45fdd8ac6d7b1a5070934',1,'ColorModel']]],
+  ['linearrec601_5fpal_10',['LinearRec601_PAL',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baac9d5b516a5a65db6322c458ac7161994',1,'ColorModel']]],
+  ['linearrec709_11',['LinearRec709',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fead14d7661a33292553fc6863ef8c8',1,'ColorModel']]],
+  ['linearsrgb_12',['LinearSRGB',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fa242177f45bb8783e8da186d1b8579',1,'ColorModel']]],
+  ['listening_13',['Listening',['../classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca2696b803e44bbe723048736d9e4bba88',1,'AbstractSocket']]],
+  ['littleendian_14',['LittleEndian',['../classDataStream.html#a9a41a843631a3e871d84b6018058180facfa54586f7bf0993bc181b9e6b43f031',1,'DataStream']]],
+  ['ltc_15',['LTC',['../classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9',1,'AudioTestPattern']]]
 ];

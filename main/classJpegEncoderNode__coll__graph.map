@@ -1,5 +1,5 @@
 <map id="JpegEncoderNode" name="JpegEncoderNode">
-<area shape="rect" id="Node000001" title="Compresses video frames to JPEG using libjpeg&#45;turbo." alt="" coords="131,243,267,268"/>
+<area shape="rect" id="Node000001" title="Compresses video frames to JPEG using JpegImageCodec." alt="" coords="131,243,267,268"/>
 <area shape="rect" id="Node000002" href="$classMediaNode.html" title="Base class for all pipeline processing nodes." alt="" coords="151,168,247,193"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,208,202,242,197,242,197,208"/>
 <area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>

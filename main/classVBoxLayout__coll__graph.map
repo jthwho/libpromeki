@@ -1,0 +1,17 @@
+<map id="VBoxLayout" name="VBoxLayout">
+<area shape="rect" id="Node000001" title="Vertical box layout (top to bottom)." alt="" coords="288,331,388,356"/>
+<area shape="rect" id="Node000002" href="$classBoxLayout.html" title="Layout that arranges widgets in a horizontal or vertical line." alt="" coords="293,256,383,281"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="341,296,341,330,335,330,335,296"/>
+<area shape="rect" id="Node000003" href="$classLayout.html" title="Abstract base class for layout managers." alt="" coords="305,181,371,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="341,221,341,256,335,256,335,221"/>
+<area shape="rect" id="Node000004" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="231,124,321,179,318,183,228,128"/>
+<area shape="rect" id="Node000005" href="$classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="92,44,93,57,98,68,108,79,122,87,152,98,150,103,119,92,105,83,93,71,88,58,86,45"/>
+<area shape="rect" id="Node000006" href="$classSignal.html" title=" " alt="" coords="216,5,393,31"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="297,45,277,71,258,85,236,96,234,91,255,81,273,67,292,42"/>
+<area shape="rect" id="Node000007" href="$classList.html" title=" " alt="" coords="272,93,404,119"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="341,133,341,181,335,181,335,133"/>
+<area shape="rect" id="Node000008" href="$classList.html" title=" " alt="" coords="429,93,559,119"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="464,128,407,160,362,183,360,179,405,155,461,123"/>
+</map>

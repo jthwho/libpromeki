@@ -13,6 +13,5 @@ var classPaintEngine_1_1Impl =
     [ "fillCircle", "classPaintEngine_1_1Impl.html#af750ffa3bcc7c6236df78da1e6b760a5", null ],
     [ "fillEllipse", "classPaintEngine_1_1Impl.html#adf337a2874ecdde37f1a8fac0c8f26ab", null ],
     [ "fillRect", "classPaintEngine_1_1Impl.html#aa2745ee578e5d195adcca40f3a2f119e", null ],
-    [ "pixelFormat", "classPaintEngine_1_1Impl.html#a725e3e284243d7b565bb53f8f8e304b2", null ],
-    [ "_pixelFormat", "classPaintEngine_1_1Impl.html#a748922ddea4a668016197cd64a926043", null ]
+    [ "pixelDesc", "classPaintEngine_1_1Impl.html#a88e3389480c60f73ab310fa2ad6ae232", null ]
 ];

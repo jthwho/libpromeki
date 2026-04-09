@@ -106,8 +106,8 @@ $(document).ready(function(){initNavTree('style_8h_source.html',''); initResizab
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="color_8h.html">promeki/core/color.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="color_8h.html">promeki/color.h</a>&gt;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
@@ -142,9 +142,9 @@ $(document).ready(function(){initNavTree('style_8h_source.html',''); initResizab
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classTuiStyle.html#a9af99265e129eb8e386342bcf46acc67">   62</a></span>                <a class="code hl_class" href="classList.html">uint8_t</a> <a class="code hl_function" href="classTuiStyle.html#a9af99265e129eb8e386342bcf46acc67">attrMask</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _attrMask; }</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classTuiStyle.html#a03a0e04d196f9eb28f250ecb6c493061">   65</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiStyle.html#a03a0e04d196f9eb28f250ecb6c493061">setForeground</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColor.html">Color</a> &amp;<a class="code hl_class" href="classList.html">color</a>) { _fg = <a class="code hl_class" href="classList.html">color</a>; }</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classTuiStyle.html#a03a0e04d196f9eb28f250ecb6c493061">   65</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiStyle.html#a03a0e04d196f9eb28f250ecb6c493061">setForeground</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColor.html">Color</a> &amp;color) { _fg = color; }</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno"><a class="line" href="classTuiStyle.html#a2269152fc0c7f53bb2d3bf6337d433b2">   68</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiStyle.html#a2269152fc0c7f53bb2d3bf6337d433b2">setBackground</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColor.html">Color</a> &amp;<a class="code hl_class" href="classList.html">color</a>) { _bg = <a class="code hl_class" href="classList.html">color</a>; }</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno"><a class="line" href="classTuiStyle.html#a2269152fc0c7f53bb2d3bf6337d433b2">   68</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiStyle.html#a2269152fc0c7f53bb2d3bf6337d433b2">setBackground</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColor.html">Color</a> &amp;color) { _bg = color; }</div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classTuiStyle.html#aff4081309be72a98c2d5a088145359c3">   71</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiStyle.html#aff4081309be72a98c2d5a088145359c3">setAttrs</a>(<a class="code hl_class" href="classList.html">uint8_t</a> <a class="code hl_function" href="classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a">attrs</a>) { _attrs = <a class="code hl_function" href="classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a">attrs</a>; _attrMask = 0xFF; }</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
@@ -158,19 +158,19 @@ $(document).ready(function(){initNavTree('style_8h_source.html',''); initResizab
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
 <div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="classTuiStyle.html#a33999943550a9544798225f79c3614c2">   90</a></span>                <span class="keyword">static</span> <a class="code hl_class" href="classTuiStyle.html">TuiStyle</a> <a class="code hl_function" href="classTuiStyle.html#a33999943550a9544798225f79c3614c2">fromForeground</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColor.html">Color</a> &amp;<a class="code hl_class" href="classList.html">fg</a>, <a class="code hl_class" href="classList.html">uint8_t</a> <a class="code hl_function" href="classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a">attrs</a> = None, <a class="code hl_class" href="classList.html">uint8_t</a> <a class="code hl_function" href="classTuiStyle.html#a9af99265e129eb8e386342bcf46acc67">attrMask</a> = 0) {</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                        <a class="code hl_class" href="classTuiStyle.html">TuiStyle</a> <a class="code hl_class" href="classList.html">s</a>;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                        <a class="code hl_class" href="classList.html">s</a>._fg = <a class="code hl_class" href="classList.html">fg</a>;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                        <a class="code hl_class" href="classList.html">s</a>._attrs = <a class="code hl_function" href="classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a">attrs</a>;</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                        <a class="code hl_class" href="classList.html">s</a>._attrMask = <a class="code hl_function" href="classTuiStyle.html#a9af99265e129eb8e386342bcf46acc67">attrMask</a>;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">s</a>;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                        <a class="code hl_class" href="classTuiStyle.html">TuiStyle</a> s;</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>                        s._fg = <a class="code hl_class" href="classList.html">fg</a>;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>                        s._attrs = <a class="code hl_function" href="classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a">attrs</a>;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>                        s._attrMask = <a class="code hl_function" href="classTuiStyle.html#a9af99265e129eb8e386342bcf46acc67">attrMask</a>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                        <span class="keywordflow">return</span> s;</div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                }</div>
 </div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
 <div class="foldopen" id="foldopen00099" data-start="{" data-end="}">
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno"><a class="line" href="classTuiStyle.html#ae6524c5fae99e503a1250b9d61ac4f51">   99</a></span>                <span class="keyword">static</span> <a class="code hl_class" href="classTuiStyle.html">TuiStyle</a> <a class="code hl_function" href="classTuiStyle.html#ae6524c5fae99e503a1250b9d61ac4f51">fromBackground</a>(<span class="keyword">const</span> <a class="code hl_class" href="classColor.html">Color</a> &amp;<a class="code hl_class" href="classList.html">bg</a>) {</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                        <a class="code hl_class" href="classTuiStyle.html">TuiStyle</a> <a class="code hl_class" href="classList.html">s</a>;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                        <a class="code hl_class" href="classList.html">s</a>._bg = <a class="code hl_class" href="classList.html">bg</a>;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">s</a>;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                        <a class="code hl_class" href="classTuiStyle.html">TuiStyle</a> s;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                        s._bg = <a class="code hl_class" href="classList.html">bg</a>;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                        <span class="keywordflow">return</span> s;</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                }</div>
 </div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span> </div>
@@ -212,8 +212,8 @@ $(document).ready(function(){initNavTree('style_8h_source.html',''); initResizab
 </div>
 <div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span> </div>
 <div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
-<div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">General-purpose RGBA color.</div><div class="ttdef"><b>Definition</b> color.h:24</div></div>
-<div class="ttc" id="aclassColor_html_a30f0228fa6a508e614409f1f183e8674"><div class="ttname"><a href="classColor.html#a30f0228fa6a508e614409f1f183e8674">Color::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if this color was explicitly constructed.</div><div class="ttdef"><b>Definition</b> color.h:34</div></div>
+<div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">A color value in any supported color model.</div><div class="ttdef"><b>Definition</b> color.h:97</div></div>
+<div class="ttc" id="aclassColor_html_a30f0228fa6a508e614409f1f183e8674"><div class="ttname"><a href="classColor.html#a30f0228fa6a508e614409f1f183e8674">Color::isValid</a></div><div class="ttdeci">bool isValid() const</div><div class="ttdoc">Returns true if this color has a valid model.</div><div class="ttdef"><b>Definition</b> color.h:255</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassTuiStyleState_html"><div class="ttname"><a href="classTuiStyleState.html">TuiStyleState</a></div><div class="ttdoc">Widget state bundle fed into palette lookups.</div><div class="ttdef"><b>Definition</b> style.h:124</div></div>
 <div class="ttc" id="aclassTuiStyle_html"><div class="ttname"><a href="classTuiStyle.html">TuiStyle</a></div><div class="ttdoc">Visual properties of a TUI cell (everything except the character).</div><div class="ttdef"><b>Definition</b> style.h:29</div></div>
@@ -244,7 +244,7 @@ $(document).ready(function(){initNavTree('style_8h_source.html',''); initResizab
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_53b52c957e3055cfb134304189fa5299.html">tui</a></li><li class="navelem"><a class="el" href="style_8h.html">style.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

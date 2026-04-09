@@ -1,7 +1,9 @@
 <map id="TuiCheckBox" name="TuiCheckBox">
-<area shape="rect" id="Node000001" title="Toggleable checkbox with text label." alt="" coords="5,152,111,177"/>
-<area shape="rect" id="Node000002" href="$classTuiWidget.html" title="Base class for all TUI widgets." alt="" coords="15,79,101,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,118,61,152,55,152,55,118"/>
-<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="10,5,106,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="61,44,61,79,55,79,55,44"/>
+<area shape="rect" id="Node000001" title="Toggleable checkbox with text label." alt="" coords="5,225,111,251"/>
+<area shape="rect" id="Node000002" href="$classTuiWidget.html" title="TUI&#45;specific widget base class." alt="" coords="15,152,101,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,191,61,225,55,225,55,191"/>
+<area shape="rect" id="Node000003" href="$classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="24,79,92,104"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="61,118,61,152,55,152,55,118"/>
+<area shape="rect" id="Node000004" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="10,5,106,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="61,44,61,79,55,79,55,44"/>
 </map>

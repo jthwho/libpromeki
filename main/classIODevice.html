@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classIODevice.html',''); initResizable
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classIODevice-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">IODevice Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span><div class="ingroups"><a class="el" href="group__core__io.html">Core I/O</a></div></div></div>
+  <div class="headertitle"><div class="title">IODevice Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span><div class="ingroups"><a class="el" href="group__io.html">I/O</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -223,7 +223,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4341cd31b97646126ccc2d21175b7bcb" id="r_a4341cd31b97646126ccc2d21175b7bcb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a4341cd31b97646126ccc2d21175b7bcb">pos</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a4341cd31b97646126ccc2d21175b7bcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current read/write position.  <br /></td></tr>
 <tr class="separator:a4341cd31b97646126ccc2d21175b7bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad750fab3127e006588812977cba6c3f1" id="r_ad750fab3127e006588812977cba6c3f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">size</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ad750fab3127e006588812977cba6c3f1" id="r_ad750fab3127e006588812977cba6c3f1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">size</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad750fab3127e006588812977cba6c3f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total size of the device in bytes.  <br /></td></tr>
 <tr class="separator:ad750fab3127e006588812977cba6c3f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc" id="r_a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#a8ad9b3fdac77b4f4fbfd8a1c1d84ddfc">atEnd</a> () <a class="el" href="classList.html">const</a></td></tr>
@@ -494,7 +494,7 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Closes the device. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
-<p>Implemented in <a class="el" href="classBufferIODevice.html#ad51a408da4ea09397c2d500b2732ea53">BufferIODevice</a>, <a class="el" href="classFile.html#afc80c80342f4969ee42f6df4570589fb">File</a>, <a class="el" href="classFileIODevice.html#a3d807fc3cdd18454e17c62d5247ce173">FileIODevice</a>, <a class="el" href="classStreamStringIODevice.html#a3d73075688896c9232de7ca3a3f682e6">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a87312a6f9e3e67024497415c48b28912">StringIODevice</a>, <a class="el" href="classRawSocket.html#a471d38dc58ccda11f8e1cbd2a7d6a949">RawSocket</a>, <a class="el" href="classTcpSocket.html#af0f2ecb6c84fc06f14979798548cd057">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#afc53e61292826003f709687428050eb4">UdpSocket</a>.</p>
+<p>Implemented in <a class="el" href="classBufferIODevice.html#ad51a408da4ea09397c2d500b2732ea53">BufferIODevice</a>, <a class="el" href="classFile.html#afc80c80342f4969ee42f6df4570589fb">File</a>, <a class="el" href="classFileIODevice.html#a3d807fc3cdd18454e17c62d5247ce173">FileIODevice</a>, <a class="el" href="classRawSocket.html#a471d38dc58ccda11f8e1cbd2a7d6a949">RawSocket</a>, <a class="el" href="classStreamStringIODevice.html#a3d73075688896c9232de7ca3a3f682e6">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a87312a6f9e3e67024497415c48b28912">StringIODevice</a>, <a class="el" href="classTcpSocket.html#af0f2ecb6c84fc06f14979798548cd057">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#afc53e61292826003f709687428050eb4">UdpSocket</a>.</p>
 
 </div>
 </div>
@@ -582,7 +582,7 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Returns true if the device is open. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if the device is currently open. </dd></dl>
 
-<p>Implemented in <a class="el" href="classBufferIODevice.html#a64186b0b0a49c0821ca19b8cbb58680f">BufferIODevice</a>, <a class="el" href="classFile.html#a0cd0ed9d8237337b35a52f9cfba26a3b">File</a>, <a class="el" href="classFileIODevice.html#a670ba51cbeb4322942fcc901988ac63b">FileIODevice</a>, <a class="el" href="classStreamStringIODevice.html#a33f9c9cdbb91491ddbf0615c44e77ab7">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a739eac117da746a071e01d2cbe6fb3f7">StringIODevice</a>, <a class="el" href="classRawSocket.html#a8f337f88aec75dca49c611358369591f">RawSocket</a>, <a class="el" href="classTcpSocket.html#af0c131ca40b29bb22f46ecdfe85146e9">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#a91d0712d5161cf96bbbf236a040e8c44">UdpSocket</a>.</p>
+<p>Implemented in <a class="el" href="classBufferIODevice.html#a64186b0b0a49c0821ca19b8cbb58680f">BufferIODevice</a>, <a class="el" href="classFile.html#a0cd0ed9d8237337b35a52f9cfba26a3b">File</a>, <a class="el" href="classFileIODevice.html#a670ba51cbeb4322942fcc901988ac63b">FileIODevice</a>, <a class="el" href="classRawSocket.html#a8f337f88aec75dca49c611358369591f">RawSocket</a>, <a class="el" href="classStreamStringIODevice.html#a33f9c9cdbb91491ddbf0615c44e77ab7">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a739eac117da746a071e01d2cbe6fb3f7">StringIODevice</a>, <a class="el" href="classTcpSocket.html#af0c131ca40b29bb22f46ecdfe85146e9">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#a91d0712d5161cf96bbbf236a040e8c44">UdpSocket</a>.</p>
 
 </div>
 </div>
@@ -640,7 +640,7 @@ template&lt;typename... Args&gt; </td></tr>
 <p>Returns true if the device is sequential (non-seekable). </p>
 <p>Sequential devices (pipes, sockets) cannot be seeked. The default implementation returns false. </p><dl class="section return"><dt>Returns</dt><dd>true if the device is sequential. </dd></dl>
 
-<p>Reimplemented in <a class="el" href="classBufferIODevice.html#a24396e0672c6dd0d5a37ee22323655d0">BufferIODevice</a>, <a class="el" href="classFile.html#a846bd0d945f6fa77ff925a8d7f0ed23a">File</a>, <a class="el" href="classFileIODevice.html#a19d4acac40531030e2aa84118a113025">FileIODevice</a>, <a class="el" href="classStreamStringIODevice.html#af8f7b86aa9d26a9aa508fdbf653e7782">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#ae9cfe5ebc09e5563246955e331b1bbfe">StringIODevice</a>, and <a class="el" href="classAbstractSocket.html#a41884853540816476ab21965dc7bc06f">AbstractSocket</a>.</p>
+<p>Reimplemented in <a class="el" href="classAbstractSocket.html#a41884853540816476ab21965dc7bc06f">AbstractSocket</a>, <a class="el" href="classBufferIODevice.html#a24396e0672c6dd0d5a37ee22323655d0">BufferIODevice</a>, <a class="el" href="classFile.html#a846bd0d945f6fa77ff925a8d7f0ed23a">File</a>, <a class="el" href="classFileIODevice.html#a19d4acac40531030e2aa84118a113025">FileIODevice</a>, <a class="el" href="classStreamStringIODevice.html#af8f7b86aa9d26a9aa508fdbf653e7782">StreamStringIODevice</a>, and <a class="el" href="classStringIODevice.html#ae9cfe5ebc09e5563246955e331b1bbfe">StringIODevice</a>.</p>
 
 </div>
 </div>
@@ -705,7 +705,7 @@ template&lt;typename... Args&gt; </td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
-<p>Implemented in <a class="el" href="classBufferIODevice.html#a9625e8eb164e780c5d26632d94ac327a">BufferIODevice</a>, <a class="el" href="classFile.html#a2e1d4cb10c5270421ebc9143dcbfb5f7">File</a>, <a class="el" href="classFileIODevice.html#a13d0069b4ddbdef91b33e7562254ccba">FileIODevice</a>, <a class="el" href="classStreamStringIODevice.html#a90ba5203497a71b5ad87d83c88614850">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a02680d33b3d401bc290fa3c2f7697000">StringIODevice</a>, <a class="el" href="classRawSocket.html#a971f4973ea0fec214370aaca1de47d7b">RawSocket</a>, <a class="el" href="classTcpSocket.html#a0f5a4587d51a7c266bf6a08f4ae00d2e">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#afbeb6612728122d31643eaed87042e40">UdpSocket</a>.</p>
+<p>Implemented in <a class="el" href="classBufferIODevice.html#a9625e8eb164e780c5d26632d94ac327a">BufferIODevice</a>, <a class="el" href="classFile.html#a2e1d4cb10c5270421ebc9143dcbfb5f7">File</a>, <a class="el" href="classFileIODevice.html#a13d0069b4ddbdef91b33e7562254ccba">FileIODevice</a>, <a class="el" href="classRawSocket.html#a971f4973ea0fec214370aaca1de47d7b">RawSocket</a>, <a class="el" href="classStreamStringIODevice.html#a90ba5203497a71b5ad87d83c88614850">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a02680d33b3d401bc290fa3c2f7697000">StringIODevice</a>, <a class="el" href="classTcpSocket.html#a0f5a4587d51a7c266bf6a08f4ae00d2e">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#afbeb6612728122d31643eaed87042e40">UdpSocket</a>.</p>
 
 </div>
 </div>
@@ -784,7 +784,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Emitted just before the device is closed. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000004">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000009">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -815,7 +815,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when bytes have been written. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000002">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000007">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -846,7 +846,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when an error occurs. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000003">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000008">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -867,7 +867,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when data is available for reading. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000001">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000006">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -915,7 +915,7 @@ template&lt;typename... Args&gt; </td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of bytes read, or -1 on error. </dd></dl>
 
-<p>Implemented in <a class="el" href="classStreamStringIODevice.html#a9ee4711412e9543b64774bd67e1e89aa">StreamStringIODevice</a>, <a class="el" href="classBufferedIODevice.html#ac531795e1bad22600402280355c6ff27">BufferedIODevice</a>, <a class="el" href="classBufferIODevice.html#a18b3674fef4ffed9ece3511bfc7e8b32">BufferIODevice</a>, <a class="el" href="classFileIODevice.html#aa52eb26bf1249b327cbfb87f3352bfe5">FileIODevice</a>, <a class="el" href="classStringIODevice.html#a4f88b621fd878d5218c71467df01e813">StringIODevice</a>, <a class="el" href="classRawSocket.html#a617383d12013b723a903be0effe0d4f6">RawSocket</a>, <a class="el" href="classTcpSocket.html#a1470927bf607f6e86fa6edaa7516caa6">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#a2a971d46032369153e24f2ccac32a954">UdpSocket</a>.</p>
+<p>Implemented in <a class="el" href="classStreamStringIODevice.html#a9ee4711412e9543b64774bd67e1e89aa">StreamStringIODevice</a>, <a class="el" href="classBufferedIODevice.html#ac531795e1bad22600402280355c6ff27">BufferedIODevice</a>, <a class="el" href="classBufferIODevice.html#a18b3674fef4ffed9ece3511bfc7e8b32">BufferIODevice</a>, <a class="el" href="classFileIODevice.html#aa52eb26bf1249b327cbfb87f3352bfe5">FileIODevice</a>, <a class="el" href="classRawSocket.html#a617383d12013b723a903be0effe0d4f6">RawSocket</a>, <a class="el" href="classStringIODevice.html#a4f88b621fd878d5218c71467df01e813">StringIODevice</a>, <a class="el" href="classTcpSocket.html#a1470927bf607f6e86fa6edaa7516caa6">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#a2a971d46032369153e24f2ccac32a954">UdpSocket</a>.</p>
 
 </div>
 </div>
@@ -1034,7 +1034,7 @@ template&lt;typename... Args&gt; </td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; IODevice::size </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; IODevice::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1168,12 +1168,12 @@ template&lt;typename... Args&gt; </td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The number of bytes written, or -1 on error. </dd></dl>
 
-<p>Implemented in <a class="el" href="classBufferIODevice.html#a889b2588ee7c7fdb4f70d91576422418">BufferIODevice</a>, <a class="el" href="classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9">File</a>, <a class="el" href="classFileIODevice.html#aa3bbff591748f4ba62c2f1fbe08a5adc">FileIODevice</a>, <a class="el" href="classStreamStringIODevice.html#a400e59ee40c4417f798e1ebacb689173">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a450e36c24faad5673efcb2f1c1c76cad">StringIODevice</a>, <a class="el" href="classRawSocket.html#ac8160e6cc81f0f37edc80d9e2e4e88b5">RawSocket</a>, <a class="el" href="classTcpSocket.html#a631d0fa1ca392ed2ada020763f65b978">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#a53288c97067bf6119576707a969b7efd">UdpSocket</a>.</p>
+<p>Implemented in <a class="el" href="classBufferIODevice.html#a889b2588ee7c7fdb4f70d91576422418">BufferIODevice</a>, <a class="el" href="classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9">File</a>, <a class="el" href="classFileIODevice.html#aa3bbff591748f4ba62c2f1fbe08a5adc">FileIODevice</a>, <a class="el" href="classRawSocket.html#ac8160e6cc81f0f37edc80d9e2e4e88b5">RawSocket</a>, <a class="el" href="classStreamStringIODevice.html#a400e59ee40c4417f798e1ebacb689173">StreamStringIODevice</a>, <a class="el" href="classStringIODevice.html#a450e36c24faad5673efcb2f1c1c76cad">StringIODevice</a>, <a class="el" href="classTcpSocket.html#a631d0fa1ca392ed2ada020763f65b978">TcpSocket</a>, and <a class="el" href="classUdpSocket.html#a53288c97067bf6119576707a969b7efd">UdpSocket</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="iodevice_8h_source.html">iodevice.h</a></li>
+<li>include/promeki/<a class="el" href="iodevice_8h_source.html">iodevice.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -1182,7 +1182,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classIODevice.html">IODevice</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

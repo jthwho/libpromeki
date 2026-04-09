@@ -9,6 +9,7 @@ var classRtpSession =
     [ "PROMEKI_SIGNAL", "classRtpSession.html#ad1d8bc716ff456059335c93a7d27e976", null ],
     [ "sendPacket", "classRtpSession.html#a2d8830611f5e8fa6e652b25b80274f4d", null ],
     [ "sendPackets", "classRtpSession.html#abb98d7f038370209135450dd752412d1", null ],
+    [ "sendPacketsPaced", "classRtpSession.html#a65d6124b69d382c2b6b91f02b6e99e1b", null ],
     [ "sequenceNumber", "classRtpSession.html#ad23f8f5bba184e407fc547c726ab0589", null ],
     [ "setClockRate", "classRtpSession.html#afa04a7a9f55813b3e981c38fb23db6e4", null ],
     [ "setPayloadType", "classRtpSession.html#aa62da4ecda73e343eaa922b2f2e0ad46", null ],

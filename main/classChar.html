@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('classChar.html',''); initResizable(); 
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classChar-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Char Class Reference<div class="ingroups"><a class="el" href="group__core__strings.html">Core Strings</a></div></div></div>
+  <div class="headertitle"><div class="title">Char Class Reference<div class="ingroups"><a class="el" href="group__strings.html">Strings</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -166,6 +166,13 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isPrintable</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a1939ea5948c3fd4daf58511da1b9ec4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the character is printable. <br /></td></tr>
 <tr class="separator:a1939ea5948c3fd4daf58511da1b9ec4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74339510fd5bddabd7397531163b52ec" id="r_a74339510fd5bddabd7397531163b52ec"><td class="memItemLeft" align="right" valign="top"><a id="a74339510fd5bddabd7397531163b52ec" name="a74339510fd5bddabd7397531163b52ec"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isHexDigit</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a74339510fd5bddabd7397531163b52ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the character is a hexadecimal digit (0-9, a-f, A-F). <br /></td></tr>
+<tr class="separator:a74339510fd5bddabd7397531163b52ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1f9de718f9b64d54db36e6c084ff754" id="r_ab1f9de718f9b64d54db36e6c084ff754"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classChar.html#ab1f9de718f9b64d54db36e6c084ff754">hexDigitValue</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab1f9de718f9b64d54db36e6c084ff754"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the numeric value of this hex digit.  <br /></td></tr>
+<tr class="separator:ab1f9de718f9b64d54db36e6c084ff754"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd8320d7ff5542757068ad3d827fe86b" id="r_abd8320d7ff5542757068ad3d827fe86b"><td class="memItemLeft" align="right" valign="top"><a id="abd8320d7ff5542757068ad3d827fe86b" name="abd8320d7ff5542757068ad3d827fe86b"></a>
 <a class="el" href="classChar.html">Char</a>&#160;</td><td class="memItemRight" valign="bottom"><b>toUpper</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:abd8320d7ff5542757068ad3d827fe86b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the uppercase version of this character. <br /></td></tr>
@@ -259,6 +266,34 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ab1f9de718f9b64d54db36e6c084ff754" name="ab1f9de718f9b64d54db36e6c084ff754"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab1f9de718f9b64d54db36e6c084ff754">&#9670;&#160;</a></span>hexDigitValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Char::hexDigitValue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the numeric value of this hex digit. </p>
+<dl class="section return"><dt>Returns</dt><dd>0-15 for valid hex digits, or -1 if not a hex digit. </dd></dl>
+
+</div>
+</div>
 <a id="ac2db16d6955529f0d67134d55e01af52" name="ac2db16d6955529f0d67134d55e01af52"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac2db16d6955529f0d67134d55e01af52">&#9670;&#160;</a></span>toUtf8()</h2>
 
@@ -287,7 +322,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="char_8h_source.html">char.h</a></li>
+<li>include/promeki/<a class="el" href="char_8h_source.html">char.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -296,7 +331,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classChar.html">Char</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -107,15 +107,15 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <p>libpromeki provides the foundational building blocks that professional media software needs: timecode, frame rates, image and audio descriptors, pixel formats, color spaces, memory management, signal/slot event systems, and more. It is designed so that you can focus on your application logic instead of reinventing infrastructure.</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Library Architecture</h1>
-<p>libpromeki is split into three shared libraries:</p>
-<p><b>promeki-core</b> — General-purpose C++ utilities with no media-specific dependencies. Includes strings with copy-on-write, shared pointers, points/matrices, date/time, timecode, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, logging, JSON, signals/slots, an object system, command-line parsing, file I/O, memory pools, and a unit test framework.</p>
-<p><b>promeki-proav</b> — Professional audio/video classes built on top of promeki-core. Includes image and audio descriptors, pixel format registry, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG), font painting, color space conversion, codecs, and frame/video descriptors.</p>
-<p><b>promeki-music</b> — Music and MIDI utilities built on top of promeki-proav. Includes MIDI note representation with named constants for all 128 notes and General MIDI percussion, customizable note name overlays, musical scales with degree-to-MIDI mapping, and a note-sequence parser for text-based musical notation.</p>
-<p>You can use promeki-core on its own for non-media projects, link against promeki-proav to get the full media toolkit, or add promeki-music for music and MIDI functionality.</p>
+<p>libpromeki is organized into one main shared library and two optional UI libraries:</p>
+<p><b>promeki</b> — The core library containing general-purpose C++ utilities, networking, professional audio/video classes, and music/MIDI support. Includes strings with copy-on-write, shared pointers, containers (<a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a>, <a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a>, <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a>, <a class="el" href="classHashMap.html" title="Unordered associative container wrapping std::unordered_map.">HashMap</a>), concurrency primitives (<a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>, <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a>, <a class="el" href="classQueue.html" title="Thread-safe FIFO queue.">Queue</a>, Future/Promise), an event loop with signals/slots, points/matrices, date/time, timecode, frame rates, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, logging, JSON, an object system, command-line parsing, file I/O, typed serialization streams (<a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a>, <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a>), memory spaces, TCP/UDP/raw sockets, RTP/SDP, color models and color science, pixel format/descriptor registries, image and audio descriptors, image file I/O (PNG, JPEG), audio file I/O (WAV, AIFF, OGG), font rendering (cached and alpha-compositing), codecs, a media processing pipeline (<a class="el" href="classMediaNode.html" title="Base class for all pipeline processing nodes.">MediaNode</a>, <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a>), test pattern generation, LTC encoding/decoding, frame/video descriptors, MIDI notes, musical scales, and a note-sequence parser.</p>
+<p><b>promeki-tui</b> — <a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> UI widget library (optional).</p>
+<p><b>promeki-sdl</b> — SDL3-based GUI library (optional, off by default).</p>
+<p>Individual feature areas (networking, pro A/V, music, image formats, font rendering, audio file I/O) can be independently enabled or disabled via CMake feature flags. Each external dependency can be sourced from the vendored submodules or from system-installed packages.</p>
 <h1><a class="anchor" id="autotoc_md2"></a>
 No Dependency Hell</h1>
-<p>All third-party libraries that promeki-proav depends on (zlib, libpng, FreeType, libjpeg-turbo, libsndfile) are vendored as git submodules, built as static libraries with <code>-fPIC</code>, and absorbed directly into <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki-proav.so</a></code>. Their headers are installed under <code>promeki/thirdparty/</code> to avoid collisions with system versions.</p>
-<p>When you install libpromeki, you get three shared libraries and a set of headers. Your application links against <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki::core</a></code> and/or <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki::proav</a></code> — no chasing down system packages, no version mismatches, no transitive dependency surprises.</p>
+<p>All third-party libraries that promeki depends on (zlib, libpng, FreeType, libjpeg-turbo, libsndfile) are vendored as git submodules, built as static libraries with <code>-fPIC</code>, and absorbed directly into <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki.so</a></code>. Alternatively, each dependency can be switched to use system-installed versions via <code>PROMEKI_USE_SYSTEM_*</code> CMake options.</p>
+<p>When you install libpromeki, you get a shared library and a set of headers. Your application links against <code>promeki::promeki</code> — no chasing down system packages, no version mismatches, no transitive dependency surprises.</p>
 <h1><a class="anchor" id="autotoc_md3"></a>
 History</h1>
 <p>The bulk of the code that makes up libpromeki started out life as code that existed across multiple libraries originally developed by my (now defunct) company, <a href="https://en.wikipedia.org/wiki/SpectSoft">SpectSoft</a>, for our video disk recorder product called RaveHD. During its run, it was used in post production, VFX, animation, and other media related sectors. At that time, the entire application stack was built on top of the <a href="https://www.qt.io/">Qt</a> framework. The Qt design patterns, aesthetic, and general way of doing things has certainly informed much of how this library was architected.</p>
@@ -129,20 +129,67 @@ Building</h1>
 <div class="line">cmake --build build -j$(nproc)</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md5"></a>
 CMake Build Options</h2>
+<p><b>Feature flags</b> (control what goes into <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki.so</a></code>):</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Option   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>PROMEKI_BUILD_PROAV</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Build the promeki-proav media library    </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_NETWORK</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include networking support (sockets, RTP, SDP)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>PROMEKI_BUILD_MUSIC</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Build the promeki-music library (requires proav)    </td></tr>
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_PROAV</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include pro A/V support (image, audio, pipeline)    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_MUSIC</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include music support (MIDI, scales)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_PNG</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include PNG image I/O    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_JPEG</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include JPEG codec    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_FREETYPE</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include FreeType font rendering    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_ENABLE_AUDIO</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Include audio file I/O (libsndfile)   </td></tr>
+</table>
+<p><b>Dependency source</b> (vendored submodule or system package):</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Option   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_ZLIB</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system zlib    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_LIBPNG</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system libpng    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_LIBJPEG</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system libjpeg-turbo    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_FREETYPE</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system FreeType    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_SNDFILE</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system libsndfile    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_NLOHMANN_JSON</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system nlohmann-json    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_USE_SYSTEM_VTC</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Use system libvtc   </td></tr>
+</table>
+<p><b>Build targets:</b></p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Option   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_BUILD_TUI</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Build the promeki-tui library    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_BUILD_SDL</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Build the promeki-sdl library    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>PROMEKI_BUILD_TESTS</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Build unit tests    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>PROMEKI_BUILD_UTILS</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Build utility applications    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>PROMEKI_BUILD_DEMOS</code>   </td><td class="markdownTableBodyNone"><code>ON</code>   </td><td class="markdownTableBodyNone">Build demonstration applications    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>PROMEKI_BUILD_DOCS</code>   </td><td class="markdownTableBodyNone"><code>OFF</code>   </td><td class="markdownTableBodyNone">Build Doxygen API documentation   </td></tr>
 </table>
-<p>To build only the core library without media or music components:</p>
-<div class="fragment"><div class="line">cmake -B build -DPROMEKI_BUILD_PROAV=OFF -DPROMEKI_BUILD_MUSIC=OFF</div>
+<p>To build a minimal core-only library:</p>
+<div class="fragment"><div class="line">cmake -B build -DPROMEKI_ENABLE_PROAV=OFF -DPROMEKI_ENABLE_NETWORK=OFF -DPROMEKI_ENABLE_MUSIC=OFF</div>
+</div><!-- fragment --><p>To build using system-installed dependencies:</p>
+<div class="fragment"><div class="line">cmake -B build -DPROMEKI_USE_SYSTEM_ZLIB=ON -DPROMEKI_USE_SYSTEM_LIBPNG=ON \</div>
+<div class="line">    -DPROMEKI_USE_SYSTEM_FREETYPE=ON -DPROMEKI_USE_SYSTEM_SNDFILE=ON \</div>
+<div class="line">    -DPROMEKI_USE_SYSTEM_LIBJPEG=ON</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md6"></a>
 Cleaning</h2>
 <p>The <code>libclean</code> target removes only the promeki library objects, test executables, and utilities while preserving third-party builds. This avoids rebuilding vendored dependencies (zlib, libpng, FreeType, etc.) which rarely change:</p>
@@ -159,9 +206,9 @@ Installing</h2>
 <div class="line"># or to a custom prefix:</div>
 <div class="line">cmake --install build --prefix /opt/promeki</div>
 </div><!-- fragment --><p>This installs:</p><ul>
-<li><code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">lib/libpromeki-core.so</a></code>, <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">lib/libpromeki-proav.so</a></code>, and <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">lib/libpromeki-music.so</a></code> (versioned, with SONAME)</li>
-<li><code>include/promeki/</code> — all public headers</li>
-<li><code>include/promeki/thirdparty/</code> — bundled third-party headers</li>
+<li><code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">lib/libpromeki.so</a></code> (versioned, with SONAME), plus <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki-tui.so</a></code> and <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki-sdl.so</a></code> if enabled</li>
+<li><code>include/promeki/</code> — all public headers (including generated <code>config.h</code>)</li>
+<li><code>include/promeki/thirdparty/</code> — bundled third-party headers (when using vendored deps)</li>
 <li><code>lib/cmake/promeki/</code> — CMake package config files</li>
 <li><code>share/doc/promeki/</code> — license and third-party notices</li>
 </ul>
@@ -170,37 +217,38 @@ Using libpromeki in Your Project</h1>
 <p>After installing, add this to your project's <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code>:</p>
 <div class="fragment"><div class="line">find_package(promeki REQUIRED)</div>
 <div class="line"> </div>
-<div class="line"># For general-purpose utilities only:</div>
-<div class="line">target_link_libraries(myapp PRIVATE promeki::core)</div>
+<div class="line"># Link against the main library:</div>
+<div class="line">target_link_libraries(myapp PRIVATE promeki::promeki)</div>
 <div class="line"> </div>
-<div class="line"># For media/audio/video functionality (includes core):</div>
-<div class="line">target_link_libraries(myapp PRIVATE promeki::proav)</div>
+<div class="line"># For TUI applications:</div>
+<div class="line">target_link_libraries(myapp PRIVATE promeki::tui)</div>
 <div class="line"> </div>
-<div class="line"># For music/MIDI functionality (includes proav and core):</div>
-<div class="line">target_link_libraries(myapp PRIVATE promeki::music)</div>
+<div class="line"># For SDL applications:</div>
+<div class="line">target_link_libraries(myapp PRIVATE promeki::sdl)</div>
 </div><!-- fragment --><p>If you installed to a non-standard prefix, tell CMake where to find it:</p>
 <div class="fragment"><div class="line">cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md10"></a>
 Include Conventions</h2>
 <p>All promeki headers live under the <code>promeki/</code> namespace:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/core/string.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="timecode_8h.html">promeki/core/timecode.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="imagedesc_8h.html">promeki/proav/imagedesc.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="timecode_8h.html">promeki/timecode.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="imagedesc_8h.html">promeki/imagedesc.h</a>&gt;</span></div>
 <div class="ttc" id="aimagedesc_8h_html"><div class="ttname"><a href="imagedesc_8h.html">imagedesc.h</a></div></div>
 <div class="ttc" id="astring_8h_html"><div class="ttname"><a href="string_8h.html">string.h</a></div></div>
 <div class="ttc" id="atimecode_8h_html"><div class="ttname"><a href="timecode_8h.html">timecode.h</a></div></div>
-</div><!-- fragment --><p>Bundled third-party headers are under <code>promeki/thirdparty/</code>:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;promeki/thirdparty/png.h&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;promeki/thirdparty/freetype2/ft2build.h&gt;</span></div>
+</div><!-- fragment --><p>Bundled third-party headers use their canonical include paths:</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;nlohmann/json.hpp&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;png.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;ft2build.h&gt;</span></div>
 </div><!-- fragment --><p>Everything in promeki is in the <code>promeki</code> namespace:</p>
-<div class="fragment"><div class="line"><span class="keyword">using namespace </span><a class="code hl_class" href="classList.html">promeki</a>;</div>
+<div class="fragment"><div class="line"><span class="keyword">using namespace </span>promeki;</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> name(<span class="stringliteral">&quot;hello&quot;</span>);</div>
 <div class="line"><a class="code hl_class" href="classTimecode.html">Timecode</a> <a class="code hl_class" href="classList.html">tc</a>(1, 2, 3, 4, FrameRate::fps24());</div>
 <div class="line"><a class="code hl_class" href="classUUID.html">UUID</a> <span class="keywordtype">id</span> = <a class="code hl_function" href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a>();</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:45</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:46</div></div>
 <div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID).</div><div class="ttdef"><b>Definition</b> uuid.h:34</div></div>
 <div class="ttc" id="aclassUUID_html_aa4b21b5eec74fc441124669adb10ed78"><div class="ttname"><a href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a></div><div class="ttdeci">static UUID generate(int version=4)</div><div class="ttdoc">Convenience generator that dispatches to the appropriate generateVn() function.</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md11"></a>
@@ -230,7 +278,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

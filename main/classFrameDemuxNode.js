@@ -2,6 +2,7 @@ var classFrameDemuxNode =
 [
     [ "FrameDemuxNode", "classFrameDemuxNode.html#a52f1aa57af4d35dce754710ac6b27bd7", null ],
     [ "~FrameDemuxNode", "classFrameDemuxNode.html#a1db92b4513cbefa8d936b1195788c9ac", null ],
-    [ "configure", "classFrameDemuxNode.html#a612863b5a8afaa119ae5a09db351f746", null ],
-    [ "process", "classFrameDemuxNode.html#a3710be10a9a870800b288ff6695196d6", null ]
+    [ "build", "classFrameDemuxNode.html#a917b0e0f7fa6e8ba63892dc608825d26", null ],
+    [ "defaultConfig", "classFrameDemuxNode.html#ad713ee15ff8e212e1848559463808285", null ],
+    [ "processFrame", "classFrameDemuxNode.html#a89c4987e7b2681e81efe498f676bc3cb", null ]
 ];

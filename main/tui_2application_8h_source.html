@@ -106,11 +106,11 @@ $(document).ready(function(){initNavTree('tui_2application_8h_source.html',''); 
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="core_2application_8h.html">promeki/core/application.h</a>&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="terminal_8h.html">promeki/core/terminal.h</a>&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="point_8h.html">promeki/core/point.h</a>&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="eventloop_8h.html">promeki/core/eventloop.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="application_8h.html">promeki/application.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="terminal_8h.html">promeki/terminal.h</a>&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="point_8h.html">promeki/point.h</a>&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="eventloop_8h.html">promeki/eventloop.h</a>&gt;</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="screen_8h.html">promeki/tui/screen.h</a>&gt;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;<a class="code" href="palette_8h.html">promeki/tui/palette.h</a>&gt;</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;<a class="code" href="inputparser_8h.html">promeki/tui/inputparser.h</a>&gt;</span></div>
@@ -147,7 +147,7 @@ $(document).ready(function(){initNavTree('tui_2application_8h_source.html',''); 
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="classTuiApplication.html#a7915497f82dacecc1840afdb565effd3">   81</a></span>                <span class="keywordtype">int</span> <a class="code hl_function" href="classTuiApplication.html#a7915497f82dacecc1840afdb565effd3">exec</a>();</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno"><a class="line" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">   87</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">quit</a>(<span class="keywordtype">int</span> exitCode = 0);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno"><a class="line" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">   87</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">quit</a>(<span class="keywordtype">int</span> <a class="code hl_function" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a> = 0);</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
 <div class="foldopen" id="foldopen00100" data-start="{" data-end="}">
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="classTuiApplication.html#aedd0e260f8a000795d19e05393930102">  100</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classTuiApplication.html#aedd0e260f8a000795d19e05393930102">setColorMode</a>(<a class="code hl_enumeration" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a> mode) {</div>
@@ -210,9 +210,11 @@ $(document).ready(function(){initNavTree('tui_2application_8h_source.html',''); 
 </div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span> </div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="ttc" id="aapplication_8h_html"><div class="ttname"><a href="application_8h.html">application.h</a></div></div>
 <div class="ttc" id="aclassAnsiStream_html"><div class="ttname"><a href="classAnsiStream.html">AnsiStream</a></div><div class="ttdoc">ANSI escape code writer backed by an IODevice. Writes ANSI escape sequences and raw text to an IODevi...</div><div class="ttdef"><b>Definition</b> ansistream.h:27</div></div>
 <div class="ttc" id="aclassApplication_html"><div class="ttname"><a href="classApplication.html">Application</a></div><div class="ttdoc">Application-wide state for the promeki library.</div><div class="ttdef"><b>Definition</b> application.h:47</div></div>
-<div class="ttc" id="aclassEventLoop_html"><div class="ttname"><a href="classEventLoop.html">EventLoop</a></div><div class="ttdoc">Per-thread event loop providing event dispatch, timers, and posted callables.</div><div class="ttdef"><b>Definition</b> eventloop.h:58</div></div>
+<div class="ttc" id="aclassApplication_html_ac2b799c01a3e63ae2efc44e8152fc724"><div class="ttname"><a href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">Application::exitCode</a></div><div class="ttdeci">static int exitCode()</div><div class="ttdoc">Returns the exit code set by quit().</div></div>
+<div class="ttc" id="aclassEventLoop_html"><div class="ttname"><a href="classEventLoop.html">EventLoop</a></div><div class="ttdoc">Per-thread event loop providing event dispatch, timers, and posted callables.</div><div class="ttdef"><b>Definition</b> eventloop.h:59</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassMouseEvent_html_aa50254b739447fda5dac9916f4299c3a"><div class="ttname"><a href="classMouseEvent.html#aa50254b739447fda5dac9916f4299c3a">MouseEvent::Button</a></div><div class="ttdeci">Button</div><div class="ttdoc">Mouse button flags (bit values for combining).</div><div class="ttdef"><b>Definition</b> mouseevent.h:29</div></div>
 <div class="ttc" id="aclassPoint_html"><div class="ttname"><a href="classPoint.html">Point&lt; int32_t, 2 &gt;</a></div></div>
@@ -245,8 +247,7 @@ $(document).ready(function(){initNavTree('tui_2application_8h_source.html',''); 
 <div class="ttc" id="aclassTuiScreen_html"><div class="ttname"><a href="classTuiScreen.html">TuiScreen</a></div><div class="ttdoc">Double-buffered character cell grid for TUI rendering.</div><div class="ttdef"><b>Definition</b> screen.h:60</div></div>
 <div class="ttc" id="aclassTuiScreen_html_a649f0224d52de4046f5448e079a84093"><div class="ttname"><a href="classTuiScreen.html#a649f0224d52de4046f5448e079a84093">TuiScreen::colorMode</a></div><div class="ttdeci">Terminal::ColorSupport colorMode() const</div><div class="ttdoc">Returns the current color mode.</div><div class="ttdef"><b>Definition</b> screen.h:131</div></div>
 <div class="ttc" id="aclassTuiScreen_html_ad825c596bc2b23404663ee51b24940f1"><div class="ttname"><a href="classTuiScreen.html#ad825c596bc2b23404663ee51b24940f1">TuiScreen::setColorMode</a></div><div class="ttdeci">void setColorMode(Terminal::ColorSupport mode)</div><div class="ttdoc">Sets the color mode used when emitting colors during flush.</div><div class="ttdef"><b>Definition</b> screen.h:125</div></div>
-<div class="ttc" id="aclassTuiWidget_html"><div class="ttname"><a href="classTuiWidget.html">TuiWidget</a></div><div class="ttdoc">Base class for all TUI widgets.</div><div class="ttdef"><b>Definition</b> widget.h:88</div></div>
-<div class="ttc" id="acore_2application_8h_html"><div class="ttname"><a href="core_2application_8h.html">application.h</a></div></div>
+<div class="ttc" id="aclassTuiWidget_html"><div class="ttname"><a href="classTuiWidget.html">TuiWidget</a></div><div class="ttdoc">TUI-specific widget base class.</div><div class="ttdef"><b>Definition</b> widget.h:34</div></div>
 <div class="ttc" id="aeventloop_8h_html"><div class="ttname"><a href="eventloop_8h.html">eventloop.h</a></div></div>
 <div class="ttc" id="ainputparser_8h_html"><div class="ttname"><a href="inputparser_8h.html">inputparser.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
@@ -264,7 +265,7 @@ $(document).ready(function(){initNavTree('tui_2application_8h_source.html',''); 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_53b52c957e3055cfb134304189fa5299.html">tui</a></li><li class="navelem"><a class="el" href="tui_2application_8h.html">application.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

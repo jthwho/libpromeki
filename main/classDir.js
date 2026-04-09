@@ -10,6 +10,7 @@ var classDir =
     [ "isEmpty", "classDir.html#a741b3afab46335973607bfa934978f43", null ],
     [ "mkdir", "classDir.html#a424388976d6fcfda754f3c8b994b4c60", null ],
     [ "mkpath", "classDir.html#a7699463ee6296caf632cce0fff36e7f4", null ],
+    [ "numberedSequences", "classDir.html#ab44ac90d5a78cf81f63a983c780c6a9c", null ],
     [ "path", "classDir.html#a504887ed69c9a02ce20676fefe76c4a4", null ],
     [ "remove", "classDir.html#a001a2323bfeaf7031521d3ff18280625", null ],
     [ "removeRecursively", "classDir.html#af6f6f2aa9807f5403115a65269c3d857", null ]

@@ -100,10 +100,9 @@ $(document).ready(function(){initNavTree('classPromise.html',''); initResizable(
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classPromise-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Promise&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__concurrency.html">Core Concurrency</a></div></div></div>
+  <div class="headertitle"><div class="title">Promise&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__concurrency.html">Concurrency</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -214,7 +213,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Sets an error on the promise. </p>
-<p>The associated <a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a> will receive a default-constructed T. The error is communicated via an exception internally.</p>
+<p>The error is propagated through the future via the <a class="el" href="structPromiseError.html" title="Internal exception type used by Promise to propagate errors through std::future.">PromiseError</a> exception. <a class="el" href="classFuture.html#a285281887a6a0e54454afde5a1a798a6" title="Returns the result, blocking until available or timeout.">Future::result()</a> catches it and returns the error in the Result's error field.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">error</td><td>The error to set. </td></tr>
@@ -261,7 +260,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="promise_8h_source.html">promise.h</a></li>
+<li>include/promeki/<a class="el" href="promise_8h_source.html">promise.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -270,7 +269,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPromise.html">Promise</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

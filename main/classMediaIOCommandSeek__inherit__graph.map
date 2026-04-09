@@ -1,0 +1,5 @@
+<map id="MediaIOCommandSeek" name="MediaIOCommandSeek">
+<area shape="rect" id="Node000001" title="Command to seek to a frame position." alt="" coords="5,79,180,104"/>
+<area shape="rect" id="Node000002" href="$classMediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="21,5,164,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,44,95,79,90,79,90,44"/>
+</map>

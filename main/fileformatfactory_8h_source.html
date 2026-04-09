@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/core/fileformatfactory.h Source File</title>
+<title>libpromeki: include/promeki/fileformatfactory.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -105,13 +105,13 @@ $(document).ready(function(){initNavTree('fileformatfactory_8h_source.html','');
 <a href="fileformatfactory_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/core/string.h</a>&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="stringlist_8h.html">promeki/core/stringlist.h</a>&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/core/list.h</a>&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="result_8h.html">promeki/core/result.h</a>&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="logger_8h.html">promeki/core/logger.h</a>&gt;</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="util_8h.html">promeki/core/util.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;<a class="code" href="stringlist_8h.html">promeki/stringlist.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/list.h</a>&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="result_8h.html">promeki/result.h</a>&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="logger_8h.html">promeki/logger.h</a>&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;<a class="code" href="util_8h.html">promeki/util.h</a>&gt;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
@@ -136,7 +136,7 @@ $(document).ready(function(){initNavTree('fileformatfactory_8h_source.html','');
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>                        <span class="keyword">auto</span> &amp;<a class="code hl_class" href="classList.html">list</a> = factoryList();</div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>                        <span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">ret</a> = <a class="code hl_class" href="classList.html">list</a>.<a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>();</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>                        <a class="code hl_class" href="classList.html">list</a> += <a class="code hl_class" href="classList.html">factory</a>;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                        promekiInfo(<span class="stringliteral">&quot;Registered FileFormatFactory %s&quot;</span>,</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                        promekiLog(<a class="code hl_enumvalue" href="classLogger.html#ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1">Logger::LogLevel::Debug</a>, <span class="stringliteral">&quot;Registered FileFormatFactory %s&quot;</span>,</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>                                <a class="code hl_class" href="classList.html">factory</a>-&gt;name().cstr());</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>                        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">ret</a>;</div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>                }</div>
@@ -231,13 +231,14 @@ $(document).ready(function(){initNavTree('fileformatfactory_8h_source.html','');
 <div class="ttc" id="aclassIODevice_html"><div class="ttname"><a href="classIODevice.html">IODevice</a></div><div class="ttdoc">Abstract base class for all I/O devices.</div><div class="ttdef"><b>Definition</b> iodevice.h:29</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a7b46313fcbf10064276c8d0447a73691"><div class="ttname"><a href="classList.html#a7b46313fcbf10064276c8d0447a73691">List::size</a></div><div class="ttdeci">size_t size() const noexcept</div><div class="ttdoc">Returns the number of elements in the list.</div><div class="ttdef"><b>Definition</b> list.h:301</div></div>
+<div class="ttc" id="aclassLogger_html_ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1"><div class="ttname"><a href="classLogger.html#ac744681e23720966b5f430ec2060da36a56db48fa2adaf90cde424c8ecfb8e5e1">Logger::Debug</a></div><div class="ttdeci">@ Debug</div><div class="ttdoc">Debug-level messages.</div><div class="ttdef"><b>Definition</b> logger.h:107</div></div>
 <div class="ttc" id="aclassStringList_html"><div class="ttname"><a href="classStringList.html">StringList</a></div><div class="ttdoc">Manages a list of strings.</div><div class="ttdef"><b>Definition</b> stringlist.h:21</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
-<div class="ttc" id="aclassString_html_a141999accd33a559ca9fdf938247c0a6"><div class="ttname"><a href="classString.html#a141999accd33a559ca9fdf938247c0a6">String::toLower</a></div><div class="ttdeci">String toLower() const</div><div class="ttdoc">Returns a lowercase copy of this string.</div><div class="ttdef"><b>Definition</b> string.h:624</div></div>
-<div class="ttc" id="aclassString_html_a588c5cc9faededbb9d938662d354feed"><div class="ttname"><a href="classString.html#a588c5cc9faededbb9d938662d354feed">String::size</a></div><div class="ttdeci">size_t size() const</div><div class="ttdoc">Returns the number of characters in the string.</div><div class="ttdef"><b>Definition</b> string.h:292</div></div>
-<div class="ttc" id="aclassString_html_a8dee0a0536c5efaebda975315b380b80"><div class="ttname"><a href="classString.html#a8dee0a0536c5efaebda975315b380b80">String::npos</a></div><div class="ttdeci">static constexpr size_t npos</div><div class="ttdoc">Sentinel value indicating &quot;not found&quot;.</div><div class="ttdef"><b>Definition</b> string.h:91</div></div>
-<div class="ttc" id="aclassString_html_ab7e14dd845e9ce8b1c41535431d4ba66"><div class="ttname"><a href="classString.html#ab7e14dd845e9ce8b1c41535431d4ba66">String::mid</a></div><div class="ttdeci">String mid(size_t pos, size_t count=npos) const</div><div class="ttdoc">Returns a substring starting at pos (alias for substr).</div><div class="ttdef"><b>Definition</b> string.h:425</div></div>
-<div class="ttc" id="aclassString_html_ada5431a2efa0924b6efd13164043470b"><div class="ttname"><a href="classString.html#ada5431a2efa0924b6efd13164043470b">String::rfind</a></div><div class="ttdeci">size_t rfind(char val, size_t from=npos) const</div><div class="ttdoc">Finds the last occurrence of a character.</div><div class="ttdef"><b>Definition</b> string.h:375</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
+<div class="ttc" id="aclassString_html_a141999accd33a559ca9fdf938247c0a6"><div class="ttname"><a href="classString.html#a141999accd33a559ca9fdf938247c0a6">String::toLower</a></div><div class="ttdeci">String toLower() const</div><div class="ttdoc">Returns a lowercase copy of this string.</div><div class="ttdef"><b>Definition</b> string.h:808</div></div>
+<div class="ttc" id="aclassString_html_a588c5cc9faededbb9d938662d354feed"><div class="ttname"><a href="classString.html#a588c5cc9faededbb9d938662d354feed">String::size</a></div><div class="ttdeci">size_t size() const</div><div class="ttdoc">Returns the number of characters in the string.</div><div class="ttdef"><b>Definition</b> string.h:383</div></div>
+<div class="ttc" id="aclassString_html_a8dee0a0536c5efaebda975315b380b80"><div class="ttname"><a href="classString.html#a8dee0a0536c5efaebda975315b380b80">String::npos</a></div><div class="ttdeci">static constexpr size_t npos</div><div class="ttdoc">Sentinel value indicating &quot;not found&quot;.</div><div class="ttdef"><b>Definition</b> string.h:111</div></div>
+<div class="ttc" id="aclassString_html_ab7e14dd845e9ce8b1c41535431d4ba66"><div class="ttname"><a href="classString.html#ab7e14dd845e9ce8b1c41535431d4ba66">String::mid</a></div><div class="ttdeci">String mid(size_t pos, size_t count=npos) const</div><div class="ttdoc">Returns a substring starting at pos (alias for substr).</div><div class="ttdef"><b>Definition</b> string.h:540</div></div>
+<div class="ttc" id="aclassString_html_ada5431a2efa0924b6efd13164043470b"><div class="ttname"><a href="classString.html#ada5431a2efa0924b6efd13164043470b">String::rfind</a></div><div class="ttdeci">size_t rfind(char val, size_t from=npos) const</div><div class="ttdoc">Finds the last occurrence of a character.</div><div class="ttdef"><b>Definition</b> string.h:477</div></div>
 <div class="ttc" id="alist_8h_html"><div class="ttname"><a href="list_8h.html">list.h</a></div></div>
 <div class="ttc" id="alogger_8h_html"><div class="ttname"><a href="logger_8h.html">logger.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
@@ -258,8 +259,8 @@ $(document).ready(function(){initNavTree('fileformatfactory_8h_source.html','');
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="fileformatfactory_8h.html">fileformatfactory.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="fileformatfactory_8h.html">fileformatfactory.h</a></li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

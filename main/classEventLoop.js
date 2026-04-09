@@ -14,6 +14,7 @@ var classEventLoop =
     [ "postEvent", "classEventLoop.html#aaf48e9f44e9568fce1de3f49cce39b4d", null ],
     [ "processEvents", "classEventLoop.html#ae63f0671a0d3d3b8d08d7caf13529f96", null ],
     [ "quit", "classEventLoop.html#a9e126989d057c302e18f20061f93deb5", null ],
+    [ "setWakeCallback", "classEventLoop.html#ae7de62b668488ec8a01537c3b9416ab2", null ],
     [ "startTimer", "classEventLoop.html#aa7f329bb7872a41fe40f3652d06290c4", null ],
     [ "startTimer", "classEventLoop.html#a704cb5e15ea382e283c8cc96aa95186b", null ],
     [ "stopTimer", "classEventLoop.html#a0b602a0f8f64b33f9adcdcfd119ea0b0", null ]

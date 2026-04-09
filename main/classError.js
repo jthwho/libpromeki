@@ -39,7 +39,14 @@ var classError =
       [ "InvalidArgument", "classError.html#ab5980e13b879db253df802b0950d1708aa5b787b2e97c330870af29648d078cd7", null ],
       [ "InvalidDimension", "classError.html#ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c", null ],
       [ "NotHostAccessible", "classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9", null ],
-      [ "BufferTooSmall", "classError.html#ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df", null ]
+      [ "BufferTooSmall", "classError.html#ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df", null ],
+      [ "IdNotFound", "classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6", null ],
+      [ "ConversionFailed", "classError.html#ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52", null ],
+      [ "Stopped", "classError.html#ab5980e13b879db253df802b0950d1708a57deae1c5de62d83f172f42a3db7fcc2", null ],
+      [ "Cancelled", "classError.html#ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec", null ],
+      [ "DecodeFailed", "classError.html#ab5980e13b879db253df802b0950d1708a52e22953d80c35b50658bf4e7399a8da", null ],
+      [ "EncodeFailed", "classError.html#ab5980e13b879db253df802b0950d1708a0da389a20619220b914a8114ee62bef1", null ],
+      [ "CorruptData", "classError.html#ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110", null ]
     ] ],
     [ "Error", "classError.html#a83eaa8db2a6c22d6aff5758eea236a6e", null ],
     [ "~Error", "classError.html#a1a45d42a3a035d510333cdfeb36a0e93", null ],

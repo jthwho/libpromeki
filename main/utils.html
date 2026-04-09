@@ -118,8 +118,8 @@ Building</h1>
 Standalone Build</h1>
 <p>The <code>utils/</code> directory has its own top-level <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code> and can be built independently against an installed copy of libpromeki, just like any external project:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cd</a> utils</div>
-<div class="line">mkdir <a class="code hl_class" href="classList.html">build</a> &amp;&amp; <a class="code hl_class" href="classList.html">cd</a> <a class="code hl_class" href="classList.html">build</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">DCMAKE_PREFIX_PATH</a>=/path/to/<a class="code hl_class" href="classList.html">promeki</a>/<a class="code hl_class" href="classList.html">install</a> ..</div>
+<div class="line">mkdir build &amp;&amp; <a class="code hl_class" href="classList.html">cd</a> build</div>
+<div class="line"><a class="code hl_class" href="classList.html">cmake</a> -<a class="code hl_class" href="classList.html">DCMAKE_PREFIX_PATH</a>=/path/to/promeki/<a class="code hl_class" href="classList.html">install</a> ..</div>
 <div class="line">make</div>
 </div><!-- fragment --><p>This is exactly the workflow that any third-party consumer of the library would follow, making the utilities a living reference for integration.</p>
 <h1><a class="anchor" id="utils_adding"></a>
@@ -127,16 +127,16 @@ Adding a New Utility</h1>
 <p>Each utility lives in its own subdirectory under <code>utils/</code>:</p>
 <div class="fragment"><div class="line">utils/</div>
 <div class="line">  <a class="code hl_class" href="classList.html">CMakeLists</a>.txt          # top-level, <a class="code hl_class" href="classList.html">includes</a> <a class="code hl_class" href="classList.html">each</a> <a class="code hl_class" href="classList.html">subdirectory</a></div>
-<div class="line">  <a class="code hl_class" href="classList.html">promeki</a>-<a class="code hl_class" href="classList.html">info</a>/</div>
+<div class="line">  promeki-<a class="code hl_class" href="classList.html">info</a>/</div>
 <div class="line">    <a class="code hl_class" href="classList.html">CMakeLists</a>.txt         # <a class="code hl_class" href="classList.html">add_executable</a> + <a class="code hl_class" href="classList.html">target_link_libraries</a></div>
 <div class="line">    <a class="code hl_class" href="classList.html">main</a>.cpp</div>
-<div class="line">  <a class="code hl_class" href="classList.html">my</a>-<span class="keyword">new</span>-<a class="code hl_class" href="classList.html">util</a>/</div>
+<div class="line">  <a class="code hl_class" href="classList.html">my</a>-<span class="keyword">new</span>-util/</div>
 <div class="line">    <a class="code hl_class" href="classList.html">CMakeLists</a>.txt</div>
 <div class="line">    <a class="code hl_class" href="classList.html">main</a>.cpp</div>
 </div><!-- fragment --><p>To add a new utility:</p>
 <ol type="1">
 <li>Create a new subdirectory under <code>utils/</code> (e.g. <code>utils/my-new-util/</code>).</li>
-<li>Add a <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code> that creates the executable and links against the appropriate promeki target(s) (<code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki::core</a></code>, <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki::proav</a></code>, or <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki::music</a></code>).</li>
+<li>Add a <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code> that creates the executable and links against the appropriate promeki target (<code>promeki::promeki</code>, or <code>promeki::tui</code> / <code>promeki::sdl</code> for UI libraries).</li>
 <li>Include an <code>install(TARGETS ...)</code> rule so it gets installed.</li>
 <li>Add an <code>add_subdirectory()</code> call in <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">utils/CMakeLists.txt</a></code>.</li>
 </ol>
@@ -146,7 +146,11 @@ Current Utilities</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Utility   </th><th class="markdownTableHeadNone">Library   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">promeki-info   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">promeki::core</a>   </td><td class="markdownTableBodyNone">Prints library build information   </td></tr>
+<td class="markdownTableBodyNone">promeki-info   </td><td class="markdownTableBodyNone">promeki::promeki   </td><td class="markdownTableBodyNone">Prints library build information    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">testrender   </td><td class="markdownTableBodyNone">promeki::promeki   </td><td class="markdownTableBodyNone">Renders test patterns to image files    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">vidgen   </td><td class="markdownTableBodyNone">promeki::promeki   </td><td class="markdownTableBodyNone">Generates video/audio test patterns and streams via RTP   </td></tr>
 </table>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
@@ -155,7 +159,7 @@ Current Utilities</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

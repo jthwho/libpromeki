@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('classNumName.html',''); initResizable(
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classNumName-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">NumName Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
+  <div class="headertitle"><div class="title">NumName Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -165,6 +165,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a1102b72ecf7b2ef5bb0de41b7c745de8" id="r_a1102b72ecf7b2ef5bb0de41b7c745de8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classNumName.html">NumName</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNumName.html#a1102b72ecf7b2ef5bb0de41b7c745de8">parse</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str, int *<a class="el" href="classList.html">val</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a1102b72ecf7b2ef5bb0de41b7c745de8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a string into a <a class="el" href="classNumName.html" title="Deconstructs a numbered name into its prefix, number, and suffix components.">NumName</a>.  <br /></td></tr>
 <tr class="separator:a1102b72ecf7b2ef5bb0de41b7c745de8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd480a14c58c013e5d642f1258431cd0" id="r_abd480a14c58c013e5d642f1258431cd0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classNumName.html">NumName</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNumName.html#abd480a14c58c013e5d642f1258431cd0">fromMask</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">mask</a>)</td></tr>
+<tr class="memdesc:abd480a14c58c013e5d642f1258431cd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a mask pattern into a <a class="el" href="classNumName.html" title="Deconstructs a numbered name into its prefix, number, and suffix components.">NumName</a>.  <br /></td></tr>
+<tr class="separator:abd480a14c58c013e5d642f1258431cd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Deconstructs a numbered name into its prefix, number, and suffix components. </p>
@@ -318,6 +321,49 @@ Static Public Member Functions</h2></td></tr>
 <p>Returns a C-style printf format mask for the numbered name. </p>
 <p>For example, "file.1234.dpx" yields "file.%d.dpx" and "file.01234.dpx" yields "file.%05d.dpx".</p>
 <dl class="section return"><dt>Returns</dt><dd>The format mask string. </dd></dl>
+
+</div>
+</div>
+<a id="abd480a14c58c013e5d642f1258431cd0" name="abd480a14c58c013e5d642f1258431cd0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd480a14c58c013e5d642f1258431cd0">&#9670;&#160;</a></span>fromMask()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classNumName.html">NumName</a> NumName::fromMask </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>mask</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Parses a mask pattern into a <a class="el" href="classNumName.html" title="Deconstructs a numbered name into its prefix, number, and suffix components.">NumName</a>. </p>
+<p>Accepts either hash-style (<code>"seq_####.dpx"</code>, <code>"seq_#.dpx"</code>) or printf-style (<code>"seq_%04d.dpx"</code>, <code>"seq_%d.dpx"</code>) patterns.</p>
+<p>Hash and printf styles are equivalent:</p><ul>
+<li><code>"#"</code> == <code>"%d"</code> → non-padded, 1-digit</li>
+<li><code>"####"</code> == <code>"%04d"</code> → padded, 4-digit</li>
+<li><code>"#####"</code> == <code>"%05d"</code> → padded, 5-digit</li>
+</ul>
+<p>Note that in the <code>#-style</code> a single <code>#</code> is non-padded (the number of <code>#</code> characters only constrains padding width, not the minimum digit count), which matches <code>d</code> (non-padded). Multiple <code>#</code> characters indicate zero-padded output (like <code>%0Nd</code>).</p>
+<p>Only the first token encountered (scanning from the left) is treated as the number placeholder; any other numeric runs in the prefix/suffix are left as literal text.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mask</td><td>The mask string to parse. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classNumName.html" title="Deconstructs a numbered name into its prefix, number, and suffix components.">NumName</a> matching the mask, or an invalid <a class="el" href="classNumName.html" title="Deconstructs a numbered name into its prefix, number, and suffix components.">NumName</a> if the mask contains no recognized placeholder. </dd></dl>
 
 </div>
 </div>
@@ -580,7 +626,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="numname_8h_source.html">numname.h</a></li>
+<li>include/promeki/<a class="el" href="numname_8h_source.html">numname.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -589,7 +635,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classNumName.html">NumName</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

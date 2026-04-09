@@ -1,5 +1,5 @@
 <map id="MediaPipeline" name="MediaPipeline">
-<area shape="rect" id="Node000001" title="Owns a MediaGraph and orchestrates pipeline processing." alt="" coords="142,168,257,193"/>
+<area shape="rect" id="Node000001" title="Owns nodes and topology, orchestrates pipeline processing." alt="" coords="142,168,257,193"/>
 <area shape="rect" id="Node000002" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
 <area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,133,202,168,197,168,197,133"/>
 <area shape="rect" id="Node000003" href="$classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>

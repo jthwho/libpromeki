@@ -28,21 +28,6 @@ var group__tui__core =
       ] ],
       [ "feed", "classTuiInputParser.html#a5bff8a2f8386dea47e260c011f2f70ea", null ]
     ] ],
-    [ "TuiLayout", "classTuiLayout.html", [
-      [ "addLayout", "classTuiLayout.html#a905717d57e8e036e434e9c15a644bd76", null ],
-      [ "addWidget", "classTuiLayout.html#a4b2536158bb67869d13f6956404cd97e", null ],
-      [ "calculateLayout", "classTuiLayout.html#a392a0091a07f834ad05eb499584c3859", null ],
-      [ "contentRect", "classTuiLayout.html#a2936fee159033298902c22b4c7aa5d90", null ],
-      [ "layouts", "classTuiLayout.html#af47f82cadb692b9e4d2fbd3084b3e707", null ],
-      [ "margins", "classTuiLayout.html#a2c23e0b8b56becef679552ce1e698d76", null ],
-      [ "removeWidget", "classTuiLayout.html#a192e50985c117d89e17123f4206240dc", null ],
-      [ "setMargins", "classTuiLayout.html#a8d7b42f5ab60dc9fb7d3ee9a8fca62ef", null ],
-      [ "setMargins", "classTuiLayout.html#ac42d300931e8f94b6a168f6cd2b92913", null ],
-      [ "setSpacing", "classTuiLayout.html#abcb17da7753691f651bb3b7b836575a9", null ],
-      [ "sizeHint", "classTuiLayout.html#a7931053a5aa07e8cf42e102534e1583f", null ],
-      [ "spacing", "classTuiLayout.html#a0169cc95ba1b535afe7c6cb700df2d6f", null ],
-      [ "widgets", "classTuiLayout.html#abb82dc965289ec9d9c0a955d14a0f041", null ]
-    ] ],
     [ "TuiPainter", "classTuiPainter.html", [
       [ "TuiPainter", "classTuiPainter.html#a8f30df5fa6fa2d495352367dec986a7d", null ],
       [ "attrs", "classTuiPainter.html#a231b61e1377023b6b59c0bd6e1677dfb", null ],
@@ -129,5 +114,9 @@ var group__tui__core =
       [ "setBackground", "classTuiStyle.html#a2269152fc0c7f53bb2d3bf6337d433b2", null ],
       [ "setForeground", "classTuiStyle.html#a03a0e04d196f9eb28f250ecb6c493061", null ]
     ] ],
-    [ "TuiPaintEvent", "classTuiPaintEvent.html", null ]
+    [ "TuiWidget", "classTuiWidget.html", [
+      [ "TuiWidget", "classTuiWidget.html#a5e42aa0784a97894dce841beb12b5e8e", null ],
+      [ "~TuiWidget", "classTuiWidget.html#aa76ca2f89f411021a9f73e5cd6ec52ae", null ],
+      [ "update", "classTuiWidget.html#a95d9cb30fa4d0931af3b901f0dae2737", null ]
+    ] ]
 ];

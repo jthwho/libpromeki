@@ -103,19 +103,28 @@ $(document).ready(function(){initNavTree('classImageFile.html',''); initResizabl
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classImageFile-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">ImageFile Class Reference<div class="ingroups"><a class="el" href="group__proav__media.html">ProAV Media</a></div></div></div>
+  <div class="headertitle"><div class="title">ImageFile Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> file loader and saver.  
+<p>Media file loader and saver.  
  <a href="classImageFile.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="imagefile_8h_source.html">imagefile.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ae0e1dfa29f57da6aa4665566347722da" id="r_ae0e1dfa29f57da6aa4665566347722da"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722da">ID</a> { <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa703f09ce653aee51543ba313208e0621">Invalid</a> = 0
+<tr class="memitem:ae0e1dfa29f57da6aa4665566347722da" id="r_ae0e1dfa29f57da6aa4665566347722da"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722da">ID</a> { <br />
+&#160;&#160;<a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa703f09ce653aee51543ba313208e0621">Invalid</a> = 0
 , <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627">PNG</a>
+, <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daabfd88a3f212bc61b07d6469f297435d5">RawYUV</a>
+, <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daab6175fc9bd4953c5838a28d6b21484ce">DPX</a>
+, <br />
+&#160;&#160;<a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daace74f2ecbaa1e914a999a1ced9569ac0">Cineon</a>
+, <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa4b1b30315e91f6e295c0918af41dd084">TGA</a>
+, <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9001995d4005855523088ca640275310">SGI</a>
+, <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa713d726c6c2ac040f9993c880d843e72">PNM</a>
+<br />
  }</td></tr>
 <tr class="memdesc:ae0e1dfa29f57da6aa4665566347722da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifiers for supported image file formats.  <a href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722da">More...</a><br /></td></tr>
 <tr class="separator:ae0e1dfa29f57da6aa4665566347722da"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -123,7 +132,7 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a18de969707a0b98ee83d336a9f588454" id="r_a18de969707a0b98ee83d336a9f588454"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a18de969707a0b98ee83d336a9f588454">ImageFile</a> (int id=0)</td></tr>
-<tr class="memdesc:a18de969707a0b98ee83d336a9f588454"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classImageFile.html" title="Image file loader and saver.">ImageFile</a> for the given format.  <br /></td></tr>
+<tr class="memdesc:a18de969707a0b98ee83d336a9f588454"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a> for the given format.  <br /></td></tr>
 <tr class="separator:a18de969707a0b98ee83d336a9f588454"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5e46d8a3293c3665a94f09587de5c59" id="r_ac5e46d8a3293c3665a94f09587de5c59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59">filename</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ac5e46d8a3293c3665a94f09587de5c59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the filename associated with this image file.  <br /></td></tr>
@@ -131,22 +140,37 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a041e91f1ad4d9c82f0e8fc7119249d30" id="r_a041e91f1ad4d9c82f0e8fc7119249d30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a041e91f1ad4d9c82f0e8fc7119249d30">setFilename</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a041e91f1ad4d9c82f0e8fc7119249d30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the filename for loading or saving.  <br /></td></tr>
 <tr class="separator:a041e91f1ad4d9c82f0e8fc7119249d30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f37251fb8017e196aa37c50d67b260a" id="r_a7f37251fb8017e196aa37c50d67b260a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a7f37251fb8017e196aa37c50d67b260a">image</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a7f37251fb8017e196aa37c50d67b260a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the image data.  <br /></td></tr>
-<tr class="separator:a7f37251fb8017e196aa37c50d67b260a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec6bebd589075891271044ecee25209a" id="r_aec6bebd589075891271044ecee25209a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classFrame.html">Frame</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#aec6bebd589075891271044ecee25209a">frame</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aec6bebd589075891271044ecee25209a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the frame.  <br /></td></tr>
+<tr class="separator:aec6bebd589075891271044ecee25209a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28970599a579f04de39f9f2a75826a7a" id="r_a28970599a579f04de39f9f2a75826a7a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html">Frame</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a28970599a579f04de39f9f2a75826a7a">frame</a> ()</td></tr>
+<tr class="memdesc:a28970599a579f04de39f9f2a75826a7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the frame.  <br /></td></tr>
+<tr class="separator:a28970599a579f04de39f9f2a75826a7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acaf3cf90bf1fef215fa44c176519fa83" id="r_acaf3cf90bf1fef215fa44c176519fa83"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#acaf3cf90bf1fef215fa44c176519fa83">setFrame</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classFrame.html">Frame</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:acaf3cf90bf1fef215fa44c176519fa83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the frame.  <br /></td></tr>
+<tr class="separator:acaf3cf90bf1fef215fa44c176519fa83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12c22464caa2b5b71ac9b5d9e41bedf1" id="r_a12c22464caa2b5b71ac9b5d9e41bedf1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classImage.html">Image</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a12c22464caa2b5b71ac9b5d9e41bedf1">image</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a12c22464caa2b5b71ac9b5d9e41bedf1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the first image from the frame, or an invalid <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> if empty.  <br /></td></tr>
+<tr class="separator:a12c22464caa2b5b71ac9b5d9e41bedf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc0b9e24941f9b6611f52c25c2089914" id="r_abc0b9e24941f9b6611f52c25c2089914"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#abc0b9e24941f9b6611f52c25c2089914">setImage</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
-<tr class="memdesc:abc0b9e24941f9b6611f52c25c2089914"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the image data for saving.  <br /></td></tr>
+<tr class="memdesc:abc0b9e24941f9b6611f52c25c2089914"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the frame to contain a single image.  <br /></td></tr>
 <tr class="separator:abc0b9e24941f9b6611f52c25c2089914"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae362a7d95937a7c0edc685a7a0a526ed" id="r_ae362a7d95937a7c0edc685a7a0a526ed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#ae362a7d95937a7c0edc685a7a0a526ed">metadata</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae362a7d95937a7c0edc685a7a0a526ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the frame metadata.  <br /></td></tr>
+<tr class="separator:ae362a7d95937a7c0edc685a7a0a526ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1b1d6eece79dc4f6484f90381d3aac2" id="r_ab1b1d6eece79dc4f6484f90381d3aac2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#ab1b1d6eece79dc4f6484f90381d3aac2">metadata</a> ()</td></tr>
+<tr class="memdesc:ab1b1d6eece79dc4f6484f90381d3aac2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the frame metadata.  <br /></td></tr>
+<tr class="separator:ab1b1d6eece79dc4f6484f90381d3aac2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f80c59e672824afefcda941bf148c7b" id="r_a7f80c59e672824afefcda941bf148c7b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a7f80c59e672824afefcda941bf148c7b">load</a> ()</td></tr>
-<tr class="memdesc:a7f80c59e672824afefcda941bf148c7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads an image from the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>.  <br /></td></tr>
+<tr class="memdesc:a7f80c59e672824afefcda941bf148c7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads media from the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>.  <br /></td></tr>
 <tr class="separator:a7f80c59e672824afefcda941bf148c7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6710e31cbb8451b923a6b26da85cc40a" id="r_a6710e31cbb8451b923a6b26da85cc40a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageFile.html#a6710e31cbb8451b923a6b26da85cc40a">save</a> ()</td></tr>
-<tr class="memdesc:a6710e31cbb8451b923a6b26da85cc40a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the image to the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>.  <br /></td></tr>
+<tr class="memdesc:a6710e31cbb8451b923a6b26da85cc40a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves media to the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>.  <br /></td></tr>
 <tr class="separator:a6710e31cbb8451b923a6b26da85cc40a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> file loader and saver. </p>
-<p>Provides a simple interface for loading and saving image files. The file format is determined by the ID passed at construction, which selects the corresponding <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> backend. </p>
+<div class="textblock"><p>Media file loader and saver. </p>
+<p>Provides a simple interface for loading and saving media files. The file format is determined by the ID passed at construction, which selects the corresponding <a class="el" href="classImageFileIO.html" title="Abstract backend for image file format I/O.">ImageFileIO</a> backend. Internally holds a <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> which can carry images, audio, and metadata. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ae0e1dfa29f57da6aa4665566347722da" name="ae0e1dfa29f57da6aa4665566347722da"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae0e1dfa29f57da6aa4665566347722da">&#9670;&#160;</a></span>ID</h2>
@@ -165,6 +189,18 @@ Public Member Functions</h2></td></tr>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daa703f09ce653aee51543ba313208e0621" name="ae0e1dfa29f57da6aa4665566347722daa703f09ce653aee51543ba313208e0621"></a>Invalid&#160;</td><td class="fielddoc"><p>No format / invalid. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627" name="ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627"></a>PNG&#160;</td><td class="fielddoc"><p>PNG image format. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daabfd88a3f212bc61b07d6469f297435d5" name="ae0e1dfa29f57da6aa4665566347722daabfd88a3f212bc61b07d6469f297435d5"></a>RawYUV&#160;</td><td class="fielddoc"><p>Raw YUV image format (headerless). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daab6175fc9bd4953c5838a28d6b21484ce" name="ae0e1dfa29f57da6aa4665566347722daab6175fc9bd4953c5838a28d6b21484ce"></a>DPX&#160;</td><td class="fielddoc"><p>SMPTE 268M DPX image format. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daace74f2ecbaa1e914a999a1ced9569ac0" name="ae0e1dfa29f57da6aa4665566347722daace74f2ecbaa1e914a999a1ced9569ac0"></a>Cineon&#160;</td><td class="fielddoc"><p>Kodak Cineon image format. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daa4b1b30315e91f6e295c0918af41dd084" name="ae0e1dfa29f57da6aa4665566347722daa4b1b30315e91f6e295c0918af41dd084"></a>TGA&#160;</td><td class="fielddoc"><p>Targa image format. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daa9001995d4005855523088ca640275310" name="ae0e1dfa29f57da6aa4665566347722daa9001995d4005855523088ca640275310"></a>SGI&#160;</td><td class="fielddoc"><p>Silicon Graphics image format. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae0e1dfa29f57da6aa4665566347722daa713d726c6c2ac040f9993c880d843e72" name="ae0e1dfa29f57da6aa4665566347722daa713d726c6c2ac040f9993c880d843e72"></a>PNM&#160;</td><td class="fielddoc"><p>Portable AnyMap (PPM/PGM/PBM). </p>
 </td></tr>
 </table>
 
@@ -187,7 +223,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Constructs an <a class="el" href="classImageFile.html" title="Image file loader and saver.">ImageFile</a> for the given format. </p>
+<p>Constructs an <a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a> for the given format. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id</td><td>The format identifier (e.g. <a class="el" href="classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa007683c552e3127e7e77cd4057682627" title="PNG image format.">ImageFile::PNG</a>). Defaults to Invalid. </td></tr>
@@ -226,8 +262,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a7f37251fb8017e196aa37c50d67b260a" name="a7f37251fb8017e196aa37c50d67b260a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f37251fb8017e196aa37c50d67b260a">&#9670;&#160;</a></span>image()</h2>
+<a id="a28970599a579f04de39f9f2a75826a7a" name="a28970599a579f04de39f9f2a75826a7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28970599a579f04de39f9f2a75826a7a">&#9670;&#160;</a></span>frame() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -236,7 +272,35 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classImage.html">Image</a> &amp; ImageFile::image </td>
+          <td class="memname"><a class="el" href="classFrame.html">Frame</a> &amp; ImageFile::frame </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a mutable reference to the frame. </p>
+<dl class="section return"><dt>Returns</dt><dd>The frame containing images, audio, and metadata. </dd></dl>
+
+</div>
+</div>
+<a id="aec6bebd589075891271044ecee25209a" name="aec6bebd589075891271044ecee25209a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec6bebd589075891271044ecee25209a">&#9670;&#160;</a></span>frame() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classFrame.html">Frame</a> &amp; ImageFile::frame </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -249,8 +313,36 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the image data. </p>
-<dl class="section return"><dt>Returns</dt><dd>A const reference to the <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> object. </dd></dl>
+<p>Returns a const reference to the frame. </p>
+<dl class="section return"><dt>Returns</dt><dd>The frame containing images, audio, and metadata. </dd></dl>
+
+</div>
+</div>
+<a id="a12c22464caa2b5b71ac9b5d9e41bedf1" name="a12c22464caa2b5b71ac9b5d9e41bedf1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12c22464caa2b5b71ac9b5d9e41bedf1">&#9670;&#160;</a></span>image()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classImage.html">Image</a> ImageFile::image </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the first image from the frame, or an invalid <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> if empty. </p>
+<p>Convenience accessor for formats that carry a single image. </p><dl class="section return"><dt>Returns</dt><dd>The first image by value. </dd></dl>
 
 </div>
 </div>
@@ -269,8 +361,64 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Loads an image from the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>. </p>
+<p>Loads media from the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+</div>
+</div>
+<a id="ab1b1d6eece79dc4f6484f90381d3aac2" name="ab1b1d6eece79dc4f6484f90381d3aac2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab1b1d6eece79dc4f6484f90381d3aac2">&#9670;&#160;</a></span>metadata() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMetadata.html">Metadata</a> &amp; ImageFile::metadata </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a mutable reference to the frame metadata. </p>
+<dl class="section return"><dt>Returns</dt><dd>The metadata container. </dd></dl>
+
+</div>
+</div>
+<a id="ae362a7d95937a7c0edc685a7a0a526ed" name="ae362a7d95937a7c0edc685a7a0a526ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae362a7d95937a7c0edc685a7a0a526ed">&#9670;&#160;</a></span>metadata() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp; ImageFile::metadata </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a const reference to the frame metadata. </p>
+<dl class="section return"><dt>Returns</dt><dd>The metadata container. </dd></dl>
 
 </div>
 </div>
@@ -289,7 +437,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Saves the image to the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>. </p>
+<p>Saves media to the file specified by <a class="el" href="classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59" title="Returns the filename associated with this image file.">filename()</a>. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
 </div>
@@ -328,6 +476,40 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="acaf3cf90bf1fef215fa44c176519fa83" name="acaf3cf90bf1fef215fa44c176519fa83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf3cf90bf1fef215fa44c176519fa83">&#9670;&#160;</a></span>setFrame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> ImageFile::setFrame </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFrame.html">Frame</a> &amp;&#160;</td>
+          <td class="paramname"><em>val</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the frame. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">val</td><td>The <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> to set. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="abc0b9e24941f9b6611f52c25c2089914" name="abc0b9e24941f9b6611f52c25c2089914"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc0b9e24941f9b6611f52c25c2089914">&#9670;&#160;</a></span>setImage()</h2>
 
@@ -352,10 +534,10 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the image data for saving. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Sets the frame to contain a single image. </p>
+<p>Convenience setter for formats that carry a single image. Clears any existing images and audio in the frame. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">val</td><td>The <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> to set. </td></tr>
+    <tr><td class="paramname">val</td><td>The <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> to set. </td></tr>
   </table>
   </dd>
 </dl>
@@ -363,7 +545,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="imagefile_8h_source.html">imagefile.h</a></li>
+<li>include/promeki/<a class="el" href="imagefile_8h_source.html">imagefile.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -372,7 +554,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageFile.html">ImageFile</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

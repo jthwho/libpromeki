@@ -1,5 +1,7 @@
-<map id="include/promeki/proav/audiofile.h" name="include/promeki/proav/audiofile.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,173,45"/>
-<area shape="rect" id="Node000002" href="$audiofilefactory_8h.html" title=" " alt="" coords="5,93,173,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,59,92,93,87,93,87,59"/>
+<map id="include/promeki/audiofile.h" name="include/promeki/audiofile.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="153,5,351,31"/>
+<area shape="rect" id="Node000002" href="$audiofilefactory_8h.html" title=" " alt="" coords="5,86,248,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,40,147,88,144,84,221,36"/>
+<area shape="rect" id="Node000003" href="$mediaiotask__audiofile_8h.html" title=" " alt="" coords="273,79,485,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="284,36,350,76,347,81,281,40"/>
 </map>

@@ -5,5 +5,5 @@ var searchData=
   ['underlined_2',['Underlined',['../classAnsiStream.html#a7e20231eb70e71674e8522796a2b784bab386b2f6b7ccffc5623c4a694feb0d08',1,'AnsiStream']]],
   ['unicode_3',['Unicode',['../classString.html#a9c3c4c0e2ff486a3f2c6c7f92540d310af75090c14d39a011351f9ecdd2eca22b',1,'String']]],
   ['unsupportedsystemerror_4',['UnsupportedSystemError',['../classError.html#ab5980e13b879db253df802b0950d1708a244c26b91104769c834f407065598c4c',1,'Error']]],
-  ['usegraphpool_5',['UseGraphPool',['../classMediaNode.html#a2d29784a8601b07f04f106e401771fdaaf56c29aae2cd7b3b1c6282ce5801d567',1,'MediaNode']]]
+  ['userdefined_5',['userdefined',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2e34eec771e2e907d58cce0b4c92e35f',1,'ColorModel::UserDefined'],['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edae54fd854f6098fac7803f28dc201c94e',1,'MemSpace::UserDefined'],['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c',1,'PixelDesc::UserDefined'],['../classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda4f0fbe6edb23ddd49c7721c444b0bb10',1,'PixelFormat::UserDefined']]]
 ];

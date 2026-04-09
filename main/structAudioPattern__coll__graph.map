@@ -1,0 +1,7 @@
+<map id="AudioPattern" name="AudioPattern">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for audio test pattern generator modes." alt="" coords="52,137,157,163"/>
+<area shape="rect" id="Node000002" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="5,5,103,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="66,42,103,136,98,138,61,44"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="127,5,186,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="154,44,144,78,130,114,116,138,111,135,125,112,139,76,148,43"/>
+</map>

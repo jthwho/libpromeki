@@ -157,11 +157,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a9af99265e129eb8e386342bcf46acc67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the attribute mask (1 = defined, 0 = ignored). <br /></td></tr>
 <tr class="separator:a9af99265e129eb8e386342bcf46acc67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03a0e04d196f9eb28f250ecb6c493061" id="r_a03a0e04d196f9eb28f250ecb6c493061"><td class="memItemLeft" align="right" valign="top"><a id="a03a0e04d196f9eb28f250ecb6c493061" name="a03a0e04d196f9eb28f250ecb6c493061"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setForeground</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">color</a>)</td></tr>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setForeground</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;color)</td></tr>
 <tr class="memdesc:a03a0e04d196f9eb28f250ecb6c493061"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the foreground color. <br /></td></tr>
 <tr class="separator:a03a0e04d196f9eb28f250ecb6c493061"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2269152fc0c7f53bb2d3bf6337d433b2" id="r_a2269152fc0c7f53bb2d3bf6337d433b2"><td class="memItemLeft" align="right" valign="top"><a id="a2269152fc0c7f53bb2d3bf6337d433b2" name="a2269152fc0c7f53bb2d3bf6337d433b2"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setBackground</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;<a class="el" href="classList.html">color</a>)</td></tr>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setBackground</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classColor.html">Color</a> &amp;color)</td></tr>
 <tr class="memdesc:a2269152fc0c7f53bb2d3bf6337d433b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the background color. <br /></td></tr>
 <tr class="separator:a2269152fc0c7f53bb2d3bf6337d433b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff4081309be72a98c2d5a088145359c3" id="r_aff4081309be72a98c2d5a088145359c3"><td class="memItemLeft" align="right" valign="top"><a id="aff4081309be72a98c2d5a088145359c3" name="aff4081309be72a98c2d5a088145359c3"></a>
@@ -204,7 +204,7 @@ Static Public Member Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Visual properties of a TUI cell (everything except the character). </p>
 <p>A <a class="el" href="classTuiStyle.html" title="Visual properties of a TUI cell (everything except the character).">TuiStyle</a> bundles foreground color, background color, and text attributes into a single value. Any property can be flagged as "ignored" so that it inherits from a lower layer when styles are merged via <a class="el" href="classTuiStyle.html#a8c8b60285b30f2f79d7c87396c578d7b" title="Merges this style on top of another.">merged()</a>.</p>
-<p>An ignored color is represented by Color::Ignored (an invalid <a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a>). Attributes use a separate mask: bits set in the mask are defined by this style; bits not in the mask are inherited during merging. </p>
+<p>An ignored color is represented by <a class="el" href="classColor.html#a6254012fff6f277c0ee9644c503d07a4" title="Invalid/unset color sentinel (default-constructed).">Color::Ignored</a> (an invalid <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a>). Attributes use a separate mask: bits set in the mask are defined by this style; bits not in the mask are inherited during merging. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a8c8b60285b30f2f79d7c87396c578d7b" name="a8c8b60285b30f2f79d7c87396c578d7b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8c8b60285b30f2f79d7c87396c578d7b">&#9670;&#160;</a></span>merged()</h2>
@@ -237,7 +237,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiStyle.html">TuiStyle</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

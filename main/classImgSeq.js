@@ -1,0 +1,27 @@
+var classImgSeq =
+[
+    [ "ImgSeq", "classImgSeq.html#a646e40d62cd21fdce2bc5068eaf73ca5", null ],
+    [ "detectRange", "classImgSeq.html#a68ad991c3693719dde9bfae3988c285e", null ],
+    [ "frameFileName", "classImgSeq.html#ac64fdc14213aa351225ed46d1c033c79", null ],
+    [ "frameRate", "classImgSeq.html#a0d96c7b1435d7ce65360f956e3daa813", null ],
+    [ "head", "classImgSeq.html#a5a9767e0aaa85342c96a8fabdf38dd8c", null ],
+    [ "isValid", "classImgSeq.html#a70bb90706e4b20047307af4392d5775b", null ],
+    [ "length", "classImgSeq.html#a34f6f381399613cc411b1c78b00a16b1", null ],
+    [ "metadata", "classImgSeq.html#afb5cc91907a283bf3a683deb1ae61745", null ],
+    [ "metadata", "classImgSeq.html#a3ae8c3b6808c505caa738a8a592699c5", null ],
+    [ "name", "classImgSeq.html#a1bb1f186f5c5b951a0685f75d905e6f5", null ],
+    [ "pixelDesc", "classImgSeq.html#a06041490e0764b6fa9fb2fc25230f2ce", null ],
+    [ "save", "classImgSeq.html#a142a2a4fe22bf6d19160d7f62ba2096a", null ],
+    [ "setFrameRate", "classImgSeq.html#a83758163491f7c4e4d01bd51c76eaf88", null ],
+    [ "setHead", "classImgSeq.html#a675dbee6571fdd55e5000a53c5c087d0", null ],
+    [ "setMetadata", "classImgSeq.html#a92eb58f4d59b83955732e5a5fa0e11cc", null ],
+    [ "setName", "classImgSeq.html#a38d7d003fcd58aed26cc3c460c312e9d", null ],
+    [ "setPixelDesc", "classImgSeq.html#a5b3d023855fb3d95cac7af93dc57f23e", null ],
+    [ "setSidecarPath", "classImgSeq.html#a18123f20bcd11ad6f00a6fcbdc0942f2", null ],
+    [ "setTail", "classImgSeq.html#a2bbcbcb2132eb2fc6299651e9a8d9101", null ],
+    [ "setVideoSize", "classImgSeq.html#afee9941b9baf620350b598cffc927c5d", null ],
+    [ "sidecarPath", "classImgSeq.html#af5029e2f49a2c63f830c201461ddec3b", null ],
+    [ "tail", "classImgSeq.html#a975bccb2312a4fc27478df91630887d4", null ],
+    [ "toJson", "classImgSeq.html#aa384fa649d3d0e1ec3e3dda83112f6e3", null ],
+    [ "videoSize", "classImgSeq.html#a3b5155fba1472f84c86f3370a376e4fc", null ]
+];

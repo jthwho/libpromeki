@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classError.html',''); initResizable();
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classError-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Error Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
+  <div class="headertitle"><div class="title">Error Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -164,6 +164,15 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a93545eff2d16415430592788aae53c1c">InvalidDimension</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9">NotHostAccessible</a>
 , <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df">BufferTooSmall</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6">IdNotFound</a>
+, <br />
+&#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52">ConversionFailed</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a57deae1c5de62d83f172f42a3db7fcc2">Stopped</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec">Cancelled</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a52e22953d80c35b50658bf4e7399a8da">DecodeFailed</a>
+, <br />
+&#160;&#160;<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a0da389a20619220b914a8114ee62bef1">EncodeFailed</a>
+, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110">CorruptData</a>
 <br />
  }</td></tr>
 <tr class="memdesc:ab5980e13b879db253df802b0950d1708"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> codes for the promeki library.  <a href="classError.html#ab5980e13b879db253df802b0950d1708">More...</a><br /></td></tr>
@@ -251,7 +260,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
 <div class="ttc" id="aclassError_html_ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3"><div class="ttname"><a href="classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3">Error::NotExist</a></div><div class="ttdeci">@ NotExist</div><div class="ttdoc">File or resource does not exist (ENOENT).</div><div class="ttdef"><b>Definition</b> error.h:71</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 </div><!-- fragment --> a mapping to the corresponding POSIX errno value when applicable. </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="ab5980e13b879db253df802b0950d1708" name="ab5980e13b879db253df802b0950d1708"></a>
@@ -285,11 +294,11 @@ Static Public Member Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708ad7ee0e319256158dc429b1e93648eab9" name="ab5980e13b879db253df802b0950d1708ad7ee0e319256158dc429b1e93648eab9"></a>PermissionDenied&#160;</td><td class="fielddoc"><p>Permission denied (EACCES). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" name="ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b"></a>TryAgain&#160;</td><td class="fielddoc"><p>Resource temporarily unavailable (EAGAIN). </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" name="ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b"></a>TryAgain&#160;</td><td class="fielddoc"><p><a class="el" href="classResource.html" title="Compiled-in resource filesystem (Qt-style &quot;:/...&quot;).">Resource</a> temporarily unavailable (EAGAIN). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a83a606aceccbabd5471b962cd5766647" name="ab5980e13b879db253df802b0950d1708a83a606aceccbabd5471b962cd5766647"></a>BadFileDesc&#160;</td><td class="fielddoc"><p>Bad file descriptor (EBADF). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2" name="ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2"></a>Busy&#160;</td><td class="fielddoc"><p>Resource is busy (EBUSY). </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2" name="ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2"></a>Busy&#160;</td><td class="fielddoc"><p><a class="el" href="classResource.html" title="Compiled-in resource filesystem (Qt-style &quot;:/...&quot;).">Resource</a> is busy (EBUSY). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7" name="ab5980e13b879db253df802b0950d1708a4aa2e5d7a56b60c9db994fbb271b98b7"></a>Exists&#160;</td><td class="fielddoc"><p><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> or resource already exists (EEXIST). </p>
 </td></tr>
@@ -329,13 +338,13 @@ Static Public Member Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a2695d424a618d219be1876e3c9339de0" name="ab5980e13b879db253df802b0950d1708a2695d424a618d219be1876e3c9339de0"></a>NoFrameRate&#160;</td><td class="fielddoc"><p>No frame rate has been set. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a32fc5ae6cd22e6f34dc2233f6aa7f29b" name="ab5980e13b879db253df802b0950d1708a32fc5ae6cd22e6f34dc2233f6aa7f29b"></a>AlreadyOpen&#160;</td><td class="fielddoc"><p>Resource is already open. </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a32fc5ae6cd22e6f34dc2233f6aa7f29b" name="ab5980e13b879db253df802b0950d1708a32fc5ae6cd22e6f34dc2233f6aa7f29b"></a>AlreadyOpen&#160;</td><td class="fielddoc"><p><a class="el" href="classResource.html" title="Compiled-in resource filesystem (Qt-style &quot;:/...&quot;).">Resource</a> is already open. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" name="ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde"></a>NotSupported&#160;</td><td class="fielddoc"><p>Operation is not supported. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a67e1f2f9dd20f6721897f4eca0aaed8b" name="ab5980e13b879db253df802b0950d1708a67e1f2f9dd20f6721897f4eca0aaed8b"></a>OpenFailed&#160;</td><td class="fielddoc"><p>Failed to open a resource. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612" name="ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612"></a>NotOpen&#160;</td><td class="fielddoc"><p>Resource is not open. </p>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612" name="ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612"></a>NotOpen&#160;</td><td class="fielddoc"><p><a class="el" href="classResource.html" title="Compiled-in resource filesystem (Qt-style &quot;:/...&quot;).">Resource</a> is not open. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a47ebde87a9587fbdf7b0d5a2c5a443d0" name="ab5980e13b879db253df802b0950d1708a47ebde87a9587fbdf7b0d5a2c5a443d0"></a>EndOfFile&#160;</td><td class="fielddoc"><p>End of file reached. </p>
 </td></tr>
@@ -346,6 +355,20 @@ Static Public Member Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9" name="ab5980e13b879db253df802b0950d1708a6a4439b5905d9343e6851ada64dd7cf9"></a>NotHostAccessible&#160;</td><td class="fielddoc"><p>Memory is not host-accessible. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df" name="ab5980e13b879db253df802b0950d1708a570ab844224a9c1eb8d9201c506eb8df"></a>BufferTooSmall&#160;</td><td class="fielddoc"><p><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> is too small for the operation. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6" name="ab5980e13b879db253df802b0950d1708a0efebc1e22f971143b7b60506091f9d6"></a>IdNotFound&#160;</td><td class="fielddoc"><p>Requested ID was not found in the database. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52" name="ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52"></a>ConversionFailed&#160;</td><td class="fielddoc"><p>Type conversion could not be performed. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a57deae1c5de62d83f172f42a3db7fcc2" name="ab5980e13b879db253df802b0950d1708a57deae1c5de62d83f172f42a3db7fcc2"></a>Stopped&#160;</td><td class="fielddoc"><p>Operation interrupted because the object is stopping. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec" name="ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec"></a>Cancelled&#160;</td><td class="fielddoc"><p>Operation was cancelled before completion. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a52e22953d80c35b50658bf4e7399a8da" name="ab5980e13b879db253df802b0950d1708a52e22953d80c35b50658bf4e7399a8da"></a>DecodeFailed&#160;</td><td class="fielddoc"><p>Codec decoder reported a failure. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708a0da389a20619220b914a8114ee62bef1" name="ab5980e13b879db253df802b0950d1708a0da389a20619220b914a8114ee62bef1"></a>EncodeFailed&#160;</td><td class="fielddoc"><p>Codec encoder reported a failure. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110" name="ab5980e13b879db253df802b0950d1708ac27bcb6eb0536b89f16339118db69110"></a>CorruptData&#160;</td><td class="fielddoc"><p>Stored data is structurally corrupt. </p>
 </td></tr>
 </table>
 
@@ -651,7 +674,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="error_8h_source.html">error.h</a></li>
+<li>include/promeki/<a class="el" href="error_8h_source.html">error.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -660,7 +683,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classError.html">Error</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

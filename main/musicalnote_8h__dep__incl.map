@@ -1,5 +1,5 @@
-<map id="include/promeki/music/musicalnote.h" name="include/promeki/music/musicalnote.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,176,45"/>
-<area shape="rect" id="Node000002" href="$notesequenceparser_8h.html" title=" " alt="" coords="5,93,176,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,59,93,93,88,93,88,59"/>
+<map id="include/promeki/musicalnote.h" name="include/promeki/musicalnote.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="31,5,254,31"/>
+<area shape="rect" id="Node000002" href="$notesequenceparser_8h.html" title=" " alt="" coords="5,79,280,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="145,44,145,79,140,79,140,44"/>
 </map>

@@ -137,8 +137,19 @@ Public Types</h2></td></tr>
 , <b>TypeSize2D</b>
 , <br />
 &#160;&#160;<b>TypeUUID</b>
+, <b>TypeUMID</b>
 , <b>TypeTimecode</b>
 , <b>TypeRational</b>
+, <br />
+&#160;&#160;<b>TypeFrameRate</b>
+, <b>TypeStringList</b>
+, <b>TypeColor</b>
+, <b>TypeColorModel</b>
+, <br />
+&#160;&#160;<b>TypeMemSpace</b>
+, <b>TypePixelFormat</b>
+, <b>TypePixelDesc</b>
+, <b>TypeEnum</b>
 <br />
  }</td></tr>
 <tr class="memdesc:ab2d523ea5ddb45e27665551747d0c1be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enumerates every type the variant can hold.  <a href="classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1be">More...</a><br /></td></tr>
@@ -177,6 +188,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aae602ac42c83cbb3b1b7b4d5d2cbf95e" id="r_aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classVariantImpl.html">VariantImpl</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#aae602ac42c83cbb3b1b7b4d5d2cbf95e">toStandardType</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts complex types to their <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation, leaving simple types unchanged.  <br /></td></tr>
 <tr class="separator:aae602ac42c83cbb3b1b7b4d5d2cbf95e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a285ac7c13304d0164695813596f65a78" id="r_a285ac7c13304d0164695813596f65a78"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classEnum.html">Enum</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#a285ac7c13304d0164695813596f65a78">asEnum</a> (<a class="el" href="classEnum_1_1Type.html">Enum::Type</a> <a class="el" href="classList.html">enumType</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a285ac7c13304d0164695813596f65a78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolves the stored value to an <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> of the given type.  <br /></td></tr>
+<tr class="separator:a285ac7c13304d0164695813596f65a78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43409c9668791efb1404d487e1286b93" id="r_a43409c9668791efb1404d487e1286b93"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantImpl.html#a43409c9668791efb1404d487e1286b93">operator==</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantImpl.html">VariantImpl</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a43409c9668791efb1404d487e1286b93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both variants hold equal values.  <br /></td></tr>
+<tr class="separator:a43409c9668791efb1404d487e1286b93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11ab0b675171b251f5064137b038f43d" id="r_a11ab0b675171b251f5064137b038f43d"><td class="memItemLeft" align="right" valign="top"><a id="a11ab0b675171b251f5064137b038f43d" name="a11ab0b675171b251f5064137b038f43d"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantImpl.html">VariantImpl</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a11ab0b675171b251f5064137b038f43d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the variants are not equal. <br /></td></tr>
+<tr class="separator:a11ab0b675171b251f5064137b038f43d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -192,13 +213,13 @@ Static Public Member Functions</h2></td></tr>
 class VariantImpl&lt; Types &gt;</div><p>Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES. </p>
 <p><a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> is a thin wrapper around <code>std::variant</code> that adds a Type enum, human-readable type names, and automatic type-conversion logic via the templated <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">get()</a> method. It is not intended to be used directly; instead use</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Variant</a> v = 42;</div>
-<div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_class" href="classList.html">s</a> = v.get&lt;<a class="code hl_class" href="classString.html">String</a>&gt;();  <span class="comment">// &quot;42&quot;</span></div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> s = v.get&lt;<a class="code hl_class" href="classString.html">String</a>&gt;();  <span class="comment">// &quot;42&quot;</span></div>
 <div class="line">v.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;hello&quot;</span>));</div>
 <div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">valid</a> = v.isValid();    <span class="comment">// true</span></div>
 <div class="line">Variant::Type <a class="code hl_class" href="classList.html">t</a> = v.type();  <span class="comment">// Variant::TypeString</span></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 </div><!-- fragment --> the <code>Variant</code> type alias which is instantiated with the concrete type list.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -272,6 +293,73 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a285ac7c13304d0164695813596f65a78" name="a285ac7c13304d0164695813596f65a78"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a285ac7c13304d0164695813596f65a78">&#9670;&#160;</a></span>asEnum()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Types&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classEnum.html">Enum</a> <a class="el" href="classVariantImpl.html">VariantImpl</a>&lt; <a class="el" href="classList.html">Types</a> &gt;::asEnum </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classEnum_1_1Type.html">Enum::Type</a>&#160;</td>
+          <td class="paramname"><em>enumType</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classError.html">Error</a> *&#160;</td>
+          <td class="paramname"><em>err</em> = <code><a class="el" href="classList.html">nullptr</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Resolves the stored value to an <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> of the given type. </p>
+<p>Unlike <code><a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">get&lt;Enum&gt;()</a></code>, which has no context about the intended enum kind and therefore requires a fully qualified <code>"TypeName::ValueName"</code> string, this method takes a target <a class="el" href="classEnum_1_1Type.html">Enum::Type</a> handle and uses it to resolve several more flexible forms. Accepted inputs:</p>
+<ul>
+<li><code>TypeInvalid</code> (default-constructed / missing config key) → returns <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum(enumType)</a></code>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. the type's registered default value, with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code>. This makes the registered default double as the config fallback so callers don't need to repeat it.</li>
+<li><code>TypeEnum</code> holding an <a class="el" href="classEnum.html">Enum</a> of <code>enumType</code> → returned directly.</li>
+<li><code>TypeEnum</code> holding an <a class="el" href="classEnum.html">Enum</a> of a <em>different</em> type → error, returns an invalid <a class="el" href="classEnum.html">Enum</a>.</li>
+<li><code>TypeString</code> <code>"TypeName::ValueName"</code> (qualified) → parsed via <a class="el" href="classEnum.html#ac621480dfcb02bcd46dca06ebbb7dc35">Enum::lookup</a>; must match <code>enumType</code>.</li>
+<li><code>TypeString</code> <code>"ValueName"</code> (unqualified) → resolved by name against <code>enumType</code>.</li>
+<li><code>TypeString</code> decimal integer (e.g. <code>"100"</code>, <code>"-1"</code>) → wrapped as <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum(enumType, int)</a></code>. The result may be out-of-list but is still valid and round-trippable.</li>
+<li>Any integer <code>Type</code> (bool/u8..s64) → wrapped as <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum(enumType, int)</a></code>.</li>
+<li>Anything else → error, returns an invalid <a class="el" href="classEnum.html">Enum</a>.</li>
+</ul>
+<p>This is the canonical way to pull a typed <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> out of a config value that may have been authored as a string, an integer, or a typed <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a>.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">Variant</a> v = <a class="code hl_class" href="classList.html">cfg</a>.get(ConfigVideoPattern);</div>
+<div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a>;</div>
+<div class="line"><a class="code hl_class" href="classEnum.html">Enum</a> <a class="code hl_class" href="classList.html">pat</a> = v.asEnum(VideoPattern::Type, &amp;<a class="code hl_class" href="classList.html">err</a>);</div>
+<div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a>.isError() || !<a class="code hl_class" href="classList.html">pat</a>.isValid()) <a class="code hl_class" href="classList.html">pat</a> = VideoPattern::ColorBars;</div>
+<div class="ttc" id="aclassEnum_html"><div class="ttname"><a href="classEnum.html">Enum</a></div><div class="ttdoc">Runtime-typed enumeration value carrying a registered type and integer.</div><div class="ttdef"><b>Definition</b> enum.h:93</div></div>
+<div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
+</div><!-- fragment --></dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enumType</td><td>Target <a class="el" href="classEnum.html">Enum</a> type handle. </td></tr>
+    <tr><td class="paramname">err</td><td>Optional error output; set to <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5b787b2e97c330870af29648d078cd7" title="Invalid argument supplied.">Error::InvalidArgument</a></code> if <code>enumType</code> is invalid, <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a></code> on any other conversion failure, or <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The converted <a class="el" href="classEnum.html">Enum</a>, or a default-constructed (invalid) <a class="el" href="classEnum.html">Enum</a> on failure. </dd></dl>
+
+</div>
+</div>
 <a id="a742303e0eb9374239f4fadf7f2c05bac" name="a742303e0eb9374239f4fadf7f2c05bac"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a742303e0eb9374239f4fadf7f2c05bac">&#9670;&#160;</a></span>fromJson()</h2>
 
@@ -306,6 +394,7 @@ template&lt;typename... Types&gt; </div>
 <li>signed integer -&gt; <code>int64_t</code></li>
 <li>floating-point -&gt; <code>double</code></li>
 <li>string -&gt; <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code></li>
+<li>array -&gt; <code><a class="el" href="classStringList.html" title="Manages a list of strings.">StringList</a></code> (elements converted to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>)</li>
 <li>anything else -&gt; <code><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a></code> (via <code>json::dump()</code>)</li>
 </ul>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -361,6 +450,53 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The converted value, or a default-constructed <code>To</code> on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a43409c9668791efb1404d487e1286b93" name="a43409c9668791efb1404d487e1286b93"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43409c9668791efb1404d487e1286b93">&#9670;&#160;</a></span>operator==()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Types&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> <a class="el" href="classVariantImpl.html">VariantImpl</a>&lt; <a class="el" href="classList.html">Types</a> &gt;<a class="el" href="classList.html">::operator</a>== </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantImpl.html">VariantImpl</a>&lt; <a class="el" href="classList.html">Types</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if both variants hold equal values. </p>
+<p>Comparison is performed in three tiers:</p><ol type="1">
+<li><b>Same type</b> — uses the type's own operator==.</li>
+<li><b>Cross-type numeric</b> (including bool) — promotes to a common representation: double when either operand is floating-point, otherwise a safe signed/unsigned integer comparison via uint64_t with a negative-value guard.</li>
+<li><b>Cross-type convertible</b> — attempts to convert one operand to the other's type via <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">get&lt;T&gt;()</a>. Both directions are tried; if either conversion succeeds and the converted values compare equal, returns true.</li>
+</ol>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Same type — direct comparison</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42));  <span class="comment">// true</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Cross-type numeric promotion</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">uint32_t</a>(42)); <span class="comment">// true</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(3))  == <a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(3.0);          <span class="comment">// true</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(-1)) == <a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">uint32_t</a>(0));  <span class="comment">// false (negative guard)</span></div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Cross-type convertible</span></div>
+<div class="line"><a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classList.html">int32_t</a>(42)) == <a class="code hl_typedef" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a>(<a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;42&quot;</span>)); <span class="comment">// true</span></div>
+<div class="ttc" id="avariant_8h_html_ac15b79be40667401a29a7cf97c330853"><div class="ttname"><a href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a></div><div class="ttdeci">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, Enum, detail::VariantEnd &gt; Variant</div><div class="ttdoc">Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.</div><div class="ttdef"><b>Definition</b> variant.h:633</div></div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -434,7 +570,7 @@ template&lt;typename... Types&gt; </div>
 </div><div class="memdoc">
 
 <p>Converts complex types to their <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation, leaving simple types unchanged. </p>
-<p>Types such as <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a>, <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, Size2Du32, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, and <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> are converted to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <code>get&lt;std::string&gt;()</code>. All other types (numeric, bool, invalid) are returned as-is.</p>
+<p>Types such as <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, <a class="el" href="classDateTime.html" title="Wall-clock date and time based on std::chrono::system_clock.">DateTime</a>, <a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>, Size2Du32, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>, <a class="el" href="classUMID.html" title="SMPTE 330M Unique Material Identifier (UMID).">UMID</a>, <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a>, and <a class="el" href="classStringList.html" title="Manages a list of strings.">StringList</a> are converted to <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> via <code>get&lt;<a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>&gt;()</code>. All other types (numeric, bool, invalid) are returned as-is.</p>
 <dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a> containing either the original value or its <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> representation. </dd></dl>
 
 </div>
@@ -477,7 +613,7 @@ template&lt;typename... Types&gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="variant_8h_source.html">variant.h</a></li>
+<li>include/promeki/<a class="el" href="variant_8h_source.html">variant.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -486,7 +622,7 @@ template&lt;typename... Types&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantImpl.html">VariantImpl</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

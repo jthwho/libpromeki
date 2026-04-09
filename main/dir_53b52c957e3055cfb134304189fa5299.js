@@ -6,7 +6,7 @@ var dir_53b52c957e3055cfb134304189fa5299 =
     [ "frame.h", "tui_2frame_8h.html", null ],
     [ "inputparser.h", "inputparser_8h.html", "inputparser_8h" ],
     [ "label.h", "label_8h.html", "label_8h" ],
-    [ "layout.h", "layout_8h.html", "layout_8h" ],
+    [ "layout.h", "tui_2layout_8h.html", null ],
     [ "lineedit.h", "lineedit_8h.html", null ],
     [ "listview.h", "listview_8h.html", null ],
     [ "menu.h", "menu_8h.html", "menu_8h" ],
@@ -20,5 +20,5 @@ var dir_53b52c957e3055cfb134304189fa5299 =
     [ "style.h", "style_8h.html", "style_8h" ],
     [ "tabwidget.h", "tabwidget_8h.html", null ],
     [ "textarea.h", "textarea_8h.html", null ],
-    [ "widget.h", "widget_8h.html", "widget_8h" ]
+    [ "widget.h", "tui_2widget_8h.html", null ]
 ];

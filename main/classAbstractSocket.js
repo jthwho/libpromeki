@@ -27,6 +27,8 @@ var classAbstractSocket =
     [ "PROMEKI_SIGNAL", "classAbstractSocket.html#a77948be06e2469025b66856a5853a69e", null ],
     [ "PROMEKI_SIGNAL", "classAbstractSocket.html#a6b894ded240d99fcdfcced5d914baec6", null ],
     [ "setNonBlocking", "classAbstractSocket.html#a33ef079cac8b563d8b0ac69e4d74b00e", null ],
+    [ "setReceiveTimeout", "classAbstractSocket.html#a786fa46750fb498d65559c6163935707", null ],
+    [ "setSendTimeout", "classAbstractSocket.html#a39f1a93460094b355b14464035be2422", null ],
     [ "setSocketDescriptor", "classAbstractSocket.html#a1f1a78e36d0aac74cbdd19ec75ce996f", null ],
     [ "setSocketOption", "classAbstractSocket.html#a55cbea16ccf4d7560a847259de8ba010", null ],
     [ "setState", "classAbstractSocket.html#aeafb3a6944d445013276a61f4f4994e7", null ],

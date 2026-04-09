@@ -100,14 +100,15 @@ $(document).ready(function(){initNavTree('classMediaPipeline.html',''); initResi
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classMediaPipeline-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">MediaPipeline Class Reference<div class="ingroups"><a class="el" href="group__proav__pipeline.html">ProAV Pipeline</a></div></div></div>
+  <div class="headertitle"><div class="title">MediaPipeline Class Reference<div class="ingroups"><a class="el" href="group__pipeline.html">Pipeline</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Owns a <a class="el" href="classMediaGraph.html" title="Directed acyclic graph of MediaNodes connected by MediaLinks.">MediaGraph</a> and orchestrates pipeline processing.  
+<p>Owns nodes and topology, orchestrates pipeline processing.  
  <a href="classMediaPipeline.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="mediapipeline_8h_source.html">mediapipeline.h</a>&gt;</code></p>
@@ -116,7 +117,7 @@ Inheritance diagram for MediaPipeline:</div>
 <div class="dyncontent">
 <div class="center"><img src="classMediaPipeline__inherit__graph.png" border="0" usemap="#aMediaPipeline_inherit__map" alt="Inheritance graph"/></div>
 <map name="aMediaPipeline_inherit__map" id="aMediaPipeline_inherit__map">
-<area shape="rect" title="Owns a MediaGraph and orchestrates pipeline processing." alt="" coords="5,79,120,104"/>
+<area shape="rect" title="Owns nodes and topology, orchestrates pipeline processing." alt="" coords="5,79,120,104"/>
 <area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="15,5,111,31"/>
 <area shape="poly" title=" " alt="" coords="65,44,65,79,60,79,60,44"/>
 </map>
@@ -126,7 +127,7 @@ Collaboration diagram for MediaPipeline:</div>
 <div class="dyncontent">
 <div class="center"><img src="classMediaPipeline__coll__graph.png" border="0" usemap="#aMediaPipeline_coll__map" alt="Collaboration graph"/></div>
 <map name="aMediaPipeline_coll__map" id="aMediaPipeline_coll__map">
-<area shape="rect" title="Owns a MediaGraph and orchestrates pipeline processing." alt="" coords="142,168,257,193"/>
+<area shape="rect" title="Owns nodes and topology, orchestrates pipeline processing." alt="" coords="142,168,257,193"/>
 <area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="151,93,247,119"/>
 <area shape="poly" title=" " alt="" coords="202,133,202,168,197,168,197,133"/>
 <area shape="rect" href="classObjectBase_1_1SignalMeta.html" title="Metadata entry describing a signal on an ObjectBase&#45;derived class." alt="" coords="5,5,183,31"/>
@@ -136,6 +137,12 @@ Collaboration diagram for MediaPipeline:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaPipeline_1_1BuildError.html">BuildError</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Collects all errors from a <a class="el" href="classMediaPipeline.html#ab55d01325582c894ff5058e79cab208c" title="Builds the pipeline from a configuration.">build()</a> call.  <a href="structMediaPipeline_1_1BuildError.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:a5b443714546d0d15aa4670acf2413199" id="r_a5b443714546d0d15aa4670acf2413199"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a5b443714546d0d15aa4670acf2413199">State</a> { <br />
@@ -159,32 +166,61 @@ Public Types</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a48591532723de50ab0988a6e59317f33" id="r_a48591532723de50ab0988a6e59317f33"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a48591532723de50ab0988a6e59317f33">MediaPipeline</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
-<tr class="memdesc:a48591532723de50ab0988a6e59317f33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classMediaPipeline.html" title="Owns a MediaGraph and orchestrates pipeline processing.">MediaPipeline</a>.  <br /></td></tr>
+<tr class="memdesc:a48591532723de50ab0988a6e59317f33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a>.  <br /></td></tr>
 <tr class="separator:a48591532723de50ab0988a6e59317f33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a02cdb25cc2090eae4318ca7673a882" id="r_a0a02cdb25cc2090eae4318ca7673a882"><td class="memItemLeft" align="right" valign="top"><a id="a0a02cdb25cc2090eae4318ca7673a882" name="a0a02cdb25cc2090eae4318ca7673a882"></a>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~MediaPipeline</b> ()</td></tr>
-<tr class="memdesc:a0a02cdb25cc2090eae4318ca7673a882"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Stops the pipeline if running. <br /></td></tr>
+<tr class="memdesc:a0a02cdb25cc2090eae4318ca7673a882"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Stops the pipeline if running, deletes owned nodes. <br /></td></tr>
 <tr class="separator:a0a02cdb25cc2090eae4318ca7673a882"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22f3a2b1893b2983ce9af1199216c463" id="r_a22f3a2b1893b2983ce9af1199216c463"><td class="memItemLeft" align="right" valign="top"><a id="a22f3a2b1893b2983ce9af1199216c463" name="a22f3a2b1893b2983ce9af1199216c463"></a>
-<a class="el" href="classMediaGraph.html">MediaGraph</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>graph</b> ()</td></tr>
-<tr class="memdesc:a22f3a2b1893b2983ce9af1199216c463"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the managed graph. <br /></td></tr>
-<tr class="separator:a22f3a2b1893b2983ce9af1199216c463"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc2b1d3d133d4d5054dda17ecd13d40e" id="r_afc2b1d3d133d4d5054dda17ecd13d40e"><td class="memItemLeft" align="right" valign="top"><a id="afc2b1d3d133d4d5054dda17ecd13d40e" name="afc2b1d3d133d4d5054dda17ecd13d40e"></a>
-<a class="el" href="classList.html">const</a> <a class="el" href="classMediaGraph.html">MediaGraph</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>graph</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:afc2b1d3d133d4d5054dda17ecd13d40e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the managed graph (const). <br /></td></tr>
-<tr class="separator:afc2b1d3d133d4d5054dda17ecd13d40e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a068b06d83a64bdde66608d79e6ca23cd" id="r_a068b06d83a64bdde66608d79e6ca23cd"><td class="memItemLeft" align="right" valign="top"><a id="a068b06d83a64bdde66608d79e6ca23cd" name="a068b06d83a64bdde66608d79e6ca23cd"></a>
-<a class="el" href="classThreadPool.html">ThreadPool</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>threadPool</b> ()</td></tr>
-<tr class="memdesc:a068b06d83a64bdde66608d79e6ca23cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the thread pool used for processing. <br /></td></tr>
-<tr class="separator:a068b06d83a64bdde66608d79e6ca23cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae36ce557ef9f1e8dc227c4b4ac89afe4" id="r_ae36ce557ef9f1e8dc227c4b4ac89afe4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#ae36ce557ef9f1e8dc227c4b4ac89afe4">setThreadPool</a> (<a class="el" href="classThreadPool.html">ThreadPool</a> *<a class="el" href="classList.html">pool</a>)</td></tr>
-<tr class="memdesc:ae36ce557ef9f1e8dc227c4b4ac89afe4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets an external thread pool to use instead of the internal one.  <br /></td></tr>
-<tr class="separator:ae36ce557ef9f1e8dc227c4b4ac89afe4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab55d01325582c894ff5058e79cab208c" id="r_ab55d01325582c894ff5058e79cab208c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structMediaPipeline_1_1BuildError.html">BuildError</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#ab55d01325582c894ff5058e79cab208c">build</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a> &amp;config)</td></tr>
+<tr class="memdesc:ab55d01325582c894ff5058e79cab208c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds the pipeline from a configuration.  <br /></td></tr>
+<tr class="separator:ab55d01325582c894ff5058e79cab208c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b1dfdb77ed56502cadb2d18da5bcec5" id="r_a2b1dfdb77ed56502cadb2d18da5bcec5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a2b1dfdb77ed56502cadb2d18da5bcec5">addNode</a> (<a class="el" href="classMediaNode.html">MediaNode</a> *<a class="el" href="classMediaPipeline.html#a7d7e63c5577e425580e1fd59eb4c376b">node</a>)</td></tr>
+<tr class="memdesc:a2b1dfdb77ed56502cadb2d18da5bcec5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a node to the pipeline. Takes ownership.  <br /></td></tr>
+<tr class="separator:a2b1dfdb77ed56502cadb2d18da5bcec5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e8c0578a2835b64a6e1197f20dac21e" id="r_a3e8c0578a2835b64a6e1197f20dac21e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a3e8c0578a2835b64a6e1197f20dac21e">removeNode</a> (<a class="el" href="classMediaNode.html">MediaNode</a> *<a class="el" href="classMediaPipeline.html#a7d7e63c5577e425580e1fd59eb4c376b">node</a>)</td></tr>
+<tr class="memdesc:a3e8c0578a2835b64a6e1197f20dac21e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a node from the pipeline.  <br /></td></tr>
+<tr class="separator:a3e8c0578a2835b64a6e1197f20dac21e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d89d60f6275db2f1fc82deaf54bc73e" id="r_a7d89d60f6275db2f1fc82deaf54bc73e"><td class="memItemLeft" align="right" valign="top"><a id="a7d89d60f6275db2f1fc82deaf54bc73e" name="a7d89d60f6275db2f1fc82deaf54bc73e"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>nodes</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7d89d60f6275db2f1fc82deaf54bc73e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns all nodes in the pipeline. <br /></td></tr>
+<tr class="separator:a7d89d60f6275db2f1fc82deaf54bc73e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d7e63c5577e425580e1fd59eb4c376b" id="r_a7d7e63c5577e425580e1fd59eb4c376b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a7d7e63c5577e425580e1fd59eb4c376b">node</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7d7e63c5577e425580e1fd59eb4c376b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds a node by name.  <br /></td></tr>
+<tr class="separator:a7d7e63c5577e425580e1fd59eb4c376b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f20161ebaeddf61367f63a5c7d98e81" id="r_a0f20161ebaeddf61367f63a5c7d98e81"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a0f20161ebaeddf61367f63a5c7d98e81">connect</a> (<a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a> source, <a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a> sink)</td></tr>
+<tr class="memdesc:a0f20161ebaeddf61367f63a5c7d98e81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects a source to a sink.  <br /></td></tr>
+<tr class="separator:a0f20161ebaeddf61367f63a5c7d98e81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b3eb5d16978e7246c8fecad7c59e4d1" id="r_a5b3eb5d16978e7246c8fecad7c59e4d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a5b3eb5d16978e7246c8fecad7c59e4d1">connect</a> (<a class="el" href="classMediaNode.html">MediaNode</a> *<a class="el" href="classList.html">sourceNode</a>, int sourceIndex, <a class="el" href="classMediaNode.html">MediaNode</a> *<a class="el" href="classList.html">sinkNode</a>, int <a class="el" href="classList.html">sinkIndex</a>)</td></tr>
+<tr class="memdesc:a5b3eb5d16978e7246c8fecad7c59e4d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects nodes by source/sink index.  <br /></td></tr>
+<tr class="separator:a5b3eb5d16978e7246c8fecad7c59e4d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27da7cfccbf1e766ca2567c7a97b106c" id="r_a27da7cfccbf1e766ca2567c7a97b106c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a27da7cfccbf1e766ca2567c7a97b106c">connect</a> (<a class="el" href="classMediaNode.html">MediaNode</a> *<a class="el" href="classList.html">sourceNode</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;sourceName, <a class="el" href="classMediaNode.html">MediaNode</a> *<a class="el" href="classList.html">sinkNode</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;sinkName)</td></tr>
+<tr class="memdesc:a27da7cfccbf1e766ca2567c7a97b106c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects nodes by source/sink name.  <br /></td></tr>
+<tr class="separator:a27da7cfccbf1e766ca2567c7a97b106c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bd3dc121677d898a764a69ef2ec60a5" id="r_a9bd3dc121677d898a764a69ef2ec60a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a9bd3dc121677d898a764a69ef2ec60a5">disconnect</a> (<a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a> source, <a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a> sink)</td></tr>
+<tr class="memdesc:a9bd3dc121677d898a764a69ef2ec60a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disconnects a source from a sink.  <br /></td></tr>
+<tr class="separator:a9bd3dc121677d898a764a69ef2ec60a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed" id="r_ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed">validate</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates the pipeline topology.  <br /></td></tr>
+<tr class="separator:ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ee4ffba8b5bb3919b2de39dc968feee" id="r_a5ee4ffba8b5bb3919b2de39dc968feee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a5ee4ffba8b5bb3919b2de39dc968feee">topologicalSort</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5ee4ffba8b5bb3919b2de39dc968feee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns nodes in topological order (dependencies first).  <br /></td></tr>
+<tr class="separator:a5ee4ffba8b5bb3919b2de39dc968feee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac72ae01c12eee00eddfca50951f36ef3" id="r_ac72ae01c12eee00eddfca50951f36ef3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#ac72ae01c12eee00eddfca50951f36ef3">sourceNodes</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ac72ae01c12eee00eddfca50951f36ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns nodes with no input connections (source nodes).  <br /></td></tr>
+<tr class="separator:ac72ae01c12eee00eddfca50951f36ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4646fe3cd6d5e148910897996173716" id="r_aa4646fe3cd6d5e148910897996173716"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#aa4646fe3cd6d5e148910897996173716">sinkNodes</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa4646fe3cd6d5e148910897996173716"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns nodes with no output connections (sink nodes).  <br /></td></tr>
+<tr class="separator:aa4646fe3cd6d5e148910897996173716"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23ca3afbc4e0bad2bd023184a428625a" id="r_a23ca3afbc4e0bad2bd023184a428625a"><td class="memItemLeft" align="right" valign="top"><a id="a23ca3afbc4e0bad2bd023184a428625a" name="a23ca3afbc4e0bad2bd023184a428625a"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
+<tr class="memdesc:a23ca3afbc4e0bad2bd023184a428625a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all nodes and links. Deletes all owned nodes. <br /></td></tr>
+<tr class="separator:a23ca3afbc4e0bad2bd023184a428625a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b9c9fc9c80f13452459182d9f968b09" id="r_a2b9c9fc9c80f13452459182d9f968b09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a2b9c9fc9c80f13452459182d9f968b09">start</a> ()</td></tr>
-<tr class="memdesc:a2b9c9fc9c80f13452459182d9f968b09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates the graph, configures all nodes, and starts processing.  <br /></td></tr>
+<tr class="memdesc:a2b9c9fc9c80f13452459182d9f968b09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates the pipeline, configures all nodes, and starts processing.  <br /></td></tr>
 <tr class="separator:a2b9c9fc9c80f13452459182d9f968b09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ae5fc86ccd54b3ed18c9feaa1d2c99a" id="r_a0ae5fc86ccd54b3ed18c9feaa1d2c99a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a0ae5fc86ccd54b3ed18c9feaa1d2c99a">stop</a> ()</td></tr>
-<tr class="memdesc:a0ae5fc86ccd54b3ed18c9feaa1d2c99a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops all nodes and waits for processing to complete.  <br /></td></tr>
+<tr class="memdesc:a0ae5fc86ccd54b3ed18c9feaa1d2c99a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops all nodes.  <br /></td></tr>
 <tr class="separator:a0ae5fc86ccd54b3ed18c9feaa1d2c99a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a89f3d625d2e7d7780ea7fac3ffbe76ea" id="r_a89f3d625d2e7d7780ea7fac3ffbe76ea"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a89f3d625d2e7d7780ea7fac3ffbe76ea">pause</a> ()</td></tr>
 <tr class="memdesc:a89f3d625d2e7d7780ea7fac3ffbe76ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pauses processing.  <br /></td></tr>
@@ -192,6 +228,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac3bffd2039cef08ae2c2bd059bfb36a6" id="r_ac3bffd2039cef08ae2c2bd059bfb36a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#ac3bffd2039cef08ae2c2bd059bfb36a6">resume</a> ()</td></tr>
 <tr class="memdesc:ac3bffd2039cef08ae2c2bd059bfb36a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resumes processing from a paused state.  <br /></td></tr>
 <tr class="separator:ac3bffd2039cef08ae2c2bd059bfb36a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10f0c7264b740985e1b49773ae01d084" id="r_a10f0c7264b740985e1b49773ae01d084"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html#a10f0c7264b740985e1b49773ae01d084">benchmarkSummary</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a10f0c7264b740985e1b49773ae01d084"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produces a combined benchmark summary from all nodes.  <br /></td></tr>
+<tr class="separator:a10f0c7264b740985e1b49773ae01d084"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab218585ccd9fd1a8cc82614fb0a662af" id="r_ab218585ccd9fd1a8cc82614fb0a662af"><td class="memItemLeft" align="right" valign="top"><a id="ab218585ccd9fd1a8cc82614fb0a662af" name="ab218585ccd9fd1a8cc82614fb0a662af"></a>
 <a class="el" href="classMediaPipeline.html#a5b443714546d0d15aa4670acf2413199">State</a>&#160;</td><td class="memItemRight" valign="bottom"><b>state</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ab218585ccd9fd1a8cc82614fb0a662af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current pipeline state. <br /></td></tr>
@@ -286,8 +325,9 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="separator:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Owns a <a class="el" href="classMediaGraph.html" title="Directed acyclic graph of MediaNodes connected by MediaLinks.">MediaGraph</a> and orchestrates pipeline processing. </p>
-<p><a class="el" href="classMediaPipeline.html" title="Owns a MediaGraph and orchestrates pipeline processing.">MediaPipeline</a> manages the execution of a media processing graph. It validates the graph, configures all nodes, and schedules processing using a thread pool. The processing model is back-pressure driven: source nodes run continuously gated by downstream queue depth, and only timing-aware sink nodes manage real-time pacing. </p>
+<div class="textblock"><p>Owns nodes and topology, orchestrates pipeline processing. </p>
+<p><a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a> manages the topology and execution of a media processing pipeline. Nodes are added, connected via their sources and sinks, validated for cycles and correctness, then started.</p>
+<p>Connections are made by wiring a node's <a class="el" href="classMediaSource.html" title="Output endpoint on a MediaNode that delivers Frame::Ptr to connected sinks.">MediaSource</a> to another node's <a class="el" href="classMediaSink.html" title="Input endpoint on a MediaNode that receives Frame::Ptr.">MediaSink</a>. The pipeline provides convenience <a class="el" href="classMediaPipeline.html#a0f20161ebaeddf61367f63a5c7d98e81" title="Connects a source to a sink.">connect()</a> methods that look up the source/sink by index or name. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a5b443714546d0d15aa4670acf2413199" name="a5b443714546d0d15aa4670acf2413199"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5b443714546d0d15aa4670acf2413199">&#9670;&#160;</a></span>State</h2>
@@ -336,7 +376,7 @@ template&lt;typename... Args&gt; </td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Constructs a <a class="el" href="classMediaPipeline.html" title="Owns a MediaGraph and orchestrates pipeline processing.">MediaPipeline</a>. </p>
+<p>Constructs a <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">parent</td><td>Optional parent object. </td></tr>
@@ -347,6 +387,289 @@ template&lt;typename... Args&gt; </td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a2b1dfdb77ed56502cadb2d18da5bcec5" name="a2b1dfdb77ed56502cadb2d18da5bcec5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2b1dfdb77ed56502cadb2d18da5bcec5">&#9670;&#160;</a></span>addNode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::addNode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td>
+          <td class="paramname"><em>node</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Adds a node to the pipeline. Takes ownership. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">node</td><td>The node to add. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success. </dd></dl>
+
+</div>
+</div>
+<a id="a10f0c7264b740985e1b49773ae01d084" name="a10f0c7264b740985e1b49773ae01d084"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a10f0c7264b740985e1b49773ae01d084">&#9670;&#160;</a></span>benchmarkSummary()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> MediaPipeline::benchmarkSummary </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Produces a combined benchmark summary from all nodes. </p>
+<dl class="section return"><dt>Returns</dt><dd>A formatted <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> with per-node benchmark statistics. </dd></dl>
+
+</div>
+</div>
+<a id="ab55d01325582c894ff5058e79cab208c" name="ab55d01325582c894ff5058e79cab208c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab55d01325582c894ff5058e79cab208c">&#9670;&#160;</a></span>build()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structMediaPipeline_1_1BuildError.html">BuildError</a> MediaPipeline::build </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a> &amp;&#160;</td>
+          <td class="paramname"><em>config</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Builds the pipeline from a configuration. </p>
+<p>Creates all nodes via the factory, wires connections, and calls <a class="el" href="classMediaNode.html#a73390a1daa25f848560d91349a71b131" title="Configures this node from a MediaNodeConfig.">MediaNode::build()</a> on each node. The pipeline must be in the Stopped state. The configuration list need not be in any particular order; dependency order is determined automatically from the connection graph.</p>
+<p>On error, any partially-created nodes are cleaned up and the pipeline remains in the Stopped state. All errors are collected into the returned <a class="el" href="structMediaPipeline_1_1BuildError.html" title="Collects all errors from a build() call.">BuildError</a> (not just the first).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td>The pipeline configuration. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="structMediaPipeline_1_1BuildError.html" title="Collects all errors from a build() call.">BuildError</a> collecting all problems found. </dd></dl>
+
+</div>
+</div>
+<a id="a27da7cfccbf1e766ca2567c7a97b106c" name="a27da7cfccbf1e766ca2567c7a97b106c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27da7cfccbf1e766ca2567c7a97b106c">&#9670;&#160;</a></span>connect() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::connect </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td>
+          <td class="paramname"><em>sourceNode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>sourceName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td>
+          <td class="paramname"><em>sinkNode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>sinkName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Connects nodes by source/sink name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sourceNode</td><td>The source node. </td></tr>
+    <tr><td class="paramname">sourceName</td><td>Output source name on the source node. </td></tr>
+    <tr><td class="paramname">sinkNode</td><td>The sink node. </td></tr>
+    <tr><td class="paramname">sinkName</td><td>Input sink name on the sink node. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a> if names not found. </dd></dl>
+
+</div>
+</div>
+<a id="a5b3eb5d16978e7246c8fecad7c59e4d1" name="a5b3eb5d16978e7246c8fecad7c59e4d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b3eb5d16978e7246c8fecad7c59e4d1">&#9670;&#160;</a></span>connect() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::connect </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td>
+          <td class="paramname"><em>sourceNode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sourceIndex</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td>
+          <td class="paramname"><em>sinkNode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>sinkIndex</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Connects nodes by source/sink index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sourceNode</td><td>The source node. </td></tr>
+    <tr><td class="paramname">sourceIndex</td><td>Output source index on the source node. </td></tr>
+    <tr><td class="paramname">sinkNode</td><td>The sink node. </td></tr>
+    <tr><td class="paramname">sinkIndex</td><td>Input sink index on the sink node. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a> on bad indices. </dd></dl>
+
+</div>
+</div>
+<a id="a0f20161ebaeddf61367f63a5c7d98e81" name="a0f20161ebaeddf61367f63a5c7d98e81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f20161ebaeddf61367f63a5c7d98e81">&#9670;&#160;</a></span>connect() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::connect </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a>&#160;</td>
+          <td class="paramname"><em>source</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a>&#160;</td>
+          <td class="paramname"><em>sink</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Connects a source to a sink. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>The output source. </td></tr>
+    <tr><td class="paramname">sink</td><td>The input sink. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a> if either is null. </dd></dl>
+
+</div>
+</div>
+<a id="a9bd3dc121677d898a764a69ef2ec60a5" name="a9bd3dc121677d898a764a69ef2ec60a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9bd3dc121677d898a764a69ef2ec60a5">&#9670;&#160;</a></span>disconnect()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::disconnect </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a>&#160;</td>
+          <td class="paramname"><em>source</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a>&#160;</td>
+          <td class="paramname"><em>sink</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Disconnects a source from a sink. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>The output source. </td></tr>
+    <tr><td class="paramname">sink</td><td>The input sink. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success. </dd></dl>
+
+</div>
+</div>
+<a id="a7d7e63c5577e425580e1fd59eb4c376b" name="a7d7e63c5577e425580e1fd59eb4c376b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d7e63c5577e425580e1fd59eb4c376b">&#9670;&#160;</a></span>node()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMediaNode.html">MediaNode</a> * MediaPipeline::node </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Finds a node by name. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The node name. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The node, or nullptr if not found. </dd></dl>
+
+</div>
+</div>
 <a id="a89f3d625d2e7d7780ea7fac3ffbe76ea" name="a89f3d625d2e7d7780ea7fac3ffbe76ea"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a89f3d625d2e7d7780ea7fac3ffbe76ea">&#9670;&#160;</a></span>pause()</h2>
 
@@ -364,6 +687,34 @@ template&lt;typename... Args&gt; </td></tr>
 
 <p>Pauses processing. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success. </dd></dl>
+
+</div>
+</div>
+<a id="a3e8c0578a2835b64a6e1197f20dac21e" name="a3e8c0578a2835b64a6e1197f20dac21e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e8c0578a2835b64a6e1197f20dac21e">&#9670;&#160;</a></span>removeNode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::removeNode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMediaNode.html">MediaNode</a> *&#160;</td>
+          <td class="paramname"><em>node</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Removes a node from the pipeline. </p>
+<p>Disconnects all connections involving this node first. The caller regains ownership and must delete the node.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">node</td><td>The node to remove. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa613e1e338d84e5ebd843bac6eb9d4c3" title="File or resource does not exist (ENOENT).">Error::NotExist</a> if not found. </dd></dl>
 
 </div>
 </div>
@@ -387,37 +738,43 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
-<a id="ae36ce557ef9f1e8dc227c4b4ac89afe4" name="ae36ce557ef9f1e8dc227c4b4ac89afe4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae36ce557ef9f1e8dc227c4b4ac89afe4">&#9670;&#160;</a></span>setThreadPool()</h2>
+<a id="aa4646fe3cd6d5e148910897996173716" name="aa4646fe3cd6d5e148910897996173716"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4646fe3cd6d5e148910897996173716">&#9670;&#160;</a></span>sinkNodes()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> MediaPipeline::setThreadPool </td>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt; MediaPipeline::sinkNodes </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classThreadPool.html">ThreadPool</a> *&#160;</td>
-          <td class="paramname"><em>pool</em></td><td>)</td>
-          <td></td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
-<p>Sets an external thread pool to use instead of the internal one. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pool</td><td>The thread pool. Ownership is not transferred. </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>Returns nodes with no output connections (sink nodes). </p>
+<dl class="section return"><dt>Returns</dt><dd>A list of sink nodes. </dd></dl>
+
+</div>
+</div>
+<a id="ac72ae01c12eee00eddfca50951f36ef3" name="ac72ae01c12eee00eddfca50951f36ef3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac72ae01c12eee00eddfca50951f36ef3">&#9670;&#160;</a></span>sourceNodes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt; MediaPipeline::sourceNodes </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns nodes with no input connections (source nodes). </p>
+<dl class="section return"><dt>Returns</dt><dd>A list of source nodes. </dd></dl>
 
 </div>
 </div>
@@ -436,7 +793,7 @@ template&lt;typename... Args&gt; </td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Validates the graph, configures all nodes, and starts processing. </p>
+<p>Validates the pipeline, configures all nodes, and starts processing. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error describing the failure. </dd></dl>
 
 </div>
@@ -456,13 +813,54 @@ template&lt;typename... Args&gt; </td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Stops all nodes and waits for processing to complete. </p>
+<p>Stops all nodes. </p>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success. </dd></dl>
 
 </div>
 </div>
+<a id="a5ee4ffba8b5bb3919b2de39dc968feee" name="a5ee4ffba8b5bb3919b2de39dc968feee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ee4ffba8b5bb3919b2de39dc968feee">&#9670;&#160;</a></span>topologicalSort()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaNode.html">MediaNode</a> * &gt; MediaPipeline::topologicalSort </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns nodes in topological order (dependencies first). </p>
+<dl class="section return"><dt>Returns</dt><dd>An ordered list of node pointers, or empty if the pipeline has cycles. </dd></dl>
+
+</div>
+</div>
+<a id="ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed" name="ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2fe31a2ca7ed0ce0e4ef3ef57ca64ed">&#9670;&#160;</a></span>validate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> MediaPipeline::validate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Validates the pipeline topology. </p>
+<p>Checks for cycles (DAG requirement) and that the pipeline is non-empty.</p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> if valid, or an error describing the problem. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="mediapipeline_8h_source.html">mediapipeline.h</a></li>
+<li>include/promeki/<a class="el" href="mediapipeline_8h_source.html">mediapipeline.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -471,7 +869,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaPipeline.html">MediaPipeline</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

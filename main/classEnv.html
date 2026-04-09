@@ -102,7 +102,7 @@ $(document).ready(function(){initNavTree('classEnv.html',''); initResizable(); }
   <div class="summary">
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classEnv-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Env Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
+  <div class="headertitle"><div class="title">Env Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -116,7 +116,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a1a7542737d1fce2a67a13d87dbb94267" id="r_a1a7542737d1fce2a67a13d87dbb94267"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#a1a7542737d1fce2a67a13d87dbb94267">get</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *name)</td></tr>
 <tr class="memdesc:a1a7542737d1fce2a67a13d87dbb94267"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value of an environment variable.  <br /></td></tr>
 <tr class="separator:a1a7542737d1fce2a67a13d87dbb94267"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2286e9900dafc2a34997797d1d6f281" id="r_af2286e9900dafc2a34997797d1d6f281"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#af2286e9900dafc2a34997797d1d6f281">get</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *name, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">defaultValue</a>)</td></tr>
+<tr class="memitem:af2286e9900dafc2a34997797d1d6f281" id="r_af2286e9900dafc2a34997797d1d6f281"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#af2286e9900dafc2a34997797d1d6f281">get</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *name, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;defaultValue)</td></tr>
 <tr class="memdesc:af2286e9900dafc2a34997797d1d6f281"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value of an environment variable with a default.  <br /></td></tr>
 <tr class="separator:af2286e9900dafc2a34997797d1d6f281"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaca730ca8d2367c811bca925fbcfc322" id="r_aaca730ca8d2367c811bca925fbcfc322"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#aaca730ca8d2367c811bca925fbcfc322">isSet</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *name)</td></tr>
@@ -137,7 +137,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"><span class="keywordtype">bool</span> exists = Env::contains(<span class="stringliteral">&quot;PATH&quot;</span>);</div>
 <div class="ttc" id="aclassEnv_html_a1a7542737d1fce2a67a13d87dbb94267"><div class="ttname"><a href="classEnv.html#a1a7542737d1fce2a67a13d87dbb94267">Env::get</a></div><div class="ttdeci">static String get(const char *name)</div><div class="ttdoc">Returns the value of an environment variable.</div><div class="ttdef"><b>Definition</b> env.h:38</div></div>
 <div class="ttc" id="aclassEnv_html_ab4f7d1f9ef3fe165d1e57fb9a29dbdf9"><div class="ttname"><a href="classEnv.html#ab4f7d1f9ef3fe165d1e57fb9a29dbdf9">Env::set</a></div><div class="ttdeci">static bool set(const char *name, const String &amp;value, bool overwrite=true)</div><div class="ttdoc">Sets an environment variable.</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:35</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 </div><!-- fragment --> rest of the library. </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a1a7542737d1fce2a67a13d87dbb94267" name="a1a7542737d1fce2a67a13d87dbb94267"></a>
@@ -345,7 +345,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="env_8h_source.html">env.h</a></li>
+<li>include/promeki/<a class="el" href="env_8h_source.html">env.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -354,7 +354,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classEnv.html">Env</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

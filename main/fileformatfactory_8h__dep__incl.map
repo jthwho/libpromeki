@@ -1,5 +1,5 @@
-<map id="include/promeki/core/fileformatfactory.h" name="include/promeki/core/fileformatfactory.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="10,5,169,45"/>
-<area shape="rect" id="Node000002" href="$audiofilefactory_8h.html" title=" " alt="" coords="5,93,173,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,59,92,93,87,93,87,59"/>
+<map id="include/promeki/fileformatfactory.h" name="include/promeki/fileformatfactory.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,256,31"/>
+<area shape="rect" id="Node000002" href="$audiofilefactory_8h.html" title=" " alt="" coords="9,79,252,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,44,133,79,128,79,128,44"/>
 </map>

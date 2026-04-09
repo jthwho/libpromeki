@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/core/algorithm.h Source File</title>
+<title>libpromeki: include/promeki/algorithm.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -108,14 +108,14 @@ $(document).ready(function(){initNavTree('algorithm_8h_source.html',''); initRes
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;numeric&gt;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/core/list.h</a>&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="list_8h.html">promeki/list.h</a>&gt;</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Container&gt;</div>
 <div class="foldopen" id="foldopen00027" data-start="{" data-end="}">
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d">   27</a></span>Container <a class="code hl_function" href="group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a>(Container c) {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="group__util.html#gac27428ecfe86c08c467f57d7ab38308d">   27</a></span>Container <a class="code hl_function" href="group__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a>(Container c) {</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        std::sort(c.begin(), c.end());</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>        <span class="keywordflow">return</span> c;</div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>}</div>
@@ -123,7 +123,7 @@ $(document).ready(function(){initNavTree('algorithm_8h_source.html',''); initRes
 <div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Container, <span class="keyword">typename</span> Compare&gt;</div>
 <div class="foldopen" id="foldopen00041" data-start="{" data-end="}">
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="algorithm_8h.html#a3d1f85599b2310eb633f46d1a0c114e2">   41</a></span>Container <a class="code hl_function" href="group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a>(Container c, Compare comp) {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="algorithm_8h.html#a3d1f85599b2310eb633f46d1a0c114e2">   41</a></span>Container <a class="code hl_function" href="group__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a>(Container c, Compare comp) {</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        std::sort(c.begin(), c.end(), comp);</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">return</span> c;</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>}</div>
@@ -222,7 +222,7 @@ $(document).ready(function(){initNavTree('algorithm_8h_source.html',''); initRes
 <div class="ttc" id="aalgorithm_8h_html_ae54077ea4d167bc6ea90c82a6604664a"><div class="ttname"><a href="algorithm_8h.html#ae54077ea4d167bc6ea90c82a6604664a">mapped</a></div><div class="ttdeci">auto mapped(const Container &amp;c, Transform fn)</div><div class="ttdoc">Returns a container of transformed elements.</div><div class="ttdef"><b>Definition</b> algorithm.h:72</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a435a5f3a020e207c2ddb3de7f2637109"><div class="ttname"><a href="classList.html#a435a5f3a020e207c2ddb3de7f2637109">List::reserve</a></div><div class="ttdeci">void reserve(size_t newCapacity)</div><div class="ttdoc">Pre-allocates storage for at least newCapacity elements.</div><div class="ttdef"><b>Definition</b> list.h:314</div></div>
-<div class="ttc" id="agroup__core__util_html_gac27428ecfe86c08c467f57d7ab38308d"><div class="ttname"><a href="group__core__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a></div><div class="ttdeci">PROMEKI_NAMESPACE_BEGIN Container sorted(Container c)</div><div class="ttdoc">Returns a sorted copy of the container.</div><div class="ttdef"><b>Definition</b> algorithm.h:27</div></div>
+<div class="ttc" id="agroup__util_html_gac27428ecfe86c08c467f57d7ab38308d"><div class="ttname"><a href="group__util.html#gac27428ecfe86c08c467f57d7ab38308d">sorted</a></div><div class="ttdeci">PROMEKI_NAMESPACE_BEGIN Container sorted(Container c)</div><div class="ttdoc">Returns a sorted copy of the container.</div><div class="ttdef"><b>Definition</b> algorithm.h:27</div></div>
 <div class="ttc" id="alist_8h_html"><div class="ttname"><a href="list_8h.html">list.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html"><div class="ttname"><a href="namespace_8h.html">namespace.h</a></div></div>
 <div class="ttc" id="anamespace_8h_html_a0444a93cedfdf35aa76c315990dc6e10"><div class="ttname"><a href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div><div class="ttdeci">#define PROMEKI_NAMESPACE_BEGIN</div><div class="ttdoc">Starts a promeki namespace block.</div><div class="ttdef"><b>Definition</b> namespace.h:14</div></div>
@@ -233,8 +233,8 @@ $(document).ready(function(){initNavTree('algorithm_8h_source.html',''); initRes
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="algorithm_8h.html">algorithm.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="algorithm_8h.html">algorithm.h</a></li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

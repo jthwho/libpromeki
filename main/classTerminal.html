@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('classTerminal.html',''); initResizable
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classTerminal-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Terminal Class Reference<div class="ingroups"><a class="el" href="group__core__util.html">Core Utilities</a></div></div></div>
+  <div class="headertitle"><div class="title">Terminal Class Reference<div class="ingroups"><a class="el" href="group__util.html">Utilities</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -159,7 +159,7 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isRawMode</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa8d01a29e9a0c79e1847cb43e160f134"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if raw mode is currently enabled. <br /></td></tr>
 <tr class="separator:aa8d01a29e9a0c79e1847cb43e160f134"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26ce0cc34d5e8ec404c7c8e2e963828a" id="r_a26ce0cc34d5e8ec404c7c8e2e963828a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a26ce0cc34d5e8ec404c7c8e2e963828a">readInput</a> (<a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">buf</a>, int <a class="el" href="classList.html">maxLen</a>)</td></tr>
+<tr class="memitem:a26ce0cc34d5e8ec404c7c8e2e963828a" id="r_a26ce0cc34d5e8ec404c7c8e2e963828a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a26ce0cc34d5e8ec404c7c8e2e963828a">readInput</a> (<a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">buf</a>, int <a class="el" href="classList.html">maxLen</a>)</td></tr>
 <tr class="memdesc:a26ce0cc34d5e8ec404c7c8e2e963828a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads available input bytes without blocking.  <br /></td></tr>
 <tr class="separator:a26ce0cc34d5e8ec404c7c8e2e963828a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e3632ee2a32d9ed75f2d1b36c3d3754" id="r_a5e3632ee2a32d9ed75f2d1b36c3d3754"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a5e3632ee2a32d9ed75f2d1b36c3d3754">windowSize</a> (int &amp;cols, int &amp;rows) <a class="el" href="classList.html">const</a></td></tr>
@@ -191,13 +191,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7da1f4a539b363bfcb61a10d71689cf4" id="r_a7da1f4a539b363bfcb61a10d71689cf4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a7da1f4a539b363bfcb61a10d71689cf4">disableAlternateScreen</a> ()</td></tr>
 <tr class="memdesc:a7da1f4a539b363bfcb61a10d71689cf4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Switches back to the main screen buffer.  <br /></td></tr>
 <tr class="separator:a7da1f4a539b363bfcb61a10d71689cf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9d920fcb63bef1a1a1ae10474d5b6d06" id="r_a9d920fcb63bef1a1a1ae10474d5b6d06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a9d920fcb63bef1a1a1ae10474d5b6d06">setResizeCallback</a> (<a class="el" href="classTerminal.html#a9a70127ef97279a2409d28edb6932bf6">ResizeCallback</a> <a class="el" href="classList.html">cb</a>)</td></tr>
+<tr class="memitem:a9d920fcb63bef1a1a1ae10474d5b6d06" id="r_a9d920fcb63bef1a1a1ae10474d5b6d06"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a9d920fcb63bef1a1a1ae10474d5b6d06">setResizeCallback</a> (<a class="el" href="classTerminal.html#a9a70127ef97279a2409d28edb6932bf6">ResizeCallback</a> cb)</td></tr>
 <tr class="memdesc:a9d920fcb63bef1a1a1ae10474d5b6d06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a callback for window resize events (SIGWINCH on POSIX).  <br /></td></tr>
 <tr class="separator:a9d920fcb63bef1a1a1ae10474d5b6d06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa793dd276f0b8ffe083241a7ca498cca" id="r_aa793dd276f0b8ffe083241a7ca498cca"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#aa793dd276f0b8ffe083241a7ca498cca">installSignalHandlers</a> ()</td></tr>
 <tr class="memdesc:aa793dd276f0b8ffe083241a7ca498cca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Installs signal handlers for clean terminal restoration.  <br /></td></tr>
 <tr class="separator:aa793dd276f0b8ffe083241a7ca498cca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a801ff22a36c0d8b6cc308d9571811c09" id="r_a801ff22a36c0d8b6cc308d9571811c09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a801ff22a36c0d8b6cc308d9571811c09">writeOutput</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *data, int <a class="el" href="classList.html">len</a>)</td></tr>
+<tr class="memitem:a801ff22a36c0d8b6cc308d9571811c09" id="r_a801ff22a36c0d8b6cc308d9571811c09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTerminal.html#a801ff22a36c0d8b6cc308d9571811c09">writeOutput</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *data, int <a class="el" href="classList.html">len</a>)</td></tr>
 <tr class="memdesc:a801ff22a36c0d8b6cc308d9571811c09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes raw bytes to stdout.  <br /></td></tr>
 <tr class="separator:a801ff22a36c0d8b6cc308d9571811c09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -224,7 +224,7 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Describes the color capability level of the terminal. </p>
-<p>The TUI rendering pipeline always works with full RGB <a class="el" href="classColor.html" title="General-purpose RGBA color.">Color</a> values internally. During <a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6" title="Diffs front vs back buffer and emits minimal ANSI updates.">TuiScreen::flush()</a>, each cell's foreground and background are converted to the nearest representable color for the active ColorSupport level. This means the UI degrades gracefully to any color mode, but for the best visual results, applications should provide a <a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> whose colors are chosen with the target color mode in mind.</p>
+<p>The TUI rendering pipeline always works with full RGB <a class="el" href="classColor.html" title="A color value in any supported color model.">Color</a> values internally. During <a class="el" href="classTuiScreen.html#aee2413e684c951d8a1a5e8e8e4e0c2b6" title="Diffs front vs back buffer and emits minimal ANSI updates.">TuiScreen::flush()</a>, each cell's foreground and background are converted to the nearest representable color for the active ColorSupport level. This means the UI degrades gracefully to any color mode, but for the best visual results, applications should provide a <a class="el" href="classTuiPalette.html" title="Style palette for TUI widgets.">TuiPalette</a> whose colors are chosen with the target color mode in mind.</p>
 <p>When the <code>NO_COLOR</code> environment variable is set, the detected color capability is mapped to its grayscale equivalent (e.g. TrueColor becomes GrayscaleTrue). Grayscale modes convert each color to its perceptual luminance (Rec. 709) before emitting it.</p>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classTuiScreen.html#ad825c596bc2b23404663ee51b24940f1" title="Sets the color mode used when emitting colors during flush.">TuiScreen::setColorMode()</a> </dd>
 <dd>
@@ -466,7 +466,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt; Terminal::readInput </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt; Terminal::readInput </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">char</a> *&#160;</td>
           <td class="paramname"><em>buf</em>, </td>
@@ -568,7 +568,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt; Terminal::writeOutput </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; int &gt; Terminal::writeOutput </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td>
           <td class="paramname"><em>data</em>, </td>
@@ -600,7 +600,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="terminal_8h_source.html">terminal.h</a></li>
+<li>include/promeki/<a class="el" href="terminal_8h_source.html">terminal.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -609,7 +609,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTerminal.html">Terminal</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

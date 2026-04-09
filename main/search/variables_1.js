@@ -1,12 +1,19 @@
 var searchData=
 [
-  ['abouttodestroysignalname_0',['aboutToDestroySignalName',['../classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e',1,'ObjectBase']]],
-  ['address_1',['address',['../classMemPool_1_1Block.html#aece66343ad0fc2d6b530527ac7602201',1,'MemPool::Block']]],
-  ['align_2',['align',['../structMemAllocation.html#a8e2145536d6b39f27b235a312aa22889',1,'MemAllocation']]],
-  ['alignment_3',['alignment',['../classMemPool_1_1Block.html#a9832fa37c5c118a8c50eaad32b5ac5d7',1,'MemPool::Block']]],
-  ['alloc_4',['alloc',['../structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b',1,'MemSpace::Ops']]],
-  ['allocated_5',['allocated',['../classMemPool_1_1Block.html#a7422a78f0a7df2fcc27fb361679bf046',1,'MemPool::Block']]],
-  ['amplitude_6',['amplitude',['../structAudioGen_1_1Config.html#a6d64e1e848e0fa31bfaa2083cd5d27a1',1,'AudioGen::Config']]],
-  ['avgprocessduration_7',['avgProcessDuration',['../structNodeStats.html#aad0d28043f5e11b23e294778dc2fe6e7',1,'NodeStats']]],
-  ['awk_8',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
+  ['abbrev_0',['abbrev',['../structPixelDesc_1_1CompSemantic.html#aebeb76d0194113ba8c8f815b4b0312fb',1,'PixelDesc::CompSemantic::abbrev'],['../structColorModel_1_1CompInfo.html#a80a005e7d927fcc5f2208229233317d6',1,'ColorModel::CompInfo::abbrev']]],
+  ['abouttodestroysignalname_1',['aboutToDestroySignalName',['../classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e',1,'ObjectBase']]],
+  ['address_2',['address',['../classMemPool_1_1Block.html#aece66343ad0fc2d6b530527ac7602201',1,'MemPool::Block']]],
+  ['album_3',['Album',['../classMetadata.html#ac111c4181b61f9a1a07072e660214030',1,'Metadata']]],
+  ['align_4',['align',['../structMemAllocation.html#a8e2145536d6b39f27b235a312aa22889',1,'MemAllocation']]],
+  ['alignment_5',['alignment',['../classMemPool_1_1Block.html#a9832fa37c5c118a8c50eaad32b5ac5d7',1,'MemPool::Block']]],
+  ['alloc_6',['alloc',['../structMemSpace_1_1Ops.html#a0933a54b3f16590607b280a943acbc0b',1,'MemSpace::Ops']]],
+  ['allocated_7',['allocated',['../classMemPool_1_1Block.html#a7422a78f0a7df2fcc27fb361679bf046',1,'MemPool::Block']]],
+  ['alphacompindex_8',['alphacompindex',['../structCSCPipeline_1_1Stage.html#af15957ef5fe4b27520f4b4fdb0cb5703',1,'CSCPipeline::Stage::alphaCompIndex'],['../structPixelDesc_1_1Data.html#adc3db02d5a72840f678fe40e17002bcb',1,'PixelDesc::Data::alphaCompIndex']]],
+  ['alphavalue_9',['alphaValue',['../structCSCPipeline_1_1Stage.html#a0669ca51ba0daac069b43aefbd812813',1,'CSCPipeline::Stage']]],
+  ['artist_10',['Artist',['../classMetadata.html#a4244a4f8bc7ef525ddbba3c9d373e0a5',1,'Metadata']]],
+  ['audiotracks_11',['audioTracks',['../classMediaIOCommandOpen.html#a0d0b5f356c1896755dc09a049b29d4dc',1,'MediaIOCommandOpen']]],
+  ['averagelatencyms_12',['AverageLatencyMs',['../classMediaIOStats.html#a1d1dcc32f0838834b06a0417c4717db6',1,'MediaIOStats']]],
+  ['avg_13',['avg',['../structBenchmarkReporter_1_1StepStats.html#a703cfdda69eb08f08b1994a37b42200a',1,'BenchmarkReporter::StepStats']]],
+  ['avgprocessduration_14',['avgProcessDuration',['../structNodeStats.html#aad0d28043f5e11b23e294778dc2fe6e7',1,'NodeStats']]],
+  ['awk_15',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
 ];

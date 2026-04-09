@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['xy_0',['xy',['../structCIEWavelength.html#a87a39ffa915e956b8d465ebcd8889ff3',1,'CIEWavelength']]],
-  ['xyz_1',['xyz',['../structCIEWavelength.html#aa6451561b56aa0b21f5dd7260df4587b',1,'CIEWavelength']]]
+  ['wavelength_0',['wavelength',['../structCIEWavelength.html#ace5358d72cd31e2bc856186095542d2d',1,'CIEWavelength']]],
+  ['white_1',['White',['../classColor.html#a64abba1de9a93b7b2cf3ddbde14f640b',1,'Color']]],
+  ['whitespacechars_2',['WhitespaceChars',['../classString.html#a3e9dafc40e847e0c7edb5ac3ed695853',1,'String']]]
 ];

@@ -1,9 +1,9 @@
-<map id="include/promeki/core/span.h" name="include/promeki/core/span.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="48,5,207,45"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,76,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,48,66,86,62,82,105,44"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="101,93,154,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="130,46,130,79,125,79,125,46"/>
-<area shape="rect" id="Node000004" href="$namespace_8h.html" title=" " alt="" coords="177,93,376,119"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="164,43,244,84,241,89,162,48"/>
+<map id="include/promeki/span.h" name="include/promeki/span.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="40,5,215,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,76,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="115,33,67,72,64,68,112,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="101,79,154,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="130,31,130,65,125,65,125,31"/>
+<area shape="rect" id="Node000004" href="$namespace_8h.html" title=" " alt="" coords="179,79,345,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="150,28,229,70,227,74,148,33"/>
 </map>

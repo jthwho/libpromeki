@@ -1,7 +1,7 @@
-<map id="include/promeki/core/pidcontroller.h" name="include/promeki/core/pidcontroller.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="108,5,267,45"/>
-<area shape="rect" id="Node000002" href="$namespace_8h.html" title=" " alt="" coords="5,93,204,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,47,129,86,125,82,165,44"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="228,93,315,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="209,44,251,82,247,86,206,48"/>
+<map id="include/promeki/pidcontroller.h" name="include/promeki/pidcontroller.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="51,5,275,31"/>
+<area shape="rect" id="Node000002" href="$namespace_8h.html" title=" " alt="" coords="5,79,172,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,33,113,71,109,67,150,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="196,79,283,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,29,219,67,215,71,174,33"/>
 </map>

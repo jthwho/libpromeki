@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>libpromeki: include/promeki/core/list.h Source File</title>
+<title>libpromeki: include/promeki/list.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -109,8 +109,8 @@ $(document).ready(function(){initNavTree('list_8h_source.html',''); initResizabl
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;functional&gt;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/core/namespace.h</a>&gt;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="sharedptr_8h.html">promeki/core/sharedptr.h</a>&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;<a class="code" href="namespace_8h.html">promeki/namespace.h</a>&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;<a class="code" href="sharedptr_8h.html">promeki/sharedptr.h</a>&gt;</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><a class="code hl_define" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
@@ -137,7 +137,7 @@ $(document).ready(function(){initNavTree('list_8h_source.html',''); initResizabl
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="classList.html#ad6aca4c38c82cc5b5fd56ae77b73815f">   71</a></span>                <span class="keyword">explicit</span> <a class="code hl_function" href="classList.html#ad6aca4c38c82cc5b5fd56ae77b73815f">List</a>(<span class="keywordtype">size_t</span> <a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>) : d(<a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>) {}</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classList.html#a091ca41992f35860c542c08655198f20">   78</a></span>                <a class="code hl_function" href="classList.html#a091ca41992f35860c542c08655198f20">List</a>(<span class="keywordtype">size_t</span> <a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">T</a> &amp;<a class="code hl_class" href="classList.html">defaultValue</a>) : d(<a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>, <a class="code hl_class" href="classList.html">defaultValue</a>) {}</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classList.html#a091ca41992f35860c542c08655198f20">   78</a></span>                <a class="code hl_function" href="classList.html#a091ca41992f35860c542c08655198f20">List</a>(<span class="keywordtype">size_t</span> <a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>, <span class="keyword">const</span> <a class="code hl_class" href="classList.html">T</a> &amp;defaultValue) : d(<a class="code hl_function" href="classList.html#a7b46313fcbf10064276c8d0447a73691">size</a>, defaultValue) {}</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="classList.html#a43ce719b9dcc8aa532bad580c44e99f6">   81</a></span>                <a class="code hl_function" href="classList.html#a43ce719b9dcc8aa532bad580c44e99f6">List</a>(<span class="keyword">const</span> <a class="code hl_class" href="classList.html">List</a> &amp;<a class="code hl_class" href="classList.html">other</a>) : d(<a class="code hl_class" href="classList.html">other</a>.d) {}</div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
@@ -766,8 +766,8 @@ $(document).ready(function(){initNavTree('list_8h_source.html',''); initResizabl
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="dir_ad13c61ad61140e75ee33c3a0e8002db.html">core</a></li><li class="navelem"><a class="el" href="list_8h.html">list.h</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="list_8h.html">list.h</a></li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

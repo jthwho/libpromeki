@@ -101,12 +101,13 @@ $(document).ready(function(){initNavTree('classFrameDemuxNode.html',''); initRes
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classFrameDemuxNode-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">FrameDemuxNode Class Reference<div class="ingroups"><a class="el" href="group__proav__pipeline.html">ProAV Pipeline</a></div></div></div>
+  <div class="headertitle"><div class="title">FrameDemuxNode Class Reference<div class="ingroups"><a class="el" href="group__pipeline.html">Pipeline</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Splits a <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into separate <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> and <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> streams.  
+<p>Splits a <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into separate <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> and <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> streams.  
  <a href="classFrameDemuxNode.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="framedemuxnode_8h_source.html">framedemuxnode.h</a>&gt;</code></p>
@@ -148,12 +149,12 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><b>~FrameDemuxNode</b> ()=<a class="el" href="classList.html">default</a></td></tr>
 <tr class="memdesc:a1db92b4513cbefa8d936b1195788c9ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
 <tr class="separator:a1db92b4513cbefa8d936b1195788c9ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a612863b5a8afaa119ae5a09db351f746" id="r_a612863b5a8afaa119ae5a09db351f746"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameDemuxNode.html#a612863b5a8afaa119ae5a09db351f746">configure</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a612863b5a8afaa119ae5a09db351f746"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates ports and allocates resources.  <br /></td></tr>
-<tr class="separator:a612863b5a8afaa119ae5a09db351f746"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3710be10a9a870800b288ff6695196d6" id="r_a3710be10a9a870800b288ff6695196d6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameDemuxNode.html#a3710be10a9a870800b288ff6695196d6">process</a> () <a class="el" href="classList.html">override</a></td></tr>
-<tr class="memdesc:a3710be10a9a870800b288ff6695196d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes one cycle of data.  <br /></td></tr>
-<tr class="separator:a3710be10a9a870800b288ff6695196d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad713ee15ff8e212e1848559463808285" id="r_ad713ee15ff8e212e1848559463808285"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaNodeConfig.html">MediaNodeConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameDemuxNode.html#ad713ee15ff8e212e1848559463808285">defaultConfig</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:ad713ee15ff8e212e1848559463808285"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a default configuration for this node type.  <br /></td></tr>
+<tr class="separator:ad713ee15ff8e212e1848559463808285"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a917b0e0f7fa6e8ba63892dc608825d26" id="r_a917b0e0f7fa6e8ba63892dc608825d26"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structBuildResult.html">BuildResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameDemuxNode.html#a917b0e0f7fa6e8ba63892dc608825d26">build</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaNodeConfig.html">MediaNodeConfig</a> &amp;config) <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:a917b0e0f7fa6e8ba63892dc608825d26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configures this node from a <a class="el" href="classMediaNodeConfig.html" title="Configuration descriptor for creating and configuring a MediaNode.">MediaNodeConfig</a>.  <br /></td></tr>
+<tr class="separator:a917b0e0f7fa6e8ba63892dc608825d26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classMediaNode"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classMediaNode')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classMediaNode.html">MediaNode</a></td></tr>
 <tr class="memitem:a308223b75992f06d85d78a871b73818c inherit pub_methods_classMediaNode" id="r_a308223b75992f06d85d78a871b73818c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a308223b75992f06d85d78a871b73818c">MediaNode</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a308223b75992f06d85d78a871b73818c inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classMediaNode.html" title="Base class for all pipeline processing nodes.">MediaNode</a>.  <br /></td></tr>
@@ -173,77 +174,58 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa26145c42c5788b74d322f989f5597a0 inherit pub_methods_classMediaNode" id="r_aa26145c42c5788b74d322f989f5597a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#aa26145c42c5788b74d322f989f5597a0">setName</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>)</td></tr>
 <tr class="memdesc:aa26145c42c5788b74d322f989f5597a0 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the node name.  <br /></td></tr>
 <tr class="separator:aa26145c42c5788b74d322f989f5597a0 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeebe705423e45237e71ae5210c9fca7f inherit pub_methods_classMediaNode" id="r_aeebe705423e45237e71ae5210c9fca7f"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPort.html#a125705b811e26e73f83a2087823bf9ac">MediaPort::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>inputPorts</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aeebe705423e45237e71ae5210c9fca7f inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of input ports. <br /></td></tr>
-<tr class="separator:aeebe705423e45237e71ae5210c9fca7f inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a657ccc36ed8b511ad32ed390ed20d856 inherit pub_methods_classMediaNode" id="r_a657ccc36ed8b511ad32ed390ed20d856"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">const</a> <a class="el" href="classMediaPort.html#a125705b811e26e73f83a2087823bf9ac">MediaPort::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>outputPorts</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a657ccc36ed8b511ad32ed390ed20d856 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of output ports. <br /></td></tr>
-<tr class="separator:a657ccc36ed8b511ad32ed390ed20d856 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77cdeba0593d316082c7e336398f55c8 inherit pub_methods_classMediaNode" id="r_a77cdeba0593d316082c7e336398f55c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPort.html#aebaa34efc206948907510555979e04e6">MediaPort::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a77cdeba0593d316082c7e336398f55c8">inputPort</a> (int index) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a77cdeba0593d316082c7e336398f55c8 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the input port at the given index.  <br /></td></tr>
-<tr class="separator:a77cdeba0593d316082c7e336398f55c8 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3988fe8dc27b035d202ac9e19d10a136 inherit pub_methods_classMediaNode" id="r_a3988fe8dc27b035d202ac9e19d10a136"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPort.html#aebaa34efc206948907510555979e04e6">MediaPort::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3988fe8dc27b035d202ac9e19d10a136">outputPort</a> (int index) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a3988fe8dc27b035d202ac9e19d10a136 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the output port at the given index.  <br /></td></tr>
-<tr class="separator:a3988fe8dc27b035d202ac9e19d10a136 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3aad8d8e376ea8adbec21331300d3d9d inherit pub_methods_classMediaNode" id="r_a3aad8d8e376ea8adbec21331300d3d9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPort.html#aebaa34efc206948907510555979e04e6">MediaPort::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3aad8d8e376ea8adbec21331300d3d9d">inputPort</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a3aad8d8e376ea8adbec21331300d3d9d inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the input port with the given name.  <br /></td></tr>
-<tr class="separator:a3aad8d8e376ea8adbec21331300d3d9d inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1de6e44eec685157e6a20b2c4cfad6b inherit pub_methods_classMediaNode" id="r_ab1de6e44eec685157e6a20b2c4cfad6b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaPort.html#aebaa34efc206948907510555979e04e6">MediaPort::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ab1de6e44eec685157e6a20b2c4cfad6b">outputPort</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ab1de6e44eec685157e6a20b2c4cfad6b inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the output port with the given name.  <br /></td></tr>
-<tr class="separator:ab1de6e44eec685157e6a20b2c4cfad6b inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e0a949ac9c593148ba4ff17d90d51a6 inherit pub_methods_classMediaNode" id="r_a9e0a949ac9c593148ba4ff17d90d51a6"><td class="memItemLeft" align="right" valign="top">
-int&#160;</td><td class="memItemRight" valign="bottom"><b>inputPortCount</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a9e0a949ac9c593148ba4ff17d90d51a6 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of input ports. <br /></td></tr>
-<tr class="separator:a9e0a949ac9c593148ba4ff17d90d51a6 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa840cec7692d42f160c088a9a852b6c2 inherit pub_methods_classMediaNode" id="r_aa840cec7692d42f160c088a9a852b6c2"><td class="memItemLeft" align="right" valign="top">
-int&#160;</td><td class="memItemRight" valign="bottom"><b>outputPortCount</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aa840cec7692d42f160c088a9a852b6c2 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of output ports. <br /></td></tr>
-<tr class="separator:aa840cec7692d42f160c088a9a852b6c2 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a63b98ac1e02857badcca2c4be947bd87 inherit pub_methods_classMediaNode" id="r_a63b98ac1e02857badcca2c4be947bd87"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a63b98ac1e02857badcca2c4be947bd87">setThreadingPolicy</a> (<a class="el" href="classMediaNode.html#a2d29784a8601b07f04f106e401771fda">ThreadingPolicy</a> <a class="el" href="classList.html">policy</a>)</td></tr>
-<tr class="memdesc:a63b98ac1e02857badcca2c4be947bd87 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the threading policy.  <br /></td></tr>
-<tr class="separator:a63b98ac1e02857badcca2c4be947bd87 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad5dc533da675b875fbbaf04c8c4e3d10 inherit pub_methods_classMediaNode" id="r_ad5dc533da675b875fbbaf04c8c4e3d10"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ad5dc533da675b875fbbaf04c8c4e3d10">setThreadingPolicy</a> (<a class="el" href="classThreadPool.html">ThreadPool</a> *<a class="el" href="classList.html">pool</a>)</td></tr>
-<tr class="memdesc:ad5dc533da675b875fbbaf04c8c4e3d10 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a custom thread pool and switches policy to CustomPool.  <br /></td></tr>
-<tr class="separator:ad5dc533da675b875fbbaf04c8c4e3d10 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6fc1a235d51c0bdbaa5625a313ccd4ed inherit pub_methods_classMediaNode" id="r_a6fc1a235d51c0bdbaa5625a313ccd4ed"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classMediaNode.html#a2d29784a8601b07f04f106e401771fda">ThreadingPolicy</a>&#160;</td><td class="memItemRight" valign="bottom"><b>threadingPolicy</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a6fc1a235d51c0bdbaa5625a313ccd4ed inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current threading policy. <br /></td></tr>
-<tr class="separator:a6fc1a235d51c0bdbaa5625a313ccd4ed inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2419a13a1a5f8ee02b3a652b31d5ef2 inherit pub_methods_classMediaNode" id="r_ae2419a13a1a5f8ee02b3a652b31d5ef2"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classThreadPool.html">ThreadPool</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>customThreadPool</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ae2419a13a1a5f8ee02b3a652b31d5ef2 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the custom thread pool, or nullptr if not using CustomPool. <br /></td></tr>
-<tr class="separator:ae2419a13a1a5f8ee02b3a652b31d5ef2 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3994509220a61140c737ee71da18f38e inherit pub_methods_classMediaNode" id="r_a3994509220a61140c737ee71da18f38e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3994509220a61140c737ee71da18f38e">setIdealQueueSize</a> (int size)</td></tr>
-<tr class="memdesc:a3994509220a61140c737ee71da18f38e inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ideal input queue depth.  <br /></td></tr>
-<tr class="separator:a3994509220a61140c737ee71da18f38e inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b20b6c1de3d5f1d8e692de891a9585c inherit pub_methods_classMediaNode" id="r_a1b20b6c1de3d5f1d8e692de891a9585c"><td class="memItemLeft" align="right" valign="top">
-int&#160;</td><td class="memItemRight" valign="bottom"><b>idealQueueSize</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a1b20b6c1de3d5f1d8e692de891a9585c inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ideal input queue size. <br /></td></tr>
-<tr class="separator:a1b20b6c1de3d5f1d8e692de891a9585c inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a19292c735be659dc0c1cf0e2fafb45db inherit pub_methods_classMediaNode" id="r_a19292c735be659dc0c1cf0e2fafb45db"><td class="memItemLeft" align="right" valign="top">
-int&#160;</td><td class="memItemRight" valign="bottom"><b>queuedFrameCount</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a19292c735be659dc0c1cf0e2fafb45db inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current input queue depth. <br /></td></tr>
-<tr class="separator:a19292c735be659dc0c1cf0e2fafb45db inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b20d21fbbf564f8b9f2526b72688c90 inherit pub_methods_classMediaNode" id="r_a4b20d21fbbf564f8b9f2526b72688c90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a4b20d21fbbf564f8b9f2526b72688c90">start</a> ()</td></tr>
-<tr class="memdesc:a4b20d21fbbf564f8b9f2526b72688c90 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begins processing.  <br /></td></tr>
-<tr class="separator:a4b20d21fbbf564f8b9f2526b72688c90 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a79edc1508f7df261513e7e320ca7c6fa inherit pub_methods_classMediaNode" id="r_a79edc1508f7df261513e7e320ca7c6fa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a79edc1508f7df261513e7e320ca7c6fa">stop</a> ()</td></tr>
-<tr class="memdesc:a79edc1508f7df261513e7e320ca7c6fa inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops processing.  <br /></td></tr>
-<tr class="separator:a79edc1508f7df261513e7e320ca7c6fa inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2684b81286e9f9a38593a49822ebab34 inherit pub_methods_classMediaNode" id="r_a2684b81286e9f9a38593a49822ebab34"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a2684b81286e9f9a38593a49822ebab34">starvation</a> ()</td></tr>
-<tr class="memdesc:a2684b81286e9f9a38593a49822ebab34 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the node's input queue is empty and data is needed.  <br /></td></tr>
-<tr class="separator:a2684b81286e9f9a38593a49822ebab34 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a552ce26256cbba9e1e8b008627740b51 inherit pub_methods_classMediaNode" id="r_a552ce26256cbba9e1e8b008627740b51"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a552ce26256cbba9e1e8b008627740b51">properties</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a552ce26256cbba9e1e8b008627740b51 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns all configurable properties as key-value pairs.  <br /></td></tr>
-<tr class="separator:a552ce26256cbba9e1e8b008627740b51 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20c983162fa215863a9e53b147f26913 inherit pub_methods_classMediaNode" id="r_a20c983162fa215863a9e53b147f26913"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a20c983162fa215863a9e53b147f26913">setProperty</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a20c983162fa215863a9e53b147f26913 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a property by name.  <br /></td></tr>
-<tr class="separator:a20c983162fa215863a9e53b147f26913 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85b79d0ee17f628f9d4b37fe2936c506 inherit pub_methods_classMediaNode" id="r_a85b79d0ee17f628f9d4b37fe2936c506"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a85b79d0ee17f628f9d4b37fe2936c506">property</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a85b79d0ee17f628f9d4b37fe2936c506 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a single property value by name.  <br /></td></tr>
-<tr class="separator:a85b79d0ee17f628f9d4b37fe2936c506 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79c7796ba20ae64912d9ebbf75d567f9 inherit pub_methods_classMediaNode" id="r_a79c7796ba20ae64912d9ebbf75d567f9"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">const</a> <a class="el" href="classMediaSink.html#a26d965107df2e4cea8f13689355a3e4c">MediaSink::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>sinks</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a79c7796ba20ae64912d9ebbf75d567f9 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of input sinks. <br /></td></tr>
+<tr class="separator:a79c7796ba20ae64912d9ebbf75d567f9 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb4b574f447d339713f723a29c303c2d inherit pub_methods_classMediaNode" id="r_afb4b574f447d339713f723a29c303c2d"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">const</a> <a class="el" href="classMediaSource.html#adaef13ca349f78809e5ae8c5ac609ed8">MediaSource::PtrList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>sources</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:afb4b574f447d339713f723a29c303c2d inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of output sources. <br /></td></tr>
+<tr class="separator:afb4b574f447d339713f723a29c303c2d inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c3d834bca5b4d202d9dd239a87bf635 inherit pub_methods_classMediaNode" id="r_a0c3d834bca5b4d202d9dd239a87bf635"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a0c3d834bca5b4d202d9dd239a87bf635">sink</a> (int index) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0c3d834bca5b4d202d9dd239a87bf635 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the input sink at the given index.  <br /></td></tr>
+<tr class="separator:a0c3d834bca5b4d202d9dd239a87bf635 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a785fc890a7e47db8ef3b50b6f01d4740 inherit pub_methods_classMediaNode" id="r_a785fc890a7e47db8ef3b50b6f01d4740"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a785fc890a7e47db8ef3b50b6f01d4740">source</a> (int index) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a785fc890a7e47db8ef3b50b6f01d4740 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the output source at the given index.  <br /></td></tr>
+<tr class="separator:a785fc890a7e47db8ef3b50b6f01d4740 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6595c047a315a667925c5f85251661da inherit pub_methods_classMediaNode" id="r_a6595c047a315a667925c5f85251661da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a6595c047a315a667925c5f85251661da">sink</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a6595c047a315a667925c5f85251661da inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the input sink with the given name.  <br /></td></tr>
+<tr class="separator:a6595c047a315a667925c5f85251661da inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa26d81488fd60ac81fc1f588acf1cadf inherit pub_methods_classMediaNode" id="r_aa26d81488fd60ac81fc1f588acf1cadf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#aa26d81488fd60ac81fc1f588acf1cadf">source</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaNode.html#ad39d8ddfe2667a3280059a0fa32159b4">name</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa26d81488fd60ac81fc1f588acf1cadf inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the output source with the given name.  <br /></td></tr>
+<tr class="separator:aa26d81488fd60ac81fc1f588acf1cadf inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1171748730595dab25c97d883bf8db2f inherit pub_methods_classMediaNode" id="r_a1171748730595dab25c97d883bf8db2f"><td class="memItemLeft" align="right" valign="top">
+int&#160;</td><td class="memItemRight" valign="bottom"><b>sinkCount</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a1171748730595dab25c97d883bf8db2f inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of input sinks. <br /></td></tr>
+<tr class="separator:a1171748730595dab25c97d883bf8db2f inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a166b3783181edf06e024a321d82033e3 inherit pub_methods_classMediaNode" id="r_a166b3783181edf06e024a321d82033e3"><td class="memItemLeft" align="right" valign="top">
+int&#160;</td><td class="memItemRight" valign="bottom"><b>sourceCount</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a166b3783181edf06e024a321d82033e3 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of output sources. <br /></td></tr>
+<tr class="separator:a166b3783181edf06e024a321d82033e3 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19630d26bc4f1256a604fd1893b4ecc3 inherit pub_methods_classMediaNode" id="r_a19630d26bc4f1256a604fd1893b4ecc3"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classThread.html">Thread</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>thread</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a19630d26bc4f1256a604fd1893b4ecc3 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> owned by this node, or nullptr. <br /></td></tr>
+<tr class="separator:a19630d26bc4f1256a604fd1893b4ecc3 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b1820f1cdf383d354378b341fab4800 inherit pub_methods_classMediaNode" id="r_a3b1820f1cdf383d354378b341fab4800"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3b1820f1cdf383d354378b341fab4800">wake</a> ()</td></tr>
+<tr class="memdesc:a3b1820f1cdf383d354378b341fab4800 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wakes the node so it re-evaluates work availability.  <br /></td></tr>
+<tr class="separator:a3b1820f1cdf383d354378b341fab4800 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af885a1897e777cac08a26fbfddc27f09 inherit pub_methods_classMediaNode" id="r_af885a1897e777cac08a26fbfddc27f09"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>hasInput</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:af885a1897e777cac08a26fbfddc27f09 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if any input sink queue has data. <br /></td></tr>
+<tr class="separator:af885a1897e777cac08a26fbfddc27f09 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87d756846a329f5df12f59b693f2a310 inherit pub_methods_classMediaNode" id="r_a87d756846a329f5df12f59b693f2a310"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a87d756846a329f5df12f59b693f2a310">canOutput</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a87d756846a329f5df12f59b693f2a310 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if all output sources can deliver.  <br /></td></tr>
+<tr class="separator:a87d756846a329f5df12f59b693f2a310 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a708e956242b438a286ab3175cb4892d9 inherit pub_methods_classMediaNode" id="r_a708e956242b438a286ab3175cb4892d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a708e956242b438a286ab3175cb4892d9">canOutput</a> (int sourceIndex) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a708e956242b438a286ab3175cb4892d9 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the output source at the given index can deliver.  <br /></td></tr>
+<tr class="separator:a708e956242b438a286ab3175cb4892d9 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae47fc841ebc5f19280fce6db3a078702 inherit pub_methods_classMediaNode" id="r_ae47fc841ebc5f19280fce6db3a078702"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ae47fc841ebc5f19280fce6db3a078702">hasWork</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae47fc841ebc5f19280fce6db3a078702 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the node has work to do.  <br /></td></tr>
+<tr class="separator:ae47fc841ebc5f19280fce6db3a078702 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed348eafb12ee09832bd9a5b3b9b9ec6 inherit pub_methods_classMediaNode" id="r_aed348eafb12ee09832bd9a5b3b9b9ec6"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classMediaPipeline.html">MediaPipeline</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>pipeline</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aed348eafb12ee09832bd9a5b3b9b9ec6 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pipeline this node belongs to, or nullptr. <br /></td></tr>
+<tr class="separator:aed348eafb12ee09832bd9a5b3b9b9ec6 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd39b7a1c51f0ab292a82d6f8e451fa8 inherit pub_methods_classMediaNode" id="r_afd39b7a1c51f0ab292a82d6f8e451fa8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structNodeStats.html">NodeStats</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#afd39b7a1c51f0ab292a82d6f8e451fa8">stats</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:afd39b7a1c51f0ab292a82d6f8e451fa8 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a snapshot of the node's performance statistics.  <br /></td></tr>
 <tr class="separator:afd39b7a1c51f0ab292a82d6f8e451fa8 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -251,9 +233,16 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>queuedFrameCount</b> (
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>resetStats</b> ()</td></tr>
 <tr class="memdesc:a88625b0c57a4ee6943de31aaa50e3a3d inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resets all statistics counters to zero. <br /></td></tr>
 <tr class="separator:a88625b0c57a4ee6943de31aaa50e3a3d inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab913f4e07bbb7e75ffbc643c724787c0 inherit pub_methods_classMediaNode" id="r_ab913f4e07bbb7e75ffbc643c724787c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="variant_8h.html#a118b9567ec361d6700448dc86095f7e7">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ab913f4e07bbb7e75ffbc643c724787c0">extendedStats</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ab913f4e07bbb7e75ffbc643c724787c0 inherit pub_methods_classMediaNode" id="r_ab913f4e07bbb7e75ffbc643c724787c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ab913f4e07bbb7e75ffbc643c724787c0">extendedStats</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ab913f4e07bbb7e75ffbc643c724787c0 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns additional node-specific statistics.  <br /></td></tr>
 <tr class="separator:ab913f4e07bbb7e75ffbc643c724787c0 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7340792bfd581850f3b506a21eb80891 inherit pub_methods_classMediaNode" id="r_a7340792bfd581850f3b506a21eb80891"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>benchmarkEnabled</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7340792bfd581850f3b506a21eb80891 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if benchmarking is enabled for this node. <br /></td></tr>
+<tr class="separator:a7340792bfd581850f3b506a21eb80891 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d050f12026769ba0242b27c9a3f5e81 inherit pub_methods_classMediaNode" id="r_a3d050f12026769ba0242b27c9a3f5e81"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBenchmarkReporter.html">BenchmarkReporter</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3d050f12026769ba0242b27c9a3f5e81">benchmarkReporter</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a3d050f12026769ba0242b27c9a3f5e81 inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the benchmark reporter for this node, if any.  <br /></td></tr>
+<tr class="separator:a3d050f12026769ba0242b27c9a3f5e81 inherit pub_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d31fb2e8a88791aa6f51561bc93935a inherit pub_methods_classMediaNode" id="r_a9d31fb2e8a88791aa6f51561bc93935a"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>PROMEKI_SIGNAL</b> (<a class="el" href="classList.html">stateChanged</a>, <a class="el" href="classMediaNode.html#ad4c42f5f6b8028cfa53a151c2006c8ae">State</a>)</td></tr>
 <tr class="memdesc:a9d31fb2e8a88791aa6f51561bc93935a inherit pub_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emitted when the node's state changes. <br /></td></tr>
@@ -305,6 +294,82 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
 <tr class="separator:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a89c4987e7b2681e81efe498f676bc3cb" id="r_a89c4987e7b2681e81efe498f676bc3cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameDemuxNode.html#a89c4987e7b2681e81efe498f676bc3cb">processFrame</a> (<a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> &amp;frame, int <a class="el" href="classList.html">inputIndex</a>, <a class="el" href="medianode_8h.html#ad7fe4389047e0575f0c976d45196045f">DeliveryList</a> &amp;<a class="el" href="classList.html">deliveries</a>) <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memdesc:a89c4987e7b2681e81efe498f676bc3cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Processes a single frame of data.  <br /></td></tr>
+<tr class="separator:a89c4987e7b2681e81efe498f676bc3cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_classMediaNode"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classMediaNode')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classMediaNode.html">MediaNode</a></td></tr>
+<tr class="memitem:a4b20d21fbbf564f8b9f2526b72688c90 inherit pro_methods_classMediaNode" id="r_a4b20d21fbbf564f8b9f2526b72688c90"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a4b20d21fbbf564f8b9f2526b72688c90">start</a> ()</td></tr>
+<tr class="memdesc:a4b20d21fbbf564f8b9f2526b72688c90 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begins processing.  <br /></td></tr>
+<tr class="separator:a4b20d21fbbf564f8b9f2526b72688c90 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79edc1508f7df261513e7e320ca7c6fa inherit pro_methods_classMediaNode" id="r_a79edc1508f7df261513e7e320ca7c6fa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a79edc1508f7df261513e7e320ca7c6fa">stop</a> ()</td></tr>
+<tr class="memdesc:a79edc1508f7df261513e7e320ca7c6fa inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops processing.  <br /></td></tr>
+<tr class="separator:a79edc1508f7df261513e7e320ca7c6fa inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0ca3f296d28346266e5cad07bb2a41c inherit pro_methods_classMediaNode" id="r_ad0ca3f296d28346266e5cad07bb2a41c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ad0ca3f296d28346266e5cad07bb2a41c">cleanup</a> ()</td></tr>
+<tr class="memdesc:ad0ca3f296d28346266e5cad07bb2a41c inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called during <a class="el" href="classMediaNode.html#a79edc1508f7df261513e7e320ca7c6fa" title="Stops processing.">stop()</a> to allow cleanup while the object is still fully constructed.  <br /></td></tr>
+<tr class="separator:ad0ca3f296d28346266e5cad07bb2a41c inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f6fdc0b72edf9c736fb4153f415d83f inherit pro_methods_classMediaNode" id="r_a4f6fdc0b72edf9c736fb4153f415d83f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a4f6fdc0b72edf9c736fb4153f415d83f">process</a> ()</td></tr>
+<tr class="memdesc:a4f6fdc0b72edf9c736fb4153f415d83f inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs one processing cycle.  <br /></td></tr>
+<tr class="separator:a4f6fdc0b72edf9c736fb4153f415d83f inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04848b4fd2ff345b54fbe3ef06edcf5d inherit pro_methods_classMediaNode" id="r_a04848b4fd2ff345b54fbe3ef06edcf5d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a04848b4fd2ff345b54fbe3ef06edcf5d">currentBenchmark</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a04848b4fd2ff345b54fbe3ef06edcf5d inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pre-created benchmark for the current frame.  <br /></td></tr>
+<tr class="separator:a04848b4fd2ff345b54fbe3ef06edcf5d inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8d900ddc7e9792f5aeda554bb08b6a9 inherit pro_methods_classMediaNode" id="r_af8d900ddc7e9792f5aeda554bb08b6a9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#af8d900ddc7e9792f5aeda554bb08b6a9">setThread</a> (<a class="el" href="classThread.html">Thread</a> *<a class="el" href="classMediaNode.html#a19630d26bc4f1256a604fd1893b4ecc3">thread</a>)</td></tr>
+<tr class="memdesc:af8d900ddc7e9792f5aeda554bb08b6a9 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the thread for this node. Takes ownership.  <br /></td></tr>
+<tr class="separator:af8d900ddc7e9792f5aeda554bb08b6a9 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3587b94a10aac71738d2e54ba0f2873f inherit pro_methods_classMediaNode" id="r_a3587b94a10aac71738d2e54ba0f2873f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3587b94a10aac71738d2e54ba0f2873f">dequeueInput</a> (int <a class="el" href="classList.html">sinkIndex</a>)</td></tr>
+<tr class="memdesc:a3587b94a10aac71738d2e54ba0f2873f inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues a frame from the input sink at the given index.  <br /></td></tr>
+<tr class="separator:a3587b94a10aac71738d2e54ba0f2873f inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7718f594ab69226bb31394648208a829 inherit pro_methods_classMediaNode" id="r_a7718f594ab69226bb31394648208a829"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a7718f594ab69226bb31394648208a829">dequeueInput</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;sinkName)</td></tr>
+<tr class="memdesc:a7718f594ab69226bb31394648208a829 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues a frame from the named input sink.  <br /></td></tr>
+<tr class="separator:a7718f594ab69226bb31394648208a829 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a971a77420994d539a9c042490affe2d0 inherit pro_methods_classMediaNode" id="r_a971a77420994d539a9c042490affe2d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a971a77420994d539a9c042490affe2d0">dequeueInput</a> ()</td></tr>
+<tr class="memdesc:a971a77420994d539a9c042490affe2d0 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues a frame from the first input sink that has data.  <br /></td></tr>
+<tr class="separator:a971a77420994d539a9c042490affe2d0 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ecc9f1637d5f4c7f23a98922bff6b54 inherit pro_methods_classMediaNode" id="r_a0ecc9f1637d5f4c7f23a98922bff6b54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a0ecc9f1637d5f4c7f23a98922bff6b54">recordProcessTiming</a> (<a class="el" href="classList.html">double</a> duration)</td></tr>
+<tr class="memdesc:a0ecc9f1637d5f4c7f23a98922bff6b54 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records timing for a <a class="el" href="classMediaNode.html#a4f6fdc0b72edf9c736fb4153f415d83f" title="Runs one processing cycle.">process()</a> call.  <br /></td></tr>
+<tr class="separator:a0ecc9f1637d5f4c7f23a98922bff6b54 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e7ff03b39a5fb36f0178ff66c25ddec inherit pro_methods_classMediaNode" id="r_a6e7ff03b39a5fb36f0178ff66c25ddec"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a6e7ff03b39a5fb36f0178ff66c25ddec">addSink</a> (<a class="el" href="classMediaSink.html#a6850f8b8aea2cf2ca536f2584123d1a1">MediaSink::Ptr</a> <a class="el" href="classMediaNode.html#a0c3d834bca5b4d202d9dd239a87bf635">sink</a>)</td></tr>
+<tr class="memdesc:a6e7ff03b39a5fb36f0178ff66c25ddec inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an input sink to this node.  <br /></td></tr>
+<tr class="separator:a6e7ff03b39a5fb36f0178ff66c25ddec inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a350b86bec4a417ab84afbb533a97b21d inherit pro_methods_classMediaNode" id="r_a350b86bec4a417ab84afbb533a97b21d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a350b86bec4a417ab84afbb533a97b21d">addSource</a> (<a class="el" href="classMediaSource.html#ac4112b72128fa802a718d8ca8b764222">MediaSource::Ptr</a> <a class="el" href="classMediaNode.html#a785fc890a7e47db8ef3b50b6f01d4740">source</a>)</td></tr>
+<tr class="memdesc:a350b86bec4a417ab84afbb533a97b21d inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an output source to this node.  <br /></td></tr>
+<tr class="separator:a350b86bec4a417ab84afbb533a97b21d inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6355880ff6a8e13ac0c6bd10f7bd6d75 inherit pro_methods_classMediaNode" id="r_a6355880ff6a8e13ac0c6bd10f7bd6d75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a6355880ff6a8e13ac0c6bd10f7bd6d75">setState</a> (<a class="el" href="classMediaNode.html#ad4c42f5f6b8028cfa53a151c2006c8ae">State</a> <a class="el" href="classMediaNode.html#a97170f7adc9677ae105a6944c01a7185">state</a>)</td></tr>
+<tr class="memdesc:a6355880ff6a8e13ac0c6bd10f7bd6d75 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the node state and emits stateChanged.  <br /></td></tr>
+<tr class="separator:a6355880ff6a8e13ac0c6bd10f7bd6d75 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4378ccddc419244bc36fe087a619b0c9 inherit pro_methods_classMediaNode" id="r_a4378ccddc419244bc36fe087a619b0c9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a4378ccddc419244bc36fe087a619b0c9">deliverOutput</a> (int sourceIndex, <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> frame)</td></tr>
+<tr class="memdesc:a4378ccddc419244bc36fe087a619b0c9 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delivers a frame via the output source at the given index.  <br /></td></tr>
+<tr class="separator:a4378ccddc419244bc36fe087a619b0c9 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e44c00865a466b63045aa8e1ceb3227 inherit pro_methods_classMediaNode" id="r_a3e44c00865a466b63045aa8e1ceb3227"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3e44c00865a466b63045aa8e1ceb3227">deliverOutput</a> (<a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> frame)</td></tr>
+<tr class="memdesc:a3e44c00865a466b63045aa8e1ceb3227 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delivers a frame via all output sources.  <br /></td></tr>
+<tr class="separator:a3e44c00865a466b63045aa8e1ceb3227 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e3c006258e649df99a3c034c2df4751 inherit pro_methods_classMediaNode" id="r_a7e3c006258e649df99a3c034c2df4751"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a7e3c006258e649df99a3c034c2df4751">emitMessage</a> (<a class="el" href="group__pipeline.html#ga11717da96dc4e4a5f79371318448f82b">Severity</a> severity, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;message, <a class="el" href="classList.html">uint64_t</a> frameNumber=0)</td></tr>
+<tr class="memdesc:a7e3c006258e649df99a3c034c2df4751 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emits a message with the given severity and text.  <br /></td></tr>
+<tr class="separator:a7e3c006258e649df99a3c034c2df4751 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88113e103d74d76340e3766462fa03e8 inherit pro_methods_classMediaNode" id="r_a88113e103d74d76340e3766462fa03e8"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>emitWarning</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;message)</td></tr>
+<tr class="memdesc:a88113e103d74d76340e3766462fa03e8 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emits a Warning-severity message. <br /></td></tr>
+<tr class="separator:a88113e103d74d76340e3766462fa03e8 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac451e16ae6f822a4eb0988f99e445a46 inherit pro_methods_classMediaNode" id="r_ac451e16ae6f822a4eb0988f99e445a46"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ac451e16ae6f822a4eb0988f99e445a46">emitError</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;message)</td></tr>
+<tr class="memdesc:ac451e16ae6f822a4eb0988f99e445a46 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emits an Error-severity message.  <br /></td></tr>
+<tr class="separator:ac451e16ae6f822a4eb0988f99e445a46 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04e3405bc1483c5b0947e8c4b60956e5 inherit pro_methods_classMediaNode" id="r_a04e3405bc1483c5b0947e8c4b60956e5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a04e3405bc1483c5b0947e8c4b60956e5">waitForWork</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
+<tr class="memdesc:a04e3405bc1483c5b0947e8c4b60956e5 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until the node has work to do, the node leaves Running state, or the timeout expires.  <br /></td></tr>
+<tr class="separator:a04e3405bc1483c5b0947e8c4b60956e5 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase" id="r_ac12565258ee428cb8691cb6584e1d54e"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>signalSender</b> ()</td></tr>
+<tr class="memdesc:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> that emitted the signal currently being handled. <br /></td></tr>
+<tr class="separator:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3d2ac9f3b27592045bfc0226d2a5e4f inherit pro_methods_classObjectBase" id="r_aa3d2ac9f3b27592045bfc0226d2a5e4f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f">event</a> (<a class="el" href="classEvent.html">Event</a> *<a class="el" href="classList.html">e</a>)</td></tr>
+<tr class="memdesc:aa3d2ac9f3b27592045bfc0226d2a5e4f inherit pro_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> to deliver events to this object.  <br /></td></tr>
+<tr class="separator:aa3d2ac9f3b27592045bfc0226d2a5e4f inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase" id="r_a3ee4d94ac818e49a506f7fa4be8cc2f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a3ee4d94ac818e49a506f7fa4be8cc2f7">timerEvent</a> (<a class="el" href="classTimerEvent.html">TimerEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
+<tr class="memdesc:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when a timer fires for this object.  <br /></td></tr>
+<tr class="separator:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classMediaNode"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classMediaNode')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classMediaNode.html">MediaNode</a></td></tr>
@@ -315,12 +380,6 @@ Additional Inherited Members</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ad4c42f5f6b8028cfa53a151c2006c8ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Node lifecycle state.  <a href="classMediaNode.html#ad4c42f5f6b8028cfa53a151c2006c8ae">More...</a><br /></td></tr>
 <tr class="separator:ad4c42f5f6b8028cfa53a151c2006c8ae inherit pub_types_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d29784a8601b07f04f106e401771fda inherit pub_types_classMediaNode" id="r_a2d29784a8601b07f04f106e401771fda"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a2d29784a8601b07f04f106e401771fda">ThreadingPolicy</a> { <a class="el" href="classMediaNode.html#a2d29784a8601b07f04f106e401771fdaaf56c29aae2cd7b3b1c6282ce5801d567">UseGraphPool</a>
-, <a class="el" href="classMediaNode.html#a2d29784a8601b07f04f106e401771fdaa3e8d05ab853f251156448a628d1de45d">DedicatedThread</a>
-, <a class="el" href="classMediaNode.html#a2d29784a8601b07f04f106e401771fdaa1c1c5a7d9ef67898e2557f953b6b63a6">CustomPool</a>
- }</td></tr>
-<tr class="memdesc:a2d29784a8601b07f04f106e401771fda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Threading policy for this node.  <a href="classMediaNode.html#a2d29784a8601b07f04f106e401771fda">More...</a><br /></td></tr>
-<tr class="separator:a2d29784a8601b07f04f106e401771fda inherit pub_types_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
@@ -356,65 +415,14 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase" id="r_ae2f4061ea36551655f6fd02fec4b2abd"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignalMeta</b> = <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>(<a class="el" href="classObjectBase.html#a6cf10683d2b9fa2dd0ab9a0722e925ad">metaInfo</a>(), <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
 <tr class="separator:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_classMediaNode"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classMediaNode')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classMediaNode.html">MediaNode</a></td></tr>
-<tr class="memitem:aa3e801fe7f9a56c423ec19a8a15ecb5f inherit pro_methods_classMediaNode" id="r_aa3e801fe7f9a56c423ec19a8a15ecb5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#aa3e801fe7f9a56c423ec19a8a15ecb5f">enqueueInput</a> (<a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> frame)</td></tr>
-<tr class="memdesc:aa3e801fe7f9a56c423ec19a8a15ecb5f inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueues a frame into this node's input queue.  <br /></td></tr>
-<tr class="separator:aa3e801fe7f9a56c423ec19a8a15ecb5f inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ecc9f1637d5f4c7f23a98922bff6b54 inherit pro_methods_classMediaNode" id="r_a0ecc9f1637d5f4c7f23a98922bff6b54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a0ecc9f1637d5f4c7f23a98922bff6b54">recordProcessTiming</a> (<a class="el" href="classList.html">double</a> duration)</td></tr>
-<tr class="memdesc:a0ecc9f1637d5f4c7f23a98922bff6b54 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records timing for a <a class="el" href="classMediaNode.html#ab6fbd04386109e9ea5d5815255fe0b7a" title="Processes one cycle of data.">process()</a> call.  <br /></td></tr>
-<tr class="separator:a0ecc9f1637d5f4c7f23a98922bff6b54 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af42528ff2bd04607c31f213440b5c137 inherit pro_methods_classMediaNode" id="r_af42528ff2bd04607c31f213440b5c137"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#af42528ff2bd04607c31f213440b5c137">recordStarvation</a> ()</td></tr>
-<tr class="memdesc:af42528ff2bd04607c31f213440b5c137 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Records a starvation event.  <br /></td></tr>
-<tr class="separator:af42528ff2bd04607c31f213440b5c137 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3edf98b51ff6e53c622eed77c3496a8a inherit pro_methods_classMediaNode" id="r_a3edf98b51ff6e53c622eed77c3496a8a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3edf98b51ff6e53c622eed77c3496a8a">addInputPort</a> (<a class="el" href="classMediaPort.html#aebaa34efc206948907510555979e04e6">MediaPort::Ptr</a> port)</td></tr>
-<tr class="memdesc:a3edf98b51ff6e53c622eed77c3496a8a inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an input port to this node.  <br /></td></tr>
-<tr class="separator:a3edf98b51ff6e53c622eed77c3496a8a inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32bcd70295817f0d0086c97cf611e135 inherit pro_methods_classMediaNode" id="r_a32bcd70295817f0d0086c97cf611e135"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a32bcd70295817f0d0086c97cf611e135">addOutputPort</a> (<a class="el" href="classMediaPort.html#aebaa34efc206948907510555979e04e6">MediaPort::Ptr</a> port)</td></tr>
-<tr class="memdesc:a32bcd70295817f0d0086c97cf611e135 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an output port to this node.  <br /></td></tr>
-<tr class="separator:a32bcd70295817f0d0086c97cf611e135 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6355880ff6a8e13ac0c6bd10f7bd6d75 inherit pro_methods_classMediaNode" id="r_a6355880ff6a8e13ac0c6bd10f7bd6d75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a6355880ff6a8e13ac0c6bd10f7bd6d75">setState</a> (<a class="el" href="classMediaNode.html#ad4c42f5f6b8028cfa53a151c2006c8ae">State</a> <a class="el" href="classMediaNode.html#a97170f7adc9677ae105a6944c01a7185">state</a>)</td></tr>
-<tr class="memdesc:a6355880ff6a8e13ac0c6bd10f7bd6d75 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the node state and emits stateChanged.  <br /></td></tr>
-<tr class="separator:a6355880ff6a8e13ac0c6bd10f7bd6d75 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a971a77420994d539a9c042490affe2d0 inherit pro_methods_classMediaNode" id="r_a971a77420994d539a9c042490affe2d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a971a77420994d539a9c042490affe2d0">dequeueInput</a> ()</td></tr>
-<tr class="memdesc:a971a77420994d539a9c042490affe2d0 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dequeues a frame from this node's input queue.  <br /></td></tr>
-<tr class="separator:a971a77420994d539a9c042490affe2d0 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a024516ad5237e93e2d4285ec1aaabc13 inherit pro_methods_classMediaNode" id="r_a024516ad5237e93e2d4285ec1aaabc13"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a024516ad5237e93e2d4285ec1aaabc13">deliverOutput</a> (int <a class="el" href="classList.html">portIndex</a>, <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> frame)</td></tr>
-<tr class="memdesc:a024516ad5237e93e2d4285ec1aaabc13 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delivers a frame to all outgoing links on the given output port.  <br /></td></tr>
-<tr class="separator:a024516ad5237e93e2d4285ec1aaabc13 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e44c00865a466b63045aa8e1ceb3227 inherit pro_methods_classMediaNode" id="r_a3e44c00865a466b63045aa8e1ceb3227"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a3e44c00865a466b63045aa8e1ceb3227">deliverOutput</a> (<a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> frame)</td></tr>
-<tr class="memdesc:a3e44c00865a466b63045aa8e1ceb3227 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delivers a frame to all outgoing links on all output ports.  <br /></td></tr>
-<tr class="separator:a3e44c00865a466b63045aa8e1ceb3227 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e3c006258e649df99a3c034c2df4751 inherit pro_methods_classMediaNode" id="r_a7e3c006258e649df99a3c034c2df4751"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a7e3c006258e649df99a3c034c2df4751">emitMessage</a> (<a class="el" href="group__proav__pipeline.html#ga11717da96dc4e4a5f79371318448f82b">Severity</a> severity, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;message, <a class="el" href="classList.html">uint64_t</a> frameNumber=0)</td></tr>
-<tr class="memdesc:a7e3c006258e649df99a3c034c2df4751 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emits a message with the given severity and text.  <br /></td></tr>
-<tr class="separator:a7e3c006258e649df99a3c034c2df4751 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88113e103d74d76340e3766462fa03e8 inherit pro_methods_classMediaNode" id="r_a88113e103d74d76340e3766462fa03e8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#a88113e103d74d76340e3766462fa03e8">emitWarning</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;message)</td></tr>
-<tr class="memdesc:a88113e103d74d76340e3766462fa03e8 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emits a Warning-severity message.  <br /></td></tr>
-<tr class="separator:a88113e103d74d76340e3766462fa03e8 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac451e16ae6f822a4eb0988f99e445a46 inherit pro_methods_classMediaNode" id="r_ac451e16ae6f822a4eb0988f99e445a46"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html#ac451e16ae6f822a4eb0988f99e445a46">emitError</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;message)</td></tr>
-<tr class="memdesc:ac451e16ae6f822a4eb0988f99e445a46 inherit pro_methods_classMediaNode"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emits an Error-severity message.  <br /></td></tr>
-<tr class="separator:ac451e16ae6f822a4eb0988f99e445a46 inherit pro_methods_classMediaNode"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pro_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase" id="r_ac12565258ee428cb8691cb6584e1d54e"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classObjectBase.html">ObjectBase</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>signalSender</b> ()</td></tr>
-<tr class="memdesc:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> that emitted the signal currently being handled. <br /></td></tr>
-<tr class="separator:ac12565258ee428cb8691cb6584e1d54e inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3d2ac9f3b27592045bfc0226d2a5e4f inherit pro_methods_classObjectBase" id="r_aa3d2ac9f3b27592045bfc0226d2a5e4f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f">event</a> (<a class="el" href="classEvent.html">Event</a> *<a class="el" href="classList.html">e</a>)</td></tr>
-<tr class="memdesc:aa3d2ac9f3b27592045bfc0226d2a5e4f inherit pro_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> to deliver events to this object.  <br /></td></tr>
-<tr class="separator:aa3d2ac9f3b27592045bfc0226d2a5e4f inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase" id="r_a3ee4d94ac818e49a506f7fa4be8cc2f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a3ee4d94ac818e49a506f7fa4be8cc2f7">timerEvent</a> (<a class="el" href="classTimerEvent.html">TimerEvent</a> *<a class="el" href="classList.html">e</a>)</td></tr>
-<tr class="memdesc:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when a timer fires for this object.  <br /></td></tr>
-<tr class="separator:a3ee4d94ac818e49a506f7fa4be8cc2f7 inherit pro_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Splits a <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into separate <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> and <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> streams. </p>
-<p>Utility node with one <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> input port, one <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> output port, and one <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> output port. Extracts the image and audio from each incoming <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> and delivers them to the respective output ports. <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> from the <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> is propagated to both output streams.</p>
-<p>If the input <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> has no audio, only the <a class="el" href="classImage.html" title="Raster image with pixel format, planes, and metadata.">Image</a> output is produced.</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFrameDemuxNode.html">FrameDemuxNode</a> *<a class="code hl_class" href="classList.html">demux</a> = <span class="keyword">new</span> <a class="code hl_class" href="classFrameDemuxNode.html">FrameDemuxNode</a>();</div>
-<div class="line">graph.connect(source, 0, <a class="code hl_class" href="classList.html">demux</a>, 0);       <span class="comment">// Frame input</span></div>
-<div class="line">graph.connect(<a class="code hl_class" href="classList.html">demux</a>, 0, <a class="code hl_class" href="classList.html">videoSink</a>, 0);     <span class="comment">// Image output</span></div>
-<div class="line">graph.connect(<a class="code hl_class" href="classList.html">demux</a>, 1, <a class="code hl_class" href="classList.html">audioSink</a>, 0);     <span class="comment">// Audio output</span></div>
-<div class="ttc" id="aclassFrameDemuxNode_html"><div class="ttname"><a href="classFrameDemuxNode.html">FrameDemuxNode</a></div><div class="ttdoc">Splits a Frame into separate Image and Audio streams.</div><div class="ttdef"><b>Definition</b> framedemuxnode.h:34</div></div>
+<div class="textblock"><p>Splits a <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into separate <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> and <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> streams. </p>
+<p>Utility node with one <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> input port, one <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> output port, and one <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> output port. Extracts the image and audio from each incoming <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> and delivers them to the respective output ports. <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> from the <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> is propagated to both output streams.</p>
+<p>If the input <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> has no audio, only the <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> output is produced.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classMediaNodeConfig.html">MediaNodeConfig</a> <a class="code hl_class" href="classList.html">cfg</a>(<span class="stringliteral">&quot;FrameDemuxNode&quot;</span>, <span class="stringliteral">&quot;demux&quot;</span>);</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassMediaNodeConfig_html"><div class="ttname"><a href="classMediaNodeConfig.html">MediaNodeConfig</a></div><div class="ttdoc">Configuration descriptor for creating and configuring a MediaNode.</div><div class="ttdef"><b>Definition</b> medianodeconfig.h:60</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a52f1aa57af4d35dce754710ac6b27bd7" name="a52f1aa57af4d35dce754710ac6b27bd7"></a>
@@ -444,8 +452,8 @@ template&lt;typename... Args&gt; </td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a612863b5a8afaa119ae5a09db351f746" name="a612863b5a8afaa119ae5a09db351f746"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a612863b5a8afaa119ae5a09db351f746">&#9670;&#160;</a></span>configure()</h2>
+<a id="a917b0e0f7fa6e8ba63892dc608825d26" name="a917b0e0f7fa6e8ba63892dc608825d26"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a917b0e0f7fa6e8ba63892dc608825d26">&#9670;&#160;</a></span>build()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -454,9 +462,10 @@ template&lt;typename... Args&gt; </td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classError.html">Error</a> FrameDemuxNode::configure </td>
+          <td class="memname"><a class="el" href="structBuildResult.html">BuildResult</a> FrameDemuxNode::build </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaNodeConfig.html">MediaNodeConfig</a> &amp;&#160;</td>
+          <td class="paramname"><em>config</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -467,16 +476,22 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Validates ports and allocates resources. </p>
-<p>Transitions the node from Idle to Configured on success.</p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error code. </dd></dl>
+<p>Configures this node from a <a class="el" href="classMediaNodeConfig.html" title="Configuration descriptor for creating and configuring a MediaNode.">MediaNodeConfig</a>. </p>
+<p>Called by <a class="el" href="classMediaPipeline.html#ab55d01325582c894ff5058e79cab208c" title="Builds the pipeline from a configuration.">MediaPipeline::build()</a> after creating the node via the factory and wiring connections. The node reads its configuration from the config, validates it, allocates resources, and transitions to the Configured state on success.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td>The node configuration. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="structBuildResult.html" title="Collects diagnostic messages from a node&#39;s build() call.">BuildResult</a> collecting any diagnostics. </dd></dl>
 
-<p>Reimplemented from <a class="el" href="classMediaNode.html#acd22f3db60677df87b4b4f799c1209e5">MediaNode</a>.</p>
+<p>Implements <a class="el" href="classMediaNode.html#a73390a1daa25f848560d91349a71b131">MediaNode</a>.</p>
 
 </div>
 </div>
-<a id="a3710be10a9a870800b288ff6695196d6" name="a3710be10a9a870800b288ff6695196d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3710be10a9a870800b288ff6695196d6">&#9670;&#160;</a></span>process()</h2>
+<a id="ad713ee15ff8e212e1848559463808285" name="ad713ee15ff8e212e1848559463808285"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad713ee15ff8e212e1848559463808285">&#9670;&#160;</a></span>defaultConfig()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -485,10 +500,10 @@ template&lt;typename... Args&gt; </td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> FrameDemuxNode::process </td>
+          <td class="memname"><a class="el" href="classMediaNodeConfig.html">MediaNodeConfig</a> FrameDemuxNode::defaultConfig </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td></td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -498,15 +513,79 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Processes one cycle of data. </p>
-<p>Pure virtual — must be implemented by concrete node subclasses. </p>
+<p>Returns a default configuration for this node type. </p>
+<p>Override in concrete nodes to provide sensible defaults for all config options. The returned config has its Type set to the node's class name but no Name or Connections (those are pipeline concerns).</p>
+<p>The base class implementation returns an empty, default-constructed config.</p>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classMediaNodeConfig.html" title="Configuration descriptor for creating and configuring a MediaNode.">MediaNodeConfig</a> populated with default values. </dd></dl>
 
-<p>Implements <a class="el" href="classMediaNode.html#ab6fbd04386109e9ea5d5815255fe0b7a">MediaNode</a>.</p>
+<p>Reimplemented from <a class="el" href="classMediaNode.html#a36a22c44e0c2f09ae0639fda17849f5d">MediaNode</a>.</p>
+
+</div>
+</div>
+<a id="a89c4987e7b2681e81efe498f676bc3cb" name="a89c4987e7b2681e81efe498f676bc3cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89c4987e7b2681e81efe498f676bc3cb">&#9670;&#160;</a></span>processFrame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> FrameDemuxNode::processFrame </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Frame::Ptr</a> &amp;&#160;</td>
+          <td class="paramname"><em>frame</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>inputIndex</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="medianode_8h.html#ad7fe4389047e0575f0c976d45196045f">DeliveryList</a> &amp;&#160;</td>
+          <td class="paramname"><em>deliveries</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Processes a single frame of data. </p>
+<p>Called by the base class <a class="el" href="classMediaNode.html#a4f6fdc0b72edf9c736fb4153f415d83f" title="Runs one processing cycle.">process()</a> after dequeuing input and stamping benchmarks. Concrete nodes implement their processing logic here.</p>
+<p>For nodes with inputs: <code>frame</code> contains the dequeued data and <code>inputIndex</code> identifies which sink it came from.</p>
+<p>For source nodes (no sinks): <code>frame</code> is null and <code>inputIndex</code> is -1. The node creates and populates the frame.</p>
+<p>Output delivery is controlled via <code>deliveries:</code> </p><ul>
+<li>If <code>deliveries</code> is left empty and <code>frame</code> is valid after return, the base class delivers <code>frame</code> to all outputs.</li>
+<li>If <code>deliveries</code> is populated, each entry is delivered to its specified sourceIndex (or all outputs if sourceIndex is -1).</li>
+<li>If both are empty/invalid, no delivery occurs (terminal sinks).</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">frame</td><td>The input frame (or null for source nodes). </td></tr>
+    <tr><td class="paramname">inputIndex</td><td>The sink index the frame came from, or -1 for source nodes. </td></tr>
+    <tr><td class="paramname">deliveries</td><td>Output delivery list; populate for multi-output routing. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Implements <a class="el" href="classMediaNode.html#a87540c70c61d671ec95a4364f1f9e32d">MediaNode</a>.</p>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="framedemuxnode_8h_source.html">framedemuxnode.h</a></li>
+<li>include/promeki/<a class="el" href="framedemuxnode_8h_source.html">framedemuxnode.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -515,7 +594,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameDemuxNode.html">FrameDemuxNode</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

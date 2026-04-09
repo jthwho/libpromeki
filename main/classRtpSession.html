@@ -161,6 +161,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abb98d7f038370209135450dd752412d1" id="r_abb98d7f038370209135450dd752412d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#abb98d7f038370209135450dd752412d1">sendPackets</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">markerOnLast</a>=<a class="el" href="classList.html">true</a>)</td></tr>
 <tr class="memdesc:abb98d7f038370209135450dd752412d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends pre-packed RTP packets from a payload handler.  <br /></td></tr>
 <tr class="separator:abb98d7f038370209135450dd752412d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65d6124b69d382c2b6b91f02b6e99e1b" id="r_a65d6124b69d382c2b6b91f02b6e99e1b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a65d6124b69d382c2b6b91f02b6e99e1b">sendPacketsPaced</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;<a class="el" href="classList.html">spreadInterval</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">markerOnLast</a>=<a class="el" href="classList.html">true</a>)</td></tr>
+<tr class="memdesc:a65d6124b69d382c2b6b91f02b6e99e1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends pre-packed RTP packets with even inter-packet pacing.  <br /></td></tr>
+<tr class="separator:a65d6124b69d382c2b6b91f02b6e99e1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f7581de92068be35e93575640feaec5" id="r_a6f7581de92068be35e93575640feaec5"><td class="memItemLeft" align="right" valign="top"><a id="a6f7581de92068be35e93575640feaec5" name="a6f7581de92068be35e93575640feaec5"></a>
 <a class="el" href="classList.html">uint32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ssrc</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a6f7581de92068be35e93575640feaec5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the locally generated SSRC. <br /></td></tr>
@@ -292,7 +295,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassRtpPayloadJpeg_html"><div class="ttname"><a href="classRtpPayloadJpeg.html">RtpPayloadJpeg</a></div><div class="ttdoc">RTP payload handler for RFC 2435 JPEG (Motion JPEG).</div><div class="ttdef"><b>Definition</b> rtppayload.h:264</div></div>
-<div class="ttc" id="aclassRtpSession_html"><div class="ttname"><a href="classRtpSession.html">RtpSession</a></div><div class="ttdoc">RTP session for sending and receiving packets (RFC 3550).</div><div class="ttdef"><b>Definition</b> rtpsession.h:47</div></div>
+<div class="ttc" id="aclassRtpSession_html"><div class="ttname"><a href="classRtpSession.html">RtpSession</a></div><div class="ttdoc">RTP session for sending and receiving packets (RFC 3550).</div><div class="ttdef"><b>Definition</b> rtpsession.h:48</div></div>
 <div class="ttc" id="aclassSocketAddress_html_aa74f0f4a0ee616a0b941f899e1dcc7f3"><div class="ttname"><a href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a></div><div class="ttdeci">static SocketAddress any(uint16_t port)</div><div class="ttdoc">Returns INADDR_ANY with the given port.</div><div class="ttdef"><b>Definition</b> socketaddress.h:71</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -369,7 +372,7 @@ template&lt;typename... Args&gt; </td></tr>
 
 <p>Emitted when a packet is received. </p>
 <p>Parameters: payload data (<a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>), RTP timestamp (uint32_t), payload type (uint8_t), marker bit (bool).</p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000018">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000023">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -400,7 +403,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when an SSRC collision is detected. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000019">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000024">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -517,6 +520,66 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="a65d6124b69d382c2b6b91f02b6e99e1b" name="a65d6124b69d382c2b6b91f02b6e99e1b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65d6124b69d382c2b6b91f02b6e99e1b">&#9670;&#160;</a></span>sendPacketsPaced()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> RtpSession::sendPacketsPaced </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;&#160;</td>
+          <td class="paramname"><em>packets</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">uint32_t</a>&#160;</td>
+          <td class="paramname"><em>timestamp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;&#160;</td>
+          <td class="paramname"><em>dest</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;&#160;</td>
+          <td class="paramname"><em>spreadInterval</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>markerOnLast</em> = <code><a class="el" href="classList.html">true</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sends pre-packed RTP packets with even inter-packet pacing. </p>
+<p>Spreads packet transmission evenly across the given duration, sleeping between packets to maintain a steady send rate. This implements ST 2110-21 style sender pacing to avoid bursting all packets at once and overflowing receiver jitter buffers.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">packets</td><td>The pre-packed packet list. Modified in-place. </td></tr>
+    <tr><td class="paramname">timestamp</td><td>The RTP timestamp for this frame. </td></tr>
+    <tr><td class="paramname">dest</td><td>The destination address. </td></tr>
+    <tr><td class="paramname">spreadInterval</td><td>The total duration over which to spread packet transmission. Packets are sent at evenly spaced intervals within this window. </td></tr>
+    <tr><td class="paramname">markerOnLast</td><td>If true, set marker bit on the last packet. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on first failure. </dd></dl>
+
+</div>
+</div>
 <a id="aac6e34b68f6373f128c78cb876ba16fb" name="aac6e34b68f6373f128c78cb876ba16fb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aac6e34b68f6373f128c78cb876ba16fb">&#9670;&#160;</a></span>socket()</h2>
 
@@ -575,7 +638,7 @@ template&lt;typename... Args&gt; </td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/network/<a class="el" href="rtpsession_8h_source.html">rtpsession.h</a></li>
+<li>include/promeki/<a class="el" href="rtpsession_8h_source.html">rtpsession.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -584,7 +647,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRtpSession.html">RtpSession</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

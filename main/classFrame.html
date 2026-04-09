@@ -103,14 +103,14 @@ $(document).ready(function(){initNavTree('classFrame.html',''); initResizable();
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classFrame-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Frame Class Reference<div class="ingroups"><a class="el" href="group__proav__media.html">ProAV Media</a></div></div></div>
+  <div class="headertitle"><div class="title">Frame Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>A media frame containing images, audio, and metadata.  
  <a href="classFrame.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="proav_2frame_8h_source.html">frame.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="frame_8h_source.html">frame.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -123,7 +123,7 @@ Public Types</h2></td></tr>
 <tr class="memdesc:a3e035fa4cfd9d5b51231280d05ad4808"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plain value list of <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> objects. <br /></td></tr>
 <tr class="separator:a3e035fa4cfd9d5b51231280d05ad4808"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a59b79f2fc64b0774ac7ee5094c98a199" id="r_a59b79f2fc64b0774ac7ee5094c98a199"><td class="memItemLeft" align="right" valign="top"><a id="a59b79f2fc64b0774ac7ee5094c98a199" name="a59b79f2fc64b0774ac7ee5094c98a199"></a>
-<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec">promeki::List</a>&lt; <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Ptr</a> &gt;</td></tr>
+<a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PtrList</b> = promeki::List&lt; <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a">Ptr</a> &gt;</td></tr>
 <tr class="memdesc:a59b79f2fc64b0774ac7ee5094c98a199"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of shared pointers to <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> objects. <br /></td></tr>
 <tr class="separator:a59b79f2fc64b0774ac7ee5094c98a199"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -151,20 +151,29 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4ff149c36694dcda0da237da9d454d39" id="r_a4ff149c36694dcda0da237da9d454d39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a4ff149c36694dcda0da237da9d454d39">metadata</a> ()</td></tr>
 <tr class="memdesc:a4ff149c36694dcda0da237da9d454d39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the frame metadata.  <br /></td></tr>
 <tr class="separator:a4ff149c36694dcda0da237da9d454d39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a74d626f104011cc6315eb56f75411e" id="r_a6a74d626f104011cc6315eb56f75411e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a6a74d626f104011cc6315eb56f75411e">benchmark</a> () <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a></td></tr>
+<tr class="memdesc:a6a74d626f104011cc6315eb56f75411e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the frame benchmark.  <br /></td></tr>
+<tr class="separator:a6a74d626f104011cc6315eb56f75411e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abbaf21b52eeb26c889f520b9f654009d" id="r_abbaf21b52eeb26c889f520b9f654009d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#abbaf21b52eeb26c889f520b9f654009d">benchmark</a> ()</td></tr>
+<tr class="memdesc:abbaf21b52eeb26c889f520b9f654009d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the frame benchmark.  <br /></td></tr>
+<tr class="separator:abbaf21b52eeb26c889f520b9f654009d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e5e34cd3fc8dca4b282c125b7bb1035" id="r_a6e5e34cd3fc8dca4b282c125b7bb1035"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrame.html#a6e5e34cd3fc8dca4b282c125b7bb1035">setBenchmark</a> (<a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> <a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">bm</a>)</td></tr>
+<tr class="memdesc:a6e5e34cd3fc8dca4b282c125b7bb1035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the frame benchmark.  <br /></td></tr>
+<tr class="separator:a6e5e34cd3fc8dca4b282c125b7bb1035"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A media frame containing images, audio, and metadata. </p>
 <p>Aggregates one or more image planes, one or more audio tracks, and a metadata container into a single unit that represents a frame of</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classVideoDesc.html">VideoDesc</a> <a class="code hl_typedef" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">vdesc</a>;</div>
-<div class="line"><a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame = Frame::Ptr::create(<a class="code hl_typedef" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">vdesc</a>);</div>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classMediaDesc.html">MediaDesc</a> <a class="code hl_typedef" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">mdesc</a>;</div>
+<div class="line"><a class="code hl_class" href="classSharedPtr.html">Frame::Ptr</a> frame = Frame::Ptr::create(<a class="code hl_typedef" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">mdesc</a>);</div>
 <div class="line">frame-&gt;setTimecode(<a class="code hl_class" href="classTimecode.html">Timecode</a>(<a class="code hl_enumvalue" href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a>, 1, 0, 0, 0));</div>
 <div class="line"><a class="code hl_class" href="classImage.html">Image</a> <a class="code hl_typedef" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">img</a> = frame-&gt;image(0);</div>
-<div class="ttc" id="aclassFrame_html_a3e035fa4cfd9d5b51231280d05ad4808"><div class="ttname"><a href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Frame::List</a></div><div class="ttdeci">promeki::List&lt; Frame &gt; List</div><div class="ttdoc">Plain value list of Frame objects.</div><div class="ttdef"><b>Definition</b> frame.h:42</div></div>
-<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel format, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
-<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr</a></div><div class="ttdoc">A smart pointer class with reference counting and optional copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> sharedptr.h:252</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:45</div></div>
-<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:53</div></div>
-<div class="ttc" id="aclassVideoDesc_html"><div class="ttname"><a href="classVideoDesc.html">VideoDesc</a></div><div class="ttdoc">Describes a video format including frame rate, image layers, audio channels, and metadata.</div><div class="ttdef"><b>Definition</b> videodesc.h:25</div></div>
+<div class="ttc" id="aclassFrame_html_a3e035fa4cfd9d5b51231280d05ad4808"><div class="ttname"><a href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">Frame::List</a></div><div class="ttdeci">promeki::List&lt; Frame &gt; List</div><div class="ttdoc">Plain value list of Frame objects.</div><div class="ttdef"><b>Definition</b> frame.h:43</div></div>
+<div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
+<div class="ttc" id="aclassMediaDesc_html"><div class="ttname"><a href="classMediaDesc.html">MediaDesc</a></div><div class="ttdoc">Describes a media format including frame rate, image layers, audio channels, and metadata.</div><div class="ttdef"><b>Definition</b> mediadesc.h:30</div></div>
+<div class="ttc" id="aclassSharedPtr_html"><div class="ttname"><a href="classSharedPtr.html">SharedPtr&lt; Frame &gt;</a></div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:46</div></div>
+<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:54</div></div>
 </div><!-- fragment --> media content. </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a467f242201a17814c868b403ae7c421f" name="a467f242201a17814c868b403ae7c421f"></a>
@@ -220,6 +229,62 @@ Public Member Functions</h2></td></tr>
 
 <p>Returns a const reference to the list of audio tracks. </p>
 <dl class="section return"><dt>Returns</dt><dd>The audio pointer list. </dd></dl>
+
+</div>
+</div>
+<a id="abbaf21b52eeb26c889f520b9f654009d" name="abbaf21b52eeb26c889f520b9f654009d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abbaf21b52eeb26c889f520b9f654009d">&#9670;&#160;</a></span>benchmark() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> &amp; Frame::benchmark </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a mutable reference to the frame benchmark. </p>
+<dl class="section return"><dt>Returns</dt><dd>The benchmark pointer. </dd></dl>
+
+</div>
+</div>
+<a id="a6a74d626f104011cc6315eb56f75411e" name="a6a74d626f104011cc6315eb56f75411e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a74d626f104011cc6315eb56f75411e">&#9670;&#160;</a></span>benchmark() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">const</a> <a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a> &amp; Frame::benchmark </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a const reference to the frame benchmark. </p>
+<dl class="section return"><dt>Returns</dt><dd>The benchmark pointer (may be null if benchmarking is disabled). </dd></dl>
 
 </div>
 </div>
@@ -335,8 +400,42 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a6e5e34cd3fc8dca4b282c125b7bb1035" name="a6e5e34cd3fc8dca4b282c125b7bb1035"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e5e34cd3fc8dca4b282c125b7bb1035">&#9670;&#160;</a></span>setBenchmark()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classFrame.html#a3e035fa4cfd9d5b51231280d05ad4808">void</a> Frame::setBenchmark </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classBenchmark.html#a966e10511c08b157ba12506b43d203fe">Benchmark::Ptr</a>&#160;</td>
+          <td class="paramname"><em>bm</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the frame benchmark. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bm</td><td>The benchmark to attach. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="proav_2frame_8h_source.html">frame.h</a></li>
+<li>include/promeki/<a class="el" href="frame_8h_source.html">frame.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -345,7 +444,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrame.html">Frame</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

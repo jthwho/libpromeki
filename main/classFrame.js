@@ -6,8 +6,11 @@ var classFrame =
     [ "Frame", "classFrame.html#af859480e7bdedf343c1ad7d941106f26", null ],
     [ "audioList", "classFrame.html#a467f242201a17814c868b403ae7c421f", null ],
     [ "audioList", "classFrame.html#acd463c7e5ee785d13334c3e079cb23a3", null ],
+    [ "benchmark", "classFrame.html#abbaf21b52eeb26c889f520b9f654009d", null ],
+    [ "benchmark", "classFrame.html#a6a74d626f104011cc6315eb56f75411e", null ],
     [ "imageList", "classFrame.html#a8d258b0e55414fc85257cb1784559db5", null ],
     [ "imageList", "classFrame.html#a8360d8a81a700a1b90cf6da71cd524e4", null ],
     [ "metadata", "classFrame.html#a4ff149c36694dcda0da237da9d454d39", null ],
-    [ "metadata", "classFrame.html#a3029bf6f68d261411f9510536c1994d2", null ]
+    [ "metadata", "classFrame.html#a3029bf6f68d261411f9510536c1994d2", null ],
+    [ "setBenchmark", "classFrame.html#a6e5e34cd3fc8dca4b282c125b7bb1035", null ]
 ];

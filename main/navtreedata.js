@@ -26,6 +26,40 @@ var NAVTREE =
 [
   [ "libpromeki", "index.html", [
     [ "PROfessional MEdia toolKIt", "index.html", "index" ],
+    [ "Color Science", "color_science.html", [
+      [ "What Is a Color?", "color_science.html#cs_what", null ],
+      [ "CIE XYZ: The Universal Color Space", "color_science.html#cs_cie", null ],
+      [ "Chromaticity: Separating Color from Brightness", "color_science.html#cs_chromaticity", null ],
+      [ "RGB Color Spaces", "color_science.html#cs_rgb", [
+        [ "Transfer Functions (Gamma)", "color_science.html#cs_transfer", null ],
+        [ "Prime Notation: R'G'B' vs RGB", "color_science.html#cs_prime", null ]
+      ] ],
+      [ "Derived Color Models", "color_science.html#cs_derived", [
+        [ "HSV and HSL", "color_science.html#cs_hsv", null ],
+        [ "YCbCr (Luma/Chroma)", "color_science.html#cs_ycbcr", [
+          [ "Why YCbCr, not YUV?", "color_science.html#cs_not_yuv", null ]
+        ] ]
+      ] ],
+      [ "CIE Perceptual Models", "color_science.html#cs_cie_models", [
+        [ "CIE L*a*b*", "color_science.html#cs_lab", null ]
+      ] ],
+      [ "Component Normalization", "color_science.html#cs_normalization", null ],
+      [ "How Conversion Works", "color_science.html#cs_conversion", null ],
+      [ "Library Classes", "color_science.html#cs_classes", [
+        [ "Quick Start", "color_science.html#cs_usage", null ]
+      ] ],
+      [ "Further Reading", "color_science.html#cs_further", null ]
+    ] ],
+    [ "Color Space Conversion (CSC) Framework", "csc.html", [
+      [ "Overview", "csc.html#csc_overview", null ],
+      [ "Pipeline Architecture", "csc.html#csc_pipeline", null ],
+      [ "Fast-Path Kernels", "csc.html#csc_fastpaths", null ],
+      [ "Accuracy Characteristics", "csc.html#csc_accuracy", null ],
+      [ "Configuration", "csc.html#csc_config", null ],
+      [ "Thread Safety", "csc.html#csc_threading", null ],
+      [ "Adding Custom Fast Paths", "csc.html#csc_extending", null ],
+      [ "Test Strategy", "csc.html#csc_testing", null ]
+    ] ],
     [ "Data Object Categories", "dataobjects.html", [
       [ "Simple", "dataobjects.html#simple", null ],
       [ "Shareable", "dataobjects.html#shareable", null ],
@@ -41,6 +75,49 @@ var NAVTREE =
       [ "Standalone Build", "demos.html#demos_standalone", null ],
       [ "Adding a New Demo", "demos.html#demos_adding", null ],
       [ "Current Demos", "demos.html#demos_list", null ]
+    ] ],
+    [ "Font Rendering", "fonts.html", [
+      [ "Class Hierarchy", "fonts.html#font_hierarchy", null ],
+      [ "Choosing a Renderer", "fonts.html#font_choosing", null ],
+      [ "Color Semantics", "fonts.html#font_colors", null ],
+      [ "Kerning", "fonts.html#font_kerning", null ],
+      [ "Font Metrics", "fonts.html#font_metrics", null ],
+      [ "PaintEngine and Invalidation", "fonts.html#font_paintengine", null ],
+      [ "Examples", "fonts.html#font_examples", [
+        [ "FastFont: Timecode Overlay", "fonts.html#font_example_fast", null ],
+        [ "BasicFont: Transparent Overlay", "fonts.html#font_example_basic", null ]
+      ] ]
+    ] ],
+    [ "Media I/O Subsystem", "mediaio.html", [
+      [ "Overview", "mediaio.html#mediaio_overview", null ],
+      [ "Architecture", "mediaio.html#mediaio_architecture", [
+        [ "Command pattern", "mediaio.html#mediaio_command_pattern", null ],
+        [ "Strand-based serialization", "mediaio.html#mediaio_strand", null ],
+        [ "Lock-free data flow", "mediaio.html#mediaio_data_flow", null ],
+        [ "Threading model", "mediaio.html#mediaio_threading", null ]
+      ] ],
+      [ "User API", "mediaio.html#mediaio_user_api", [
+        [ "Creating an instance", "mediaio.html#mediaio_create", null ],
+        [ "Open / close lifecycle", "mediaio.html#mediaio_lifecycle", null ],
+        [ "Reading frames", "mediaio.html#mediaio_read", null ],
+        [ "Writing frames", "mediaio.html#mediaio_write", null ],
+        [ "Seeking", "mediaio.html#mediaio_seek", null ],
+        [ "Parameterized commands", "mediaio.html#mediaio_params", null ]
+      ] ],
+      [ "Authoring a backend", "mediaio.html#mediaio_authoring", [
+        [ "Setup", "mediaio.html#mediaio_authoring_setup", null ],
+        [ "Skeleton", "mediaio.html#mediaio_authoring_template", null ],
+        [ "Open / close contract", "mediaio.html#mediaio_authoring_open", null ],
+        [ "Reading", "mediaio.html#mediaio_authoring_read", null ],
+        [ "Threading rules for backends", "mediaio.html#mediaio_authoring_threading", null ],
+        [ "Parameterized command dispatch", "mediaio.html#mediaio_authoring_params", null ]
+      ] ],
+      [ "EOF semantics", "mediaio.html#mediaio_eof", null ],
+      [ "Mid-stream descriptor changes", "mediaio.html#mediaio_descchange", null ],
+      [ "Backend statistics", "mediaio.html#mediaio_stats", null ],
+      [ "Live capture pattern", "mediaio.html#mediaio_capture", null ],
+      [ "Per-frame metadata keys", "mediaio.html#mediaio_metadata", null ],
+      [ "Thread pool sizing", "mediaio.html#mediaio_pool", null ]
     ] ],
     [ "Threading and Concurrency", "threading.html", [
       [ "Threading Model", "threading.html#thread_model", null ],
@@ -59,6 +136,14 @@ var NAVTREE =
       ] ],
       [ "ThreadPool", "threading.html#thread_pool", null ],
       [ "Pipeline Threading", "threading.html#thread_pipeline", null ]
+    ] ],
+    [ "TypeRegistry Pattern", "typeregistry.html", [
+      [ "Overview", "typeregistry.html#tr_overview", null ],
+      [ "Construction and Copying", "typeregistry.html#tr_construction", null ],
+      [ "Registering User-Defined Types", "typeregistry.html#tr_extension", null ],
+      [ "Design Guidelines", "typeregistry.html#tr_guidelines", null ],
+      [ "ID Disambiguation Guards", "typeregistry.html#tr_disambiguation", null ],
+      [ "Classes Using This Pattern", "typeregistry.html#tr_classes", null ]
     ] ],
     [ "Utility Applications", "utils.html", [
       [ "Building", "utils.html#utils_building", null ],
@@ -109,26 +194,30 @@ var NAVTREE =
         [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md55", null ],
         [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md56", null ]
       ] ],
-      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md58", null ],
-      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md60", null ],
-      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md62", [
-        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md63", null ],
-        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md64", null ],
-        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md65", null ]
+      [ "TypeRegistry Types", "md_CODING__STANDARDS.html#autotoc_md58", [
+        [ "Pass the Wrapper, Not the ID", "md_CODING__STANDARDS.html#autotoc_md59", null ],
+        [ "ID Disambiguation Guards", "md_CODING__STANDARDS.html#autotoc_md60", null ]
       ] ],
-      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md67", [
-        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md68", null ],
-        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md69", null ],
-        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md70", null ],
-        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md71", null ]
+      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md62", null ],
+      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md64", null ],
+      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md66", [
+        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md67", null ],
+        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md68", null ],
+        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md69", null ]
       ] ],
-      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md73", [
-        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md74", null ],
-        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md75", null ],
-        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md76", null ],
-        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md77", null ]
+      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md71", [
+        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md72", null ],
+        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md73", null ],
+        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md74", null ],
+        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md75", null ]
       ] ],
-      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md79", null ]
+      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md77", [
+        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md78", null ],
+        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md79", null ],
+        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md80", null ],
+        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md81", null ]
+      ] ],
+      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md83", null ]
     ] ],
     [ "Signal List", "signal.html", null ],
     [ "Deprecated List", "deprecated.html", null ],
@@ -143,7 +232,7 @@ var NAVTREE =
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
         [ "Functions", "functions_func.html", "functions_func" ],
-        [ "Variables", "functions_vars.html", null ],
+        [ "Variables", "functions_vars.html", "functions_vars" ],
         [ "Typedefs", "functions_type.html", null ],
         [ "Enumerations", "functions_enum.html", null ],
         [ "Enumerator", "functions_eval.html", "functions_eval" ],
@@ -155,7 +244,6 @@ var NAVTREE =
       [ "File Members", "globals.html", [
         [ "All", "globals.html", null ],
         [ "Functions", "globals_func.html", null ],
-        [ "Variables", "globals_vars.html", null ],
         [ "Typedefs", "globals_type.html", null ],
         [ "Enumerations", "globals_enum.html", null ],
         [ "Enumerator", "globals_eval.html", null ],
@@ -168,26 +256,31 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "abstractsocket_8h.html",
-"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca84aa28ec9a3a754e94020ed72d80080d",
-"classAudioBlock.html#a72f11a9fce8cb8e7c13e15744e6d5dfc",
-"classCmdLineParser_1_1Option.html#af36860253d6946da6c3a49af658f9d41",
-"classEncodedDesc.html#a3d11f0db93f503a293908d76ba184eca",
-"classFrameRate.html",
-"classIpv4Address.html#ad0cea1e85bf178d3e8f3405d8e72a308",
-"classLogger.html#ab8bdb095bc42de4845060b26282f2714",
-"classMediaPipeline.html#a48591532723de50ab0988a6e59317f33",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a82915af763c85459d5a3264ad9acc515",
-"classNetworkAddress.html#ad454c715759d0275a4a99de4b0958d06",
-"classPixelFormat.html#aa47cca27864c57b6e7b820564294390ba063c33785fb635fdf722480186a82cf3",
-"classRefCount.html#a871f21de0112bc4ca80b47d81e1be6e4",
-"classSize2DTemplate.html#a1258357cb4c5d46ffdb5217e9393250f",
-"classStringData.html#adf5b573840a1912309d2e692e365cc34",
-"classTestPatternNode.html#acadbee74845f882d210f9b2fc84b3273",
-"classTuiButton.html#a53de611e4078be71d22106e902674788",
-"classUUID.html#a3629d821d3ee36fbae26548e153061a7",
-"functions_func_~.html",
-"musicalnote_8h_source.html",
-"structPixelFormat_1_1Data.html#a8d47fc3ebc2dc41e67b25386ff0b4e70"
+"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca74ecc283316a8e346a06a1b341db8987",
+"classAudio.html#a55558ab750f8d19bc9e068a40a1814b5",
+"classBuffer.html#a59b8743e4a5f731bdd0c4185c9ef263b",
+"classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eea5fc098b14be50d988f4aa9064cda0878",
+"classDeque.html#af40009710b3c3cfd63eac95bcd66850b",
+"classFileFormatFactory.html#a8dabd06c6ca8f9895403f17ae3fb148b",
+"classHashSet.html#aa0883bc59820dba4bc6794b9429862ff",
+"classJsonArray.html#a307c1bb8083bd9279bac468ba743a4c1",
+"classLtcEncoder.html#a43fe5ab20bf8032320f1bb51521c37f5",
+"classMediaNode.html#a04848b4fd2ff345b54fbe3ef06edcf5d",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a2c2acac6c36a5532e584698370ab0e2c",
+"classMulticastManager.html",
+"classPixelDesc.html#a47d965b250b01cc56726f22f0fb2e895",
+"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedad3f397737cd6aa599eaf09a9f869a494",
+"classRational.html#a00d8cb65b071cad3c51da1f7941efec9",
+"classSDLPlayerTask.html#aa9f1a07788a9c827cd9ad6e6a9300963",
+"classStreamString.html#a6aa60d85776fe60e3b61e956e47771e3",
+"classStringRegistry_1_1Item.html#a6fe48984ddf39b2c902ddf8a81e538e9",
+"classTimecode.html#a0c1acba5a9446c8020cbaf07681c12b3accb4a21551ab4373d6dcbc8a966d0582",
+"classTuiStyle.html#ada1dc0029e7a011110624b974dfa540c",
+"classWidget.html#abccdac90a54c995c3b835b89894a14a8",
+"functions_j.html",
+"md_CODING__STANDARDS.html#autotoc_md59",
+"size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a",
+"structPixelDesc_1_1Data.html#a5a40d17198925ae278e33a8aa3821b6a"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

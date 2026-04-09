@@ -1,0 +1,108 @@
+var group__widget =
+[
+    [ "Layout", "classLayout.html", [
+      [ "addLayout", "classLayout.html#affddf1fc3718a3ad5752fc6b6017f4fe", null ],
+      [ "addWidget", "classLayout.html#a5fc0a5041203b73a512d5ccc9650cc25", null ],
+      [ "calculateLayout", "classLayout.html#a918f2f516d7afa07d374e1fa3c32100f", null ],
+      [ "contentRect", "classLayout.html#a993a03dfb91f79afd8b015758988e0d3", null ],
+      [ "layouts", "classLayout.html#ac334c6bdf8116e903fb18cdc99110642", null ],
+      [ "margins", "classLayout.html#a2d1a7162f1def2683292da94f722c9b7", null ],
+      [ "removeWidget", "classLayout.html#a2f4e94d2af9afeff4caf54f719a315ad", null ],
+      [ "setMargins", "classLayout.html#a9d26d5f27015af0205d9d2b5a85cf643", null ],
+      [ "setMargins", "classLayout.html#a9eefb66db2d47b0a3a31b6df7350706a", null ],
+      [ "setSpacing", "classLayout.html#a1ef7ea1a46144029ebdadae084108e7b", null ],
+      [ "sizeHint", "classLayout.html#a82338a6a09fbf8f9563426505b2857ab", null ],
+      [ "spacing", "classLayout.html#a54ab50b70626dfae7a0722efacd2c41d", null ],
+      [ "widgets", "classLayout.html#a0dbf8ede8a01d6cd7e398deb202f6930", null ]
+    ] ],
+    [ "BoxLayout", "classBoxLayout.html", [
+      [ "BoxLayout", "classBoxLayout.html#a13115ede5ae9276a380b9f821e5e38fd", null ],
+      [ "addLayout", "classBoxLayout.html#acc362dd8e2f4429376aa2cb675a1eeb8", null ],
+      [ "addStretch", "classBoxLayout.html#a1b230958633c9df03f4499cc037e35ec", null ],
+      [ "addWidget", "classBoxLayout.html#a5e15008b4aa310ff23b55ae3cfd98e54", null ],
+      [ "calculateLayout", "classBoxLayout.html#a418408bf6f8a962e3ea50e0e4c142f2f", null ],
+      [ "direction", "classBoxLayout.html#a393035c69c3fac93a20ac602c30a8d13", null ],
+      [ "setStretch", "classBoxLayout.html#a267b20ea24422d2b5edc0fa923f608f1", null ],
+      [ "sizeHint", "classBoxLayout.html#a86865df58b21dc45c2520c293c68295e", null ]
+    ] ],
+    [ "HBoxLayout", "classHBoxLayout.html", null ],
+    [ "VBoxLayout", "classVBoxLayout.html", null ],
+    [ "GridLayout", "classGridLayout.html", [
+      [ "addWidget", "classGridLayout.html#a281a7a2fe84ffea789e25ea62920d7ee", null ],
+      [ "calculateLayout", "classGridLayout.html#a23223f9c32786aba209a93311de93580", null ],
+      [ "setColumnMinimumWidth", "classGridLayout.html#a82fde7c5b83be97ca4e35f7d9f1472c2", null ],
+      [ "setColumnStretch", "classGridLayout.html#ac76810ed53a839088920c93ee8485778", null ],
+      [ "setRowMinimumHeight", "classGridLayout.html#a50e258e04936689448d4ba8df1d25f7b", null ],
+      [ "setRowStretch", "classGridLayout.html#a1d4b0d6108f400e9334c6846b6214135", null ]
+    ] ],
+    [ "PaintEvent", "classPaintEvent.html", [
+      [ "PaintEvent", "classPaintEvent.html#af02b740ba2378323187cf400b1a5b28e", null ]
+    ] ],
+    [ "ResizeEvent", "classResizeEvent.html", [
+      [ "ResizeEvent", "classResizeEvent.html#af5e50e42b46d18522e8f10653e2e9d20", null ],
+      [ "size", "classResizeEvent.html#a7fc6566d9bdd62d16567db4e2f7db85c", null ]
+    ] ],
+    [ "Widget", "classWidget.html", [
+      [ "Widget", "classWidget.html#ab7ef1be1ec4a6a851c7e6a4d49d1992c", null ],
+      [ "~Widget", "classWidget.html#a714cf798aadb4d615f6f60a355382c02", null ],
+      [ "clearDirty", "classWidget.html#a8aa094dd649d4550d7970e1c6257c1ac", null ],
+      [ "event", "classWidget.html#a9bcfe234f6bfb86b768e5dcb556d5e7d", null ],
+      [ "focusInEvent", "classWidget.html#ae5e97fadb99b5954084f4eb97e7553f3", null ],
+      [ "focusOutEvent", "classWidget.html#ae83ad5259ffb47bfe40f54874227384c", null ],
+      [ "focusPolicy", "classWidget.html#a1c7f7287225de1fc1b284a98a0797f98", null ],
+      [ "geometry", "classWidget.html#a4dcbb32d11c0fb6dc628f77fabf47154", null ],
+      [ "hasFocus", "classWidget.html#aff4a130f23c3d84eae5131baeabf9118", null ],
+      [ "height", "classWidget.html#ad83cc00012e97a403dd65b289f4ceffe", null ],
+      [ "hide", "classWidget.html#a4a2f8eebacdd20db505b838f1a118c6b", null ],
+      [ "isDirty", "classWidget.html#a2ba151741b4a8b518cde0f11a18bffae", null ],
+      [ "isEffectivelyVisible", "classWidget.html#ad9ec27f3462efc3be7416b1cc7026641", null ],
+      [ "isEnabled", "classWidget.html#ad31fc3f6a09f243a4ec1cc170987e467", null ],
+      [ "isVisible", "classWidget.html#ae469bb315299916388d717225e71a802", null ],
+      [ "keyEvent", "classWidget.html#a816190c360f2d28fa1291798e54271e5", null ],
+      [ "layout", "classWidget.html#abcd4652116123a438e7733a80f39e414", null ],
+      [ "mapFromGlobal", "classWidget.html#a4f3745e40d2b1470d3d52bb415dfda12", null ],
+      [ "mapFromParent", "classWidget.html#a5a6a7c81b8bb5deb257fbcce6db05cd1", null ],
+      [ "mapToGlobal", "classWidget.html#a438c19b92df689960ffea4d7cf0f9426", null ],
+      [ "mapToParent", "classWidget.html#a6ddde80fd2601a65399ea9544107f4ac", null ],
+      [ "maximumSize", "classWidget.html#a2c738aaeb4fb9fb2b241886d662c8bfe", null ],
+      [ "minimumSize", "classWidget.html#ada359fcc07ad3b5ff284ccd495f0898a", null ],
+      [ "minimumSizeHint", "classWidget.html#aae6d7045cf6b6a44b34ced3bfc857051", null ],
+      [ "mouseEvent", "classWidget.html#ac325f61a09ed13584895c98fa8bb7e69", null ],
+      [ "paintEvent", "classWidget.html#a1e2e333e3bfbbf826996c8c3fb22b327", null ],
+      [ "resizeEvent", "classWidget.html#a6731df61b27c6082914790fa82388783", null ],
+      [ "sendEvent", "classWidget.html#a09f351320935ade583afc2b4e348fc8d", null ],
+      [ "setEnabled", "classWidget.html#ab5e436fd5203d231d70c4336cfad6050", null ],
+      [ "setFocus", "classWidget.html#a7698a3a2e3a9a3259827326e858f4984", null ],
+      [ "setFocused", "classWidget.html#a54d7047c0d0065d91175947825e9037a", null ],
+      [ "setFocusPolicy", "classWidget.html#a84bdb00ff2149dfcf2457b945ee04ed9", null ],
+      [ "setGeometry", "classWidget.html#a639e493dd6b8c32cd2347d3dfbf36018", null ],
+      [ "setLayout", "classWidget.html#a918bb0ea9555dc7b408c6a92d9d0b637", null ],
+      [ "setMaximumSize", "classWidget.html#abccdac90a54c995c3b835b89894a14a8", null ],
+      [ "setMinimumSize", "classWidget.html#a48066ceb2c9181e95c04e59636627a21", null ],
+      [ "setSizePolicy", "classWidget.html#ae6478eb8ab6e6a96c84485ff9f57d7d5", null ],
+      [ "setVisible", "classWidget.html#a66088a03691f9c643ff335fa826576ba", null ],
+      [ "show", "classWidget.html#a25ff178539e226b5f30ef0335d060f2b", null ],
+      [ "size", "classWidget.html#a83619f3c809a9df0914dd08cf9f64ab3", null ],
+      [ "sizeHint", "classWidget.html#aabe29236f51dc3d17f48457260eddbf7", null ],
+      [ "sizePolicy", "classWidget.html#ada2527321b148fd7bcfaa404d34f7a82", null ],
+      [ "update", "classWidget.html#afe2dda7a8a52942718713a02e666b26a", null ],
+      [ "width", "classWidget.html#a03c9a3f3ff19d7f39b8e6be03357d87a", null ],
+      [ "x", "classWidget.html#accfa721c42ac2298f0fb2fb9dc3d1e54", null ],
+      [ "y", "classWidget.html#aeddec2a0f7f6e74d6d64f4a64b130dca", null ]
+    ] ],
+    [ "BoxDirection", "group__widget.html#ga8603b74945301d755e683a00dd5ab191", null ],
+    [ "FocusPolicy", "group__widget.html#gab55053d0a57be0d70df423df9c2b12cd", [
+      [ "NoFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cda506647bdf445931594e9b2de731eeb88", null ],
+      [ "TabFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cda42ac1811b5f65ff0e0f2dc013ed5c0db", null ],
+      [ "ClickFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cdaaf157268a8cf10ab876ef5fbc986ec8b", null ],
+      [ "StrongFocus", "group__widget.html#ggab55053d0a57be0d70df423df9c2b12cdacd803f669da6ea95150385d1d17b166c", null ]
+    ] ],
+    [ "SizePolicy", "group__widget.html#gadf3bce1b63354112cc4b0f620fe5822a", [
+      [ "SizeFixed", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aae5d6e5f9d941cc892c1759db5ecf8227", null ],
+      [ "SizeMinimum", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa4e164127d74102a31d160c6bc1e14005", null ],
+      [ "SizeMaximum", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa6c029524ceddafa39e9091a0f5683146", null ],
+      [ "SizePreferred", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa2035f5ce2976cd90b9d4d48b320f1ffb", null ],
+      [ "SizeExpanding", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aaf2bcf12518309e23a1d81474c2913355", null ],
+      [ "SizeMinimumExpanding", "group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aae4998dd2c042d9783a6abcf10e34626e", null ]
+    ] ]
+];

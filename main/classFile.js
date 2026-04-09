@@ -1,5 +1,6 @@
 var classFile =
 [
+    [ "IOVec", "structFile_1_1IOVec.html", "structFile_1_1IOVec" ],
     [ "FileHandle", "classFile.html#a42476f88b764bbb09ee2e978e404dd31", null ],
     [ "Flags", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513", [
       [ "NoFlags", "classFile.html#aad4a83201b3528a66eab5ad4f9cf1513a24e88b69189d56af622c09f4b1c877a8", null ],
@@ -24,12 +25,14 @@ var classFile =
     [ "isDirectIO", "classFile.html#a0d5e350abdbaba52b443929f0a974974", null ],
     [ "isNonBlocking", "classFile.html#a4b32461e8c15bedff43fe1baccfc33be", null ],
     [ "isOpen", "classFile.html#a0cd0ed9d8237337b35a52f9cfba26a3b", null ],
+    [ "isResource", "classFile.html#ada6203e3fdb3457786927c13d19646a2", null ],
     [ "isSequential", "classFile.html#a846bd0d945f6fa77ff925a8d7f0ed23a", null ],
     [ "isSynchronous", "classFile.html#a887e6a47ee7a7e42e4d25c5eb2977e0a", null ],
     [ "open", "classFile.html#a2e1d4cb10c5270421ebc9143dcbfb5f7", null ],
     [ "open", "classFile.html#a1c1c19ae853e3f47f9c237bf2cc6a106", null ],
     [ "operator=", "classFile.html#a878dae94a3b260807de318337ecfc515", null ],
     [ "pos", "classFile.html#a7b6b064db3ea4c8ca0bc1c1a74c8ad3f", null ],
+    [ "preallocate", "classFile.html#a09b3ffbd44dabad5dbb0c41ca060697f", null ],
     [ "readBulk", "classFile.html#ad8250f53607cae7768d22f9ec4adda97", null ],
     [ "readFromDevice", "classFile.html#ae39311e1dad0e1d6f08ce8ae2585716f", null ],
     [ "seek", "classFile.html#a5977104e1cd474c660d284ce4e994db8", null ],
@@ -40,6 +43,9 @@ var classFile =
     [ "setNonBlocking", "classFile.html#a15eebc4712faecd4cc90516d79b3c8f6", null ],
     [ "setSynchronous", "classFile.html#a83cad4d4e00ce6813fe831318c2af601", null ],
     [ "size", "classFile.html#aeea4fc38b313b98d0689cef418e8e80e", null ],
+    [ "sync", "classFile.html#ac77099c1f87a3b9498e7984634fb2e3a", null ],
     [ "truncate", "classFile.html#a949d6bc0f4792b6dcc387d64510808df", null ],
-    [ "write", "classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9", null ]
+    [ "write", "classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9", null ],
+    [ "writeBulk", "classFile.html#ac25ba3bf455e5a43dd686a82c6912f5f", null ],
+    [ "writev", "classFile.html#ab71ce353defafaeb9633bb6cde7d2c9c", null ]
 ];

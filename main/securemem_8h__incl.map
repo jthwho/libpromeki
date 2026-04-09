@@ -1,15 +1,15 @@
-<map id="include/promeki/core/securemem.h" name="include/promeki/core/securemem.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="145,5,304,45"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="59,93,129,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,48,126,88,124,84,192,43"/>
-<area shape="rect" id="Node000003" href="$namespace_8h.html" title=" " alt="" coords="5,167,204,192"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,47,124,157,120,154,207,44"/>
-<area shape="rect" id="Node000004" href="$platform_8h.html" title=" " alt="" coords="360,167,540,192"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="280,43,327,64,373,91,408,122,435,154,431,157,404,126,370,95,324,68,278,48"/>
-<area shape="rect" id="Node000005" href="$error_8h.html" title=" " alt="" coords="205,93,359,119"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="241,44,267,80,263,84,236,47"/>
-<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="254,121,147,164,145,159,253,116"/>
-<area shape="poly" id="edge7_Node000005_Node000004" title=" " alt="" coords="310,116,411,159,409,164,308,121"/>
-<area shape="rect" id="Node000006" title=" " alt="" coords="228,167,336,192"/>
-<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="285,119,285,153,279,153,279,119"/>
+<map id="include/promeki/securemem.h" name="include/promeki/securemem.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="91,5,311,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="43,79,113,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,33,111,74,108,69,180,28"/>
+<area shape="rect" id="Node000003" href="$namespace_8h.html" title=" " alt="" coords="5,152,172,177"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,33,108,143,104,140,189,29"/>
+<area shape="rect" id="Node000004" href="$platform_8h.html" title=" " alt="" coords="328,152,476,177"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="233,28,278,48,325,77,360,108,387,139,383,142,356,111,322,81,276,53,231,33"/>
+<area shape="rect" id="Node000005" href="$error_8h.html" title=" " alt="" coords="189,79,311,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="211,29,236,66,232,69,207,33"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="225,106,129,149,126,144,223,102"/>
+<area shape="poly" id="edge7_Node000005_Node000004" title=" " alt="" coords="276,102,366,144,364,149,273,106"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="196,152,304,177"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="253,104,253,138,247,138,247,104"/>
 </map>

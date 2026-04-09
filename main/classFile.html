@@ -100,12 +100,13 @@ $(document).ready(function(){initNavTree('classFile.html',''); initResizable(); 
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classFile-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">File Class Reference<div class="ingroups"><a class="el" href="group__core__io.html">Core I/O</a></div></div></div>
+  <div class="headertitle"><div class="title">File Class Reference<div class="ingroups"><a class="el" href="group__io.html">I/O</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -146,6 +147,12 @@ Collaboration diagram for File:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structFile_1_1IOVec.html">IOVec</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scatter/gather buffer descriptor for vectored I/O.  <a href="structFile_1_1IOVec.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:aad4a83201b3528a66eab5ad4f9cf1513" id="r_aad4a83201b3528a66eab5ad4f9cf1513"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#aad4a83201b3528a66eab5ad4f9cf1513">Flags</a> { <br />
@@ -243,27 +250,39 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7b6b064db3ea4c8ca0bc1c1a74c8ad3f" id="r_a7b6b064db3ea4c8ca0bc1c1a74c8ad3f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a7b6b064db3ea4c8ca0bc1c1a74c8ad3f">pos</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a7b6b064db3ea4c8ca0bc1c1a74c8ad3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current read/write position.  <br /></td></tr>
 <tr class="separator:a7b6b064db3ea4c8ca0bc1c1a74c8ad3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeea4fc38b313b98d0689cef418e8e80e" id="r_aeea4fc38b313b98d0689cef418e8e80e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#aeea4fc38b313b98d0689cef418e8e80e">size</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
+<tr class="memitem:aeea4fc38b313b98d0689cef418e8e80e" id="r_aeea4fc38b313b98d0689cef418e8e80e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#aeea4fc38b313b98d0689cef418e8e80e">size</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:aeea4fc38b313b98d0689cef418e8e80e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total file size in bytes.  <br /></td></tr>
 <tr class="separator:aeea4fc38b313b98d0689cef418e8e80e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a292ce25f1dce6a6fa7b8ab7618cdee18" id="r_a292ce25f1dce6a6fa7b8ab7618cdee18"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a292ce25f1dce6a6fa7b8ab7618cdee18">atEnd</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a292ce25f1dce6a6fa7b8ab7618cdee18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the position is at or past the end.  <br /></td></tr>
 <tr class="separator:a292ce25f1dce6a6fa7b8ab7618cdee18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07dfb9c11be59363975521e2f52daa1c" id="r_a07dfb9c11be59363975521e2f52daa1c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a07dfb9c11be59363975521e2f52daa1c">seekFromCurrent</a> (<a class="el" href="classList.html">int64_t</a> offset) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a07dfb9c11be59363975521e2f52daa1c" id="r_a07dfb9c11be59363975521e2f52daa1c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a07dfb9c11be59363975521e2f52daa1c">seekFromCurrent</a> (<a class="el" href="classList.html">int64_t</a> offset) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a07dfb9c11be59363975521e2f52daa1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks relative to the current file position.  <br /></td></tr>
 <tr class="separator:a07dfb9c11be59363975521e2f52daa1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1dc1aaa4030b5ef5a57d841c0904f3cd" id="r_a1dc1aaa4030b5ef5a57d841c0904f3cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a1dc1aaa4030b5ef5a57d841c0904f3cd">seekFromEnd</a> (<a class="el" href="classList.html">int64_t</a> offset) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:a1dc1aaa4030b5ef5a57d841c0904f3cd" id="r_a1dc1aaa4030b5ef5a57d841c0904f3cd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a1dc1aaa4030b5ef5a57d841c0904f3cd">seekFromEnd</a> (<a class="el" href="classList.html">int64_t</a> offset) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a1dc1aaa4030b5ef5a57d841c0904f3cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Seeks relative to the end of the file.  <br /></td></tr>
 <tr class="separator:a1dc1aaa4030b5ef5a57d841c0904f3cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a949d6bc0f4792b6dcc387d64510808df" id="r_a949d6bc0f4792b6dcc387d64510808df"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a949d6bc0f4792b6dcc387d64510808df">truncate</a> (<a class="el" href="classList.html">int64_t</a> offset) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a949d6bc0f4792b6dcc387d64510808df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Truncates the file to the specified length.  <br /></td></tr>
 <tr class="separator:a949d6bc0f4792b6dcc387d64510808df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab5c88c11d95cc841bc9db6193d75c78d" id="r_ab5c88c11d95cc841bc9db6193d75c78d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ab5c88c11d95cc841bc9db6193d75c78d">directIOAlignment</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:ab71ce353defafaeb9633bb6cde7d2c9c" id="r_ab71ce353defafaeb9633bb6cde7d2c9c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ab71ce353defafaeb9633bb6cde7d2c9c">writev</a> (<a class="el" href="classList.html">const</a> <a class="el" href="structFile_1_1IOVec.html">IOVec</a> *<a class="el" href="classList.html">iov</a>, int count)</td></tr>
+<tr class="memdesc:ab71ce353defafaeb9633bb6cde7d2c9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes multiple buffers to the file in a single system call.  <br /></td></tr>
+<tr class="separator:ab71ce353defafaeb9633bb6cde7d2c9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09b3ffbd44dabad5dbb0c41ca060697f" id="r_a09b3ffbd44dabad5dbb0c41ca060697f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a09b3ffbd44dabad5dbb0c41ca060697f">preallocate</a> (<a class="el" href="classList.html">int64_t</a> offset, <a class="el" href="classList.html">int64_t</a> length)</td></tr>
+<tr class="memdesc:a09b3ffbd44dabad5dbb0c41ca060697f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Preallocates file space without writing data.  <br /></td></tr>
+<tr class="separator:a09b3ffbd44dabad5dbb0c41ca060697f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5c88c11d95cc841bc9db6193d75c78d" id="r_ab5c88c11d95cc841bc9db6193d75c78d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ab5c88c11d95cc841bc9db6193d75c78d">directIOAlignment</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ab5c88c11d95cc841bc9db6193d75c78d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the direct I/O alignment requirement for this file.  <br /></td></tr>
 <tr class="separator:ab5c88c11d95cc841bc9db6193d75c78d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8250f53607cae7768d22f9ec4adda97" id="r_ad8250f53607cae7768d22f9ec4adda97"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ad8250f53607cae7768d22f9ec4adda97">readBulk</a> (<a class="el" href="classBuffer.html">Buffer</a> &amp;<a class="el" href="classList.html">buf</a>, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classFile.html#aeea4fc38b313b98d0689cef418e8e80e">size</a>)</td></tr>
 <tr class="memdesc:ad8250f53607cae7768d22f9ec4adda97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads bulk data from the current file position using direct I/O.  <br /></td></tr>
 <tr class="separator:ad8250f53607cae7768d22f9ec4adda97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac25ba3bf455e5a43dd686a82c6912f5f" id="r_ac25ba3bf455e5a43dd686a82c6912f5f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ac25ba3bf455e5a43dd686a82c6912f5f">writeBulk</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classFile.html#aeea4fc38b313b98d0689cef418e8e80e">size</a>)</td></tr>
+<tr class="memdesc:ac25ba3bf455e5a43dd686a82c6912f5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes bulk data to the current file position using direct I/O.  <br /></td></tr>
+<tr class="separator:ac25ba3bf455e5a43dd686a82c6912f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac77099c1f87a3b9498e7984634fb2e3a" id="r_ac77099c1f87a3b9498e7984634fb2e3a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ac77099c1f87a3b9498e7984634fb2e3a">sync</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">dataOnly</a>=<a class="el" href="classList.html">true</a>)</td></tr>
+<tr class="memdesc:ac77099c1f87a3b9498e7984634fb2e3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Forces any buffered writes to stable storage.  <br /></td></tr>
+<tr class="separator:ac77099c1f87a3b9498e7984634fb2e3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d0a7812217598415f758e6c05d15e72" id="r_a6d0a7812217598415f758e6c05d15e72"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a6d0a7812217598415f758e6c05d15e72">setDirectIO</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">enable</a>)</td></tr>
 <tr class="memdesc:a6d0a7812217598415f758e6c05d15e72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables direct I/O (bypass OS page cache).  <br /></td></tr>
 <tr class="separator:a6d0a7812217598415f758e6c05d15e72"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -282,6 +301,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4b32461e8c15bedff43fe1baccfc33be" id="r_a4b32461e8c15bedff43fe1baccfc33be"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#a4b32461e8c15bedff43fe1baccfc33be">isNonBlocking</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a4b32461e8c15bedff43fe1baccfc33be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if non-blocking mode is enabled.  <br /></td></tr>
 <tr class="separator:a4b32461e8c15bedff43fe1baccfc33be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada6203e3fdb3457786927c13d19646a2" id="r_ada6203e3fdb3457786927c13d19646a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFile.html#ada6203e3fdb3457786927c13d19646a2">isResource</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ada6203e3fdb3457786927c13d19646a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this <a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> is currently serving a compiled-in resource.  <br /></td></tr>
+<tr class="separator:ada6203e3fdb3457786927c13d19646a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classBufferedIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classBufferedIODevice')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classBufferedIODevice.html">BufferedIODevice</a></td></tr>
 <tr class="memitem:afe86020bcf21c62cb68cebf3f7105502 inherit pub_methods_classBufferedIODevice" id="r_afe86020bcf21c62cb68cebf3f7105502"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferedIODevice.html#afe86020bcf21c62cb68cebf3f7105502">BufferedIODevice</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:afe86020bcf21c62cb68cebf3f7105502 inherit pub_methods_classBufferedIODevice"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer.">BufferedIODevice</a>.  <br /></td></tr>
@@ -750,7 +772,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt; File::directIOAlignment </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt; File::directIOAlignment </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -933,6 +955,34 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="ada6203e3fdb3457786927c13d19646a2" name="ada6203e3fdb3457786927c13d19646a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada6203e3fdb3457786927c13d19646a2">&#9670;&#160;</a></span>isResource()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> File::isResource </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if this <a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> is currently serving a compiled-in resource. </p>
+<p>Resource-mode files are opened by passing a path that begins with <code>":/"</code> — see <a class="el" href="classResource.html">Resource</a>. They behave like read-only memory-backed files: write operations, preallocate, truncate and direct-I/O knobs are no-ops or report <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ac15fea98dcdbe451f5cd98335c8284b4" title="Read-only file system (EROFS).">Error::ReadOnly</a></code>. </p>
+
+</div>
+</div>
 <a id="a846bd0d945f6fa77ff925a8d7f0ed23a" name="a846bd0d945f6fa77ff925a8d7f0ed23a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a846bd0d945f6fa77ff925a8d7f0ed23a">&#9670;&#160;</a></span>isSequential()</h2>
 
@@ -1095,6 +1145,45 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="a09b3ffbd44dabad5dbb0c41ca060697f" name="a09b3ffbd44dabad5dbb0c41ca060697f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09b3ffbd44dabad5dbb0c41ca060697f">&#9670;&#160;</a></span>preallocate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> File::preallocate </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>offset</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>length</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Preallocates file space without writing data. </p>
+<p>Uses posix_fallocate() to ensure that the requested disk space is available, avoiding ENOSPC during subsequent writes. This is a best-effort operation; the file size is not changed.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">offset</td><td>Starting byte offset for the allocation. </td></tr>
+    <tr><td class="paramname">length</td><td>Number of bytes to preallocate. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+</div>
+</div>
 <a id="ad8250f53607cae7768d22f9ec4adda97" name="ad8250f53607cae7768d22f9ec4adda97"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad8250f53607cae7768d22f9ec4adda97">&#9670;&#160;</a></span>readBulk()</h2>
 
@@ -1230,7 +1319,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; File::seekFromCurrent </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; File::seekFromCurrent </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
           <td class="paramname"><em>offset</em></td><td>)</td>
@@ -1257,7 +1346,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; File::seekFromEnd </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; File::seekFromEnd </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
           <td class="paramname"><em>offset</em></td><td>)</td>
@@ -1405,7 +1494,7 @@ template&lt;typename... Args&gt; </td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; File::size </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">int64_t</a> &gt; File::size </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -1422,6 +1511,35 @@ template&lt;typename... Args&gt; </td></tr>
 <dl class="section return"><dt>Returns</dt><dd>A Result containing the file size, or an error if fstat fails. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">IODevice</a>.</p>
+
+</div>
+</div>
+<a id="ac77099c1f87a3b9498e7984634fb2e3a" name="ac77099c1f87a3b9498e7984634fb2e3a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac77099c1f87a3b9498e7984634fb2e3a">&#9670;&#160;</a></span>sync()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> File::sync </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>dataOnly</em> = <code><a class="el" href="classList.html">true</a></code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Forces any buffered writes to stable storage. </p>
+<p>Calls <code>fdatasync()</code> (or <code>fsync()</code> if <code>dataOnly</code> is false) on the underlying file descriptor. Blocks until the kernel confirms the data is durable — expensive, but required for crash-consistent checkpoints.</p>
+<p><code>fdatasync()</code> only flushes file data + metadata that the data depends on (e.g. file size). <code>fsync()</code> also flushes inode metadata (timestamps, etc.) — rarely needed for media workloads.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dataOnly</td><td>If true (default), use fdatasync; if false, use fsync. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or a system error. </dd></dl>
 
 </div>
 </div>
@@ -1500,8 +1618,88 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="ac25ba3bf455e5a43dd686a82c6912f5f" name="ac25ba3bf455e5a43dd686a82c6912f5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac25ba3bf455e5a43dd686a82c6912f5f">&#9670;&#160;</a></span>writeBulk()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">int64_t</a> File::writeBulk </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes bulk data to the current file position using direct I/O. </p>
+<p>Symmetric to <code><a class="el" href="classFile.html#ad8250f53607cae7768d22f9ec4adda97" title="Reads bulk data from the current file position using direct I/O.">readBulk()</a></code>. Writes <code>size</code> bytes from <code>data</code> to the file starting at the current write position, using direct I/O for the aligned interior of the region and normal I/O for any unaligned head and tail bytes. This is the optimal strategy for writing large media payloads (image data, audio samples) to container files, bypassing the OS page cache for the bulk transfer so sustained captures don't thrash other applications' cached pages.</p>
+<p>Unlike <code><a class="el" href="classFile.html#ad8250f53607cae7768d22f9ec4adda97" title="Reads bulk data from the current file position using direct I/O.">readBulk()</a></code> which receives a <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> and uses <code>shiftData()</code> to land the payload on an aligned address, <code><a class="el" href="classFile.html#ac25ba3bf455e5a43dd686a82c6912f5f" title="Writes bulk data to the current file position using direct I/O.">writeBulk()</a></code> takes a raw pointer + size. For O_DIRECT writes to succeed, the source pointer must be aligned to <code><a class="el" href="classFile.html#ab5c88c11d95cc841bc9db6193d75c78d" title="Returns the direct I/O alignment requirement for this file.">directIOAlignment()</a></code>; if it is not, <code><a class="el" href="classFile.html#ac25ba3bf455e5a43dd686a82c6912f5f" title="Writes bulk data to the current file position using direct I/O.">writeBulk()</a></code> falls back to non-DIO writes for the entire region. Passing the <code>data()</code> pointer of a page-aligned <code><a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a></code> (e.g. the default) satisfies this requirement.</p>
+<p>If alignment cannot be determined, the DIO portion is below one alignment block, or the DIO write fails at runtime, <code><a class="el" href="classFile.html#ac25ba3bf455e5a43dd686a82c6912f5f" title="Writes bulk data to the current file position using direct I/O.">writeBulk()</a></code> falls back to a normal write automatically.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>Source pointer, should be <a class="el" href="classFile.html#ab5c88c11d95cc841bc9db6193d75c78d" title="Returns the direct I/O alignment requirement for this file.">directIOAlignment()</a>-aligned for the aligned interior to go through DIO. </td></tr>
+    <tr><td class="paramname">size</td><td>Number of bytes to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of bytes written (equal to <code>size</code> on success) or -1 on hard I/O failure. </dd></dl>
+
+</div>
+</div>
+<a id="ab71ce353defafaeb9633bb6cde7d2c9c" name="ab71ce353defafaeb9633bb6cde7d2c9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab71ce353defafaeb9633bb6cde7d2c9c">&#9670;&#160;</a></span>writev()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">int64_t</a> File::writev </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="structFile_1_1IOVec.html">IOVec</a> *&#160;</td>
+          <td class="paramname"><em>iov</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Writes multiple buffers to the file in a single system call. </p>
+<p>Uses the platform's scatter/gather I/O (writev on POSIX) to write all buffers atomically from the application's perspective. This avoids the overhead of multiple <a class="el" href="classFile.html#a4a00e7b84ea73aa0d865503d1d8722f9" title="Writes data to the file at the current position.">write()</a> calls and ensures that header + payload are written in one kernel transition, which is important for direct I/O writes where each transfer must be aligned.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">iov</td><td><a class="el" href="classArray.html" title="Fixed-size array container wrapping std::array.">Array</a> of <a class="el" href="structFile_1_1IOVec.html" title="Scatter/gather buffer descriptor for vectored I/O.">IOVec</a> structures describing buffers. </td></tr>
+    <tr><td class="paramname">count</td><td>Number of <a class="el" href="structFile_1_1IOVec.html" title="Scatter/gather buffer descriptor for vectored I/O.">IOVec</a> entries. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The total number of bytes written, or -1 on error. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="file_8h_source.html">file.h</a></li>
+<li>include/promeki/<a class="el" href="file_8h_source.html">file.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -1510,7 +1708,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFile.html">File</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

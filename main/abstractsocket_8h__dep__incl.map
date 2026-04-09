@@ -1,11 +1,11 @@
-<map id="include/promeki/network/abstractsocket.h" name="include/promeki/network/abstractsocket.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="213,5,397,45"/>
-<area shape="rect" id="Node000002" href="$rawsocket_8h.html" title=" " alt="" coords="5,93,189,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,53,144,96,142,91,246,48"/>
-<area shape="rect" id="Node000003" href="$tcpsocket_8h.html" title=" " alt="" coords="213,93,397,133"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="308,59,308,93,303,93,303,59"/>
-<area shape="rect" id="Node000004" href="$udpsocket_8h.html" title=" " alt="" coords="421,93,605,133"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="365,48,469,91,467,96,363,53"/>
-<area shape="rect" id="Node000005" href="$prioritysocket_8h.html" title=" " alt="" coords="421,181,605,221"/>
-<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="516,147,516,181,511,181,511,147"/>
+<map id="include/promeki/abstractsocket.h" name="include/promeki/abstractsocket.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="223,5,461,31"/>
+<area shape="rect" id="Node000002" href="$rawsocket_8h.html" title=" " alt="" coords="5,79,215,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="293,37,148,81,147,76,291,32"/>
+<area shape="rect" id="Node000003" href="$tcpsocket_8h.html" title=" " alt="" coords="239,79,445,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="345,44,345,79,339,79,339,44"/>
+<area shape="rect" id="Node000004" href="$udpsocket_8h.html" title=" " alt="" coords="469,79,679,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="393,32,537,76,536,81,391,37"/>
+<area shape="rect" id="Node000005" href="$prioritysocket_8h.html" title=" " alt="" coords="458,152,690,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="577,118,577,152,571,152,571,118"/>
 </map>

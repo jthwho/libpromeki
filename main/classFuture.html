@@ -102,7 +102,7 @@ $(document).ready(function(){initNavTree('classFuture.html',''); initResizable()
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classFuture-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Future&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__core__concurrency.html">Core Concurrency</a></div></div></div>
+  <div class="headertitle"><div class="title">Future&lt; T &gt; Class Template Reference<div class="ingroups"><a class="el" href="group__concurrency.html">Concurrency</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -142,7 +142,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0a7cff31c9b772f8c0975888ff71f33e" id="r_a0a7cff31c9b772f8c0975888ff71f33e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFuture.html#a0a7cff31c9b772f8c0975888ff71f33e">isReady</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a0a7cff31c9b772f8c0975888ff71f33e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks whether the result is ready without blocking.  <br /></td></tr>
 <tr class="separator:a0a7cff31c9b772f8c0975888ff71f33e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a285281887a6a0e54454afde5a1a798a6" id="r_a285281887a6a0e54454afde5a1a798a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFuture.html#a285281887a6a0e54454afde5a1a798a6">result</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
+<tr class="memitem:a285281887a6a0e54454afde5a1a798a6" id="r_a285281887a6a0e54454afde5a1a798a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFuture.html#a285281887a6a0e54454afde5a1a798a6">result</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
 <tr class="memdesc:a285281887a6a0e54454afde5a1a798a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the result, blocking until available or timeout.  <br /></td></tr>
 <tr class="separator:a285281887a6a0e54454afde5a1a798a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f29f53bcc52e6a14b3c45576cac7a16" id="r_a4f29f53bcc52e6a14b3c45576cac7a16"><td class="memItemLeft" align="right" valign="top"><a id="a4f29f53bcc52e6a14b3c45576cac7a16" name="a4f29f53bcc52e6a14b3c45576cac7a16"></a>
@@ -168,7 +168,7 @@ class Future&lt; T &gt;</div><p>Asynchronous result wrapping std::future&lt;T&gt
 <div class="line"> </div>
 <div class="line"><span class="comment">// In the waiting thread:</span></div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="classFuture.html#a285281887a6a0e54454afde5a1a798a6">result</a> = future.get();  <span class="comment">// 42</span></div>
-<div class="ttc" id="aclassFuture_html_a285281887a6a0e54454afde5a1a798a6"><div class="ttname"><a href="classFuture.html#a285281887a6a0e54454afde5a1a798a6">Future::result</a></div><div class="ttdeci">Result&lt; T &gt; result(unsigned int timeoutMs=0)</div><div class="ttdoc">Returns the result, blocking until available or timeout.</div><div class="ttdef"><b>Definition</b> future.h:76</div></div>
+<div class="ttc" id="aclassFuture_html_a285281887a6a0e54454afde5a1a798a6"><div class="ttname"><a href="classFuture.html#a285281887a6a0e54454afde5a1a798a6">Future::result</a></div><div class="ttdeci">Result&lt; T &gt; result(unsigned int timeoutMs=0)</div><div class="ttdoc">Returns the result, blocking until available or timeout.</div><div class="ttdef"><b>Definition</b> future.h:93</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --> Move-only (non-copyable).</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
@@ -250,7 +250,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__core__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt; <a class="el" href="classFuture.html">Future</a>&lt; <a class="el" href="classList.html">T</a> &gt;::result </td>
+          <td class="memname"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">T</a> &gt; <a class="el" href="classFuture.html">Future</a>&lt; <a class="el" href="classList.html">T</a> &gt;::result </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
           <td class="paramname"><em>timeoutMs</em> = <code>0</code></td><td>)</td>
@@ -271,7 +271,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A Result containing the value and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>, or a default-constructed T and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a> on timeout. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A Result containing the value and <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>, or a default-constructed T and an error code on failure (<a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a>, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a>, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec" title="Operation was cancelled before completion.">Error::Cancelled</a>, or another error set via <a class="el" href="classPromise.html#a46b39615ec87d853521ab6779f996dea" title="Sets an error on the promise.">Promise::setError</a>). </dd></dl>
 
 </div>
 </div>
@@ -313,7 +313,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="future_8h_source.html">future.h</a></li>
+<li>include/promeki/<a class="el" href="future_8h_source.html">future.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -322,7 +322,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFuture.html">Future</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

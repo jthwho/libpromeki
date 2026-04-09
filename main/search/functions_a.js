@@ -6,6 +6,7 @@ var searchData=
   ['joinmulticastgroup_3',['joinmulticastgroup',['../classUdpSocket.html#a89b7e8595e82ce968190b28e87ee0a0f',1,'UdpSocket::joinMulticastGroup(const SocketAddress &amp;group)'],['../classUdpSocket.html#a7ee98e55431a922322b35a2ab224a332',1,'UdpSocket::joinMulticastGroup(const SocketAddress &amp;group, const String &amp;iface)']]],
   ['joinsourcegroup_4',['joinSourceGroup',['../classMulticastManager.html#ac5cb5fecb368c00cc1ef2e844120dd4c',1,'MulticastManager']]],
   ['jpegencodernode_5',['JpegEncoderNode',['../classJpegEncoderNode.html#a35bd49ea9cb9cea3ddd1df832134de27',1,'JpegEncoderNode']]],
-  ['jsonarray_6',['JsonArray',['../classJsonArray.html#a304f5ede160dbc87f9ec7d7983bd1cbf',1,'JsonArray']]],
-  ['jsonobject_7',['JsonObject',['../classJsonObject.html#aa41d053fc27e4fcf4f1c6f55ef28f4a9',1,'JsonObject']]]
+  ['jpegimagecodec_6',['JpegImageCodec',['../classJpegImageCodec.html#a9b57bd67d388d6dd3e7c72747f9c3538',1,'JpegImageCodec']]],
+  ['jsonarray_7',['JsonArray',['../classJsonArray.html#a304f5ede160dbc87f9ec7d7983bd1cbf',1,'JsonArray']]],
+  ['jsonobject_8',['JsonObject',['../classJsonObject.html#aa41d053fc27e4fcf4f1c6f55ef28f4a9',1,'JsonObject']]]
 ];

@@ -6,6 +6,8 @@ var classSize2DTemplate =
     [ "height", "classSize2DTemplate.html#a2c68a7514da2a2f374b9226697d5b0d0", null ],
     [ "isValid", "classSize2DTemplate.html#ae8189cdfc84baffd497da522c42cb25e", null ],
     [ "operator String", "classSize2DTemplate.html#ad5c740383f223272239578d452ed5592", null ],
+    [ "operator!=", "classSize2DTemplate.html#a0976be32f15a86e07ba87a1db87f6619", null ],
+    [ "operator==", "classSize2DTemplate.html#a68afa47eb76135697114f4d658ae61fb", null ],
     [ "pointIsInside", "classSize2DTemplate.html#ab2628c972403429e0a06a9b1c7870ea6", null ],
     [ "set", "classSize2DTemplate.html#a334f6a89eaa38219aac3b6a9b44c51fa", null ],
     [ "setHeight", "classSize2DTemplate.html#a1258357cb4c5d46ffdb5217e9393250f", null ],

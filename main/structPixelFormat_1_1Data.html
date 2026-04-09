@@ -106,78 +106,143 @@ $(document).ready(function(){initNavTree('structPixelFormat_1_1Data.html',''); i
 </div><!--header-->
 <div class="contents">
 
-<p>Aggregate descriptor holding all metadata for a pixel format.  
+<p>Immutable data record for a pixel format.  
  <a href="structPixelFormat_1_1Data.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="pixelformat__old_8h_source.html">pixelformat_old.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="pixelformat_8h_source.html">pixelformat.h</a>&gt;</code></p>
 <div class="dynheader">
 Collaboration diagram for PixelFormat::Data:</div>
 <div class="dyncontent">
 <div class="center"><img src="structPixelFormat_1_1Data__coll__graph.png" border="0" usemap="#aPixelFormat_1_1Data_coll__map" alt="Collaboration graph"/></div>
 <map name="aPixelFormat_1_1Data_coll__map" id="aPixelFormat_1_1Data_coll__map">
-<area shape="rect" title="Aggregate descriptor holding all metadata for a pixel format." alt="" coords="9,108,147,133"/>
+<area shape="rect" title="Immutable data record for a pixel format." alt="" coords="94,185,233,211"/>
 <area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" title=" " alt="" coords="43,43,56,83,71,106,66,109,52,85,38,45"/>
-<area shape="rect" href="classImage.html" title="Raster image with pixel format, planes, and metadata." alt="" coords="89,5,152,31"/>
-<area shape="poly" title=" " alt="" coords="113,44,85,109,80,107,108,42"/>
+<area shape="poly" title=" " alt="" coords="28,45,20,83,21,103,28,121,46,143,68,160,118,183,116,188,66,165,42,147,24,124,16,104,15,83,23,44"/>
+<area shape="rect" href="structPixelFormat_1_1PlaneDesc.html" title="Describes a single image plane." alt="" coords="76,95,251,121"/>
+<area shape="poly" title=" " alt="" coords="65,36,148,93,145,97,62,41"/>
+<area shape="rect" href="structPixelFormat_1_1CompDesc.html" title="Describes a single component within the pixel format." alt="" coords="275,95,452,121"/>
+<area shape="poly" title=" " alt="" coords="326,129,191,188,188,183,323,124"/>
+<area shape="poly" title=" " alt="" coords="166,134,166,185,161,185,161,134"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a3048aa927f0d16d2a106a3142cabb860" id="r_a3048aa927f0d16d2a106a3142cabb860"><td class="memItemLeft" align="right" valign="top"><a id="a3048aa927f0d16d2a106a3142cabb860" name="a3048aa927f0d16d2a106a3142cabb860"></a>
-<a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>id</b></td></tr>
-<tr class="memdesc:a3048aa927f0d16d2a106a3142cabb860"><td class="mdescLeft">&#160;</td><td class="mdescRight">Format identifier. <br /></td></tr>
+<a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4ded">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>id</b> = <a class="el" href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda9ee039b9848b08d28b606c4e542f17c3">Invalid</a></td></tr>
+<tr class="memdesc:a3048aa927f0d16d2a106a3142cabb860"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique format identifier. <br /></td></tr>
 <tr class="separator:a3048aa927f0d16d2a106a3142cabb860"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7497eeacdf82ce3356ef7b48fc47bd2a" id="r_a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="memItemLeft" align="right" valign="top"><a id="a7497eeacdf82ce3356ef7b48fc47bd2a" name="a7497eeacdf82ce3356ef7b48fc47bd2a"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>name</b></td></tr>
-<tr class="memdesc:a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short format name. <br /></td></tr>
+<tr class="memdesc:a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Short format name (e.g. "I_4x8"). <br /></td></tr>
 <tr class="separator:a7497eeacdf82ce3356ef7b48fc47bd2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae3970f8a7f46fa320bee9a15069b3bf9" id="r_ae3970f8a7f46fa320bee9a15069b3bf9"><td class="memItemLeft" align="right" valign="top"><a id="ae3970f8a7f46fa320bee9a15069b3bf9" name="ae3970f8a7f46fa320bee9a15069b3bf9"></a>
 <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><b>desc</b></td></tr>
 <tr class="memdesc:ae3970f8a7f46fa320bee9a15069b3bf9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable description. <br /></td></tr>
 <tr class="separator:ae3970f8a7f46fa320bee9a15069b3bf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade327745be9ce4ab778ba2e89e2ba19d" id="r_ade327745be9ce4ab778ba2e89e2ba19d"><td class="memItemLeft" align="right" valign="top"><a id="ade327745be9ce4ab778ba2e89e2ba19d" name="ade327745be9ce4ab778ba2e89e2ba19d"></a>
-<a class="el" href="classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b">Sampling</a>&#160;</td><td class="memItemRight" valign="bottom"><b>sampling</b></td></tr>
+<a class="el" href="classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b">Sampling</a>&#160;</td><td class="memItemRight" valign="bottom"><b>sampling</b> = <a class="el" href="classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612bacf4a4339ca78da3e0d0a41327e688871">SamplingUndefined</a></td></tr>
 <tr class="memdesc:ade327745be9ce4ab778ba2e89e2ba19d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Chroma subsampling mode. <br /></td></tr>
 <tr class="separator:ade327745be9ce4ab778ba2e89e2ba19d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a662801ce412e7a7d22bc2b10d8a8f958" id="r_a662801ce412e7a7d22bc2b10d8a8f958"><td class="memItemLeft" align="right" valign="top"><a id="a662801ce412e7a7d22bc2b10d8a8f958" name="a662801ce412e7a7d22bc2b10d8a8f958"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pixelsPerBlock</b></td></tr>
-<tr class="memdesc:a662801ce412e7a7d22bc2b10d8a8f958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pixels per encoded block. <br /></td></tr>
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>pixelsPerBlock</b> = 0</td></tr>
+<tr class="memdesc:a662801ce412e7a7d22bc2b10d8a8f958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of pixels in one encoded block. <br /></td></tr>
 <tr class="separator:a662801ce412e7a7d22bc2b10d8a8f958"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a109116d35ea10928b055cba775a1d29f" id="r_a109116d35ea10928b055cba775a1d29f"><td class="memItemLeft" align="right" valign="top"><a id="a109116d35ea10928b055cba775a1d29f" name="a109116d35ea10928b055cba775a1d29f"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bytesPerBlock</b></td></tr>
-<tr class="memdesc:a109116d35ea10928b055cba775a1d29f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bytes per encoded block. <br /></td></tr>
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>bytesPerBlock</b> = 0</td></tr>
+<tr class="memdesc:a109116d35ea10928b055cba775a1d29f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of bytes in one encoded block. <br /></td></tr>
 <tr class="separator:a109116d35ea10928b055cba775a1d29f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98aa2378e3654f7f3256f865846815f0" id="r_a98aa2378e3654f7f3256f865846815f0"><td class="memItemLeft" align="right" valign="top"><a id="a98aa2378e3654f7f3256f865846815f0" name="a98aa2378e3654f7f3256f865846815f0"></a>
-<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>hasAlpha</b></td></tr>
-<tr class="memdesc:a98aa2378e3654f7f3256f865846815f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether format has alpha. <br /></td></tr>
-<tr class="separator:a98aa2378e3654f7f3256f865846815f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa71d1c7b5f73f20c860ed14140897a56" id="r_aa71d1c7b5f73f20c860ed14140897a56"><td class="memItemLeft" align="right" valign="top"><a id="aa71d1c7b5f73f20c860ed14140897a56" name="aa71d1c7b5f73f20c860ed14140897a56"></a>
-std::vector&lt; <a class="el" href="classPixelFormat.html#aebad94562b303985bd3e111e30a29e5f">FourCC</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>fourccList</b></td></tr>
-<tr class="memdesc:aa71d1c7b5f73f20c860ed14140897a56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Associated <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> codes. <br /></td></tr>
-<tr class="separator:aa71d1c7b5f73f20c860ed14140897a56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d47fc3ebc2dc41e67b25386ff0b4e70" id="r_a8d47fc3ebc2dc41e67b25386ff0b4e70"><td class="memItemLeft" align="right" valign="top"><a id="a8d47fc3ebc2dc41e67b25386ff0b4e70" name="a8d47fc3ebc2dc41e67b25386ff0b4e70"></a>
-std::vector&lt; <a class="el" href="structPixelFormat_1_1CompDesc.html">CompDesc</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>compList</b></td></tr>
-<tr class="memdesc:a8d47fc3ebc2dc41e67b25386ff0b4e70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Component descriptors. <br /></td></tr>
-<tr class="separator:a8d47fc3ebc2dc41e67b25386ff0b4e70"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a99127a0c8587dd4ff4abc4fff8ab8859" id="r_a99127a0c8587dd4ff4abc4fff8ab8859"><td class="memItemLeft" align="right" valign="top"><a id="a99127a0c8587dd4ff4abc4fff8ab8859" name="a99127a0c8587dd4ff4abc4fff8ab8859"></a>
-std::vector&lt; <a class="el" href="structPixelFormat_1_1PlaneDesc.html">PlaneDesc</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>planeList</b></td></tr>
-<tr class="memdesc:a99127a0c8587dd4ff4abc4fff8ab8859"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plane descriptors. <br /></td></tr>
-<tr class="separator:a99127a0c8587dd4ff4abc4fff8ab8859"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18937eb0ab769e3b639af41bde1d1a13" id="r_a18937eb0ab769e3b639af41bde1d1a13"><td class="memItemLeft" align="right" valign="top"><a id="a18937eb0ab769e3b639af41bde1d1a13" name="a18937eb0ab769e3b639af41bde1d1a13"></a>
-<a class="el" href="classPixelFormat.html#a0bab166b896a7667aa81e40582919b8b">CreatePixelFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>createPixel</b></td></tr>
-<tr class="memdesc:a18937eb0ab769e3b639af41bde1d1a13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to create a Pixel from component values. <br /></td></tr>
-<tr class="separator:a18937eb0ab769e3b639af41bde1d1a13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8c0d2d14d8061d70e3eeb364f6473d7" id="r_ac8c0d2d14d8061d70e3eeb364f6473d7"><td class="memItemLeft" align="right" valign="top"><a id="ac8c0d2d14d8061d70e3eeb364f6473d7" name="ac8c0d2d14d8061d70e3eeb364f6473d7"></a>
-<a class="el" href="classPixelFormat.html#a8feb7801cb663564579ad01fa5c5fc09">FillFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>fill</b></td></tr>
-<tr class="memdesc:ac8c0d2d14d8061d70e3eeb364f6473d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to fill an image with a pixel value. <br /></td></tr>
-<tr class="separator:ac8c0d2d14d8061d70e3eeb364f6473d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc146466565af3f2956477628c887fde" id="r_afc146466565af3f2956477628c887fde"><td class="memItemLeft" align="right" valign="top"><a id="afc146466565af3f2956477628c887fde" name="afc146466565af3f2956477628c887fde"></a>
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>compCount</b> = 0</td></tr>
+<tr class="memdesc:afc146466565af3f2956477628c887fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of components per pixel. <br /></td></tr>
+<tr class="separator:afc146466565af3f2956477628c887fde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae63285000844ba24eabd3f3fb9fe4a4a" id="r_ae63285000844ba24eabd3f3fb9fe4a4a"><td class="memItemLeft" align="right" valign="top"><a id="ae63285000844ba24eabd3f3fb9fe4a4a" name="ae63285000844ba24eabd3f3fb9fe4a4a"></a>
+<a class="el" href="structPixelFormat_1_1CompDesc.html">CompDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>comps</b> [<a class="el" href="classPixelFormat.html#a1419408ed305410e631fb2b100c2f881">MaxComps</a>] = {}</td></tr>
+<tr class="memdesc:ae63285000844ba24eabd3f3fb9fe4a4a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Component descriptors. <br /></td></tr>
+<tr class="separator:ae63285000844ba24eabd3f3fb9fe4a4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4baee14e2cb7389de771ec21d51fcd8" id="r_ae4baee14e2cb7389de771ec21d51fcd8"><td class="memItemLeft" align="right" valign="top"><a id="ae4baee14e2cb7389de771ec21d51fcd8" name="ae4baee14e2cb7389de771ec21d51fcd8"></a>
+<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>planeCount</b> = 0</td></tr>
+<tr class="memdesc:ae4baee14e2cb7389de771ec21d51fcd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of planes. <br /></td></tr>
+<tr class="separator:ae4baee14e2cb7389de771ec21d51fcd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a581ee5cc47bc70c76df8118c60a81ce7" id="r_a581ee5cc47bc70c76df8118c60a81ce7"><td class="memItemLeft" align="right" valign="top"><a id="a581ee5cc47bc70c76df8118c60a81ce7" name="a581ee5cc47bc70c76df8118c60a81ce7"></a>
+<a class="el" href="structPixelFormat_1_1PlaneDesc.html">PlaneDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>planes</b> [<a class="el" href="classPixelFormat.html#af952151e830901156bf5cf475e9a4f62">MaxPlanes</a>] = {}</td></tr>
+<tr class="memdesc:a581ee5cc47bc70c76df8118c60a81ce7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Plane descriptors. <br /></td></tr>
+<tr class="separator:a581ee5cc47bc70c76df8118c60a81ce7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af94f78a88c59bdf01af9d06ba9a5f323" id="r_af94f78a88c59bdf01af9d06ba9a5f323"><td class="memItemLeft" align="right" valign="top"><a id="af94f78a88c59bdf01af9d06ba9a5f323" name="af94f78a88c59bdf01af9d06ba9a5f323"></a>
+<a class="el" href="classPixelFormat.html#a11a3e3912eb14b53e4a16818cc841990">ChromaSitingH</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chromaSitingH</b> = <a class="el" href="classPixelFormat.html#a11a3e3912eb14b53e4a16818cc841990a0dc3671e183894e9efd6d552f7165579">ChromaHUndefined</a></td></tr>
+<tr class="memdesc:af94f78a88c59bdf01af9d06ba9a5f323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Horizontal chroma siting. <br /></td></tr>
+<tr class="separator:af94f78a88c59bdf01af9d06ba9a5f323"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e8305c1646845407583d9267e29d6a6" id="r_a3e8305c1646845407583d9267e29d6a6"><td class="memItemLeft" align="right" valign="top"><a id="a3e8305c1646845407583d9267e29d6a6" name="a3e8305c1646845407583d9267e29d6a6"></a>
+<a class="el" href="classPixelFormat.html#a481b110c7c7acb5dffd9d04e281c6462">ChromaSitingV</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chromaSitingV</b> = <a class="el" href="classPixelFormat.html#a481b110c7c7acb5dffd9d04e281c6462a41d644ba32d8d240c0146c96c13a6e0c">ChromaVUndefined</a></td></tr>
+<tr class="memdesc:a3e8305c1646845407583d9267e29d6a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vertical chroma siting. <br /></td></tr>
+<tr class="separator:a3e8305c1646845407583d9267e29d6a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af41bc2f98070946b026a8f4d96d16336" id="r_af41bc2f98070946b026a8f4d96d16336"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structPixelFormat_1_1Data.html#af41bc2f98070946b026a8f4d96d16336">lineStrideFunc</a> )(<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td></tr>
+<tr class="memdesc:af41bc2f98070946b026a8f4d96d16336"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the line stride for a given plane.  <br /></td></tr>
+<tr class="separator:af41bc2f98070946b026a8f4d96d16336"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d4d86c88496035d9ed210d994245142" id="r_a5d4d86c88496035d9ed210d994245142"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structPixelFormat_1_1Data.html#a5d4d86c88496035d9ed210d994245142">planeSizeFunc</a> )(<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> height, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td></tr>
+<tr class="memdesc:a5d4d86c88496035d9ed210d994245142"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the total byte size of a given plane.  <br /></td></tr>
+<tr class="separator:a5d4d86c88496035d9ed210d994245142"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Aggregate descriptor holding all metadata for a pixel format. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="pixelformat__old_8h_source.html">pixelformat_old.h</a></li>
+<div class="textblock"><p>Immutable data record for a pixel format. </p>
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="af41bc2f98070946b026a8f4d96d16336" name="af41bc2f98070946b026a8f4d96d16336"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af41bc2f98070946b026a8f4d96d16336">&#9670;&#160;</a></span>lineStrideFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">size_t</a>(* PixelFormat::Data::lineStrideFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Computes the line stride for a given plane. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>Pointer to this <a class="el" href="structPixelFormat_1_1Data.html" title="Immutable data record for a pixel format.">Data</a> record. </td></tr>
+    <tr><td class="paramname">planeIdx</td><td>Zero-based plane index. </td></tr>
+    <tr><td class="paramname">width</td><td><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> width in pixels. </td></tr>
+    <tr><td class="paramname">linePad</td><td>Padding bytes appended to each scanline. </td></tr>
+    <tr><td class="paramname">lineAlign</td><td>Alignment requirement in bytes. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classLine.html" title="N-dimensional line segment defined by a start and end point.">Line</a> stride in bytes, or 0 if not applicable. </dd></dl>
+
+</div>
+</div>
+<a id="a5d4d86c88496035d9ed210d994245142" name="a5d4d86c88496035d9ed210d994245142"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d4d86c88496035d9ed210d994245142">&#9670;&#160;</a></span>planeSizeFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">size_t</a>(* PixelFormat::Data::planeSizeFunc) (<a class="el" href="classList.html">const</a> <a class="el" href="structPixelFormat_1_1Data.html">Data</a> *d, <a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">planeIdx</a>, <a class="el" href="classList.html">size_t</a> width, <a class="el" href="classList.html">size_t</a> height, <a class="el" href="classList.html">size_t</a> linePad, <a class="el" href="classList.html">size_t</a> lineAlign) = <a class="el" href="classList.html">nullptr</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Computes the total byte size of a given plane. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>Pointer to this <a class="el" href="structPixelFormat_1_1Data.html" title="Immutable data record for a pixel format.">Data</a> record. </td></tr>
+    <tr><td class="paramname">planeIdx</td><td>Zero-based plane index. </td></tr>
+    <tr><td class="paramname">width</td><td><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> width in pixels. </td></tr>
+    <tr><td class="paramname">height</td><td><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> height in pixels. </td></tr>
+    <tr><td class="paramname">linePad</td><td>Padding bytes appended to each scanline. </td></tr>
+    <tr><td class="paramname">lineAlign</td><td>Alignment requirement in bytes. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Plane size in bytes, or 0 if not applicable. </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>include/promeki/<a class="el" href="pixelformat_8h_source.html">pixelformat.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -186,7 +251,7 @@ std::vector&lt; <a class="el" href="structPixelFormat_1_1PlaneDesc.html">PlaneDe
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPixelFormat.html">PixelFormat</a></li><li class="navelem"><a class="el" href="structPixelFormat_1_1Data.html">Data</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

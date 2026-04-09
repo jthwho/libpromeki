@@ -106,7 +106,7 @@ $(document).ready(function(){initNavTree('classAudioDesc.html',''); initResizabl
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classAudioDesc-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">AudioDesc Class Reference<div class="ingroups"><a class="el" href="group__proav__media.html">ProAV Media</a></div></div></div>
+  <div class="headertitle"><div class="title">AudioDesc Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -173,8 +173,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a4748613d1123df20087b6a9b0e44b25f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions are fully equal, including metadata.  <br /></td></tr>
 <tr class="separator:a4748613d1123df20087b6a9b0e44b25f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0f5aeaef11ed389c117b0c174ecc905" id="r_ac0f5aeaef11ed389c117b0c174ecc905"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac0f5aeaef11ed389c117b0c174ecc905">isValid</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ac0f5aeaef11ed389c117b0c174ecc905"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this audio description has a valid data type, sample rate, and channel count.  <br /></td></tr>
+<tr class="memdesc:ac0f5aeaef11ed389c117b0c174ecc905"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this audio description is valid.  <br /></td></tr>
 <tr class="separator:ac0f5aeaef11ed389c117b0c174ecc905"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab627ec31647826dda77b727aad03fe54" id="r_ab627ec31647826dda77b727aad03fe54"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab627ec31647826dda77b727aad03fe54">isCompressed</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab627ec31647826dda77b727aad03fe54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if this description identifies a compressed audio codec (as opposed to raw PCM).  <br /></td></tr>
+<tr class="separator:ab627ec31647826dda77b727aad03fe54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae562a951eb019b6e0d9284f4bd1d425f" id="r_ae562a951eb019b6e0d9284f4bd1d425f"><td class="memItemLeft" align="right" valign="top"><a id="ae562a951eb019b6e0d9284f4bd1d425f" name="ae562a951eb019b6e0d9284f4bd1d425f"></a>
+<a class="el" href="classFourCC.html">FourCC</a>&#160;</td><td class="memItemRight" valign="bottom"><b>codecFourCC</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae562a951eb019b6e0d9284f4bd1d425f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the four-character code identifying the compressed codec, or an all-zero <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> for PCM audio. <br /></td></tr>
+<tr class="separator:ae562a951eb019b6e0d9284f4bd1d425f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b04f88e7700990b1230558ec5f6ed17" id="r_a8b04f88e7700990b1230558ec5f6ed17"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a8b04f88e7700990b1230558ec5f6ed17">setCodecFourCC</a> (<a class="el" href="classFourCC.html">FourCC</a> code)</td></tr>
+<tr class="memdesc:a8b04f88e7700990b1230558ec5f6ed17"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the compressed codec <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a>.  <br /></td></tr>
+<tr class="separator:a8b04f88e7700990b1230558ec5f6ed17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9768a6e021bda041de148a1add6ddf3" id="r_ac9768a6e021bda041de148a1add6ddf3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ac9768a6e021bda041de148a1add6ddf3">isNative</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ac9768a6e021bda041de148a1add6ddf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the data type is the platform's native float format.  <br /></td></tr>
 <tr class="separator:ac9768a6e021bda041de148a1add6ddf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1017,6 +1027,34 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="ab627ec31647826dda77b727aad03fe54" name="ab627ec31647826dda77b727aad03fe54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab627ec31647826dda77b727aad03fe54">&#9670;&#160;</a></span>isCompressed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">bool</a> AudioDesc::isCompressed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if this description identifies a compressed audio codec (as opposed to raw PCM). </p>
+<p>Compressed audio has a non-zero <code><a class="el" href="classAudioDesc.html#ae562a951eb019b6e0d9284f4bd1d425f" title="Returns the four-character code identifying the compressed codec, or an all-zero FourCC for PCM audio...">codecFourCC()</a></code> and typically an <code>Invalid</code> <code>dataType</code> (since the encoded bitstream has no single bit-depth). </p>
+
+</div>
+</div>
 <a id="ac9768a6e021bda041de148a1add6ddf3" name="ac9768a6e021bda041de148a1add6ddf3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac9768a6e021bda041de148a1add6ddf3">&#9670;&#160;</a></span>isNative()</h2>
 
@@ -1068,8 +1106,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </table>
 </div><div class="memdoc">
 
-<p>Returns true if this audio description has a valid data type, sample rate, and channel count. </p>
-<dl class="section return"><dt>Returns</dt><dd>true if valid. </dd></dl>
+<p>Returns true if this audio description is valid. </p>
+<p>Valid when the sample rate and channel count are set AND either a PCM data type or a compressed codec <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> is present. </p>
 
 </div>
 </div>
@@ -1319,6 +1357,35 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="a8b04f88e7700990b1230558ec5f6ed17" name="a8b04f88e7700990b1230558ec5f6ed17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b04f88e7700990b1230558ec5f6ed17">&#9670;&#160;</a></span>setCodecFourCC()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> AudioDesc::setCodecFourCC </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classFourCC.html">FourCC</a>&#160;</td>
+          <td class="paramname"><em>code</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the compressed codec <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a>. </p>
+<p>Setting a non-zero <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> marks this description as compressed; setting zero clears the compressed flag. Does not modify <code>dataType</code>, <code>sampleRate</code>, or <code>channels</code>. </p>
+
+</div>
+</div>
 <a id="a331dc642a6ebce45a2cc3edbe654b039" name="a331dc642a6ebce45a2cc3edbe654b039"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a331dc642a6ebce45a2cc3edbe654b039">&#9670;&#160;</a></span>setDataType()</h2>
 
@@ -1507,7 +1574,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/proav/<a class="el" href="audiodesc_8h_source.html">audiodesc.h</a></li>
+<li>include/promeki/<a class="el" href="audiodesc_8h_source.html">audiodesc.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -1516,7 +1583,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDesc.html">AudioDesc</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

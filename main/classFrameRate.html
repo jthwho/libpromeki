@@ -102,8 +102,9 @@ $(document).ready(function(){initNavTree('classFrameRate.html',''); initResizabl
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classFrameRate-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">FrameRate Class Reference<div class="ingroups"><a class="el" href="group__core__time.html">Core Time</a></div></div></div>
+  <div class="headertitle"><div class="title">FrameRate Class Reference<div class="ingroups"><a class="el" href="group__time.html">Time</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -117,15 +118,21 @@ Public Types</h2></td></tr>
 <tr class="memitem:a0b03c0fe2f653ec8479d240690191b9c" id="r_a0b03c0fe2f653ec8479d240690191b9c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c">WellKnownRate</a> { <br />
 &#160;&#160;<a class="el" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202">FPS_NotWellKnown</a> = 0
 , <b>FPS_Invalid</b>
+, <b>FPS_120</b>
+, <b>FPS_11988</b>
+, <br />
+&#160;&#160;<b>FPS_100</b>
 , <b>FPS_60</b>
 , <b>FPS_5994</b>
+, <b>FPS_50</b>
 , <br />
-&#160;&#160;<b>FPS_50</b>
+&#160;&#160;<b>FPS_48</b>
+, <b>FPS_4795</b>
 , <b>FPS_30</b>
 , <b>FPS_2997</b>
-, <b>FPS_25</b>
 , <br />
-&#160;&#160;<b>FPS_24</b>
+&#160;&#160;<b>FPS_25</b>
+, <b>FPS_24</b>
 , <b>FPS_2398</b>
 <br />
  }</td></tr>
@@ -162,6 +169,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0e7b792ebba72a9f71044c6c6274ad7e" id="r_a0e7b792ebba72a9f71044c6c6274ad7e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a0e7b792ebba72a9f71044c6c6274ad7e">toDouble</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a0e7b792ebba72a9f71044c6c6274ad7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the frame rate as a double-precision floating point value.  <br /></td></tr>
 <tr class="separator:a0e7b792ebba72a9f71044c6c6274ad7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9e48a6eecf39a9d5cb54a89ac48be56" id="r_aa9e48a6eecf39a9d5cb54a89ac48be56"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classDuration.html">Duration</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#aa9e48a6eecf39a9d5cb54a89ac48be56">frameDuration</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa9e48a6eecf39a9d5cb54a89ac48be56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the period of one frame as a <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>.  <br /></td></tr>
+<tr class="separator:aa9e48a6eecf39a9d5cb54a89ac48be56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a912fb106905a7dcb5278f3aa0d9fd4b4" id="r_a912fb106905a7dcb5278f3aa0d9fd4b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">samplesPerFrame</a> (<a class="el" href="classList.html">int64_t</a> sampleRate, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">frameIndex</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a912fb106905a7dcb5278f3aa0d9fd4b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of audio samples for the given frame index.  <br /></td></tr>
+<tr class="separator:a912fb106905a7dcb5278f3aa0d9fd4b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6720aed23667e784d2f6ed26b397b12" id="r_aa6720aed23667e784d2f6ed26b397b12"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#aa6720aed23667e784d2f6ed26b397b12">toString</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa6720aed23667e784d2f6ed26b397b12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a string representation of the frame rate.  <br /></td></tr>
 <tr class="separator:aa6720aed23667e784d2f6ed26b397b12"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,10 +184,46 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a93b0aff90172523f99ac5dd2a357fbc3" id="r_a93b0aff90172523f99ac5dd2a357fbc3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c">WellKnownRate</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a93b0aff90172523f99ac5dd2a357fbc3">wellKnownRate</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a93b0aff90172523f99ac5dd2a357fbc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the WellKnownRate enum value for this frame rate.  <br /></td></tr>
 <tr class="separator:a93b0aff90172523f99ac5dd2a357fbc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1a6d0901f7f0c9691b662ae6828832e" id="r_ae1a6d0901f7f0c9691b662ae6828832e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameRate.html#ad06e0a3a69109ae17dde81e2a59afd8b">RationalType</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#ae1a6d0901f7f0c9691b662ae6828832e">rational</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae1a6d0901f7f0c9691b662ae6828832e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying rational value.  <br /></td></tr>
+<tr class="separator:ae1a6d0901f7f0c9691b662ae6828832e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c95b864ab50b20d8967913448c7cbf8" id="r_a2c95b864ab50b20d8967913448c7cbf8"><td class="memItemLeft" align="right" valign="top"><a id="a2c95b864ab50b20d8967913448c7cbf8" name="a2c95b864ab50b20d8967913448c7cbf8"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classFrameRate.html">FrameRate</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a2c95b864ab50b20d8967913448c7cbf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both frame rates represent the same rational value. <br /></td></tr>
+<tr class="separator:a2c95b864ab50b20d8967913448c7cbf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea707c11e2724a659523f021804cb6fb" id="r_aea707c11e2724a659523f021804cb6fb"><td class="memItemLeft" align="right" valign="top"><a id="aea707c11e2724a659523f021804cb6fb" name="aea707c11e2724a659523f021804cb6fb"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classFrameRate.html">FrameRate</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aea707c11e2724a659523f021804cb6fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the frame rates differ. <br /></td></tr>
+<tr class="separator:aea707c11e2724a659523f021804cb6fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a172e85b22f5a6f3be7019111fc63282f" id="r_a172e85b22f5a6f3be7019111fc63282f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classFrameRate.html">FrameRate</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a172e85b22f5a6f3be7019111fc63282f">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str)</td></tr>
+<tr class="memdesc:a172e85b22f5a6f3be7019111fc63282f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a frame rate from a string.  <br /></td></tr>
+<tr class="separator:a172e85b22f5a6f3be7019111fc63282f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents a video frame rate as a rational number. </p>
-<p><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> wraps a <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> value and provides an enumeration of well-known industry-standard frame rates (24, 25, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a>, 30, etc.). A frame rate can be constructed from a WellKnownRate enum or from an arbitrary rational value. </p>
+<p><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> wraps a <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> value and provides an enumeration of well-known industry-standard frame rates. A frame rate can be constructed from a WellKnownRate enum or from an arbitrary rational value. <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> is a first-class Variant type and can be stored directly in <a class="el" href="classMediaNodeConfig.html" title="Configuration descriptor for creating and configuring a MediaNode.">MediaNodeConfig</a> and other Variant-based containers.</p>
+<dl class="section user"><dt>Why rational numbers?</dt><dd></dd></dl>
+<p>Video frame rates must be represented as exact rational numbers (numerator / denominator), never as floating-point approximations. This requirement originates from the 1953 transition to NTSC color television in the United States.</p>
+<p>The original black-and-white NTSC standard operated at exactly 30 frames per second (60 fields/s), derived from the 60 Hz AC power line frequency. When color was added, engineers needed to multiplex a <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">3.579545</a> MHz color subcarrier into the existing signal without creating visible interference patterns. A beat frequency between the color subcarrier and the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">4.5</a> MHz audio carrier would have produced objectionable artifacts in the picture. To eliminate this beat, the frame rate was reduced by a factor of exactly 1000/1001, shifting the color subcarrier frequency just enough to place the beat outside the visible spectrum. The resulting frame rate is exactly 30000/1001 frames per second &ndash; not <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a>, which is merely a convenient approximation.</p>
+<p>This 1000/1001 relationship propagates to every frame rate derived from the NTSC family:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Common name   </th><th class="markdownTableHeadNone">Exact rational   </th><th class="markdownTableHeadNone">Decimal (approx.)    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">"59.94"   </td><td class="markdownTableBodyNone">60000/1001   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">59.94005994</a>...    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">"29.97"   </td><td class="markdownTableBodyNone">30000/1001   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97002997</a>...    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">"23.976"   </td><td class="markdownTableBodyNone">24000/1001   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">23.97602397</a>...   </td></tr>
+</table>
+<p>The names "29.97" and "23.976" (sometimes written "23.98") are widespread in the industry but are not the actual frame rates &ndash; they are approximate shorthands. Using the floating-point value <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> instead of the rational 30000/1001 introduces a small but compounding error: over the course of a one-hour program, the accumulated drift amounts to approximately <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">3.6</a> frames (about 108 milliseconds at 30000/1001). In professional workflows involving timecode, edit decision lists, and long-form content, this drift causes frame-accurate synchronization to fail.</p>
+<p>By storing the frame rate as an exact rational, <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> avoids this class of error entirely. <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> interval calculations, timecode conversions, and duration computations remain exact regardless of program length.</p>
+<dl class="section user"><dt>Well-known rates</dt><dd></dd></dl>
+<p>The WellKnownRate enum identifies industry-standard frame rates so that code can branch on them without comparing rationals. When a <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> is constructed from a rational that matches a well-known rate, the enum is set automatically.</p>
+<p>The <a class="el" href="classFrameRate.html#a172e85b22f5a6f3be7019111fc63282f" title="Parses a frame rate from a string.">fromString()</a> factory accepts both the approximate common names ("29.97", "23.976", "23.98") and exact fraction strings ("30000/1001"), always producing the correct rational internally. </p>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a0b03c0fe2f653ec8479d240690191b9c" name="a0b03c0fe2f653ec8479d240690191b9c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0b03c0fe2f653ec8479d240690191b9c">&#9670;&#160;</a></span>WellKnownRate</h2>
@@ -250,6 +299,76 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="aa9e48a6eecf39a9d5cb54a89ac48be56" name="aa9e48a6eecf39a9d5cb54a89ac48be56"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9e48a6eecf39a9d5cb54a89ac48be56">&#9670;&#160;</a></span>frameDuration()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classDuration.html">Duration</a> FrameRate::frameDuration </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the period of one frame as a <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>. </p>
+<p>Computed from the exact rational form as <code>denominator</code> / <code>numerator</code> seconds, rounded to the nearest nanosecond. Returns a zero <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a> if the frame rate is invalid.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFrameRate.html">FrameRate</a> fps(FrameRate::FPS_2997);     <span class="comment">// 30000/1001</span></div>
+<div class="line"><a class="code hl_class" href="classDuration.html">Duration</a>  d = fps.frameDuration();      <span class="comment">// ~33_366_666 ns</span></div>
+<div class="ttc" id="aclassDuration_html"><div class="ttname"><a href="classDuration.html">Duration</a></div><div class="ttdoc">Time duration with nanosecond precision.</div><div class="ttdef"><b>Definition</b> duration.h:27</div></div>
+<div class="ttc" id="aclassFrameRate_html"><div class="ttname"><a href="classFrameRate.html">FrameRate</a></div><div class="ttdoc">Represents a video frame rate as a rational number.</div><div class="ttdef"><b>Definition</b> framerate.h:101</div></div>
+</div><!-- fragment --></dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The frame period as a <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a172e85b22f5a6f3be7019111fc63282f" name="a172e85b22f5a6f3be7019111fc63282f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a172e85b22f5a6f3be7019111fc63282f">&#9670;&#160;</a></span>fromString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classFrameRate.html">FrameRate</a> &gt; FrameRate::fromString </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Parses a frame rate from a string. </p>
+<p>Accepts well-known rate strings ("23.976", "23.98", "24", "25", "29.97", "30", "47.95", "48", "50", "59.94", "60", "100", "119.88", "120") and fraction strings ("30000/1001", "24/1").</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>The string to parse. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A Result containing the parsed <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> or an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>. </dd></dl>
+
+</div>
+</div>
 <a id="a3668afabc874fe36f362e34cc36f6ca9" name="a3668afabc874fe36f362e34cc36f6ca9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3668afabc874fe36f362e34cc36f6ca9">&#9670;&#160;</a></span>isValid()</h2>
 
@@ -303,6 +422,89 @@ Public Member Functions</h2></td></tr>
 
 <p>Returns true if this is a well-known industry frame rate. </p>
 <dl class="section return"><dt>Returns</dt><dd>true if the rate matches a WellKnownRate entry. </dd></dl>
+
+</div>
+</div>
+<a id="ae1a6d0901f7f0c9691b662ae6828832e" name="ae1a6d0901f7f0c9691b662ae6828832e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1a6d0901f7f0c9691b662ae6828832e">&#9670;&#160;</a></span>rational()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classFrameRate.html#ad06e0a3a69109ae17dde81e2a59afd8b">RationalType</a> &amp; FrameRate::rational </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the underlying rational value. </p>
+<dl class="section return"><dt>Returns</dt><dd>The rational frame rate. </dd></dl>
+
+</div>
+</div>
+<a id="a912fb106905a7dcb5278f3aa0d9fd4b4" name="a912fb106905a7dcb5278f3aa0d9fd4b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a912fb106905a7dcb5278f3aa0d9fd4b4">&#9670;&#160;</a></span>samplesPerFrame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">size_t</a> FrameRate::samplesPerFrame </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>sampleRate</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>frameIndex</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the number of audio samples for the given frame index. </p>
+<p>Uses exact rational arithmetic so the cumulative sample count stays perfectly aligned with wall-clock time over arbitrary durations — including for fractional NTSC rates where the per-frame count must alternate. For 48 kHz @ <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> fps the function emits the standard cadence of 1601/1602/1601/1602/1602 (which sums to exactly 8008 every 5 frames), instead of the constant 1602 you would get from a naive <code>round</code>(sampleRate/fps).</p>
+<p>The implementation is:</p>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cumulative</a>(<a class="code hl_class" href="classList.html">n</a>) = (<a class="code hl_class" href="classList.html">n</a> * sampleRate * <a class="code hl_function" href="classFrameRate.html#acb54536ba866f30e98d52d6a8f8ba152">denominator</a>) / <a class="code hl_function" href="classFrameRate.html#a494073b25ab38bee4d9bf1b434a32d24">numerator</a>   <span class="comment">// integer div</span></div>
+<div class="line"><a class="code hl_function" href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">samplesPerFrame</a>(<a class="code hl_class" href="classList.html">n</a>) = <a class="code hl_class" href="classList.html">cumulative</a>(<a class="code hl_class" href="classList.html">n</a> + 1) - <a class="code hl_class" href="classList.html">cumulative</a>(<a class="code hl_class" href="classList.html">n</a>)</div>
+<div class="ttc" id="aclassFrameRate_html_a494073b25ab38bee4d9bf1b434a32d24"><div class="ttname"><a href="classFrameRate.html#a494073b25ab38bee4d9bf1b434a32d24">FrameRate::numerator</a></div><div class="ttdeci">unsigned int numerator() const</div><div class="ttdoc">Returns the numerator of the frame rate rational.</div><div class="ttdef"><b>Definition</b> framerate.h:136</div></div>
+<div class="ttc" id="aclassFrameRate_html_a912fb106905a7dcb5278f3aa0d9fd4b4"><div class="ttname"><a href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">FrameRate::samplesPerFrame</a></div><div class="ttdeci">size_t samplesPerFrame(int64_t sampleRate, int64_t frameIndex) const</div><div class="ttdoc">Returns the number of audio samples for the given frame index.</div><div class="ttdef"><b>Definition</b> framerate.h:204</div></div>
+<div class="ttc" id="aclassFrameRate_html_acb54536ba866f30e98d52d6a8f8ba152"><div class="ttname"><a href="classFrameRate.html#acb54536ba866f30e98d52d6a8f8ba152">FrameRate::denominator</a></div><div class="ttdeci">unsigned int denominator() const</div><div class="ttdoc">Returns the denominator of the frame rate rational.</div><div class="ttdef"><b>Definition</b> framerate.h:139</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+</div><!-- fragment --><p>For integer-cadence rates (24, 25, 30, 50, 60) every frame returns the same constant value. For fractional rates the result alternates in a fixed cycle whose period equals the <code>denominator</code> (e.g. 1001 for NTSC — though the visible pattern repeats every 5 frames).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sampleRate</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample rate in Hz (e.g. 48000). </td></tr>
+    <tr><td class="paramname">frameIndex</td><td>Zero-based frame index since the start of the run. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of samples to emit for that frame, or 0 if the frame rate is invalid or <code>sampleRate</code> is non-positive. </dd></dl>
 
 </div>
 </div>
@@ -367,9 +569,6 @@ Public Member Functions</h2></td></tr>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9c">WellKnownRate</a> FrameRate::wellKnownRate </td>
@@ -378,20 +577,24 @@ Public Member Functions</h2></td></tr>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Returns the WellKnownRate enum value for this frame rate. </p>
+<p>Compares the current rational value against all well-known rates using reduced form, so e.g. 30000/1000 matches FPS_30 (30/1).</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classFrameRate.html">FrameRate</a> <a class="code hl_class" href="classList.html">fr</a>(<a class="code hl_class" href="classRational.html">FrameRate::RationalType</a>(30000, 1000));</div>
+<div class="line"><a class="code hl_class" href="classList.html">assert</a>(<a class="code hl_class" href="classList.html">fr</a>.wellKnownRate() == FrameRate::FPS_30); <span class="comment">// 30000/1000 reduces to 30/1</span></div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classFrameRate.html">FrameRate</a> <a class="code hl_class" href="classList.html">custom</a>(<a class="code hl_class" href="classRational.html">FrameRate::RationalType</a>(90, 1));</div>
+<div class="line"><a class="code hl_class" href="classList.html">assert</a>(<a class="code hl_class" href="classList.html">custom</a>.wellKnownRate() == <a class="code hl_enumvalue" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202">FrameRate::FPS_NotWellKnown</a>);</div>
+<div class="ttc" id="aclassFrameRate_html_a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202"><div class="ttname"><a href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202">FrameRate::FPS_NotWellKnown</a></div><div class="ttdeci">@ FPS_NotWellKnown</div><div class="ttdoc">Not a well-known rate.</div><div class="ttdef"><b>Definition</b> framerate.h:109</div></div>
+<div class="ttc" id="aclassRational_html"><div class="ttname"><a href="classRational.html">Rational&lt; unsigned int &gt;</a></div></div>
+</div><!-- fragment --></dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The matching WellKnownRate, or FPS_NotWellKnown. </dd></dl>
 
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="framerate_8h_source.html">framerate.h</a></li>
+<li>include/promeki/<a class="el" href="framerate_8h_source.html">framerate.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -400,7 +603,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameRate.html">FrameRate</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

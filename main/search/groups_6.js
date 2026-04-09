@@ -1,9 +1,6 @@
 var searchData=
 [
-  ['paint_0',['ProAV Paint',['../group__proav__paint.html',1,'']]],
-  ['pipeline_1',['ProAV Pipeline',['../group__proav__pipeline.html',1,'']]],
-  ['proav_20color_2',['ProAV Color',['../group__proav__color.html',1,'']]],
-  ['proav_20media_3',['ProAV Media',['../group__proav__media.html',1,'']]],
-  ['proav_20paint_4',['ProAV Paint',['../group__proav__paint.html',1,'']]],
-  ['proav_20pipeline_5',['ProAV Pipeline',['../group__proav__pipeline.html',1,'']]]
+  ['math_0',['Math',['../group__math.html',1,'']]],
+  ['media_1',['media',['../group__media.html',1,'Media'],['../group__proav.html',1,'ProAV Media']]],
+  ['music_20theory_2',['Music Theory',['../group__music.html',1,'']]]
 ];

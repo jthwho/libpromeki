@@ -5,6 +5,5 @@ var structNodeStats =
     [ "lastProcessDuration", "structNodeStats.html#ae9e1ff80125a8132304a0d0b6e6bcdb3", null ],
     [ "peakProcessDuration", "structNodeStats.html#aeb619148d93416e12e4b1e17e60ad463", null ],
     [ "peakQueueDepth", "structNodeStats.html#aad3f81b3f8bd029b2211b29fe2d46744", null ],
-    [ "processCount", "structNodeStats.html#a6f46b38bcbb12cf61a6f1f5f07ce8958", null ],
-    [ "starvationCount", "structNodeStats.html#a42a2c4f5c406fd8a25a6b364471b71ce", null ]
+    [ "processCount", "structNodeStats.html#a6f46b38bcbb12cf61a6f1f5f07ce8958", null ]
 ];

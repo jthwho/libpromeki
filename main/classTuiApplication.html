@@ -177,7 +177,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a7915497f82dacecc1840afdb565effd3" id="r_a7915497f82dacecc1840afdb565effd3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a7915497f82dacecc1840afdb565effd3">exec</a> ()</td></tr>
 <tr class="memdesc:a7915497f82dacecc1840afdb565effd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runs the TUI application event loop.  <br /></td></tr>
 <tr class="separator:a7915497f82dacecc1840afdb565effd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a79e9e47ebfd992adee8e4e4e488d6faf" id="r_a79e9e47ebfd992adee8e4e4e488d6faf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">quit</a> (int exitCode=0)</td></tr>
+<tr class="memitem:a79e9e47ebfd992adee8e4e4e488d6faf" id="r_a79e9e47ebfd992adee8e4e4e488d6faf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf">quit</a> (int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>=0)</td></tr>
 <tr class="memdesc:a79e9e47ebfd992adee8e4e4e488d6faf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
 <tr class="separator:a79e9e47ebfd992adee8e4e4e488d6faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aedd0e260f8a000795d19e05393930102" id="r_aedd0e260f8a000795d19e05393930102"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTuiApplication.html#aedd0e260f8a000795d19e05393930102">setColorMode</a> (<a class="el" href="classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6">Terminal::ColorSupport</a> mode)</td></tr>
@@ -268,6 +268,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a3842d4110749e27e2cd267c95f0b621c inherit pub_static_methods_classApplication" id="r_a3842d4110749e27e2cd267c95f0b621c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a3842d4110749e27e2cd267c95f0b621c">stderrDevice</a> ()</td></tr>
 <tr class="memdesc:a3842d4110749e27e2cd267c95f0b621c inherit pub_static_methods_classApplication"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stderr.  <br /></td></tr>
 <tr class="separator:a3842d4110749e27e2cd267c95f0b621c inherit pub_static_methods_classApplication"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a208db3379cddeea6924b8b3c3f9f10aa inherit pub_static_methods_classApplication" id="r_a208db3379cddeea6924b8b3c3f9f10aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> (int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>=0)</td></tr>
+<tr class="memdesc:a208db3379cddeea6924b8b3c3f9f10aa inherit pub_static_methods_classApplication"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
+<tr class="separator:a208db3379cddeea6924b8b3c3f9f10aa inherit pub_static_methods_classApplication"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0d8eefe80b02d2ece0d41e5a863cb4e inherit pub_static_methods_classApplication" id="r_ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#ad0d8eefe80b02d2ece0d41e5a863cb4e">shouldQuit</a> ()</td></tr>
+<tr class="memdesc:ad0d8eefe80b02d2ece0d41e5a863cb4e inherit pub_static_methods_classApplication"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> has been called.  <br /></td></tr>
+<tr class="separator:ad0d8eefe80b02d2ece0d41e5a863cb4e inherit pub_static_methods_classApplication"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2b799c01a3e63ae2efc44e8152fc724 inherit pub_static_methods_classApplication" id="r_ac2b799c01a3e63ae2efc44e8152fc724"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a> ()</td></tr>
+<tr class="memdesc:ac2b799c01a3e63ae2efc44e8152fc724 inherit pub_static_methods_classApplication"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the exit code set by <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a>.  <br /></td></tr>
+<tr class="separator:ac2b799c01a3e63ae2efc44e8152fc724 inherit pub_static_methods_classApplication"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> class for TUI programs. </p>
@@ -558,7 +567,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTuiApplication.html">TuiApplication</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

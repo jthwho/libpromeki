@@ -1,5 +1,6 @@
 var point_8h =
 [
+    [ "std::formatter< promeki::Point< T, NumValues > >", "structstd_1_1formatter_3_01promeki_1_1Point_3_01T_00_01NumValues_01_4_01_4.html", null ],
     [ "Point2Dd", "point_8h.html#acc02f813dd5a8bb7c3e87e201c9bf80a", null ],
     [ "Point2Df", "point_8h.html#a780dcf4c32aa1956c46945b155739860", null ],
     [ "Point2Di32", "point_8h.html#a559444f073d8a5f68fdebd61c5663f56", null ],

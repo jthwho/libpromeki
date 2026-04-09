@@ -1,6 +1,6 @@
 var classObjectBasePtr =
 [
-    [ "ObjectBasePtr", "group__core__events.html#gafae67ee68f029801adb92c6676a76de1", null ],
+    [ "ObjectBasePtr", "group__events.html#gafae67ee68f029801adb92c6676a76de1", null ],
     [ "ObjectBasePtr", "classObjectBasePtr.html#ac5ab3d730afaeff603da41666df735cf", null ],
     [ "~ObjectBasePtr", "classObjectBasePtr.html#a45b2a25d0f57fc10569529ff29252616", null ],
     [ "data", "classObjectBasePtr.html#adf1b8edd2a2f6e822c973b69a18ef306", null ],

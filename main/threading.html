@@ -245,14 +245,15 @@ Future and Promise</h2>
 <h1><a class="anchor" id="thread_pool"></a>
 ThreadPool</h1>
 <p><a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a> provides a pool of worker threads for running tasks concurrently. Submit work with <code>submit()</code>, which returns a <a class="el" href="classFuture.html" title="Asynchronous result wrapping std::future&lt;T&gt;.">Future</a> for the result.</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classThreadPool.html">ThreadPool</a> <a class="code hl_class" href="classList.html">pool</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">Future&lt;int&gt;</a> result = <a class="code hl_class" href="classList.html">pool</a>.submit([]() {</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classThreadPool.html">ThreadPool</a> pool;</div>
+<div class="line"><a class="code hl_class" href="classList.html">Future&lt;int&gt;</a> result = pool.<a class="code hl_function" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">submit</a>([]() {</div>
 <div class="line">        <span class="keywordflow">return</span> <a class="code hl_class" href="classList.html">expensiveComputation</a>();</div>
 <div class="line">});</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Later...</span></div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>, <a class="code hl_class" href="classList.html">err</a>] = result.result();</div>
 <div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:44</div></div>
+<div class="ttc" id="aclassThreadPool_html_acd7225ce903d2a46a744f23eeb9b8d47"><div class="ttname"><a href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">ThreadPool::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for asynchronous execution.</div><div class="ttdef"><b>Definition</b> threadpool.h:75</div></div>
 </div><!-- fragment --><p>Key features:</p><ul>
 <li>Default thread count is <code>std::thread::hardware_concurrency()</code>.</li>
 <li><code>setThreadCount(0)</code> switches to inline mode where tasks run on the calling thread &ndash; useful for WASM or single-threaded contexts.</li>
@@ -262,13 +263,13 @@ ThreadPool</h1>
 <p>Tasks submitted to the pool should be self-contained. Pass data in by copy (for simple types) or by <code>Ptr</code> (for shareable types). Do not capture raw pointers to <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> instances &ndash; use signals instead to communicate results back.</p>
 <h1><a class="anchor" id="thread_pipeline"></a>
 Pipeline Threading</h1>
-<p>The <a class="el" href="classMediaPipeline.html" title="Owns a MediaGraph and orchestrates pipeline processing.">MediaPipeline</a> schedules <a class="el" href="classMediaNode.html#ab6fbd04386109e9ea5d5815255fe0b7a" title="Processes one cycle of data.">MediaNode::process()</a> calls across a thread pool. Each node can specify its threading policy:</p>
+<p>The <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a> schedules <a class="el" href="classMediaNode.html#a4f6fdc0b72edf9c736fb4153f415d83f" title="Runs one processing cycle.">MediaNode::process()</a> calls across a thread pool. Each node can specify its threading policy:</p>
 <ul>
 <li><b>UseGraphPool</b> (default): scheduled on the pipeline's shared <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a>.</li>
 <li><b>DedicatedThread</b>: gets its own thread for deterministic scheduling (e.g., real-time audio nodes).</li>
 <li><b>CustomPool</b>: uses a separate <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a> instance.</li>
 </ul>
-<p>Data flows between nodes through <a class="el" href="classMediaLink.html" title="Connects an output port to an input port in a media pipeline.">MediaLink</a>, which uses a thread-safe <a class="el" href="classQueue.html">Queue</a> internally. Nodes receive data via <code>pullFrame()</code> and produce data via <code>pushFrame()</code> &ndash; both are safe to call from the node's processing thread. </p>
+<p>Data flows between nodes through MediaSink/MediaSource connections, which use a thread-safe <a class="el" href="classQueue.html">Queue</a> internally. Nodes receive data via their sinks and produce data via their sources &ndash; both are safe to call from the node's processing thread. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -276,7 +277,7 @@ Pipeline Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

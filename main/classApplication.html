@@ -104,22 +104,24 @@ $(document).ready(function(){initNavTree('classApplication.html',''); initResiza
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classApplication-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">Application Class Reference<div class="ingroups"><a class="el" href="group__core__events.html">Core Events</a></div></div></div>
+  <div class="headertitle"><div class="title">Application Class Reference<div class="ingroups"><a class="el" href="group__events.html">Events</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Application-wide state for the promeki library.  
  <a href="classApplication.html#details">More...</a></p>
 
-<p><code>#include &lt;<a class="el" href="core_2application_8h_source.html">application.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="application_8h_source.html">application.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for Application:</div>
 <div class="dyncontent">
 <div class="center"><img src="classApplication__inherit__graph.png" border="0" usemap="#aApplication_inherit__map" alt="Inheritance graph"/></div>
 <map name="aApplication_inherit__map" id="aApplication_inherit__map">
-<area shape="rect" title="Application&#45;wide state for the promeki library." alt="" coords="15,5,109,31"/>
-<area shape="rect" href="classTuiApplication.html" title="Application class for TUI programs." alt="" coords="5,79,119,104"/>
-<area shape="poly" title=" " alt="" coords="65,44,65,79,59,79,59,44"/>
+<area shape="rect" title="Application&#45;wide state for the promeki library." alt="" coords="89,5,184,31"/>
+<area shape="rect" href="classSDLApplication.html" title="Application class for SDL&#45;based programs." alt="" coords="5,79,127,104"/>
+<area shape="poly" title=" " alt="" coords="117,43,79,80,76,77,113,39"/>
+<area shape="rect" href="classTuiApplication.html" title="Application class for TUI programs." alt="" coords="151,79,264,104"/>
+<area shape="poly" title=" " alt="" coords="160,39,198,77,194,80,156,43"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -177,6 +179,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a3842d4110749e27e2cd267c95f0b621c" id="r_a3842d4110749e27e2cd267c95f0b621c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a3842d4110749e27e2cd267c95f0b621c">stderrDevice</a> ()</td></tr>
 <tr class="memdesc:a3842d4110749e27e2cd267c95f0b621c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stderr.  <br /></td></tr>
 <tr class="separator:a3842d4110749e27e2cd267c95f0b621c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a208db3379cddeea6924b8b3c3f9f10aa" id="r_a208db3379cddeea6924b8b3c3f9f10aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> (int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>=0)</td></tr>
+<tr class="memdesc:a208db3379cddeea6924b8b3c3f9f10aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
+<tr class="separator:a208db3379cddeea6924b8b3c3f9f10aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0d8eefe80b02d2ece0d41e5a863cb4e" id="r_ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#ad0d8eefe80b02d2ece0d41e5a863cb4e">shouldQuit</a> ()</td></tr>
+<tr class="memdesc:ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> has been called.  <br /></td></tr>
+<tr class="separator:ad0d8eefe80b02d2ece0d41e5a863cb4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2b799c01a3e63ae2efc44e8152fc724" id="r_ac2b799c01a3e63ae2efc44e8152fc724"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a> ()</td></tr>
+<tr class="memdesc:ac2b799c01a3e63ae2efc44e8152fc724"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the exit code set by <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a>.  <br /></td></tr>
+<tr class="separator:ac2b799c01a3e63ae2efc44e8152fc724"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-wide state for the promeki library. </p>
@@ -315,6 +326,34 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ac2b799c01a3e63ae2efc44e8152fc724" name="ac2b799c01a3e63ae2efc44e8152fc724"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac2b799c01a3e63ae2efc44e8152fc724">&#9670;&#160;</a></span>exitCode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> int Application::exitCode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the exit code set by <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd>The exit code, or 0 if <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> was never called. </dd></dl>
+
+</div>
+</div>
 <a id="a91441b3fc11ca0e6b342a11a247b60cd" name="a91441b3fc11ca0e6b342a11a247b60cd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a91441b3fc11ca0e6b342a11a247b60cd">&#9670;&#160;</a></span>mainEventLoop()</h2>
 
@@ -368,6 +407,40 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Returns the <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> object for the main (application) thread. </p>
 <dl class="section return"><dt>Returns</dt><dd>The main thread, or nullptr if no <a class="el" href="classApplication.html" title="Application-wide state for the promeki library.">Application</a> was constructed. </dd></dl>
+
+</div>
+</div>
+<a id="a208db3379cddeea6924b8b3c3f9f10aa" name="a208db3379cddeea6924b8b3c3f9f10aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a208db3379cddeea6924b8b3c3f9f10aa">&#9670;&#160;</a></span>quit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> Application::quit </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>exitCode</em> = <code>0</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Requests the application to quit. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">exitCode</td><td>The exit code (retrievable via <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724" title="Returns the exit code set by quit().">exitCode()</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -436,6 +509,34 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="ad0d8eefe80b02d2ece0d41e5a863cb4e" name="ad0d8eefe80b02d2ece0d41e5a863cb4e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0d8eefe80b02d2ece0d41e5a863cb4e">&#9670;&#160;</a></span>shouldQuit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a> Application::shouldQuit </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns true if <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa" title="Requests the application to quit.">quit()</a> has been called. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if the application should exit. </dd></dl>
 
 </div>
 </div>
@@ -527,7 +628,7 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/promeki/core/<a class="el" href="core_2application_8h_source.html">application.h</a></li>
+<li>include/promeki/<a class="el" href="application_8h_source.html">application.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -536,7 +637,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classApplication.html">Application</a></li>
-    <li class="footer">Generated on 2026-03-17 08:44:26 from commit c7a44db (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-09 04:27:36 from commit f6f2709 (1.0.0).</li>
   </ul>
 </div>
 </body>

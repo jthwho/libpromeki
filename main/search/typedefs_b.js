@@ -1,18 +1,10 @@
 var searchData=
 [
-  ['params_0',['Params',['../classColorSpace.html#a2b93b4c03f458cff0de72cc70f7567da',1,'ColorSpace']]],
-  ['pixel_1',['Pixel',['../classPaintEngine.html#afd45e9778ae2ec84323494a03d6da2fb',1,'PaintEngine']]],
-  ['point2dd_2',['Point2Dd',['../point_8h.html#acc02f813dd5a8bb7c3e87e201c9bf80a',1,'point.h']]],
-  ['point2df_3',['Point2Df',['../point_8h.html#a780dcf4c32aa1956c46945b155739860',1,'point.h']]],
-  ['point2di32_4',['Point2Di32',['../point_8h.html#a559444f073d8a5f68fdebd61c5663f56',1,'point.h']]],
-  ['point3dd_5',['Point3Dd',['../point_8h.html#a4dd2720b05e62317e8da6419fb693d36',1,'point.h']]],
-  ['point3df_6',['Point3Df',['../point_8h.html#a834e55867f2da88ae61a275cd719d887',1,'point.h']]],
-  ['point3di32_7',['Point3Di32',['../point_8h.html#a59618ce07ab17b967f2a19c5b1486f0c',1,'point.h']]],
-  ['point4dd_8',['Point4Dd',['../point_8h.html#a76763eadb3a0611975bf3061fa841bf0',1,'point.h']]],
-  ['point4df_9',['Point4Df',['../point_8h.html#a896b4d70ee68baaa5c3aab7f97ac87b5',1,'point.h']]],
-  ['point4di32_10',['Point4Di32',['../point_8h.html#af5cf1d3bd7cd1a4b2b8c5bbf8de59883',1,'point.h']]],
-  ['pointlist_11',['PointList',['../classPaintEngine.html#a936a65acce1f99cace70c3edf6e39a1f',1,'PaintEngine']]],
-  ['pt_12',['Pt',['../classLine.html#a5f551a026fb79e7542e0bfc41ba11fb3',1,'Line']]],
-  ['ptr_13',['ptr',['../classMap.html#ae461e09a58bcee58cb6c068be9c58bd7',1,'Map::Ptr'],['../classArray.html#a5616b9e3df8abafed7f565aee6df635f',1,'Array::Ptr'],['../classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3',1,'Buffer::Ptr'],['../classDeque.html#abdeec467505200791af25ca7f9b25974',1,'Deque::Ptr'],['../classHashMap.html#a2a489efee5e2f18b568bbd8d9b89e166',1,'HashMap::Ptr'],['../classHashSet.html#a6c4965db9061a1eae05db2b6944a47fa',1,'HashSet::Ptr'],['../classJsonObject.html#a62fefd42376241146aeac1af21e678d8',1,'JsonObject::Ptr'],['../classJsonArray.html#a8724dc65bbc6c3c211c1a215923e4d14',1,'JsonArray::Ptr'],['../classVideoDesc.html#a9f85389cddeb40479cee4849b3c45135',1,'VideoDesc::Ptr'],['../classPaintEngine.html#a1eb384e7a73bcfe666294d023be9627f',1,'PaintEngine::Ptr'],['../classMediaPort.html#aebaa34efc206948907510555979e04e6',1,'MediaPort::Ptr'],['../classImageDesc.html#ad783f089e7476a66b79dc80c73e0287a',1,'ImageDesc::Ptr'],['../classList.html#a5065311ff7846505d9a73878bcf7a3e3',1,'List::Ptr'],['../classMetadata.html#a5385a0d2ae648d73ce72f419508aa84a',1,'Metadata::Ptr'],['../classSet.html#a1025ebd8480fec683af6f72948745599',1,'Set::Ptr'],['../classSdpSession.html#a87314b8825103db9780da5c789a0c324',1,'SdpSession::Ptr'],['../classAudio.html#a5a5464f78ba10693bf958d4b2b9c7351',1,'Audio::Ptr'],['../classAudioDesc.html#a12c38d68a765340588c5b19ae43ee023',1,'AudioDesc::Ptr'],['../classAudioFile.html#a794f70d63a3db456635a12e50dc2c356',1,'AudioFile::Ptr'],['../classEncodedDesc.html#abd57f1a974f497389d07777c6b24b448',1,'EncodedDesc::Ptr'],['../classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a',1,'Frame::Ptr'],['../classImage.html#a38745cfc2762b9f0aeaaba861098b852',1,'Image::Ptr'],['../classMediaLink.html#a964a94faa588623b9966a15ff30f2f01',1,'MediaLink::Ptr']]],
-  ['ptrlist_14',['ptrlist',['../classMediaPort.html#a125705b811e26e73f83a2087823bf9ac',1,'MediaPort::PtrList'],['../classMediaLink.html#a3f9577696253610b4cad7f2bc4e7b13d',1,'MediaLink::PtrList'],['../classImage.html#a198b089768debdf038e39b6be082184f',1,'Image::PtrList'],['../classFrame.html#a59b79f2fc64b0774ac7ee5094c98a199',1,'Frame::PtrList'],['../classEncodedDesc.html#a6aef43f7d0a88d6c12aadb751f236c26',1,'EncodedDesc::PtrList'],['../classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2',1,'Audio::PtrList'],['../classSdpSession.html#ac9bc09af10f42d5652304ae434dbb861',1,'SdpSession::PtrList'],['../classBuffer.html#a97dab4fcadca3cea1e8f874bde3c1380',1,'Buffer::PtrList']]]
+  ['onnewlinefunc_0',['onnewlinefunc',['../classStreamStringIODevice.html#acecd3699d23604fda22882a29bfa1afe',1,'StreamStringIODevice::OnNewLineFunc'],['../classStreamString.html#a14c26f2adcda09c0f9762cf0c0c78109',1,'StreamString::OnNewLineFunc']]],
+  ['optionboolcallback_1',['OptionBoolCallback',['../classCmdLineParser.html#a7d7a5dc0469a64bbb42d4ec7de4d6647',1,'CmdLineParser']]],
+  ['optioncallback_2',['OptionCallback',['../classCmdLineParser.html#a0197bfb6bfc86e1050549c1027f64664',1,'CmdLineParser']]],
+  ['optioncallbackvariant_3',['OptionCallbackVariant',['../classCmdLineParser.html#ac938ca2ad49ce2936b0fe38043a9c77f',1,'CmdLineParser']]],
+  ['optiondoublecallback_4',['OptionDoubleCallback',['../classCmdLineParser.html#a7a65715544c8b80935751611fa9a7b10',1,'CmdLineParser']]],
+  ['optionintcallback_5',['OptionIntCallback',['../classCmdLineParser.html#a28f0ee61b366aa0b331d08d05d8f9830',1,'CmdLineParser']]],
+  ['optionstringcallback_6',['OptionStringCallback',['../classCmdLineParser.html#ada6de482fe937b3ba56fabf5de6fb237',1,'CmdLineParser']]]
 ];
