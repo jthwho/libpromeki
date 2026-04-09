@@ -226,7 +226,8 @@ class DataStream {
                         TypeXYZColor    = 0x32, ///< @brief XYZColor (three tagged doubles)
                         TypeAudioDesc   = 0x33, ///< @brief AudioDesc (format + sample rate + channels + metadata)
                         TypeImageDesc   = 0x34, ///< @brief ImageDesc (size + pixel desc + line pad + align + interlaced + metadata)
-                        TypeMediaDesc   = 0x35  ///< @brief MediaDesc (frame rate + image list + audio list + metadata)
+                        TypeMediaDesc   = 0x35, ///< @brief MediaDesc (frame rate + image list + audio list + metadata)
+                        TypeUMID        = 0x36  ///< @brief UMID (uint8 length = 32 or 64, then N raw bytes)
                 };
 
                 /** @brief Current wire format version. */
@@ -403,6 +404,8 @@ class DataStream {
 
                 /** @brief Writes a UUID as 16 raw bytes. */
                 DataStream &operator<<(const UUID &val);
+                /** @brief Writes a UMID as a uint8 length (32 or 64) followed by N raw bytes. */
+                DataStream &operator<<(const UMID &val);
                 /** @brief Writes a DateTime as int64 nanoseconds since epoch. */
                 DataStream &operator<<(const DateTime &val);
                 /** @brief Writes a TimeStamp as int64 nanoseconds since epoch. */
@@ -467,6 +470,8 @@ class DataStream {
 
                 /** @brief Reads a UUID from 16 raw bytes. */
                 DataStream &operator>>(UUID &val);
+                /** @brief Reads a UMID from a uint8 length (32 or 64) followed by N raw bytes. */
+                DataStream &operator>>(UMID &val);
                 /** @brief Reads a DateTime from a tagged int64 ns-since-epoch. */
                 DataStream &operator>>(DateTime &val);
                 /** @brief Reads a TimeStamp from a tagged int64 ns-since-epoch. */
@@ -639,6 +644,7 @@ class DataStream {
                 void writeStringData(const String &val);
                 void writeBufferData(const Buffer &val);
                 void writeUUIDData(const UUID &val);
+                void writeUMIDData(const UMID &val);
                 void writeDateTimeData(const DateTime &val);
                 void writeTimeStampData(const TimeStamp &val);
                 void writeFrameRateData(const FrameRate &val);
@@ -666,6 +672,7 @@ class DataStream {
                 String   readStringData();
                 Buffer   readBufferData();
                 UUID     readUUIDData();
+                UMID     readUMIDData();
                 DateTime readDateTimeData();
                 TimeStamp readTimeStampData();
                 FrameRate readFrameRateData();

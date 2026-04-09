@@ -62,7 +62,7 @@ Image Image::fromBuffer(const Buffer::Ptr &buffer,
         // one Buffer per plane — fromBuffer refuses those since it only
         // knows about one buffer.
         if(!pd.isCompressed() && pd.planeCount() != 1) {
-                promekiWarn("Image::fromBuffer: uncompressed pixel description '%s' has %d planes; "
+                promekiWarn("Image::fromBuffer: uncompressed pixel description '%s' has %zu planes; "
                             "fromBuffer only supports single-plane uncompressed formats",
                             pd.name().cstr(), pd.planeCount());
                 return Image();

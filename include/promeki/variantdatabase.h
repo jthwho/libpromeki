@@ -105,6 +105,38 @@ class VariantDatabase {
                 }
 
                 /**
+                 * @brief Sets the value only if no entry exists for @p id.
+                 *
+                 * Unlike @ref set, which always overwrites, this call is a
+                 * no-op when the key already has a value.  It is intended
+                 * as a primitive for filling in defaults without
+                 * clobbering caller-supplied values.
+                 *
+                 * @param id    The entry identifier.
+                 * @param value The value to store if no existing entry.
+                 * @return true if the value was stored, false if an entry
+                 *         already existed for @p id.
+                 */
+                bool setIfMissing(ID id, const Variant &value) {
+                        if(_data.contains(id.id())) return false;
+                        _data.insert(id.id(), value);
+                        return true;
+                }
+
+                /**
+                 * @brief Move overload of @ref setIfMissing.
+                 * @param id    The entry identifier.
+                 * @param value The value to move-store if no existing entry.
+                 * @return true if the value was stored, false if an entry
+                 *         already existed for @p id.
+                 */
+                bool setIfMissing(ID id, Variant &&value) {
+                        if(_data.contains(id.id())) return false;
+                        _data.insert(id.id(), std::move(value));
+                        return true;
+                }
+
+                /**
                  * @brief Returns the value for the given ID.
                  * @param id           The entry identifier.
                  * @param defaultValue Value returned if the ID is not present.

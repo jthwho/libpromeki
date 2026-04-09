@@ -52,6 +52,24 @@ TEST_CASE("VariantDatabase: contains") {
         CHECK(db.contains(key));
 }
 
+TEST_CASE("VariantDatabase: setIfMissing stores when absent") {
+        TestDB db;
+        TestDB::ID key("vdb.setIfMissing.absent");
+        bool stored = db.setIfMissing(key, String("hello"));
+        CHECK(stored);
+        CHECK(db.contains(key));
+        CHECK(db.get(key).get<String>() == "hello");
+}
+
+TEST_CASE("VariantDatabase: setIfMissing preserves existing value") {
+        TestDB db;
+        TestDB::ID key("vdb.setIfMissing.present");
+        db.set(key, String("first"));
+        bool stored = db.setIfMissing(key, String("second"));
+        CHECK_FALSE(stored);
+        CHECK(db.get(key).get<String>() == "first");
+}
+
 TEST_CASE("VariantDatabase: set overwrites existing value") {
         TestDB db;
         TestDB::ID key("vdb.overwrite");

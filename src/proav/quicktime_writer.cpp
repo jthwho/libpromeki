@@ -551,10 +551,10 @@ Error QuickTimeWriter::writeMoov() {
         }
 
         // ---- udta (optional) ----
-        // Phase 4 doesn't emit udta — Phase 5 / MediaIOTask layer is responsible
-        // for surfacing container metadata via setContainerMetadata, but the
-        // serialization back into ©nam/©cmt/etc. is left for a follow-up.
-        (void)_writerMetadata;
+        // Container-level text metadata is emitted as classic
+        // ©-prefixed atoms inside a udta box.  appendUdta() is a
+        // no-op when no recognized fields are present.
+        appendUdta(w);
 
         w.endBox(moov);
 
@@ -562,6 +562,167 @@ Error QuickTimeWriter::writeMoov() {
         int64_t n = _file->write(bytes.data(), static_cast<int64_t>(bytes.size()));
         if(n != static_cast<int64_t>(bytes.size())) return Error::IOError;
         return Error::Ok;
+}
+
+// XML-escapes @p in for embedding as element content in an XMP packet.
+// Only the minimum set required by XML text content: &, <, >.
+static String xmlEscape(const String &in) {
+        String out;
+        const char *s = in.cstr();
+        size_t n = in.size();
+        for(size_t i = 0; i < n; ++i) {
+                char c = s[i];
+                switch(c) {
+                        case '&': out += "&amp;";  break;
+                        case '<': out += "&lt;";   break;
+                        case '>': out += "&gt;";   break;
+                        default:  out += c;        break;
+                }
+        }
+        return out;
+}
+
+// Builds a minimal XMP packet describing the supplied bext: fields.
+// Returns an empty String if no bext fields are present, signalling
+// that no XMP_ box should be emitted.  The packet uses the standard
+// Adobe BWF bext namespace (http://ns.adobe.com/bwf/bext/1.0/) so
+// third-party tools (Adobe Bridge, MXF readers) can parse it.
+static String buildBextXmpPacket(const Metadata &meta) {
+        // Collect the fields we care about.  OriginationDateTime is
+        // stored in libpromeki as a single ISO-8601 "YYYY-MM-DDTHH:MM:SS"
+        // string, but the bext XMP schema splits it into separate
+        // originationDate and originationTime elements — split here
+        // on the 'T' separator if present.
+        String originator;
+        String originatorRef;
+        String originationDate;
+        String originationTime;
+        String umid;
+        bool any = false;
+
+        if(meta.contains(Metadata::Originator)) {
+                originator = meta.get(Metadata::Originator).get<String>();
+                if(!originator.isEmpty()) any = true;
+        }
+        if(meta.contains(Metadata::OriginatorReference)) {
+                originatorRef = meta.get(Metadata::OriginatorReference).get<String>();
+                if(!originatorRef.isEmpty()) any = true;
+        }
+        if(meta.contains(Metadata::OriginationDateTime)) {
+                String dt = meta.get(Metadata::OriginationDateTime).get<String>();
+                size_t tpos = dt.find('T');
+                if(tpos != String::npos) {
+                        originationDate = dt.mid(0, tpos);
+                        originationTime = dt.mid(tpos + 1);
+                } else {
+                        // Fallback: treat the whole thing as a date.
+                        originationDate = dt;
+                }
+                if(!originationDate.isEmpty() || !originationTime.isEmpty()) any = true;
+        }
+        if(meta.contains(Metadata::UMID)) {
+                umid = meta.get(Metadata::UMID).get<String>();
+                if(!umid.isEmpty()) any = true;
+        }
+
+        if(!any) return String();
+
+        // Standard XMP header — the magic GUID is part of the Adobe
+        // XMP spec for locating the packet inside a host file.
+        String out;
+        out += "<?xpacket begin=\"\xEF\xBB\xBF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n";
+        out += "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\" x:xmptk=\"libpromeki\">\n";
+        out += " <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n";
+        out += "  <rdf:Description rdf:about=\"\"\n";
+        out += "   xmlns:bext=\"http://ns.adobe.com/bwf/bext/1.0/\">\n";
+        if(!originator.isEmpty()) {
+                out += "   <bext:originator>";
+                out += xmlEscape(originator);
+                out += "</bext:originator>\n";
+        }
+        if(!originatorRef.isEmpty()) {
+                out += "   <bext:originatorReference>";
+                out += xmlEscape(originatorRef);
+                out += "</bext:originatorReference>\n";
+        }
+        if(!originationDate.isEmpty()) {
+                out += "   <bext:originationDate>";
+                out += xmlEscape(originationDate);
+                out += "</bext:originationDate>\n";
+        }
+        if(!originationTime.isEmpty()) {
+                out += "   <bext:originationTime>";
+                out += xmlEscape(originationTime);
+                out += "</bext:originationTime>\n";
+        }
+        if(!umid.isEmpty()) {
+                out += "   <bext:umid>";
+                out += xmlEscape(umid);
+                out += "</bext:umid>\n";
+        }
+        out += "  </rdf:Description>\n";
+        out += " </rdf:RDF>\n";
+        out += "</x:xmpmeta>\n";
+        out += "<?xpacket end=\"w\"?>";
+        return out;
+}
+
+void QuickTimeWriter::appendUdta(AtomWriter &w) {
+        // Maps a Metadata::ID to a classic ©-prefixed four-byte atom
+        // type.  The first byte of each atom type is 0xA9 ('©');
+        // `c1`/`c2`/`c3` supply the three ASCII bytes that follow.
+        struct AtomEntry { char c1; char c2; char c3; String text; };
+        List<AtomEntry> entries;
+
+        auto addIfPresent = [&](Metadata::ID id, char c1, char c2, char c3) {
+                if(!_writerMetadata.contains(id)) return;
+                String text = _writerMetadata.get(id).get<String>();
+                if(text.isEmpty()) return;
+                entries.pushToBack(AtomEntry{c1, c2, c3, std::move(text)});
+        };
+
+        // Standard iTunes / QuickTime ©-atoms.  Software is mapped to
+        // ©too (encoder tool) to match the reader's parsing at
+        // quicktime_reader.cpp:parseUdta.
+        addIfPresent(Metadata::Title,       'n', 'a', 'm');
+        addIfPresent(Metadata::Comment,     'c', 'm', 't');
+        addIfPresent(Metadata::Date,        'd', 'a', 'y');
+        addIfPresent(Metadata::Artist,      'A', 'R', 'T');
+        addIfPresent(Metadata::Copyright,   'c', 'p', 'y');
+        addIfPresent(Metadata::Software,    't', 'o', 'o');
+        addIfPresent(Metadata::Album,       'a', 'l', 'b');
+        addIfPresent(Metadata::Genre,       'g', 'e', 'n');
+        addIfPresent(Metadata::Description, 'd', 'e', 's');
+
+        // BWF-ish libpromeki metadata (Originator / OriginatorReference
+        // / OriginationDateTime / UMID) is emitted as an XMP packet
+        // using the Adobe bext namespace.  XMP is the standard way to
+        // carry these fields inside a QuickTime container and is
+        // preserved by common media tools.
+        String xmpPacket = buildBextXmpPacket(_writerMetadata);
+
+        if(entries.isEmpty() && xmpPacket.isEmpty()) return;
+
+        auto udta = w.beginBox(kUdta);
+        for(size_t i = 0; i < entries.size(); ++i) {
+                const AtomEntry &e = entries[i];
+                FourCC atomType(static_cast<char>(0xA9), e.c1, e.c2, e.c3);
+                auto atom = w.beginBox(atomType);
+                size_t len = e.text.size();
+                if(len > 0xFFFF) len = 0xFFFF;  // Pascal-style 16-bit length cap.
+                w.writeU16(static_cast<uint16_t>(len));
+                w.writeU16(0);   // language code — 0 = unspecified.
+                if(len > 0) w.writeBytes(e.text.cstr(), len);
+                w.endBox(atom);
+        }
+        if(!xmpPacket.isEmpty()) {
+                // XMP_ box: raw XMP packet bytes, no length prefix or
+                // language code.  Four-byte type is 'X','M','P','_'.
+                auto xmp = w.beginBox(FourCC('X', 'M', 'P', '_'));
+                w.writeBytes(xmpPacket.cstr(), xmpPacket.size());
+                w.endBox(xmp);
+        }
+        w.endBox(udta);
 }
 
 void QuickTimeWriter::appendTrak(AtomWriter &w, const QuickTimeWriterTrack &t,
@@ -964,6 +1125,12 @@ Error QuickTimeWriter::writeInitMoov() {
         // giving default sample values that trun can override.
         appendMvex(w);
 
+        // udta: container-level text metadata.  Must come after mvex
+        // inside moov in the init segment so the moov layout stays
+        // conventional.  appendUdta() is a no-op when no recognized
+        // fields are present.
+        appendUdta(w);
+
         w.endBox(moov);
 
         const List<uint8_t> &bytes = w.data();
@@ -1192,6 +1359,25 @@ Error QuickTimeWriter::writeFragment() {
         AtomWriter moofWriter;
         auto moofBox = moofWriter.beginBox(kMoof);
 
+        // mfhd: the fragment's sequence number.  Per ISO/IEC 14496-12
+        // §8.8.5 the sequence number of the first fragment shall be 1
+        // and subsequent fragments shall increment by 1.  We start at
+        // 1 in the constructor and ++ after each successful writeFragment().
+        //
+        // Note on VLC's "Fragment sequence discontinuity detected 1 != 0"
+        // info message: VLC's mp4 demuxer (modules/demux/mp4/mp4.c, the
+        // FragGetMoofSequenceNumber path) initializes its internal
+        // `i_lastseqnumber` sentinel to UINT32_MAX and checks each
+        // fragment with
+        //     b_discontinuity = (i_sequence_number != i_lastseqnumber + 1);
+        // On the first fragment UINT32_MAX + 1 wraps to 0, so VLC expects
+        // sequence 0 and prints `1 != 0` at msg_Info severity.  This is
+        // a VLC-side off-by-one — every spec-compliant fragmented MP4
+        // (ffmpeg, GPAC, Bento4) trips the same message on its first
+        // fragment.  Playback is unaffected (the "discontinuity" flag
+        // just triggers a benign time rebase at t=0).  We stay
+        // spec-compliant and do NOT start from 0 to paper over it.
+        // Verified against VLC master mp4.c:5655-5660 on 2026-04-08.
         auto mfhd = moofWriter.beginFullBox(kMfhd, 0, 0);
         moofWriter.writeU32(_fragmentSequence);
         moofWriter.endBox(mfhd);

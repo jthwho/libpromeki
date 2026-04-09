@@ -256,6 +256,11 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
                            _filename.cstr(), err.name().cstr());
                 return err;
         }
+        // Hand the container metadata (which MediaIO has already
+        // stamped with the libpromeki write defaults) to the
+        // QuickTime engine so it can be surfaced in the output
+        // file's metadata box once udta serialization lands.
+        _qt.setContainerMetadata(cmd.pendingMetadata);
         _writerTracksRegistered = false;
         _writerFrameCount       = 0;
         _writerVideoTrackId     = 0;
@@ -295,6 +300,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         cmd.mediaDesc  = cmd.pendingMediaDesc;
+        cmd.metadata   = cmd.pendingMetadata;
         cmd.frameRate  = _frameRate;
         cmd.frameCount = 0;
         cmd.canSeek    = false;

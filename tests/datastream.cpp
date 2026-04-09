@@ -16,6 +16,7 @@
 #include <promeki/string.h>
 #include <promeki/variant.h>
 #include <promeki/uuid.h>
+#include <promeki/umid.h>
 #include <promeki/timecode.h>
 #include <promeki/datetime.h>
 #include <promeki/timestamp.h>
@@ -862,6 +863,52 @@ TEST_CASE("DataStream: round-trip Variant UUID") {
         }
 }
 
+TEST_CASE("DataStream: round-trip Variant UMID (Extended)") {
+        WriterFixture f;
+        UMID id = UMID::generate(UMID::Extended);
+        Variant vId(id);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << vId;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant val;
+                rs >> val;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(val.type() == Variant::TypeUMID);
+                UMID out = val.get<UMID>();
+                CHECK(out.isValid());
+                CHECK(out.length() == UMID::Extended);
+                CHECK(out == id);
+        }
+}
+
+TEST_CASE("DataStream: round-trip Variant UMID (Basic)") {
+        WriterFixture f;
+        UMID id = UMID::generate(UMID::Basic);
+        Variant vId(id);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << vId;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                Variant val;
+                rs >> val;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(val.type() == Variant::TypeUMID);
+                UMID out = val.get<UMID>();
+                CHECK(out.isValid());
+                CHECK(out.length() == UMID::Basic);
+                CHECK(out == id);
+        }
+}
+
 // ============================================================================
 // Double byte order round-trip
 // ============================================================================
@@ -1298,6 +1345,45 @@ TEST_CASE("DataStream: direct round-trip UUID") {
                 UUID out;
                 rs >> out;
                 CHECK(rs.status() == DataStream::Ok);
+                CHECK(out == id);
+        }
+}
+
+TEST_CASE("DataStream: direct round-trip UMID") {
+        WriterFixture f;
+        UMID id = UMID::generate(UMID::Extended);
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << id;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                UMID out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK(out.isValid());
+                CHECK(out == id);
+        }
+}
+
+TEST_CASE("DataStream: default-constructed UMID round-trip") {
+        WriterFixture f;
+        UMID id;  // invalid
+        CHECK_FALSE(id.isValid());
+        {
+                DataStream ws = DataStream::createWriter(&f.dev);
+                ws << id;
+                CHECK(ws.status() == DataStream::Ok);
+        }
+        f.dev.seek(0);
+        {
+                DataStream rs = DataStream::createReader(&f.dev);
+                UMID out;
+                rs >> out;
+                CHECK(rs.status() == DataStream::Ok);
+                CHECK_FALSE(out.isValid());
                 CHECK(out == id);
         }
 }

@@ -360,6 +360,12 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 }
                 cmd.metadata = cmd.pendingMetadata;
                 cmd.metadata.set(Metadata::FrameRateSource, frSource);
+                // Stash the container metadata so writeSingle() can
+                // merge it (MediaIO write defaults, caller-supplied
+                // tags, etc.) into each saved frame — each single-file
+                // write produces a standalone file and needs its own
+                // container metadata in the frame.
+                _writeContainerMetadata = cmd.metadata;
                 _writeCount = 0;
                 cmd.frameCount = 0;
         }
@@ -576,6 +582,11 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 meta.merge(_seqMetadata);
                 meta.set(Metadata::FrameRateSource, frSource);
                 cmd.metadata = meta;
+                // Stash the container metadata so writeSequence() can
+                // apply it to every image in the sequence — each file
+                // is a standalone image and needs its own copy of
+                // Date, Software, Originator, UMID, etc.
+                _writeContainerMetadata = meta;
                 cmd.frameCount = 0;
         }
 
@@ -596,6 +607,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         _readCount = 0;
         _writeCount = 0;
         _loaded = false;
+        _writeContainerMetadata = Metadata();
 
         _sequenceMode = false;
         _seqName = NumName();
@@ -688,9 +700,16 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_ImageFile::writeSingle(MediaIOCommandWrite &cmd) {
+        // Copy the frame so we can merge container metadata into its
+        // Metadata without disturbing the caller's original.
+        Frame frame = *cmd.frame;
+        Metadata merged = _writeContainerMetadata;
+        merged.merge(frame.metadata());   // Frame-level values win.
+        frame.metadata() = std::move(merged);
+
         ImageFile imgFile(_imageFileID);
         imgFile.setFilename(_filename);
-        imgFile.setFrame(*cmd.frame);
+        imgFile.setFrame(frame);
         Error err = imgFile.save();
         if(err.isError()) {
                 promekiErr("MediaIOTask_ImageFile: save '%s' failed: %s",
@@ -707,9 +726,19 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
         int64_t frameNum = _seqHead + _writeCount;
         String fn = (_seqDir / _seqName.name(static_cast<int>(frameNum))).toString();
 
+        // Copy the frame so we can merge container metadata into its
+        // Metadata without disturbing the caller's original.  Each
+        // image in a sequence is a standalone file and needs its own
+        // copy of the container-level defaults (Date, Software,
+        // Originator, UMID, ...).
+        Frame frame = *cmd.frame;
+        Metadata merged = _writeContainerMetadata;
+        merged.merge(frame.metadata());   // Frame-level values win.
+        frame.metadata() = std::move(merged);
+
         ImageFile imgFile(_imageFileID);
         imgFile.setFilename(fn);
-        imgFile.setFrame(*cmd.frame);
+        imgFile.setFrame(frame);
         Error err = imgFile.save();
         if(err.isError()) {
                 promekiErr("MediaIOTask_ImageFile: save sequence frame '%s' failed: %s",

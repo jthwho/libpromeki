@@ -218,7 +218,7 @@ All `@defgroup` definitions exist in `docs/modules.dox`: containers, concurrency
 
 ## Existing FIXMEs
 
-10 tracked items in [fixme.md](fixme.md):
+11 tracked items in [fixme.md](fixme.md):
 
 | File | Issue | Natural Phase |
 |---|---|---|
@@ -232,3 +232,4 @@ All `@defgroup` definitions exist in `docs/modules.dox`: containers, concurrency
 | `src/proav/quicktime_reader.cpp` | Fragmented reader ignores `trex` defaults fallback | Phase 4B |
 | `src/proav/mediaiotask_quicktime.cpp` | Compressed audio pull-rate drifts (one packet/video frame) | Phase 4B |
 | `src/proav/quicktime_writer.cpp` | Compressed audio write path missing (remux blocked) | Phase 4B |
+| `src/proav/quicktime_reader.cpp` | Minimal XMP parser only matches `bext:` prefix (blocked on core XML support) | Phase 4B / Core |

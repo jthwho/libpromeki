@@ -162,6 +162,18 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
                         return Error::NotSupported;
                 }
 
+                // Fold the MediaIO container metadata (which MediaIO
+                // has already stamped with the libpromeki write
+                // defaults) into the AudioDesc's metadata so the
+                // libsndfile backend can emit it as BWF/INFO chunks.
+                // Any entries already present on the AudioDesc win
+                // over the container-supplied values.
+                if(!cmd.pendingMetadata.isEmpty()) {
+                        Metadata merged = cmd.pendingMetadata;
+                        merged.merge(_audioDesc.metadata());
+                        _audioDesc.metadata() = std::move(merged);
+                }
+
                 _audioFile.setDesc(_audioDesc);
                 Error err = _audioFile.open();
                 if(err.isError()) {
@@ -184,6 +196,13 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
         cmd.mediaDesc = mediaDesc;
         cmd.audioDesc = _audioDesc;
         cmd.frameRate = _frameRate;
+        if(cmd.mode == MediaIO::Writer) {
+                // Surface the merged AudioDesc metadata (caller values
+                // plus MediaIO write defaults) as the container
+                // metadata so MediaIO can cache it and clients can
+                // read it back via MediaIO::metadata().
+                cmd.metadata = _audioDesc.metadata();
+        }
         return Error::Ok;
 }
 

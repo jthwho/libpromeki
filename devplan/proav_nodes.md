@@ -232,6 +232,20 @@ Read/write MediaIOTask for QuickTime (.mov), MP4, and ISO-BMFF containers. Built
 - Fragmented layout: writes ftyp + init-moov (minimal moov with mvex/trex) at open; each `flush()` emits a moof+mdat pair; `finalize()` flushes any residual fragment and closes the file. Each fragment is self-describing: default_base_is_moof flag in tfhd so sample offsets are relative to the moof atom, not the file start.
 - Audio compression in trun: for fragmented audio (PCM), emits one trun entry per chunk rather than per sample (audio-trun compression). For classic PCM audio, emits one stsc/stco/stsz entry per chunk.
 
+**Container metadata (udta) design — COMPLETE (2026-04-08):**
+
+`QuickTime::setContainerMetadata(Metadata)` stores the container metadata; `QuickTimeWriter::appendUdta()` serializes it into a `udta` box inside `moov` (classic layout) or the init-moov (fragmented layout). The box is skipped entirely when nothing is set. Two parallel encodings live side-by-side:
+
+- **Standard text fields → classic QuickTime ©-atoms:** Title→©nam, Comment→©cmt, Date→©day, Artist→©ART, Copyright→©cpy, Software→©too, Album→©alb, Genre→©gen, Description→©des. Payload format: `[u16 textLen][u16 language=0][text bytes]`.
+- **BWF-ish fields → XMP packet in an `XMP_` box:** Originator, OriginatorReference, OriginationDateTime, UMID are emitted under the Adobe BWF bext namespace (`http://ns.adobe.com/bwf/bext/1.0/`). `OriginationDateTime` is split into `bext:originationDate` + `bext:originationTime` at the ISO-8601 `T` separator. UMID is stored as hex text via `bext:umid`. The XMP packet uses the standard `xpacket` wrapper with the Adobe magic id.
+- **Reader side:** `QuickTimeReader::parseUdta` handles both encodings. ©-atoms map back to their Metadata IDs as before. An `XMP_` box is extracted via `extractBextElement(xmp, "umid")` etc. — a minimal substring-based XMP reader that finds `<bext:localName>...</bext:localName>`, handles XML entities (`&amp;`/`&lt;`/`&gt;`/`&quot;`/`&apos;`) and tolerates attributes + whitespace on the opening tag. UMID is recomposed as a typed `UMID` via `UMID::fromString`; OriginationDateTime is recombined from the date + time parts.
+
+**Supporting classes added this round:**
+- `promeki::UMID` — SMPTE 330M Unique Material Identifier, Basic (32B) and Extended (64B) forms; `UMID::generate(Length = Extended)` populates a random material number, Extended fills the Source Pack time/date from `gmtime_r` and sets the Organization field to `"MEKI"` as a persistent libpromeki signature embedded in the UMID bytes themselves. Registered as `Variant::TypeUMID` for round-tripping through Metadata.
+- `Metadata::applyMediaIOWriteDefaults()` — called by `MediaIO::open(Writer|ReadWrite)` to populate standard write-time defaults via `setIfMissing`: `Date` (UTC YYYY-MM-DD), `OriginationDateTime` (UTC ISO-8601), `Software` (Application::appName if set else `"libpromeki (https://howardlogic.com)"`), `Originator` (`"libpromeki howardlogic.com"`, 26 chars, fits BWF 32-char cap), `OriginatorReference` (fresh UUIDv7 string), `UMID` (fresh Extended). Caller-set values always win.
+- `VariantDatabase::setIfMissing(ID, Variant)` — generic primitive used by `applyMediaIOWriteDefaults`.
+- Writer propagation: `MediaIOTask_ImageFile` stashes container metadata in `_writeContainerMetadata` and merges it into each frame (image sequences are standalone files); `MediaIOTask_AudioFile` merges `cmd.pendingMetadata` into `_audioDesc.metadata()` before `setDesc` so the libsndfile backend emits Software/Date/etc. into WAV/BWF; `MediaIOTask_QuickTime` forwards via `_qt.setContainerMetadata()`.
+
 **Known issues / FIXMEs (all tracked in fixme.md):**
 - Little-endian float audio storage is lossy (promoted to s16 at write time)
 - `raw ` 24-bit BGR/RGB byte-order player disagreement (mplayer vs VLC/ffmpeg)
@@ -240,6 +254,7 @@ Read/write MediaIOTask for QuickTime (.mov), MP4, and ISO-BMFF containers. Built
 - Fragmented reader ignores `trex` defaults fallback (only reads `tfhd` overrides)
 - Compressed audio pull-rate drifts (one packet per video frame, not dts-aligned)
 - Compressed audio write path is missing (remux-style workflows blocked)
+- **XMP parser only matches the `bext:` prefix** — a third-party XMP packet that binds the bext namespace URI under a different prefix will not round-trip. Blocked on adding proper XML support to the core library.
 
 **Verified end-to-end:** `mediaplay --burn --size 1920x1080 --pattern ColorBars --audio-mode AvSync --duration 5 --output /tmp/test.mov` produces a fragmented MP4 that plays in VLC and ffprobes cleanly with video (`rawvideo`) and audio (`pcm_s16le`).
 

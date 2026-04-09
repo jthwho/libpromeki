@@ -214,6 +214,39 @@ class Metadata : public VariantDatabase<MetadataTag> {
                  * @return true if equal.
                  */
                 bool operator==(const Metadata &other) const;
+
+                /**
+                 * @brief Fills in standard defaults used for MediaIO writes.
+                 *
+                 * Each of the fields below is populated only if the
+                 * corresponding key is not already present (via
+                 * @ref VariantDatabase::setIfMissing), so caller-supplied
+                 * values are always preserved.  This helper is intended to
+                 * be called by @ref MediaIO on the container metadata just
+                 * before dispatching a writer open; it is @em not called
+                 * automatically by any other part of the Metadata class.
+                 *
+                 * Defaults populated:
+                 *
+                 *  - @ref Date — current wall-clock UTC date, formatted as
+                 *    @c "YYYY-MM-DD".
+                 *  - @ref OriginationDateTime — current wall-clock UTC
+                 *    timestamp, formatted as @c "YYYY-MM-DDTHH:MM:SS"
+                 *    (BWF-friendly ISO 8601).
+                 *  - @ref Software — the Application name if
+                 *    @ref Application::appName is non-empty, otherwise
+                 *    @c "libpromeki (https://howardlogic.com)".
+                 *  - @ref Originator — always
+                 *    @c "libpromeki howardlogic.com".  BWF caps this
+                 *    field at 32 characters; this value fits and acts
+                 *    as a persistent libpromeki signature.
+                 *  - @ref OriginatorReference — a fresh UUID v7
+                 *    (time-sortable) as a string.
+                 *  - @ref UMID — a fresh Extended SMPTE 330M UMID with
+                 *    a random material number and a @c "MEKI"
+                 *    organization tag in the source pack.
+                 */
+                void applyMediaIOWriteDefaults();
 };
 
 PROMEKI_NAMESPACE_END

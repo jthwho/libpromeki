@@ -149,6 +149,7 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 int             _imageFileID = ImageFile::Invalid;
                 MediaIOMode     _mode = MediaIO_NotOpen;
                 bool            _sequenceMode = false;
+                Metadata        _writeContainerMetadata; ///< @brief Container metadata merged into each written frame (writer only).
 
                 // Single-file state
                 Frame::Ptr      _frame;

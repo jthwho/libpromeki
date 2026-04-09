@@ -328,6 +328,15 @@ void DataStream::writeUUIDData(const UUID &val) {
         writeBytes(val.raw(), 16);
 }
 
+void DataStream::writeUMIDData(const UMID &val) {
+        // Format: uint8 byte length (32 for Basic, 64 for Extended, 0
+        // for Invalid), then `length` raw UMID bytes.  Invalid UMIDs
+        // serialize as a bare zero byte with no payload.
+        const size_t n = val.byteSize();
+        writeUInt8(static_cast<uint8_t>(n));
+        if(n > 0) writeBytes(val.raw(), n);
+}
+
 void DataStream::writeDateTimeData(const DateTime &val) {
         int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
                 val.value().time_since_epoch()).count();
@@ -467,6 +476,21 @@ UUID DataStream::readUUIDData() {
         UUID::DataFormat raw;
         if(!readBytes(raw.data(), 16)) return UUID();
         return UUID(raw);
+}
+
+UMID DataStream::readUMIDData() {
+        uint8_t n = readUInt8();
+        if(_status != Ok) return UMID();
+        if(n == 0) return UMID();
+        if(n != UMID::BasicSize && n != UMID::ExtendedSize) {
+                setError(ReadCorruptData,
+                        String::sprintf("UMID payload length %u is neither 32 nor 64",
+                                static_cast<unsigned>(n)));
+                return UMID();
+        }
+        uint8_t buf[UMID::ExtendedSize];
+        if(!readBytes(buf, n)) return UMID();
+        return UMID::fromBytes(buf, n);
 }
 
 DateTime DataStream::readDateTimeData() {
@@ -683,6 +707,12 @@ DataStream &DataStream::operator<<(const UUID &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const UMID &val) {
+        writeTag(TypeUMID);
+        writeUMIDData(val);
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const DateTime &val) {
         writeTag(TypeDateTime);
         writeDateTimeData(val);
@@ -774,6 +804,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypeTimeStamp:  *this << val.get<TimeStamp>(); break;
                 case Variant::TypeSize2D:     *this << val.get<Size2Du32>(); break;
                 case Variant::TypeUUID:       *this << val.get<UUID>(); break;
+                case Variant::TypeUMID:       *this << val.get<UMID>(); break;
                 case Variant::TypeTimecode:   *this << val.get<Timecode>(); break;
                 case Variant::TypeRational:   *this << val.get<Rational<int>>(); break;
                 case Variant::TypeFrameRate:  *this << val.get<FrameRate>(); break;
@@ -914,6 +945,12 @@ DataStream &DataStream::operator>>(UUID &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(UMID &val) {
+        if(!readTag(TypeUMID)) { val = UMID(); return *this; }
+        val = readUMIDData();
+        return *this;
+}
+
 DataStream &DataStream::operator>>(DateTime &val) {
         if(!readTag(TypeDateTime)) { val = DateTime(); return *this; }
         val = readDateTimeData();
@@ -1000,6 +1037,7 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypeDouble:      val = readDouble(); break;
                 case TypeString:      val = readStringData(); break;
                 case TypeUUID:        val = readUUIDData(); break;
+                case TypeUMID:        val = readUMIDData(); break;
                 case TypeDateTime:    val = readDateTimeData(); break;
                 case TypeTimeStamp:   val = readTimeStampData(); break;
                 case TypeSize2D: {

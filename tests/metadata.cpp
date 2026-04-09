@@ -9,6 +9,11 @@
 #include <doctest/doctest.h>
 #include <promeki/metadata.h>
 #include <promeki/stringlist.h>
+#include <promeki/application.h>
+#include <promeki/umid.h>
+#include <promeki/datastream.h>
+#include <promeki/bufferiodevice.h>
+#include <promeki/buffer.h>
 
 using namespace promeki;
 
@@ -212,4 +217,147 @@ TEST_CASE("Metadata_Dump") {
 
     StringList dumped = m.dump();
     CHECK(dumped.size() == 1);
+}
+
+// ============================================================================
+// applyMediaIOWriteDefaults
+// ============================================================================
+
+TEST_CASE("Metadata_WriteDefaults_PopulatesAllFields") {
+    Application::setAppName(String());  // no application name
+    Metadata m;
+    m.applyMediaIOWriteDefaults();
+
+    CHECK(m.contains(Metadata::Date));
+    CHECK(m.contains(Metadata::OriginationDateTime));
+    CHECK(m.contains(Metadata::Software));
+    CHECK(m.contains(Metadata::Originator));
+    CHECK(m.contains(Metadata::OriginatorReference));
+    CHECK(m.contains(Metadata::UMID));
+
+    // Software falls back to the libpromeki tag when appName is empty.
+    String sw = m.get(Metadata::Software).get<String>();
+    CHECK(sw == "libpromeki (https://howardlogic.com)");
+
+    // Originator is always the libpromeki signature (fits in BWF's 32-char limit).
+    String orig = m.get(Metadata::Originator).get<String>();
+    CHECK(orig == "libpromeki howardlogic.com");
+    CHECK(orig.size() <= 32);
+
+    // UMID is stored as a fresh Extended UMID.
+    UMID umid = m.get(Metadata::UMID).get<UMID>();
+    CHECK(umid.isValid());
+    CHECK(umid.length() == UMID::Extended);
+}
+
+TEST_CASE("Metadata_WriteDefaults_UsesApplicationAppName") {
+    Application::setAppName(String("myapp"));
+    Metadata m;
+    m.applyMediaIOWriteDefaults();
+    CHECK(m.get(Metadata::Software).get<String>() == "myapp");
+    Application::setAppName(String());  // restore for other tests
+}
+
+TEST_CASE("Metadata_WriteDefaults_PreservesExistingValues") {
+    Metadata m;
+    m.set(Metadata::Software, String("CallerSetSoftware"));
+    m.set(Metadata::Date, String("1999-01-01"));
+    m.set(Metadata::Originator, String("CallerSetOriginator"));
+    m.applyMediaIOWriteDefaults();
+
+    CHECK(m.get(Metadata::Software).get<String>() == "CallerSetSoftware");
+    CHECK(m.get(Metadata::Date).get<String>() == "1999-01-01");
+    CHECK(m.get(Metadata::Originator).get<String>() == "CallerSetOriginator");
+    // Missing fields are still populated.
+    CHECK(m.contains(Metadata::OriginationDateTime));
+    CHECK(m.contains(Metadata::UMID));
+}
+
+TEST_CASE("Metadata_WriteDefaults_FreshUMIDEachCall") {
+    Metadata a;
+    Metadata b;
+    a.applyMediaIOWriteDefaults();
+    b.applyMediaIOWriteDefaults();
+    UMID ua = a.get(Metadata::UMID).get<UMID>();
+    UMID ub = b.get(Metadata::UMID).get<UMID>();
+    CHECK(ua.isValid());
+    CHECK(ub.isValid());
+    CHECK(ua != ub);
+}
+
+TEST_CASE("Metadata_WriteDefaults_OriginationDateTimeIsIso8601") {
+    Metadata m;
+    m.applyMediaIOWriteDefaults();
+    String s = m.get(Metadata::OriginationDateTime).get<String>();
+    // Expect "YYYY-MM-DDTHH:MM:SS" — 19 characters with a 'T' at offset 10.
+    CHECK(s.size() == 19);
+    CHECK(s[4]  == '-');
+    CHECK(s[7]  == '-');
+    CHECK(s[10] == 'T');
+    CHECK(s[13] == ':');
+    CHECK(s[16] == ':');
+}
+
+// ============================================================================
+// DataStream round-trip
+// ============================================================================
+// A Metadata carrying a UMID Variant is the common case after
+// MediaIO::open() has applied write defaults.  VariantDatabase
+// serialization goes through DataStream::operator<<(const Variant&),
+// which must recognize TypeUMID.  Without the dedicated tag this
+// test would fail with a "Variant::write: unknown type" error.
+
+TEST_CASE("Metadata_Json_UMIDRoundTripsViaString") {
+    // JSON can't distinguish a String from a UMID, so UMID → JSON → UMID
+    // goes through its hex string representation.  The Variant's
+    // String↔UMID conversion lets the caller recover a typed UMID via
+    // `metadata.get(Metadata::UMID).get<UMID>()`.
+    Metadata m;
+    UMID inUmid = UMID::generate(UMID::Extended);
+    m.set(Metadata::UMID, inUmid);
+    m.set(Metadata::Title, String("json umid test"));
+
+    JsonObject j = m.toJson();
+    Error err;
+    Metadata m2 = Metadata::fromJson(j, &err);
+    CHECK(err.isOk());
+    REQUIRE(m2.contains(Metadata::UMID));
+
+    UMID outUmid = m2.get(Metadata::UMID).get<UMID>();
+    CHECK(outUmid.isValid());
+    CHECK(outUmid == inUmid);
+}
+
+TEST_CASE("Metadata_DataStream_RoundTripWithUMID") {
+    Metadata m;
+    m.applyMediaIOWriteDefaults();
+    m.set(Metadata::Title, String("DataStream test"));
+
+    Buffer buf(8192);
+    BufferIODevice dev(&buf);
+    dev.open(IODevice::ReadWrite);
+
+    {
+        DataStream writer = DataStream::createWriter(&dev);
+        writer << m;
+        CHECK(writer.status() == DataStream::Ok);
+    }
+
+    dev.seek(0);
+    Metadata m2;
+    {
+        DataStream reader = DataStream::createReader(&dev);
+        reader >> m2;
+        CHECK(reader.status() == DataStream::Ok);
+    }
+
+    CHECK(m2 == m);
+    CHECK(m2.contains(Metadata::UMID));
+    UMID original = m.get(Metadata::UMID).get<UMID>();
+    UMID roundTripped = m2.get(Metadata::UMID).get<UMID>();
+    CHECK(original == roundTripped);
+    CHECK(roundTripped.isValid());
+    CHECK(roundTripped.length() == UMID::Extended);
+    CHECK(m2.get(Metadata::Title).get<String>() == "DataStream test");
+    CHECK(m2.get(Metadata::Originator).get<String>() == "libpromeki howardlogic.com");
 }

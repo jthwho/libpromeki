@@ -121,6 +121,19 @@ class QuickTimeWriter : public QuickTime::Impl {
                                  uint32_t movieTimescale);
                 Error patchMdatSize();
 
+                /**
+                 * @brief Emits a @c udta box containing classic
+                 *        ©-prefixed text atoms for the container
+                 *        metadata set via @ref setContainerMetadata.
+                 *
+                 * The box is appended to @p mw at the current write
+                 * position; it is intended to be called from inside an
+                 * already-open @c moov box.  No @c udta box is written
+                 * when the container metadata has no recognized text
+                 * fields.
+                 */
+                void  appendUdta(quicktime_atom::AtomWriter &mw);
+
                 // ---- Fragmented layout helpers ----
 
                 /** @brief Ensures the init moov has been written.

@@ -299,6 +299,19 @@ Error MediaIO::open(Mode mode) {
         if(mode == NotOpen) return Error::InvalidArgument;
         if(_task == nullptr) return Error::Invalid;
 
+        // Fill in the standard libpromeki write defaults (Date,
+        // OriginationDateTime, Software, Originator, OriginatorReference,
+        // UMID) when opening a writer.  Values already set by the caller
+        // are preserved because applyMediaIOWriteDefaults() uses
+        // setIfMissing internally.  The defaults are merged into both
+        // the free-standing pending metadata and the media descriptor's
+        // own metadata, so writer backends see the same information
+        // regardless of which path they read from.
+        if(mode == Writer || mode == ReadWrite) {
+                _pendingMetadata.applyMediaIOWriteDefaults();
+                _pendingMediaDesc.metadata().applyMediaIOWriteDefaults();
+        }
+
         auto *cmdOpen = new MediaIOCommandOpen();
         cmdOpen->mode = mode;
         cmdOpen->config = _config;

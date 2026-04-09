@@ -12,6 +12,7 @@
 #include <promeki/iodevice.h>
 #include <promeki/logger.h>
 #include <promeki/rational.h>
+#include <promeki/umid.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -1437,6 +1438,61 @@ Error QuickTimeReader::parseTrun(int64_t trunPayloadOffset, int64_t trunPayloadE
 }
 
 // ---------------------------------------------------------------------------
+// XMP packet parsing — minimal extractor for Adobe bext: namespace fields
+// ---------------------------------------------------------------------------
+
+// Unescapes the XML entities we emit ourselves in the writer — &amp;,
+// &lt;, &gt; — plus &quot; and &apos; as a courtesy for third-party
+// XMP that might use them.  Numeric character references (&#x...)
+// are not expanded; none of the bext fields we care about use them
+// in practice.
+static String unescapeXmlEntities(const String &in) {
+        return in
+                .replace(String("&lt;"),   String("<"))
+                .replace(String("&gt;"),   String(">"))
+                .replace(String("&quot;"), String("\""))
+                .replace(String("&apos;"), String("'"))
+                .replace(String("&amp;"),  String("&"));  // must be last
+}
+
+// Extracts the text content of the first <bext:localName ...> element
+// found in @p xmp.  Returns an empty String if the element is absent,
+// self-closing, or malformed.  This is deliberately minimal — it only
+// needs to handle XMP packets that libpromeki itself writes, plus the
+// conventional form used by other media tools.  Attributes and
+// whitespace on the opening tag are tolerated.
+static String extractBextElement(const String &xmp, const char *localName) {
+        String openPrefix = String("<bext:") + localName;
+        size_t start = xmp.find(openPrefix);
+        if(start == String::npos) return String();
+
+        // The character immediately after the local name must be one of
+        // `>`, `/`, or whitespace — otherwise we matched a prefix of
+        // something longer (e.g. <bext:umidX>).
+        size_t afterName = start + openPrefix.size();
+        if(afterName >= xmp.size()) return String();
+        char next = static_cast<char>(xmp.charAt(afterName).codepoint());
+        if(next != '>' && next != '/' && next != ' ' && next != '\t' &&
+           next != '\r' && next != '\n') {
+                return String();
+        }
+
+        // Walk forward to the end of the opening tag.
+        size_t openEnd = xmp.find('>', afterName);
+        if(openEnd == String::npos) return String();
+        // Self-closing tag? Content is empty.
+        if(openEnd > 0 && xmp.charAt(openEnd - 1) == '/') return String();
+
+        size_t contentStart = openEnd + 1;
+        String closeMarker = String("</bext:") + localName + ">";
+        size_t closeStart = xmp.find(closeMarker, contentStart);
+        if(closeStart == String::npos) return String();
+
+        String raw = xmp.mid(contentStart, closeStart - contentStart).trim();
+        return unescapeXmlEntities(raw);
+}
+
+// ---------------------------------------------------------------------------
 // udta: container-level metadata (simple subset)
 // ---------------------------------------------------------------------------
 
@@ -1491,6 +1547,49 @@ Error QuickTimeReader::parseUdta(int64_t payloadOffset, int64_t payloadEnd) {
                                         _containerMetadata.set(Metadata::Genre, value);
                                 } else if(c1 == 'd' && c2 == 'e' && c3 == 's') {
                                         _containerMetadata.set(Metadata::Description, value);
+                                }
+                        }
+                } else if(child.type == FourCC('X', 'M', 'P', '_')) {
+                        // Adobe XMP packet — parse for BWF bext: fields.
+                        // Refuse absurdly large packets to avoid wild allocations.
+                        constexpr int64_t kMaxXmpSize = 1024 * 1024;  // 1 MiB
+                        if(child.payloadSize > 0 && child.payloadSize <= kMaxXmpSize) {
+                                List<char> buf(static_cast<size_t>(child.payloadSize));
+                                if(stream.readBytes(buf.data(), static_cast<int>(child.payloadSize)).isOk()) {
+                                        String xmp(buf.data(), static_cast<size_t>(child.payloadSize));
+                                        String originator  = extractBextElement(xmp, "originator");
+                                        String origRef     = extractBextElement(xmp, "originatorReference");
+                                        String origDate    = extractBextElement(xmp, "originationDate");
+                                        String origTime    = extractBextElement(xmp, "originationTime");
+                                        String umidHex     = extractBextElement(xmp, "umid");
+
+                                        if(!originator.isEmpty()) {
+                                                _containerMetadata.set(Metadata::Originator, originator);
+                                        }
+                                        if(!origRef.isEmpty()) {
+                                                _containerMetadata.set(Metadata::OriginatorReference, origRef);
+                                        }
+                                        if(!origDate.isEmpty() || !origTime.isEmpty()) {
+                                                // Recombine date + time into the
+                                                // libpromeki ISO-8601 format.
+                                                String combined = origDate;
+                                                if(!origTime.isEmpty()) {
+                                                        if(!combined.isEmpty()) combined += "T";
+                                                        combined += origTime;
+                                                }
+                                                _containerMetadata.set(Metadata::OriginationDateTime, combined);
+                                        }
+                                        if(!umidHex.isEmpty()) {
+                                                Error umidErr;
+                                                UMID umid = UMID::fromString(umidHex, &umidErr);
+                                                if(umidErr.isOk() && umid.isValid()) {
+                                                        _containerMetadata.set(Metadata::UMID, umid);
+                                                } else {
+                                                        // Fall back to the raw hex so callers
+                                                        // can still inspect it.
+                                                        _containerMetadata.set(Metadata::UMID, umidHex);
+                                                }
+                                        }
                                 }
                         }
                 }

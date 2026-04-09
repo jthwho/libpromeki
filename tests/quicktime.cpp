@@ -11,6 +11,9 @@
 #include <doctest/doctest.h>
 #include <promeki/quicktime.h>
 #include <promeki/string.h>
+#include <promeki/umid.h>
+#include <promeki/file.h>
+#include <promeki/list.h>
 
 using namespace promeki;
 
@@ -815,4 +818,238 @@ TEST_CASE("QuickTime: tmcd track yields anchor timecode 01:00:00:00 at 24 fps") 
         CHECK(tc.min() == 0);
         CHECK(tc.sec() == 0);
         CHECK(tc.frame() == 0);
+}
+
+// ============================================================================
+// Container metadata (udta) round-trip
+// ============================================================================
+
+namespace {
+
+Metadata makeUdtaFixture() {
+        Metadata m;
+        m.set(Metadata::Title,               String("Round-Trip Title"));
+        m.set(Metadata::Comment,             String("QT udta round-trip test"));
+        m.set(Metadata::Date,                String("2026-04-08"));
+        m.set(Metadata::Artist,              String("Test Artist"));
+        m.set(Metadata::Copyright,           String("(c) libpromeki"));
+        m.set(Metadata::Software,            String("libpromeki test"));
+        m.set(Metadata::Album,               String("Test Album"));
+        m.set(Metadata::Genre,               String("Test Genre"));
+        m.set(Metadata::Description,         String("Test Description"));
+        m.set(Metadata::Originator,          String("libpromeki howardlogic.com"));
+        m.set(Metadata::OriginatorReference, String("01921f83-7a41-7e5a-9c9d-3a3f0d5e1b2c"));
+        m.set(Metadata::OriginationDateTime, String("2026-04-08T12:34:56"));
+        return m;
+}
+
+void writeSingleFrameWithMeta(const String &path, const Metadata &meta) {
+        QuickTime qt = QuickTime::createWriter(path);
+        REQUIRE(qt.open() == Error::Ok);
+        qt.setContainerMetadata(meta);
+        uint32_t vid = 0;
+        REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                                 Size2Du32(16, 16),
+                                 FrameRate(FrameRate::RationalType(24, 1)),
+                                 &vid) == Error::Ok);
+        QuickTime::Sample s;
+        s.data = makeFilledBuffer(512, 0x42);
+        s.duration = 1;
+        s.keyframe = true;
+        REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+        REQUIRE(qt.finalize() == Error::Ok);
+}
+
+void checkStandardFields(const Metadata &meta) {
+        CHECK(meta.get(Metadata::Title).get<String>()               == "Round-Trip Title");
+        CHECK(meta.get(Metadata::Comment).get<String>()             == "QT udta round-trip test");
+        CHECK(meta.get(Metadata::Date).get<String>()                == "2026-04-08");
+        CHECK(meta.get(Metadata::Artist).get<String>()              == "Test Artist");
+        CHECK(meta.get(Metadata::Copyright).get<String>()           == "(c) libpromeki");
+        CHECK(meta.get(Metadata::Software).get<String>()            == "libpromeki test");
+        CHECK(meta.get(Metadata::Album).get<String>()               == "Test Album");
+        CHECK(meta.get(Metadata::Genre).get<String>()               == "Test Genre");
+        CHECK(meta.get(Metadata::Description).get<String>()         == "Test Description");
+        CHECK(meta.get(Metadata::Originator).get<String>()          == "libpromeki howardlogic.com");
+        CHECK(meta.get(Metadata::OriginatorReference).get<String>() == "01921f83-7a41-7e5a-9c9d-3a3f0d5e1b2c");
+        CHECK(meta.get(Metadata::OriginationDateTime).get<String>() == "2026-04-08T12:34:56");
+}
+
+} // namespace
+
+TEST_CASE("QuickTimeWriter: container metadata round-trips via udta") {
+        const String tmp = "/tmp/qt_writer_udta_roundtrip.mov";
+        std::remove(tmp.cstr());
+
+        Metadata in = makeUdtaFixture();
+        writeSingleFrameWithMeta(tmp, in);
+
+        QuickTime qt = QuickTime::createReader(tmp);
+        REQUIRE(qt.open() == Error::Ok);
+
+        const Metadata &out = qt.containerMetadata();
+        checkStandardFields(out);
+
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: BWF fields are emitted as an XMP packet") {
+        // Writing any bext field should produce an XMP_ box inside
+        // udta that contains the bext namespace and the field's
+        // local-name element.  We verify this by scanning the raw
+        // file bytes for the box type 'XMP_' and a few hallmark
+        // markers from the packet.
+        const String tmp = "/tmp/qt_writer_udta_xmp_verify.mov";
+        std::remove(tmp.cstr());
+
+        Metadata in;
+        in.set(Metadata::Originator,          String("libpromeki howardlogic.com"));
+        in.set(Metadata::OriginatorReference, String("ref-123"));
+        in.set(Metadata::OriginationDateTime, String("2026-04-08T12:34:56"));
+        in.set(Metadata::UMID,                UMID::generate(UMID::Extended));
+
+        writeSingleFrameWithMeta(tmp, in);
+
+        // Slurp the whole file and look for the XMP markers.
+        File f(tmp);
+        REQUIRE(f.open(IODevice::ReadOnly).isOk());
+        auto sizeRes = f.size();
+        REQUIRE(sizeRes.second().isOk());
+        int64_t n = sizeRes.first();
+        REQUIRE(n > 0);
+        List<char> bytes(static_cast<size_t>(n));
+        REQUIRE(f.read(bytes.data(), n) == n);
+        f.close();
+
+        auto containsBytes = [&](const char *needle) {
+                size_t nlen = std::strlen(needle);
+                if(nlen == 0 || bytes.size() < nlen) return false;
+                for(size_t i = 0; i + nlen <= bytes.size(); ++i) {
+                        if(std::memcmp(bytes.data() + i, needle, nlen) == 0) return true;
+                }
+                return false;
+        };
+        CHECK(containsBytes("XMP_"));
+        CHECK(containsBytes("http://ns.adobe.com/bwf/bext/1.0/"));
+        CHECK(containsBytes("<bext:umid>"));
+        CHECK(containsBytes("<bext:originator>"));
+        CHECK(containsBytes("<bext:originatorReference>"));
+        CHECK(containsBytes("<bext:originationDate>"));
+        CHECK(containsBytes("<bext:originationTime>"));
+        // Date/time split happens inside the XMP writer — the exact
+        // composite "2026-04-08T12:34:56" should NOT appear as a
+        // single bext element.
+        CHECK_FALSE(containsBytes(">2026-04-08T12:34:56<"));
+
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: UMID round-trips via XMP as typed UMID") {
+        const String tmp = "/tmp/qt_writer_udta_umid.mov";
+        std::remove(tmp.cstr());
+
+        UMID inUmid = UMID::generate(UMID::Extended);
+        REQUIRE(inUmid.isValid());
+
+        Metadata in;
+        in.set(Metadata::Title, String("UMID Test"));
+        in.set(Metadata::UMID, inUmid);
+
+        writeSingleFrameWithMeta(tmp, in);
+
+        QuickTime qt = QuickTime::createReader(tmp);
+        REQUIRE(qt.open() == Error::Ok);
+
+        const Metadata &out = qt.containerMetadata();
+        REQUIRE(out.contains(Metadata::UMID));
+        UMID outUmid = out.get(Metadata::UMID).get<UMID>();
+        CHECK(outUmid.isValid());
+        CHECK(outUmid == inUmid);
+
+        // Check the MEKI organization tag survived the round-trip.
+        const uint8_t *raw = outUmid.raw();
+        CHECK(raw[56] == 'M');
+        CHECK(raw[57] == 'E');
+        CHECK(raw[58] == 'K');
+        CHECK(raw[59] == 'I');
+
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: empty container metadata omits udta") {
+        // Sanity check: when no container metadata is set, the file is
+        // still well-formed and readable.  None of the udta-bound
+        // fields should appear in the reader's container metadata.
+        // (The reader pre-seeds Metadata::Software with the ftyp brand
+        // for diagnostics, so that field is intentionally not checked
+        // here.)
+        const String tmp = "/tmp/qt_writer_udta_empty.mov";
+        std::remove(tmp.cstr());
+
+        QuickTime qt = QuickTime::createWriter(tmp);
+        REQUIRE(qt.open() == Error::Ok);
+        uint32_t vid = 0;
+        REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                                 Size2Du32(16, 16),
+                                 FrameRate(FrameRate::RationalType(24, 1)),
+                                 &vid) == Error::Ok);
+        QuickTime::Sample s;
+        s.data = makeFilledBuffer(512, 0x20);
+        s.duration = 1;
+        s.keyframe = true;
+        REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+        REQUIRE(qt.finalize() == Error::Ok);
+
+        QuickTime reader = QuickTime::createReader(tmp);
+        REQUIRE(reader.open() == Error::Ok);
+        const Metadata &out = reader.containerMetadata();
+        CHECK_FALSE(out.contains(Metadata::Title));
+        CHECK_FALSE(out.contains(Metadata::Comment));
+        CHECK_FALSE(out.contains(Metadata::Artist));
+        CHECK_FALSE(out.contains(Metadata::Copyright));
+        CHECK_FALSE(out.contains(Metadata::Originator));
+        CHECK_FALSE(out.contains(Metadata::OriginatorReference));
+        CHECK_FALSE(out.contains(Metadata::OriginationDateTime));
+        CHECK_FALSE(out.contains(Metadata::UMID));
+
+        std::remove(tmp.cstr());
+}
+
+TEST_CASE("QuickTimeWriter: fragmented layout emits udta in the init moov") {
+        const String tmp = "/tmp/qt_writer_udta_fragmented.mov";
+        std::remove(tmp.cstr());
+
+        Metadata in;
+        in.set(Metadata::Software,   String("libpromeki fragmented test"));
+        in.set(Metadata::Originator, String("libpromeki howardlogic.com"));
+        in.set(Metadata::Title,      String("Fragmented Title"));
+
+        {
+                QuickTime qt = QuickTime::createWriter(tmp);
+                REQUIRE(qt.setLayout(QuickTime::LayoutFragmented) == Error::Ok);
+                REQUIRE(qt.open() == Error::Ok);
+                qt.setContainerMetadata(in);
+                uint32_t vid = 0;
+                REQUIRE(qt.addVideoTrack(PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709),
+                                         Size2Du32(16, 16),
+                                         FrameRate(FrameRate::RationalType(24, 1)),
+                                         &vid) == Error::Ok);
+                for(int f = 0; f < 4; ++f) {
+                        QuickTime::Sample s;
+                        s.data = makeFilledBuffer(512, static_cast<uint8_t>(0x30 + f));
+                        s.duration = 1;
+                        s.keyframe = true;
+                        REQUIRE(qt.writeSample(vid, s) == Error::Ok);
+                }
+                REQUIRE(qt.finalize() == Error::Ok);
+        }
+
+        QuickTime reader = QuickTime::createReader(tmp);
+        REQUIRE(reader.open() == Error::Ok);
+        const Metadata &out = reader.containerMetadata();
+        CHECK(out.get(Metadata::Software).get<String>()   == "libpromeki fragmented test");
+        CHECK(out.get(Metadata::Originator).get<String>() == "libpromeki howardlogic.com");
+        CHECK(out.get(Metadata::Title).get<String>()      == "Fragmented Title");
+
+        std::remove(tmp.cstr());
 }

@@ -16,6 +16,7 @@
 #include <promeki/datetime.h>
 #include <promeki/size2d.h>
 #include <promeki/uuid.h>
+#include <promeki/umid.h>
 #include <promeki/timecode.h>
 #include <promeki/rational.h>
 #include <promeki/framerate.h>
@@ -63,6 +64,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypeTimeStamp | `TimeStamp`         |
  * | TypeSize2D    | `Size2Du32`            |
  * | TypeUUID      | `UUID`              |
+ * | TypeUMID      | `UMID`              |
  * | TypeTimecode  | `Timecode`          |
  * | TypeRational  | `Rational<int>`     |
  * | TypeFrameRate | `FrameRate`         |
@@ -92,6 +94,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeTimeStamp, TimeStamp)     \
         X(TypeSize2D, Size2Du32)           \
         X(TypeUUID, UUID)               \
+        X(TypeUMID, UMID)               \
         X(TypeTimecode, Timecode)       \
         X(TypeRational, Rational<int>)  \
         X(TypeFrameRate, FrameRate)     \
@@ -288,6 +291,17 @@ template <typename... Types> class VariantImpl {
                                                 return ret;
                                         }
 
+                                } else if constexpr (std::is_same_v<To, UMID>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                Error e;
+                                                UMID ret = UMID::fromString(arg, &e);
+                                                if(e.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return UMID();
+                                                }
+                                                return ret;
+                                        }
+
                                 } else if constexpr (std::is_same_v<To, Timecode>) {
                                         if constexpr (std::is_same_v<From, String>) {
                                                 Result<Timecode> ret = Timecode::fromString(arg);
@@ -366,6 +380,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, TimeStamp>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Size2Du32>) return arg.toString();
                                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, UMID>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Timecode>) return arg.toString().first();
                                         if constexpr (std::is_same_v<From, Rational<int>>) return arg.toString();
                                         if constexpr (std::is_same_v<From, FrameRate>) return arg.toString();
@@ -393,7 +408,7 @@ template <typename... Types> class VariantImpl {
                 /**
                  * @brief Converts complex types to their String representation, leaving simple types unchanged.
                  *
-                 * Types such as String, DateTime, TimeStamp, Size2Du32, UUID, Timecode,
+                 * Types such as String, DateTime, TimeStamp, Size2Du32, UUID, UMID, Timecode,
                  * Rational, and StringList are converted to String via `get<String>()`.
                  * All other types (numeric, bool, invalid) are returned as-is.
                  *
@@ -407,6 +422,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeTimeStamp:
                                 case TypeSize2D:
                                 case TypeUUID:
+                                case TypeUMID:
                                 case TypeTimecode:
                                 case TypeRational:
                                 case TypeFrameRate:
