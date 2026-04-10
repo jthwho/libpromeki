@@ -229,6 +229,9 @@ class PixelFormat {
                         I_422_UYVY_3x16_LE   = 77,   ///< 3 components, 16-bit LE, 4:2:2 UYVY.
                         I_422_UYVY_3x16_BE   = 78,   ///< 3 components, 16-bit BE, 4:2:2 UYVY.
 
+                        // -- Planar 4:4:4 (RGB / YUV 4:4:4) --
+                        P_444_3x8            = 79,   ///< 3 planes, 8-bit, 4:4:4 (equal-sized planes, no subsampling).
+
                         UserDefined          = 1024  ///< First ID available for user-registered types.
                 };
 

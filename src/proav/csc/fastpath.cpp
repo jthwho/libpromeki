@@ -76,6 +76,10 @@ HWY_EXPORT(FastPathUYVY12LE_2020toRGBA12LE);
 HWY_EXPORT(FastPathRGBA12LEtoUYVY12LE_2020);
 HWY_EXPORT(FastPathPlanar12LE420_2020toRGBA12LE);
 HWY_EXPORT(FastPathRGBA12LEtoPlanar12LE420_2020);
+HWY_EXPORT(FastPathPlanarRGB8toRGB8);
+HWY_EXPORT(FastPathRGB8toPlanarRGB8);
+HWY_EXPORT(FastPathPlanarRGB8toRGBA8);
+HWY_EXPORT(FastPathRGBA8toPlanarRGB8);
 
 // Generate dispatch wrappers via macro to avoid repetitive boilerplate
 #define CSC_DISPATCH(Name) \
@@ -141,6 +145,10 @@ CSC_DISPATCH(FastPathUYVY12LE_2020toRGBA12LE)
 CSC_DISPATCH(FastPathRGBA12LEtoUYVY12LE_2020)
 CSC_DISPATCH(FastPathPlanar12LE420_2020toRGBA12LE)
 CSC_DISPATCH(FastPathRGBA12LEtoPlanar12LE420_2020)
+CSC_DISPATCH(FastPathPlanarRGB8toRGB8)
+CSC_DISPATCH(FastPathRGB8toPlanarRGB8)
+CSC_DISPATCH(FastPathPlanarRGB8toRGBA8)
+CSC_DISPATCH(FastPathRGBA8toPlanarRGB8)
 
 #undef CSC_DISPATCH
 
@@ -274,6 +282,16 @@ static struct FastPathRegistrar {
                 // Planar 420 12-bit LE Rec.2020
                 reg(PixelDesc::YUV12_420_Planar_LE_Rec2020, PixelDesc::RGBA12_LE_sRGB, dispatch_FastPathPlanar12LE420_2020toRGBA12LE);
                 reg(PixelDesc::RGBA12_LE_sRGB,              PixelDesc::YUV12_420_Planar_LE_Rec2020, dispatch_FastPathRGBA12LEtoPlanar12LE420_2020);
+
+                // --- Planar RGB8 fast paths ---
+
+                // Planar RGB8 <-> Interleaved RGB8
+                reg(PixelDesc::RGB8_Planar_sRGB, PixelDesc::RGB8_sRGB,  dispatch_FastPathPlanarRGB8toRGB8);
+                reg(PixelDesc::RGB8_sRGB,        PixelDesc::RGB8_Planar_sRGB, dispatch_FastPathRGB8toPlanarRGB8);
+
+                // Planar RGB8 <-> RGBA8
+                reg(PixelDesc::RGB8_Planar_sRGB, PixelDesc::RGBA8_sRGB, dispatch_FastPathPlanarRGB8toRGBA8);
+                reg(PixelDesc::RGBA8_sRGB,       PixelDesc::RGB8_Planar_sRGB, dispatch_FastPathRGBA8toPlanarRGB8);
         }
 } __fastPathRegistrar;
 

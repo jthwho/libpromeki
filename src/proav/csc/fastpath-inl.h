@@ -1687,6 +1687,126 @@ void FastPathRGBA12LEtoPlanar12LE420_2020(const void *const *srcPlanes,
         return;
 }
 
+// =========================================================================
+// Planar RGB8 <-> Interleaved RGB8 (pure byte shuffle, no colour math)
+// =========================================================================
+
+void FastPathPlanarRGB8toRGB8(const void *const *srcPlanes,
+                              const size_t *srcStrides,
+                              void *const *dstPlanes,
+                              const size_t *dstStrides,
+                              size_t width, CSCContext &ctx) {
+        const uint8_t *rp = static_cast<const uint8_t *>(srcPlanes[0]);
+        const uint8_t *gp = static_cast<const uint8_t *>(srcPlanes[1]);
+        const uint8_t *bp = static_cast<const uint8_t *>(srcPlanes[2]);
+        uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
+
+        const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
+        const size_t Nq = hn::Lanes(du8q);
+
+        size_t x = 0;
+        for(; x + Nq <= width; x += Nq) {
+                auto r = hn::LoadU(du8q, rp + x);
+                auto g = hn::LoadU(du8q, gp + x);
+                auto b = hn::LoadU(du8q, bp + x);
+                hn::StoreInterleaved3(r, g, b, du8q, dst + x * 3);
+        }
+        for(; x < width; x++) {
+                dst[x * 3 + 0] = rp[x];
+                dst[x * 3 + 1] = gp[x];
+                dst[x * 3 + 2] = bp[x];
+        }
+        return;
+}
+
+void FastPathRGB8toPlanarRGB8(const void *const *srcPlanes,
+                              const size_t *srcStrides,
+                              void *const *dstPlanes,
+                              const size_t *dstStrides,
+                              size_t width, CSCContext &ctx) {
+        const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+        uint8_t *rp = static_cast<uint8_t *>(dstPlanes[0]);
+        uint8_t *gp = static_cast<uint8_t *>(dstPlanes[1]);
+        uint8_t *bp = static_cast<uint8_t *>(dstPlanes[2]);
+
+        const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
+        const size_t Nq = hn::Lanes(du8q);
+
+        size_t x = 0;
+        for(; x + Nq <= width; x += Nq) {
+                hn::Vec<decltype(du8q)> r, g, b;
+                hn::LoadInterleaved3(du8q, src + x * 3, r, g, b);
+                hn::StoreU(r, du8q, rp + x);
+                hn::StoreU(g, du8q, gp + x);
+                hn::StoreU(b, du8q, bp + x);
+        }
+        for(; x < width; x++) {
+                rp[x] = src[x * 3 + 0];
+                gp[x] = src[x * 3 + 1];
+                bp[x] = src[x * 3 + 2];
+        }
+        return;
+}
+
+void FastPathPlanarRGB8toRGBA8(const void *const *srcPlanes,
+                               const size_t *srcStrides,
+                               void *const *dstPlanes,
+                               const size_t *dstStrides,
+                               size_t width, CSCContext &ctx) {
+        const uint8_t *rp = static_cast<const uint8_t *>(srcPlanes[0]);
+        const uint8_t *gp = static_cast<const uint8_t *>(srcPlanes[1]);
+        const uint8_t *bp = static_cast<const uint8_t *>(srcPlanes[2]);
+        uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
+
+        const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
+        const size_t Nq = hn::Lanes(du8q);
+        const auto alpha = hn::Set(du8q, uint8_t(255));
+
+        size_t x = 0;
+        for(; x + Nq <= width; x += Nq) {
+                auto r = hn::LoadU(du8q, rp + x);
+                auto g = hn::LoadU(du8q, gp + x);
+                auto b = hn::LoadU(du8q, bp + x);
+                hn::StoreInterleaved4(r, g, b, alpha, du8q, dst + x * 4);
+        }
+        for(; x < width; x++) {
+                dst[x * 4 + 0] = rp[x];
+                dst[x * 4 + 1] = gp[x];
+                dst[x * 4 + 2] = bp[x];
+                dst[x * 4 + 3] = 255;
+        }
+        return;
+}
+
+void FastPathRGBA8toPlanarRGB8(const void *const *srcPlanes,
+                               const size_t *srcStrides,
+                               void *const *dstPlanes,
+                               const size_t *dstStrides,
+                               size_t width, CSCContext &ctx) {
+        const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+        uint8_t *rp = static_cast<uint8_t *>(dstPlanes[0]);
+        uint8_t *gp = static_cast<uint8_t *>(dstPlanes[1]);
+        uint8_t *bp = static_cast<uint8_t *>(dstPlanes[2]);
+
+        const hn::Rebind<uint8_t, hn::ScalableTag<float>> du8q;
+        const size_t Nq = hn::Lanes(du8q);
+
+        size_t x = 0;
+        for(; x + Nq <= width; x += Nq) {
+                hn::Vec<decltype(du8q)> r, g, b, a;
+                hn::LoadInterleaved4(du8q, src + x * 4, r, g, b, a);
+                hn::StoreU(r, du8q, rp + x);
+                hn::StoreU(g, du8q, gp + x);
+                hn::StoreU(b, du8q, bp + x);
+        }
+        for(; x < width; x++) {
+                rp[x] = src[x * 4 + 0];
+                gp[x] = src[x * 4 + 1];
+                bp[x] = src[x * 4 + 2];
+        }
+        return;
+}
+
 }  // namespace HWY_NAMESPACE
 }  // namespace csc
 }  // namespace promeki

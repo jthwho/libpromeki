@@ -315,3 +315,101 @@ TEST_CASE("JpegXsImageCodec_ConfigureFromMediaConfig") {
                 CHECK(configured.decomposition() == baseline.decomposition());
         }
 }
+
+// ============================================================================
+// Planar RGB encode / decode path
+// ============================================================================
+//
+// The codec accepts RGB8_Planar_sRGB (3 equal-sized planar planes)
+// via COLOUR_FORMAT_PLANAR_YUV444_OR_RGB.  Interleaved RGB reaches
+// the codec through the CSC fast path (RGB8_sRGB → RGB8_Planar_sRGB)
+// and the reverse on decode.
+
+static Image makePlanarRGB8(int w, int h) {
+        Image img(w, h, PixelDesc(PixelDesc::RGB8_Planar_sRGB));
+        if(!img.isValid()) return img;
+        for(int p = 0; p < 3; p++) {
+                uint8_t *plane = static_cast<uint8_t *>(img.data(p));
+                const size_t stride = img.lineStride(p);
+                for(int y = 0; y < h; y++) {
+                        uint8_t *row = plane + y * stride;
+                        for(int x = 0; x < w; x++) {
+                                if(p == 0) row[x] = static_cast<uint8_t>(x * 255 / w);
+                                else if(p == 1) row[x] = static_cast<uint8_t>(y * 255 / h);
+                                else row[x] = 128;
+                        }
+                }
+        }
+        return img;
+}
+
+TEST_CASE("JpegXsImageCodec_PlanarRGB8_Encode") {
+        JpegXsImageCodec codec;
+        codec.setBpp(8);
+        Image src = makePlanarRGB8(320, 240);
+        REQUIRE(src.isValid());
+
+        Image enc = codec.encode(src);
+        REQUIRE(enc.isValid());
+        CHECK(enc.isCompressed());
+        CHECK(enc.pixelDesc().id() == PixelDesc::JPEG_XS_RGB8_sRGB);
+        CHECK(enc.compressedSize() > 0);
+        CHECK(enc.width() == 320);
+        CHECK(enc.height() == 240);
+}
+
+TEST_CASE("JpegXsImageCodec_PlanarRGB8_RoundTrip") {
+        JpegXsImageCodec codec;
+        codec.setBpp(8);
+        Image src = makePlanarRGB8(256, 192);
+        REQUIRE(src.isValid());
+
+        Image enc = codec.encode(src);
+        REQUIRE(enc.isValid());
+        REQUIRE(enc.isCompressed());
+
+        // Decode to planar RGB (native target).
+        Image dec = codec.decode(enc);
+        REQUIRE(dec.isValid());
+        CHECK(!dec.isCompressed());
+        CHECK(dec.pixelDesc().id() == PixelDesc::RGB8_Planar_sRGB);
+        CHECK(dec.width() == 256);
+        CHECK(dec.height() == 192);
+
+        // Convert planar → interleaved via CSC fast path.
+        Image rgb = dec.convert(PixelDesc(PixelDesc::RGB8_sRGB), dec.metadata());
+        REQUIRE(rgb.isValid());
+        CHECK(rgb.pixelDesc().id() == PixelDesc::RGB8_sRGB);
+}
+
+TEST_CASE("JpegXsImageCodec_RGB8_ImageConvertRoundTrip") {
+        // Full chain via Image::convert():
+        // RGB8 → [CSC] → RGB8_Planar → [codec] → JPEG_XS_RGB8
+        // JPEG_XS_RGB8 → [codec] → RGB8_Planar → [CSC] → RGB8
+        Image src(128, 96, PixelDesc(PixelDesc::RGB8_sRGB));
+        REQUIRE(src.isValid());
+        uint8_t *data = static_cast<uint8_t *>(src.data(0));
+        const size_t stride = src.lineStride(0);
+        for(int y = 0; y < 96; y++) {
+                uint8_t *row = data + y * stride;
+                for(int x = 0; x < 128; x++) {
+                        row[x * 3 + 0] = static_cast<uint8_t>(x * 2);
+                        row[x * 3 + 1] = static_cast<uint8_t>(y * 2);
+                        row[x * 3 + 2] = 128;
+                }
+        }
+
+        Image jxs = src.convert(PixelDesc(PixelDesc::JPEG_XS_RGB8_sRGB),
+                                src.metadata());
+        REQUIRE(jxs.isValid());
+        CHECK(jxs.isCompressed());
+        CHECK(jxs.pixelDesc().id() == PixelDesc::JPEG_XS_RGB8_sRGB);
+
+        Image decoded = jxs.convert(PixelDesc(PixelDesc::RGB8_sRGB),
+                                    jxs.metadata());
+        REQUIRE(decoded.isValid());
+        CHECK(!decoded.isCompressed());
+        CHECK(decoded.pixelDesc().id() == PixelDesc::RGB8_sRGB);
+        CHECK(decoded.width() == 128);
+        CHECK(decoded.height() == 96);
+}

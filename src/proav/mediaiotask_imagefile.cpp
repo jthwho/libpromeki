@@ -61,6 +61,7 @@ static const ExtMap extMap[] = {
         { "jpg",     ImageFile::JPEG },
         { "jpeg",    ImageFile::JPEG },
         { "jfif",    ImageFile::JPEG },
+        { "jxs",     ImageFile::JpegXS },
         { "uyvy",    ImageFile::RawYUV },
         { "yuyv",    ImageFile::RawYUV },
         { "yuy2",    ImageFile::RawYUV },
@@ -141,6 +142,9 @@ static bool probeImageDevice(IODevice *device) {
         // any marker (FF xx).  Matches all conforming JPEG streams.
         if(buf[0] == 0xFF && buf[1] == 0xD8 && buf[2] == 0xFF) return true;
 
+        // JPEG XS (ISO/IEC 21122): SOC marker FF 10.
+        if(buf[0] == 0xFF && buf[1] == 0x10) return true;
+
         // SGI: first 2 bytes = 0x01DA
         uint16_t magic16 = (uint16_t(buf[0]) << 8) | uint16_t(buf[1]);
         if(magic16 == 0x01DA) return true;
@@ -193,7 +197,7 @@ static StringList buildExtensions() {
 MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
         return {
                 "ImageFile",
-                "Single-image files and image sequences (DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, RawYUV, .imgseq)",
+                "Single-image files and image sequences (DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)",
                 buildExtensions(),
                 true,   // canRead
                 true,   // canWrite

@@ -27,17 +27,28 @@ PROMEKI_REGISTER_IMAGE_CODEC(JpegXsImageCodec, "jpegxs")
 // Pixel format classification
 // ---------------------------------------------------------------------------
 //
-// JPEG XS is strictly planar at the API level (stride[] is in samples,
-// plane pointers are data_yuv[0..N-1]) so the codec only accepts
-// planar YUV inputs.  This table maps every accepted uncompressed
-// PixelDesc to the triple (bit_depth, colour_format, compressed tag)
-// the rest of the file needs.  Anything not in the table is an
-// unsupported format and the encode/decode path bails out early.
+// Maps every accepted uncompressed PixelDesc to the triple
+// (bit_depth, colour_format, compressed tag) the rest of the file
+// needs.  Anything not in the table is an unsupported format and the
+// encode/decode path bails out early.
+//
+// All inputs are planar at the SVT API level.  Interleaved RGB
+// reaches the codec via a CSC fast path (RGB8_sRGB →
+// RGB8_Planar_sRGB) before encode, and the reverse path on decode.
+//
+// FIXME: SVT-JPEG-XS supports COLOUR_FORMAT_PACKED_YUV444_OR_RGB
+// for direct interleaved RGB encode (with internal AVX2/512
+// deinterleave), but svt_jpeg_xs_encoder_send_picture() has a
+// validation bug: it checks stride[c]/alloc_size[c] for all 3
+// logical components even though the packed buffer only fills
+// component 0.  Once fixed upstream, add RGB8_sRGB directly to
+// classifyInput() to skip the CSC deinterleave on encode.
+// See devplan/fixme.md for details.
 
 struct JpegXsLayout {
-        int                     bitDepth;     // 8, 10, 12
-        ColourFormat_t          colourFormat; // PLANAR_YUV420 / PLANAR_YUV422
-        PixelDesc::ID           compressed;   // Output tag for the compressed Image
+        int                     bitDepth;       // 8, 10, 12
+        ColourFormat_t          colourFormat;   // PLANAR_YUV420 / PLANAR_YUV422 / PLANAR_YUV444_OR_RGB
+        PixelDesc::ID           compressed;     // Output tag for the compressed Image
         bool                    is420;
         bool                    valid = false;
 };
@@ -69,6 +80,10 @@ static JpegXsLayout classifyInput(PixelDesc::ID id) {
                         l = { 12, COLOUR_FORMAT_PLANAR_YUV420,
                               PixelDesc::JPEG_XS_YUV12_420_Rec709, true,  true };
                         break;
+                case PixelDesc::RGB8_Planar_sRGB:
+                        l = { 8,  COLOUR_FORMAT_PLANAR_YUV444_OR_RGB,
+                              PixelDesc::JPEG_XS_RGB8_sRGB,        false, true };
+                        break;
                 default: break;
         }
         return l;
@@ -86,6 +101,7 @@ static PixelDesc::ID defaultDecodeTarget(PixelDesc::ID id) {
                 case PixelDesc::JPEG_XS_YUV8_420_Rec709:  return PixelDesc::YUV8_420_Planar_Rec709;
                 case PixelDesc::JPEG_XS_YUV10_420_Rec709: return PixelDesc::YUV10_420_Planar_LE_Rec709;
                 case PixelDesc::JPEG_XS_YUV12_420_Rec709: return PixelDesc::YUV12_420_Planar_LE_Rec709;
+                case PixelDesc::JPEG_XS_RGB8_sRGB:        return PixelDesc::RGB8_Planar_sRGB;
                 default: return PixelDesc::Invalid;
         }
 }
@@ -148,7 +164,7 @@ Image JpegXsImageCodec::encode(const Image &input) {
         JpegXsLayout layout = classifyInput(input.pixelDesc().id());
         if(!layout.valid) {
                 setError(Error::PixelFormatNotSupported,
-                         "JPEG XS encoder only accepts planar YUV 4:2:2 / 4:2:0 inputs");
+                         "JPEG XS encoder accepts planar YUV 4:2:2/4:2:0 and packed RGB inputs");
                 return Image();
         }
 
@@ -367,7 +383,10 @@ Image JpegXsImageCodec::decode(const Image &input, int outputFormat) {
         // Copy each tightly packed plane into the corresponding output
         // Image plane.  The output Image's row stride may be larger
         // than the plane width (alignment padding), so we can't do a
-        // single memcpy per plane.
+        // single memcpy per plane.  This handles both planar YUV and
+        // planar RGB uniformly — the codec decodes to the natural
+        // planar layout and the CSC pipeline handles any interleaving
+        // (e.g. RGB8_Planar_sRGB → RGB8_sRGB).
         for(int c = 0; c < cfg.components_num; c++) {
                 const uint32_t planeWidthBytes = cfg.components[c].width * pixelBytes;
                 const uint32_t planeHeight     = cfg.components[c].height;

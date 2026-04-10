@@ -221,7 +221,7 @@ All `@defgroup` definitions exist in `docs/modules.dox`: containers, concurrency
 | `src/proav/quicktime_reader.cpp` | Fragmented reader ignores `trex` defaults fallback | Phase 4 |
 | `src/proav/mediaiotask_quicktime.cpp` | Compressed audio pull-rate drifts (one packet/video frame) | Phase 4 |
 | `src/proav/quicktime_reader.cpp` | Minimal XMP parser only matches `bext:` prefix (blocked on core XML support) | Phase 4 / Core |
-| `src/proav/jpegxsimagecodec.cpp` | JPEG XS: packed RGB encode path not implemented | Phase 4 |
+| `src/proav/jpegxsimagecodec.cpp` | JPEG XS: SVT packed-RGB validation bug (workaround via CSC to planar) | Phase 4 |
 | `src/proav/jpegxsimagecodec.cpp` | JPEG XS: additional matrix/range/colour-space variants | Phase 4 |
 | `src/proav/quicktime_writer.cpp` | JPEG XS: QuickTime/ISO-BMFF container support (`jxsm` sample entry) | Phase 4 |
 | `src/proav/mediaiotask_rtp.cpp` | JPEG XS: RFC 9134 RTP slice packetization + fmtp generation | Phase 4 |

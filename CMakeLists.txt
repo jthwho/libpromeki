@@ -799,7 +799,10 @@ if(PROMEKI_ENABLE_PROAV)
         # JPEG XS has no fallback — the entire file is gated, not just
         # the external linkage, because SvtJpegxs.h is only available
         # when the thirdparty library was configured in.
-        list(APPEND PROMEKI_SOURCES src/proav/jpegxsimagecodec.cpp)
+        list(APPEND PROMEKI_SOURCES
+            src/proav/jpegxsimagecodec.cpp
+            src/proav/imagefileio_jpegxs.cpp
+        )
     endif()
     if(PROMEKI_ENABLE_PNG)
         list(APPEND PROMEKI_SOURCES src/proav/imagefileio_png.cpp)
@@ -1402,6 +1405,7 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_JPEGXS)
             list(APPEND UNITTEST_SOURCES
                 tests/jpegxsimagecodec.cpp
+                tests/imagefileio_jpegxs.cpp
             )
         endif()
     endif()

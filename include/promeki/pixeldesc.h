@@ -107,6 +107,8 @@ class PaintEngine;
  * | YUV8_411_Planar_Rec709       | 8-bit Y'CbCr 4:1:1 planar, Rec.709               |
  * | JPEG_RGB8_sRGB               | JPEG-compressed 8-bit RGB, sRGB                   |
  * | JPEG_XS_YUV10_422_Rec709     | JPEG XS-compressed 10-bit Y'CbCr 4:2:2, Rec.709   |
+ * | JPEG_XS_RGB8_sRGB            | JPEG XS-compressed 8-bit RGB, sRGB                 |
+ * | RGB8_Planar_sRGB             | 8-bit planar RGB (3 planes: R, G, B), sRGB         |
  *
  * @par Example
  * @code
@@ -393,6 +395,9 @@ class PixelDesc {
                         JPEG_XS_YUV10_420_Rec709           = 157,  ///< JPEG XS-compressed 10-bit YCbCr 4:2:0, Rec.709, limited range.
                         JPEG_XS_YUV12_420_Rec709           = 158,  ///< JPEG XS-compressed 12-bit YCbCr 4:2:0, Rec.709, limited range.
                         JPEG_XS_RGB8_sRGB                  = 159,  ///< JPEG XS-compressed 8-bit RGB, sRGB, full range.
+
+                        // -- Planar RGB --
+                        RGB8_Planar_sRGB                   = 160,  ///< 8-bit planar RGB (3 equal-sized planes: R, G, B), sRGB, full range.
 
                         UserDefined                        = 1024  ///< First ID available for user-registered types.
                 };

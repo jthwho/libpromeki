@@ -416,8 +416,7 @@ static PixelDesc::Data makeJPEG_XS_YUV8_422_Rec709() {
                 "JPEG_XS_YUV8_422_Rec709",
                 PixelFormat::P_422_3x8, 8, /*is420*/ false,
                 { PixelDesc::YUV8_422_Planar_Rec709 },
-                { PixelDesc::YUV8_422_Planar_Rec709,
-                  PixelDesc::RGB8_sRGB }
+                { PixelDesc::YUV8_422_Planar_Rec709 }
         });
 }
 
@@ -447,8 +446,7 @@ static PixelDesc::Data makeJPEG_XS_YUV8_420_Rec709() {
                 "JPEG_XS_YUV8_420_Rec709",
                 PixelFormat::P_420_3x8, 8, /*is420*/ true,
                 { PixelDesc::YUV8_420_Planar_Rec709 },
-                { PixelDesc::YUV8_420_Planar_Rec709,
-                  PixelDesc::RGB8_sRGB }
+                { PixelDesc::YUV8_420_Planar_Rec709 }
         });
 }
 
@@ -481,9 +479,22 @@ static PixelDesc::Data makeJPEG_XS_RGB8_sRGB() {
         d.colorModel    = ColorModel(ColorModel::sRGB);
         d.compressed    = true;
         d.codecName     = "jpegxs";
-        d.encodeSources = { PixelDesc::RGB8_sRGB };
-        d.decodeTargets = { PixelDesc::RGB8_sRGB };
+        d.encodeSources = { PixelDesc::RGB8_Planar_sRGB };
+        d.decodeTargets = { PixelDesc::RGB8_Planar_sRGB };
         d.fourccList    = { "jxsm" };
+        d.compSemantics[0] = { "Red",   "R", 0, 255 };
+        d.compSemantics[1] = { "Green", "G", 0, 255 };
+        d.compSemantics[2] = { "Blue",  "B", 0, 255 };
+        return d;
+}
+
+static PixelDesc::Data makeRGB8_Planar_sRGB() {
+        PixelDesc::Data d;
+        d.id            = PixelDesc::RGB8_Planar_sRGB;
+        d.name          = "RGB8_Planar_sRGB";
+        d.desc          = "8-bit planar RGB (3 equal-sized planes: R, G, B), sRGB, full range";
+        d.pixelFormat   = PixelFormat(PixelFormat::P_444_3x8);
+        d.colorModel    = ColorModel(ColorModel::sRGB);
         d.compSemantics[0] = { "Red",   "R", 0, 255 };
         d.compSemantics[1] = { "Green", "G", 0, 255 };
         d.compSemantics[2] = { "Blue",  "B", 0, 255 };
@@ -1950,6 +1961,7 @@ struct PixelDescRegistry {
                 add(makeJPEG_XS_YUV10_420_Rec709());
                 add(makeJPEG_XS_YUV12_420_Rec709());
                 add(makeJPEG_XS_RGB8_sRGB());
+                add(makeRGB8_Planar_sRGB());
         }
 
         void add(PixelDesc::Data d) {

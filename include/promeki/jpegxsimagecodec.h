@@ -22,17 +22,18 @@ PROMEKI_NAMESPACE_BEGIN
  * workflow: sub-frame latency, constant bitrate, and native support
  * for 10- and 12-bit YCbCr.
  *
- * Supported input formats (all Rec.709 limited range):
+ * Supported input formats:
  * - @c YUV8_422_Planar_Rec709, @c YUV10_422_Planar_LE_Rec709,
- *   @c YUV12_422_Planar_LE_Rec709
+ *   @c YUV12_422_Planar_LE_Rec709 (Rec.709 limited range)
  * - @c YUV8_420_Planar_Rec709, @c YUV10_420_Planar_LE_Rec709,
- *   @c YUV12_420_Planar_LE_Rec709
+ *   @c YUV12_420_Planar_LE_Rec709 (Rec.709 limited range)
+ * - @c RGB8_Planar_sRGB (sRGB full range)
  *
- * Decoder targets are the matching uncompressed formats.  The
- * @c JPEG_XS_RGB8_sRGB PixelDesc entry exists so the library can
- * describe RGB JPEG XS streams, but the packed-RGB input path is
- * not implemented in this codec yet — use a planar YUV encode for
- * now.
+ * Decoder targets are the matching uncompressed planar formats.
+ * Interleaved RGB (e.g. @c RGB8_sRGB) reaches the codec via the
+ * CSC fast path (@c RGB8_sRGB ↔ @c RGB8_Planar_sRGB) — the
+ * full encode/decode chain through @c Image::convert() is
+ * transparent to callers.
  *
  * JPEG XS is constant-bitrate rather than quality-targeted: configure
  * the encoder with a bits-per-pixel budget via @c setBpp (or

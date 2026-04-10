@@ -38,7 +38,8 @@ class ImageFile {
                         TGA,         ///< @brief Targa image format.
                         SGI,         ///< @brief Silicon Graphics image format.
                         PNM,         ///< @brief Portable AnyMap (PPM/PGM/PBM).
-                        JPEG         ///< @brief JPEG / JFIF image format.
+                        JPEG,        ///< @brief JPEG / JFIF image format.
+                        JpegXS       ///< @brief JPEG XS (ISO/IEC 21122) image format.
                 };
 
                 /**

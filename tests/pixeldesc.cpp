@@ -811,14 +811,14 @@ TEST_CASE("PixelDesc: JPEG XS YCbCr entries have correct encode/decode targets")
 TEST_CASE("PixelDesc: JPEG_XS_RGB8_sRGB encode/decode targets") {
         PixelDesc pd(PixelDesc::JPEG_XS_RGB8_sRGB);
         REQUIRE(pd.isValid());
-        bool foundRgb = false;
+        bool foundPlanar = false;
         for(const auto &src : pd.encodeSources()) {
-                if(src == PixelDesc::RGB8_sRGB) { foundRgb = true; break; }
+                if(src == PixelDesc::RGB8_Planar_sRGB) { foundPlanar = true; break; }
         }
-        CHECK(foundRgb);
+        CHECK(foundPlanar);
         bool foundTarget = false;
         for(const auto &tgt : pd.decodeTargets()) {
-                if(tgt == PixelDesc::RGB8_sRGB) { foundTarget = true; break; }
+                if(tgt == PixelDesc::RGB8_Planar_sRGB) { foundTarget = true; break; }
         }
         CHECK(foundTarget);
 }

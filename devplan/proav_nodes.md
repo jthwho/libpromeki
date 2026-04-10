@@ -15,16 +15,16 @@ This document tracks the `MediaIOTask` backends that plug into the `MediaIO` fra
 The framework itself (`MediaIO` controller, `MediaIOTask` interface, `Strand` per-instance executor, `MediaIOCommand` dispatch, three `VariantDatabase` types for Config/Stats/Params, factory + registration, cached state, EOF latching, step/prefetch/seek modes, track selection, mid-stream descriptor updates, `cancelPending()`, error/signal plumbing) is complete and documented in `docs/mediaio.dox`. The following backends are complete and tested:
 
 - **MediaIOTask_TPG** — Test pattern generator (video + audio + timecode). Static pattern caching, motion, text burn-in with FiraCode default, AvSync mode, NTSC audio cadence via `FrameRate::samplesPerFrame()`. `ConfigVideoSize` / `ConfigFrameRate` / full config key set.
-- **MediaIOTask_ImageFile** — DPX, Cineon, TGA, SGI, RGB, PNM/PPM/PGM, PNG, JPEG, RawYUV. PNG backend uses libspng+zlib-ng with O_DIRECT save path. JPEG backend (libjpeg-turbo via `JpegImageCodec`) loads the bitstream compressed (zero decode), and saves pass-through bytes verbatim for already-JPEG inputs or routes uncompressed inputs through `Image::convert()`. Default frame rate via `ConfigFrameRate`.
+- **MediaIOTask_ImageFile** — DPX, Cineon, TGA, SGI, RGB, PNM/PPM/PGM, PNG, JPEG, JPEG XS, RawYUV. PNG backend uses libspng+zlib-ng with O_DIRECT save path. JPEG backend (libjpeg-turbo via `JpegImageCodec`) loads the bitstream compressed (zero decode), and saves pass-through bytes verbatim for already-JPEG inputs or routes uncompressed inputs through `Image::convert()`. JPEG XS backend (`ImageFileIO_JpegXS`) follows the same compressed-load / pass-through-save pattern with SVT header probing to determine the compressed `PixelDesc`. Default frame rate via `ConfigFrameRate`.
 - **MediaIOTask_AudioFile** — WAV, BWF, AIFF, OGG via libsndfile. Frame chunking by samples/frame, seek delegation, step control, audiodesc from file on read / config on write.
 - **MediaIOTask_QuickTime** — Classic + fragmented reader and writer for `.mov` / `.mp4`. ProRes + H.264 + HEVC + PCM + AAC read; ProRes + PCM write. udta metadata including ©-atoms, XMP BWF extension, UMID, write-time defaults. BufferPool + AudioBuffer FIFO utilities in place.
 - **SDLPlayerTask** — Write-only display sink with audio-led pacing, fast mode, main-thread `renderPending()` dispatch. Injected via `MediaIO::adoptTask()`. Transparent compressed video decode (JPEG, JPEG XS, any registered `ImageCodec`) — decode runs on the strand worker thread via `Image::convert` to `RGBA8_sRGB`, no Converter stage needed in front.
 
-**JpegXsImageCodec** is complete — JPEG XS (ISO/IEC 21122) encode/decode using vendored SVT-JPEG-XS, supporting planar YUV 4:2:2/4:2:0 at 8/10/12-bit (Rec.709 limited range). CMake feature flag `PROMEKI_ENABLE_JPEGXS` (auto-detected on x86-64 with nasm/yasm). Config via `MediaConfig::JpegXsBpp` and `MediaConfig::JpegXsDecomposition`. Seven new `JPEG_XS_*` PixelDesc IDs. Packed RGB path and additional colour-space variants are tracked in `fixme.md`.
+**JpegXsImageCodec** is complete — JPEG XS (ISO/IEC 21122) encode/decode using vendored SVT-JPEG-XS, supporting planar YUV 4:2:2/4:2:0 at 8/10/12-bit (Rec.709 limited range) and planar RGB 4:4:4 at 8-bit (`RGB8_Planar_sRGB` via `COLOUR_FORMAT_PLANAR_YUV444_OR_RGB`). Interleaved `RGB8_sRGB` reaches the codec through the CSC fast path (`RGB8_sRGB` ↔ `RGB8_Planar_sRGB`) — the full encode/decode chain via `Image::convert()` is transparent to callers. CMake feature flag `PROMEKI_ENABLE_JPEGXS` (auto-detected on x86-64 with nasm/yasm). Config via `MediaConfig::JpegXsBpp` and `MediaConfig::JpegXsDecomposition`. Eight compressed `JPEG_XS_*` PixelDesc IDs plus `RGB8_Planar_sRGB` (new). Additional colour-space variants and the SVT packed-RGB validation bug workaround are tracked in `fixme.md`.
 
 **Histogram** class added — lightweight sub-bucketed log2 histogram for hot-path instrumentation (latency/interval/size distributions). Used by `MediaIOTask_Rtp` for TX/RX timing stats.
 
-All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
+All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, `tests/imagefileio_jpegxs.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
 
 ---
 
@@ -180,6 +180,37 @@ The `ImgSeq` format gained a `"dir"` JSON field so the image directory can be ex
 
 ---
 
+## MediaIOTask_ImageFile — JPEG XS Extension (COMPLETE)
+
+JPEG XS read/write is wired into the existing `ImageFile` / `ImageFileIO` subsystem so the `"ImageFile"` MediaIO backend handles `.jxs` files automatically.
+
+**Files (complete):**
+- `src/proav/imagefileio_jpegxs.cpp`
+- `tests/imagefileio_jpegxs.cpp`
+- Extension map (`.jxs`) and `FF 10` SOC magic-byte probe in `src/proav/mediaiotask_imagefile.cpp`
+
+**Design (as shipped):**
+
+- Registered via `PROMEKI_REGISTER_IMAGEFILEIO(ImageFileIO_JpegXS)` under `ImageFile::JpegXS`.  Extension `.jxs` maps to it through `MediaIOTask_ImageFile::extMap`.
+- Magic-byte probe (`FF 10` — the JPEG XS SOC marker) wired into `probeImageDevice()`.
+- **Load keeps the bitstream compressed.**  `ImageFileIO_JpegXS::load()` reads the file, probes the JPEG XS codestream header by calling `svt_jpeg_xs_decoder_init()` briefly to obtain `(width, height, bit_depth, colour_format)`, selects the appropriate compressed `PixelDesc` (`JPEG_XS_YUV8/10/12_422_Rec709`, `JPEG_XS_YUV8/10/12_420_Rec709`, or `JPEG_XS_RGB8_sRGB`), then wraps the file buffer as plane 0 of a compressed `Image` via `Image::fromBuffer()`.  Zero decode on the load path.
+- **Save has three paths** — all routed through `Image::convert()`:
+  - Already-compressed JPEG XS input → write payload bytes verbatim (pass-through; zero re-encode).
+  - Compressed non-JPEG-XS input → rejected with `Error::NotSupported`.
+  - Uncompressed input → target subtype chosen from input `PixelDesc` family to minimise CSC hops: planar YUV 4:2:2/4:2:0 map to their matching `JPEG_XS_YUV*` ID; `RGB8_sRGB` / `RGB8_Planar_sRGB` map to `JPEG_XS_RGB8_sRGB`; RGBA and other sRGB-family formats fall back to `JPEG_XS_RGB8_sRGB`; everything else falls back to `JPEG_XS_YUV8_422_Rec709`.  `Image::convert()` inserts any required CSC transparently.
+- `MediaConfig::JpegXsBpp` and `MediaConfig::JpegXsDecomposition` flow through `Image::convert()` into `JpegXsImageCodec::configure()` unchanged.
+- **RGB path** — `RGB8_sRGB` → `RGB8_Planar_sRGB` (CSC fast path: `FastPathRGB8toPlanarRGB8`) → `JpegXsImageCodec::encode()` (via `COLOUR_FORMAT_PLANAR_YUV444_OR_RGB`).  Decode reverses: codec → `RGB8_Planar_sRGB` → `RGB8_sRGB` (CSC fast path: `FastPathPlanarRGB8toRGB8`).  The CSC workaround is required because the SVT `send_picture` validation rejects packed-format buffers (bug tracked in `fixme.md`).
+
+**New PixelFormat / PixelDesc added:**
+- `PixelFormat::P_444_3x8` — 3-plane 8-bit 4:4:4, no subsampling.
+- `PixelDesc::RGB8_Planar_sRGB` — 8-bit planar R/G/B (one byte per component per pixel, 3 equal-sized planes), sRGB full range.  Codec-internal intermediate; CSC fast paths to/from `RGB8_sRGB` and `RGBA8_sRGB`.
+
+**Remaining work (future):**
+- [ ] 10/12-bit planar RGB (`P_444_3x10_LE`, `RGB10_Planar_LE_sRGB`) once SVT packed validation is fixed or real 10/12-bit RGB workflows appear.
+- [ ] `ImageFile::JpegXS` exposed in `MediaIOTask_ImageFile::defaultConfig()` so callers can probe JPEG XS config keys without knowing the codec.
+
+---
+
 ## mediaplay — Generic Config-Driven CLI
 
 **Files:** `utils/mediaplay/main.cpp`, `cli.{h,cpp}`, `stage.{h,cpp}`, `pipeline.{h,cpp}` (split from the original monolithic `main.cpp`; wired via `utils/mediaplay/CMakeLists.txt`)
@@ -238,7 +269,7 @@ All tracked in `fixme.md`. Summary of the ones that belong to this document:
 - QuickTime: XMP parser only matches `bext:` prefix (blocked on core XML support)
 - QuickTime: fragmented reader ignores `trex` default fallback (only handles `tfhd` overrides)
 - QuickTime: `BufferPool` available but not wired into the hot path
-- JPEG XS: packed RGB encode path not implemented (`classifyInput` rejects `RGB8_sRGB`)
-- JPEG XS: additional matrix/range/colour-space variants (only Rec.709 limited-range wired up)
+- JPEG XS: RGB encode path uses CSC workaround (`RGB8_sRGB` → `RGB8_Planar_sRGB` → SVT planar) due to SVT validation bug in `send_picture` for packed format; details and future direct path in `fixme.md`
+- JPEG XS: additional matrix/range/colour-space variants (only Rec.709 limited-range and sRGB wired up)
 - JPEG XS: QuickTime/ISO-BMFF `jxsm` sample entry not implemented
 - JPEG XS: RFC 9134 RTP slice packetization mode (K=1) + fmtp generation from SVT image config

@@ -1117,6 +1117,31 @@ static PixelFormat::Data makePlanar411_3x8() {
 }
 
 // ---------------------------------------------------------------------------
+// Planar 4:4:4 factory functions
+// ---------------------------------------------------------------------------
+
+static PixelFormat::Data makePlanar444_3x8() {
+        PixelFormat::Data d;
+        d.id             = PixelFormat::P_444_3x8;
+        d.name           = "Planar_444_3x8";
+        d.desc           = "3 planes, 8-bit, 4:4:4";
+        d.sampling       = PixelFormat::Sampling444;
+        d.chromaSitingH  = PixelFormat::ChromaHCenter;
+        d.chromaSitingV  = PixelFormat::ChromaVCenter;
+        d.compCount      = 3;
+        d.comps[0]       = { 0, 8, 0 };
+        d.comps[1]       = { 1, 8, 0 };
+        d.comps[2]       = { 2, 8, 0 };
+        d.planeCount     = 3;
+        d.planes[0]      = { "C0", 1, 1, 1 };
+        d.planes[1]      = { "C1", 1, 1, 1 };
+        d.planes[2]      = { "C2", 1, 1, 1 };
+        d.lineStrideFunc = planarLineStride;
+        d.planeSizeFunc  = planarPlaneSize;
+        return d;
+}
+
+// ---------------------------------------------------------------------------
 // 16-bit YCbCr additions factory functions
 // ---------------------------------------------------------------------------
 
@@ -1284,6 +1309,7 @@ struct PixelFormatRegistry {
                 add(makeSemiPlanar420_16BE());
                 add(makeInterleavedUYVY3x16LE());
                 add(makeInterleavedUYVY3x16BE());
+                add(makePlanar444_3x8());
         }
 
         void add(PixelFormat::Data d) {
