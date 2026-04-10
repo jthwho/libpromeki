@@ -181,7 +181,7 @@ Static Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Well-known <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> type for audio sample formats. </p>
-<p>Mirrors <code><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a></code> in value and order. Used as the value type for any config key that selects an audio sample format (e.g. <code><a class="el" href="classMediaIOTask__Converter.html#a4372d06e106dee0eba19f4e4c96f8c3d" title="Target audio sample format (Enum AudioDataType; Invalid = pass-through).">MediaIOTask_Converter::ConfigOutputAudioDataType</a></code>).</p>
+<p>Mirrors <code><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a></code> in value and order. Used as the value type for any config key that selects an audio sample format (e.g. <code><a class="el" href="classMediaConfig.html#a52a00ba4fc391ab90af994026b41fa87" title="Enum AudioDataType — target audio sample format (Invalid = audio pass-through).">MediaConfig::OutputAudioDataType</a></code>).</p>
 <p>The integer values match the <code><a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4" title="Enumeration of supported audio sample data types.">AudioDesc::DataType</a></code> enumeration so callers can convert in either direction via a plain <code>static_cast</code> on <code><a class="el" href="classEnum.html#a64baa605793d6a57d99ab2800768f38f" title="Returns the integer value of this enum.">Enum::value()</a></code>. The string names also match — e.g. <code>"PCMI_S16LE"</code>, <code>"PCMI_Float32LE"</code> — so legacy code that still passes strings through <code><a class="el" href="classAudioDesc.html#abe205f6720fd6198eacaf796c3c3db2e" title="Converts a string name to its corresponding DataType enum value.">AudioDesc::stringToDataType</a></code> keeps working when the same string is fed through the <a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> lookup path. </p>
 </div><h2 class="groupheader">Member Data Documentation</h2>
 <a id="a800ecfc9082faeb46123338dbb0e9146" name="a800ecfc9082faeb46123338dbb0e9146"></a>
@@ -238,7 +238,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structAudioDataType.html">AudioDataType</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

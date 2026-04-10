@@ -1,7 +1,0 @@
-<map id="RtpVideoSinkNode" name="RtpVideoSinkNode">
-<area shape="rect" id="Node000001" title="Terminal sink node that sends video frames over RTP." alt="" coords="5,152,148,177"/>
-<area shape="rect" id="Node000002" href="$classMediaNode.html" title="Base class for all pipeline processing nodes." alt="" coords="29,79,125,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="79,118,79,152,74,152,74,118"/>
-<area shape="rect" id="Node000003" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="29,5,125,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="79,44,79,79,74,79,74,44"/>
-</map>

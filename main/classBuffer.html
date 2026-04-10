@@ -293,10 +293,11 @@ Static Public Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">sz</td><td>Size in bytes to allocate. </td></tr>
     <tr><td class="paramname">an</td><td>Alignment in bytes (defaults to DefaultAlign). </td></tr>
-    <tr><td class="paramname">ms</td><td>Memory space to allocate from. </td></tr>
+    <tr><td class="paramname">ms</td><td>Memory space to allocate from.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>This allocates the buffer of a given size, but does not set the logical size (it is initialized to 0). </dd></dl>
 
 </div>
 </div>
@@ -359,10 +360,11 @@ Static Public Attributes</h2></td></tr>
     <tr><td class="paramname">sz</td><td>Size of the memory region in bytes. </td></tr>
     <tr><td class="paramname">an</td><td>Alignment of the pointer (0 if unknown). </td></tr>
     <tr><td class="paramname">own</td><td>If true, the buffer takes ownership and will free the memory on destruction. </td></tr>
-    <tr><td class="paramname">ms</td><td>Memory space the pointer belongs to. </td></tr>
+    <tr><td class="paramname">ms</td><td>Memory space the pointer belongs to.</td></tr>
   </table>
   </dd>
 </dl>
+<dl class="section note"><dt>Note</dt><dd>This wraps existing memory but does not set the logical size (it is initialized to 0). </dd></dl>
 
 </div>
 </div>
@@ -901,7 +903,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classBuffer.html">Buffer</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

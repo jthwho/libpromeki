@@ -39,5 +39,10 @@ var group__media =
       [ "isValid", "classBufferView.html#a5c19f615f543ce7c7299801cf8dd4b34", null ],
       [ "offset", "classBufferView.html#a485a977ea91d0ea0ad662ac0641b9854", null ],
       [ "size", "classBufferView.html#ade6d05e0dbe62e7c524a129545ccc902", null ]
-    ] ]
+    ] ],
+    [ "MediaConfigTag", "structMediaConfigTag.html", null ],
+    [ "MediaConfig", "classMediaConfig.html", [
+      [ "Base", "classMediaConfig.html#ad8954efa32046757a54fff49601b2fcf", null ]
+    ] ],
+    [ "MediaConfigID", "group__media.html#ga5a21e9aead5071f63ae79fb219adc486", null ]
 ];

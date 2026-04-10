@@ -1,0 +1,5 @@
+<map id="MulticastReceiver::GroupEntry" name="MulticastReceiver::GroupEntry">
+<area shape="rect" id="Node000001" title="Describes one group membership request." alt="" coords="5,108,152,148"/>
+<area shape="rect" id="Node000002" href="$classSocketAddress.html" title="Network address with port number." alt="" coords="20,5,137,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="81,45,81,108,76,108,76,45"/>
+</map>

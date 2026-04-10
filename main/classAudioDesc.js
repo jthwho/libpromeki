@@ -46,6 +46,7 @@ var classAudioDesc =
     [ "setDataType", "classAudioDesc.html#a331dc642a6ebce45a2cc3edbe654b039", null ],
     [ "setSampleRate", "classAudioDesc.html#a31b0bf94438907b125f7fba03183fdc0", null ],
     [ "toJson", "classAudioDesc.html#ab14f6e70fe47ab39420796247f5ecbdf", null ],
+    [ "toSdp", "classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50", null ],
     [ "toString", "classAudioDesc.html#a39a3326dbbe81cbb3951e3f31beff7df", null ],
     [ "workingDesc", "classAudioDesc.html#ad04bfe1f04c616f7bafc2071fa9ee5eb", null ]
 ];

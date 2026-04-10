@@ -9,6 +9,7 @@ var classJpegImageCodec =
     [ "~JpegImageCodec", "classJpegImageCodec.html#a211a0c76ba09540893b5fb6e934f738d", null ],
     [ "canDecode", "classJpegImageCodec.html#a71fad2735b105a801668d0574dbe41e7", null ],
     [ "canEncode", "classJpegImageCodec.html#a58b01cde6177af7325e4c2972174cad9", null ],
+    [ "configure", "classJpegImageCodec.html#af16707778aaa732b428d61534e9136e9", null ],
     [ "decode", "classJpegImageCodec.html#a9ab06fa21ab7d6e1b18294ccf0b5de6e", null ],
     [ "description", "classJpegImageCodec.html#a80655d69a66712069d062a81c42d50ee", null ],
     [ "encode", "classJpegImageCodec.html#a6a821b05211c924875d2291a1e692ae4", null ],

@@ -1,5 +1,0 @@
-<map id="MediaSource" name="MediaSource">
-<area shape="rect" id="Node000001" title="Output endpoint on a MediaNode that delivers Frame::Ptr to connected sinks." alt="" coords="5,93,112,119"/>
-<area shape="rect" id="Node000002" href="$classRefCount.html" title="An atomic reference count object." alt="" coords="17,5,100,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="61,45,61,93,56,93,56,45"/>
-</map>

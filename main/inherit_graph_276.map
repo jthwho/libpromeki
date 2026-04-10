@@ -1,13 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" title=" " alt="" coords="5,156,117,181"/>
-<area shape="rect" id="Node000001" href="$structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html" title=" " alt="" coords="165,5,347,60"/>
-<area shape="poly" id="edge91_Node000000_Node000001" title=" " alt="" coords="81,144,118,107,164,70,186,58,188,62,167,75,122,111,85,147"/>
-<area shape="rect" id="Node000002" href="$structdetail_1_1is__type__registry_3_01ColorModel_01_4.html" title=" " alt="" coords="171,85,341,125"/>
-<area shape="poly" id="edge92_Node000000_Node000002" title=" " alt="" coords="113,149,194,122,195,127,115,154"/>
-<area shape="rect" id="Node000003" href="$structdetail_1_1is__type__registry_3_01MemSpace_01_4.html" title=" " alt="" coords="171,149,341,189"/>
-<area shape="poly" id="edge93_Node000000_Node000003" title=" " alt="" coords="131,166,171,166,171,171,131,171"/>
-<area shape="rect" id="Node000004" href="$structdetail_1_1is__type__registry_3_01PixelDesc_01_4.html" title=" " alt="" coords="171,213,341,253"/>
-<area shape="poly" id="edge94_Node000000_Node000004" title=" " alt="" coords="115,183,195,210,194,215,113,188"/>
-<area shape="rect" id="Node000005" href="$structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html" title=" " alt="" coords="171,277,341,317"/>
-<area shape="poly" id="edge95_Node000000_Node000005" title=" " alt="" coords="84,190,121,227,167,262,190,274,188,279,164,267,117,231,80,194"/>
+<area shape="rect" id="Node000000" href="$classStringData.html" title="Pure virtual interface for String storage backends." alt="" coords="5,80,96,105"/>
+<area shape="rect" id="Node000001" href="$classStringLatin1Data.html" title="Latin1 string storage. One byte = one character." alt="" coords="171,5,302,31"/>
+<area shape="poly" id="edge94_Node000000_Node000001" title=" " alt="" coords="82,70,143,40,177,28,179,33,145,44,85,75"/>
+<area shape="rect" id="Node000002" href="$classStringLiteralData.html" title="Immutable string storage wrapping a string literal pointer." alt="" coords="171,55,303,80"/>
+<area shape="poly" id="edge95_Node000000_Node000002" title=" " alt="" coords="110,82,170,74,171,79,110,87"/>
+<area shape="rect" id="Node000003" href="$classStringUnicodeData.html" title="Unicode string storage. Decoded codepoints in a List&lt;Char&gt;." alt="" coords="165,104,309,129"/>
+<area shape="poly" id="edge96_Node000000_Node000003" title=" " alt="" coords="110,98,165,105,164,110,109,103"/>
+<area shape="rect" id="Node000004" href="$classStringUnicodeLiteralData.html" title="Immutable Unicode string storage wrapping compile&#45;time decoded data." alt="" coords="144,153,329,179"/>
+<area shape="poly" id="edge97_Node000000_Node000004" title=" " alt="" coords="86,110,145,138,183,151,181,156,143,143,84,114"/>
 </map>

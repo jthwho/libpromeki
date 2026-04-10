@@ -102,6 +102,7 @@ $(document).ready(function(){initNavTree('classMediaDesc.html',''); initResizabl
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="classMediaDesc-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MediaDesc Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
@@ -133,6 +134,9 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>MediaDesc</b> ()=<a class="el" href="classList.html">default</a></td></tr>
 <tr class="memdesc:a6bcbb1383322acdf03122b47f5962ac3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a default (invalid) media description. <br /></td></tr>
 <tr class="separator:a6bcbb1383322acdf03122b47f5962ac3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97ab5cb5eb6fc28ba06c24aef49b242a" id="r_a97ab5cb5eb6fc28ba06c24aef49b242a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSdpSession.html">SdpSession</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaDesc.html#a97ab5cb5eb6fc28ba06c24aef49b242a">toSdp</a> (<a class="el" href="classList.html">uint8_t</a> <a class="el" href="classList.html">videoPayloadType</a>=96) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a97ab5cb5eb6fc28ba06c24aef49b242a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds an <a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a> from this <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a>.  <br /></td></tr>
+<tr class="separator:a97ab5cb5eb6fc28ba06c24aef49b242a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8301531765c6da2170962437b61b1fb" id="r_af8301531765c6da2170962437b61b1fb"><td class="memItemLeft" align="right" valign="top"><a id="af8301531765c6da2170962437b61b1fb" name="af8301531765c6da2170962437b61b1fb"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:af8301531765c6da2170962437b61b1fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the media description is valid (has a valid frame rate and at least one image or audio description). <br /></td></tr>
@@ -168,11 +172,54 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> ()</td></tr>
 <tr class="memdesc:a66442b47f146bbae242a802eb881d19e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the metadata. <br /></td></tr>
 <tr class="separator:a66442b47f146bbae242a802eb881d19e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a75565941a0e7a37552c14fac0088fc14" id="r_a75565941a0e7a37552c14fac0088fc14"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaDesc.html">MediaDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaDesc.html#a75565941a0e7a37552c14fac0088fc14">fromSdp</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSdpSession.html">SdpSession</a> &amp;session)</td></tr>
+<tr class="memdesc:a75565941a0e7a37552c14fac0088fc14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregates the per-<code>m=</code> descriptors from an SDP session.  <br /></td></tr>
+<tr class="separator:a75565941a0e7a37552c14fac0088fc14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes a media format including frame rate, image layers, audio channels, and metadata. </p>
 <p><a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> is the complete descriptor for a media resource. It carries the frame rate, zero or more image layers (<a class="el" href="classImageDesc.html" title="Describes the format and layout of a single image.">ImageDesc</a>), zero or more audio channel groups (<a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>), and container-level metadata. A valid <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> has a valid frame rate and at least one image or audio description. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a75565941a0e7a37552c14fac0088fc14" name="a75565941a0e7a37552c14fac0088fc14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a75565941a0e7a37552c14fac0088fc14">&#9670;&#160;</a></span>fromSdp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaDesc.html">MediaDesc</a> MediaDesc::fromSdp </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSdpSession.html">SdpSession</a> &amp;&#160;</td>
+          <td class="paramname"><em>session</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Aggregates the per-<code>m=</code> descriptors from an SDP session. </p>
+<p>Walks every media description in <code>session</code>, calls <a class="el" href="classImageDesc.html#a993657bc4406c5eef0b92b7f89d550d7">ImageDesc::fromSdp</a> or <a class="el" href="classAudioDesc.html#a560400079ae4386b1f1a7e12b4ed65eb">AudioDesc::fromSdp</a> on each one (based on its <code>mediaType</code>), and pushes any successful result into the corresponding list on the returned <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a>. The frame rate is left unset — SDP does not carry a frame rate attribute, so callers that need one must fill it in separately.</p>
+<p>Media descriptions whose encoding name is not recognised by <a class="el" href="classImageDesc.html#a993657bc4406c5eef0b92b7f89d550d7">ImageDesc::fromSdp</a> / <a class="el" href="classAudioDesc.html#a560400079ae4386b1f1a7e12b4ed65eb">AudioDesc::fromSdp</a> are silently skipped, so the returned <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> may be partial (or empty) for streams that use encodings libpromeki does not yet know about.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">session</td><td>The parsed SDP session. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> with the image and audio lists populated from <code>session</code>. </dd></dl>
+
+</div>
+</div>
 <a id="a09c0528b5aa497ab8ddac1b886186d2c" name="a09c0528b5aa497ab8ddac1b886186d2c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a09c0528b5aa497ab8ddac1b886186d2c">&#9670;&#160;</a></span>setFrameRate()</h2>
 
@@ -207,6 +254,35 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a97ab5cb5eb6fc28ba06c24aef49b242a" name="a97ab5cb5eb6fc28ba06c24aef49b242a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97ab5cb5eb6fc28ba06c24aef49b242a">&#9670;&#160;</a></span>toSdp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSdpSession.html">SdpSession</a> MediaDesc::toSdp </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">uint8_t</a>&#160;</td>
+          <td class="paramname"><em>videoPayloadType</em> = <code>96</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Builds an <a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a> from this <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a>. </p>
+<p>The inverse of <a class="el" href="classMediaDesc.html#a75565941a0e7a37552c14fac0088fc14">fromSdp</a>. Walks the image and audio lists and calls <a class="el" href="classImageDesc.html#a7aa8196008eb99acec3eeea25ddeac99">ImageDesc::toSdp</a> / <a class="el" href="classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50">AudioDesc::toSdp</a> on each entry, appending the resulting media descriptions to a new <a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a>.</p>
+<p>Video payload types start at <code>videoPayloadType</code> (default 96) and increment for each image entry. <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> payload types start at <code>audioPayloadType</code> (default one past the last video PT).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">videoPayloadType</td><td>Starting PT for video streams. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A populated <a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a>. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediadesc_8h_source.html">mediadesc.h</a></li>
 </ul>
@@ -217,7 +293,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaDesc.html">MediaDesc</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -100,7 +100,10 @@ $(document).ready(function(){initNavTree('classUdpSocket.html',''); initResizabl
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classUdpSocket-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">UdpSocket Class Reference<div class="ingroups"><a class="el" href="group__network.html">Network</a></div></div></div>
 </div><!--header-->
@@ -147,6 +150,55 @@ Collaboration diagram for UdpSocket:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structUdpSocket_1_1Datagram.html">Datagram</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes a single datagram for batch-send APIs.  <a href="structUdpSocket_1_1Datagram.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:aa3e71cccd2d27986479f9b6a15ba24fb" id="r_aa3e71cccd2d27986479f9b6a15ba24fb"><td class="memItemLeft" align="right" valign="top"><a id="aa3e71cccd2d27986479f9b6a15ba24fb" name="aa3e71cccd2d27986479f9b6a15ba24fb"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DatagramList</b> = <a class="el" href="classList.html">List</a>&lt; <a class="el" href="structUdpSocket_1_1Datagram.html">Datagram</a> &gt;</td></tr>
+<tr class="memdesc:aa3e71cccd2d27986479f9b6a15ba24fb"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classList.html" title="Dynamic array container wrapping std::vector.">List</a> of datagrams for batch send. <br /></td></tr>
+<tr class="separator:aa3e71cccd2d27986479f9b6a15ba24fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classAbstractSocket"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classAbstractSocket')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classAbstractSocket.html">AbstractSocket</a></td></tr>
+<tr class="memitem:a2e2f93375bf764e38a846c57ac8e4b2c inherit pub_types_classAbstractSocket" id="r_a2e2f93375bf764e38a846c57ac8e4b2c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2c">SocketType</a> { <a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2cac0be3b88463cfd59be8155bb5e3495d6">TcpSocketType</a>
+, <a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2ca4cd213a8349cc347e719c748b45c3236">UdpSocketType</a>
+, <a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2ca94c2b0ac526d2543b2043856d308a044">RawSocketType</a>
+ }</td></tr>
+<tr class="memdesc:a2e2f93375bf764e38a846c57ac8e4b2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of socket.  <a href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2c">More...</a><br /></td></tr>
+<tr class="separator:a2e2f93375bf764e38a846c57ac8e4b2c inherit pub_types_classAbstractSocket"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af30ebd5460722ac138372160d81b939c inherit pub_types_classAbstractSocket" id="r_af30ebd5460722ac138372160d81b939c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939c">SocketState</a> { <br />
+&#160;&#160;<a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939cab5e8cb77385da5c2bf79d30a510eb735">Unconnected</a>
+, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca0c49879fb70e997ae09df5a8eb3f8d52">Connecting</a>
+, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939caf8d26e684ec82f944f7e0ac93e190664">Connected</a>
+, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca70c9dfc1c3289a714faef9bbd493440c">Bound</a>
+, <br />
+&#160;&#160;<a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca83f667e3d1c2918e1728585b48b10a82">Closing</a>
+, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca2696b803e44bbe723048736d9e4bba88">Listening</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:af30ebd5460722ac138372160d81b939c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The current state of the socket.  <a href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939c">More...</a><br /></td></tr>
+<tr class="separator:af30ebd5460722ac138372160d81b939c inherit pub_types_classAbstractSocket"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classIODevice')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
+<tr class="memitem:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
+, <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a">ReadOnly</a> = 0x01
+, <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> = 0x02
+, <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b">ReadWrite</a> = ReadOnly | WriteOnly
+, <br />
+&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930">Append</a> = 0x04 | WriteOnly
+<br />
+ }</td></tr>
+<tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
+<tr class="separator:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
+<tr class="memdesc:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for invoking a slot with a list of Variants. <br /></td></tr>
+<tr class="separator:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa837ef3b63156eb8fd3ee2958f9a102d" id="r_aa837ef3b63156eb8fd3ee2958f9a102d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#aa837ef3b63156eb8fd3ee2958f9a102d">UdpSocket</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
@@ -177,13 +229,25 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:add5c68fef5c035cd83fcd5c9a986eefe" id="r_add5c68fef5c035cd83fcd5c9a986eefe"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#add5c68fef5c035cd83fcd5c9a986eefe">bytesAvailable</a> () <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:add5c68fef5c035cd83fcd5c9a986eefe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes available for reading.  <br /></td></tr>
 <tr class="separator:add5c68fef5c035cd83fcd5c9a986eefe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc0eb8f1f70c3ece44e0c2a03dc003d0" id="r_adc0eb8f1f70c3ece44e0c2a03dc003d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">ssize_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0">writeDatagram</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">size_t</a> <a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">size</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>)</td></tr>
+<tr class="memitem:adc0eb8f1f70c3ece44e0c2a03dc003d0" id="r_adc0eb8f1f70c3ece44e0c2a03dc003d0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">ssize_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0">writeDatagram</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">size_t</a> <a class="el" href="classIODevice.html#ad750fab3127e006588812977cba6c3f1">size</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;dest)</td></tr>
 <tr class="memdesc:adc0eb8f1f70c3ece44e0c2a03dc003d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a datagram to a specific destination.  <br /></td></tr>
 <tr class="separator:adc0eb8f1f70c3ece44e0c2a03dc003d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc903fc891824faff904ed18630ef839" id="r_afc903fc891824faff904ed18630ef839"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">ssize_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#afc903fc891824faff904ed18630ef839">writeDatagram</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html">Buffer</a> &amp;data, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>)</td></tr>
+<tr class="memitem:afc903fc891824faff904ed18630ef839" id="r_afc903fc891824faff904ed18630ef839"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">ssize_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#afc903fc891824faff904ed18630ef839">writeDatagram</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html">Buffer</a> &amp;data, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;dest)</td></tr>
 <tr class="memdesc:afc903fc891824faff904ed18630ef839"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> as a datagram.  <br /></td></tr>
 <tr class="separator:afc903fc891824faff904ed18630ef839"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a261b998b436fe176231d26883be640c0" id="r_a261b998b436fe176231d26883be640c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">ssize_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#a261b998b436fe176231d26883be640c0">readDatagram</a> (<a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">size_t</a> maxSize, <a class="el" href="classSocketAddress.html">SocketAddress</a> *<a class="el" href="classList.html">sender</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:abb70a958826f6f6d24b19f4b7992b50f" id="r_abb70a958826f6f6d24b19f4b7992b50f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#abb70a958826f6f6d24b19f4b7992b50f">writeDatagrams</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb">DatagramList</a> &amp;<a class="el" href="classList.html">datagrams</a>)</td></tr>
+<tr class="memdesc:abb70a958826f6f6d24b19f4b7992b50f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a batch of datagrams in one syscall.  <br /></td></tr>
+<tr class="separator:abb70a958826f6f6d24b19f4b7992b50f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af60121fcad7158754cb9a8700965c753" id="r_af60121fcad7158754cb9a8700965c753"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#af60121fcad7158754cb9a8700965c753">setPacingRate</a> (<a class="el" href="classList.html">uint64_t</a> <a class="el" href="classList.html">bytesPerSec</a>)</td></tr>
+<tr class="memdesc:af60121fcad7158754cb9a8700965c753"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a per-socket transmit rate limit.  <br /></td></tr>
+<tr class="separator:af60121fcad7158754cb9a8700965c753"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94c2383319fbe078382ba7ddb4de1a57" id="r_a94c2383319fbe078382ba7ddb4de1a57"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#a94c2383319fbe078382ba7ddb4de1a57">clearPacingRate</a> ()</td></tr>
+<tr class="memdesc:a94c2383319fbe078382ba7ddb4de1a57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the transmit rate limit set by <a class="el" href="classUdpSocket.html#af60121fcad7158754cb9a8700965c753">setPacingRate()</a>.  <br /></td></tr>
+<tr class="separator:a94c2383319fbe078382ba7ddb4de1a57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91a31af0e85b69ea8d5064a6320df096" id="r_a91a31af0e85b69ea8d5064a6320df096"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#a91a31af0e85b69ea8d5064a6320df096">setTxTime</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">enable</a>, int <a class="el" href="classList.html">clockId</a>=11)</td></tr>
+<tr class="memdesc:a91a31af0e85b69ea8d5064a6320df096"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables per-packet transmit-time scheduling.  <br /></td></tr>
+<tr class="separator:a91a31af0e85b69ea8d5064a6320df096"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a261b998b436fe176231d26883be640c0" id="r_a261b998b436fe176231d26883be640c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">ssize_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#a261b998b436fe176231d26883be640c0">readDatagram</a> (<a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">size_t</a> maxSize, <a class="el" href="classSocketAddress.html">SocketAddress</a> *sender=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a261b998b436fe176231d26883be640c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Receives a datagram.  <br /></td></tr>
 <tr class="separator:a261b998b436fe176231d26883be640c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeab9244817662235c7f6bb4f04290070" id="r_aeab9244817662235c7f6bb4f04290070"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#aeab9244817662235c7f6bb4f04290070">hasPendingDatagrams</a> () <a class="el" href="classList.html">const</a></td></tr>
@@ -213,7 +277,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af3443a4407fd2e0d748d4f05480bfde9" id="r_af3443a4407fd2e0d748d4f05480bfde9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#af3443a4407fd2e0d748d4f05480bfde9">setReuseAddress</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">enable</a>)</td></tr>
 <tr class="memdesc:af3443a4407fd2e0d748d4f05480bfde9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables SO_REUSEADDR.  <br /></td></tr>
 <tr class="separator:af3443a4407fd2e0d748d4f05480bfde9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace9424bdf144770de40fcbce8b70659f" id="r_ace9424bdf144770de40fcbce8b70659f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#ace9424bdf144770de40fcbce8b70659f">setDscp</a> (<a class="el" href="classList.html">uint8_t</a> <a class="el" href="classList.html">dscp</a>)</td></tr>
+<tr class="memitem:ace9424bdf144770de40fcbce8b70659f" id="r_ace9424bdf144770de40fcbce8b70659f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUdpSocket.html#ace9424bdf144770de40fcbce8b70659f">setDscp</a> (<a class="el" href="classList.html">uint8_t</a> dscp)</td></tr>
 <tr class="memdesc:ace9424bdf144770de40fcbce8b70659f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the DSCP (Differentiated Services) value.  <br /></td></tr>
 <tr class="separator:ace9424bdf144770de40fcbce8b70659f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classAbstractSocket"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classAbstractSocket')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classAbstractSocket.html">AbstractSocket</a></td></tr>
@@ -378,58 +442,12 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
 <tr class="separator:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classAbstractSocket"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classAbstractSocket')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classAbstractSocket.html">AbstractSocket</a></td></tr>
-<tr class="memitem:a2e2f93375bf764e38a846c57ac8e4b2c inherit pub_types_classAbstractSocket" id="r_a2e2f93375bf764e38a846c57ac8e4b2c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2c">SocketType</a> { <a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2cac0be3b88463cfd59be8155bb5e3495d6">TcpSocketType</a>
-, <a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2ca4cd213a8349cc347e719c748b45c3236">UdpSocketType</a>
-, <a class="el" href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2ca94c2b0ac526d2543b2043856d308a044">RawSocketType</a>
- }</td></tr>
-<tr class="memdesc:a2e2f93375bf764e38a846c57ac8e4b2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of socket.  <a href="classAbstractSocket.html#a2e2f93375bf764e38a846c57ac8e4b2c">More...</a><br /></td></tr>
-<tr class="separator:a2e2f93375bf764e38a846c57ac8e4b2c inherit pub_types_classAbstractSocket"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af30ebd5460722ac138372160d81b939c inherit pub_types_classAbstractSocket" id="r_af30ebd5460722ac138372160d81b939c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939c">SocketState</a> { <br />
-&#160;&#160;<a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939cab5e8cb77385da5c2bf79d30a510eb735">Unconnected</a>
-, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca0c49879fb70e997ae09df5a8eb3f8d52">Connecting</a>
-, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939caf8d26e684ec82f944f7e0ac93e190664">Connected</a>
-, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca70c9dfc1c3289a714faef9bbd493440c">Bound</a>
-, <br />
-&#160;&#160;<a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca83f667e3d1c2918e1728585b48b10a82">Closing</a>
-, <a class="el" href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca2696b803e44bbe723048736d9e4bba88">Listening</a>
-<br />
- }</td></tr>
-<tr class="memdesc:af30ebd5460722ac138372160d81b939c"><td class="mdescLeft">&#160;</td><td class="mdescRight">The current state of the socket.  <a href="classAbstractSocket.html#af30ebd5460722ac138372160d81b939c">More...</a><br /></td></tr>
-<tr class="separator:af30ebd5460722ac138372160d81b939c inherit pub_types_classAbstractSocket"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classIODevice"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classIODevice')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classIODevice.html">IODevice</a></td></tr>
-<tr class="memitem:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice" id="r_ac12c287cd37708c10d6618d667a3147a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> { <br />
-&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa84e4448af6ff59ea244090f7126f7926">NotOpen</a> = 0x00
-, <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa6d749f5bb57e3cef1e17d58e0419625a">ReadOnly</a> = 0x01
-, <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aa5e2c1690c5235439fb591119ec7f8dbe">WriteOnly</a> = 0x02
-, <a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b">ReadWrite</a> = ReadOnly | WriteOnly
-, <br />
-&#160;&#160;<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aafcb88e165d8115a411e69369436fa930">Append</a> = 0x04 | WriteOnly
-<br />
- }</td></tr>
-<tr class="memdesc:ac12c287cd37708c10d6618d667a3147a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mode flags controlling how a device is opened.  <a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">More...</a><br /></td></tr>
-<tr class="separator:ac12c287cd37708c10d6618d667a3147a inherit pub_types_classIODevice"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
-<tr class="memdesc:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for invoking a slot with a list of Variants. <br /></td></tr>
-<tr class="separator:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
-<tr class="memdesc:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase_1_1MetaInfo.html" title="Captures all the metadata about this object.">MetaInfo</a> for the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> class. <br /></td></tr>
-<tr class="separator:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase" id="r_a7d2e491c5289e22a84070551cc95aaa1"><td class="memTemplParams" colspan="2">
-template&lt;typename... Args&gt; </td></tr>
-<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
-<tr class="memdesc:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">connects a signal and slot together. This function assumes both the signal and slot exist in a <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> or derived object <br /></td></tr>
-<tr class="separator:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase" id="r_a4dd3a080906c3330b8168cbc354f83b0"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignal</b> = <a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;(<a class="el" href="classList.html">this</a>, <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
-<tr class="separator:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a1ccd2a36437c4a9ce7a1ff3f024469cf" id="r_a1ccd2a36437c4a9ce7a1ff3f024469cf"><td class="memItemLeft" align="right" valign="top"><a id="a1ccd2a36437c4a9ce7a1ff3f024469cf" name="a1ccd2a36437c4a9ce7a1ff3f024469cf"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PacingRateUnlimited</b> = ~<a class="el" href="classList.html">static_cast</a>&lt;<a class="el" href="classList.html">uint64_t</a>&gt;(0)</td></tr>
+<tr class="memdesc:a1ccd2a36437c4a9ce7a1ff3f024469cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Value returned by <a class="el" href="classUdpSocket.html#af60121fcad7158754cb9a8700965c753">setPacingRate()</a> to disable pacing. <br /></td></tr>
+<tr class="separator:a1ccd2a36437c4a9ce7a1ff3f024469cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_classAbstractSocket"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classAbstractSocket')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classAbstractSocket.html">AbstractSocket</a></td></tr>
 <tr class="memitem:a73a4ed131da5c19cb64bbe3fb3c8b9ff inherit pub_static_attribs_classAbstractSocket" id="r_a73a4ed131da5c19cb64bbe3fb3c8b9ff"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">unsigned</a> int&#160;</td><td class="memItemRight" valign="bottom"><b>DefaultReceiveTimeoutMs</b> = 5000</td></tr>
@@ -445,6 +463,23 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase" id="r_ae2f4061ea36551655f6fd02fec4b2abd"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignalMeta</b> = <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>(<a class="el" href="classObjectBase.html#a6cf10683d2b9fa2dd0ab9a0722e925ad">metaInfo</a>(), <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
 <tr class="separator:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
+<tr class="memdesc:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classObjectBase_1_1MetaInfo.html" title="Captures all the metadata about this object.">MetaInfo</a> for the <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> class. <br /></td></tr>
+<tr class="separator:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase" id="r_a7d2e491c5289e22a84070551cc95aaa1"><td class="memTemplParams" colspan="2">
+template&lt;typename... Args&gt; </td></tr>
+<tr class="memitem:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
+<tr class="memdesc:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">connects a signal and slot together. This function assumes both the signal and slot exist in a <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> or derived object <br /></td></tr>
+<tr class="separator:a7d2e491c5289e22a84070551cc95aaa1 inherit pub_static_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase" id="r_a4dd3a080906c3330b8168cbc354f83b0"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignal</b> = <a class="el" href="classSignal.html">Signal</a>&lt; <a class="el" href="classObjectBase.html">ObjectBase</a> * &gt;(<a class="el" href="classList.html">this</a>, <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
+<tr class="separator:a4dd3a080906c3330b8168cbc354f83b0 inherit pub_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classAbstractSocket"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classAbstractSocket')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classAbstractSocket.html">AbstractSocket</a></td></tr>
 <tr class="memitem:af96a8b91b524afd693081eea7bc5e6fb inherit pro_methods_classAbstractSocket" id="r_af96a8b91b524afd693081eea7bc5e6fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAbstractSocket.html#af96a8b91b524afd693081eea7bc5e6fb">createSocket</a> (int <a class="el" href="classList.html">domain</a>, int type, int protocol=0)</td></tr>
 <tr class="memdesc:af96a8b91b524afd693081eea7bc5e6fb inherit pro_methods_classAbstractSocket"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates the underlying socket descriptor.  <br /></td></tr>
@@ -511,19 +546,19 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_fd</b> = -1</td></tr>
 <div class="line"><a class="code hl_class" href="classList.html">sock</a>.bind(<a class="code hl_function" href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a>(5004));</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Send a datagram</span></div>
-<div class="line"><a class="code hl_class" href="classSocketAddress.html">SocketAddress</a> <a class="code hl_class" href="classList.html">dest</a>(<a class="code hl_class" href="classIpv4Address.html">Ipv4Address</a>(239, 0, 0, 1), 5004);</div>
-<div class="line"><a class="code hl_class" href="classList.html">sock</a>.writeDatagram(<span class="stringliteral">&quot;hello&quot;</span>, 5, <a class="code hl_class" href="classList.html">dest</a>);</div>
+<div class="line"><a class="code hl_class" href="classSocketAddress.html">SocketAddress</a> dest(<a class="code hl_class" href="classIpv4Address.html">Ipv4Address</a>(239, 0, 0, 1), 5004);</div>
+<div class="line"><a class="code hl_class" href="classList.html">sock</a>.writeDatagram(<span class="stringliteral">&quot;hello&quot;</span>, 5, dest);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Receive a datagram</span></div>
 <div class="line"><span class="keywordtype">char</span> <a class="code hl_class" href="classList.html">buf</a>[1500];</div>
-<div class="line"><a class="code hl_class" href="classSocketAddress.html">SocketAddress</a> <a class="code hl_class" href="classList.html">sender</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">ssize_t</a> <a class="code hl_class" href="classList.html">n</a> = <a class="code hl_class" href="classList.html">sock</a>.readDatagram(<a class="code hl_class" href="classList.html">buf</a>, <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">buf</a>), &amp;<a class="code hl_class" href="classList.html">sender</a>);</div>
+<div class="line"><a class="code hl_class" href="classSocketAddress.html">SocketAddress</a> sender;</div>
+<div class="line"><a class="code hl_class" href="classList.html">ssize_t</a> <a class="code hl_class" href="classList.html">n</a> = <a class="code hl_class" href="classList.html">sock</a>.readDatagram(<a class="code hl_class" href="classList.html">buf</a>, <span class="keyword">sizeof</span>(<a class="code hl_class" href="classList.html">buf</a>), &amp;sender);</div>
 <div class="ttc" id="aclassIODevice_html_ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b"><div class="ttname"><a href="classIODevice.html#ac12c287cd37708c10d6618d667a3147aaf4c28a6a138da2e1a9dfa2427f00fb9b">IODevice::ReadWrite</a></div><div class="ttdeci">@ ReadWrite</div><div class="ttdoc">Open for reading and writing.</div><div class="ttdef"><b>Definition</b> iodevice.h:37</div></div>
 <div class="ttc" id="aclassIpv4Address_html"><div class="ttname"><a href="classIpv4Address.html">Ipv4Address</a></div><div class="ttdoc">IPv4 network address.</div><div class="ttdef"><b>Definition</b> ipv4address.h:51</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassSocketAddress_html"><div class="ttname"><a href="classSocketAddress.html">SocketAddress</a></div><div class="ttdoc">Network address with port number.</div><div class="ttdef"><b>Definition</b> socketaddress.h:50</div></div>
 <div class="ttc" id="aclassSocketAddress_html_aa74f0f4a0ee616a0b941f899e1dcc7f3"><div class="ttname"><a href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a></div><div class="ttdeci">static SocketAddress any(uint16_t port)</div><div class="ttdoc">Returns INADDR_ANY with the given port.</div><div class="ttdef"><b>Definition</b> socketaddress.h:71</div></div>
-<div class="ttc" id="aclassUdpSocket_html"><div class="ttname"><a href="classUdpSocket.html">UdpSocket</a></div><div class="ttdoc">Datagram-oriented UDP socket with multicast support.</div><div class="ttdef"><b>Definition</b> udpsocket.h:47</div></div>
+<div class="ttc" id="aclassUdpSocket_html"><div class="ttname"><a href="classUdpSocket.html">UdpSocket</a></div><div class="ttdoc">Datagram-oriented UDP socket with multicast support.</div><div class="ttdef"><b>Definition</b> udpsocket.h:48</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa837ef3b63156eb8fd3ee2958f9a102d" name="aa837ef3b63156eb8fd3ee2958f9a102d"></a>
@@ -580,6 +615,26 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_fd</b> = -1</td></tr>
 <dl class="section return"><dt>Returns</dt><dd>Bytes available, or 0 if unknown. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classIODevice.html#a7c0d344529ef3572fc0ebd4a9ecef83a">IODevice</a>.</p>
+
+</div>
+</div>
+<a id="a94c2383319fbe078382ba7ddb4de1a57" name="a94c2383319fbe078382ba7ddb4de1a57"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94c2383319fbe078382ba7ddb4de1a57">&#9670;&#160;</a></span>clearPacingRate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> UdpSocket::clearPacingRate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clears the transmit rate limit set by <a class="el" href="classUdpSocket.html#af60121fcad7158754cb9a8700965c753">setPacingRate()</a>. </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
 </div>
 </div>
@@ -1044,6 +1099,35 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_fd</b> = -1</td></tr>
 
 </div>
 </div>
+<a id="af60121fcad7158754cb9a8700965c753" name="af60121fcad7158754cb9a8700965c753"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af60121fcad7158754cb9a8700965c753">&#9670;&#160;</a></span>setPacingRate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> UdpSocket::setPacingRate </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">uint64_t</a>&#160;</td>
+          <td class="paramname"><em>bytesPerSec</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets a per-socket transmit rate limit. </p>
+<p>Uses <code>SO_MAX_PACING_RATE</code>, which is enforced by the <code>fq</code> qdisc on Linux (default on modern kernels). Packets submitted via <code><a class="el" href="classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0" title="Sends a datagram to a specific destination.">writeDatagram()</a></code> or <code><a class="el" href="classUdpSocket.html#abb70a958826f6f6d24b19f4b7992b50f" title="Sends a batch of datagrams in one syscall.">writeDatagrams()</a></code> beyond the configured rate are held by the qdisc and released on schedule, with zero per-packet CPU cost.</p>
+<p>Pass <a class="el" href="classUdpSocket.html#a1ccd2a36437c4a9ce7a1ff3f024469cf">PacingRateUnlimited</a> to disable pacing.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bytesPerSec</td><td>Maximum transmit rate in bytes/sec. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" title="Operation is not supported.">Error::NotSupported</a> if the platform does not implement it, or another error on failure. </dd></dl>
+
+</div>
+</div>
 <a id="af3443a4407fd2e0d748d4f05480bfde9" name="af3443a4407fd2e0d748d4f05480bfde9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af3443a4407fd2e0d748d4f05480bfde9">&#9670;&#160;</a></span>setReuseAddress()</h2>
 
@@ -1069,6 +1153,46 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_fd</b> = -1</td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a91a31af0e85b69ea8d5064a6320df096" name="a91a31af0e85b69ea8d5064a6320df096"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91a31af0e85b69ea8d5064a6320df096">&#9670;&#160;</a></span>setTxTime()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> UdpSocket::setTxTime </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>enable</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>clockId</em> = <code>11</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enables per-packet transmit-time scheduling. </p>
+<p>Sets <code>SO_TXTIME</code> on Linux, which lets individual datagrams carry a <code>SCM_TXTIME</code> nanosecond deadline via <a class="el" href="structUdpSocket_1_1Datagram.html#a118e37ee4be4cf9451ae5d61efa4f037">Datagram::txTimeNs</a>. Requires the ETF qdisc; works best with NICs that support hardware TX scheduling (Intel i210, i225). Used by ST 2110-21 sender pacing and by precise AES67 pacing.</p>
+<p>Disabling is a no-op — once the caller stops passing a non-zero <a class="el" href="structUdpSocket_1_1Datagram.html#a118e37ee4be4cf9451ae5d61efa4f037">Datagram::txTimeNs</a>, subsequent sends behave like plain UDP without reconfiguring the socket.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enable</td><td>True to enable, false to disable. </td></tr>
+    <tr><td class="paramname">clockId</td><td>Clock ID for the deadlines (defaults to <code>CLOCK_TAI</code> to match PTP). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" title="Operation is not supported.">Error::NotSupported</a> if the platform does not implement it, or another error on failure. </dd></dl>
 
 </div>
 </div>
@@ -1204,6 +1328,37 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_fd</b> = -1</td></tr>
 
 </div>
 </div>
+<a id="abb70a958826f6f6d24b19f4b7992b50f" name="abb70a958826f6f6d24b19f4b7992b50f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abb70a958826f6f6d24b19f4b7992b50f">&#9670;&#160;</a></span>writeDatagrams()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int UdpSocket::writeDatagrams </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb">DatagramList</a> &amp;&#160;</td>
+          <td class="paramname"><em>datagrams</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sends a batch of datagrams in one syscall. </p>
+<p>On Linux this uses <code>sendmmsg()</code>, which hands the kernel the entire batch in a single system call and avoids the per-packet context-switch cost of looping on <code>sendto()</code>. On platforms without <code>sendmmsg()</code> the implementation falls back to a <code>sendto()</code> loop with equivalent semantics.</p>
+<p>Each datagram's <code>data</code> pointer must remain valid until this call returns. The kernel copies into its own buffers before this function returns; callers do not need to keep the data alive afterwards.</p>
+<p>If <code>txTimeNs</code> is non-zero and transmit-time is enabled (see <a class="el" href="classUdpSocket.html#a91a31af0e85b69ea8d5064a6320df096">setTxTime()</a>), the datagram carries a <code>SCM_TXTIME</code> cmsg and is held by the ETF qdisc until the target time.</p>
+<p>On partial failure the kernel reports how many datagrams it accepted before erroring; this call returns that count. Callers that care about completeness should compare against <code><a class="el" href="classList.html#a7b46313fcbf10064276c8d0447a73691" title="Returns the number of elements in the list.">datagrams.size()</a></code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">datagrams</td><td>The list of datagrams to send. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of datagrams accepted by the kernel, or -1 if none were sent. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="udpsocket_8h_source.html">udpsocket.h</a></li>
 </ul>
@@ -1214,7 +1369,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>_fd</b> = -1</td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classUdpSocket.html">UdpSocket</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

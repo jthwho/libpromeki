@@ -5,5 +5,8 @@ var group__wellknownenums =
     [ "AudioPattern", "structAudioPattern.html", null ],
     [ "ChromaSubsampling", "structChromaSubsampling.html", null ],
     [ "AudioDataType", "structAudioDataType.html", null ],
-    [ "QuickTimeLayout", "structQuickTimeLayout.html", null ]
+    [ "CscPath", "structCscPath.html", null ],
+    [ "QuickTimeLayout", "structQuickTimeLayout.html", null ],
+    [ "RtpPacingMode", "structRtpPacingMode.html", null ],
+    [ "MetadataRtpFormat", "structMetadataRtpFormat.html", null ]
 ];

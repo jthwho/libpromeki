@@ -225,9 +225,9 @@ Macros</h2></td></tr>
 <tr class="memitem:ga171ec9034fbfc2c134195af18ea762e7" id="r_ga171ec9034fbfc2c134195af18ea762e7"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga171ec9034fbfc2c134195af18ea762e7">PROMEKI_SHARED</a>(<a class="el" href="classList.html">BASE</a>)</td></tr>
 <tr class="memdesc:ga171ec9034fbfc2c134195af18ea762e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to simplify making a base object into a native shared object.  <br /></td></tr>
 <tr class="separator:ga171ec9034fbfc2c134195af18ea762e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga25b90810f9f44c24939254e7eef520e3" id="r_ga25b90810f9f44c24939254e7eef520e3"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga25b90810f9f44c24939254e7eef520e3">PROMEKI_VARIANT_TYPES</a></td></tr>
-<tr class="memdesc:ga25b90810f9f44c24939254e7eef520e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">X-macro that defines all supported Variant types.  <br /></td></tr>
-<tr class="separator:ga25b90810f9f44c24939254e7eef520e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadd038fa9fc95b7e756cc1f175a180eb2" id="r_gadd038fa9fc95b7e756cc1f175a180eb2"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2">PROMEKI_VARIANT_TYPES_NETWORK</a></td></tr>
+<tr class="memdesc:gadd038fa9fc95b7e756cc1f175a180eb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">X-macro that defines all supported Variant types.  <br /></td></tr>
+<tr class="separator:gadd038fa9fc95b7e756cc1f175a180eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -295,61 +295,18 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ga25b90810f9f44c24939254e7eef520e3" name="ga25b90810f9f44c24939254e7eef520e3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga25b90810f9f44c24939254e7eef520e3">&#9670;&#160;</a></span>PROMEKI_VARIANT_TYPES</h2>
+<a id="gadd038fa9fc95b7e756cc1f175a180eb2" name="gadd038fa9fc95b7e756cc1f175a180eb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gadd038fa9fc95b7e756cc1f175a180eb2">&#9670;&#160;</a></span>PROMEKI_VARIANT_TYPES_NETWORK</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_VARIANT_TYPES</td>
+          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_VARIANT_TYPES_NETWORK</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">        X(TypeInvalid, std::monostate)  <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeBool, <span class="keywordtype">bool</span>)               <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeU8, <a class="code hl_class" href="classList.html">uint8_t</a>)              <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeS8, <a class="code hl_class" href="classList.html">int8_t</a>)               <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeU16, <a class="code hl_class" href="classList.html">uint16_t</a>)            <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeS16, <a class="code hl_class" href="classList.html">int16_t</a>)             <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeU32, <a class="code hl_class" href="classList.html">uint32_t</a>)            <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeS32, <a class="code hl_class" href="classList.html">int32_t</a>)             <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeU64, <a class="code hl_class" href="classList.html">uint64_t</a>)            <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeS64, <a class="code hl_class" href="classList.html">int64_t</a>)             <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeFloat, <span class="keywordtype">float</span>)             <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeDouble, <span class="keywordtype">double</span>)           <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeString, <a class="code hl_class" href="classString.html">String</a>)           <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeDateTime, <a class="code hl_class" href="classDateTime.html">DateTime</a>)       <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeTimeStamp, <a class="code hl_class" href="classTimeStamp.html">TimeStamp</a>)     <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeSize2D, <a class="code hl_class" href="classSize2DTemplate.html">Size2Du32</a>)           <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeUUID, <a class="code hl_class" href="classUUID.html">UUID</a>)               <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeUMID, <a class="code hl_class" href="classUMID.html">UMID</a>)               <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeTimecode, <a class="code hl_class" href="classTimecode.html">Timecode</a>)       <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeRational, <a class="code hl_class" href="classList.html">Rational&lt;int&gt;</a>)  <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeFrameRate, <a class="code hl_class" href="classFrameRate.html">FrameRate</a>)     <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeStringList, <a class="code hl_class" href="classStringList.html">StringList</a>)   <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeColor, <a class="code hl_class" href="classColor.html">Color</a>)             <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeColorModel, <a class="code hl_class" href="classColorModel.html">ColorModel</a>)   <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeMemSpace, <a class="code hl_class" href="classMemSpace.html">MemSpace</a>)       <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypePixelFormat, <a class="code hl_class" href="classPixelFormat.html">PixelFormat</a>) <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypePixelDesc, <a class="code hl_class" href="classPixelDesc.html">PixelDesc</a>)     <a class="code hl_class" href="classList.html">\</a></div>
-<div class="line"><a class="code hl_class" href="classList.html">        X</a>(TypeEnum, <a class="code hl_class" href="classEnum.html">Enum</a>)</div>
-<div class="ttc" id="aclassColorModel_html"><div class="ttname"><a href="classColorModel.html">ColorModel</a></div><div class="ttdoc">Single source of truth for a color model and its associated color space.</div><div class="ttdef"><b>Definition</b> colormodel.h:129</div></div>
-<div class="ttc" id="aclassColor_html"><div class="ttname"><a href="classColor.html">Color</a></div><div class="ttdoc">A color value in any supported color model.</div><div class="ttdef"><b>Definition</b> color.h:97</div></div>
-<div class="ttc" id="aclassDateTime_html"><div class="ttname"><a href="classDateTime.html">DateTime</a></div><div class="ttdoc">Wall-clock date and time based on std::chrono::system_clock.</div><div class="ttdef"><b>Definition</b> datetime.h:39</div></div>
-<div class="ttc" id="aclassEnum_html"><div class="ttname"><a href="classEnum.html">Enum</a></div><div class="ttdoc">Runtime-typed enumeration value carrying a registered type and integer.</div><div class="ttdef"><b>Definition</b> enum.h:93</div></div>
-<div class="ttc" id="aclassFrameRate_html"><div class="ttname"><a href="classFrameRate.html">FrameRate</a></div><div class="ttdoc">Represents a video frame rate as a rational number.</div><div class="ttdef"><b>Definition</b> framerate.h:101</div></div>
-<div class="ttc" id="aclassMemSpace_html"><div class="ttname"><a href="classMemSpace.html">MemSpace</a></div><div class="ttdoc">Abstraction for memory allocation in different address spaces.</div><div class="ttdef"><b>Definition</b> memspace.h:38</div></div>
-<div class="ttc" id="aclassPixelDesc_html"><div class="ttname"><a href="classPixelDesc.html">PixelDesc</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:123</div></div>
-<div class="ttc" id="aclassPixelFormat_html"><div class="ttname"><a href="classPixelFormat.html">PixelFormat</a></div><div class="ttdoc">Describes the memory layout of pixel data without color semantics.</div><div class="ttdef"><b>Definition</b> pixelformat.h:105</div></div>
-<div class="ttc" id="aclassSize2DTemplate_html"><div class="ttname"><a href="classSize2DTemplate.html">Size2DTemplate&lt; uint32_t &gt;</a></div></div>
-<div class="ttc" id="aclassStringList_html"><div class="ttname"><a href="classStringList.html">StringList</a></div><div class="ttdoc">Manages a list of strings.</div><div class="ttdef"><b>Definition</b> stringlist.h:21</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
-<div class="ttc" id="aclassTimeStamp_html"><div class="ttname"><a href="classTimeStamp.html">TimeStamp</a></div><div class="ttdoc">A monotonic timestamp based on std::chrono::steady_clock.</div><div class="ttdef"><b>Definition</b> timestamp.h:32</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:46</div></div>
-<div class="ttc" id="aclassUMID_html"><div class="ttname"><a href="classUMID.html">UMID</a></div><div class="ttdoc">SMPTE 330M Unique Material Identifier (UMID).</div><div class="ttdef"><b>Definition</b> umid.h:55</div></div>
-<div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID).</div><div class="ttdef"><b>Definition</b> uuid.h:34</div></div>
-</div><!-- fragment -->
+
 <p>X-macro that defines all supported Variant types. </p>
 <p>Each entry has the form <code>X(EnumName, CppType)</code>. The macro is expanded in several contexts inside <a class="el" href="classVariantImpl.html" title="Type-safe tagged union that can hold any of the types listed in PROMEKI_VARIANT_TYPES.">VariantImpl</a>:</p><ul>
 <li>To generate the Type enum (TypeInvalid, TypeBool, ..., TypeRational).</li>
@@ -416,6 +373,15 @@ Functions</h2></td></tr>
 <td class="markdownTableBodyNone">TypePixelDesc   </td><td class="markdownTableBodyNone"><code><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a></code>    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">TypeEnum   </td><td class="markdownTableBodyNone"><code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a></code>   </td></tr>
+</table>
+<p>When <code>PROMEKI_ENABLE_NETWORK</code> is true, the following types are also available:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Enumerator   </th><th class="markdownTableHeadNone">C++ type    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">TypeSocketAddress   </td><td class="markdownTableBodyNone"><code><a class="el" href="classSocketAddress.html" title="Network address with port number.">SocketAddress</a></code>    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">TypeSdpSession   </td><td class="markdownTableBodyNone"><code><a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a></code>   </td></tr>
 </table>
 
 </div>
@@ -615,7 +581,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

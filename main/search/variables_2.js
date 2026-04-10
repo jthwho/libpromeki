@@ -8,10 +8,11 @@ var searchData=
   ['bitspersample_5',['bitsPerSample',['../structAudioDesc_1_1Format.html#a51b3c997229066bdb01bf789994d9c39',1,'AudioDesc::Format']]],
   ['black_6',['Black',['../classColor.html#abfda8f6d25cb1b8ddbf029624bf879dd',1,'Color']]],
   ['blue_7',['Blue',['../classColor.html#a662b7359238c900518fa4a5595c3b2d5',1,'Color']]],
-  ['bufferalign_8',['BufferAlign',['../classCSCContext.html#a5bbb8ca1a68d591f4b44dea873814a39',1,'CSCContext']]],
-  ['buffercount_9',['BufferCount',['../classCSCContext.html#a48258b3c0b253825bcb42e6fe010e679',1,'CSCContext']]],
-  ['byteoffset_10',['byteOffset',['../structPixelFormat_1_1CompDesc.html#aeeb42db2533d5ccd8f4f08148b92091b',1,'PixelFormat::CompDesc']]],
-  ['bytesperblock_11',['bytesperblock',['../structCSCPipeline_1_1Stage.html#a5ee6919a4748aa9817a415326294352c',1,'CSCPipeline::Stage::bytesPerBlock'],['../structPixelFormat_1_1Data.html#a109116d35ea10928b055cba775a1d29f',1,'PixelFormat::Data::bytesPerBlock']]],
-  ['bytespersample_12',['bytespersample',['../structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec',1,'AudioDesc::Format::bytesPerSample'],['../structPixelFormat_1_1PlaneDesc.html#a11a8635a9ba6e3265899d2392d170a79',1,'PixelFormat::PlaneDesc::bytesPerSample']]],
-  ['bytespersecond_13',['BytesPerSecond',['../classMediaIOStats.html#a70c91fd6b0ccab2d9b7534d210a36a9a',1,'MediaIOStats']]]
+  ['bucketcount_8',['BucketCount',['../classHistogram.html#a3e8f7e9865ec68e8a6039034681bc26f',1,'Histogram']]],
+  ['bufferalign_9',['BufferAlign',['../classCSCContext.html#a5bbb8ca1a68d591f4b44dea873814a39',1,'CSCContext']]],
+  ['buffercount_10',['BufferCount',['../classCSCContext.html#a48258b3c0b253825bcb42e6fe010e679',1,'CSCContext']]],
+  ['byteoffset_11',['byteOffset',['../structPixelFormat_1_1CompDesc.html#aeeb42db2533d5ccd8f4f08148b92091b',1,'PixelFormat::CompDesc']]],
+  ['bytesperblock_12',['bytesperblock',['../structCSCPipeline_1_1Stage.html#a5ee6919a4748aa9817a415326294352c',1,'CSCPipeline::Stage::bytesPerBlock'],['../structPixelFormat_1_1Data.html#a109116d35ea10928b055cba775a1d29f',1,'PixelFormat::Data::bytesPerBlock']]],
+  ['bytespersample_13',['bytespersample',['../structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec',1,'AudioDesc::Format::bytesPerSample'],['../structPixelFormat_1_1PlaneDesc.html#a11a8635a9ba6e3265899d2392d170a79',1,'PixelFormat::PlaneDesc::bytesPerSample']]],
+  ['bytespersecond_14',['BytesPerSecond',['../classMediaIOStats.html#a70c91fd6b0ccab2d9b7534d210a36a9a',1,'MediaIOStats']]]
 ];

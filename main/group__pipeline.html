@@ -100,13 +100,12 @@ $(document).ready(function(){initNavTree('group__pipeline.html',''); initResizab
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
-<a href="#enum-members">Enumerations</a>  </div>
+<a href="#nested-classes">Classes</a>  </div>
   <div class="headertitle"><div class="title">Pipeline</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Media processing pipeline: graph, nodes, and scheduling.  
+<p>MediaIO-based media pipeline and its backends.  
 <a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
@@ -114,143 +113,17 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmarkReporter.html">BenchmarkReporter</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Aggregates <a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a> objects and computes per-step timing statistics.  <a href="classBenchmarkReporter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameDemuxNode.html">FrameDemuxNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Splits a <a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> into separate <a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> and <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> streams.  <a href="classFrameDemuxNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classJpegEncoderNode.html">JpegEncoderNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compresses video frames to JPEG using <a class="el" href="classJpegImageCodec.html" title="JPEG image codec using libjpeg-turbo.">JpegImageCodec</a>.  <a href="classJpegEncoderNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structNodeMessage.html">NodeMessage</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Structured message emitted by a pipeline node.  <a href="structNodeMessage.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structNodeStats.html">NodeStats</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Snapshot of node performance statistics.  <a href="structNodeStats.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structBuildResult.html">BuildResult</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Collects diagnostic messages from a node's build() call.  <a href="structBuildResult.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDelivery.html">Delivery</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specifies which output source should receive a frame.  <a href="structDelivery.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNode.html">MediaNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base class for all pipeline processing nodes.  <a href="classMediaNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaNodeConfig.html">MediaNodeConfig</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configuration descriptor for creating and configuring a <a class="el" href="classMediaNode.html" title="Base class for all pipeline processing nodes.">MediaNode</a>.  <a href="classMediaNodeConfig.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipeline.html">MediaPipeline</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Owns nodes and topology, orchestrates pipeline processing.  <a href="classMediaPipeline.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaPipeline_1_1BuildError.html">MediaPipeline::BuildError</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Collects all errors from a <a class="el" href="classMediaPipeline.html#ab55d01325582c894ff5058e79cab208c" title="Builds the pipeline from a configuration.">build()</a> call.  <a href="structMediaPipeline_1_1BuildError.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaPipelineConfig.html">MediaPipelineConfig</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Holds the complete configuration for building a <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a>.  <a href="classMediaPipelineConfig.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaSink.html">MediaSink</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Input endpoint on a <a class="el" href="classMediaNode.html" title="Base class for all pipeline processing nodes.">MediaNode</a> that receives <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr</a>.  <a href="classMediaSink.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaSource.html">MediaSource</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Output endpoint on a <a class="el" href="classMediaNode.html" title="Base class for all pipeline processing nodes.">MediaNode</a> that delivers <a class="el" href="classFrame.html#a1fee9d81d4ead77656cb6f87e531a74a" title="Shared pointer type for Frame.">Frame::Ptr</a> to connected sinks.  <a href="classMediaSource.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpAudioSinkNode.html">RtpAudioSinkNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> sink node that sends audio samples over RTP.  <a href="classRtpAudioSinkNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpVideoSinkNode.html">RtpVideoSinkNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classTerminal.html" title="Low-level terminal I/O abstraction.">Terminal</a> sink node that sends video frames over RTP.  <a href="classRtpVideoSinkNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTestPatternNode.html">TestPatternNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Source node that generates video and audio test patterns.  <a href="classTestPatternNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecodeOverlayNode.html">TimecodeOverlayNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Burns timecode text into video frames using <a class="el" href="classFastFont.html" title="High-performance cached font renderer.">FastFont</a>.  <a href="classTimecodeOverlayNode.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
-Enumerations</h2></td></tr>
-<tr class="memitem:ga11717da96dc4e4a5f79371318448f82b" id="r_ga11717da96dc4e4a5f79371318448f82b"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pipeline.html#ga11717da96dc4e4a5f79371318448f82b">Severity</a> { <a class="el" href="group__pipeline.html#gga11717da96dc4e4a5f79371318448f82ba4059b0251f66a18cb56f544728796875">Severity::Info</a>
-, <a class="el" href="group__pipeline.html#gga11717da96dc4e4a5f79371318448f82ba0eaadb4fcb48a0a0ed7bc9868be9fbaa">Severity::Warning</a>
-, <a class="el" href="group__pipeline.html#gga11717da96dc4e4a5f79371318448f82ba902b0d55fddef6f8d651fe1035b7d4bd">Severity::Error</a>
-, <a class="el" href="group__pipeline.html#gga11717da96dc4e4a5f79371318448f82ba882384ec38ce8d9582b57e70861730e4">Severity::Fatal</a>
- }</td></tr>
-<tr class="memdesc:ga11717da96dc4e4a5f79371318448f82b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Severity level for node messages.  <a href="group__pipeline.html#ga11717da96dc4e4a5f79371318448f82b">More...</a><br /></td></tr>
-<tr class="separator:ga11717da96dc4e4a5f79371318448f82b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga33879ae3c530ed9ef4025c4e051c0330" id="r_ga33879ae3c530ed9ef4025c4e051c0330"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__pipeline.html#ga33879ae3c530ed9ef4025c4e051c0330">ContentHint</a> : unsigned { <a class="el" href="group__pipeline.html#gga33879ae3c530ed9ef4025c4e051c0330aa2e4c152ee204ab2ea1ad234934623ba">ContentNone</a> = 0
-, <a class="el" href="group__pipeline.html#gga33879ae3c530ed9ef4025c4e051c0330a949e6ba52a8a546bc4716c66b5909544">ContentVideo</a> = 1 &lt;&lt; 0
-, <a class="el" href="group__pipeline.html#gga33879ae3c530ed9ef4025c4e051c0330a468e019654509886e1644b9dc89eb00b">ContentAudio</a> = 1 &lt;&lt; 1
- }</td></tr>
-<tr class="memdesc:ga33879ae3c530ed9ef4025c4e051c0330"><td class="mdescLeft">&#160;</td><td class="mdescRight">Content hint flags describing what media a sink or source expects.  <a href="group__pipeline.html#ga33879ae3c530ed9ef4025c4e051c0330">More...</a><br /></td></tr>
-<tr class="separator:ga33879ae3c530ed9ef4025c4e051c0330"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<p>Media processing pipeline: graph, nodes, and scheduling. </p>
-<p><a class="el" href="classMediaNode.html" title="Base class for all pipeline processing nodes.">MediaNode</a> and <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a> framework for constructing audio/video processing pipelines. Includes concrete nodes such as <a class="el" href="classTestPatternNode.html" title="Source node that generates video and audio test patterns.">TestPatternNode</a>, <a class="el" href="classFrameDemuxNode.html" title="Splits a Frame into separate Image and Audio streams.">FrameDemuxNode</a>, and <a class="el" href="classTimecodeOverlayNode.html" title="Burns timecode text into video frames using FastFont.">TimecodeOverlayNode</a>. </p>
-<h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="ga33879ae3c530ed9ef4025c4e051c0330" name="ga33879ae3c530ed9ef4025c4e051c0330"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga33879ae3c530ed9ef4025c4e051c0330">&#9670;&#160;</a></span>ContentHint</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="group__pipeline.html#ga33879ae3c530ed9ef4025c4e051c0330">ContentHint</a> : <a class="el" href="classList.html">unsigned</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Content hint flags describing what media a sink or source expects. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga33879ae3c530ed9ef4025c4e051c0330aa2e4c152ee204ab2ea1ad234934623ba" name="gga33879ae3c530ed9ef4025c4e051c0330aa2e4c152ee204ab2ea1ad234934623ba"></a>ContentNone&#160;</td><td class="fielddoc"><p>No content hint. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="gga33879ae3c530ed9ef4025c4e051c0330a949e6ba52a8a546bc4716c66b5909544" name="gga33879ae3c530ed9ef4025c4e051c0330a949e6ba52a8a546bc4716c66b5909544"></a>ContentVideo&#160;</td><td class="fielddoc"><p>Carries video data. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="gga33879ae3c530ed9ef4025c4e051c0330a468e019654509886e1644b9dc89eb00b" name="gga33879ae3c530ed9ef4025c4e051c0330a468e019654509886e1644b9dc89eb00b"></a>ContentAudio&#160;</td><td class="fielddoc"><p>Carries audio data. </p>
-</td></tr>
-</table>
-
-</div>
-</div>
-<a id="ga11717da96dc4e4a5f79371318448f82b" name="ga11717da96dc4e4a5f79371318448f82b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga11717da96dc4e4a5f79371318448f82b">&#9670;&#160;</a></span>Severity</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classList.html">class</a> <a class="el" href="group__pipeline.html#ga11717da96dc4e4a5f79371318448f82b">Severity</a></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Severity level for node messages. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga11717da96dc4e4a5f79371318448f82ba4059b0251f66a18cb56f544728796875" name="gga11717da96dc4e4a5f79371318448f82ba4059b0251f66a18cb56f544728796875"></a>Info&#160;</td><td class="fielddoc"><p>Informational message. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="gga11717da96dc4e4a5f79371318448f82ba0eaadb4fcb48a0a0ed7bc9868be9fbaa" name="gga11717da96dc4e4a5f79371318448f82ba0eaadb4fcb48a0a0ed7bc9868be9fbaa"></a>Warning&#160;</td><td class="fielddoc"><p>Warning &ndash; non-fatal issue. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="gga11717da96dc4e4a5f79371318448f82ba902b0d55fddef6f8d651fe1035b7d4bd" name="gga11717da96dc4e4a5f79371318448f82ba902b0d55fddef6f8d651fe1035b7d4bd"></a>Error&#160;</td><td class="fielddoc"><p><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> &ndash; node transitions to ErrorState. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="gga11717da96dc4e4a5f79371318448f82ba882384ec38ce8d9582b57e70861730e4" name="gga11717da96dc4e4a5f79371318448f82ba882384ec38ce8d9582b57e70861730e4"></a>Fatal&#160;</td><td class="fielddoc"><p>Fatal &ndash; pipeline should stop. </p>
-</td></tr>
-</table>
-
-</div>
-</div>
+<p>MediaIO-based media pipeline and its backends. </p>
+<p><a class="el" href="classMediaIO.html">MediaIO</a> controller, <a class="el" href="classMediaIOTask.html">MediaIOTask</a> backends, and the per-instance <a class="el" href="classStrand.html">Strand</a> executor that moves frames between stages. Concrete backends include <a class="el" href="classMediaIOTask__TPG.html">MediaIOTask_TPG</a>, <a class="el" href="classMediaIOTask__ImageFile.html">MediaIOTask_ImageFile</a>, <a class="el" href="classMediaIOTask__AudioFile.html">MediaIOTask_AudioFile</a>, <a class="el" href="classMediaIOTask__QuickTime.html">MediaIOTask_QuickTime</a>, and <a class="el" href="classMediaIOTask__Converter.html">MediaIOTask_Converter</a>. </p>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -102,7 +102,6 @@ $(document).ready(function(){initNavTree('classMediaIOTask__AudioFile.html','');
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
-<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classMediaIOTask__AudioFile-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MediaIOTask_AudioFile Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
@@ -170,21 +169,6 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a2c3c1c254d4ff0edab56a9b87669d3a0" id="r_a2c3c1c254d4ff0edab56a9b87669d3a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="structMediaIO_1_1FormatDesc.html">MediaIO::FormatDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask__AudioFile.html#a2c3c1c254d4ff0edab56a9b87669d3a0">formatDesc</a> ()</td></tr>
 <tr class="memdesc:a2c3c1c254d4ff0edab56a9b87669d3a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the format descriptor for this backend.  <br /></td></tr>
 <tr class="separator:a2c3c1c254d4ff0edab56a9b87669d3a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
-Static Public Attributes</h2></td></tr>
-<tr class="memitem:ac3ab50e2c57b59695fe7550e9cf2c820" id="r_ac3ab50e2c57b59695fe7550e9cf2c820"><td class="memItemLeft" align="right" valign="top"><a id="ac3ab50e2c57b59695fe7550e9cf2c820" name="ac3ab50e2c57b59695fe7550e9cf2c820"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigFrameRate</b></td></tr>
-<tr class="memdesc:ac3ab50e2c57b59695fe7550e9cf2c820"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate (<a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>, required). <br /></td></tr>
-<tr class="separator:ac3ab50e2c57b59695fe7550e9cf2c820"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af0607b13745113572ffda6835236103b" id="r_af0607b13745113572ffda6835236103b"><td class="memItemLeft" align="right" valign="top"><a id="af0607b13745113572ffda6835236103b" name="af0607b13745113572ffda6835236103b"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigAudioRate</b></td></tr>
-<tr class="memdesc:af0607b13745113572ffda6835236103b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample rate Hz (float, required for writer). <br /></td></tr>
-<tr class="separator:af0607b13745113572ffda6835236103b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab9b9b234261210df25e800bd6b759ac" id="r_aab9b9b234261210df25e800bd6b759ac"><td class="memItemLeft" align="right" valign="top"><a id="aab9b9b234261210df25e800bd6b759ac" name="aab9b9b234261210df25e800bd6b759ac"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964">MediaIO::ConfigID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ConfigAudioChannels</b></td></tr>
-<tr class="memdesc:aab9b9b234261210df25e800bd6b759ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Channel count (int, required for writer). <br /></td></tr>
-<tr class="separator:aab9b9b234261210df25e800bd6b759ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend for audio file formats. </p>
@@ -194,13 +178,13 @@ Static Public Attributes</h2></td></tr>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Key   </th><th class="markdownTableHeadNone">Type   </th><th class="markdownTableHeadNone">Default   </th><th class="markdownTableHeadNone">Description    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">ConfigFilename   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone"><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> path (inherited from <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a>).    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a35d1c7334bd471517976c367d29c6f0c">MediaConfig::Filename</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone"><a class="el" href="classFile.html" title="File I/O device with buffered reading.">File</a> path.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">ConfigFrameRate   </td><td class="markdownTableBodyNone"><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate for sample chunking (required).    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a4e1856db1c596fe40581946e74e06df4">MediaConfig::FrameRate</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate for sample chunking.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">ConfigAudioRate   </td><td class="markdownTableBodyNone">float   </td><td class="markdownTableBodyNone">48000   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample rate Hz (required for writer).    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a477e449d4b08ec8a936c11e0812ca359">MediaConfig::AudioRate</a>   </td><td class="markdownTableBodyNone">float   </td><td class="markdownTableBodyNone">48000   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample rate Hz (required for writer).    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">ConfigAudioChannels   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">2   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> channel count (required for writer).   </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a28cd07150ca8d7adcc1d34f3d6c1a692">MediaConfig::AudioChannels</a>   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">2   </td><td class="markdownTableBodyNone"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> channel count (required for writer).   </td></tr>
 </table>
 </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -242,7 +226,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__AudioFile.html">MediaIOTask_AudioFile</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

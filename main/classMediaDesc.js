@@ -12,5 +12,6 @@ var classMediaDesc =
     [ "isValid", "classMediaDesc.html#af8301531765c6da2170962437b61b1fb", null ],
     [ "metadata", "classMediaDesc.html#a66442b47f146bbae242a802eb881d19e", null ],
     [ "metadata", "classMediaDesc.html#ad2a151a9a769e7dfdd6f768fc83410cb", null ],
-    [ "setFrameRate", "classMediaDesc.html#a09c0528b5aa497ab8ddac1b886186d2c", null ]
+    [ "setFrameRate", "classMediaDesc.html#a09c0528b5aa497ab8ddac1b886186d2c", null ],
+    [ "toSdp", "classMediaDesc.html#a97ab5cb5eb6fc28ba06c24aef49b242a", null ]
 ];

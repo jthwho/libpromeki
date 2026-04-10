@@ -166,6 +166,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0f82693f1d149cd4cdff716b898ee0f0" id="r_a0f82693f1d149cd4cdff716b898ee0f0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0">AudioDesc</a> (<a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4">DataType</a> <a class="el" href="classList.html">dt</a>, <a class="el" href="classList.html">float</a> <a class="el" href="classList.html">sr</a>, <a class="el" href="classList.html">unsigned</a> int ch)</td></tr>
 <tr class="memdesc:a0f82693f1d149cd4cdff716b898ee0f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an audio description with the specified data type, sample rate, and channels.  <br /></td></tr>
 <tr class="separator:a0f82693f1d149cd4cdff716b898ee0f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab18d9b72c5be9490dd33d25403d55f50" id="r_ab18d9b72c5be9490dd33d25403d55f50"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50">toSdp</a> (<a class="el" href="classList.html">uint8_t</a> payloadType) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ab18d9b72c5be9490dd33d25403d55f50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds an SDP media description from this <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>.  <br /></td></tr>
+<tr class="separator:ab18d9b72c5be9490dd33d25403d55f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f30788b4198573e07bbe7cb50e63aa2" id="r_a6f30788b4198573e07bbe7cb50e63aa2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2">formatEquals</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">other</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a6f30788b4198573e07bbe7cb50e63aa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if both audio descriptions have equal format (type, rate, channels).  <br /></td></tr>
 <tr class="separator:a6f30788b4198573e07bbe7cb50e63aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -277,6 +280,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a0d33275750109af335ca4bc2de006b75" id="r_a0d33275750109af335ca4bc2de006b75"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a0d33275750109af335ca4bc2de006b75">fromJson</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">json</a>, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a0d33275750109af335ca4bc2de006b75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> from a JSON object.  <br /></td></tr>
 <tr class="separator:a0d33275750109af335ca4bc2de006b75"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a560400079ae4386b1f1a7e12b4ed65eb" id="r_a560400079ae4386b1f1a7e12b4ed65eb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioDesc.html#a560400079ae4386b1f1a7e12b4ed65eb">fromSdp</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;<a class="el" href="classList.html">md</a>)</td></tr>
+<tr class="memdesc:a560400079ae4386b1f1a7e12b4ed65eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Derives an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> from an SDP media description.  <br /></td></tr>
+<tr class="separator:a560400079ae4386b1f1a7e12b4ed65eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -938,6 +944,48 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="a560400079ae4386b1f1a7e12b4ed65eb" name="a560400079ae4386b1f1a7e12b4ed65eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a560400079ae4386b1f1a7e12b4ed65eb">&#9670;&#160;</a></span>fromSdp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> AudioDesc::fromSdp </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> &amp;&#160;</td>
+          <td class="paramname"><em>md</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Derives an <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> from an SDP media description. </p>
+<p>Interprets the RTP payload encoding name in the <code>a=rtpmap</code> attribute to build an audio <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. Supported encodings (all RFC 3551 / RFC 3190):</p>
+<ul>
+<li><code>L16</code> → <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a47c6e05a1bf59e11ff068427534fd113">PCMI_S16BE</a> (wire is big-endian 16-bit)</li>
+<li><code>L24</code> → <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4ac1fd00818d28213c657c0a1f051352b7">PCMI_S24BE</a> (wire is packed 24-bit big-endian)</li>
+<li><code>L8</code> → <a class="el" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a68ca8ff123b4b67f60fc3b922f93a74d">PCMI_U8</a> (unsigned 8-bit per RFC 3551 §4.<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">5.10</a>)</li>
+</ul>
+<p>Sample rate and channel count come from the rtpmap rate / channel fields. Anything else (compressed codecs, non-audio media descriptions) yields an invalid <a class="el" href="classAudioDesc.html">AudioDesc</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">md</td><td>The SDP media description to interpret. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A populated <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>, or an invalid <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> on any failure. </dd></dl>
+
+</div>
+</div>
 <a id="a80c89f16eb57e133ca1deb9472c8bfef" name="a80c89f16eb57e133ca1deb9472c8bfef"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a80c89f16eb57e133ca1deb9472c8bfef">&#9670;&#160;</a></span>integerToFloat() <span class="overload">[1/2]</span></h2>
 
@@ -1517,6 +1565,35 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="ab18d9b72c5be9490dd33d25403d55f50" name="ab18d9b72c5be9490dd33d25403d55f50"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab18d9b72c5be9490dd33d25403d55f50">&#9670;&#160;</a></span>toSdp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSdpMediaDescription.html">SdpMediaDescription</a> AudioDesc::toSdp </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">uint8_t</a>&#160;</td>
+          <td class="paramname"><em>payloadType</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Builds an SDP media description from this <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>. </p>
+<p>The inverse of <a class="el" href="classAudioDesc.html#a560400079ae4386b1f1a7e12b4ed65eb">fromSdp</a>. Populates the returned <code><a class="el" href="classSdpMediaDescription.html" title="SDP media description (m= section).">SdpMediaDescription</a></code> with <code>m=audio</code>, an <code>a=rtpmap</code> line for the appropriate encoding (<code>L16</code>, <code>L24</code>, or <code>L8</code>), and the clock rate / channel count derived from this descriptor.</p>
+<p>Returns an empty <code><a class="el" href="classSdpMediaDescription.html" title="SDP media description (m= section).">SdpMediaDescription</a></code> if the <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> is invalid or the data type has no RTP encoding mapping.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">payloadType</td><td>RTP payload type (0-127). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A populated <a class="el" href="classSdpMediaDescription.html" title="SDP media description (m= section).">SdpMediaDescription</a>, or an empty one on failure. </dd></dl>
+
+</div>
+</div>
 <a id="a39a3326dbbe81cbb3951e3f31beff7df" name="a39a3326dbbe81cbb3951e3f31beff7df"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a39a3326dbbe81cbb3951e3f31beff7df">&#9670;&#160;</a></span>toString()</h2>
 
@@ -1583,7 +1660,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioDesc.html">AudioDesc</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

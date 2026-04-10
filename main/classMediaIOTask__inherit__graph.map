@@ -1,15 +1,17 @@
 <map id="MediaIOTask" name="MediaIOTask">
-<area shape="rect" id="Node000001" title="Backend interface for media I/O." alt="" coords="5,129,111,155"/>
+<area shape="rect" id="Node000001" title="Backend interface for media I/O." alt="" coords="5,153,111,179"/>
 <area shape="rect" id="Node000002" href="$classMediaIOTask__AudioFile.html" title="MediaIOTask backend for audio file formats." alt="" coords="164,5,336,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="75,117,110,77,133,57,157,40,183,28,185,33,160,44,136,61,114,81,79,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="70,140,105,89,129,62,157,40,181,28,183,33,160,44,133,66,109,92,75,143"/>
 <area shape="rect" id="Node000003" href="$classMediaIOTask__Converter.html" title="MediaIOTask backend that transforms media frames." alt="" coords="162,55,338,80"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="92,120,158,89,193,78,194,83,160,94,94,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="81,142,116,114,157,89,187,78,189,83,160,94,119,119,85,146"/>
 <area shape="rect" id="Node000004" href="$classMediaIOTask__ImageFile.html" title="MediaIOTask backend for image files and image sequences." alt="" coords="162,104,338,129"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="124,131,161,126,162,131,125,136"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="120,147,199,127,200,132,122,153"/>
 <area shape="rect" id="Node000005" href="$classMediaIOTask__QuickTime.html" title="MediaIOTask backend for QuickTime / ISO&#45;BMFF container files." alt="" coords="159,153,341,179"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="125,148,159,152,158,157,124,153"/>
-<area shape="rect" id="Node000006" href="$classMediaIOTask__TPG.html" title="MediaIOTask backend that generates test patterns." alt="" coords="181,203,319,228"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="96,159,160,188,198,200,196,205,158,192,94,164"/>
-<area shape="rect" id="Node000007" href="$classSDLPlayerTask.html" title="MediaIOTask writer that plays frames through SDL." alt="" coords="191,252,309,277"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="79,163,114,201,160,237,192,251,190,256,157,242,111,205,75,167"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="125,163,158,163,158,169,125,169"/>
+<area shape="rect" id="Node000006" href="$classMediaIOTask__Rtp.html" title="MediaIOTask backend that transmits frames as RTP streams." alt="" coords="183,203,317,228"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="122,179,200,200,199,205,120,185"/>
+<area shape="rect" id="Node000007" href="$classMediaIOTask__TPG.html" title="MediaIOTask backend that generates test patterns." alt="" coords="181,252,319,277"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="85,185,119,212,160,237,192,249,190,254,157,242,116,217,82,190"/>
+<area shape="rect" id="Node000008" href="$classSDLPlayerTask.html" title="MediaIOTask writer that plays frames through SDL." alt="" coords="191,301,309,327"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="75,189,110,239,133,265,160,286,192,301,190,306,157,291,130,269,106,242,71,192"/>
 </map>

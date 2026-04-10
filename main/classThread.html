@@ -118,9 +118,11 @@ Inheritance diagram for Thread:</div>
 <div class="dyncontent">
 <div class="center"><img src="classThread__inherit__graph.png" border="0" usemap="#aThread_inherit__map" alt="Inheritance graph"/></div>
 <map name="aThread_inherit__map" id="aThread_inherit__map">
-<area shape="rect" title="Wrapper around std::thread with a built&#45;in EventLoop." alt="" coords="20,79,87,104"/>
-<area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="5,5,101,31"/>
-<area shape="poly" title=" " alt="" coords="56,44,56,79,51,79,51,44"/>
+<area shape="rect" title="Wrapper around std::thread with a built&#45;in EventLoop." alt="" coords="41,79,108,104"/>
+<area shape="rect" href="classMulticastReceiver.html" title="Standalone multicast datagram receiver with an owned worker thread." alt="" coords="5,152,144,177"/>
+<area shape="poly" title=" " alt="" coords="77,118,77,152,72,152,72,118"/>
+<area shape="rect" href="classObjectBase.html" title="Base object for promeki." alt="" coords="27,5,123,31"/>
+<area shape="poly" title=" " alt="" coords="77,44,77,79,72,79,72,44"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
@@ -765,7 +767,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when the thread finishes (carries the event loop exit code). </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000027">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000029">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -786,7 +788,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when the thread starts running. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000026">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000028">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -841,6 +843,8 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Override for custom thread behavior. </p>
 <p>Default implementation runs the thread's <a class="el" href="classEventLoop.html" title="Per-thread event loop providing event dispatch, timers, and posted callables.">EventLoop</a> via exec(). </p>
+
+<p>Reimplemented in <a class="el" href="classMulticastReceiver.html#a068685caf611b740bc043a2831f0e103">MulticastReceiver</a>.</p>
 
 </div>
 </div>
@@ -1048,7 +1052,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classThread.html">Thread</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

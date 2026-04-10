@@ -172,6 +172,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa9e48a6eecf39a9d5cb54a89ac48be56" id="r_aa9e48a6eecf39a9d5cb54a89ac48be56"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classDuration.html">Duration</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#aa9e48a6eecf39a9d5cb54a89ac48be56">frameDuration</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa9e48a6eecf39a9d5cb54a89ac48be56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the period of one frame as a <a class="el" href="classDuration.html" title="Time duration with nanosecond precision.">Duration</a>.  <br /></td></tr>
 <tr class="separator:aa9e48a6eecf39a9d5cb54a89ac48be56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cd0da25af476ee7d273b63dbfd9bcc0" id="r_a6cd0da25af476ee7d273b63dbfd9bcc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a6cd0da25af476ee7d273b63dbfd9bcc0">cumulativeTicks</a> (<a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">tickRate</a>, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">frameIndex</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a6cd0da25af476ee7d273b63dbfd9bcc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the cumulative tick count at the start of frame N.  <br /></td></tr>
+<tr class="separator:a6cd0da25af476ee7d273b63dbfd9bcc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a912fb106905a7dcb5278f3aa0d9fd4b4" id="r_a912fb106905a7dcb5278f3aa0d9fd4b4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">samplesPerFrame</a> (<a class="el" href="classList.html">int64_t</a> sampleRate, <a class="el" href="classList.html">int64_t</a> <a class="el" href="classList.html">frameIndex</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a912fb106905a7dcb5278f3aa0d9fd4b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of audio samples for the given frame index.  <br /></td></tr>
 <tr class="separator:a912fb106905a7dcb5278f3aa0d9fd4b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -204,7 +207,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Represents a video frame rate as a rational number. </p>
-<p><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> wraps a <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> value and provides an enumeration of well-known industry-standard frame rates. A frame rate can be constructed from a WellKnownRate enum or from an arbitrary rational value. <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> is a first-class Variant type and can be stored directly in <a class="el" href="classMediaNodeConfig.html" title="Configuration descriptor for creating and configuring a MediaNode.">MediaNodeConfig</a> and other Variant-based containers.</p>
+<p><a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> wraps a <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a> value and provides an enumeration of well-known industry-standard frame rates. A frame rate can be constructed from a WellKnownRate enum or from an arbitrary rational value. <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> is a first-class Variant type and can be stored directly in <a class="el" href="classMediaConfig.html" title="Generic name/value configuration container for the media subsystem.">MediaConfig</a> and other Variant-based containers.</p>
 <dl class="section user"><dt>Why rational numbers?</dt><dd></dd></dl>
 <p>Video frame rates must be represented as exact rational numbers (numerator / denominator), never as floating-point approximations. This requirement originates from the 1953 transition to NTSC color television in the United States.</p>
 <p>The original black-and-white NTSC standard operated at exactly 30 frames per second (60 fields/s), derived from the 60 Hz AC power line frequency. When color was added, engineers needed to multiplex a <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">3.579545</a> MHz color subcarrier into the existing signal without creating visible interference patterns. A beat frequency between the color subcarrier and the <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">4.5</a> MHz audio carrier would have produced objectionable artifacts in the picture. To eliminate this beat, the frame rate was reduced by a factor of exactly 1000/1001, shifting the color subcarrier frequency just enough to place the beat outside the visible spectrum. The resulting frame rate is exactly 30000/1001 frames per second &ndash; not <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a>, which is merely a convenient approximation.</p>
@@ -299,6 +302,60 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a6cd0da25af476ee7d273b63dbfd9bcc0" name="a6cd0da25af476ee7d273b63dbfd9bcc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cd0da25af476ee7d273b63dbfd9bcc0">&#9670;&#160;</a></span>cumulativeTicks()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">int64_t</a> FrameRate::cumulativeTicks </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>tickRate</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">int64_t</a>&#160;</td>
+          <td class="paramname"><em>frameIndex</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the cumulative tick count at the start of frame N. </p>
+<p>Computes <code></code>(frameIndex <code>×</code> <code>tickRate</code> <code>×</code> <code>denominator</code>) <code>/</code> <code>numerator</code> using exact 64-bit integer arithmetic. The result is the number of ticks of a clock running at <code>tickRate</code> that have elapsed between the start of the stream and the start of frame <code>frameIndex</code>. This is the primitive that every "time-at-frame" computation in libpromeki should build on:</p>
+<ul>
+<li><b><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample accounting</b> — pass the audio sample rate. <a class="el" href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">samplesPerFrame</a> delegates here and subtracts two consecutive calls to get the exact per-frame sample count, producing the NTSC 1601/1602 cadence without drift.</li>
+<li><b>RTP timestamps</b> — pass the RTP clock rate (typically 90000 for video, the sample rate for AES67 audio). The 64-bit result can be truncated to 32 bits for the wire representation; drift is bounded by the 1/<code>numerator</code> rational precision, which is exact for well-known rates.</li>
+<li><b>Wall-clock scheduling</b> — pass a 1 GHz "nanosecond tick" rate and the result is the frame's start time in nanoseconds.</li>
+</ul>
+<p>For integer-cadence rates (24, 25, 30, 50, 60) the stride between consecutive frames is constant. For fractional rates (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> = 30000/1001, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">23.976</a> = 24000/1001) the stride alternates in a fixed period (1001 frames for NTSC) so the cumulative count stays aligned with wall-clock time across arbitrary durations.</p>
+<p>Int64 range notes: for any plausible tickRate (≤ 2 GHz) and <code>denominator</code> (≤ 1001) and frame index (≤ 2^30), the intermediate product fits in int64 with a wide margin. Streams longer than 2^30 frames at &gt; 24 fps last longer than a year, which is well beyond the relevant use cases.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">tickRate</td><td>Ticks per second (e.g. 48000 for audio sample accounting, 90000 for standard video RTP). </td></tr>
+    <tr><td class="paramname">frameIndex</td><td>Zero-based frame index since the start of the run. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Cumulative tick count at the start of <code>frameIndex</code>, or 0 if the frame rate is invalid or <code>tickRate</code> is non-positive. </dd></dl>
+
+</div>
+</div>
 <a id="aa9e48a6eecf39a9d5cb54a89ac48be56" name="aa9e48a6eecf39a9d5cb54a89ac48be56"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa9e48a6eecf39a9d5cb54a89ac48be56">&#9670;&#160;</a></span>frameDuration()</h2>
 
@@ -488,15 +545,8 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the number of audio samples for the given frame index. </p>
-<p>Uses exact rational arithmetic so the cumulative sample count stays perfectly aligned with wall-clock time over arbitrary durations — including for fractional NTSC rates where the per-frame count must alternate. For 48 kHz @ <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> fps the function emits the standard cadence of 1601/1602/1601/1602/1602 (which sums to exactly 8008 every 5 frames), instead of the constant 1602 you would get from a naive <code>round</code>(sampleRate/fps).</p>
-<p>The implementation is:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">cumulative</a>(<a class="code hl_class" href="classList.html">n</a>) = (<a class="code hl_class" href="classList.html">n</a> * sampleRate * <a class="code hl_function" href="classFrameRate.html#acb54536ba866f30e98d52d6a8f8ba152">denominator</a>) / <a class="code hl_function" href="classFrameRate.html#a494073b25ab38bee4d9bf1b434a32d24">numerator</a>   <span class="comment">// integer div</span></div>
-<div class="line"><a class="code hl_function" href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">samplesPerFrame</a>(<a class="code hl_class" href="classList.html">n</a>) = <a class="code hl_class" href="classList.html">cumulative</a>(<a class="code hl_class" href="classList.html">n</a> + 1) - <a class="code hl_class" href="classList.html">cumulative</a>(<a class="code hl_class" href="classList.html">n</a>)</div>
-<div class="ttc" id="aclassFrameRate_html_a494073b25ab38bee4d9bf1b434a32d24"><div class="ttname"><a href="classFrameRate.html#a494073b25ab38bee4d9bf1b434a32d24">FrameRate::numerator</a></div><div class="ttdeci">unsigned int numerator() const</div><div class="ttdoc">Returns the numerator of the frame rate rational.</div><div class="ttdef"><b>Definition</b> framerate.h:136</div></div>
-<div class="ttc" id="aclassFrameRate_html_a912fb106905a7dcb5278f3aa0d9fd4b4"><div class="ttname"><a href="classFrameRate.html#a912fb106905a7dcb5278f3aa0d9fd4b4">FrameRate::samplesPerFrame</a></div><div class="ttdeci">size_t samplesPerFrame(int64_t sampleRate, int64_t frameIndex) const</div><div class="ttdoc">Returns the number of audio samples for the given frame index.</div><div class="ttdef"><b>Definition</b> framerate.h:204</div></div>
-<div class="ttc" id="aclassFrameRate_html_acb54536ba866f30e98d52d6a8f8ba152"><div class="ttname"><a href="classFrameRate.html#acb54536ba866f30e98d52d6a8f8ba152">FrameRate::denominator</a></div><div class="ttdeci">unsigned int denominator() const</div><div class="ttdoc">Returns the denominator of the frame rate rational.</div><div class="ttdef"><b>Definition</b> framerate.h:139</div></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-</div><!-- fragment --><p>For integer-cadence rates (24, 25, 30, 50, 60) every frame returns the same constant value. For fractional rates the result alternates in a fixed cycle whose period equals the <code>denominator</code> (e.g. 1001 for NTSC — though the visible pattern repeats every 5 frames).</p>
+<p>Thin wrapper around <a class="el" href="classFrameRate.html#a6cd0da25af476ee7d273b63dbfd9bcc0">cumulativeTicks</a> that returns <code>cumulative</code>(frameIndex+1) <code>-</code> <code>cumulative(frameIndex)</code>, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. the exact number of audio samples belonging to frame N. For 48 kHz @ <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> fps this yields the standard 1601/1602/1601/1602/1602 cadence summing to exactly 8008 every 5 frames.</p>
+<p>For integer-cadence rates (24, 25, 30, 50, 60) every frame returns the same constant value. For fractional rates the result alternates in a fixed cycle whose period equals the <code>denominator</code> (e.g. 1001 for NTSC — though the visible pattern repeats every 5 frames).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">sampleRate</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> sample rate in Hz (e.g. 48000). </td></tr>
@@ -587,6 +637,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"><a class="code hl_class" href="classFrameRate.html">FrameRate</a> <a class="code hl_class" href="classList.html">custom</a>(<a class="code hl_class" href="classRational.html">FrameRate::RationalType</a>(90, 1));</div>
 <div class="line"><a class="code hl_class" href="classList.html">assert</a>(<a class="code hl_class" href="classList.html">custom</a>.wellKnownRate() == <a class="code hl_enumvalue" href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202">FrameRate::FPS_NotWellKnown</a>);</div>
 <div class="ttc" id="aclassFrameRate_html_a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202"><div class="ttname"><a href="classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202">FrameRate::FPS_NotWellKnown</a></div><div class="ttdeci">@ FPS_NotWellKnown</div><div class="ttdoc">Not a well-known rate.</div><div class="ttdef"><b>Definition</b> framerate.h:109</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassRational_html"><div class="ttname"><a href="classRational.html">Rational&lt; unsigned int &gt;</a></div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section return"><dt>Returns</dt><dd>The matching WellKnownRate, or FPS_NotWellKnown. </dd></dl>
@@ -603,7 +654,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFrameRate.html">FrameRate</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

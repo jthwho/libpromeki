@@ -75,7 +75,7 @@ var NAVTREEINDEX2 =
 "classAudioDesc.html#a31b0bf94438907b125f7fba03183fdc0":[13,13,3,26],
 "classAudioDesc.html#a32c198911f37bb6caed55d5d5e357853":[13,13,3,7],
 "classAudioDesc.html#a331dc642a6ebce45a2cc3edbe654b039":[13,13,3,25],
-"classAudioDesc.html#a39a3326dbbe81cbb3951e3f31beff7df":[13,13,3,28],
+"classAudioDesc.html#a39a3326dbbe81cbb3951e3f31beff7df":[13,13,3,29],
 "classAudioDesc.html#a3f4486efd3ceda5d12df5d987d564aba":[13,13,3,6],
 "classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc":[13,13,3,4],
 "classAudioDesc.html#a4748613d1123df20087b6a9b0e44b25f":[13,13,3,20],
@@ -104,11 +104,12 @@ var NAVTREEINDEX2 =
 "classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4ae2e2b5c221811c33ee58a4ba83dd9e38":[13,13,3,2,3],
 "classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4aef9ae22c3216ce137fc50b6056ce3ea8":[13,13,3,2,8],
 "classAudioDesc.html#ab14f6e70fe47ab39420796247f5ecbdf":[13,13,3,27],
+"classAudioDesc.html#ab18d9b72c5be9490dd33d25403d55f50":[13,13,3,28],
 "classAudioDesc.html#ab627ec31647826dda77b727aad03fe54":[13,13,3,15],
 "classAudioDesc.html#abb0b952fedcf67639b5de33908c5bfb4":[13,13,3,8],
 "classAudioDesc.html#ac0f5aeaef11ed389c117b0c174ecc905":[13,13,3,17],
 "classAudioDesc.html#ac9768a6e021bda041de148a1add6ddf3":[13,13,3,16],
-"classAudioDesc.html#ad04bfe1f04c616f7bafc2071fa9ee5eb":[13,13,3,29],
+"classAudioDesc.html#ad04bfe1f04c616f7bafc2071fa9ee5eb":[13,13,3,30],
 "classAudioDesc.html#ae562a951eb019b6e0d9284f4bd1d425f":[13,13,3,11],
 "classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76":[13,13,3,12],
 "classAudioDesc.html#afe5d5fdda9cf22642631123d392f9f6d":[13,13,3,18],
@@ -248,6 +249,5 @@ var NAVTREEINDEX2 =
 "classBuffer.html#a401b36f3343ef73a9dfa13b754dc81dc":[13,7,0,22],
 "classBuffer.html#a44dea5535d00022d1e54bffb0b387606":[13,7,0,20],
 "classBuffer.html#a46144112ecb2bd9593ba8767fb140145":[13,7,0,17],
-"classBuffer.html#a54e60683bb045b1d830e9152b4b482ef":[13,7,0,19],
-"classBuffer.html#a5506e9a3382998fba7625794bfde1576":[13,7,0,6]
+"classBuffer.html#a54e60683bb045b1d830e9152b4b482ef":[13,7,0,19]
 };

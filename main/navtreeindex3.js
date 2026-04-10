@@ -1,5 +1,6 @@
 var NAVTREEINDEX3 =
 {
+"classBuffer.html#a5506e9a3382998fba7625794bfde1576":[13,7,0,6],
 "classBuffer.html#a59b8743e4a5f731bdd0c4185c9ef263b":[13,7,0,8],
 "classBuffer.html#a59d9432844bceaefd50a787f2804eb69":[13,7,0,14],
 "classBuffer.html#a75407799931ea8ff390fd7c7d9ea07f0":[13,7,0,9],
@@ -128,7 +129,7 @@ var NAVTREEINDEX3 =
 "classCSCPipeline.html#a7b879527f20946e47acfbe7bfc8f7b6daf431fd74a362b3fbbe9a1e8ea45b776d":[13,13,10,2,6],
 "classCSCPipeline.html#ac3b5c44140b41d20bfd2f3e71234119f":[13,13,10,10],
 "classCSCPipeline.html#acf57e399814e854635db7ce6e8be7ca7":[13,13,10,3],
-"classCSCPipeline.html#ad7df750eee82c2562e95d39b1518d4f1":[13,13,10,4],
+"classCSCPipeline.html#aeab56b54fe3be89cc303939d5e397a2b":[13,13,10,4],
 "classCSCPipeline.html#aeaef0095631c664616cfcef21d1ab95d":[13,13,10,11],
 "classCSCPipeline.html#af07e55b3e798d05022a48512cf432b09":[13,13,10,6],
 "classCSCRegistry.html":[13,13,11],
@@ -248,6 +249,5 @@ var NAVTREEINDEX3 =
 "classColorModel.html#a3406ef23ef3f921fef8699ddf327add1":[13,14,3,9],
 "classColorModel.html#a3fb169682ff2d6a8228b4f7939fb88ac":[13,14,3,11],
 "classColorModel.html#a421e6efa9c86c51eca8171d50e67b3ee":[13,14,3,6],
-"classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eea3c0a5d60704f6eeb42d5a984a9d5bfab":[13,14,3,6,0],
-"classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eea525df06bc140a3eedfc6b3e3e88719f2":[13,14,3,6,5]
+"classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eea3c0a5d60704f6eeb42d5a984a9d5bfab":[13,14,3,6,0]
 };

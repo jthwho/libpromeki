@@ -21,6 +21,7 @@ var classFrameRate =
     [ "FrameRate", "classFrameRate.html#a6c6c3729ca18931c58a6331f5b08c9cb", null ],
     [ "FrameRate", "classFrameRate.html#abf1342825d478fdf1f6b030052643112", null ],
     [ "FrameRate", "classFrameRate.html#ab9edebc2d00f76147153f070093e5f95", null ],
+    [ "cumulativeTicks", "classFrameRate.html#a6cd0da25af476ee7d273b63dbfd9bcc0", null ],
     [ "denominator", "classFrameRate.html#acb54536ba866f30e98d52d6a8f8ba152", null ],
     [ "frameDuration", "classFrameRate.html#aa9e48a6eecf39a9d5cb54a89ac48be56", null ],
     [ "isValid", "classFrameRate.html#a3668afabc874fe36f362e34cc36f6ca9", null ],

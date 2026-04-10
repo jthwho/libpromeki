@@ -1,5 +1,0 @@
-<map id="MediaSink" name="MediaSink">
-<area shape="rect" id="Node000001" title="Input endpoint on a MediaNode that receives Frame::Ptr." alt="" coords="5,93,96,119"/>
-<area shape="rect" id="Node000002" href="$classRefCount.html" title="An atomic reference count object." alt="" coords="9,5,92,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="53,45,53,93,48,93,48,45"/>
-</map>

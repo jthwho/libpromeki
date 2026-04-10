@@ -42,5 +42,5 @@ var searchData=
   ['rgbf32_5fle_5flinearrec709_39',['RGBF32_LE_LinearRec709',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa0d41d31bd6e2853752cdf9894f23420e',1,'PixelDesc']]],
   ['right_40',['Right',['../classTextStream.html#a6bc874c130622f3c0c26808f33875853af053e9a7e0ba8285514f43125d8ca1f6',1,'TextStream']]],
   ['roundrobin_41',['RoundRobin',['../group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da91a63281bd2e647fe3b92d1d22cd3380',1,'thread.h']]],
-  ['running_42',['running',['../classMediaNode.html#ad4c42f5f6b8028cfa53a151c2006c8aea83964814d148ea39408922126f49269e',1,'MediaNode::Running'],['../classMediaPipeline.html#a5b443714546d0d15aa4670acf2413199a744d24412aed4ecbbd20518af91ab14a',1,'MediaPipeline::Running'],['../classProcess.html#a29199d5fd3060da8da03649f06127847a6e3fad4880be8797cfce76d46cf8a0f7',1,'Process::Running']]]
+  ['running_42',['Running',['../classProcess.html#a29199d5fd3060da8da03649f06127847a6e3fad4880be8797cfce76d46cf8a0f7',1,'Process']]]
 ];

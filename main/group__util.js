@@ -595,7 +595,7 @@ var group__util =
       [ "writeTo", "classVariantDatabase.html#addc64ebe789a1513cf0d6621ace73f0f", null ]
     ] ],
     [ "PROMEKI_SHARED", "group__util.html#ga171ec9034fbfc2c134195af18ea762e7", null ],
-    [ "PROMEKI_VARIANT_TYPES", "group__util.html#ga25b90810f9f44c24939254e7eef520e3", null ],
+    [ "PROMEKI_VARIANT_TYPES_NETWORK", "group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2", null ],
     [ "Config", "group__util.html#gaf8b66ff752a54a8c6048a661432bd094", null ],
     [ "Result", "group__util.html#ga72213850e8f39e4956d4ce23dd5238f7", null ],
     [ "fnv1a", "group__util.html#gab69e96bcf690e69917938a80b3e84123", null ],

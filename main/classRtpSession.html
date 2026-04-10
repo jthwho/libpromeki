@@ -100,7 +100,9 @@ $(document).ready(function(){initNavTree('classRtpSession.html',''); initResizab
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classRtpSession-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">RtpSession Class Reference<div class="ingroups"><a class="el" href="group__network.html">Network</a></div></div></div>
 </div><!--header-->
@@ -135,6 +137,17 @@ Collaboration diagram for RtpSession:</div>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:ae472a7b0761117674132e5779dff44c6" id="r_ae472a7b0761117674132e5779dff44c6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#ae472a7b0761117674132e5779dff44c6">PacketCallback</a> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classRtpPacket.html">RtpPacket</a> &amp;<a class="el" href="classList.html">packet</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;sender)&gt;</td></tr>
+<tr class="memdesc:ae472a7b0761117674132e5779dff44c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signature of the per-packet receive callback.  <br /></td></tr>
+<tr class="separator:ae472a7b0761117674132e5779dff44c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
+<tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
+<tr class="memdesc:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for invoking a slot with a list of Variants. <br /></td></tr>
+<tr class="separator:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:add74a7893d26d6a3d0d7216371515fba" id="r_add74a7893d26d6a3d0d7216371515fba"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#add74a7893d26d6a3d0d7216371515fba">RtpSession</a> (<a class="el" href="classObjectBase.html">ObjectBase</a> *<a class="el" href="classObjectBase.html#ad8a11dd19f4510f3ce38c779fc7911a8">parent</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
@@ -145,25 +158,58 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a68967becf4679ec75b90fdb2add1e372"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Stops the session if running. <br /></td></tr>
 <tr class="separator:a68967becf4679ec75b90fdb2add1e372"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a1244cc553c06105e2fe16b118975d1" id="r_a0a1244cc553c06105e2fe16b118975d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">start</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">localAddr</a>)</td></tr>
-<tr class="memdesc:a0a1244cc553c06105e2fe16b118975d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts the session, binding to a local address.  <br /></td></tr>
+<tr class="memdesc:a0a1244cc553c06105e2fe16b118975d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts the session with an internally-owned UDP transport.  <br /></td></tr>
 <tr class="separator:a0a1244cc553c06105e2fe16b118975d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53557cab0cf51dfe990cc6cd3f641ba9" id="r_a53557cab0cf51dfe990cc6cd3f641ba9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a53557cab0cf51dfe990cc6cd3f641ba9">start</a> (<a class="el" href="classPacketTransport.html">PacketTransport</a> *<a class="el" href="classRtpSession.html#a0c7222924319a2c7ef1a34d342de006c">transport</a>)</td></tr>
+<tr class="memdesc:a53557cab0cf51dfe990cc6cd3f641ba9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts the session with a caller-owned transport.  <br /></td></tr>
+<tr class="separator:a53557cab0cf51dfe990cc6cd3f641ba9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5bc58b777d8ac8763d47e27569a037c" id="r_ae5bc58b777d8ac8763d47e27569a037c"><td class="memItemLeft" align="right" valign="top"><a id="ae5bc58b777d8ac8763d47e27569a037c" name="ae5bc58b777d8ac8763d47e27569a037c"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>stop</b> ()</td></tr>
-<tr class="memdesc:ae5bc58b777d8ac8763d47e27569a037c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops the session and closes the socket. <br /></td></tr>
+<tr class="memdesc:ae5bc58b777d8ac8763d47e27569a037c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops the session and closes any owned transport. <br /></td></tr>
 <tr class="separator:ae5bc58b777d8ac8763d47e27569a037c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adea8229e1e4abfbfc6178abbfac0ad6d" id="r_adea8229e1e4abfbfc6178abbfac0ad6d"><td class="memItemLeft" align="right" valign="top"><a id="adea8229e1e4abfbfc6178abbfac0ad6d" name="adea8229e1e4abfbfc6178abbfac0ad6d"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isRunning</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:adea8229e1e4abfbfc6178abbfac0ad6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the session is started. <br /></td></tr>
 <tr class="separator:adea8229e1e4abfbfc6178abbfac0ad6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d8830611f5e8fa6e652b25b80274f4d" id="r_a2d8830611f5e8fa6e652b25b80274f4d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a2d8830611f5e8fa6e652b25b80274f4d">sendPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html">Buffer</a> &amp;payload, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">uint8_t</a> <a class="el" href="classRtpSession.html#a982403a5be30d9149c864f55df13eabf">payloadType</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>, <a class="el" href="classList.html">bool</a> marker=<a class="el" href="classList.html">false</a>)</td></tr>
-<tr class="memdesc:a2d8830611f5e8fa6e652b25b80274f4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a single RTP packet with raw payload data.  <br /></td></tr>
-<tr class="separator:a2d8830611f5e8fa6e652b25b80274f4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb98d7f038370209135450dd752412d1" id="r_abb98d7f038370209135450dd752412d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#abb98d7f038370209135450dd752412d1">sendPackets</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">markerOnLast</a>=<a class="el" href="classList.html">true</a>)</td></tr>
-<tr class="memdesc:abb98d7f038370209135450dd752412d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends pre-packed RTP packets from a payload handler.  <br /></td></tr>
-<tr class="separator:abb98d7f038370209135450dd752412d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a65d6124b69d382c2b6b91f02b6e99e1b" id="r_a65d6124b69d382c2b6b91f02b6e99e1b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a65d6124b69d382c2b6b91f02b6e99e1b">sendPacketsPaced</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;<a class="el" href="classList.html">dest</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;<a class="el" href="classList.html">spreadInterval</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">markerOnLast</a>=<a class="el" href="classList.html">true</a>)</td></tr>
-<tr class="memdesc:a65d6124b69d382c2b6b91f02b6e99e1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends pre-packed RTP packets with even inter-packet pacing.  <br /></td></tr>
-<tr class="separator:a65d6124b69d382c2b6b91f02b6e99e1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af62d944786242a511bfbaac7785ca3f3" id="r_af62d944786242a511bfbaac7785ca3f3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#af62d944786242a511bfbaac7785ca3f3">setRemote</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;dest)</td></tr>
+<tr class="memdesc:af62d944786242a511bfbaac7785ca3f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the destination address for all subsequent sends.  <br /></td></tr>
+<tr class="separator:af62d944786242a511bfbaac7785ca3f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a024993050a5263b4a5f66c83c86c9246" id="r_a024993050a5263b4a5f66c83c86c9246"><td class="memItemLeft" align="right" valign="top"><a id="a024993050a5263b4a5f66c83c86c9246" name="a024993050a5263b4a5f66c83c86c9246"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>remote</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a024993050a5263b4a5f66c83c86c9246"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current destination address. <br /></td></tr>
+<tr class="separator:a024993050a5263b4a5f66c83c86c9246"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8deb45c772b19eb0ba26aced4ad188a" id="r_ac8deb45c772b19eb0ba26aced4ad188a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#ac8deb45c772b19eb0ba26aced4ad188a">sendPacket</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classBuffer.html">Buffer</a> &amp;payload, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">uint8_t</a> <a class="el" href="classRtpSession.html#a982403a5be30d9149c864f55df13eabf">payloadType</a>, <a class="el" href="classList.html">bool</a> marker=<a class="el" href="classList.html">false</a>)</td></tr>
+<tr class="memdesc:ac8deb45c772b19eb0ba26aced4ad188a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a single RTP packet with raw payload data.  <br /></td></tr>
+<tr class="separator:ac8deb45c772b19eb0ba26aced4ad188a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f942c263642558ea358d9ff84bc725b" id="r_a5f942c263642558ea358d9ff84bc725b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a5f942c263642558ea358d9ff84bc725b">sendPackets</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">markerOnLast</a>=<a class="el" href="classList.html">true</a>)</td></tr>
+<tr class="memdesc:a5f942c263642558ea358d9ff84bc725b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends pre-packed RTP packets from a payload handler.  <br /></td></tr>
+<tr class="separator:a5f942c263642558ea358d9ff84bc725b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76af66acfe0ac7893d4b0af680d0362b" id="r_a76af66acfe0ac7893d4b0af680d0362b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a76af66acfe0ac7893d4b0af680d0362b">sendPackets</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> <a class="el" href="classList.html">startTimestamp</a>, <a class="el" href="classList.html">uint32_t</a> <a class="el" href="classList.html">timestampStride</a>, <a class="el" href="classList.html">bool</a> marker=<a class="el" href="classList.html">false</a>)</td></tr>
+<tr class="memdesc:a76af66acfe0ac7893d4b0af680d0362b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a list of packets with per-packet timestamps.  <br /></td></tr>
+<tr class="separator:a76af66acfe0ac7893d4b0af680d0362b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7cdafde2c8a5e7c2af886e76710fdb09" id="r_a7cdafde2c8a5e7c2af886e76710fdb09"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a7cdafde2c8a5e7c2af886e76710fdb09">sendPacketsPaced</a> (<a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;<a class="el" href="classList.html">packets</a>, <a class="el" href="classList.html">uint32_t</a> timestamp, <a class="el" href="classList.html">const</a> <a class="el" href="classDuration.html">Duration</a> &amp;<a class="el" href="classList.html">spreadInterval</a>, <a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">markerOnLast</a>=<a class="el" href="classList.html">true</a>)</td></tr>
+<tr class="memdesc:a7cdafde2c8a5e7c2af886e76710fdb09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends pre-packed RTP packets with userspace pacing.  <br /></td></tr>
+<tr class="separator:a7cdafde2c8a5e7c2af886e76710fdb09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3880b0793056b807b5b78a456d7856c0" id="r_a3880b0793056b807b5b78a456d7856c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a3880b0793056b807b5b78a456d7856c0">startReceiving</a> (<a class="el" href="classRtpSession.html#ae472a7b0761117674132e5779dff44c6">PacketCallback</a> callback, <a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;threadName=&quot;rtp-<a class="el" href="classList.html">rx&quot;</a>)</td></tr>
+<tr class="memdesc:a3880b0793056b807b5b78a456d7856c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts the per-session RTP receive loop.  <br /></td></tr>
+<tr class="separator:a3880b0793056b807b5b78a456d7856c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc3c2e41373de0c69f25cd3d6561b7de" id="r_abc3c2e41373de0c69f25cd3d6561b7de"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#abc3c2e41373de0c69f25cd3d6561b7de">stopReceiving</a> ()</td></tr>
+<tr class="memdesc:abc3c2e41373de0c69f25cd3d6561b7de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stops the receive loop and joins the receive thread.  <br /></td></tr>
+<tr class="separator:abc3c2e41373de0c69f25cd3d6561b7de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7cc9f0c2cc20422f0e74d253052911f" id="r_ae7cc9f0c2cc20422f0e74d253052911f"><td class="memItemLeft" align="right" valign="top"><a id="ae7cc9f0c2cc20422f0e74d253052911f" name="ae7cc9f0c2cc20422f0e74d253052911f"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isReceiving</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae7cc9f0c2cc20422f0e74d253052911f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the receive loop is running. <br /></td></tr>
+<tr class="separator:ae7cc9f0c2cc20422f0e74d253052911f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a826f50f7cab2277d06c098126c1f2bd2" id="r_a826f50f7cab2277d06c098126c1f2bd2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a826f50f7cab2277d06c098126c1f2bd2">setReceivePollIntervalMs</a> (<a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>)</td></tr>
+<tr class="memdesc:a826f50f7cab2277d06c098126c1f2bd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the receive-loop poll interval in milliseconds.  <br /></td></tr>
+<tr class="separator:a826f50f7cab2277d06c098126c1f2bd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa09c4248b9e0a920916466b8650f873f" id="r_aa09c4248b9e0a920916466b8650f873f"><td class="memItemLeft" align="right" valign="top"><a id="aa09c4248b9e0a920916466b8650f873f" name="aa09c4248b9e0a920916466b8650f873f"></a>
+<a class="el" href="classList.html">unsigned</a> int&#160;</td><td class="memItemRight" valign="bottom"><b>receivePollIntervalMs</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aa09c4248b9e0a920916466b8650f873f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the receive-loop poll interval. <br /></td></tr>
+<tr class="separator:aa09c4248b9e0a920916466b8650f873f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ca3b8106bcd298c4a69946a2b9a6147" id="r_a3ca3b8106bcd298c4a69946a2b9a6147"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a3ca3b8106bcd298c4a69946a2b9a6147">setPacingRate</a> (<a class="el" href="classList.html">uint64_t</a> <a class="el" href="classList.html">bytesPerSec</a>)</td></tr>
+<tr class="memdesc:a3ca3b8106bcd298c4a69946a2b9a6147"><td class="mdescLeft">&#160;</td><td class="mdescRight">Applies a transmit-rate cap to the transport.  <br /></td></tr>
+<tr class="separator:a3ca3b8106bcd298c4a69946a2b9a6147"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f7581de92068be35e93575640feaec5" id="r_a6f7581de92068be35e93575640feaec5"><td class="memItemLeft" align="right" valign="top"><a id="a6f7581de92068be35e93575640feaec5" name="a6f7581de92068be35e93575640feaec5"></a>
 <a class="el" href="classList.html">uint32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ssrc</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a6f7581de92068be35e93575640feaec5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the locally generated SSRC. <br /></td></tr>
@@ -192,9 +238,9 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">uint32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clockRate</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aa5f810fe6cc1e57aeaef1fa494090223"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the RTP timestamp clock rate. <br /></td></tr>
 <tr class="separator:aa5f810fe6cc1e57aeaef1fa494090223"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac6e34b68f6373f128c78cb876ba16fb" id="r_aac6e34b68f6373f128c78cb876ba16fb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUdpSocket.html">UdpSocket</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#aac6e34b68f6373f128c78cb876ba16fb">socket</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aac6e34b68f6373f128c78cb876ba16fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the internal UDP socket.  <br /></td></tr>
-<tr class="separator:aac6e34b68f6373f128c78cb876ba16fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c7222924319a2c7ef1a34d342de006c" id="r_a0c7222924319a2c7ef1a34d342de006c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classPacketTransport.html">PacketTransport</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#a0c7222924319a2c7ef1a34d342de006c">transport</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0c7222924319a2c7ef1a34d342de006c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the active packet transport.  <br /></td></tr>
+<tr class="separator:a0c7222924319a2c7ef1a34d342de006c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa96235f400afdbfbfd3363c12c4d4a87" id="r_aa96235f400afdbfbfd3363c12c4d4a87"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classRtpSession.html#aa96235f400afdbfbfd3363c12c4d4a87">PROMEKI_SIGNAL</a> (<a class="el" href="classList.html">packetReceived</a>, <a class="el" href="classBuffer.html">Buffer</a>, <a class="el" href="classList.html">uint32_t</a>, <a class="el" href="classList.html">uint8_t</a>, <a class="el" href="classList.html">bool</a>)</td></tr>
 <tr class="memdesc:aa96235f400afdbfbfd3363c12c4d4a87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emitted when a packet is received.  <br /></td></tr>
 <tr class="separator:aa96235f400afdbfbfd3363c12c4d4a87"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -240,13 +286,14 @@ template&lt;typename... Args&gt; </td></tr>
 <tr class="memitem:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespace_8h.html#a0444a93cedfdf35aa76c315990dc6e10">PROMEKI_NAMESPACE_BEGIN</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><b>connect</b> (<a class="el" href="classSignal.html">Signal</a>&lt; Args... &gt; *signal, <a class="el" href="classSlot.html">Slot</a>&lt; Args... &gt; *<a class="el" href="classList.html">slot</a>)</td></tr>
 <tr class="separator:a5ee9c4a45874eeef32c887718823feda inherit pub_methods_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:af3b6b68ea427022129a5c6c8aff5f3d8" id="r_af3b6b68ea427022129a5c6c8aff5f3d8"><td class="memItemLeft" align="right" valign="top"><a id="af3b6b68ea427022129a5c6c8aff5f3d8" name="af3b6b68ea427022129a5c6c8aff5f3d8"></a>
+<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ReceiveThread</b></td></tr>
+<tr class="separator:af3b6b68ea427022129a5c6c8aff5f3d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pub_types_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
-<tr class="memitem:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase" id="r_aa5b71229762e66678aa59aaa21ecd7af"><td class="memItemLeft" align="right" valign="top">
-<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SlotVariantFunc</b> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a237e2a78d81fec1b598585def4459f2a">VariantList</a> &amp;)&gt;</td></tr>
-<tr class="memdesc:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function type for invoking a slot with a list of Variants. <br /></td></tr>
-<tr class="separator:aa5b71229762e66678aa59aaa21ecd7af inherit pub_types_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
@@ -281,24 +328,59 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>RTP session for sending and receiving packets (RFC 3550). </p>
-<p><a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a> manages the RTP protocol state for a single synchronization source (SSRC). It handles RTP header construction, sequence number management, and timestamp tracking.</p>
-<p>The session operates on pre-built <a class="el" href="classRtpPacket.html" title="A BufferView that interprets its data as an RTP packet.">RtpPacket</a> lists from <a class="el" href="classRtpPayload.html" title="Abstract base class for RTP payload type handlers.">RtpPayload</a> handlers. It fills in the RTP header fields (version, payload type, sequence number, timestamp, SSRC, marker bit) and transmits via a <a class="el" href="classUdpSocket.html" title="Datagram-oriented UDP socket with multicast support.">UdpSocket</a>.</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classRtpSession.html">RtpSession</a> <a class="code hl_class" href="classList.html">session</a>;</div>
-<div class="line"><a class="code hl_class" href="classList.html">session</a>.setPayloadType(96);</div>
-<div class="line"><a class="code hl_class" href="classList.html">session</a>.setClockRate(90000);</div>
-<div class="line"><a class="code hl_class" href="classError.html">Error</a> <a class="code hl_class" href="classList.html">err</a> = <a class="code hl_class" href="classList.html">session</a>.start(<a class="code hl_function" href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a>(0));</div>
+<p><a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a> manages the RTP protocol state for a single synchronization source (SSRC). It handles RTP header construction, sequence number management, timestamp tracking, and packet transmission via a <a class="el" href="classPacketTransport.html">PacketTransport</a>.</p>
+<p>The session operates on pre-built <a class="el" href="classRtpPacket.html">RtpPacket</a> lists from <a class="el" href="classRtpPayload.html">RtpPayload</a> handlers: it fills in the RTP header fields (version, payload type, sequence number, timestamp, SSRC, marker bit) and hands the packets to the transport for delivery.</p>
+<dl class="section user"><dt>Transport ownership</dt><dd></dd></dl>
+<p><a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a> can either own its transport (when started via <a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">start(const SocketAddress&amp;)</a>, which creates an internal <a class="el" href="classUdpSocketTransport.html">UdpSocketTransport</a>) or borrow a caller-owned transport (when started via <a class="el" href="classRtpSession.html#a53557cab0cf51dfe990cc6cd3f641ba9">start(PacketTransport*)</a>). Borrowing is the right pattern when the caller needs to configure the transport with options <a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a> doesn't expose, or when the same transport is being shared across multiple RTP streams (not currently supported, but forward-compatible with future DPDK multiplexing).</p>
+<dl class="section user"><dt>Destination</dt><dd></dd></dl>
+<p>The destination address is set once via <a class="el" href="classRtpSession.html#af62d944786242a511bfbaac7785ca3f3">setRemote()</a> before sending any packets. RTP streams have a single peer (unicast address or multicast group), so per-send destination arguments would only invite inconsistency. To send to a multicast group, pass the group address to <code><a class="el" href="classRtpSession.html#af62d944786242a511bfbaac7785ca3f3" title="Sets the destination address for all subsequent sends.">setRemote()</a></code> and configure the transport (TTL, outgoing interface) before <code><a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1" title="Starts the session with an internally-owned UDP transport.">start()</a></code>.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classRtpSession.html">RtpSession</a> session;</div>
+<div class="line">session.<a class="code hl_function" href="classRtpSession.html#aa62da4ecda73e343eaa922b2f2e0ad46">setPayloadType</a>(96);</div>
+<div class="line">session.<a class="code hl_function" href="classRtpSession.html#afa04a7a9f55813b3e981c38fb23db6e4">setClockRate</a>(90000);</div>
+<div class="line">session.<a class="code hl_function" href="classRtpSession.html#af62d944786242a511bfbaac7785ca3f3">setRemote</a>(<a class="code hl_class" href="classSocketAddress.html">SocketAddress</a>(<a class="code hl_class" href="classIpv4Address.html">Ipv4Address</a>(239, 0, 0, 1), 5004));</div>
+<div class="line">session.<a class="code hl_function" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">start</a>(<a class="code hl_function" href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a>(0));</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Send pre-packed RTP packets</span></div>
 <div class="line"><a class="code hl_class" href="classRtpPayloadJpeg.html">RtpPayloadJpeg</a> payload(1920, 1080);</div>
 <div class="line"><span class="keyword">auto</span> <a class="code hl_class" href="classList.html">packets</a> = payload.pack(<a class="code hl_class" href="classList.html">jpegData</a>, <a class="code hl_class" href="classList.html">jpegSize</a>);</div>
-<div class="line"><a class="code hl_class" href="classList.html">session</a>.sendPackets(<a class="code hl_class" href="classList.html">packets</a>, timestamp, <a class="code hl_class" href="classList.html">dest</a>, <span class="keyword">true</span>);</div>
-<div class="ttc" id="aclassError_html"><div class="ttname"><a href="classError.html">Error</a></div><div class="ttdoc">Lightweight error code wrapper for the promeki library.</div><div class="ttdef"><b>Definition</b> error.h:39</div></div>
+<div class="line">session.<a class="code hl_function" href="classRtpSession.html#a5f942c263642558ea358d9ff84bc725b">sendPackets</a>(<a class="code hl_class" href="classList.html">packets</a>, timestamp, <span class="keyword">true</span>);</div>
+<div class="ttc" id="aclassIpv4Address_html"><div class="ttname"><a href="classIpv4Address.html">Ipv4Address</a></div><div class="ttdoc">IPv4 network address.</div><div class="ttdef"><b>Definition</b> ipv4address.h:51</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassRtpPayloadJpeg_html"><div class="ttname"><a href="classRtpPayloadJpeg.html">RtpPayloadJpeg</a></div><div class="ttdoc">RTP payload handler for RFC 2435 JPEG (Motion JPEG).</div><div class="ttdef"><b>Definition</b> rtppayload.h:264</div></div>
-<div class="ttc" id="aclassRtpSession_html"><div class="ttname"><a href="classRtpSession.html">RtpSession</a></div><div class="ttdoc">RTP session for sending and receiving packets (RFC 3550).</div><div class="ttdef"><b>Definition</b> rtpsession.h:48</div></div>
+<div class="ttc" id="aclassRtpPayloadJpeg_html"><div class="ttname"><a href="classRtpPayloadJpeg.html">RtpPayloadJpeg</a></div><div class="ttdoc">RTP payload handler for RFC 2435 JPEG (Motion JPEG).</div><div class="ttdef"><b>Definition</b> rtppayload.h:360</div></div>
+<div class="ttc" id="aclassRtpSession_html"><div class="ttname"><a href="classRtpSession.html">RtpSession</a></div><div class="ttdoc">RTP session for sending and receiving packets (RFC 3550).</div><div class="ttdef"><b>Definition</b> rtpsession.h:73</div></div>
+<div class="ttc" id="aclassRtpSession_html_a0a1244cc553c06105e2fe16b118975d1"><div class="ttname"><a href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">RtpSession::start</a></div><div class="ttdeci">Error start(const SocketAddress &amp;localAddr)</div><div class="ttdoc">Starts the session with an internally-owned UDP transport.</div></div>
+<div class="ttc" id="aclassRtpSession_html_a5f942c263642558ea358d9ff84bc725b"><div class="ttname"><a href="classRtpSession.html#a5f942c263642558ea358d9ff84bc725b">RtpSession::sendPackets</a></div><div class="ttdeci">Error sendPackets(RtpPacket::List &amp;packets, uint32_t timestamp, bool markerOnLast=true)</div><div class="ttdoc">Sends pre-packed RTP packets from a payload handler.</div></div>
+<div class="ttc" id="aclassRtpSession_html_aa62da4ecda73e343eaa922b2f2e0ad46"><div class="ttname"><a href="classRtpSession.html#aa62da4ecda73e343eaa922b2f2e0ad46">RtpSession::setPayloadType</a></div><div class="ttdeci">void setPayloadType(uint8_t pt)</div><div class="ttdoc">Sets the default payload type.</div><div class="ttdef"><b>Definition</b> rtpsession.h:328</div></div>
+<div class="ttc" id="aclassRtpSession_html_af62d944786242a511bfbaac7785ca3f3"><div class="ttname"><a href="classRtpSession.html#af62d944786242a511bfbaac7785ca3f3">RtpSession::setRemote</a></div><div class="ttdeci">void setRemote(const SocketAddress &amp;dest)</div><div class="ttdoc">Sets the destination address for all subsequent sends.</div><div class="ttdef"><b>Definition</b> rtpsession.h:127</div></div>
+<div class="ttc" id="aclassRtpSession_html_afa04a7a9f55813b3e981c38fb23db6e4"><div class="ttname"><a href="classRtpSession.html#afa04a7a9f55813b3e981c38fb23db6e4">RtpSession::setClockRate</a></div><div class="ttdeci">void setClockRate(uint32_t hz)</div><div class="ttdoc">Sets the RTP timestamp clock rate in Hz.</div><div class="ttdef"><b>Definition</b> rtpsession.h:334</div></div>
+<div class="ttc" id="aclassSocketAddress_html"><div class="ttname"><a href="classSocketAddress.html">SocketAddress</a></div><div class="ttdoc">Network address with port number.</div><div class="ttdef"><b>Definition</b> socketaddress.h:50</div></div>
 <div class="ttc" id="aclassSocketAddress_html_aa74f0f4a0ee616a0b941f899e1dcc7f3"><div class="ttname"><a href="classSocketAddress.html#aa74f0f4a0ee616a0b941f899e1dcc7f3">SocketAddress::any</a></div><div class="ttdeci">static SocketAddress any(uint16_t port)</div><div class="ttdoc">Returns INADDR_ANY with the given port.</div><div class="ttdef"><b>Definition</b> socketaddress.h:71</div></div>
 </div><!-- fragment --> </dd></dl>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="ae472a7b0761117674132e5779dff44c6" name="ae472a7b0761117674132e5779dff44c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae472a7b0761117674132e5779dff44c6">&#9670;&#160;</a></span>PacketCallback</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="classRtpSession.html#ae472a7b0761117674132e5779dff44c6">RtpSession::PacketCallback</a> =  std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classRtpPacket.html">RtpPacket</a> &amp;<a class="el" href="classList.html">packet</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;sender)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Signature of the per-packet receive callback. </p>
+<p>Invoked from the receive thread for every RTP packet arriving on the transport. The <code>packet</code> view references a <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> owned by the session; its backing memory is valid only for the duration of the call. Consumers that need to retain the bytes should copy them or take a fresh <a class="el" href="classBuffer.html#ac322dca232d7badbe8f5eed86b24dee3">Buffer::Ptr</a> copy.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">packet</td><td>The parsed RTP packet. </td></tr>
+    <tr><td class="paramname">sender</td><td>The datagram sender's address. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="add74a7893d26d6a3d0d7216371515fba" name="add74a7893d26d6a3d0d7216371515fba"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#add74a7893d26d6a3d0d7216371515fba">&#9670;&#160;</a></span>RtpSession()</h2>
 
@@ -372,7 +454,7 @@ template&lt;typename... Args&gt; </td></tr>
 
 <p>Emitted when a packet is received. </p>
 <p>Parameters: payload data (<a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>), RTP timestamp (uint32_t), payload type (uint8_t), marker bit (bool).</p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000023">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000025">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
@@ -403,12 +485,12 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Emitted when an SSRC collision is detected. </p>
-<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000024">Signal:</a></b></dt><dd></dd></dl>
+<dl class="signal"><dt><b><a class="el" href="signal.html#_signal000026">Signal:</a></b></dt><dd></dd></dl>
 
 </div>
 </div>
-<a id="a2d8830611f5e8fa6e652b25b80274f4d" name="a2d8830611f5e8fa6e652b25b80274f4d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2d8830611f5e8fa6e652b25b80274f4d">&#9670;&#160;</a></span>sendPacket()</h2>
+<a id="ac8deb45c772b19eb0ba26aced4ad188a" name="ac8deb45c772b19eb0ba26aced4ad188a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8deb45c772b19eb0ba26aced4ad188a">&#9670;&#160;</a></span>sendPacket()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -434,8 +516,54 @@ template&lt;typename... Args&gt; </td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;&#160;</td>
-          <td class="paramname"><em>dest</em>, </td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>marker</em> = <code><a class="el" href="classList.html">false</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sends a single RTP packet with raw payload data. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">payload</td><td>The payload data. </td></tr>
+    <tr><td class="paramname">timestamp</td><td>The RTP timestamp for this packet. </td></tr>
+    <tr><td class="paramname">payloadType</td><td>The RTP payload type. </td></tr>
+    <tr><td class="paramname">marker</td><td>If true, the marker bit is set. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a76af66acfe0ac7893d4b0af680d0362b" name="a76af66acfe0ac7893d4b0af680d0362b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76af66acfe0ac7893d4b0af680d0362b">&#9670;&#160;</a></span>sendPackets() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> RtpSession::sendPackets </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classRtpPacket.html#ac88d10b933d477637a4c1f61151accc1">RtpPacket::List</a> &amp;&#160;</td>
+          <td class="paramname"><em>packets</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">uint32_t</a>&#160;</td>
+          <td class="paramname"><em>startTimestamp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">uint32_t</a>&#160;</td>
+          <td class="paramname"><em>timestampStride</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -451,15 +579,15 @@ template&lt;typename... Args&gt; </td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sends a single RTP packet with raw payload data. </p>
-<p>Constructs a complete RTP packet with header and sends it.</p>
+<p>Sends a list of packets with per-packet timestamps. </p>
+<p>Each packet is stamped with <code>startTimestamp</code> <code>+</code> <code>i</code> <code>*</code> <code>timestampStride</code> so consecutive packets carry monotonically advancing RTP timestamps. This is the AES67 / ST 2110-30 audio path, where every packet-time interval gets its own timestamp reflecting the exact sample index at the start of that packet.</p>
+<p>Sequence numbers still come from the session's monotonic counter and the marker bit is applied uniformly (audio streams should pass <code>marker</code> = <code>false</code>). Packets are handed to the transport as a single batch via <a class="el" href="classPacketTransport.html#a4802fdd5c93b247bbdf605ebaac9768b">PacketTransport::sendPackets()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">payload</td><td>The payload data. </td></tr>
-    <tr><td class="paramname">timestamp</td><td>The RTP timestamp for this packet. </td></tr>
-    <tr><td class="paramname">payloadType</td><td>The RTP payload type. </td></tr>
-    <tr><td class="paramname">dest</td><td>The destination address. </td></tr>
-    <tr><td class="paramname">marker</td><td>If true, the marker bit is set. </td></tr>
+    <tr><td class="paramname">packets</td><td>The pre-packed packet list, modified in-place. </td></tr>
+    <tr><td class="paramname">startTimestamp</td><td>The RTP timestamp for the first packet's first sample. </td></tr>
+    <tr><td class="paramname">timestampStride</td><td>Increment applied per successive packet. </td></tr>
+    <tr><td class="paramname">marker</td><td>Marker bit applied to every packet. </td></tr>
   </table>
   </dd>
 </dl>
@@ -467,8 +595,8 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
-<a id="abb98d7f038370209135450dd752412d1" name="abb98d7f038370209135450dd752412d1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abb98d7f038370209135450dd752412d1">&#9670;&#160;</a></span>sendPackets()</h2>
+<a id="a5f942c263642558ea358d9ff84bc725b" name="a5f942c263642558ea358d9ff84bc725b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f942c263642558ea358d9ff84bc725b">&#9670;&#160;</a></span>sendPackets() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -488,12 +616,6 @@ template&lt;typename... Args&gt; </td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;&#160;</td>
-          <td class="paramname"><em>dest</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
           <td class="paramname"><em>markerOnLast</em> = <code><a class="el" href="classList.html">true</a></code>&#160;</td>
         </tr>
@@ -506,22 +628,21 @@ template&lt;typename... Args&gt; </td></tr>
 </div><div class="memdoc">
 
 <p>Sends pre-packed RTP packets from a payload handler. </p>
-<p>Fills in the RTP header fields on each packet and transmits. The marker bit is set on the last packet in the list (end of frame/access unit).</p>
+<p>Fills in the RTP header fields on each packet and transmits them in one batch through the transport. The marker bit is set on the last packet in the list when <code>markerOnLast</code> is true (end of frame/access unit).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">packets</td><td>The pre-packed packet list. Modified in-place: RTP header fields are overwritten before transmission. </td></tr>
     <tr><td class="paramname">timestamp</td><td>The RTP timestamp for this frame. </td></tr>
-    <tr><td class="paramname">dest</td><td>The destination address. </td></tr>
     <tr><td class="paramname">markerOnLast</td><td>If true, set marker bit on the last packet. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on first failure. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
 </div>
 </div>
-<a id="a65d6124b69d382c2b6b91f02b6e99e1b" name="a65d6124b69d382c2b6b91f02b6e99e1b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a65d6124b69d382c2b6b91f02b6e99e1b">&#9670;&#160;</a></span>sendPacketsPaced()</h2>
+<a id="a7cdafde2c8a5e7c2af886e76710fdb09" name="a7cdafde2c8a5e7c2af886e76710fdb09"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7cdafde2c8a5e7c2af886e76710fdb09">&#9670;&#160;</a></span>sendPacketsPaced()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -537,12 +658,6 @@ template&lt;typename... Args&gt; </td></tr>
           <td></td>
           <td class="paramtype"><a class="el" href="classList.html">uint32_t</a>&#160;</td>
           <td class="paramname"><em>timestamp</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;&#160;</td>
-          <td class="paramname"><em>dest</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -564,24 +679,51 @@ template&lt;typename... Args&gt; </td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Sends pre-packed RTP packets with even inter-packet pacing. </p>
-<p>Spreads packet transmission evenly across the given duration, sleeping between packets to maintain a steady send rate. This implements ST 2110-21 style sender pacing to avoid bursting all packets at once and overflowing receiver jitter buffers.</p>
+<p>Sends pre-packed RTP packets with userspace pacing. </p>
+<p>Spreads packet transmission evenly across the given duration by sleeping between sends. Implements ST 2110-21-style userspace sender pacing and is the fallback when kernel pacing is unavailable. For kernel pacing, prefer <a class="el" href="classRtpSession.html#a3ca3b8106bcd298c4a69946a2b9a6147">setPacingRate()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">packets</td><td>The pre-packed packet list. Modified in-place. </td></tr>
     <tr><td class="paramname">timestamp</td><td>The RTP timestamp for this frame. </td></tr>
-    <tr><td class="paramname">dest</td><td>The destination address. </td></tr>
-    <tr><td class="paramname">spreadInterval</td><td>The total duration over which to spread packet transmission. Packets are sent at evenly spaced intervals within this window. </td></tr>
+    <tr><td class="paramname">spreadInterval</td><td>The total duration over which to spread packet transmission. </td></tr>
     <tr><td class="paramname">markerOnLast</td><td>If true, set marker bit on the last packet. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on first failure. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
 
 </div>
 </div>
-<a id="aac6e34b68f6373f128c78cb876ba16fb" name="aac6e34b68f6373f128c78cb876ba16fb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aac6e34b68f6373f128c78cb876ba16fb">&#9670;&#160;</a></span>socket()</h2>
+<a id="a3ca3b8106bcd298c4a69946a2b9a6147" name="a3ca3b8106bcd298c4a69946a2b9a6147"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ca3b8106bcd298c4a69946a2b9a6147">&#9670;&#160;</a></span>setPacingRate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> RtpSession::setPacingRate </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">uint64_t</a>&#160;</td>
+          <td class="paramname"><em>bytesPerSec</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Applies a transmit-rate cap to the transport. </p>
+<p>Convenience wrapper around <a class="el" href="classPacketTransport.html#acf92aad95aa0eeac4ff68ceca413b0dc">PacketTransport::setPacingRate()</a> that works whether the transport is internally or externally owned. For UDP sockets this maps to the kernel <code>SO_MAX_PACING_RATE</code> option, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. true kernel pacing with no per-packet CPU cost.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bytesPerSec</td><td>Maximum transmit rate in bytes/sec. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, an error otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="a826f50f7cab2277d06c098126c1f2bd2" name="a826f50f7cab2277d06c098126c1f2bd2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a826f50f7cab2277d06c098126c1f2bd2">&#9670;&#160;</a></span>setReceivePollIntervalMs()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -590,10 +732,11 @@ template&lt;typename... Args&gt; </td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classUdpSocket.html">UdpSocket</a> * RtpSession::socket </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> RtpSession::setReceivePollIntervalMs </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
+          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramname"><em>timeoutMs</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
@@ -603,14 +746,54 @@ template&lt;typename... Args&gt; </td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the internal UDP socket. </p>
-<p>Use this to configure socket options (DSCP, multicast, etc.) after calling <a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1" title="Starts the session, binding to a local address.">start()</a>.</p>
-<dl class="section return"><dt>Returns</dt><dd>Pointer to the socket, or nullptr if not started. </dd></dl>
+<p>Sets the receive-loop poll interval in milliseconds. </p>
+<p>Shorter intervals make <a class="el" href="classRtpSession.html#abc3c2e41373de0c69f25cd3d6561b7de">stopReceiving</a> more responsive at the cost of extra idle wakeups. Default is 200 ms. Must be set before <a class="el" href="classRtpSession.html#a3880b0793056b807b5b78a456d7856c0">startReceiving</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">timeoutMs</td><td>Poll interval in milliseconds. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af62d944786242a511bfbaac7785ca3f3" name="af62d944786242a511bfbaac7785ca3f3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af62d944786242a511bfbaac7785ca3f3">&#9670;&#160;</a></span>setRemote()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> RtpSession::setRemote </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;&#160;</td>
+          <td class="paramname"><em>dest</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the destination address for all subsequent sends. </p>
+<p>Can be called before or after <a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">start()</a>. Unicast and multicast addresses are both accepted; multicast TTL and outgoing interface are configured on the transport, not here.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dest</td><td>The destination address and port. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
 <a id="a0a1244cc553c06105e2fe16b118975d1" name="a0a1244cc553c06105e2fe16b118975d1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a1244cc553c06105e2fe16b118975d1">&#9670;&#160;</a></span>start()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a1244cc553c06105e2fe16b118975d1">&#9670;&#160;</a></span>start() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -625,8 +808,8 @@ template&lt;typename... Args&gt; </td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Starts the session, binding to a local address. </p>
-<p>Creates and opens the internal UDP socket, then binds it to the specified local address. Use port 0 to let the OS assign a port.</p>
+<p>Starts the session with an internally-owned UDP transport. </p>
+<p>Creates a <a class="el" href="classUdpSocketTransport.html">UdpSocketTransport</a> bound to the given local address, opens it, and takes ownership. The transport is automatically closed and destroyed by <a class="el" href="classRtpSession.html#ae5bc58b777d8ac8763d47e27569a037c">stop()</a> or the destructor.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">localAddr</td><td>The local address and port to bind to. </td></tr>
@@ -634,6 +817,124 @@ template&lt;typename... Args&gt; </td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a53557cab0cf51dfe990cc6cd3f641ba9" name="a53557cab0cf51dfe990cc6cd3f641ba9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53557cab0cf51dfe990cc6cd3f641ba9">&#9670;&#160;</a></span>start() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> RtpSession::start </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classPacketTransport.html">PacketTransport</a> *&#160;</td>
+          <td class="paramname"><em>transport</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Starts the session with a caller-owned transport. </p>
+<p>The transport must be <a class="el" href="classPacketTransport.html#a3b984fb36f47041213d35cc96013fa33">open</a> before this call. <a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a> does not take ownership of the transport; the caller is responsible for closing and destroying it after <a class="el" href="classRtpSession.html#ae5bc58b777d8ac8763d47e27569a037c">stop()</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">transport</td><td>The caller-owned, already-open transport. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, or an error on failure. </dd></dl>
+
+</div>
+</div>
+<a id="a3880b0793056b807b5b78a456d7856c0" name="a3880b0793056b807b5b78a456d7856c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3880b0793056b807b5b78a456d7856c0">&#9670;&#160;</a></span>startReceiving()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classError.html">Error</a> RtpSession::startReceiving </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classRtpSession.html#ae472a7b0761117674132e5779dff44c6">PacketCallback</a>&#160;</td>
+          <td class="paramname"><em>callback</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>threadName</em> = <code>&quot;rtp-<a class="el" href="classList.html">rx&quot;</a></code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Starts the per-session RTP receive loop. </p>
+<p>Spawns an internal <a class="el" href="classThread.html">Thread</a> named <code>"rtp-rx"</code> that calls <a class="el" href="classPacketTransport.html#aeb000502c4736d4f416bce3dc47bce6c">PacketTransport::receivePacket</a> in a loop, wraps each datagram in an <a class="el" href="classRtpPacket.html">RtpPacket</a> view of an owned <a class="el" href="classBuffer.html">Buffer</a>, and delivers the packet to <code>callback</code>. The existing <code>packetReceived</code> signal is also emitted for consumers that prefer event-loop dispatch.</p>
+<p>The session must already be running (<a class="el" href="classRtpSession.html#adea8229e1e4abfbfc6178abbfac0ad6d">isRunning()</a> == true) — call one of the <a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">start</a> overloads first.</p>
+<p>The receive thread polls the stop flag every few hundred milliseconds using <code>SO_RCVTIMEO</code> on the underlying socket, so <a class="el" href="classRtpSession.html#abc3c2e41373de0c69f25cd3d6561b7de">stopReceiving()</a> returns within one poll interval. If the transport is not a UDP socket the poll timeout is a best-effort — transports that cannot expose a non-blocking receive may stall <a class="el" href="classRtpSession.html#abc3c2e41373de0c69f25cd3d6561b7de">stopReceiving</a> until a packet arrives.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">callback</td><td>The per-packet callback (required). </td></tr>
+    <tr><td class="paramname">threadName</td><td><a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> name surfaced to debuggers and OS monitors. Defaults to <code>"rtp-rx"</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a9ecc12dc0da5c0dd111a92aafa3790d2" title="Resource is busy (EBUSY).">Error::Busy</a> if already receiving, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a36766448250f002cfab6d0d2c9268612" title="Resource is not open.">Error::NotOpen</a> if the session has not been started, or <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5b787b2e97c330870af29648d078cd7" title="Invalid argument supplied.">Error::InvalidArgument</a> on a null callback. </dd></dl>
+
+</div>
+</div>
+<a id="abc3c2e41373de0c69f25cd3d6561b7de" name="abc3c2e41373de0c69f25cd3d6561b7de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc3c2e41373de0c69f25cd3d6561b7de">&#9670;&#160;</a></span>stopReceiving()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> RtpSession::stopReceiving </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Stops the receive loop and joins the receive thread. </p>
+<p>Safe to call from any thread, including the receive thread itself (in which case the join is skipped). Safe to call when no receive loop is running. </p>
+
+</div>
+</div>
+<a id="a0c7222924319a2c7ef1a34d342de006c" name="a0c7222924319a2c7ef1a34d342de006c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c7222924319a2c7ef1a34d342de006c">&#9670;&#160;</a></span>transport()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classPacketTransport.html">PacketTransport</a> * RtpSession::transport </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the active packet transport. </p>
+<p>This is the transport the session is currently using — either the one created internally by <a class="el" href="classRtpSession.html#a0a1244cc553c06105e2fe16b118975d1">start(const SocketAddress&amp;)</a>, or the one passed to <a class="el" href="classRtpSession.html#a53557cab0cf51dfe990cc6cd3f641ba9">start(PacketTransport*)</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>Pointer to the transport, or nullptr if the session is not running. </dd></dl>
 
 </div>
 </div>
@@ -647,7 +948,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classRtpSession.html">RtpSession</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

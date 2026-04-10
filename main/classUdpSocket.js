@@ -1,8 +1,11 @@
 var classUdpSocket =
 [
+    [ "Datagram", "structUdpSocket_1_1Datagram.html", "structUdpSocket_1_1Datagram" ],
+    [ "DatagramList", "classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb", null ],
     [ "UdpSocket", "classUdpSocket.html#aa837ef3b63156eb8fd3ee2958f9a102d", null ],
     [ "~UdpSocket", "classUdpSocket.html#a4f0c61954dbbdb8dec1458bc7975a9ea", null ],
     [ "bytesAvailable", "classUdpSocket.html#add5c68fef5c035cd83fcd5c9a986eefe", null ],
+    [ "clearPacingRate", "classUdpSocket.html#a94c2383319fbe078382ba7ddb4de1a57", null ],
     [ "close", "classUdpSocket.html#afc53e61292826003f709687428050eb4", null ],
     [ "hasPendingDatagrams", "classUdpSocket.html#aeab9244817662235c7f6bb4f04290070", null ],
     [ "isOpen", "classUdpSocket.html#a91d0712d5161cf96bbbf236a040e8c44", null ],
@@ -18,8 +21,11 @@ var classUdpSocket =
     [ "setMulticastInterface", "classUdpSocket.html#aed28682a8d66cc4515cd384f44575be1", null ],
     [ "setMulticastLoopback", "classUdpSocket.html#a8b0661d8ddc3500c313f181336f6d0cd", null ],
     [ "setMulticastTTL", "classUdpSocket.html#a89110e22b7d5352d7f9dd4e36ec67f84", null ],
+    [ "setPacingRate", "classUdpSocket.html#af60121fcad7158754cb9a8700965c753", null ],
     [ "setReuseAddress", "classUdpSocket.html#af3443a4407fd2e0d748d4f05480bfde9", null ],
+    [ "setTxTime", "classUdpSocket.html#a91a31af0e85b69ea8d5064a6320df096", null ],
     [ "write", "classUdpSocket.html#a53288c97067bf6119576707a969b7efd", null ],
     [ "writeDatagram", "classUdpSocket.html#afc903fc891824faff904ed18630ef839", null ],
-    [ "writeDatagram", "classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0", null ]
+    [ "writeDatagram", "classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0", null ],
+    [ "writeDatagrams", "classUdpSocket.html#abb70a958826f6f6d24b19f4b7992b50f", null ]
 ];

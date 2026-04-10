@@ -8,7 +8,7 @@ var classImage =
     [ "Image", "classImage.html#aacc20880faf59e1cedc78c7d2d71154e", null ],
     [ "Image", "classImage.html#a6f33098b4bde360957fd09bab5ded431", null ],
     [ "compressedSize", "classImage.html#a9b610a3cd7782ad7318d22a912021243", null ],
-    [ "convert", "classImage.html#a74793ff2fb4a5c636120ce4c773dff8b", null ],
+    [ "convert", "classImage.html#aaeb74cf6bc00468468d74fa278209f9d", null ],
     [ "createPaintEngine", "classImage.html#a2ea6053a9be42b4b21b59a0944e5d564", null ],
     [ "data", "classImage.html#a1940daf743c22020142daf837d76c8ca", null ],
     [ "desc", "classImage.html#ac89cd3932f4a60d133232ef5fcb24bdb", null ],

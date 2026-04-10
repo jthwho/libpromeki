@@ -1,8 +1,8 @@
 var classMediaIO =
 [
     [ "FormatDesc", "structMediaIO_1_1FormatDesc.html", "structMediaIO_1_1FormatDesc" ],
-    [ "Config", "classMediaIO.html#a4571e9b5125ab3fef2fc1bf26f383229", null ],
-    [ "ConfigID", "classMediaIO.html#a0214f0c06ab65d1c19d30c9ef7527964", null ],
+    [ "Config", "classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade", null ],
+    [ "ConfigID", "classMediaIO.html#a08d6f0ff155c9b44e241d5c0f4a4559f", null ],
     [ "Mode", "classMediaIO.html#aecf4fd1d9415ab9e37e355e826afc123", null ],
     [ "SeekMode", "classMediaIO.html#a04b4e0c765ff2b7c9a7c6718714c3136", null ],
     [ "MediaIO", "classMediaIO.html#ab68bc666b152b29315fd67e537502a49", null ],

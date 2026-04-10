@@ -262,14 +262,9 @@ ThreadPool</h1>
 </ul>
 <p>Tasks submitted to the pool should be self-contained. Pass data in by copy (for simple types) or by <code>Ptr</code> (for shareable types). Do not capture raw pointers to <a class="el" href="classObjectBase.html" title="Base object for promeki.">ObjectBase</a> instances &ndash; use signals instead to communicate results back.</p>
 <h1><a class="anchor" id="thread_pipeline"></a>
-Pipeline Threading</h1>
-<p>The <a class="el" href="classMediaPipeline.html" title="Owns nodes and topology, orchestrates pipeline processing.">MediaPipeline</a> schedules <a class="el" href="classMediaNode.html#a4f6fdc0b72edf9c736fb4153f415d83f" title="Runs one processing cycle.">MediaNode::process()</a> calls across a thread pool. Each node can specify its threading policy:</p>
-<ul>
-<li><b>UseGraphPool</b> (default): scheduled on the pipeline's shared <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a>.</li>
-<li><b>DedicatedThread</b>: gets its own thread for deterministic scheduling (e.g., real-time audio nodes).</li>
-<li><b>CustomPool</b>: uses a separate <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a> instance.</li>
-</ul>
-<p>Data flows between nodes through MediaSink/MediaSource connections, which use a thread-safe <a class="el" href="classQueue.html">Queue</a> internally. Nodes receive data via their sinks and produce data via their sources &ndash; both are safe to call from the node's processing thread. </p>
+MediaIO Threading</h1>
+<p>Each <a class="el" href="classMediaIO.html">MediaIO</a> instance owns a <a class="el" href="classStrand.html">Strand</a> that serializes its commands on a shared <a class="el" href="classThreadPool.html">ThreadPool</a>. Backends never manage their own threads — the <a class="el" href="classStrand.html" title="Serialized executor backed by a ThreadPool.">Strand</a> guarantees that every <a class="el" href="classMediaIOTask.html">MediaIOTask</a> callback runs on a single logical worker at a time, while still sharing the pool across the whole application.</p>
+<p>Frames move between <a class="el" href="classMediaIO.html">MediaIO</a> stages via signals. A producer emits <code>frameReady</code> when a new frame is available; connected consumers call <code>writeFrame()</code> (non-blocking) on their own <a class="el" href="classStrand.html" title="Serialized executor backed by a ThreadPool.">Strand</a>. Back-pressure is reported through <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a></code> and a matching <code>frameWanted</code> signal when the consumer drains again. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
@@ -277,7 +272,7 @@ Pipeline Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

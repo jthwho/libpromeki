@@ -10,9 +10,7 @@ var searchData=
   ['bufferiodevice_7',['BufferIODevice',['../classBufferIODevice.html',1,'']]],
   ['bufferpool_8',['BufferPool',['../classBufferPool.html',1,'']]],
   ['bufferview_9',['BufferView',['../classBufferView.html',1,'']]],
-  ['builderror_10',['BuildError',['../structMediaPipeline_1_1BuildError.html',1,'MediaPipeline']]],
-  ['buildinfo_11',['BuildInfo',['../structBuildInfo.html',1,'']]],
-  ['buildresult_12',['BuildResult',['../structBuildResult.html',1,'']]],
-  ['burnposition_13',['BurnPosition',['../structBurnPosition.html',1,'']]],
-  ['bytearray_14',['ByteArray',['../classByteArray.html',1,'']]]
+  ['buildinfo_10',['BuildInfo',['../structBuildInfo.html',1,'']]],
+  ['burnposition_11',['BurnPosition',['../structBurnPosition.html',1,'']]],
+  ['bytearray_12',['ByteArray',['../classByteArray.html',1,'']]]
 ];

@@ -1,0 +1,5 @@
+<map id="PacketTransport::Datagram" name="PacketTransport::Datagram">
+<area shape="rect" id="Node000001" title="Describes one outbound datagram." alt="" coords="5,93,203,119"/>
+<area shape="rect" id="Node000002" href="$classSocketAddress.html" title="Network address with port number." alt="" coords="45,5,163,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,45,107,93,101,93,101,45"/>
+</map>

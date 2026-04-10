@@ -1,5 +1,7 @@
 <map id="ImageCodec" name="ImageCodec">
-<area shape="rect" id="Node000001" title="Abstract base class for image codecs." alt="" coords="19,5,122,31"/>
+<area shape="rect" id="Node000001" title="Abstract base class for image codecs." alt="" coords="101,5,203,31"/>
 <area shape="rect" id="Node000002" href="$classJpegImageCodec.html" title="JPEG image codec using libjpeg&#45;turbo." alt="" coords="5,79,136,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="73,44,73,79,68,79,68,44"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="130,42,86,80,82,76,127,38"/>
+<area shape="rect" id="Node000003" href="$classJpegXsImageCodec.html" title="JPEG XS image codec using SVT&#45;JPEG&#45;XS." alt="" coords="160,79,307,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,38,222,76,218,80,174,42"/>
 </map>

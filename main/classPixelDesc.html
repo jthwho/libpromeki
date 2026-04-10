@@ -305,7 +305,29 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa5707c40f99dc9c1bb224ac365e45342b">ProRes_422_HQ</a> = 140
 , <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa87241549ca29c8666e79dd4998d54685">ProRes_4444</a> = 141
 , <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaf286c81f80d9bdf8ba1826736a4c7972">ProRes_4444_XQ</a> = 142
-, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c">UserDefined</a> = 1024
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa77f92cfad5e5592ef7ca45df9a1cfdcc">YUV8_422_Rec709_Full</a> = 143
+, <br />
+&#160;&#160;<a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa87030ab1072b7fccbb641d56cc82b7ab">YUV8_422_Rec601_Full</a> = 144
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad46a5c603760d27dc6c3f3228d3b209c">YUV8_420_Planar_Rec709_Full</a> = 145
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafacb4142f86a62081789fc7f1d924b961b">YUV8_420_Planar_Rec601_Full</a> = 146
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaacbdb64fcf3473bc74b46bd18e9a5bfd">JPEG_YUV8_422_Rec601</a> = 147
+, <br />
+&#160;&#160;<a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa29dc7505b02bf1129511606246d4d99f">JPEG_YUV8_420_Rec601</a> = 148
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaf499e4a4c2f5a0d3a0e0e1bbff6683c7">JPEG_YUV8_422_Rec709_Full</a> = 149
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafac95d02d5db3e1d16e72599fa97e89aec">JPEG_YUV8_420_Rec709_Full</a> = 150
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa918e710b2515a3da763d42efdd271567">JPEG_YUV8_422_Rec601_Full</a> = 151
+, <br />
+&#160;&#160;<a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa091ef4a8520c5a201a871cfaeead8a66">JPEG_YUV8_420_Rec601_Full</a> = 152
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa0c40446ccf609ce6ea2ce508167742d3">JPEG_XS_YUV8_422_Rec709</a> = 153
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa256e507abd7cb55b0b9b7a1623e97108">JPEG_XS_YUV10_422_Rec709</a> = 154
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa63b8095ebd136f11417722c49f1f2689">JPEG_XS_YUV12_422_Rec709</a> = 155
+, <br />
+&#160;&#160;<a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafac2569d89b6575d644b275806917422a5">JPEG_XS_YUV8_420_Rec709</a> = 156
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa2afc50cb5939fbcb461a458768764bef">JPEG_XS_YUV10_420_Rec709</a> = 157
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c">JPEG_XS_YUV12_420_Rec709</a> = 158
+, <a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35">JPEG_XS_RGB8_sRGB</a> = 159
+, <br />
+&#160;&#160;<a class="el" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c">UserDefined</a> = 1024
 <br />
  }</td></tr>
 <tr class="memdesc:ac8b8cdd7bab3e05c21bdb406cee6faaf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Identifies a pixel description.  <a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faaf">More...</a><br /></td></tr>
@@ -498,7 +520,9 @@ These represent different component orderings in memory; the underlying <a class
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">YUV8_411_Planar_Rec709   </td><td class="markdownTableBodyNone">8-bit Y'CbCr 4:1:1 planar, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">JPEG_RGB8_sRGB   </td><td class="markdownTableBodyNone">JPEG-compressed 8-bit RGB, sRGB   </td></tr>
+<td class="markdownTableBodyNone">JPEG_RGB8_sRGB   </td><td class="markdownTableBodyNone">JPEG-compressed 8-bit RGB, sRGB    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">JPEG_XS_YUV10_422_Rec709   </td><td class="markdownTableBodyNone">JPEG XS-compressed 10-bit Y'CbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>   </td></tr>
 </table>
 </dd></dl>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classPixelDesc.html">PixelDesc</a> <a class="code hl_class" href="classList.html">pd</a>(<a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>);</div>
@@ -510,8 +534,8 @@ These represent different component orderings in memory; the underlying <a class
 <div class="line"><a class="code hl_class" href="classPaintEngine.html">PaintEngine</a> <a class="code hl_class" href="classList.html">pe</a> = <a class="code hl_class" href="classList.html">pd</a>.createPaintEngine(image);</div>
 <div class="ttc" id="aclassColorModel_html_aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1"><div class="ttname"><a href="classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baab461b41b14d00c9f34acbe77a873e0c1">ColorModel::sRGB</a></div><div class="ttdeci">@ sRGB</div><div class="ttdoc">sRGB (IEC 61966-2-1).</div><div class="ttdef"><b>Definition</b> colormodel.h:140</div></div>
 <div class="ttc" id="aclassPaintEngine_html"><div class="ttname"><a href="classPaintEngine.html">PaintEngine</a></div><div class="ttdoc">2D drawing engine for rendering primitives onto images.</div><div class="ttdef"><b>Definition</b> paintengine.h:32</div></div>
-<div class="ttc" id="aclassPixelDesc_html"><div class="ttname"><a href="classPixelDesc.html">PixelDesc</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:123</div></div>
-<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:137</div></div>
+<div class="ttc" id="aclassPixelDesc_html"><div class="ttname"><a href="classPixelDesc.html">PixelDesc</a></div><div class="ttdoc">Complete pixel description combining format, color model, and semantics.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:124</div></div>
+<div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:138</div></div>
 <div class="ttc" id="aclassPixelFormat_html_a7ae7d8a6cf46a5c9947b72d5ec9d4deda1583525eaf868484e76d1a30508e3d46"><div class="ttname"><a href="classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda1583525eaf868484e76d1a30508e3d46">PixelFormat::I_4x8</a></div><div class="ttdeci">@ I_4x8</div><div class="ttdoc">4 components, 8 bits each, interleaved (4 bytes/pixel).</div><div class="ttdef"><b>Definition</b> pixelformat.h:121</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="classPixelFormat.html" title="Describes the memory layout of pixel data without color semantics.">PixelFormat</a>, <a class="el" href="classColorModel.html" title="Single source of truth for a color model and its associated color space.">ColorModel</a>, <a class="el" href="typeregistry.html">TypeRegistry Pattern</a> </dd></dl>
@@ -547,9 +571,9 @@ These represent different component orderings in memory; the underlying <a class
 </td></tr>
 <tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e" name="ac8b8cdd7bab3e05c21bdb406cee6faafa08aa1ad3b58839bccc68085bacee382e"></a>JPEG_RGB8_sRGB&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit RGB, sRGB, full range. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa0e6ec62dd1a5078a0ba0f5e7a6787060" name="ac8b8cdd7bab3e05c21bdb406cee6faafa0e6ec62dd1a5078a0ba0f5e7a6787060"></a>JPEG_YUV8_422_Rec709&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>. </p>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa0e6ec62dd1a5078a0ba0f5e7a6787060" name="ac8b8cdd7bab3e05c21bdb406cee6faafa0e6ec62dd1a5078a0ba0f5e7a6787060"></a>JPEG_YUV8_422_Rec709&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> matrix, limited range (broadcast). </p>
 </td></tr>
-<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa8d823748ba840656f290abb3b8913be7" name="ac8b8cdd7bab3e05c21bdb406cee6faafa8d823748ba840656f290abb3b8913be7"></a>JPEG_YUV8_420_Rec709&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>. </p>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa8d823748ba840656f290abb3b8913be7" name="ac8b8cdd7bab3e05c21bdb406cee6faafa8d823748ba840656f290abb3b8913be7"></a>JPEG_YUV8_420_Rec709&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> matrix, limited range (broadcast). </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa4ec24c4345de40500dfff6ebdd3cc08b" name="ac8b8cdd7bab3e05c21bdb406cee6faafa4ec24c4345de40500dfff6ebdd3cc08b"></a>YUV8_422_UYVY_Rec709&#160;</td><td class="fielddoc"><p>8-bit YCbCr 4:2:2 UYVY, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
 </td></tr>
@@ -817,6 +841,40 @@ These represent different component orderings in memory; the underlying <a class
 </td></tr>
 <tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafaf286c81f80d9bdf8ba1826736a4c7972" name="ac8b8cdd7bab3e05c21bdb406cee6faafaf286c81f80d9bdf8ba1826736a4c7972"></a>ProRes_4444_XQ&#160;</td><td class="fielddoc"><p>Apple ProRes 4444 XQ (ap4x). </p>
 </td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa77f92cfad5e5592ef7ca45df9a1cfdcc" name="ac8b8cdd7bab3e05c21bdb406cee6faafa77f92cfad5e5592ef7ca45df9a1cfdcc"></a>YUV8_422_Rec709_Full&#160;</td><td class="fielddoc"><p>8-bit YCbCr 4:2:2 YUYV, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> matrix, full range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa87030ab1072b7fccbb641d56cc82b7ab" name="ac8b8cdd7bab3e05c21bdb406cee6faafa87030ab1072b7fccbb641d56cc82b7ab"></a>YUV8_422_Rec601_Full&#160;</td><td class="fielddoc"><p>8-bit YCbCr 4:2:2 YUYV, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> matrix, full range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafad46a5c603760d27dc6c3f3228d3b209c" name="ac8b8cdd7bab3e05c21bdb406cee6faafad46a5c603760d27dc6c3f3228d3b209c"></a>YUV8_420_Planar_Rec709_Full&#160;</td><td class="fielddoc"><p>8-bit YCbCr 4:2:0 planar, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> matrix, full range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafacb4142f86a62081789fc7f1d924b961b" name="ac8b8cdd7bab3e05c21bdb406cee6faafacb4142f86a62081789fc7f1d924b961b"></a>YUV8_420_Planar_Rec601_Full&#160;</td><td class="fielddoc"><p>8-bit YCbCr 4:2:0 planar, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> matrix, full range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafaacbdb64fcf3473bc74b46bd18e9a5bfd" name="ac8b8cdd7bab3e05c21bdb406cee6faafaacbdb64fcf3473bc74b46bd18e9a5bfd"></a>JPEG_YUV8_422_Rec601&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> matrix, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa29dc7505b02bf1129511606246d4d99f" name="ac8b8cdd7bab3e05c21bdb406cee6faafa29dc7505b02bf1129511606246d4d99f"></a>JPEG_YUV8_420_Rec601&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> matrix, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafaf499e4a4c2f5a0d3a0e0e1bbff6683c7" name="ac8b8cdd7bab3e05c21bdb406cee6faafaf499e4a4c2f5a0d3a0e0e1bbff6683c7"></a>JPEG_YUV8_422_Rec709_Full&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> matrix, full range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafac95d02d5db3e1d16e72599fa97e89aec" name="ac8b8cdd7bab3e05c21bdb406cee6faafac95d02d5db3e1d16e72599fa97e89aec"></a>JPEG_YUV8_420_Rec709_Full&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> matrix, full range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa918e710b2515a3da763d42efdd271567" name="ac8b8cdd7bab3e05c21bdb406cee6faafa918e710b2515a3da763d42efdd271567"></a>JPEG_YUV8_422_Rec601_Full&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> matrix, full range (strict JFIF). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa091ef4a8520c5a201a871cfaeead8a66" name="ac8b8cdd7bab3e05c21bdb406cee6faafa091ef4a8520c5a201a871cfaeead8a66"></a>JPEG_YUV8_420_Rec601_Full&#160;</td><td class="fielddoc"><p>JPEG-compressed 8-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.601</a> matrix, full range (strict JFIF). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa0c40446ccf609ce6ea2ce508167742d3" name="ac8b8cdd7bab3e05c21bdb406cee6faafa0c40446ccf609ce6ea2ce508167742d3"></a>JPEG_XS_YUV8_422_Rec709&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 8-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa256e507abd7cb55b0b9b7a1623e97108" name="ac8b8cdd7bab3e05c21bdb406cee6faafa256e507abd7cb55b0b9b7a1623e97108"></a>JPEG_XS_YUV10_422_Rec709&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 10-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa63b8095ebd136f11417722c49f1f2689" name="ac8b8cdd7bab3e05c21bdb406cee6faafa63b8095ebd136f11417722c49f1f2689"></a>JPEG_XS_YUV12_422_Rec709&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 12-bit YCbCr 4:2:2, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafac2569d89b6575d644b275806917422a5" name="ac8b8cdd7bab3e05c21bdb406cee6faafac2569d89b6575d644b275806917422a5"></a>JPEG_XS_YUV8_420_Rec709&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 8-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa2afc50cb5939fbcb461a458768764bef" name="ac8b8cdd7bab3e05c21bdb406cee6faafa2afc50cb5939fbcb461a458768764bef"></a>JPEG_XS_YUV10_420_Rec709&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 10-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c" name="ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c"></a>JPEG_XS_YUV12_420_Rec709&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 12-bit YCbCr 4:2:0, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a>, limited range. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35" name="ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35"></a>JPEG_XS_RGB8_sRGB&#160;</td><td class="fielddoc"><p>JPEG XS-compressed 8-bit RGB, sRGB, full range. </p>
+</td></tr>
 <tr><td class="fieldname"><a id="ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c" name="ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c"></a>UserDefined&#160;</td><td class="fielddoc"><p>First ID available for user-registered types. </p>
 </td></tr>
 </table>
@@ -1004,7 +1062,7 @@ These represent different component orderings in memory; the underlying <a class
 </div><div class="memdoc">
 
 <p>Returns whether this pixel format has a registered paint engine. </p>
-<p>Formats without a paint engine (e.g. YUV/YCbCr, compressed) will return an invalid no-op engine from <code>createPaintEngine</code> rather than a working one. Callers that need to draw directly can use this to decide whether to render via an RGB scratch image followed by <code><a class="el" href="classImage.html#a74793ff2fb4a5c636120ce4c773dff8b" title="Converts this image to a different pixel description.">Image::convert()</a></code>.</p>
+<p>Formats without a paint engine (e.g. YUV/YCbCr, compressed) will return an invalid no-op engine from <code>createPaintEngine</code> rather than a working one. Callers that need to draw directly can use this to decide whether to render via an RGB scratch image followed by <code><a class="el" href="classImage.html#aaeb74cf6bc00468468d74fa278209f9d" title="Converts this image to a different pixel description.">Image::convert()</a></code>.</p>
 <dl class="section return"><dt>Returns</dt><dd><code>true</code> if <code>createPaintEngine</code> would return a working engine, <code>false</code> otherwise. </dd></dl>
 
 </div>
@@ -1224,7 +1282,7 @@ These represent different component orderings in memory; the underlying <a class
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classPixelDesc.html">PixelDesc</a></li>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -6,5 +6,7 @@ var classRtpPayload =
     [ "maxPayloadSize", "classRtpPayload.html#a699beaa3bde84013963c8538e68ba66e", null ],
     [ "pack", "classRtpPayload.html#aab15f2043a616e9d77acb9d79594d759", null ],
     [ "payloadType", "classRtpPayload.html#a0227258e7793c3e5ddd449f91dcb1d3a", null ],
-    [ "unpack", "classRtpPayload.html#a02fed4b1e8ad6937870476e45afda648", null ]
+    [ "setMaxPayloadSize", "classRtpPayload.html#a66fe59c9f31f807cb1aadd6d641373ff", null ],
+    [ "unpack", "classRtpPayload.html#a02fed4b1e8ad6937870476e45afda648", null ],
+    [ "_maxPayloadSize", "classRtpPayload.html#a47fff5ce2c9b4f66d0774ea4f79805e9", null ]
 ];

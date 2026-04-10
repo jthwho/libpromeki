@@ -100,7 +100,8 @@ $(document).ready(function(){initNavTree('group__media.html',''); initResizable(
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle"><div class="title">Media</div></div>
 </div><!--header-->
 <div class="contents">
@@ -116,17 +117,47 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferView.html">BufferView</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight view into a region of a shared <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>.  <a href="classBufferView.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaConfigTag.html">MediaConfigTag</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phantom tag for the shared media config <a class="el" href="classStringRegistry.html">StringRegistry</a>.  <a href="structMediaConfigTag.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html">MediaConfig</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generic name/value configuration container for the media subsystem.  <a href="classMediaConfig.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:ga5a21e9aead5071f63ae79fb219adc486" id="r_ga5a21e9aead5071f63ae79fb219adc486"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__media.html#ga5a21e9aead5071f63ae79fb219adc486">MediaConfigID</a> = <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaConfig::ID</a></td></tr>
+<tr class="memdesc:ga5a21e9aead5071f63ae79fb219adc486"><td class="mdescLeft">&#160;</td><td class="mdescRight">Strongly-typed key into a <a class="el" href="classMediaConfig.html">MediaConfig</a>.  <br /></td></tr>
+<tr class="separator:ga5a21e9aead5071f63ae79fb219adc486"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Aligned memory buffers for media data. </p>
 <p>The <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a> class provides page-aligned, reference-counted memory suitable for image planes, audio sample blocks, and other bulk media data. </p>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a id="ga5a21e9aead5071f63ae79fb219adc486" name="ga5a21e9aead5071f63ae79fb219adc486"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga5a21e9aead5071f63ae79fb219adc486">&#9670;&#160;</a></span>MediaConfigID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="group__media.html#ga5a21e9aead5071f63ae79fb219adc486">MediaConfigID</a> =  <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaConfig::ID</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Strongly-typed key into a <a class="el" href="classMediaConfig.html">MediaConfig</a>. </p>
+<p>Convenience alias so call sites that want to declare their own extra keys (e.g. a user-defined converter subclass) can say <code>MediaConfigID{"MyKey"}</code> without having to spell out the full nested type. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-09 08:09:46 from commit 6b2de96 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,7 +1,0 @@
-<map id="MediaPipeline::BuildError::Entry" name="MediaPipeline::BuildError::Entry">
-<area shape="rect" id="Node000001" title="A single error entry." alt="" coords="5,108,192,148"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="18,5,78,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="47,45,47,64,52,83,71,106,67,109,47,85,41,65,41,45"/>
-<area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="124,5,177,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="143,44,124,85,111,109,107,106,119,83,138,42"/>
-</map>

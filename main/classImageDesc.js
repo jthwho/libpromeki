@@ -23,6 +23,7 @@ var classImageDesc =
     [ "setSize", "classImageDesc.html#a3797103cf7d70f63b5082b49e144692a", null ],
     [ "setSize", "classImageDesc.html#ab7c04a3d184312f65943bd07ee799cd8", null ],
     [ "size", "classImageDesc.html#a991e9888c52686ece1125c2c4a5a56cd", null ],
+    [ "toSdp", "classImageDesc.html#a7aa8196008eb99acec3eeea25ddeac99", null ],
     [ "toString", "classImageDesc.html#a0ebdb8f56904ceb7fbf0ab049f623e5c", null ],
     [ "width", "classImageDesc.html#aefe38b35b63e2b157571465ff70b75bd", null ]
 ];

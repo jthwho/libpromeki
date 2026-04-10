@@ -1,0 +1,9 @@
+<map id="JpegXsImageCodec" name="JpegXsImageCodec">
+<area shape="rect" id="Node000001" title="JPEG XS image codec using SVT&#45;JPEG&#45;XS." alt="" coords="7,168,153,193"/>
+<area shape="rect" id="Node000002" href="$classImageCodec.html" title="Abstract base class for image codecs." alt="" coords="29,93,131,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="83,133,83,168,77,168,77,133"/>
+<area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="5,5,59,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="31,44,36,68,46,81,59,91,56,95,42,85,31,70,26,45"/>
+<area shape="rect" id="Node000004" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="99,5,159,31"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="118,44,89,94,85,91,114,41"/>
+</map>

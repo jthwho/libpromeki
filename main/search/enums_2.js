@@ -5,6 +5,5 @@ var searchData=
   ['code_2',['Code',['../classError.html#ab5980e13b879db253df802b0950d1708',1,'Error']]],
   ['colorgroup_3',['ColorGroup',['../classTuiPalette.html#a063db3c8298633dabc97b80078c0a6d2',1,'TuiPalette']]],
   ['colorrole_4',['ColorRole',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0',1,'TuiPalette']]],
-  ['colorsupport_5',['ColorSupport',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6',1,'Terminal']]],
-  ['contenthint_6',['ContentHint',['../group__pipeline.html#ga33879ae3c530ed9ef4025c4e051c0330',1,'mediasink.h']]]
+  ['colorsupport_5',['ColorSupport',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6',1,'Terminal']]]
 ];
