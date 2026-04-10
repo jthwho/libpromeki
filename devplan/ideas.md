@@ -5,9 +5,4 @@
    the threads with this name.  The mediaplay application, and eventual MediaPipeline, should give
    these short default names. (e.g. out1, in1, in2).
 
-2. We should modify the VariantDatabase to make ID initialization require a new object that captures
-   the variant type(s), ranges, default value, etc of the ID item.  That'll allow us a lot of
-   introspection in general.  We can use that to 1. check and warn of values that are out of spec
-   and 2. provide more help/detail in the mediaplay application.
-
-3. Put the crash log code in the library.  We're currently using it in the unit tests.
+2. Put the crash log code in the library.  We're currently using it in the unit tests.

@@ -121,10 +121,11 @@ static bool filesIdentical(const char *pathA, const char *pathB,
                 return false;
         }
         std::vector<uint8_t> ba(laOut), bb(lbOut);
-        std::fread(ba.data(), 1, laOut, fa);
-        std::fread(bb.data(), 1, lbOut, fb);
+        size_t ra = std::fread(ba.data(), 1, laOut, fa);
+        size_t rb = std::fread(bb.data(), 1, lbOut, fb);
         std::fclose(fa);
         std::fclose(fb);
+        if(static_cast<long>(ra) != laOut || static_cast<long>(rb) != lbOut) return false;
         return std::memcmp(ba.data(), bb.data(), laOut) == 0;
 }
 
@@ -759,8 +760,9 @@ TEST_CASE("ImageFileIO JpegXS: load truncated codestream returns error") {
         FILE *fi = std::fopen(fnGood, "rb");
         REQUIRE(fi);
         std::vector<uint8_t> buf(64);
-        std::fread(buf.data(), 1, 64, fi);
+        size_t rd = std::fread(buf.data(), 1, 64, fi);
         std::fclose(fi);
+        REQUIRE(rd == 64);
 
         FILE *fo = std::fopen(fnBad, "wb");
         REQUIRE(fo);

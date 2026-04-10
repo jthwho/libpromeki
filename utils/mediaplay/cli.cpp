@@ -18,73 +18,29 @@
 #include <promeki/mediaio.h>
 #include <promeki/metadata.h>
 #include <promeki/numname.h>
+#include <promeki/textstream.h>
 #include <promeki/variant.h>
 #include <promeki/variantdatabase.h>
+#include <promeki/variantspec.h>
 
 using namespace promeki;
 
 namespace mediaplay {
 
-namespace {
-
-// Dumps every entry of a VariantDatabase<Tag> to stdout, sorted by
-// key name, with Enums rendered as just their valueName() so the
-// trailing [Enum] column isn't redundant.  Used for both the
-// MediaConfig schema and the Metadata schema dumps.
-template <typename Tag>
-static void printDatabaseDump(const VariantDatabase<Tag> &db) {
-        using DbID = typename VariantDatabase<Tag>::ID;
-        List<DbID> ids = db.ids();
-        StringList names;
-        for(size_t i = 0; i < ids.size(); ++i) names.pushToBack(ids[i].name());
-        // List::sort() returns a sorted copy rather than sorting in
-        // place, so we have to assign the result back.
-        names = names.sort();
-        for(size_t i = 0; i < names.size(); ++i) {
-                DbID id(names[i]);
-                Variant v = db.get(id);
-                String rendered;
-                if(v.type() == Variant::TypeEnum) {
-                        // Enum::toString() returns the fully
-                        // qualified "TypeName::ValueName" form,
-                        // which duplicates the type tag we already
-                        // print in the trailing [Enum] column.
-                        // valueName() is more readable.
-                        Enum e = v.get<Enum>();
-                        rendered = e.valueName();
-                } else {
-                        Error se;
-                        rendered = v.get<String>(&se);
-                        if(se.isError()) rendered = String("<") + v.typeName() + ">";
-                }
-                fprintf(stdout, "    %-24s = %-16s  [%s]\n",
-                        names[i].cstr(), rendered.cstr(), v.typeName());
-        }
-}
-
-} // namespace
-
 void printBackendConfigHelp() {
-        fprintf(stdout,
-                "\nSchema per backend (set via --ic / --im / --oc / --om / --cc / --cm Key:Value):\n");
+        TextStream ts(stdout);
+        ts << endl << "Config per backend (set via --ic / --oc / --cc Key:Value," << endl
+           << "  pass Key:list for enum values, Key:help for key details):" << endl;
+
         auto dumpBackend = [&](const String &name,
                                const String &caps,
                                const String &desc,
-                               const MediaIO::Config &cfg,
-                               const Metadata &meta) {
-                fprintf(stdout, "\n  %s [%s] — %s\n",
-                        name.cstr(), caps.cstr(), desc.cstr());
-                if(cfg.isEmpty()) {
-                        fprintf(stdout, "    config: (none)\n");
+                               const MediaIO::Config::SpecMap &specs) {
+                ts << endl << "  " << name << " [" << caps << "] — " << desc << endl;
+                if(specs.isEmpty()) {
+                        ts << "    (no config keys)" << endl;
                 } else {
-                        fprintf(stdout, "    config keys (--ic / --oc / --cc):\n");
-                        printDatabaseDump(cfg);
-                }
-                if(meta.isEmpty()) {
-                        fprintf(stdout, "    metadata: (none)\n");
-                } else {
-                        fprintf(stdout, "    metadata keys (--im / --om / --cm):\n");
-                        printDatabaseDump(meta);
+                        MediaIO::Config::writeSpecMapHelp(ts, specs);
                 }
         };
 
@@ -93,19 +49,14 @@ void printBackendConfigHelp() {
                 if(desc.canRead) caps += "R";
                 if(desc.canWrite) caps += "W";
                 if(desc.canReadWrite) caps += "RW";
-                dumpBackend(desc.name, caps, desc.description,
-                            MediaIO::defaultConfig(desc.name),
-                            MediaIO::defaultMetadata(desc.name));
+                MediaIO::Config::SpecMap specs = desc.configSpecs
+                        ? desc.configSpecs() : MediaIO::Config::SpecMap();
+                dumpBackend(desc.name, caps, desc.description, specs);
         }
 
-        // SDL is a mediaplay-local pseudo-backend (see stage.h) —
-        // still advertise its schema alongside the registry so users
-        // see a uniform picture.
-        dumpBackend(String(kStageSdl),
-                    String("W"),
-                    String(sdlDescription()),
-                    sdlDefaultConfig(),
-                    sdlDefaultMetadata());
+        // SDL is a mediaplay-local pseudo-backend.
+        dumpBackend(String(kStageSdl), String("W"),
+                    String(sdlDescription()), sdlConfigSpecs());
 }
 
 void usage() {
@@ -124,8 +75,9 @@ void usage() {
                 "  -i, --in <NAME|list>      Input backend name (default: TPG).\n"
                 "  --ic <K:V>                Set one input stage config key.\n"
                 "                            Repeatable.  Passing `K:list`\n"
-                "                            lists valid values when the\n"
-                "                            key's type is an Enum or PixelDesc.\n"
+                "                            lists valid values for Enum/PixelDesc\n"
+                "                            keys.  Passing `K:help` shows the\n"
+                "                            key's type, range, and description.\n"
                 "  --im <K:V>                Set one input stage metadata key\n"
                 "                            (Title, Artist, Copyright, ...).\n"
                 "                            Repeatable.\n"

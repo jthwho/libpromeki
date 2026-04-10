@@ -567,6 +567,7 @@ set(PROMEKI_HEADERS
     include/promeki/uuid.h
     include/promeki/variant.h
     include/promeki/variantdatabase.h
+    include/promeki/variantspec.h
     include/promeki/waitcondition.h
     include/promeki/widget.h
     include/promeki/xyzcolor.h
@@ -653,6 +654,7 @@ set(PROMEKI_SOURCES
     src/core/util.cpp
     src/core/uuid.cpp
     src/core/variant.cpp
+    src/core/variantspec.cpp
     src/core/widget.cpp
     src/core/xyzcolor.cpp
 )
@@ -1322,6 +1324,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/uuid.cpp
         tests/variant.cpp
         tests/variantdatabase.cpp
+        tests/variantspec.cpp
         tests/waitcondition.cpp
         tests/xyzcolor.cpp
     )

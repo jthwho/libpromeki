@@ -71,6 +71,24 @@ class BufferIODevice : public IODevice {
                  */
                 Buffer *buffer() const { return _buffer; }
 
+                /**
+                 * @brief Enables or disables automatic buffer growth on write.
+                 *
+                 * When enabled, writes that would exceed the current
+                 * availSize() cause the buffer to be reallocated with
+                 * enough space (doubling strategy, minimum 4 KB).
+                 * An invalid/empty buffer is allocated on the first write.
+                 *
+                 * Disabled by default.  TextStream enables this when it
+                 * creates a BufferIODevice internally.
+                 *
+                 * @param enabled True to enable auto-growth.
+                 */
+                void setAutoGrow(bool enabled) { _autoGrow = enabled; }
+
+                /** @brief Returns true if auto-growth is enabled. */
+                bool autoGrow() const { return _autoGrow; }
+
                 Error open(OpenMode mode) override;
                 Error close() override;
                 bool isOpen() const override;
@@ -84,8 +102,9 @@ class BufferIODevice : public IODevice {
                 bool atEnd() const override;
 
         private:
-                Buffer  *_buffer = nullptr;
-                int64_t _pos     = 0;
+                Buffer  *_buffer   = nullptr;
+                int64_t  _pos      = 0;
+                bool     _autoGrow = false;
 };
 
 PROMEKI_NAMESPACE_END

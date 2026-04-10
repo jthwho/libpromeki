@@ -114,20 +114,23 @@ MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
                 []() -> MediaIOTask * {
                         return new MediaIOTask_QuickTime();
                 },
-                []() -> MediaIO::Config {
-                        MediaIO::Config cfg;
-                        cfg.set(MediaConfig::Type, "QuickTime");
+                []() -> MediaIO::Config::SpecMap {
+                        MediaIO::Config::SpecMap specs;
+                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                                const VariantSpec *gs = MediaConfig::spec(id);
+                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+                        };
                         // -1 sentinel = "let the reader pick the
                         // first video / audio track it finds".
-                        cfg.set(MediaConfig::VideoTrack, -1);
-                        cfg.set(MediaConfig::AudioTrack, -1);
+                        s(MediaConfig::VideoTrack, int32_t(-1));
+                        s(MediaConfig::AudioTrack, int32_t(-1));
                         // Writer defaults — fragmented layout is the
                         // crash-safe choice for live capture, classic
                         // is only appropriate for offline rendering.
-                        cfg.set(MediaConfig::QuickTimeLayout, QuickTimeLayout::Fragmented);
-                        cfg.set(MediaConfig::QuickTimeFragmentFrames, DefaultFragmentFrames);
-                        cfg.set(MediaConfig::QuickTimeFlushSync, false);
-                        return cfg;
+                        s(MediaConfig::QuickTimeLayout, QuickTimeLayout::Fragmented);
+                        s(MediaConfig::QuickTimeFragmentFrames, int32_t(DefaultFragmentFrames));
+                        s(MediaConfig::QuickTimeFlushSync, false);
+                        return specs;
                 },
                 []() -> Metadata {
                         // udta ©-atom set written via addIfPresent()

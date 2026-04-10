@@ -32,48 +32,52 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                 []() -> MediaIOTask * {
                         return new MediaIOTask_TPG();
                 },
-                []() -> MediaIO::Config {
-                        MediaIO::Config cfg;
+                []() -> MediaIO::Config::SpecMap {
+                        MediaIO::Config::SpecMap specs;
+                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                                const VariantSpec *gs = MediaConfig::spec(id);
+                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+                        };
                         // General
-                        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+                        s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
                         // Video — enabled by default so an unconfigured
                         // TPG produces a usable 1080p59.94 colour-bars
                         // stream out of the box.
-                        cfg.set(MediaConfig::VideoEnabled, true);
-                        cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
-                        cfg.set(MediaConfig::VideoSize, Size2Du32(1920, 1080));
-                        cfg.set(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
-                        cfg.set(MediaConfig::VideoSolidColor, Color::Black);
-                        cfg.set(MediaConfig::VideoMotion, 0.0);
+                        s(MediaConfig::VideoEnabled, true);
+                        s(MediaConfig::VideoPattern, VideoPattern::ColorBars);
+                        s(MediaConfig::VideoSize, Size2Du32(1920, 1080));
+                        s(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::RGB8_sRGB));
+                        s(MediaConfig::VideoSolidColor, Color::Black);
+                        s(MediaConfig::VideoMotion, 0.0);
                         // Video burn-in — on by default so the plain
                         // TPG stream shows timecode out of the box.
                         // Font size 0 means "auto": VideoTestPattern
                         // scales from image height (36px at 1080p).
-                        cfg.set(MediaConfig::VideoBurnEnabled, true);
-                        cfg.set(MediaConfig::VideoBurnFontPath, String());
-                        cfg.set(MediaConfig::VideoBurnFontSize, 0);
-                        cfg.set(MediaConfig::VideoBurnText, String());
-                        cfg.set(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
-                        cfg.set(MediaConfig::VideoBurnTextColor, Color::White);
-                        cfg.set(MediaConfig::VideoBurnBgColor, Color::Black);
-                        cfg.set(MediaConfig::VideoBurnDrawBg, true);
+                        s(MediaConfig::VideoBurnEnabled, true);
+                        s(MediaConfig::VideoBurnFontPath, String());
+                        s(MediaConfig::VideoBurnFontSize, int32_t(0));
+                        s(MediaConfig::VideoBurnText, String());
+                        s(MediaConfig::VideoBurnPosition, BurnPosition::BottomCenter);
+                        s(MediaConfig::VideoBurnTextColor, Color::White);
+                        s(MediaConfig::VideoBurnBgColor, Color::Black);
+                        s(MediaConfig::VideoBurnDrawBg, true);
                         // Audio — enabled by default, defaulting to
                         // the AvSync pattern so the plain TPG stream
                         // emits a per-frame A/V sync marker that pairs
                         // with the video AvSync pattern and the burn.
-                        cfg.set(MediaConfig::AudioEnabled, true);
-                        cfg.set(MediaConfig::AudioMode, AudioPattern::AvSync);
-                        cfg.set(MediaConfig::AudioRate, 48000.0f);
-                        cfg.set(MediaConfig::AudioChannels, 2);
-                        cfg.set(MediaConfig::AudioToneFrequency, 1000.0);
-                        cfg.set(MediaConfig::AudioToneLevel, -20.0);
-                        cfg.set(MediaConfig::AudioLtcLevel, -20.0);
-                        cfg.set(MediaConfig::AudioLtcChannel, 0);
+                        s(MediaConfig::AudioEnabled, true);
+                        s(MediaConfig::AudioMode, AudioPattern::AvSync);
+                        s(MediaConfig::AudioRate, 48000.0f);
+                        s(MediaConfig::AudioChannels, int32_t(2));
+                        s(MediaConfig::AudioToneFrequency, 1000.0);
+                        s(MediaConfig::AudioToneLevel, -20.0);
+                        s(MediaConfig::AudioLtcLevel, -20.0);
+                        s(MediaConfig::AudioLtcChannel, int32_t(0));
                         // Timecode
-                        cfg.set(MediaConfig::TimecodeEnabled, true);
-                        cfg.set(MediaConfig::TimecodeStart, "01:00:00:00");
-                        cfg.set(MediaConfig::TimecodeDropFrame, false);
-                        return cfg;
+                        s(MediaConfig::TimecodeEnabled, true);
+                        s(MediaConfig::TimecodeStart, String("01:00:00:00"));
+                        s(MediaConfig::TimecodeDropFrame, false);
+                        return specs;
                 },
                 []() -> Metadata {
                         // TPG is a pure generator — it does not

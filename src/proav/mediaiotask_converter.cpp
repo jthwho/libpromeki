@@ -31,14 +31,18 @@ MediaIO::FormatDesc MediaIOTask_Converter::formatDesc() {
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Converter();
                 },
-                []() -> MediaIO::Config {
-                        MediaIO::Config cfg;
-                        cfg.set(MediaConfig::OutputPixelDesc, PixelDesc());
-                        cfg.set(MediaConfig::JpegQuality, 85);
-                        cfg.set(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV422);
-                        cfg.set(MediaConfig::OutputAudioDataType, AudioDataType::Invalid);
-                        cfg.set(MediaConfig::Capacity, 4);
-                        return cfg;
+                []() -> MediaIO::Config::SpecMap {
+                        MediaIO::Config::SpecMap specs;
+                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                                const VariantSpec *gs = MediaConfig::spec(id);
+                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+                        };
+                        s(MediaConfig::OutputPixelDesc, PixelDesc());
+                        s(MediaConfig::JpegQuality, int32_t(85));
+                        s(MediaConfig::JpegSubsampling, ChromaSubsampling::YUV422);
+                        s(MediaConfig::OutputAudioDataType, AudioDataType::Invalid);
+                        s(MediaConfig::Capacity, int32_t(4));
+                        return specs;
                 }
         };
 }

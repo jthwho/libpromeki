@@ -28,6 +28,9 @@ struct MetadataTag {};
  * serialization and deserialization. When shared ownership is needed,
  * use Metadata::Ptr.
  *
+ * Each ID is declared via @ref declareID with a mandatory @ref VariantSpec
+ * that captures the accepted type, default value, and description.
+ *
  * @par Example
  * @code
  * Metadata meta;
@@ -49,133 +52,374 @@ class Metadata : public VariantDatabase<MetadataTag> {
 
                 using Base::Base;
 
+                // ============================================================
+                // Core metadata
+                // ============================================================
+
                 /// @brief SMPTE timecode associated with this media unit.
-                static inline const ID Timecode{"Timecode"};
+                static inline const ID Timecode = declareID("Timecode",
+                        VariantSpec().setType(Variant::TypeTimecode)
+                                .setDefault(promeki::Timecode())
+                                .setDescription("SMPTE timecode associated with this media unit."));
+
                 /// @brief Gamma / transfer-function exponent.
-                static inline const ID Gamma{"Gamma"};
+                static inline const ID Gamma = declareID("Gamma",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.0)
+                                .setMin(0.0)
+                                .setDescription("Gamma / transfer-function exponent."));
+
                 /// @brief Title of the media.
-                static inline const ID Title{"Title"};
+                static inline const ID Title = declareID("Title",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Title of the media."));
+
                 /// @brief Copyright notice.
-                static inline const ID Copyright{"Copyright"};
+                static inline const ID Copyright = declareID("Copyright",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Copyright notice."));
+
                 /// @brief Software that created or last modified the media.
-                static inline const ID Software{"Software"};
+                static inline const ID Software = declareID("Software",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Software that created or modified the media."));
+
                 /// @brief Artist or creator name.
-                static inline const ID Artist{"Artist"};
+                static inline const ID Artist = declareID("Artist",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Artist or creator name."));
+
                 /// @brief Free-form comment.
-                static inline const ID Comment{"Comment"};
+                static inline const ID Comment = declareID("Comment",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Free-form comment."));
+
                 /// @brief Creation or origination date.
-                static inline const ID Date{"Date"};
+                static inline const ID Date = declareID("Date",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Creation or origination date."));
+
                 /// @brief Album name (audio media).
-                static inline const ID Album{"Album"};
+                static inline const ID Album = declareID("Album",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Album name (audio media)."));
+
                 /// @brief License information.
-                static inline const ID License{"License"};
+                static inline const ID License = declareID("License",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("License information."));
+
                 /// @brief Track number (audio media).
-                static inline const ID TrackNumber{"TrackNumber"};
+                static inline const ID TrackNumber = declareID("TrackNumber",
+                        VariantSpec().setTypes({Variant::TypeS32, Variant::TypeString})
+                                .setDefault(String())
+                                .setDescription("Track number (audio media)."));
+
                 /// @brief Genre (audio media).
-                static inline const ID Genre{"Genre"};
+                static inline const ID Genre = declareID("Genre",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Genre (audio media)."));
+
                 /// @brief Enable Broadcast Wave Format metadata in audio files.
-                static inline const ID EnableBWF{"EnableBWF"};
+                static inline const ID EnableBWF = declareID("EnableBWF",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Enable Broadcast Wave Format metadata."));
+
                 /// @brief Human-readable description of the content.
-                static inline const ID Description{"Description"};
+                static inline const ID Description = declareID("Description",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Human-readable description of the content."));
+
                 /// @brief BWF originator name.
-                static inline const ID Originator{"Originator"};
+                static inline const ID Originator = declareID("Originator",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("BWF originator name."));
+
                 /// @brief BWF originator reference.
-                static inline const ID OriginatorReference{"OriginatorReference"};
+                static inline const ID OriginatorReference = declareID("OriginatorReference",
+                        VariantSpec().setTypes({Variant::TypeString, Variant::TypeUUID})
+                                .setDefault(String())
+                                .setDescription("BWF originator reference."));
+
                 /// @brief BWF origination date and time.
-                static inline const ID OriginationDateTime{"OriginationDateTime"};
+                static inline const ID OriginationDateTime = declareID("OriginationDateTime",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("BWF origination date and time."));
+
                 /// @brief Frame rate of the associated video.
-                static inline const ID FrameRate{"FrameRate"};
+                static inline const ID FrameRate = declareID("FrameRate",
+                        VariantSpec().setTypes({Variant::TypeRational, Variant::TypeDouble, Variant::TypeFrameRate})
+                                .setDefault(Rational<int>())
+                                .setDescription("Frame rate of the associated video."));
+
                 /// @brief Source that supplied the associated FrameRate (String).
                 /// One of: @c "file" (read from the container/sidecar),
                 /// @c "config" (caller-supplied override), or @c "default"
-                /// (backend fell back to its built-in default).  Set by
-                /// backends whose intrinsic frame rate isn't known and
-                /// must be guessed or overridden (image sequences, still
-                /// images, etc.).
-                static inline const ID FrameRateSource{"FrameRateSource"};
+                /// (backend fell back to its built-in default).
+                static inline const ID FrameRateSource = declareID("FrameRateSource",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Source of the FrameRate value (file, config, or default)."));
+
                 /// @brief SMPTE UMID (Unique Material Identifier).
-                static inline const ID UMID{"UMID"};
+                static inline const ID UMID = declareID("UMID",
+                        VariantSpec().setTypes({Variant::TypeString, Variant::TypeUMID})
+                                .setDefault(String())
+                                .setDescription("SMPTE UMID (Unique Material Identifier)."));
+
                 /// @brief BWF coding history string.
-                static inline const ID CodingHistory{"CodingHistory"};
+                static inline const ID CodingHistory = declareID("CodingHistory",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("BWF coding history string."));
+
+                // ============================================================
+                // Compression metadata
+                // ============================================================
+
                 /// @brief Compression level hint for lossy codecs.
-                static inline const ID CompressionLevel{"CompressionLevel"};
+                static inline const ID CompressionLevel = declareID("CompressionLevel",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setDescription("Compression level hint for lossy codecs."));
+
                 /// @brief Enable variable bit-rate encoding.
-                static inline const ID EnableVBR{"EnableVBR"};
+                static inline const ID EnableVBR = declareID("EnableVBR",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Enable variable bit-rate encoding."));
+
                 /// @brief VBR quality setting (codec-specific).
-                static inline const ID VBRQuality{"VBRQuality"};
+                static inline const ID VBRQuality = declareID("VBRQuality",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setDescription("VBR quality setting (codec-specific)."));
+
                 /// @brief Internal: allocation hint for compressed pixel formats.
                 /// Use Image::compressedSize() instead.
-                static inline const ID CompressedSize{"CompressedSize"};
-                /// @brief Signals end-of-stream to downstream nodes.
-                static inline const ID EndOfStream{"EndOfStream"};
-                /// @brief Frame sequence number within a stream.
-                static inline const ID FrameNumber{"FrameNumber"};
-                /// @brief Wall-clock timestamp of when a frame was captured (TimeStamp).
-                static inline const ID CaptureTime{"CaptureTime"};
-                /// @brief Timestamp at which a frame should be presented (TimeStamp).
-                static inline const ID PresentationTime{"PresentationTime"};
-                /// @brief Number of times this frame was repeated due to underrun (int).
-                static inline const ID FrameRepeated{"FrameRepeated"};
-                /// @brief Number of frames dropped immediately before this one (int).
-                static inline const ID FrameDropped{"FrameDropped"};
-                /// @brief This frame arrived later than its scheduled time (bool).
-                static inline const ID FrameLate{"FrameLate"};
-                /// @brief This frame is a keyframe / intra frame (bool).
-                static inline const ID FrameKeyframe{"FrameKeyframe"};
-                /// @brief This frame's MediaDesc differs from the previously
-                /// reported one (bool).  When set, MediaIO has updated its
-                /// cached descriptor and emitted the descriptorChanged signal.
-                static inline const ID MediaDescChanged{"MediaDescChanged"};
+                static inline const ID CompressedSize = declareID("CompressedSize",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Internal allocation hint for compressed pixel formats."));
 
-                // -- DPX file info --
+                // ============================================================
+                // Streaming / frame status
+                // ============================================================
+
+                /// @brief Signals end-of-stream to downstream nodes.
+                static inline const ID EndOfStream = declareID("EndOfStream",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Signals end-of-stream to downstream nodes."));
+
+                /// @brief Frame sequence number within a stream.
+                static inline const ID FrameNumber = declareID("FrameNumber",
+                        VariantSpec().setType(Variant::TypeS64)
+                                .setDefault(int64_t(0))
+                                .setMin(int64_t(0))
+                                .setDescription("Frame sequence number within a stream."));
+
+                /// @brief Wall-clock timestamp of when a frame was captured (TimeStamp).
+                static inline const ID CaptureTime = declareID("CaptureTime",
+                        VariantSpec().setType(Variant::TypeTimeStamp)
+                                .setDefault(TimeStamp())
+                                .setDescription("Wall-clock timestamp when frame was captured."));
+
+                /// @brief Timestamp at which a frame should be presented (TimeStamp).
+                static inline const ID PresentationTime = declareID("PresentationTime",
+                        VariantSpec().setType(Variant::TypeTimeStamp)
+                                .setDefault(TimeStamp())
+                                .setDescription("Timestamp when frame should be presented."));
+
+                /// @brief Number of times this frame was repeated due to underrun (int).
+                static inline const ID FrameRepeated = declareID("FrameRepeated",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Number of times frame repeated due to underrun."));
+
+                /// @brief Number of frames dropped immediately before this one (int).
+                static inline const ID FrameDropped = declareID("FrameDropped",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Number of frames dropped before this one."));
+
+                /// @brief This frame arrived later than its scheduled time (bool).
+                static inline const ID FrameLate = declareID("FrameLate",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Frame arrived later than scheduled."));
+
+                /// @brief This frame is a keyframe / intra frame (bool).
+                static inline const ID FrameKeyframe = declareID("FrameKeyframe",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Frame is a keyframe / intra frame."));
+
+                /// @brief This frame's MediaDesc differs from the previously
+                /// reported one (bool).
+                static inline const ID MediaDescChanged = declareID("MediaDescChanged",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Frame's MediaDesc differs from previously reported."));
+
+                // ============================================================
+                // DPX file info
+                // ============================================================
 
                 /// @brief Original source filename (from previous save).
-                static inline const ID FileOrigName{"FileOrigName"};
-                /// @brief Project name.
-                static inline const ID Project{"Project"};
-                /// @brief Reel or input device name.
-                static inline const ID Reel{"Reel"};
+                static inline const ID FileOrigName = declareID("FileOrigName",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Original source filename."));
 
-                // -- DPX film info --
+                /// @brief Project name.
+                static inline const ID Project = declareID("Project",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Project name."));
+
+                /// @brief Reel or input device name.
+                static inline const ID Reel = declareID("Reel",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Reel or input device name."));
+
+                // ============================================================
+                // DPX film info
+                // ============================================================
 
                 /// @brief Film manufacturer ID code (2 chars).
-                static inline const ID FilmMfgID{"FilmMfgID"};
-                /// @brief Film type (2 chars).
-                static inline const ID FilmType{"FilmType"};
-                /// @brief Film offset in perfs (2 chars).
-                static inline const ID FilmOffset{"FilmOffset"};
-                /// @brief Film prefix (6 chars).
-                static inline const ID FilmPrefix{"FilmPrefix"};
-                /// @brief Film count (4 chars).
-                static inline const ID FilmCount{"FilmCount"};
-                /// @brief Film format (e.g. "Academy").
-                static inline const ID FilmFormat{"FilmFormat"};
-                /// @brief Sequence position (frame number in sequence).
-                static inline const ID FilmSeqPos{"FilmSeqPos"};
-                /// @brief Sequence length (total frames in sequence).
-                static inline const ID FilmSeqLen{"FilmSeqLen"};
-                /// @brief Held count (1 = default, >1 = repeated frame).
-                static inline const ID FilmHoldCount{"FilmHoldCount"};
-                /// @brief Film shutter angle in degrees.
-                static inline const ID FilmShutter{"FilmShutter"};
-                /// @brief Film frame identification (e.g. keycode).
-                static inline const ID FilmFrameID{"FilmFrameID"};
-                /// @brief Film slate information.
-                static inline const ID FilmSlate{"FilmSlate"};
+                static inline const ID FilmMfgID = declareID("FilmMfgID",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film manufacturer ID code (2 chars)."));
 
-                // -- DPX TV info --
+                /// @brief Film type (2 chars).
+                static inline const ID FilmType = declareID("FilmType",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film type (2 chars)."));
+
+                /// @brief Film offset in perfs (2 chars).
+                static inline const ID FilmOffset = declareID("FilmOffset",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film offset in perfs (2 chars)."));
+
+                /// @brief Film prefix (6 chars).
+                static inline const ID FilmPrefix = declareID("FilmPrefix",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film prefix (6 chars)."));
+
+                /// @brief Film count (4 chars).
+                static inline const ID FilmCount = declareID("FilmCount",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film count (4 chars)."));
+
+                /// @brief Film format (e.g. "Academy").
+                static inline const ID FilmFormat = declareID("FilmFormat",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film format (e.g. Academy)."));
+
+                /// @brief Sequence position (frame number in sequence).
+                static inline const ID FilmSeqPos = declareID("FilmSeqPos",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Sequence position (frame number in sequence)."));
+
+                /// @brief Sequence length (total frames in sequence).
+                static inline const ID FilmSeqLen = declareID("FilmSeqLen",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Sequence length (total frames in sequence)."));
+
+                /// @brief Held count (1 = default, >1 = repeated frame).
+                static inline const ID FilmHoldCount = declareID("FilmHoldCount",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(1))
+                                .setMin(int32_t(1))
+                                .setDescription("Held count (1 = default, >1 = repeated frame)."));
+
+                /// @brief Film shutter angle in degrees.
+                static inline const ID FilmShutter = declareID("FilmShutter",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.0)
+                                .setMin(0.0)
+                                .setMax(360.0)
+                                .setDescription("Film shutter angle in degrees."));
+
+                /// @brief Film frame identification (e.g. keycode).
+                static inline const ID FilmFrameID = declareID("FilmFrameID",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film frame identification (e.g. keycode)."));
+
+                /// @brief Film slate information.
+                static inline const ID FilmSlate = declareID("FilmSlate",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Film slate information."));
+
+                // ============================================================
+                // DPX TV info
+                // ============================================================
 
                 /// @brief Field number within an interlaced frame (0 or 1).
-                static inline const ID FieldID{"FieldID"};
+                static inline const ID FieldID = declareID("FieldID",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setRange(int32_t(0), int32_t(1))
+                                .setDescription("Field number within an interlaced frame (0 or 1)."));
 
-                // -- DPX image element info --
+                // ============================================================
+                // DPX image element info
+                // ============================================================
 
                 /// @brief SMPTE 268M transfer characteristic code.
-                static inline const ID TransferCharacteristic{"TransferCharacteristic"};
+                static inline const ID TransferCharacteristic = declareID("TransferCharacteristic",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("SMPTE 268M transfer characteristic code."));
+
                 /// @brief SMPTE 268M colorimetric specification code.
-                static inline const ID Colorimetric{"Colorimetric"};
+                static inline const ID Colorimetric = declareID("Colorimetric",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("SMPTE 268M colorimetric specification code."));
+
                 /// @brief Image orientation code (0 = left-to-right, top-to-bottom).
-                static inline const ID Orientation{"Orientation"};
+                static inline const ID Orientation = declareID("Orientation",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Image orientation code (0 = left-to-right, top-to-bottom)."));
+
+                // ============================================================
+                // Methods
+                // ============================================================
 
                 /**
                  * @brief Converts a metadata ID to its string name.

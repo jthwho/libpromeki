@@ -205,23 +205,26 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                 []() -> MediaIOTask * {
                         return new MediaIOTask_ImageFile();
                 },
-                []() -> MediaIO::Config {
-                        MediaIO::Config cfg;
-                        cfg.set(MediaConfig::Type, "ImageFile");
+                []() -> MediaIO::Config::SpecMap {
+                        MediaIO::Config::SpecMap specs;
+                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                                const VariantSpec *gs = MediaConfig::spec(id);
+                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+                        };
                         // 0 == ImageFile::Invalid — the Open handler
                         // treats this as "infer the backend from the
                         // filename extension or the content probe".
-                        cfg.set(MediaConfig::ImageFileID, 0);
+                        s(MediaConfig::ImageFileID, int32_t(0));
                         // Empty size hint: only used by headerless
                         // formats (RawYUV) that can't derive the
                         // geometry from the file itself.
-                        cfg.set(MediaConfig::VideoSize, Size2Du32());
-                        cfg.set(MediaConfig::VideoPixelFormat, PixelDesc());
-                        cfg.set(MediaConfig::FrameRate, DefaultFrameRate);
-                        cfg.set(MediaConfig::SequenceHead, DefaultSequenceHead);
-                        cfg.set(MediaConfig::SaveImgSeqPath, String());
-                        cfg.set(MediaConfig::SaveImgSeqPathMode, ImgSeqPathMode::Relative);
-                        return cfg;
+                        s(MediaConfig::VideoSize, Size2Du32());
+                        s(MediaConfig::VideoPixelFormat, PixelDesc());
+                        s(MediaConfig::FrameRate, DefaultFrameRate);
+                        s(MediaConfig::SequenceHead, int32_t(DefaultSequenceHead));
+                        s(MediaConfig::SaveImgSeqPath, String());
+                        s(MediaConfig::SaveImgSeqPathMode, ImgSeqPathMode::Relative);
+                        return specs;
                 },
                 []() -> Metadata {
                         // Image file formats consume different subsets

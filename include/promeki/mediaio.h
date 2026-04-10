@@ -103,23 +103,41 @@ class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
                 using Base::Base;
 
                 /// @brief int64_t — total frames dropped since open.
-                static inline const ID FramesDropped{"FramesDropped"};
+                static inline const ID FramesDropped = declareID("FramesDropped",
+                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
+                                .setMin(int64_t(0)).setDescription("Total frames dropped since open."));
                 /// @brief int64_t — total frames repeated due to underrun.
-                static inline const ID FramesRepeated{"FramesRepeated"};
+                static inline const ID FramesRepeated = declareID("FramesRepeated",
+                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
+                                .setMin(int64_t(0)).setDescription("Total frames repeated due to underrun."));
                 /// @brief int64_t — total frames that arrived late.
-                static inline const ID FramesLate{"FramesLate"};
+                static inline const ID FramesLate = declareID("FramesLate",
+                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
+                                .setMin(int64_t(0)).setDescription("Total frames that arrived late."));
                 /// @brief int64_t — current depth of internal buffer.
-                static inline const ID QueueDepth{"QueueDepth"};
+                static inline const ID QueueDepth = declareID("QueueDepth",
+                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
+                                .setMin(int64_t(0)).setDescription("Current depth of internal buffer."));
                 /// @brief int64_t — capacity of internal buffer.
-                static inline const ID QueueCapacity{"QueueCapacity"};
+                static inline const ID QueueCapacity = declareID("QueueCapacity",
+                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
+                                .setMin(int64_t(0)).setDescription("Capacity of internal buffer."));
                 /// @brief double — current data rate.
-                static inline const ID BytesPerSecond{"BytesPerSecond"};
+                static inline const ID BytesPerSecond = declareID("BytesPerSecond",
+                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
+                                .setMin(0.0).setDescription("Current data rate in bytes per second."));
                 /// @brief double — average end-to-end latency.
-                static inline const ID AverageLatencyMs{"AverageLatencyMs"};
+                static inline const ID AverageLatencyMs = declareID("AverageLatencyMs",
+                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
+                                .setMin(0.0).setDescription("Average end-to-end latency in ms."));
                 /// @brief double — peak observed latency.
-                static inline const ID PeakLatencyMs{"PeakLatencyMs"};
+                static inline const ID PeakLatencyMs = declareID("PeakLatencyMs",
+                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
+                                .setMin(0.0).setDescription("Peak observed latency in ms."));
                 /// @brief String — most recent error description.
-                static inline const ID LastErrorMessage{"LastErrorMessage"};
+                static inline const ID LastErrorMessage = declareID("LastErrorMessage",
+                        VariantSpec().setType(Variant::TypeString).setDefault(String())
+                                .setDescription("Most recent error description."));
 };
 
 /** @brief Phantom tag for the MediaIO parameterized-command StringRegistry. */
@@ -448,15 +466,29 @@ class MediaIO : public ObjectBase {
                 struct FormatDesc {
                         /** @brief Factory function that creates a new task instance. */
                         using CreateFunc = std::function<MediaIOTask *()>;
-                        /** @brief Returns the default configuration for this backend. */
-                        using DefaultConfigFunc = std::function<Config ()>;
+                        /**
+                         * @brief Returns the config specs for this backend.
+                         *
+                         * The returned map lists every @ref MediaConfig::ID
+                         * the backend understands, each paired with a
+                         * @ref VariantSpec that carries the backend-specific
+                         * default value, accepted types, ranges, and
+                         * description.  Backends can narrow or widen the
+                         * global spec for each ID.
+                         *
+                         * @ref MediaIO::defaultConfig builds a @ref Config
+                         * from the specs' default values.
+                         * @ref MediaIO::configSpecs returns the raw map
+                         * for introspection.
+                         */
+                        using ConfigSpecFunc = std::function<Config::SpecMap ()>;
                         /**
                          * @brief Returns the metadata schema this backend honors.
                          *
                          * The returned @ref Metadata lists every
                          * @ref Metadata::ID the backend understands, pre-populated
                          * with empty / default values.  It is the metadata
-                         * counterpart to @ref DefaultConfigFunc — callers that
+                         * counterpart to @ref ConfigSpecFunc — callers that
                          * want to know which metadata keys are honored (for
                          * @c --help dumps, GUI editors, etc.) can walk the
                          * returned container without having to hard-code a
@@ -491,7 +523,7 @@ class MediaIO : public ObjectBase {
                         bool                canWrite;        ///< @brief Whether the backend supports writing.
                         bool                canReadWrite;    ///< @brief Whether the backend supports bidirectional mode.
                         CreateFunc          create;          ///< @brief Backend factory.
-                        DefaultConfigFunc   defaultConfig;   ///< @brief Default configuration provider.
+                        ConfigSpecFunc      configSpecs;     ///< @brief Backend config specs provider.
                         DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
                         ProbeFunc           canHandleDevice; ///< @brief Content-based probe.
                         EnumerateFunc       enumerate;       ///< @brief Instance enumerator.
@@ -514,10 +546,28 @@ class MediaIO : public ObjectBase {
 
                 /**
                  * @brief Returns the default configuration for the named backend.
+                 *
+                 * Builds a @ref Config by extracting the default value from
+                 * each @ref VariantSpec in the backend's config spec map.
+                 *
                  * @param typeName The registered backend name (e.g. "TPG").
                  * @return A Config populated with default values.
                  */
                 static Config defaultConfig(const String &typeName);
+
+                /**
+                 * @brief Returns the config specs for the named backend.
+                 *
+                 * The returned map contains one entry per config key the
+                 * backend supports, each paired with a @ref VariantSpec
+                 * describing the accepted types, default, range, and
+                 * description.  Use this for introspection (e.g. @c --help
+                 * dumps, config GUIs).
+                 *
+                 * @param typeName The registered backend name.
+                 * @return A SpecMap, or an empty map if the backend is not found.
+                 */
+                static Config::SpecMap configSpecs(const String &typeName);
 
                 /**
                  * @brief Returns the metadata schema the named backend honors.

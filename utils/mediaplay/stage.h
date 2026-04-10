@@ -85,6 +85,9 @@ struct StageSpec {
 /** @brief Returns the SDL player's config schema with empty / default values. */
 promeki::MediaIO::Config sdlDefaultConfig();
 
+/** @brief Returns the SDL player's config specs. */
+promeki::MediaIO::Config::SpecMap sdlConfigSpecs();
+
 /** @brief Returns the SDL player's metadata schema (currently empty). */
 promeki::Metadata sdlDefaultMetadata();
 
@@ -106,27 +109,8 @@ const char *sdlDescription();
 [[noreturn]] void listPixelFormatsAndExit(const promeki::String &keyLabel);
 
 // --------------------------------------------------------------------------
-// Value parser
+// Value parser helpers
 // --------------------------------------------------------------------------
-
-/**
- * @brief Coerces a string into a Variant whose held type matches
- *        @p templateValue.
- *
- * The backend's default config is the canonical source of truth for
- * every key's target type — this function reads @c templateValue.type()
- * and dispatches to the appropriate typed constructor, leaning on
- * library @c fromString() helpers where they exist and on
- * @c Variant::get<T>() for scalar conversions.
- *
- * The special value `"list"` is intercepted up-front for types that
- * have a natural enumeration (Enum, PixelDesc) and surfaces valid
- * values to stdout before exiting.
- */
-promeki::Variant parseConfigValue(const promeki::String &keyLabel,
-                                  const promeki::String &str,
-                                  const promeki::Variant &templateValue,
-                                  promeki::Error *err);
 
 /**
  * @brief Splits `Key:Value` into `(Key, Value)`.

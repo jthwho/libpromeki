@@ -61,13 +61,16 @@ MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
                 []() -> MediaIOTask * {
                         return new MediaIOTask_AudioFile();
                 },
-                []() -> MediaIO::Config {
-                        MediaIO::Config cfg;
-                        cfg.set(MediaConfig::Type, "AudioFile");
-                        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
-                        cfg.set(MediaConfig::AudioRate, 48000.0f);
-                        cfg.set(MediaConfig::AudioChannels, 2u);
-                        return cfg;
+                []() -> MediaIO::Config::SpecMap {
+                        MediaIO::Config::SpecMap specs;
+                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                                const VariantSpec *gs = MediaConfig::spec(id);
+                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+                        };
+                        s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_2997));
+                        s(MediaConfig::AudioRate, 48000.0f);
+                        s(MediaConfig::AudioChannels, int32_t(2));
+                        return specs;
                 },
                 []() -> Metadata {
                         // libsndfile INFO chunk keys (WAV/AIFF/OGG)

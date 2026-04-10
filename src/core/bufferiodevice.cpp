@@ -28,7 +28,13 @@ void BufferIODevice::setBuffer(Buffer *buffer) {
 
 Error BufferIODevice::open(OpenMode mode) {
         if(isOpen()) return Error(Error::AlreadyOpen);
-        if(_buffer == nullptr || !_buffer->isValid()) return Error(Error::Invalid);
+        if(_buffer == nullptr) return Error(Error::Invalid);
+        // When auto-grow is enabled, allocate an initial buffer if
+        // the caller handed us an empty/invalid one.
+        if(!_buffer->isValid() && _autoGrow && (mode & WriteOnly)) {
+                *_buffer = Buffer(4096);
+        }
+        if(!_buffer->isValid()) return Error(Error::Invalid);
         setOpenMode(mode);
         _pos = 0;
         return Error();
@@ -61,8 +67,22 @@ int64_t BufferIODevice::write(const void *data, int64_t maxSize) {
         if(!isOpen() || !isWritable()) return -1;
         int64_t endPos = _pos + maxSize;
         if(endPos > static_cast<int64_t>(_buffer->availSize())) {
-                setError(Error(Error::BufferTooSmall));
-                return -1;
+                if(!_autoGrow) {
+                        setError(Error(Error::BufferTooSmall));
+                        return -1;
+                }
+                // Grow: double current size or fit the write, whichever is larger.
+                size_t needed = static_cast<size_t>(endPos);
+                size_t newCap = _buffer->availSize();
+                if(newCap < 4096) newCap = 4096;
+                while(newCap < needed) newCap *= 2;
+                Buffer grown(newCap);
+                if(_buffer->size() > 0) {
+                        _buffer->memSpace().copy(
+                                _buffer->allocation(), grown.allocation(), _buffer->size());
+                }
+                grown.setSize(_buffer->size());
+                *_buffer = std::move(grown);
         }
         std::memcpy(static_cast<uint8_t *>(_buffer->data()) + _pos, data,
                 static_cast<size_t>(maxSize));

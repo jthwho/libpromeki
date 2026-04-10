@@ -10,20 +10,11 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <promeki/color.h>
-#include <promeki/colormodel.h>
-#include <promeki/config.h>
-#include <promeki/datetime.h>
-#include <promeki/framerate.h>
 #include <promeki/mediaiotask_imagefile.h>
 #include <promeki/pixeldesc.h>
-#include <promeki/pixelformat.h>
-#include <promeki/rational.h>
 #include <promeki/size2d.h>
-#if PROMEKI_ENABLE_NETWORK
-#include <promeki/socketaddress.h>
-#endif
-#include <promeki/timecode.h>
+#include <promeki/textstream.h>
+#include <promeki/variantspec.h>
 
 using namespace promeki;
 
@@ -42,22 +33,29 @@ const char *const kStageFile = "__file__";
 // MediaConfig keys carry the Sdl prefix to avoid colliding with
 // non-SDL audio/paced/window options.
 
+MediaIO::Config::SpecMap sdlConfigSpecs() {
+        MediaIO::Config::SpecMap specs;
+        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                const VariantSpec *gs = MediaConfig::spec(id);
+                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+        };
+        s(MediaConfig::SdlPaced, true);
+        s(MediaConfig::SdlAudioEnabled, true);
+        s(MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
+        s(MediaConfig::SdlWindowTitle, String("mediaplay"));
+        return specs;
+}
+
 MediaIO::Config sdlDefaultConfig() {
         MediaIO::Config cfg;
+        cfg.setValidation(SpecValidation::None);
+        MediaIO::Config::SpecMap specs = sdlConfigSpecs();
+        for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
+                const Variant &def = it->second.defaultValue();
+                if(def.isValid()) cfg.set(it->first, def);
+        }
+        cfg.setValidation(SpecValidation::Warn);
         cfg.set(MediaConfig::Type, String(kStageSdl));
-        // Paced: when true the player uses audio-led pacing (audio
-        // clock drives video presentation) with a wall-clock fallback
-        // for video-only streams.  When false the player runs as
-        // fast as possible with audio dropped entirely.
-        cfg.set(MediaConfig::SdlPaced, true);
-        // Audio: when true the player opens an SDL audio device and
-        // plays the stream's first audio track.  When false the audio
-        // device is never opened.  Implicitly false when Paced=false.
-        cfg.set(MediaConfig::SdlAudioEnabled, true);
-        // WindowSize / WindowTitle control the SDLWindow that mediaplay
-        // allocates before adopting the SDLPlayerTask.
-        cfg.set(MediaConfig::SdlWindowSize,  Size2Du32(1280, 720));
-        cfg.set(MediaConfig::SdlWindowTitle, String("mediaplay"));
         return cfg;
 }
 
@@ -116,164 +114,6 @@ void listPixelFormatsAndExit(const String &keyLabel) {
         std::exit(0);
 }
 
-// --------------------------------------------------------------------------
-// parseConfigValue — string → Variant matching the target type
-// --------------------------------------------------------------------------
-
-Variant parseConfigValue(const String &keyLabel,
-                         const String &str,
-                         const Variant &templateValue,
-                         Error *err) {
-        auto fail = [&](Error e, const char *detail) {
-                if(err != nullptr) *err = e;
-                fprintf(stderr, "Error: %s = '%s': %s\n",
-                        keyLabel.cstr(), str.cstr(), detail);
-                return Variant();
-        };
-        if(err != nullptr) *err = Error::Ok;
-
-        // `list` → enumerate and exit for types that support it.
-        if(str == "list") {
-                switch(templateValue.type()) {
-                        case Variant::TypeEnum: {
-                                Enum existing = templateValue.get<Enum>();
-                                listEnumTypeAndExit(keyLabel, existing.type());
-                        }
-                        case Variant::TypePixelDesc:
-                                listPixelFormatsAndExit(keyLabel);
-                        default:
-                                return fail(Error::NotSupported,
-                                            "'list' is only supported for Enum / PixelDesc keys");
-                }
-        }
-
-        // Template may be invalid when the backend didn't declare the
-        // key in its defaultConfig — accept as a raw string so
-        // late-bound keys still work.
-        if(!templateValue.isValid()) return Variant(str);
-
-        // Wrap the raw string in a transient Variant so Variant::get<T>
-        // can use its String->T conversion matrix.
-        Variant src(str);
-        Error ce;
-
-        switch(templateValue.type()) {
-                case Variant::TypeBool: {
-                        String low = str.toLower();
-                        if(low == "true" || low == "yes" || low == "1" || low == "on")
-                                return Variant(true);
-                        if(low == "false" || low == "no" || low == "0" || low == "off")
-                                return Variant(false);
-                        return fail(Error::Invalid, "expected true/false/yes/no/1/0");
-                }
-                case Variant::TypeU8:  { auto v = src.get<uint8_t >(&ce); if(ce.isError()) return fail(ce, "not a uint8");  return Variant(v); }
-                case Variant::TypeS8:  { auto v = src.get<int8_t  >(&ce); if(ce.isError()) return fail(ce, "not an int8"); return Variant(v); }
-                case Variant::TypeU16: { auto v = src.get<uint16_t>(&ce); if(ce.isError()) return fail(ce, "not a uint16"); return Variant(v); }
-                case Variant::TypeS16: { auto v = src.get<int16_t >(&ce); if(ce.isError()) return fail(ce, "not an int16"); return Variant(v); }
-                case Variant::TypeU32: { auto v = src.get<uint32_t>(&ce); if(ce.isError()) return fail(ce, "not a uint32"); return Variant(v); }
-                case Variant::TypeS32: { auto v = src.get<int32_t >(&ce); if(ce.isError()) return fail(ce, "not an int32"); return Variant(v); }
-                case Variant::TypeU64: { auto v = src.get<uint64_t>(&ce); if(ce.isError()) return fail(ce, "not a uint64"); return Variant(v); }
-                case Variant::TypeS64: { auto v = src.get<int64_t >(&ce); if(ce.isError()) return fail(ce, "not an int64"); return Variant(v); }
-                case Variant::TypeFloat:  { auto v = src.get<float >(&ce); if(ce.isError()) return fail(ce, "not a float");  return Variant(v); }
-                case Variant::TypeDouble: { auto v = src.get<double>(&ce); if(ce.isError()) return fail(ce, "not a double"); return Variant(v); }
-                case Variant::TypeString:
-                        return Variant(str);
-                case Variant::TypeSize2D: {
-                        auto r = Size2Du32::fromString(str);
-                        if(r.second().isError() || !r.first().isValid())
-                                return fail(Error::Invalid, "expected WxH");
-                        return Variant(r.first());
-                }
-                case Variant::TypeFrameRate: {
-                        auto r = FrameRate::fromString(str);
-                        if(r.second().isError() || !r.first().isValid())
-                                return fail(Error::Invalid, "invalid frame rate");
-                        return Variant(r.first());
-                }
-                case Variant::TypeRational: {
-                        // Rational has no fromString; parse "N/D" by hand.
-                        size_t slash = str.find('/');
-                        if(slash == String::npos)
-                                return fail(Error::Invalid, "expected N/D");
-                        Error ne, de;
-                        int n = str.left(slash).to<int>(&ne);
-                        int d = str.mid(slash + 1).to<int>(&de);
-                        if(ne.isError() || de.isError() || d == 0)
-                                return fail(Error::Invalid, "expected N/D with non-zero D");
-                        return Variant(Rational<int>(n, d));
-                }
-                case Variant::TypeTimecode: {
-                        auto r = Timecode::fromString(str);
-                        if(r.second().isError())
-                                return fail(Error::Invalid, "invalid timecode");
-                        return Variant(r.first());
-                }
-                case Variant::TypeDateTime: {
-                        Error de;
-                        DateTime dt = DateTime::fromString(str, DateTime::DefaultFormat, &de);
-                        if(de.isError())
-                                return fail(Error::Invalid, "invalid datetime");
-                        return Variant(dt);
-                }
-                case Variant::TypeColor: {
-                        Color c = Color::fromString(str);
-                        if(!c.isValid())
-                                return fail(Error::Invalid, "invalid color");
-                        return Variant(c);
-                }
-                case Variant::TypePixelDesc: {
-                        PixelDesc pd = PixelDesc::lookup(str);
-                        if(!pd.isValid())
-                                return fail(Error::Invalid, "unknown PixelDesc name");
-                        return Variant(pd);
-                }
-                case Variant::TypePixelFormat: {
-                        PixelFormat pf = PixelFormat::lookup(str);
-                        if(!pf.isValid())
-                                return fail(Error::Invalid, "unknown PixelFormat name");
-                        return Variant(pf);
-                }
-                case Variant::TypeColorModel: {
-                        ColorModel cm = ColorModel::lookup(str);
-                        if(!cm.isValid())
-                                return fail(Error::Invalid, "unknown ColorModel name");
-                        return Variant(cm);
-                }
-                case Variant::TypeEnum: {
-                        Enum existing = templateValue.get<Enum>();
-                        Enum::Type t = existing.type();
-                        Enum e(t, str);
-                        if(!e.hasListedValue()) {
-                                // Fall back to "TypeName::ValueName" fully
-                                // qualified form so users can copy --help
-                                // lines verbatim.
-                                Error lookErr;
-                                Enum fq = Enum::lookup(str, &lookErr);
-                                if(lookErr.isOk() && fq.type() == t && fq.hasListedValue())
-                                        return Variant(fq);
-                                return fail(Error::Invalid, "unknown enum value");
-                        }
-                        return Variant(e);
-                }
-                case Variant::TypeStringList: {
-                        return Variant(str.split(","));
-                }
-#if PROMEKI_ENABLE_NETWORK
-                case Variant::TypeSocketAddress: {
-                        auto r = SocketAddress::fromString(str);
-                        if(r.second().isError() || r.first().isNull())
-                                return fail(Error::Invalid, "expected host:port");
-                        return Variant(r.first());
-                }
-#endif
-                default:
-                        break;
-        }
-
-        return fail(Error::NotSupported,
-                    "config key uses a Variant type mediaplay doesn't know how to parse");
-}
-
 bool splitKeyValue(const String &arg, String &key, String &val) {
         size_t colon = arg.find(':');
         if(colon == String::npos) return false;
@@ -285,16 +125,12 @@ bool splitKeyValue(const String &arg, String &key, String &val) {
 Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
         if(stage.rawKeyValues.isEmpty()) return Error::Ok;
 
-        // Load the type schema.  Registered backends come from the
-        // MediaIO registry; the SDL pseudo-backend has its schema
-        // hard-coded in sdlDefaultConfig(); the synthetic __file__
-        // marker has no schema at classify time, though buildFileSink
-        // later re-applies config against the resolved backend name.
-        MediaIO::Config schema;
+        // Load the config specs for this backend.
+        MediaIO::Config::SpecMap specs;
         if(stage.type == kStageSdl) {
-                schema = sdlDefaultConfig();
+                specs = sdlConfigSpecs();
         } else if(stage.type != kStageFile) {
-                schema = MediaIO::defaultConfig(stage.type);
+                specs = MediaIO::configSpecs(stage.type);
         }
 
         for(const auto &kv : stage.rawKeyValues) {
@@ -306,27 +142,58 @@ Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
                         return Error::InvalidArgument;
                 }
                 MediaIO::ConfigID id(key);
-                Variant templateValue = schema.get(id);  // invalid if absent
-                Error pe;
                 String label = stageLabel + "." + key;
-                Variant value = parseConfigValue(label, val, templateValue, &pe);
-                if(pe.isError()) return pe;
-                stage.config.set(id, std::move(value));
+
+                // Look up the spec: backend-specific first, then global.
+                const VariantSpec *spec = nullptr;
+                VariantSpec specStorage;
+                auto it = specs.find(id);
+                if(it != specs.end()) {
+                        spec = &it->second;
+                } else {
+                        const VariantSpec *gs = MediaConfig::spec(id);
+                        if(gs) { specStorage = *gs; spec = &specStorage; }
+                }
+
+                // Handle sentinels.
+                if(val == "list") {
+                        if(spec && spec->hasEnumType()) listEnumTypeAndExit(label, spec->enumType());
+                        if(spec && spec->acceptsType(Variant::TypePixelDesc)) listPixelFormatsAndExit(label);
+                        fprintf(stderr, "Error: %s: 'list' is only supported for Enum / PixelDesc keys\n",
+                                label.cstr());
+                        return Error::NotSupported;
+                }
+                if(val == "help") {
+                        if(spec) {
+                                TextStream ts(stdout);
+                                spec->writeHelp(ts, key);
+                        } else {
+                                fprintf(stdout, "%s: no spec registered for this key\n", key.cstr());
+                        }
+                        std::exit(0);
+                }
+
+                // Parse the value using the spec.
+                if(spec) {
+                        Error pe;
+                        Variant value = spec->parseString(val, &pe);
+                        if(pe.isError()) {
+                                fprintf(stderr, "Error: %s = '%s': failed to parse as %s\n",
+                                        label.cstr(), val.cstr(), spec->typeName().cstr());
+                                return pe;
+                        }
+                        stage.config.set(id, std::move(value));
+                } else {
+                        // No spec — accept as a raw string so late-bound
+                        // keys (e.g. __file__ stage) still work.
+                        stage.config.set(id, Variant(val));
+                }
         }
         return Error::Ok;
 }
 
 Error applyStageMetadata(StageSpec &stage, const String &stageLabel) {
         if(stage.rawMetaKeyValues.isEmpty()) return Error::Ok;
-
-        // Load the metadata schema — same lookup rules as
-        // applyStageConfig above.
-        Metadata schema;
-        if(stage.type == kStageSdl) {
-                schema = sdlDefaultMetadata();
-        } else if(stage.type != kStageFile) {
-                schema = MediaIO::defaultMetadata(stage.type);
-        }
 
         for(const auto &kv : stage.rawMetaKeyValues) {
                 String key, val;
@@ -337,12 +204,24 @@ Error applyStageMetadata(StageSpec &stage, const String &stageLabel) {
                         return Error::InvalidArgument;
                 }
                 Metadata::ID id(key);
-                Variant templateValue = schema.get(id);  // invalid if absent
-                Error pe;
                 String label = stageLabel + "." + key;
-                Variant value = parseConfigValue(label, val, templateValue, &pe);
-                if(pe.isError()) return pe;
-                stage.metadata.set(id, std::move(value));
+
+                // Look up the global spec for this metadata key.
+                const VariantSpec *spec = Metadata::spec(id);
+
+                if(spec) {
+                        Error pe;
+                        Variant value = spec->parseString(val, &pe);
+                        if(pe.isError()) {
+                                fprintf(stderr, "Error: %s = '%s': failed to parse as %s\n",
+                                        label.cstr(), val.cstr(), spec->typeName().cstr());
+                                return pe;
+                        }
+                        stage.metadata.set(id, std::move(value));
+                } else {
+                        // No spec — accept as string.
+                        stage.metadata.set(id, Variant(val));
+                }
         }
         return Error::Ok;
 }

@@ -24,6 +24,7 @@ TextStream::TextStream(IODevice *device) : _device(device) { }
 
 TextStream::TextStream(Buffer *buffer) {
         auto *dev = new BufferIODevice(buffer);
+        dev->setAutoGrow(true);
         dev->open(IODevice::ReadWrite);
         _ownedDevice = dev;
         _device = dev;

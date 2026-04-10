@@ -126,67 +126,50 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Rtp();
                 },
-                []() -> MediaIO::Config {
-                        MediaIO::Config cfg;
-                        // Media descriptor knobs.  These live in the
-                        // shared MediaConfig catalog and are the
-                        // reader-side fallback when neither SDP nor
-                        // a caller-supplied MediaDesc describes the
-                        // stream geometry / pixel layout.  Declaring
-                        // them in defaultConfig() is what makes
-                        // `mediaplay --ic VideoSize:1920x1080` parse
-                        // the value as a Size2Du32 instead of a raw
-                        // string.  The writer also honours these
-                        // keys as a fallback when the caller omits
-                        // a MediaDesc.
-                        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
-                        cfg.set(MediaConfig::VideoSize, Size2Du32());
-                        cfg.set(MediaConfig::VideoPixelFormat, PixelDesc());
-                        cfg.set(MediaConfig::AudioRate, 48000.0f);
-                        cfg.set(MediaConfig::AudioChannels, 2u);
-
+                []() -> MediaIO::Config::SpecMap {
+                        MediaIO::Config::SpecMap specs;
+                        auto s = [&specs](MediaConfig::ID id, const Variant &def) {
+                                const VariantSpec *gs = MediaConfig::spec(id);
+                                specs.insert(id, gs ? VariantSpec(*gs).setDefault(def) : VariantSpec().setDefault(def));
+                        };
+                        // Media descriptor knobs.
+                        s(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
+                        s(MediaConfig::VideoSize, Size2Du32());
+                        s(MediaConfig::VideoPixelFormat, PixelDesc());
+                        s(MediaConfig::AudioRate, 48000.0f);
+                        s(MediaConfig::AudioChannels, int32_t(2));
                         // Transport-global defaults.
-                        cfg.set(MediaConfig::RtpLocalAddress, SocketAddress::any(0));
-                        cfg.set(MediaConfig::RtpSessionName, String("promeki RTP stream"));
-                        cfg.set(MediaConfig::RtpSessionOrigin, String("-"));
-                        cfg.set(MediaConfig::RtpPacingMode, RtpPacingMode::Auto);
-                        cfg.set(MediaConfig::RtpMulticastTTL, 64);
-                        cfg.set(MediaConfig::RtpMulticastInterface, String());
-                        cfg.set(MediaConfig::RtpSaveSdpPath, String());
-                        // RtpSdp is polymorphic (String path or
-                        // SdpSession); seed it with an empty String
-                        // so the mediaplay CLI parses `--ic RtpSdp:...`
-                        // as a plain string path.  Callers that want
-                        // to pass a programmatically-built SdpSession
-                        // set it via cfg.set(RtpSdp, sdpSession).
-                        cfg.set(MediaConfig::RtpSdp, String());
-                        cfg.set(MediaConfig::RtpJitterMs, 50);
-                        cfg.set(MediaConfig::RtpMaxReadQueueDepth, 4);
-
-                        // Per-stream defaults: empty destinations, so
-                        // an unconfigured RTP sink transmits nothing.
-                        cfg.set(MediaConfig::VideoRtpDestination, SocketAddress());
-                        cfg.set(MediaConfig::VideoRtpPayloadType, 96);
-                        cfg.set(MediaConfig::VideoRtpClockRate, 90000);
-                        cfg.set(MediaConfig::VideoRtpSsrc, uint32_t(0));
-                        cfg.set(MediaConfig::VideoRtpDscp, 46);
-                        cfg.set(MediaConfig::VideoRtpTargetBitrate, 0);
-
-                        cfg.set(MediaConfig::AudioRtpDestination, SocketAddress());
-                        cfg.set(MediaConfig::AudioRtpPayloadType, 96);
-                        cfg.set(MediaConfig::AudioRtpClockRate, 0);
-                        cfg.set(MediaConfig::AudioRtpSsrc, uint32_t(0));
-                        cfg.set(MediaConfig::AudioRtpDscp, 34);
-                        cfg.set(MediaConfig::AudioRtpPacketTimeUs, 1000);
-
-                        cfg.set(MediaConfig::DataEnabled, false);
-                        cfg.set(MediaConfig::DataRtpDestination, SocketAddress());
-                        cfg.set(MediaConfig::DataRtpPayloadType, 98);
-                        cfg.set(MediaConfig::DataRtpClockRate, 90000);
-                        cfg.set(MediaConfig::DataRtpSsrc, uint32_t(0));
-                        cfg.set(MediaConfig::DataRtpDscp, 34);
-                        cfg.set(MediaConfig::DataRtpFormat, MetadataRtpFormat::JsonMetadata);
-                        return cfg;
+                        s(MediaConfig::RtpLocalAddress, SocketAddress::any(0));
+                        s(MediaConfig::RtpSessionName, String("promeki RTP stream"));
+                        s(MediaConfig::RtpSessionOrigin, String("-"));
+                        s(MediaConfig::RtpPacingMode, RtpPacingMode::Auto);
+                        s(MediaConfig::RtpMulticastTTL, int32_t(64));
+                        s(MediaConfig::RtpMulticastInterface, String());
+                        s(MediaConfig::RtpSaveSdpPath, String());
+                        s(MediaConfig::RtpSdp, String());
+                        s(MediaConfig::RtpJitterMs, int32_t(50));
+                        s(MediaConfig::RtpMaxReadQueueDepth, int32_t(4));
+                        // Per-stream defaults.
+                        s(MediaConfig::VideoRtpDestination, SocketAddress());
+                        s(MediaConfig::VideoRtpPayloadType, int32_t(96));
+                        s(MediaConfig::VideoRtpClockRate, int32_t(90000));
+                        s(MediaConfig::VideoRtpSsrc, int32_t(0));
+                        s(MediaConfig::VideoRtpDscp, int32_t(46));
+                        s(MediaConfig::VideoRtpTargetBitrate, int32_t(0));
+                        s(MediaConfig::AudioRtpDestination, SocketAddress());
+                        s(MediaConfig::AudioRtpPayloadType, int32_t(96));
+                        s(MediaConfig::AudioRtpClockRate, int32_t(0));
+                        s(MediaConfig::AudioRtpSsrc, int32_t(0));
+                        s(MediaConfig::AudioRtpDscp, int32_t(34));
+                        s(MediaConfig::AudioRtpPacketTimeUs, int32_t(1000));
+                        s(MediaConfig::DataEnabled, false);
+                        s(MediaConfig::DataRtpDestination, SocketAddress());
+                        s(MediaConfig::DataRtpPayloadType, int32_t(98));
+                        s(MediaConfig::DataRtpClockRate, int32_t(90000));
+                        s(MediaConfig::DataRtpSsrc, int32_t(0));
+                        s(MediaConfig::DataRtpDscp, int32_t(34));
+                        s(MediaConfig::DataRtpFormat, MetadataRtpFormat::JsonMetadata);
+                        return specs;
                 },
                 []() -> Metadata {
                         // An RTP sink does not produce or consume

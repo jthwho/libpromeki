@@ -104,10 +104,23 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
 
 MediaIO::Config MediaIO::defaultConfig(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
-        if(desc == nullptr || !desc->defaultConfig) return Config();
-        Config cfg = desc->defaultConfig();
+        if(desc == nullptr || !desc->configSpecs) return Config();
+        Config cfg;
+        cfg.setValidation(SpecValidation::None);
+        Config::SpecMap specs = desc->configSpecs();
+        for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
+                const Variant &def = it->second.defaultValue();
+                if(def.isValid()) cfg.set(it->first, def);
+        }
+        cfg.setValidation(SpecValidation::Warn);
         cfg.set(MediaConfig::Type, typeName);
         return cfg;
+}
+
+MediaIO::Config::SpecMap MediaIO::configSpecs(const String &typeName) {
+        const FormatDesc *desc = findFormatByName(typeName);
+        if(desc == nullptr || !desc->configSpecs) return Config::SpecMap();
+        return desc->configSpecs();
 }
 
 Metadata MediaIO::defaultMetadata(const String &typeName) {
@@ -171,7 +184,7 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         // file the caller passed in, so downstream consumers that
         // need to know "which backend is this?" can read it back
         // from io->config() without a second registry walk.
-        io->_config = desc->defaultConfig ? desc->defaultConfig() : Config();
+        io->_config = desc->configSpecs ? defaultConfig(desc->name) : Config();
         io->_config.set(MediaConfig::Type, desc->name);
         io->_config.set(MediaConfig::Filename, filename);
         return io;
@@ -195,7 +208,7 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         // with the backend's full default schema plus the type and
         // filename so callers that read io->config() back out see a
         // complete, discoverable picture.
-        io->_config = desc->defaultConfig ? desc->defaultConfig() : Config();
+        io->_config = desc->configSpecs ? defaultConfig(desc->name) : Config();
         io->_config.set(MediaConfig::Type, desc->name);
         io->_config.set(MediaConfig::Filename, filename);
         return io;
