@@ -176,6 +176,77 @@ The writer side (`buildBextXmpPacket`) also hand-rolls XML by string concatenati
 
 ---
 
+## JPEG XS: packed RGB encode path is not implemented
+
+**Files:** `src/proav/jpegxsimagecodec.cpp` (`classifyInput`), `include/promeki/pixeldesc.h`
+**FIXME:** The initial `JpegXsImageCodec` drop only accepts planar YUV 4:2:2 / 4:2:0 at 8/10/12-bit. SVT-JPEG-XS itself supports `COLOUR_FORMAT_PACKED_YUV444_OR_RGB` for interleaved 8-bit RGB (RGBRGB…), and we already declared the `JPEG_XS_RGB8_sRGB` compressed PixelDesc so the library can *describe* an RGB JPEG XS stream — but the codec's `classifyInput()` rejects `RGB8_sRGB` on the input side, and there is no corresponding `PACKED_YUV444_OR_RGB` branch in the encode/decode plumbing.
+
+The SVT encoder's single-plane layout for packed RGB differs from the planar path: `components_num` is 1, `components[0].byte_size = width*height*3*pixel_size`, and stride/min-size accounting treats the whole image as one component. The decoder side also needs the tightly-packed temp-plane copy path extended to handle a single 3×-wide plane.
+
+- [ ] Extend `classifyInput()` with an `RGB8_sRGB` case that maps to `COLOUR_FORMAT_PACKED_YUV444_OR_RGB` and tags the output as `JPEG_XS_RGB8_sRGB`.
+- [ ] In `encode()`, handle the single-plane packed layout: `stride[0]` in bytes, `data_yuv[0]` pointing at the interleaved RGB buffer. Verify against `svt_jpeg_xs_encoder_get_image_config()` output.
+- [ ] In `decode()`, extend the temp-plane allocation loop to honor `components_num == 1` for packed-RGB bitstreams.
+- [ ] Add a `JpegXsImageCodec_RoundTripRGB8` test mirroring the planar round-trip coverage.
+- [ ] Optional: add 10/12-bit RGB (SVT supports it via `PLANAR_YUV444_OR_RGB` with `gbrp10le`-style plane ordering, which also needs a new planar RGB PixelDesc since the library's current RGB10/12 variants are interleaved `I_3x10_LE` / `I_3x12_LE`).
+
+---
+
+## JPEG XS: additional matrix / range / colour-space variants
+
+**Files:** `src/core/pixeldesc.cpp`, `src/proav/jpegxsimagecodec.cpp`
+**FIXME:** The first-pass codec exposes only the Rec.709 limited-range YUV family (`JPEG_XS_{YUV8,YUV10,YUV12}_{422,420}_Rec709`). JPEG XS itself is colour-space agnostic — matrix / range / primaries live out-of-band in the container (ISO/IEC 21122-3 sample entry) or the SDP (RFC 9134 `a=fmtp`), never in the bitstream — so adding more variants is purely a bookkeeping exercise once real workflows need them.
+
+Likely additions when an upstream caller actually asks for them:
+- `JPEG_XS_*_Rec601` / `JPEG_XS_*_Rec601_Full` — legacy broadcast / strict JFIF analogues.
+- `JPEG_XS_*_Rec709_Full` — modern full-range YUV from cameras with an ICC profile.
+- `JPEG_XS_*_Rec2020` — HDR / UHD contribution, including the 10- and 12-bit planar variants.
+- `JPEG_XS_*_SemiPlanar_*` (NV12 / NV16) — if a zero-copy path from a hardware decoder wants to avoid the deinterleave cost on the input side (SVT needs planar, so the codec would have to run the NV-planar → fully-planar split like the JPEG codec already does).
+
+- [ ] Wait for a concrete upstream need before expanding the matrix; the current Rec.709 limited-range default matches ST 2110 JPEG XS carriage.
+- [ ] When adding, follow the JPEG variant pattern in `pixeldesc.cpp` (`makeJPEG_XS_YUV` helper already structured for this) and extend `classifyInput()` / `defaultDecodeTarget()` accordingly.
+- [ ] Extend the codec's validation in `decode()` to match on the new uncompressed targets.
+
+---
+
+## JPEG XS: QuickTime / ISO-BMFF container support (jxsm sample entry)
+
+**Files:** `src/proav/quicktime_writer.cpp` (visual sample entry writer, `fourCCForPixelDesc`), `src/proav/quicktime_reader.cpp` (video sample-entry parse path), `src/proav/mediaiotask_quicktime.cpp` (`pickStorageFormat`)
+**FIXME:** The codec can encode and decode JPEG XS, the `PixelDesc` carries the `jxsm` FourCC in its `fourccList`, but nothing on the QuickTime writer/reader path knows how to actually emit or consume an ISO/IEC 21122-3 sample entry. Writing a JPEG XS MP4 requires:
+
+1. A `jxsm` (JPEG XS movie) visual sample entry in `stsd` — the standard ISO visual sample entry plus an extension box that carries the JPEG XS codestream headers (`jxpl` profile/level, `colr` nclc/nclx colour info, `jpgC` codestream header sample for random access).
+2. The sample entry's `depth` and `component_count` fields pulled from the JPEG XS image config (`bit_depth`, `components_num`), not the current `depth=24` default the `raw ` / `2vuy` path uses.
+3. In the reader, sample-entry recognition for `jxsm` and mapping back to one of the `JPEG_XS_*_Rec709` PixelDescs (matrix / range come from the `colr` atom's nclc codes, not from inspecting the bitstream).
+4. Round-trip test that writes a JPEG XS-encoded image into an MP4, reads it back, and verifies the decompressed frame matches the source within JPEG XS's quantisation tolerance.
+
+Relevant references: ISO/IEC 21122-3 Annex A for the `jxsm` sample entry, ISO/IEC 14496-12 for the host visual sample entry layout, and the SVT-JPEG-XS ffmpeg-plugin source (`thirdparty/svt-jpeg-xs/ffmpeg-plugin/`) which implements the same bindings against FFmpeg's ISO-BMFF writer — a useful cross-check for the extension-atom byte layout.
+
+- [ ] Add a `jxsm` sample entry emitter in `quicktime_writer.cpp` that carries the required extension atoms (`jpgC` at minimum — verify which others are mandatory per 21122-3).
+- [ ] Teach `pickStorageFormat()` in `mediaiotask_quicktime.cpp` to route `JPEG_XS_*` PixelDescs through the new path (instead of the current RGB8 / 2vuy fallback).
+- [ ] Add reader support: recognise `jxsm`, parse the extension atoms, and map the track to the corresponding `JPEG_XS_*_Rec709` PixelDesc using the `colr` atom's matrix/range codes.
+- [ ] Round-trip test: `MediaIOTask_QuickTime` writer → reader, comparing decoded frame to source.
+- [ ] External interop test: verify the written `.mov` opens in ffplay/VLC/QuickTime Player.
+
+---
+
+## JPEG XS: RFC 9134 slice-mode packetization
+
+**Files:** `src/network/rtppayload.cpp` (`RtpPayloadJpegXs`), `src/proav/mediaiotask_rtp.cpp`, `include/promeki/mediaiotask_rtp.h`
+**FIXME:** `RtpPayloadJpegXs` implements codestream mode (K=0): each `pack()` call fragments one complete codestream across MTU-sized packets with the 4-byte RFC 9134 header. Slice mode (K=1) — where the encoder emits one slice per packet and each slice fits in a single RTP packet — is not yet implemented. Slice mode is what ST 2110-22 mandates for constant-bitrate contribution links.
+
+Slice mode requires:
+- **Encoder integration**: SVT-JPEG-XS `slice_packetization_mode = 1` makes each `svt_jpeg_xs_encoder_get_packet()` return one slice-sized bitstream buffer. Needs a new `MediaConfig::JpegXsSlicePacketization` key plumbed into the encoder API.
+- **Pack path**: instead of fragmenting a complete codestream, each encoder output buffer maps 1:1 to one RTP packet with `K=1` in the header. The `SEP` counter increments per slice; the `P` (last packet in frame) flag comes from `last_packet_in_frame` on the encoder output.
+- **Unpack path**: reassembly by RTP timestamp is the same, but verification should check the per-frame packet counter for gaps / reordering.
+- **SDP**: the `a=fmtp` line must carry `packetization-mode=1` so receivers know to expect slice boundaries at packet boundaries.
+
+- [ ] Add `MediaConfig::JpegXsSlicePacketization` key; plumb into `JpegXsImageCodec` encoder init.
+- [ ] Extend `RtpPayloadJpegXs::pack()` with a K=1 branch that maps encoder slices 1:1 to RTP packets.
+- [ ] Update `RtpPayloadJpegXs::unpack()` to verify per-frame packet counter for gap detection.
+- [ ] Update `buildJpegXsFmtp()` to emit `packetization-mode=1` when slice mode is active.
+- [ ] Loopback test mirroring the existing codestream-mode coverage.
+
+---
+
 ## QuickTimeWriter: compressed audio input path is missing
 
 **File:** `src/proav/quicktime_writer.cpp` (`addAudioTrack`, `writeSample` audio branch)
@@ -185,4 +256,32 @@ The writer side (`buildBextXmpPacket`) also hand-rolls XML by string concatenati
 - [ ] In `writeSample()` audio branch, when the track is compressed, write each sample as one variable-size entry (with its own duration / size / keyframe flags) rather than treating it as a constant-size PCM chunk.
 - [ ] In `appendTrak()` stsd emission, when the track is compressed, emit the correct sample entry form (ISO-BMFF `mp4a` / `Opus` / etc.) with any required extension atoms (`esds` for AAC, `dOps` for Opus, etc.) — at minimum a stub that carries the codec-specific config bytes supplied via the track metadata.
 - [ ] Extend MediaIOTask_QuickTime writer path to accept compressed audio frames (currently refuses via the non-PCM guard in `setupWriterFromFrame`).
+
+---
+
+## RTP JPEG reader: no in-band signal for Rec.709 or limited/full range
+
+**Files:** `src/proav/mediaiotask_rtp.cpp` (`emitVideoFrame` deferred JPEG geometry)
+**FIXME:** When the RTP JPEG reader discovers image geometry from the first reassembled frame, it correctly detects subsampling (4:2:2 vs 4:2:0 from the RFC 2435 Type field / SOF0 sampling factors) and RGB (SOF0 component structure + Type >= 2), but always defaults to Rec.601 full range per the JFIF specification. RFC 2435 carries no metadata for the color matrix (Rec.601 vs Rec.709) or quantization range (full vs limited).
+
+JPEG itself supports optional markers that can carry color information:
+- **APP2 (ICC Profile)** — the most authoritative source; a full ICC color profile can be embedded across chained APP2 segments. Definitively identifies primaries, matrix, and transfer function.
+- **APP14 (Adobe)** — carries a color transform byte (0=unknown/RGB, 1=YCbCr, 2=YCCK).
+- **APP1 (EXIF)** — `ColorSpace` tag (1=sRGB, 0xFFFF=uncalibrated).
+- **APP0 (JFIF)** — its presence implies Rec.601 full-range YCbCr per the JFIF spec.
+
+However, standard RFC 2435 senders strip all markers and transmit only the entropy-coded data + quantization tables. Our own `RtpPayloadJpeg::unpack()` reconstructs a bare JFIF (SOI/DQT/SOF0/DHT/SOS/ECS/EOI) with none of these APP markers. Non-standard MJPEG-over-RTP implementations that send complete JFIF frames (typically with a dynamic PT) could include these markers, but the current reader does not inspect them.
+
+- [ ] Parse APP2 ICC profile from reassembled JFIF when present — extract primaries/matrix/TRC and map to the closest PixelDesc variant (Rec.601 vs Rec.709, full vs limited).
+- [ ] Parse APP14 Adobe marker for the color transform byte as a secondary signal.
+- [ ] Consider a `MediaConfig::VideoColorModel` override key so callers can force Rec.709 / limited range for broadcast sources that use JPEG transport without color metadata.
+
+---
+
+## CMake: libjpeg-turbo ExternalProject did not forward NASM compiler path
+
+**File:** `CMakeLists.txt` (libjpeg-turbo ExternalProject_Add)
+**FIXME (fixed):** The vendored libjpeg-turbo ExternalProject build did not forward `CMAKE_ASM_NASM_COMPILER` to the sub-build, causing `check_language(ASM_NASM)` to fail and SIMD to be silently disabled. Fixed by adding `find_program(PROMEKI_NASM_PATH NAMES nasm yasm)` and passing `-DCMAKE_ASM_NASM_COMPILER=${PROMEKI_NASM_PATH}` to the ExternalProject. Performance impact: libjpeg-turbo without SIMD is significantly slower for encode/decode.
+
+- [x] Forward NASM path to libjpeg-turbo ExternalProject (fixed 2026-04-09)
 

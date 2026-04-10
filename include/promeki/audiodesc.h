@@ -17,6 +17,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class SdpMediaDescription;
+
 /**
  * @brief Describes an audio format including sample type, rate, and channel count.
  * @ingroup proav
@@ -269,6 +271,47 @@ class AudioDesc {
                                 _format = lookupFormat(Invalid);
                         }
                 }
+
+                /**
+                 * @brief Derives an AudioDesc from an SDP media description.
+                 *
+                 * Interprets the RTP payload encoding name in the
+                 * @c a=rtpmap attribute to build an audio AudioDesc.
+                 * Supported encodings (all RFC 3551 / RFC 3190):
+                 *
+                 *  - @c L16  → @ref PCMI_S16BE (wire is big-endian 16-bit)
+                 *  - @c L24  → @ref PCMI_S24BE (wire is packed 24-bit big-endian)
+                 *  - @c L8   → @ref PCMI_U8   (unsigned 8-bit per RFC 3551 §4.5.10)
+                 *
+                 * Sample rate and channel count come from the rtpmap
+                 * rate / channel fields.  Anything else (compressed
+                 * codecs, non-audio media descriptions) yields an
+                 * invalid @ref AudioDesc.
+                 *
+                 * @param md The SDP media description to interpret.
+                 * @return A populated AudioDesc, or an invalid
+                 *         AudioDesc on any failure.
+                 */
+                static AudioDesc fromSdp(const SdpMediaDescription &md);
+
+                /**
+                 * @brief Builds an SDP media description from this AudioDesc.
+                 *
+                 * The inverse of @ref fromSdp.  Populates the returned
+                 * @c SdpMediaDescription with @c m=audio, an
+                 * @c a=rtpmap line for the appropriate encoding
+                 * (@c L16, @c L24, or @c L8), and the clock rate /
+                 * channel count derived from this descriptor.
+                 *
+                 * Returns an empty @c SdpMediaDescription if the
+                 * AudioDesc is invalid or the data type has no RTP
+                 * encoding mapping.
+                 *
+                 * @param payloadType RTP payload type (0-127).
+                 * @return A populated SdpMediaDescription, or an
+                 *         empty one on failure.
+                 */
+                SdpMediaDescription toSdp(uint8_t payloadType) const;
 
                 /**
                  * @brief Returns true if both audio descriptions have equal format (type, rate, channels).

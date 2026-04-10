@@ -192,38 +192,40 @@ bool SDLVideoWidget::uploadCurrentImage() {
 
         const PixelDesc &srcPd = _currentImage.pixelDesc();
 
-        // Compressed formats can't be uploaded — they need to be
-        // decoded first by an ImageCodec or similar.  Report clearly
-        // rather than silently failing inside convert().
-        if(srcPd.isCompressed()) {
-                promekiErr("SDLVideoWidget: compressed pixel format '%s' "
-                           "cannot be displayed — decode it first",
-                           srcPd.name().cstr());
-                return false;
-        }
-
-        // Fast path: direct SDL format — upload as-is with no CSC.
-        uint32_t sdlFmt = mapPixelDesc(srcPd);
-        if(sdlFmt != 0) {
-                ensureTexture(_currentImage.width(),
-                              _currentImage.height(), sdlFmt,
-                              mapColorspace(srcPd));
-                if(_texture == nullptr) return false;
-                uploadImage(_currentImage, sdlFmt);
-                return true;
+        // Fast path: directly-mappable uncompressed SDL format —
+        // upload as-is with no CSC.  Compressed formats and
+        // uncompressed formats SDL cannot ingest directly fall
+        // through to the Image::convert() fallback below.
+        if(!srcPd.isCompressed()) {
+                uint32_t sdlFmt = mapPixelDesc(srcPd);
+                if(sdlFmt != 0) {
+                        ensureTexture(_currentImage.width(),
+                                      _currentImage.height(), sdlFmt,
+                                      mapColorspace(srcPd));
+                        if(_texture == nullptr) return false;
+                        uploadImage(_currentImage, sdlFmt);
+                        return true;
+                }
         }
 
         // Fallback: run the image through Image::convert() into
-        // RGBA8_sRGB, which every backend can display.  The CSCPipeline
-        // is pulled from the library-wide cache, so repeated frames of
-        // the same format don't pay compile() cost.  This handles YUV,
-        // linear float, DPX, v210, non-host-endian and 10/12-bit
-        // formats, and any user-registered PixelDesc the CSC pipeline
-        // knows how to convert.
+        // RGBA8_sRGB, which every backend can display.  The
+        // CSCPipeline is pulled from the library-wide cache, so
+        // repeated frames of the same format don't pay compile()
+        // cost.  This handles YUV, linear float, DPX, v210,
+        // non-host-endian and 10/12-bit formats, and any
+        // user-registered PixelDesc the CSC pipeline knows how to
+        // convert.  It also handles compressed formats by
+        // dispatching to the registered ImageCodec (JPEG, JPEG XS,
+        // etc.) — the decode happens inside convert() so the widget
+        // stays codec-agnostic.  For RTP playback the SDLPlayerTask
+        // decodes ahead of us on its strand thread, so this branch
+        // only runs when callers push a compressed image directly
+        // into the widget outside the MediaIO path.
         Image converted = _currentImage.convert(
                 PixelDesc(PixelDesc::RGBA8_sRGB), _currentImage.metadata());
         if(!converted.isValid()) {
-                promekiErr("SDLVideoWidget: CSC from '%s' to RGBA8_sRGB failed",
+                promekiErr("SDLVideoWidget: convert from '%s' to RGBA8_sRGB failed",
                            srcPd.name().cstr());
                 return false;
         }

@@ -139,6 +139,19 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
         // Compressed → uncompressed: pull the right codec out of the
         // registry by name and decode.  We never reference a concrete
         // codec subclass here — Image::convert is codec-agnostic.
+        //
+        // Decode-target selection: some codecs (e.g. libjpeg-turbo)
+        // can decode straight to the caller's target format; others
+        // (e.g. SVT JPEG XS) only emit one specific native layout
+        // and reject everything else.  To paper over the
+        // difference we ask the codec for the caller's target
+        // first, and if that lookup is rejected we retry with the
+        // first entry in the source PixelDesc's @c decodeTargets
+        // list.  An uncompressed CSC at the end lifts the codec's
+        // native output to the caller's actual target.  This lets
+        // sinks like SDLPlayerTask call
+        // @c convert(JPEG_XS_*, RGBA8_sRGB) without having to know
+        // each codec's native preference.
         if(srcCompressed) {
                 CodecHandle codec(pixelDesc().codecName());
                 if(!codec.isValid() || !codec->canDecode()) {
@@ -148,7 +161,25 @@ Image Image::convert(const PixelDesc &pd, const Metadata &metadata,
                 }
                 codec->configure(config);
 
-                Image decoded = codec->decode(*this, pd.id());
+                // Check whether the requested target is in the
+                // codec's natively-supported decode-target set.
+                // If not, fall back to the codec's first preferred
+                // target so we can let the CSC pipeline handle the
+                // last hop.  (An empty decodeTargets list means the
+                // codec is opaque about its preferences — try the
+                // caller's target verbatim and let the codec
+                // refuse if it must.)
+                const auto &targets = pixelDesc().decodeTargets();
+                PixelDesc::ID decodeTarget = pd.id();
+                bool targetSupported = targets.isEmpty();
+                for(PixelDesc::ID t : targets) {
+                        if(t == pd.id()) { targetSupported = true; break; }
+                }
+                if(!targetSupported && !targets.isEmpty()) {
+                        decodeTarget = targets[0];
+                }
+
+                Image decoded = codec->decode(*this, decodeTarget);
                 if(!decoded.isValid()) {
                         promekiErr("Image::convert: %s decode failed: %s",
                                    codec->name().cstr(),

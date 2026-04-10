@@ -28,3 +28,6 @@
 [submodule "thirdparty/cirf"]
 	path = thirdparty/cirf
 	url = https://github.com/jthwho/cirf.git
+[submodule "thirdparty/svt-jpeg-xs"]
+	path = thirdparty/svt-jpeg-xs
+	url = https://github.com/OpenVisualCloud/SVT-JPEG-XS.git

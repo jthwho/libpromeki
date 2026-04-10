@@ -229,8 +229,16 @@ class RtpPayloadRawVideo : public RtpPayload {
                  * @param width Frame width in pixels.
                  * @param height Frame height in pixels.
                  * @param bitsPerPixel Bits per pixel (e.g. 24 for RGB8).
+                 * @param pgroupBytes RFC 4175 pixel group (pgroup) size in bytes.
+                 *        A pgroup is the smallest byte-aligned unit of pixel
+                 *        data — e.g. 3 for RGB 8-bit, 4 for YCbCr-4:2:2 8-bit.
+                 *        Chunk sizes are aligned to this boundary so that a
+                 *        pixel is never split across packets.  If 0, the pgroup
+                 *        is inferred as bitsPerPixel/8 (correct for formats
+                 *        where one pixel equals one pgroup).
                  */
-                RtpPayloadRawVideo(int width, int height, int bitsPerPixel);
+                RtpPayloadRawVideo(int width, int height, int bitsPerPixel,
+                                   int pgroupBytes = 0);
 
                 /** @copydoc RtpPayload::payloadType() */
                 uint8_t payloadType() const override { return _payloadType; }
@@ -253,10 +261,14 @@ class RtpPayloadRawVideo : public RtpPayload {
                 /** @brief Returns bits per pixel. */
                 int bitsPerPixel() const { return _bitsPerPixel; }
 
+                /** @brief Returns the pgroup size in bytes. */
+                int pgroupBytes() const { return _pgroupBytes; }
+
         private:
                 int      _width;
                 int      _height;
                 int      _bitsPerPixel;
+                int      _pgroupBytes;
                 uint8_t  _payloadType = 96;
 };
 
@@ -380,6 +392,107 @@ class RtpPayloadJpeg : public RtpPayload {
                 int _width;
                 int _height;
                 int _quality;
+};
+
+/**
+ * @brief RTP payload handler for RFC 9134 JPEG XS.
+ * @ingroup network
+ *
+ * Implements the RTP payload format for JPEG XS (ISO/IEC 21122)
+ * as defined in RFC 9134.  The first-pass implementation runs in
+ * codestream packetization mode (K=0): the whole JPEG XS
+ * codestream is handed to @ref pack() as one blob, fragmented
+ * into MTU-sized chunks, and each fragment gets a 4-byte payload
+ * header prepended.  Slice packetization mode (K=1) and
+ * interlaced framing are followups.
+ *
+ * @par RFC 9134 payload header (4 bytes)
+ * @code
+ *  0                   1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |T|K|L| I |F counter|     SEP counter     |     P counter       |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * @endcode
+ *
+ * - @b T  (1 bit):  Transmission mode. 1 = sequential (default).
+ * - @b K  (1 bit):  Packetization mode. 0 = codestream (this class),
+ *                   1 = slice (followup).
+ * - @b L  (1 bit):  Last packet of the current packetization unit.
+ *                   Set on the final packet of each frame.
+ * - @b I  (2 bits): Interlace info.  00 = progressive (this class).
+ * - @b F  (5 bits): Frame counter modulo 32.  Incremented on every
+ *                   call to @ref pack(); identical across all packets
+ *                   of the same frame.
+ * - @b SEP(11 bits): Slice/Extended-Packet counter.  In codestream
+ *                   mode, this increments every time the P counter
+ *                   wraps from 2047 to 0 within a single frame.
+ * - @b P  (11 bits): Packet counter within the current packetization
+ *                   unit.  Starts at 0 for each new frame and wraps
+ *                   at 2048.
+ *
+ * The RTP marker bit (set by @ref RtpSession::sendPackets) signals
+ * the last packet of the video frame and is independent of the L
+ * bit in codestream mode (where both mark the same packet).  The
+ * RTP timestamp uses a 90 kHz clock per the RFC and is constant
+ * across all packets of one frame.
+ *
+ * @par Example
+ * @code
+ * RtpPayloadJpegXs payload(1920, 1080);
+ * auto packets = payload.pack(jxsData, jxsSize);
+ * // packets[0..N-1] carry the 4-byte header + bitstream fragment;
+ * // payload.frameCounter() advances after each pack() call.
+ * @endcode
+ */
+class RtpPayloadJpegXs : public RtpPayload {
+        public:
+                /// @brief RFC 9134 payload header size in bytes.
+                static constexpr size_t HeaderSize = 4;
+
+                /// @brief RTP clock rate for JPEG XS (fixed at 90 kHz per RFC).
+                static constexpr uint32_t ClockRate = 90000;
+
+                /**
+                 * @brief Constructs a JPEG XS payload handler.
+                 * @param width       Frame width in pixels.
+                 * @param height      Frame height in pixels.
+                 * @param payloadType RTP payload type (dynamic, default 96).
+                 */
+                RtpPayloadJpegXs(int width, int height, uint8_t payloadType = 96);
+
+                /** @copydoc RtpPayload::payloadType() */
+                uint8_t payloadType() const override { return _payloadType; }
+                /** @copydoc RtpPayload::clockRate() */
+                uint32_t clockRate() const override { return ClockRate; }
+                /** @copydoc RtpPayload::pack() */
+                RtpPacket::List pack(const void *mediaData, size_t size) override;
+                /** @copydoc RtpPayload::unpack() */
+                Buffer unpack(const RtpPacket::List &packets) override;
+
+                /// @brief Overrides the RTP payload type number.
+                void setPayloadType(uint8_t pt) { _payloadType = pt; }
+
+                /// @brief Returns the frame width.
+                int width() const { return _width; }
+                /// @brief Returns the frame height.
+                int height() const { return _height; }
+
+                /**
+                 * @brief Returns the next frame counter value that will be
+                 * written into the F field, modulo 32.  Advances on each
+                 * successful @ref pack() call.
+                 */
+                uint8_t frameCounter() const { return _frameCounter; }
+
+                /// @brief Resets the frame counter to 0 (testing hook).
+                void resetFrameCounter() { _frameCounter = 0; }
+
+        private:
+                int      _width;
+                int      _height;
+                uint8_t  _payloadType;
+                uint8_t  _frameCounter = 0;
 };
 
 PROMEKI_NAMESPACE_END

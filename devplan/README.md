@@ -12,15 +12,20 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 
 **Primary work queue (in rough order):**
 
-1. **MediaIOTask_Rtp reader mode** (see `proav_nodes.md`):
-   - Writer path is SHIPPED — unified video + audio + metadata sink with MJPEG / L16 / JSON payloads, SDP export via `RtpSaveSdpPath` config key and the `GetSdp` params command, kernel pacing via `SO_MAX_PACING_RATE`, and end-to-end verified through `mediaplay -o Rtp`.
-   - Reader mode is the next milestone: reassembling fragmented frames, handling packet loss / reorder within a jitter window, and mid-stream descriptor discovery.
+1. **MediaIOTask_Rtp** (see `proav_nodes.md`):
+   - Writer path is SHIPPED — unified video + audio + metadata sink with MJPEG / L16 / JSON / JPEG XS payloads, SDP export, kernel pacing, per-stream TX worker threads, and timing histograms.
+   - **Reader path is SHIPPED** — per-stream RTP receive threads, packet reassembly, SDP-driven auto-config (`RtpSdp` config key), video/audio/data frame aggregation, jitter buffer, and comprehensive loopback tests.
+   - Remaining reader work: mid-stream descriptor discovery, RTP timestamp wrap handling.
 2. **New `MediaPipeline` class** (see `proav_pipeline.md`):
    - `MediaPipelineConfig` data object describing stages + routes, with JSON `toJson()`/`fromJson()`.
    - `MediaPipeline` class that builds, opens, starts, stops, and closes a pipeline of MediaIO instances.
 3. **mediaplay JSON pipeline support** (see `proav_nodes.md` → mediaplay section):
    - `--pipeline <file.json>` / `--save-pipeline` — blocked on new `MediaPipelineConfig`.
-4. **Network optimization follow-ups** (see `proav_optimization.md`):
+4. **JPEG XS container and RTP follow-ups** (see `fixme.md`):
+   - QuickTime / ISO-BMFF `jxsm` sample entry (read + write).
+   - `RtpPayloadJpegXs` slice packetization mode (K=1) for ST 2110-22.
+   - Packed RGB encode path in the codec.
+5. **Network optimization follow-ups** (see `proav_optimization.md`):
    - Core prerequisites SHIPPED: `UdpSocket::setPacingRate()`, `UdpSocket::writeDatagrams()` (sendmmsg batch send), `PacketTransport` abstraction with `UdpSocketTransport` and `LoopbackTransport`, `RtpSession` migrated to `PacketTransport`, `SO_TXTIME` enable path.
    - Remaining: wire `RtpPacingMode::TxTime` through `MediaIOTask_Rtp` so per-packet `SCM_TXTIME` deadlines actually get stamped onto each datagram.  DPDK transport backend as a later phase.
 
@@ -35,25 +40,23 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 | [network_protocols.md](network_protocols.md) | 3B | HTTP, WebSocket, higher-level protocols |
 | [network_avoverip.md](network_avoverip.md) | 3C | AV-over-IP building blocks (RTP, PTP, SDP, multicast) |
 | [proav_pipeline.md](proav_pipeline.md) | 4A | `MediaPipeline` class (MediaIO-based, JSON-definable) |
-| [proav_nodes.md](proav_nodes.md) | 4B | MediaIO backends (existing + new: RtpVideo, RtpAudio) |
+| [proav_nodes.md](proav_nodes.md) | 4B | MediaIO backends (all complete: TPG, ImageFile, AudioFile, QuickTime, Converter, Rtp, SDL) |
 | [proav_dsp.md](proav_dsp.md) | 4C | DSP and effects (future, as Converter subclasses) |
 | [proav_optimization.md](proav_optimization.md) | 4D | Network optimization (sendmmsg, kernel pacing, PacketTransport) |
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
 | [fixme.md](fixme.md) | ongoing | Existing FIXME comments tracked across the tree |
+| [ideas.md](ideas.md) | backlog | Exploratory ideas that need further design |
 
 ## Dependency Graph
 
 ```
 Phase 1 (COMPLETE) ──┬─► Phase 2 (COMPLETE)
                      │     │
-                     │     ├─► Phase 3A (COMPLETE) ─► Phase 3C (mostly complete) ─┐
-                     │     │                                                      │
-                     │     ├─► Phase 4 (MediaIO framework complete)               │
-                     │     │     │                                                │
-                     │     │     ├─► Remaining MediaIO backends: RtpVideo, ◄──────┘
-                     │     │     │   RtpAudio
+                     │     ├─► Phase 3A (COMPLETE) ─► Phase 3C (mostly complete)
+                     │     │
+                     │     ├─► Phase 4 (MediaIO framework + backends complete)
                      │     │     │
                      │     │     ├─► Phase 4A: MediaPipeline (MediaIO-based)
                      │     │     │
@@ -83,12 +86,12 @@ Delivered: List, Map, Set, HashMap, HashSet, Deque, Stack, PriorityQueue, Span, 
 IO abstractions, filesystem utilities, DataStream, and TextStream all implemented. Resource filesystem (cirf) integrated: `File`, `FileIODevice`, and `Dir` transparently accept `:/` resource paths. libpromeki ships `:/.PROMEKI/` built-in resources (bundled FiraCode font). Remaining extension work lives in `core_streams.md` (TextStream type operators, ObjectBase serialization).
 
 ### Phase 3: Network Library — IN PROGRESS
-**Phase 3A (Sockets) COMPLETE** — including `UdpSocket::writeDatagrams()` (sendmmsg), `setPacingRate()`, and `setTxTime()`. Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) mostly complete** — PrioritySocket, `PacketTransport` + `UdpSocketTransport` + `LoopbackTransport`, RtpSession (migrated to PacketTransport, incl. `sendPacketsPaced()`, `setRemote()`, `setPacingRate()`), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing, plus new `RtpPayloadJson` for metadata streams), SdpSession, MulticastManager. PtpClock remaining.
+**Phase 3A (Sockets) COMPLETE** — including `UdpSocket::writeDatagrams()` (sendmmsg), `setPacingRate()`, and `setTxTime()`. Phase 3B (HTTP/TLS) not started. **Phase 3C (AV-over-IP) mostly complete** — PrioritySocket, `PacketTransport` + `UdpSocketTransport` + `LoopbackTransport`, RtpSession (migrated to PacketTransport, incl. `sendPacketsPaced()`, `setRemote()`, `setPacingRate()`, plus new `startReceiving()` / `stopReceiving()` receive loop), RtpPacket, RtpPayload (L24, L16, RawVideo, JPEG with RFC 2435 DQT/entropy parsing, `RtpPayloadJson` for metadata streams, **`RtpPayloadJpegXs` for RFC 9134 JPEG XS**), SdpSession (with `fromFile()` / `toFile()`, structured `RtpMap` / `FmtpParameters` accessors), MulticastManager, **MulticastReceiver**. PtpClock remaining.
 
 ### Phase 4: ProAV — MediaIO-Based Pipeline
-**MediaIO framework complete.** Six backends complete: `MediaIOTask_TPG`, `MediaIOTask_ImageFile` (DPX/Cineon/TGA/SGI/PNM/PNG/JPEG/RawYUV), `MediaIOTask_AudioFile`, `MediaIOTask_QuickTime`, `MediaIOTask_Converter`, and the new unified **`MediaIOTask_Rtp`** (writer mode, MJPEG / L16 / JSON metadata), plus `SDLPlayerTask` for display sink. The `mediaplay` utility exercises all of them end-to-end, including the RTP sink with SDP export.
+**MediaIO framework complete.** Six backends complete: `MediaIOTask_TPG`, `MediaIOTask_ImageFile` (DPX/Cineon/TGA/SGI/PNM/PNG/JPEG/RawYUV), `MediaIOTask_AudioFile`, `MediaIOTask_QuickTime`, `MediaIOTask_Converter`, and the unified **`MediaIOTask_Rtp`** (writer + reader mode, MJPEG / L16 / JSON / JPEG XS payloads, SDP-driven auto-config, per-stream TX/RX threads, timing histograms), plus `SDLPlayerTask` for display sink (with transparent compressed-video decode). A **`JpegXsImageCodec`** using vendored SVT-JPEG-XS provides JPEG XS encode/decode for planar YUV 4:2:2/4:2:0 at 8/10/12-bit. The `mediaplay` utility exercises all backends end-to-end.
 
-The legacy `MediaNode` / `MediaPipeline` / concrete `*Node` classes and their two dedicated utilities (`vidgen`, `testrender`) have been deleted. The new `MediaPipeline` class (see `proav_pipeline.md`) and the RTP reader path (see `proav_nodes.md`) are the remaining work in this phase.
+The legacy `MediaNode` / `MediaPipeline` / concrete `*Node` classes and their two dedicated utilities (`vidgen`, `testrender`) have been deleted. The new `MediaPipeline` class (see `proav_pipeline.md`) is the main remaining work in this phase.
 
 Network optimization core prerequisites — batch `sendmmsg`, kernel pacing (`SO_MAX_PACING_RATE`), `SO_TXTIME` enable path, `PacketTransport` abstraction, `RtpSession` migration — are all shipped (see `proav_optimization.md`).  Remaining optimization work is the per-packet `SCM_TXTIME` deadline computation inside `MediaIOTask_Rtp` and a future DPDK transport backend.
 
@@ -203,18 +206,23 @@ All `@defgroup` definitions exist in `docs/modules.dox`: containers, concurrency
 
 ## Existing FIXMEs
 
-11 tracked items in [fixme.md](fixme.md):
+16 tracked items in [fixme.md](fixme.md):
 
 | File | Issue | Natural Phase |
 |---|---|---|
 | `src/core/file.cpp:40` | Windows File implementation is a stub | Phase 2 |
 | `src/proav/audiogen.cpp:66` | Audio generation doesn't handle planar formats | Phase 4 |
 | `src/core/datetime.cpp:112` | Should use `String::parseNumberWords()` instead of `strtoll` | Phase 7 |
+| various | Replace direct std library usage with library wrappers | Phase 7 |
 | `src/proav/mediaiotask_quicktime.cpp` | LE float audio storage is lossy (promoted to s16) | Phase 4 |
 | `src/core/pixeldesc.cpp` | `raw ` BGR vs RGB byte-order disagreement | Phase 4 |
 | `CMakeLists.txt` | SDL incremental-rebuild misses header ABI changes | Phase 4 |
 | `include/promeki/bufferpool.h` | BufferPool available but not wired into QuickTime hot path | Phase 4 |
 | `src/proav/quicktime_reader.cpp` | Fragmented reader ignores `trex` defaults fallback | Phase 4 |
 | `src/proav/mediaiotask_quicktime.cpp` | Compressed audio pull-rate drifts (one packet/video frame) | Phase 4 |
-| `src/proav/quicktime_writer.cpp` | Compressed audio write path missing (remux blocked) | Phase 4 |
 | `src/proav/quicktime_reader.cpp` | Minimal XMP parser only matches `bext:` prefix (blocked on core XML support) | Phase 4 / Core |
+| `src/proav/jpegxsimagecodec.cpp` | JPEG XS: packed RGB encode path not implemented | Phase 4 |
+| `src/proav/jpegxsimagecodec.cpp` | JPEG XS: additional matrix/range/colour-space variants | Phase 4 |
+| `src/proav/quicktime_writer.cpp` | JPEG XS: QuickTime/ISO-BMFF container support (`jxsm` sample entry) | Phase 4 |
+| `src/proav/mediaiotask_rtp.cpp` | JPEG XS: RFC 9134 RTP slice packetization + fmtp generation | Phase 4 |
+| `src/proav/quicktime_writer.cpp` | Compressed audio write path missing (remux blocked) | Phase 4 |

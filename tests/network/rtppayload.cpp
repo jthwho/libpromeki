@@ -235,6 +235,66 @@ TEST_CASE("RtpPayloadRawVideo") {
                         CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
                 }
         }
+
+        SUBCASE("continuation bit is always zero") {
+                // RFC 4175 §4: C is set only when another scan line
+                // header follows in the SAME packet.  We emit one
+                // line header per packet, so C must always be 0.
+                RtpPayloadRawVideo payload(320, 240, 24, 3);
+                const size_t frameSize = 320 * 240 * 3;
+                std::vector<uint8_t> data(frameSize, 0x55);
+                auto packets = payload.pack(data.data(), frameSize);
+                REQUIRE(packets.size() > 10);
+
+                // Per-line header starts at payload offset 2 (ext seq).
+                // C bit is MSB of the offset field at byte 4 of the
+                // line header (payload bytes 6-7).
+                for(size_t i = 0; i < packets.size(); i++) {
+                        const uint8_t *pl = packets[i].payload();
+                        uint8_t offsetHi = pl[2 + 4]; // ext_seq(2) + line_hdr byte 4
+                        CHECK((offsetHi & 0x80) == 0);
+                }
+        }
+
+        SUBCASE("pgroup alignment for RGB8") {
+                // RGB8 has pgroup = 3 bytes.  Every chunk's byte count
+                // (the Length field in the per-line header) must be a
+                // multiple of 3 so that no pixel is split across packets.
+                RtpPayloadRawVideo payload(320, 240, 24, 3);
+                const size_t frameSize = 320 * 240 * 3;
+                std::vector<uint8_t> data(frameSize, 0xAA);
+                auto packets = payload.pack(data.data(), frameSize);
+
+                for(size_t i = 0; i < packets.size(); i++) {
+                        const uint8_t *pl = packets[i].payload();
+                        uint16_t dataLen = (static_cast<uint16_t>(pl[2]) << 8) | pl[3];
+                        CHECK((dataLen % 3) == 0);
+                }
+        }
+
+        SUBCASE("pgroup alignment for UYVY8") {
+                // UYVY8 422 has pgroup = 4 bytes (2 pixels per 4 bytes).
+                RtpPayloadRawVideo payload(320, 240, 16, 4);
+                const size_t frameSize = 320 * 240 * 2;
+                std::vector<uint8_t> data(frameSize, 0xBB);
+                auto packets = payload.pack(data.data(), frameSize);
+
+                for(size_t i = 0; i < packets.size(); i++) {
+                        const uint8_t *pl = packets[i].payload();
+                        uint16_t dataLen = (static_cast<uint16_t>(pl[2]) << 8) | pl[3];
+                        CHECK((dataLen % 4) == 0);
+                }
+        }
+
+        SUBCASE("pgroupBytes accessor") {
+                RtpPayloadRawVideo a(320, 240, 24, 3);
+                CHECK(a.pgroupBytes() == 3);
+                RtpPayloadRawVideo b(320, 240, 16, 4);
+                CHECK(b.pgroupBytes() == 4);
+                // Default: inferred from bpp
+                RtpPayloadRawVideo c(320, 240, 32);
+                CHECK(c.pgroupBytes() == 4);
+        }
 }
 
 TEST_CASE("RtpPayloadJpeg") {
@@ -364,6 +424,189 @@ TEST_CASE("RtpPayloadJpeg") {
                 RtpPacket::List empty;
                 Buffer result = payload.unpack(empty);
                 CHECK(result.size() == 0);
+        }
+}
+
+// ============================================================================
+// RtpPayloadJpegXs (RFC 9134)
+// ============================================================================
+//
+// JPEG XS is an opaque byte stream at the RTP layer — pack() just
+// splits it into MTU-sized fragments and prepends the 4-byte
+// RFC 9134 header.  These tests don't care about real JPEG XS
+// bitstreams; they use synthetic data with a unique byte at every
+// position so the round-trip can verify order and completeness.
+
+static std::vector<uint8_t> buildJxsBytes(size_t size) {
+        std::vector<uint8_t> v(size);
+        for(size_t i = 0; i < size; i++) {
+                // Spread a full-range 256-period pattern so any
+                // off-by-one in a fragment shows up visibly.
+                v[i] = static_cast<uint8_t>(i & 0xFF);
+        }
+        return v;
+}
+
+// Mirror of the private writeJxsHeader in rtppayload.cpp — used by
+// the bit-layout tests to decode the header back out of a packet.
+// Keeping a local copy avoids exposing the helper in the public API.
+static void decodeJxsHeader(const uint8_t *hdr, bool &T, bool &K, bool &L,
+                            uint8_t &I, uint8_t &F, uint16_t &SEP, uint16_t &P) {
+        T = ((hdr[0] >> 7) & 1) != 0;
+        K = ((hdr[0] >> 6) & 1) != 0;
+        L = ((hdr[0] >> 5) & 1) != 0;
+        I = static_cast<uint8_t>((hdr[0] >> 3) & 0x03);
+        F = static_cast<uint8_t>(((hdr[0] & 0x07) << 2) | ((hdr[1] >> 6) & 0x03));
+        SEP = static_cast<uint16_t>(((hdr[1] & 0x3F) << 5) | ((hdr[2] >> 3) & 0x1F));
+        P   = static_cast<uint16_t>(((hdr[2] & 0x07) << 8) | hdr[3]);
+}
+
+TEST_CASE("RtpPayloadJpegXs") {
+
+        SUBCASE("construction") {
+                RtpPayloadJpegXs payload(1920, 1080);
+                CHECK(payload.width() == 1920);
+                CHECK(payload.height() == 1080);
+                CHECK(payload.clockRate() == 90000);
+                CHECK(payload.payloadType() == 96);
+                CHECK(payload.frameCounter() == 0);
+                CHECK(RtpPayloadJpegXs::HeaderSize == 4);
+        }
+
+        SUBCASE("custom payload type") {
+                RtpPayloadJpegXs payload(1920, 1080, 112);
+                CHECK(payload.payloadType() == 112);
+                payload.setPayloadType(100);
+                CHECK(payload.payloadType() == 100);
+        }
+
+        SUBCASE("pack empty / null data") {
+                RtpPayloadJpegXs payload(640, 480);
+                CHECK(payload.pack(nullptr, 0).isEmpty());
+                CHECK(payload.pack(nullptr, 100).isEmpty());
+                // Frame counter should NOT advance on a rejected call
+                CHECK(payload.frameCounter() == 0);
+        }
+
+        SUBCASE("single-packet frame") {
+                RtpPayloadJpegXs payload(320, 240);
+                auto data = buildJxsBytes(500);  // comfortably under the 1200-byte MTU
+                auto packets = payload.pack(data.data(), data.size());
+                REQUIRE(packets.size() == 1);
+                // The one-and-only packet is the last packet → L=1
+                const uint8_t *pl = packets[0].payload();
+                bool T, K, L; uint8_t I, F; uint16_t SEP, P;
+                decodeJxsHeader(pl, T, K, L, I, F, SEP, P);
+                CHECK(T == true);    // sequential
+                CHECK(K == false);   // codestream mode
+                CHECK(L == true);    // last (and only) packet
+                CHECK(I == 0);       // progressive
+                CHECK(F == 0);       // first frame
+                CHECK(SEP == 0);
+                CHECK(P == 0);       // first packet in frame
+        }
+
+        SUBCASE("multi-packet fragmentation") {
+                RtpPayloadJpegXs payload(1920, 1080);
+                auto data = buildJxsBytes(5000); // forces ~5 packets at default 1200 MTU
+                auto packets = payload.pack(data.data(), data.size());
+                REQUIRE(packets.size() > 1);
+
+                // Shared buffer (same pattern as JPEG / raw paths).
+                for(size_t i = 1; i < packets.size(); i++) {
+                        CHECK(packets[i].buffer().ptr() == packets[0].buffer().ptr());
+                }
+
+                // Non-last packets must have L=0 and strictly-increasing
+                // P counters starting at 0.  The last packet flips L=1.
+                for(size_t i = 0; i < packets.size(); i++) {
+                        const uint8_t *pl = packets[i].payload();
+                        bool T, K, L; uint8_t I, F; uint16_t SEP, P;
+                        decodeJxsHeader(pl, T, K, L, I, F, SEP, P);
+                        CHECK(T == true);
+                        CHECK(K == false);
+                        CHECK(I == 0);
+                        CHECK(F == 0);       // same frame across all packets
+                        CHECK(P == (uint16_t)i);
+                        CHECK(SEP == 0);     // no P wrap at this size
+                        if(i + 1 == packets.size()) {
+                                CHECK(L == true);
+                        } else {
+                                CHECK(L == false);
+                        }
+                }
+        }
+
+        SUBCASE("frame counter advances across pack() calls") {
+                RtpPayloadJpegXs payload(320, 240);
+                auto data = buildJxsBytes(500);
+
+                for(int frame = 0; frame < 35; frame++) {
+                        auto packets = payload.pack(data.data(), data.size());
+                        REQUIRE(packets.size() >= 1);
+                        const uint8_t *pl = packets[0].payload();
+                        bool T, K, L; uint8_t I, F; uint16_t SEP, P;
+                        decodeJxsHeader(pl, T, K, L, I, F, SEP, P);
+                        // F counter is mod 32, so frame 32 wraps back to 0.
+                        CHECK(F == (uint8_t)(frame & 0x1F));
+                }
+                // After 35 calls the stored counter is (35 & 0x1F) = 3.
+                CHECK(payload.frameCounter() == 3);
+        }
+
+        SUBCASE("resetFrameCounter clears state") {
+                RtpPayloadJpegXs payload(320, 240);
+                auto data = buildJxsBytes(500);
+                payload.pack(data.data(), data.size());
+                payload.pack(data.data(), data.size());
+                CHECK(payload.frameCounter() == 2);
+                payload.resetFrameCounter();
+                CHECK(payload.frameCounter() == 0);
+        }
+
+        SUBCASE("round-trip single frame") {
+                RtpPayloadJpegXs payload(640, 480);
+                auto src = buildJxsBytes(900);
+                auto packets = payload.pack(src.data(), src.size());
+                REQUIRE(!packets.isEmpty());
+
+                Buffer out = payload.unpack(packets);
+                REQUIRE(out.size() == src.size());
+                CHECK(std::memcmp(out.data(), src.data(), src.size()) == 0);
+        }
+
+        SUBCASE("round-trip multi-packet frame") {
+                RtpPayloadJpegXs payload(1920, 1080);
+                auto src = buildJxsBytes(12345); // ~11 packets at 1200 MTU
+                auto packets = payload.pack(src.data(), src.size());
+                REQUIRE(packets.size() > 1);
+
+                Buffer out = payload.unpack(packets);
+                REQUIRE(out.size() == src.size());
+                CHECK(std::memcmp(out.data(), src.data(), src.size()) == 0);
+        }
+
+        SUBCASE("unpack empty packet list") {
+                RtpPayloadJpegXs payload(320, 240);
+                RtpPacket::List empty;
+                Buffer result = payload.unpack(empty);
+                CHECK(result.size() == 0);
+        }
+
+        SUBCASE("custom MTU changes fragmentation") {
+                // A very small MTU forces lots of small fragments; a
+                // very large MTU collapses the frame to one packet.
+                auto data = buildJxsBytes(1000);
+
+                RtpPayloadJpegXs tiny(320, 240);
+                tiny.setMaxPayloadSize(200);   // 200 - 4 = 196 bytes/pkt → ~6 packets
+                auto tinyPackets = tiny.pack(data.data(), data.size());
+                CHECK(tinyPackets.size() > 1);
+
+                RtpPayloadJpegXs jumbo(320, 240);
+                jumbo.setMaxPayloadSize(8000); // one-shot
+                auto jumboPackets = jumbo.pack(data.data(), data.size());
+                CHECK(jumboPackets.size() == 1);
         }
 }
 

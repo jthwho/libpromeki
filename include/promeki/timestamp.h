@@ -11,6 +11,7 @@
 #include <thread>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/duration.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -243,6 +244,98 @@ inline TimeStamp operator-(const TimeStamp& ts, const TimeStamp::Duration& durat
         TimeStamp result(ts);
         result -= duration;
         return result;
+}
+
+// ---------------------------------------------------------------------------
+// promeki::Duration interop
+//
+// promeki::Duration and TimeStamp::Duration are intentionally different
+// types — promeki::Duration is the library's portable nanosecond-precision
+// value object, while TimeStamp::Duration is the platform's
+// std::chrono::steady_clock::duration.  These free function overloads let
+// callers do TimeStamp + promeki::Duration arithmetic directly, without
+// the lossy round-trip through @c secondsToDuration / @c toSecondsDouble
+// that earlier code had to fall back on.
+//
+// Implemented as free functions so the parameter type can be the
+// namespace-level @c promeki::Duration without colliding with the
+// in-class @c TimeStamp::Duration typedef.
+// ---------------------------------------------------------------------------
+
+/**
+ * @brief Converts a @ref Duration to the underlying clock duration type.
+ *
+ * @param d The library Duration to convert.
+ * @return The equivalent @ref TimeStamp::Duration (clock-native).
+ */
+inline TimeStamp::Duration toClockDuration(const Duration &d) {
+        return std::chrono::duration_cast<TimeStamp::Duration>(
+                std::chrono::nanoseconds(d.nanoseconds()));
+}
+
+/**
+ * @brief Advances a TimeStamp by a library Duration in place.
+ * @param ts The TimeStamp to advance.
+ * @param d  The duration to add.
+ * @return Reference to @p ts.
+ */
+inline TimeStamp &operator+=(TimeStamp &ts, const Duration &d) {
+        ts.setValue(ts.value() + toClockDuration(d));
+        return ts;
+}
+
+/**
+ * @brief Moves a TimeStamp back by a library Duration in place.
+ * @param ts The TimeStamp to retard.
+ * @param d  The duration to subtract.
+ * @return Reference to @p ts.
+ */
+inline TimeStamp &operator-=(TimeStamp &ts, const Duration &d) {
+        ts.setValue(ts.value() - toClockDuration(d));
+        return ts;
+}
+
+/**
+ * @brief Returns a TimeStamp advanced by a library Duration.
+ * @param ts The base timestamp.
+ * @param d  The duration to add.
+ * @return A new TimeStamp offset forward by @p d.
+ */
+inline TimeStamp operator+(const TimeStamp &ts, const Duration &d) {
+        TimeStamp result(ts);
+        result += d;
+        return result;
+}
+
+/**
+ * @brief Returns a TimeStamp moved back by a library Duration.
+ * @param ts The base timestamp.
+ * @param d  The duration to subtract.
+ * @return A new TimeStamp offset backward by @p d.
+ */
+inline TimeStamp operator-(const TimeStamp &ts, const Duration &d) {
+        TimeStamp result(ts);
+        result -= d;
+        return result;
+}
+
+/**
+ * @brief Returns the @ref Duration between two TimeStamps.
+ *
+ * Equivalent to <tt>a.value() - b.value()</tt> converted to the
+ * library's portable @ref Duration type.  Used wherever code wants
+ * "time since" or "time between" measurements without having to
+ * dip into raw @c std::chrono.
+ *
+ * @param a The later TimeStamp.
+ * @param b The earlier TimeStamp.
+ * @return @c a - @c b as a @ref Duration.  Can be negative if @p a
+ *         precedes @p b.
+ */
+inline Duration operator-(const TimeStamp &a, const TimeStamp &b) {
+        auto diff = a.value() - b.value();
+        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(diff);
+        return Duration::fromNanoseconds(ns.count());
 }
 
 PROMEKI_NAMESPACE_END

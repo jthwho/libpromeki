@@ -12,6 +12,7 @@
 #include <promeki/sdl/sdlwindow.h>
 #include <promeki/frame.h>
 #include <promeki/mediadesc.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
@@ -185,8 +186,36 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
         // Only the first writeFrame in each "main thread catch-up"
         // window actually posts a wake; subsequent writes just update
         // the stashed image and let the existing pending wake handle it.
+        //
+        // Compressed input (JPEG, JPEG XS) is decoded here on the
+        // MediaIO strand worker thread before being handed to the
+        // main-thread render path.  Image::convert() dispatches to
+        // the registered ImageCodec under the hood — the SDL player
+        // task does not need to know which codec is involved, only
+        // that the target format needs to be something the widget
+        // can upload.  RGBA8_sRGB is the universal display target;
+        // any per-codec CSC hop (e.g. JPEG XS → planar YUV →
+        // RGBA8) is handled by the convert() chain.  Running the
+        // decode on the strand thread keeps the UI responsive even
+        // for heavy codecs — the main thread only sees the decoded
+        // image ready for upload.
         if(!frame->imageList().isEmpty()) {
                 Image::Ptr newImage = frame->imageList()[0];
+                if(newImage.isValid() && newImage->isCompressed()) {
+                        Image decoded = newImage->convert(
+                                PixelDesc(PixelDesc::RGBA8_sRGB),
+                                newImage->metadata());
+                        if(!decoded.isValid()) {
+                                promekiWarn("SDLPlayerTask: decode of '%s' "
+                                            "to RGBA8_sRGB failed — dropping frame",
+                                            newImage->pixelDesc().name().cstr());
+                                _framesDropped.fetchAndAdd(1);
+                                cmd.currentFrame++;
+                                cmd.frameCount = MediaIO::FrameCountInfinite;
+                                return Error::Ok;
+                        }
+                        newImage = Image::Ptr::create(std::move(decoded));
+                }
                 {
                         Mutex::Locker lock(_pendingMutex);
                         if(_pendingImage.isValid()) {

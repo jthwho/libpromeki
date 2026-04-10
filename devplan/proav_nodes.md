@@ -18,9 +18,13 @@ The framework itself (`MediaIO` controller, `MediaIOTask` interface, `Strand` pe
 - **MediaIOTask_ImageFile** — DPX, Cineon, TGA, SGI, RGB, PNM/PPM/PGM, PNG, JPEG, RawYUV. PNG backend uses libspng+zlib-ng with O_DIRECT save path. JPEG backend (libjpeg-turbo via `JpegImageCodec`) loads the bitstream compressed (zero decode), and saves pass-through bytes verbatim for already-JPEG inputs or routes uncompressed inputs through `Image::convert()`. Default frame rate via `ConfigFrameRate`.
 - **MediaIOTask_AudioFile** — WAV, BWF, AIFF, OGG via libsndfile. Frame chunking by samples/frame, seek delegation, step control, audiodesc from file on read / config on write.
 - **MediaIOTask_QuickTime** — Classic + fragmented reader and writer for `.mov` / `.mp4`. ProRes + H.264 + HEVC + PCM + AAC read; ProRes + PCM write. udta metadata including ©-atoms, XMP BWF extension, UMID, write-time defaults. BufferPool + AudioBuffer FIFO utilities in place.
-- **SDLPlayerTask** — Write-only display sink with audio-led pacing, fast mode, main-thread `renderPending()` dispatch. Injected via `MediaIO::adoptTask()`.
+- **SDLPlayerTask** — Write-only display sink with audio-led pacing, fast mode, main-thread `renderPending()` dispatch. Injected via `MediaIO::adoptTask()`. Transparent compressed video decode (JPEG, JPEG XS, any registered `ImageCodec`) — decode runs on the strand worker thread via `Image::convert` to `RGBA8_sRGB`, no Converter stage needed in front.
 
-All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
+**JpegXsImageCodec** is complete — JPEG XS (ISO/IEC 21122) encode/decode using vendored SVT-JPEG-XS, supporting planar YUV 4:2:2/4:2:0 at 8/10/12-bit (Rec.709 limited range). CMake feature flag `PROMEKI_ENABLE_JPEGXS` (auto-detected on x86-64 with nasm/yasm). Config via `MediaConfig::JpegXsBpp` and `MediaConfig::JpegXsDecomposition`. Seven new `JPEG_XS_*` PixelDesc IDs. Packed RGB path and additional colour-space variants are tracked in `fixme.md`.
+
+**Histogram** class added — lightweight sub-bucketed log2 histogram for hot-path instrumentation (latency/interval/size distributions). Used by `MediaIOTask_Rtp` for TX/RX timing stats.
+
+All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
 
 ---
 
@@ -65,9 +69,9 @@ Tracking items that came out of the `Image::convert` / `ImageCodec::configure` r
 
 ---
 
-## MediaIOTask_Rtp — UNIFIED WRITER (SHIPPED, WRITER ONLY)
+## MediaIOTask_Rtp — UNIFIED WRITER + READER
 
-Unified RTP video + audio + metadata transmitter.  One MediaIO
+Unified RTP video + audio + metadata transceiver.  One MediaIO
 instance carries one SDP session with up to three `m=` sections
 (video / audio / data), each backed by its own `RtpSession`,
 `RtpPayload`, and `UdpSocketTransport` so per-stream DSCP, SSRC,
@@ -76,12 +80,10 @@ how SMPTE ST 2110 and AES67 deployments group streams and lets the
 sink publish a single SDP file that a downstream receiver can
 consume as one bundle.
 
-The old devplan split this into separate `MediaIOTask_RtpVideo`
-and `MediaIOTask_RtpAudio` backends; that split has been merged
-into a single unified task.  The old `RtpVideoSinkNode` /
-`RtpAudioSinkNode` utilities from the deleted MediaNode layer are
-now reintroduced via this task's writer path; reader mode is new
-work and is deferred below.
+Both Writer and Reader modes are now implemented.  The old devplan
+split this into separate `MediaIOTask_RtpVideo` and
+`MediaIOTask_RtpAudio` backends; that split has been merged into a
+single unified task.
 
 **Files (shipped):**
 - `include/promeki/mediaiotask_rtp.h`
@@ -90,7 +92,7 @@ work and is deferred below.
 
 **Shipped in the writer-mode first pass:**
 
-- Registered as `"Rtp"` with `canWrite = true` only (`canRead` and `canReadWrite` are both false).  Reader mode is rejected at open time.
+- Registered as `"Rtp"` with `canWrite = true` and `canRead = true` (`canReadWrite` is false).  `ReadWrite` mode is rejected at open time.
 - Built on the completed `PacketTransport` / `UdpSocketTransport` stack: every stream owns its own transport so destinations, DSCPs, and bind ports stay independent.
 - Supported payload classes (inferred from the media descriptor, no manual `RtpPayload` config key required):
   - Video MJPEG via `RtpPayloadJpeg` when the input `PixelDesc` is in the JPEG family.
@@ -111,19 +113,34 @@ work and is deferred below.
   - `executeCmd(MediaIOCommandParams&)` with `name == "GetSdp"` — returns the SDP text under `result["Sdp"]` for callers that want the live session description without a file round-trip.
 - Stats: `FramesSent`, `PacketsSent`, `BytesSent`, `FramesDropped` via `MediaIOCommandStats`.
 - RTP timestamps: `frame_count × (clock_rate / frame_rate)` from a local steady clock.  PTP-locked timestamps are deferred until `PtpClock` lands (see `network_avoverip.md`).
-- Tests (`tests/mediaiotask_rtp.cpp`, 10 cases, 59 assertions): registry, default config, reader/ReadWrite mode rejection, no-active-streams failure, video loopback with RTP header verification, audio PCMI_S16LE loopback with SSRC verification, metadata JSON loopback, SDP file export, SDP via GetSdp params command.
+- Tests (`tests/mediaiotask_rtp.cpp`): registry, default config, ReadWrite mode rejection, no-active-streams failure, video loopback with RTP header verification, audio PCMI_S16LE loopback with SSRC verification, metadata JSON loopback, SDP file export, SDP via GetSdp params command, plus new reader-mode tests: video reader loopback (MJPEG), audio reader loopback (L16), data reader loopback (JSON), combined A/V reader with frame aggregation, SDP-driven reader auto-config, JPEG XS writer+reader round-trip (when PROMEKI_ENABLE_JPEGXS is on).
 - `mediaplay` integration: `stage.cpp` parses `SocketAddress` config values via `SocketAddress::fromString()` so `--oc VideoRtpDestination:239.0.0.1:5004` works straight from the CLI.
 - A convenience script `scripts/rtp-rx-ffplay.sh` launches `ffplay` on an existing SDP file or synthesizes one from command-line parameters for MJPEG / raw / L16 / L24 streams.
 
+**Shipped in the reader-mode second pass:**
+
+- Reader mode (`MediaIOTask_Rtp` as a Reader).  Each configured stream opens its own `UdpSocketTransport` bound to the port in `*RtpDestination`, joins multicast groups automatically, and runs an `RtpSession` receive thread (`startReceiving()`) that delivers packets to per-stream reassemblers (`onVideoPacket`, `onAudioPacket`, `onDataPacket`).  Completed frames land in a bounded thread-safe `Queue<Frame::Ptr>` that `executeCmd(Read)` drains with a configurable timeout.
+- SDP-driven reader auto-config: `MediaConfig::RtpSdp` (accepts a filesystem path as String, or a pre-parsed `SdpSession` Variant).  The reader calls `SdpSession::fromFile` / applies the parsed SDP via `applySdp()` to populate per-stream destinations, payload types, clock rates, and geometry from `m=` / `a=rtpmap` / `a=fmtp` lines.  Explicit per-stream config keys override SDP-discovered values.
+- Reader frame aggregation: video stream is the frame clock.  When a complete video frame is reassembled (marker bit), `emitVideoFrame` drains one frame's worth of audio from the `AudioBuffer` FIFO and merges the latest metadata snapshot, pushing a single combined `Frame` downstream.  Audio that arrives ahead of video accumulates in the FIFO; late audio is waited for up to `audioTimeoutMs`.
+- Per-stream TX worker threads (`SendThread`): video, audio, and data each get their own send thread so video pacing sleeps don't block audio's AES67 cadence.  Work items arrive via a `Queue<TxWorkItem>` with a result channel for synchronous caller wait.
+- Timing instrumentation via `Histogram`: per-stream TX frame-interval, TX send-duration, RX packet-interval, RX frame-interval, RX frame-assemble-time — all in microseconds.  Surfaced as pretty-printed strings in `MediaIOStats`.
+- New reader stats: `StatsFramesReceived`, `StatsPacketsReceived`, `StatsBytesReceived`, plus histogram stats (`StatsTxVideoFrameIntervalUs`, `StatsTxVideoSendDurationUs`, `StatsRxVideoPacketIntervalUs`, `StatsRxVideoFrameIntervalUs`, `StatsRxVideoFrameAssembleUs`).
+- Compressed video pacing for writer: VBR streams without explicit `VideoRtpTargetBitrate` are paced per-frame — the rate cap is recomputed from each frame's actual byte count and set via `setPacingRate()` before dispatch.
+- New config keys: `RtpSdp`, `RtpJitterMs`, `RtpMaxReadQueueDepth`.
+- `SdpSession` content probe for reader auto-detection of `.sdp` files.
+- New descriptors: `AudioDesc::fromSdp()`, `ImageDesc::fromSdp()`, `MediaDesc::fromSdp()` — derive audio/image/media descriptors from SDP media descriptions.
+
 **Deferred for a follow-up pass:**
 
-- [ ] Reader mode (`MediaIOTask_Rtp` as a Reader).  The reassembly bookkeeping for fragmented video frames, timestamp wrap handling, and mid-stream descriptor discovery all need to land before this backend can run bidirectionally.  `cmd.canSeek = false`, `cmd.frameCount = MediaIO::FrameCountInfinite`, and mid-stream descriptor changes via `cmd.mediaDescChanged` when the stream reports a new resolution / pixel format mid-playback.
+- [ ] Mid-stream descriptor discovery: reader mode does not yet handle resolution / pixel format changes mid-playback (`cmd.mediaDescChanged`).
+- [ ] Timestamp wrap handling in the reader reassembler (RTP timestamp wraps at 2^32).
 - [ ] Proper ST 2110-20 pgroup sizing for 10/12-bit YCbCr in `RtpPayloadRawVideo`.  The current implementation uses a simple `bitsPerPixel` model that works for 8-bit interleaved formats only.
 - [ ] L24 audio support via `RtpPayloadL24`.  The existing payload class handles 3-byte-packed big-endian samples, but `AudioDesc::PCMI_S24LE` stores samples in 4-byte int32 slots — the task needs a pack-and-swap step (or a Converter stage that lands in 3-byte packed form).
 - [ ] SMPTE ST 2110-40 Ancillary Data payload class for the metadata stream.  The `MetadataRtpFormat::St2110_40` enum entry exists but the backend rejects it at configure time until RFC 8331 packet handling is implemented (ST 291 ANC packet parsing, DID/SDID/DBN handling, field/line placement, BCH ECC).
 - [ ] `SO_TXTIME` per-packet deadlines wired through `RtpPacingMode::TxTime` and `PacketTransport::setTxTime()`.  The transport interface is ready; the sender just needs to compute per-packet deadlines from the frame rate.
 - [ ] PTP-locked RTP timestamps once `PtpClock` lands (see `network_avoverip.md`).
 - [ ] Back-pressure: writer should return `Error::TryAgain` when the underlying UDP send buffer is full instead of blocking.  Not a problem at current rates but will matter for ST 2110 uncompressed.
+- [ ] `RtpPayloadJpegXs` slice packetization mode (K=1) and interlaced framing — currently only codestream mode (K=0) is implemented.
 
 ---
 
@@ -208,3 +225,7 @@ All tracked in `fixme.md`. Summary of the ones that belong to this document:
 - QuickTime: XMP parser only matches `bext:` prefix (blocked on core XML support)
 - QuickTime: fragmented reader ignores `trex` default fallback (only handles `tfhd` overrides)
 - QuickTime: `BufferPool` available but not wired into the hot path
+- JPEG XS: packed RGB encode path not implemented (`classifyInput` rejects `RGB8_sRGB`)
+- JPEG XS: additional matrix/range/colour-space variants (only Rec.709 limited-range wired up)
+- JPEG XS: QuickTime/ISO-BMFF `jxsm` sample entry not implemented
+- JPEG XS: RFC 9134 RTP slice packetization mode (K=1) + fmtp generation from SVT image config

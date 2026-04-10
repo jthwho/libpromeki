@@ -31,6 +31,7 @@
 #include <promeki/enum.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
+#include <promeki/sdpsession.h>
 #endif
 #include <nlohmann/json.hpp>
 
@@ -79,10 +80,18 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypePixelFormat | `PixelFormat`     |
  * | TypePixelDesc | `PixelDesc`         |
  * | TypeEnum      | `Enum`              |
+ *
+ * When @c PROMEKI_ENABLE_NETWORK is true, the following types are also available:
+ *
+ * | Enumerator        | C++ type            |
+ * |-------------------|---------------------|
+ * | TypeSocketAddress | `SocketAddress`     |
+ * | TypeSdpSession    | `SdpSession`        |
  */
 #if PROMEKI_ENABLE_NETWORK
 #       define PROMEKI_VARIANT_TYPES_NETWORK    \
-                X(TypeSocketAddress, SocketAddress)
+                X(TypeSocketAddress, SocketAddress) \
+                X(TypeSdpSession, SdpSession)
 #else
 #       define PROMEKI_VARIANT_TYPES_NETWORK
 #endif
@@ -402,6 +411,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
 #if PROMEKI_ENABLE_NETWORK
                                         if constexpr (std::is_same_v<From, SocketAddress>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, SdpSession>) return arg.toString();
 #endif
 
                                 }
@@ -414,6 +424,26 @@ template <typename... Types> class VariantImpl {
                                                         return SocketAddress{};
                                                 }
                                                 return addr;
+                                        }
+                                } else if constexpr (std::is_same_v<To, SdpSession>) {
+                                        // Convert from String both for the
+                                        // case where a raw serialized SDP is
+                                        // stored in the Variant, and for the
+                                        // more common case of a file path —
+                                        // the parser recognises v=0 so a
+                                        // path with SDP content in it falls
+                                        // through cleanly to a parse error.
+                                        // Filesystem loading is up to the
+                                        // caller (use SdpSession::fromFile
+                                        // explicitly), so this path is only
+                                        // "parse from raw text".
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [sdp, parseErr] = SdpSession::fromString(arg);
+                                                if(parseErr.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return SdpSession{};
+                                                }
+                                                return sdp;
                                         }
                                 }
 #endif
@@ -462,6 +492,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeEnum:
 #if PROMEKI_ENABLE_NETWORK
                                 case TypeSocketAddress:
+                                case TypeSdpSession:
 #endif
                                         return get<String>();
                                         break;

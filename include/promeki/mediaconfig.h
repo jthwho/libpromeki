@@ -187,6 +187,19 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 static inline const ID JpegSubsampling{"JpegSubsampling"};
 
                 // ============================================================
+                // JPEG XS codec
+                // ============================================================
+
+                /// @brief int (or float) — JPEG XS target bits per pixel.  JPEG XS is
+                /// constant-bitrate; typical broadcast values are 2-6 bpp for
+                /// visually-lossless contribution.  Codec default: 3.
+                static inline const ID JpegXsBpp{"JpegXsBpp"};
+                /// @brief int — JPEG XS horizontal decomposition depth (0-5,
+                /// codec default: 5).  Higher values trade encode cost for
+                /// quality.  See @c ndecomp_h in SvtJpegxsEnc.h.
+                static inline const ID JpegXsDecomposition{"JpegXsDecomposition"};
+
+                // ============================================================
                 // CSC pipeline
                 // ============================================================
 
@@ -255,6 +268,24 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief String — if non-empty, the MediaIO opens this file and
                 /// writes the generated SDP session description to it at open time.
                 static inline const ID RtpSaveSdpPath{"RtpSaveSdpPath"};
+                /// @brief Polymorphic reader-side SDP input.  Accepts either:
+                /// - @c String: interpreted as a filesystem path.  The MediaIO
+                ///   calls @ref SdpSession::fromFile at open time.
+                /// - @ref SdpSession: consumed directly, no filesystem access.
+                /// The MediaIO populates per-stream destinations, payload types,
+                /// clock rates, and (for JPEG XS) geometry from the @c m= /
+                /// @c a=rtpmap / @c a=fmtp lines.  Explicit per-stream config
+                /// keys still override anything discovered via SDP.
+                static inline const ID RtpSdp{"RtpSdp"};
+                /// @brief int — reader-side jitter buffer depth in milliseconds.
+                /// Packets arriving within this window after the first packet of
+                /// a frame are waited for; packets arriving after it are
+                /// considered lost.  Default 50 ms.
+                static inline const ID RtpJitterMs{"RtpJitterMs"};
+                /// @brief int — reader-side output frame queue capacity.  When
+                /// full, incoming packets that complete a new frame cause the
+                /// oldest queued frame to be dropped.  Default 4.
+                static inline const ID RtpMaxReadQueueDepth{"RtpMaxReadQueueDepth"};
 
                 // --- Video stream ---
                 /// @brief SocketAddress — destination for the video stream. Empty = disabled.
@@ -269,6 +300,12 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 static inline const ID VideoRtpDscp{"VideoRtpDscp"};
                 /// @brief int — target bitrate in bits/sec (0 = compute from descriptor).
                 static inline const ID VideoRtpTargetBitrate{"VideoRtpTargetBitrate"};
+                /// @brief String — raw @c a=fmtp value from the SDP for the
+                /// video stream.  Populated by @ref applySdp on the reader
+                /// side; the writer builds its own fmtp from the PixelDesc.
+                /// Used by the deferred JPEG geometry path to derive
+                /// colorimetry and quantization range.
+                static inline const ID VideoRtpFmtp{"VideoRtpFmtp"};
 
                 // --- Audio stream ---
                 /// @brief SocketAddress — destination for the audio stream. Empty = disabled.

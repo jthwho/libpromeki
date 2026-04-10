@@ -30,6 +30,8 @@ HWY_EXPORT(FastPathNV12toRGBA8);
 HWY_EXPORT(FastPathRGBA8toNV12);
 HWY_EXPORT(FastPathUYVY8toRGBA8);
 HWY_EXPORT(FastPathRGBA8toUYVY8);
+HWY_EXPORT(FastPathYUYV8toUYVY8);
+HWY_EXPORT(FastPathUYVY8toYUYV8);
 HWY_EXPORT(FastPathNV21toRGBA8);
 HWY_EXPORT(FastPathRGBA8toNV21);
 HWY_EXPORT(FastPathNV16toRGBA8);
@@ -93,6 +95,8 @@ CSC_DISPATCH(FastPathNV12toRGBA8)
 CSC_DISPATCH(FastPathRGBA8toNV12)
 CSC_DISPATCH(FastPathUYVY8toRGBA8)
 CSC_DISPATCH(FastPathRGBA8toUYVY8)
+CSC_DISPATCH(FastPathYUYV8toUYVY8)
+CSC_DISPATCH(FastPathUYVY8toYUYV8)
 CSC_DISPATCH(FastPathNV21toRGBA8)
 CSC_DISPATCH(FastPathRGBA8toNV21)
 CSC_DISPATCH(FastPathNV16toRGBA8)
@@ -159,6 +163,10 @@ static struct FastPathRegistrar {
                 reg(PixelDesc::YUV8_422_UYVY_Rec709,     PixelDesc::RGBA8_sRGB, dispatch_FastPathUYVY8toRGBA8);
                 reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_UYVY_Rec709, dispatch_FastPathRGBA8toUYVY8);
 
+                // YUYV <-> UYVY (byte-pair swap, no colour math)
+                reg(PixelDesc::YUV8_422_Rec709,          PixelDesc::YUV8_422_UYVY_Rec709, dispatch_FastPathYUYV8toUYVY8);
+                reg(PixelDesc::YUV8_422_UYVY_Rec709,     PixelDesc::YUV8_422_Rec709,      dispatch_FastPathUYVY8toYUYV8);
+
                 // NV12 (420 semi-planar, CbCr)
                 reg(PixelDesc::YUV8_420_SemiPlanar_Rec709, PixelDesc::RGBA8_sRGB, dispatch_FastPathNV12toRGBA8);
                 reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_420_SemiPlanar_Rec709, dispatch_FastPathRGBA8toNV12);
@@ -188,6 +196,10 @@ static struct FastPathRegistrar {
                 // UYVY Rec.601
                 reg(PixelDesc::YUV8_422_UYVY_Rec601,     PixelDesc::RGBA8_sRGB, dispatch_FastPathUYVY601toRGBA8);
                 reg(PixelDesc::RGBA8_sRGB,               PixelDesc::YUV8_422_UYVY_Rec601, dispatch_FastPathRGBA8toUYVY601);
+
+                // YUYV <-> UYVY Rec.601 (same byte swap as Rec.709)
+                reg(PixelDesc::YUV8_422_Rec601,          PixelDesc::YUV8_422_UYVY_Rec601, dispatch_FastPathYUYV8toUYVY8);
+                reg(PixelDesc::YUV8_422_UYVY_Rec601,     PixelDesc::YUV8_422_Rec601,      dispatch_FastPathUYVY8toYUYV8);
 
                 // NV12 Rec.601
                 reg(PixelDesc::YUV8_420_SemiPlanar_Rec601, PixelDesc::RGBA8_sRGB, dispatch_FastPathNV12_601toRGBA8);

@@ -8,9 +8,11 @@
 #pragma once
 
 #include <cstdint>
+#include <promeki/error.h>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/list.h>
+#include <promeki/map.h>
 #include <promeki/pair.h>
 #include <promeki/result.h>
 #include <promeki/sharedptr.h>
@@ -108,6 +110,60 @@ class SdpMediaDescription {
                 /** @brief Sets the connection address for this media. */
                 void setConnectionAddress(const String &addr) { _connectionAddress = addr; }
 
+                /**
+                 * @brief Structured form of an @c a=rtpmap attribute.
+                 *
+                 * @c rtpmap is written as @c "<pt> <encoding>/<rate>[/<ch>]"
+                 * in the SDP attribute value.  RtpMap is the parsed
+                 * representation so callers don't have to re-implement
+                 * the split logic every time.
+                 */
+                struct RtpMap {
+                        uint8_t         payloadType = 0;     ///< @brief RTP payload type (0-127).
+                        String          encoding;            ///< @brief Encoding name (e.g. @c "JPEG", @c "jxsv", @c "L16").
+                        uint32_t        clockRate = 0;       ///< @brief RTP timestamp clock rate in Hz.
+                        unsigned int    channels = 1;        ///< @brief Audio channels (defaults to 1 for video).
+                        bool            valid = false;       ///< @brief Set by @ref rtpMap() when parsing succeeded.
+                };
+
+                /**
+                 * @brief Parses the @c a=rtpmap attribute if present.
+                 *
+                 * Returns an @ref RtpMap with @c valid = false if the
+                 * attribute is missing or malformed, and @c valid = true
+                 * with populated fields on success.
+                 */
+                RtpMap rtpMap() const;
+
+                /** @brief Parameter map extracted from an @c a=fmtp attribute. */
+                using FmtpParameters = Map<String, String>;
+
+                /**
+                 * @brief Parses the @c a=fmtp attribute into a key=value map.
+                 *
+                 * @c fmtp lines are written as
+                 * @c "<pt> key1=value1;key2=value2;...".  Returns an empty
+                 * map when the attribute is absent or has no parameters.
+                 * Values that don't contain an @c = are stored with an
+                 * empty value so callers can still check for their presence.
+                 */
+                FmtpParameters fmtpParameters() const;
+
+                /** @brief Equality comparison for Variant / container use. */
+                bool operator==(const SdpMediaDescription &other) const {
+                        return _mediaType          == other._mediaType &&
+                               _port               == other._port &&
+                               _protocol           == other._protocol &&
+                               _payloadTypes       == other._payloadTypes &&
+                               _attributes         == other._attributes &&
+                               _connectionAddress  == other._connectionAddress;
+                }
+
+                /** @brief Inequality comparison. */
+                bool operator!=(const SdpMediaDescription &other) const {
+                        return !(*this == other);
+                }
+
         private:
                 String          _mediaType;
                 uint16_t        _port = 0;
@@ -162,6 +218,21 @@ class SdpSession {
                  *         or Error::Invalid on parse failure.
                  */
                 static Result<SdpSession> fromString(const String &sdp);
+
+                /**
+                 * @brief Reads and parses an SDP file from disk.
+                 *
+                 * Opens @p path via @ref File, slurps the contents, and
+                 * hands them to @ref fromString.  Accepts any resource
+                 * path supported by @ref File, including the @c :/
+                 * resource namespace.
+                 *
+                 * @param path The filesystem or resource path.
+                 * @return Result with the parsed session on success, or
+                 *         an error Result when the file cannot be read
+                 *         or parsed.
+                 */
+                static Result<SdpSession> fromFile(const String &path);
 
                 /** @brief Default constructor. */
                 SdpSession() = default;
@@ -221,6 +292,37 @@ class SdpSession {
                  * @return The complete SDP document as a string.
                  */
                 String toString() const;
+
+                /**
+                 * @brief Writes the SDP text to the given file.
+                 *
+                 * Truncates any existing file.  The caller is responsible
+                 * for directory creation — @ref File will not create
+                 * missing parent directories.
+                 *
+                 * @param path The filesystem path to write.
+                 * @return Error::Ok on success, or an error if the file
+                 *         cannot be opened or the write is short.
+                 */
+                Error toFile(const String &path) const;
+
+                /** @brief Equality comparison for Variant / container use. */
+                bool operator==(const SdpSession &other) const {
+                        return _sessionName        == other._sessionName &&
+                               _originUsername     == other._originUsername &&
+                               _sessionId          == other._sessionId &&
+                               _sessionVersion     == other._sessionVersion &&
+                               _originNetType      == other._originNetType &&
+                               _originAddrType     == other._originAddrType &&
+                               _originAddress      == other._originAddress &&
+                               _connectionAddress  == other._connectionAddress &&
+                               _mediaDescriptions  == other._mediaDescriptions;
+                }
+
+                /** @brief Inequality comparison. */
+                bool operator!=(const SdpSession &other) const {
+                        return !(*this == other);
+                }
 
         private:
                 String          _sessionName;

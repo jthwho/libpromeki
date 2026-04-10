@@ -106,6 +106,7 @@ class PaintEngine;
  * | YUV8_420_NV21_Rec709         | 8-bit Y'CbCr 4:2:0 NV21 (CrCb order)             |
  * | YUV8_411_Planar_Rec709       | 8-bit Y'CbCr 4:1:1 planar, Rec.709               |
  * | JPEG_RGB8_sRGB               | JPEG-compressed 8-bit RGB, sRGB                   |
+ * | JPEG_XS_YUV10_422_Rec709     | JPEG XS-compressed 10-bit Y'CbCr 4:2:2, Rec.709   |
  *
  * @par Example
  * @code
@@ -373,6 +374,25 @@ class PixelDesc {
                         JPEG_YUV8_420_Rec709_Full          = 150,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.709 matrix, full range.
                         JPEG_YUV8_422_Rec601_Full          = 151,  ///< JPEG-compressed 8-bit YCbCr 4:2:2, Rec.601 matrix, full range (strict JFIF).
                         JPEG_YUV8_420_Rec601_Full          = 152,  ///< JPEG-compressed 8-bit YCbCr 4:2:0, Rec.601 matrix, full range (strict JFIF).
+
+                        // -- JPEG XS (ISO/IEC 21122) compressed variants --
+                        //
+                        // Modern low-complexity intra-only codec.  JPEG XS
+                        // carries matrix / range out-of-band (in the MP4 sample
+                        // entry or RTP SDP — see RFC 9134) rather than inside
+                        // the bitstream, so the compressed PixelDescs only
+                        // distinguish bit depth and subsampling; Rec.709 is the
+                        // canonical broadcast default and the one wired up
+                        // here.  10- and 12-bit variants are first-class
+                        // citizens since JPEG XS targets high-bit-depth
+                        // contribution workflows.
+                        JPEG_XS_YUV8_422_Rec709            = 153,  ///< JPEG XS-compressed 8-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_XS_YUV10_422_Rec709           = 154,  ///< JPEG XS-compressed 10-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_XS_YUV12_422_Rec709           = 155,  ///< JPEG XS-compressed 12-bit YCbCr 4:2:2, Rec.709, limited range.
+                        JPEG_XS_YUV8_420_Rec709            = 156,  ///< JPEG XS-compressed 8-bit YCbCr 4:2:0, Rec.709, limited range.
+                        JPEG_XS_YUV10_420_Rec709           = 157,  ///< JPEG XS-compressed 10-bit YCbCr 4:2:0, Rec.709, limited range.
+                        JPEG_XS_YUV12_420_Rec709           = 158,  ///< JPEG XS-compressed 12-bit YCbCr 4:2:0, Rec.709, limited range.
+                        JPEG_XS_RGB8_sRGB                  = 159,  ///< JPEG XS-compressed 8-bit RGB, sRGB, full range.
 
                         UserDefined                        = 1024  ///< First ID available for user-registered types.
                 };

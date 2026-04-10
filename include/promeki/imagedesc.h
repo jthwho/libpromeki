@@ -16,6 +16,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class SdpMediaDescription;
+
 /**
  * @brief Describes the format and layout of a single image.
  * @ingroup proav
@@ -56,6 +58,101 @@ class ImageDesc {
                  */
                 ImageDesc(size_t w, size_t h, const PixelDesc &pd) :
                         _size(Size2Du32(w, h)), _pixelDesc(pd) { }
+
+                /**
+                 * @brief Derives an ImageDesc from an SDP media description.
+                 *
+                 * Interprets the RTP payload encoding name in the
+                 * @c a=rtpmap attribute and (when applicable) the
+                 * @c a=fmtp parameters to build a video ImageDesc.
+                 * Supported encodings:
+                 *
+                 *  - @c jxsv  (RFC 9134 JPEG XS) — geometry comes from
+                 *             @c width= / @c height= in the fmtp line;
+                 *             sampling and depth pick one of the
+                 *             @c JPEG_XS_* @ref PixelDesc entries.
+                 *             Defaults to @c JPEG_XS_YUV10_422_Rec709
+                 *             when fmtp is incomplete.
+                 *  - @c raw   (RFC 4175 uncompressed) — geometry and
+                 *             pixel layout come from the fmtp line
+                 *             (@c sampling, @c depth, @c width,
+                 *             @c height).  Not yet implemented; this
+                 *             overload returns an invalid ImageDesc
+                 *             for now.
+                 *  - @c JPEG  (RFC 2435 MJPEG) — geometry is carried
+                 *             in the RFC 2435 packet header rather
+                 *             than SDP, so this overload returns an
+                 *             invalid ImageDesc.  Callers that need
+                 *             MJPEG should read the geometry off the
+                 *             first packet.
+                 *
+                 * Any other encoding (or a non-video @p md) yields an
+                 * invalid @ref ImageDesc.  The interpretation is
+                 * RTP-specific — these encoding names come from the
+                 * IANA RTP payload registry and their respective
+                 * RFCs — and lives on @ref ImageDesc because
+                 * ImageDesc is the target type and the rest of
+                 * proav already depends on the network layer.
+                 *
+                 * @param md The SDP media description to interpret.
+                 * @return A populated ImageDesc, or an invalid
+                 *         ImageDesc on any failure.
+                 */
+                static ImageDesc fromSdp(const SdpMediaDescription &md);
+
+                /**
+                 * @brief Resolves a JPEG PixelDesc from ST 2110-20
+                 * colorimetry and RANGE parameters plus subsampling.
+                 *
+                 * Used by the deferred JPEG geometry path in the RTP
+                 * reader to pick the correct PixelDesc variant when
+                 * colorimetry/RANGE are available from the SDP fmtp
+                 * line.  When @p colorimetry is empty, defaults to
+                 * Rec.601 full range (JFIF standard).
+                 *
+                 * @param colorimetry ST 2110-20 colorimetry string
+                 *        (e.g. "BT601-5", "BT709-2").
+                 * @param range       "FULL" or "NARROW" (empty = FULL).
+                 * @param is420       True for 4:2:0, false for 4:2:2.
+                 * @param isRgb       True for RGB (overrides subsampling).
+                 * @return The matching PixelDesc::ID.
+                 */
+                static PixelDesc::ID jpegPixelDescFromSdp(
+                        const String &colorimetry,
+                        const String &range,
+                        bool is420,
+                        bool isRgb);
+
+                /**
+                 * @brief Builds an SDP media description from this ImageDesc.
+                 *
+                 * The inverse of @ref fromSdp.  Populates the returned
+                 * @c SdpMediaDescription with @c m=video, an
+                 * @c a=rtpmap line, and (where applicable) an
+                 * @c a=fmtp line carrying the format-specific
+                 * parameters:
+                 *
+                 *  - @b JPEG — rtpmap @c JPEG/90000, fmtp with
+                 *    ST 2110-20 @c colorimetry and @c RANGE derived
+                 *    from the PixelDesc's ColorModel and component
+                 *    range.
+                 *  - @b JPEG @b XS — rtpmap @c jxsv/90000, fmtp
+                 *    with @c sampling, @c depth, @c width, @c height,
+                 *    @c colorimetry, and @c RANGE per RFC 9134.
+                 *  - @b raw — rtpmap @c raw/90000, fmtp with
+                 *    @c sampling, @c depth, @c width, @c height,
+                 *    @c colorimetry, and @c RANGE per RFC 4175 /
+                 *    ST 2110-20.
+                 *
+                 * Returns an empty @c SdpMediaDescription if the
+                 * ImageDesc is invalid or the PixelDesc is not
+                 * supported.
+                 *
+                 * @param payloadType RTP payload type (0-127).
+                 * @return A populated SdpMediaDescription, or an
+                 *         empty one on failure.
+                 */
+                SdpMediaDescription toSdp(uint8_t payloadType) const;
 
                 /**
                  * @brief Returns true if this image description has valid dimensions and pixel description.

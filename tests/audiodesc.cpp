@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/audiodesc.h>
+#include <promeki/sdpsession.h>
 
 using namespace promeki;
 
@@ -184,4 +185,98 @@ TEST_CASE("AudioDesc_ToJson") {
     CHECK(json.contains("DataType"));
     CHECK(json.contains("SampleRate"));
     CHECK(json.contains("Channels"));
+}
+
+// ============================================================================
+// fromSdp — derive an AudioDesc from an SDP media description
+// ============================================================================
+
+TEST_CASE("AudioDesc_fromSdp_L16_Stereo") {
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.setPort(5006);
+    md.setProtocol("RTP/AVP");
+    md.addPayloadType(96);
+    md.setAttribute("rtpmap", "96 L16/48000/2");
+
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK(ad.isValid());
+    CHECK(ad.dataType() == AudioDesc::PCMI_S16BE);
+    CHECK(ad.sampleRate() == 48000.0f);
+    CHECK(ad.channels() == 2);
+}
+
+TEST_CASE("AudioDesc_fromSdp_L24") {
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.addPayloadType(97);
+    md.setAttribute("rtpmap", "97 L24/48000/8");
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK(ad.isValid());
+    CHECK(ad.dataType() == AudioDesc::PCMI_S24BE);
+    CHECK(ad.sampleRate() == 48000.0f);
+    CHECK(ad.channels() == 8);
+}
+
+TEST_CASE("AudioDesc_fromSdp_L8") {
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.addPayloadType(11);
+    md.setAttribute("rtpmap", "11 L8/44100/1");
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK(ad.isValid());
+    CHECK(ad.dataType() == AudioDesc::PCMI_U8);
+    CHECK(ad.sampleRate() == 44100.0f);
+    CHECK(ad.channels() == 1);
+}
+
+TEST_CASE("AudioDesc_fromSdp_L16_DefaultsToMono") {
+    // Channels default to 1 when omitted per RFC 3551.
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.addPayloadType(96);
+    md.setAttribute("rtpmap", "96 L16/48000");
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK(ad.isValid());
+    CHECK(ad.dataType() == AudioDesc::PCMI_S16BE);
+    CHECK(ad.channels() == 1);
+}
+
+TEST_CASE("AudioDesc_fromSdp_NonAudioReturnsInvalid") {
+    SdpMediaDescription md;
+    md.setMediaType("video");
+    md.setAttribute("rtpmap", "96 jxsv/90000");
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK_FALSE(ad.isValid());
+}
+
+TEST_CASE("AudioDesc_fromSdp_UnknownEncodingReturnsInvalid") {
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.addPayloadType(96);
+    md.setAttribute("rtpmap", "96 opus/48000/2");
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    // Opus isn't wired yet — fromSdp should decline cleanly.
+    CHECK_FALSE(ad.isValid());
+}
+
+TEST_CASE("AudioDesc_fromSdp_MissingRtpmapReturnsInvalid") {
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.addPayloadType(96);
+    // No rtpmap attribute.
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK_FALSE(ad.isValid());
+}
+
+TEST_CASE("AudioDesc_fromSdp_L16_HighChannelCount") {
+    SdpMediaDescription md;
+    md.setMediaType("audio");
+    md.addPayloadType(96);
+    md.setAttribute("rtpmap", "96 L16/96000/16");
+    AudioDesc ad = AudioDesc::fromSdp(md);
+    CHECK(ad.isValid());
+    CHECK(ad.dataType() == AudioDesc::PCMI_S16BE);
+    CHECK(ad.sampleRate() == 96000.0f);
+    CHECK(ad.channels() == 16);
 }

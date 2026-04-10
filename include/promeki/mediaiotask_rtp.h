@@ -8,19 +8,28 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/frame.h>
+#include <promeki/imagedesc.h>
 #include <promeki/mediaiotask.h>
+#include <promeki/queue.h>
+#include <promeki/rtppacket.h>
+#include <promeki/sdpsession.h>
 #include <promeki/socketaddress.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audiobuffer.h>
+#include <promeki/histogram.h>
+#include <promeki/mutex.h>
+#include <promeki/waitcondition.h>
 #include <promeki/string.h>
+#include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 class RtpSession;
 class RtpPayload;
 class UdpSocketTransport;
-class SdpSession;
+class Thread;
 
 /**
  * @brief MediaIOTask backend that transmits frames as RTP streams.
@@ -78,12 +87,38 @@ class SdpSession;
  *
  * @par Mode support
  *
- * Only @c MediaIO::Writer is supported in this first pass.  Reader
- * mode (receiving an RTP stream into frames) is tracked separately
- * and will reuse the same @ref RtpSession / @ref RtpPayload stack
- * once the reassembly bookkeeping is in place.  @c ReadWrite is
- * explicitly rejected — an RTP sink and an RTP source are
- * conceptually different streams and should not share a MediaIO.
+ * Both @c MediaIO::Writer and @c MediaIO::Reader are supported.
+ * In reader mode, each configured stream opens its own
+ * @ref UdpSocketTransport bound to the port in the corresponding
+ * @c *RtpDestination key, joins the multicast group if the
+ * destination is a group address, and runs an @ref RtpSession
+ * receive thread that hands packets to a per-stream reassembler.
+ * The reassembler emits completed @ref Frame objects into a shared
+ * thread-safe output queue that @c executeCmd(MediaIOCommandRead)
+ * drains with a bounded timeout.  @c ReadWrite is explicitly
+ * rejected — an RTP sink and an RTP source are conceptually
+ * different streams and should not share a MediaIO.
+ *
+ * @par Reader auto-config via SDP
+ *
+ * When @ref MediaConfig::RtpSdp is set, the reader parses
+ * the SDP file at open time and uses the @c m= / @c a=rtpmap /
+ * @c a=fmtp lines to populate stream destinations, payload types,
+ * clock rates, and payload handlers — so a receiver configured
+ * from an SDP written by an RTP sink (@ref MediaConfig::RtpSaveSdpPath)
+ * just works with no manual key mirroring.  Explicit
+ * @c *RtpDestination keys still override the SDP-discovered values
+ * if both are set.
+ *
+ * @par Reader frame emission
+ *
+ * Each stream emits @ref Frame instances independently: a video
+ * stream pushes frames with only @c imageList populated; an audio
+ * stream pushes frames with only @c audioList populated; a data
+ * stream pushes frames with only @c metadata populated.  Consumers
+ * that need synchronised video-plus-audio frames should drive a
+ * downstream @ref MediaIOTask_Converter or their own aggregator
+ * over the resulting interleaved stream.
  *
  * @par Pacing
  *
@@ -102,6 +137,31 @@ class SdpSession;
  * @ref MediaConfig::VideoRtpTargetBitrate (if set) or computed
  * from the video descriptor for uncompressed inputs, and from
  * @c sampleRate @c × @c channels @c × @c bytesPerSample for audio.
+ * Compressed video streams (JPEG / JPEG XS) without an explicit
+ * @c VideoRtpTargetBitrate are paced per frame instead: every
+ * call to @c sendVideo recomputes the rate cap from that frame's
+ * actual packed byte count and sets it via @ref RtpSession::setPacingRate
+ * before dispatching, so the kernel @c fq qdisc spaces a VBR
+ * frame's bytes over exactly one frame interval without needing
+ * to know the bitrate in advance.  The cap is always set to the
+ * exact source rate (no headroom) so the socket's send buffer
+ * provides backpressure that holds the writer in lockstep with
+ * the wall-clock frame schedule — any headroom would let the
+ * encoder outrun the wire and the receiver would see playback
+ * time advance faster than realtime (notably visible with fast
+ * codecs like JPEG XS where encoding can run many multiples
+ * of frame rate).
+ *
+ * @note The kernel rate-cap approach is approximate per-packet —
+ *       it controls *byte rate*, not per-packet deadlines.  For
+ *       SMPTE ST 2110-21 / IPMX Type N or Type W senders that
+ *       must place each packet at a specific scanline-aligned
+ *       offset, the proper mechanism is per-packet @c SCM_TXTIME
+ *       deadlines via the ETF qdisc — the deferred @c TxTime
+ *       pacing mode.  The @ref UdpSocket transport already plumbs
+ *       @c SCM_TXTIME via the @c Datagram::txTimeNs field, but
+ *       wiring it up here is the next step on that path and is
+ *       not done yet.
  *
  * @par Audio packet sizing
  *
@@ -236,8 +296,25 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 static inline const MediaIOStats::ID StatsPacketsSent{"PacketsSent"};
                 /** @brief int64_t — total bytes transmitted across all streams. */
                 static inline const MediaIOStats::ID StatsBytesSent{"BytesSent"};
-                /** @brief int64_t — total frames dropped due to transport back-pressure. */
+                /** @brief int64_t — total frames dropped due to transport back-pressure
+                 * (writer) or queue overflow (reader). */
                 static inline const MediaIOStats::ID StatsFramesDropped{"FramesDropped"};
+                /** @brief int64_t — total frames received from the network. */
+                static inline const MediaIOStats::ID StatsFramesReceived{"FramesReceived"};
+                /** @brief int64_t — total RTP packets received across all streams. */
+                static inline const MediaIOStats::ID StatsPacketsReceived{"PacketsReceived"};
+                /** @brief int64_t — total bytes received across all streams. */
+                static inline const MediaIOStats::ID StatsBytesReceived{"BytesReceived"};
+                /** @brief String — pretty-printed video TX frame-interval histogram (us). */
+                static inline const MediaIOStats::ID StatsTxVideoFrameIntervalUs{"TxVideoFrameIntervalUs"};
+                /** @brief String — pretty-printed video TX send-duration histogram (us). */
+                static inline const MediaIOStats::ID StatsTxVideoSendDurationUs{"TxVideoSendDurationUs"};
+                /** @brief String — pretty-printed video RX packet-interval histogram (us). */
+                static inline const MediaIOStats::ID StatsRxVideoPacketIntervalUs{"RxVideoPacketIntervalUs"};
+                /** @brief String — pretty-printed video RX frame-interval histogram (us). */
+                static inline const MediaIOStats::ID StatsRxVideoFrameIntervalUs{"RxVideoFrameIntervalUs"};
+                /** @brief String — pretty-printed video RX frame-assemble-time histogram (us). */
+                static inline const MediaIOStats::ID StatsRxVideoFrameAssembleUs{"RxVideoFrameAssembleUs"};
 
                 /** @brief Params command name: return the SDP text in @c result["Sdp"]. */
                 static inline const MediaIOParamsID ParamGetSdp{"GetSdp"};
@@ -259,6 +336,7 @@ class MediaIOTask_Rtp : public MediaIOTask {
         private:
                 Error executeCmd(MediaIOCommandOpen &cmd) override;
                 Error executeCmd(MediaIOCommandClose &cmd) override;
+                Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandParams &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
@@ -271,10 +349,21 @@ class MediaIOTask_Rtp : public MediaIOTask {
                  * dispatch in @c executeCmd(MediaIOCommandWrite&) can
                  * iterate over active streams uniformly.
                  */
+                /**
+                 * @brief Work item dispatched to a per-stream SendThread.
+                 */
+                struct TxWorkItem {
+                        std::function<Error()>  work;
+                        Queue<Error>           *resultQueue;
+                };
+
+                class SendThread;
+
                 struct Stream {
                         UdpSocketTransport *transport = nullptr;
                         RtpSession         *session   = nullptr;
                         RtpPayload         *payload   = nullptr;
+                        SendThread         *txThread  = nullptr;
                         SocketAddress       destination;
                         uint8_t             payloadType = 0;
                         uint32_t            clockRate   = 90000;
@@ -282,10 +371,50 @@ class MediaIOTask_Rtp : public MediaIOTask {
                         uint32_t            ssrc        = 0;
                         int64_t             packetsSent = 0;
                         int64_t             bytesSent   = 0;
+                        int64_t             packetsReceived = 0;
+                        int64_t             bytesReceived   = 0;
+                        int64_t             framesReceived  = 0;
+                        int64_t             packetsLost     = 0;
                         String              mediaType;    ///< @brief "video", "audio", "data"
                         String              rtpmap;       ///< @brief SDP a=rtpmap:... value
                         String              fmtp;         ///< @brief SDP a=fmtp:... value, optional
                         bool                active = false;
+
+                        // Reader-mode per-stream reassembly state.
+                        ImageDesc           readerImageDesc;
+                        AudioDesc           readerAudioDesc;
+                        uint32_t            reasmTimestamp = 0;
+                        bool                reasmHasTimestamp = false;
+                        uint16_t            reasmLastSeq = 0;
+                        bool                reasmHaveLastSeq = false;
+                        bool                reasmSynced = false; ///< @brief True once a marker boundary has been seen.
+                        RtpPacket::List     reasmPackets;
+
+                        // Timing instrumentation.  Each histogram is
+                        // updated only by the worker thread that owns
+                        // the stream — the TX worker for writer mode,
+                        // the per-session RX thread for reader mode —
+                        // so they need no internal locking.  Stats
+                        // queries read them via @c executeCmd
+                        // (MediaIOCommandStats&) and serialise the
+                        // toString() form into the @ref MediaIOStats
+                        // payload.  All durations are tracked in
+                        // microseconds for compactness; nanoseconds
+                        // would push past the bucket layout's useful
+                        // range for the long tail.
+                        Histogram           txFrameInterval;     ///< @brief us between sendVideo entries
+                        Histogram           txSendDuration;      ///< @brief us spent inside sendVideo
+                        Histogram           rxPacketInterval;    ///< @brief us between received packets
+                        Histogram           rxFrameInterval;     ///< @brief us between completed frames
+                        Histogram           rxFrameAssembleTime; ///< @brief us first packet -> marker
+                        TimeStamp           txLastSendStart;     ///< @brief Last entry into sendVideo (TX worker only)
+                        TimeStamp           rxLastPacketTime;    ///< @brief Last received packet time (RX thread only)
+                        TimeStamp           rxLastFrameTime;     ///< @brief Last emitted frame time (RX thread only)
+                        TimeStamp           rxFrameStartTime;    ///< @brief First packet of current reassembly
+                        bool                txHasLastSend       = false;
+                        bool                rxHasLastPacket     = false;
+                        bool                rxHasLastFrame      = false;
+                        bool                rxHasFrameStart     = false;
                 };
 
                 Error configureVideoStream(const MediaIO::Config &cfg,
@@ -295,10 +424,52 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 Error configureDataStream(const MediaIO::Config &cfg);
 
                 Error openStream(Stream &s, bool enableMulticastLoopback);
+                Error openReaderStream(Stream &s, bool enableMulticastLoopback);
 
-                Error sendVideo(const Image &image);
+                /**
+                 * @brief Sends one video frame on the @c _video stream.
+                 *
+                 * Called from the per-stream transmit thread via
+                 * @c executeCmd(MediaIOCommandWrite&).  The frame
+                 * index is passed in (rather than read from
+                 * @c _frameCount) so the worker thread does not race
+                 * with the strand thread that owns the counter.
+                 *
+                 * @param image      The image plane to packetise.
+                 * @param frameIndex Zero-based frame index for this
+                 *                   transmission, used to compute
+                 *                   the RTP timestamp via
+                 *                   @ref FrameRate::cumulativeTicks.
+                 */
+                Error sendVideo(const Image &image, int64_t frameIndex);
+
+                /**
+                 * @brief Sends one audio chunk on the @c _audio stream.
+                 *
+                 * Audio packetisation maintains its own monotonic
+                 * sample counter inside @c _audioState, so no frame
+                 * index is needed here.
+                 */
                 Error sendAudio(const Audio &audio);
-                Error sendData(const Metadata &metadata);
+
+                /**
+                 * @brief Sends one metadata blob on the @c _data stream.
+                 * @param metadata   The metadata to serialise.
+                 * @param frameIndex Zero-based frame index for the RTP timestamp.
+                 */
+                Error sendData(const Metadata &metadata, int64_t frameIndex);
+
+                // Reader path.
+                Error applySdp(const SdpSession &sdp,
+                               MediaIO::Config &cfg,
+                               MediaDesc &mediaDesc);
+                Error openAllReaders();
+                void  onVideoPacket(const RtpPacket &pkt);
+                void  onAudioPacket(const RtpPacket &pkt);
+                void  onDataPacket(const RtpPacket &pkt);
+                void  emitVideoFrame();
+                void  emitDataMessage();
+                void  pushReaderFrame(Frame::Ptr frame);
 
                 void  buildSdp();
                 Error writeSdpFile(const String &path);
@@ -349,8 +520,78 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 int64_t         _framesSent = 0;
                 int64_t         _framesDropped = 0;
 
-                // SDP
-                String          _sdpText;
+                // Mode
+                bool            _readerMode = false;
+
+                // RFC 4175 wire-format PixelDesc.  When the input
+                // pixel format doesn't match what RFC 4175 expects
+                // on the wire (e.g. YUYV vs UYVY), sendVideo()
+                // calls Image::convert() to the wire format before
+                // packing.  Invalid means no conversion needed.
+                PixelDesc       _videoWirePixelDesc;
+
+                // Reader runtime
+                Queue<Frame::Ptr> _readerQueue;
+                int             _readerMaxDepth = 4;
+                int             _readerJitterMs = 50;
+                int64_t         _readerFramesReceived = 0;
+                int64_t         _readerFramesDropped  = 0;
+
+                /**
+                 * @brief Reader-side frame aggregator.
+                 *
+                 * The three RTP RX threads (video, audio, data)
+                 * receive packets independently and at different
+                 * cadences.  Without aggregation, each stream would
+                 * push separate Frame objects into @c _readerQueue,
+                 * which breaks the SDL player's audio-led pacing
+                 * model (it expects each Frame to carry both video
+                 * and audio, like every other reader backend).
+                 *
+                 * This aggregator uses the video stream as the
+                 * frame clock: when a complete video frame is
+                 * reassembled (marker bit), @c emitVideoFrame
+                 * drains one frame's worth of audio from the FIFO
+                 * and merges the latest metadata snapshot, then
+                 * pushes a single combined Frame that downstream
+                 * consumers can process as a coherent A/V unit.
+                 *
+                 * Audio that arrives ahead of video accumulates in
+                 * the FIFO.  If audio is late, @c emitVideoFrame
+                 * waits up to @c audioTimeoutMs for the samples to
+                 * appear before emitting with partial or no audio.
+                 * The AudioBuffer will eventually support resampling
+                 * which lets us compensate for long-term clock drift
+                 * between audio and video RTP sources; for now the
+                 * pass-through rate must match.
+                 */
+                struct ReaderAggregator {
+                        /// @brief FIFO accumulating L16 samples from the audio RX thread.
+                        AudioBuffer     audioFifo;
+                        /// @brief Protects @c audioFifo (audio RX pushes, video RX pops).
+                        Mutex           audioMutex;
+                        /// @brief Signalled by audio RX after each push; video RX waits on it.
+                        WaitCondition   audioReady;
+                        /// @brief Latest metadata snapshot from the data RX thread.
+                        Metadata        pendingMetadata;
+                        /// @brief Protects @c pendingMetadata and @c hasMetadata.
+                        Mutex           dataMutex;
+                        /// @brief True when @c pendingMetadata has been updated since the last video frame.
+                        bool            hasMetadata = false;
+                        /// @brief Zero-based frame index for @c samplesPerFrame.
+                        int64_t         videoFrameIndex = 0;
+                        /// @brief Max wait (ms) for audio before emitting without it.
+                        int             audioTimeoutMs = 50;
+                };
+                ReaderAggregator _readerAgg;
+
+                // SDP — the active session description built at
+                // open time.  Reader mode leaves this empty (the
+                // reader consumes an externally-supplied SDP via
+                // RtpSdp); writer mode populates it so the
+                // GetSdp params command and the RtpSaveSdpPath
+                // export path can serve it.
+                SdpSession      _sdpSession;
                 String          _sdpPath;
 };
 

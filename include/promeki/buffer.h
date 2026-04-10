@@ -111,6 +111,9 @@ class Buffer {
                  * @param sz Size in bytes to allocate.
                  * @param an Alignment in bytes (defaults to DefaultAlign).
                  * @param ms Memory space to allocate from.
+                 *
+                 * @note This allocates the buffer of a given size, but does not
+                 * set the logical size (it is initialized to 0).
                  */
                 Buffer(size_t sz, size_t an = DefaultAlign, const MemSpace &ms = MemSpace::Default) :
                         _alloc(ms.alloc(sz, an))
@@ -125,6 +128,9 @@ class Buffer {
                  * @param an  Alignment of the pointer (0 if unknown).
                  * @param own If true, the buffer takes ownership and will free the memory on destruction.
                  * @param ms  Memory space the pointer belongs to.
+                 *
+                 * @note This wraps existing memory but does not set the logical
+                 * size (it is initialized to 0).
                  */
                 Buffer(void *p, size_t sz, size_t an = 0, bool own = false, const MemSpace &ms = MemSpace::Default) :
                         _data(p), _owned(own)

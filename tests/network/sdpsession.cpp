@@ -5,6 +5,8 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cstdio>
+#include <unistd.h>
 #include <doctest/doctest.h>
 #include <promeki/sdpsession.h>
 
@@ -431,5 +433,211 @@ TEST_CASE("SdpMediaDescription") {
                 CHECK(attrs[1].first() == "fmtp");
                 CHECK(attrs[1].second() == "96 width=3840");
                 CHECK(attrs[2].first() == "mediaclk");
+        }
+
+        SUBCASE("rtpMap parses a video entry") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "96 raw/90000");
+                auto rm = md.rtpMap();
+                CHECK(rm.valid);
+                CHECK(rm.payloadType == 96);
+                CHECK(rm.encoding == "raw");
+                CHECK(rm.clockRate == 90000);
+                CHECK(rm.channels == 1);
+        }
+
+        SUBCASE("rtpMap parses an audio entry with channel count") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "97 L16/48000/2");
+                auto rm = md.rtpMap();
+                CHECK(rm.valid);
+                CHECK(rm.payloadType == 97);
+                CHECK(rm.encoding == "L16");
+                CHECK(rm.clockRate == 48000);
+                CHECK(rm.channels == 2);
+        }
+
+        SUBCASE("rtpMap returns invalid on missing attribute") {
+                SdpMediaDescription md;
+                auto rm = md.rtpMap();
+                CHECK_FALSE(rm.valid);
+        }
+
+        SUBCASE("rtpMap returns invalid on malformed attribute") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "not-a-number encoding/rate");
+                auto rm = md.rtpMap();
+                CHECK_FALSE(rm.valid);
+        }
+
+        SUBCASE("fmtpParameters extracts key=value pairs") {
+                SdpMediaDescription md;
+                md.setAttribute("fmtp",
+                        "96 packetmode=0;rate=90000;sampling=YCbCr-4:2:2;"
+                        "depth=10;width=1920;height=1080;RANGE=NARROW");
+                auto params = md.fmtpParameters();
+                CHECK(params.value("packetmode") == "0");
+                CHECK(params.value("rate") == "90000");
+                CHECK(params.value("sampling") == "YCbCr-4:2:2");
+                CHECK(params.value("depth") == "10");
+                CHECK(params.value("width") == "1920");
+                CHECK(params.value("height") == "1080");
+                CHECK(params.value("RANGE") == "NARROW");
+        }
+
+        SUBCASE("fmtpParameters on missing attribute returns empty map") {
+                SdpMediaDescription md;
+                auto params = md.fmtpParameters();
+                CHECK(params.isEmpty());
+        }
+
+        SUBCASE("rtpMap parses jxsv entry") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "96 jxsv/90000");
+                auto rm = md.rtpMap();
+                CHECK(rm.valid);
+                CHECK(rm.payloadType == 96);
+                CHECK(rm.encoding == "jxsv");
+                CHECK(rm.clockRate == 90000);
+                CHECK(rm.channels == 1);
+        }
+
+        SUBCASE("rtpMap handles boundary payload type 0") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "0 PCMU/8000");
+                auto rm = md.rtpMap();
+                CHECK(rm.valid);
+                CHECK(rm.payloadType == 0);
+                CHECK(rm.encoding == "PCMU");
+                CHECK(rm.clockRate == 8000);
+        }
+
+        SUBCASE("rtpMap handles boundary payload type 127") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "127 H264/90000");
+                auto rm = md.rtpMap();
+                CHECK(rm.valid);
+                CHECK(rm.payloadType == 127);
+        }
+
+        SUBCASE("rtpMap rejects payload type 128") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "128 bad/90000");
+                auto rm = md.rtpMap();
+                CHECK_FALSE(rm.valid);
+        }
+
+        SUBCASE("rtpMap rejects empty value") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "");
+                auto rm = md.rtpMap();
+                CHECK_FALSE(rm.valid);
+        }
+
+        SUBCASE("rtpMap rejects missing slash") {
+                SdpMediaDescription md;
+                md.setAttribute("rtpmap", "96 raw");
+                auto rm = md.rtpMap();
+                CHECK_FALSE(rm.valid);
+        }
+
+        SUBCASE("fmtpParameters handles bare flags without values") {
+                SdpMediaDescription md;
+                md.setAttribute("fmtp", "96 flag1;key=val;flag2");
+                auto params = md.fmtpParameters();
+                CHECK(params.contains("flag1"));
+                CHECK(params.value("flag1").isEmpty());
+                CHECK(params.value("key") == "val");
+                CHECK(params.contains("flag2"));
+                CHECK(params.value("flag2").isEmpty());
+        }
+
+        SUBCASE("SdpMediaDescription equality") {
+                SdpMediaDescription a;
+                a.setMediaType("video");
+                a.setPort(5004);
+                a.setProtocol("RTP/AVP");
+                a.addPayloadType(96);
+
+                SdpMediaDescription b = a;
+                CHECK(a == b);
+                CHECK_FALSE(a != b);
+
+                b.setPort(5006);
+                CHECK_FALSE(a == b);
+                CHECK(a != b);
+        }
+
+        SUBCASE("fromFile / toFile round-trip") {
+                String tmpPath = String("/tmp/promeki-sdp-tofile-") +
+                                  String::number(getpid()) + String(".sdp");
+                std::remove(tmpPath.cstr());
+
+                // Build a non-trivial session, write it, parse it
+                // back, and verify field equality.
+                SdpSession original;
+                original.setSessionName("round-trip test");
+                original.setOrigin("jth", 999, 1, "IN", "IP4", "10.0.0.1");
+                original.setConnectionAddress("239.7.8.9");
+                SdpMediaDescription video;
+                video.setMediaType("video");
+                video.setPort(5004);
+                video.setProtocol("RTP/AVP");
+                video.addPayloadType(96);
+                video.setAttribute("rtpmap", "96 jxsv/90000");
+                video.setAttribute("fmtp",
+                        "96 packetmode=0;rate=90000;sampling=YCbCr-4:2:2;"
+                        "depth=10;width=1920;height=1080;colorimetry=BT709;"
+                        "RANGE=NARROW");
+                video.setAttribute("rtcp-mux", String());
+                original.addMediaDescription(video);
+
+                Error werr = original.toFile(tmpPath);
+                CHECK(werr.isOk());
+
+                auto loaded = SdpSession::fromFile(tmpPath);
+                CHECK(loaded.second().isOk());
+                const SdpSession &parsed = loaded.first();
+                CHECK(parsed.sessionName() == "round-trip test");
+                CHECK(parsed.originUsername() == "jth");
+                CHECK(parsed.sessionId() == 999);
+                CHECK(parsed.sessionVersion() == 1);
+                CHECK(parsed.originAddress() == "10.0.0.1");
+                CHECK(parsed.connectionAddress() == "239.7.8.9");
+                REQUIRE(parsed.mediaDescriptions().size() == 1);
+                const SdpMediaDescription &m = parsed.mediaDescriptions()[0];
+                CHECK(m.mediaType() == "video");
+                CHECK(m.port() == 5004);
+                auto rm = m.rtpMap();
+                CHECK(rm.valid);
+                CHECK(rm.encoding == "jxsv");
+                auto params = m.fmtpParameters();
+                CHECK(params.value("width") == "1920");
+                CHECK(params.value("height") == "1080");
+                CHECK(params.value("sampling") == "YCbCr-4:2:2");
+
+                // operator== should hold for the full round-trip.
+                CHECK(parsed == original);
+
+                std::remove(tmpPath.cstr());
+        }
+
+        SUBCASE("fromFile fails gracefully on missing file") {
+                auto r = SdpSession::fromFile("/nonexistent/path/does/not/exist.sdp");
+                CHECK(r.second().isError());
+        }
+
+        SUBCASE("equality operator") {
+                SdpSession a;
+                a.setSessionName("same");
+                a.setOrigin("me", 1, 1);
+
+                SdpSession b = a;
+                CHECK(a == b);
+                CHECK_FALSE(a != b);
+
+                b.setSessionName("different");
+                CHECK_FALSE(a == b);
+                CHECK(a != b);
         }
 }

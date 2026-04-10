@@ -717,3 +717,164 @@ TEST_CASE("PixelDesc: hasPaintEngine") {
                 CHECK_FALSE(PixelDesc(PixelDesc::YUV10_422_Rec709).hasPaintEngine());
         }
 }
+
+// ============================================================================
+// JPEG XS compressed formats (ISO/IEC 21122)
+// ============================================================================
+
+TEST_CASE("PixelDesc: JPEG_XS_YUV8_422_Rec709 is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV8_422_Rec709);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.compCount() == 3);
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_YUV10_422_Rec709 is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV10_422_Rec709);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.compCount() == 3);
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_YUV12_422_Rec709 is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV12_422_Rec709);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_YUV8_420_Rec709 is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV8_420_Rec709);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_YUV10_420_Rec709 is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV10_420_Rec709);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_YUV12_420_Rec709 is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV12_420_Rec709);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_RGB8_sRGB is compressed") {
+        PixelDesc pd(PixelDesc::JPEG_XS_RGB8_sRGB);
+        CHECK(pd.isValid());
+        CHECK(pd.isCompressed());
+        CHECK(pd.codecName() == "jpegxs");
+        CHECK(pd.compCount() == 3);
+}
+
+TEST_CASE("PixelDesc: JPEG XS YCbCr entries have correct encode/decode targets") {
+        // Each JPEG XS YCbCr variant must have exactly one encode
+        // source (the matching planar uncompressed format) and at
+        // least one decode target.
+        struct Case {
+                PixelDesc::ID jpegXs;
+                PixelDesc::ID uncompressed;
+        };
+        const Case cases[] = {
+                { PixelDesc::JPEG_XS_YUV8_422_Rec709,  PixelDesc::YUV8_422_Planar_Rec709 },
+                { PixelDesc::JPEG_XS_YUV10_422_Rec709, PixelDesc::YUV10_422_Planar_LE_Rec709 },
+                { PixelDesc::JPEG_XS_YUV12_422_Rec709, PixelDesc::YUV12_422_Planar_LE_Rec709 },
+                { PixelDesc::JPEG_XS_YUV8_420_Rec709,  PixelDesc::YUV8_420_Planar_Rec709 },
+                { PixelDesc::JPEG_XS_YUV10_420_Rec709, PixelDesc::YUV10_420_Planar_LE_Rec709 },
+                { PixelDesc::JPEG_XS_YUV12_420_Rec709, PixelDesc::YUV12_420_Planar_LE_Rec709 },
+        };
+        for(const auto &c : cases) {
+                PixelDesc pd(c.jpegXs);
+                REQUIRE(pd.isValid());
+                // Encode source must include the uncompressed match.
+                bool foundSource = false;
+                for(const auto &src : pd.encodeSources()) {
+                        if(src == c.uncompressed) { foundSource = true; break; }
+                }
+                CHECK_MESSAGE(foundSource, "encode source missing for ", (int)c.jpegXs);
+                // Decode target must include the uncompressed match.
+                bool foundTarget = false;
+                for(const auto &tgt : pd.decodeTargets()) {
+                        if(tgt == c.uncompressed) { foundTarget = true; break; }
+                }
+                CHECK_MESSAGE(foundTarget, "decode target missing for ", (int)c.jpegXs);
+        }
+}
+
+TEST_CASE("PixelDesc: JPEG_XS_RGB8_sRGB encode/decode targets") {
+        PixelDesc pd(PixelDesc::JPEG_XS_RGB8_sRGB);
+        REQUIRE(pd.isValid());
+        bool foundRgb = false;
+        for(const auto &src : pd.encodeSources()) {
+                if(src == PixelDesc::RGB8_sRGB) { foundRgb = true; break; }
+        }
+        CHECK(foundRgb);
+        bool foundTarget = false;
+        for(const auto &tgt : pd.decodeTargets()) {
+                if(tgt == PixelDesc::RGB8_sRGB) { foundTarget = true; break; }
+        }
+        CHECK(foundTarget);
+}
+
+TEST_CASE("PixelDesc: JPEG XS fourcc is jxsm") {
+        // ISO/IEC 21122-3 ISOBMFF sample entry is "jxsm".
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV10_422_Rec709);
+        REQUIRE(pd.isValid());
+        bool foundFourcc = false;
+        for(const auto &cc : pd.fourccList()) {
+                if(cc == "jxsm") { foundFourcc = true; break; }
+        }
+        CHECK(foundFourcc);
+}
+
+TEST_CASE("PixelDesc: JPEG XS string name round-trip via registeredIDs") {
+        // All JPEG XS entries must appear in the registeredIDs list
+        // and must have non-empty string names that start with
+        // "JPEG_XS_".
+        const PixelDesc::ID jxsIds[] = {
+                PixelDesc::JPEG_XS_YUV8_422_Rec709,
+                PixelDesc::JPEG_XS_YUV10_422_Rec709,
+                PixelDesc::JPEG_XS_YUV12_422_Rec709,
+                PixelDesc::JPEG_XS_YUV8_420_Rec709,
+                PixelDesc::JPEG_XS_YUV10_420_Rec709,
+                PixelDesc::JPEG_XS_YUV12_420_Rec709,
+                PixelDesc::JPEG_XS_RGB8_sRGB,
+        };
+        auto allIds = PixelDesc::registeredIDs();
+        for(PixelDesc::ID id : jxsIds) {
+                bool foundInRegistry = false;
+                for(const auto &regId : allIds) {
+                        if(regId == id) { foundInRegistry = true; break; }
+                }
+                CHECK_MESSAGE(foundInRegistry,
+                              "JPEG XS ID ", (int)id,
+                              " not in registeredIDs");
+                PixelDesc pd(id);
+                REQUIRE(pd.isValid());
+                CHECK(pd.name().startsWith("JPEG_XS_"));
+        }
+}
+
+TEST_CASE("PixelDesc: JPEG XS component semantics have expected ranges") {
+        // The 10-bit 4:2:2 entry should have Rec.709 limited-range
+        // component semantics: Y 64-940, Cb/Cr 64-960.
+        PixelDesc pd(PixelDesc::JPEG_XS_YUV10_422_Rec709);
+        REQUIRE(pd.isValid());
+        REQUIRE(pd.compCount() >= 3);
+        CHECK(pd.compSemantic(0).name == "Luma");
+        CHECK(pd.compSemantic(0).rangeMin == 64);
+        CHECK(pd.compSemantic(0).rangeMax == 940);
+        CHECK(pd.compSemantic(1).name == "Chroma Blue");
+        CHECK(pd.compSemantic(1).rangeMin == 64);
+        CHECK(pd.compSemantic(1).rangeMax == 960);
+        CHECK(pd.compSemantic(2).name == "Chroma Red");
+        CHECK(pd.compSemantic(2).rangeMin == 64);
+        CHECK(pd.compSemantic(2).rangeMax == 960);
+}

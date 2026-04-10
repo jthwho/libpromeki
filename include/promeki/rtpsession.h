@@ -8,6 +8,8 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
+#include <promeki/atomic.h>
 #include <promeki/objectbase.h>
 #include <promeki/error.h>
 #include <promeki/buffer.h>
@@ -18,6 +20,7 @@
 PROMEKI_NAMESPACE_BEGIN
 
 class PacketTransport;
+class Thread;
 
 /**
  * @brief RTP session for sending and receiving packets (RFC 3550).
@@ -212,6 +215,92 @@ class RtpSession : public ObjectBase {
                                        bool markerOnLast = true);
 
                 /**
+                 * @brief Signature of the per-packet receive callback.
+                 *
+                 * Invoked from the receive thread for every RTP
+                 * packet arriving on the transport.  The @c packet
+                 * view references a Buffer owned by the session; its
+                 * backing memory is valid only for the duration of
+                 * the call.  Consumers that need to retain the bytes
+                 * should copy them or take a fresh @ref Buffer::Ptr
+                 * copy.
+                 *
+                 * @param packet The parsed RTP packet.
+                 * @param sender The datagram sender's address.
+                 */
+                using PacketCallback = std::function<
+                        void(const RtpPacket &packet, const SocketAddress &sender)>;
+
+                /**
+                 * @brief Starts the per-session RTP receive loop.
+                 *
+                 * Spawns an internal @ref Thread named
+                 * @c "rtp-rx" that calls
+                 * @ref PacketTransport::receivePacket in a loop,
+                 * wraps each datagram in an @ref RtpPacket view of
+                 * an owned @ref Buffer, and delivers the packet to
+                 * @p callback.  The existing @c packetReceived
+                 * signal is also emitted for consumers that prefer
+                 * event-loop dispatch.
+                 *
+                 * The session must already be running
+                 * (@ref isRunning() == true) — call one of the
+                 * @ref start overloads first.
+                 *
+                 * The receive thread polls the stop flag every few
+                 * hundred milliseconds using @c SO_RCVTIMEO on the
+                 * underlying socket, so @ref stopReceiving() returns
+                 * within one poll interval.  If the transport is not
+                 * a UDP socket the poll timeout is a best-effort —
+                 * transports that cannot expose a non-blocking
+                 * receive may stall @ref stopReceiving until a
+                 * packet arrives.
+                 *
+                 * @param callback The per-packet callback (required).
+                 * @param threadName Thread name surfaced to
+                 *        debuggers and OS monitors.  Defaults to
+                 *        @c "rtp-rx".
+                 * @return Error::Ok on success, Error::Busy if
+                 *         already receiving, Error::NotOpen if the
+                 *         session has not been started, or
+                 *         Error::InvalidArgument on a null callback.
+                 */
+                Error startReceiving(PacketCallback callback,
+                                     const String &threadName = "rtp-rx");
+
+                /**
+                 * @brief Stops the receive loop and joins the receive thread.
+                 *
+                 * Safe to call from any thread, including the
+                 * receive thread itself (in which case the join is
+                 * skipped).  Safe to call when no receive loop is
+                 * running.
+                 */
+                void stopReceiving();
+
+                /** @brief Returns true if the receive loop is running. */
+                bool isReceiving() const { return _receiving.value(); }
+
+                /**
+                 * @brief Sets the receive-loop poll interval in milliseconds.
+                 *
+                 * Shorter intervals make @ref stopReceiving more
+                 * responsive at the cost of extra idle wakeups.
+                 * Default is 200 ms.  Must be set before
+                 * @ref startReceiving.
+                 *
+                 * @param timeoutMs Poll interval in milliseconds.
+                 */
+                void setReceivePollIntervalMs(unsigned int timeoutMs) {
+                        _receivePollMs = timeoutMs == 0 ? 200 : timeoutMs;
+                }
+
+                /** @brief Returns the receive-loop poll interval. */
+                unsigned int receivePollIntervalMs() const {
+                        return _receivePollMs;
+                }
+
+                /**
                  * @brief Applies a transmit-rate cap to the transport.
                  *
                  * Convenience wrapper around
@@ -274,6 +363,9 @@ class RtpSession : public ObjectBase {
                 PROMEKI_SIGNAL(ssrcCollision, uint32_t);
 
         private:
+                class ReceiveThread;
+                friend class ReceiveThread;
+
                 void fillHeader(RtpPacket &pkt, uint8_t pt, bool marker,
                                 uint32_t timestamp);
                 void generateSsrc();
@@ -286,6 +378,12 @@ class RtpSession : public ObjectBase {
                 uint16_t         _sequenceNumber = 0;
                 uint8_t          _payloadType = 96;
                 uint32_t         _clockRate = 90000;
+
+                // Receive path
+                ReceiveThread   *_receiveThread = nullptr;
+                PacketCallback   _receiveCallback;
+                Atomic<bool>     _receiving;
+                unsigned int     _receivePollMs = 200;
 };
 
 PROMEKI_NAMESPACE_END

@@ -369,6 +369,44 @@ void FastPathRGBA8toUYVY8(const void *const *srcPlanes,
 }
 
 // =========================================================================
+// YUYV8 <-> UYVY8  (byte-pair swap, no colour math)
+// YUYV byte order: [Y0, Cb, Y1, Cr]
+// UYVY byte order: [Cb, Y0, Cr, Y1]
+// =========================================================================
+
+void FastPathYUYV8toUYVY8(const void *const *srcPlanes,
+                           const size_t *srcStrides,
+                           void *const *dstPlanes,
+                           const size_t *dstStrides,
+                           size_t width, CSCContext &ctx) {
+        const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+        uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                dst[i*4+0] = src[i*4+1]; // Cb
+                dst[i*4+1] = src[i*4+0]; // Y0
+                dst[i*4+2] = src[i*4+3]; // Cr
+                dst[i*4+3] = src[i*4+2]; // Y1
+        }
+}
+
+void FastPathUYVY8toYUYV8(const void *const *srcPlanes,
+                           const size_t *srcStrides,
+                           void *const *dstPlanes,
+                           const size_t *dstStrides,
+                           size_t width, CSCContext &ctx) {
+        const uint8_t *src = static_cast<const uint8_t *>(srcPlanes[0]);
+        uint8_t *dst = static_cast<uint8_t *>(dstPlanes[0]);
+        size_t pairs = width / 2;
+        for(size_t i = 0; i < pairs; i++) {
+                dst[i*4+0] = src[i*4+1]; // Y0
+                dst[i*4+1] = src[i*4+0]; // Cb
+                dst[i*4+2] = src[i*4+3]; // Y1
+                dst[i*4+3] = src[i*4+2]; // Cr
+        }
+}
+
+// =========================================================================
 // NV21 (CrCb order) <-> RGBA8  (BT.709 fixed-point)
 // =========================================================================
 

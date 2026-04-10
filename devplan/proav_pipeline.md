@@ -177,9 +177,9 @@ A pipeline that pulls the TPG, runs it through a colorspace converter, and fans 
 
 The pipeline leans on the `"Converter"` backend (ReadWrite MediaIO that takes a frame on `writeFrame()` and produces a transformed frame on `readFrame()`) for every CSC / codec / audio-format transform. See `proav_nodes.md` under **MediaIOTask_Converter**.
 
-### RTP MediaIO Backends — REQUIRED for networked pipelines
+### RTP MediaIO Backend — COMPLETE
 
-See `proav_nodes.md` under **MediaIOTask_RtpVideo** and **MediaIOTask_RtpAudio**. Needed for any RTP streaming pipeline. Until they exist, only file/container-based pipelines are expressible.
+The unified `MediaIOTask_Rtp` supports both Writer and Reader modes (see `proav_nodes.md`).  Networked pipelines are now expressible: an RTP sink stage feeds packets to the network, and an RTP source stage reads them back via SDP-driven auto-config.
 
 ### MediaConfig Variant type coverage
 

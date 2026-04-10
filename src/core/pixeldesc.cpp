@@ -350,6 +350,147 @@ static PixelDesc::Data makeJPEG_YUV8_420_Rec601_Full() {
 }
 
 // ---------------------------------------------------------------------------
+// JPEG XS YCbCr factory helper
+// ---------------------------------------------------------------------------
+//
+// Builds one entry from the JPEG XS YCbCr family.  Unlike the JPEG
+// variants above, matrix / range are carried out-of-band (RFC 9134
+// SDP for RTP, ISO/IEC 21122-3 sample entry for MP4) and not written
+// into the JPEG XS codestream itself, so only bit depth and
+// subsampling vary.  All entries are Rec.709 limited range — the
+// canonical broadcast default that matches what ST 2110 JPEG XS
+// carriage expects.  Bit depth drives the pixelFormat choice
+// (P_XXX_3x8 for 8-bit, P_XXX_3x10_LE for 10-bit, etc.) and the
+// CompSemantic ranges.
+struct JpegXsYuvEntry {
+        PixelDesc::ID         id;
+        const char           *name;
+        PixelFormat::ID       pixelFormat;  // P_422_3x8 / P_422_3x10_LE / ... / P_420_*
+        int                   bitDepth;     // 8, 10, or 12
+        bool                  is420;
+        List<PixelDesc::ID>   encodeSources;
+        List<PixelDesc::ID>   decodeTargets;
+};
+
+static PixelDesc::Data makeJPEG_XS_YUV(const JpegXsYuvEntry &e) {
+        PixelDesc::Data d;
+        d.id            = e.id;
+        d.name          = e.name;
+        const char *subsampling = e.is420 ? "4:2:0" : "4:2:2";
+        d.desc = String("JPEG XS-compressed ") +
+                 String::number(e.bitDepth) + String("-bit YCbCr ") +
+                 String(subsampling) + String(" (Rec.709, limited range)");
+        d.pixelFormat   = PixelFormat(e.pixelFormat);
+        d.colorModel    = ColorModel(ColorModel::YCbCr_Rec709);
+        d.compressed    = true;
+        d.codecName     = "jpegxs";
+        d.encodeSources = e.encodeSources;
+        d.decodeTargets = e.decodeTargets;
+        // JPEG XS ISOBMFF sample entry is "jxsm" (ISO/IEC 21122-3).
+        d.fourccList    = { "jxsm" };
+        // Component ranges scale with bit depth, matching the other
+        // limited-range YCbCr descriptors in this file.
+        switch(e.bitDepth) {
+                case 8:
+                        d.compSemantics[0] = { "Luma",        "Y",  16,  235  };
+                        d.compSemantics[1] = { "Chroma Blue", "Cb", 16,  240  };
+                        d.compSemantics[2] = { "Chroma Red",  "Cr", 16,  240  };
+                        break;
+                case 10:
+                        d.compSemantics[0] = { "Luma",        "Y",  64,  940  };
+                        d.compSemantics[1] = { "Chroma Blue", "Cb", 64,  960  };
+                        d.compSemantics[2] = { "Chroma Red",  "Cr", 64,  960  };
+                        break;
+                case 12:
+                        d.compSemantics[0] = { "Luma",        "Y",  256, 3760 };
+                        d.compSemantics[1] = { "Chroma Blue", "Cb", 256, 3840 };
+                        d.compSemantics[2] = { "Chroma Red",  "Cr", 256, 3840 };
+                        break;
+        }
+        return d;
+}
+
+static PixelDesc::Data makeJPEG_XS_YUV8_422_Rec709() {
+        return makeJPEG_XS_YUV({
+                PixelDesc::JPEG_XS_YUV8_422_Rec709,
+                "JPEG_XS_YUV8_422_Rec709",
+                PixelFormat::P_422_3x8, 8, /*is420*/ false,
+                { PixelDesc::YUV8_422_Planar_Rec709 },
+                { PixelDesc::YUV8_422_Planar_Rec709,
+                  PixelDesc::RGB8_sRGB }
+        });
+}
+
+static PixelDesc::Data makeJPEG_XS_YUV10_422_Rec709() {
+        return makeJPEG_XS_YUV({
+                PixelDesc::JPEG_XS_YUV10_422_Rec709,
+                "JPEG_XS_YUV10_422_Rec709",
+                PixelFormat::P_422_3x10_LE, 10, /*is420*/ false,
+                { PixelDesc::YUV10_422_Planar_LE_Rec709 },
+                { PixelDesc::YUV10_422_Planar_LE_Rec709 }
+        });
+}
+
+static PixelDesc::Data makeJPEG_XS_YUV12_422_Rec709() {
+        return makeJPEG_XS_YUV({
+                PixelDesc::JPEG_XS_YUV12_422_Rec709,
+                "JPEG_XS_YUV12_422_Rec709",
+                PixelFormat::P_422_3x12_LE, 12, /*is420*/ false,
+                { PixelDesc::YUV12_422_Planar_LE_Rec709 },
+                { PixelDesc::YUV12_422_Planar_LE_Rec709 }
+        });
+}
+
+static PixelDesc::Data makeJPEG_XS_YUV8_420_Rec709() {
+        return makeJPEG_XS_YUV({
+                PixelDesc::JPEG_XS_YUV8_420_Rec709,
+                "JPEG_XS_YUV8_420_Rec709",
+                PixelFormat::P_420_3x8, 8, /*is420*/ true,
+                { PixelDesc::YUV8_420_Planar_Rec709 },
+                { PixelDesc::YUV8_420_Planar_Rec709,
+                  PixelDesc::RGB8_sRGB }
+        });
+}
+
+static PixelDesc::Data makeJPEG_XS_YUV10_420_Rec709() {
+        return makeJPEG_XS_YUV({
+                PixelDesc::JPEG_XS_YUV10_420_Rec709,
+                "JPEG_XS_YUV10_420_Rec709",
+                PixelFormat::P_420_3x10_LE, 10, /*is420*/ true,
+                { PixelDesc::YUV10_420_Planar_LE_Rec709 },
+                { PixelDesc::YUV10_420_Planar_LE_Rec709 }
+        });
+}
+
+static PixelDesc::Data makeJPEG_XS_YUV12_420_Rec709() {
+        return makeJPEG_XS_YUV({
+                PixelDesc::JPEG_XS_YUV12_420_Rec709,
+                "JPEG_XS_YUV12_420_Rec709",
+                PixelFormat::P_420_3x12_LE, 12, /*is420*/ true,
+                { PixelDesc::YUV12_420_Planar_LE_Rec709 },
+                { PixelDesc::YUV12_420_Planar_LE_Rec709 }
+        });
+}
+
+static PixelDesc::Data makeJPEG_XS_RGB8_sRGB() {
+        PixelDesc::Data d;
+        d.id            = PixelDesc::JPEG_XS_RGB8_sRGB;
+        d.name          = "JPEG_XS_RGB8_sRGB";
+        d.desc          = "JPEG XS-compressed 8-bit RGB, sRGB, full range";
+        d.pixelFormat   = PixelFormat(PixelFormat::I_3x8);
+        d.colorModel    = ColorModel(ColorModel::sRGB);
+        d.compressed    = true;
+        d.codecName     = "jpegxs";
+        d.encodeSources = { PixelDesc::RGB8_sRGB };
+        d.decodeTargets = { PixelDesc::RGB8_sRGB };
+        d.fourccList    = { "jxsm" };
+        d.compSemantics[0] = { "Red",   "R", 0, 255 };
+        d.compSemantics[1] = { "Green", "G", 0, 255 };
+        d.compSemantics[2] = { "Blue",  "B", 0, 255 };
+        return d;
+}
+
+// ---------------------------------------------------------------------------
 // Legacy single-entry wrappers used by the registry init block
 // ---------------------------------------------------------------------------
 
@@ -1797,6 +1938,18 @@ struct PixelDescRegistry {
                 add(makeJPEG_YUV8_420_Rec709_Full());
                 add(makeJPEG_YUV8_422_Rec601_Full());
                 add(makeJPEG_YUV8_420_Rec601_Full());
+
+                // JPEG XS entries.  Unlike JPEG these only distinguish
+                // bit depth and subsampling (matrix / range live in the
+                // container metadata) so the grid is smaller: 8/10/12-bit
+                // × 4:2:2/4:2:0 for YCbCr, plus an 8-bit sRGB entry.
+                add(makeJPEG_XS_YUV8_422_Rec709());
+                add(makeJPEG_XS_YUV10_422_Rec709());
+                add(makeJPEG_XS_YUV12_422_Rec709());
+                add(makeJPEG_XS_YUV8_420_Rec709());
+                add(makeJPEG_XS_YUV10_420_Rec709());
+                add(makeJPEG_XS_YUV12_420_Rec709());
+                add(makeJPEG_XS_RGB8_sRGB());
         }
 
         void add(PixelDesc::Data d) {

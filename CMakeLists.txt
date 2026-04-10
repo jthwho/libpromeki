@@ -32,6 +32,18 @@ option(PROMEKI_ENABLE_PROAV    "Include pro A/V support"                ON)
 option(PROMEKI_ENABLE_MUSIC    "Include music support"                  ON)
 option(PROMEKI_ENABLE_PNG      "Include PNG image I/O"                  ON)
 option(PROMEKI_ENABLE_JPEG     "Include JPEG codec"                     ON)
+# SVT-JPEG-XS is x86-64 only and needs nasm/yasm at build time; default
+# ON only when the host toolchain can actually build it, so it's silently
+# picked up on capable machines and silently skipped elsewhere.  Explicit
+# -DPROMEKI_ENABLE_JPEGXS=ON/OFF on the command line overrides the probe.
+set(PROMEKI_ENABLE_JPEGXS_DEFAULT OFF)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
+    find_program(PROMEKI_JPEGXS_ASM NAMES nasm yasm)
+    if(PROMEKI_JPEGXS_ASM)
+        set(PROMEKI_ENABLE_JPEGXS_DEFAULT ON)
+    endif()
+endif()
+option(PROMEKI_ENABLE_JPEGXS   "Include JPEG XS codec (SVT-JPEG-XS, x86-64 + nasm/yasm)" ${PROMEKI_ENABLE_JPEGXS_DEFAULT})
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
@@ -41,6 +53,7 @@ option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" O
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
 option(PROMEKI_USE_SYSTEM_LIBSPNG       "Use system libspng instead of vendored"        OFF)
 option(PROMEKI_USE_SYSTEM_LIBJPEG       "Use system libjpeg instead of vendored"        OFF)
+option(PROMEKI_USE_SYSTEM_SVT_JPEG_XS   "Use system SVT-JPEG-XS instead of vendored"    OFF)
 option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
@@ -58,6 +71,9 @@ if(PROMEKI_ENABLE_PNG AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_JPEG AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_JPEG requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_JPEGXS AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_JPEGXS requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_ENABLE_FREETYPE AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_FREETYPE requires PROMEKI_ENABLE_PROAV")
@@ -293,6 +309,12 @@ if(PROMEKI_ENABLE_JPEG)
         find_package(JPEG REQUIRED)
         set(PROMEKI_JPEG_TARGET JPEG::JPEG)
     else()
+        find_program(PROMEKI_NASM_PATH NAMES nasm yasm)
+        set(_JPEG_TURBO_EXTRA_ARGS)
+        if(PROMEKI_NASM_PATH)
+            list(APPEND _JPEG_TURBO_EXTRA_ARGS
+                -DCMAKE_ASM_NASM_COMPILER=${PROMEKI_NASM_PATH})
+        endif()
         ExternalProject_Add(
             libjpeg-turbo-ep
             SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libjpeg-turbo
@@ -302,6 +324,7 @@ if(PROMEKI_ENABLE_JPEG)
                 -DENABLE_SHARED=OFF
                 -DENABLE_STATIC=ON
                 -DWITH_TURBOJPEG=OFF
+                ${_JPEG_TURBO_EXTRA_ARGS}
         )
         add_library(promeki_jpeg_vendored STATIC IMPORTED)
         set_target_properties(promeki_jpeg_vendored PROPERTIES
@@ -309,6 +332,41 @@ if(PROMEKI_ENABLE_JPEG)
         )
         add_dependencies(promeki_jpeg_vendored libjpeg-turbo-ep)
         set(PROMEKI_JPEG_TARGET promeki_jpeg_vendored)
+    endif()
+endif()
+
+# --- SVT-JPEG-XS ---
+# Modern low-complexity intra-only codec (ISO/IEC 21122).  Open-source
+# Intel implementation, BSD+Patent licensed.  x86-64 only and requires
+# nasm/yasm at build time (its entire SIMD stack is hand-written asm).
+# We consume a single libSvtJpegxs.a that wraps both encoder and decoder
+# under the same C API (SvtJpegxsEnc.h / SvtJpegxsDec.h).  pthread and
+# libm are transitive link dependencies — added below on the promeki
+# link line alongside the imported target.
+if(PROMEKI_ENABLE_JPEGXS)
+    if(PROMEKI_USE_SYSTEM_SVT_JPEG_XS)
+        find_library(PROMEKI_SYSTEM_SVT_JPEG_XS SvtJpegxs REQUIRED)
+        add_library(promeki_jpegxs_system INTERFACE IMPORTED)
+        target_link_libraries(promeki_jpegxs_system INTERFACE ${PROMEKI_SYSTEM_SVT_JPEG_XS})
+        set(PROMEKI_JPEGXS_TARGET promeki_jpegxs_system)
+    else()
+        ExternalProject_Add(
+            svt-jpeg-xs-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/svt-jpeg-xs
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_APPS=OFF
+                -DBUILD_TESTING=OFF
+                -DCMAKE_BUILD_TYPE=Release
+        )
+        add_library(promeki_jpegxs_vendored STATIC IMPORTED)
+        set_target_properties(promeki_jpegxs_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libSvtJpegxs.a
+        )
+        add_dependencies(promeki_jpegxs_vendored svt-jpeg-xs-ep)
+        set(PROMEKI_JPEGXS_TARGET promeki_jpegxs_vendored)
     endif()
 endif()
 
@@ -544,6 +602,7 @@ set(PROMEKI_SOURCES
     src/core/fileiodevice.cpp
     src/core/fourcc.cpp
     src/core/framerate.cpp
+    src/core/histogram.cpp
     src/core/iodevice.cpp
     src/core/json.cpp
     src/core/keyevent.cpp
@@ -607,6 +666,7 @@ if(PROMEKI_ENABLE_NETWORK)
         include/promeki/loopbacktransport.h
         include/promeki/macaddress.h
         include/promeki/multicastmanager.h
+        include/promeki/multicastreceiver.h
         include/promeki/networkaddress.h
         include/promeki/packettransport.h
         include/promeki/prioritysocket.h
@@ -628,6 +688,7 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/loopbacktransport.cpp
         src/network/macaddress.cpp
         src/network/multicastmanager.cpp
+        src/network/multicastreceiver.cpp
         src/network/networkaddress.cpp
         src/network/packettransport.cpp
         src/network/prioritysocket.cpp
@@ -667,6 +728,7 @@ if(PROMEKI_ENABLE_PROAV)
         include/promeki/imagefileio.h
         include/promeki/imgseq.h
         include/promeki/jpegimagecodec.h
+        include/promeki/jpegxsimagecodec.h
         include/promeki/ltcdecoder.h
         include/promeki/ltcencoder.h
         include/promeki/mediaio.h
@@ -732,6 +794,12 @@ if(PROMEKI_ENABLE_PROAV)
         # jpegimagecodec is always included when proav is on; this gate
         # controls linking against libjpeg (codec uses it internally)
         list(APPEND PROMEKI_SOURCES src/proav/imagefileio_jpeg.cpp)
+    endif()
+    if(PROMEKI_ENABLE_JPEGXS)
+        # JPEG XS has no fallback — the entire file is gated, not just
+        # the external linkage, because SvtJpegxs.h is only available
+        # when the thirdparty library was configured in.
+        list(APPEND PROMEKI_SOURCES src/proav/jpegxsimagecodec.cpp)
     endif()
     if(PROMEKI_ENABLE_PNG)
         list(APPEND PROMEKI_SOURCES src/proav/imagefileio_png.cpp)
@@ -858,6 +926,13 @@ if(PROMEKI_ENABLE_PROAV)
     if(NOT PROMEKI_USE_SYSTEM_LIBJPEG AND PROMEKI_ENABLE_JPEG)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
+    if(NOT PROMEKI_USE_SYSTEM_SVT_JPEG_XS AND PROMEKI_ENABLE_JPEGXS)
+        # SVT-JPEG-XS installs its public headers under include/svt-jpegxs/
+        target_include_directories(promeki PRIVATE
+            ${PROMEKI_THIRDPARTY_PREFIX}/include
+            ${PROMEKI_THIRDPARTY_PREFIX}/include/svt-jpegxs
+        )
+    endif()
     if(NOT PROMEKI_USE_SYSTEM_LIBSPNG AND PROMEKI_ENABLE_PNG)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
@@ -874,6 +949,17 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_JPEG)
         target_link_libraries(promeki PRIVATE ${PROMEKI_JPEG_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_JPEG)
+    endif()
+    if(PROMEKI_ENABLE_JPEGXS)
+        # SVT-JPEG-XS needs pthread + libm transitively; the imported
+        # static target doesn't carry these so add them explicitly.
+        find_package(Threads REQUIRED)
+        target_link_libraries(promeki PRIVATE
+            ${PROMEKI_JPEGXS_TARGET}
+            Threads::Threads
+            m
+        )
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_JPEGXS)
     endif()
     if(PROMEKI_ENABLE_PNG)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SPNG_TARGET} ${PROMEKI_ZLIB_TARGET})
@@ -1174,6 +1260,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/future.cpp
         tests/hashmap.cpp
         tests/hashset.cpp
+        tests/histogram.cpp
         tests/iodevice.cpp
         tests/json.cpp
         tests/line.cpp
@@ -1244,6 +1331,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/network/loopbacktransport.cpp
             tests/network/macaddress.cpp
             tests/network/multicastmanager.cpp
+            tests/network/multicastreceiver.cpp
             tests/network/networkaddress.cpp
             tests/network/prioritysocket.cpp
             tests/network/rawsocket.cpp
@@ -1285,6 +1373,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/jpegimagecodec.cpp
             tests/ltcdecoder.cpp
             tests/ltcencoder.cpp
+            tests/mediadesc.cpp
             tests/mediaio.cpp
             tests/mediaiotask_converter.cpp
             tests/mediaiotask_quicktime.cpp
@@ -1308,6 +1397,11 @@ if(PROMEKI_BUILD_TESTS)
         if(PROMEKI_ENABLE_JPEG)
             list(APPEND UNITTEST_SOURCES
                 tests/imagefileio_jpeg.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_JPEGXS)
+            list(APPEND UNITTEST_SOURCES
+                tests/jpegxsimagecodec.cpp
             )
         endif()
     endif()

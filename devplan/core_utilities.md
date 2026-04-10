@@ -3,7 +3,7 @@
 **Phase:** 7 (ongoing)
 **Standards:** All code must follow `CODING_STANDARDS.md`. Every class requires complete doctest unit tests. See `README.md` for full requirements.
 
-String, Variant, Color/ColorModel, StringRegistry/VariantDatabase/Config, Metadata, Size2DTemplate/TimeStamp, and the C++20 `std::format` integration are done. See git history for the completed work. The items below are the remaining opportunistic enhancements.
+String, Variant, Color/ColorModel, StringRegistry/VariantDatabase/Config, Metadata, Size2DTemplate/TimeStamp, and the C++20 `std::format` integration are done. `SdpSession` was added as a Variant type (`TypeSdpSession`) with String-to-SdpSession conversion via `SdpSession::fromString()`. TimeStamp gained `promeki::Duration` interop operators (`+=`, `-=`, `+`, `-`, and `durationBetween`). See git history for the completed work. The items below are the remaining opportunistic enhancements.
 
 ---
 

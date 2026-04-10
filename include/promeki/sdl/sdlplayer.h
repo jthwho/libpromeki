@@ -66,6 +66,35 @@ class SDLAudioOutput;
  * whatever image is currently stashed, so any older image still
  * waiting when a newer one arrives is counted as a dropped frame.
  *
+ * @par Compressed input — automatic decode
+ *
+ * SDLPlayerTask accepts compressed video formats (JPEG, JPEG XS,
+ * and anything else with a registered @ref ImageCodec) as input
+ * and decodes them transparently before the frame is handed to
+ * the widget.  The decode runs inside @ref executeCmd
+ * "executeCmd(Write)" on the MediaIO strand worker thread via
+ * @ref Image::convert, which dispatches to the codec registry by
+ * name — the task does not hard-code any codec.  The decode
+ * target is @c PixelDesc::RGBA8_sRGB so the decoded image can
+ * be handed to @ref SDLVideoWidget directly, regardless of which
+ * codec was involved.
+ *
+ * Running the decode on the strand thread (rather than the main
+ * thread) keeps the UI responsive for heavy codecs: the main
+ * thread only ever sees an already-decoded image ready for
+ * texture upload.  This means a receiver like
+ * @c mediaplay @c -i @c foo.sdp @c -o @c SDL just works for any
+ * format the codec layer can decode, with no Converter stage
+ * needed in front of the SDL sink.
+ *
+ * If a decode fails (missing codec, malformed bitstream) the
+ * offending frame is counted as dropped and the task continues
+ * processing subsequent frames.
+ *
+ * Uncompressed input with a pixel layout SDL cannot upload
+ * directly (e.g. 10-bit planar YUV) is handled by the widget's
+ * own CSC fallback — the task does not pre-convert those.
+ *
  * @par Open-time setup
  *
  * For a writer, MediaIO delivers the caller-provided @c MediaDesc and

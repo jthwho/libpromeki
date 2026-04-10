@@ -17,6 +17,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+class SdpSession;
+
 /**
  * @brief Describes a media format including frame rate, image layers, audio channels, and metadata.
  * @ingroup proav
@@ -41,6 +43,47 @@ class MediaDesc {
 
         /** @brief Constructs a default (invalid) media description. */
         MediaDesc() = default;
+
+        /**
+         * @brief Aggregates the per-@c m= descriptors from an SDP session.
+         *
+         * Walks every media description in @p session, calls
+         * @ref ImageDesc::fromSdp or @ref AudioDesc::fromSdp on
+         * each one (based on its @c mediaType), and pushes any
+         * successful result into the corresponding list on the
+         * returned MediaDesc.  The frame rate is left unset —
+         * SDP does not carry a frame rate attribute, so callers
+         * that need one must fill it in separately.
+         *
+         * Media descriptions whose encoding name is not recognised
+         * by @ref ImageDesc::fromSdp / @ref AudioDesc::fromSdp are
+         * silently skipped, so the returned MediaDesc may be
+         * partial (or empty) for streams that use encodings
+         * libpromeki does not yet know about.
+         *
+         * @param session The parsed SDP session.
+         * @return A MediaDesc with the image and audio lists
+         *         populated from @p session.
+         */
+        static MediaDesc fromSdp(const SdpSession &session);
+
+        /**
+         * @brief Builds an SdpSession from this MediaDesc.
+         *
+         * The inverse of @ref fromSdp.  Walks the image and audio
+         * lists and calls @ref ImageDesc::toSdp /
+         * @ref AudioDesc::toSdp on each entry, appending the
+         * resulting media descriptions to a new SdpSession.
+         *
+         * Video payload types start at @p videoPayloadType (default
+         * 96) and increment for each image entry.  Audio payload
+         * types start at @p audioPayloadType (default one past the
+         * last video PT).
+         *
+         * @param videoPayloadType Starting PT for video streams.
+         * @return A populated SdpSession.
+         */
+        SdpSession toSdp(uint8_t videoPayloadType = 96) const;
 
         /** @brief Returns true if the media description is valid (has a valid frame rate and at least one image or audio description). */
         bool isValid() const { return _frameRate.isValid() && (_imageList.size() > 0 || _audioList.size() > 0); }

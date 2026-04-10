@@ -5,11 +5,17 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <atomic>
+#include <chrono>
+#include <thread>
+#include <vector>
 #include <doctest/doctest.h>
 #include <promeki/rtpsession.h>
 #include <promeki/udpsocket.h>
 #include <promeki/loopbacktransport.h>
 #include <promeki/rtppayload.h>
+#include <promeki/duration.h>
+#include <promeki/timestamp.h>
 #include <cstring>
 
 using namespace promeki;
@@ -331,6 +337,72 @@ TEST_CASE("RtpSession") {
                 session.stop();
         }
 
+        SUBCASE("sendPacketsPaced spreads multi-packet frame across interval") {
+                // Verify that sendPacketsPaced holds the call open
+                // for the requested spread interval when there are
+                // many packets, so the writer can use it as a
+                // frame-rate enforcer that bounds the per-frame
+                // dispatch duration to one frame interval.
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
+                REQUIRE(session.start(&txPort).isOk());
+
+                auto pkts = RtpPacket::createList(8, 200);
+                const Duration interval = Duration::fromMilliseconds(50);
+
+                TimeStamp start = TimeStamp::now();
+                Error err = session.sendPacketsPaced(pkts, 0, interval, true);
+                int64_t elapsedMs = start.elapsedMilliseconds();
+
+                CHECK(err.isOk());
+                CHECK(rxPort.pendingPackets() == 8);
+                // Allow a small jitter window — the call should
+                // last at least the requested interval and not
+                // wildly more (the loopback transport adds
+                // microseconds at most).
+                CHECK(elapsedMs >= 45);
+                CHECK(elapsedMs <= 100);
+
+                session.stop();
+        }
+
+        SUBCASE("sendPacketsPaced paces single-packet frames too") {
+                // Single-packet frames previously bypassed pacing
+                // entirely (the function returned immediately
+                // because there was nothing to spread "between"
+                // packets), which broke the writer's frame-rate
+                // pacing for very small compressed frames.  The
+                // call should now last spreadInterval regardless
+                // of packet count.
+                LoopbackTransport txPort, rxPort;
+                LoopbackTransport::pair(&txPort, &rxPort);
+                txPort.open();
+                rxPort.open();
+
+                RtpSession session;
+                session.setRemote(SocketAddress(Ipv4Address::loopback(), 5004));
+                REQUIRE(session.start(&txPort).isOk());
+
+                auto pkts = RtpPacket::createList(1, 200);
+                const Duration interval = Duration::fromMilliseconds(40);
+
+                TimeStamp start = TimeStamp::now();
+                Error err = session.sendPacketsPaced(pkts, 0, interval, true);
+                int64_t elapsedMs = start.elapsedMilliseconds();
+
+                CHECK(err.isOk());
+                CHECK(rxPort.pendingPackets() == 1);
+                CHECK(elapsedMs >= 35);
+                CHECK(elapsedMs <= 80);
+
+                session.stop();
+        }
+
         SUBCASE("setPacingRate via RtpSession") {
                 RtpSession session;
                 session.setRemote(SocketAddress::localhost(5004));
@@ -362,5 +434,131 @@ TEST_CASE("RtpSession") {
                 }
                 // If we get here without crash, destructor worked
                 CHECK(true);
+        }
+
+        SUBCASE("startReceiving before start fails") {
+                RtpSession session;
+                Error err = session.startReceiving(
+                        [](const RtpPacket &, const SocketAddress &) {});
+                CHECK(err == Error::NotOpen);
+                CHECK_FALSE(session.isReceiving());
+        }
+
+        SUBCASE("startReceiving with null callback fails") {
+                // Need a running session first.
+                UdpSocket receiver;
+                receiver.open(IODevice::ReadWrite);
+                receiver.bind(SocketAddress::any(0));
+
+                RtpSession session;
+                REQUIRE(session.start(SocketAddress::any(0)).isOk());
+                Error err = session.startReceiving(RtpSession::PacketCallback{});
+                CHECK(err == Error::InvalidArgument);
+                CHECK_FALSE(session.isReceiving());
+                session.stop();
+        }
+
+        SUBCASE("receive loop delivers packets to callback") {
+                // sender: RtpSession transmitting onto a well-known
+                //         loopback port
+                // receiver: second RtpSession with startReceiving
+                //           listening on that port
+                UdpSocket pickport;
+                pickport.open(IODevice::ReadWrite);
+                pickport.bind(SocketAddress::any(0));
+                uint16_t port = pickport.localAddress().port();
+                pickport.close();
+
+                RtpSession rxSession;
+                rxSession.setReceivePollIntervalMs(20);
+                Error err = rxSession.start(SocketAddress::any(port));
+                REQUIRE(err.isOk());
+
+                std::atomic<int> count{0};
+                std::atomic<uint32_t> lastTimestamp{0};
+                std::atomic<uint8_t> lastPayloadType{0};
+                std::atomic<uint32_t> lastSsrc{0};
+                err = rxSession.startReceiving(
+                        [&](const RtpPacket &pkt, const SocketAddress &) {
+                                lastTimestamp.store(pkt.timestamp());
+                                lastPayloadType.store(pkt.payloadType());
+                                lastSsrc.store(pkt.ssrc());
+                                count.fetch_add(1);
+                        });
+                REQUIRE(err.isOk());
+                CHECK(rxSession.isReceiving());
+
+                // Give the receive thread time to install
+                // SO_RCVTIMEO and settle into the loop.
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+                // Send a single RTP packet.
+                RtpSession txSession;
+                txSession.setPayloadType(97);
+                txSession.setClockRate(48000);
+                txSession.setSsrc(0xCAFEBABE);
+                txSession.setRemote(SocketAddress(
+                        Ipv4Address::loopback(), port));
+                REQUIRE(txSession.start(SocketAddress::any(0)).isOk());
+
+                RtpPayloadL16 payload(48000, 2);
+                std::vector<uint8_t> audio(64, 0);
+                auto packets = payload.pack(audio.data(), audio.size());
+                REQUIRE(!packets.isEmpty());
+                err = txSession.sendPackets(packets, 12345, false);
+                CHECK(err.isOk());
+
+                // Wait up to 500 ms for delivery.
+                for(int i = 0; i < 50 && count.load() == 0; i++) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+
+                rxSession.stopReceiving();
+                CHECK_FALSE(rxSession.isReceiving());
+
+                txSession.stop();
+                rxSession.stop();
+
+                CHECK(count.load() >= 1);
+                CHECK(lastTimestamp.load() == 12345);
+                CHECK(lastPayloadType.load() == 97);
+                CHECK(lastSsrc.load() == 0xCAFEBABE);
+        }
+
+        SUBCASE("stopReceiving is idempotent") {
+                RtpSession session;
+                REQUIRE(session.start(SocketAddress::any(0)).isOk());
+                REQUIRE(session.startReceiving(
+                        [](const RtpPacket &, const SocketAddress &) {}).isOk());
+                session.stopReceiving();
+                CHECK_FALSE(session.isReceiving());
+                session.stopReceiving(); // second call is a no-op
+                CHECK_FALSE(session.isReceiving());
+                session.stop();
+        }
+
+        SUBCASE("receivePollIntervalMs defaults and setter") {
+                RtpSession session;
+                CHECK(session.receivePollIntervalMs() == 200);
+                session.setReceivePollIntervalMs(50);
+                CHECK(session.receivePollIntervalMs() == 50);
+        }
+
+        SUBCASE("setReceivePollIntervalMs zero coerces to 200") {
+                RtpSession session;
+                session.setReceivePollIntervalMs(0);
+                CHECK(session.receivePollIntervalMs() == 200);
+        }
+
+        SUBCASE("startReceiving twice returns Busy") {
+                RtpSession session;
+                REQUIRE(session.start(SocketAddress::any(0)).isOk());
+                REQUIRE(session.startReceiving(
+                        [](const RtpPacket &, const SocketAddress &) {}).isOk());
+                Error err = session.startReceiving(
+                        [](const RtpPacket &, const SocketAddress &) {});
+                CHECK(err == Error::Busy);
+                session.stopReceiving();
+                session.stop();
         }
 }

@@ -10,7 +10,7 @@ This document tracks optimization work for the network transmit path (batch send
 
 **Completed:** Font rendering (Font/FastFont/BasicFont), ImageCodec/AudioCodec/JpegImageCodec, VideoTestPattern/AudioTestPattern, userspace packet pacing via `RtpSession::sendPacketsPaced()`, PaintEngine interleaved template overhaul, CSC framework and pipeline bug fixes, **kernel batch send (`sendmmsg` via `UdpSocket::writeDatagrams()`)**, **kernel pacing (`SO_MAX_PACING_RATE` via `UdpSocket::setPacingRate()`)**, **`SO_TXTIME` enable path**, **`PacketTransport` abstraction with `UdpSocketTransport` and `LoopbackTransport`**, **`RtpSession` migrated to `PacketTransport`** (with `setRemote()` at start time, batched send via the transport, and `setPacingRate()` wrapper for kernel pacing).
 
-**Remaining:** per-packet `SCM_TXTIME` cmsg scheduling on top of the existing `setTxTime()` enable path (sender-side deadline computation), and future DPDK transport backend.  The new `MediaPipeline` (see `proav_pipeline.md`) is signal-driven end to end, so there is no separate pipeline-scheduler problem to solve in this document.
+**Remaining:** per-packet `SCM_TXTIME` cmsg scheduling on top of the existing `setTxTime()` enable path (sender-side deadline computation), and future DPDK transport backend.  Compressed video (JPEG / JPEG XS) VBR streams are now paced per-frame by recomputing `setPacingRate()` from each frame's actual byte count before dispatch.  The new `MediaPipeline` (see `proav_pipeline.md`) is signal-driven end to end, so there is no separate pipeline-scheduler problem to solve in this document.
 
 ---
 

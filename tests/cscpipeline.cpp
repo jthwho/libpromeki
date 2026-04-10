@@ -1115,3 +1115,76 @@ TEST_CASE("v210 RGBA8 fast path: v210 -> RGBA8 does not crash on 1920-wide image
         REQUIRE(back.isValid());
         CHECK(back.width() == 1920);
 }
+
+// =========================================================================
+// YUYV <-> UYVY byte-swap fast path
+// =========================================================================
+
+TEST_CASE("CSC YUYV8 -> UYVY8 byte-swap correctness") {
+        // Build a 4-pixel YUYV image with known byte values.
+        // YUYV byte order per pair: [Y0, Cb, Y1, Cr]
+        Image src(4, 1, PixelDesc::YUV8_422_Rec709);
+        REQUIRE(src.isValid());
+        uint8_t *sp = static_cast<uint8_t *>(src.data());
+        // Pair 0: Y0=16, Cb=128, Y1=235, Cr=200
+        sp[0] = 16;  sp[1] = 128; sp[2] = 235; sp[3] = 200;
+        // Pair 1: Y0=100, Cb=64, Y1=180, Cr=192
+        sp[4] = 100; sp[5] = 64;  sp[6] = 180; sp[7] = 192;
+
+        Image dst = src.convert(PixelDesc::YUV8_422_UYVY_Rec709, src.metadata());
+        REQUIRE(dst.isValid());
+        CHECK(dst.pixelDesc().id() == PixelDesc::YUV8_422_UYVY_Rec709);
+
+        // UYVY byte order per pair: [Cb, Y0, Cr, Y1]
+        const uint8_t *dp = static_cast<const uint8_t *>(dst.data());
+        // Pair 0
+        CHECK(dp[0] == 128); // Cb
+        CHECK(dp[1] == 16);  // Y0
+        CHECK(dp[2] == 200); // Cr
+        CHECK(dp[3] == 235); // Y1
+        // Pair 1
+        CHECK(dp[4] == 64);  // Cb
+        CHECK(dp[5] == 100); // Y0
+        CHECK(dp[6] == 192); // Cr
+        CHECK(dp[7] == 180); // Y1
+}
+
+TEST_CASE("CSC UYVY8 -> YUYV8 byte-swap correctness") {
+        Image src(4, 1, PixelDesc::YUV8_422_UYVY_Rec709);
+        REQUIRE(src.isValid());
+        uint8_t *sp = static_cast<uint8_t *>(src.data());
+        // UYVY pair: [Cb, Y0, Cr, Y1]
+        sp[0] = 128; sp[1] = 16;  sp[2] = 200; sp[3] = 235;
+        sp[4] = 64;  sp[5] = 100; sp[6] = 192; sp[7] = 180;
+
+        Image dst = src.convert(PixelDesc::YUV8_422_Rec709, src.metadata());
+        REQUIRE(dst.isValid());
+        CHECK(dst.pixelDesc().id() == PixelDesc::YUV8_422_Rec709);
+
+        // YUYV pair: [Y0, Cb, Y1, Cr]
+        const uint8_t *dp = static_cast<const uint8_t *>(dst.data());
+        CHECK(dp[0] == 16);  // Y0
+        CHECK(dp[1] == 128); // Cb
+        CHECK(dp[2] == 235); // Y1
+        CHECK(dp[3] == 200); // Cr
+        CHECK(dp[4] == 100);
+        CHECK(dp[5] == 64);
+        CHECK(dp[6] == 180);
+        CHECK(dp[7] == 192);
+}
+
+TEST_CASE("CSC YUYV8 <-> UYVY8 round-trip is lossless") {
+        Image src(320, 4, PixelDesc::YUV8_422_Rec709);
+        REQUIRE(src.isValid());
+        uint8_t *sp = static_cast<uint8_t *>(src.data());
+        size_t nbytes = src.lineStride() * src.height();
+        for(size_t i = 0; i < nbytes; i++) sp[i] = static_cast<uint8_t>(i & 0xFF);
+
+        Image uyvy = src.convert(PixelDesc::YUV8_422_UYVY_Rec709, src.metadata());
+        REQUIRE(uyvy.isValid());
+        Image back = uyvy.convert(PixelDesc::YUV8_422_Rec709, uyvy.metadata());
+        REQUIRE(back.isValid());
+
+        const uint8_t *bp = static_cast<const uint8_t *>(back.data());
+        CHECK(memcmp(sp, bp, nbytes) == 0);
+}

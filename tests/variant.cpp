@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/variant.h>
+#include <promeki/sdpsession.h>
 
 using namespace promeki;
 
@@ -717,6 +718,86 @@ TEST_CASE("Variant_SocketAddress_TypeName") {
     // The type name is whatever the X-macro stringified.
     String name = String(v.typeName());
     CHECK(name == "SocketAddress");
+}
+
+// ============================================================================
+// SdpSession Variant type
+// ============================================================================
+
+TEST_CASE("Variant_SdpSession_TypedRoundtrip") {
+        SdpSession sdp;
+        sdp.setSessionName("test-session");
+        sdp.setOrigin("user", 42, 1, "IN", "IP4", "10.0.0.1");
+        Variant v(sdp);
+        CHECK(v.type() == Variant::TypeSdpSession);
+        CHECK(v.isValid());
+        SdpSession back = v.get<SdpSession>();
+        CHECK(back == sdp);
+        CHECK(back.sessionName() == "test-session");
+        CHECK(back.originUsername() == "user");
+        CHECK(back.sessionId() == 42);
+}
+
+TEST_CASE("Variant_SdpSession_ToString") {
+        SdpSession sdp;
+        sdp.setSessionName("variant-to-string-test");
+        Variant v(sdp);
+        String s = v.get<String>();
+        CHECK(s.contains("v=0"));
+        CHECK(s.contains("variant-to-string-test"));
+}
+
+TEST_CASE("Variant_SdpSession_FromString") {
+        // Build a valid SDP text and store it as a String variant,
+        // then convert to SdpSession via get<SdpSession>().
+        String sdpText =
+                "v=0\r\n"
+                "o=test 100 1 IN IP4 127.0.0.1\r\n"
+                "s=from-string-test\r\n"
+                "c=IN IP4 239.0.0.1\r\n"
+                "t=0 0\r\n"
+                "m=video 5004 RTP/AVP 96\r\n"
+                "a=rtpmap:96 raw/90000\r\n";
+        Variant v(sdpText);
+        Error err;
+        SdpSession sdp = v.get<SdpSession>(&err);
+        CHECK(err.isOk());
+        CHECK(sdp.sessionName() == "from-string-test");
+        CHECK(sdp.connectionAddress() == "239.0.0.1");
+        REQUIRE(sdp.mediaDescriptions().size() == 1);
+        CHECK(sdp.mediaDescriptions()[0].mediaType() == "video");
+}
+
+TEST_CASE("Variant_SdpSession_FromStringDegenerateInput") {
+        // SdpSession::fromString is lenient — it skips lines it
+        // cannot parse and returns Error::Ok with whatever fields
+        // it could extract.  So "garbage" input yields an empty
+        // session rather than an error.  Verify we get a valid
+        // Variant round-trip even for this degenerate case.
+        Variant v(String("this is not valid SDP"));
+        Error err;
+        SdpSession sdp = v.get<SdpSession>(&err);
+        // The parser returns Ok with an empty session.
+        CHECK(err.isOk());
+        CHECK(sdp.sessionName().isEmpty());
+}
+
+TEST_CASE("Variant_SdpSession_TypeName") {
+        Variant v(SdpSession{});
+        String name = String(v.typeName());
+        CHECK(name == "SdpSession");
+}
+
+TEST_CASE("Variant_SdpSession_ToStringViaGetString") {
+        // Test that Variant::get<String>() works for SdpSession type
+        // (this exercises the toString conversion branch in the
+        // variant visitor).
+        SdpSession sdp;
+        sdp.setSessionName("to-string-overall");
+        Variant v(sdp);
+        String s = v.get<String>();
+        CHECK(s.contains("v=0"));
+        CHECK(s.contains("to-string-overall"));
 }
 
 #endif // PROMEKI_ENABLE_NETWORK
