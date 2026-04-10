@@ -215,6 +215,12 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 static inline const ID ImageFileID{"ImageFileID"};
                 /// @brief int — first frame index for a sequence writer.
                 static inline const ID SequenceHead{"SequenceHead"};
+                /// @brief String — if non-empty, the backend writes an @c .imgseq
+                /// JSON sidecar to this path when the sequence writer closes.
+                static inline const ID SaveImgSeqPath{"SaveImgSeqPath"};
+                /// @brief Enum @ref ImgSeqPathMode — whether the sidecar's
+                /// directory reference is relative (to the sidecar) or absolute.
+                static inline const ID SaveImgSeqPathMode{"SaveImgSeqPathMode"};
 
                 // ============================================================
                 // QuickTime / ISO-BMFF (MediaIOTask_QuickTime)

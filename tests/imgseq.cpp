@@ -376,6 +376,91 @@ TEST_CASE("ImgSeq: detectRange on invalid pattern fails") {
         CHECK(seq.detectRange(t.path()).isError());
 }
 
+// ============================================================================
+// dir field (image directory separate from sidecar location)
+// ============================================================================
+
+TEST_CASE("ImgSeq: dir field defaults to empty") {
+        ImgSeq seq;
+        CHECK(seq.dir().isEmpty());
+}
+
+TEST_CASE("ImgSeq: setDir / dir round-trip") {
+        ImgSeq seq;
+        FilePath d("/media/renders/shot001");
+        seq.setDir(d);
+        CHECK(seq.dir() == d);
+}
+
+TEST_CASE("ImgSeq: toJson omits dir when empty") {
+        ImgSeq seq;
+        seq.setName(NumName::fromMask("shot_####.dpx"));
+        seq.setHead(1);
+        seq.setTail(10);
+        JsonObject root = seq.toJson();
+        CHECK_FALSE(root.contains("dir"));
+}
+
+TEST_CASE("ImgSeq: toJson includes dir when set") {
+        ImgSeq seq;
+        seq.setName(NumName::fromMask("shot_####.dpx"));
+        seq.setHead(1);
+        seq.setTail(10);
+        seq.setDir(FilePath("/media/renders/shot001"));
+        JsonObject root = seq.toJson();
+        REQUIRE(root.contains("dir"));
+        CHECK(root.getString("dir") == "/media/renders/shot001");
+}
+
+TEST_CASE("ImgSeq: fromJson parses dir field") {
+        JsonObject root;
+        root.set("type", String("imgseq"));
+        root.set("name", String("shot_####.dpx"));
+        root.set("dir", String("/media/renders/shot001"));
+        Error err;
+        ImgSeq seq = ImgSeq::fromJson(root, &err);
+        CHECK(err.isOk());
+        CHECK(seq.isValid());
+        CHECK(seq.dir() == FilePath("/media/renders/shot001"));
+}
+
+TEST_CASE("ImgSeq: dir round-trips through JSON") {
+        ImgSeq orig;
+        orig.setName(NumName::fromMask("shot_####.dpx"));
+        orig.setHead(1);
+        orig.setTail(5);
+        orig.setDir(FilePath("../images/shot001"));
+        JsonObject json = orig.toJson();
+        Error err;
+        ImgSeq parsed = ImgSeq::fromJson(json, &err);
+        CHECK(err.isOk());
+        CHECK(parsed.dir() == FilePath("../images/shot001"));
+}
+
+TEST_CASE("ImgSeq: dir round-trips through save/load") {
+        Dir t = Dir::temp();
+        FilePath scratch = t.path() / "promeki_imgseq_dir_field";
+        Dir d(scratch);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+        FilePath sidecar = scratch / "clip.imgseq";
+
+        ImgSeq orig;
+        orig.setName(NumName::fromMask("clip_####.exr"));
+        orig.setHead(1);
+        orig.setTail(24);
+        orig.setDir(FilePath("../renders/clip"));
+
+        CHECK(orig.save(sidecar).isOk());
+
+        Error err;
+        ImgSeq loaded = ImgSeq::load(sidecar, &err);
+        CHECK(err.isOk());
+        CHECK(loaded.dir() == FilePath("../renders/clip"));
+
+        d.removeRecursively();
+}
+
 TEST_CASE("ImgSeq: save writes human-readable JSON with indentation") {
         Dir t = Dir::temp();
         FilePath scratch = t.path() / "promeki_imgseq_readable";

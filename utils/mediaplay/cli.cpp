@@ -177,12 +177,6 @@ void usage() {
                 "                            output length in frames.\n"
                 "  --verbose                 Print periodic progress stats.\n"
                 "\n"
-                "Sequence sidecar:\n"
-                "  --imgseq                  Write an .imgseq sidecar alongside\n"
-                "                            the first file sink that uses a\n"
-                "                            sequence mask.\n"
-                "  --imgseq-file <PATH>      Explicit sidecar path; implies --imgseq.\n"
-                "\n"
                 "Misc:\n"
                 "  -h, --help                Show this help text and the schema.\n");
         printBackendConfigHelp();
@@ -314,20 +308,6 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  "Print periodic progress stats",
                  CmdLineParser::OptionCallback([&]() {
                          opts.verbose = true;
-                         return 0;
-                 })},
-
-                {0, "imgseq",
-                 "Write an .imgseq sidecar alongside the first sequence sink",
-                 CmdLineParser::OptionCallback([&]() {
-                         opts.writeImgSeq = true;
-                         return 0;
-                 })},
-                {0, "imgseq-file",
-                 "Explicit .imgseq sidecar path (implies --imgseq)",
-                 CmdLineParser::OptionStringCallback([&](const String &s) {
-                         opts.imgSeqPath = s;
-                         opts.writeImgSeq = true;
                          return 0;
                  })},
         });

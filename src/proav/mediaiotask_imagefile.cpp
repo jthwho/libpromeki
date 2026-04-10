@@ -14,6 +14,7 @@
 #include <promeki/logger.h>
 #include <promeki/imgseq.h>
 #include <promeki/dir.h>
+#include <promeki/enums.h>
 #include <promeki/filepath.h>
 #include <promeki/buffer.h>
 #include <promeki/metadata.h>
@@ -214,6 +215,8 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                         cfg.set(MediaConfig::VideoPixelFormat, PixelDesc());
                         cfg.set(MediaConfig::FrameRate, DefaultFrameRate);
                         cfg.set(MediaConfig::SequenceHead, DefaultSequenceHead);
+                        cfg.set(MediaConfig::SaveImgSeqPath, String());
+                        cfg.set(MediaConfig::SaveImgSeqPathMode, ImgSeqPathMode::Relative);
                         return cfg;
                 },
                 []() -> Metadata {
@@ -277,6 +280,9 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         _filename = cfg.getAs<String>(MediaConfig::Filename);
         _mode = cmd.mode;
         _sequenceMode = false;
+        _saveImgSeqPath = cfg.getAs<String>(MediaConfig::SaveImgSeqPath, String());
+        _saveImgSeqPathMode = cfg.get(MediaConfig::SaveImgSeqPathMode)
+                .asEnum(ImgSeqPathMode::Type, nullptr);
 
         // Resolve the reported frame rate with a documented priority:
         //   1. Writer with a valid pendingMediaDesc frame rate
@@ -318,6 +324,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
                 if(err.isError()) return err;
         }
 
+        _writerFrameRate = mediaDesc.frameRate();
         cmd.mediaDesc = mediaDesc;
         cmd.frameRate = mediaDesc.frameRate();
         return Error::Ok;
@@ -470,7 +477,17 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                         return Error::Invalid;
                 }
                 pattern = seq.name();
-                dir = FilePath(_filename).parent();
+                FilePath sidecarDir = FilePath(_filename).parent();
+                if(sidecarDir.isEmpty()) sidecarDir = FilePath(".");
+                if(!seq.dir().isEmpty()) {
+                        if(seq.dir().isAbsolute()) {
+                                dir = seq.dir();
+                        } else {
+                                dir = sidecarDir / seq.dir();
+                        }
+                } else {
+                        dir = sidecarDir;
+                }
 
                 if(seq.head() != 0 || seq.tail() != 0) {
                         head = static_cast<int64_t>(seq.head());
@@ -642,6 +659,13 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 _seqAtEnd = false;
                 _writeCount = 0;
 
+                // Stash the video descriptor for the .imgseq sidecar.
+                if(!cmd.pendingMediaDesc.imageList().isEmpty()) {
+                        const ImageDesc &id = cmd.pendingMediaDesc.imageList()[0];
+                        _seqSize = id.size();
+                        _seqPixelDesc = id.pixelDesc();
+                }
+
                 Metadata meta = cmd.pendingMetadata;
                 meta.merge(_seqMetadata);
                 meta.set(Metadata::FrameRateSource, frSource);
@@ -663,7 +687,73 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
 // Close
 // ----------------------------------------------------------------------------
 
+Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
+        if(_saveImgSeqPath.isEmpty()) return Error::Ok;
+        if(_writeCount <= 0) {
+                promekiInfo("MediaIOTask_ImageFile: skipping .imgseq sidecar — no frames written");
+                return Error::Ok;
+        }
+        ImgSeq seq;
+        seq.setName(_seqName);
+        seq.setHead(static_cast<size_t>(_seqHead));
+        seq.setTail(static_cast<size_t>(_seqHead + _writeCount - 1));
+        if(_writerFrameRate.isValid()) {
+                seq.setFrameRate(_writerFrameRate);
+        }
+        if(_seqSize.width() > 0 && _seqSize.height() > 0) {
+                seq.setVideoSize(_seqSize);
+        }
+        if(_seqPixelDesc.isValid()) {
+                seq.setPixelDesc(_seqPixelDesc);
+        }
+
+        // If SaveImgSeqPath is relative, resolve it against the image
+        // directory so the sidecar lands alongside the frames by default.
+        FilePath sidecarPath(_saveImgSeqPath);
+        if(sidecarPath.isRelative()) {
+                FilePath imageDir = _seqDir;
+                if(imageDir.isEmpty()) imageDir = FilePath(".");
+                sidecarPath = imageDir / sidecarPath;
+        }
+
+        // Compute the dir field: a path from the sidecar location to
+        // the image directory.  The sidecar's "name" is always a bare
+        // filename pattern; "dir" tells the reader where to find the
+        // files relative to the sidecar (or as an absolute path).
+        FilePath sidecarDir = sidecarPath.parent();
+        if(sidecarDir.isEmpty()) sidecarDir = FilePath(".");
+        FilePath imageDir = _seqDir;
+        if(imageDir.isEmpty()) imageDir = FilePath(".");
+
+        bool absolute = _saveImgSeqPathMode.isValid() &&
+                        _saveImgSeqPathMode == ImgSeqPathMode::Absolute;
+        if(absolute) {
+                seq.setDir(imageDir.absolutePath());
+        } else {
+                FilePath rel = imageDir.absolutePath().relativeTo(sidecarDir.absolutePath());
+                // Only emit dir when it differs from the sidecar location.
+                if(rel.toString() != ".") {
+                        seq.setDir(rel);
+                }
+        }
+
+        Error err = seq.save(sidecarPath);
+        if(err.isError()) {
+                promekiErr("MediaIOTask_ImageFile: failed to write .imgseq sidecar '%s': %s",
+                        sidecarPath.toString().cstr(), err.name().cstr());
+        } else {
+                promekiInfo("MediaIOTask_ImageFile: wrote .imgseq sidecar '%s'",
+                        sidecarPath.toString().cstr());
+        }
+        return err;
+}
+
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
+        // Write the .imgseq sidecar before resetting state (writer + sequence only).
+        if(_mode == MediaIO::Writer && _sequenceMode) {
+                writeImgSeqSidecar();
+        }
+
         _frame = {};
         _filename = String();
         _imageFileID = ImageFile::Invalid;
@@ -673,6 +763,9 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         _loaded = false;
         _writeContainerMetadata = Metadata();
         _ioConfig = MediaConfig();
+        _saveImgSeqPath = String();
+        _saveImgSeqPathMode = Enum();
+        _writerFrameRate = FrameRate();
 
         _sequenceMode = false;
         _seqName = NumName();

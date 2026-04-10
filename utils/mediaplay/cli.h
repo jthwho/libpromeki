@@ -60,11 +60,6 @@ struct Options {
         double                          duration    = 0.0;
         int64_t                         frameCount  = 0;
         bool                            verbose     = false;
-
-        // Image-sequence sidecar (for the first file output that is
-        // a sequence mask).
-        bool                            writeImgSeq = false;
-        promeki::String                 imgSeqPath;
 };
 
 /**

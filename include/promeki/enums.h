@@ -342,6 +342,26 @@ struct MetadataRtpFormat {
         static inline const Enum St2110_40    { Type, 1 };
 };
 
+/**
+ * @brief Well-known Enum type for @c .imgseq sidecar path mode.
+ *
+ * Controls whether the directory written into an @c .imgseq sidecar
+ * is expressed as a relative path (from the sidecar's own location)
+ * or as an absolute path.  Used as the value type for the
+ * @ref MediaConfig::SaveImgSeqPathMode config key.
+ */
+struct ImgSeqPathMode {
+        static inline const Enum::Type Type = Enum::registerType("ImgSeqPathMode",
+                {
+                        { "Relative", 0 },
+                        { "Absolute", 1 }
+                },
+                0);  // default: Relative
+
+        static inline const Enum Relative { Type, 0 };
+        static inline const Enum Absolute { Type, 1 };
+};
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

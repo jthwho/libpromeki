@@ -162,6 +162,20 @@ class ImgSeq {
                 /** @brief Returns @c true if the pattern is valid. */
                 bool isValid() const { return _name.isValid(); }
 
+                /**
+                 * @brief Returns the directory where the image files live.
+                 *
+                 * When loaded from a sidecar, this is the value of the
+                 * @c "dir" JSON field (empty means same directory as the
+                 * sidecar).  Relative paths are resolved against the
+                 * sidecar's containing directory; absolute paths are used
+                 * as-is.
+                 */
+                const FilePath &dir() const { return _dir; }
+
+                /** @brief Sets the image directory. */
+                void setDir(const FilePath &val) { _dir = val; }
+
                 /** @brief Returns the file pattern. */
                 const NumName &name() const { return _name; }
 
@@ -251,6 +265,7 @@ class ImgSeq {
                 }
 
         private:
+                FilePath        _dir;
                 NumName         _name;
                 size_t          _head = 0;
                 size_t          _tail = 0;

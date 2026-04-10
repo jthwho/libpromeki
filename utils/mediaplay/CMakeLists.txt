@@ -2,7 +2,6 @@ add_executable(mediaplay
     main.cpp
     cli.cpp
     pipeline.cpp
-    sidecar.cpp
     stage.cpp
 )
 target_link_libraries(mediaplay PRIVATE promeki::promeki promeki::sdl)

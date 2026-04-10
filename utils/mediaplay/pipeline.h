@@ -31,17 +31,14 @@ using namespace promeki;
 /**
  * @brief One output attached to the pipeline.
  *
- * Populated by main() after each `--out` has been built.  The
- * @c isFile and @c isSeq flags let the sidecar writer find the
- * first sequence-mask sink to describe.
+ * Populated by main() after each `--out` has been built.
  */
 struct Sink {
         MediaIO     *io    = nullptr;
         String       name;
         bool         paced = false;
         bool         isFile = false;   ///< True for backends opened via createForFileWrite.
-        bool         isSeq  = false;   ///< True when the output is a sequence mask.
-        String       path;             ///< File path for sequence sidecar / logging.
+        String       path;             ///< File path for logging.
 };
 
 /**

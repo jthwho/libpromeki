@@ -165,6 +165,15 @@ JPEG read/write is wired into the existing `ImageFile` / `ImageFileIO` subsystem
 - The JPEG sub-format selected on save is chosen from the input `PixelDesc` family (RGB → `JPEG_RGB8_sRGB`, RGBA → `JPEG_RGBA8_sRGB`, YUV 4:2:2 → `JPEG_YUV8_422_Rec709`, YUV 4:2:0 → `JPEG_YUV8_420_Rec709`) to avoid an extra CSC hop.
 - **PixelDesc `encodeSources` cleanup** was part of this work: `JPEG_RGB8_sRGB`, `JPEG_YUV8_422_Rec709`, and `JPEG_YUV8_420_Rec709` no longer falsely advertise cross-family sources (RGB in YUV, RGBA in RGB).  The codec tags its output based on the input component order, so each JPEG `PixelDesc` now only lists the inputs whose natural family matches its own — `Image::convert()` handles any cross-family CSC before the codec runs.
 
+**Design additions (imgseq sidecar writing — shipped):**
+
+`MediaIOTask_ImageFile` now writes an `.imgseq` JSON sidecar automatically when the writer closes a sequence.  Two new `MediaConfig` keys control the feature:
+
+- `MediaConfig::SaveImgSeqPath` (String) — when non-empty, the backend writes an `.imgseq` JSON sidecar to this path on close.  A relative path is resolved against the image-sequence directory so the sidecar lands alongside the frames by default.
+- `MediaConfig::SaveImgSeqPathMode` (Enum `ImgSeqPathMode`) — `Relative` (default) or `Absolute`; controls whether the `"dir"` field written into the sidecar is a relative path (from the sidecar's location to the image directory) or an absolute path.
+
+The `ImgSeq` format gained a `"dir"` JSON field so the image directory can be expressed separately from the sidecar's own location.  `FilePath::relativeTo()` was added to support the relative-path computation.  The `--imgseq` / `--imgseq-file` CLI options and the `sidecar.{h,cpp}` files have been removed from `mediaplay`; the library handles sidecar writing entirely.
+
 **Remaining work (future):**
 - [ ] `MediaConfig::JpegQuality` / `MediaConfig::JpegSubsampling` / `MediaConfig::JpegProgressive` exposed as first-class `MediaIOTask_ImageFile` open-time config (today callers forward them through `ImageFile::save(config)` directly or via the Converter stage; the ImageFile backend itself does not advertise them in its `defaultConfig()`).
 - [ ] EXIF / IPTC metadata parsing (initial: lossless pass-through of the raw JPEG bitstream, no tag-level round-trip).
@@ -173,7 +182,7 @@ JPEG read/write is wired into the existing `ImageFile` / `ImageFileIO` subsystem
 
 ## mediaplay — Generic Config-Driven CLI
 
-**Files:** `utils/mediaplay/main.cpp`, `cli.{h,cpp}`, `stage.{h,cpp}`, `pipeline.{h,cpp}`, `sidecar.{h,cpp}` (split from the original monolithic `main.cpp`; wired via `utils/mediaplay/CMakeLists.txt`)
+**Files:** `utils/mediaplay/main.cpp`, `cli.{h,cpp}`, `stage.{h,cpp}`, `pipeline.{h,cpp}` (split from the original monolithic `main.cpp`; wired via `utils/mediaplay/CMakeLists.txt`)
 
 **Shipped — CLI rework (this session):**
 
@@ -190,6 +199,10 @@ SDL is a pseudo-backend (`kStageSdl`) that exposes a full schema via `sdlDefault
 `--duration` fix: rewrote `Pipeline::drain()` into `drainSource()` + `drainConverter()` wired to each stage's `frameReadySignal` with non-blocking writes and per-stage back-pressure counters.  No more blocking `writeFrame(true)`/`readFrame(true)` on the main thread; `--duration` is now honoured even when a Converter is in the path.
 
 Also fixed sort-in-place bug in the help dumper: `List::sort()` returns a copy, does not sort in place.
+
+**Shipped — imgseq sidecar refactor (this session):**
+
+Removed `--imgseq` / `--imgseq-file` CLI options and deleted `sidecar.{h,cpp}`.  Sidecar writing is now a library-level concern: set `MediaConfig::SaveImgSeqPath` on the ImageFile writer stage instead.  The `ImgSeq` format gained a `"dir"` JSON field; `FilePath::relativeTo()` was added.  `ImgSeqPathMode` enum (Relative/Absolute) controls whether the sidecar's `"dir"` field is written as a relative or absolute path.
 
 **Earlier shipped (previous session):**
 

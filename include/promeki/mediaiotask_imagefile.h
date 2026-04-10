@@ -16,6 +16,7 @@
 #include <promeki/framerate.h>
 #include <promeki/size2d.h>
 #include <promeki/filepath.h>
+#include <promeki/enum.h>
 #include <promeki/numname.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -101,6 +102,8 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoPixelFormat | PixelDesc | — | Pixel description for headerless formats. |
  * | @ref MediaConfig::FrameRate        | FrameRate | 30/1 | Reported frame rate for the still image or sequence. |
  * | @ref MediaConfig::SequenceHead     | int       | 1 | First frame number for a sequence writer. |
+ * | @ref MediaConfig::SaveImgSeqPath   | String    | — | Path for @c .imgseq sidecar written on close (writer only). |
+ * | @ref MediaConfig::SaveImgSeqPathMode | Enum @ref ImgSeqPathMode | Relative | Whether sidecar dir reference is relative or absolute. |
  */
 class MediaIOTask_ImageFile : public MediaIOTask {
         public:
@@ -138,6 +141,8 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 Error writeSingle(MediaIOCommandWrite &cmd);
                 Error writeSequence(MediaIOCommandWrite &cmd);
 
+                Error writeImgSeqSidecar();
+
                 // Common state
                 String          _filename;          ///< @brief Raw config filename (single file, mask, or .imgseq).
                 int             _imageFileID = ImageFile::Invalid;
@@ -145,6 +150,9 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 bool            _sequenceMode = false;
                 Metadata        _writeContainerMetadata; ///< @brief Container metadata merged into each written frame (writer only).
                 MediaConfig     _ioConfig;          ///< @brief Open-time MediaConfig forwarded to ImageFileIO load/save calls.
+                String          _saveImgSeqPath;    ///< @brief Path for .imgseq sidecar written on close (writer only).
+                Enum            _saveImgSeqPathMode; ///< @brief Relative or Absolute path mode for the sidecar.
+                FrameRate       _writerFrameRate;   ///< @brief Resolved frame rate stashed for the sidecar.
 
                 // Single-file state
                 Frame::Ptr      _frame;

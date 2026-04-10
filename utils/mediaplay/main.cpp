@@ -21,7 +21,6 @@
  *   - `cli.{h,cpp}`       — Options, parser, help text, schema dump
  *   - `stage.{h,cpp}`     — StageSpec, value parser, stage builders
  *   - `pipeline.{h,cpp}`  — Pipeline + Sink
- *   - `sidecar.{h,cpp}`   — `.imgseq` sidecar helpers
  */
 
 #include <csignal>
@@ -37,12 +36,10 @@
 #include <promeki/list.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
-#include <promeki/mediaiotask_imagefile.h>
 #include <promeki/metadata.h>
 #include <promeki/rect.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>
-#include <promeki/variant.h>
 
 #include <promeki/sdl/sdlapplication.h>
 #include <promeki/sdl/sdlaudiooutput.h>
@@ -52,7 +49,6 @@
 
 #include "cli.h"
 #include "pipeline.h"
-#include "sidecar.h"
 #include "stage.h"
 
 using namespace promeki;
@@ -145,8 +141,6 @@ int main(int argc, char **argv) {
         SDLWindow       *window      = nullptr;
         SDLVideoWidget  *videoWidget = nullptr;
         SDLAudioOutput  *audioOutput = nullptr;
-        bool anySequenceOutput = false;
-        String firstSequencePath;
 
         auto cleanupAndFail = [&](int rc) {
                 for(auto it = sinks.begin(); it != sinks.end(); ++it) {
@@ -248,7 +242,7 @@ int main(int argc, char **argv) {
                                 return cleanupAndFail(1);
                         }
                         sinks.pushToBack(Sink{player, String("sdl"),
-                                              sdlPaced, false, false, String()});
+                                              sdlPaced, false, String()});
                         continue;
                 }
 
@@ -265,16 +259,9 @@ int main(int argc, char **argv) {
                         return cleanupAndFail(1);
                 }
                 bool isFile = (spec.type == kStageFile);
-                bool isSeq = isFile && outputIsSequenceMask(spec.path);
-                sinks.pushToBack(Sink{sinkIO, label, false, isFile, isSeq,
+                sinks.pushToBack(Sink{sinkIO, label, false, isFile,
                                       isFile ? spec.path : String()});
-                if(isSeq && !anySequenceOutput) {
-                        anySequenceOutput = true;
-                        firstSequencePath = spec.path;
-                }
-                fprintf(stdout, "Output: %s%s\n",
-                        label.cstr(),
-                        isSeq ? "  (image sequence)" : "");
+                fprintf(stdout, "Output: %s\n", label.cstr());
         }
 
         if(sinks.isEmpty()) {
@@ -320,50 +307,12 @@ int main(int argc, char **argv) {
                 }
         }
 
-        const uint64_t totalWritten = pipeline.framesPumped();
-
         for(auto it = pipeline.sinks().begin();
                  it != pipeline.sinks().end(); ++it) {
                 it->io->close();
         }
         if(converter != nullptr) converter->close();
         source->close();
-
-        // --- Optional .imgseq sidecar ---
-        if(opts.writeImgSeq) {
-                if(!anySequenceOutput) {
-                        fprintf(stderr,
-                                "Warning: --imgseq requires a sequence-mask output; ignoring.\n");
-                } else {
-                        FilePath sidecar = opts.imgSeqPath.isEmpty()
-                                ? deriveSidecarPath(firstSequencePath)
-                                : FilePath(opts.imgSeqPath);
-                        int seqHead = 0;
-                        // Look for an explicit --oc SequenceHead on
-                        // the sink that owns the sequence so the sidecar
-                        // matches the real on-disk numbering.
-                        for(const auto &sink : pipeline.sinks()) {
-                                if(sink.isSeq) {
-                                        MediaIO::Config cfg = sink.io->config();
-                                        Variant v = cfg.get(
-                                                MediaConfig::SequenceHead);
-                                        if(v.isValid()) seqHead = v.get<int32_t>();
-                                        break;
-                                }
-                        }
-                        Error sErr = writeImgSeqSidecar(sidecar, firstSequencePath,
-                                                        effectiveDesc, seqHead,
-                                                        static_cast<int64_t>(totalWritten));
-                        if(sErr.isError()) {
-                                fprintf(stderr,
-                                        "Warning: failed to write sidecar '%s': %s\n",
-                                        sidecar.toString().cstr(), sErr.name().cstr());
-                        } else {
-                                fprintf(stdout, "Wrote sidecar: %s\n",
-                                        sidecar.toString().cstr());
-                        }
-                }
-        }
 
         for(auto it = pipeline.sinks().begin();
                  it != pipeline.sinks().end(); ++it) {

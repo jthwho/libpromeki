@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/enum.h>
+#include <promeki/enums.h>
 #include <promeki/variant.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/datastream.h>
@@ -645,4 +646,42 @@ TEST_CASE("Variant::asEnum: rejects an unsupported source type (e.g. Color)") {
         Enum e = v.asEnum(TestCodec::Type, &err);
         CHECK(err == Error::Invalid);
         CHECK_FALSE(e.isValid());
+}
+
+// ---------------------------------------------------------------------------
+// ImgSeqPathMode — well-known Enum from enums.h
+// ---------------------------------------------------------------------------
+
+TEST_CASE("ImgSeqPathMode: constants have expected values") {
+        CHECK(ImgSeqPathMode::Relative.isValid());
+        CHECK(ImgSeqPathMode::Absolute.isValid());
+        CHECK(ImgSeqPathMode::Relative.value() == 0);
+        CHECK(ImgSeqPathMode::Absolute.value() == 1);
+        CHECK(ImgSeqPathMode::Relative != ImgSeqPathMode::Absolute);
+}
+
+TEST_CASE("ImgSeqPathMode: default Variant resolves to Relative") {
+        // Simulates what happens when SaveImgSeqPathMode is absent from
+        // the config: asEnum must return the registered default (Relative).
+        Variant v;
+        Error err;
+        Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
+        CHECK(err.isOk());
+        CHECK(e == ImgSeqPathMode::Relative);
+}
+
+TEST_CASE("ImgSeqPathMode: named String round-trip") {
+        Variant v = String("ImgSeqPathMode::Absolute");
+        Error err;
+        Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
+        CHECK(err.isOk());
+        CHECK(e == ImgSeqPathMode::Absolute);
+}
+
+TEST_CASE("ImgSeqPathMode: unqualified name resolves against type") {
+        Variant v = String("Relative");
+        Error err;
+        Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
+        CHECK(err.isOk());
+        CHECK(e == ImgSeqPathMode::Relative);
 }

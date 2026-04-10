@@ -173,6 +173,23 @@ class FilePath {
                 }
 
                 /**
+                 * @brief Returns this path expressed relative to @p base.
+                 *
+                 * Wraps @c std::filesystem::relative.  If the computation
+                 * fails (different roots, permission error, etc.) the
+                 * original path is returned unchanged.
+                 *
+                 * @param base The directory to compute a relative path from.
+                 * @return A relative FilePath, or this path on failure.
+                 */
+                FilePath relativeTo(const FilePath &base) const {
+                        std::error_code ec;
+                        auto r = std::filesystem::relative(_path, base._path, ec);
+                        if(ec || r.empty()) return *this;
+                        return FilePath(r);
+                }
+
+                /**
                  * @brief Converts the path to a String.
                  * @return The path as a String.
                  */

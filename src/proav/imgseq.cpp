@@ -23,6 +23,7 @@ namespace {
 // place makes the schema easy to audit and reuse.
 constexpr const char *kFieldType      = "type";
 constexpr const char *kFieldName      = "name";
+constexpr const char *kFieldDir       = "dir";
 constexpr const char *kFieldHead      = "head";
 constexpr const char *kFieldTail      = "tail";
 constexpr const char *kFieldFrameRate = "frameRate";
@@ -102,6 +103,10 @@ ImgSeq ImgSeq::fromJson(const JsonObject &json, Error *err) {
         }
         ret.setName(nn);
 
+        if(json.contains(kFieldDir)) {
+                ret.setDir(FilePath(json.getString(kFieldDir)));
+        }
+
         if(json.contains(kFieldHead)) {
                 int64_t h = json.getInt(kFieldHead);
                 if(h < 0) h = 0;
@@ -167,6 +172,9 @@ JsonObject ImgSeq::toJson() const {
         JsonObject root;
         root.set(kFieldType, String(TypeTag));
         root.set(kFieldName, _name.hashmask());
+        if(!_dir.isEmpty()) {
+                root.set(kFieldDir, _dir.toString());
+        }
         root.set(kFieldHead, static_cast<int64_t>(_head));
         root.set(kFieldTail, static_cast<int64_t>(_tail));
         if(_frameRate.isValid()) {
