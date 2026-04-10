@@ -1,5 +1,9 @@
 var NAVTREEINDEX25 =
 {
+"structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html":[15,0,0,4],
+"structstd_1_1formatter_3_01promeki_1_1Char_01_4.html":[15,0,1,0],
+"structstd_1_1formatter_3_01promeki_1_1Point_3_01T_00_01NumValues_01_4_01_4.html":[15,0,1,1],
+"structstd_1_1formatter_3_01promeki_1_1Rational_3_01T_01_4_01_4.html":[15,0,1,2],
 "structstd_1_1formatter_3_01promeki_1_1Size2DTemplate_3_01T_01_4_01_4.html":[15,0,1,3],
 "structstd_1_1formatter_3_01promeki_1_1String_01_4.html":[15,0,1,4],
 "structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html":[15,0,1,5],

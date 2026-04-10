@@ -1,17 +1,3 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classMediaIOCommand.html" title="Base class for MediaIO commands." alt="" coords="5,153,148,179"/>
-<area shape="rect" id="Node000001" href="$classMediaIOCommandClose.html" title="Command to close a media resource." alt="" coords="202,5,381,31"/>
-<area shape="poly" id="edge14_Node000000_Node000001" title=" " alt="" coords="92,140,135,89,163,62,195,40,220,28,222,33,197,44,166,66,138,93,96,144"/>
-<area shape="rect" id="Node000002" href="$classMediaIOCommandOpen.html" title="Command to open a media resource." alt="" coords="203,55,380,80"/>
-<area shape="poly" id="edge15_Node000000_Node000002" title=" " alt="" coords="104,143,146,115,195,89,228,78,229,83,197,94,148,120,107,147"/>
-<area shape="rect" id="Node000003" href="$classMediaIOCommandParams.html" title="Backend&#45;specific parameterized command." alt="" coords="196,104,387,129"/>
-<area shape="poly" id="edge16_Node000000_Node000003" title=" " alt="" coords="145,148,235,127,236,132,147,153"/>
-<area shape="rect" id="Node000004" href="$classMediaIOCommandRead.html" title="Command to read the next frame." alt="" coords="203,153,379,179"/>
-<area shape="poly" id="edge17_Node000000_Node000004" title=" " alt="" coords="161,163,203,163,203,169,161,169"/>
-<area shape="rect" id="Node000005" href="$classMediaIOCommandSeek.html" title="Command to seek to a frame position." alt="" coords="204,203,379,228"/>
-<area shape="poly" id="edge18_Node000000_Node000005" title=" " alt="" coords="147,179,236,200,235,205,145,184"/>
-<area shape="rect" id="Node000006" href="$classMediaIOCommandStats.html" title="Backend statistics query command." alt="" coords="203,252,379,277"/>
-<area shape="poly" id="edge19_Node000000_Node000006" title=" " alt="" coords="108,185,149,212,197,237,233,249,231,254,195,242,146,216,105,189"/>
-<area shape="rect" id="Node000007" href="$classMediaIOCommandWrite.html" title="Command to write a frame." alt="" coords="202,301,381,327"/>
-<area shape="poly" id="edge20_Node000000_Node000007" title=" " alt="" coords="97,188,139,238,167,264,197,286,226,299,223,304,195,291,163,269,135,242,93,192"/>
+<area shape="rect" id="Node000000" href="$structMediaIO_1_1FormatDesc.html" title="Describes a registered media I/O backend." alt="" coords="5,5,168,31"/>
 </map>

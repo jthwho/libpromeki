@@ -1,5 +1,8 @@
 var NAVTREEINDEX14 =
 {
+"classPriorityQueue.html#a42453ea04e3235edc65b6082cbffb6da":[13,0,6,9],
+"classPriorityQueue.html#a67de0df55fa41c15977337bdda147112":[13,0,6,1],
+"classPriorityQueue.html#a92e7d5ff8d1526686daa87f1230e04d8":[13,0,6,12],
 "classPriorityQueue.html#aba8716deef2e593aa92a5fa231ff410b":[13,0,6,2],
 "classPriorityQueue.html#ac520c56ed06b543113f6e003330863b9":[13,0,6,0],
 "classPriorityQueue.html#ad2f921bbd345c3b6b7f038ab37bf33f1":[13,0,6,10],
@@ -61,12 +64,12 @@ var NAVTREEINDEX14 =
 "classPromise.html#a9448b037a96b2d9a9215b7f3ea46f1f2":[13,1,4,1],
 "classPromise.html#adae8a68a2108712d6eb929a9748469cc":[13,1,4,2],
 "classPromise.html#af65a925bb9c14081b15d5854b2e9bdfb":[13,1,4,6],
-"classPromise_3_01void_01_4.html":[15,0,155],
-"classPromise_3_01void_01_4.html#a0b175b5aafd6a57cfd79e20c9244294f":[15,0,155,1],
-"classPromise_3_01void_01_4.html#a44e06bd3290e6f48f5f054857af685d3":[15,0,155,4],
-"classPromise_3_01void_01_4.html#a4fe34d858d0416adcc821ef222a58bab":[15,0,155,0],
-"classPromise_3_01void_01_4.html#a7f1af6b41ede910e763162b5886f9615":[15,0,155,3],
-"classPromise_3_01void_01_4.html#a9d3a9207598e9c1970c138e91e364598":[15,0,155,2],
+"classPromise_3_01void_01_4.html":[15,0,156],
+"classPromise_3_01void_01_4.html#a0b175b5aafd6a57cfd79e20c9244294f":[15,0,156,1],
+"classPromise_3_01void_01_4.html#a44e06bd3290e6f48f5f054857af685d3":[15,0,156,4],
+"classPromise_3_01void_01_4.html#a4fe34d858d0416adcc821ef222a58bab":[15,0,156,0],
+"classPromise_3_01void_01_4.html#a7f1af6b41ede910e763162b5886f9615":[15,0,156,3],
+"classPromise_3_01void_01_4.html#a9d3a9207598e9c1970c138e91e364598":[15,0,156,2],
 "classQueue.html":[13,0,7],
 "classQueue.html#a225f5d08888ea72a4dfe73f235761e5d":[13,0,7,2],
 "classQueue.html#a3c2bd12f74fab343a6f72043692b0932":[13,0,7,9],
@@ -246,8 +249,5 @@ var NAVTREEINDEX14 =
 "classRect.html#a5f772df6184d7f7ca8f8c7e6414d1a65":[13,8,6,15],
 "classRect.html#a6bd18dda4f7a4ad00fb80b6f186d9dcd":[13,8,6,28],
 "classRect.html#a6e85ded31cba53f87d936cd2f5dcfc8e":[13,8,6,11],
-"classRect.html#a6eb7d7149a4e43ffc537875a509a7a20":[13,8,6,7],
-"classRect.html#a730e8ddc629db0cae437dbf47d1d5178":[13,8,6,22],
-"classRect.html#a79f766d5354a818f3f93b272aa0c6ba2":[13,8,6,8],
-"classRect.html#a7b7446d67e6158d366bb9058c81470f2":[13,8,6,26]
+"classRect.html#a6eb7d7149a4e43ffc537875a509a7a20":[13,8,6,7]
 };

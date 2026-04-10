@@ -13,7 +13,7 @@ var searchData=
   ['maxs24_10',['MaxS24',['../classAudioDesc.html#af195b376da48d2d2ca152d7e0e0e2013',1,'AudioDesc']]],
   ['maxu24_11',['MaxU24',['../classAudioDesc.html#ae7a8153dc6502a6ba5182060d1b3b975',1,'AudioDesc']]],
   ['maxwavelength_12',['MaxWavelength',['../classCIEPoint.html#a1e09b6a4719f768b806aba60d0f93d7d',1,'CIEPoint']]],
-  ['mediadescchanged_13',['mediadescchanged',['../classMediaIOCommandRead.html#a616a6256d355d4997e5ef346760f94e0',1,'MediaIOCommandRead::mediaDescChanged'],['../classMetadata.html#af6762a5698ac8412dff444fcf9d6745d',1,'Metadata::MediaDescChanged']]],
+  ['mediadescchanged_13',['mediadescchanged',['../classMetadata.html#af6762a5698ac8412dff444fcf9d6745d',1,'Metadata::MediaDescChanged'],['../classMediaIOCommandRead.html#a616a6256d355d4997e5ef346760f94e0',1,'MediaIOCommandRead::mediaDescChanged']]],
   ['min_14',['min',['../structBenchmarkReporter_1_1StepStats.html#afb4d0efab4d2d91add27f88b664251cb',1,'BenchmarkReporter::StepStats']]],
   ['mins24_15',['MinS24',['../classAudioDesc.html#a39d719985ad1ec4416d6004d95e1ca68',1,'AudioDesc']]],
   ['minu24_16',['MinU24',['../classAudioDesc.html#a5ff57815cd9ea4e811e44fc55f153860',1,'AudioDesc']]],

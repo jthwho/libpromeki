@@ -1,5 +1,8 @@
 var NAVTREEINDEX21 =
 {
+"codec_8h.html":[16,0,0,0,31],
+"codec_8h.html#a7ec5363907f0c8384d35fd9700ae4673":[16,0,0,0,31,0],
+"codec_8h_source.html":[16,0,0,0,31],
 "color_8h.html":[16,0,0,0,32],
 "color_8h_source.html":[16,0,0,0,32],
 "color_science.html":[1],
@@ -246,8 +249,5 @@ var NAVTREEINDEX21 =
 "functions_vars_s.html":[15,3,2,19],
 "functions_vars_t.html":[15,3,2,20],
 "functions_vars_u.html":[15,3,2,21],
-"functions_vars_v.html":[15,3,2,22],
-"functions_vars_w.html":[15,3,2,23],
-"functions_vars_x.html":[15,3,2,24],
-"functions_vars_y.html":[15,3,2,25]
+"functions_vars_v.html":[15,3,2,22]
 };

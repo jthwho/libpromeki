@@ -125,6 +125,7 @@ var hierarchy =
     [ "ImageFile", "classImageFile.html", null ],
     [ "ImageFileIO", "classImageFileIO.html", null ],
     [ "ImgSeq", "classImgSeq.html", null ],
+    [ "ImgSeqPathMode", "structImgSeqPathMode.html", null ],
     [ "AudioFile::Impl", "classAudioFile_1_1Impl.html", null ],
     [ "PaintEngine::Impl", "classPaintEngine_1_1Impl.html", null ],
     [ "QuickTime::Impl", "classQuickTime_1_1Impl.html", null ],

@@ -1,5 +1,8 @@
 var NAVTREEINDEX23 =
 {
+"mediaio.html#mediaio_authoring_threading":[6,3,4],
+"mediaio.html#mediaio_capture":[6,7],
+"mediaio.html#mediaio_command_pattern":[6,1,0],
 "mediaio.html#mediaio_create":[6,2,0],
 "mediaio.html#mediaio_data_flow":[6,1,2],
 "mediaio.html#mediaio_descchange":[6,5],
@@ -246,8 +249,5 @@ var NAVTREEINDEX23 =
 "structAudioDesc_1_1Format.html#adf4f916ff9e70566dade7047c28e9aec":[13,13,3,0,2],
 "structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec":[13,13,3,0,1],
 "structAudioGen_1_1Config.html":[13,13,5,0],
-"structAudioGen_1_1Config.html#a0f0b9fbb10fb92d510dff79e67e3f415":[13,13,5,0,2],
-"structAudioGen_1_1Config.html#a11b8635732e60f5c62990d69767f6d1f":[13,13,5,0,1],
-"structAudioGen_1_1Config.html#a1c4fb64b867087dad499e3064ebe1889":[13,13,5,0,3],
-"structAudioGen_1_1Config.html#a4f4e5c81e5309842e1215728b32b06fa":[13,13,5,0,0]
+"structAudioGen_1_1Config.html#a0f0b9fbb10fb92d510dff79e67e3f415":[13,13,5,0,2]
 };

@@ -196,6 +196,7 @@ var group__io =
       [ "operator<", "classFilePath.html#ad74fae390636305c0911d7e3f7a6a5c7", null ],
       [ "operator==", "classFilePath.html#adef144ad19e1647e95b776948aeab939", null ],
       [ "parent", "classFilePath.html#afb44fa56161eb59087cbb2705bccb4d6", null ],
+      [ "relativeTo", "classFilePath.html#a7752d258c80d72bdbd04f271f50b75ba", null ],
       [ "suffix", "classFilePath.html#aa5d7289e71cd1617003e82e7f65e15af", null ],
       [ "toStdPath", "classFilePath.html#adcc59c0709ed859a4892c367b7e4e036", null ],
       [ "toString", "classFilePath.html#a7296faeecf493adbeee3ae94996b66d7", null ]

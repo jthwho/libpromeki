@@ -8,5 +8,6 @@ var group__wellknownenums =
     [ "CscPath", "structCscPath.html", null ],
     [ "QuickTimeLayout", "structQuickTimeLayout.html", null ],
     [ "RtpPacingMode", "structRtpPacingMode.html", null ],
-    [ "MetadataRtpFormat", "structMetadataRtpFormat.html", null ]
+    [ "MetadataRtpFormat", "structMetadataRtpFormat.html", null ],
+    [ "ImgSeqPathMode", "structImgSeqPathMode.html", null ]
 ];

@@ -168,6 +168,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acdae13a8a8764b1e01b6d51805f27d8d" id="r_acdae13a8a8764b1e01b6d51805f27d8d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFilePath.html">FilePath</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFilePath.html#acdae13a8a8764b1e01b6d51805f27d8d">absolutePath</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:acdae13a8a8764b1e01b6d51805f27d8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the absolute form of this path.  <br /></td></tr>
 <tr class="separator:acdae13a8a8764b1e01b6d51805f27d8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7752d258c80d72bdbd04f271f50b75ba" id="r_a7752d258c80d72bdbd04f271f50b75ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classFilePath.html">FilePath</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFilePath.html#a7752d258c80d72bdbd04f271f50b75ba">relativeTo</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classFilePath.html">FilePath</a> &amp;<a class="el" href="classList.html">base</a>) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7752d258c80d72bdbd04f271f50b75ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns this path expressed relative to <code>base</code>.  <br /></td></tr>
+<tr class="separator:a7752d258c80d72bdbd04f271f50b75ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7296faeecf493adbeee3ae94996b66d7" id="r_a7296faeecf493adbeee3ae94996b66d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classFilePath.html#a7296faeecf493adbeee3ae94996b66d7">toString</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a7296faeecf493adbeee3ae94996b66d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the path to a <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>.  <br /></td></tr>
 <tr class="separator:a7296faeecf493adbeee3ae94996b66d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -687,6 +690,42 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a7752d258c80d72bdbd04f271f50b75ba" name="a7752d258c80d72bdbd04f271f50b75ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7752d258c80d72bdbd04f271f50b75ba">&#9670;&#160;</a></span>relativeTo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classFilePath.html">FilePath</a> FilePath::relativeTo </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classFilePath.html">FilePath</a> &amp;&#160;</td>
+          <td class="paramname"><em>base</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns this path expressed relative to <code>base</code>. </p>
+<p>Wraps <code>std::filesystem::relative</code>. If the computation fails (different roots, permission error, etc.) the original path is returned unchanged.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">base</td><td>The directory to compute a relative path from. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A relative <a class="el" href="classFilePath.html" title="Simple value type wrapping std::filesystem::path.">FilePath</a>, or this path on failure. </dd></dl>
+
+</div>
+</div>
 <a id="aa5d7289e71cd1617003e82e7f65e15af" name="aa5d7289e71cd1617003e82e7f65e15af"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa5d7289e71cd1617003e82e7f65e15af">&#9670;&#160;</a></span>suffix()</h2>
 
@@ -781,7 +820,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classFilePath.html">FilePath</a></li>
-    <li class="footer">Generated on 2026-04-10 07:02:57 from commit bf321dd (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
   </ul>
 </div>
 </body>

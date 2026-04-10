@@ -1,5 +1,8 @@
 var NAVTREEINDEX10 =
 {
+"classMediaIOCommandClose.html":[13,13,26],
+"classMediaIOCommandClose.html#af38ecddda78bea98198b273ffb75bbd0":[13,13,26,0],
+"classMediaIOCommandOpen.html":[13,13,25],
 "classMediaIOCommandOpen.html#a0d0b5f356c1896755dc09a049b29d4dc":[13,13,25,1],
 "classMediaIOCommandOpen.html#a0f6ec8ac1675fd2423c9a44ad0564c9b":[13,13,25,3],
 "classMediaIOCommandOpen.html#a34c8e5769ba8345330e956c7eba5c493":[13,13,25,2],
@@ -246,8 +249,5 @@ var NAVTREEINDEX10 =
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a92ee44aaf4f281575f002e2d3f55b000":[13,17,0,0,96],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a92f18016c31838d2f6b3e66fa563e64a":[13,17,0,0,48],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a956deae5292f9fbd68dbd56e3d94fdee":[13,17,0,0,241],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a968fa7534da9fc52645d2ea3e58d3d62":[13,17,0,0,209],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a96e674afa2f6619dd6d929f534190e20":[13,17,0,0,210],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a970ddb7a940816058cc5011535855401":[13,17,0,0,163],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a9771fa8959e787bb424acf964cd3ebdc":[13,17,0,0,223]
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a968fa7534da9fc52645d2ea3e58d3d62":[13,17,0,0,209]
 };

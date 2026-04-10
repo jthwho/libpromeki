@@ -1,5 +1,8 @@
 var NAVTREEINDEX22 =
 {
+"functions_vars_w.html":[15,3,2,23],
+"functions_vars_x.html":[15,3,2,24],
+"functions_vars_y.html":[15,3,2,25],
 "functions_w.html":[15,3,0,23],
 "functions_x.html":[15,3,0,24],
 "functions_y.html":[15,3,0,25],
@@ -246,8 +249,5 @@ var NAVTREEINDEX22 =
 "mediaio.html#mediaio_authoring_params":[6,3,5],
 "mediaio.html#mediaio_authoring_read":[6,3,3],
 "mediaio.html#mediaio_authoring_setup":[6,3,0],
-"mediaio.html#mediaio_authoring_template":[6,3,1],
-"mediaio.html#mediaio_authoring_threading":[6,3,4],
-"mediaio.html#mediaio_capture":[6,7],
-"mediaio.html#mediaio_command_pattern":[6,1,0]
+"mediaio.html#mediaio_authoring_template":[6,3,1]
 };

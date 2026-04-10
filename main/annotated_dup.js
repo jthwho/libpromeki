@@ -94,6 +94,7 @@ var annotated_dup =
     [ "ImageFile", "classImageFile.html", "classImageFile" ],
     [ "ImageFileIO", "classImageFileIO.html", "classImageFileIO" ],
     [ "ImgSeq", "classImgSeq.html", "classImgSeq" ],
+    [ "ImgSeqPathMode", "structImgSeqPathMode.html", null ],
     [ "IODevice", "classIODevice.html", "classIODevice" ],
     [ "Ipv4Address", "classIpv4Address.html", "classIpv4Address" ],
     [ "Ipv6Address", "classIpv6Address.html", "classIpv6Address" ],
