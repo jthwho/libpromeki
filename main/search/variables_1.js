@@ -32,5 +32,6 @@ var searchData=
   ['audiotracks_29',['audioTracks',['../classMediaIOCommandOpen.html#a0d0b5f356c1896755dc09a049b29d4dc',1,'MediaIOCommandOpen']]],
   ['averagelatencyms_30',['AverageLatencyMs',['../classMediaIOStats.html#a1d1dcc32f0838834b06a0417c4717db6',1,'MediaIOStats']]],
   ['avg_31',['avg',['../structBenchmarkReporter_1_1StepStats.html#a703cfdda69eb08f08b1994a37b42200a',1,'BenchmarkReporter::StepStats']]],
-  ['awk_32',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
+  ['avgnsperiter_32',['avgNsPerIter',['../classBenchmarkResult.html#a79d6e40b8cbf375fd48ce51948c1719e',1,'BenchmarkResult']]],
+  ['awk_33',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
 ];

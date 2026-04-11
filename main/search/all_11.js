@@ -89,5 +89,5 @@ var searchData=
   ['overlay_86',['overlay',['../fonts.html#font_example_basic',1,'BasicFont: Transparent Overlay'],['../fonts.html#font_example_fast',1,'FastFont: Timecode Overlay']]],
   ['overview_87',['overview',['../index.html#autotoc_md1',1,'Feature Overview'],['../typeregistry.html#tr_overview',1,'Overview'],['../mediaio.html#mediaio_overview',1,'Overview'],['../csc.html#csc_overview',1,'Overview']]],
   ['owner_88',['owner',['../classSignal.html#adabd9110c0e59046736a602219135fc8',1,'Signal::owner()'],['../classSlot.html#a29e99c4871f9cb8c88a5b2cf010c6cdf',1,'Slot::owner()']]],
-  ['ownsfile_89',['ownsfile',['../classFileIODevice.html#a400e865d46d840cafd00959bd3bf337ba963bf915059bf3e3c19ff778fdcc130a',1,'FileIODevice::OwnsFile'],['../classFileIODevice.html#adfd22ec7e307462c1168c5963fa731d0',1,'FileIODevice::ownsFile() const']]]
+  ['ownsfile_89',['ownsfile',['../classFileIODevice.html#adfd22ec7e307462c1168c5963fa731d0',1,'FileIODevice::ownsFile() const'],['../classFileIODevice.html#a400e865d46d840cafd00959bd3bf337ba963bf915059bf3e3c19ff778fdcc130a',1,'FileIODevice::OwnsFile']]]
 ];

@@ -14,5 +14,7 @@ var searchData=
   ['ishostaccessible_11',['isHostAccessible',['../structMemSpace_1_1Ops.html#a9670bbc91982b48085224fc1d2d153a0',1,'MemSpace::Ops']]],
   ['isplanar_12',['isPlanar',['../structAudioDesc_1_1Format.html#a14b8529ec8b94e934d260722cb8a33ac',1,'AudioDesc::Format']]],
   ['issigned_13',['isSigned',['../structAudioDesc_1_1Format.html#aa2a20adf8c327c2a16f7fee8f1159530',1,'AudioDesc::Format']]],
-  ['isssm_14',['isSSM',['../structMulticastReceiver_1_1GroupEntry.html#a11002158042a330f72446f2210ca6cac',1,'MulticastReceiver::GroupEntry']]]
+  ['isssm_14',['isSSM',['../structMulticastReceiver_1_1GroupEntry.html#a11002158042a330f72446f2210ca6cac',1,'MulticastReceiver::GroupEntry']]],
+  ['itemspersecond_15',['itemsPerSecond',['../classBenchmarkResult.html#a99080c317d73cd928e7208f55f6f5752',1,'BenchmarkResult']]],
+  ['iterations_16',['iterations',['../classBenchmarkResult.html#ac9dbdb26aeca62c1b5913afb17d2a63c',1,'BenchmarkResult']]]
 ];

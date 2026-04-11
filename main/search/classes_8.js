@@ -19,5 +19,6 @@ var searchData=
   ['is_5ftype_5fregistry_3c_20pixelformat_20_3e_16',['is_type_registry&lt; PixelFormat &gt;',['../structdetail_1_1is__type__registry_3_01PixelFormat_01_4.html',1,'detail']]],
   ['issharedobject_17',['IsSharedObject',['../structIsSharedObject.html',1,'']]],
   ['issharedobject_3c_20t_2c_20std_3a_3avoid_5ft_3c_20decltype_28_26t_3a_3a_5fpromeki_5frefct_29_3e_20_3e_18',['IsSharedObject&lt; T, std::void_t&lt; decltype(&amp;T::_promeki_refct)&gt; &gt;',['../structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html',1,'']]],
-  ['item_19',['Item',['../classStringRegistry_1_1Item.html',1,'StringRegistry']]]
+  ['item_19',['Item',['../classStringRegistry_1_1Item.html',1,'StringRegistry']]],
+  ['iterator_20',['Iterator',['../classBenchmarkState_1_1Iterator.html',1,'BenchmarkState']]]
 ];

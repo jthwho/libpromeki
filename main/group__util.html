@@ -142,6 +142,18 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmark.html">Benchmark</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ordered collection of named timestamps for pipeline performance measurement.  <a href="classBenchmark.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmarkState.html">BenchmarkState</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-run state passed to a benchmark case function.  <a href="classBenchmarkState.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmarkResult.html">BenchmarkResult</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result of running a single <a class="el" href="classBenchmarkCase.html" title="A single registered benchmark case.">BenchmarkCase</a>.  <a href="classBenchmarkResult.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmarkCase.html">BenchmarkCase</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A single registered benchmark case.  <a href="classBenchmarkCase.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBenchmarkRunner.html">BenchmarkRunner</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drives registered <a class="el" href="classBenchmarkCase.html" title="A single registered benchmark case.">BenchmarkCase</a> instances and collects results.  <a href="classBenchmarkRunner.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferPool.html">BufferPool</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Simple fixed-geometry buffer pool for hot-path allocations.  <a href="classBufferPool.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,6 +226,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSignalHandler.html">SignalHandler</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Installs handlers for termination signals (Ctrl-C, kill, etc.).  <a href="classSignalHandler.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStatsAccumulator.html">StatsAccumulator</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Online running-statistics accumulator for a stream of double samples.  <a href="classStatsAccumulator.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classStringRegistry.html">StringRegistry&lt; Tag &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thread-safe append-only registry that maps unique strings to integer IDs.  <a href="classStringRegistry.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -241,6 +256,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:ga70723073a3da0b313289ae73f693b7a2" id="r_ga70723073a3da0b313289ae73f693b7a2"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga70723073a3da0b313289ae73f693b7a2">PROMEKI_REGISTER_BENCHMARK</a>(<a class="el" href="classList.html">Suite</a>,  Name,  Description,  <a class="el" href="classList.html">Fn</a>)</td></tr>
+<tr class="memdesc:ga70723073a3da0b313289ae73f693b7a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a benchmark case at static initialization time.  <br /></td></tr>
+<tr class="separator:ga70723073a3da0b313289ae73f693b7a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga171ec9034fbfc2c134195af18ea762e7" id="r_ga171ec9034fbfc2c134195af18ea762e7"><td class="memItemLeft" align="right" valign="top">#<a class="el" href="classList.html">define</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga171ec9034fbfc2c134195af18ea762e7">PROMEKI_SHARED</a>(<a class="el" href="classList.html">BASE</a>)</td></tr>
 <tr class="memdesc:ga171ec9034fbfc2c134195af18ea762e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Macro to simplify making a base object into a native shared object.  <br /></td></tr>
 <tr class="separator:ga171ec9034fbfc2c134195af18ea762e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -284,6 +302,69 @@ Functions</h2></td></tr>
 <p>General-purpose utilities, error handling, and diagnostics. </p>
 <p>Variant type, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> reporting, <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> generation, <a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a> codes, <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> key-value store, environment access, command-line parsing, logging, memory pools, platform detection, terminal I/O, and more. </p>
 <h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="ga70723073a3da0b313289ae73f693b7a2" name="ga70723073a3da0b313289ae73f693b7a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga70723073a3da0b313289ae73f693b7a2">&#9670;&#160;</a></span>PROMEKI_REGISTER_BENCHMARK</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#<a class="el" href="classList.html">define</a> PROMEKI_REGISTER_BENCHMARK</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="classList.html">Suite</a>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">Name, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">Description, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><a class="el" href="classList.html">Fn</a>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">        [[<a class="code hl_class" href="classList.html">maybe_unused</a>]] <span class="keyword">static</span> <span class="keywordtype">int</span> PROMEKI_CONCAT(<a class="code hl_class" href="classList.html">__promeki_benchmark_</a>, PROMEKI_UNIQUE_ID) = \</div>
+<div class="line">                promeki::BenchmarkRunner::registerCase(                                   \</div>
+<div class="line">                        promeki::BenchmarkCase((<a class="code hl_class" href="classList.html">Suite</a>), (Name), (Description), (<a class="code hl_class" href="classList.html">Fn</a>)));</div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+</div><!-- fragment -->
+<p>Registers a benchmark case at static initialization time. </p>
+<p>Usage: </p><div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span> <a class="code hl_class" href="classList.html">bench_myCase</a>(<a class="code hl_class" href="classBenchmarkState.html">BenchmarkState</a> &amp;state) {</div>
+<div class="line">        <span class="keywordflow">for</span>(<span class="keyword">auto</span> <a class="code hl_class" href="classList.html">_</a> : state) { (<a class="code hl_class" href="classList.html">void</a>)<a class="code hl_class" href="classList.html">_</a>; <a class="code hl_class" href="classList.html">hotCode</a>(); }</div>
+<div class="line">}</div>
+<div class="line"><a class="code hl_define" href="group__util.html#ga70723073a3da0b313289ae73f693b7a2">PROMEKI_REGISTER_BENCHMARK</a>(<span class="stringliteral">&quot;mysuite&quot;</span>, <span class="stringliteral">&quot;myCase&quot;</span>,</div>
+<div class="line">                           <span class="stringliteral">&quot;Short description of what this measures&quot;</span>,</div>
+<div class="line">                           <a class="code hl_class" href="classList.html">bench_myCase</a>);</div>
+<div class="ttc" id="aclassBenchmarkState_html"><div class="ttname"><a href="classBenchmarkState.html">BenchmarkState</a></div><div class="ttdoc">Per-run state passed to a benchmark case function.</div><div class="ttdef"><b>Definition</b> benchmarkrunner.h:57</div></div>
+<div class="ttc" id="agroup__util_html_ga70723073a3da0b313289ae73f693b7a2"><div class="ttname"><a href="group__util.html#ga70723073a3da0b313289ae73f693b7a2">PROMEKI_REGISTER_BENCHMARK</a></div><div class="ttdeci">#define PROMEKI_REGISTER_BENCHMARK(Suite, Name, Description, Fn)</div><div class="ttdoc">Registers a benchmark case at static initialization time.</div><div class="ttdef"><b>Definition</b> benchmarkrunner.h:650</div></div>
+</div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Suite</td><td>Suite name (string literal or C string). </td></tr>
+    <tr><td class="paramname">Name</td><td>Case name (string literal or C string). </td></tr>
+    <tr><td class="paramname">Description</td><td>Short description (string literal or C string). </td></tr>
+    <tr><td class="paramname">Fn</td><td>Case function with signature <code>void(<a class="el" href="classBenchmarkState.html" title="Per-run state passed to a benchmark case function.">BenchmarkState</a> &amp;)</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ga171ec9034fbfc2c134195af18ea762e7" name="ga171ec9034fbfc2c134195af18ea762e7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ga171ec9034fbfc2c134195af18ea762e7">&#9670;&#160;</a></span>PROMEKI_SHARED</h2>
 
@@ -302,7 +383,6 @@ Functions</h2></td></tr>
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">public</span>: \</div>
 <div class="line">        <a class="code hl_class" href="classRefCount.html">RefCount</a> _promeki_refct; \</div>
 <div class="line">        <span class="keyword">virtual</span> <a class="code hl_class" href="classList.html">BASE</a> *_promeki_clone()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <span class="keyword">new</span> <a class="code hl_class" href="classList.html">BASE</a>(*<span class="keyword">this</span>); }</div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassRefCount_html"><div class="ttname"><a href="classRefCount.html">RefCount</a></div><div class="ttdoc">An atomic reference count object.</div><div class="ttdef"><b>Definition</b> sharedptr.h:101</div></div>
 </div><!-- fragment -->
 <p>Macro to simplify making a base object into a native shared object. </p>
@@ -643,7 +723,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-11 03:44:27 from commit 4ae6981 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 08:09:30 from commit 0f64efb (1.0.0).</li>
   </ul>
 </div>
 </body>

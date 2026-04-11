@@ -609,6 +609,9 @@ var group__proav =
       [ "~MediaIO", "classMediaIO.html#aa8ae7f54296e42a66f7733c004854e3c", null ],
       [ "adoptTask", "classMediaIO.html#adf861eac41671d654408efeada979bcd", null ],
       [ "audioDesc", "classMediaIO.html#aefa839dd20f3f8ae04600d2e8bff98fe", null ],
+      [ "benchmarkEnabled", "classMediaIO.html#a8990d72f90bafa51c735c0a40fd29f83", null ],
+      [ "benchmarkIsSink", "classMediaIO.html#a16a5667b2b7b49933b515ee365881183", null ],
+      [ "benchmarkReporter", "classMediaIO.html#a983eef070dfddb5ec868e2286837c685", null ],
       [ "cancelPending", "classMediaIO.html#ac447402620a14b5d83187837fa48c741", null ],
       [ "canSeek", "classMediaIO.html#afae845b4b2bae524405f1b6fc1c188ea", null ],
       [ "close", "classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d", null ],
@@ -620,9 +623,11 @@ var group__proav =
       [ "frameRate", "classMediaIO.html#aafd52b1340c54ed99dd259c9cf938646", null ],
       [ "isIdle", "classMediaIO.html#a25bc3f3266775eba1227f97f97a39ac9", null ],
       [ "isOpen", "classMediaIO.html#abf7d1c3fdb738c4fb7dd42f170bc72be", null ],
+      [ "localId", "classMediaIO.html#a84144895a74ec8e63eca42aa6397ef38", null ],
       [ "mediaDesc", "classMediaIO.html#af11b9ed12de09ee03a21a113dddc542b", null ],
       [ "metadata", "classMediaIO.html#aadd8c85c375a9a81a5d0b45730444b1c", null ],
       [ "mode", "classMediaIO.html#a620ffa469a1531a177a4f642b98b83a9", null ],
+      [ "name", "classMediaIO.html#affb7ed0a5bf186bb0dfe7972bf6b2c1f", null ],
       [ "open", "classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3", null ],
       [ "pendingReads", "classMediaIO.html#ab97dbd1a4a293727b49f6bbb307d1a97", null ],
       [ "pendingWrites", "classMediaIO.html#a8d6077a1817f66954ffa588b664f3f63", null ],
@@ -638,6 +643,8 @@ var group__proav =
       [ "sendParams", "classMediaIO.html#a2e5ae6fcfa20997a48b85b4e91a77169", null ],
       [ "setAudioDesc", "classMediaIO.html#a1c7f478adb932c62c48be77442bf1718", null ],
       [ "setAudioTracks", "classMediaIO.html#a2729f382dd4766bdd8c8e7c2bce5dede", null ],
+      [ "setBenchmarkIsSink", "classMediaIO.html#ac5aec2a21d488cfdacd7364281f4145d", null ],
+      [ "setBenchmarkReporter", "classMediaIO.html#a5a6b747f7f9c87c4f40c0b2e8ea267fc", null ],
       [ "setConfig", "classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3", null ],
       [ "setMediaDesc", "classMediaIO.html#a1275eb1f436852fd2fd63a1fefd5df95", null ],
       [ "setMetadata", "classMediaIO.html#a6de44bf5739776dc1b5eaa2ea21e0fbc", null ],
@@ -646,11 +653,16 @@ var group__proav =
       [ "setVideoTracks", "classMediaIO.html#a307a396ad329c3c1e6de4f3df2fb2ff3", null ],
       [ "stats", "classMediaIO.html#a3249b9b60ce5deeb47a885e4cca4de2c", null ],
       [ "step", "classMediaIO.html#af5de472d92c64fd2b4fc010b14381194", null ],
+      [ "uuid", "classMediaIO.html#aaa4eed4f1032cc745b89e9c78837e038", null ],
       [ "writeFrame", "classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60", null ]
     ] ],
     [ "MediaIOTask", "classMediaIOTask.html", [
       [ "MediaIOTask", "classMediaIOTask.html#a0b805f45d7b99204ec16da2f3ee060c1", null ],
-      [ "~MediaIOTask", "classMediaIOTask.html#ae9d15045ad37ac2f930a2f0f91633b2c", null ]
+      [ "~MediaIOTask", "classMediaIOTask.html#ae9d15045ad37ac2f930a2f0f91633b2c", null ],
+      [ "mediaIo", "classMediaIOTask.html#a56ee29aac6f338c32541042c01754160", null ],
+      [ "noteFrameDropped", "classMediaIOTask.html#a33a701a9866643312bab92a63113fe83", null ],
+      [ "noteFrameLate", "classMediaIOTask.html#a6acec0883297253ee37fef6b0b52f809", null ],
+      [ "noteFrameRepeated", "classMediaIOTask.html#a2748f45ad224498f2cc97a3976177e39", null ]
     ] ],
     [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", [
       [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html#a60af0a1cceb4782dfdd5c2f19cda6dc2", null ],
@@ -1154,6 +1166,14 @@ var group__proav =
       [ "startTimecode", "classQuickTime.html#a7e804427c546b9ac71b8dd9d2c46b660", null ],
       [ "tracks", "classQuickTime.html#aaef5740462d05280562a6ebe4777ccdf", null ],
       [ "writeSample", "classQuickTime.html#a959a2360611483d84766b1c656834d98", null ]
+    ] ],
+    [ "RateTracker", "classRateTracker.html", [
+      [ "RateTracker", "classRateTracker.html#a7a22ea04659f872569d53ecb44cd46fd", null ],
+      [ "bytesPerSecond", "classRateTracker.html#a1e99f5dcf5820d1dda1f90cb7cb15814", null ],
+      [ "framesPerSecond", "classRateTracker.html#a0f1b8767b159feffcaa9881b524dd291", null ],
+      [ "record", "classRateTracker.html#a63a51b336fba9cd10c0bf00036e8c9d5", null ],
+      [ "reset", "classRateTracker.html#a76f64cc51c815ce9f36f17bece03d0ee", null ],
+      [ "windowMs", "classRateTracker.html#a1c6d9f2b02422dbd888f64a161398437", null ]
     ] ],
     [ "VideoTestPattern", "classVideoTestPattern.html", [
       [ "BurnPosition", "classVideoTestPattern.html#a6fe2032ce077d97ee53aa5f1fadc4980", [

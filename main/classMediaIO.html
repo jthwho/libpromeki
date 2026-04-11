@@ -105,6 +105,7 @@ $(document).ready(function(){initNavTree('classMediaIO.html',''); initResizable(
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classMediaIO-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">MediaIO Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
@@ -188,6 +189,33 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>config</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:afd4dfa37eca8c62bb3bc6a3fb43bb0d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configuration. <br /></td></tr>
 <tr class="separator:afd4dfa37eca8c62bb3bc6a3fb43bb0d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84144895a74ec8e63eca42aa6397ef38" id="r_a84144895a74ec8e63eca42aa6397ef38"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a84144895a74ec8e63eca42aa6397ef38">localId</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a84144895a74ec8e63eca42aa6397ef38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the process-local monotonic instance ID.  <br /></td></tr>
+<tr class="separator:a84144895a74ec8e63eca42aa6397ef38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affb7ed0a5bf186bb0dfe7972bf6b2c1f" id="r_affb7ed0a5bf186bb0dfe7972bf6b2c1f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#affb7ed0a5bf186bb0dfe7972bf6b2c1f">name</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:affb7ed0a5bf186bb0dfe7972bf6b2c1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the human-readable instance name.  <br /></td></tr>
+<tr class="separator:affb7ed0a5bf186bb0dfe7972bf6b2c1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa4eed4f1032cc745b89e9c78837e038" id="r_aaa4eed4f1032cc745b89e9c78837e038"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classUUID.html">UUID</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#aaa4eed4f1032cc745b89e9c78837e038">uuid</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aaa4eed4f1032cc745b89e9c78837e038"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the globally-unique instance identifier.  <br /></td></tr>
+<tr class="separator:aaa4eed4f1032cc745b89e9c78837e038"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a6b747f7f9c87c4f40c0b2e8ea267fc" id="r_a5a6b747f7f9c87c4f40c0b2e8ea267fc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a5a6b747f7f9c87c4f40c0b2e8ea267fc">setBenchmarkReporter</a> (<a class="el" href="classBenchmarkReporter.html">BenchmarkReporter</a> *<a class="el" href="classList.html">reporter</a>)</td></tr>
+<tr class="memdesc:a5a6b747f7f9c87c4f40c0b2e8ea267fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attaches an external <a class="el" href="classBenchmarkReporter.html" title="Aggregates Benchmark objects and computes per-step timing statistics.">BenchmarkReporter</a> for stamp aggregation.  <br /></td></tr>
+<tr class="separator:a5a6b747f7f9c87c4f40c0b2e8ea267fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a983eef070dfddb5ec868e2286837c685" id="r_a983eef070dfddb5ec868e2286837c685"><td class="memItemLeft" align="right" valign="top"><a id="a983eef070dfddb5ec868e2286837c685" name="a983eef070dfddb5ec868e2286837c685"></a>
+<a class="el" href="classBenchmarkReporter.html">BenchmarkReporter</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>benchmarkReporter</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a983eef070dfddb5ec868e2286837c685"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the currently attached <a class="el" href="classBenchmarkReporter.html" title="Aggregates Benchmark objects and computes per-step timing statistics.">BenchmarkReporter</a> (may be nullptr). <br /></td></tr>
+<tr class="separator:a983eef070dfddb5ec868e2286837c685"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5aec2a21d488cfdacd7364281f4145d" id="r_ac5aec2a21d488cfdacd7364281f4145d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#ac5aec2a21d488cfdacd7364281f4145d">setBenchmarkIsSink</a> (<a class="el" href="classList.html">bool</a> isSink)</td></tr>
+<tr class="memdesc:ac5aec2a21d488cfdacd7364281f4145d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marks this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> as a sink for benchmark submission.  <br /></td></tr>
+<tr class="separator:ac5aec2a21d488cfdacd7364281f4145d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16a5667b2b7b49933b515ee365881183" id="r_a16a5667b2b7b49933b515ee365881183"><td class="memItemLeft" align="right" valign="top"><a id="a16a5667b2b7b49933b515ee365881183" name="a16a5667b2b7b49933b515ee365881183"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>benchmarkIsSink</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a16a5667b2b7b49933b515ee365881183"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the sink flag. <br /></td></tr>
+<tr class="separator:a16a5667b2b7b49933b515ee365881183"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8990d72f90bafa51c735c0a40fd29f83" id="r_a8990d72f90bafa51c735c0a40fd29f83"><td class="memItemLeft" align="right" valign="top"><a id="a8990d72f90bafa51c735c0a40fd29f83" name="a8990d72f90bafa51c735c0a40fd29f83"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>benchmarkEnabled</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8990d72f90bafa51c735c0a40fd29f83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if per-frame <a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a> stamping is active. <br /></td></tr>
+<tr class="separator:a8990d72f90bafa51c735c0a40fd29f83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf7d1c3fdb738c4fb7dd42f170bc72be" id="r_abf7d1c3fdb738c4fb7dd42f170bc72be"><td class="memItemLeft" align="right" valign="top"><a id="abf7d1c3fdb738c4fb7dd42f170bc72be" name="abf7d1c3fdb738c4fb7dd42f170bc72be"></a>
 <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>isOpen</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:abf7d1c3fdb738c4fb7dd42f170bc72be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the resource is open. <br /></td></tr>
@@ -288,7 +316,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> () <a class="
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setConfig</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)</td></tr>
 <tr class="memdesc:aa7fa76347a8b9344c335fcda93658db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the configuration. <br /></td></tr>
 <tr class="separator:aa7fa76347a8b9344c335fcda93658db3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e5ae6fcfa20997a48b85b4e91a77169" id="r_a2e5ae6fcfa20997a48b85b4e91a77169"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a2e5ae6fcfa20997a48b85b4e91a77169">sendParams</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name, <a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a06b0689531fca228f2204307ec306ca6">MediaIOParams</a> &amp;params=<a class="el" href="mediaio_8h.html#a06b0689531fca228f2204307ec306ca6">MediaIOParams</a>(), <a class="el" href="mediaio_8h.html#a06b0689531fca228f2204307ec306ca6">MediaIOParams</a> *result=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memitem:a2e5ae6fcfa20997a48b85b4e91a77169" id="r_a2e5ae6fcfa20997a48b85b4e91a77169"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a2e5ae6fcfa20997a48b85b4e91a77169">sendParams</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classMediaIO.html#affb7ed0a5bf186bb0dfe7972bf6b2c1f">name</a>, <a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a06b0689531fca228f2204307ec306ca6">MediaIOParams</a> &amp;params=<a class="el" href="mediaio_8h.html#a06b0689531fca228f2204307ec306ca6">MediaIOParams</a>(), <a class="el" href="mediaio_8h.html#a06b0689531fca228f2204307ec306ca6">MediaIOParams</a> *result=<a class="el" href="classList.html">nullptr</a>)</td></tr>
 <tr class="memdesc:a2e5ae6fcfa20997a48b85b4e91a77169"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends a backend-specific parameterized command.  <br /></td></tr>
 <tr class="separator:a2e5ae6fcfa20997a48b85b4e91a77169"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3249b9b60ce5deeb47a885e4cca4de2c" id="r_a3249b9b60ce5deeb47a885e4cca4de2c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaIOStats.html">MediaIOStats</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a3249b9b60ce5deeb47a885e4cca4de2c">stats</a> ()</td></tr>
@@ -432,12 +460,24 @@ Static Public Attributes</h2></td></tr>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameCountError</b> = -3</td></tr>
 <tr class="memdesc:a1e1d610c0b05a252c1b188fdee1f585f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> count unavailable due to error. <br /></td></tr>
 <tr class="separator:a1e1d610c0b05a252c1b188fdee1f585f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1378509b74f656a50aa8616f848613d9" id="r_a1378509b74f656a50aa8616f848613d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe">MediaIOParamsID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a1378509b74f656a50aa8616f848613d9">ParamBenchmarkReport</a> {&quot;BenchmarkReport&quot;}</td></tr>
+<tr class="memdesc:a1378509b74f656a50aa8616f848613d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Params command: returns the attached reporter's summary text.  <br /></td></tr>
+<tr class="separator:a1378509b74f656a50aa8616f848613d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9ed76d0da80f51a7c539a3dbad98167" id="r_af9ed76d0da80f51a7c539a3dbad98167"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe">MediaIOParamsID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#af9ed76d0da80f51a7c539a3dbad98167">ParamBenchmarkReset</a> {&quot;BenchmarkReset&quot;}</td></tr>
+<tr class="memdesc:af9ed76d0da80f51a7c539a3dbad98167"><td class="mdescLeft">&#160;</td><td class="mdescRight">Params command: clears the attached reporter's accumulators.  <br /></td></tr>
+<tr class="separator:af9ed76d0da80f51a7c539a3dbad98167"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_attribs_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_attribs_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Attributes inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase" id="r_a680b86576aa0a9679bb74ce178b2b93e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a> = PROMEKI_STRINGIFY( <a class="el" href="classList.html">aboutToDestroy</a> ) &quot;(&quot; PROMEKI_STRINGIFY_ARGS( <a class="el" href="classObjectBase.html">ObjectBase</a> * ) &quot;)&quot;</td></tr>
 <tr class="separator:a680b86576aa0a9679bb74ce178b2b93e inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase" id="r_ae2f4061ea36551655f6fd02fec4b2abd"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>&#160;</td><td class="memItemRight" valign="bottom"><b>aboutToDestroySignalMeta</b> = <a class="el" href="classObjectBase_1_1SignalMeta.html">SignalMeta</a>(<a class="el" href="classObjectBase.html#a6cf10683d2b9fa2dd0ab9a0722e925ad">metaInfo</a>(), <a class="el" href="classObjectBase.html#a680b86576aa0a9679bb74ce178b2b93e">aboutToDestroySignalName</a>)</td></tr>
 <tr class="separator:ae2f4061ea36551655f6fd02fec4b2abd inherit pub_static_attribs_classObjectBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a9be1386a0ac50262f360c69ec5dcc935" id="r_a9be1386a0ac50262f360c69ec5dcc935"><td class="memItemLeft" align="right" valign="top"><a id="a9be1386a0ac50262f360c69ec5dcc935" name="a9be1386a0ac50262f360c69ec5dcc935"></a>
+<a class="el" href="classList.html">class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MediaIOTask</b></td></tr>
+<tr class="separator:a9be1386a0ac50262f360c69ec5dcc935"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -976,6 +1016,35 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a84144895a74ec8e63eca42aa6397ef38" name="a84144895a74ec8e63eca42aa6397ef38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84144895a74ec8e63eca42aa6397ef38">&#9670;&#160;</a></span>localId()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MediaIO::localId </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the process-local monotonic instance ID. </p>
+<p>Assigned from a static atomic counter in the constructor and never changes afterward. Used as the suffix in the default instance name (<code>"media&lt;localId&gt;"</code>) and as a stable within-process handle for logging and pipeline correlation.</p>
+<dl class="section return"><dt>Returns</dt><dd>The local ID. </dd></dl>
+
+</div>
+</div>
 <a id="af11b9ed12de09ee03a21a113dddc542b" name="af11b9ed12de09ee03a21a113dddc542b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af11b9ed12de09ee03a21a113dddc542b">&#9670;&#160;</a></span>mediaDesc()</h2>
 
@@ -1029,6 +1098,35 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Returns the cached container metadata. </p>
 <p>Reference lifetime is the same as <code><a class="el" href="classMediaIO.html#af11b9ed12de09ee03a21a113dddc542b" title="Returns the cached media description.">mediaDesc()</a></code>. </p>
+
+</div>
+</div>
+<a id="affb7ed0a5bf186bb0dfe7972bf6b2c1f" name="affb7ed0a5bf186bb0dfe7972bf6b2c1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#affb7ed0a5bf186bb0dfe7972bf6b2c1f">&#9670;&#160;</a></span>name()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp; MediaIO::name </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the human-readable instance name. </p>
+<p>Seeded in the constructor from the local ID (as <code>"media&lt;localId&gt;"</code>). Overridable at open time via <a class="el" href="classMediaConfig.html#af79538d4cde7c9f1b89800b6f0ae72a4">MediaConfig::Name</a> — the base class resolves the default at <code><a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a></code> and writes the resolved value back into the live config, so <code><a class="el" href="classMediaIO.html#affb7ed0a5bf186bb0dfe7972bf6b2c1f" title="Returns the human-readable instance name.">name()</a></code> is always non-empty and matches what the config reports.</p>
+<dl class="section return"><dt>Returns</dt><dd>The instance name. </dd></dl>
 
 </div>
 </div>
@@ -1559,6 +1657,78 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ac5aec2a21d488cfdacd7364281f4145d" name="ac5aec2a21d488cfdacd7364281f4145d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5aec2a21d488cfdacd7364281f4145d">&#9670;&#160;</a></span>setBenchmarkIsSink()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> MediaIO::setBenchmarkIsSink </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>isSink</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Marks this <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> as a sink for benchmark submission. </p>
+<p>Sinks submit each frame's <a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a> to their attached reporter after the <code>taskEnd</code> stamp. Non-sink stages still stamp — so a pipeline's terminal stage sees all the accumulated timestamps from upstream — but do not submit, avoiding double counting.</p>
+<p>Defaults to true so a standalone <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> "just works" when a reporter is attached. MediaPipeline sets it to false on all non-terminal stages during build().</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">isSink</td><td>True if this stage should submit. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a5a6b747f7f9c87c4f40c0b2e8ea267fc" name="a5a6b747f7f9c87c4f40c0b2e8ea267fc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a6b747f7f9c87c4f40c0b2e8ea267fc">&#9670;&#160;</a></span>setBenchmarkReporter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> MediaIO::setBenchmarkReporter </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classBenchmarkReporter.html">BenchmarkReporter</a> *&#160;</td>
+          <td class="paramname"><em>reporter</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Attaches an external <a class="el" href="classBenchmarkReporter.html" title="Aggregates Benchmark objects and computes per-step timing statistics.">BenchmarkReporter</a> for stamp aggregation. </p>
+<p>Ownership stays with the caller — the pointer is only observed, never deleted. Pass <code>nullptr</code> to detach. When a reporter is attached and <a class="el" href="classMediaConfig.html#ac3851747ca43da19e25ea16e44a408d9">MediaConfig::EnableBenchmark</a> is true and this stage is a sink (the default, flippable via <a class="el" href="classMediaIO.html#ac5aec2a21d488cfdacd7364281f4145d">setBenchmarkIsSink</a>), every frame's completed <a class="el" href="classBenchmark.html">Benchmark</a> is submitted to the reporter after its <code>taskEnd</code> stamp fires.</p>
+<p>Attaching a reporter alone does not enable stamping — the stamps are only recorded when <code>EnableBenchmark</code> is set in the config before <code><a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a></code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">reporter</td><td>The reporter to attach, or nullptr. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a1275eb1f436852fd2fd63a1fefd5df95" name="a1275eb1f436852fd2fd63a1fefd5df95"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1275eb1f436852fd2fd63a1fefd5df95">&#9670;&#160;</a></span>setMediaDesc()</h2>
 
@@ -1724,6 +1894,35 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aaa4eed4f1032cc745b89e9c78837e038" name="aaa4eed4f1032cc745b89e9c78837e038"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa4eed4f1032cc745b89e9c78837e038">&#9670;&#160;</a></span>uuid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classUUID.html">UUID</a> &amp; MediaIO::uuid </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the globally-unique instance identifier. </p>
+<p>Seeded in the constructor via <code><a class="el" href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78" title="Convenience generator that dispatches to the appropriate generateVn() function.">UUID::generate()</a></code> so every instance has a valid <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a> before <code><a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a></code> is even called. Overridable at open time via <a class="el" href="classMediaConfig.html#a4f10cb1bd938c72ec3473d8c5988c024">MediaConfig::Uuid</a>; the base class resolves the final value in <code><a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a></code> and writes it back into the live config.</p>
+<dl class="section return"><dt>Returns</dt><dd>The instance <a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a>. </dd></dl>
+
+</div>
+</div>
 <a id="a083b9e49f5f676da9066f084bfbd0f60" name="a083b9e49f5f676da9066f084bfbd0f60"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a083b9e49f5f676da9066f084bfbd0f60">&#9670;&#160;</a></span>writeFrame()</h2>
 
@@ -1763,6 +1962,57 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="a1378509b74f656a50aa8616f848613d9" name="a1378509b74f656a50aa8616f848613d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1378509b74f656a50aa8616f848613d9">&#9670;&#160;</a></span>ParamBenchmarkReport</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe">MediaIOParamsID</a> MediaIO::ParamBenchmarkReport {&quot;BenchmarkReport&quot;}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Params command: returns the attached reporter's summary text. </p>
+<p>Handled by the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> base class before the command reaches the backend, so every backend inherits this introspection hook for free. The reporter's <code>summaryReport()</code> string is written into the command result under <a class="el" href="classMediaIO.html#a1378509b74f656a50aa8616f848613d9">ParamBenchmarkReport</a>. Returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" title="Operation is not supported.">Error::NotSupported</a></code> if no reporter is attached. </p>
+
+</div>
+</div>
+<a id="af9ed76d0da80f51a7c539a3dbad98167" name="af9ed76d0da80f51a7c539a3dbad98167"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9ed76d0da80f51a7c539a3dbad98167">&#9670;&#160;</a></span>ParamBenchmarkReset</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="mediaio_8h.html#a218d9d799191abce354a7120ce37ebbe">MediaIOParamsID</a> MediaIO::ParamBenchmarkReset {&quot;BenchmarkReset&quot;}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Params command: clears the attached reporter's accumulators. </p>
+<p>Same base-class interception as BenchmarkReport. No result payload; returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success or <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" title="Operation is not supported.">Error::NotSupported</a></code> if no reporter is attached. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediaio_8h_source.html">mediaio.h</a></li>
 </ul>
@@ -1773,7 +2023,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-11 03:44:27 from commit 4ae6981 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 08:09:30 from commit 0f64efb (1.0.0).</li>
   </ul>
 </div>
 </body>

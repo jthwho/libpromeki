@@ -177,14 +177,25 @@ Static Public Attributes</h2></td></tr>
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaIOStats::ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>StatsFramesConverted</b> {&quot;FramesConverted&quot;}</td></tr>
 <tr class="memdesc:a324d97b22ec702ec49babd128c4f062f"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total frames successfully converted. <br /></td></tr>
 <tr class="separator:a324d97b22ec702ec49babd128c4f062f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad200eae9fa437be1600fff789607b8f3" id="r_ad200eae9fa437be1600fff789607b8f3"><td class="memItemLeft" align="right" valign="top"><a id="ad200eae9fa437be1600fff789607b8f3" name="ad200eae9fa437be1600fff789607b8f3"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaIOStats::ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>StatsBytesIn</b> {&quot;BytesIn&quot;}</td></tr>
-<tr class="memdesc:ad200eae9fa437be1600fff789607b8f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total input image+audio bytes processed. <br /></td></tr>
-<tr class="separator:ad200eae9fa437be1600fff789607b8f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a46f6f28b3521c5b908011d4f0bb8489b" id="r_a46f6f28b3521c5b908011d4f0bb8489b"><td class="memItemLeft" align="right" valign="top"><a id="a46f6f28b3521c5b908011d4f0bb8489b" name="a46f6f28b3521c5b908011d4f0bb8489b"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">MediaIOStats::ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>StatsBytesOut</b> {&quot;BytesOut&quot;}</td></tr>
-<tr class="memdesc:a46f6f28b3521c5b908011d4f0bb8489b"><td class="mdescLeft">&#160;</td><td class="mdescRight">int64_t — total output image+audio bytes produced. <br /></td></tr>
-<tr class="separator:a46f6f28b3521c5b908011d4f0bb8489b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_methods_classMediaIOTask"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classMediaIOTask')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classMediaIOTask.html">MediaIOTask</a></td></tr>
+<tr class="memitem:a33a701a9866643312bab92a63113fe83 inherit pro_methods_classMediaIOTask" id="r_a33a701a9866643312bab92a63113fe83"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>noteFrameDropped</b> ()</td></tr>
+<tr class="memdesc:a33a701a9866643312bab92a63113fe83 inherit pro_methods_classMediaIOTask"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increments the lifetime dropped-frame counter. <br /></td></tr>
+<tr class="separator:a33a701a9866643312bab92a63113fe83 inherit pro_methods_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2748f45ad224498f2cc97a3976177e39 inherit pro_methods_classMediaIOTask" id="r_a2748f45ad224498f2cc97a3976177e39"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>noteFrameRepeated</b> ()</td></tr>
+<tr class="memdesc:a2748f45ad224498f2cc97a3976177e39 inherit pro_methods_classMediaIOTask"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increments the lifetime repeated-frame counter. <br /></td></tr>
+<tr class="separator:a2748f45ad224498f2cc97a3976177e39 inherit pro_methods_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6acec0883297253ee37fef6b0b52f809 inherit pro_methods_classMediaIOTask" id="r_a6acec0883297253ee37fef6b0b52f809"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>noteFrameLate</b> ()</td></tr>
+<tr class="memdesc:a6acec0883297253ee37fef6b0b52f809 inherit pro_methods_classMediaIOTask"><td class="mdescLeft">&#160;</td><td class="mdescRight">Increments the lifetime late-frame counter. <br /></td></tr>
+<tr class="separator:a6acec0883297253ee37fef6b0b52f809 inherit pro_methods_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56ee29aac6f338c32541042c01754160 inherit pro_methods_classMediaIOTask" id="r_a56ee29aac6f338c32541042c01754160"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMediaIO.html">MediaIO</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOTask.html#a56ee29aac6f338c32541042c01754160">mediaIo</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a56ee29aac6f338c32541042c01754160 inherit pro_methods_classMediaIOTask"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> that owns this task.  <br /></td></tr>
+<tr class="separator:a56ee29aac6f338c32541042c01754160 inherit pro_methods_classMediaIOTask"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="classMediaIOTask.html" title="Backend interface for media I/O.">MediaIOTask</a> backend that transforms media frames. </p>
@@ -242,10 +253,10 @@ Static Public Attributes</h2></td></tr>
 <div class="line"><span class="keyword">delete</span> io;</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:63</div></div>
-<div class="ttc" id="aclassMediaConfig_html_a10e0225661fb05485a0cd21d75f1eaf7"><div class="ttname"><a href="classMediaConfig.html#a10e0225661fb05485a0cd21d75f1eaf7">MediaConfig::Type</a></div><div class="ttdeci">static const ID Type</div><div class="ttdoc">String — registered backend type name (e.g. &quot;TPG&quot;, &quot;ImageFile&quot;).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:81</div></div>
-<div class="ttc" id="aclassMediaConfig_html_ae999aa7371378376e309d897f488710e"><div class="ttname"><a href="classMediaConfig.html#ae999aa7371378376e309d897f488710e">MediaConfig::OutputPixelDesc</a></div><div class="ttdeci">static const ID OutputPixelDesc</div><div class="ttdoc">PixelDesc — target pixel description for the converter stage (Invalid = video pass-through).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:303</div></div>
-<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:428</div></div>
+<div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:64</div></div>
+<div class="ttc" id="aclassMediaConfig_html_a10e0225661fb05485a0cd21d75f1eaf7"><div class="ttname"><a href="classMediaConfig.html#a10e0225661fb05485a0cd21d75f1eaf7">MediaConfig::Type</a></div><div class="ttdeci">static const ID Type</div><div class="ttdoc">String — registered backend type name (e.g. &quot;TPG&quot;, &quot;ImageFile&quot;).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:82</div></div>
+<div class="ttc" id="aclassMediaConfig_html_ae999aa7371378376e309d897f488710e"><div class="ttname"><a href="classMediaConfig.html#ae999aa7371378376e309d897f488710e">MediaConfig::OutputPixelDesc</a></div><div class="ttdeci">static const ID OutputPixelDesc</div><div class="ttdoc">PixelDesc — target pixel description for the converter stage (Invalid = video pass-through).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:330</div></div>
+<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:436</div></div>
 <div class="ttc" id="aclassMediaIO_html_a083b9e49f5f676da9066f084bfbd0f60"><div class="ttname"><a href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a></div><div class="ttdeci">Error writeFrame(const Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Writes a frame to the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
@@ -294,7 +305,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__Converter.html">MediaIOTask_Converter</a></li>
-    <li class="footer">Generated on 2026-04-11 03:44:27 from commit 4ae6981 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 08:09:30 from commit 0f64efb (1.0.0).</li>
   </ul>
 </div>
 </body>

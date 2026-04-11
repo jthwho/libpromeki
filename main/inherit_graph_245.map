@@ -1,3 +1,15 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classSharedPtr.html" title=" " alt="" coords="5,5,165,45"/>
+<area shape="rect" id="Node000000" href="$classRtpPayload.html" title="Abstract base class for RTP payload type handlers." alt="" coords="5,129,100,155"/>
+<area shape="rect" id="Node000001" href="$classRtpPayloadJpeg.html" title="RTP payload handler for RFC 2435 JPEG (Motion JPEG)." alt="" coords="167,5,289,31"/>
+<area shape="poly" id="edge100_Node000000_Node000001" title=" " alt="" coords="69,116,102,77,147,40,171,28,173,33,149,44,106,81,73,120"/>
+<area shape="rect" id="Node000002" href="$classRtpPayloadJpegXs.html" title="RTP payload handler for RFC 9134 JPEG XS." alt="" coords="159,55,297,80"/>
+<area shape="poly" id="edge101_Node000000_Node000002" title=" " alt="" coords="85,120,147,89,179,78,180,83,149,94,88,125"/>
+<area shape="rect" id="Node000003" href="$classRtpPayloadJson.html" title="RTP payload handler for JSON blobs." alt="" coords="167,104,289,129"/>
+<area shape="poly" id="edge102_Node000000_Node000003" title=" " alt="" coords="113,131,166,123,167,128,114,136"/>
+<area shape="rect" id="Node000004" href="$classRtpPayloadL16.html" title="RTP payload handler for 16&#45;bit linear audio (L16)." alt="" coords="169,153,287,179"/>
+<area shape="poly" id="edge103_Node000000_Node000004" title=" " alt="" coords="114,148,169,155,168,161,113,153"/>
+<area shape="rect" id="Node000005" href="$classRtpPayloadL24.html" title="RTP payload handler for 24&#45;bit linear audio (L24)." alt="" coords="169,203,287,228"/>
+<area shape="poly" id="edge104_Node000000_Node000005" title=" " alt="" coords="89,159,149,188,184,200,182,205,147,192,87,164"/>
+<area shape="rect" id="Node000006" href="$classRtpPayloadRawVideo.html" title="RTP payload handler for RFC 4175 raw video (ST 2110&#45;20)." alt="" coords="148,252,308,277"/>
+<area shape="poly" id="edge105_Node000000_Node000006" title=" " alt="" coords="73,164,106,202,149,237,176,250,174,254,147,242,102,205,69,167"/>
 </map>

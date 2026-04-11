@@ -2,7 +2,7 @@ var searchData=
 [
   ['fieldid_0',['FieldID',['../classMetadata.html#aa370a3c48561bc6474fa782b33961fdc',1,'Metadata']]],
   ['filehandleclosedvalue_1',['FileHandleClosedValue',['../classFile.html#a318541e395eb56e0ebba54eeba970b0e',1,'File']]],
-  ['filename_2',['filename',['../classMediaConfig.html#a35d1c7334bd471517976c367d29c6f0c',1,'MediaConfig::Filename'],['../structFileFormatFactory_1_1Context.html#a4bb849827a4d56cbc33079ff983aacca',1,'FileFormatFactory::Context::filename']]],
+  ['filename_2',['filename',['../structFileFormatFactory_1_1Context.html#a4bb849827a4d56cbc33079ff983aacca',1,'FileFormatFactory::Context::filename'],['../classMediaConfig.html#a35d1c7334bd471517976c367d29c6f0c',1,'MediaConfig::Filename']]],
   ['fileorigname_3',['FileOrigName',['../classMetadata.html#a0f0abff54a023b2a46885726c4c00a0c',1,'Metadata']]],
   ['fill_4',['fill',['../structMemSpace_1_1Ops.html#a6a57ec936c0c7ccecb2b34802d1d6aaa',1,'MemSpace::Ops']]],
   ['fillbytes_5',['fillbytes',['../structMemSpace_1_1Stats_1_1Snapshot.html#a7598897ea6a37331ffcebede0bead2c0',1,'MemSpace::Stats::Snapshot::fillBytes'],['../structMemSpace_1_1Stats.html#aa02c3f14b579aae2b9f82ccb48717220',1,'MemSpace::Stats::fillBytes']]],
@@ -34,11 +34,12 @@ var searchData=
   ['framerepeated_31',['FrameRepeated',['../classMetadata.html#a0f17fcddf9ea27028e2122b9fc416154',1,'Metadata']]],
   ['framesdropped_32',['FramesDropped',['../classMediaIOStats.html#a3341de20471c901304cf989485ead6a8',1,'MediaIOStats']]],
   ['frameslate_33',['FramesLate',['../classMediaIOStats.html#a76437c690c9de43b5d6d8172f8d4a1ec',1,'MediaIOStats']]],
-  ['framesrepeated_34',['FramesRepeated',['../classMediaIOStats.html#a15fc376d042a115f9c8a17e307fdd64f',1,'MediaIOStats']]],
-  ['freq_35',['freq',['../structAudioGen_1_1Config.html#a11b8635732e60f5c62990d69767f6d1f',1,'AudioGen::Config']]],
-  ['fromid_36',['fromId',['../structBenchmarkReporter_1_1StepStats.html#a3aaa65e2bfe24e30805be5f1177f7827',1,'BenchmarkReporter::StepStats']]],
-  ['fromparentmatrix_37',['fromParentMatrix',['../structColorModel_1_1Data.html#a3a7148bd4b947968beee4e2b26b72be9',1,'ColorModel::Data']]],
-  ['fromparentoffset_38',['fromParentOffset',['../structColorModel_1_1Data.html#a190aed555dc0da6a0a75febd18deadcb',1,'ColorModel::Data']]],
-  ['fromxyzfunc_39',['fromXYZFunc',['../structColorModel_1_1Data.html#a4cba9dbf6291af66f74dead44c2912ec',1,'ColorModel::Data']]],
-  ['func_40',['func',['../structCSCPipeline_1_1Stage.html#a5f65b2d5d7ec9703a3201bc49bb9a249',1,'CSCPipeline::Stage']]]
+  ['framespersecond_34',['FramesPerSecond',['../classMediaIOStats.html#a0415ff34c266c709938c648042c4e983',1,'MediaIOStats']]],
+  ['framesrepeated_35',['FramesRepeated',['../classMediaIOStats.html#a15fc376d042a115f9c8a17e307fdd64f',1,'MediaIOStats']]],
+  ['freq_36',['freq',['../structAudioGen_1_1Config.html#a11b8635732e60f5c62990d69767f6d1f',1,'AudioGen::Config']]],
+  ['fromid_37',['fromId',['../structBenchmarkReporter_1_1StepStats.html#a3aaa65e2bfe24e30805be5f1177f7827',1,'BenchmarkReporter::StepStats']]],
+  ['fromparentmatrix_38',['fromParentMatrix',['../structColorModel_1_1Data.html#a3a7148bd4b947968beee4e2b26b72be9',1,'ColorModel::Data']]],
+  ['fromparentoffset_39',['fromParentOffset',['../structColorModel_1_1Data.html#a190aed555dc0da6a0a75febd18deadcb',1,'ColorModel::Data']]],
+  ['fromxyzfunc_40',['fromXYZFunc',['../structColorModel_1_1Data.html#a4cba9dbf6291af66f74dead44c2912ec',1,'ColorModel::Data']]],
+  ['func_41',['func',['../structCSCPipeline_1_1Stage.html#a5f65b2d5d7ec9703a3201bc49bb9a249',1,'CSCPipeline::Stage']]]
 ];

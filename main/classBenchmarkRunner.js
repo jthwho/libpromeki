@@ -1,0 +1,28 @@
+var classBenchmarkRunner =
+[
+    [ "BenchmarkRunner", "classBenchmarkRunner.html#a8bdcee725fd974b5bcf5c4a3845ac4d0", null ],
+    [ "clearResults", "classBenchmarkRunner.html#a67478fb8702bf60584412965f4fe79ed", null ],
+    [ "estimatedDurationMs", "classBenchmarkRunner.html#a42698d4484fb3fd88b14eab5b6a8c377", null ],
+    [ "filter", "classBenchmarkRunner.html#a8b71479c189641130be8afd33b7893bb", null ],
+    [ "filteredCaseCount", "classBenchmarkRunner.html#a1130d00b749ba6734124f099802a2131", null ],
+    [ "formatComparison", "classBenchmarkRunner.html#a2f856561998844ea57ea60276912ac52", null ],
+    [ "formatTable", "classBenchmarkRunner.html#a22736714ebfc0d7af858b7986da3bdf4", null ],
+    [ "maxIterations", "classBenchmarkRunner.html#ac0bc6f9be5d99f347c8fcf02138708db", null ],
+    [ "minIterations", "classBenchmarkRunner.html#ade97244fbbf57dc344c42d0f75e07398", null ],
+    [ "minTimeMs", "classBenchmarkRunner.html#aa31a152b54617541bcead6e40e186de6", null ],
+    [ "repeats", "classBenchmarkRunner.html#abe46c0881bc40cb368c3de0bed67cb44", null ],
+    [ "results", "classBenchmarkRunner.html#a1ba10d5456821524c6e17fe92d6d7bd8", null ],
+    [ "runAll", "classBenchmarkRunner.html#ac79ad95f27e09d89e5376f9eda80f881", null ],
+    [ "runCase", "classBenchmarkRunner.html#a9cf14efc28451faad487740f0f478f81", null ],
+    [ "runCaseByName", "classBenchmarkRunner.html#af510fb56bfa5a5b901e252221850d23e", null ],
+    [ "setFilter", "classBenchmarkRunner.html#a5bab211ab422f726b49412dddb24b28d", null ],
+    [ "setMaxIterations", "classBenchmarkRunner.html#a66cb1f49cd552183da39fa53d48df1d7", null ],
+    [ "setMinIterations", "classBenchmarkRunner.html#a0df75e45be099256d0649d30a4f5d953", null ],
+    [ "setMinTimeMs", "classBenchmarkRunner.html#ad0e77e4a726b616d499847fe155d65fa", null ],
+    [ "setRepeats", "classBenchmarkRunner.html#a38e1d7bf8e73c71d5de1278b643a3bf8", null ],
+    [ "setVerbose", "classBenchmarkRunner.html#a58652a268bf988c2f8533a1bd223ac93", null ],
+    [ "setWarmupMs", "classBenchmarkRunner.html#a3685b14452579bcc0bc26ed98abe61e1", null ],
+    [ "toJson", "classBenchmarkRunner.html#ad6068cfc6a8281ba0d9235fd2b285178", null ],
+    [ "warmupMs", "classBenchmarkRunner.html#a033821bd116ff81493174534ae5923e3", null ],
+    [ "writeJson", "classBenchmarkRunner.html#aada3e06f5169795010acc84e60738752", null ]
+];

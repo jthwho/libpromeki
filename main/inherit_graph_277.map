@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classStringRegistry.html" title="Thread&#45;safe append&#45;only registry that maps unique strings to integer IDs." alt="" coords="5,5,172,31"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,95,117,120"/>
+<area shape="rect" id="Node000001" href="$structToStringFormatter.html" title="std::formatter helper that renders any type with a no&#45;arg toString() returning a String." alt="" coords="177,5,353,31"/>
+<area shape="poly" id="edge108_Node000000_Node000001" title=" " alt="" coords="89,84,124,62,164,41,201,28,203,33,166,46,127,66,92,89"/>
+<area shape="rect" id="Node000002" href="$structstd_1_1formatter_3_01promeki_1_1Char_01_4.html" title="std::formatter specialization for promeki::Char." alt="" coords="174,55,355,95"/>
+<area shape="poly" id="edge109_Node000000_Node000002" title=" " alt="" coords="131,94,173,87,174,92,131,99"/>
+<area shape="rect" id="Node000003" href="$structstd_1_1formatter_3_01promeki_1_1String_01_4.html" title="std::formatter specialization for promeki::String." alt="" coords="174,119,355,159"/>
+<area shape="poly" id="edge110_Node000000_Node000003" title=" " alt="" coords="131,116,174,122,173,128,131,121"/>
+<area shape="rect" id="Node000004" href="$structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html" title="std::formatter partial specialization for promeki::VariantImpl." alt="" coords="165,183,364,223"/>
+<area shape="poly" id="edge111_Node000000_Node000004" title=" " alt="" coords="93,126,127,148,166,169,196,181,193,186,164,174,125,152,90,130"/>
 </map>

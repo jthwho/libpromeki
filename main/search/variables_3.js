@@ -23,7 +23,7 @@ var searchData=
   ['comment_20',['Comment',['../classMetadata.html#a6ba3ff7db1f5ac2b7d1ad099b6f9be9b',1,'Metadata']]],
   ['compbits_21',['compBits',['../structCSCPipeline_1_1Stage.html#a16ff8bb57b46c3cf270d4f53326b232d',1,'CSCPipeline::Stage']]],
   ['compbyteoffset_22',['compByteOffset',['../structCSCPipeline_1_1Stage.html#a652a94884a9c95d5c181b05a7589a7e2',1,'CSCPipeline::Stage']]],
-  ['compcount_23',['compcount',['../structPixelFormat_1_1Data.html#afc146466565af3f2956477628c887fde',1,'PixelFormat::Data::compCount'],['../structCSCPipeline_1_1Stage.html#a2c098188e814c35a6b5ab49a73fcb6a2',1,'CSCPipeline::Stage::compCount']]],
+  ['compcount_23',['compcount',['../structCSCPipeline_1_1Stage.html#a2c098188e814c35a6b5ab49a73fcb6a2',1,'CSCPipeline::Stage::compCount'],['../structPixelFormat_1_1Data.html#afc146466565af3f2956477628c887fde',1,'PixelFormat::Data::compCount']]],
   ['compplane_24',['compPlane',['../structCSCPipeline_1_1Stage.html#ac45bf94f72f08b91878a73eab6178e4b',1,'CSCPipeline::Stage']]],
   ['compressed_25',['compressed',['../structPixelDesc_1_1Data.html#ad8df92ba00706df546cdaabb65308f82',1,'PixelDesc::Data']]],
   ['compressedsize_26',['CompressedSize',['../classMetadata.html#ac30cead856a7b4a4951ae3728e2dd35f',1,'Metadata']]],
@@ -33,7 +33,7 @@ var searchData=
   ['configspecs_30',['configSpecs',['../structMediaIO_1_1FormatDesc.html#a33c29ac64149cabee55431e220323f47',1,'MediaIO::FormatDesc']]],
   ['copy_31',['copy',['../structMemSpace_1_1Ops.html#a1d4ccdc87d78f4913341121f3f2e5adc',1,'MemSpace::Ops']]],
   ['copybytes_32',['copybytes',['../structMemSpace_1_1Stats_1_1Snapshot.html#ab28bf136f8affa4a5d85d97ea2d1c166',1,'MemSpace::Stats::Snapshot::copyBytes'],['../structMemSpace_1_1Stats.html#a108034e8d3eab99dd248aa6ed9de1645',1,'MemSpace::Stats::copyBytes']]],
-  ['copycount_33',['copycount',['../structMemSpace_1_1Stats.html#af84231e9fbc12946a5e6d9efffe532fe',1,'MemSpace::Stats::copyCount'],['../structMemSpace_1_1Stats_1_1Snapshot.html#a78b98ee35c96c651ca4395769f032eeb',1,'MemSpace::Stats::Snapshot::copyCount']]],
+  ['copycount_33',['copycount',['../structMemSpace_1_1Stats_1_1Snapshot.html#a78b98ee35c96c651ca4395769f032eeb',1,'MemSpace::Stats::Snapshot::copyCount'],['../structMemSpace_1_1Stats.html#af84231e9fbc12946a5e6d9efffe532fe',1,'MemSpace::Stats::copyCount']]],
   ['copyfailcount_34',['copyfailcount',['../structMemSpace_1_1Stats_1_1Snapshot.html#ac071932bf78ec30635507c34b1fc79d2',1,'MemSpace::Stats::Snapshot::copyFailCount'],['../structMemSpace_1_1Stats.html#a12425bfb8e37198f1c833c42c4f21999',1,'MemSpace::Stats::copyFailCount']]],
   ['copyright_35',['Copyright',['../classMetadata.html#ac3d8cdd3aec28815d4376e0c78cd4dac',1,'Metadata']]],
   ['coredumps_36',['CoreDumps',['../classLibraryOptions.html#ab5dda65c802eaba30d484482b509ddc6',1,'LibraryOptions']]],
@@ -44,5 +44,6 @@ var searchData=
   ['createpaintenginefunc_41',['createPaintEngineFunc',['../structPixelDesc_1_1Data.html#abe26cd9d8d8c0dce2601291b0a820af5',1,'PixelDesc::Data']]],
   ['cscpath_42',['CscPath',['../classMediaConfig.html#accb05151064a3e15f1b9622a36545477',1,'MediaConfig']]],
   ['currentversion_43',['CurrentVersion',['../classDataStream.html#a39cb7d2d7745d20b5b6fc734dda8753b',1,'DataStream']]],
-  ['cyan_44',['Cyan',['../classColor.html#aba8a75025a243f2186eef9bc5f8b0536',1,'Color']]]
+  ['custom_44',['custom',['../classBenchmarkResult.html#a2e13a8d0be410a67d559c6cf2d83ed06',1,'BenchmarkResult']]],
+  ['cyan_45',['Cyan',['../classColor.html#aba8a75025a243f2186eef9bc5f8b0536',1,'Color']]]
 ];
