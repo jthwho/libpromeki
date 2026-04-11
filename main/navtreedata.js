@@ -88,7 +88,44 @@ var NAVTREE =
         [ "BasicFont: Transparent Overlay", "fonts.html#font_example_basic", null ]
       ] ]
     ] ],
+    [ "Image Data Encoder Wire Format", "imagedataencoder.html", [
+      [ "Overview", "imagedataencoder.html#img_data_overview", null ],
+      [ "Bit and byte ordering", "imagedataencoder.html#img_data_bitorder", null ],
+      [ "Bit cell width selection", "imagedataencoder.html#img_data_cellwidth", null ],
+      [ "Per-format value mapping", "imagedataencoder.html#img_data_value_mapping", null ],
+      [ "How to write a decoder", "imagedataencoder.html#img_data_decode", null ],
+      [ "Alignment notes", "imagedataencoder.html#img_data_alignment", null ],
+      [ "Worked example", "imagedataencoder.html#img_data_example", null ],
+      [ "Why not actual VITC?", "imagedataencoder.html#img_data_format_history", null ]
+    ] ],
+    [ "Inspector — Frame validation and monitoring", "inspector.html", [
+      [ "Quick start", "inspector.html#inspector_quickstart", null ],
+      [ "The four checks", "inspector.html#inspector_checks", [
+        [ "Picture data band decode", "inspector.html#inspector_check_picture", null ],
+        [ "Audio LTC decode", "inspector.html#inspector_check_ltc", null ],
+        [ "A/V Sync", "inspector.html#inspector_check_avsync", null ],
+        [ "Continuity tracking", "inspector.html#inspector_check_continuity", null ]
+      ] ],
+      [ "Consuming the results", "inspector.html#inspector_results", [
+        [ "Per-frame callback", "inspector.html#inspector_callback", null ],
+        [ "Accumulator snapshot", "inspector.html#inspector_snapshot", null ],
+        [ "Periodic log", "inspector.html#inspector_log", null ]
+      ] ],
+      [ "Construction patterns", "inspector.html#inspector_construct", [
+        [ "Standard factory (no callback)", "inspector.html#inspector_construct_factory", null ],
+        [ "Adopt-task path (per-frame callback)", "inspector.html#inspector_construct_adopt", null ]
+      ] ],
+      [ "What to look for in CI / QA", "inspector.html#inspector_what_to_look_for", null ],
+      [ "Annotated log reference", "inspector.html#inspector_log_reference", [
+        [ "At open time — configuration block", "inspector.html#inspector_log_config", null ],
+        [ "Periodic report (one block per interval)", "inspector.html#inspector_log_periodic", null ],
+        [ "Discontinuity warnings (immediate)", "inspector.html#inspector_log_warnings", null ]
+      ] ],
+      [ "Known limits", "inspector.html#inspector_known_limits", null ],
+      [ "See also", "inspector.html#inspector_see_also", null ]
+    ] ],
     [ "Media I/O Subsystem", "mediaio.html", [
+      [ "Available backends", "mediaio.html#mediaio_backends", null ],
       [ "Overview", "mediaio.html#mediaio_overview", null ],
       [ "Architecture", "mediaio.html#mediaio_architecture", [
         [ "Command pattern", "mediaio.html#mediaio_command_pattern", null ],
@@ -229,7 +266,11 @@ var NAVTREE =
     [ "Deprecated List", "deprecated.html", null ],
     [ "Topics", "topics.html", "topics" ],
     [ "Namespaces", "namespaces.html", [
-      [ "Namespace List", "namespaces.html", "namespaces_dup" ]
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ],
+      [ "Namespace Members", "namespacemembers.html", [
+        [ "All", "namespacemembers.html", null ],
+        [ "Variables", "namespacemembers_vars.html", null ]
+      ] ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
@@ -265,29 +306,30 @@ var NAVTREEINDEX =
 "classAnsiStream.html#a338b08f6aae49641c1f62523260304dca71ff34b31580faf6bef52a04b8fbbc81",
 "classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2",
 "classBenchmarkResult.html#a79d6e40b8cbf375fd48ce51948c1719e",
-"classCmdLineParser_1_1Option.html#a3e71d113538143612177668d1d710fe1",
-"classDataStream.html#ad920709ebbd708ea3b52deae37d85359",
-"classEvent.html#a105223995bbf1a1e4714d0c77f91cf0b",
-"classFuture.html#a9ac9431501995753e310106a440d2525",
-"classImageFileIO.html#ae92ccf6c98b57e38d66878b71f9fd36a",
-"classList.html#a2782bc21ddc467a8bfc935d06f5f988e",
-"classMatrix3x3.html#ad8ccbd2bb64b750a5b895e673b7dab62",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a32a64aa1d5990f8653742dcd2408d01a",
-"classMulticastManager.html#a3f29f0bc5d6e1f56a3e1b5f26de9e7a2",
-"classPair.html",
-"classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda2a4da0fbcce234810d8415e53c5bd7c0",
-"classQuickTime_1_1Impl.html#a7bddd6d7c071b5fc5b200787f806a8b1",
-"classRtpPayloadRawVideo.html#a79b01221bf013d099f0570f568c8dddb",
-"classSpan.html#a05e7a987c552fa373c01666ef1b66bff",
-"classStringIODevice.html#aaa2e86902778558f0dd8eee40ae3297c",
-"classTextStream.html#ad890feab163b3a42b1c22826b0f0bf3f",
-"classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a210f95686725eb4ff43cd1c88d2bd244",
-"classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea735b566166d0e05663776b060742a32a",
-"demos.html",
-"group__widget.html#ggadf3bce1b63354112cc4b0f620fe5822aa2035f5ce2976cd90b9d4d48b320f1ffb",
-"mouseevent_8h_source.html",
-"structCSCPipeline_1_1Stage.html#aed9ea9f7bb65cb949668d27382391c53",
-"textstream_8h.html"
+"classCmdLineParser.html#ad68578dcb0ae34b66bc1786a24f076c6",
+"classDataStream.html#aba69c4e72f0b2fd003ec8b28eb9550e8",
+"classError.html#ab5980e13b879db253df802b0950d1708aedd29d605deffb7b02d42d7ee3f586c7",
+"classFuture.html#a063b0ca1c68522942727301d051e3510",
+"classImageFile.html#a28970599a579f04de39f9f2a75826a7a",
+"classLayout.html#a2d1a7162f1def2683292da94f722c9b7",
+"classMatrix.html#a76b16bdec84fdae740065cd44b880093",
+"classMidiNote.html#aa205fc50cf6dcfeaeb72ca0af777d962",
+"classMidiNoteNames.html",
+"classPaintEngine.html#a302c06e18928db5f61cf9c2b0191e5ff",
+"classPixelDesc.html#acb5235a3a6e50d01c4aa96f39803ad4b",
+"classQuickTime.html#a95b514c82c79cb6a69b19a5f2769cb1d",
+"classRtpPayloadJpegXs.html#a21770753cce825c0b2e5d31a6e9894c9",
+"classSize2DTemplate.html#a550b7b9942a902a09bce947f66a0b761",
+"classStringData.html#a2df7230bf5027c98ee1cc4c51e911d8a",
+"classTextStream.html#a09e08526080a5667729d0096d7c67849",
+"classTuiListView.html#ad9e284c1bfc975122f6435d4c61300b8",
+"classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a",
+"crc_8h.html#a8d97826e3079c419fdfb454c7ab3107b",
+"group__color.html",
+"md_CODING__STANDARDS.html#autotoc_md78",
+"size2d_8h.html#a51649ce3cba4039d2bcc6f082192cd6a",
+"structMemSpace_1_1Stats.html#a017f32f236faa64ae0266c457805c433",
+"videodesc_8h.html#a64d13f687418b4089a2bd71786b36633"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

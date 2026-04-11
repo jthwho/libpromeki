@@ -4,8 +4,9 @@ var searchData=
   ['datagram_1',['datagram',['../structPacketTransport_1_1Datagram.html',1,'PacketTransport::Datagram'],['../structUdpSocket_1_1Datagram.html',1,'UdpSocket::Datagram']]],
   ['datastream_2',['DataStream',['../classDataStream.html',1,'']]],
   ['datetime_3',['DateTime',['../classDateTime.html',1,'']]],
-  ['decodedtimecode_4',['DecodedTimecode',['../structLtcDecoder_1_1DecodedTimecode.html',1,'LtcDecoder']]],
-  ['deque_5',['Deque',['../classDeque.html',1,'']]],
-  ['dir_6',['Dir',['../classDir.html',1,'']]],
-  ['duration_7',['Duration',['../classDuration.html',1,'']]]
+  ['decodeditem_4',['DecodedItem',['../structImageDataDecoder_1_1DecodedItem.html',1,'ImageDataDecoder']]],
+  ['decodedtimecode_5',['DecodedTimecode',['../structLtcDecoder_1_1DecodedTimecode.html',1,'LtcDecoder']]],
+  ['deque_6',['Deque',['../classDeque.html',1,'']]],
+  ['dir_7',['Dir',['../classDir.html',1,'']]],
+  ['duration_8',['Duration',['../classDuration.html',1,'']]]
 ];

@@ -244,9 +244,10 @@ Public Member Functions</h2></td></tr>
 <div class="ttc" id="avariant_8h_html_ac15b79be40667401a29a7cf97c330853"><div class="ttname"><a href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a></div><div class="ttdeci">VariantImpl&lt; std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, Size2Du32, UUID, UMID, Timecode, Rational&lt; int &gt;, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, Enum, detail::VariantEnd &gt; Variant</div><div class="ttdoc">Concrete variant type instantiated with every type from PROMEKI_VARIANT_TYPES.</div><div class="ttdef"><b>Definition</b> variant.h:694</div></div>
 </div><!-- fragment --></dd></dl>
 <p>Polymorphic specs accept multiple types:</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classVariantSpec.html">VariantSpec</a> <a class="code hl_class" href="classList.html">poly</a> = <a class="code hl_function" href="classVariantSpec.html#a8e7639f0f32e2848e1c0f88c39e2be11">VariantSpec</a>()</div>
-<div class="line">    .setTypes({Variant::TypeString, Variant::TypeSdpSession})</div>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classVariantSpec.html">VariantSpec</a> poly = <a class="code hl_function" href="classVariantSpec.html#a8e7639f0f32e2848e1c0f88c39e2be11">VariantSpec</a>()</div>
+<div class="line">    .<a class="code hl_function" href="classVariantSpec.html#a6ce989cfccc4e97d533474bb819771ce">setTypes</a>({Variant::TypeString, Variant::TypeSdpSession})</div>
 <div class="line">    .<a class="code hl_function" href="classVariantSpec.html#ac9bf4b3d2fff7903d3b68919b4ecfa45">setDescription</a>(<span class="stringliteral">&quot;SDP input: file path or session object&quot;</span>);</div>
+<div class="ttc" id="aclassVariantSpec_html_a6ce989cfccc4e97d533474bb819771ce"><div class="ttname"><a href="classVariantSpec.html#a6ce989cfccc4e97d533474bb819771ce">VariantSpec::setTypes</a></div><div class="ttdeci">VariantSpec &amp; setTypes(std::initializer_list&lt; Type &gt; types)</div><div class="ttdoc">Sets multiple accepted Variant types (polymorphic).</div><div class="ttdef"><b>Definition</b> variantspec.h:89</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a0bf3e5544a79cd08cd3952e087bec16e" name="a0bf3e5544a79cd08cd3952e087bec16e"></a>
@@ -1141,7 +1142,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantSpec.html">VariantSpec</a></li>
-    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
   </ul>
 </div>
 </body>

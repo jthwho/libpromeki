@@ -17,8 +17,9 @@ var searchData=
   ['configtag_14',['ConfigTag',['../structConfigTag.html',1,'']]],
   ['context_15',['Context',['../structFileFormatFactory_1_1Context.html',1,'FileFormatFactory']]],
   ['crashhandler_16',['CrashHandler',['../classCrashHandler.html',1,'']]],
-  ['csccontext_17',['CSCContext',['../classCSCContext.html',1,'']]],
-  ['cscpath_18',['CscPath',['../classCscPath.html',1,'']]],
-  ['cscpipeline_19',['CSCPipeline',['../classCSCPipeline.html',1,'']]],
-  ['cscregistry_20',['CSCRegistry',['../classCSCRegistry.html',1,'']]]
+  ['crc_17',['CRC',['../classCRC.html',1,'']]],
+  ['csccontext_18',['CSCContext',['../classCSCContext.html',1,'']]],
+  ['cscpath_19',['CscPath',['../classCscPath.html',1,'']]],
+  ['cscpipeline_20',['CSCPipeline',['../classCSCPipeline.html',1,'']]],
+  ['cscregistry_21',['CSCRegistry',['../classCSCRegistry.html',1,'']]]
 ];

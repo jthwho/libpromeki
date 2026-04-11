@@ -159,9 +159,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8c46f0f9d98831569592cc578d4318d1" id="r_a8c46f0f9d98831569592cc578d4318d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#a8c46f0f9d98831569592cc578d4318d1">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">int8_t</a> *samples, <a class="el" href="classList.html">size_t</a> count)</td></tr>
 <tr class="memdesc:a8c46f0f9d98831569592cc578d4318d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feeds raw int8_t audio samples to the decoder.  <br /></td></tr>
 <tr class="separator:a8c46f0f9d98831569592cc578d4318d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a2237a47b453dae1fe73e04341c323d" id="r_a9a2237a47b453dae1fe73e04341c323d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#a9a2237a47b453dae1fe73e04341c323d">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;audio)</td></tr>
-<tr class="memdesc:a9a2237a47b453dae1fe73e04341c323d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object to the decoder.  <br /></td></tr>
-<tr class="separator:a9a2237a47b453dae1fe73e04341c323d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9f298171e75d4429d40498729b7419c" id="r_aa9f298171e75d4429d40498729b7419c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#aa9f298171e75d4429d40498729b7419c">decode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;audio, int <a class="el" href="classList.html">channelIndex</a>=0)</td></tr>
+<tr class="memdesc:aa9f298171e75d4429d40498729b7419c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object's selected channel to the decoder.  <br /></td></tr>
+<tr class="separator:aa9f298171e75d4429d40498729b7419c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf43eaef9b869ca6879240a5cad0a1d4" id="r_aaf43eaef9b869ca6879240a5cad0a1d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLtcDecoder.html#aaf43eaef9b869ca6879240a5cad0a1d4">reset</a> ()</td></tr>
 <tr class="memdesc:aaf43eaef9b869ca6879240a5cad0a1d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the decoder state.  <br /></td></tr>
 <tr class="separator:aaf43eaef9b869ca6879240a5cad0a1d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,12 +171,18 @@ Public Member Functions</h2></td></tr>
 <p>Wraps libvtc's VtcLTCDecoder to extract SMPTE timecode from biphase-mark-encoded audio. Supports incremental decoding (audio can be fed in chunks) and detects forward/reverse playback direction.</p>
 <p>Not copyable (owns decoder state). Movable.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classLtcDecoder.html">LtcDecoder</a> <a class="code hl_function" href="textstream_8h.html#ab11fb250e029efe6fb7886eb811ebe8e">dec</a>(48000);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Low-level: hand-prepared int8 mono samples.</span></div>
 <div class="line"><span class="keyword">auto</span> results = <a class="code hl_function" href="textstream_8h.html#ab11fb250e029efe6fb7886eb811ebe8e">dec</a>.decode(<a class="code hl_class" href="classList.html">audioSamples</a>, sampleCount);</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// High-level: any-format Audio, picking the LTC channel.</span></div>
+<div class="line"><span class="keyword">auto</span> results = <a class="code hl_function" href="textstream_8h.html#ab11fb250e029efe6fb7886eb811ebe8e">dec</a>.decode(audio, <a class="code hl_class" href="classList.html">ltcChannelIndex</a>);</div>
+<div class="line"> </div>
 <div class="line"><span class="keywordflow">for</span>(<span class="keyword">auto</span> &amp;r : results) {</div>
 <div class="line">    <span class="comment">// r.timecode is the decoded value</span></div>
 <div class="line">}</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassLtcDecoder_html"><div class="ttname"><a href="classLtcDecoder.html">LtcDecoder</a></div><div class="ttdoc">Decodes LTC (Linear Timecode) audio samples into timecode values.</div><div class="ttdef"><b>Definition</b> ltcdecoder.h:37</div></div>
+<div class="ttc" id="aclassLtcDecoder_html"><div class="ttname"><a href="classLtcDecoder.html">LtcDecoder</a></div><div class="ttdoc">Decodes LTC (Linear Timecode) audio samples into timecode values.</div><div class="ttdef"><b>Definition</b> ltcdecoder.h:44</div></div>
 <div class="ttc" id="atextstream_8h_html_ab11fb250e029efe6fb7886eb811ebe8e"><div class="ttname"><a href="textstream_8h.html#ab11fb250e029efe6fb7886eb811ebe8e">dec</a></div><div class="ttdeci">TextStream &amp; dec(TextStream &amp;s)</div><div class="ttdoc">Sets integer base to 10 (decimal).</div><div class="ttdef"><b>Definition</b> textstream.h:415</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
@@ -207,8 +213,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a9a2237a47b453dae1fe73e04341c323d" name="a9a2237a47b453dae1fe73e04341c323d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a2237a47b453dae1fe73e04341c323d">&#9670;&#160;</a></span>decode() <span class="overload">[1/2]</span></h2>
+<a id="aa9f298171e75d4429d40498729b7419c" name="aa9f298171e75d4429d40498729b7419c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9f298171e75d4429d40498729b7419c">&#9670;&#160;</a></span>decode() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -217,17 +223,29 @@ Public Member Functions</h2></td></tr>
           <td class="memname"><a class="el" href="classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9">DecodedList</a> LtcDecoder::decode </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
-          <td class="paramname"><em>audio</em></td><td>)</td>
+          <td class="paramname"><em>audio</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>channelIndex</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object to the decoder. </p>
-<p>The <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> must be mono PCMI_S8. Other formats are not supported.</p>
+<p>Feeds an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object's selected channel to the decoder. </p>
+<p>Format-agnostic — any sample format <a class="el" href="classAudioDesc.html">AudioDesc</a> supports is accepted. The named channel is converted to int8 mono via <a class="el" href="structAudioDesc_1_1Format.html#a19231a42331af0bc4033f345818edb65">AudioDesc::Format::samplesToFloat</a> (the same per-format helper <a class="el" href="classAudioBuffer.html">AudioBuffer</a> uses) followed by a normalised float-to-int8 quantisation. The audio's sample rate must match the decoder's configured rate, otherwise an empty list is returned.</p>
+<p>The fast path for <code>PCMI_S8</code> mono audio (when <code>channelIndex</code> is 0) skips the conversion entirely and feeds the raw bytes straight to libvtc.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">audio</td><td>The audio to decode. </td></tr>
+    <tr><td class="paramname">audio</td><td>The audio chunk. </td></tr>
+    <tr><td class="paramname">channelIndex</td><td>Zero-based channel index carrying LTC. Defaults to channel 0. </td></tr>
   </table>
   </dd>
 </dl>
@@ -394,7 +412,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLtcDecoder.html">LtcDecoder</a></li>
-    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
   </ul>
 </div>
 </body>

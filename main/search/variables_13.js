@@ -20,7 +20,7 @@ var searchData=
   ['software_17',['Software',['../classMetadata.html#a121b2c33d6b23d806b28b7de4c772eda',1,'Metadata']]],
   ['source_18',['source',['../structMulticastReceiver_1_1GroupEntry.html#a2c75f2c379901557d01a7cbdf1e3abd9',1,'MulticastReceiver::GroupEntry']]],
   ['sourcechannels_19',['sourceChannels',['../classAudioBlock_1_1Config.html#ac2bbfaabf008f8f84e8c255ef05c64d1',1,'AudioBlock::Config']]],
-  ['stats_20',['stats',['../classMediaIOCommandStats.html#add913729d484e4d64e4725b7729852cc',1,'MediaIOCommandStats::stats'],['../structMemSpace_1_1Ops.html#a559b7631993babfc6074f75f46f5f892',1,'MemSpace::Ops::stats']]],
+  ['stats_20',['stats',['../structMemSpace_1_1Ops.html#a559b7631993babfc6074f75f46f5f892',1,'MemSpace::Ops::stats'],['../classMediaIOCommandStats.html#add913729d484e4d64e4725b7729852cc',1,'MediaIOCommandStats::stats']]],
   ['statsbytesreceived_21',['StatsBytesReceived',['../classMediaIOTask__Rtp.html#ab0287346a327c5f748f09281a82ab75b',1,'MediaIOTask_Rtp']]],
   ['statsbytessent_22',['StatsBytesSent',['../classMediaIOTask__Rtp.html#a6f17f8a28e81f72587a26cba35882dbc',1,'MediaIOTask_Rtp']]],
   ['statsframesconverted_23',['StatsFramesConverted',['../classMediaIOTask__Converter.html#a324d97b22ec702ec49babd128c4f062f',1,'MediaIOTask_Converter']]],
@@ -35,8 +35,12 @@ var searchData=
   ['statstxvideosenddurationus_32',['StatsTxVideoSendDurationUs',['../classMediaIOTask__Rtp.html#ae7858915fa006704e3c1e3b2439a1d8a',1,'MediaIOTask_Rtp']]],
   ['stddev_33',['stddev',['../structBenchmarkReporter_1_1StepStats.html#adf63bfe72ddb6d5fc886d53a29a148ae',1,'BenchmarkReporter::StepStats']]],
   ['stddevnsperiter_34',['stddevNsPerIter',['../classBenchmarkResult.html#ad2ee669691c5d02809a31cabadf019cc',1,'BenchmarkResult']]],
-  ['style_35',['style',['../structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1',1,'TuiCell']]],
-  ['subbucketsperoctave_36',['SubBucketsPerOctave',['../classHistogram.html#aeae18f280b70316c2ed0a1b08f4736e0',1,'Histogram']]],
-  ['succeeded_37',['succeeded',['../classBenchmarkResult.html#a3b260212da4082321f58fac76c4716fe',1,'BenchmarkResult']]],
-  ['suite_38',['suite',['../classBenchmarkResult.html#a9c7fc5c2c4cb085699c2fd1487e9a2e6',1,'BenchmarkResult']]]
+  ['streamid_35',['StreamID',['../classMediaConfig.html#a15901fca416be1f265903e57e5b996f4',1,'MediaConfig']]],
+  ['style_36',['style',['../structTuiCell.html#a6e99f081e0f8db7c86143e96a4cce5b1',1,'TuiCell']]],
+  ['subbucketsperoctave_37',['SubBucketsPerOctave',['../classHistogram.html#aeae18f280b70316c2ed0a1b08f4736e0',1,'Histogram']]],
+  ['succeeded_38',['succeeded',['../classBenchmarkResult.html#a3b260212da4082321f58fac76c4716fe',1,'BenchmarkResult']]],
+  ['suite_39',['suite',['../classBenchmarkResult.html#a9c7fc5c2c4cb085699c2fd1487e9a2e6',1,'BenchmarkResult']]],
+  ['syncbits_40',['syncbits',['../classImageDataDecoder.html#a51c9dea649d96ed1a848d9f9da9c0930',1,'ImageDataDecoder::SyncBits'],['../classImageDataEncoder.html#a86d5bdbf13f9d9e8fee9e6ffe88200ef',1,'ImageDataEncoder::SyncBits']]],
+  ['syncnibble_41',['syncnibble',['../classImageDataDecoder.html#af02722838a6b06545a44e9d25d66302e',1,'ImageDataDecoder::SyncNibble'],['../classImageDataEncoder.html#a243b28ecd3f34cb711c02b5c35e34fe7',1,'ImageDataEncoder::SyncNibble']]],
+  ['syncstartcol_42',['syncStartCol',['../structImageDataDecoder_1_1DecodedItem.html#a4840ceb422bf1cad0405caa45032cd1e',1,'ImageDataDecoder::DecodedItem']]]
 ];

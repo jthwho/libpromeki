@@ -252,6 +252,42 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:af1ef1773fa288ae9340c92fa9fe1584f" id="r_af1ef1773fa288ae9340c92fa9fe1584f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#af1ef1773fa288ae9340c92fa9fe1584f">TimecodeDropFrame</a></td></tr>
 <tr class="memdesc:af1ef1773fa288ae9340c92fa9fe1584f"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — drop-frame flag for <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> / <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">59.94</a> timecode.  <br /></td></tr>
 <tr class="separator:af1ef1773fa288ae9340c92fa9fe1584f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15901fca416be1f265903e57e5b996f4" id="r_a15901fca416be1f265903e57e5b996f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a15901fca416be1f265903e57e5b996f4">StreamID</a></td></tr>
+<tr class="memdesc:a15901fca416be1f265903e57e5b996f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">uint32 — opaque per-stream identifier. Combined with the rolling frame number into the frame-ID payload of the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> when <a class="el" href="classMediaConfig.html#ab7571702beb95250cbceba8e50132bb1">TpgDataEncoderEnabled</a> is true. Defaults to 0; use any value the application finds convenient for cross-stream correlation.  <br /></td></tr>
+<tr class="separator:a15901fca416be1f265903e57e5b996f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7571702beb95250cbceba8e50132bb1" id="r_ab7571702beb95250cbceba8e50132bb1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#ab7571702beb95250cbceba8e50132bb1">TpgDataEncoderEnabled</a></td></tr>
+<tr class="memdesc:ab7571702beb95250cbceba8e50132bb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — enable the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> pass on TPG video frames. When true (default), the TPG stamps two 64-bit payloads into the top of every generated video frame: (1) <code></code>(StreamID &lt;&lt; 32) | frameNumber, and (2) the <a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">Timecode::toBcd64</a> BCD timecode word.  <br /></td></tr>
+<tr class="separator:ab7571702beb95250cbceba8e50132bb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a669c0101bff62c9ff245b29b0076fa38" id="r_a669c0101bff62c9ff245b29b0076fa38"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a669c0101bff62c9ff245b29b0076fa38">TpgDataEncoderRepeatLines</a></td></tr>
+<tr class="memdesc:a669c0101bff62c9ff245b29b0076fa38"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — number of scan lines each <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> item occupies in the encoded band. The TPG emits two items, so the total stamped band height is <code>2</code> * TpgDataEncoderRepeatLines scan lines starting from the top of the image. Default 16, which gives a comfortable read margin for a noisy decoder without consuming too much picture area.  <br /></td></tr>
+<tr class="separator:a669c0101bff62c9ff245b29b0076fa38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af739d099e46b957ddcfc6a4835c3933f" id="r_af739d099e46b957ddcfc6a4835c3933f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#af739d099e46b957ddcfc6a4835c3933f">InspectorDropFrames</a></td></tr>
+<tr class="memdesc:af739d099e46b957ddcfc6a4835c3933f"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — drop incoming frames after running checks. When true, the inspector behaves as a pure null sink for upstream pacing purposes; the per-frame events and accumulator stats are still produced as long as the corresponding decoders are enabled.  <br /></td></tr>
+<tr class="separator:af739d099e46b957ddcfc6a4835c3933f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d90ebbff5ede647f8f02d1fc9248e7d" id="r_a9d90ebbff5ede647f8f02d1fc9248e7d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a></td></tr>
+<tr class="memdesc:a9d90ebbff5ede647f8f02d1fc9248e7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — decode the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> bands from the picture. Required for the picture-side timecode and frame ID checks; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> or <a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">InspectorCheckContinuity</a> is set.  <br /></td></tr>
+<tr class="separator:a9d90ebbff5ede647f8f02d1fc9248e7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeca6e42ab742cf541066deee93871aa9" id="r_aeca6e42ab742cf541066deee93871aa9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">InspectorDecodeLtc</a></td></tr>
+<tr class="memdesc:aeca6e42ab742cf541066deee93871aa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — decode LTC from the audio track. Required for the LTC vs picture-TC drift check; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is set.  <br /></td></tr>
+<tr class="separator:aeca6e42ab742cf541066deee93871aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cc60ab320b26013dc5ae1a561d59dd3" id="r_a4cc60ab320b26013dc5ae1a561d59dd3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a></td></tr>
+<tr class="memdesc:a4cc60ab320b26013dc5ae1a561d59dd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — compare the picture timecode against the audio LTC and report the per-frame offset, in audio samples, on every frame. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a> and <a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">InspectorDecodeLtc</a>.  <br /></td></tr>
+<tr class="separator:a4cc60ab320b26013dc5ae1a561d59dd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43de6cf6fa985ebd28d77ad0daa484bf" id="r_a43de6cf6fa985ebd28d77ad0daa484bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a43de6cf6fa985ebd28d77ad0daa484bf">InspectorSyncOffsetToleranceSamples</a></td></tr>
+<tr class="memdesc:a43de6cf6fa985ebd28d77ad0daa484bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — maximum allowed sample-to-sample change in the picture-vs-LTC sync offset before the inspector flags a discontinuity. Default 0: any change is reported. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> higher (e.g. 1, 2, ...) when the upstream encode/decode pair has a known small jitter that should not generate noise. Only meaningful when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is enabled.  <br /></td></tr>
+<tr class="separator:a43de6cf6fa985ebd28d77ad0daa484bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8eb2a3ea1d7147fcf4f2249b8ec1c504" id="r_a8eb2a3ea1d7147fcf4f2249b8ec1c504"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">InspectorCheckContinuity</a></td></tr>
+<tr class="memdesc:a8eb2a3ea1d7147fcf4f2249b8ec1c504"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — track frame number, timecode, and stream ID continuity from one frame to the next. Any unexpected jump (skipped frame, repeated frame, stream-ID change, TC discontinuity) becomes a discontinuity record on the per-frame event with both the previous and current values. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a>.  <br /></td></tr>
+<tr class="separator:a8eb2a3ea1d7147fcf4f2249b8ec1c504"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ebc4c19e6667f94572f2dbe0f93eb89" id="r_a7ebc4c19e6667f94572f2dbe0f93eb89"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a7ebc4c19e6667f94572f2dbe0f93eb89">InspectorImageDataRepeatLines</a></td></tr>
+<tr class="memdesc:a7ebc4c19e6667f94572f2dbe0f93eb89"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — scan lines per <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> band. Must match the encoder's <a class="el" href="classMediaConfig.html#a669c0101bff62c9ff245b29b0076fa38">TpgDataEncoderRepeatLines</a> so the inspector reads at the right band offsets. Default 16.  <br /></td></tr>
+<tr class="separator:a7ebc4c19e6667f94572f2dbe0f93eb89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1af38928ec9fc79a108c4ea6d53b79c2" id="r_a1af38928ec9fc79a108c4ea6d53b79c2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a1af38928ec9fc79a108c4ea6d53b79c2">InspectorLtcChannel</a></td></tr>
+<tr class="memdesc:a1af38928ec9fc79a108c4ea6d53b79c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — audio channel index that carries LTC. Mirrors <a class="el" href="classMediaConfig.html#ab956db387dfa6915da89e38a3b73bf91">AudioLtcChannel</a>; default 0.  <br /></td></tr>
+<tr class="separator:a1af38928ec9fc79a108c4ea6d53b79c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b98f1e6982e7e355314616c358c4eb6" id="r_a5b98f1e6982e7e355314616c358c4eb6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a5b98f1e6982e7e355314616c358c4eb6">InspectorLogIntervalSec</a></td></tr>
+<tr class="memdesc:a5b98f1e6982e7e355314616c358c4eb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — periodic-summary log interval in seconds (wall time, not media time). Default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to 0 to disable periodic logging entirely; per-frame events are still produced.  <br /></td></tr>
+<tr class="separator:a5b98f1e6982e7e355314616c358c4eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae999aa7371378376e309d897f488710e" id="r_ae999aa7371378376e309d897f488710e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#ae999aa7371378376e309d897f488710e">OutputPixelDesc</a></td></tr>
 <tr class="memdesc:ae999aa7371378376e309d897f488710e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> — target pixel description for the converter stage (<code>Invalid</code> = video pass-through).  <br /></td></tr>
 <tr class="separator:ae999aa7371378376e309d897f488710e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -521,8 +557,8 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 <div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:64</div></div>
-<div class="ttc" id="aclassMediaConfig_html_a177b37d7554c3a401879d78b244a4440"><div class="ttname"><a href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a></div><div class="ttdeci">static const ID JpegSubsampling</div><div class="ttdoc">Enum ChromaSubsampling — JPEG chroma subsampling (codec default: 4:2:2, RFC 2435 compatible).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:363</div></div>
-<div class="ttc" id="aclassMediaConfig_html_a214ed57abc7e330e459128e8466f8951"><div class="ttname"><a href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a></div><div class="ttdeci">static const ID JpegQuality</div><div class="ttdoc">int — JPEG quality 1-100 (codec default: 85).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:355</div></div>
+<div class="ttc" id="aclassMediaConfig_html_a177b37d7554c3a401879d78b244a4440"><div class="ttname"><a href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a></div><div class="ttdeci">static const ID JpegSubsampling</div><div class="ttdoc">Enum ChromaSubsampling — JPEG chroma subsampling (codec default: 4:2:2, RFC 2435 compatible).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:500</div></div>
+<div class="ttc" id="aclassMediaConfig_html_a214ed57abc7e330e459128e8466f8951"><div class="ttname"><a href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a></div><div class="ttdeci">static const ID JpegQuality</div><div class="ttdoc">int — JPEG quality 1-100 (codec default: 85).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:492</div></div>
 <div class="ttc" id="aclassMediaConfig_html_a35d1c7334bd471517976c367d29c6f0c"><div class="ttname"><a href="classMediaConfig.html#a35d1c7334bd471517976c367d29c6f0c">MediaConfig::Filename</a></div><div class="ttdeci">static const ID Filename</div><div class="ttdoc">String — path or URL to the media resource.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:76</div></div>
 <div class="ttc" id="aclassMediaConfig_html_a7d80868703d9c175b31ae92af1e7a60d"><div class="ttname"><a href="classMediaConfig.html#a7d80868703d9c175b31ae92af1e7a60d">MediaConfig::VideoSize</a></div><div class="ttdeci">static const ID VideoSize</div><div class="ttdoc">Size2Du32 — image dimensions.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:130</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
@@ -1337,6 +1373,266 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a8eb2a3ea1d7147fcf4f2249b8ec1c504" name="a8eb2a3ea1d7147fcf4f2249b8ec1c504"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8eb2a3ea1d7147fcf4f2249b8ec1c504">&#9670;&#160;</a></span>InspectorCheckContinuity</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorCheckContinuity</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorCheckContinuity&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector tracks TC / frame# / streamID continuity.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — track frame number, timecode, and stream ID continuity from one frame to the next. Any unexpected jump (skipped frame, repeated frame, stream-ID change, TC discontinuity) becomes a discontinuity record on the per-frame event with both the previous and current values. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a>. </p>
+
+</div>
+</div>
+<a id="a4cc60ab320b26013dc5ae1a561d59dd3" name="a4cc60ab320b26013dc5ae1a561d59dd3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4cc60ab320b26013dc5ae1a561d59dd3">&#9670;&#160;</a></span>InspectorCheckTcSync</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorCheckTcSync</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorCheckTcSync&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector reports picture-TC vs LTC offset in samples.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — compare the picture timecode against the audio LTC and report the per-frame offset, in audio samples, on every frame. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a> and <a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">InspectorDecodeLtc</a>. </p>
+<p>In professional video workflows audio and video are locked to the same reference, so the offset is expected to be a fixed phase relationship and any <em>change</em> from one frame to the next is a real fault. Combined with <a class="el" href="classMediaConfig.html#a43de6cf6fa985ebd28d77ad0daa484bf">InspectorSyncOffsetToleranceSamples</a>, the inspector fires a discontinuity warning whenever the offset moves by more than the configured tolerance. </p>
+
+</div>
+</div>
+<a id="a9d90ebbff5ede647f8f02d1fc9248e7d" name="a9d90ebbff5ede647f8f02d1fc9248e7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d90ebbff5ede647f8f02d1fc9248e7d">&#9670;&#160;</a></span>InspectorDecodeImageData</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorDecodeImageData</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorDecodeImageData&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector decodes image-data bands from each frame.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — decode the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> bands from the picture. Required for the picture-side timecode and frame ID checks; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> or <a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">InspectorCheckContinuity</a> is set. </p>
+
+</div>
+</div>
+<a id="aeca6e42ab742cf541066deee93871aa9" name="aeca6e42ab742cf541066deee93871aa9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeca6e42ab742cf541066deee93871aa9">&#9670;&#160;</a></span>InspectorDecodeLtc</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorDecodeLtc</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorDecodeLtc&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector decodes LTC from each frame&#39;s audio.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — decode LTC from the audio track. Required for the LTC vs picture-TC drift check; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is set. </p>
+
+</div>
+</div>
+<a id="af739d099e46b957ddcfc6a4835c3933f" name="af739d099e46b957ddcfc6a4835c3933f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af739d099e46b957ddcfc6a4835c3933f">&#9670;&#160;</a></span>InspectorDropFrames</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorDropFrames</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorDropFrames&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">true</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector drops frames after checks (sink behaviour).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — drop incoming frames after running checks. When true, the inspector behaves as a pure null sink for upstream pacing purposes; the per-frame events and accumulator stats are still produced as long as the corresponding decoders are enabled. </p>
+
+</div>
+</div>
+<a id="a7ebc4c19e6667f94572f2dbe0f93eb89" name="a7ebc4c19e6667f94572f2dbe0f93eb89"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ebc4c19e6667f94572f2dbe0f93eb89">&#9670;&#160;</a></span>InspectorImageDataRepeatLines</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorImageDataRepeatLines</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorImageDataRepeatLines&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(16))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(1))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Scan lines per ImageDataDecoder band in Inspector.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>int — scan lines per <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> band. Must match the encoder's <a class="el" href="classMediaConfig.html#a669c0101bff62c9ff245b29b0076fa38">TpgDataEncoderRepeatLines</a> so the inspector reads at the right band offsets. Default 16. </p>
+
+</div>
+</div>
+<a id="a5b98f1e6982e7e355314616c358c4eb6" name="a5b98f1e6982e7e355314616c358c4eb6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b98f1e6982e7e355314616c358c4eb6">&#9670;&#160;</a></span>InspectorLogIntervalSec</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorLogIntervalSec</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorLogIntervalSec&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
+<div class="line">                                .setDefault(1.0)</div>
+<div class="line">                                .setMin(0.0)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector periodic-summary log interval, seconds.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>double — periodic-summary log interval in seconds (wall time, not media time). Default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to 0 to disable periodic logging entirely; per-frame events are still produced. </p>
+
+</div>
+</div>
+<a id="a1af38928ec9fc79a108c4ea6d53b79c2" name="a1af38928ec9fc79a108c4ea6d53b79c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1af38928ec9fc79a108c4ea6d53b79c2">&#9670;&#160;</a></span>InspectorLtcChannel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorLtcChannel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorLtcChannel&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Audio channel index carrying LTC for the inspector.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>int — audio channel index that carries LTC. Mirrors <a class="el" href="classMediaConfig.html#ab956db387dfa6915da89e38a3b73bf91">AudioLtcChannel</a>; default 0. </p>
+
+</div>
+</div>
+<a id="a43de6cf6fa985ebd28d77ad0daa484bf" name="a43de6cf6fa985ebd28d77ad0daa484bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43de6cf6fa985ebd28d77ad0daa484bf">&#9670;&#160;</a></span>InspectorSyncOffsetToleranceSamples</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorSyncOffsetToleranceSamples</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorSyncOffsetToleranceSamples&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(</div>
+<div class="line">                                        <span class="stringliteral">&quot;Max allowed sample-to-sample change in &quot;</span></div>
+<div class="line">                                        <span class="stringliteral">&quot;picture-vs-LTC sync offset before flagging &quot;</span></div>
+<div class="line">                                        <span class="stringliteral">&quot;a discontinuity (0 = any change).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>int — maximum allowed sample-to-sample change in the picture-vs-LTC sync offset before the inspector flags a discontinuity. Default 0: any change is reported. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> higher (e.g. 1, 2, ...) when the upstream encode/decode pair has a known small jitter that should not generate noise. Only meaningful when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is enabled. </p>
+
+</div>
+</div>
 <a id="a214ed57abc7e330e459128e8466f8951" name="a214ed57abc7e330e459128e8466f8951"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a214ed57abc7e330e459128e8466f8951">&#9670;&#160;</a></span>JpegQuality</h2>
 
@@ -2111,6 +2407,34 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a15901fca416be1f265903e57e5b996f4" name="a15901fca416be1f265903e57e5b996f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a15901fca416be1f265903e57e5b996f4">&#9670;&#160;</a></span>StreamID</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::StreamID</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;StreamID&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeU32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">uint32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Opaque per-stream identifier (uint32).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>uint32 — opaque per-stream identifier. Combined with the rolling frame number into the frame-ID payload of the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> when <a class="el" href="classMediaConfig.html#ab7571702beb95250cbceba8e50132bb1">TpgDataEncoderEnabled</a> is true. Defaults to 0; use any value the application finds convenient for cross-stream correlation. </p>
+
+</div>
+</div>
 <a id="af1ef1773fa288ae9340c92fa9fe1584f" name="af1ef1773fa288ae9340c92fa9fe1584f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af1ef1773fa288ae9340c92fa9fe1584f">&#9670;&#160;</a></span>TimecodeDropFrame</h2>
 
@@ -2218,9 +2542,66 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeTimecode)</div>
 <div class="line">                                .setDefault(<a class="code hl_class" href="classTimecode.html">Timecode</a>())</div>
 <div class="line">                                .setDescription(<span class="stringliteral">&quot;Pre-built starting timecode.&quot;</span>))</div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:46</div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:47</div></div>
 </div><!-- fragment -->
 <p><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> — pre-built starting timecode (alternative to <code>TimecodeStart</code>). </p>
+
+</div>
+</div>
+<a id="ab7571702beb95250cbceba8e50132bb1" name="ab7571702beb95250cbceba8e50132bb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7571702beb95250cbceba8e50132bb1">&#9670;&#160;</a></span>TpgDataEncoderEnabled</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::TpgDataEncoderEnabled</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;TpgDataEncoderEnabled&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">true</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Enable VITC-style binary data encoder pass on TPG video.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — enable the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> pass on TPG video frames. When true (default), the TPG stamps two 64-bit payloads into the top of every generated video frame: (1) <code></code>(StreamID &lt;&lt; 32) | frameNumber, and (2) the <a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">Timecode::toBcd64</a> BCD timecode word. </p>
+
+</div>
+</div>
+<a id="a669c0101bff62c9ff245b29b0076fa38" name="a669c0101bff62c9ff245b29b0076fa38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a669c0101bff62c9ff245b29b0076fa38">&#9670;&#160;</a></span>TpgDataEncoderRepeatLines</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::TpgDataEncoderRepeatLines</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;TpgDataEncoderRepeatLines&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(16))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(1))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Scan lines per ImageDataEncoder item in TPG.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>int — number of scan lines each <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> item occupies in the encoded band. The TPG emits two items, so the total stamped band height is <code>2</code> * TpgDataEncoderRepeatLines scan lines starting from the top of the image. Default 16, which gives a comfortable read margin for a noisy decoder without consuming too much picture area. </p>
 
 </div>
 </div>
@@ -2917,7 +3298,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaConfig.html">MediaConfig</a></li>
-    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
   </ul>
 </div>
 </body>

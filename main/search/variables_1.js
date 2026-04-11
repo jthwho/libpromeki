@@ -33,5 +33,7 @@ var searchData=
   ['averagelatencyms_30',['AverageLatencyMs',['../classMediaIOStats.html#a1d1dcc32f0838834b06a0417c4717db6',1,'MediaIOStats']]],
   ['avg_31',['avg',['../structBenchmarkReporter_1_1StepStats.html#a703cfdda69eb08f08b1994a37b42200a',1,'BenchmarkReporter::StepStats']]],
   ['avgnsperiter_32',['avgNsPerIter',['../classBenchmarkResult.html#a79d6e40b8cbf375fd48ce51948c1719e',1,'BenchmarkResult']]],
-  ['awk_33',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
+  ['avsyncoffsetsamples_33',['avSyncOffsetSamples',['../structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e',1,'InspectorEvent']]],
+  ['avsyncvalid_34',['avSyncValid',['../structInspectorEvent.html#a7306989a0c3cfe410da73abdfaf46acf',1,'InspectorEvent']]],
+  ['awk_35',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
 ];

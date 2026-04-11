@@ -1,0 +1,5 @@
+<map id="MediaIOTask_Inspector" name="MediaIOTask_Inspector">
+<area shape="rect" id="Node000001" title="MediaIO sink backend that decodes and validates a media stream." alt="" coords="5,79,177,104"/>
+<area shape="rect" id="Node000002" href="$classMediaIOTask.html" title="Backend interface for media I/O." alt="" coords="39,5,144,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="94,44,94,79,89,79,89,44"/>
+</map>

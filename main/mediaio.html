@@ -103,7 +103,8 @@ $(document).ready(function(){initNavTree('mediaio.html',''); initResizable(); })
 </div><!--header-->
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
-<ul><li class="level1"><a href="#mediaio_overview">Overview</a></li>
+<ul><li class="level1"><a href="#mediaio_backends">Available backends</a></li>
+<li class="level1"><a href="#mediaio_overview">Overview</a></li>
 <li class="level1"><a href="#mediaio_architecture">Architecture</a><ul><li class="level2"><a href="#mediaio_command_pattern">Command pattern</a></li>
 <li class="level2"><a href="#mediaio_strand">Strand-based serialization</a></li>
 <li class="level2"><a href="#mediaio_data_flow">Lock-free data flow</a></li>
@@ -136,6 +137,28 @@ $(document).ready(function(){initNavTree('mediaio.html',''); initResizable(); })
 </div>
 <div class="textblock"><p>Architecture and authoring guide for the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> framework.</p>
 <p>The <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> subsystem provides a uniform interface for reading and writing media — files, image sequences, capture cards, decoders — through a small set of cooperating classes. This page covers the overall architecture, the threading model, the public API, and how to write a new backend.</p>
+<h1><a class="anchor" id="mediaio_backends"></a>
+Available backends</h1>
+<p>The library ships with the following <a class="el" href="classMediaIOTask.html">MediaIOTask</a> backends. Each is registered via <code>PROMEKI_REGISTER_MEDIAIO</code> and can be created by name through <a class="el" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a> or one of the filename factories below.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Backend   </th><th class="markdownTableHeadNone">Direction   </th><th class="markdownTableHeadNone">Purpose    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>TPG</code>   </td><td class="markdownTableBodyNone">source   </td><td class="markdownTableBodyNone">Synthetic test pattern generator — colour bars + audio (default AudioPattern::AvSync, which embeds LTC on the LTC channel + a click marker on the others) + timecode + a <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> data band stamped at the top of every frame.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Inspector</code>   </td><td class="markdownTableBodyNone">sink   </td><td class="markdownTableBodyNone"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> validator / monitor — decodes the TPG image data band, decodes audio LTC, reports A/V sync offset, tracks frame number / stream ID / TC continuity, and emits both per-frame events and a periodic summary log. See <a class="el" href="inspector.html">Inspector — Frame validation and monitoring</a> for the QA-oriented user guide.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code><a class="el" href="classImageFile.html" title="Media file loader and saver.">ImageFile</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, TGA, SGI, PNM, raw YUV).    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code><a class="el" href="classAudioFile.html" title="Audio file reader and writer.">AudioFile</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">Single audio file via libsndfile (WAV, FLAC, AIFF, ...).    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a></code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone"><a class="el" href="classQuickTime.html" title="QuickTime / ISO-BMFF container reader and writer.">QuickTime</a> / ISO-BMFF reader and writer (fragmented or moov-at-end layout).    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Rtp</code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly).    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Converter</code>   </td><td class="markdownTableBodyNone">both   </td><td class="markdownTableBodyNone">In-process pixel-format and audio-format converter that wraps a child read-side and a parent write-side.   </td></tr>
+</table>
+<p>The TPG and Inspector are designed to be used together with no extra configuration: a default-config TPG produces everything the default-config Inspector knows how to verify (image data band, BCD timecode, LTC audio, A/V sync), so a smoke-test pipeline is just two factory calls plus a frame loop. See <a class="el" href="inspector.html">Inspector — Frame validation and monitoring</a> for the full walk-through.</p>
 <h1><a class="anchor" id="mediaio_overview"></a>
 Overview</h1>
 <p><a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> is split into two cooperating layers:</p>
@@ -531,7 +554,7 @@ Thread pool sizing</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
   </ul>
 </div>
 </body>

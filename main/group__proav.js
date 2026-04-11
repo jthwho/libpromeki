@@ -372,6 +372,53 @@ var group__proav =
       [ "size", "classImage.html#a82a4a6f6f0e6d370bb1a81e4c55ce20f", null ],
       [ "width", "classImage.html#aa3c6a86a6e5f35499ae781710154cb33", null ]
     ] ],
+    [ "ImageDataDecoder", "classImageDataDecoder.html", [
+      [ "Band", "structImageDataDecoder_1_1Band.html", [
+        [ "firstLine", "structImageDataDecoder_1_1Band.html#a70109e0c462e150167b7230286326ae8", null ],
+        [ "lineCount", "structImageDataDecoder_1_1Band.html#a9afc8b83b1b1193947121f7d26427392", null ]
+      ] ],
+      [ "DecodedItem", "structImageDataDecoder_1_1DecodedItem.html", [
+        [ "bitWidth", "structImageDataDecoder_1_1DecodedItem.html#a1d7ad70a61b5ebd497d0da7a2c62acd8", null ],
+        [ "decodedCrc", "structImageDataDecoder_1_1DecodedItem.html#a9310276da43c04dfce0eff863b9dd0ac", null ],
+        [ "decodedSync", "structImageDataDecoder_1_1DecodedItem.html#a34fe37079e7de7bd8e99c0560b95b58d", null ],
+        [ "error", "structImageDataDecoder_1_1DecodedItem.html#a73967f24d5737a681401a032e5a6e756", null ],
+        [ "expectedCrc", "structImageDataDecoder_1_1DecodedItem.html#a490771e997128b8656fcc9c2b8b239dd", null ],
+        [ "payload", "structImageDataDecoder_1_1DecodedItem.html#a12b4c5829c2a10ac4818d9e5d3912515", null ],
+        [ "syncStartCol", "structImageDataDecoder_1_1DecodedItem.html#a4840ceb422bf1cad0405caa45032cd1e", null ]
+      ] ],
+      [ "DecodedList", "classImageDataDecoder.html#a26a82f73daef8830773090ddccb728df", null ],
+      [ "SampleMode", "classImageDataDecoder.html#a469b38f2f959b73cc7af5ac6caccb511", [
+        [ "AverageBand", "classImageDataDecoder.html#a469b38f2f959b73cc7af5ac6caccb511a62283784e23c065a153c8bd1936a5365", null ],
+        [ "MiddleLine", "classImageDataDecoder.html#a469b38f2f959b73cc7af5ac6caccb511adec4890a5d849105252d042fb7df7aab", null ]
+      ] ],
+      [ "ImageDataDecoder", "classImageDataDecoder.html#a65e6dd987efc24bad4d7f65d83c95b55", null ],
+      [ "ImageDataDecoder", "classImageDataDecoder.html#a771b3fbf65ddb881a6d043aaa5b3ccc1", null ],
+      [ "bitWidthMax", "classImageDataDecoder.html#af3b0a20117afbc1970ab45e1ab7aaa49", null ],
+      [ "bitWidthMin", "classImageDataDecoder.html#af39105cdbb193f931a8f516a07715d7c", null ],
+      [ "decode", "classImageDataDecoder.html#ac9ad0c64c53eff4f3db556f4e92fb71c", null ],
+      [ "decode", "classImageDataDecoder.html#ac39a9b6898534597a1c8a76a9c0fdbbd", null ],
+      [ "desc", "classImageDataDecoder.html#acb21abcb2e5748831efb64200d45c113", null ],
+      [ "expectedBitWidth", "classImageDataDecoder.html#a85be11f3b825d7ea87a74d763aa76222", null ],
+      [ "isValid", "classImageDataDecoder.html#a7bae11028c8dc5579a73d810f1d116f9", null ],
+      [ "sampleMode", "classImageDataDecoder.html#a7e031b245da886bd3afc5c29843f7444", null ],
+      [ "setSampleMode", "classImageDataDecoder.html#ac456a550a803fe3f5820db9acf8c47d0", null ]
+    ] ],
+    [ "ImageDataEncoder", "classImageDataEncoder.html", [
+      [ "Item", "structImageDataEncoder_1_1Item.html", [
+        [ "firstLine", "structImageDataEncoder_1_1Item.html#a40083e0aab3f86fb8a10bb2e962f38e7", null ],
+        [ "lineCount", "structImageDataEncoder_1_1Item.html#a3ecc2f29bd0721804d0fc63df94c4137", null ],
+        [ "payload", "structImageDataEncoder_1_1Item.html#ab6934802e522e30f9e9a6d785b91fc85", null ]
+      ] ],
+      [ "ImageDataEncoder", "classImageDataEncoder.html#a37fd2b933fbc687d8308a0f6b1ef9f56", null ],
+      [ "ImageDataEncoder", "classImageDataEncoder.html#a7794a87d154a78a3df15373e955106ba", null ],
+      [ "bitWidth", "classImageDataEncoder.html#a3be1e74ede8dbfac86806d433963b1a9", null ],
+      [ "desc", "classImageDataEncoder.html#ac30b0589f555900b31e05bc1f3299258", null ],
+      [ "encode", "classImageDataEncoder.html#a949dc2996fa62106f7fd67158fdaa0bc", null ],
+      [ "encode", "classImageDataEncoder.html#a5e4b771019f7fff9664c070e25ca4d2f", null ],
+      [ "isValid", "classImageDataEncoder.html#a22cc4c9e0d401f83e2363c764cb21a1d", null ],
+      [ "padWidth", "classImageDataEncoder.html#a3566a6a3e1e93a795fe8ad6d0cbe3d8e", null ],
+      [ "patternWidth", "classImageDataEncoder.html#a46725056975abc14bad9792e54b33aec", null ]
+    ] ],
     [ "ImageDesc", "classImageDesc.html", [
       [ "Ptr", "classImageDesc.html#ad783f089e7476a66b79dc80c73e0287a", null ],
       [ "ImageDesc", "classImageDesc.html#a0c5fd17eb1dec3cbeddc823fc9284d34", null ],
@@ -498,7 +545,7 @@ var group__proav =
       [ "DecodedList", "classLtcDecoder.html#a801ff1d622064a6b3634eb20ed92aeb9", null ],
       [ "LtcDecoder", "classLtcDecoder.html#aefcccac7fc533c95f2527f43854dce2b", null ],
       [ "~LtcDecoder", "classLtcDecoder.html#ae8ed02f8a37b709bb1434e705b001201", null ],
-      [ "decode", "classLtcDecoder.html#a9a2237a47b453dae1fe73e04341c323d", null ],
+      [ "decode", "classLtcDecoder.html#aa9f298171e75d4429d40498729b7419c", null ],
       [ "decode", "classLtcDecoder.html#a8c46f0f9d98831569592cc578d4318d1", null ],
       [ "reset", "classLtcDecoder.html#aaf43eaef9b869ca6879240a5cad0a1d4", null ],
       [ "sampleRate", "classLtcDecoder.html#aaf6bd60fa1995c6a73d5814786985b2d", null ],
@@ -677,6 +724,51 @@ var group__proav =
     [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html", [
       [ "MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html#af4f06377303c84c45c73803e88a07599", null ],
       [ "~MediaIOTask_ImageFile", "classMediaIOTask__ImageFile.html#aa18980438b7b6c3101fe7bddeb3dc101", null ]
+    ] ],
+    [ "InspectorDiscontinuity", "structInspectorDiscontinuity.html", [
+      [ "Kind", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801d", [
+        [ "FrameNumberJump", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a", null ],
+        [ "StreamIdChange", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da536ddcee17d16b4926db7438fb180c41", null ],
+        [ "PictureTcJump", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaf6f35ee9a1d7430e99f4f9e74e0c8c7", null ],
+        [ "LtcTcJump", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daec026ed8cf22df8bb7896c9dae32eb77", null ],
+        [ "ImageDataDecodeFailure", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da9ea6cad4db5d41e0d2b4662d696b5eaf", null ],
+        [ "LtcDecodeFailure", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6", null ],
+        [ "SyncOffsetChange", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260", null ]
+      ] ],
+      [ "currentValue", "structInspectorDiscontinuity.html#abfd4e723af9bdcd681d8ffe1f0d943c3", null ],
+      [ "description", "structInspectorDiscontinuity.html#a1bac026b34c80a43702307422a70163f", null ],
+      [ "kind", "structInspectorDiscontinuity.html#a1935c3a4d2c999342e0e40ba2ffbe49d", null ],
+      [ "previousValue", "structInspectorDiscontinuity.html#a4805a1ae20db9515fa6dd56a9ddba30a", null ]
+    ] ],
+    [ "InspectorEvent", "structInspectorEvent.html", [
+      [ "avSyncOffsetSamples", "structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e", null ],
+      [ "avSyncValid", "structInspectorEvent.html#a7306989a0c3cfe410da73abdfaf46acf", null ],
+      [ "discontinuities", "structInspectorEvent.html#aabf26768b9d236ce4fe732a0943a9f03", null ],
+      [ "frameIndex", "structInspectorEvent.html#a4ac5a885c977f17d3feed4281b5116c2", null ],
+      [ "ltcDecoded", "structInspectorEvent.html#a9fa69f188068a68855a6b0ba94a4cf0c", null ],
+      [ "ltcDecoderEnabled", "structInspectorEvent.html#aa5a89de684fe2569204fc6971c8224eb", null ],
+      [ "ltcSampleStart", "structInspectorEvent.html#ab071023156ef6e16374ac59a360c987b", null ],
+      [ "ltcTimecode", "structInspectorEvent.html#a3d9310b693eede6b1bd21fdbb16c9ae7", null ],
+      [ "pictureDecoded", "structInspectorEvent.html#aa2ebde0796e9559d01964997e48fe949", null ],
+      [ "pictureDecoderEnabled", "structInspectorEvent.html#a1b1291a7d01d940b78ad6ebca487e3b0", null ],
+      [ "pictureFrameNumber", "structInspectorEvent.html#acd06d9ce09f888e3ffb3c7b38a2c9b51", null ],
+      [ "pictureStreamId", "structInspectorEvent.html#a84fb002c9775a10c958010d5642ff219", null ],
+      [ "pictureTimecode", "structInspectorEvent.html#a35faf4620e770dda09118863e1b2b874", null ]
+    ] ],
+    [ "InspectorSnapshot", "structInspectorSnapshot.html", [
+      [ "framesProcessed", "structInspectorSnapshot.html#a08ede529519f69748bff66171f431126", null ],
+      [ "framesWithLtc", "structInspectorSnapshot.html#aab78b4c6271d22bce133df411044285b", null ],
+      [ "framesWithPictureData", "structInspectorSnapshot.html#ad0063a4655a21339e9ebe78ace4e96dc", null ],
+      [ "hasLastEvent", "structInspectorSnapshot.html#a74bf47a3d931b8120cb1e9dc765e1b45", null ],
+      [ "lastEvent", "structInspectorSnapshot.html#a0c7f2dda7770d65e06415339996b10d3", null ],
+      [ "totalDiscontinuities", "structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5", null ]
+    ] ],
+    [ "MediaIOTask_Inspector", "classMediaIOTask__Inspector.html", [
+      [ "EventCallback", "classMediaIOTask__Inspector.html#a497edb7adb3ac341dfbda6d88714cf5a", null ],
+      [ "MediaIOTask_Inspector", "classMediaIOTask__Inspector.html#a6cc1b2fd0e9c972b551968812633528d", null ],
+      [ "~MediaIOTask_Inspector", "classMediaIOTask__Inspector.html#a8e8fbfbe848ac125ca354d44a5b334b4", null ],
+      [ "setEventCallback", "classMediaIOTask__Inspector.html#a3abd49175160a45874ffd09255598df2", null ],
+      [ "snapshot", "classMediaIOTask__Inspector.html#a722864caa5ed43527b4fee9b93e03843", null ]
     ] ],
     [ "MediaIOTask_QuickTime", "classMediaIOTask__QuickTime.html", [
       [ "MediaIOTask_QuickTime", "classMediaIOTask__QuickTime.html#a22a8f086dd9a78c91d2a641e522e904b", null ],

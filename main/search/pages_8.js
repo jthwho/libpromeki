@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['pattern_0',['TypeRegistry Pattern',['../typeregistry.html',1,'']]],
-  ['professional_20media_20toolkit_1',['PROfessional MEdia toolKIt',['../index.html',1,'']]]
+  ['o_20subsystem_0',['Media I/O Subsystem',['../mediaio.html',1,'']]],
+  ['object_20categories_1',['Data Object Categories',['../dataobjects.html',1,'']]]
 ];

@@ -8,5 +8,6 @@ var searchData=
   ['focustext_5',['FocusText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a54eaa4fa26b1cd197a3fd25abf16ade5',1,'TuiPalette']]],
   ['force_6',['Force',['../classLogger.html#ac744681e23720966b5f430ec2060da36a1e8cecc45c0f0451b38807bf09181f57',1,'Logger']]],
   ['forward_7',['Forward',['../classTimecodeGenerator.html#a4c4ad2cf7baea2f3f1e93dc3b68c0dbda03259fcbfc2c3849da9a6c0e9f28d009',1,'TimecodeGenerator']]],
-  ['fps_5fnotwellknown_8',['FPS_NotWellKnown',['../classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202',1,'FrameRate']]]
+  ['fps_5fnotwellknown_8',['FPS_NotWellKnown',['../classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca678c03071e4d9a0c5df04d175257d202',1,'FrameRate']]],
+  ['framenumberjump_9',['FrameNumberJump',['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da76f5a1985d93b6ebcd1b8de165efe65a',1,'InspectorDiscontinuity']]]
 ];

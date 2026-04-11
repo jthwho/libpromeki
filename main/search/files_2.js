@@ -10,7 +10,8 @@ var searchData=
   ['colormodel_2eh_7',['colormodel.h',['../colormodel_8h.html',1,'']]],
   ['configoption_2eh_8',['configoption.h',['../configoption_8h.html',1,'']]],
   ['crashhandler_2eh_9',['crashhandler.h',['../crashhandler_8h.html',1,'']]],
-  ['csccontext_2eh_10',['csccontext.h',['../csccontext_8h.html',1,'']]],
-  ['cscpipeline_2eh_11',['cscpipeline.h',['../cscpipeline_8h.html',1,'']]],
-  ['cscregistry_2eh_12',['cscregistry.h',['../cscregistry_8h.html',1,'']]]
+  ['crc_2eh_10',['crc.h',['../crc_8h.html',1,'']]],
+  ['csccontext_2eh_11',['csccontext.h',['../csccontext_8h.html',1,'']]],
+  ['cscpipeline_2eh_12',['cscpipeline.h',['../cscpipeline_8h.html',1,'']]],
+  ['cscregistry_2eh_13',['cscregistry.h',['../cscregistry_8h.html',1,'']]]
 ];

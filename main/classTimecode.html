@@ -255,6 +255,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a20c98fe7a64fd1a5ee877ff976769c85" id="r_a20c98fe7a64fd1a5ee877ff976769c85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classTimecode.html#a1eaa827f9244f0d4f00c6fd69878c496">FrameNumber</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a20c98fe7a64fd1a5ee877ff976769c85">toFrameNumber</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a20c98fe7a64fd1a5ee877ff976769c85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts the timecode to an absolute frame number.  <br /></td></tr>
 <tr class="separator:a20c98fe7a64fd1a5ee877ff976769c85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b6f9be97a95839c1677c5ce8f2f129b" id="r_a0b6f9be97a95839c1677c5ce8f2f129b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">toBcd64</a> (<a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a> <a class="el" href="classList.html">fmt</a>=TimecodePackFormat::Vitc) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0b6f9be97a95839c1677c5ce8f2f129b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packs the timecode into the 64-bit BCD time-address word.  <br /></td></tr>
+<tr class="separator:a0b6f9be97a95839c1677c5ce8f2f129b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -264,6 +267,17 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:abdfde6ef249fe224b4986ee482ee6bf0" id="r_abdfde6ef249fe224b4986ee482ee6bf0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classTimecode.html">Timecode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;str)</td></tr>
 <tr class="memdesc:abdfde6ef249fe224b4986ee482ee6bf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> from its string representation.  <br /></td></tr>
 <tr class="separator:abdfde6ef249fe224b4986ee482ee6bf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b66b507b1249e7b9704ede346672d51" id="r_a3b66b507b1249e7b9704ede346672d51"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classTimecode.html">Timecode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTimecode.html#a3b66b507b1249e7b9704ede346672d51">fromBcd64</a> (<a class="el" href="classList.html">uint64_t</a> <a class="el" href="classList.html">bcd</a>, <a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a> <a class="el" href="classList.html">fmt</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classTimecode_1_1Mode.html">Mode</a> &amp;<a class="el" href="classTimecode.html#a1826a8723d0dce00f0d0a81d86ea97bb">mode</a>)</td></tr>
+<tr class="memdesc:a3b66b507b1249e7b9704ede346672d51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unpacks a 64-bit BCD time-address word into a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>.  <br /></td></tr>
+<tr class="separator:a3b66b507b1249e7b9704ede346672d51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa3ce9771ec2705780ae660d9c4c22e8" id="r_afa3ce9771ec2705780ae660d9c4c22e8"><td class="memItemLeft" align="right" valign="top"><a id="afa3ce9771ec2705780ae660d9c4c22e8" name="afa3ce9771ec2705780ae660d9c4c22e8"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classTimecode.html">Timecode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>fromBcd64</b> (<a class="el" href="classList.html">uint64_t</a> <a class="el" href="classList.html">bcd</a>)</td></tr>
+<tr class="memdesc:afa3ce9771ec2705780ae660d9c4c22e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience overload — defaults to TimecodePackFormat::Vitc and unknown <a class="el" href="classTimecode_1_1Mode.html">Mode</a>. <br /></td></tr>
+<tr class="separator:afa3ce9771ec2705780ae660d9c4c22e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa55376828b0c82b3177a4d1fdba4cf8" id="r_aaa55376828b0c82b3177a4d1fdba4cf8"><td class="memItemLeft" align="right" valign="top"><a id="aaa55376828b0c82b3177a4d1fdba4cf8" name="aaa55376828b0c82b3177a4d1fdba4cf8"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classTimecode.html">Timecode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>fromBcd64</b> (<a class="el" href="classList.html">uint64_t</a> <a class="el" href="classList.html">bcd</a>, <a class="el" href="classList.html">const</a> <a class="el" href="classTimecode_1_1Mode.html">Mode</a> &amp;<a class="el" href="classTimecode.html#a1826a8723d0dce00f0d0a81d86ea97bb">mode</a>)</td></tr>
+<tr class="memdesc:aaa55376828b0c82b3177a4d1fdba4cf8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience overload — uses TimecodePackFormat::Vitc, with caller-supplied <a class="el" href="classTimecode_1_1Mode.html">Mode</a>. <br /></td></tr>
+<tr class="separator:aaa55376828b0c82b3177a4d1fdba4cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Class for holding and manipulating timecode. </p>
@@ -281,9 +295,9 @@ Static Public Member Functions</h2></td></tr>
 <div class="line"><span class="comment">// Parse from string</span></div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">tc3</a>, <a class="code hl_class" href="classList.html">err2</a>] = <a class="code hl_function" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">Timecode::fromString</a>(<span class="stringliteral">&quot;10:30:00:00&quot;</span>);</div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:46</div></div>
+<div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:47</div></div>
 <div class="ttc" id="aclassTimecode_html_a3ee26bacefa096ade620149e0f0b035b"><div class="ttname"><a href="classTimecode.html#a3ee26bacefa096ade620149e0f0b035b">Timecode::fromFrameNumber</a></div><div class="ttdeci">static Timecode fromFrameNumber(const Mode &amp;mode, FrameNumber frameNumber)</div><div class="ttdoc">Constructs a Timecode from a mode and absolute frame number.</div></div>
-<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:54</div></div>
+<div class="ttc" id="aclassTimecode_html_a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207"><div class="ttname"><a href="classTimecode.html#a5f71607fe05c9b37edcf0415f01bc623ab9061ed221bf828494caab45b084b207">Timecode::NDF24</a></div><div class="ttdeci">@ NDF24</div><div class="ttdoc">24 fps non-drop-frame (maps to VTC_FORMAT_24)</div><div class="ttdef"><b>Definition</b> timecode.h:55</div></div>
 <div class="ttc" id="aclassTimecode_html_abdfde6ef249fe224b4986ee482ee6bf0"><div class="ttname"><a href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">Timecode::fromString</a></div><div class="ttdeci">static Result&lt; Timecode &gt; fromString(const String &amp;str)</div><div class="ttdoc">Parses a Timecode from its string representation.</div></div>
 </div><!-- fragment --> Internally delegates all timecode logic to libvtc. </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
@@ -530,6 +544,69 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a3b66b507b1249e7b9704ede346672d51" name="a3b66b507b1249e7b9704ede346672d51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b66b507b1249e7b9704ede346672d51">&#9670;&#160;</a></span>fromBcd64()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classTimecode.html">Timecode</a> &gt; Timecode::fromBcd64 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">uint64_t</a>&#160;</td>
+          <td class="paramname"><em>bcd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a>&#160;</td>
+          <td class="paramname"><em>fmt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classTimecode_1_1Mode.html">Mode</a> &amp;&#160;</td>
+          <td class="paramname"><em>mode</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Unpacks a 64-bit BCD time-address word into a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>. </p>
+<p>Inverse of <a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b">toBcd64</a>. The supplied <code>mode</code> supplies the frame rate; the BCD word's drop-frame flag is resolved against <code>mode</code> according to these rules:</p>
+<ul>
+<li>If the DF flag is <b>clear</b>, <code>mode</code> is used as-is.</li>
+<li>If the DF flag is <b>set</b> and <code>mode</code> is invalid / unknown, the result is at <code>VTC_FORMAT_29_97_DF</code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">i.e</a>. an unset DF flag combined with an unknown rate yields the canonical <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> DF rate).</li>
+<li>If the DF flag is <b>set</b> and <code>mode</code> is at a rate that has a drop-frame sister format (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> NDF → <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> DF, 30 NDF → 30 DF, <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">59.94</a> NDF → <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">59.94</a> DF), the result is upgraded to that DF sister.</li>
+<li>If <code>mode</code> is already at the matching DF rate, the result keeps that mode unchanged.</li>
+<li>If the DF flag is <b>set</b> and <code>mode</code> is at a rate that does not support drop-frame counting (24, 25, integer 24/25-multiple HFR rates, etc.), an <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aebb73a9aa26ca370a067f365c42f2e52" title="Type conversion could not be performed.">Error::ConversionFailed</a></code> is returned because the BCD word and the requested mode are inconsistent.</li>
+</ul>
+<p>The <code>fmt</code> argument selects which standard's bit positions are used to extract the digits and flag bits. The two variants only differ at bit 27 (see <a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a>); for typical Vitc/Ltc data exchanged through <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a>, both produce identical digits.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bcd</td><td>The 64-bit BCD word. </td></tr>
+    <tr><td class="paramname">fmt</td><td>Which variant's bit interpretation to use (default: TimecodePackFormat::Vitc). </td></tr>
+    <tr><td class="paramname">mode</td><td>The timecode mode the result should adopt (subject to the DF rules above). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the unpacked <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> on success, or an <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a> on inconsistency. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">toBcd64</a>, <a class="el" href="classTimecodePackFormat.html" title="Selects the on-the-wire BCD time-address layout used by Timecode::toBcd64 and Timecode::fromBcd64.">TimecodePackFormat</a> </dd></dl>
+
+</div>
+</div>
 <a id="a3ee26bacefa096ade620149e0f0b035b" name="a3ee26bacefa096ade620149e0f0b035b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3ee26bacefa096ade620149e0f0b035b">&#9670;&#160;</a></span>fromFrameNumber()</h2>
 
@@ -601,13 +678,20 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Parses a <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> from its string representation. </p>
+<p>Recognised inputs:</p><ul>
+<li>Standard SMPTE strings such as <code>"01:00:00:00"</code> (NDF) or <code>"01:00:00;00"</code> (DF, semicolon before frames).</li>
+<li>The canonical invalid-timecode sentinel <code>"--:--:--:--"</code> — returns a default-constructed (invalid) <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code>, so the round-trip <code><a class="el" href="classTimecode.html#ac3fe8478d926509d7c561d21b769e94c" title="Converts the timecode to a string.">toString()</a></code> → <code><a class="el" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0" title="Parses a Timecode from its string representation.">fromString()</a></code> is lossless for invalid timecodes.</li>
+<li>An empty string — treated identically to the invalid sentinel: returns an invalid <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> with <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code>.</li>
+<li>Any other string that cannot be parsed returns a default-constructed <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> and a non-ok error code.</li>
+</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">str</td><td>The string to parse (e.g. "01:00:00:00"). </td></tr>
+    <tr><td class="paramname">str</td><td>The string to parse (e.g. <code>"01:00:00:00"</code>). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the parsed <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> on success or a default-constructed <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> and an error code on failure. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the parsed <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> on success or a default-constructed <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> and an error code on parse failure. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTimecode.html#ac3fe8478d926509d7c561d21b769e94c" title="Converts the timecode to a string.">toString</a>, <a class="el" href="classTimecode.html#a0b6f9be97a95839c1677c5ce8f2f129b" title="Packs the timecode into the 64-bit BCD time-address word.">toBcd64</a> </dd></dl>
 
 </div>
 </div>
@@ -704,6 +788,38 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a0b6f9be97a95839c1677c5ce8f2f129b" name="a0b6f9be97a95839c1677c5ce8f2f129b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b6f9be97a95839c1677c5ce8f2f129b">&#9670;&#160;</a></span>toBcd64()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">uint64_t</a> Timecode::toBcd64 </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a>&#160;</td>
+          <td class="paramname"><em>fmt</em> = <code>TimecodePackFormat::Vitc</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Packs the timecode into the 64-bit BCD time-address word. </p>
+<p>Produces the same set of fields that SMPTE 12M-1 (LTC) and SMPTE 12M-2 (VITC) carry in their respective time-address fields — eight BCD time digits, the binary groups (32 bits of user bits), the drop-frame flag, the color frame flag, and the binary group flags BGF0/BGF1/BGF2 — minus the wire-level framing (sync words, <a class="el" href="classCRC.html" title="Table-driven cyclic redundancy check (CRC) computation.">CRC</a>, biphase mark transitions).</p>
+<p>The bit positions inside the returned 64-bit word match the bit positions defined for the chosen variant in SMPTE 12M (so a downstream consumer that already knows "LTC bit 11 = color frame flag" can apply that knowledge directly to bit 11 of the returned word). The specification only differs at one bit position, bit 27 — see <a class="el" href="classTimecodePackFormat.html">TimecodePackFormat</a> for the table.</p>
+<p>In Ltc mode this calls libvtc's <code>vtc_ltc_pack</code> and returns the lower 8 bytes of its 80-bit output (the 16-bit sync word at bits 64-79 is intentionally dropped — wire framing is the encoder's job, not this method's). In Vitc mode this packs directly so bit 27 carries the field marker bit (sourced from <a class="el" href="classTimecode.html#acbbeede3b77afd36a53ab85603fac8c5">isFirstField</a>), per SMPTE 12M-2 / 12-3.</p>
+<p>The bit ordering in the returned 64-bit word is the same as in <code>vtc_ltc_pack:</code> bit 0 = LSB of frame units, bit 63 = MSB of user-bit nibble 8. Callers that want to transmit the word over a wire should pick a bit order convention and document it; libpromeki's <code><a class="el" href="classImageDataEncoder.html" title="Fast VITC-style binary data encoder for raster images.">ImageDataEncoder</a></code> transmits MSB-first.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">fmt</td><td>Which variant's bit interpretation to use (default: TimecodePackFormat::Vitc). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The 64-bit BCD time-address word. </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTimecode.html#a3b66b507b1249e7b9704ede346672d51" title="Unpacks a 64-bit BCD time-address word into a Timecode.">fromBcd64</a>, <a class="el" href="classTimecodePackFormat.html" title="Selects the on-the-wire BCD time-address layout used by Timecode::toBcd64 and Timecode::fromBcd64.">TimecodePackFormat</a> </dd></dl>
+
+</div>
+</div>
 <a id="a20c98fe7a64fd1a5ee877ff976769c85" name="a20c98fe7a64fd1a5ee877ff976769c85"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a20c98fe7a64fd1a5ee877ff976769c85">&#9670;&#160;</a></span>toFrameNumber()</h2>
 
@@ -741,13 +857,19 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Converts the timecode to a string. </p>
+<p>Always returns a non-empty, printable string:</p><ul>
+<li>An <b>invalid</b> timecode (no mode, not constructed with valid digits) returns <code>"--:--:--:--"</code>, the canonical invalid-timecode sentinel. <a class="el" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">fromString</a> recognises this sentinel and round-trips it back to a default-constructed invalid <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>.</li>
+<li>A <b>format-less</b> timecode (mode is valid but has no associated <code>VtcFormat</code>, e.g. constructed with fps=0) returns the bare digits <code>"HH:MM:SS:FF"</code> without a frame-rate suffix.</li>
+<li>A <b>valid</b> timecode with a known format uses libvtc and the supplied <code>fmt</code> to produce the standard SMPTE-style string (e.g. <code>"01:02:03:04"</code> or <code>"01:02:03;04"</code> for drop-frame).</li>
+</ul>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">fmt</td><td>The string format to use (default: SMPTE). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the formatted string on success or an empty <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> and an error code on failure. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> holding the formatted string. The error code in the returned <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> is <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> for all three cases above; an error is only returned when libvtc itself reports an internal failure (extremely rare). </dd></dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0" title="Parses a Timecode from its string representation.">fromString</a>, <a class="el" href="classTimecodePackFormat.html" title="Selects the on-the-wire BCD time-address layout used by Timecode::toBcd64 and Timecode::fromBcd64.">TimecodePackFormat</a> </dd></dl>
 
 </div>
 </div>
@@ -761,7 +883,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classTimecode.html">Timecode</a></li>
-    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
   </ul>
 </div>
 </body>

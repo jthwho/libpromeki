@@ -11,7 +11,7 @@ var searchData=
   ['maxlutsize_8',['MaxLUTSize',['../classCSCPipeline.html#a9a7fc1d9cc8b7dcee3df3596d89a5bc4',1,'CSCPipeline']]],
   ['maxnsperiter_9',['maxNsPerIter',['../classBenchmarkResult.html#a7ba15554c6eaebf1519a842f9f58cb49',1,'BenchmarkResult']]],
   ['maxpixelbytes_10',['MaxPixelBytes',['../classPaintEngine.html#ab7e402c863970bc08715dc222ac702c6',1,'PaintEngine']]],
-  ['maxplanes_11',['MaxPlanes',['../classPixelFormat.html#af952151e830901156bf5cf475e9a4f62',1,'PixelFormat']]],
+  ['maxplanes_11',['maxplanes',['../classPixelFormat.html#af952151e830901156bf5cf475e9a4f62',1,'PixelFormat::MaxPlanes'],['../classImageDataEncoder.html#a581a19ccf6d0cf71036bf299a575baa2',1,'ImageDataEncoder::MaxPlanes']]],
   ['maxs24_12',['MaxS24',['../classAudioDesc.html#af195b376da48d2d2ca152d7e0e0e2013',1,'AudioDesc']]],
   ['maxu24_13',['MaxU24',['../classAudioDesc.html#ae7a8153dc6502a6ba5182060d1b3b975',1,'AudioDesc']]],
   ['maxwavelength_14',['MaxWavelength',['../classCIEPoint.html#a1e09b6a4719f768b806aba60d0f93d7d',1,'CIEPoint']]],

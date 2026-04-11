@@ -15,5 +15,7 @@ var searchData=
   ['linearsrgb_12',['LinearSRGB',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa2fa242177f45bb8783e8da186d1b8579',1,'ColorModel']]],
   ['listening_13',['Listening',['../classAbstractSocket.html#af30ebd5460722ac138372160d81b939ca2696b803e44bbe723048736d9e4bba88',1,'AbstractSocket']]],
   ['littleendian_14',['LittleEndian',['../classDataStream.html#a9a41a843631a3e871d84b6018058180facfa54586f7bf0993bc181b9e6b43f031',1,'DataStream']]],
-  ['ltc_15',['LTC',['../classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9',1,'AudioTestPattern']]]
+  ['ltc_15',['LTC',['../classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9',1,'AudioTestPattern']]],
+  ['ltcdecodefailure_16',['LtcDecodeFailure',['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6',1,'InspectorDiscontinuity']]],
+  ['ltctcjump_17',['LtcTcJump',['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daec026ed8cf22df8bb7896c9dae32eb77',1,'InspectorDiscontinuity']]]
 ];

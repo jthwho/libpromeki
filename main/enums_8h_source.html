@@ -438,7 +438,27 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div class="line"><a id="l00510" name="l00510"></a><span class="lineno">  510</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classImgSeqPathMode.html">ImgSeqPathMode</a> ImgSeqPathMode::Relative { 0 };</div>
 <div class="line"><a id="l00511" name="l00511"></a><span class="lineno">  511</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classImgSeqPathMode.html">ImgSeqPathMode</a> ImgSeqPathMode::Absolute { 1 };</div>
 <div class="line"><a id="l00512" name="l00512"></a><span class="lineno">  512</span> </div>
-<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="foldopen" id="foldopen00549" data-start="{" data-end="};">
+<div class="line"><a id="l00549" name="l00549"></a><span class="lineno"><a class="line" href="classTimecodePackFormat.html">  549</a></span><span class="keyword">class </span><a class="code hl_class" href="classTimecodePackFormat.html">TimecodePackFormat</a> : <span class="keyword">public</span> <a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;TimecodePackFormat&gt; {</div>
+<div class="line"><a id="l00550" name="l00550"></a><span class="lineno">  550</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00551" name="l00551"></a><span class="lineno">  551</span>                <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classEnum_1_1Type.html">Enum::Type</a> <a class="code hl_class" href="classEnum_1_1Type.html">Type</a> = <a class="code hl_function" href="classEnum.html#aee589f1f0e9bceb1bd1ca13ac005dd74">Enum::registerType</a>(<span class="stringliteral">&quot;TimecodePackFormat&quot;</span>,</div>
+<div class="line"><a id="l00552" name="l00552"></a><span class="lineno">  552</span>                        {</div>
+<div class="line"><a id="l00553" name="l00553"></a><span class="lineno">  553</span>                                { <span class="stringliteral">&quot;Vitc&quot;</span>, 0 },</div>
+<div class="line"><a id="l00554" name="l00554"></a><span class="lineno">  554</span>                                { <span class="stringliteral">&quot;Ltc&quot;</span>,  1 }</div>
+<div class="line"><a id="l00555" name="l00555"></a><span class="lineno">  555</span>                        },</div>
+<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span>                        0);  <span class="comment">// default: Vitc</span></div>
+<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span> </div>
+<div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span>                <span class="keyword">using </span><a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;<a class="code hl_class" href="classTimecodePackFormat.html">TimecodePackFormat</a>&gt;<a class="code hl_function" href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">::TypedEnum</a>;</div>
+<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span> </div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classTimecodePackFormat.html">TimecodePackFormat</a> Vitc;</div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classTimecodePackFormat.html">TimecodePackFormat</a> Ltc;</div>
+<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span>};</div>
+</div>
+<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span> </div>
+<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classTimecodePackFormat.html">TimecodePackFormat</a> TimecodePackFormat::Vitc { 0 };</div>
+<div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classTimecodePackFormat.html">TimecodePackFormat</a> TimecodePackFormat::Ltc  { 1 };</div>
+<div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span> </div>
+<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aclassAudioDataType_html"><div class="ttname"><a href="classAudioDataType.html">AudioDataType</a></div><div class="ttdoc">Well-known Enum type for audio sample formats.</div><div class="ttdef"><b>Definition</b> enums.h:229</div></div>
 <div class="ttc" id="aclassAudioPattern_html"><div class="ttname"><a href="classAudioPattern.html">AudioPattern</a></div><div class="ttdoc">Well-known Enum type for audio test pattern generator modes.</div><div class="ttdef"><b>Definition</b> enums.h:163</div></div>
 <div class="ttc" id="aclassBurnPosition_html"><div class="ttname"><a href="classBurnPosition.html">BurnPosition</a></div><div class="ttdoc">Well-known Enum type for on-screen burn-in position presets.</div><div class="ttdef"><b>Definition</b> enums.h:120</div></div>
@@ -451,6 +471,7 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div class="ttc" id="aclassMetadataRtpFormat_html"><div class="ttname"><a href="classMetadataRtpFormat.html">MetadataRtpFormat</a></div><div class="ttdoc">Well-known Enum type for the metadata-stream wire format over RTP.</div><div class="ttdef"><b>Definition</b> enums.h:422</div></div>
 <div class="ttc" id="aclassQuickTimeLayout_html"><div class="ttname"><a href="classQuickTimeLayout.html">QuickTimeLayout</a></div><div class="ttdoc">Well-known Enum type for QuickTime / ISO-BMFF container layout.</div><div class="ttdef"><b>Definition</b> enums.h:329</div></div>
 <div class="ttc" id="aclassRtpPacingMode_html"><div class="ttname"><a href="classRtpPacingMode.html">RtpPacingMode</a></div><div class="ttdoc">Well-known Enum type for RTP sender pacing mode.</div><div class="ttdef"><b>Definition</b> enums.h:376</div></div>
+<div class="ttc" id="aclassTimecodePackFormat_html"><div class="ttname"><a href="classTimecodePackFormat.html">TimecodePackFormat</a></div><div class="ttdoc">Selects the on-the-wire BCD time-address layout used by Timecode::toBcd64 and Timecode::fromBcd64.</div><div class="ttdef"><b>Definition</b> enums.h:549</div></div>
 <div class="ttc" id="aclassTypedEnum_html"><div class="ttname"><a href="classTypedEnum.html">TypedEnum</a></div><div class="ttdoc">CRTP base pinning an Enum value to a compile-time type.</div><div class="ttdef"><b>Definition</b> enum.h:428</div></div>
 <div class="ttc" id="aclassTypedEnum_html_a4456f276a370afa987e063f2705a6894"><div class="ttname"><a href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">TypedEnum&lt; VideoPattern &gt;::TypedEnum</a></div><div class="ttdeci">TypedEnum()</div><div class="ttdoc">Default-constructs with the registered default value.</div><div class="ttdef"><b>Definition</b> enum.h:437</div></div>
 <div class="ttc" id="aclassVideoPattern_html"><div class="ttname"><a href="classVideoPattern.html">VideoPattern</a></div><div class="ttdoc">Well-known Enum type for video test pattern generator modes.</div><div class="ttdef"><b>Definition</b> enums.h:65</div></div>
@@ -467,7 +488,7 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="enums_8h.html">enums.h</a></li>
-    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
   </ul>
 </div>
 </body>
