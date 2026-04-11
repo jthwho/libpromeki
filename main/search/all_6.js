@@ -30,7 +30,7 @@ var searchData=
   ['datastream_2eh_27',['datastream.h',['../datastream_8h.html',1,'']]],
   ['datastreammaxcontainercount_28',['DataStreamMaxContainerCount',['../datastream_8h.html#a2a16cb1ac6d0b5962dd59b9adbc1482d',1,'detail']]],
   ['datatype_29',['datatype',['../classMatrix.html#aabba345044e14bce1a17874a52c04894',1,'Matrix::DataType'],['../classXYZColor.html#a6bf6a45135bb8ff9e6d052f8d71976b1',1,'XYZColor::DataType'],['../classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76',1,'AudioDesc::dataType()'],['../classCIEPoint.html#afa9d8171d7caaca334d410af64b6f26d',1,'CIEPoint::DataType'],['../classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4',1,'AudioDesc::DataType'],['../classArray.html#afab2776234c0983e8246d52a7eaae847',1,'Array::DataType']]],
-  ['date_30',['date',['../classMetadata.html#a687079d5e8a71579ffb8b69b7eff5436',1,'Metadata::Date'],['../structBuildInfo.html#a417714cb2a6e8bc67684b333a80439da',1,'BuildInfo::date']]],
+  ['date_30',['date',['../structBuildInfo.html#a417714cb2a6e8bc67684b333a80439da',1,'BuildInfo::date'],['../classMetadata.html#a687079d5e8a71579ffb8b69b7eff5436',1,'Metadata::Date']]],
   ['datetime_31',['datetime',['../classDateTime.html#a3ccfb87f7a2e9683b91964e32d907161',1,'DateTime::DateTime()'],['../classDateTime.html#abd75d049678e2edf4d8f67f388bb578c',1,'DateTime::DateTime(const Value &amp;val)'],['../classDateTime.html#ada003fae581e7a2cd9ed84a4b03de2df',1,'DateTime::DateTime(std::tm val)'],['../classDateTime.html#a0a4b04a762082cf8407292328236e5cc',1,'DateTime::DateTime(time_t val)'],['../classDateTime.html',1,'DateTime']]],
   ['datetime_2eh_32',['datetime.h',['../datetime_8h.html',1,'']]],
   ['dbfs_33',['dbfs',['../classAudioLevel.html#ab2ab6a3f315311653c5eea4a77cd4e5d',1,'AudioLevel']]],

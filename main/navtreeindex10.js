@@ -122,6 +122,7 @@ var NAVTREEINDEX10 =
 "classMediaIOCommandWrite.html":[13,13,28],
 "classMediaIOCommandWrite.html#a8553f021de3d143b6ed0061331ec0d35":[13,13,28,0],
 "classMediaIOStats.html":[13,13,23],
+"classMediaIOStats.html#a44d58106c2af72a440e2941f8d07e71e":[13,13,23,0],
 "classMediaIOTask.html":[13,13,33],
 "classMediaIOTask.html#a0b805f45d7b99204ec16da2f3ee060c1":[13,13,33,0],
 "classMediaIOTask.html#a2748f45ad224498f2cc97a3976177e39":[13,13,33,5],
@@ -248,6 +249,5 @@ var NAVTREEINDEX10 =
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a2cc6f3aea4d445e4bdfa6ba5159a55b0":[13,17,0,0,20],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a2d24d6c83546939f78fe35cff37c13eb":[13,17,0,0,82],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a2f3d30bfd62b60d4ed0631ccb2b51463":[13,17,0,0,17],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a320b97167b7fac9cb09dc3c4a010975c":[13,17,0,0,11],
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a32a64aa1d5990f8653742dcd2408d01a":[13,17,0,0,222]
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a320b97167b7fac9cb09dc3c4a010975c":[13,17,0,0,11]
 };

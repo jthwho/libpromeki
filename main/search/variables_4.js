@@ -10,7 +10,7 @@ var searchData=
   ['datartppayloadtype_7',['DataRtpPayloadType',['../classMediaConfig.html#ad0d8e3058dbc774769c095493833b8d2',1,'MediaConfig']]],
   ['datartpssrc_8',['DataRtpSsrc',['../classMediaConfig.html#a9e677e1d5c8edac000189a0f201457d9',1,'MediaConfig']]],
   ['datastreammaxcontainercount_9',['DataStreamMaxContainerCount',['../datastream_8h.html#a2a16cb1ac6d0b5962dd59b9adbc1482d',1,'detail']]],
-  ['date_10',['date',['../structBuildInfo.html#a417714cb2a6e8bc67684b333a80439da',1,'BuildInfo::date'],['../classMetadata.html#a687079d5e8a71579ffb8b69b7eff5436',1,'Metadata::Date']]],
+  ['date_10',['date',['../classMetadata.html#a687079d5e8a71579ffb8b69b7eff5436',1,'Metadata::Date'],['../structBuildInfo.html#a417714cb2a6e8bc67684b333a80439da',1,'BuildInfo::date']]],
   ['decodetargets_11',['decodeTargets',['../structPixelDesc_1_1Data.html#af447f49c618165af6773095d9627b99c',1,'PixelDesc::Data']]],
   ['defaultalign_12',['DefaultAlign',['../classBuffer.html#a778803293f4a645e371b65868f45a300',1,'Buffer']]],
   ['defaultbpp_13',['DefaultBpp',['../classJpegXsImageCodec.html#a8a14a3580217c6863e4dcf95cf9b8150',1,'JpegXsImageCodec']]],

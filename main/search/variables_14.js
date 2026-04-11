@@ -2,7 +2,7 @@ var searchData=
 [
   ['terminationsignalhandler_0',['TerminationSignalHandler',['../classLibraryOptions.html#ab98ee2f75c05fdbafc96ee9ff4784377',1,'LibraryOptions']]],
   ['time_1',['time',['../structBuildInfo.html#a481d627e0e866d0d31b97cd3e01aa2a2',1,'BuildInfo']]],
-  ['timecode_2',['timecode',['../structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf',1,'LtcDecoder::DecodedTimecode::timecode'],['../classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a',1,'Metadata::Timecode']]],
+  ['timecode_2',['timecode',['../classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a',1,'Metadata::Timecode'],['../structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf',1,'LtcDecoder::DecodedTimecode::timecode']]],
   ['timecodedropframe_3',['TimecodeDropFrame',['../classMediaConfig.html#af1ef1773fa288ae9340c92fa9fe1584f',1,'MediaConfig']]],
   ['timecodeenabled_4',['TimecodeEnabled',['../classMediaConfig.html#a6e1f9ffd6d4e35c6c31e9d70745cab93',1,'MediaConfig']]],
   ['timecodestart_5',['TimecodeStart',['../classMediaConfig.html#a3c81773e8e88cdcce788dc5f9c90acdf',1,'MediaConfig']]],
@@ -22,6 +22,6 @@ var searchData=
   ['transfercharacteristic_19',['TransferCharacteristic',['../classMetadata.html#a4d76ff2e68eee780461d23d7593fca9f',1,'Metadata']]],
   ['transparent_20',['Transparent',['../classColor.html#ab0826c48816176cd42b5226becebf69d',1,'Color']]],
   ['txtimens_21',['txtimens',['../structPacketTransport_1_1Datagram.html#a74cc7586d150bcb5da4028333a1077ab',1,'PacketTransport::Datagram::txTimeNs'],['../structUdpSocket_1_1Datagram.html#a118e37ee4be4cf9451ae5d61efa4f037',1,'UdpSocket::Datagram::txTimeNs']]],
-  ['type_22',['type',['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type'],['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../structColorModel_1_1Data.html#a2bac1789ecc4f6fa41ff68c1dd6d3750',1,'ColorModel::Data::type'],['../classMediaConfig.html#a10e0225661fb05485a0cd21d75f1eaf7',1,'MediaConfig::Type']]],
+  ['type_22',['type',['../classMediaConfig.html#a10e0225661fb05485a0cd21d75f1eaf7',1,'MediaConfig::Type'],['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type'],['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../structColorModel_1_1Data.html#a2bac1789ecc4f6fa41ff68c1dd6d3750',1,'ColorModel::Data::type']]],
   ['typetag_23',['TypeTag',['../classImgSeq.html#a874c453b7992f884ad865967d2d81524',1,'ImgSeq']]]
 ];

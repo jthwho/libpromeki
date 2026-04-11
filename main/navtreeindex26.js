@@ -1,5 +1,8 @@
 var NAVTREEINDEX26 =
 {
+"textstream_8h.html":[16,0,0,0,172],
+"textstream_8h.html#a000f36a17f7f5d7c80eaa3b3b827951c":[16,0,0,0,172,3],
+"textstream_8h.html#a13e76ee7f2deb7562490d39dd01a6b9e":[16,0,0,0,172,9],
 "textstream_8h.html#a3070e55aba106805cd1a88236dd982c4":[16,0,0,0,172,8],
 "textstream_8h.html#a48400f6ec2c2882bad00e5f47e152724":[16,0,0,0,172,4],
 "textstream_8h.html#a5f0b360195e1cd563f76019eca97126a":[16,0,0,0,172,7],

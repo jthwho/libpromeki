@@ -1,5 +1,6 @@
 var NAVTREEINDEX17 =
 {
+"classSpan.html#a05e7a987c552fa373c01666ef1b66bff":[13,0,9,9],
 "classSpan.html#a0d8282f8360c992912f77e1bee3480e1":[13,0,9,24],
 "classSpan.html#a146b409e36337a99b608b94ee36f7670":[13,0,9,26],
 "classSpan.html#a2aa3e8fd7509c305cd592b74fa4bc43c":[13,0,9,35],
@@ -72,11 +73,13 @@ var NAVTREEINDEX17 =
 "classStatsAccumulator.html#adbdce3bcbdcabde5201f3384edc43098":[13,10,33,6],
 "classStrand.html":[13,1,6],
 "classStrand.html#a017113c66a0705b99cb04aff95a43b12":[13,1,6,3],
-"classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4":[13,1,6,6],
-"classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1":[13,1,6,5],
+"classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4":[13,1,6,8],
+"classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1":[13,1,6,6],
 "classStrand.html#a70cc2083de363bc42dd0b36bf4549650":[13,1,6,1],
 "classStrand.html#aa02387a38e0d63774baa450ef4561ecd":[13,1,6,4],
+"classStrand.html#aa6ca785d5064153322ef7005d84e53e8":[13,1,6,7],
 "classStrand.html#addafe08ed6d9ea519d731ab98ec247d9":[13,1,6,0],
+"classStrand.html#af81ff4892a0aa5df02b81524125fec67":[13,1,6,5],
 "classStrand.html#af8b3169e35c9eb9bddf2fc41c83bd823":[13,1,6,2],
 "classStreamString.html":[13,3,2],
 "classStreamString.html#a14c26f2adcda09c0f9762cf0c0c78109":[13,3,2,0],
@@ -246,8 +249,5 @@ var NAVTREEINDEX17 =
 "classStringIODevice.html#a739eac117da746a071e01d2cbe6fb3f7":[13,2,11,6],
 "classStringIODevice.html#a872e6c25e17262af70fb952831dc0fcc":[13,2,11,13],
 "classStringIODevice.html#a87312a6f9e3e67024497415c48b28912":[13,2,11,5],
-"classStringIODevice.html#aa9836ffea49ca1478ac02509146a55c3":[13,2,11,11],
-"classStringIODevice.html#aaa2e86902778558f0dd8eee40ae3297c":[13,2,11,2],
-"classStringIODevice.html#ac5a695d28e89117a524054b4639f63a0":[13,2,11,14],
-"classStringIODevice.html#ae9cfe5ebc09e5563246955e331b1bbfe":[13,2,11,7]
+"classStringIODevice.html#aa9836ffea49ca1478ac02509146a55c3":[13,2,11,11]
 };

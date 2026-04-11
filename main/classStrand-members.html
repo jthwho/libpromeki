@@ -109,10 +109,12 @@ $(document).ready(function(){initNavTree('classStrand.html',''); initResizable()
   <tr class="odd"><td class="entry"><a class="el" href="classStrand.html#aa02387a38e0d63774baa450ef4561ecd">isBusy</a>() const</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>operator=</b>(const Strand &amp;)=delete (defined in <a class="el" href="classStrand.html">Strand</a>)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>operator=</b>(Strand &amp;&amp;)=delete (defined in <a class="el" href="classStrand.html">Strand</a>)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classStrand.html#a70cc2083de363bc42dd0b36bf4549650">Strand</a>(ThreadPool &amp;pool)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">explicit</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>Strand</b>(const Strand &amp;)=delete (defined in <a class="el" href="classStrand.html">Strand</a>)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Strand</b>(Strand &amp;&amp;)=delete (defined in <a class="el" href="classStrand.html">Strand</a>)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1">submit</a>(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classStrand.html#af81ff4892a0aa5df02b81524125fec67">pendingCount</a>() const</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classStrand.html#a70cc2083de363bc42dd0b36bf4549650">Strand</a>(ThreadPool &amp;pool)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">explicit</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Strand</b>(const Strand &amp;)=delete (defined in <a class="el" href="classStrand.html">Strand</a>)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>Strand</b>(Strand &amp;&amp;)=delete (defined in <a class="el" href="classStrand.html">Strand</a>)</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classStrand.html#a40368b1897ef2e7cab11ba3ad2eebef1">submit</a>(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classStrand.html#aa6ca785d5064153322ef7005d84e53e8">submitUrgent</a>(F &amp;&amp;callable, TaskFunc onCancel={}) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classStrand.html#addafe08ed6d9ea519d731ab98ec247d9">TaskFunc</a> typedef</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classStrand.html#a32227088d8f2b3a7e3bac06fae99f0e4">waitForIdle</a>()</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="classStrand.html#af8b3169e35c9eb9bddf2fc41c83bd823">~Strand</a>()</td><td class="entry"><a class="el" href="classStrand.html">Strand</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
@@ -122,7 +124,7 @@ $(document).ready(function(){initNavTree('classStrand.html',''); initResizable()
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-11 08:09:30 from commit 0f64efb (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 08:42:10 from commit 005fe53 (1.0.0).</li>
   </ul>
 </div>
 </body>

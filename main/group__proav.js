@@ -530,7 +530,9 @@ var group__proav =
       [ "setFrameRate", "classMediaDesc.html#a09c0528b5aa497ab8ddac1b886186d2c", null ],
       [ "toSdp", "classMediaDesc.html#a97ab5cb5eb6fc28ba06c24aef49b242a", null ]
     ] ],
-    [ "MediaIOStats", "classMediaIOStats.html", null ],
+    [ "MediaIOStats", "classMediaIOStats.html", [
+      [ "toString", "classMediaIOStats.html#a44d58106c2af72a440e2941f8d07e71e", null ]
+    ] ],
     [ "MediaIOCommand", "classMediaIOCommand.html", [
       [ "Ptr", "classMediaIOCommand.html#ad675e746da515cca49d36b141e96b7c4", null ],
       [ "Type", "classMediaIOCommand.html#a16255ac120516e70d467f2c2878071b9", [

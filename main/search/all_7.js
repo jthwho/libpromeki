@@ -69,7 +69,7 @@ var searchData=
   ['errormessage_66',['errorMessage',['../classBenchmarkResult.html#ae8e0930f6347a15d3672c4b0e860f694',1,'BenchmarkResult']]],
   ['errors_67',['errors',['../classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d',1,'NoteSequenceParser']]],
   ['estimateddurationms_68',['estimatedDurationMs',['../classBenchmarkRunner.html#a42698d4484fb3fd88b14eab5b6a8c377',1,'BenchmarkRunner']]],
-  ['event_69',['event',['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()'],['../classWidget.html#a9bcfe234f6bfb86b768e5dcb556d5e7d',1,'Widget::event()'],['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()'],['../classEvent.html',1,'Event']]],
+  ['event_69',['event',['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()'],['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()'],['../classWidget.html#a9bcfe234f6bfb86b768e5dcb556d5e7d',1,'Widget::event()'],['../classEvent.html',1,'Event']]],
   ['event_2eh_70',['event.h',['../event_8h.html',1,'']]],
   ['eventloop_71',['eventloop',['../classEventLoop.html',1,'EventLoop'],['../classEventLoop.html#a33fa78d25c8dc23ece149c805e0f2d17',1,'EventLoop::EventLoop()'],['../classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb',1,'ObjectBase::eventLoop()'],['../classSDLApplication.html#a09aa72c5fa029bb904b5d0467bd221a1',1,'SDLApplication::eventLoop()'],['../threading.html#thread_eventloop',1,'EventLoop']]],
   ['eventloop_2eh_72',['eventloop.h',['../eventloop_8h.html',1,'']]],

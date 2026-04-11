@@ -1,5 +1,8 @@
 var NAVTREEINDEX18 =
 {
+"classStringIODevice.html#aaa2e86902778558f0dd8eee40ae3297c":[13,2,11,2],
+"classStringIODevice.html#ac5a695d28e89117a524054b4639f63a0":[13,2,11,14],
+"classStringIODevice.html#ae9cfe5ebc09e5563246955e331b1bbfe":[13,2,11,7],
 "classStringLatin1Data.html":[15,0,214],
 "classStringLatin1Data.html#a0c89168788e1609dab8bb4502d91a926":[15,0,214,0],
 "classStringLatin1Data.html#a13949c4ce67b7a3b21af72a97f559311":[15,0,214,26],
@@ -246,8 +249,5 @@ var NAVTREEINDEX18 =
 "classTextStream.html#ab05c6887776b310ad292c6a75483fea1":[13,3,3,8],
 "classTextStream.html#ac0595c3a58126cc37e2268e162d1bff3":[13,3,3,14],
 "classTextStream.html#aca4cd037475e8c6f85c2665fe16b7dfb":[13,3,3,7],
-"classTextStream.html#ad3ed423b73b7a848dbd9f17c4dcc5fbe":[13,3,3,11],
-"classTextStream.html#ad890feab163b3a42b1c22826b0f0bf3f":[13,3,3,21],
-"classTextStream.html#ada9af90937c32c5eb9365be1bc3b3b91":[13,3,3,19],
-"classTextStream.html#adba7fe8378bc912998ebe23becc05500":[13,3,3,31]
+"classTextStream.html#ad3ed423b73b7a848dbd9f17c4dcc5fbe":[13,3,3,11]
 };

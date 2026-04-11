@@ -1,5 +1,8 @@
 var NAVTREEINDEX19 =
 {
+"classTextStream.html#ad890feab163b3a42b1c22826b0f0bf3f":[13,3,3,21],
+"classTextStream.html#ada9af90937c32c5eb9365be1bc3b3b91":[13,3,3,19],
+"classTextStream.html#adba7fe8378bc912998ebe23becc05500":[13,3,3,31],
 "classTextStream.html#adbc8c1584a21c36d572003274bb74ef0":[13,3,3,6],
 "classTextStream.html#ae32efc15f8e997061e0bed32a8f95fe7":[13,3,3,27],
 "classTextStream.html#ae68e9b43c391a47b6bd6158094f497d1":[13,3,3,35],
@@ -246,8 +249,5 @@ var NAVTREEINDEX19 =
 "classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0":[13,20,3,1],
 "classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a02ff7c90a175be1e1639f666ab8cf363":[13,20,3,1,15],
 "classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a07840a60f6edfa74c09f216c26433c96":[13,20,3,1,20],
-"classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a13d1910ce10be8660c589a07348eedfb":[13,20,3,1,1],
-"classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a210f95686725eb4ff43cd1c88d2bd244":[13,20,3,1,7],
-"classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a54eaa4fa26b1cd197a3fd25abf16ade5":[13,20,3,1,9],
-"classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a77e4dafed4262e88973ec84d8a350519":[13,20,3,1,6]
+"classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a13d1910ce10be8660c589a07348eedfb":[13,20,3,1,1]
 };

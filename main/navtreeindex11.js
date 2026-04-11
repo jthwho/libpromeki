@@ -1,5 +1,6 @@
 var NAVTREEINDEX11 =
 {
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a32a64aa1d5990f8653742dcd2408d01a":[13,17,0,0,222],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a32d87801dfc086f2c78c2719ee6ddaa1":[13,17,0,0,46],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a354836abe6f08296e9b3b6a02b029a6e":[13,17,0,0,7],
 "classMidiNote.html#ae35b95311738089287eaa0e86d959ac3a35f32c025f434b17d25523ca4c327c84":[13,17,0,0,52],
@@ -248,6 +249,5 @@ var NAVTREEINDEX11 =
 "classMulticastManager.html#a02e751a1a300dbe108415c6da7290fc9":[13,12,5,13],
 "classMulticastManager.html#a264cc6f1a90c389d802c1d9ec2a3c4c5":[13,12,5,5],
 "classMulticastManager.html#a2cb095497ab69a6696c1f104921a7e64":[13,12,5,10],
-"classMulticastManager.html#a321f511d404d7bf00d7aaf431f150938":[13,12,5,2],
-"classMulticastManager.html#a3f29f0bc5d6e1f56a3e1b5f26de9e7a2":[13,12,5,8]
+"classMulticastManager.html#a321f511d404d7bf00d7aaf431f150938":[13,12,5,2]
 };

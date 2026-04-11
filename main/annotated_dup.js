@@ -137,7 +137,7 @@ var annotated_dup =
     [ "MediaIOCommandStats", "classMediaIOCommandStats.html", "classMediaIOCommandStats" ],
     [ "MediaIOCommandWrite", "classMediaIOCommandWrite.html", "classMediaIOCommandWrite" ],
     [ "MediaIOParamsTag", "structMediaIOParamsTag.html", null ],
-    [ "MediaIOStats", "classMediaIOStats.html", null ],
+    [ "MediaIOStats", "classMediaIOStats.html", "classMediaIOStats" ],
     [ "MediaIOStatsTag", "structMediaIOStatsTag.html", null ],
     [ "MediaIOTask", "classMediaIOTask.html", "classMediaIOTask" ],
     [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", "classMediaIOTask__AudioFile" ],
