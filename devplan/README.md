@@ -171,7 +171,7 @@ Every new class must have complete unit tests. Every modification to an existing
 
 ## Benchmark Infrastructure
 
-See [benchmarking.md](benchmarking.md) for the full plan. **Shipped so far:** library-native `BenchmarkRunner` + `StatsAccumulator`, the unified `promeki-bench` utility (CSC suite only, programmatically generated from `PixelDesc::registeredIDs()`), MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd), the `MediaIO` identifier triple (`localId` / `Name` / `UUID`), and three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`). **Still pending:** the non-CSC microbench suites (network / codec / container / concurrency / variantdatabase / histogram), Part D live telemetry via `MediaIOStats`, Part E MediaIO end-to-end cases (blocked on `MediaPipeline`), and CI regression integration.
+See [benchmarking.md](benchmarking.md) for the full plan. **Shipped so far:** library-native `BenchmarkRunner` + `StatsAccumulator`, the unified `promeki-bench` utility (CSC suite only, programmatically generated from `PixelDesc::registeredIDs()`), MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd), the `MediaIO` identifier triple (`localId` / `Name` / `UUID`), three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`), Part D live telemetry (`RateTracker`, `BytesPerSecond`/`FramesPerSecond`/drop/repeat/late counters, latency keys, `PendingOperations` from `Strand::pendingCount()`, `MediaIOStats::toString()` compact log-line renderer, urgent `stats()` dispatch), and `mediaplay --stats` / `--stats-interval`. **Still pending:** the non-CSC microbench suites (network / codec / container / concurrency / variantdatabase / histogram), Part E MediaIO end-to-end cases (blocked on `MediaPipeline`), and CI regression integration.
 
 ---
 

@@ -475,6 +475,47 @@ TEST_CASE("Thread: setName on running thread updates OS name") {
         CHECK(matched.load());
 }
 
+TEST_CASE("Thread: setName before start is race-free (stress)") {
+        // Regression test for a startup race: Thread::threadEntry() calls
+        // applyOsName() before the parent has necessarily finished
+        // assigning _thread / _pthreadHandle, so nativeHandle() could
+        // return a null pthread_t and crash pthread_setname_np inside
+        // libc.  The fix is to use pthread_self() inside applyOsName()
+        // when called from the thread being named.
+        //
+        // Any single run is flaky — the race window is narrow — so we
+        // spin up many threads in quick succession and verify that all
+        // of them both survive startup and successfully applied their
+        // names.  Without the fix this test crashes (SIGSEGV in libc)
+        // intermittently on a multi-core machine.
+        constexpr int kCount = 64;
+        List<Thread *> threads;
+        List<std::atomic<bool> *> matches;
+        for(int i = 0; i < kCount; i++) {
+                auto *t = new Thread();
+                t->setName(String::number(i));
+                t->start();
+                threads.pushToBack(t);
+
+                auto *m = new std::atomic<bool>(false);
+                matches.pushToBack(m);
+                String expected = String::number(i);
+                t->threadEventLoop()->postCallable([m, expected] {
+                        char buf[64] = {};
+                        pthread_getname_np(pthread_self(), buf, sizeof(buf));
+                        m->store(String(buf) == expected,
+                                 std::memory_order_relaxed);
+                });
+        }
+        for(int i = 0; i < kCount; i++) {
+                threads[i]->quit();
+                threads[i]->wait();
+                CHECK(matches[i]->load());
+                delete threads[i];
+                delete matches[i];
+        }
+}
+
 TEST_CASE("Thread: setName truncates long names gracefully") {
         Thread t;
         t.setName("this_is_a_very_long_thread_name_that_exceeds_the_limit");

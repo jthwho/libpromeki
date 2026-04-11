@@ -138,6 +138,44 @@ TEST_CASE("Strand_DestructorWaitsForIdle") {
         CHECK(counter.value() == 20);
 }
 
+TEST_CASE("Strand_PendingCountReflectsQueuedTasks") {
+        // pendingCount() reports tasks that have been submitted but
+        // not yet popped for execution.  Used by MediaIO to surface
+        // backlog depth as a stat; needs to be monotone w.r.t. the
+        // visible queue depth.
+        ThreadPool pool(2);
+        Strand strand(pool);
+
+        CHECK(strand.pendingCount() == 0);
+
+        // Park a task on the strand so everything else we submit is
+        // guaranteed to queue behind it.
+        Atomic<bool> firstStarted{false};
+        Atomic<bool> firstUnblock{false};
+        strand.submit([&] {
+                firstStarted.setValue(true);
+                while(!firstUnblock.value()) {
+                        sleepUs(50);
+                }
+        });
+        while(!firstStarted.value()) {
+                sleepUs(50);
+        }
+        // The in-flight task is not "pending".
+        CHECK(strand.pendingCount() == 0);
+
+        // Queue five more — they're all pending.
+        for(int i = 0; i < 5; i++) {
+                strand.submit([] {});
+        }
+        CHECK(strand.pendingCount() == 5);
+
+        // Let everything drain and confirm the counter zeroes.
+        firstUnblock.setValue(true);
+        strand.waitForIdle();
+        CHECK(strand.pendingCount() == 0);
+}
+
 TEST_CASE("Strand_CancelPending") {
         // Cancelling drains queued tasks; their futures resolve with Cancelled.
         ThreadPool pool(2);
@@ -185,6 +223,121 @@ TEST_CASE("Strand_CancelEmptyQueue") {
         ThreadPool pool(2);
         Strand strand(pool);
         CHECK(strand.cancelPending() == 0);
+}
+
+TEST_CASE("Strand_SubmitUrgentJumpsQueue") {
+        // An urgent submission must run before any pending (not-yet-started)
+        // tasks, but must still wait for the currently-running task.
+        ThreadPool pool(4);
+        Strand strand(pool);
+
+        // Block the strand with a long-running task so everything else
+        // queues behind it.
+        Atomic<bool> firstStarted{false};
+        Atomic<bool> firstUnblock{false};
+        auto firstFuture = strand.submit([&]() -> int {
+                firstStarted.setValue(true);
+                while(!firstUnblock.value()) {
+                        sleepUs(50);
+                }
+                return 0;
+        });
+        while(!firstStarted.value()) {
+                sleepUs(50);
+        }
+
+        // Queue up several normal tasks behind the in-flight one.
+        List<int> order;
+        Mutex orderMutex;
+        auto appender = [&](int id) {
+                return [id, &order, &orderMutex] {
+                        Mutex::Locker lock(orderMutex);
+                        order.pushToBack(id);
+                };
+        };
+        strand.submit(appender(1));
+        strand.submit(appender(2));
+        strand.submit(appender(3));
+
+        // Now submit an urgent task — it should run before 1, 2, 3.
+        strand.submitUrgent(appender(99));
+
+        // Release the blocker and drain the strand.
+        firstUnblock.setValue(true);
+        strand.waitForIdle();
+
+        REQUIRE((int)order.size() == 4);
+        CHECK(order[0] == 99);
+        CHECK(order[1] == 1);
+        CHECK(order[2] == 2);
+        CHECK(order[3] == 3);
+        CHECK(firstFuture.result().first() == 0);
+}
+
+TEST_CASE("Strand_SubmitUrgentStillSerial") {
+        // Urgent submissions must still run under the strand's serial
+        // guarantee — never concurrently with another task.
+        ThreadPool pool(4);
+        Strand strand(pool);
+        Atomic<int> active{0};
+        Atomic<int> maxActive{0};
+
+        auto body = [&] {
+                int now = active.fetchAndAdd(1) + 1;
+                int prev = maxActive.value();
+                while(now > prev && !maxActive.compareAndSwap(prev, now)) {}
+                sleepUs(100);
+                active.fetchAndSub(1);
+        };
+
+        for(int i = 0; i < 30; i++) {
+                if(i % 3 == 0) {
+                        strand.submitUrgent(body);
+                } else {
+                        strand.submit(body);
+                }
+        }
+        strand.waitForIdle();
+
+        CHECK(maxActive.value() == 1);
+}
+
+TEST_CASE("Strand_SubmitUrgentCancelledByCancelPending") {
+        // Urgent tasks sitting in the pending queue are swept up by
+        // cancelPending() just like normal tasks — there is no separate
+        // priority lane to protect.  MediaIO::stats() relies on this:
+        // when a seek or setStep clears the queue, an in-flight urgent
+        // stats call resolves with Cancelled and the caller simply
+        // polls again on the next tick.
+        ThreadPool pool(2);
+        Strand strand(pool);
+
+        Atomic<bool> firstStarted{false};
+        Atomic<bool> firstUnblock{false};
+        auto firstFuture = strand.submit([&]() -> Error {
+                firstStarted.setValue(true);
+                while(!firstUnblock.value()) {
+                        sleepUs(50);
+                }
+                return Error::Ok;
+        });
+        while(!firstStarted.value()) {
+                sleepUs(50);
+        }
+
+        Atomic<int> ranCount{0};
+        auto urgentFuture = strand.submitUrgent([&]() -> Error {
+                ranCount.fetchAndAdd(1);
+                return Error::Ok;
+        });
+
+        size_t cancelled = strand.cancelPending();
+        CHECK(cancelled == 1);
+        CHECK(urgentFuture.result().second() == Error::Cancelled);
+
+        firstUnblock.setValue(true);
+        CHECK(firstFuture.result().first() == Error::Ok);
+        CHECK(ranCount.value() == 0);
 }
 
 TEST_CASE("Strand_CancelHookRuns") {

@@ -14,6 +14,7 @@
 #include <promeki/image.h>
 #include <promeki/audio.h>
 #include <promeki/buffer.h>
+#include <promeki/stringlist.h>
 #include <atomic>
 #include <cstdint>
 
@@ -391,6 +392,77 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
                         stats.set(MediaIOStats::PeakLatencyMs, peakMs);
                 }
         }
+
+        // Backlog depth from the strand itself.  Telemetry callers
+        // (e.g. mediaplay --stats) surface this to let operators see
+        // when I/O is falling behind without every backend having to
+        // reimplement "how many operations are pending".
+        stats.set(MediaIOStats::PendingOperations,
+                  static_cast<int64_t>(_strand.pendingCount()));
+}
+
+String MediaIOStats::toString() const {
+        // Compact single-line renderer for the standard telemetry
+        // keys.  Callers like mediaplay used to hand-format every
+        // key individually; centralizing it here keeps log output
+        // consistent across tools and gives backends a canonical
+        // "what do these stats look like" answer for free.
+        //
+        // Key ordering is fixed so periodic output stays scannable
+        // in a terminal.  Cheap counters that are still zero are
+        // elided so the line stays quiet under normal operation —
+        // the interesting thing a reader wants to notice is when
+        // something shows up that wasn't there before.
+        StringList parts;
+
+        if(contains(BytesPerSecond)) {
+                // String::fromByteCount picks GB/MB/KB/B for us; we
+                // just append "/s" to turn a byte count into a rate.
+                double bps = getAs<double>(BytesPerSecond);
+                uint64_t rounded = bps > 0.0
+                        ? static_cast<uint64_t>(bps + 0.5)
+                        : uint64_t(0);
+                parts.pushToBack(String::format("{}/s",
+                        String::fromByteCount(rounded, 2)));
+        }
+        if(contains(FramesPerSecond)) {
+                parts.pushToBack(String::format("{:.1f} fps",
+                        getAs<double>(FramesPerSecond)));
+        }
+        if(contains(FramesDropped)) {
+                parts.pushToBack(String::format("drop={}",
+                        getAs<int64_t>(FramesDropped)));
+        }
+        if(contains(FramesRepeated)) {
+                int64_t v = getAs<int64_t>(FramesRepeated);
+                if(v > 0) parts.pushToBack(String::format("rep={}", v));
+        }
+        if(contains(FramesLate)) {
+                int64_t v = getAs<int64_t>(FramesLate);
+                if(v > 0) parts.pushToBack(String::format("late={}", v));
+        }
+        if(contains(AverageLatencyMs) || contains(PeakLatencyMs)) {
+                parts.pushToBack(String::format("lat={:.2f}/{:.2f} ms",
+                        getAs<double>(AverageLatencyMs),
+                        getAs<double>(PeakLatencyMs)));
+        }
+        if(contains(QueueDepth) || contains(QueueCapacity)) {
+                parts.pushToBack(String::format("q={}/{}",
+                        getAs<int64_t>(QueueDepth),
+                        getAs<int64_t>(QueueCapacity)));
+        }
+        if(contains(PendingOperations)) {
+                parts.pushToBack(String::format("pend={}",
+                        getAs<int64_t>(PendingOperations)));
+        }
+        if(contains(LastErrorMessage)) {
+                String msg = getAs<String>(LastErrorMessage);
+                if(!msg.isEmpty()) {
+                        parts.pushToBack(String::format("err={}", msg));
+                }
+        }
+
+        return parts.join(String("  "));
 }
 
 void MediaIO::ensureFrameBenchmark(Frame::Ptr &frame) {
@@ -464,13 +536,20 @@ Error MediaIO::dispatchCommand(MediaIOCommand::Ptr cmd) {
         return Error::NotSupported;
 }
 
-Error MediaIO::submitAndWait(MediaIOCommand::Ptr cmd) {
+Error MediaIO::submitAndWait(MediaIOCommand::Ptr cmd, bool urgent) {
         // Submit to the strand for serialized execution and wait for the
         // result.  The strand returns a Future<Error> for the dispatched
-        // call's return value.
-        Future<Error> future = _strand.submit([this, cmd]() mutable {
+        // call's return value.  Urgent submissions jump ahead of any
+        // tasks still in the pending queue — used by low-latency
+        // telemetry probes like stats() so they don't block behind a
+        // deep queue of real work.  Urgent tasks still serialize with
+        // the currently-running task; they never run concurrently.
+        auto runner = [this, cmd]() mutable {
                 return dispatchCommand(cmd);
-        });
+        };
+        Future<Error> future = urgent
+                ? _strand.submitUrgent(std::move(runner))
+                : _strand.submit(std::move(runner));
         auto r = future.result();
         if(r.second().isError()) return r.second();
         return r.first();
@@ -941,7 +1020,12 @@ MediaIOStats MediaIO::stats() {
         if(!isOpen()) return MediaIOStats();
         auto *cmdStats = new MediaIOCommandStats();
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdStats);
-        Error err = submitAndWait(cmd);
+        // Urgent: telemetry pollers (UI overlays, live monitors) call
+        // stats() on a cadence and shouldn't block behind a deep queue
+        // of prefetched reads or other in-flight I/O.  Front-inserting
+        // into the strand caps the latency at "one task duration"
+        // instead of "full queue drain".
+        Error err = submitAndWait(cmd, /*urgent=*/true);
         if(err.isError()) return MediaIOStats();
         // Let the base-class telemetry overlay the backend's stats.
         // populateStandardStats() writes the standard keys after the

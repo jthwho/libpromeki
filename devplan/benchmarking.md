@@ -8,7 +8,7 @@
 
 This document replaces the stub "Benchmark Infrastructure" section in `README.md` and the wishlist line in `proav_optimization.md` about a future `benchmark-promeki` target.
 
-**Completed:** `BenchmarkRunner` core + `StatsAccumulator`, `promeki-bench` CLI driver with columnized output / build-type warnings / filtered count + duration estimate, CSC suite with programmatic pair generation, MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd) with sink-aware reporter submission, MediaIO identifier triple (`localId` / `Name` / `UUID`), three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`), **Part D** live telemetry (`RateTracker`, automatic `BytesPerSecond`/`FramesPerSecond`, base-class drop/repeat/late counters via `MediaIOTask::noteFrame*` helpers, latency keys derived from the attached reporter), and `mediaplay --stats` / `--stats-interval` for live per-stage telemetry printing.
+**Completed:** `BenchmarkRunner` core + `StatsAccumulator`, `promeki-bench` CLI driver with columnized output / build-type warnings / filtered count + duration estimate, CSC suite with programmatic pair generation, MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd) with sink-aware reporter submission, MediaIO identifier triple (`localId` / `Name` / `UUID`), three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`), **Part D** live telemetry (`RateTracker`, automatic `BytesPerSecond`/`FramesPerSecond`, base-class drop/repeat/late counters via `MediaIOTask::noteFrame*` helpers, latency keys derived from the attached reporter, `PendingOperations` from `Strand::pendingCount()`, `MediaIOStats::toString()` compact log-line renderer, urgent `stats()` dispatch so pollers don't block behind I/O queues), and `mediaplay --stats` / `--stats-interval` for live per-stage telemetry printing.
 
 **Remaining:** the non-CSC microbench suites (network / codec / container / concurrency / variantdatabase / histogram), **Part E** MediaIO end-to-end bench cases (blocked on `MediaPipeline`), and CI regression integration.
 
@@ -136,13 +136,20 @@ Always-on lightweight counters populating the standard `MediaIOStats` keys. Chea
 - `MediaIOTask_Converter` migrated: `_bytesIn` / `_bytesOut` fields and the `StatsBytesIn` / `StatsBytesOut` stats keys removed (superseded by the base `BytesPerSecond`). `FramesConverted` / `QueueDepth` / `QueueCapacity` stay as genuine backend state.
 - `SDLPlayerTask` migrated: the internal `_framesDropped` atomic counter and its public `framesDropped()` accessor were removed; both drop sites (decode failure and pending-image replacement) now go through `noteFrameDropped()` so the standard `MediaIOStats::FramesDropped` key surfaces the value for free.
 
+**Shipped — `MediaIOStats::PendingOperations` key and `toString()`:**
+
+- `MediaIOStats::PendingOperations` — new standard `int64_t` key populated by `populateStandardStats()` from `Strand::pendingCount()`.  Gives telemetry callers backlog visibility without every backend having to track it.
+- `MediaIOStats::toString()` — compact single-line renderer for standard keys.  Fixed key order (byte-rate, fps, drop, rep, late, lat, q, pend, err); counters at zero (`FramesRepeated`, `FramesLate`) and empty `LastErrorMessage` are elided to keep normal-operation lines quiet; `FramesDropped` always shown.
+- `MediaIO::submitAndWait()` gained an `urgent` bool; `MediaIO::stats()` passes `urgent=true` so telemetry pollers don't block behind deep prefetch queues.
+- `mediaplay::printStats()` refactored to call `MediaIOStats::toString()`, deleting the local `formatByteRate()` helper.
+
 **Shipped — `mediaplay --stats`:**
 
 - New `--stats` flag on `mediaplay` (no-arg, defaults to a 1 s print interval) plus `--stats-interval <SEC>` to override.
-- When enabled, main.cpp flips `EnableBenchmark:true` on every stage (source, optional converter, every sink including SDL and file sinks) before `open()` and attaches a caller-owned `BenchmarkReporter` to each. A main-loop timer polls every stage's `stats()` and prints one compact line per stage: label, `B/s` (auto-scaled), `fps`, `drop` count, `avg/peak` latency ms, and `queue depth/capacity`.
+- When enabled, main.cpp flips `EnableBenchmark:true` on every stage (source, optional converter, every sink including SDL and file sinks) before `open()` and attaches a caller-owned `BenchmarkReporter` to each. A main-loop timer polls every stage's `stats()` and prints one compact line per stage via `MediaIOStats::toString()`.
 - Reporter lifetimes match the stages; cleanup runs alongside the existing per-stage teardown in both the normal shutdown path and `cleanupAndFail`.
 
-**Tests shipped — `tests/mediaio_stats.cpp` (7 cases):**
+**Tests shipped — `tests/mediaio_stats.cpp` (12 cases):**
 
 - Default-state assertion that every standard key is present and zero on a freshly-opened TPG reader.
 - Read-path rate tracking check: custom `TelemetryTestTask` backend adopted via `adoptTask()` produces synthetic frames; after a short delay `BytesPerSecond` / `FramesPerSecond` are asserted positive.
@@ -150,6 +157,11 @@ Always-on lightweight counters populating the standard `MediaIOStats` keys. Chea
 - Counters reset to zero across close/reopen.
 - Latency keys populate when `EnableBenchmark=true` and a reporter is attached.
 - Latency keys stay at 0.0 when no reporter is attached.
+- `PendingOperations` key populated by base class from `Strand::pendingCount()` (non-negative, present in stats).
+- `toString()` empty-instance edge case returns empty `String`.
+- `toString()` standard-keys comprehensive: byte-rate, fps, drop, rep (non-zero), late elision (zero), lat, q, pend.
+- `toString()` `LastErrorMessage` surfaced when non-empty.
+- `toString()` drop=0 always shown; rep/late/err elided when zero/empty.
 
 ---
 

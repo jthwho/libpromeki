@@ -285,20 +285,43 @@ void Thread::setName(const String &n) {
 void Thread::applyOsName() {
         Mutex::Locker locker(_mutex);
         if(_name.isEmpty()) return;
+        // When applyOsName() is called from the thread being named
+        // itself — which is always the case during threadEntry()'s
+        // startup sequence — prefer pthread_self() over nativeHandle().
+        //
+        // Rationale: threadEntry() starts running on the child thread
+        // as soon as pthread_create() / std::thread{} dispatches it,
+        // which may be *before* the parent has finished assigning
+        // _thread / _pthreadHandle / _usesPthread.  If the child wins
+        // that race, nativeHandle() falls through to a default-
+        // constructed std::thread::native_handle() == 0, and
+        // pthread_setname_np(0, ...) crashes inside libc.
+        //
+        // _currentThread is set by threadEntry() before applyOsName()
+        // runs, so testing "_currentThread == this" reliably detects
+        // the "called from self" case and lets us sidestep the race
+        // entirely with pthread_self(), which is always valid in the
+        // running thread.
+        const bool fromSelf = (_currentThread == this);
 #if defined(PROMEKI_PLATFORM_LINUX)
-        pthread_setname_np(nativeHandle(), _name.cstr());
+        pthread_t target = fromSelf ? pthread_self() : nativeHandle();
+        pthread_setname_np(target, _name.cstr());
 #elif defined(PROMEKI_PLATFORM_APPLE)
         // macOS only allows setting the name of the current thread.
-        if(pthread_self() == nativeHandle()) {
+        if(fromSelf) {
                 pthread_setname_np(_name.cstr());
         }
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
-        // Convert to wide string for SetThreadDescription
+        // Convert to wide string for SetThreadDescription.  Same race
+        // as above: when called from threadEntry() before the parent
+        // has stored _thread, nativeHandle() returns an invalid HANDLE.
+        // Use GetCurrentThread() when naming ourselves.
+        HANDLE target = fromSelf ? GetCurrentThread() : nativeHandle();
         int len = MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, nullptr, 0);
         if(len > 0) {
                 std::wstring wide(len, L'\0');
                 MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, wide.data(), len);
-                SetThreadDescription(nativeHandle(), wide.c_str());
+                SetThreadDescription(target, wide.c_str());
         }
 #endif
         return;

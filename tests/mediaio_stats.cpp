@@ -308,3 +308,89 @@ TEST_CASE("MediaIO stats: latency keys stay zero when no reporter attached") {
         io->close();
         delete io;
 }
+
+TEST_CASE("MediaIO stats: PendingOperations populated by base class") {
+        // The MediaIO base class surfaces Strand::pendingCount() as
+        // MediaIOStats::PendingOperations so telemetry callers can
+        // see backlog without the backend having to track it.
+        MediaIO::Config cfg;
+        cfg.set(MediaConfig::Type, "TPG");
+        cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
+        cfg.set(MediaConfig::VideoEnabled, true);
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Reader).isOk());
+
+        // At steady state — strand idle or running a single prefetch
+        // read — pending ops should be small.  We don't pin it to a
+        // specific value because the prefetch depth is backend-chosen,
+        // but it must be present and non-negative.
+        MediaIOStats stats = io->stats();
+        CHECK(stats.contains(MediaIOStats::PendingOperations));
+        CHECK(stats.getAs<int64_t>(MediaIOStats::PendingOperations) >= 0);
+
+        io->close();
+        delete io;
+}
+
+TEST_CASE("MediaIOStats::toString: empty instance returns empty string") {
+        MediaIOStats stats;
+        CHECK(stats.toString() == String());
+}
+
+TEST_CASE("MediaIOStats::toString: renders standard keys compactly") {
+        // Build a stats instance by hand and check that toString()
+        // emits the expected tokens in order.  Substring checks keep
+        // the test robust against whitespace/format tweaks.
+        MediaIOStats stats;
+        stats.set(MediaIOStats::BytesPerSecond, 12500000.0); // ~12.5 MB/s
+        stats.set(MediaIOStats::FramesPerSecond, 23.976);
+        stats.set(MediaIOStats::FramesDropped, int64_t(2));
+        stats.set(MediaIOStats::FramesRepeated, int64_t(1));
+        stats.set(MediaIOStats::FramesLate, int64_t(0)); // elided when zero
+        stats.set(MediaIOStats::AverageLatencyMs, 1.23);
+        stats.set(MediaIOStats::PeakLatencyMs, 4.56);
+        stats.set(MediaIOStats::QueueDepth, int64_t(3));
+        stats.set(MediaIOStats::QueueCapacity, int64_t(8));
+        stats.set(MediaIOStats::PendingOperations, int64_t(5));
+
+        String s = stats.toString();
+        INFO("toString output: ", s.cstr());
+
+        CHECK(s.contains("/s"));                // byte-rate unit suffix
+        CHECK(s.contains("24.0 fps"));          // 23.976 rounds to one decimal
+        CHECK(s.contains("drop=2"));
+        CHECK(s.contains("rep=1"));
+        CHECK_FALSE(s.contains("late="));       // zero counters elided
+        CHECK(s.contains("lat=1.23/4.56 ms"));
+        CHECK(s.contains("q=3/8"));
+        CHECK(s.contains("pend=5"));
+        CHECK_FALSE(s.contains("err="));        // no LastErrorMessage set
+}
+
+TEST_CASE("MediaIOStats::toString: surfaces LastErrorMessage when set") {
+        MediaIOStats stats;
+        stats.set(MediaIOStats::BytesPerSecond, 0.0);
+        stats.set(MediaIOStats::LastErrorMessage, String("disk full"));
+        String s = stats.toString();
+        CHECK(s.contains("err=disk full"));
+}
+
+TEST_CASE("MediaIOStats::toString: elides zero counters but keeps drop") {
+        // FramesDropped is always shown — it's the one a reader
+        // scanning a stats line is most likely looking for, so a
+        // visible "drop=0" is more useful than a silent omission.
+        // FramesRepeated / FramesLate / LastErrorMessage elide when
+        // zero/empty to keep the normal-operation line quiet.
+        MediaIOStats stats;
+        stats.set(MediaIOStats::BytesPerSecond, 1000.0);
+        stats.set(MediaIOStats::FramesPerSecond, 30.0);
+        stats.set(MediaIOStats::FramesDropped, int64_t(0));
+        stats.set(MediaIOStats::FramesRepeated, int64_t(0));
+        stats.set(MediaIOStats::FramesLate, int64_t(0));
+
+        String s = stats.toString();
+        CHECK(s.contains("drop=0"));
+        CHECK_FALSE(s.contains("rep="));
+        CHECK_FALSE(s.contains("late="));
+}

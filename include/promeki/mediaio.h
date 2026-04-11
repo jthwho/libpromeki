@@ -146,6 +146,37 @@ class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
                 static inline const ID LastErrorMessage = declareID("LastErrorMessage",
                         VariantSpec().setType(Variant::TypeString).setDefault(String())
                                 .setDescription("Most recent error description."));
+                /// @brief int64_t — number of commands queued on the strand but
+                /// not yet running.  Populated by the MediaIO base class from
+                /// Strand::pendingCount(); gives telemetry callers visibility
+                /// into backlog depth without every backend having to track it.
+                static inline const ID PendingOperations = declareID("PendingOperations",
+                        VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
+                                .setMin(int64_t(0)).setDescription(
+                                        "Commands queued on the strand but not yet running."));
+
+                /**
+                 * @brief Renders the standard telemetry keys as a compact log line.
+                 *
+                 * Formats whichever standard keys are present into a single
+                 * space-separated line suitable for dumping to a terminal or
+                 * logger.  Keys are emitted in a fixed order so periodic
+                 * telemetry output stays scannable:
+                 *
+                 *   BytesPerSecond  FramesPerSecond  FramesDropped  FramesRepeated
+                 *   FramesLate  AverageLatencyMs/PeakLatencyMs  QueueDepth/QueueCapacity
+                 *   PendingOperations  LastErrorMessage
+                 *
+                 * Counters that are still zero (@c FramesRepeated, @c FramesLate)
+                 * and the empty @c LastErrorMessage are elided to keep the line
+                 * quiet under normal operation.  Backend-specific keys are @em
+                 * not included — callers that want a full dump should iterate
+                 * via @ref forEach.
+                 *
+                 * @return A single-line summary, or an empty String if the
+                 *         container holds no standard keys.
+                 */
+                String toString() const;
 };
 
 /** @brief Phantom tag for the MediaIO parameterized-command StringRegistry. */
@@ -1225,7 +1256,7 @@ class MediaIO : public ObjectBase {
                 friend class MediaIOTask;
 
                 Error dispatchCommand(MediaIOCommand::Ptr cmd);
-                Error submitAndWait(MediaIOCommand::Ptr cmd);
+                Error submitAndWait(MediaIOCommand::Ptr cmd, bool urgent = false);
                 void  submitReadCommand();
                 void  resolveIdentifiersAndBenchmark();
                 void  ensureFrameBenchmark(Frame::Ptr &frame);

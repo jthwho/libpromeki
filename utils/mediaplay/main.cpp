@@ -96,53 +96,21 @@ void attachStatsReporter(MediaIO *io, const String &label,
 }
 
 /**
- * @brief Formats a byte rate with a short human-readable suffix.
- *
- * Picks B/s, KB/s, MB/s, or GB/s so the --stats output stays
- * aligned.  Values less than 1 B/s render as "0 B/s".
- */
-String formatByteRate(double bps) {
-        const char *unit = "B/s";
-        double v = bps;
-        if(v >= 1e9) { v /= 1e9; unit = "GB/s"; }
-        else if(v >= 1e6) { v /= 1e6; unit = "MB/s"; }
-        else if(v >= 1e3) { v /= 1e3; unit = "KB/s"; }
-        char buf[64];
-        std::snprintf(buf, sizeof(buf), "%7.2f %s", v, unit);
-        return String(buf);
-}
-
-/**
  * @brief Prints one line per stage with the current telemetry snapshot.
  *
- * Called from the main-loop --stats timer.  Queries each stage's
- * stats() on the hot path (a command round-trip on the strand) and
- * renders a compact summary.  A blank line separates successive
- * prints so long runs remain scannable in a terminal.
+ * Called from the main-loop --stats timer.  Delegates formatting to
+ * @ref MediaIOStats::toString — everything here is just labeling and
+ * I/O — so the rendering stays consistent with any other tool in the
+ * library that logs stats.
  */
 void printStats(const List<StatsSlot> &slots) {
         if(slots.isEmpty()) return;
         for(auto it = slots.begin(); it != slots.end(); ++it) {
                 if(it->io == nullptr) continue;
                 MediaIOStats s = it->io->stats();
-                double bps = s.getAs<double>(MediaIOStats::BytesPerSecond);
-                double fps = s.getAs<double>(MediaIOStats::FramesPerSecond);
-                int64_t dropped = s.getAs<int64_t>(MediaIOStats::FramesDropped);
-                double avgLat = s.getAs<double>(MediaIOStats::AverageLatencyMs);
-                double peakLat = s.getAs<double>(MediaIOStats::PeakLatencyMs);
-                int64_t qDepth = s.getAs<int64_t>(MediaIOStats::QueueDepth);
-                int64_t qCap   = s.getAs<int64_t>(MediaIOStats::QueueCapacity);
-
-                fprintf(stdout,
-                        "[stats] %-16s  %s  %7.1f fps  drop=%lld  "
-                        "lat=%.2f/%.2f ms  q=%lld/%lld\n",
+                fprintf(stdout, "[stats] %-16s  %s\n",
                         it->label.cstr(),
-                        formatByteRate(bps).cstr(),
-                        fps,
-                        static_cast<long long>(dropped),
-                        avgLat, peakLat,
-                        static_cast<long long>(qDepth),
-                        static_cast<long long>(qCap));
+                        s.toString().cstr());
         }
         fflush(stdout);
 }

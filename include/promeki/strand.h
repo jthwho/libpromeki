@@ -94,37 +94,46 @@ class Strand {
                 template <typename F>
                 auto submit(F &&callable,
                             TaskFunc onCancel = {}) -> Future<std::invoke_result_t<F>> {
-                        using R = std::invoke_result_t<F>;
-                        auto promise = std::make_shared<Promise<R>>();
-                        Future<R> future = promise->future();
+                        return submitImpl(std::forward<F>(callable),
+                                          std::move(onCancel), false);
+                }
 
-                        Entry entry;
-                        entry.run = [promise, f = std::forward<F>(callable)]() mutable {
-                                if constexpr (std::is_void_v<R>) {
-                                        f();
-                                        promise->setValue();
-                                } else {
-                                        promise->setValue(f());
-                                }
-                        };
-                        entry.cancel = [promise, onCancel = std::move(onCancel)]() mutable {
-                                if(onCancel) onCancel();
-                                promise->setError(Error::Cancelled);
-                        };
-
-                        bool needSpawn = false;
-                        {
-                                Mutex::Locker lock(_mutex);
-                                _queue.emplace_back(std::move(entry));
-                                if(!_running) {
-                                        _running = true;
-                                        needSpawn = true;
-                                }
-                        }
-                        if(needSpawn) {
-                                _pool.submit([this] { runNext(); });
-                        }
-                        return future;
+                /**
+                 * @brief Submits a callable that jumps ahead of any
+                 *        not-yet-started tasks in the pending queue.
+                 *
+                 * The strand's core guarantee is @em serial execution,
+                 * which this method preserves: the urgent task still
+                 * waits for any task currently in flight to finish, and
+                 * it still executes alone.  What it does @em not honor
+                 * is FIFO submission order — the task is inserted at the
+                 * @em front of the pending queue, so it runs before any
+                 * tasks already queued but not yet started.
+                 *
+                 * This is intended for low-latency, read-only telemetry
+                 * probes (e.g. stats snapshots) whose callers would
+                 * otherwise block behind a deep queue of real work.
+                 * Do @b not use it for anything that mutates state the
+                 * already-queued tasks depend on — reordering writes
+                 * will break callers that assume FIFO ordering.
+                 *
+                 * Rapid successive urgent submissions are themselves
+                 * LIFO with respect to one another (each new urgent
+                 * task front-inserts ahead of the previous one).  In
+                 * principle a high-frequency urgent polling loop could
+                 * starve normal work; in practice urgent calls are
+                 * expected to be infrequent telemetry pokes from a UI.
+                 *
+                 * @tparam F A callable type.
+                 * @param callable The callable to execute.
+                 * @param onCancel Optional cleanup invoked on cancellation.
+                 * @return A Future for the callable's result.
+                 */
+                template <typename F>
+                auto submitUrgent(F &&callable,
+                                  TaskFunc onCancel = {}) -> Future<std::invoke_result_t<F>> {
+                        return submitImpl(std::forward<F>(callable),
+                                          std::move(onCancel), true);
                 }
 
                 /**
@@ -168,6 +177,28 @@ class Strand {
                         return _running;
                 }
 
+                /**
+                 * @brief Returns the number of tasks waiting to run.
+                 *
+                 * Counts only tasks that have been submitted but not yet
+                 * popped for execution.  The currently-running task (if
+                 * any) is @em not included — "pending" means "not yet
+                 * started".
+                 *
+                 * This is an instantaneous snapshot; by the time the
+                 * caller acts on the value, tasks may have started or
+                 * new tasks may have been submitted.  Useful for
+                 * telemetry (e.g. surfacing backlog depth through
+                 * MediaIOStats::PendingOperations) but not for making
+                 * correctness decisions.
+                 *
+                 * @return The current pending-queue size.
+                 */
+                size_t pendingCount() const {
+                        Mutex::Locker lock(_mutex);
+                        return _queue.size();
+                }
+
         private:
                 /**
                  * @brief A single queued task with its run + cancel hooks.
@@ -179,6 +210,54 @@ class Strand {
                         TaskFunc run;
                         TaskFunc cancel;
                 };
+
+                /**
+                 * @brief Shared implementation for submit / submitUrgent.
+                 *
+                 * Builds the Entry from @p callable + @p onCancel, then
+                 * enqueues it at the back (normal) or front (urgent) of
+                 * the pending queue, spawning a runner if the strand is
+                 * currently idle.
+                 */
+                template <typename F>
+                auto submitImpl(F &&callable, TaskFunc onCancel,
+                                bool urgent) -> Future<std::invoke_result_t<F>> {
+                        using R = std::invoke_result_t<F>;
+                        auto promise = std::make_shared<Promise<R>>();
+                        Future<R> future = promise->future();
+
+                        Entry entry;
+                        entry.run = [promise, f = std::forward<F>(callable)]() mutable {
+                                if constexpr (std::is_void_v<R>) {
+                                        f();
+                                        promise->setValue();
+                                } else {
+                                        promise->setValue(f());
+                                }
+                        };
+                        entry.cancel = [promise, onCancel = std::move(onCancel)]() mutable {
+                                if(onCancel) onCancel();
+                                promise->setError(Error::Cancelled);
+                        };
+
+                        bool needSpawn = false;
+                        {
+                                Mutex::Locker lock(_mutex);
+                                if(urgent) {
+                                        _queue.emplace_front(std::move(entry));
+                                } else {
+                                        _queue.emplace_back(std::move(entry));
+                                }
+                                if(!_running) {
+                                        _running = true;
+                                        needSpawn = true;
+                                }
+                        }
+                        if(needSpawn) {
+                                _pool.submit([this] { runNext(); });
+                        }
+                        return future;
+                }
 
                 /**
                  * @brief Pool entry point: pops the next task and runs it,
