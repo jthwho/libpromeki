@@ -23,7 +23,6 @@
  *   - `pipeline.{h,cpp}`  — Pipeline + Sink
  */
 
-#include <csignal>
 #include <cstdio>
 
 #include <promeki/application.h>
@@ -36,6 +35,7 @@
 #include <promeki/list.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
+#include <promeki/memspace.h>
 #include <promeki/metadata.h>
 #include <promeki/rect.h>
 #include <promeki/size2d.h>
@@ -292,9 +292,6 @@ int main(int argc, char **argv) {
                                 (unsigned long)pipeline.framesPumped());
                 });
         }
-        std::signal(SIGINT,  [](int) { Application::quit(0); });
-        std::signal(SIGTERM, [](int) { Application::quit(0); });
-
         int rc = app.exec();
 
         // --- Shut down ---
@@ -323,6 +320,10 @@ int main(int argc, char **argv) {
         delete source;
         delete audioOutput;
         delete window;
+
+        if(opts.memStats) {
+                MemSpace::logAllStats();
+        }
 
         return rc;
 }

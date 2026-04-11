@@ -562,6 +562,7 @@ set(PROMEKI_HEADERS
     include/promeki/sha1.h
     include/promeki/sharedptr.h
     include/promeki/signal.h
+    include/promeki/signalhandler.h
     include/promeki/size2d.h
     include/promeki/slot.h
     include/promeki/streamstring.h
@@ -655,6 +656,7 @@ set(PROMEKI_SOURCES
     src/core/sha1.cpp
     src/core/sharedptr.cpp
     src/core/signal.cpp
+    src/core/signalhandler.cpp
     src/core/size2d.cpp
     src/core/slot.cpp
     src/core/string.cpp
@@ -1323,6 +1325,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/sha1.cpp
         tests/sharedptr.cpp
         tests/signal.cpp
+        tests/signalhandler.cpp
         tests/size2d.cpp
         tests/span.cpp
         tests/stack.cpp

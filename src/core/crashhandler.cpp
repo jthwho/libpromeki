@@ -12,6 +12,7 @@
 #include <promeki/buildinfo.h>
 #include <promeki/dir.h>
 #include <promeki/logger.h>
+#include <promeki/memspace.h>
 #include <promeki/platform.h>
 
 #if defined(PROMEKI_PLATFORM_POSIX)
@@ -53,6 +54,8 @@ struct promeki_dirent64 {
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG("CrashHandler");
+
 #if defined(PROMEKI_PLATFORM_POSIX)
 
 // ============================================================================
@@ -69,6 +72,8 @@ constexpr size_t MaxCmdLen    = 2048;
 constexpr size_t MaxOsLen     = 256;
 constexpr size_t MaxEnvLen    = 65536;   ///< 64 KiB upper bound on env snapshot.
 constexpr size_t MaxLibOptLen = 1024;    ///< Library options snapshot buffer.
+constexpr size_t MaxMemSpaces        = 32; ///< Max MemSpace entries captured.
+constexpr size_t MaxMemSpaceNameLen  = 64; ///< Max characters per MemSpace name (including NUL).
 
 char g_crashLogPath[MaxPathLen] = {};
 char g_hostname[MaxHostLen]     = {};
@@ -84,6 +89,22 @@ bool g_envTruncated             = false;
 char g_libOptsSnapshot[MaxLibOptLen] = {}; ///< LibraryOptions snapshot.
 time_t g_startTime              = 0;  ///< Process start time (epoch seconds).
 bool g_installed = false;
+
+/// Cached view of a registered MemSpace for the signal handler.
+///
+/// Captured at install() time so the handler can walk a flat array
+/// instead of touching the MemSpace registry's std::map at crash
+/// time.  The @c stats pointer is safe to hold indefinitely because
+/// Stats objects are allocated with @c new by the MemSpace registry
+/// and intentionally never freed (see @c memspace.cpp).
+struct MemSpaceCacheEntry {
+        int                    id;                             ///< MemSpace::ID value.
+        char                   name[MaxMemSpaceNameLen];       ///< NUL-terminated copy of the space's name.
+        const MemSpace::Stats *stats;                          ///< Borrowed; owned by the MemSpace registry forever.
+};
+MemSpaceCacheEntry g_memSpaces[MaxMemSpaces] = {};
+size_t g_memSpaceCount          = 0;
+bool   g_memSpacesTruncated     = false;
 
 // Signals we handle.
 constexpr int CrashSignals[] = { SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL };
@@ -589,6 +610,131 @@ void snapshotEnvironment() {
         g_envSnapshot[g_envSnapshotLen] = '\0';
 }
 
+/// Snapshots the set of currently-registered MemSpaces into the
+/// @ref g_memSpaces cache so the signal handler can walk a fixed-size
+/// flat array instead of touching the MemSpace registry's std::map
+/// at crash time.
+///
+/// Only @c {id, name, Stats*} is captured — the counter values
+/// themselves are read live via atomic loads inside the signal
+/// handler, so a fresh snapshot is only needed when the set of
+/// registered MemSpaces changes.
+///
+/// Called from @ref CrashHandler::install.  User code can refresh
+/// the cache after registering new MemSpaces via
+/// @ref Application::refreshCrashHandler.
+void snapshotMemSpaces() {
+        g_memSpaceCount = 0;
+        g_memSpacesTruncated = false;
+        MemSpace::IDList ids = MemSpace::registeredIDs();
+        for(MemSpace::ID id : ids) {
+                if(g_memSpaceCount >= MaxMemSpaces) {
+                        g_memSpacesTruncated = true;
+                        break;
+                }
+                MemSpace ms(id);
+                MemSpaceCacheEntry &e = g_memSpaces[g_memSpaceCount++];
+                e.id = static_cast<int>(id);
+                const char *n = ms.name().cstr();
+                size_t i = 0;
+                for(; i + 1 < MaxMemSpaceNameLen && n[i] != '\0'; ++i) {
+                        e.name[i] = n[i];
+                }
+                e.name[i] = '\0';
+                // If the full name didn't fit, warn so the truncation
+                // is discoverable instead of silently showing up in
+                // crash reports.
+                if(n[i] != '\0') {
+                        promekiWarn("CrashHandler: MemSpace name '%s' truncated to "
+                                    "%zu chars in crash snapshot", n,
+                                    MaxMemSpaceNameLen - 1);
+                }
+                e.stats = &ms.stats();
+        }
+        if(g_memSpacesTruncated) {
+                promekiWarn("CrashHandler: more than %zu MemSpaces registered; "
+                            "crash snapshot is truncated", MaxMemSpaces);
+        }
+}
+
+/// Signal-safe: writes all cached MemSpace stats to @p fd1 and @p fd2.
+///
+/// Reads each Stats field via @c Atomic::value() — lock-free on
+/// every platform libpromeki targets and therefore async-signal-safe.
+/// Counts and byte totals are formatted with the signal-safe
+/// @ref utoa helper.  No heap allocation, no stdio, no locks.
+void writeMemSpaceStats(int fd1, int fd2) {
+        if(g_memSpaceCount == 0) return;
+        char numBuf[32];
+        safeWrite2(fd1, fd2, "\n--- MemSpace Stats ---\n");
+        for(size_t i = 0; i < g_memSpaceCount; ++i) {
+                const MemSpaceCacheEntry &e = g_memSpaces[i];
+                if(e.stats == nullptr) continue;
+
+                safeWrite2(fd1, fd2, "[");
+                safeWrite2(fd1, fd2,
+                           utoa(static_cast<uint64_t>(e.id),
+                                numBuf, sizeof(numBuf)));
+                safeWrite2(fd1, fd2, ":");
+                safeWrite2(fd1, fd2, e.name);
+                safeWrite2(fd1, fd2, "]\n");
+
+                // Atomic acquire-loads — signal-safe for lock-free
+                // 64-bit integer atomics.
+                const uint64_t allocCount     = e.stats->allocCount.value();
+                const uint64_t allocBytes     = e.stats->allocBytes.value();
+                const uint64_t allocFailCount = e.stats->allocFailCount.value();
+                const uint64_t maxAllocBytes  = e.stats->maxAllocBytes.value();
+                const uint64_t releaseCount   = e.stats->releaseCount.value();
+                const uint64_t releaseBytes   = e.stats->releaseBytes.value();
+                const uint64_t copyCount      = e.stats->copyCount.value();
+                const uint64_t copyBytes      = e.stats->copyBytes.value();
+                const uint64_t copyFailCount  = e.stats->copyFailCount.value();
+                const uint64_t fillCount      = e.stats->fillCount.value();
+                const uint64_t fillBytes      = e.stats->fillBytes.value();
+                const uint64_t liveCount      = e.stats->liveCount.value();
+                const uint64_t liveBytes      = e.stats->liveBytes.value();
+                const uint64_t peakCount      = e.stats->peakCount.value();
+                const uint64_t peakBytes      = e.stats->peakBytes.value();
+
+                auto writeLabel = [&](const char *label, uint64_t val) {
+                        safeWrite2(fd1, fd2, label);
+                        safeWrite2(fd1, fd2,
+                                   utoa(val, numBuf, sizeof(numBuf)));
+                };
+
+                writeLabel("  alloc:   count=", allocCount);
+                writeLabel(" bytes=",             allocBytes);
+                writeLabel(" fail=",              allocFailCount);
+                writeLabel(" maxSingle=",         maxAllocBytes);
+                safeWrite2(fd1, fd2, "\n");
+
+                writeLabel("  release: count=", releaseCount);
+                writeLabel(" bytes=",             releaseBytes);
+                safeWrite2(fd1, fd2, "\n");
+
+                writeLabel("  live:    count=", liveCount);
+                writeLabel(" bytes=",             liveBytes);
+                writeLabel(" peakCount=",         peakCount);
+                writeLabel(" peakBytes=",         peakBytes);
+                safeWrite2(fd1, fd2, "\n");
+
+                writeLabel("  copy:    count=", copyCount);
+                writeLabel(" bytes=",             copyBytes);
+                writeLabel(" fail=",              copyFailCount);
+                safeWrite2(fd1, fd2, "\n");
+
+                writeLabel("  fill:    count=", fillCount);
+                writeLabel(" bytes=",             fillBytes);
+                safeWrite2(fd1, fd2, "\n");
+        }
+        if(g_memSpacesTruncated) {
+                safeWrite2(fd1, fd2,
+                           "(truncated — more MemSpaces registered "
+                           "than snapshot buffer)\n");
+        }
+}
+
 /// Signal-safe: dumps a single named 64-bit register value as
 /// @c "NAME: 0xHEX  " (no newline).
 void writeReg(int fd1, int fd2, const char *name, uint64_t val) {
@@ -946,6 +1092,13 @@ void writeReportBody(int logFd, bool isCrash) {
         }
 #endif
 
+        // --- MemSpace Stats ---
+        // Per-memory-space counters (alloc, release, live/peak, copy,
+        // fill).  Reads the Atomic<uint64_t> counters directly from
+        // the install-time snapshot's cached Stats pointers — no map
+        // traversal, no allocation, no locks.
+        writeMemSpaceStats(STDERR_FILENO, logFd);
+
         // --- Resource Limits ---
         // getrlimit is POSIX-standard and async-signal-safe (reads
         // kernel state into a user buffer).  Useful for diagnosing
@@ -1213,6 +1366,12 @@ void CrashHandler::install() {
                 g_libOptsSnapshot[dlen] = '\0';
         }
 
+        // Snapshot registered MemSpaces so the signal handler can
+        // walk a flat array instead of the registry's std::map.
+        // Counter values are read live at crash time; only the
+        // {id, name, Stats*} metadata is cached here.
+        snapshotMemSpaces();
+
         // Enable core dumps if requested.
         if(LibraryOptions::instance().getAs<bool>(LibraryOptions::CoreDumps)) {
                 enableCoreDumps();
@@ -1230,7 +1389,7 @@ void CrashHandler::install() {
         }
         g_installed = true;
 
-        promekiInfo("CrashHandler: installed (crash log: %s)", g_crashLogPath);
+        promekiDebug("CrashHandler: installed (crash log: %s)", g_crashLogPath);
 }
 
 void CrashHandler::uninstall() {
@@ -1256,6 +1415,8 @@ void CrashHandler::uninstall() {
         g_envTruncated   = false;
         g_libOptsSnapshot[0] = '\0';
         g_startTime      = 0;
+        g_memSpaceCount      = 0;
+        g_memSpacesTruncated = false;
 }
 
 bool CrashHandler::isInstalled() {

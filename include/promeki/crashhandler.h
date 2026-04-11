@@ -72,8 +72,28 @@ class CrashHandler {
                  * If @ref LibraryOptions::CoreDumps is true, also raises
                  * RLIMIT_CORE to the hard limit.
                  *
-                 * Safe to call multiple times — subsequent calls update the
-                 * pre-built state but do not stack handlers.
+                 * Snapshots the following process state into static
+                 * buffers so the signal handler can write a report
+                 * without touching any non-signal-safe APIs:
+                 * - Command line (@ref Application::arguments)
+                 * - Hostname, working directory, uname info
+                 * - Environment (if @ref LibraryOptions::CaptureEnvironment)
+                 * - @ref LibraryOptions values
+                 * - The set of registered @ref MemSpace entries
+                 *   (metadata only — counter values are read live
+                 *   at crash time via atomic loads)
+                 *
+                 * State that changes after install() — such as
+                 * @ref MemSpace instances registered by a subsystem
+                 * later in startup — will not appear in crash reports
+                 * until the snapshot is refreshed.  Use
+                 * @ref Application::refreshCrashHandler to re-snapshot.
+                 *
+                 * Safe to call multiple times — subsequent calls update
+                 * the pre-built state but do not stack handlers.
+                 *
+                 * @see Application::refreshCrashHandler
+                 * @see MemSpace::registerData
                  */
                 static void install();
 

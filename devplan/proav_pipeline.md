@@ -213,16 +213,16 @@ The interesting next consumer is `mediaplay --save-pipeline`: with `MediaConfig:
 
 Multiple stages may hold references to the same `Buffer::Ptr` (shared via `SharedPtr` COW) when the pipeline fans out. Mutating consumers must call `ensureExclusive()` on `Image` and `Audio` before writing buffer data. `Image::ensureExclusive()` / `isExclusive()` exist; `Audio::ensureExclusive()` / `isExclusive()` still need to be added (tracked in the remaining-work list below). Buffer allocation (including COW clones) goes through the buffer's `MemSpace`, so pooled allocation is a MemSpace-level concern.
 
-### Memory space statistics
+### Memory space statistics — COMPLETE
 
-MemSpace has no visibility into allocation behaviour. For pipeline debugging and performance analysis, per-space statistics and a pool implementation are still useful. This work is independent of the pipeline class itself and can land whenever needed — the pipeline will pick up pooled allocation automatically via the MemSpace layer.
+`MemSpace::Stats` has landed: every MemSpace instance carries a lock-free `Atomic<uint64_t>`-based Stats object tracking alloc / release / copy / fill counts and bytes, allocation failures, largest single allocation, live / peak outstanding allocations, and copy failures. A per-instance `Stats::Snapshot` POD is returned by `snapshot()` for reporting. `statsReport()` / `allStatsReport()` format the counters as a `StringList` (human-readable byte sizes via `String::fromByteCount`); `logStats()` / `logAllStats()` dump that report to the promeki log at Info level. `mediaplay --memstats` wires this into end-of-run diagnostics. A pool implementation remains optional future work.
 
 ---
 
 ## Remaining Work Checklist
 
 - [ ] `Audio::ensureExclusive()` / `Audio::isExclusive()` — parity with `Image`
-- [ ] `MemSpace::Stats` — per-space counters, `stats()` accessor, `resetStats()`, `peakCount`/`peakBytes`, COW detach tracking
+- [x] `MemSpace::Stats` — per-space atomic counters, `stats()` / `statsSnapshot()` / `resetStats()`, peak/live/max-alloc tracking, `statsReport()` / `logStats()` / `logAllStats()`, wired into `mediaplay --memstats`
 - [ ] `MemSpacePool` — recycling `MemSpace` for fixed-size buffers, optional pre-allocation, LIFO recycle stack, pool hit/miss metrics
 - [ ] `MediaPipelineConfig` data object (JSON + DataStream round-trip)
 - [ ] `MediaPipeline` class (build/open/start/stop/close, signal plumbing, fan-out, validation)

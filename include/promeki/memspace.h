@@ -8,7 +8,9 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/atomic.h>
 #include <promeki/string.h>
+#include <promeki/stringlist.h>
 #include <promeki/list.h>
 #include <promeki/error.h>
 
@@ -54,6 +56,96 @@ class MemSpace {
                 /** @brief List of MemSpace IDs. */
                 using IDList = List<ID>;
 
+                /**
+                 * @brief Lock-free runtime statistics for a memory space.
+                 *
+                 * Every MemSpace instance with the same ID shares one
+                 * Stats object owned by the registry.  All counters are
+                 * `Atomic<uint64_t>` so updates and reads are safe from
+                 * any thread without taking a lock.
+                 *
+                 * Counters are cumulative since process start (or since
+                 * the most recent call to reset()).  The "live" pair
+                 * tracks currently-outstanding allocations and shrinks
+                 * on release(); the "peak" pair records their
+                 * high-water marks.
+                 *
+                 * Non-copyable, non-movable — retrieve a plain-value
+                 * Snapshot via snapshot() for reporting.
+                 */
+                struct Stats {
+                        /** @brief Plain-value snapshot of a Stats for reporting. */
+                        struct Snapshot {
+                                uint64_t allocCount     = 0;    ///< Successful allocations.
+                                uint64_t allocBytes     = 0;    ///< Total bytes allocated (success only).
+                                uint64_t allocFailCount = 0;    ///< Allocations that returned a null pointer.
+                                uint64_t maxAllocBytes  = 0;    ///< Largest single successful allocation, in bytes.
+                                uint64_t releaseCount   = 0;    ///< Releases of non-null allocations.
+                                uint64_t releaseBytes   = 0;    ///< Total bytes released.
+                                uint64_t copyCount      = 0;    ///< Successful copy() calls.
+                                uint64_t copyBytes      = 0;    ///< Total bytes copied.
+                                uint64_t copyFailCount  = 0;    ///< copy() calls that returned false.
+                                uint64_t fillCount      = 0;    ///< Successful fill() calls.
+                                uint64_t fillBytes      = 0;    ///< Total bytes filled.
+                                uint64_t liveCount      = 0;    ///< Outstanding allocations at snapshot time.
+                                uint64_t liveBytes      = 0;    ///< Outstanding bytes at snapshot time.
+                                uint64_t peakCount      = 0;    ///< Highest liveCount ever observed.
+                                uint64_t peakBytes      = 0;    ///< Highest liveBytes ever observed.
+                        };
+
+                        Atomic<uint64_t> allocCount     {0};    ///< @see Snapshot::allocCount
+                        Atomic<uint64_t> allocBytes     {0};    ///< @see Snapshot::allocBytes
+                        Atomic<uint64_t> allocFailCount {0};    ///< @see Snapshot::allocFailCount
+                        Atomic<uint64_t> maxAllocBytes  {0};    ///< @see Snapshot::maxAllocBytes
+                        Atomic<uint64_t> releaseCount   {0};    ///< @see Snapshot::releaseCount
+                        Atomic<uint64_t> releaseBytes   {0};    ///< @see Snapshot::releaseBytes
+                        Atomic<uint64_t> copyCount      {0};    ///< @see Snapshot::copyCount
+                        Atomic<uint64_t> copyBytes      {0};    ///< @see Snapshot::copyBytes
+                        Atomic<uint64_t> copyFailCount  {0};    ///< @see Snapshot::copyFailCount
+                        Atomic<uint64_t> fillCount      {0};    ///< @see Snapshot::fillCount
+                        Atomic<uint64_t> fillBytes      {0};    ///< @see Snapshot::fillBytes
+                        Atomic<uint64_t> liveCount      {0};    ///< @see Snapshot::liveCount
+                        Atomic<uint64_t> liveBytes      {0};    ///< @see Snapshot::liveBytes
+                        Atomic<uint64_t> peakCount      {0};    ///< @see Snapshot::peakCount
+                        Atomic<uint64_t> peakBytes      {0};    ///< @see Snapshot::peakBytes
+
+                        Stats() = default;
+                        Stats(const Stats &) = delete;
+                        Stats &operator=(const Stats &) = delete;
+                        Stats(Stats &&) = delete;
+                        Stats &operator=(Stats &&) = delete;
+
+                        /**
+                         * @brief Atomically captures a plain-value snapshot.
+                         *
+                         * Each field is loaded independently, so a
+                         * snapshot taken during heavy churn is
+                         * consistent per-field but may not be globally
+                         * consistent across fields.  This is fine for
+                         * reporting and debugging.
+                         */
+                        Snapshot snapshot() const;
+
+                        /** @brief Zeroes every counter. */
+                        void reset();
+
+                        /**
+                         * @brief Internal: records a successful allocation.
+                         *
+                         * Called by MemSpace::alloc().  Updates the
+                         * cumulative, live, peak, and max counters.
+                         */
+                        void recordAlloc(uint64_t bytes);
+
+                        /**
+                         * @brief Internal: records a release.
+                         *
+                         * Called by MemSpace::release().  Updates the
+                         * cumulative and live counters.
+                         */
+                        void recordRelease(uint64_t bytes);
+                };
+
                 /** @brief Function table for memory space operations. */
                 struct Ops {
                         ID id;                                                              ///< The memory space identifier.
@@ -63,6 +155,7 @@ class MemSpace {
                         void (*release)(MemAllocation &alloc);                              ///< Release previously allocated memory.
                         bool (*copy)(const MemAllocation &src, const MemAllocation &dst, size_t bytes); ///< Copy bytes from this space to another.
                         Error (*fill)(void *ptr, size_t bytes, char value);                 ///< Fill memory with a byte value.
+                        Stats *stats = nullptr;                                             ///< Runtime counters; owned by the registry, auto-created by registerData() if null.
                 };
 
                 /**
@@ -98,8 +191,21 @@ class MemSpace {
                  * After this call, constructing a MemSpace from @p ops.id
                  * will resolve to the registered operations.
                  *
+                 * @note If CrashHandler is installed, its MemSpace
+                 *       snapshot is captured at install() time and
+                 *       will not automatically include MemSpaces
+                 *       registered afterward.  To make a newly
+                 *       registered MemSpace appear in crash reports,
+                 *       call @ref Application::refreshCrashHandler
+                 *       once all MemSpaces have been registered (for
+                 *       example, at the end of application startup).
+                 *       Refreshing is intentionally explicit so
+                 *       bulk registrations at startup only pay the
+                 *       snapshot cost once.
+                 *
                  * @param ops The populated Ops struct with id set to a value from registerType().
                  * @see registerType()
+                 * @see Application::refreshCrashHandler
                  */
                 static void registerData(Ops &&ops);
 
@@ -174,8 +280,72 @@ class MemSpace {
                  */
                 Error fill(void *ptr, size_t bytes, char value) const {
                         if(ptr == nullptr) return Error::Invalid;
-                        return d->fill(ptr, bytes, value);
+                        Error err = d->fill(ptr, bytes, value);
+                        if(err.isOk()) {
+                                d->stats->fillCount.fetchAndAdd(1);
+                                d->stats->fillBytes.fetchAndAdd(bytes);
+                        }
+                        return err;
                 }
+
+                /**
+                 * @brief Returns the runtime stats for this memory space.
+                 *
+                 * Stats are shared by every MemSpace wrapper that
+                 * references the same ID — every call to alloc(),
+                 * release(), copy(), or fill() on any instance
+                 * updates the same underlying counters atomically.
+                 *
+                 * @return A reference to the live (non-copyable) Stats object.
+                 */
+                Stats &stats() const { return *d->stats; }
+
+                /**
+                 * @brief Convenience: returns a plain-value snapshot of the stats.
+                 * @return A Stats::Snapshot capturing the current counters.
+                 */
+                Stats::Snapshot statsSnapshot() const { return d->stats->snapshot(); }
+
+                /** @brief Zeroes every counter in this memory space's Stats. */
+                void resetStats() const { d->stats->reset(); }
+
+                /**
+                 * @brief Formats this memory space's stats as a StringList.
+                 *
+                 * Each line is already prefixed with the memory space
+                 * name, ready for display.  Safe to call at any time
+                 * from any thread — the snapshot is taken atomically.
+                 *
+                 * @return One StringList entry per line of the report.
+                 */
+                StringList statsReport() const;
+
+                /**
+                 * @brief Formats stats for every registered MemSpace as a StringList.
+                 *
+                 * Walks registeredIDs() and concatenates each
+                 * statsReport().  Useful when the caller wants to
+                 * capture the report as structured text (tests,
+                 * debug panels, file dumps).
+                 */
+                static StringList allStatsReport();
+
+                /**
+                 * @brief Writes statsReport() to the promeki log at Info level.
+                 *
+                 * Convenience wrapper: captures the StringList via
+                 * statsReport() and emits each line through
+                 * @c promekiInfo.
+                 */
+                void logStats() const;
+
+                /**
+                 * @brief Writes allStatsReport() to the promeki log at Info level.
+                 *
+                 * Convenience wrapper for shutdown dumps and periodic
+                 * monitoring.
+                 */
+                static void logAllStats();
 
                 /** @brief Returns the underlying Ops pointer. */
                 const Ops *data() const { return d; }
@@ -213,7 +383,14 @@ inline MemSpace::MemSpace(ID id) : d(lookup(id)) {}
 
 inline bool MemSpace::copy(const MemAllocation &src, const MemAllocation &dst, size_t bytes) const {
         if(src.ptr == nullptr || dst.ptr == nullptr) return false;
-        return d->copy(src, dst, bytes);
+        bool ok = d->copy(src, dst, bytes);
+        if(ok) {
+                d->stats->copyCount.fetchAndAdd(1);
+                d->stats->copyBytes.fetchAndAdd(bytes);
+        } else {
+                d->stats->copyFailCount.fetchAndAdd(1);
+        }
+        return ok;
 }
 
 inline MemAllocation MemSpace::alloc(size_t bytes, size_t align) const {
@@ -222,12 +399,19 @@ inline MemAllocation MemSpace::alloc(size_t bytes, size_t align) const {
         a.align = align;
         a.ms = *this;
         d->alloc(a);
+        if(a.ptr != nullptr) {
+                d->stats->recordAlloc(static_cast<uint64_t>(bytes));
+        } else {
+                d->stats->allocFailCount.fetchAndAdd(1);
+        }
         return a;
 }
 
 inline void MemSpace::release(MemAllocation &alloc) const {
         if(alloc.ptr == nullptr) return;
+        uint64_t bytes = static_cast<uint64_t>(alloc.size);
         d->release(alloc);
+        d->stats->recordRelease(bytes);
         alloc.ptr = nullptr;
         alloc.priv = nullptr;
 }

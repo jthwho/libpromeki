@@ -17,15 +17,20 @@ PROMEKI_NAMESPACE_BEGIN
  * @ingroup util
  *
  * Library-provided @ref Enum types that are commonly used as config values
- * throughout the ProAV pipeline.  Each struct follows the pattern documented
- * on @ref Enum:
+ * throughout the ProAV pipeline.  Each class inherits from
+ * @ref TypedEnum "TypedEnum<Self>" so its values carry a compile-time
+ * type identity:
  *
  * - A @c Type member holds the registered @ref Enum::Type handle.
- * - A set of @c static @c inline @c const @ref Enum constants, one per
+ * - A set of @c static @c const wrapper-class constants, one per
  *   registered value, for ergonomic use at call sites:
  *   @code
  *   cfg.set(MediaConfig::VideoPattern, VideoPattern::ColorBars);
  *   @endcode
+ * - Functions that want compile-time type checking take the concrete
+ *   class (e.g. @c "const VideoPattern &") instead of a bare
+ *   @c "const Enum &"; runtime compatibility with @ref Variant and any
+ *   @ref Enum-based API is preserved via public inheritance.
  *
  * The integer values are stable and match the corresponding C++ `enum`
  * inside the subsystem that originally defined them (e.g.
@@ -38,7 +43,7 @@ PROMEKI_NAMESPACE_BEGIN
  * @c "LTC") rather than the legacy all-lowercase config strings.  Call
  * sites that previously wrote @c "colorbars" / @c "bottomcenter" /
  * @c "tone" / @c "422" need to be updated to the CamelCase form or, better,
- * to use the @ref Enum constants directly.
+ * to use the typed constants directly.
  * @{
  */
 
@@ -57,37 +62,53 @@ PROMEKI_NAMESPACE_BEGIN
  *         static_cast<VideoTestPattern::Pattern>(e.value());
  * @endcode
  */
-struct VideoPattern {
-        static inline const Enum::Type Type = Enum::registerType("VideoPattern",
-                {
-                        { "ColorBars",    0  },
-                        { "ColorBars75",  1  },
-                        { "Ramp",         2  },
-                        { "Grid",         3  },
-                        { "Crosshatch",   4  },
-                        { "Checkerboard", 5  },
-                        { "SolidColor",   6  },
-                        { "White",        7  },
-                        { "Black",        8  },
-                        { "Noise",        9  },
-                        { "ZonePlate",    10 },
-                        { "AvSync",       11 }
-                },
-                0);  // default: ColorBars
+class VideoPattern : public TypedEnum<VideoPattern> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("VideoPattern",
+                        {
+                                { "ColorBars",    0  },
+                                { "ColorBars75",  1  },
+                                { "Ramp",         2  },
+                                { "Grid",         3  },
+                                { "Crosshatch",   4  },
+                                { "Checkerboard", 5  },
+                                { "SolidColor",   6  },
+                                { "White",        7  },
+                                { "Black",        8  },
+                                { "Noise",        9  },
+                                { "ZonePlate",    10 },
+                                { "AvSync",       11 }
+                        },
+                        0);  // default: ColorBars
 
-        static inline const Enum ColorBars    { Type, 0  };
-        static inline const Enum ColorBars75  { Type, 1  };
-        static inline const Enum Ramp         { Type, 2  };
-        static inline const Enum Grid         { Type, 3  };
-        static inline const Enum Crosshatch   { Type, 4  };
-        static inline const Enum Checkerboard { Type, 5  };
-        static inline const Enum SolidColor   { Type, 6  };
-        static inline const Enum White        { Type, 7  };
-        static inline const Enum Black        { Type, 8  };
-        static inline const Enum Noise        { Type, 9  };
-        static inline const Enum ZonePlate    { Type, 10 };
-        static inline const Enum AvSync       { Type, 11 };
+                using TypedEnum<VideoPattern>::TypedEnum;
+
+                static const VideoPattern ColorBars;
+                static const VideoPattern ColorBars75;
+                static const VideoPattern Ramp;
+                static const VideoPattern Grid;
+                static const VideoPattern Crosshatch;
+                static const VideoPattern Checkerboard;
+                static const VideoPattern SolidColor;
+                static const VideoPattern White;
+                static const VideoPattern Black;
+                static const VideoPattern Noise;
+                static const VideoPattern ZonePlate;
+                static const VideoPattern AvSync;
 };
+
+inline const VideoPattern VideoPattern::ColorBars    { 0  };
+inline const VideoPattern VideoPattern::ColorBars75  { 1  };
+inline const VideoPattern VideoPattern::Ramp         { 2  };
+inline const VideoPattern VideoPattern::Grid         { 3  };
+inline const VideoPattern VideoPattern::Crosshatch   { 4  };
+inline const VideoPattern VideoPattern::Checkerboard { 5  };
+inline const VideoPattern VideoPattern::SolidColor   { 6  };
+inline const VideoPattern VideoPattern::White        { 7  };
+inline const VideoPattern VideoPattern::Black        { 8  };
+inline const VideoPattern VideoPattern::Noise        { 9  };
+inline const VideoPattern VideoPattern::ZonePlate    { 10 };
+inline const VideoPattern VideoPattern::AvSync       { 11 };
 
 /**
  * @brief Well-known Enum type for on-screen burn-in position presets.
@@ -96,27 +117,38 @@ struct VideoPattern {
  * the value type for the @c MediaIOTask_TPG @c ConfigVideoBurnPosition
  * config key.
  */
-struct BurnPosition {
-        static inline const Enum::Type Type = Enum::registerType("BurnPosition",
-                {
-                        { "TopLeft",      0 },
-                        { "TopCenter",    1 },
-                        { "TopRight",     2 },
-                        { "BottomLeft",   3 },
-                        { "BottomCenter", 4 },
-                        { "BottomRight",  5 },
-                        { "Center",       6 }
-                },
-                4);  // default: BottomCenter
+class BurnPosition : public TypedEnum<BurnPosition> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("BurnPosition",
+                        {
+                                { "TopLeft",      0 },
+                                { "TopCenter",    1 },
+                                { "TopRight",     2 },
+                                { "BottomLeft",   3 },
+                                { "BottomCenter", 4 },
+                                { "BottomRight",  5 },
+                                { "Center",       6 }
+                        },
+                        4);  // default: BottomCenter
 
-        static inline const Enum TopLeft      { Type, 0 };
-        static inline const Enum TopCenter    { Type, 1 };
-        static inline const Enum TopRight     { Type, 2 };
-        static inline const Enum BottomLeft   { Type, 3 };
-        static inline const Enum BottomCenter { Type, 4 };
-        static inline const Enum BottomRight  { Type, 5 };
-        static inline const Enum Center       { Type, 6 };
+                using TypedEnum<BurnPosition>::TypedEnum;
+
+                static const BurnPosition TopLeft;
+                static const BurnPosition TopCenter;
+                static const BurnPosition TopRight;
+                static const BurnPosition BottomLeft;
+                static const BurnPosition BottomCenter;
+                static const BurnPosition BottomRight;
+                static const BurnPosition Center;
 };
+
+inline const BurnPosition BurnPosition::TopLeft      { 0 };
+inline const BurnPosition BurnPosition::TopCenter    { 1 };
+inline const BurnPosition BurnPosition::TopRight     { 2 };
+inline const BurnPosition BurnPosition::BottomLeft   { 3 };
+inline const BurnPosition BurnPosition::BottomCenter { 4 };
+inline const BurnPosition BurnPosition::BottomRight  { 5 };
+inline const BurnPosition BurnPosition::Center       { 6 };
 
 /**
  * @brief Well-known Enum type for audio test pattern generator modes.
@@ -128,21 +160,29 @@ struct BurnPosition {
  * the corresponding Enum type is called @c AudioPattern for consistency
  * with @ref VideoPattern.
  */
-struct AudioPattern {
-        static inline const Enum::Type Type = Enum::registerType("AudioPattern",
-                {
-                        { "Tone",    0 },
-                        { "Silence", 1 },
-                        { "LTC",     2 },
-                        { "AvSync",  3 }
-                },
-                0);  // default: Tone
+class AudioPattern : public TypedEnum<AudioPattern> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("AudioPattern",
+                        {
+                                { "Tone",    0 },
+                                { "Silence", 1 },
+                                { "LTC",     2 },
+                                { "AvSync",  3 }
+                        },
+                        0);  // default: Tone
 
-        static inline const Enum Tone    { Type, 0 };
-        static inline const Enum Silence { Type, 1 };
-        static inline const Enum LTC     { Type, 2 };
-        static inline const Enum AvSync  { Type, 3 };
+                using TypedEnum<AudioPattern>::TypedEnum;
+
+                static const AudioPattern Tone;
+                static const AudioPattern Silence;
+                static const AudioPattern LTC;
+                static const AudioPattern AvSync;
 };
+
+inline const AudioPattern AudioPattern::Tone    { 0 };
+inline const AudioPattern AudioPattern::Silence { 1 };
+inline const AudioPattern AudioPattern::LTC     { 2 };
+inline const AudioPattern AudioPattern::AvSync  { 3 };
 
 /**
  * @brief Well-known Enum type for chroma subsampling modes.
@@ -151,19 +191,26 @@ struct AudioPattern {
  * value type for @ref MediaConfig::JpegSubsampling and anywhere else a
  * simple 4:4:4 / 4:2:2 / 4:2:0 selection is needed.
  */
-struct ChromaSubsampling {
-        static inline const Enum::Type Type = Enum::registerType("ChromaSubsampling",
-                {
-                        { "YUV444", 0 },
-                        { "YUV422", 1 },
-                        { "YUV420", 2 }
-                },
-                1);  // default: YUV422 (RFC 2435 JPEG-over-RTP compatible)
+class ChromaSubsampling : public TypedEnum<ChromaSubsampling> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("ChromaSubsampling",
+                        {
+                                { "YUV444", 0 },
+                                { "YUV422", 1 },
+                                { "YUV420", 2 }
+                        },
+                        1);  // default: YUV422 (RFC 2435 JPEG-over-RTP compatible)
 
-        static inline const Enum YUV444 { Type, 0 };
-        static inline const Enum YUV422 { Type, 1 };
-        static inline const Enum YUV420 { Type, 2 };
+                using TypedEnum<ChromaSubsampling>::TypedEnum;
+
+                static const ChromaSubsampling YUV444;
+                static const ChromaSubsampling YUV422;
+                static const ChromaSubsampling YUV420;
 };
+
+inline const ChromaSubsampling ChromaSubsampling::YUV444 { 0 };
+inline const ChromaSubsampling ChromaSubsampling::YUV422 { 1 };
+inline const ChromaSubsampling ChromaSubsampling::YUV420 { 2 };
 
 /**
  * @brief Well-known Enum type for audio sample formats.
@@ -179,47 +226,68 @@ struct ChromaSubsampling {
  * passes strings through @c AudioDesc::stringToDataType keeps working
  * when the same string is fed through the Enum lookup path.
  */
-struct AudioDataType {
-        static inline const Enum::Type Type = Enum::registerType("AudioDataType",
-                {
-                        { "Invalid",        0  },
-                        { "PCMI_Float32LE", 1  },
-                        { "PCMI_Float32BE", 2  },
-                        { "PCMI_S8",        3  },
-                        { "PCMI_U8",        4  },
-                        { "PCMI_S16LE",     5  },
-                        { "PCMI_U16LE",     6  },
-                        { "PCMI_S16BE",     7  },
-                        { "PCMI_U16BE",     8  },
-                        { "PCMI_S24LE",     9  },
-                        { "PCMI_U24LE",     10 },
-                        { "PCMI_S24BE",     11 },
-                        { "PCMI_U24BE",     12 },
-                        { "PCMI_S32LE",     13 },
-                        { "PCMI_U32LE",     14 },
-                        { "PCMI_S32BE",     15 },
-                        { "PCMI_U32BE",     16 }
-                },
-                1);  // default: PCMI_Float32LE
+class AudioDataType : public TypedEnum<AudioDataType> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("AudioDataType",
+                        {
+                                { "Invalid",        0  },
+                                { "PCMI_Float32LE", 1  },
+                                { "PCMI_Float32BE", 2  },
+                                { "PCMI_S8",        3  },
+                                { "PCMI_U8",        4  },
+                                { "PCMI_S16LE",     5  },
+                                { "PCMI_U16LE",     6  },
+                                { "PCMI_S16BE",     7  },
+                                { "PCMI_U16BE",     8  },
+                                { "PCMI_S24LE",     9  },
+                                { "PCMI_U24LE",     10 },
+                                { "PCMI_S24BE",     11 },
+                                { "PCMI_U24BE",     12 },
+                                { "PCMI_S32LE",     13 },
+                                { "PCMI_U32LE",     14 },
+                                { "PCMI_S32BE",     15 },
+                                { "PCMI_U32BE",     16 }
+                        },
+                        1);  // default: PCMI_Float32LE
 
-        static inline const Enum Invalid        { Type, 0  };
-        static inline const Enum PCMI_Float32LE { Type, 1  };
-        static inline const Enum PCMI_Float32BE { Type, 2  };
-        static inline const Enum PCMI_S8        { Type, 3  };
-        static inline const Enum PCMI_U8        { Type, 4  };
-        static inline const Enum PCMI_S16LE     { Type, 5  };
-        static inline const Enum PCMI_U16LE     { Type, 6  };
-        static inline const Enum PCMI_S16BE     { Type, 7  };
-        static inline const Enum PCMI_U16BE     { Type, 8  };
-        static inline const Enum PCMI_S24LE     { Type, 9  };
-        static inline const Enum PCMI_U24LE     { Type, 10 };
-        static inline const Enum PCMI_S24BE     { Type, 11 };
-        static inline const Enum PCMI_U24BE     { Type, 12 };
-        static inline const Enum PCMI_S32LE     { Type, 13 };
-        static inline const Enum PCMI_U32LE     { Type, 14 };
-        static inline const Enum PCMI_S32BE     { Type, 15 };
-        static inline const Enum PCMI_U32BE     { Type, 16 };
+                using TypedEnum<AudioDataType>::TypedEnum;
+
+                static const AudioDataType Invalid;
+                static const AudioDataType PCMI_Float32LE;
+                static const AudioDataType PCMI_Float32BE;
+                static const AudioDataType PCMI_S8;
+                static const AudioDataType PCMI_U8;
+                static const AudioDataType PCMI_S16LE;
+                static const AudioDataType PCMI_U16LE;
+                static const AudioDataType PCMI_S16BE;
+                static const AudioDataType PCMI_U16BE;
+                static const AudioDataType PCMI_S24LE;
+                static const AudioDataType PCMI_U24LE;
+                static const AudioDataType PCMI_S24BE;
+                static const AudioDataType PCMI_U24BE;
+                static const AudioDataType PCMI_S32LE;
+                static const AudioDataType PCMI_U32LE;
+                static const AudioDataType PCMI_S32BE;
+                static const AudioDataType PCMI_U32BE;
 };
+
+inline const AudioDataType AudioDataType::Invalid        { 0  };
+inline const AudioDataType AudioDataType::PCMI_Float32LE { 1  };
+inline const AudioDataType AudioDataType::PCMI_Float32BE { 2  };
+inline const AudioDataType AudioDataType::PCMI_S8        { 3  };
+inline const AudioDataType AudioDataType::PCMI_U8        { 4  };
+inline const AudioDataType AudioDataType::PCMI_S16LE     { 5  };
+inline const AudioDataType AudioDataType::PCMI_U16LE     { 6  };
+inline const AudioDataType AudioDataType::PCMI_S16BE     { 7  };
+inline const AudioDataType AudioDataType::PCMI_U16BE     { 8  };
+inline const AudioDataType AudioDataType::PCMI_S24LE     { 9  };
+inline const AudioDataType AudioDataType::PCMI_U24LE     { 10 };
+inline const AudioDataType AudioDataType::PCMI_S24BE     { 11 };
+inline const AudioDataType AudioDataType::PCMI_U24BE     { 12 };
+inline const AudioDataType AudioDataType::PCMI_S32LE     { 13 };
+inline const AudioDataType AudioDataType::PCMI_U32LE     { 14 };
+inline const AudioDataType AudioDataType::PCMI_S32BE     { 15 };
+inline const AudioDataType AudioDataType::PCMI_U32BE     { 16 };
 
 /**
  * @brief Well-known Enum type for @ref CSCPipeline processing-path selection.
@@ -231,17 +299,23 @@ struct AudioDataType {
  * useful for debugging and as a reference for accuracy comparisons
  * against @ref Color::convert.
  */
-struct CscPath {
-        static inline const Enum::Type Type = Enum::registerType("CscPath",
-                {
-                        { "Optimized", 0 },
-                        { "Scalar",    1 }
-                },
-                0);  // default: Optimized
+class CscPath : public TypedEnum<CscPath> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("CscPath",
+                        {
+                                { "Optimized", 0 },
+                                { "Scalar",    1 }
+                        },
+                        0);  // default: Optimized
 
-        static inline const Enum Optimized { Type, 0 };
-        static inline const Enum Scalar    { Type, 1 };
+                using TypedEnum<CscPath>::TypedEnum;
+
+                static const CscPath Optimized;
+                static const CscPath Scalar;
 };
+
+inline const CscPath CscPath::Optimized { 0 };
+inline const CscPath CscPath::Scalar    { 1 };
 
 /**
  * @brief Well-known Enum type for QuickTime / ISO-BMFF container layout.
@@ -252,17 +326,23 @@ struct CscPath {
  * of moof / mdat fragment pairs, which is what streaming and live
  * ingest pipelines need.
  */
-struct QuickTimeLayout {
-        static inline const Enum::Type Type = Enum::registerType("QuickTimeLayout",
-                {
-                        { "Classic",    0 },
-                        { "Fragmented", 1 }
-                },
-                1);  // default: Fragmented
+class QuickTimeLayout : public TypedEnum<QuickTimeLayout> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("QuickTimeLayout",
+                        {
+                                { "Classic",    0 },
+                                { "Fragmented", 1 }
+                        },
+                        1);  // default: Fragmented
 
-        static inline const Enum Classic    { Type, 0 };
-        static inline const Enum Fragmented { Type, 1 };
+                using TypedEnum<QuickTimeLayout>::TypedEnum;
+
+                static const QuickTimeLayout Classic;
+                static const QuickTimeLayout Fragmented;
 };
+
+inline const QuickTimeLayout QuickTimeLayout::Classic    { 0 };
+inline const QuickTimeLayout QuickTimeLayout::Fragmented { 1 };
 
 /**
  * @brief Well-known Enum type for RTP sender pacing mode.
@@ -293,23 +373,32 @@ struct QuickTimeLayout {
  *                 kernel both support it; falls back to @c KernelFq
  *                 otherwise.  Used for ST 2110-21-grade pacing.
  */
-struct RtpPacingMode {
-        static inline const Enum::Type Type = Enum::registerType("RtpPacingMode",
-                {
-                        { "None",      0 },
-                        { "Userspace", 1 },
-                        { "KernelFq",  2 },
-                        { "TxTime",    3 },
-                        { "Auto",      4 }
-                },
-                4);  // default: Auto
+class RtpPacingMode : public TypedEnum<RtpPacingMode> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("RtpPacingMode",
+                        {
+                                { "None",      0 },
+                                { "Userspace", 1 },
+                                { "KernelFq",  2 },
+                                { "TxTime",    3 },
+                                { "Auto",      4 }
+                        },
+                        4);  // default: Auto
 
-        static inline const Enum None      { Type, 0 };
-        static inline const Enum Userspace { Type, 1 };
-        static inline const Enum KernelFq  { Type, 2 };
-        static inline const Enum TxTime    { Type, 3 };
-        static inline const Enum Auto      { Type, 4 };
+                using TypedEnum<RtpPacingMode>::TypedEnum;
+
+                static const RtpPacingMode None;
+                static const RtpPacingMode Userspace;
+                static const RtpPacingMode KernelFq;
+                static const RtpPacingMode TxTime;
+                static const RtpPacingMode Auto;
 };
+
+inline const RtpPacingMode RtpPacingMode::None      { 0 };
+inline const RtpPacingMode RtpPacingMode::Userspace { 1 };
+inline const RtpPacingMode RtpPacingMode::KernelFq  { 2 };
+inline const RtpPacingMode RtpPacingMode::TxTime    { 3 };
+inline const RtpPacingMode RtpPacingMode::Auto      { 4 };
 
 /**
  * @brief Well-known Enum type for the metadata-stream wire format over RTP.
@@ -330,17 +419,70 @@ struct RtpPacingMode {
  *                     backend rejects this value until the ANC
  *                     payload class lands.
  */
-struct MetadataRtpFormat {
-        static inline const Enum::Type Type = Enum::registerType("MetadataRtpFormat",
-                {
-                        { "JsonMetadata", 0 },
-                        { "St2110_40",    1 }
-                },
-                0);  // default: JsonMetadata
+class MetadataRtpFormat : public TypedEnum<MetadataRtpFormat> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("MetadataRtpFormat",
+                        {
+                                { "JsonMetadata", 0 },
+                                { "St2110_40",    1 }
+                        },
+                        0);  // default: JsonMetadata
 
-        static inline const Enum JsonMetadata { Type, 0 };
-        static inline const Enum St2110_40    { Type, 1 };
+                using TypedEnum<MetadataRtpFormat>::TypedEnum;
+
+                static const MetadataRtpFormat JsonMetadata;
+                static const MetadataRtpFormat St2110_40;
 };
+
+inline const MetadataRtpFormat MetadataRtpFormat::JsonMetadata { 0 };
+inline const MetadataRtpFormat MetadataRtpFormat::St2110_40    { 1 };
+
+/**
+ * @brief Well-known Enum type for human-readable byte-count formatting.
+ *
+ * Selects the unit family used by @ref String::fromByteCount when
+ * formatting an allocation size or similar byte-valued quantity:
+ *
+ * - @c Metric — powers of 1000 with SI suffixes: `B`, `KB`, `MB`,
+ *               `GB`, `TB`, `PB`, `EB`.
+ * - @c Binary — powers of 1024 with IEC suffixes: `B`, `KiB`, `MiB`,
+ *               `GiB`, `TiB`, `PiB`, `EiB`.
+ *
+ * Inherits from @ref TypedEnum so function signatures can take
+ * `const ByteCountStyle &` and get compile-time type checking —
+ * other enum kinds (e.g. @c VideoPattern) will fail to compile
+ * when passed in the same slot.  Runtime compatibility with
+ * @ref Variant and any API that takes a plain @ref Enum is
+ * preserved via implicit derived-to-base slicing.
+ *
+ * @par Example
+ * @code
+ * String s = String::fromByteCount(1048576, 3, ByteCountStyle::Binary);
+ * // → "1 MiB"
+ *
+ * // Round-trip through Variant still works:
+ * Variant v = ByteCountStyle::Binary;          // Enum slice
+ * Enum e = v.get<Enum>();                      // "ByteCountStyle::Binary"
+ * ByteCountStyle back{e.value()};              // back to typed
+ * @endcode
+ */
+class ByteCountStyle : public TypedEnum<ByteCountStyle> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("ByteCountStyle",
+                        {
+                                { "Metric", 0 },
+                                { "Binary", 1 }
+                        },
+                        0);  // default: Metric
+
+                using TypedEnum<ByteCountStyle>::TypedEnum;
+
+                static const ByteCountStyle Metric;     ///< Powers of 1000 (`KB`, `MB`, ...).
+                static const ByteCountStyle Binary;     ///< Powers of 1024 (`KiB`, `MiB`, ...).
+};
+
+inline const ByteCountStyle ByteCountStyle::Metric{0};
+inline const ByteCountStyle ByteCountStyle::Binary{1};
 
 /**
  * @brief Well-known Enum type for @c .imgseq sidecar path mode.
@@ -350,17 +492,23 @@ struct MetadataRtpFormat {
  * or as an absolute path.  Used as the value type for the
  * @ref MediaConfig::SaveImgSeqPathMode config key.
  */
-struct ImgSeqPathMode {
-        static inline const Enum::Type Type = Enum::registerType("ImgSeqPathMode",
-                {
-                        { "Relative", 0 },
-                        { "Absolute", 1 }
-                },
-                0);  // default: Relative
+class ImgSeqPathMode : public TypedEnum<ImgSeqPathMode> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("ImgSeqPathMode",
+                        {
+                                { "Relative", 0 },
+                                { "Absolute", 1 }
+                        },
+                        0);  // default: Relative
 
-        static inline const Enum Relative { Type, 0 };
-        static inline const Enum Absolute { Type, 1 };
+                using TypedEnum<ImgSeqPathMode>::TypedEnum;
+
+                static const ImgSeqPathMode Relative;
+                static const ImgSeqPathMode Absolute;
 };
+
+inline const ImgSeqPathMode ImgSeqPathMode::Relative { 0 };
+inline const ImgSeqPathMode ImgSeqPathMode::Absolute { 1 };
 
 /** @} */
 

@@ -60,6 +60,7 @@ struct Options {
         double                          duration    = 0.0;
         int64_t                         frameCount  = 0;
         bool                            verbose     = false;
+        bool                            memStats    = false;    ///< Dump MemSpace::Stats for every registered memory space on shutdown.
 };
 
 /**

@@ -190,7 +190,7 @@ libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
 | Program | Description |
 |---------|-------------|
 | `promeki-info` | Print library build information (version, date, build type) |
-| `mediaplay` | CLI media player and pipeline builder with --in/--out/--converter stages |
+| `mediaplay` | CLI media player and pipeline builder with --in/--out/--converter stages; pass `--memstats` to dump per-MemSpace allocation counters at exit |
 | `cscbench` | Color space conversion benchmark with JSON output |
 | `imgtest` | Image file I/O test utility |
 

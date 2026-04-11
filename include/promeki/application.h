@@ -143,6 +143,114 @@ class Application {
                 static IODevice *stderrDevice();
 
                 /**
+                 * @brief Installs termination signal handlers.
+                 *
+                 * Convenience forwarder to @ref SignalHandler::install.
+                 * Normally you do not need to call this — the
+                 * @ref Application constructor installs the handler
+                 * automatically when
+                 * @ref LibraryOptions::TerminationSignalHandler is
+                 * @c true (the default).
+                 *
+                 * Must be called from the main thread before any
+                 * application threads are spawned so the signal mask
+                 * is inherited by children.
+                 *
+                 * @see SignalHandler::install
+                 */
+                static void installSignalHandlers();
+
+                /**
+                 * @brief Uninstalls the termination signal handlers.
+                 *
+                 * Convenience forwarder to @ref SignalHandler::uninstall.
+                 * The @ref Application destructor calls this
+                 * automatically.
+                 *
+                 * @see SignalHandler::uninstall
+                 */
+                static void uninstallSignalHandlers();
+
+                /**
+                 * @brief Returns true if termination signal handlers are installed.
+                 * @return true if @ref installSignalHandlers has been
+                 *         called without a matching
+                 *         @ref uninstallSignalHandlers.
+                 *
+                 * @see SignalHandler::isInstalled
+                 */
+                static bool areSignalHandlersInstalled();
+
+                /**
+                 * @brief Installs the crash signal handlers.
+                 *
+                 * Convenience forwarder to @ref CrashHandler::install.
+                 * Normally you do not need to call this — the
+                 * @ref Application constructor installs the handler
+                 * automatically when @ref LibraryOptions::CrashHandler
+                 * is @c true (the default).
+                 *
+                 * @see CrashHandler::install
+                 */
+                static void installCrashHandler();
+
+                /**
+                 * @brief Uninstalls the crash signal handlers.
+                 *
+                 * Convenience forwarder to @ref CrashHandler::uninstall.
+                 * The @ref Application destructor calls this automatically.
+                 *
+                 * @see CrashHandler::uninstall
+                 */
+                static void uninstallCrashHandler();
+
+                /**
+                 * @brief Returns true if the crash handler is installed.
+                 * @return true if @ref installCrashHandler has been
+                 *         called without a matching
+                 *         @ref uninstallCrashHandler.
+                 *
+                 * @see CrashHandler::isInstalled
+                 */
+                static bool isCrashHandlerInstalled();
+
+                /**
+                 * @brief Re-snapshots the crash handler's install-time state.
+                 *
+                 * @ref CrashHandler takes a snapshot of various process
+                 * state at install time (command line, environment,
+                 * library options, registered MemSpaces, ...) so the
+                 * signal handler can write a report without touching
+                 * any non-signal-safe APIs.  State that changes after
+                 * install() — such as newly registered MemSpaces or
+                 * updated LibraryOptions — will not appear in crash
+                 * reports until the snapshot is refreshed.
+                 *
+                 * This method refreshes the snapshot if (and only if)
+                 * the crash handler is currently installed.  If the
+                 * crash handler was never installed or has been
+                 * explicitly uninstalled, this is a no-op — it will
+                 * not install the handler.
+                 *
+                 * Typical use: call once during application startup
+                 * after all subsystems have registered their custom
+                 * MemSpaces.
+                 *
+                 * @code
+                 * int main(int argc, char **argv) {
+                 *         Application app(argc, argv);
+                 *         initMyGpuBackend();      // registers a "GPU" MemSpace
+                 *         initMySharedMemPool();   // registers another MemSpace
+                 *         Application::refreshCrashHandler();
+                 *         // ... run event loop ...
+                 * }
+                 * @endcode
+                 *
+                 * @see CrashHandler::install, MemSpace::registerData
+                 */
+                static void refreshCrashHandler();
+
+                /**
                  * @brief Writes a diagnostic trace report to a unique file.
                  *
                  * Convenience forwarder to @ref CrashHandler::writeTrace.

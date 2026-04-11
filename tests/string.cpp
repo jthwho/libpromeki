@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <doctest/doctest.h>
 #include <promeki/char.h>
+#include <promeki/enums.h>
 #include <promeki/string.h>
 #include <promeki/stringlist.h>
 #include <promeki/uuid.h>
@@ -2422,4 +2423,93 @@ TEST_CASE("String_LargeString") {
         CHECK(replaced.length() == 10000);
         CHECK(replaced.find("abc") == String::npos);
         CHECK(replaced.count("XYZ") == 1000);
+}
+
+// ============================================================================
+// fromByteCount
+// ============================================================================
+
+TEST_CASE("String::fromByteCount: sub-kilo values render as bytes") {
+        CHECK(String::fromByteCount(0) == "0 B");
+        CHECK(String::fromByteCount(1) == "1 B");
+        CHECK(String::fromByteCount(999) == "999 B");
+        CHECK(String::fromByteCount(1023, 3, ByteCountStyle::Binary) == "1023 B");
+}
+
+TEST_CASE("String::fromByteCount: metric units") {
+        CHECK(String::fromByteCount(1000) == "1 KB");
+        CHECK(String::fromByteCount(1500) == "1.5 KB");
+        CHECK(String::fromByteCount(1500000) == "1.5 MB");
+        CHECK(String::fromByteCount(1234567890ULL) == "1.235 GB");
+        CHECK(String::fromByteCount(1000000000000ULL) == "1 TB");
+}
+
+TEST_CASE("String::fromByteCount: binary units") {
+        CHECK(String::fromByteCount(1024, 3, ByteCountStyle::Binary) == "1 KiB");
+        CHECK(String::fromByteCount(1536, 3, ByteCountStyle::Binary) == "1.5 KiB");
+        CHECK(String::fromByteCount(1048576, 3, ByteCountStyle::Binary) == "1 MiB");
+        CHECK(String::fromByteCount(1073741824ULL, 3, ByteCountStyle::Binary) == "1 GiB");
+}
+
+TEST_CASE("String::fromByteCount: maxDecimals controls precision") {
+        CHECK(String::fromByteCount(1500, 0) == "2 KB");        // rounds
+        CHECK(String::fromByteCount(1500, 1) == "1.5 KB");
+        CHECK(String::fromByteCount(1499, 0) == "1 KB");
+        CHECK(String::fromByteCount(1234567ULL, 2) == "1.23 MB");
+        CHECK(String::fromByteCount(1234567ULL, 0) == "1 MB");
+}
+
+TEST_CASE("String::fromByteCount: trailing zeros trimmed") {
+        // 2 MB rendered with 3 decimals should not become "2.000 MB"
+        CHECK(String::fromByteCount(2000000, 3) == "2 MB");
+        // 1.5 MB should be "1.5 MB" even with 3 decimals allowed
+        CHECK(String::fromByteCount(1500000, 3) == "1.5 MB");
+        // 1.25 MB with 3 decimals → "1.25 MB" (one trailing zero dropped)
+        CHECK(String::fromByteCount(1250000, 3) == "1.25 MB");
+}
+
+TEST_CASE("String::fromByteCount: large values use highest unit") {
+        // 1 EB in metric
+        CHECK(String::fromByteCount(1000000000000000000ULL) == "1 EB");
+        // 1 EiB in binary (1024^6)
+        CHECK(String::fromByteCount(1152921504606846976ULL, 3, ByteCountStyle::Binary) == "1 EiB");
+}
+
+TEST_CASE("String::fromByteCount: negative maxDecimals clamped to zero") {
+        CHECK(String::fromByteCount(1500, -2) == "2 KB");
+}
+
+TEST_CASE("String::fromByteCount: explicit metric style matches default") {
+        CHECK(String::fromByteCount(1500, 3, ByteCountStyle::Metric) ==
+              String::fromByteCount(1500));
+}
+
+TEST_CASE("String::fromByteCount: default-constructed style uses registered default") {
+        // ByteCountStyle is registered with Metric (0) as default.
+        ByteCountStyle defaulted;
+        CHECK(defaulted.value() == ByteCountStyle::Metric.value());
+        CHECK(String::fromByteCount(1500, 3, defaulted) == "1.5 KB");
+}
+
+TEST_CASE("ByteCountStyle: slices to Enum for Variant/runtime APIs") {
+        // TypedEnum inherits publicly from Enum, so a const Enum &
+        // reference on the base works for call sites that haven't
+        // been migrated to the typed form.
+        const Enum &asEnum = ByteCountStyle::Binary;
+        CHECK(asEnum.typeName() == "ByteCountStyle");
+        CHECK(asEnum.valueName() == "Binary");
+        CHECK(asEnum.value() == 1);
+}
+
+TEST_CASE("ByteCountStyle: constructs from integer value") {
+        ByteCountStyle s(1);
+        CHECK(s.value() == 1);
+        CHECK(s.valueName() == "Binary");
+        CHECK(s == ByteCountStyle::Binary);
+}
+
+TEST_CASE("ByteCountStyle: constructs from registered name") {
+        ByteCountStyle s(String("Metric"));
+        CHECK(s.value() == 0);
+        CHECK(s == ByteCountStyle::Metric);
 }

@@ -7,11 +7,18 @@
 
 #include <doctest/doctest.h>
 #include <cstdio>
+#include <cstring>
 #include <unistd.h>
+#include <promeki/application.h>
+#include <promeki/buffer.h>
 #include <promeki/crashhandler.h>
-#include <promeki/filepath.h>
 #include <promeki/dir.h>
+#include <promeki/error.h>
+#include <promeki/file.h>
+#include <promeki/filepath.h>
+#include <promeki/memspace.h>
 #include <promeki/set.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 
@@ -90,4 +97,137 @@ TEST_CASE("CrashHandler: writeTrace produces unique files") {
         for(const FilePath &f : newFiles) {
                 std::remove(f.toString().cstr());
         }
+}
+
+// ============================================================================
+// Application forwarders
+// ============================================================================
+
+TEST_CASE("Application: crash handler forwarders") {
+        const bool wasInstalled = Application::isCrashHandlerInstalled();
+        Application::uninstallCrashHandler();
+        CHECK_FALSE(Application::isCrashHandlerInstalled());
+        CHECK_FALSE(CrashHandler::isInstalled());
+        Application::installCrashHandler();
+        CHECK(Application::isCrashHandlerInstalled());
+        CHECK(CrashHandler::isInstalled());
+        Application::uninstallCrashHandler();
+        CHECK_FALSE(Application::isCrashHandlerInstalled());
+        if(wasInstalled) CrashHandler::install();
+}
+
+// ============================================================================
+// refreshCrashHandler end-to-end
+// ============================================================================
+
+namespace {
+
+/// @brief Registers a host-accessible MemSpace with the given name and
+/// returns its ID.  The stats pointer is left as nullptr so
+/// MemSpace::registerData auto-allocates one for us.
+MemSpace::ID registerTestMemSpace(const char *name) {
+        MemSpace::ID id = MemSpace::registerType();
+        MemSpace::Ops ops;
+        ops.id = id;
+        ops.name = String(name);
+        ops.isHostAccessible = [](const MemAllocation &) -> bool { return true; };
+        ops.alloc = [](MemAllocation &) {};
+        ops.release = [](MemAllocation &) {};
+        ops.copy = [](const MemAllocation &, const MemAllocation &, size_t) -> bool {
+                return false;
+        };
+        ops.fill = [](void *, size_t, char) -> Error { return Error::Ok; };
+        MemSpace::registerData(std::move(ops));
+        return id;
+}
+
+/// @brief Writes a trace via @ref CrashHandler::writeTrace, locates the
+/// resulting file in /tmp, reads it in, and deletes it.  Returns the
+/// entire trace text.
+String writeTraceAndRead(const char *reason) {
+        Dir tmp = Dir::temp();
+        String pattern = String::sprintf("promeki-trace-*-%d-*.log",
+                                         static_cast<int>(getpid()));
+        Set<String> before;
+        for(const FilePath &f : tmp.entryList(pattern)) {
+                before.insert(f.toString());
+        }
+
+        CrashHandler::writeTrace(reason);
+
+        FilePath newFile;
+        for(const FilePath &f : tmp.entryList(pattern)) {
+                if(!before.contains(f.toString())) {
+                        newFile = f;
+                        break;
+                }
+        }
+        REQUIRE_FALSE(newFile.toString().isEmpty());
+
+        File reader(newFile);
+        reader.open(IODevice::ReadOnly);
+        Buffer contents = reader.readAll();
+        reader.close();
+        std::remove(newFile.toString().cstr());
+
+        return String::fromUtf8(reinterpret_cast<const char *>(contents.data()),
+                                contents.size());
+}
+
+} // namespace
+
+TEST_CASE("CrashHandler: refreshCrashHandler re-snapshots registered MemSpaces") {
+        const bool wasInstalled = CrashHandler::isInstalled();
+
+        // Start from a clean install so the pre-install MemSpace below
+        // is guaranteed to be captured in the snapshot.
+        CrashHandler::uninstall();
+
+        // Register a MemSpace with a distinctive name *before* the
+        // crash handler is installed — it must appear in the very
+        // first trace we emit.
+        const char *preName = "CrashRefreshPre_abc123";
+        MemSpace::ID preId = registerTestMemSpace(preName);
+        (void)preId;
+
+        CrashHandler::install();
+
+        // First trace: the pre-install MemSpace should be visible.
+        String firstTrace = writeTraceAndRead("refresh-baseline");
+        CHECK(firstTrace.find(preName) != String::npos);
+
+        // Now register a second MemSpace *after* install.  It must
+        // NOT appear in a trace taken before refreshCrashHandler(),
+        // because the snapshot was frozen at install() time.
+        const char *postName = "CrashRefreshPost_xyz789";
+        MemSpace::ID postId = registerTestMemSpace(postName);
+        (void)postId;
+
+        String staleTrace = writeTraceAndRead("refresh-stale");
+        CHECK(staleTrace.find(preName)  != String::npos);
+        CHECK(staleTrace.find(postName) == String::npos);
+
+        // Refresh the snapshot and re-take the trace.  Both names
+        // should now be visible.
+        Application::refreshCrashHandler();
+
+        String refreshedTrace = writeTraceAndRead("refresh-after");
+        CHECK(refreshedTrace.find(preName)  != String::npos);
+        CHECK(refreshedTrace.find(postName) != String::npos);
+
+        // Restore the crash-handler state so later tests see the
+        // same environment they started with.
+        if(!wasInstalled) CrashHandler::uninstall();
+}
+
+TEST_CASE("CrashHandler: refreshCrashHandler is a no-op when uninstalled") {
+        const bool wasInstalled = CrashHandler::isInstalled();
+        CrashHandler::uninstall();
+        CHECK_FALSE(CrashHandler::isInstalled());
+
+        // Must not install the handler as a side effect.
+        Application::refreshCrashHandler();
+        CHECK_FALSE(CrashHandler::isInstalled());
+
+        if(wasInstalled) CrashHandler::install();
 }

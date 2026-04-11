@@ -48,7 +48,18 @@ PROMEKI_NAMESPACE_BEGIN
  * cleanly through toString() and Enum::lookup() using their decimal form
  * ("Codec::100").
  *
- * @par Example
+ * @note The raw @ref Enum class is the low-level building block.  Any
+ *       enum kind that crosses module boundaries or gets stored in a
+ *       @ref Variant / @ref VariantDatabase / config file must use the
+ *       @ref TypedEnum "TypedEnum<Self>" CRTP wrapper and live in
+ *       @c include/promeki/enums.h — see @c CODING_STANDARDS.md for
+ *       the rationale.  The @c Codec example below uses the bare
+ *       @c struct @c { @c static @c inline @c const @c Enum @c X; @c }
+ *       pattern only to illustrate the base-class API; for any new
+ *       shared enum, copy one of the @ref TypedEnum-derived classes in
+ *       @c enums.h instead.
+ *
+ * @par Example (base API — prefer TypedEnum for shared enums)
  * @code
  * struct Codec {
  *         static inline const Enum::Type Type = Enum::registerType("Codec",
@@ -89,6 +100,9 @@ PROMEKI_NAMESPACE_BEGIN
  *         // v.first() == name, v.second() == int
  * }
  * @endcode
+ *
+ * @see TypedEnum for the compile-time-typed wrapper used by all
+ *      well-known enums in @c include/promeki/enums.h.
  */
 class Enum {
         public:
@@ -359,6 +373,86 @@ class Enum {
         private:
                 const Definition *_def   = nullptr;           ///< Direct pointer to the registered Definition.
                 int               _value = InvalidValue;      ///< Integer value within that type.
+};
+
+/**
+ * @brief CRTP base pinning an @ref Enum value to a compile-time type.
+ * @ingroup util
+ *
+ * A function that takes a runtime @ref Enum can receive any enum
+ * value of any registered type — the kind of thing the caller meant
+ * is only known at runtime.  @ref TypedEnum is a thin CRTP wrapper
+ * that inherits publicly from @ref Enum and pins a derived class to
+ * a specific registered enum type, so functions can take
+ * `const Derived &` instead of `const Enum &` and gain compile-time
+ * type checking at zero run-time cost.
+ *
+ * Public inheritance preserves full runtime compatibility: a
+ * @ref TypedEnum value implicitly slices to @ref Enum, so it still
+ * participates in @ref Variant, @ref VariantDatabase, and any API
+ * that already accepts a plain @ref Enum.  The derived class adds
+ * no data members of its own — the slice is safe by construction.
+ *
+ * The derived class is expected to expose a @c static @c inline
+ * @c const @ref Enum::Type @c Type member, typically initialized
+ * via @ref Enum::registerType at static-init time.  @ref TypedEnum
+ * pulls that @c Type through @c Derived for every constructor.
+ *
+ * @par Usage
+ * @code
+ * class ByteCountStyle : public TypedEnum<ByteCountStyle> {
+ * public:
+ *     static inline const Enum::Type Type = Enum::registerType(
+ *         "ByteCountStyle", { {"Metric",0}, {"Binary",1} }, 0);
+ *
+ *     using TypedEnum<ByteCountStyle>::TypedEnum;
+ *
+ *     static const ByteCountStyle Metric;
+ *     static const ByteCountStyle Binary;
+ * };
+ *
+ * inline const ByteCountStyle ByteCountStyle::Metric{0};
+ * inline const ByteCountStyle ByteCountStyle::Binary{1};
+ *
+ * // Signature gains compile-time type checking:
+ * String format(const ByteCountStyle &style);
+ *
+ * format(ByteCountStyle::Binary);  // OK
+ * format(VideoPattern::ColorBars); // compile error — wrong type
+ * @endcode
+ *
+ * @tparam Derived The concrete class inheriting from this template;
+ *                 must expose a @c static @ref Enum::Type @c Type.
+ */
+template <typename Derived>
+class TypedEnum : public Enum {
+        public:
+                /**
+                 * @brief Default-constructs with the registered default value.
+                 *
+                 * Equivalent to @c Enum(Derived::Type); the resulting
+                 * value is valid and carries the @c defaultValue that
+                 * was passed to @ref Enum::registerType.
+                 */
+                TypedEnum() : Enum(Derived::Type) {}
+
+                /**
+                 * @brief Constructs from a raw integer value.
+                 *
+                 * The integer is not validated against the type's
+                 * value table; @ref Enum::hasListedValue reports
+                 * whether it is a registered named entry.
+                 */
+                explicit TypedEnum(int value) : Enum(Derived::Type, value) {}
+
+                /**
+                 * @brief Constructs by looking up a value name in the type's table.
+                 *
+                 * If @p name is not registered for @c Derived::Type,
+                 * the constructed value carries @ref Enum::InvalidValue
+                 * and @ref Enum::hasListedValue returns false.
+                 */
+                explicit TypedEnum(const String &name) : Enum(Derived::Type, name) {}
 };
 
 PROMEKI_NAMESPACE_END

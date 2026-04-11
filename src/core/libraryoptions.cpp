@@ -22,7 +22,9 @@ LibraryOptions &LibraryOptions::instance() {
                 // Touch each static ID to force registration, then
                 // populate from their spec defaults.
                 const ID ids[] = { CrashHandler, CoreDumps, CrashLogDir,
-                                   CaptureEnvironment };
+                                   CaptureEnvironment,
+                                   TerminationSignalHandler,
+                                   SignalDoubleTapExit };
                 for(const ID &id : ids) {
                         const VariantSpec *s = spec(id);
                         if(s != nullptr) {

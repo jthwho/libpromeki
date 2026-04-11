@@ -128,6 +128,9 @@ void usage() {
                 "                            Use this to bound the actual\n"
                 "                            output length in frames.\n"
                 "  --verbose                 Print periodic progress stats.\n"
+                "  --memstats                Print MemSpace allocation\n"
+                "                            statistics for every registered\n"
+                "                            memory space on shutdown.\n"
                 "\n"
                 "Misc:\n"
                 "  -h, --help                Show this help text and the schema.\n");
@@ -260,6 +263,12 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  "Print periodic progress stats",
                  CmdLineParser::OptionCallback([&]() {
                          opts.verbose = true;
+                         return 0;
+                 })},
+                {0, "memstats",
+                 "Dump MemSpace stats for every registered memory space on shutdown",
+                 CmdLineParser::OptionCallback([&]() {
+                         opts.memStats = true;
                          return 0;
                  })},
         });

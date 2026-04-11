@@ -503,6 +503,76 @@ This is the **only** case where an ID should appear in a public parameter list. 
 
 ---
 
+## Well-Known Enums
+
+libpromeki uses the runtime-typed `Enum` class (`include/promeki/enum.h`) for any enumerated value that needs to round-trip through `Variant`, `VariantDatabase`, JSON config files, or user-facing CLI/GUI options. Every **well-known** enum — meaning one that is shared across subsystems or exposed as configuration — goes in a single header: `include/promeki/enums.h`.
+
+### Use the `TypedEnum<Derived>` CRTP Pattern
+
+All enums in `enums.h` inherit from `TypedEnum<Self>`. This gives the enum a compile-time type identity so function signatures can take a concrete `const VideoPattern &` (etc.) instead of a generic `const Enum &`, while still participating in every runtime Enum API via public inheritance.
+
+```cpp
+// include/promeki/enums.h
+class VideoPattern : public TypedEnum<VideoPattern> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("VideoPattern",
+                        {
+                                { "ColorBars", 0 },
+                                { "Ramp",      1 },
+                                // ...
+                        },
+                        0);  // default: ColorBars
+
+                using TypedEnum<VideoPattern>::TypedEnum;
+
+                static const VideoPattern ColorBars;
+                static const VideoPattern Ramp;
+                // ...
+};
+
+inline const VideoPattern VideoPattern::ColorBars { 0 };
+inline const VideoPattern VideoPattern::Ramp      { 1 };
+```
+
+Key elements:
+
+- **`class`, not `struct`** — the wrapper is a real type, not a namespace for loose constants.
+- **`static inline const Enum::Type Type`** defined *inside* the class body so it is initialized before the per-value constants that follow.
+- **`using TypedEnum<Self>::TypedEnum;`** inherits the three base constructors (default / int / String name).
+- **`static const` member declarations inside the class, `inline const` definitions outside** — declaring them inline inside the class does not work because the enclosing class is not yet complete when the brace initializer runs. Defining them outside the class body after it closes is mandatory.
+- **No `Type` argument on the static definitions** — the inherited `TypedEnum(int)` pulls `Derived::Type` automatically, so `{ 0 }` is all that is needed.
+
+### Where Well-Known Enums Live
+
+Every enum that is used outside a single implementation file **must** live in `include/promeki/enums.h`. Do not scatter them across subsystem headers. Private, single-file enums (like a scoped `enum class` used only inside one `.cpp`) stay local — only enums that cross module boundaries or become config values belong in `enums.h`.
+
+When adding a new well-known enum, also add a brief Doxygen comment explaining what subsystem it belongs to and which `MediaConfig` / `VariantDatabase` keys consume it.
+
+### Function Signatures
+
+Prefer concrete `const TypedEnum-derived &` parameters over `const Enum &` whenever the function only accepts one specific enum kind. This gives compile-time type safety at zero runtime cost:
+
+```cpp
+// PREFER — compile-time type check; VideoPattern cannot be passed here
+String formatByteCount(const ByteCountStyle &style);
+
+// Only use generic Enum when the function genuinely accepts any enum
+// (serialization, equality, generic lookup helpers)
+DataStream &operator<<(const Enum &e);
+```
+
+Because `TypedEnum<T>` inherits publicly from `Enum` and adds no members, passing a typed value to an API that takes `const Enum &` still works via implicit derived-to-base conversion.
+
+### Backward Compatibility
+
+Migrating an existing enum from the old `struct { static inline const Enum X{Type,N}; }` pattern to `TypedEnum<Self>` is source-compatible:
+
+- `cfg.set(key, VideoPattern::ColorBars)` — still works; `std::variant`'s converting constructor picks the `Enum` alternative via derived-to-base conversion.
+- `Enum e = VideoPattern::ColorBars;` — still works; slicing is safe because `TypedEnum` adds no data members.
+- `Enum::lookup("VideoPattern::ColorBars")` — unchanged on the wire format.
+
+---
+
 ## ObjectBase and Signals/Slots
 
 Functional objects (see [Object Categories](#object-categories)) derive from `ObjectBase` to gain identity, parent/child ownership, and signal/slot communication.

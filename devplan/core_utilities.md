@@ -30,6 +30,8 @@ Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across e
 
 ## String Enhancements
 
+- [x] `String::fromByteCount(uint64_t bytes, int maxDecimals = 3)` — metric (1000-based) human-readable byte formatting (B/KB/MB/GB/TB/PB/EB), trailing zeros trimmed
+- [x] `String::fromByteCount(uint64_t bytes, int maxDecimals, const ByteCountStyle &style)` — same with explicit metric/binary style selection; `ByteCountStyle` provides compile-time type checking
 - [ ] `String::format` migration — migrate `String::sprintf` and `String::arg` call sites over time (neither is deprecated yet; just opportunistic)
 
 ---
@@ -41,6 +43,22 @@ Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across e
 - [ ] Named capture support: `(?P<name>...)` syntax
 - [ ] `namedCapture(const String &name)` — returns named capture from last match
 - [ ] Update tests
+
+---
+
+## TypedEnum CRTP — DONE
+
+- [x] `TypedEnum<Derived>` template in `include/promeki/enum.h` — CRTP base pinning an `Enum` to a compile-time type; default ctor, `int` ctor, `String` ctor; publicly inherits `Enum` so slicing to `Enum` is safe and Variant/VariantDatabase compatibility is preserved
+- [x] All 11 well-known enums in `include/promeki/enums.h` migrated from `struct X { static inline const Enum Y; }` pattern to `class X : public TypedEnum<X>` with external `inline const X::Y{val}` definitions
+- [x] New `ByteCountStyle` enum added to `enums.h` (Metric=0, Binary=1, default Metric) — used by `String::fromByteCount`
+- [x] `CODING_STANDARDS.md` updated with a "Well-Known Enums" section documenting the pattern, placement, function-signature guidance, and slicing-safe backward compatibility
+- [x] Tests: `ByteCountStyle` slicing, integer ctor, name ctor exercised in `tests/string.cpp`
+
+---
+
+## Enum Enhancements
+
+- [ ] `Enum::IDList` / `Enum::registeredTypes()` — already present; opportunistic: add `registeredValues(Type)` convenience if needed by pipeline config tooling
 
 ---
 
@@ -57,6 +75,8 @@ Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across e
 - [x] `LibraryOptions` — `VariantDatabase<LibraryOptionsTag>` singleton; options declared with `VariantSpec` (type, default, description)
 - [x] `LibraryOptions::loadFromEnvironment()` — scans `PROMEKI_OPT_*` env vars, type-coerces via `VariantSpec::parseString`, warns on unknown names
 - [x] Options: `CrashHandler` (bool, default true), `CoreDumps` (bool, default false), `CrashLogDir` (String, default empty), `CaptureEnvironment` (bool, default true)
+- [x] `TerminationSignalHandler` (bool, default true) — controls whether `Application` installs `SignalHandler` on construction
+- [x] `SignalDoubleTapExit` (bool, default true) — controls whether a second termination signal delivery calls `std::_Exit`
 - [x] Wired into `Application` constructor; loads env overrides before `CrashHandler::install()`
 - [x] Tests in `tests/libraryoptions.cpp`
 
@@ -80,4 +100,22 @@ Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across e
 - [x] Non-POSIX stub provided for portability
 - [x] Wired into `Application` constructor/destructor; `setAppName()` re-installs to pick up new name in log path
 - [x] `Application::writeTrace()` forwarder added
+- [x] Install-time snapshot includes registered `MemSpace` entries (id, name, `Stats*`); signal handler dumps per-space counters via direct atomic loads (async-signal-safe). `MaxMemSpaceNameLen=64`, warns on truncation.
+- [x] `Application::refreshCrashHandler()` — re-runs `CrashHandler::install()` if installed, refreshing the snapshot to pick up MemSpaces registered after initial install
+- [x] Application forwarders: `installCrashHandler()`, `uninstallCrashHandler()`, `isCrashHandlerInstalled()`
 - [x] Tests in `tests/crashhandler.cpp`
+
+---
+
+## SignalHandler — DONE
+
+- [x] `SignalHandler` class in `include/promeki/signalhandler.h` / `src/core/signalhandler.cpp`
+- [x] POSIX: `sigaction` + self-pipe trick; dedicated `promeki-signals` watcher thread reads pipe and runs quit logic in normal thread context (no locks, no allocation in signal path)
+- [x] Handles SIGINT, SIGTERM, SIGHUP, SIGQUIT on POSIX; CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT on Windows
+- [x] Calls `Application::quit(128+signo)` and posts `QuitItem` to `Application::mainEventLoop()` on delivery
+- [x] Double-tap force-exit: second delivery of any caught signal calls `std::_Exit(128+signo)` (controlled by `LibraryOptions::SignalDoubleTapExit`)
+- [x] `install()` / `uninstall()` / `isInstalled()` — idempotent, safe to call multiple times
+- [x] Application forwarders: `installSignalHandlers()`, `uninstallSignalHandlers()`, `areSignalHandlersInstalled()`
+- [x] Wired into `Application` constructor/destructor (gated on `LibraryOptions::TerminationSignalHandler`)
+- [x] `mediaplay` ad-hoc `std::signal(SIGINT/SIGTERM)` calls removed; library-wide handler takes over
+- [x] Tests in `tests/signalhandler.cpp` (lifecycle, double-install, Application forwarders, SIGINT end-to-end with EventLoop wakeup on POSIX)

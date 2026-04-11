@@ -79,6 +79,36 @@ class LibraryOptions : public VariantDatabase<LibraryOptionsTag> {
                                 .setDefault(true)
                                 .setDescription("Include environment variables in crash reports."));
 
+                // ============================================================
+                // Termination signal handling
+                // ============================================================
+
+                /// @brief bool — install termination signal handlers
+                /// (SIGINT/SIGTERM/SIGHUP/SIGQUIT on POSIX,
+                /// CTRL_C_EVENT/CTRL_BREAK_EVENT/... on Windows).
+                /// Default @c true.  When enabled, the @ref Application
+                /// constructor wires a dedicated signal-waiting thread
+                /// that turns those signals into @ref Application::quit
+                /// calls plus a wake-up posted to the main
+                /// @ref EventLoop.
+                static inline const ID TerminationSignalHandler = declareID("TerminationSignalHandler",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Install termination signal handlers (Ctrl-C/kill)."));
+
+                /// @brief bool — force-exit on a second termination signal
+                /// delivery (default @c true).  When true, the first
+                /// Ctrl-C asks the application to quit cleanly and a
+                /// second Ctrl-C escalates to @c std::_Exit.  Set to
+                /// @c false for command-line tools that want Ctrl-C
+                /// to take effect on the very first delivery, or for
+                /// applications that want to handle multiple signals
+                /// themselves.
+                static inline const ID SignalDoubleTapExit = declareID("SignalDoubleTapExit",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Force-exit on second termination signal delivery."));
+
                 /**
                  * @brief Returns the global LibraryOptions singleton.
                  *

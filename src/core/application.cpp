@@ -13,6 +13,7 @@
 #include <promeki/fileiodevice.h>
 #include <promeki/libraryoptions.h>
 #include <promeki/crashhandler.h>
+#include <promeki/signalhandler.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -28,10 +29,14 @@ Application::Application(int argc, char **argv) {
         if(LibraryOptions::instance().getAs<bool>(LibraryOptions::CrashHandler)) {
                 CrashHandler::install();
         }
+        if(LibraryOptions::instance().getAs<bool>(LibraryOptions::TerminationSignalHandler)) {
+                SignalHandler::install();
+        }
         return;
 }
 
 Application::~Application() {
+        SignalHandler::uninstall();
         CrashHandler::uninstall();
         delete data().mainThread;
         data().mainThread = nullptr;
@@ -61,7 +66,7 @@ const String &Application::appName() {
 void Application::setAppName(const String &name) {
         data().appName = name;
         // Re-install so the crash log path picks up the new name.
-        if(CrashHandler::isInstalled()) CrashHandler::install();
+        refreshCrashHandler();
         return;
 }
 
@@ -84,6 +89,39 @@ IODevice *Application::stdoutDevice() {
 
 IODevice *Application::stderrDevice() {
         return FileIODevice::stderrDevice();
+}
+
+void Application::installSignalHandlers() {
+        SignalHandler::install();
+        return;
+}
+
+void Application::uninstallSignalHandlers() {
+        SignalHandler::uninstall();
+        return;
+}
+
+bool Application::areSignalHandlersInstalled() {
+        return SignalHandler::isInstalled();
+}
+
+void Application::installCrashHandler() {
+        CrashHandler::install();
+        return;
+}
+
+void Application::uninstallCrashHandler() {
+        CrashHandler::uninstall();
+        return;
+}
+
+bool Application::isCrashHandlerInstalled() {
+        return CrashHandler::isInstalled();
+}
+
+void Application::refreshCrashHandler() {
+        if(CrashHandler::isInstalled()) CrashHandler::install();
+        return;
 }
 
 void Application::writeTrace(const char *reason) {
