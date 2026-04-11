@@ -1,7 +1,11 @@
 <map id="MemSpace::Ops" name="MemSpace::Ops">
-<area shape="rect" id="Node000001" title="Function table for memory space operations." alt="" coords="12,93,139,119"/>
-<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="41,44,48,68,66,92,61,95,44,71,36,45"/>
-<area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="90,5,143,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="108,44,83,94,79,92,103,42"/>
+<area shape="rect" id="Node000001" title="Function table for memory space operations." alt="" coords="53,328,180,353"/>
+<area shape="rect" id="Node000002" href="$classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,240,65,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,276,72,302,100,326,97,330,68,306,47,279"/>
+<area shape="rect" id="Node000003" href="$classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="90,240,143,265"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="119,279,119,327,114,327,114,279"/>
+<area shape="rect" id="Node000004" href="$structMemSpace_1_1Stats.html" title="Lock&#45;free runtime statistics for a memory space." alt="" coords="168,240,303,265"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="210,276,134,330,131,326,207,271"/>
+<area shape="rect" id="Node000005" href="$classAtomic.html" title=" " alt="" coords="160,5,311,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="238,45,238,240,233,240,233,45"/>
 </map>

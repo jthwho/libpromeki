@@ -1,0 +1,10 @@
+<map id="VideoPattern" name="VideoPattern">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for video test pattern generator modes." alt="" coords="147,236,253,261"/>
+<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="229,228,247,225,263,227,275,235,279,249,273,264,257,272,237,271,216,264,217,259,238,266,256,266,269,260,274,249,270,238,261,232,247,230,230,233"/>
+<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,216,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,116,196,234,191,237,122,119"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="81,5,140,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,45,113,80,108,80,108,45"/>
+<area shape="rect" id="Node000004" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="241,80,338,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="278,119,209,237,204,234,274,116"/>
+</map>

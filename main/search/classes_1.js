@@ -11,6 +11,7 @@ var searchData=
   ['bufferpool_8',['BufferPool',['../classBufferPool.html',1,'']]],
   ['bufferview_9',['BufferView',['../classBufferView.html',1,'']]],
   ['buildinfo_10',['BuildInfo',['../structBuildInfo.html',1,'']]],
-  ['burnposition_11',['BurnPosition',['../structBurnPosition.html',1,'']]],
-  ['bytearray_12',['ByteArray',['../classByteArray.html',1,'']]]
+  ['burnposition_11',['BurnPosition',['../classBurnPosition.html',1,'']]],
+  ['bytearray_12',['ByteArray',['../classByteArray.html',1,'']]],
+  ['bytecountstyle_13',['ByteCountStyle',['../classByteCountStyle.html',1,'']]]
 ];

@@ -106,6 +106,11 @@ var group__util =
       [ "value", "classEnum.html#a64baa605793d6a57d99ab2800768f38f", null ],
       [ "valueName", "classEnum.html#a1bc219ab3378717293deefccba6313c1", null ]
     ] ],
+    [ "TypedEnum< Derived >", "classTypedEnum.html", [
+      [ "TypedEnum", "classTypedEnum.html#a4456f276a370afa987e063f2705a6894", null ],
+      [ "TypedEnum", "classTypedEnum.html#a2f234be9159403b06dace576ea105e7d", null ],
+      [ "TypedEnum", "classTypedEnum.html#a19d53754d54ce639f06dcfb10c677e9e", null ]
+    ] ],
     [ "Env", "classEnv.html", null ],
     [ "Error", "classError.html", [
       [ "Code", "classError.html#ab5980e13b879db253df802b0950d1708", [
@@ -336,7 +341,46 @@ var group__util =
         [ "id", "structMemSpace_1_1Ops.html#a7a7e9ef4d1620037b707cb932238a07b", null ],
         [ "isHostAccessible", "structMemSpace_1_1Ops.html#a9670bbc91982b48085224fc1d2d153a0", null ],
         [ "name", "structMemSpace_1_1Ops.html#a423f4e8c5747eef4dc30df14437dfe82", null ],
-        [ "release", "structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d", null ]
+        [ "release", "structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d", null ],
+        [ "stats", "structMemSpace_1_1Ops.html#a559b7631993babfc6074f75f46f5f892", null ]
+      ] ],
+      [ "Stats", "structMemSpace_1_1Stats.html", [
+        [ "Snapshot", "structMemSpace_1_1Stats_1_1Snapshot.html", [
+          [ "allocBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#ab3afbc4aad98341eddef3cb4ffbee069", null ],
+          [ "allocCount", "structMemSpace_1_1Stats_1_1Snapshot.html#a5f4cf0cc0fd5e17607224c7b3aa1fbd7", null ],
+          [ "allocFailCount", "structMemSpace_1_1Stats_1_1Snapshot.html#a529362dc93fc76947f01529b9ac6495e", null ],
+          [ "copyBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#ab28bf136f8affa4a5d85d97ea2d1c166", null ],
+          [ "copyCount", "structMemSpace_1_1Stats_1_1Snapshot.html#a78b98ee35c96c651ca4395769f032eeb", null ],
+          [ "copyFailCount", "structMemSpace_1_1Stats_1_1Snapshot.html#ac071932bf78ec30635507c34b1fc79d2", null ],
+          [ "fillBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#a7598897ea6a37331ffcebede0bead2c0", null ],
+          [ "fillCount", "structMemSpace_1_1Stats_1_1Snapshot.html#afe15c0b0959010fdf5c484e9fc4ca4bd", null ],
+          [ "liveBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#af911d3c4d4fdddfabd01eae959705efd", null ],
+          [ "liveCount", "structMemSpace_1_1Stats_1_1Snapshot.html#a95316141200198eb961407fa9c4fc124", null ],
+          [ "maxAllocBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#a7f767b5c938487ccf10c7922285dcfc1", null ],
+          [ "peakBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#ab5730d7579670278c798c5dae65f173c", null ],
+          [ "peakCount", "structMemSpace_1_1Stats_1_1Snapshot.html#a95a93a09f75da4851b8ad5c4d392e0b3", null ],
+          [ "releaseBytes", "structMemSpace_1_1Stats_1_1Snapshot.html#ae0b98b7202090cdaf0d0d2e6c97cc510", null ],
+          [ "releaseCount", "structMemSpace_1_1Stats_1_1Snapshot.html#a14ef0dab7e776649f1b8b7be82bdb553", null ]
+        ] ],
+        [ "recordAlloc", "structMemSpace_1_1Stats.html#a69fda8230a1df0cec87b2afaa2354192", null ],
+        [ "recordRelease", "structMemSpace_1_1Stats.html#a9370c7f037b36fbbf59925d3a381264e", null ],
+        [ "reset", "structMemSpace_1_1Stats.html#a5150c5ad06009e9e5f45023d4fc56c00", null ],
+        [ "snapshot", "structMemSpace_1_1Stats.html#a598dd3ed57923e117e49fc20b847c348", null ],
+        [ "allocBytes", "structMemSpace_1_1Stats.html#a554f7bebb6d8fd37a93e29aa46fd3fca", null ],
+        [ "allocCount", "structMemSpace_1_1Stats.html#a3097be51a31f5dabe3faae8456c2d522", null ],
+        [ "allocFailCount", "structMemSpace_1_1Stats.html#a56713ed44edc816a9f245fce372c1d4d", null ],
+        [ "copyBytes", "structMemSpace_1_1Stats.html#a108034e8d3eab99dd248aa6ed9de1645", null ],
+        [ "copyCount", "structMemSpace_1_1Stats.html#af84231e9fbc12946a5e6d9efffe532fe", null ],
+        [ "copyFailCount", "structMemSpace_1_1Stats.html#a12425bfb8e37198f1c833c42c4f21999", null ],
+        [ "fillBytes", "structMemSpace_1_1Stats.html#aa02c3f14b579aae2b9f82ccb48717220", null ],
+        [ "fillCount", "structMemSpace_1_1Stats.html#ae204021a7e87fa477782f0bace407848", null ],
+        [ "liveBytes", "structMemSpace_1_1Stats.html#a93a5203206f9f3e6ac66533e7ed0c002", null ],
+        [ "liveCount", "structMemSpace_1_1Stats.html#a017f32f236faa64ae0266c457805c433", null ],
+        [ "maxAllocBytes", "structMemSpace_1_1Stats.html#aec630044480e9837cd4985aaf8374500", null ],
+        [ "peakBytes", "structMemSpace_1_1Stats.html#a46fcbb4278a0254a1b5cb514473fe6d0", null ],
+        [ "peakCount", "structMemSpace_1_1Stats.html#a5cbb35ae72e3d2e841e7302ce518eab7", null ],
+        [ "releaseBytes", "structMemSpace_1_1Stats.html#a1eee343d4320da5f12d51bb20d1e5028", null ],
+        [ "releaseCount", "structMemSpace_1_1Stats.html#acb1a98c04069d0f18612c581ba581a80", null ]
       ] ],
       [ "IDList", "classMemSpace.html#ad7b2087f24afb1305dd171a9df97094f", null ],
       [ "ID", "classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6ed", [
@@ -352,10 +396,15 @@ var group__util =
       [ "fill", "classMemSpace.html#a742825feed6c893590239027937230bf", null ],
       [ "id", "classMemSpace.html#a6e44a50f38983fa16c92513200408a7e", null ],
       [ "isHostAccessible", "classMemSpace.html#a745e081ef6f35fa0fd8a299fee767de5", null ],
+      [ "logStats", "classMemSpace.html#a6523ad2f023421ec948d5f3e01943f75", null ],
       [ "name", "classMemSpace.html#aac029c9bc7249bc669f9bb3594d2ccb0", null ],
       [ "operator!=", "classMemSpace.html#a180cda1b1e874d4a29a3b63c30c1e506", null ],
       [ "operator==", "classMemSpace.html#af436c5571dce7808a1c389847ac1a7ad", null ],
-      [ "release", "classMemSpace.html#aafcdf73942620b49f958d892ada0c735", null ]
+      [ "release", "classMemSpace.html#aafcdf73942620b49f958d892ada0c735", null ],
+      [ "resetStats", "classMemSpace.html#a1db8468cdb63eeb99eedc1e220dd8e2e", null ],
+      [ "stats", "classMemSpace.html#ac4d0fdb4cbe7d2c13283284fd650f215", null ],
+      [ "statsReport", "classMemSpace.html#ab1c79507d042dd547ec1944f1e33d302", null ],
+      [ "statsSnapshot", "classMemSpace.html#acb8bbe5b07aef23bc494903a349962b8", null ]
     ] ],
     [ "Metadata", "classMetadata.html", [
       [ "Base", "classMetadata.html#afa9ff336b0b23e701393f7518133ea2b", null ],
@@ -465,6 +514,7 @@ var group__util =
       [ "randomInt64", "classRandom.html#a95fc7c64406684d9bd25cc959a1e4427", null ],
       [ "seed", "classRandom.html#a9a4652192b86aca94823e26a1fea372d", null ]
     ] ],
+    [ "SignalHandler", "classSignalHandler.html", null ],
     [ "StringRegistry< Tag >", "classStringRegistry.html", [
       [ "Item", "classStringRegistry_1_1Item.html", [
         [ "Item", "classStringRegistry_1_1Item.html#a2a58aee9753d60c4b2e0eb9f41ba2638", null ],

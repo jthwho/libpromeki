@@ -6,5 +6,6 @@ var structMemSpace_1_1Ops =
     [ "id", "structMemSpace_1_1Ops.html#a7a7e9ef4d1620037b707cb932238a07b", null ],
     [ "isHostAccessible", "structMemSpace_1_1Ops.html#a9670bbc91982b48085224fc1d2d153a0", null ],
     [ "name", "structMemSpace_1_1Ops.html#a423f4e8c5747eef4dc30df14437dfe82", null ],
-    [ "release", "structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d", null ]
+    [ "release", "structMemSpace_1_1Ops.html#a7e1a52bd6ab8f690d90ce2c462a2c76d", null ],
+    [ "stats", "structMemSpace_1_1Ops.html#a559b7631993babfc6074f75f46f5f892", null ]
 ];

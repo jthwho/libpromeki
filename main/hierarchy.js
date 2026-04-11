@@ -23,12 +23,10 @@ var hierarchy =
     [ "Audio", "classAudio.html", null ],
     [ "AudioBuffer", "classAudioBuffer.html", null ],
     [ "AudioCodec", "classAudioCodec.html", null ],
-    [ "AudioDataType", "structAudioDataType.html", null ],
     [ "AudioDesc", "classAudioDesc.html", null ],
     [ "AudioFile", "classAudioFile.html", null ],
     [ "AudioGen", "classAudioGen.html", null ],
     [ "AudioLevel", "classAudioLevel.html", null ],
-    [ "AudioPattern", "structAudioPattern.html", null ],
     [ "AudioTestPattern", "classAudioTestPattern.html", null ],
     [ "Benchmark", "classBenchmark.html", null ],
     [ "BenchmarkReporter", "classBenchmarkReporter.html", null ],
@@ -39,11 +37,9 @@ var hierarchy =
       [ "RtpPacket", "classRtpPacket.html", null ]
     ] ],
     [ "BuildInfo", "structBuildInfo.html", null ],
-    [ "BurnPosition", "structBurnPosition.html", null ],
     [ "ByteArray< NumBytes >", "classByteArray.html", null ],
     [ "Char", "classChar.html", null ],
     [ "String::CharIterator", "classString_1_1CharIterator.html", null ],
-    [ "ChromaSubsampling", "structChromaSubsampling.html", null ],
     [ "CIEPoint", "classCIEPoint.html", null ],
     [ "CIEWavelength", "structCIEWavelength.html", null ],
     [ "CmdLineParser", "classCmdLineParser.html", null ],
@@ -60,7 +56,6 @@ var hierarchy =
     [ "FileFormatFactory< Product >::Context", "structFileFormatFactory_1_1Context.html", null ],
     [ "CrashHandler", "classCrashHandler.html", null ],
     [ "CSCContext", "classCSCContext.html", null ],
-    [ "CscPath", "structCscPath.html", null ],
     [ "CSCPipeline", "classCSCPipeline.html", null ],
     [ "CSCRegistry", "classCSCRegistry.html", null ],
     [ "ColorModel::Data", "structColorModel_1_1Data.html", null ],
@@ -77,7 +72,42 @@ var hierarchy =
     [ "ElapsedTimer", "classElapsedTimer.html", null ],
     [ "EncodedDesc", "classEncodedDesc.html", null ],
     [ "Benchmark::Entry", "structBenchmark_1_1Entry.html", null ],
-    [ "Enum", "classEnum.html", null ],
+    [ "Enum", "classEnum.html", [
+      [ "TypedEnum< AudioDataType >", "classTypedEnum.html", [
+        [ "AudioDataType", "classAudioDataType.html", null ]
+      ] ],
+      [ "TypedEnum< AudioPattern >", "classTypedEnum.html", [
+        [ "AudioPattern", "classAudioPattern.html", null ]
+      ] ],
+      [ "TypedEnum< BurnPosition >", "classTypedEnum.html", [
+        [ "BurnPosition", "classBurnPosition.html", null ]
+      ] ],
+      [ "TypedEnum< ByteCountStyle >", "classTypedEnum.html", [
+        [ "ByteCountStyle", "classByteCountStyle.html", null ]
+      ] ],
+      [ "TypedEnum< ChromaSubsampling >", "classTypedEnum.html", [
+        [ "ChromaSubsampling", "classChromaSubsampling.html", null ]
+      ] ],
+      [ "TypedEnum< CscPath >", "classTypedEnum.html", [
+        [ "CscPath", "classCscPath.html", null ]
+      ] ],
+      [ "TypedEnum< ImgSeqPathMode >", "classTypedEnum.html", [
+        [ "ImgSeqPathMode", "classImgSeqPathMode.html", null ]
+      ] ],
+      [ "TypedEnum< MetadataRtpFormat >", "classTypedEnum.html", [
+        [ "MetadataRtpFormat", "classMetadataRtpFormat.html", null ]
+      ] ],
+      [ "TypedEnum< QuickTimeLayout >", "classTypedEnum.html", [
+        [ "QuickTimeLayout", "classQuickTimeLayout.html", null ]
+      ] ],
+      [ "TypedEnum< RtpPacingMode >", "classTypedEnum.html", [
+        [ "RtpPacingMode", "classRtpPacingMode.html", null ]
+      ] ],
+      [ "TypedEnum< VideoPattern >", "classTypedEnum.html", [
+        [ "VideoPattern", "classVideoPattern.html", null ]
+      ] ],
+      [ "TypedEnum< Derived >", "classTypedEnum.html", null ]
+    ] ],
     [ "Env", "classEnv.html", null ],
     [ "Error", "classError.html", null ],
     [ "Event", "classEvent.html", [
@@ -126,7 +156,6 @@ var hierarchy =
     [ "ImageFile", "classImageFile.html", null ],
     [ "ImageFileIO", "classImageFileIO.html", null ],
     [ "ImgSeq", "classImgSeq.html", null ],
-    [ "ImgSeqPathMode", "structImgSeqPathMode.html", null ],
     [ "AudioFile::Impl", "classAudioFile_1_1Impl.html", null ],
     [ "PaintEngine::Impl", "classPaintEngine_1_1Impl.html", null ],
     [ "QuickTime::Impl", "classQuickTime_1_1Impl.html", null ],
@@ -229,7 +258,6 @@ var hierarchy =
     [ "MemAllocation", "structMemAllocation.html", null ],
     [ "MemPool", "classMemPool.html", null ],
     [ "MemSpace", "classMemSpace.html", null ],
-    [ "MetadataRtpFormat", "structMetadataRtpFormat.html", null ],
     [ "MetadataTag", "structMetadataTag.html", null ],
     [ "ObjectBase::MetaInfo", "classObjectBase_1_1MetaInfo.html", null ],
     [ "MidiNote", "classMidiNote.html", null ],
@@ -329,7 +357,6 @@ var hierarchy =
     [ "Queue< SharedPtr >", "classQueue.html", null ],
     [ "Queue< SharedPtr< Frame > >", "classQueue.html", null ],
     [ "QuickTime", "classQuickTime.html", null ],
-    [ "QuickTimeLayout", "structQuickTimeLayout.html", null ],
     [ "Random", "classRandom.html", null ],
     [ "Rational< T >", "classRational.html", null ],
     [ "Rational< unsigned int >", "classRational.html", null ],
@@ -343,7 +370,6 @@ var hierarchy =
     [ "Slot< Args >::removeConstAndRef< T >", "structSlot_1_1removeConstAndRef.html", null ],
     [ "Resource", "classResource.html", null ],
     [ "SdpMediaDescription::RtpMap", "structSdpMediaDescription_1_1RtpMap.html", null ],
-    [ "RtpPacingMode", "structRtpPacingMode.html", null ],
     [ "RtpPayload", "classRtpPayload.html", [
       [ "RtpPayloadJpeg", "classRtpPayloadJpeg.html", null ],
       [ "RtpPayloadJpegXs", "classRtpPayloadJpegXs.html", null ],
@@ -371,17 +397,20 @@ var hierarchy =
     [ "SharedPtrProxy< T >", "classSharedPtrProxy.html", null ],
     [ "Signal< Args >", "classSignal.html", null ],
     [ "Signal< ObjectBase * >", "classSignal.html", null ],
+    [ "SignalHandler", "classSignalHandler.html", null ],
     [ "ObjectBase::SignalMeta", "classObjectBase_1_1SignalMeta.html", null ],
     [ "Size2DTemplate< T >", "classSize2DTemplate.html", null ],
     [ "Size2DTemplate< int32_t >", "classSize2DTemplate.html", null ],
     [ "Size2DTemplate< uint32_t >", "classSize2DTemplate.html", null ],
     [ "Slot< Args >", "classSlot.html", null ],
     [ "ObjectBase::SlotMeta", "classObjectBase_1_1SlotMeta.html", null ],
+    [ "MemSpace::Stats::Snapshot", "structMemSpace_1_1Stats_1_1Snapshot.html", null ],
     [ "SocketAddress", "classSocketAddress.html", null ],
     [ "Span< T >", "classSpan.html", null ],
     [ "Stack< T >", "classStack.html", null ],
     [ "CSCPipeline::Stage", "structCSCPipeline_1_1Stage.html", null ],
     [ "MemPool::Stats", "structMemPool_1_1Stats.html", null ],
+    [ "MemSpace::Stats", "structMemSpace_1_1Stats.html", null ],
     [ "BenchmarkReporter::StepStats", "structBenchmarkReporter_1_1StepStats.html", null ],
     [ "Strand", "classStrand.html", null ],
     [ "StreamString", "classStreamString.html", null ],
@@ -444,7 +473,6 @@ var hierarchy =
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
     [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, Enum, detail::VariantEnd >", "classVariantImpl.html", null ],
     [ "VariantSpec", "classVariantSpec.html", null ],
-    [ "VideoPattern", "structVideoPattern.html", null ],
     [ "VideoTestPattern", "classVideoTestPattern.html", null ],
     [ "WaitCondition", "classWaitCondition.html", null ],
     [ "ReadWriteLock::WriteLocker", "classReadWriteLock_1_1WriteLocker.html", null ],

@@ -6,7 +6,7 @@ var searchData=
   ['imagefile_3',['ImageFile',['../classImageFile.html',1,'']]],
   ['imagefileio_4',['ImageFileIO',['../classImageFileIO.html',1,'']]],
   ['imgseq_5',['ImgSeq',['../classImgSeq.html',1,'']]],
-  ['imgseqpathmode_6',['ImgSeqPathMode',['../structImgSeqPathMode.html',1,'']]],
+  ['imgseqpathmode_6',['ImgSeqPathMode',['../classImgSeqPathMode.html',1,'']]],
   ['impl_7',['impl',['../classAudioFile_1_1Impl.html',1,'AudioFile::Impl'],['../classPaintEngine_1_1Impl.html',1,'PaintEngine::Impl'],['../classQuickTime_1_1Impl.html',1,'QuickTime::Impl']]],
   ['iodevice_8',['IODevice',['../classIODevice.html',1,'']]],
   ['iovec_9',['IOVec',['../structFile_1_1IOVec.html',1,'File']]],

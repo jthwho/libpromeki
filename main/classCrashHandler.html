@@ -181,7 +181,18 @@ Static Public Member Functions</h2></td></tr>
 <p>Installs crash signal handlers. </p>
 <p>Registers handlers for SIGSEGV, SIGABRT, SIGBUS, SIGFPE, and SIGILL. Pre-builds the crash log file path from the current <a class="el" href="classApplication.html#aad7d913b64368ef2b0081527e2c21074">Application::appName</a> and process ID.</p>
 <p>If <a class="el" href="classLibraryOptions.html#ab5dda65c802eaba30d484482b509ddc6">LibraryOptions::CoreDumps</a> is true, also raises RLIMIT_CORE to the hard limit.</p>
-<p>Safe to call multiple times — subsequent calls update the pre-built state but do not stack handlers. </p>
+<p>Snapshots the following process state into static buffers so the signal handler can write a report without touching any non-signal-safe APIs:</p><ul>
+<li>Command line (<a class="el" href="classApplication.html#a17733992cd454c2f86d49442879cad52">Application::arguments</a>)</li>
+<li>Hostname, working directory, uname info</li>
+<li>Environment (if <a class="el" href="classLibraryOptions.html#a9db25db1e38c5c1c3a7b736179fa1a62">LibraryOptions::CaptureEnvironment</a>)</li>
+<li><a class="el" href="classLibraryOptions.html">LibraryOptions</a> values</li>
+<li>The set of registered <a class="el" href="classMemSpace.html">MemSpace</a> entries (metadata only — counter values are read live at crash time via atomic loads)</li>
+</ul>
+<p>State that changes after <a class="el" href="classCrashHandler.html#af403ee814cecb7911fbd0e61d4c0bd7d" title="Installs crash signal handlers.">install()</a> — such as <a class="el" href="classMemSpace.html">MemSpace</a> instances registered by a subsystem later in startup — will not appear in crash reports until the snapshot is refreshed. Use <a class="el" href="classApplication.html#a46a7dba540b4678f04872cc1c275ce9e">Application::refreshCrashHandler</a> to re-snapshot.</p>
+<p>Safe to call multiple times — subsequent calls update the pre-built state but do not stack handlers.</p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classApplication.html#a46a7dba540b4678f04872cc1c275ce9e" title="Re-snapshots the crash handler&#39;s install-time state.">Application::refreshCrashHandler</a> </dd>
+<dd>
+<a class="el" href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a" title="Registers an Ops record in the registry.">MemSpace::registerData</a> </dd></dl>
 
 </div>
 </div>
@@ -290,7 +301,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classCrashHandler.html">CrashHandler</a></li>
-    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 03:44:27 from commit 4ae6981 (1.0.0).</li>
   </ul>
 </div>
 </body>

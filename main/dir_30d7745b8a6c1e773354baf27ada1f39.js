@@ -151,6 +151,7 @@ var dir_30d7745b8a6c1e773354baf27ada1f39 =
     [ "sha1.h", "sha1_8h.html", "sha1_8h" ],
     [ "sharedptr.h", "sharedptr_8h.html", "sharedptr_8h" ],
     [ "signal.h", "signal_8h.html", "signal_8h" ],
+    [ "signalhandler.h", "signalhandler_8h.html", null ],
     [ "size2d.h", "size2d_8h.html", "size2d_8h" ],
     [ "slot.h", "slot_8h.html", "slot_8h" ],
     [ "socketaddress.h", "socketaddress_8h.html", "socketaddress_8h" ],

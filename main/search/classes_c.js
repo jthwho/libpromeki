@@ -44,7 +44,7 @@ var searchData=
   ['mempool_41',['MemPool',['../classMemPool.html',1,'']]],
   ['memspace_42',['MemSpace',['../classMemSpace.html',1,'']]],
   ['metadata_43',['Metadata',['../classMetadata.html',1,'']]],
-  ['metadatartpformat_44',['MetadataRtpFormat',['../structMetadataRtpFormat.html',1,'']]],
+  ['metadatartpformat_44',['MetadataRtpFormat',['../classMetadataRtpFormat.html',1,'']]],
   ['metadatatag_45',['MetadataTag',['../structMetadataTag.html',1,'']]],
   ['metainfo_46',['MetaInfo',['../classObjectBase_1_1MetaInfo.html',1,'ObjectBase']]],
   ['midinote_47',['MidiNote',['../classMidiNote.html',1,'']]],

@@ -22,11 +22,11 @@ var searchData=
   ['audioblock_19',['AudioBlock',['../classAudioBlock.html',1,'']]],
   ['audiobuffer_20',['AudioBuffer',['../classAudioBuffer.html',1,'']]],
   ['audiocodec_21',['AudioCodec',['../classAudioCodec.html',1,'']]],
-  ['audiodatatype_22',['AudioDataType',['../structAudioDataType.html',1,'']]],
+  ['audiodatatype_22',['AudioDataType',['../classAudioDataType.html',1,'']]],
   ['audiodesc_23',['AudioDesc',['../classAudioDesc.html',1,'']]],
   ['audiofile_24',['AudioFile',['../classAudioFile.html',1,'']]],
   ['audiogen_25',['AudioGen',['../classAudioGen.html',1,'']]],
   ['audiolevel_26',['AudioLevel',['../classAudioLevel.html',1,'']]],
-  ['audiopattern_27',['AudioPattern',['../structAudioPattern.html',1,'']]],
+  ['audiopattern_27',['AudioPattern',['../classAudioPattern.html',1,'']]],
   ['audiotestpattern_28',['AudioTestPattern',['../classAudioTestPattern.html',1,'']]]
 ];

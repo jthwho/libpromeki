@@ -1,0 +1,10 @@
+<map id="ByteCountStyle" name="ByteCountStyle">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for human&#45;readable byte&#45;count formatting." alt="" coords="198,170,321,195"/>
+<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="336,174,347,183,339,191,321,194,320,188,337,186,342,183,333,178"/>
+<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,233,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,110,242,168,240,172,148,115"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="90,5,149,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="122,45,122,80,117,80,117,45"/>
+<area shape="rect" id="Node000004" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="257,80,355,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="296,119,268,171,263,168,291,116"/>
+</map>

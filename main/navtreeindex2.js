@@ -65,6 +65,7 @@ var NAVTREEINDEX2 =
 "classAudioCodec.html#a701f81be99a32e0ffff83f7248d03171":[13,13,8,0],
 "classAudioCodec.html#ab079fc867669e3759b31f25f2515f781":[13,13,8,1],
 "classAudioCodec.html#ab24d592a01c9137e55475e8d53d4baff":[13,13,8,2],
+"classAudioDataType.html":[13,10,0,4],
 "classAudioDesc.html":[13,13,3],
 "classAudioDesc.html#a05766200e90d56c804aa82756da80198":[13,13,3,22],
 "classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0":[13,13,3,5],
@@ -176,6 +177,7 @@ var NAVTREEINDEX2 =
 "classAudioLevel.html#ab6c2a6d119df4d92d4a06690f3f7a721":[13,6,0,11],
 "classAudioLevel.html#ab7923d8420aa262dfbf51a97fc399ba8":[13,6,0,8],
 "classAudioLevel.html#afb9b9ca8d2ac4306ff432b48b335b065":[13,6,0,1],
+"classAudioPattern.html":[13,10,0,2],
 "classAudioTestPattern.html":[13,13,6],
 "classAudioTestPattern.html#a043e89571242d90dde2aee442c2efc95":[13,13,6,10],
 "classAudioTestPattern.html#a1983d579e8ee7f112277a99634372674":[13,13,6,14],
@@ -247,7 +249,5 @@ var NAVTREEINDEX2 =
 "classBuffer.html#a228ba5926ae92551576e5dc3c90b4f9a":[13,7,0,7],
 "classBuffer.html#a291031935b303e8bed545efd755c3574":[13,7,0,24],
 "classBuffer.html#a401b36f3343ef73a9dfa13b754dc81dc":[13,7,0,22],
-"classBuffer.html#a44dea5535d00022d1e54bffb0b387606":[13,7,0,20],
-"classBuffer.html#a46144112ecb2bd9593ba8767fb140145":[13,7,0,17],
-"classBuffer.html#a54e60683bb045b1d830e9152b4b482ef":[13,7,0,19]
+"classBuffer.html#a44dea5535d00022d1e54bffb0b387606":[13,7,0,20]
 };

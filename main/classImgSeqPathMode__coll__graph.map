@@ -1,0 +1,10 @@
+<map id="ImgSeqPathMode" name="ImgSeqPathMode">
+<area shape="rect" id="Node000001" title="Well&#45;known Enum type for .imgseq sidecar path mode." alt="" coords="154,170,289,195"/>
+<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="304,174,315,183,307,191,289,193,289,188,305,186,310,183,301,179"/>
+<area shape="rect" id="Node000002" href="$classTypedEnum.html" title=" " alt="" coords="5,80,245,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,113,210,168,207,172,146,117"/>
+<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="96,5,155,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="128,45,128,80,123,80,123,45"/>
+<area shape="rect" id="Node000004" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="270,80,367,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="297,117,236,172,233,168,294,113"/>
+</map>

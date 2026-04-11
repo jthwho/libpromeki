@@ -1,7 +1,0 @@
-<map id="AudioDataType" name="AudioDataType">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for audio sample formats." alt="" coords="45,240,165,265"/>
-<area shape="rect" id="Node000002" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="5,5,103,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="60,44,74,121,95,215,103,239,98,240,90,217,69,122,55,45"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="127,5,186,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="159,45,152,123,144,170,130,217,116,241,112,238,125,215,138,169,147,122,154,44"/>
-</map>

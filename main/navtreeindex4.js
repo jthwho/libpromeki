@@ -1,5 +1,10 @@
 var NAVTREEINDEX4 =
 {
+"classColorModel.html#a0571eb00d1b3301da80cf752c090e25a":[13,14,3,24],
+"classColorModel.html#a2656c85096e47d4a92506f92a9f6be24":[13,14,3,17],
+"classColorModel.html#a2889be3bd0de3ade11d1a0f654cccf47":[13,14,3,13],
+"classColorModel.html#a3406ef23ef3f921fef8699ddf327add1":[13,14,3,9],
+"classColorModel.html#a3fb169682ff2d6a8228b4f7939fb88ac":[13,14,3,11],
 "classColorModel.html#a421e6efa9c86c51eca8171d50e67b3ee":[13,14,3,6],
 "classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eea3c0a5d60704f6eeb42d5a984a9d5bfab":[13,14,3,6,0],
 "classColorModel.html#a421e6efa9c86c51eca8171d50e67b3eea525df06bc140a3eedfc6b3e3e88719f2":[13,14,3,6,5],
@@ -55,10 +60,11 @@ var NAVTREEINDEX4 =
 "classColorModel.html#ad83e707a21e04937a5607244604c7e2c":[13,14,3,23],
 "classColorModel.html#ad9537f45cd167f2b7c131c888334b1ae":[13,14,3,20],
 "classColorModel.html#af7e1c8091b1bd0c94648f79624658493":[13,14,3,10],
-"classCompiledCodepoints.html":[15,0,37],
-"classCompiledString.html":[15,0,38],
-"classCompiledString.html#a3887f51e1ea105291ebeef09fa065eb4":[15,0,38,0],
+"classCompiledCodepoints.html":[15,0,38],
+"classCompiledString.html":[15,0,39],
+"classCompiledString.html#a3887f51e1ea105291ebeef09fa065eb4":[15,0,39,0],
 "classCrashHandler.html":[13,10,8],
+"classCscPath.html":[13,10,0,5],
 "classDataStream.html":[13,3,0],
 "classDataStream.html#a031c1cb50817d1530452c4feae207fcb":[13,3,0,3],
 "classDataStream.html#a0479f8f66f588d85dd71a620789ffe53":[13,3,0,64],
@@ -243,11 +249,5 @@ var NAVTREEINDEX4 =
 "classDeque.html#a95aa4ff3869f99d174b8f2c41b268860":[13,0,1,18],
 "classDeque.html#a96a454e70a7234616b8be11bf30ed373":[13,0,1,50],
 "classDeque.html#aa3326daa4b6e205ef9defaa53eaa771a":[13,0,1,10],
-"classDeque.html#ab52dcdd0fac6de73c32a0c7a86124cb8":[13,0,1,29],
-"classDeque.html#abdeec467505200791af25ca7f9b25974":[13,0,1,4],
-"classDeque.html#ac764b9d08cab889a790cff41472a612f":[13,0,1,36],
-"classDeque.html#acc8dce9054b00cf61a2365c715dfbad9":[13,0,1,37],
-"classDeque.html#ace02afc29a2424aae3c8ed59a6f87410":[13,0,1,45],
-"classDeque.html#ad53a0777a37105319e9cadffc3803cd1":[13,0,1,26],
-"classDeque.html#ae54ee7d2680da64db3cec38b3420f1ff":[13,0,1,39]
+"classDeque.html#ab52dcdd0fac6de73c32a0c7a86124cb8":[13,0,1,29]
 };

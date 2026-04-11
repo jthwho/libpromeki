@@ -2,7 +2,7 @@ var searchData=
 [
   ['char_0',['Char',['../classChar.html',1,'']]],
   ['chariterator_1',['CharIterator',['../classString_1_1CharIterator.html',1,'String']]],
-  ['chromasubsampling_2',['ChromaSubsampling',['../structChromaSubsampling.html',1,'']]],
+  ['chromasubsampling_2',['ChromaSubsampling',['../classChromaSubsampling.html',1,'']]],
   ['ciepoint_3',['CIEPoint',['../classCIEPoint.html',1,'']]],
   ['ciewavelength_4',['CIEWavelength',['../structCIEWavelength.html',1,'']]],
   ['cmdlineparser_5',['CmdLineParser',['../classCmdLineParser.html',1,'']]],
@@ -18,7 +18,7 @@ var searchData=
   ['context_15',['Context',['../structFileFormatFactory_1_1Context.html',1,'FileFormatFactory']]],
   ['crashhandler_16',['CrashHandler',['../classCrashHandler.html',1,'']]],
   ['csccontext_17',['CSCContext',['../classCSCContext.html',1,'']]],
-  ['cscpath_18',['CscPath',['../structCscPath.html',1,'']]],
+  ['cscpath_18',['CscPath',['../classCscPath.html',1,'']]],
   ['cscpipeline_19',['CSCPipeline',['../classCSCPipeline.html',1,'']]],
   ['cscregistry_20',['CSCRegistry',['../classCSCRegistry.html',1,'']]]
 ];

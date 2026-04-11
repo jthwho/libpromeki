@@ -14,7 +14,7 @@ var searchData=
   ['resizeevent_11',['ResizeEvent',['../classResizeEvent.html',1,'']]],
   ['resource_12',['Resource',['../classResource.html',1,'']]],
   ['rtpmap_13',['RtpMap',['../structSdpMediaDescription_1_1RtpMap.html',1,'SdpMediaDescription']]],
-  ['rtppacingmode_14',['RtpPacingMode',['../structRtpPacingMode.html',1,'']]],
+  ['rtppacingmode_14',['RtpPacingMode',['../classRtpPacingMode.html',1,'']]],
   ['rtppacket_15',['RtpPacket',['../classRtpPacket.html',1,'']]],
   ['rtppayload_16',['RtpPayload',['../classRtpPayload.html',1,'']]],
   ['rtppayloadjpeg_17',['RtpPayloadJpeg',['../classRtpPayloadJpeg.html',1,'']]],

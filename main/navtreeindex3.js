@@ -1,5 +1,7 @@
 var NAVTREEINDEX3 =
 {
+"classBuffer.html#a46144112ecb2bd9593ba8767fb140145":[13,7,0,17],
+"classBuffer.html#a54e60683bb045b1d830e9152b4b482ef":[13,7,0,19],
 "classBuffer.html#a5506e9a3382998fba7625794bfde1576":[13,7,0,6],
 "classBuffer.html#a59b8743e4a5f731bdd0c4185c9ef263b":[13,7,0,8],
 "classBuffer.html#a59d9432844bceaefd50a787f2804eb69":[13,7,0,14],
@@ -79,6 +81,7 @@ var NAVTREEINDEX3 =
 "classBufferedIODevice.html#acdb17526e659046935224d0a8e73caf3":[13,2,0,17],
 "classBufferedIODevice.html#afdf73cdafa024c5afa19cd342ef1f9ba":[13,2,0,14],
 "classBufferedIODevice.html#afe86020bcf21c62cb68cebf3f7105502":[13,2,0,0],
+"classBurnPosition.html":[13,10,0,1],
 "classByteArray.html":[13,4,1],
 "classByteArray.html#a1cee33c953fdce292721ca250cd47d9c":[13,4,1,3],
 "classByteArray.html#a26cb4759b353df38c1fce3dd1606f5c0":[13,4,1,0],
@@ -94,6 +97,7 @@ var NAVTREEINDEX3 =
 "classByteArray.html#ac5b5df3a0a3d0872a0c234dbf217e7ab":[13,4,1,1],
 "classByteArray.html#aef2aa19830496269553a5f508f0225de":[13,4,1,13],
 "classByteArray.html#aefa587e5d064e339cbf013262c59df09":[13,4,1,2],
+"classByteCountStyle.html":[13,10,0,9],
 "classCIEPoint.html":[13,14,1],
 "classCIEPoint.html#a21b78c2aa4c3dd205874c2fbe41b76c2":[13,14,1,1],
 "classCIEPoint.html#a6e1c940e549734f1f0872f5db413a7b5":[13,14,1,6],
@@ -156,6 +160,7 @@ var NAVTREEINDEX3 =
 "classChar.html#ac5fc1cd97845bc98dfb4e702a2ecf0d6":[13,4,2,8],
 "classChar.html#ad6d482575c9386e3155c7660d485b29c":[13,4,2,18],
 "classChar.html#ae0d765d84df492928332f3ae0394d1ab":[13,4,2,5],
+"classChromaSubsampling.html":[13,10,0,3],
 "classCmdLineParser.html":[13,10,7],
 "classCmdLineParser.html#a0197bfb6bfc86e1050549c1027f64664":[13,10,7,2],
 "classCmdLineParser.html#a28f0ee61b366aa0b331d08d05d8f9830":[13,10,7,5],
@@ -244,10 +249,5 @@ var NAVTREEINDEX3 =
 "classColor.html#ae502d40d4e7fec1f69a1ee691ab24cd4":[13,14,2,18],
 "classColor.html#af3c27f93476c46a757ea9997a00f3a55":[13,14,2,41],
 "classColor.html#afeb2e9d06d46475216a657088787e654":[13,14,2,32],
-"classColorModel.html":[13,14,3],
-"classColorModel.html#a0571eb00d1b3301da80cf752c090e25a":[13,14,3,24],
-"classColorModel.html#a2656c85096e47d4a92506f92a9f6be24":[13,14,3,17],
-"classColorModel.html#a2889be3bd0de3ade11d1a0f654cccf47":[13,14,3,13],
-"classColorModel.html#a3406ef23ef3f921fef8699ddf327add1":[13,14,3,9],
-"classColorModel.html#a3fb169682ff2d6a8228b4f7939fb88ac":[13,14,3,11]
+"classColorModel.html":[13,14,3]
 };

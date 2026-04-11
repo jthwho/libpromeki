@@ -1,7 +1,0 @@
-<map id="BurnPosition" name="BurnPosition">
-<area shape="rect" id="Node000001" title="Well&#45;known Enum type for on&#45;screen burn&#45;in position presets." alt="" coords="53,181,157,207"/>
-<area shape="rect" id="Node000002" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="5,5,103,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="63,43,95,157,103,180,98,182,90,158,58,45"/>
-<area shape="rect" id="Node000003" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="127,5,186,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="157,45,148,98,130,158,116,182,111,180,125,156,143,97,151,44"/>
-</map>

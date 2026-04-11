@@ -115,11 +115,15 @@ Collaboration diagram for MemSpace::Ops:</div>
 <div class="dyncontent">
 <div class="center"><img src="structMemSpace_1_1Ops__coll__graph.png" border="0" usemap="#aMemSpace_1_1Ops_coll__map" alt="Collaboration graph"/></div>
 <map name="aMemSpace_1_1Ops_coll__map" id="aMemSpace_1_1Ops_coll__map">
-<area shape="rect" title="Function table for memory space operations." alt="" coords="12,93,139,119"/>
-<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,5,65,31"/>
-<area shape="poly" title=" " alt="" coords="41,44,48,68,66,92,61,95,44,71,36,45"/>
-<area shape="rect" href="classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="90,5,143,31"/>
-<area shape="poly" title=" " alt="" coords="108,44,83,94,79,92,103,42"/>
+<area shape="rect" title="Function table for memory space operations." alt="" coords="53,328,180,353"/>
+<area shape="rect" href="classString.html" title="Encoding&#45;aware string class with copy&#45;on&#45;write semantics." alt="" coords="5,240,65,265"/>
+<area shape="poly" title=" " alt="" coords="51,276,72,302,100,326,97,330,68,306,47,279"/>
+<area shape="rect" href="classError.html" title="Lightweight error code wrapper for the promeki library." alt="" coords="90,240,143,265"/>
+<area shape="poly" title=" " alt="" coords="119,279,119,327,114,327,114,279"/>
+<area shape="rect" href="structMemSpace_1_1Stats.html" title="Lock&#45;free runtime statistics for a memory space." alt="" coords="168,240,303,265"/>
+<area shape="poly" title=" " alt="" coords="210,276,134,330,131,326,207,271"/>
+<area shape="rect" href="classAtomic.html" title=" " alt="" coords="160,5,311,31"/>
+<area shape="poly" title=" " alt="" coords="238,45,238,240,233,240,233,45"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -153,6 +157,10 @@ Public Attributes</h2></td></tr>
 <a class="el" href="classError.html">Error</a>(*&#160;</td><td class="memItemRight" valign="bottom"><b>fill</b> )(<a class="el" href="classList.html">void</a> *ptr, <a class="el" href="classList.html">size_t</a> bytes, <a class="el" href="classList.html">char</a> <a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a6a57ec936c0c7ccecb2b34802d1d6aaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill memory with a byte value. <br /></td></tr>
 <tr class="separator:a6a57ec936c0c7ccecb2b34802d1d6aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a559b7631993babfc6074f75f46f5f892" id="r_a559b7631993babfc6074f75f46f5f892"><td class="memItemLeft" align="right" valign="top"><a id="a559b7631993babfc6074f75f46f5f892" name="a559b7631993babfc6074f75f46f5f892"></a>
+<a class="el" href="structMemSpace_1_1Stats.html">Stats</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>stats</b> = <a class="el" href="classList.html">nullptr</a></td></tr>
+<tr class="memdesc:a559b7631993babfc6074f75f46f5f892"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runtime counters; owned by the registry, auto-created by <a class="el" href="classMemSpace.html#a6a7ed2a8545c7a588f399b0dc107d14a" title="Registers an Ops record in the registry.">registerData()</a> if null. <br /></td></tr>
+<tr class="separator:a559b7631993babfc6074f75f46f5f892"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Function table for memory space operations. </p>
@@ -166,7 +174,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMemSpace.html">MemSpace</a></li><li class="navelem"><a class="el" href="structMemSpace_1_1Ops.html">Ops</a></li>
-    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 03:44:27 from commit 4ae6981 (1.0.0).</li>
   </ul>
 </div>
 </body>

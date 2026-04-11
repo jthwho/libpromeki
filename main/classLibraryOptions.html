@@ -271,6 +271,12 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a9db25db1e38c5c1c3a7b736179fa1a62" id="r_a9db25db1e38c5c1c3a7b736179fa1a62"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html#a9db25db1e38c5c1c3a7b736179fa1a62">CaptureEnvironment</a></td></tr>
 <tr class="memdesc:a9db25db1e38c5c1c3a7b736179fa1a62"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — include the process environment in crash/trace reports (default true). Disable if the environment may contain secrets you don't want written to disk.  <br /></td></tr>
 <tr class="separator:a9db25db1e38c5c1c3a7b736179fa1a62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab98ee2f75c05fdbafc96ee9ff4784377" id="r_ab98ee2f75c05fdbafc96ee9ff4784377"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html#ab98ee2f75c05fdbafc96ee9ff4784377">TerminationSignalHandler</a></td></tr>
+<tr class="memdesc:ab98ee2f75c05fdbafc96ee9ff4784377"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — install termination signal handlers (SIGINT/SIGTERM/SIGHUP/SIGQUIT on POSIX, CTRL_C_EVENT/CTRL_BREAK_EVENT/... on Windows). Default <code>true</code>. When enabled, the <a class="el" href="classApplication.html">Application</a> constructor wires a dedicated signal-waiting thread that turns those signals into <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">Application::quit</a> calls plus a wake-up posted to the main <a class="el" href="classEventLoop.html">EventLoop</a>.  <br /></td></tr>
+<tr class="separator:ab98ee2f75c05fdbafc96ee9ff4784377"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d84802493809368603801edccfb3b5d" id="r_a2d84802493809368603801edccfb3b5d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html#a2d84802493809368603801edccfb3b5d">SignalDoubleTapExit</a></td></tr>
+<tr class="memdesc:a2d84802493809368603801edccfb3b5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — force-exit on a second termination signal delivery (default <code>true</code>). When true, the first Ctrl-C asks the application to quit cleanly and a second Ctrl-C escalates to <code>std::_Exit</code>. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to <code>false</code> for command-line tools that want Ctrl-C to take effect on the very first delivery, or for applications that want to handle multiple signals themselves.  <br /></td></tr>
+<tr class="separator:a2d84802493809368603801edccfb3b5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Library-wide option database populated from environment variables. </p>
@@ -446,9 +452,65 @@ Static Public Attributes</h2></td></tr>
 <div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
 <div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
 <div class="line">                                .setDescription(<span class="stringliteral">&quot;Crash log directory (empty = system temp).&quot;</span>))</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
 </div><!-- fragment -->
 <p><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — crash log directory (empty = <a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5" title="Returns a Dir for the system temp directory.">Dir::temp()</a>). </p>
+
+</div>
+</div>
+<a id="a2d84802493809368603801edccfb3b5d" name="a2d84802493809368603801edccfb3b5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d84802493809368603801edccfb3b5d">&#9670;&#160;</a></span>SignalDoubleTapExit</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> LibraryOptions::SignalDoubleTapExit</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;SignalDoubleTapExit&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">true</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Force-exit on second termination signal delivery.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — force-exit on a second termination signal delivery (default <code>true</code>). When true, the first Ctrl-C asks the application to quit cleanly and a second Ctrl-C escalates to <code>std::_Exit</code>. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to <code>false</code> for command-line tools that want Ctrl-C to take effect on the very first delivery, or for applications that want to handle multiple signals themselves. </p>
+
+</div>
+</div>
+<a id="ab98ee2f75c05fdbafc96ee9ff4784377" name="ab98ee2f75c05fdbafc96ee9ff4784377"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98ee2f75c05fdbafc96ee9ff4784377">&#9670;&#160;</a></span>TerminationSignalHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> LibraryOptions::TerminationSignalHandler</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;TerminationSignalHandler&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">true</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Install termination signal handlers (Ctrl-C/kill).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — install termination signal handlers (SIGINT/SIGTERM/SIGHUP/SIGQUIT on POSIX, CTRL_C_EVENT/CTRL_BREAK_EVENT/... on Windows). Default <code>true</code>. When enabled, the <a class="el" href="classApplication.html">Application</a> constructor wires a dedicated signal-waiting thread that turns those signals into <a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">Application::quit</a> calls plus a wake-up posted to the main <a class="el" href="classEventLoop.html">EventLoop</a>. </p>
 
 </div>
 </div>
@@ -462,7 +524,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classLibraryOptions.html">LibraryOptions</a></li>
-    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 03:44:27 from commit 4ae6981 (1.0.0).</li>
   </ul>
 </div>
 </body>
