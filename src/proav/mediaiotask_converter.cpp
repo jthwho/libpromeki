@@ -126,8 +126,6 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandOpen &cmd) {
         _frameCount = 0;
         _readCount = 0;
         _framesConverted = 0;
-        _bytesIn = 0;
-        _bytesOut = 0;
         _outputQueue.clear();
 
         cmd.mediaDesc = outDesc;
@@ -152,8 +150,6 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandClose &cmd) {
         _frameCount = 0;
         _readCount = 0;
         _framesConverted = 0;
-        _bytesIn = 0;
-        _bytesOut = 0;
         return Error::Ok;
 }
 
@@ -211,19 +207,16 @@ Error MediaIOTask_Converter::convertFrame(const Frame::Ptr &input, Frame::Ptr &o
         Frame *outRaw = outFrame.modify();
         outRaw->metadata() = input->metadata();
 
-        // Images
+        // Images.  Per-plane byte tracking is no longer needed —
+        // MediaIO::populateStandardStats drives BytesPerSecond from
+        // the base-class RateTracker, which records the full payload
+        // size of each outbound frame after a successful write.
         for(const auto &srcImgPtr : input->imageList()) {
                 if(!srcImgPtr.isValid()) continue;
                 const Image &srcImg = *srcImgPtr;
-                for(const auto &p : srcImg.planes()) {
-                        if(p.isValid()) _bytesIn += p->size();
-                }
                 Image dstImg;
                 Error err = convertImage(srcImg, dstImg);
                 if(err.isError()) return err;
-                for(const auto &p : dstImg.planes()) {
-                        if(p.isValid()) _bytesOut += p->size();
-                }
                 outRaw->imageList().pushToBack(Image::Ptr::create(std::move(dstImg)));
         }
 
@@ -231,7 +224,6 @@ Error MediaIOTask_Converter::convertFrame(const Frame::Ptr &input, Frame::Ptr &o
         for(const auto &srcAudioPtr : input->audioList()) {
                 if(!srcAudioPtr.isValid()) continue;
                 const Audio &srcAudio = *srcAudioPtr;
-                if(srcAudio.buffer().isValid()) _bytesIn += srcAudio.buffer()->size();
 
                 Audio dstAudio;
                 if(_outputAudioDataTypeSet &&
@@ -244,7 +236,6 @@ Error MediaIOTask_Converter::convertFrame(const Frame::Ptr &input, Frame::Ptr &o
                 } else {
                         dstAudio = srcAudio;
                 }
-                if(dstAudio.buffer().isValid()) _bytesOut += dstAudio.buffer()->size();
                 outRaw->audioList().pushToBack(Audio::Ptr::create(std::move(dstAudio)));
         }
 
@@ -288,9 +279,12 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandRead &cmd) {
 }
 
 Error MediaIOTask_Converter::executeCmd(MediaIOCommandStats &cmd) {
+        // FramesConverted is a backend-specific counter.  BytesIn /
+        // BytesOut were removed — the MediaIO base class now reports
+        // the single authoritative BytesPerSecond value from its
+        // RateTracker, which records the converted (output) frame
+        // payload on every successful write.
         cmd.stats.set(StatsFramesConverted, _framesConverted);
-        cmd.stats.set(StatsBytesIn, _bytesIn);
-        cmd.stats.set(StatsBytesOut, _bytesOut);
         cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_outputQueue.size()));
         cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(_capacity));
         return Error::Ok;

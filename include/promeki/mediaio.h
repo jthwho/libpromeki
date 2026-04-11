@@ -28,6 +28,9 @@
 #include <promeki/framerate.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/mediaconfig.h>
+#include <promeki/uuid.h>
+#include <promeki/benchmark.h>
+#include <promeki/ratetracker.h>
 
 /**
  * @brief Macro to register a MediaIO backend at static initialization time.
@@ -47,6 +50,7 @@ PROMEKI_NAMESPACE_BEGIN
 class IODevice;
 class ThreadPool;
 class MediaIOTask;
+class BenchmarkReporter;
 
 // ============================================================================
 // Free types — used by both commands and MediaIO so commands can be
@@ -126,6 +130,10 @@ class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
                 static inline const ID BytesPerSecond = declareID("BytesPerSecond",
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription("Current data rate in bytes per second."));
+                /// @brief double — current frame rate (frames per second).
+                static inline const ID FramesPerSecond = declareID("FramesPerSecond",
+                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
+                                .setMin(0.0).setDescription("Current frame rate in frames per second."));
                 /// @brief double — average end-to-end latency.
                 static inline const ID AverageLatencyMs = declareID("AverageLatencyMs",
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
@@ -690,6 +698,99 @@ class MediaIO : public ObjectBase {
                 /** @brief Returns the configuration. */
                 const Config &config() const { return _config; }
 
+                // ---- Per-instance identifiers ----
+
+                /**
+                 * @brief Returns the process-local monotonic instance ID.
+                 *
+                 * Assigned from a static atomic counter in the constructor
+                 * and never changes afterward.  Used as the suffix in the
+                 * default instance name (@c "media<localId>") and as a
+                 * stable within-process handle for logging and pipeline
+                 * correlation.
+                 *
+                 * @return The local ID.
+                 */
+                int localId() const { return _localId; }
+
+                /**
+                 * @brief Returns the human-readable instance name.
+                 *
+                 * Seeded in the constructor from the local ID (as
+                 * @c "media<localId>").  Overridable at open time via
+                 * @ref MediaConfig::Name — the base class resolves the
+                 * default at @c open() and writes the resolved value
+                 * back into the live config, so @c name() is always
+                 * non-empty and matches what the config reports.
+                 *
+                 * @return The instance name.
+                 */
+                const String &name() const { return _name; }
+
+                /**
+                 * @brief Returns the globally-unique instance identifier.
+                 *
+                 * Seeded in the constructor via @c UUID::generate() so
+                 * every instance has a valid UUID before @c open() is
+                 * even called.  Overridable at open time via
+                 * @ref MediaConfig::Uuid; the base class resolves the
+                 * final value in @c open() and writes it back into the
+                 * live config.
+                 *
+                 * @return The instance UUID.
+                 */
+                const UUID &uuid() const { return _uuid; }
+
+                // ---- Benchmarking ----
+
+                /**
+                 * @brief Attaches an external BenchmarkReporter for stamp aggregation.
+                 *
+                 * Ownership stays with the caller — the pointer is only
+                 * observed, never deleted.  Pass @c nullptr to detach.
+                 * When a reporter is attached and
+                 * @ref MediaConfig::EnableBenchmark is true and this
+                 * stage is a sink (the default, flippable via
+                 * @ref setBenchmarkIsSink), every frame's completed
+                 * @ref Benchmark is submitted to the reporter after its
+                 * @c taskEnd stamp fires.
+                 *
+                 * Attaching a reporter alone does not enable stamping —
+                 * the stamps are only recorded when @c EnableBenchmark
+                 * is set in the config before @c open().
+                 *
+                 * @param reporter The reporter to attach, or nullptr.
+                 */
+                void setBenchmarkReporter(BenchmarkReporter *reporter) {
+                        _benchmarkReporter = reporter;
+                }
+
+                /** @brief Returns the currently attached BenchmarkReporter (may be nullptr). */
+                BenchmarkReporter *benchmarkReporter() const { return _benchmarkReporter; }
+
+                /**
+                 * @brief Marks this MediaIO as a sink for benchmark submission.
+                 *
+                 * Sinks submit each frame's Benchmark to their attached
+                 * reporter after the @c taskEnd stamp.  Non-sink stages
+                 * still stamp — so a pipeline's terminal stage sees all
+                 * the accumulated timestamps from upstream — but do not
+                 * submit, avoiding double counting.
+                 *
+                 * Defaults to true so a standalone MediaIO "just works"
+                 * when a reporter is attached.  MediaPipeline sets it
+                 * to false on all non-terminal stages during build().
+                 *
+                 * @param isSink True if this stage should submit.
+                 */
+                void setBenchmarkIsSink(bool isSink) { _benchmarkIsSink = isSink; }
+
+                /** @brief Returns the sink flag. */
+                bool benchmarkIsSink() const { return _benchmarkIsSink; }
+
+                /** @brief Returns true if per-frame Benchmark stamping is active. */
+                bool benchmarkEnabled() const { return _benchmarkEnabled; }
+
                 /** @brief Returns true if the resource is open. */
                 bool isOpen() const { return _mode != NotOpen; }
 
@@ -1013,6 +1114,29 @@ class MediaIO : public ObjectBase {
                 /** @brief Sets the configuration. */
                 void setConfig(const Config &config) { _config = config; }
 
+                // ---- Base-class parameterized command names ----
+
+                /**
+                 * @brief Params command: returns the attached reporter's summary text.
+                 *
+                 * Handled by the MediaIO base class before the command
+                 * reaches the backend, so every backend inherits this
+                 * introspection hook for free.  The reporter's
+                 * @c summaryReport() string is written into the command
+                 * result under @ref ParamBenchmarkReport.  Returns
+                 * @c Error::NotSupported if no reporter is attached.
+                 */
+                static inline const MediaIOParamsID ParamBenchmarkReport{"BenchmarkReport"};
+
+                /**
+                 * @brief Params command: clears the attached reporter's accumulators.
+                 *
+                 * Same base-class interception as BenchmarkReport.  No
+                 * result payload; returns @c Error::Ok on success or
+                 * @c Error::NotSupported if no reporter is attached.
+                 */
+                static inline const MediaIOParamsID ParamBenchmarkReset{"BenchmarkReset"};
+
                 /**
                  * @brief Sends a backend-specific parameterized command.
                  *
@@ -1098,9 +1222,50 @@ class MediaIO : public ObjectBase {
                 PROMEKI_SIGNAL(descriptorChanged);
 
         private:
+                friend class MediaIOTask;
+
                 Error dispatchCommand(MediaIOCommand::Ptr cmd);
                 Error submitAndWait(MediaIOCommand::Ptr cmd);
                 void  submitReadCommand();
+                void  resolveIdentifiersAndBenchmark();
+                void  ensureFrameBenchmark(Frame::Ptr &frame);
+                void  submitBenchmarkIfSink(const Frame::Ptr &frame);
+
+                /**
+                 * @brief Walks a Frame and returns its total payload size.
+                 *
+                 * Sums every Image plane buffer's logical size plus every
+                 * Audio buffer's logical size.  Used by the telemetry
+                 * layer to feed RateTracker::record() when a read or
+                 * write completes.  Skips invalid entries rather than
+                 * dereferencing them.
+                 *
+                 * @param frame The frame to measure.
+                 * @return The total payload size in bytes.
+                 */
+                static int64_t frameByteSize(const Frame::Ptr &frame);
+
+                /**
+                 * @brief Populates the standard MediaIOStats keys.
+                 *
+                 * Called by @ref stats() after the backend task has
+                 * contributed its own (backend-specific) fields.  Writes
+                 * @c BytesPerSecond and @c FramesPerSecond from the
+                 * base-class RateTracker, copies @c FramesDropped,
+                 * @c FramesRepeated and @c FramesLate from the base
+                 * atomic counters, and — when @c EnableBenchmark is set
+                 * and a @c BenchmarkReporter is attached — derives
+                 * @c AverageLatencyMs / @c PeakLatencyMs from the
+                 * reporter's step pair for this stage.
+                 *
+                 * The base-class fields are authoritative: if a backend
+                 * had previously populated the same keys they are
+                 * overwritten.  Backend-specific keys set by the task
+                 * are left untouched.
+                 *
+                 * @param stats The stats object to populate.
+                 */
+                void populateStandardStats(MediaIOStats &stats) const;
 
                 MediaIOTask                *_task = nullptr;
                 Config                      _config;
@@ -1109,6 +1274,43 @@ class MediaIO : public ObjectBase {
                 int                         _prefetchDepth = 1;
                 bool                        _prefetchDepthExplicit = false;
                 bool                        _atEnd = false;
+
+                // Per-instance identifiers.  _localId is assigned from a
+                // process-wide atomic counter in the constructor and is
+                // never user-settable.  _name and _uuid are seeded in the
+                // constructor but the open() path lets callers override
+                // them via MediaConfig::Name / MediaConfig::Uuid.
+                int                         _localId = 0;
+                String                      _name;
+                UUID                        _uuid;
+
+                // Benchmark stamping state.  Opt-in via
+                // MediaConfig::EnableBenchmark; zero-cost when disabled
+                // thanks to the single branch in every stamp site.  The
+                // reporter is caller-owned and optional — without one,
+                // stamps still accumulate on each frame's Benchmark::Ptr
+                // but are never aggregated.  _benchmarkIsSink defaults to
+                // true so a standalone MediaIO submits its own frames;
+                // MediaPipeline flips it off for non-terminal stages.
+                bool                        _benchmarkEnabled = false;
+                bool                        _benchmarkIsSink  = true;
+                BenchmarkReporter          *_benchmarkReporter = nullptr;
+                Benchmark::Id               _idStampEnqueue;
+                Benchmark::Id               _idStampDequeue;
+                Benchmark::Id               _idStampTaskBegin;
+                Benchmark::Id               _idStampTaskEnd;
+
+                // Live telemetry — always on.  RateTracker does a
+                // pair of atomic increments per recorded frame, so
+                // feeding it from the read / write strand lambdas is
+                // effectively free.  The drop / repeat / late counters
+                // are lifetime totals, incremented by backends via the
+                // protected MediaIOTask helpers (noteFrameDropped
+                // etc.) and reported straight back out via stats().
+                RateTracker                 _rateTracker;
+                Atomic<int64_t>             _framesDroppedTotal{0};
+                Atomic<int64_t>             _framesRepeatedTotal{0};
+                Atomic<int64_t>             _framesLateTotal{0};
 
                 // Cached state — only read/written by the user thread
                 MediaDesc                   _mediaDesc;

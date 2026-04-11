@@ -165,8 +165,10 @@ class EventLoop {
                  * @brief Starts a timer that delivers TimerEvent to an ObjectBase.
                  *
                  * The receiver's timerEvent() virtual method will be called
-                 * each time the timer fires.  Must be called from the
-                 * EventLoop's thread.
+                 * each time the timer fires.  Thread-safe: may be called
+                 * from any thread.  When called from a thread other than
+                 * the one running @c exec(), the worker loop is woken
+                 * so it re-evaluates @c nextTimerTimeout immediately.
                  *
                  * @param receiver   The ObjectBase to receive TimerEvents.
                  * @param intervalMs The timer interval in milliseconds.
@@ -180,7 +182,8 @@ class EventLoop {
                  * @brief Starts a standalone callable timer.
                  *
                  * No ObjectBase is needed — the callable runs directly on the
-                 * EventLoop's thread each time the timer fires.
+                 * EventLoop's thread each time the timer fires.  Thread-safe:
+                 * see the ObjectBase overload for cross-thread semantics.
                  *
                  * @param intervalMs The timer interval in milliseconds.
                  * @param func       The callable to invoke when the timer fires.
@@ -193,6 +196,16 @@ class EventLoop {
 
                 /**
                  * @brief Stops and removes a timer.
+                 *
+                 * Thread-safe: may be called from any thread.  When called
+                 * from a thread other than the one running @c exec(), a
+                 * no-op wake marker is pushed so the worker loop notices
+                 * the change.  A stopTimer() call issued from another
+                 * thread can race against a timer callback that is already
+                 * executing — the callback will finish running before the
+                 * stop takes effect, so any resources the callback depends
+                 * on must outlive that small window.
+                 *
                  * @param timerId The ID returned by startTimer().
                  */
                 void stopTimer(int timerId);
@@ -229,6 +242,16 @@ class EventLoop {
                 Queue<Item>                     _queue;
                 Atomic<bool>                    _running;
                 Atomic<int>                     _exitCode;
+
+                // Timer list access is guarded by _timersMutex.  Any
+                // thread may install or stop timers via startTimer /
+                // stopTimer, so the mutex is acquired on every touch.
+                // processTimers() takes a snapshot of the ready-to-fire
+                // entries under the lock, releases the lock, and then
+                // invokes callbacks — this avoids deadlocks if a timer
+                // callback calls startTimer() or stopTimer() on the
+                // same event loop, and keeps the lock hold time bounded.
+                mutable Mutex                   _timersMutex;
                 List<TimerInfo>                 _timers;
                 Atomic<int>                     _nextTimerId{1};
 
@@ -242,6 +265,16 @@ class EventLoop {
                 std::function<void()>           _wakeCallback;
 
                 void notifyWake();
+
+                /**
+                 * @brief Wakes the owning thread if called cross-thread.
+                 *
+                 * Pushes a no-op CallableItem so a sleeping @c Queue::pop
+                 * returns and @c processEvents re-evaluates timer state.
+                 * No-op when called from the owning thread, since that
+                 * thread is by definition not asleep in @c pop.
+                 */
+                void wakeIfCrossThread();
 
                 bool dispatchItem(Item &item);
                 void processTimers();

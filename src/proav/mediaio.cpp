@@ -10,10 +10,28 @@
 #include <promeki/threadpool.h>
 #include <promeki/file.h>
 #include <promeki/logger.h>
+#include <promeki/benchmarkreporter.h>
+#include <promeki/image.h>
+#include <promeki/audio.h>
+#include <promeki/buffer.h>
+#include <atomic>
+#include <cstdint>
 
 PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_DEBUG(MediaIO)
+
+// ============================================================================
+// Per-instance local ID counter
+// ============================================================================
+//
+// Process-wide atomic counter.  Every MediaIO instance that construction
+// fires bumps it once to claim a monotonically increasing local ID.  The
+// counter never resets and is the sole source of the default `Name`
+// suffix, so two instances cannot collide even if one is destroyed and
+// another is created.
+
+static std::atomic<int> g_nextLocalId{0};
 
 // ============================================================================
 // Format registry
@@ -162,6 +180,7 @@ MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
         }
         MediaIO *io = new MediaIO(parent);
         io->_task = task;
+        task->_owner = io;
         io->_config = config;
         return io;
 }
@@ -180,6 +199,7 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         io->_task = task;
+        task->_owner = io;
         // Seed the live config with the resolved backend name + the
         // file the caller passed in, so downstream consumers that
         // need to know "which backend is this?" can read it back
@@ -204,6 +224,7 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
         if(task == nullptr) return nullptr;
         MediaIO *io = new MediaIO(parent);
         io->_task = task;
+        task->_owner = io;
         // Same rationale as createForFileRead: seed the live config
         // with the backend's full default schema plus the type and
         // filename so callers that read io->config() back out see a
@@ -224,13 +245,187 @@ StringList MediaIO::enumerate(const String &typeName) {
 // Lifecycle
 // ============================================================================
 
-MediaIO::MediaIO(ObjectBase *parent) : ObjectBase(parent) {}
+MediaIO::MediaIO(ObjectBase *parent) : ObjectBase(parent) {
+        // Claim a process-local instance ID.  Seeded immediately rather
+        // than at open() so code that creates a MediaIO, reads its
+        // identifiers, and then destroys it without ever opening still
+        // sees a meaningful localId.
+        _localId = g_nextLocalId.fetch_add(1);
+
+        // Seed the default name from the local ID.  Callers can still
+        // override via MediaConfig::Name before open(); the override is
+        // applied in resolveIdentifiersAndBenchmark().
+        _name = String("media") + String::number(_localId);
+
+        // Every instance gets a fresh random UUID at construction so
+        // cross-process pipeline correlation can start before open() is
+        // even called.  An explicit MediaConfig::Uuid takes precedence
+        // at open() time.
+        _uuid = UUID::generate();
+}
+
+void MediaIO::resolveIdentifiersAndBenchmark() {
+        // --- Name ---
+        // Honor an explicit MediaConfig::Name if provided; otherwise
+        // keep the constructor default ("media<localId>").  The resolved
+        // value is written back into the live config so a subsequent
+        // config() lookup sees the effective name rather than an empty
+        // string.
+        String cfgName = _config.getAs<String>(MediaConfig::Name, String());
+        if(!cfgName.isEmpty()) {
+                _name = cfgName;
+        }
+        _config.set(MediaConfig::Name, _name);
+
+        // --- UUID ---
+        // Same pattern: override from config if a valid UUID is
+        // supplied, otherwise keep the constructor-assigned one.
+        UUID cfgUuid = _config.getAs<UUID>(MediaConfig::Uuid, UUID());
+        if(cfgUuid.isValid()) {
+                _uuid = cfgUuid;
+        }
+        _config.set(MediaConfig::Uuid, _uuid);
+
+        // --- Benchmark enable + stamp IDs ---
+        // Read the opt-in flag once at open() so the per-frame stamp
+        // sites can check a single boolean instead of walking the
+        // VariantDatabase.  Stamp IDs are registered against the
+        // Benchmark StringRegistry once per open() with the resolved
+        // name as prefix, so reports correlate back to the stage.
+        _benchmarkEnabled = _config.getAs<bool>(MediaConfig::EnableBenchmark, false);
+        if(_benchmarkEnabled) {
+                _idStampEnqueue   = Benchmark::Id(_name + ".enqueue");
+                _idStampDequeue   = Benchmark::Id(_name + ".dequeue");
+                _idStampTaskBegin = Benchmark::Id(_name + ".taskBegin");
+                _idStampTaskEnd   = Benchmark::Id(_name + ".taskEnd");
+        }
+
+        // Fresh telemetry window per open.  A reopen must not show
+        // stale rate or drop counts from a previous session.
+        _rateTracker.reset();
+        _framesDroppedTotal.setValue(0);
+        _framesRepeatedTotal.setValue(0);
+        _framesLateTotal.setValue(0);
+}
+
+int64_t MediaIO::frameByteSize(const Frame::Ptr &frame) {
+        // Walks the frame once and sums every plane and audio buffer's
+        // logical size.  "Logical" is important: we use Buffer::size()
+        // (content) rather than allocSize() (allocation) so that
+        // partially-filled scratch buffers do not inflate the reported
+        // rate.  The loop skips invalid pointers defensively because
+        // some backends build frames lazily.
+        if(!frame.isValid()) return 0;
+        int64_t total = 0;
+        for(const auto &imgPtr : frame->imageList()) {
+                if(!imgPtr.isValid()) continue;
+                for(const auto &planePtr : imgPtr->planes()) {
+                        if(planePtr.isValid()) {
+                                total += static_cast<int64_t>(planePtr->size());
+                        }
+                }
+        }
+        for(const auto &audPtr : frame->audioList()) {
+                if(!audPtr.isValid()) continue;
+                const Buffer::Ptr &buf = audPtr->buffer();
+                if(buf.isValid()) {
+                        total += static_cast<int64_t>(buf->size());
+                }
+        }
+        return total;
+}
+
+void MediaIO::populateStandardStats(MediaIOStats &stats) const {
+        // Rate-tracker derived standard keys.  These are authoritative
+        // and overwrite any backend-contributed values: the base class
+        // owns BytesPerSecond / FramesPerSecond so that every backend
+        // gets them for free without reimplementing a rolling window.
+        stats.set(MediaIOStats::BytesPerSecond, _rateTracker.bytesPerSecond());
+        stats.set(MediaIOStats::FramesPerSecond, _rateTracker.framesPerSecond());
+
+        // Lifetime drop / repeat / late counters.  Backends report
+        // these through the MediaIOTask::noteFrameDropped family of
+        // protected helpers, which simply increment these atomics.
+        stats.set(MediaIOStats::FramesDropped,
+                _framesDroppedTotal.value());
+        stats.set(MediaIOStats::FramesRepeated,
+                _framesRepeatedTotal.value());
+        stats.set(MediaIOStats::FramesLate,
+                _framesLateTotal.value());
+
+        // Latency is only populated when the caller opted into
+        // benchmarking and provided somewhere to aggregate the stamps.
+        // Without those, the latency keys stay at their default 0.0
+        // so callers can distinguish "not measured" from "zero".
+        //
+        // BenchmarkReporter tracks *consecutive* entry pairs only, so
+        // we cannot directly ask for the full enqueue→taskEnd span.
+        // Instead, we sum the individual work-phase deltas: the
+        // writer path covers enqueue→dequeue (queue wait),
+        // dequeue→taskBegin (strand dispatch), and taskBegin→taskEnd
+        // (backend work), which together reconstruct the end-to-end
+        // latency.  The reader path skips the enqueue hop because
+        // reads are pulled by the strand worker, not pushed from the
+        // user thread.
+        if(_benchmarkEnabled && _benchmarkReporter != nullptr) {
+                double avgMs  = 0.0;
+                double peakMs = 0.0;
+                uint64_t minCount = UINT64_MAX;
+
+                auto addPair = [&](Benchmark::Id from, Benchmark::Id to) {
+                        auto s = _benchmarkReporter->stepStats(from, to);
+                        if(s.count == 0) return;
+                        avgMs  += s.avg * 1000.0;
+                        peakMs += s.max * 1000.0;
+                        if(s.count < minCount) minCount = s.count;
+                };
+
+                if(_mode == Writer || _mode == ReadWrite) {
+                        addPair(_idStampEnqueue,   _idStampDequeue);
+                }
+                addPair(_idStampDequeue,   _idStampTaskBegin);
+                addPair(_idStampTaskBegin, _idStampTaskEnd);
+
+                if(minCount != UINT64_MAX && minCount > 0) {
+                        stats.set(MediaIOStats::AverageLatencyMs, avgMs);
+                        stats.set(MediaIOStats::PeakLatencyMs, peakMs);
+                }
+        }
+}
+
+void MediaIO::ensureFrameBenchmark(Frame::Ptr &frame) {
+        // Allocates a Benchmark on the frame if one is not already
+        // attached.  Called from the hot path on every write and every
+        // successful read when benchmarking is enabled; non-enabled
+        // callers short-circuit before reaching here.  Takes a
+        // non-const reference because `.modify()` triggers copy-on-write
+        // on the caller's Frame::Ptr; callers that want their original
+        // Ptr untouched pass a local copy (see writeFrame).
+        if(!frame.isValid()) return;
+        if(frame->benchmark().isValid()) return;
+        frame.modify()->setBenchmark(Benchmark::Ptr::takeOwnership(new Benchmark()));
+}
+
+void MediaIO::submitBenchmarkIfSink(const Frame::Ptr &frame) {
+        // Final step of the stamp pipeline for sink stages: hand the
+        // completed Benchmark to the reporter so it folds into the
+        // per-step statistics.  Non-sink stages (e.g. middle of a
+        // MediaPipeline) stamp but don't submit — the terminal stage
+        // sees all accumulated stamps and submits once.
+        if(!_benchmarkIsSink) return;
+        if(_benchmarkReporter == nullptr) return;
+        if(!frame.isValid()) return;
+        Benchmark::Ptr bm = frame->benchmark();
+        if(!bm.isValid()) return;
+        _benchmarkReporter->submit(*bm);
+}
 
 Error MediaIO::adoptTask(MediaIOTask *task) {
         if(isOpen()) return Error::AlreadyOpen;
         if(task == nullptr) return Error::Invalid;
         if(_task != nullptr) return Error::Invalid;
         _task = task;
+        task->_owner = this;
         return Error::Ok;
 }
 
@@ -298,7 +493,49 @@ void MediaIO::submitReadCommand() {
                 [this, cmd]() mutable {
                         MediaIOCommand *raw = cmd.modify();
                         auto *cr = static_cast<MediaIOCommandRead *>(raw);
+
+                        // Reads have no enqueue stamp — the user thread
+                        // never handed us an existing frame — but we
+                        // can still capture dequeue/taskBegin, let the
+                        // backend produce the frame, then attach the
+                        // accumulated Benchmark and stamp taskEnd.
+                        // Intermediate timestamps live in a local
+                        // Benchmark until the frame exists.
+                        Benchmark::Ptr readBm;
+                        if(_benchmarkEnabled) {
+                                readBm = Benchmark::Ptr::takeOwnership(new Benchmark());
+                                readBm.modify()->stamp(_idStampDequeue);
+                                readBm.modify()->stamp(_idStampTaskBegin);
+                        }
+
                         cr->result = _task->executeCmd(*cr);
+
+                        // Happy-path live-telemetry hook.  Successful
+                        // reads that actually produced a frame feed
+                        // their payload size into the rate tracker so
+                        // BytesPerSecond / FramesPerSecond work for
+                        // every backend with zero migration.
+                        if(cr->result.isOk() && cr->frame.isValid()) {
+                                _rateTracker.record(
+                                        frameByteSize(cr->frame));
+                        }
+
+                        if(_benchmarkEnabled && readBm.isValid()) {
+                                readBm.modify()->stamp(_idStampTaskEnd);
+                                // Attach the collected benchmark to the
+                                // produced frame so downstream stages
+                                // (or the sink) see the read-side
+                                // timestamps.  If the backend already
+                                // populated a benchmark (rare), merge
+                                // isn't supported — the fresh one wins
+                                // since it has the correct stamp IDs
+                                // scoped to this stage's name.
+                                if(cr->frame.isValid()) {
+                                        cr->frame.modify()->setBenchmark(readBm);
+                                        submitBenchmarkIfSink(cr->frame);
+                                }
+                        }
+
                         _readResultQueue.push(cmd);
                         _pendingReadCount.fetchAndSub(1);
                         // Fire on every completion — success, EOF, or
@@ -326,6 +563,12 @@ Error MediaIO::open(Mode mode) {
         if(isOpen()) return Error::AlreadyOpen;
         if(mode == NotOpen) return Error::InvalidArgument;
         if(_task == nullptr) return Error::Invalid;
+
+        // Resolve the Name / Uuid / EnableBenchmark defaults before
+        // building the open command so the backend sees the final
+        // values via _config and the stamp sites see meaningful IDs on
+        // the first enqueued frame.
+        resolveIdentifiersAndBenchmark();
 
         // Fill in the standard libpromeki write defaults (Date,
         // OriginationDateTime, Software, Originator, OriginatorReference,
@@ -406,6 +649,12 @@ Error MediaIO::close() {
         _prefetchDepth = 1;
         _prefetchDepthExplicit = false;
         _atEnd = false;
+
+        // Clear the benchmark-enable latch so a reopen with a fresh
+        // config can toggle it back on without carrying state from the
+        // previous run.  The stamp IDs are re-registered from the
+        // resolved name in the next open() anyway.
+        _benchmarkEnabled = false;
         return err;
 }
 
@@ -564,6 +813,24 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         cmdWrite->frame = frame;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdWrite);
 
+        // Enqueue stamp — runs on the user thread right before the
+        // command is handed to the strand.  This is the one stamp the
+        // reader path has no analogue for because reads are pulled by
+        // the strand worker rather than pushed from the user thread.
+        //
+        // We stamp via `cmdWrite->frame` rather than the caller's
+        // const-ref `frame`; the former is the Ptr the command owns,
+        // and the copy-on-write clone triggered by modify() only
+        // affects our copy.  The caller's original Frame::Ptr stays
+        // pristine.
+        if(_benchmarkEnabled && cmdWrite->frame.isValid()) {
+                ensureFrameBenchmark(cmdWrite->frame);
+                Benchmark::Ptr &bmp = cmdWrite->frame.modify()->benchmark();
+                if(bmp.isValid()) {
+                        bmp.modify()->stamp(_idStampEnqueue);
+                }
+        }
+
         // Claim a pending-write slot before submit so pendingWrites()
         // reflects the new command immediately.  The strand task
         // releases the slot on completion, and the cancellation
@@ -575,9 +842,46 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                 [this, cmd]() mutable {
                         MediaIOCommand *raw = cmd.modify();
                         auto *cw = static_cast<MediaIOCommandWrite *>(raw);
+
+                        // Dequeue → taskBegin → executeCmd → taskEnd
+                        // form the worker-side stamp sequence.
+                        // Together with the enqueue stamp on the user
+                        // thread, they cover queue-wait and work-time
+                        // for every frame the writer sees.
+                        if(_benchmarkEnabled && cw->frame.isValid()) {
+                                // cw->frame is a non-const Ptr on a
+                                // command we own, so modify() never
+                                // clones here — the command holds the
+                                // only live reference to this Frame
+                                // object graph on the worker thread.
+                                Benchmark::Ptr &bmp = cw->frame.modify()->benchmark();
+                                if(bmp.isValid()) {
+                                        Benchmark *bm = bmp.modify();
+                                        bm->stamp(_idStampDequeue);
+                                        bm->stamp(_idStampTaskBegin);
+                                        Error err = _task->executeCmd(*cw);
+                                        bm->stamp(_idStampTaskEnd);
+                                        submitBenchmarkIfSink(cw->frame);
+                                        if(err.isOk()) {
+                                                _rateTracker.record(
+                                                        frameByteSize(cw->frame));
+                                                frameWantedSignal.emit();
+                                        } else {
+                                                writeErrorSignal.emit(err);
+                                        }
+                                        _pendingWriteCount.fetchAndSub(1);
+                                        return err;
+                                }
+                        }
+
                         Error err = _task->executeCmd(*cw);
-                        if(err.isOk()) frameWantedSignal.emit();
-                        else            writeErrorSignal.emit(err);
+                        if(err.isOk()) {
+                                _rateTracker.record(
+                                        frameByteSize(cw->frame));
+                                frameWantedSignal.emit();
+                        } else {
+                                writeErrorSignal.emit(err);
+                        }
                         _pendingWriteCount.fetchAndSub(1);
                         return err;
                 },
@@ -604,6 +908,24 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
 Error MediaIO::sendParams(const String &name, const MediaIOParams &params, MediaIOParams *result) {
         if(!isOpen()) return Error::NotOpen;
 
+        // Base-class Benchmark commands short-circuit before reaching
+        // the strand so they don't queue behind real work — callers
+        // typically poll these to render a status display.  Without an
+        // attached reporter there's nothing useful to report, so
+        // surface NotSupported.
+        if(name == ParamBenchmarkReport.name()) {
+                if(_benchmarkReporter == nullptr) return Error::NotSupported;
+                if(result != nullptr) {
+                        result->set(ParamBenchmarkReport, _benchmarkReporter->summaryReport());
+                }
+                return Error::Ok;
+        }
+        if(name == ParamBenchmarkReset.name()) {
+                if(_benchmarkReporter == nullptr) return Error::NotSupported;
+                _benchmarkReporter->reset();
+                return Error::Ok;
+        }
+
         auto *cmdParams = new MediaIOCommandParams();
         cmdParams->name = name;
         cmdParams->params = params;
@@ -621,6 +943,13 @@ MediaIOStats MediaIO::stats() {
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdStats);
         Error err = submitAndWait(cmd);
         if(err.isError()) return MediaIOStats();
+        // Let the base-class telemetry overlay the backend's stats.
+        // populateStandardStats() writes the standard keys after the
+        // backend has populated anything backend-specific, so drivers
+        // that still set their own BytesPerSecond / FramesDropped
+        // (legacy code) get overwritten by the authoritative base
+        // values.
+        populateStandardStats(cmdStats->stats);
         return std::move(cmdStats->stats);
 }
 

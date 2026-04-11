@@ -39,4 +39,27 @@ Error MediaIOTask::executeCmd(MediaIOCommandStats &cmd) {
         return Error::Ok;
 }
 
+// ---- Live-telemetry helper forwarders ----
+//
+// All three forward into the owning MediaIO's per-instance counters.
+// MediaIOTask is a friend of MediaIO (declared in mediaio.h), so the
+// private atomic fields are accessible here.  Each helper guards
+// against a null owner so tasks constructed in isolation (e.g. unit
+// tests) don't crash if they invoke the helpers before being adopted.
+
+void MediaIOTask::noteFrameDropped() {
+        if(_owner == nullptr) return;
+        _owner->_framesDroppedTotal.fetchAndAdd(1);
+}
+
+void MediaIOTask::noteFrameRepeated() {
+        if(_owner == nullptr) return;
+        _owner->_framesRepeatedTotal.fetchAndAdd(1);
+}
+
+void MediaIOTask::noteFrameLate() {
+        if(_owner == nullptr) return;
+        _owner->_framesLateTotal.fetchAndAdd(1);
+}
+
 PROMEKI_NAMESPACE_END

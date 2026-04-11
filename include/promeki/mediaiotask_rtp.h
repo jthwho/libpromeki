@@ -296,9 +296,6 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 static inline const MediaIOStats::ID StatsPacketsSent{"PacketsSent"};
                 /** @brief int64_t — total bytes transmitted across all streams. */
                 static inline const MediaIOStats::ID StatsBytesSent{"BytesSent"};
-                /** @brief int64_t — total frames dropped due to transport back-pressure
-                 * (writer) or queue overflow (reader). */
-                static inline const MediaIOStats::ID StatsFramesDropped{"FramesDropped"};
                 /** @brief int64_t — total frames received from the network. */
                 static inline const MediaIOStats::ID StatsFramesReceived{"FramesReceived"};
                 /** @brief int64_t — total RTP packets received across all streams. */
@@ -518,7 +515,6 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 FrameRate       _frameRate;
                 int64_t         _frameCount = 0;
                 int64_t         _framesSent = 0;
-                int64_t         _framesDropped = 0;
 
                 // Mode
                 bool            _readerMode = false;
@@ -535,7 +531,6 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 int             _readerMaxDepth = 4;
                 int             _readerJitterMs = 50;
                 int64_t         _readerFramesReceived = 0;
-                int64_t         _readerFramesDropped  = 0;
 
                 /**
                  * @brief Reader-side frame aggregator.

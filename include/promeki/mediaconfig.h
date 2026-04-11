@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/enums.h>
+#include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -82,6 +83,32 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Registered backend type name."));
+
+                /// @brief String — human-readable instance name (used in logs, spawned thread names,
+                /// benchmark stamp IDs). Defaults to `"media<localId>"` when left empty.
+                static inline const ID Name = declareID("Name",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Human-readable instance name; defaults to "
+                                        "\"media<localId>\" when empty."));
+
+                /// @brief UUID — globally-unique instance identifier used for cross-process
+                /// pipeline correlation. Defaults to a freshly generated UUID when left invalid.
+                static inline const ID Uuid = declareID("Uuid",
+                        VariantSpec().setType(Variant::TypeUUID)
+                                .setDefault(UUID())
+                                .setDescription("Globally-unique instance identifier; defaults "
+                                        "to a fresh UUID when invalid."));
+
+                /// @brief bool — opt into per-frame Benchmark stamping in the MediaIO base class.
+                /// When true, every frame flowing through this MediaIO receives stamps at
+                /// enqueue / dequeue / taskBegin / taskEnd, aggregated by an attached
+                /// BenchmarkReporter when the stage is a sink.
+                static inline const ID EnableBenchmark = declareID("EnableBenchmark",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Enable per-frame Benchmark stamping in the "
+                                        "MediaIO base class."));
 
                 /// @brief FrameRate — stream or target frame rate.
                 static inline const ID FrameRate = declareID("FrameRate",

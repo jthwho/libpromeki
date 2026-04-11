@@ -19,12 +19,13 @@ include(ExternalProject)
 
 # Build options ################################################################
 
-option(PROMEKI_BUILD_TUI    "Build the promeki-tui library"    ON)
-option(PROMEKI_BUILD_SDL    "Build the promeki-sdl library"    OFF)
-option(PROMEKI_BUILD_UTILS  "Build utility applications"       ON)
-option(PROMEKI_BUILD_DEMOS  "Build demonstration applications" ON)
-option(PROMEKI_BUILD_TESTS  "Build unit tests"                 ON)
-option(PROMEKI_BUILD_DOCS   "Build documentation"              OFF)
+option(PROMEKI_BUILD_TUI        "Build the promeki-tui library"    ON)
+option(PROMEKI_BUILD_SDL        "Build the promeki-sdl library"    OFF)
+option(PROMEKI_BUILD_UTILS      "Build utility applications"       ON)
+option(PROMEKI_BUILD_DEMOS      "Build demonstration applications" ON)
+option(PROMEKI_BUILD_TESTS      "Build unit tests"                 ON)
+option(PROMEKI_BUILD_DOCS       "Build documentation"              OFF)
+option(PROMEKI_BUILD_BENCHMARKS "Build the promeki-bench utility"  ON)
 
 # Feature flags for the main promeki library
 option(PROMEKI_ENABLE_NETWORK  "Include networking support"             ON)
@@ -490,6 +491,7 @@ set(PROMEKI_HEADERS
     include/promeki/atomic.h
     include/promeki/audiolevel.h
     include/promeki/benchmark.h
+    include/promeki/benchmarkrunner.h
     include/promeki/buffer.h
     include/promeki/bufferediodevice.h
     include/promeki/bufferiodevice.h
@@ -553,6 +555,7 @@ set(PROMEKI_HEADERS
     include/promeki/queue.h
     include/promeki/random.h
     include/promeki/rational.h
+    include/promeki/ratetracker.h
     include/promeki/readwritelock.h
     include/promeki/rect.h
     include/promeki/regex.h
@@ -565,6 +568,7 @@ set(PROMEKI_HEADERS
     include/promeki/signalhandler.h
     include/promeki/size2d.h
     include/promeki/slot.h
+    include/promeki/statsaccumulator.h
     include/promeki/streamstring.h
     include/promeki/string.h
     include/promeki/stringdata.h
@@ -598,6 +602,7 @@ set(PROMEKI_SOURCES
     src/core/array.cpp
     src/core/audiolevel.cpp
     src/core/benchmark.cpp
+    src/core/benchmarkrunner.cpp
     src/core/buffer.cpp
     src/core/bufferediodevice.cpp
     src/core/bufferiodevice.cpp
@@ -649,6 +654,7 @@ set(PROMEKI_SOURCES
     src/core/process.cpp
     src/core/random.cpp
     src/core/rational.cpp
+    src/core/ratetracker.cpp
     src/core/rect.cpp
     src/core/regex.cpp
     src/core/resource.cpp
@@ -1250,6 +1256,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/array.cpp
         tests/atomic.cpp
         tests/audiolevel.cpp
+        tests/benchmarkrunner.cpp
         tests/buffer.cpp
         tests/bufferediodevice.cpp
         tests/bufferiodevice.cpp
@@ -1315,6 +1322,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/queue.cpp
         tests/random.cpp
         tests/rational.cpp
+        tests/ratetracker.cpp
         tests/readwritelock.cpp
         tests/rect.cpp
         tests/regex.cpp
@@ -1329,6 +1337,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/size2d.cpp
         tests/span.cpp
         tests/stack.cpp
+        tests/statsaccumulator.cpp
         tests/streamstring.cpp
         tests/string.cpp
         tests/stringiodevice.cpp
@@ -1405,6 +1414,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/ltcencoder.cpp
             tests/mediadesc.cpp
             tests/mediaio.cpp
+            tests/mediaio_identifiers.cpp
+            tests/mediaio_stats.cpp
             tests/mediaiotask_converter.cpp
             tests/mediaiotask_quicktime.cpp
             tests/mediaiotask_rtp.cpp

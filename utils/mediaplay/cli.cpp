@@ -128,6 +128,16 @@ void usage() {
                 "                            Use this to bound the actual\n"
                 "                            output length in frames.\n"
                 "  --verbose                 Print periodic progress stats.\n"
+                "  --stats                   Enable live MediaIO telemetry.\n"
+                "                            Prints a BytesPerSecond /\n"
+                "                            FramesPerSecond / FramesDropped /\n"
+                "                            AverageLatencyMs summary for every\n"
+                "                            stage (source, converter, sinks)\n"
+                "                            once per second by default.  Auto-\n"
+                "                            enables EnableBenchmark on every\n"
+                "                            stage so latency keys populate.\n"
+                "  --stats-interval <SEC>    Override the --stats print interval\n"
+                "                            in seconds (default 1.0).\n"
                 "  --memstats                Print MemSpace allocation\n"
                 "                            statistics for every registered\n"
                 "                            memory space on shutdown.\n"
@@ -263,6 +273,27 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  "Print periodic progress stats",
                  CmdLineParser::OptionCallback([&]() {
                          opts.verbose = true;
+                         return 0;
+                 })},
+                {0, "stats",
+                 "Enable live MediaIO telemetry with per-stage summaries",
+                 CmdLineParser::OptionCallback([&]() {
+                         // Default 1.0s unless a prior
+                         // --stats-interval already set a value.
+                         if(opts.statsInterval <= 0.0) {
+                                 opts.statsInterval = 1.0;
+                         }
+                         return 0;
+                 })},
+                {0, "stats-interval",
+                 "Seconds between --stats prints",
+                 CmdLineParser::OptionDoubleCallback([&](double v) {
+                         if(v <= 0.0) {
+                                 fprintf(stderr,
+                                         "Error: --stats-interval must be > 0\n");
+                                 return 1;
+                         }
+                         opts.statsInterval = v;
                          return 0;
                  })},
                 {0, "memstats",

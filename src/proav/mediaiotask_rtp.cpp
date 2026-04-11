@@ -263,9 +263,7 @@ void MediaIOTask_Rtp::resetAll() {
         resetStream(_data);
         _frameCount    = 0;
         _framesSent    = 0;
-        _framesDropped = 0;
         _readerFramesReceived = 0;
-        _readerFramesDropped  = 0;
         _readerMode    = false;
         _videoWirePixelDesc = PixelDesc();
         _readerQueue.clear();
@@ -1434,7 +1432,7 @@ void MediaIOTask_Rtp::pushReaderFrame(Frame::Ptr frame) {
            static_cast<int>(_readerQueue.size()) >= _readerMaxDepth) {
                 Frame::Ptr discarded;
                 (void)_readerQueue.popOrFail(discarded);
-                _readerFramesDropped++;
+                noteFrameDropped();
         }
         _readerQueue.push(std::move(frame));
         _readerFramesReceived++;
@@ -2123,7 +2121,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         join(dataResult,  dataDispatched);
 
         if(firstErr.isError()) {
-                _framesDropped++;
+                noteFrameDropped();
                 return firstErr;
         }
 
@@ -2150,7 +2148,9 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandParams &cmd) {
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandStats &cmd) {
         if(_readerMode) {
                 cmd.stats.set(StatsFramesReceived, _readerFramesReceived);
-                cmd.stats.set(StatsFramesDropped, _readerFramesDropped);
+                // FramesDropped is populated by the MediaIO base
+                // class from noteFrameDropped() — see
+                // MediaIO::populateStandardStats.
                 cmd.stats.set(StatsPacketsReceived,
                         _video.packetsReceived + _audio.packetsReceived +
                         _data.packetsReceived);
@@ -2168,7 +2168,8 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandStats &cmd) {
                               _video.rxFrameAssembleTime.toString());
         } else {
                 cmd.stats.set(StatsFramesSent, _framesSent);
-                cmd.stats.set(StatsFramesDropped, _framesDropped);
+                // FramesDropped is populated by the MediaIO base
+                // class from noteFrameDropped().
                 cmd.stats.set(StatsPacketsSent,
                         _video.packetsSent + _audio.packetsSent + _data.packetsSent);
                 cmd.stats.set(StatsBytesSent,

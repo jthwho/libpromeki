@@ -27,12 +27,14 @@
 
 #include <promeki/application.h>
 #include <promeki/audiodesc.h>
+#include <promeki/benchmarkreporter.h>
 #include <promeki/error.h>
 #include <promeki/eventloop.h>
 #include <promeki/filepath.h>
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/list.h>
+#include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
 #include <promeki/memspace.h>
@@ -40,6 +42,7 @@
 #include <promeki/rect.h>
 #include <promeki/size2d.h>
 #include <promeki/string.h>
+#include <promeki/thread.h>
 
 #include <promeki/sdl/sdlapplication.h>
 #include <promeki/sdl/sdlaudiooutput.h>
@@ -53,6 +56,98 @@
 
 using namespace promeki;
 using namespace mediaplay;
+
+namespace {
+
+/**
+ * @brief One row in the --stats output.
+ *
+ * Remembered per stage so the main-loop timer can walk the list on
+ * every tick without having to re-discover the stages, and so the
+ * BenchmarkReporters live long enough to accumulate between ticks.
+ */
+struct StatsSlot {
+        MediaIO           *io       = nullptr;
+        String             label;
+        BenchmarkReporter *reporter = nullptr;
+};
+
+/**
+ * @brief Flips EnableBenchmark on a stage and attaches a reporter.
+ *
+ * Safe to call immediately after a stage has been built and before
+ * @c open() — the config key is read in @c resolveIdentifiersAndBenchmark
+ * which runs at the top of @c open().  The reporter is heap-owned by
+ * the caller and must outlive the MediaIO.
+ *
+ * @param io       The stage to enable benchmarking on.
+ * @param label    Human label used for stats printing.
+ * @param slots    Slot list to append to.
+ */
+void attachStatsReporter(MediaIO *io, const String &label,
+                         List<StatsSlot> &slots) {
+        if(io == nullptr) return;
+        MediaIO::Config cfg = io->config();
+        cfg.set(MediaConfig::EnableBenchmark, true);
+        io->setConfig(cfg);
+        auto *reporter = new BenchmarkReporter();
+        io->setBenchmarkReporter(reporter);
+        slots.pushToBack(StatsSlot{io, label, reporter});
+}
+
+/**
+ * @brief Formats a byte rate with a short human-readable suffix.
+ *
+ * Picks B/s, KB/s, MB/s, or GB/s so the --stats output stays
+ * aligned.  Values less than 1 B/s render as "0 B/s".
+ */
+String formatByteRate(double bps) {
+        const char *unit = "B/s";
+        double v = bps;
+        if(v >= 1e9) { v /= 1e9; unit = "GB/s"; }
+        else if(v >= 1e6) { v /= 1e6; unit = "MB/s"; }
+        else if(v >= 1e3) { v /= 1e3; unit = "KB/s"; }
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "%7.2f %s", v, unit);
+        return String(buf);
+}
+
+/**
+ * @brief Prints one line per stage with the current telemetry snapshot.
+ *
+ * Called from the main-loop --stats timer.  Queries each stage's
+ * stats() on the hot path (a command round-trip on the strand) and
+ * renders a compact summary.  A blank line separates successive
+ * prints so long runs remain scannable in a terminal.
+ */
+void printStats(const List<StatsSlot> &slots) {
+        if(slots.isEmpty()) return;
+        for(auto it = slots.begin(); it != slots.end(); ++it) {
+                if(it->io == nullptr) continue;
+                MediaIOStats s = it->io->stats();
+                double bps = s.getAs<double>(MediaIOStats::BytesPerSecond);
+                double fps = s.getAs<double>(MediaIOStats::FramesPerSecond);
+                int64_t dropped = s.getAs<int64_t>(MediaIOStats::FramesDropped);
+                double avgLat = s.getAs<double>(MediaIOStats::AverageLatencyMs);
+                double peakLat = s.getAs<double>(MediaIOStats::PeakLatencyMs);
+                int64_t qDepth = s.getAs<int64_t>(MediaIOStats::QueueDepth);
+                int64_t qCap   = s.getAs<int64_t>(MediaIOStats::QueueCapacity);
+
+                fprintf(stdout,
+                        "[stats] %-16s  %s  %7.1f fps  drop=%lld  "
+                        "lat=%.2f/%.2f ms  q=%lld/%lld\n",
+                        it->label.cstr(),
+                        formatByteRate(bps).cstr(),
+                        fps,
+                        static_cast<long long>(dropped),
+                        avgLat, peakLat,
+                        static_cast<long long>(qDepth),
+                        static_cast<long long>(qCap));
+        }
+        fflush(stdout);
+}
+
+} // namespace
 
 int main(int argc, char **argv) {
         Options opts;
@@ -77,6 +172,16 @@ int main(int argc, char **argv) {
         // --- Build source ---
         MediaIO *source = buildSource(opts.input);
         if(source == nullptr) return 1;
+
+        // Stats plumbing.  When --stats is on we attach a
+        // BenchmarkReporter to every stage and flip EnableBenchmark
+        // before open() so the latency keys populate.  The slot list
+        // owns the reporters and drives the periodic print timer.
+        List<StatsSlot> statsSlots;
+        const bool statsEnabled = (opts.statsInterval > 0.0);
+        if(statsEnabled) {
+                attachStatsReporter(source, String("source"), statsSlots);
+        }
 
         Error err = source->open(MediaIO::Reader);
         if(err.isError()) {
@@ -113,6 +218,10 @@ int main(int argc, char **argv) {
                 converter->setMediaDesc(srcDesc);
                 if(srcAudioDesc.isValid()) converter->setAudioDesc(srcAudioDesc);
                 if(!srcMetadata.isEmpty()) converter->setMetadata(srcMetadata);
+                if(statsEnabled) {
+                        attachStatsReporter(converter, String("converter"),
+                                            statsSlots);
+                }
                 err = converter->open(MediaIO::ReadWrite);
                 if(err.isError()) {
                         fprintf(stderr, "Error: Converter open failed: %s\n",
@@ -157,6 +266,11 @@ int main(int argc, char **argv) {
                 delete source;
                 delete audioOutput;
                 delete window;
+                for(auto it = statsSlots.begin();
+                         it != statsSlots.end(); ++it) {
+                        delete it->reporter;
+                }
+                statsSlots.clear();
                 return rc;
         };
 
@@ -234,6 +348,10 @@ int main(int argc, char **argv) {
                         if(effectiveAudioDesc.isValid()) {
                                 player->setAudioDesc(effectiveAudioDesc);
                         }
+                        if(statsEnabled) {
+                                attachStatsReporter(player, String("sink:sdl"),
+                                                    statsSlots);
+                        }
                         err = player->open(MediaIO::Writer);
                         if(err.isError()) {
                                 fprintf(stderr, "Error: player open failed: %s\n",
@@ -251,6 +369,11 @@ int main(int argc, char **argv) {
                                                 effectiveAudioDesc, srcMetadata,
                                                 label);
                 if(sinkIO == nullptr) return cleanupAndFail(1);
+                if(statsEnabled) {
+                        attachStatsReporter(sinkIO,
+                                            String("sink:") + label,
+                                            statsSlots);
+                }
                 err = sinkIO->open(MediaIO::Writer);
                 if(err.isError()) {
                         fprintf(stderr, "Error: output '%s' open failed: %s\n",
@@ -292,9 +415,39 @@ int main(int argc, char **argv) {
                                 (unsigned long)pipeline.framesPumped());
                 });
         }
+        // The stats timer runs on its own worker thread rather than
+        // on the main EventLoop.  MediaIO::stats() is a synchronous
+        // submitAndWait() round-trip through each stage's strand, so
+        // polling from the main thread parks the main loop while
+        // that round-trip completes.  The SDL player relies on
+        // postCallable(renderPending) running on the main thread to
+        // consume its staged image; if the main thread is blocked,
+        // the SDL strand processes writeFrame() commands faster than
+        // renderPending() can drain _pendingImage, and every frame
+        // that arrives while _pendingImage is still set is counted
+        // as dropped.  Driving the timer from a dedicated thread
+        // keeps the main loop free and eliminates that race.
+        Thread statsThread;
+        if(statsEnabled) {
+                unsigned int intervalMs = static_cast<unsigned int>(
+                        opts.statsInterval * 1000.0);
+                if(intervalMs < 1) intervalMs = 1;
+                statsThread.setName(String("mp-stats"));
+                statsThread.start();
+                statsThread.threadEventLoop()->startTimer(intervalMs,
+                        [&]() { printStats(statsSlots); });
+        }
         int rc = app.exec();
 
         // --- Shut down ---
+        // Stop the stats thread first so no in-flight printStats()
+        // can race against the stages we are about to tear down.
+        // quit() asks the worker's EventLoop to exit; wait() joins
+        // the underlying std::thread.
+        if(statsEnabled) {
+                statsThread.quit();
+                statsThread.wait();
+        }
         source->cancelPending();
         if(!pipeline.finishedCleanly()) {
                 if(converter != nullptr) converter->cancelPending();
@@ -320,6 +473,14 @@ int main(int argc, char **argv) {
         delete source;
         delete audioOutput;
         delete window;
+
+        // The reporters outlived every stage above — MediaIO only
+        // observes the pointer, never owns it.  Delete them now that
+        // the stages are gone.
+        for(auto it = statsSlots.begin(); it != statsSlots.end(); ++it) {
+                delete it->reporter;
+        }
+        statsSlots.clear();
 
         if(opts.memStats) {
                 MemSpace::logAllStats();

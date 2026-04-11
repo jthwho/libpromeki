@@ -209,7 +209,7 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                                 promekiWarn("SDLPlayerTask: decode of '%s' "
                                             "to RGBA8_sRGB failed — dropping frame",
                                             newImage->pixelDesc().name().cstr());
-                                _framesDropped.fetchAndAdd(1);
+                                noteFrameDropped();
                                 cmd.currentFrame++;
                                 cmd.frameCount = MediaIO::FrameCountInfinite;
                                 return Error::Ok;
@@ -219,7 +219,7 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                 {
                         Mutex::Locker lock(_pendingMutex);
                         if(_pendingImage.isValid()) {
-                                _framesDropped.fetchAndAdd(1);
+                                noteFrameDropped();
                         }
                         _pendingImage = newImage;
                 }

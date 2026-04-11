@@ -1196,9 +1196,13 @@ TEST_CASE("MediaIO_CancelPending_NoOpWhenClosed") {
 // Stats
 // ============================================================================
 
-TEST_CASE("MediaIO_Stats_DefaultIsEmpty") {
-        // TPG doesn't override executeCmd(MediaIOCommandStats &), so the
-        // default returns Ok with empty stats.
+TEST_CASE("MediaIO_Stats_DefaultPopulatesStandardKeys") {
+        // TPG doesn't override executeCmd(MediaIOCommandStats &), but
+        // the MediaIO base class still overlays the standard
+        // telemetry keys after the backend returns.  A freshly-opened
+        // stage that has not processed any frames yet therefore
+        // reports zero rates and zero drop / repeat / late counters
+        // rather than an empty stats bag.
         MediaIO::Config cfg;
         cfg.set(MediaConfig::Type, "TPG");
         cfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_24));
@@ -1207,10 +1211,12 @@ TEST_CASE("MediaIO_Stats_DefaultIsEmpty") {
         REQUIRE(io != nullptr);
         REQUIRE(io->open(MediaIO::Reader).isOk());
         MediaIOStats s = io->stats();
-        CHECK(s.isEmpty());
-        // Standard keys are MediaIOStats::ID values — passing them to
-        // getAs compiles cleanly because of the type-safe IDs.
-        CHECK(s.getAs<int64_t>(MediaIOStats::FramesDropped, -1) == -1);
+        CHECK_FALSE(s.isEmpty());
+        CHECK(s.getAs<int64_t>(MediaIOStats::FramesDropped, -1) == 0);
+        CHECK(s.getAs<int64_t>(MediaIOStats::FramesRepeated, -1) == 0);
+        CHECK(s.getAs<int64_t>(MediaIOStats::FramesLate, -1) == 0);
+        CHECK(s.getAs<double>(MediaIOStats::BytesPerSecond, -1.0) == 0.0);
+        CHECK(s.getAs<double>(MediaIOStats::FramesPerSecond, -1.0) == 0.0);
         io->close();
         delete io;
 }

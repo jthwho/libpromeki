@@ -72,7 +72,45 @@ class MediaIOTask {
                 MediaIOTask(MediaIOTask &&) = delete;
                 MediaIOTask &operator=(MediaIOTask &&) = delete;
 
+        protected:
+                // ---- Live-telemetry helpers ----
+                //
+                // Backends use these to report exception-path events
+                // that the MediaIO base class cannot observe on its
+                // own.  Happy-path BytesPerSecond / FramesPerSecond
+                // are already tracked automatically when an
+                // executeCmd() call produces or consumes a valid
+                // frame; these helpers exist for counters the base
+                // path cannot infer — drops, repeats, and late
+                // arrivals.  They are safe to call from the backend
+                // worker thread and are cheap (one atomic increment
+                // each).  No-op when the task has not been attached
+                // to a MediaIO yet (defensive).
+
+                /** @brief Increments the lifetime dropped-frame counter. */
+                void noteFrameDropped();
+
+                /** @brief Increments the lifetime repeated-frame counter. */
+                void noteFrameRepeated();
+
+                /** @brief Increments the lifetime late-frame counter. */
+                void noteFrameLate();
+
+                /**
+                 * @brief Returns the MediaIO that owns this task.
+                 *
+                 * Set by MediaIO immediately after adopting the task
+                 * from a factory or @c adoptTask().  Null while the
+                 * task is unattached (e.g. inside the factory, before
+                 * assignment).
+                 *
+                 * @return The owning MediaIO, or nullptr.
+                 */
+                MediaIO *mediaIo() const { return _owner; }
+
         private:
+                MediaIO *_owner = nullptr;
+
                 /**
                  * @brief Handles a CmdOpen command.
                  *

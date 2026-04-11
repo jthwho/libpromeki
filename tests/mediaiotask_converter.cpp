@@ -409,10 +409,12 @@ TEST_CASE("MediaIOTask_Converter_Stats") {
 
         MediaIOStats stats = io->stats();
         CHECK(stats.getAs<int64_t>(MediaIOTask_Converter::StatsFramesConverted) == 2);
-        CHECK(stats.getAs<int64_t>(MediaIOTask_Converter::StatsBytesIn) > 0);
-        CHECK(stats.getAs<int64_t>(MediaIOTask_Converter::StatsBytesOut) > 0);
         CHECK(stats.getAs<int64_t>(MediaIOStats::QueueDepth) == 2);
         CHECK(stats.getAs<int64_t>(MediaIOStats::QueueCapacity) == 4);
+        // Standard base-class keys are now authoritative for drops
+        // and rate; they must be present even without a running
+        // telemetry pump.
+        CHECK(stats.getAs<int64_t>(MediaIOStats::FramesDropped) == 0);
 
         io->close();
         delete io;

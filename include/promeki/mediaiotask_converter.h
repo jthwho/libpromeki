@@ -106,12 +106,6 @@ class MediaIOTask_Converter : public MediaIOTask {
                 /** @brief int64_t — total frames successfully converted. */
                 static inline const MediaIOStats::ID StatsFramesConverted{"FramesConverted"};
 
-                /** @brief int64_t — total input image+audio bytes processed. */
-                static inline const MediaIOStats::ID StatsBytesIn{"BytesIn"};
-
-                /** @brief int64_t — total output image+audio bytes produced. */
-                static inline const MediaIOStats::ID StatsBytesOut{"BytesOut"};
-
                 /**
                  * @brief Returns the format descriptor for this backend.
                  * @return A FormatDesc describing the Converter backend.
@@ -149,8 +143,6 @@ class MediaIOTask_Converter : public MediaIOTask {
                 int64_t                         _frameCount = 0;
                 int64_t                         _readCount = 0;
                 int64_t                         _framesConverted = 0;
-                int64_t                         _bytesIn = 0;
-                int64_t                         _bytesOut = 0;
 };
 
 PROMEKI_NAMESPACE_END

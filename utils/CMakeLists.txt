@@ -21,11 +21,12 @@ endif()
 
 add_subdirectory(promeki-info)
 
+if(PROMEKI_BUILD_BENCHMARKS)
+    add_subdirectory(promeki-bench)
+endif()
+
 if(PROMEKI_ENABLE_PROAV)
     add_subdirectory(imgtest)
-    if(PROMEKI_ENABLE_CSC)
-        add_subdirectory(cscbench)
-    endif()
     if(PROMEKI_BUILD_SDL)
         add_subdirectory(mediaplay)
     endif()

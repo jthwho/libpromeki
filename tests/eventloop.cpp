@@ -311,3 +311,131 @@ TEST_CASE("EventLoop: ObjectBase repeating timer via timerEvent") {
         obj.stopTimer(timerId);
         CHECK(obj.fireCount >= 3);
 }
+
+// ============================================================================
+// Cross-thread timer installation
+// ============================================================================
+//
+// startTimer and stopTimer must be safe to call from a thread other
+// than the one running exec().  Before the thread-safety fix, the
+// cross-thread caller raced on the internal timer list and, even if
+// the append somehow landed, the owning thread sat asleep in
+// Queue::pop() because nothing woke it up.  These tests drive both
+// paths and make sure the worker thread ticks the timer immediately
+// after the cross-thread install.
+
+TEST_CASE("EventLoop: startTimer from another thread wakes the worker") {
+        // Worker thread runs exec() on its own EventLoop with no
+        // pending work.  The main thread then installs a single-shot
+        // timer cross-thread; the test passes only if the timer body
+        // runs within a short wall-clock window — i.e. the worker
+        // woke up and processed the new timer promptly instead of
+        // sleeping forever.
+        EventLoop *workerLoopPtr = nullptr;
+        std::atomic<bool> workerReady{false};
+        std::atomic<bool> timerFired{false};
+
+        std::thread worker([&]() {
+                EventLoop loop;
+                workerLoopPtr = &loop;
+                workerReady.store(true);
+                loop.exec();
+        });
+
+        // Wait until the worker has constructed its EventLoop.
+        while(!workerReady.load()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        // Cross-thread single-shot timer that quits the worker.
+        workerLoopPtr->startTimer(5, [&timerFired, workerLoopPtr]() {
+                timerFired.store(true);
+                workerLoopPtr->quit();
+        }, true);
+
+        worker.join();
+        CHECK(timerFired.load());
+}
+
+TEST_CASE("EventLoop: stopTimer from another thread removes the timer") {
+        // Start a repeating timer cross-thread, let it fire once,
+        // then stop it cross-thread and confirm no further fires.
+        EventLoop *workerLoopPtr = nullptr;
+        std::atomic<bool> workerReady{false};
+        std::atomic<int> fireCount{0};
+
+        std::thread worker([&]() {
+                EventLoop loop;
+                workerLoopPtr = &loop;
+                workerReady.store(true);
+                loop.exec();
+        });
+
+        while(!workerReady.load()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        int timerId = workerLoopPtr->startTimer(5, [&fireCount]() {
+                fireCount.fetch_add(1);
+        });
+
+        // Let it fire a few times.
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        int countBefore = fireCount.load();
+        CHECK(countBefore >= 1);
+
+        // Stop cross-thread and give the worker time to observe.
+        workerLoopPtr->stopTimer(timerId);
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        int countAfterStop = fireCount.load();
+
+        // Quit the worker.
+        workerLoopPtr->quit();
+        worker.join();
+
+        // No further fires after the cross-thread stop.
+        CHECK(fireCount.load() == countAfterStop);
+}
+
+TEST_CASE("EventLoop: timer callback can start another timer without deadlocking") {
+        // processTimers() takes the timer mutex to snapshot ready
+        // entries and releases it before invoking callbacks.  A
+        // callback that calls startTimer() on the same event loop
+        // must therefore succeed without deadlocking on the mutex.
+        EventLoop loop;
+        std::atomic<int> innerFires{0};
+        std::atomic<bool> outerFired{false};
+        loop.startTimer(5, [&]() {
+                outerFired.store(true);
+                loop.startTimer(5, [&innerFires, &loop]() {
+                        innerFires.fetch_add(1);
+                        if(innerFires.load() >= 2) loop.quit();
+                }, false);
+        }, true);
+        loop.exec();
+        CHECK(outerFired.load());
+        CHECK(innerFires.load() >= 2);
+}
+
+TEST_CASE("EventLoop: timer callback can stop another timer without deadlocking") {
+        // Same guarantee as the startTimer case, but for stopTimer:
+        // a callback that stops a sibling timer on the same loop
+        // must not deadlock on _timersMutex.
+        EventLoop loop;
+        std::atomic<int> aFires{0};
+        std::atomic<int> bFires{0};
+        int bId = loop.startTimer(3, [&bFires]() {
+                bFires.fetch_add(1);
+        });
+        loop.startTimer(6, [&aFires, &loop, bId]() {
+                aFires.fetch_add(1);
+                loop.stopTimer(bId);  // stop sibling from inside our callback
+                if(aFires.load() >= 1) loop.quit();
+        });
+        loop.exec();
+        CHECK(aFires.load() >= 1);
+        // b fired at least once but stopTimer should have halted it
+        // before it could run many times.  Loose upper bound to
+        // tolerate scheduler jitter.
+        CHECK(bFires.load() < 50);
+}

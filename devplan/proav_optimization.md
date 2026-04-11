@@ -25,7 +25,7 @@ Shipped:
 - Doctest coverage in `tests/network/udpsocket.cpp`: loopback batch send (5 packets), empty list, closed-socket error, invalid entries.
 
 Still on the wishlist but not blocking:
-- [ ] Performance benchmark comparing syscall counts / wall time for N packets via the old `writeDatagram` loop vs batch — belongs in the future `benchmark-promeki` target.
+- [ ] Performance benchmark comparing syscall counts / wall time for N packets via the old `writeDatagram` loop vs batch — tracked as a case under `utils/promeki-bench/cases/network.cpp` in [benchmarking.md](benchmarking.md).
 - [ ] Convenience overload for many-packets-to-same-destination: `int writeDatagrams(const void * const *data, const size_t *sizes, int count, const SocketAddress &dest)`.  Low priority — the generic `DatagramList` form already serves `RtpSession::sendPackets()`.
 
 ---

@@ -71,10 +71,10 @@
  *
  * @section utils_list Current Utilities
  *
- * | Utility        | Library          | Description                          |
- * |----------------|------------------|--------------------------------------|
- * | promeki-info   | promeki::promeki | Prints library build information     |
- * | imgtest        | promeki::promeki | Exercises image format load/save round-trips |
- * | cscbench       | promeki::promeki | Benchmarks the CSC framework         |
- * | mediaplay      | promeki::sdl     | Config-driven MediaIO playback tool  |
+ * | Utility        | Library          | Description                                                  |
+ * |----------------|------------------|--------------------------------------------------------------|
+ * | promeki-info   | promeki::promeki | Prints library build information                             |
+ * | imgtest        | promeki::promeki | Exercises image format load/save round-trips                 |
+ * | promeki-bench  | promeki::promeki | Unified benchmark driver; CSC pair matrix plus future suites |
+ * | mediaplay      | promeki::sdl     | Config-driven MediaIO playback tool                          |
  */

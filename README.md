@@ -191,7 +191,7 @@ libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.
 |---------|-------------|
 | `promeki-info` | Print library build information (version, date, build type) |
 | `mediaplay` | CLI media player and pipeline builder with --in/--out/--converter stages; pass `--memstats` to dump per-MemSpace allocation counters at exit |
-| `cscbench` | Color space conversion benchmark with JSON output |
+| `promeki-bench` | Unified benchmark driver (CSC pair matrix now, other suites land here over time); writes JSON for baseline tracking and prints a delta table against a previous run |
 | `imgtest` | Image file I/O test utility |
 
 ## Building

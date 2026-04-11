@@ -47,6 +47,7 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
 | [logger_ring_buffer.md](logger_ring_buffer.md) | cross-cutting | Retain last N log messages in a lock-free ring for inclusion in crash reports |
+| [benchmarking.md](benchmarking.md) | cross-cutting | `BenchmarkRunner`, `promeki-bench` utility, MediaIO stamp hooks, live telemetry |
 | [fixme.md](fixme.md) | ongoing | Existing FIXME comments tracked across the tree |
 | [ideas.md](ideas.md) | backlog | Exploratory ideas that need further design |
 
@@ -170,23 +171,7 @@ Every new class must have complete unit tests. Every modification to an existing
 
 ## Benchmark Infrastructure
 
-Performance-critical code (DSP, threading, network, container operations) needs benchmarks to catch regressions and validate design decisions. No benchmark infrastructure currently exists.
-
-### Setup
-- [ ] Add benchmark framework: header-only [nanobench](https://github.com/martinus/nanobench) or similar to `thirdparty/`
-- [ ] `benchmarks/` directory for benchmark source files
-- [ ] `PROMEKI_BUILD_BENCHMARKS` CMake option (default OFF)
-- [ ] `benchmark-promeki` executable
-- [ ] `run-benchmarks` custom CMake target (opt-in, separate from `run-tests`)
-
-### Targets
-- [ ] Container operations (List, Map, HashMap, Set, HashSet) vs raw `std::` equivalents
-- [ ] ThreadPool throughput and submit latency
-- [ ] Mutex / ReadWriteLock contended vs uncontended overhead
-- [ ] DataStream serialization throughput
-- [ ] Socket throughput (TCP / UDP loopback)
-- [ ] MediaPipeline frame throughput for simple passthrough topology
-- [ ] CSC conversion throughput per pixel-format pair
+See [benchmarking.md](benchmarking.md) for the full plan. **Shipped so far:** library-native `BenchmarkRunner` + `StatsAccumulator`, the unified `promeki-bench` utility (CSC suite only, programmatically generated from `PixelDesc::registeredIDs()`), MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd), the `MediaIO` identifier triple (`localId` / `Name` / `UUID`), and three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`). **Still pending:** the non-CSC microbench suites (network / codec / container / concurrency / variantdatabase / histogram), Part D live telemetry via `MediaIOStats`, Part E MediaIO end-to-end cases (blocked on `MediaPipeline`), and CI regression integration.
 
 ---
 

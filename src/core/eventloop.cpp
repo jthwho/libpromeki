@@ -144,7 +144,11 @@ int EventLoop::startTimer(ObjectBase *receiver, unsigned int intervalMs,
         info.singleShot = singleShot;
         info.nextFire = TimeStamp::now() +
                 std::chrono::milliseconds(intervalMs);
-        _timers += info;
+        {
+                Mutex::Locker lock(_timersMutex);
+                _timers += info;
+        }
+        wakeIfCrossThread();
         return id;
 }
 
@@ -160,45 +164,100 @@ int EventLoop::startTimer(unsigned int intervalMs,
         info.singleShot = singleShot;
         info.nextFire = TimeStamp::now() +
                 std::chrono::milliseconds(intervalMs);
-        _timers += info;
+        {
+                Mutex::Locker lock(_timersMutex);
+                _timers += info;
+        }
+        wakeIfCrossThread();
         return id;
 }
 
 void EventLoop::stopTimer(int timerId) {
-        _timers.removeIf([timerId](const TimerInfo &t) {
-                return t.id == timerId;
-        });
+        {
+                Mutex::Locker lock(_timersMutex);
+                _timers.removeIf([timerId](const TimerInfo &t) {
+                        return t.id == timerId;
+                });
+        }
+        wakeIfCrossThread();
         return;
 }
 
+void EventLoop::wakeIfCrossThread() {
+        // If the caller is not the owning thread, the owning thread is
+        // likely sleeping in Queue::pop(waitMs) and needs to be woken
+        // so it re-evaluates nextTimerTimeout().  Pushing a no-op
+        // CallableItem is the cheapest way to do that: the dispatcher
+        // invokes the empty lambda (a no-op) and the loop proceeds to
+        // recompute timer state.  Same-thread callers skip the wake
+        // because the loop is not asleep — it is executing the code
+        // that called us, and the next processEvents() iteration will
+        // pick up the change naturally.
+        if(_current == this) return;
+        postCallable([](){});
+}
+
 void EventLoop::processTimers() {
-        if(_timers.isEmpty()) return;
-        TimeStamp now = TimeStamp::now();
-        List<int> expired;
-        for(size_t i = 0; i < _timers.size(); i++) {
-                auto &timer = _timers[i];
-                if(now.value() >= timer.nextFire.value()) {
-                        if(timer.receiver != nullptr) {
-                                TimerEvent te(timer.id);
-                                timer.receiver->event(&te);
-                        } else if(timer.func) {
-                                timer.func();
-                        }
-                        if(timer.singleShot) {
-                                expired += timer.id;
-                        } else {
-                                timer.nextFire = now +
-                                        std::chrono::milliseconds(timer.intervalMs);
+        // Two-phase: take the lock, scan for ready-to-fire entries,
+        // snapshot everything needed to invoke them, rearm or drop
+        // each fired entry, release the lock.  Callback invocation
+        // runs outside the lock so that a timer body can safely call
+        // startTimer() or stopTimer() on the same event loop without
+        // deadlocking against _timersMutex.
+        struct ReadyTimer {
+                int                     id;
+                ObjectBase              *receiver;
+                std::function<void()>   func;
+        };
+        List<ReadyTimer> toFire;
+
+        {
+                Mutex::Locker lock(_timersMutex);
+                if(_timers.isEmpty()) return;
+                TimeStamp now = TimeStamp::now();
+                List<int> expired;
+                for(size_t i = 0; i < _timers.size(); i++) {
+                        auto &timer = _timers[i];
+                        if(now.value() >= timer.nextFire.value()) {
+                                ReadyTimer rt;
+                                rt.id = timer.id;
+                                rt.receiver = timer.receiver;
+                                rt.func = timer.func;  // copy callable
+                                toFire += rt;
+                                if(timer.singleShot) {
+                                        expired += timer.id;
+                                } else {
+                                        timer.nextFire = now +
+                                                std::chrono::milliseconds(timer.intervalMs);
+                                }
                         }
                 }
+                for(int id : expired) {
+                        _timers.removeIf([id](const TimerInfo &t) {
+                                return t.id == id;
+                        });
+                }
         }
-        for(int id : expired) {
-                stopTimer(id);
+
+        // Fire outside the lock.  A callback that calls stopTimer()
+        // on a later timer in the same batch will still see that
+        // later timer fire once — we copied its callable above — but
+        // will succeed in removing the entry from _timers so it does
+        // not fire again.  Matches the behavior of most mainstream
+        // event loops.
+        for(auto it = toFire.begin(); it != toFire.end(); ++it) {
+                if(it->receiver != nullptr) {
+                        TimerEvent te(it->id);
+                        it->receiver->event(&te);
+                } else if(it->func) {
+                        it->func();
+                }
         }
         return;
 }
 
 unsigned int EventLoop::nextTimerTimeout() const {
+        Mutex::Locker lock(_timersMutex);
         if(_timers.isEmpty()) return 0;
         TimeStamp now = TimeStamp::now();
         unsigned int minMs = UINT_MAX;

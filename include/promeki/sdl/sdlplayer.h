@@ -159,15 +159,6 @@ class SDLPlayerTask : public MediaIOTask {
                 int64_t framesPresented() const { return _framesPresented.value(); }
 
                 /**
-                 * @brief Total frames dropped because the main thread fell behind.
-                 *
-                 * Counts every time a new image is stashed for the main
-                 * thread while an older image was still pending — the
-                 * older image is replaced and lost.
-                 */
-                int64_t framesDropped() const { return _framesDropped.value(); }
-
-                /**
                  * @brief Paints the currently stashed image, if any.
                  *
                  * Posted to the main thread's EventLoop by @c writeFrame()
@@ -218,7 +209,6 @@ class SDLPlayerTask : public MediaIOTask {
 
                 // Stats.
                 Atomic<int64_t> _framesPresented;
-                Atomic<int64_t> _framesDropped;
 };
 
 /**
