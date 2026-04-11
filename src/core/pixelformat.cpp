@@ -312,7 +312,19 @@ static size_t planarPlaneSize(const PixelFormat::Data *d, size_t planeIdx,
                               size_t width, size_t height,
                               size_t linePad, size_t lineAlign) {
         const auto &p = d->planes[planeIdx];
-        return planarLineStride(d, planeIdx, width, linePad, lineAlign) * (height / p.vSubsampling);
+        // Ceiling division on the row count: a sub-sampled chroma
+        // plane must have enough rows to receive every output the CSC
+        // pipeline (and other per-luma-row writers) will produce, even
+        // when the luma height is not an exact multiple of the chroma
+        // vSubsampling.  For example, a 1-row 4:2:0 image needs *one*
+        // chroma row, not zero — the CSC iterates `for(y = 0; y < 1)`
+        // and writes chroma row `0/2 = 0`.  Floor division would
+        // allocate zero chroma rows and the write would corrupt
+        // adjacent heap allocations.  This same fix also covers odd
+        // luma heights for arbitrary 4:2:0 / 4:2:2 / 4:1:1 inputs.
+        const size_t vSub = p.vSubsampling > 0 ? p.vSubsampling : 1;
+        const size_t chromaRows = (height + vSub - 1) / vSub;
+        return planarLineStride(d, planeIdx, width, linePad, lineAlign) * chromaRows;
 }
 
 // ---------------------------------------------------------------------------

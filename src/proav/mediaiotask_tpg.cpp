@@ -15,6 +15,7 @@
 #include <promeki/timecode.h>
 #include <promeki/audiolevel.h>
 #include <promeki/enums.h>
+#include <promeki/imagedataencoder.h>
 #include <promeki/logger.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -77,6 +78,13 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         s(MediaConfig::TimecodeEnabled, true);
                         s(MediaConfig::TimecodeStart, String("01:00:00:00"));
                         s(MediaConfig::TimecodeDropFrame, false);
+                        // VITC-style binary data encoder pass — on by
+                        // default so an out-of-the-box TPG stream
+                        // carries machine-readable frame and timecode
+                        // identifiers in the top of every frame.
+                        s(MediaConfig::TpgDataEncoderEnabled, true);
+                        s(MediaConfig::TpgDataEncoderRepeatLines, int32_t(16));
+                        s(MediaConfig::StreamID, uint32_t(0));
                         return specs;
                 },
                 []() -> Metadata {
@@ -139,6 +147,25 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
 
                 _imageDesc = ImageDesc(size.width(), size.height(), pd.id());
                 mediaDesc.imageList().pushToBack(_imageDesc);
+
+                // Build the binary data encoder up-front so the
+                // per-frame hot path is just memcpy and a single CRC
+                // pass.  If the user has disabled it (or the image is
+                // too narrow for any cell width) we silently skip the
+                // pass on each frame.
+                _dataEncoderEnabled = cfg.getAs<bool>(MediaConfig::TpgDataEncoderEnabled, true);
+                _dataEncoderRepeat  = static_cast<uint32_t>(
+                        cfg.getAs<int>(MediaConfig::TpgDataEncoderRepeatLines, 16));
+                _streamId           = cfg.getAs<uint32_t>(MediaConfig::StreamID, uint32_t(0));
+                if(_dataEncoderEnabled) {
+                        _dataEncoder = ImageDataEncoder(_imageDesc);
+                        if(!_dataEncoder.isValid()) {
+                                promekiWarn("MediaIOTask_TPG: image %s too narrow "
+                                            "for binary data encoder; skipping pass",
+                                            size.toString().cstr());
+                                _dataEncoderEnabled = false;
+                        }
+                }
 
                 Color solidColor = cfg.getAs<Color>(MediaConfig::VideoSolidColor, Color::Black);
                 _videoPattern.setSolidColor(solidColor);
@@ -271,6 +298,8 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
         _videoEnabled = false;
         _audioEnabled = false;
         _timecodeEnabled = false;
+        _dataEncoder = ImageDataEncoder();
+        _dataEncoderEnabled = false;
         _videoPattern.setBurnEnabled(false);
         return Error::Ok;
 }
@@ -311,6 +340,31 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
                 if(_timecodeEnabled) {
                         img.metadata().set(Metadata::Timecode, tc);
                 }
+
+                // Binary data encoder pass — runs after the test
+                // pattern (and any burn-in) has been rendered, so the
+                // stamped band overwrites the top of the picture.  We
+                // emit two items per frame:
+                //   item 0: (streamID << 32) | frameNumber  (frame ID)
+                //   item 1: BCD timecode word (Timecode::toBcd64)
+                if(_dataEncoderEnabled && _dataEncoder.isValid()) {
+                        const uint64_t frameId =
+                                (static_cast<uint64_t>(_streamId) << 32) |
+                                static_cast<uint32_t>(_frameCount & 0xffffffffu);
+                        const uint64_t tcBcd =
+                                (_timecodeEnabled && tc.isValid())
+                                        ? tc.toBcd64()
+                                        : uint64_t(0);
+                        List<ImageDataEncoder::Item> items;
+                        items.pushToBack({ 0, _dataEncoderRepeat, frameId });
+                        items.pushToBack({ _dataEncoderRepeat, _dataEncoderRepeat, tcBcd });
+                        Error encErr = _dataEncoder.encode(img, items);
+                        if(encErr.isError()) {
+                                promekiWarn("MediaIOTask_TPG: data encoder pass "
+                                            "failed: %s", encErr.name().cstr());
+                        }
+                }
+
                 frame.modify()->imageList().pushToBack(Image::Ptr::create(img));
         }
 

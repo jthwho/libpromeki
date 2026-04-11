@@ -5,7 +5,9 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cmath>
 #include <promeki/ltcdecoder.h>
+#include <promeki/audiodesc.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -29,9 +31,50 @@ LtcDecoder::DecodedList LtcDecoder::decode(const int8_t *samples, size_t count) 
         return _results;
 }
 
-LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio) {
+LtcDecoder::DecodedList LtcDecoder::decode(const Audio &audio, int channelIndex) {
         if(!audio.isValid()) return DecodedList();
-        return decode(audio.data<int8_t>(), audio.samples());
+        const AudioDesc &desc = audio.desc();
+        const int channels = static_cast<int>(desc.channels());
+        if(channels <= 0 || channelIndex < 0 || channelIndex >= channels) return DecodedList();
+        if(static_cast<int>(desc.sampleRate()) != _decoder.sample_rate) return DecodedList();
+
+        const size_t samples = audio.samples();
+        if(samples == 0) {
+                _results.clear();
+                return _results;
+        }
+
+        // Fast path: native int8 mono on channel 0 — feed straight
+        // through to libvtc with no conversion.
+        if(channels == 1 && channelIndex == 0 &&
+           desc.dataType() == AudioDesc::PCMI_S8) {
+                return decode(audio.data<int8_t>(), samples);
+        }
+
+        // Format-agnostic path: convert every interleaved sample frame
+        // to normalised float via @ref AudioDesc::samplesToFloat (which
+        // is the same per-format helper @ref AudioBuffer uses internally
+        // for its own data-type conversions), then pull the requested
+        // channel out and quantise to int8 for libvtc.  Scratch buffers
+        // are members of LtcDecoder so this stays allocation-free in
+        // steady state across many calls.
+        const size_t totalScalars = samples * static_cast<size_t>(channels);
+        if(_floatScratch.size() < totalScalars) _floatScratch.resize(totalScalars);
+        if(_int8Scratch.size() < samples)       _int8Scratch.resize(samples);
+
+        desc.samplesToFloat(_floatScratch.data(),
+                            static_cast<const uint8_t *>(audio.data<void>()),
+                            samples);
+
+        for(size_t s = 0; s < samples; s++) {
+                float v = _floatScratch[s * static_cast<size_t>(channels) +
+                                        static_cast<size_t>(channelIndex)];
+                if(v >  1.0f) v =  1.0f;
+                if(v < -1.0f) v = -1.0f;
+                _int8Scratch[s] = static_cast<int8_t>(std::lround(v * 127.0f));
+        }
+
+        return decode(_int8Scratch.data(), samples);
 }
 
 void LtcDecoder::reset() {

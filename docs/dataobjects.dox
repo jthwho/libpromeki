@@ -36,6 +36,9 @@
  * | @ref Duration | Time duration value |
  * | @ref FrameRate | Frame rate descriptor |
  * | @ref AudioLevel | Audio level in dBFS |
+ * | @ref InspectorEvent | Per-frame measurement record produced by @ref MediaIOTask_Inspector |
+ * | @ref InspectorSnapshot | Aggregate accumulator state from @ref MediaIOTask_Inspector |
+ * | @ref InspectorDiscontinuity | One detected discontinuity in the inspector's frame stream |
  *
  * @section shareable Shareable
  *

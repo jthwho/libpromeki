@@ -12,6 +12,7 @@
 #include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/enums.h>
 #include <vtc/vtc.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -142,10 +143,24 @@ class Timecode {
 
                 /**
                  * @brief Parses a Timecode from its string representation.
-                 * @param str The string to parse (e.g. "01:00:00:00").
+                 *
+                 * Recognised inputs:
+                 * - Standard SMPTE strings such as @c "01:00:00:00" (NDF) or
+                 *   @c "01:00:00;00" (DF, semicolon before frames).
+                 * - The canonical invalid-timecode sentinel @c "--:--:--:--"
+                 *   — returns a default-constructed (invalid) Timecode with
+                 *   @c Error::Ok, so the round-trip @c toString() →
+                 *   @c fromString() is lossless for invalid timecodes.
+                 * - An empty string — treated identically to the invalid
+                 *   sentinel: returns an invalid Timecode with @c Error::Ok.
+                 * - Any other string that cannot be parsed returns a
+                 *   default-constructed Timecode and a non-ok error code.
+                 *
+                 * @param str The string to parse (e.g. @c "01:00:00:00").
                  * @return A @ref Result holding the parsed Timecode on success
                  *         or a default-constructed Timecode and an error code
-                 *         on failure.
+                 *         on parse failure.
+                 * @see toString, toBcd64
                  */
                 static Result<Timecode> fromString(const String &str);
 
@@ -265,9 +280,29 @@ class Timecode {
                 operator String() const { return toString().first(); }
                 /**
                  * @brief Converts the timecode to a string.
+                 *
+                 * Always returns a non-empty, printable string:
+                 * - An **invalid** timecode (no mode, not constructed with
+                 *   valid digits) returns @c "--:--:--:--", the canonical
+                 *   invalid-timecode sentinel.  @ref fromString recognises
+                 *   this sentinel and round-trips it back to a
+                 *   default-constructed invalid Timecode.
+                 * - A **format-less** timecode (mode is valid but has no
+                 *   associated @c VtcFormat, e.g. constructed with fps=0)
+                 *   returns the bare digits @c "HH:MM:SS:FF" without a
+                 *   frame-rate suffix.
+                 * - A **valid** timecode with a known format uses libvtc
+                 *   and the supplied @p fmt to produce the standard
+                 *   SMPTE-style string (e.g. @c "01:02:03:04" or
+                 *   @c "01:02:03;04" for drop-frame).
+                 *
                  * @param fmt The string format to use (default: SMPTE).
-                 * @return A @ref Result holding the formatted string on success
-                 *         or an empty String and an error code on failure.
+                 * @return A @ref Result holding the formatted string.
+                 *         The error code in the returned @ref Result is
+                 *         @c Error::Ok for all three cases above; an
+                 *         error is only returned when libvtc itself
+                 *         reports an internal failure (extremely rare).
+                 * @see fromString, TimecodePackFormat
                  */
                 Result<String> toString(const VtcStringFormat *fmt = &VTC_STR_FMT_SMPTE) const;
                 /**
@@ -276,6 +311,102 @@ class Timecode {
                  *         zero and an error code on failure.
                  */
                 Result<FrameNumber> toFrameNumber() const;
+
+                /**
+                 * @brief Packs the timecode into the 64-bit BCD time-address word.
+                 *
+                 * Produces the same set of fields that SMPTE 12M-1 (LTC) and
+                 * SMPTE 12M-2 (VITC) carry in their respective time-address
+                 * fields — eight BCD time digits, the binary groups
+                 * (32 bits of user bits), the drop-frame flag, the color
+                 * frame flag, and the binary group flags BGF0/BGF1/BGF2 —
+                 * minus the wire-level framing (sync words, CRC, biphase
+                 * mark transitions).
+                 *
+                 * The bit positions inside the returned 64-bit word match
+                 * the bit positions defined for the chosen variant in
+                 * SMPTE 12M (so a downstream consumer that already knows
+                 * "LTC bit 11 = color frame flag" can apply that knowledge
+                 * directly to bit 11 of the returned word).  The
+                 * specification only differs at one bit position, bit 27 —
+                 * see @ref TimecodePackFormat for the table.
+                 *
+                 * In @ref TimecodePackFormat::Ltc "Ltc" mode this calls
+                 * libvtc's @c vtc_ltc_pack and returns the lower 8 bytes of
+                 * its 80-bit output (the 16-bit sync word at bits 64-79 is
+                 * intentionally dropped — wire framing is the encoder's job,
+                 * not this method's).  In @ref TimecodePackFormat::Vitc
+                 * "Vitc" mode this packs directly so bit 27 carries the
+                 * field marker bit (sourced from @ref isFirstField), per
+                 * SMPTE 12M-2 / 12-3.
+                 *
+                 * The bit ordering in the returned 64-bit word is the
+                 * same as in @c vtc_ltc_pack: bit 0 = LSB of frame units,
+                 * bit 63 = MSB of user-bit nibble 8.  Callers that want
+                 * to transmit the word over a wire should pick a bit
+                 * order convention and document it; libpromeki's
+                 * @c ImageDataEncoder transmits MSB-first.
+                 *
+                 * @param fmt Which variant's bit interpretation to use
+                 *            (default: @ref TimecodePackFormat::Vitc).
+                 * @return The 64-bit BCD time-address word.
+                 * @see fromBcd64, TimecodePackFormat
+                 */
+                uint64_t toBcd64(TimecodePackFormat fmt = TimecodePackFormat::Vitc) const;
+
+                /**
+                 * @brief Unpacks a 64-bit BCD time-address word into a Timecode.
+                 *
+                 * Inverse of @ref toBcd64.  The supplied @p mode supplies
+                 * the frame rate; the BCD word's drop-frame flag is
+                 * resolved against @p mode according to these rules:
+                 *
+                 * - If the DF flag is **clear**, @p mode is used as-is.
+                 * - If the DF flag is **set** and @p mode is invalid /
+                 *   unknown, the result is at @c VTC_FORMAT_29_97_DF
+                 *   (i.e. an unset DF flag combined with an unknown rate
+                 *   yields the canonical 29.97 DF rate).
+                 * - If the DF flag is **set** and @p mode is at a rate
+                 *   that has a drop-frame sister format
+                 *   (29.97 NDF → 29.97 DF, 30 NDF → 30 DF, 59.94 NDF →
+                 *   59.94 DF), the result is upgraded to that DF sister.
+                 * - If @p mode is already at the matching DF rate, the
+                 *   result keeps that mode unchanged.
+                 * - If the DF flag is **set** and @p mode is at a rate
+                 *   that does not support drop-frame counting (24, 25,
+                 *   integer 24/25-multiple HFR rates, etc.), an
+                 *   @c Error::ConversionFailed is returned because the
+                 *   BCD word and the requested mode are inconsistent.
+                 *
+                 * The @p fmt argument selects which standard's bit
+                 * positions are used to extract the digits and flag
+                 * bits.  The two variants only differ at bit 27 (see
+                 * @ref TimecodePackFormat); for typical Vitc/Ltc data
+                 * exchanged through @ref ImageDataEncoder, both produce
+                 * identical digits.
+                 *
+                 * @param bcd  The 64-bit BCD word.
+                 * @param fmt  Which variant's bit interpretation to use
+                 *             (default: @ref TimecodePackFormat::Vitc).
+                 * @param mode The timecode mode the result should adopt
+                 *             (subject to the DF rules above).
+                 * @return A @ref Result holding the unpacked Timecode on
+                 *         success, or an Error on inconsistency.
+                 * @see toBcd64, TimecodePackFormat
+                 */
+                static Result<Timecode> fromBcd64(uint64_t bcd,
+                                                  TimecodePackFormat fmt,
+                                                  const Mode &mode);
+
+                /** @brief Convenience overload — defaults to @ref TimecodePackFormat::Vitc and unknown @ref Mode. */
+                static Result<Timecode> fromBcd64(uint64_t bcd) {
+                        return fromBcd64(bcd, TimecodePackFormat::Vitc, Mode());
+                }
+
+                /** @brief Convenience overload — uses @ref TimecodePackFormat::Vitc, with caller-supplied @ref Mode. */
+                static Result<Timecode> fromBcd64(uint64_t bcd, const Mode &mode) {
+                        return fromBcd64(bcd, TimecodePackFormat::Vitc, mode);
+                }
 
         private:
                 VtcTimecode toVtc() const;

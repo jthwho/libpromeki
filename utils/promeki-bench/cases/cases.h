@@ -41,5 +41,27 @@ void registerCscCases();
  */
 String cscParamHelp();
 
+/**
+ * @brief Registers ImageDataEncoder + ImageDataDecoder cases.
+ *
+ * Reads `imagedata.format` and `imagedata.size` from BenchParams to
+ * decide which (PixelDesc, dimensions) pairs to register.
+ */
+void registerImageDataCases();
+
+/** @brief Returns per-suite help text for the imagedata suite. */
+String imageDataParamHelp();
+
+/**
+ * @brief Registers MediaIOTask_Inspector full-pipeline cases.
+ *
+ * Reads `inspector.format` and `inspector.size` from BenchParams to
+ * decide which TPG → Inspector pipeline configurations to register.
+ */
+void registerInspectorCases();
+
+/** @brief Returns per-suite help text for the inspector suite. */
+String inspectorParamHelp();
+
 } // namespace benchutil
 PROMEKI_NAMESPACE_END

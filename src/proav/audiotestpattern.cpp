@@ -32,9 +32,15 @@ Error AudioTestPattern::configure() {
         _avSyncToneCache.clear();
         _avSyncSilenceCache.clear();
 
-        if(_mode == LTC) {
+        if(_mode == LTC || _mode == AvSync) {
+                // AvSync embeds LTC alongside the click marker so the
+                // inspector / monitor side has both signals to verify
+                // — visual sync (the click) and frame-accurate timecode
+                // (the LTC) — out of the box from the default TPG
+                // configuration.
                 _ltcEncoder = new LtcEncoder((int)_desc.sampleRate(), _ltcLevel.toLinearFloat());
-        } else if(_mode == Tone || _mode == Silence) {
+        }
+        if(_mode == Tone || _mode == Silence) {
                 _audioGen = new AudioGen(_desc);
                 for(size_t ch = 0; ch < _desc.channels(); ch++) {
                         AudioGen::Config cfg;
@@ -93,8 +99,70 @@ const Audio &AudioTestPattern::avSyncSilence(size_t samples) const {
 
 Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
         if(_mode == AvSync) {
+                // AvSync output is now a mix of two signals:
+                //   1. The historical "click marker" tone burst on
+                //      every channel that isn't the LTC channel,
+                //      fired on the first frame of each second so
+                //      a viewer can confirm visual A/V alignment.
+                //   2. Continuous LTC on _ltcChannel (default 0),
+                //      which the @ref MediaIOTask_Inspector A/V sync
+                //      check decodes to validate frame-accurate
+                //      audio↔video lock.
+                // For the LTC line we need to encode this frame's
+                // timecode fresh, so the cached silence/tone buffers
+                // can't be returned wholesale — we build a per-call
+                // mix instead.  The cost is one buffer allocation
+                // and a single linear pass per frame, which is
+                // negligible compared to the LTC encode itself.
+                Audio audio(_desc, samples);
+                if(!audio.isValid()) return Audio();
+                audio.zero();
+                float *out = audio.data<float>();
+                const size_t channels = _desc.channels();
+
+                // Pick the LTC channel.  -1 (the @ref MediaConfig
+                // "all channels" sentinel) collapses to channel 0 for
+                // AvSync mode — putting LTC on every channel would
+                // wipe out the click marker, defeating the point.
+                int ltcChannel = (_ltcChannel >= 0 && _ltcChannel < (int)channels)
+                                         ? _ltcChannel : 0;
+
+                // Mix LTC into the chosen channel.  An invalid TC
+                // gracefully degrades to silence (the encoder returns
+                // an invalid Audio when it can't encode), which is
+                // exactly what we want when the timecode generator is
+                // disabled upstream.
+                if(_ltcEncoder != nullptr && tc.isValid()) {
+                        Audio ltcAudio = _ltcEncoder->encode(tc);
+                        if(ltcAudio.isValid()) {
+                                const int8_t *ltcData = ltcAudio.data<int8_t>();
+                                const size_t  copyN   = ltcAudio.samples() < samples
+                                                                ? ltcAudio.samples()
+                                                                : samples;
+                                for(size_t s = 0; s < copyN; s++) {
+                                        out[s * channels + (size_t)ltcChannel] =
+                                                static_cast<float>(ltcData[s]) / 127.0f;
+                                }
+                        }
+                }
+
+                // Overlay the AvSync click marker onto the *other*
+                // channels.  Mono streams have nowhere to put the
+                // click without trampling LTC, so they get LTC only.
                 const bool marker = tc.isValid() && tc.frame() == 0;
-                return marker ? avSyncTone(samples) : avSyncSilence(samples);
+                if(marker && channels > 1) {
+                        const Audio  &tone        = avSyncTone(samples);
+                        const float  *toneData    = tone.data<float>();
+                        const size_t  toneStride  = tone.desc().channels();
+                        for(size_t s = 0; s < samples; s++) {
+                                for(size_t c = 0; c < channels; c++) {
+                                        if((int)c == ltcChannel) continue;
+                                        out[s * channels + c] = toneData[s * toneStride + c];
+                                }
+                        }
+                }
+
+                return audio;
         }
 
         if(_mode == LTC && _ltcEncoder != nullptr) {

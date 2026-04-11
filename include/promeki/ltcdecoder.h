@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <vector>
 #include <promeki/namespace.h>
 #include <promeki/timecode.h>
 #include <promeki/list.h>
@@ -28,7 +29,13 @@ PROMEKI_NAMESPACE_BEGIN
  * @par Example
  * @code
  * LtcDecoder dec(48000);
+ *
+ * // Low-level: hand-prepared int8 mono samples.
  * auto results = dec.decode(audioSamples, sampleCount);
+ *
+ * // High-level: any-format Audio, picking the LTC channel.
+ * auto results = dec.decode(audio, ltcChannelIndex);
+ *
  * for(auto &r : results) {
  *     // r.timecode is the decoded value
  * }
@@ -90,14 +97,26 @@ class LtcDecoder {
                 DecodedList decode(const int8_t *samples, size_t count);
 
                 /**
-                 * @brief Feeds an Audio object to the decoder.
+                 * @brief Feeds an Audio object's selected channel to the decoder.
                  *
-                 * The Audio must be mono PCMI_S8. Other formats are not supported.
+                 * Format-agnostic — any sample format @ref AudioDesc supports
+                 * is accepted.  The named channel is converted to int8 mono
+                 * via @ref AudioDesc::Format::samplesToFloat (the same per-format
+                 * helper @ref AudioBuffer uses) followed by a normalised
+                 * float-to-int8 quantisation.  The audio's sample rate must
+                 * match the decoder's configured rate, otherwise an empty
+                 * list is returned.
                  *
-                 * @param audio The audio to decode.
+                 * The fast path for @c PCMI_S8 mono audio (when
+                 * @p channelIndex is 0) skips the conversion entirely and
+                 * feeds the raw bytes straight to libvtc.
+                 *
+                 * @param audio        The audio chunk.
+                 * @param channelIndex Zero-based channel index carrying LTC.
+                 *                     Defaults to channel 0.
                  * @return List of decoded timecodes found in this chunk.
                  */
-                DecodedList decode(const Audio &audio);
+                DecodedList decode(const Audio &audio, int channelIndex = 0);
 
                 /**
                  * @brief Clears the decoder state.
@@ -109,6 +128,12 @@ class LtcDecoder {
         private:
                 VtcLTCDecoder _decoder;
                 DecodedList _results;
+
+                /// Reusable scratch buffers for the format-agnostic decode
+                /// path; held as members so per-call allocation is amortised
+                /// across the inspector / monitor use case.
+                std::vector<float>  _floatScratch;
+                std::vector<int8_t> _int8Scratch;
 
                 static void decoderCallback(const VtcTimecode *tc,
                         int64_t sampleStart, int64_t sampleLength, void *userData);

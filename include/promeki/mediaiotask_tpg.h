@@ -12,6 +12,7 @@
 #include <promeki/videotestpattern.h>
 #include <promeki/audiotestpattern.h>
 #include <promeki/timecodegenerator.h>
+#include <promeki/imagedataencoder.h>
 #include <promeki/imagedesc.h>
 #include <promeki/audiodesc.h>
 #include <promeki/mediadesc.h>
@@ -130,6 +131,12 @@ class MediaIOTask_TPG : public MediaIOTask {
                 double                  _motion = 0.0;
                 double                  _motionOffset = 0.0;
                 bool                    _videoEnabled = false;
+
+                // Binary data encoder pass (VITC-style frame stamp).
+                ImageDataEncoder        _dataEncoder;
+                bool                    _dataEncoderEnabled = false;
+                uint32_t                _dataEncoderRepeat  = 16;
+                uint32_t                _streamId           = 0;
 
                 // Audio state
                 AudioTestPattern        *_audioPattern = nullptr;

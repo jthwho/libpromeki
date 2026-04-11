@@ -322,6 +322,143 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDescription("Drop-frame flag for 29.97 / 59.94 timecode."));
 
                 // ============================================================
+                // Image data encoder (VITC-style binary stamp on top of video)
+                // ============================================================
+
+                /// @brief uint32 — opaque per-stream identifier.  Combined with the
+                /// rolling frame number into the frame-ID payload of the
+                /// @ref ImageDataEncoder when @ref TpgDataEncoderEnabled is true.
+                /// Defaults to 0; use any value the application finds convenient
+                /// for cross-stream correlation.
+                static inline const ID StreamID = declareID("StreamID",
+                        VariantSpec().setType(Variant::TypeU32)
+                                .setDefault(uint32_t(0))
+                                .setDescription("Opaque per-stream identifier (uint32)."));
+
+                /// @brief bool — enable the @ref ImageDataEncoder pass on TPG video
+                /// frames.  When true (default), the TPG stamps two 64-bit
+                /// payloads into the top of every generated video frame:
+                /// (1) @c (StreamID << 32) | frameNumber, and
+                /// (2) the @ref Timecode::toBcd64 BCD timecode word.
+                static inline const ID TpgDataEncoderEnabled = declareID("TpgDataEncoderEnabled",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Enable VITC-style binary data encoder pass on TPG video."));
+
+                /// @brief int — number of scan lines each @ref ImageDataEncoder item
+                /// occupies in the encoded band.  The TPG emits two items, so the
+                /// total stamped band height is @c 2 * TpgDataEncoderRepeatLines
+                /// scan lines starting from the top of the image.  Default 16,
+                /// which gives a comfortable read margin for a noisy decoder
+                /// without consuming too much picture area.
+                static inline const ID TpgDataEncoderRepeatLines = declareID("TpgDataEncoderRepeatLines",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(16))
+                                .setMin(int32_t(1))
+                                .setDescription("Scan lines per ImageDataEncoder item in TPG."));
+
+                // ============================================================
+                // Inspector sink (MediaIOTask_Inspector)
+                // ============================================================
+
+                /// @brief bool — drop incoming frames after running checks.  When
+                /// true, the inspector behaves as a pure null sink for upstream
+                /// pacing purposes; the per-frame events and accumulator stats
+                /// are still produced as long as the corresponding decoders are
+                /// enabled.
+                static inline const ID InspectorDropFrames = declareID("InspectorDropFrames",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Inspector drops frames after checks (sink behaviour)."));
+
+                /// @brief bool — decode the @ref ImageDataEncoder bands from the
+                /// picture.  Required for the picture-side timecode and frame ID
+                /// checks; auto-enabled when @ref InspectorCheckTcSync or
+                /// @ref InspectorCheckContinuity is set.
+                static inline const ID InspectorDecodeImageData = declareID("InspectorDecodeImageData",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Inspector decodes image-data bands from each frame."));
+
+                /// @brief bool — decode LTC from the audio track.  Required for
+                /// the LTC vs picture-TC drift check; auto-enabled when
+                /// @ref InspectorCheckTcSync is set.
+                static inline const ID InspectorDecodeLtc = declareID("InspectorDecodeLtc",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Inspector decodes LTC from each frame's audio."));
+
+                /// @brief bool — compare the picture timecode against the audio
+                /// LTC and report the per-frame offset, in audio samples, on
+                /// every frame.  Implies @ref InspectorDecodeImageData and
+                /// @ref InspectorDecodeLtc.
+                ///
+                /// In professional video workflows audio and video are locked
+                /// to the same reference, so the offset is expected to be a
+                /// fixed phase relationship and any *change* from one frame
+                /// to the next is a real fault.  Combined with
+                /// @ref InspectorSyncOffsetToleranceSamples, the inspector
+                /// fires a discontinuity warning whenever the offset moves
+                /// by more than the configured tolerance.
+                static inline const ID InspectorCheckTcSync = declareID("InspectorCheckTcSync",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Inspector reports picture-TC vs LTC offset in samples."));
+
+                /// @brief int — maximum allowed sample-to-sample change in the
+                /// picture-vs-LTC sync offset before the inspector flags a
+                /// discontinuity.  Default 0: any change is reported.  Set
+                /// higher (e.g. 1, 2, ...) when the upstream encode/decode
+                /// pair has a known small jitter that should not generate
+                /// noise.  Only meaningful when @ref InspectorCheckTcSync
+                /// is enabled.
+                static inline const ID InspectorSyncOffsetToleranceSamples = declareID("InspectorSyncOffsetToleranceSamples",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription(
+                                        "Max allowed sample-to-sample change in "
+                                        "picture-vs-LTC sync offset before flagging "
+                                        "a discontinuity (0 = any change)."));
+
+                /// @brief bool — track frame number, timecode, and stream ID
+                /// continuity from one frame to the next.  Any unexpected jump
+                /// (skipped frame, repeated frame, stream-ID change, TC
+                /// discontinuity) becomes a discontinuity record on the per-frame
+                /// event with both the previous and current values.  Implies
+                /// @ref InspectorDecodeImageData.
+                static inline const ID InspectorCheckContinuity = declareID("InspectorCheckContinuity",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(false)
+                                .setDescription("Inspector tracks TC / frame# / streamID continuity."));
+
+                /// @brief int — scan lines per @ref ImageDataEncoder band.  Must
+                /// match the encoder's @ref TpgDataEncoderRepeatLines so the
+                /// inspector reads at the right band offsets.  Default 16.
+                static inline const ID InspectorImageDataRepeatLines = declareID("InspectorImageDataRepeatLines",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(16))
+                                .setMin(int32_t(1))
+                                .setDescription("Scan lines per ImageDataDecoder band in Inspector."));
+
+                /// @brief int — audio channel index that carries LTC.  Mirrors
+                /// @ref AudioLtcChannel; default 0.
+                static inline const ID InspectorLtcChannel = declareID("InspectorLtcChannel",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Audio channel index carrying LTC for the inspector."));
+
+                /// @brief double — periodic-summary log interval in seconds (wall
+                /// time, not media time).  Default 1.0.  Set to 0 to disable
+                /// periodic logging entirely; per-frame events are still produced.
+                static inline const ID InspectorLogIntervalSec = declareID("InspectorLogIntervalSec",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(1.0)
+                                .setMin(0.0)
+                                .setDescription("Inspector periodic-summary log interval, seconds."));
+
+                // ============================================================
                 // Converter (MediaIOTask_Converter)
                 // ============================================================
 

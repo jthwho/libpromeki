@@ -157,41 +157,65 @@ static float audioPeak(const Audio &a) {
         return peak;
 }
 
+// Helper: peak amplitude of a single channel of an interleaved Audio.
+static float audioPeakChannel(const Audio &audio, int channel) {
+        const float *data = audio.data<float>();
+        if(data == nullptr) return 0.0f;
+        const size_t nch  = audio.desc().channels();
+        const size_t n    = audio.samples();
+        float peak = 0.0f;
+        for(size_t s = 0; s < n; s++) {
+                float v = data[s * nch + channel];
+                if(v < 0) v = -v;
+                if(v > peak) peak = v;
+        }
+        return peak;
+}
+
 TEST_CASE("AudioTestPattern_AvSync") {
         AudioDesc desc(48000.0f, 2);
         AudioTestPattern gen(desc);
         gen.setMode(AudioTestPattern::AvSync);
         gen.setToneFrequency(1000.0);
         gen.setToneLevel(AudioLevel::fromDbfs(-20.0));
+        gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
+        gen.setLtcChannel(0);   // LTC goes on channel 0, click on channel 1
         REQUIRE(gen.configure().isOk());
 
         const size_t samples = 1600; // ~one frame at 48k / 30 fps
 
-        // tc.frame() == 0 -> tone burst
+        // AvSync now produces LTC on the LTC channel *and* the click
+        // marker on the other channels (the click is only present on
+        // frame 0 of each second so the inspector / monitor side has
+        // both visual sync and frame-accurate timecode out of the box
+        // from a default-config TPG).
+
+        // tc.frame() == 0 → click marker on the non-LTC channel,
+        // continuous LTC on the LTC channel.
         Timecode marker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 0);
         REQUIRE(marker.isValid());
         Audio tone = gen.create(samples, marker);
         REQUIRE(tone.isValid());
         CHECK(tone.samples() == samples);
-        CHECK(audioPeak(tone) > 0.05f);
+        // Channel 0 has LTC: non-trivial peak.
+        CHECK(audioPeakChannel(tone, 0) > 0.05f);
+        // Channel 1 has the click marker: also non-trivial peak.
+        CHECK(audioPeakChannel(tone, 1) > 0.05f);
 
-        // tc.frame() != 0 -> silence
+        // tc.frame() != 0 → silence on the click channel, LTC on the
+        // LTC channel.  Channel 1 must be exactly zero; channel 0
+        // carries LTC and is non-zero.
         Timecode nonMarker(Timecode::Mode(FrameRate::FPS_30, false), 1, 0, 0, 5);
         Audio silence = gen.create(samples, nonMarker);
         REQUIRE(silence.isValid());
         CHECK(silence.samples() == samples);
-        CHECK(audioPeak(silence) == doctest::Approx(0.0f));
+        CHECK(audioPeakChannel(silence, 1) == doctest::Approx(0.0f));
+        CHECK(audioPeakChannel(silence, 0) > 0.05f);
 
-        // Repeated calls return the cached buffers — same backing data.
-        Audio tone2 = gen.create(samples, marker);
-        REQUIRE(tone2.isValid());
-        CHECK(tone2.data<float>() == tone.data<float>());
-        Audio silence2 = gen.create(samples, nonMarker);
-        REQUIRE(silence2.isValid());
-        CHECK(silence2.data<float>() == silence.data<float>());
-
-        // Invalid timecode falls back to silence (graceful degradation).
+        // Invalid timecode → no LTC encoded (encoder needs a valid
+        // format), no click marker either.  Both channels are silent.
         Audio fallback = gen.create(samples, Timecode());
         REQUIRE(fallback.isValid());
-        CHECK(audioPeak(fallback) == doctest::Approx(0.0f));
+        CHECK(audioPeakChannel(fallback, 0) == doctest::Approx(0.0f));
+        CHECK(audioPeakChannel(fallback, 1) == doctest::Approx(0.0f));
 }

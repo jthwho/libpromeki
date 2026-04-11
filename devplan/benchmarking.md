@@ -8,9 +8,9 @@
 
 This document replaces the stub "Benchmark Infrastructure" section in `README.md` and the wishlist line in `proav_optimization.md` about a future `benchmark-promeki` target.
 
-**Completed:** `BenchmarkRunner` core + `StatsAccumulator`, `promeki-bench` CLI driver with columnized output / build-type warnings / filtered count + duration estimate, CSC suite with programmatic pair generation, MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd) with sink-aware reporter submission, MediaIO identifier triple (`localId` / `Name` / `UUID`), three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`), **Part D** live telemetry (`RateTracker`, automatic `BytesPerSecond`/`FramesPerSecond`, base-class drop/repeat/late counters via `MediaIOTask::noteFrame*` helpers, latency keys derived from the attached reporter, `PendingOperations` from `Strand::pendingCount()`, `MediaIOStats::toString()` compact log-line renderer, urgent `stats()` dispatch so pollers don't block behind I/O queues), and `mediaplay --stats` / `--stats-interval` for live per-stage telemetry printing.
+**Completed:** `BenchmarkRunner` core + `StatsAccumulator`, `promeki-bench` CLI driver with columnized output / build-type warnings / filtered count + duration estimate, CSC suite with programmatic pair generation, MediaIO stamp hooks (enqueue / dequeue / taskBegin / taskEnd) with sink-aware reporter submission, MediaIO identifier triple (`localId` / `Name` / `UUID`), three new `MediaConfig` keys (`Name`, `Uuid`, `EnableBenchmark`), **Part D** live telemetry (`RateTracker`, automatic `BytesPerSecond`/`FramesPerSecond`, base-class drop/repeat/late counters via `MediaIOTask::noteFrame*` helpers, latency keys derived from the attached reporter, `PendingOperations` from `Strand::pendingCount()`, `MediaIOStats::toString()` compact log-line renderer, urgent `stats()` dispatch so pollers don't block behind I/O queues), and `mediaplay --stats` / `--stats-interval` for live per-stage telemetry printing. **Image-data and inspector microbench suites** (`utils/promeki-bench/cases/imagedata.cpp` and `cases/inspector.cpp`) — encoder and decoder hot-path cases for RGBA8 / YUYV / planar 4:2:2 / v210 at 1920×1080 (cross-product configurable via `imagedata.format+=` / `imagedata.size+=`), plus a full TPG → Inspector pipeline case. `main.cpp` now silences info-level library logs at startup so bench output is clean.
 
-**Remaining:** the non-CSC microbench suites (network / codec / container / concurrency / variantdatabase / histogram), **Part E** MediaIO end-to-end bench cases (blocked on `MediaPipeline`), and CI regression integration.
+**Remaining:** the non-CSC / non-imagedata microbench suites (network / codec / container / concurrency / variantdatabase / histogram), **Part E** MediaIO end-to-end bench cases (blocked on `MediaPipeline`), and CI regression integration.
 
 ---
 
@@ -62,6 +62,7 @@ The driver lives under `utils/promeki-bench/` and is the single binary that driv
 
 **Remaining case suites** (each is an independent incremental commit; `utils/promeki-bench/cases/<file>.cpp` + header declaration + CMake source list):
 
+- [x] `imagedata.cpp` — `ImageDataEncoder` + `ImageDataDecoder` hot-path cases for RGBA8 / YUYV / planar 4:2:2 / v210 at 1920×1080 (cross-product via `imagedata.format+=` / `imagedata.size+=`), plus a full TPG → Inspector pipeline case (`inspector.cpp`). Shipped alongside `MediaIOTask_Inspector`.
 - [ ] `network.cpp` — `writeDatagrams` batch vs loop (the long-standing `proav_optimization.md` wishlist item), `UdpSocketTransport::sendPackets()` end-to-end, `RtpSession::sendPackets()` through `LoopbackTransport`.
 - [ ] `codec.cpp` — `ImageCodec::encode`/`decode` for JPEG and JPEG XS across a small image matrix, `AudioCodec` when it lands.
 - [ ] `container.cpp` — `List<int>` push/iterate, `Map<String, int>` insert/lookup, `HashMap` same. Skip `std::` comparison cases — "prefer own classes" makes the comparison uninformative.

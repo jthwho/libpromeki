@@ -11,6 +11,31 @@
  *
  * @tableofcontents
  *
+ * @section mediaio_backends Available backends
+ *
+ * The library ships with the following @ref MediaIOTask backends.
+ * Each is registered via @c PROMEKI_REGISTER_MEDIAIO and can be
+ * created by name through @ref MediaIO::create or one of the
+ * filename factories below.
+ *
+ * | Backend            | Direction | Purpose                                                                                                  |
+ * |--------------------|-----------|----------------------------------------------------------------------------------------------------------|
+ * | @c TPG             | source    | Synthetic test pattern generator — colour bars + audio (default @ref AudioPattern::AvSync, which embeds LTC on the LTC channel + a click marker on the others) + timecode + a @ref ImageDataEncoder data band stamped at the top of every frame. |
+ * | @c Inspector       | sink      | Frame validator / monitor — decodes the TPG image data band, decodes audio LTC, reports A/V sync offset, tracks frame number / stream ID / TC continuity, and emits both per-frame events and a periodic summary log.  See @ref inspector for the QA-oriented user guide. |
+ * | @c ImageFile       | both      | Single image or numbered image sequence (DPX, Cineon, PNG, JPEG, TGA, SGI, PNM, raw YUV).                |
+ * | @c AudioFile       | both      | Single audio file via libsndfile (WAV, FLAC, AIFF, ...).                                                 |
+ * | @c QuickTime       | both      | QuickTime / ISO-BMFF reader and writer (fragmented or moov-at-end layout).                               |
+ * | @c Rtp             | both      | RTP transport for video / audio / metadata streams (SDP-driven; SMPTE 2110 / AES67 friendly).            |
+ * | @c Converter       | both      | In-process pixel-format and audio-format converter that wraps a child read-side and a parent write-side. |
+ *
+ * The TPG and Inspector are designed to be used together with no
+ * extra configuration: a default-config TPG produces everything the
+ * default-config Inspector knows how to verify (image data band,
+ * BCD timecode, LTC audio, A/V sync), so a smoke-test pipeline is
+ * just two factory calls plus a frame loop.  See
+ * @ref inspector "Inspector — Frame validation and monitoring" for
+ * the full walk-through.
+ *
  * @section mediaio_overview Overview
  *
  * MediaIO is split into two cooperating layers:

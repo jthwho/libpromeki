@@ -121,3 +121,67 @@ TEST_CASE("LtcDecoder_DecodeInvalidAudio") {
     auto results = dec.decode(audio);
     CHECK(results.isEmpty());
 }
+
+// ============================================================================
+// Format-agnostic decode: float32 stereo audio with LTC on channel 0
+// ============================================================================
+
+TEST_CASE("LtcDecoder_DecodeAudio_Float32Stereo") {
+    // Encode several frames of LTC at 24fps to give the decoder enough
+    // continuous biphase-mark transitions to lock and emit a frame.
+    LtcEncoder enc(48000, 0.8f);
+    LtcDecoder dec(48000);
+
+    // Stitch a few frames of mono int8 LTC together so the decoder has
+    // a long enough run to recover at least one timecode.
+    promeki::List<int8_t> mono;
+    for(int i = 0; i < 8; i++) {
+        Timecode tc(Timecode::NDF24, 1, 0, 0, i);
+        Audio chunk = enc.encode(tc);
+        REQUIRE(chunk.isValid());
+        const int8_t *src = chunk.data<int8_t>();
+        for(size_t s = 0; s < chunk.samples(); s++) mono.pushToBack(src[s]);
+    }
+
+    // Build a float32 stereo Audio of the same length, with LTC on
+    // channel 0 and silence on channel 1.  This is the same shape the
+    // TPG produces when AudioMode == LTC.
+    AudioDesc stereoDesc(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
+    Audio stereo(stereoDesc, mono.size());
+    stereo.resize(mono.size());
+    float *out = stereo.data<float>();
+    for(size_t s = 0; s < mono.size(); s++) {
+        out[s * 2 + 0] = static_cast<float>(mono[s]) / 127.0f;
+        out[s * 2 + 1] = 0.0f;
+    }
+
+    // Format-agnostic decode pulls channel 0 out, converts to int8,
+    // and feeds the underlying decoder — exactly the path the inspector
+    // takes for TPG audio.
+    auto results = dec.decode(stereo, 0);
+    REQUIRE(results.size() > 0);
+    // The first recovered timecode should be one of the frames we
+    // encoded — match the hour/minute/second; the frame digit may
+    // depend on which frame the decoder locked onto first.
+    CHECK(results[0].timecode.hour() == 1);
+    CHECK(results[0].timecode.min() == 0);
+    CHECK(results[0].timecode.sec() == 0);
+}
+
+TEST_CASE("LtcDecoder_DecodeAudio_RejectsMismatchedSampleRate") {
+    LtcDecoder dec(48000);
+    AudioDesc desc(AudioDesc::PCMI_Float32LE, 44100.0f, 2);
+    Audio audio(desc, 1024);
+    audio.resize(1024);
+    auto results = dec.decode(audio, 0);
+    CHECK(results.isEmpty());
+}
+
+TEST_CASE("LtcDecoder_DecodeAudio_RejectsBadChannelIndex") {
+    LtcDecoder dec(48000);
+    AudioDesc desc(AudioDesc::PCMI_Float32LE, 48000.0f, 2);
+    Audio audio(desc, 1024);
+    audio.resize(1024);
+    auto results = dec.decode(audio, 5);   // out-of-range
+    CHECK(results.isEmpty());
+}

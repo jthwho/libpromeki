@@ -36,6 +36,7 @@
 #include <promeki/error.h>
 #include <promeki/buildinfo.h>
 #include <promeki/duration.h>
+#include <promeki/logger.h>
 #include <cstdio>
 
 using namespace promeki;
@@ -125,6 +126,8 @@ void printBuildWarnings() {
  */
 void registerAllSuites() {
         benchutil::registerCscCases();
+        benchutil::registerImageDataCases();
+        benchutil::registerInspectorCases();
 }
 
 /**
@@ -156,6 +159,10 @@ void printHelp(const CmdLineParser &parser) {
                 "  Bare `-p key` stores an empty string (useful as a flag).\n"
                 "\n");
         std::fputs(benchutil::cscParamHelp().cstr(), stdout);
+        std::putchar('\n');
+        std::fputs(benchutil::imageDataParamHelp().cstr(), stdout);
+        std::putchar('\n');
+        std::fputs(benchutil::inspectorParamHelp().cstr(), stdout);
         std::printf(
                 "\n"
                 "Examples:\n"
@@ -182,6 +189,17 @@ void listCases() {
 } // namespace
 
 int main(int argc, char **argv) {
+        // Silence info-level library logs.  Library backends (TPG,
+        // Inspector, image loaders, etc.) emit configuration dumps
+        // and per-frame status at info — perfectly useful in
+        // production but pure noise inside a measurement tool that
+        // wants a clean numbers-only output.  Warnings and errors
+        // still come through so a benched case that breaks is
+        // visible.  Errors logged via promekiErr (e.g. an open()
+        // failure inside a case) still surface, and the per-case
+        // "invalid" counter catches anything else.
+        Logger::defaultLogger().setLogLevel(Logger::Warn);
+
         String       outputPath;
         String       baselinePath;
         String       filter;

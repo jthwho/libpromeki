@@ -196,9 +196,14 @@ TEST_CASE("Timecode fromString") {
                 CHECK_FALSE(err.isOk());
         }
 
-        SUBCASE("Empty string returns error") {
+        SUBCASE("Empty string parses to an invalid Timecode") {
+                // Empty input is the round-trip partner of toString()
+                // on a default-constructed Timecode (which renders as
+                // the canonical "--:--:--:--" sentinel) and itself
+                // produces an invalid Timecode rather than an error.
                 auto [tc, err] = Timecode::fromString("");
-                CHECK_FALSE(err.isOk());
+                CHECK(err.isOk());
+                CHECK_FALSE(tc.isValid());
         }
 }
 
@@ -238,16 +243,20 @@ TEST_CASE("Timecode toString") {
                 CHECK(s == String("01:02:03:04/30"));
         }
 
-        SUBCASE("Invalid timecode returns error") {
+        SUBCASE("Invalid timecode renders as the canonical sentinel") {
                 Timecode tc;
                 auto [s, e] = tc.toString();
-                CHECK_FALSE(e.isOk());
+                CHECK(e.isOk());
+                CHECK(s == String("--:--:--:--"));
         }
 
-        SUBCASE("No format returns error") {
+        SUBCASE("No format renders digits without a frame rate") {
+                // Valid digits, no frame rate (Mode(0u, 0u)) — toString
+                // lays out the digits ourselves rather than failing.
                 Timecode tc(1, 2, 3, 4);
                 auto [s, e] = tc.toString();
-                CHECK_FALSE(e.isOk());
+                CHECK(e.isOk());
+                CHECK(s == String("01:02:03:04"));
         }
 }
 
@@ -612,4 +621,225 @@ TEST_CASE("Timecode vtcFormat access") {
         CHECK(fmt != nullptr);
         CHECK(vtc_format_is_drop_frame(fmt));
         CHECK(fmt->tc_fps == 30);
+}
+
+// ============================================================================
+// Invalid / format-less toString() and round-trip through fromString()
+// ============================================================================
+
+TEST_CASE("Timecode invalid renders as the canonical sentinel string") {
+        Timecode tc;  // default-constructed; isValid() == false
+        REQUIRE_FALSE(tc.isValid());
+        auto r = tc.toString();
+        REQUIRE(r.second().isOk());
+        CHECK(r.first() == String("--:--:--:--"));
+}
+
+TEST_CASE("Timecode format-less renders as plain digits") {
+        // 4-arg constructor binds Mode(0u, 0u): valid digits, no
+        // frame rate.  toString must lay out the digits ourselves
+        // since libvtc has no format pointer to consult.
+        Timecode tc(1, 23, 45, 12);
+        REQUIRE(tc.isValid());
+        CHECK_FALSE(tc.mode().hasFormat());
+        auto r = tc.toString();
+        REQUIRE(r.second().isOk());
+        CHECK(r.first() == String("01:23:45:12"));
+}
+
+TEST_CASE("Timecode fromString accepts the invalid sentinel") {
+        auto r = Timecode::fromString(String("--:--:--:--"));
+        REQUIRE(r.second().isOk());
+        CHECK_FALSE(r.first().isValid());
+        // And it round-trips: the invalid Timecode renders back to
+        // the same sentinel string.
+        auto r2 = r.first().toString();
+        REQUIRE(r2.second().isOk());
+        CHECK(r2.first() == String("--:--:--:--"));
+}
+
+TEST_CASE("Timecode fromString accepts empty as invalid") {
+        auto r = Timecode::fromString(String());
+        REQUIRE(r.second().isOk());
+        CHECK_FALSE(r.first().isValid());
+}
+
+TEST_CASE("Timecode fromBcd64 produces format-less digits when given no mode") {
+        // Encode 01:23:45:12 NDF25, then decode without supplying a
+        // mode hint.  The result should carry the original digits and
+        // be valid (so it renders to "01:23:45:12") but should fail
+        // toFrameNumber because no rate is known.
+        Timecode src(Timecode::NDF25, 1, 23, 45, 12);
+        const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
+
+        auto r = Timecode::fromBcd64(bcd);  // no mode, no fmt — defaults
+        REQUIRE(r.second().isOk());
+        const Timecode &tc = r.first();
+        CHECK(tc.isValid());
+        CHECK_FALSE(tc.mode().hasFormat());
+        CHECK(tc.hour() == 1);
+        CHECK(tc.min() == 23);
+        CHECK(tc.sec() == 45);
+        CHECK(tc.frame() == 12);
+
+        auto rs = tc.toString();
+        REQUIRE(rs.second().isOk());
+        CHECK(rs.first() == String("01:23:45:12"));
+
+        auto rf = tc.toFrameNumber();
+        CHECK(rf.second().isError());
+        CHECK(rf.second().code() == Error::NoFrameRate);
+}
+
+// ============================================================================
+// 64-bit BCD time-address packing
+// ============================================================================
+
+TEST_CASE("Timecode BCD64 round-trip Vitc 25fps") {
+        // 25 fps does not support drop-frame so the DF bit must stay clear
+        // throughout, which lets us round-trip cleanly without any rate
+        // re-resolution complications.
+        Timecode tc(Timecode::NDF25, 12, 34, 56, 18);
+        const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Vitc);
+
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, tc.mode());
+        REQUIRE(rt.second().isOk());
+        const Timecode &back = rt.first();
+        CHECK(back.hour() == 12);
+        CHECK(back.min() == 34);
+        CHECK(back.sec() == 56);
+        CHECK(back.frame() == 18);
+        CHECK(back.fps() == 25);
+        CHECK_FALSE(back.isDropFrame());
+}
+
+TEST_CASE("Timecode BCD64 round-trip Vitc 29.97 DF") {
+        Timecode tc(Timecode::DF30, 1, 23, 45, 12);
+        const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Vitc);
+        // Drop-frame bit must be set on the wire.
+        CHECK(((bcd >> 10) & 1u) != 0u);
+
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, tc.mode());
+        REQUIRE(rt.second().isOk());
+        const Timecode &back = rt.first();
+        CHECK(back.hour() == 1);
+        CHECK(back.min() == 23);
+        CHECK(back.sec() == 45);
+        CHECK(back.frame() == 12);
+        CHECK(back.isDropFrame());
+}
+
+TEST_CASE("Timecode BCD64 round-trip Ltc 25fps") {
+        Timecode tc(Timecode::NDF25, 5, 10, 15, 20);
+        const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Ltc);
+
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Ltc, tc.mode());
+        REQUIRE(rt.second().isOk());
+        const Timecode &back = rt.first();
+        CHECK(back.hour() == 5);
+        CHECK(back.min() == 10);
+        CHECK(back.sec() == 15);
+        CHECK(back.frame() == 20);
+        CHECK(back.fps() == 25);
+}
+
+TEST_CASE("Timecode BCD64 round-trip Ltc 29.97 DF") {
+        Timecode tc(Timecode::DF30, 1, 23, 45, 12);
+        const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Ltc);
+        CHECK(((bcd >> 10) & 1u) != 0u);
+
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Ltc, tc.mode());
+        REQUIRE(rt.second().isOk());
+        const Timecode &back = rt.first();
+        CHECK(back.hour() == 1);
+        CHECK(back.min() == 23);
+        CHECK(back.sec() == 45);
+        CHECK(back.frame() == 12);
+        CHECK(back.isDropFrame());
+}
+
+TEST_CASE("Timecode BCD64 nibble layout") {
+        // Verify that the BCD digits land at the documented nibble
+        // positions in Vitc mode (which is the canonical layout).
+        Timecode tc(Timecode::NDF25, 9, 8, 7, 6);
+        const uint64_t bcd = tc.toBcd64(TimecodePackFormat::Vitc);
+
+        // Frame units = 6 in bits 0..3
+        CHECK(((bcd >>  0) & 0xfu) == 6u);
+        // Frame tens = 0 in bits 8..9
+        CHECK(((bcd >>  8) & 0x3u) == 0u);
+        // Seconds units = 7 in bits 16..19
+        CHECK(((bcd >> 16) & 0xfu) == 7u);
+        // Seconds tens = 0 in bits 24..26
+        CHECK(((bcd >> 24) & 0x7u) == 0u);
+        // Minute units = 8 in bits 32..35
+        CHECK(((bcd >> 32) & 0xfu) == 8u);
+        // Minute tens = 0 in bits 40..42
+        CHECK(((bcd >> 40) & 0x7u) == 0u);
+        // Hour units = 9 in bits 48..51
+        CHECK(((bcd >> 48) & 0xfu) == 9u);
+        // Hour tens = 0 in bits 56..57
+        CHECK(((bcd >> 56) & 0x3u) == 0u);
+}
+
+TEST_CASE("Timecode BCD64 unknown mode + DF flag infers 29.97 DF") {
+        // Pack at 29.97 DF, then unpack supplying an empty mode — the DF
+        // flag in the BCD must drive inference of 29.97 DF.
+        Timecode src(Timecode::DF30, 0, 1, 0, 0);
+        const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
+
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, Timecode::Mode());
+        REQUIRE(rt.second().isOk());
+        const Timecode &back = rt.first();
+        CHECK(back.isValid());
+        CHECK(back.isDropFrame());
+        CHECK(back.fps() == 30);
+}
+
+TEST_CASE("Timecode BCD64 NDF mode + DF flag upgrades to DF sister") {
+        // Build a BCD word with DF=1 by hand at NDF digits.
+        Timecode src(Timecode::DF30, 0, 0, 1, 0);
+        const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
+        CHECK(((bcd >> 10) & 1u) != 0u);
+
+        // Caller supplies 29.97 NDF mode (which does not match the BCD's
+        // DF flag) — the unpacker must upgrade to the DF sister.
+        Timecode::Mode ndf(&VTC_FORMAT_29_97_NDF);
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, ndf);
+        REQUIRE(rt.second().isOk());
+        const Timecode &back = rt.first();
+        CHECK(back.isDropFrame());
+        CHECK(back.fps() == 30);
+}
+
+TEST_CASE("Timecode BCD64 DF flag with non-DF rate is an error") {
+        // Pack a 29.97 DF timecode, then try to unpack it as 24 fps.
+        // 24 fps has no DF sister, so the inconsistency must surface.
+        Timecode src(Timecode::DF30, 0, 0, 1, 0);
+        const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
+        CHECK(((bcd >> 10) & 1u) != 0u);
+
+        Timecode::Mode ndf24(&VTC_FORMAT_24);
+        auto rt = Timecode::fromBcd64(bcd, TimecodePackFormat::Vitc, ndf24);
+        CHECK(rt.second().isError());
+        CHECK(rt.second().code() == Error::ConversionFailed);
+}
+
+TEST_CASE("Timecode BCD64 Vitc field marker carries first-field bit") {
+        // The VITC variant's bit 27 doubles as the HFR frame-pair / field-1
+        // marker.  Toggle the FirstField flag and verify the round-trip.
+        // Field marker is only meaningful in Vitc mode.
+        Timecode src(Timecode::NDF25, 0, 0, 0, 0);
+        // No public setter for FirstField — round-trip via a known-good
+        // first-field round-trip is sufficient: pack the cleared form and
+        // verify bit 27 stays clear, since FirstField defaults to off.
+        const uint64_t bcd = src.toBcd64(TimecodePackFormat::Vitc);
+        CHECK(((bcd >> 27) & 1u) == 0u);
+
+        // Build a synthetic word with bit 27 set and verify the unpacked
+        // Timecode reports first-field on.
+        const uint64_t synth = bcd | (uint64_t(1) << 27);
+        auto rt = Timecode::fromBcd64(synth, TimecodePackFormat::Vitc, src.mode());
+        REQUIRE(rt.second().isOk());
+        CHECK(rt.first().isFirstField());
 }

@@ -382,6 +382,31 @@ TEST_CASE("PixelFormat: SP_420_8 total equals I420 total") {
         CHECK(nv12Total == i420Total);
 }
 
+TEST_CASE("PixelFormat: P_420_3x8 chroma plane non-zero for height=1") {
+        // Regression: planarPlaneSize used floor division so a 4:2:0 image
+        // with height=1 produced 0 chroma rows, letting the CSC pipeline
+        // write past the end of the empty chroma buffer.  Ceiling division
+        // must yield 1 chroma row for both the Cb and Cr planes.
+        PixelFormat pf(PixelFormat::P_420_3x8);
+        CHECK(pf.planeSize(0, 1920, 1) == 1920);  // Y: 1 row
+        CHECK(pf.planeSize(1, 1920, 1) == 960);   // Cb: ceil(1/2)=1 row, 960 bytes
+        CHECK(pf.planeSize(2, 1920, 1) == 960);   // Cr: same
+}
+
+TEST_CASE("PixelFormat: SP_420_8 chroma plane non-zero for height=1") {
+        // Same regression but for the semi-planar NV12 variant.
+        PixelFormat pf(PixelFormat::SP_420_8);
+        CHECK(pf.planeSize(0, 1920, 1) == 1920);   // Y: 1 row
+        CHECK(pf.planeSize(1, 1920, 1) == 1920);   // CbCr: ceil(1/2)=1 row, 1920 bytes
+}
+
+TEST_CASE("PixelFormat: P_420_3x8 odd-luma-height ceiling") {
+        // Odd luma heights must give ceil(height/2) chroma rows, not floor.
+        PixelFormat pf(PixelFormat::P_420_3x8);
+        CHECK(pf.planeSize(1, 1920, 3) == 960 * 2);   // ceil(3/2)=2 chroma rows
+        CHECK(pf.planeSize(1, 1920, 5) == 960 * 3);   // ceil(5/2)=3 chroma rows
+}
+
 TEST_CASE("PixelFormat: SP_420_10_LE stride 1920") {
         PixelFormat pf(PixelFormat::SP_420_10_LE);
         CHECK(pf.lineStride(0, 1920) == 3840);       // Y: 1920 * 2

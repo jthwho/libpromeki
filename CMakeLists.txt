@@ -613,6 +613,7 @@ set(PROMEKI_SOURCES
     src/core/color.cpp
     src/core/colormodel.cpp
     src/core/crashhandler.cpp
+    src/core/crc.cpp
     src/core/datastream.cpp
     src/core/datetime.cpp
     src/core/dir.cpp
@@ -787,6 +788,8 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/encodeddesc.cpp
         src/proav/frame.cpp
         src/proav/image.cpp
+        src/proav/imagedataencoder.cpp
+        src/proav/imagedatadecoder.cpp
         src/proav/imagedesc.cpp
         src/proav/imagefile.cpp
         src/proav/imagefileio.cpp
@@ -804,6 +807,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/mediaiotask.cpp
         src/proav/mediaiotask_converter.cpp
         src/proav/mediaiotask_imagefile.cpp
+        src/proav/mediaiotask_inspector.cpp
         src/proav/mediaiotask_quicktime.cpp
         src/proav/mediaiotask_rtp.cpp
         src/proav/mediaiotask_tpg.cpp
@@ -1271,6 +1275,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/colormodel.cpp
         tests/configoption.cpp
         tests/crashhandler.cpp
+        tests/crc.cpp
         tests/datastream.cpp
         tests/datastream_include_chain.cpp
         tests/datetime.cpp
@@ -1400,6 +1405,8 @@ if(PROMEKI_BUILD_TESTS)
             tests/basicfont.cpp
             tests/frame.cpp
             tests/image.cpp
+            tests/imagedataencoder.cpp
+            tests/imagedatadecoder.cpp
             tests/imagedesc.cpp
             tests/imagefile.cpp
             tests/imagefileio.cpp
@@ -1417,6 +1424,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/mediaio_identifiers.cpp
             tests/mediaio_stats.cpp
             tests/mediaiotask_converter.cpp
+            tests/mediaiotask_inspector.cpp
             tests/mediaiotask_quicktime.cpp
             tests/mediaiotask_rtp.cpp
             tests/paintengine.cpp
