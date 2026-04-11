@@ -105,6 +105,7 @@ $(document).ready(function(){initNavTree('group__util.html',''); initResizable()
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">Utilities</div></div>
 </div><!--header-->
@@ -150,6 +151,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCmdLineParser.html">CmdLineParser</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Command-line argument parser with callback-driven option handling.  <a href="classCmdLineParser.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCrashHandler.html">CrashHandler</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Installs signal handlers for fatal crash signals.  <a href="classCrashHandler.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnum.html">Enum</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runtime-typed enumeration value carrying a registered type and integer.  <a href="classEnum.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,6 +171,12 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classKeyEvent.html">KeyEvent</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classEvent.html" title="Base class for the event system.">Event</a> delivered when a key is pressed or released.  <a href="classKeyEvent.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structLibraryOptionsTag.html">LibraryOptionsTag</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Phantom tag for the library-wide options <a class="el" href="classVariantDatabase.html">VariantDatabase</a>.  <a href="structLibraryOptionsTag.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLibraryOptions.html">LibraryOptions</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Library-wide option database populated from environment variables.  <a href="classLibraryOptions.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classLogger.html">Logger</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asynchronous thread-safe logging facility.  <a href="classLogger.html#details">More...</a><br /></td></tr>
@@ -219,6 +229,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html">VariantDatabase&lt; Tag &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A collection of named Variant values keyed by string-registered IDs.  <a href="classVariantDatabase.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantSpec.html">VariantSpec</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Describes the constraints and default value for a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> ID.  <a href="classVariantSpec.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -238,6 +251,15 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ga72213850e8f39e4956d4ce23dd5238f7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a> = <a class="el" href="classPair.html">Pair</a>&lt; <a class="el" href="classList.html">T</a>, <a class="el" href="classError.html">Error</a> &gt;</td></tr>
 <tr class="memdesc:ga72213850e8f39e4956d4ce23dd5238f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience alias for fallible return types.  <br /></td></tr>
 <tr class="separator:ga72213850e8f39e4956d4ce23dd5238f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ga3e19f7ded49aac87704161e5d5b458db" id="r_ga3e19f7ded49aac87704161e5d5b458db"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> { <a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754">SpecValidation::None</a>
+, <a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17">SpecValidation::Warn</a>
+, <a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974">SpecValidation::Strict</a>
+ }</td></tr>
+<tr class="memdesc:ga3e19f7ded49aac87704161e5d5b458db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validation mode for <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a" title="Sets the value for the given ID.">VariantDatabase::set()</a>.  <a href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">More...</a><br /></td></tr>
+<tr class="separator:ga3e19f7ded49aac87704161e5d5b458db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -411,7 +433,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">cfg</a>.get(width).get&lt;<a class="code hl_class" href="classList.html">int32_t</a>&gt;(); <span class="comment">// 1920</span></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 <div class="ttc" id="aclassVariantDatabase_html"><div class="ttname"><a href="classVariantDatabase.html">VariantDatabase&lt; ConfigTag &gt;</a></div></div>
-<div class="ttc" id="aclassVariantDatabase_html_a08cce9737a8bae134efe77f5b3392f9b"><div class="ttname"><a href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">VariantDatabase&lt; ConfigTag &gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; ConfigTag &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:67</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_a08cce9737a8bae134efe77f5b3392f9b"><div class="ttname"><a href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">VariantDatabase&lt; ConfigTag &gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; ConfigTag &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:84</div></div>
 </div><!-- fragment --> </dd></dl>
 
 </div>
@@ -438,6 +460,40 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ga3e19f7ded49aac87704161e5d5b458db" name="ga3e19f7ded49aac87704161e5d5b458db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga3e19f7ded49aac87704161e5d5b458db">&#9670;&#160;</a></span>SpecValidation</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classList.html">class</a> <a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Validation mode for <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a" title="Sets the value for the given ID.">VariantDatabase::set()</a>. </p>
+<p>Controls whether values are checked against the registered <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> when stored via <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">VariantDatabase::set</a>. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754" name="gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"><p>No validation — values are stored unconditionally. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17" name="gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17"></a>Warn&#160;</td><td class="fielddoc"><p>Log a warning for out-of-spec values, but store them. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974" name="gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974"></a>Strict&#160;</td><td class="fielddoc"><p>Reject out-of-spec values (set returns false). </p>
+</td></tr>
+</table>
 
 </div>
 </div>
@@ -581,7 +637,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -1,7 +1,7 @@
 var searchData=
 [
   ['waitformore_0',['WaitForMore',['../classEventLoop.html#a18e4672007c4c1c025a5ed07243cbd9ea6a17bc697107f99a0ca9f01015258af4',1,'EventLoop']]],
-  ['warn_1',['Warn',['../classLogger.html#ac744681e23720966b5f430ec2060da36ab4e32104cbc6d28791887cc5683bd882',1,'Logger']]],
+  ['warn_1',['warn',['../classLogger.html#ac744681e23720966b5f430ec2060da36ab4e32104cbc6d28791887cc5683bd882',1,'Logger::Warn'],['../group__util.html#gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17',1,'Warn:&#160;variantdatabase.h']]],
   ['white_2',['White',['../classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61aaae28edd8c10c35f4fdb9b47bdaa35e8',1,'VideoTestPattern']]],
   ['window_3',['Window',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0acce2c80a40066873f90088d85f5ead28',1,'TuiPalette']]],
   ['windowtext_4',['WindowText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a13d1910ce10be8660c589a07348eedfb',1,'TuiPalette']]],

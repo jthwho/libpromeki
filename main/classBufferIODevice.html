@@ -157,6 +157,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a443748139315d5eca64a5f3d1970a103" id="r_a443748139315d5eca64a5f3d1970a103"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classBuffer.html">Buffer</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferIODevice.html#a443748139315d5eca64a5f3d1970a103">buffer</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a443748139315d5eca64a5f3d1970a103"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the underlying <a class="el" href="classBuffer.html" title="Generic memory buffer descriptor with alignment and memory space support.">Buffer</a>, or nullptr.  <br /></td></tr>
 <tr class="separator:a443748139315d5eca64a5f3d1970a103"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ef1a4fa4c608ec966f12d7753dc5923" id="r_a8ef1a4fa4c608ec966f12d7753dc5923"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferIODevice.html#a8ef1a4fa4c608ec966f12d7753dc5923">setAutoGrow</a> (<a class="el" href="classList.html">bool</a> enabled)</td></tr>
+<tr class="memdesc:a8ef1a4fa4c608ec966f12d7753dc5923"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables or disables automatic buffer growth on write.  <br /></td></tr>
+<tr class="separator:a8ef1a4fa4c608ec966f12d7753dc5923"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15430ce57f4e8529ae3b12bdb085d7fd" id="r_a15430ce57f4e8529ae3b12bdb085d7fd"><td class="memItemLeft" align="right" valign="top"><a id="a15430ce57f4e8529ae3b12bdb085d7fd" name="a15430ce57f4e8529ae3b12bdb085d7fd"></a>
+<a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><b>autoGrow</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a15430ce57f4e8529ae3b12bdb085d7fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if auto-growth is enabled. <br /></td></tr>
+<tr class="separator:a15430ce57f4e8529ae3b12bdb085d7fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9625e8eb164e780c5d26632d94ac327a" id="r_a9625e8eb164e780c5d26632d94ac327a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classBufferIODevice.html#a9625e8eb164e780c5d26632d94ac327a">open</a> (<a class="el" href="classIODevice.html#ac12c287cd37708c10d6618d667a3147a">OpenMode</a> mode) <a class="el" href="classList.html">override</a></td></tr>
 <tr class="memdesc:a9625e8eb164e780c5d26632d94ac327a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opens the device with the specified mode.  <br /></td></tr>
 <tr class="separator:a9625e8eb164e780c5d26632d94ac327a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -748,6 +755,42 @@ template&lt;typename... Args&gt; </td></tr>
 
 </div>
 </div>
+<a id="a8ef1a4fa4c608ec966f12d7753dc5923" name="a8ef1a4fa4c608ec966f12d7753dc5923"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ef1a4fa4c608ec966f12d7753dc5923">&#9670;&#160;</a></span>setAutoGrow()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> BufferIODevice::setAutoGrow </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enables or disables automatic buffer growth on write. </p>
+<p>When enabled, writes that would exceed the current availSize() cause the buffer to be reallocated with enough space (doubling strategy, minimum 4 KB). An invalid/empty buffer is allocated on the first write.</p>
+<p>Disabled by default. <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a> enables this when it creates a <a class="el" href="classBufferIODevice.html" title="IODevice backed by an in-memory Buffer.">BufferIODevice</a> internally.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">enabled</td><td>True to enable auto-growth. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a83a023802e9e69edda31781723f5ca05" name="a83a023802e9e69edda31781723f5ca05"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a83a023802e9e69edda31781723f5ca05">&#9670;&#160;</a></span>setBuffer()</h2>
 
@@ -862,7 +905,7 @@ template&lt;typename... Args&gt; </td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classBufferIODevice.html">BufferIODevice</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -179,6 +179,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a3842d4110749e27e2cd267c95f0b621c" id="r_a3842d4110749e27e2cd267c95f0b621c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classIODevice.html">IODevice</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a3842d4110749e27e2cd267c95f0b621c">stderrDevice</a> ()</td></tr>
 <tr class="memdesc:a3842d4110749e27e2cd267c95f0b621c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns an <a class="el" href="classIODevice.html" title="Abstract base class for all I/O devices.">IODevice</a> wrapping C stderr.  <br /></td></tr>
 <tr class="separator:a3842d4110749e27e2cd267c95f0b621c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6927ab7d7fa81205f374b5bd0dd16d6e" id="r_a6927ab7d7fa81205f374b5bd0dd16d6e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a6927ab7d7fa81205f374b5bd0dd16d6e">writeTrace</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *<a class="el" href="classList.html">reason</a>=<a class="el" href="classList.html">nullptr</a>)</td></tr>
+<tr class="memdesc:a6927ab7d7fa81205f374b5bd0dd16d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a diagnostic trace report to a unique file.  <br /></td></tr>
+<tr class="separator:a6927ab7d7fa81205f374b5bd0dd16d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a208db3379cddeea6924b8b3c3f9f10aa" id="r_a208db3379cddeea6924b8b3c3f9f10aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classApplication.html#a208db3379cddeea6924b8b3c3f9f10aa">quit</a> (int <a class="el" href="classApplication.html#ac2b799c01a3e63ae2efc44e8152fc724">exitCode</a>=0)</td></tr>
 <tr class="memdesc:a208db3379cddeea6924b8b3c3f9f10aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Requests the application to quit.  <br /></td></tr>
 <tr class="separator:a208db3379cddeea6924b8b3c3f9f10aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -627,6 +630,42 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a6927ab7d7fa81205f374b5bd0dd16d6e" name="a6927ab7d7fa81205f374b5bd0dd16d6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6927ab7d7fa81205f374b5bd0dd16d6e">&#9670;&#160;</a></span>writeTrace()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> Application::writeTrace </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *&#160;</td>
+          <td class="paramname"><em>reason</em> = <code><a class="el" href="classList.html">nullptr</a></code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Writes a diagnostic trace report to a unique file. </p>
+<p>Convenience forwarder to <a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886">CrashHandler::writeTrace</a>. Useful for snapshotting application state (build info, OS info, memory usage, thread list, stack trace) from code paths that detect a soft failure or an unexpected condition worth investigating later.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">reason</td><td>Optional human-readable reason for the trace.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="classCrashHandler.html#ac4b0f00d268bb709d61367cf72a6a886" title="Writes a diagnostic trace report to a unique file.">CrashHandler::writeTrace</a> </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="application_8h_source.html">application.h</a></li>
 </ul>
@@ -637,7 +676,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classApplication.html">Application</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

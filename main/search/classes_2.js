@@ -16,8 +16,9 @@ var searchData=
   ['config_13',['config',['../classAudioBlock_1_1Config.html',1,'AudioBlock::Config'],['../structAudioGen_1_1Config.html',1,'AudioGen::Config']]],
   ['configtag_14',['ConfigTag',['../structConfigTag.html',1,'']]],
   ['context_15',['Context',['../structFileFormatFactory_1_1Context.html',1,'FileFormatFactory']]],
-  ['csccontext_16',['CSCContext',['../classCSCContext.html',1,'']]],
-  ['cscpath_17',['CscPath',['../structCscPath.html',1,'']]],
-  ['cscpipeline_18',['CSCPipeline',['../classCSCPipeline.html',1,'']]],
-  ['cscregistry_19',['CSCRegistry',['../classCSCRegistry.html',1,'']]]
+  ['crashhandler_16',['CrashHandler',['../classCrashHandler.html',1,'']]],
+  ['csccontext_17',['CSCContext',['../classCSCContext.html',1,'']]],
+  ['cscpath_18',['CscPath',['../structCscPath.html',1,'']]],
+  ['cscpipeline_19',['CSCPipeline',['../classCSCPipeline.html',1,'']]],
+  ['cscregistry_20',['CSCRegistry',['../classCSCRegistry.html',1,'']]]
 ];

@@ -17,5 +17,6 @@ var searchData=
   ['jpeg_5fyuv8_5f422_5frec601_14',['JPEG_YUV8_422_Rec601',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaacbdb64fcf3473bc74b46bd18e9a5bfd',1,'PixelDesc']]],
   ['jpeg_5fyuv8_5f422_5frec601_5ffull_15',['JPEG_YUV8_422_Rec601_Full',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa918e710b2515a3da763d42efdd271567',1,'PixelDesc']]],
   ['jpeg_5fyuv8_5f422_5frec709_16',['JPEG_YUV8_422_Rec709',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa0e6ec62dd1a5078a0ba0f5e7a6787060',1,'PixelDesc']]],
-  ['jpeg_5fyuv8_5f422_5frec709_5ffull_17',['JPEG_YUV8_422_Rec709_Full',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaf499e4a4c2f5a0d3a0e0e1bbff6683c7',1,'PixelDesc']]]
+  ['jpeg_5fyuv8_5f422_5frec709_5ffull_17',['JPEG_YUV8_422_Rec709_Full',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaf499e4a4c2f5a0d3a0e0e1bbff6683c7',1,'PixelDesc']]],
+  ['jpegxs_18',['JpegXS',['../classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9042aef653f4e83272ed612adfccf5fc',1,'ImageFile']]]
 ];

@@ -149,6 +149,10 @@ Public Types</h2></td></tr>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ID</b> = <a class="el" href="classList.html">typename</a> <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt; <a class="el" href="structMetadataTag.html">MetadataTag</a> &gt;::Item</td></tr>
 <tr class="memdesc:a08cce9737a8bae134efe77f5b3392f9b inherit pub_types_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight handle identifying an entry by name. <br /></td></tr>
 <tr class="separator:a08cce9737a8bae134efe77f5b3392f9b inherit pub_types_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76e6097358e353e2dc6de5aa86a63505 inherit pub_types_classVariantDatabase" id="r_a76e6097358e353e2dc6de5aa86a63505"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SpecMap</b> = <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;</td></tr>
+<tr class="memdesc:a76e6097358e353e2dc6de5aa86a63505 inherit pub_types_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a> of ID to <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for batch spec operations. <br /></td></tr>
+<tr class="separator:a76e6097358e353e2dc6de5aa86a63505 inherit pub_types_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -168,14 +172,20 @@ Public Member Functions</h2></td></tr>
 <tr class="inherit_header pub_methods_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt; MetadataTag &gt;</a></td></tr>
 <tr class="memitem:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase" id="r_a0c4d5feedfdea38ab75909d0cfa59b19"><td class="memItemLeft" align="right" valign="top">
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantDatabase</b> ()=<a class="el" href="classList.html">default</a></td></tr>
-<tr class="memdesc:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database. <br /></td></tr>
+<tr class="memdesc:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database with Warn validation. <br /></td></tr>
 <tr class="separator:a0c4d5feedfdea38ab75909d0cfa59b19 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0105273e5397bebb5589d363ecff7c3e inherit pub_methods_classVariantDatabase" id="r_a0105273e5397bebb5589d363ecff7c3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a0105273e5397bebb5589d363ecff7c3e">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a0105273e5397bebb5589d363ecff7c3e inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
-<tr class="separator:a0105273e5397bebb5589d363ecff7c3e inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c3385dc86892284ad66426d6dc5d4f3 inherit pub_methods_classVariantDatabase" id="r_a4c3385dc86892284ad66426d6dc5d4f3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a4c3385dc86892284ad66426d6dc5d4f3">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a4c3385dc86892284ad66426d6dc5d4f3 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
-<tr class="separator:a4c3385dc86892284ad66426d6dc5d4f3 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3e3820c886e257bdd72a38507461bb2 inherit pub_methods_classVariantDatabase" id="r_ac3e3820c886e257bdd72a38507461bb2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2">setValidation</a> (<a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> mode)</td></tr>
+<tr class="memdesc:ac3e3820c886e257bdd72a38507461bb2 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the validation mode for this database instance.  <br /></td></tr>
+<tr class="separator:ac3e3820c886e257bdd72a38507461bb2 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase" id="r_ada585323d1db22e24541527411cb4ce4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4">validation</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current validation mode.  <br /></td></tr>
+<tr class="separator:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase" id="r_a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
+<tr class="separator:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase" id="r_a8451aca5a2a870fd1df8dc3de13055bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
+<tr class="separator:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase" id="r_a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value only if no entry exists for <code>id</code>.  <br /></td></tr>
 <tr class="separator:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -248,228 +258,191 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:a790e5ea773e5135b192190cace94d891"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deserializes a <a class="el" href="classMetadata.html" title="Key-value metadata container using typed Variant values.">Metadata</a> object from a JSON object.  <br /></td></tr>
 <tr class="separator:a790e5ea773e5135b192190cace94d891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classVariantDatabase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classVariantDatabase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classVariantDatabase.html">VariantDatabase&lt; MetadataTag &gt;</a></td></tr>
+<tr class="memitem:aa81c6cfc6ceee506ea6c50b918644aa7 inherit pub_static_methods_classVariantDatabase" id="r_aa81c6cfc6ceee506ea6c50b918644aa7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> &amp;<a class="el" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">spec</a>)</td></tr>
+<tr class="memdesc:aa81c6cfc6ceee506ea6c50b918644aa7 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares an ID and registers its <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a>.  <br /></td></tr>
+<tr class="separator:aa81c6cfc6ceee506ea6c50b918644aa7 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe019941e5ee644f48f1590e2a025c71 inherit pub_static_methods_classVariantDatabase" id="r_abe019941e5ee644f48f1590e2a025c71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">spec</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id)</td></tr>
+<tr class="memdesc:abe019941e5ee644f48f1590e2a025c71 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none.  <br /></td></tr>
+<tr class="separator:abe019941e5ee644f48f1590e2a025c71 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84df1f7e946887f83852ed42d1f9b299 inherit pub_static_methods_classVariantDatabase" id="r_a84df1f7e946887f83852ed42d1f9b299"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint32_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a84df1f7e946887f83852ed42d1f9b299">registeredSpecs</a> ()</td></tr>
+<tr class="memdesc:a84df1f7e946887f83852ed42d1f9b299 inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the entire spec registry.  <br /></td></tr>
+<tr class="separator:a84df1f7e946887f83852ed42d1f9b299 inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84c46ba9dc80cd52c6cdc468a0e7403a inherit pub_static_methods_classVariantDatabase" id="r_a84c46ba9dc80cd52c6cdc468a0e7403a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a84c46ba9dc80cd52c6cdc468a0e7403a">fromSpecs</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>)</td></tr>
+<tr class="memdesc:a84c46ba9dc80cd52c6cdc468a0e7403a inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a SpecMap's default values.  <br /></td></tr>
+<tr class="separator:a84c46ba9dc80cd52c6cdc468a0e7403a inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6ab45eceb475564cb25fecfad3e96ed inherit pub_static_methods_classVariantDatabase" id="r_ac6ab45eceb475564cb25fecfad3e96ed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ac6ab45eceb475564cb25fecfad3e96ed">writeSpecMapHelp</a> (<a class="el" href="classTextStream.html">TextStream</a> &amp;stream, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>)</td></tr>
+<tr class="memdesc:ac6ab45eceb475564cb25fecfad3e96ed inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes formatted help text for every spec in a SpecMap.  <br /></td></tr>
+<tr class="separator:ac6ab45eceb475564cb25fecfad3e96ed inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae06c400a4039edd713e22fc9e2bc14aa inherit pub_static_methods_classVariantDatabase" id="r_ae06c400a4039edd713e22fc9e2bc14aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae06c400a4039edd713e22fc9e2bc14aa">fromJson</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">json</a>)</td></tr>
 <tr class="memdesc:ae06c400a4039edd713e22fc9e2bc14aa inherit pub_static_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>.  <br /></td></tr>
 <tr class="separator:ae06c400a4039edd713e22fc9e2bc14aa inherit pub_static_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:afcab0b9a69d3b11c78761888f3e7072a" id="r_afcab0b9a69d3b11c78761888f3e7072a"><td class="memItemLeft" align="right" valign="top"><a id="afcab0b9a69d3b11c78761888f3e7072a" name="afcab0b9a69d3b11c78761888f3e7072a"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Timecode</b> {&quot;Timecode&quot;}</td></tr>
-<tr class="memdesc:afcab0b9a69d3b11c78761888f3e7072a"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE timecode associated with this media unit. <br /></td></tr>
+<tr class="memitem:afcab0b9a69d3b11c78761888f3e7072a" id="r_afcab0b9a69d3b11c78761888f3e7072a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a">Timecode</a></td></tr>
+<tr class="memdesc:afcab0b9a69d3b11c78761888f3e7072a"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE timecode associated with this media unit.  <br /></td></tr>
 <tr class="separator:afcab0b9a69d3b11c78761888f3e7072a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30b9865d30e8dcc9511f439e270cd6b9" id="r_a30b9865d30e8dcc9511f439e270cd6b9"><td class="memItemLeft" align="right" valign="top"><a id="a30b9865d30e8dcc9511f439e270cd6b9" name="a30b9865d30e8dcc9511f439e270cd6b9"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Gamma</b> {&quot;Gamma&quot;}</td></tr>
-<tr class="memdesc:a30b9865d30e8dcc9511f439e270cd6b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gamma / transfer-function exponent. <br /></td></tr>
+<tr class="memitem:a30b9865d30e8dcc9511f439e270cd6b9" id="r_a30b9865d30e8dcc9511f439e270cd6b9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a30b9865d30e8dcc9511f439e270cd6b9">Gamma</a></td></tr>
+<tr class="memdesc:a30b9865d30e8dcc9511f439e270cd6b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gamma / transfer-function exponent.  <br /></td></tr>
 <tr class="separator:a30b9865d30e8dcc9511f439e270cd6b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff99fcd1fd3fb4c681442f7d1c0d8f83" id="r_aff99fcd1fd3fb4c681442f7d1c0d8f83"><td class="memItemLeft" align="right" valign="top"><a id="aff99fcd1fd3fb4c681442f7d1c0d8f83" name="aff99fcd1fd3fb4c681442f7d1c0d8f83"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Title</b> {&quot;Title&quot;}</td></tr>
-<tr class="memdesc:aff99fcd1fd3fb4c681442f7d1c0d8f83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Title of the media. <br /></td></tr>
+<tr class="memitem:aff99fcd1fd3fb4c681442f7d1c0d8f83" id="r_aff99fcd1fd3fb4c681442f7d1c0d8f83"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#aff99fcd1fd3fb4c681442f7d1c0d8f83">Title</a></td></tr>
+<tr class="memdesc:aff99fcd1fd3fb4c681442f7d1c0d8f83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Title of the media.  <br /></td></tr>
 <tr class="separator:aff99fcd1fd3fb4c681442f7d1c0d8f83"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac3d8cdd3aec28815d4376e0c78cd4dac" id="r_ac3d8cdd3aec28815d4376e0c78cd4dac"><td class="memItemLeft" align="right" valign="top"><a id="ac3d8cdd3aec28815d4376e0c78cd4dac" name="ac3d8cdd3aec28815d4376e0c78cd4dac"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Copyright</b> {&quot;Copyright&quot;}</td></tr>
-<tr class="memdesc:ac3d8cdd3aec28815d4376e0c78cd4dac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copyright notice. <br /></td></tr>
+<tr class="memitem:ac3d8cdd3aec28815d4376e0c78cd4dac" id="r_ac3d8cdd3aec28815d4376e0c78cd4dac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ac3d8cdd3aec28815d4376e0c78cd4dac">Copyright</a></td></tr>
+<tr class="memdesc:ac3d8cdd3aec28815d4376e0c78cd4dac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copyright notice.  <br /></td></tr>
 <tr class="separator:ac3d8cdd3aec28815d4376e0c78cd4dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a121b2c33d6b23d806b28b7de4c772eda" id="r_a121b2c33d6b23d806b28b7de4c772eda"><td class="memItemLeft" align="right" valign="top"><a id="a121b2c33d6b23d806b28b7de4c772eda" name="a121b2c33d6b23d806b28b7de4c772eda"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Software</b> {&quot;Software&quot;}</td></tr>
-<tr class="memdesc:a121b2c33d6b23d806b28b7de4c772eda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Software that created or last modified the media. <br /></td></tr>
+<tr class="memitem:a121b2c33d6b23d806b28b7de4c772eda" id="r_a121b2c33d6b23d806b28b7de4c772eda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a121b2c33d6b23d806b28b7de4c772eda">Software</a></td></tr>
+<tr class="memdesc:a121b2c33d6b23d806b28b7de4c772eda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Software that created or last modified the media.  <br /></td></tr>
 <tr class="separator:a121b2c33d6b23d806b28b7de4c772eda"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4244a4f8bc7ef525ddbba3c9d373e0a5" id="r_a4244a4f8bc7ef525ddbba3c9d373e0a5"><td class="memItemLeft" align="right" valign="top"><a id="a4244a4f8bc7ef525ddbba3c9d373e0a5" name="a4244a4f8bc7ef525ddbba3c9d373e0a5"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Artist</b> {&quot;Artist&quot;}</td></tr>
-<tr class="memdesc:a4244a4f8bc7ef525ddbba3c9d373e0a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Artist or creator name. <br /></td></tr>
+<tr class="memitem:a4244a4f8bc7ef525ddbba3c9d373e0a5" id="r_a4244a4f8bc7ef525ddbba3c9d373e0a5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a4244a4f8bc7ef525ddbba3c9d373e0a5">Artist</a></td></tr>
+<tr class="memdesc:a4244a4f8bc7ef525ddbba3c9d373e0a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Artist or creator name.  <br /></td></tr>
 <tr class="separator:a4244a4f8bc7ef525ddbba3c9d373e0a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ba3ff7db1f5ac2b7d1ad099b6f9be9b" id="r_a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"><td class="memItemLeft" align="right" valign="top"><a id="a6ba3ff7db1f5ac2b7d1ad099b6f9be9b" name="a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Comment</b> {&quot;Comment&quot;}</td></tr>
-<tr class="memdesc:a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free-form comment. <br /></td></tr>
+<tr class="memitem:a6ba3ff7db1f5ac2b7d1ad099b6f9be9b" id="r_a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a6ba3ff7db1f5ac2b7d1ad099b6f9be9b">Comment</a></td></tr>
+<tr class="memdesc:a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free-form comment.  <br /></td></tr>
 <tr class="separator:a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a687079d5e8a71579ffb8b69b7eff5436" id="r_a687079d5e8a71579ffb8b69b7eff5436"><td class="memItemLeft" align="right" valign="top"><a id="a687079d5e8a71579ffb8b69b7eff5436" name="a687079d5e8a71579ffb8b69b7eff5436"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Date</b> {&quot;Date&quot;}</td></tr>
-<tr class="memdesc:a687079d5e8a71579ffb8b69b7eff5436"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creation or origination date. <br /></td></tr>
+<tr class="memitem:a687079d5e8a71579ffb8b69b7eff5436" id="r_a687079d5e8a71579ffb8b69b7eff5436"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a687079d5e8a71579ffb8b69b7eff5436">Date</a></td></tr>
+<tr class="memdesc:a687079d5e8a71579ffb8b69b7eff5436"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creation or origination date.  <br /></td></tr>
 <tr class="separator:a687079d5e8a71579ffb8b69b7eff5436"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac111c4181b61f9a1a07072e660214030" id="r_ac111c4181b61f9a1a07072e660214030"><td class="memItemLeft" align="right" valign="top"><a id="ac111c4181b61f9a1a07072e660214030" name="ac111c4181b61f9a1a07072e660214030"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Album</b> {&quot;Album&quot;}</td></tr>
-<tr class="memdesc:ac111c4181b61f9a1a07072e660214030"><td class="mdescLeft">&#160;</td><td class="mdescRight">Album name (audio media). <br /></td></tr>
+<tr class="memitem:ac111c4181b61f9a1a07072e660214030" id="r_ac111c4181b61f9a1a07072e660214030"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ac111c4181b61f9a1a07072e660214030">Album</a></td></tr>
+<tr class="memdesc:ac111c4181b61f9a1a07072e660214030"><td class="mdescLeft">&#160;</td><td class="mdescRight">Album name (audio media).  <br /></td></tr>
 <tr class="separator:ac111c4181b61f9a1a07072e660214030"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6d74384e72bf5b17339d6373c78f0fef" id="r_a6d74384e72bf5b17339d6373c78f0fef"><td class="memItemLeft" align="right" valign="top"><a id="a6d74384e72bf5b17339d6373c78f0fef" name="a6d74384e72bf5b17339d6373c78f0fef"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>License</b> {&quot;License&quot;}</td></tr>
-<tr class="memdesc:a6d74384e72bf5b17339d6373c78f0fef"><td class="mdescLeft">&#160;</td><td class="mdescRight">License information. <br /></td></tr>
+<tr class="memitem:a6d74384e72bf5b17339d6373c78f0fef" id="r_a6d74384e72bf5b17339d6373c78f0fef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a6d74384e72bf5b17339d6373c78f0fef">License</a></td></tr>
+<tr class="memdesc:a6d74384e72bf5b17339d6373c78f0fef"><td class="mdescLeft">&#160;</td><td class="mdescRight">License information.  <br /></td></tr>
 <tr class="separator:a6d74384e72bf5b17339d6373c78f0fef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16bab06e9349647ccc88a9679363dd83" id="r_a16bab06e9349647ccc88a9679363dd83"><td class="memItemLeft" align="right" valign="top"><a id="a16bab06e9349647ccc88a9679363dd83" name="a16bab06e9349647ccc88a9679363dd83"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>TrackNumber</b> {&quot;TrackNumber&quot;}</td></tr>
-<tr class="memdesc:a16bab06e9349647ccc88a9679363dd83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Track number (audio media). <br /></td></tr>
+<tr class="memitem:a16bab06e9349647ccc88a9679363dd83" id="r_a16bab06e9349647ccc88a9679363dd83"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a16bab06e9349647ccc88a9679363dd83">TrackNumber</a></td></tr>
+<tr class="memdesc:a16bab06e9349647ccc88a9679363dd83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Track number (audio media).  <br /></td></tr>
 <tr class="separator:a16bab06e9349647ccc88a9679363dd83"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad446146e07fc61aefe2b9996f94a2bd" id="r_aad446146e07fc61aefe2b9996f94a2bd"><td class="memItemLeft" align="right" valign="top"><a id="aad446146e07fc61aefe2b9996f94a2bd" name="aad446146e07fc61aefe2b9996f94a2bd"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Genre</b> {&quot;Genre&quot;}</td></tr>
-<tr class="memdesc:aad446146e07fc61aefe2b9996f94a2bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Genre (audio media). <br /></td></tr>
+<tr class="memitem:aad446146e07fc61aefe2b9996f94a2bd" id="r_aad446146e07fc61aefe2b9996f94a2bd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#aad446146e07fc61aefe2b9996f94a2bd">Genre</a></td></tr>
+<tr class="memdesc:aad446146e07fc61aefe2b9996f94a2bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Genre (audio media).  <br /></td></tr>
 <tr class="separator:aad446146e07fc61aefe2b9996f94a2bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bb0103fbaf7fa783eed12a258339c73" id="r_a9bb0103fbaf7fa783eed12a258339c73"><td class="memItemLeft" align="right" valign="top"><a id="a9bb0103fbaf7fa783eed12a258339c73" name="a9bb0103fbaf7fa783eed12a258339c73"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EnableBWF</b> {&quot;EnableBWF&quot;}</td></tr>
-<tr class="memdesc:a9bb0103fbaf7fa783eed12a258339c73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable Broadcast Wave Format metadata in audio files. <br /></td></tr>
+<tr class="memitem:a9bb0103fbaf7fa783eed12a258339c73" id="r_a9bb0103fbaf7fa783eed12a258339c73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a9bb0103fbaf7fa783eed12a258339c73">EnableBWF</a></td></tr>
+<tr class="memdesc:a9bb0103fbaf7fa783eed12a258339c73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable Broadcast Wave Format metadata in audio files.  <br /></td></tr>
 <tr class="separator:a9bb0103fbaf7fa783eed12a258339c73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a09b92adbb432382a1de7451addd7f30b" id="r_a09b92adbb432382a1de7451addd7f30b"><td class="memItemLeft" align="right" valign="top"><a id="a09b92adbb432382a1de7451addd7f30b" name="a09b92adbb432382a1de7451addd7f30b"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Description</b> {&quot;Description&quot;}</td></tr>
-<tr class="memdesc:a09b92adbb432382a1de7451addd7f30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable description of the content. <br /></td></tr>
+<tr class="memitem:a09b92adbb432382a1de7451addd7f30b" id="r_a09b92adbb432382a1de7451addd7f30b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a09b92adbb432382a1de7451addd7f30b">Description</a></td></tr>
+<tr class="memdesc:a09b92adbb432382a1de7451addd7f30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Human-readable description of the content.  <br /></td></tr>
 <tr class="separator:a09b92adbb432382a1de7451addd7f30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac6f3e3758aaa031a697987a4808ccbc0" id="r_ac6f3e3758aaa031a697987a4808ccbc0"><td class="memItemLeft" align="right" valign="top"><a id="ac6f3e3758aaa031a697987a4808ccbc0" name="ac6f3e3758aaa031a697987a4808ccbc0"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Originator</b> {&quot;Originator&quot;}</td></tr>
-<tr class="memdesc:ac6f3e3758aaa031a697987a4808ccbc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF originator name. <br /></td></tr>
+<tr class="memitem:ac6f3e3758aaa031a697987a4808ccbc0" id="r_ac6f3e3758aaa031a697987a4808ccbc0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ac6f3e3758aaa031a697987a4808ccbc0">Originator</a></td></tr>
+<tr class="memdesc:ac6f3e3758aaa031a697987a4808ccbc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF originator name.  <br /></td></tr>
 <tr class="separator:ac6f3e3758aaa031a697987a4808ccbc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95263f7b9a9356b29e20a8e6b7d71386" id="r_a95263f7b9a9356b29e20a8e6b7d71386"><td class="memItemLeft" align="right" valign="top"><a id="a95263f7b9a9356b29e20a8e6b7d71386" name="a95263f7b9a9356b29e20a8e6b7d71386"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OriginatorReference</b> {&quot;OriginatorReference&quot;}</td></tr>
-<tr class="memdesc:a95263f7b9a9356b29e20a8e6b7d71386"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF originator reference. <br /></td></tr>
+<tr class="memitem:a95263f7b9a9356b29e20a8e6b7d71386" id="r_a95263f7b9a9356b29e20a8e6b7d71386"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a95263f7b9a9356b29e20a8e6b7d71386">OriginatorReference</a></td></tr>
+<tr class="memdesc:a95263f7b9a9356b29e20a8e6b7d71386"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF originator reference.  <br /></td></tr>
 <tr class="separator:a95263f7b9a9356b29e20a8e6b7d71386"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1db4844d9e5824c4bc65e4dcc89dfd3c" id="r_a1db4844d9e5824c4bc65e4dcc89dfd3c"><td class="memItemLeft" align="right" valign="top"><a id="a1db4844d9e5824c4bc65e4dcc89dfd3c" name="a1db4844d9e5824c4bc65e4dcc89dfd3c"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OriginationDateTime</b> {&quot;OriginationDateTime&quot;}</td></tr>
-<tr class="memdesc:a1db4844d9e5824c4bc65e4dcc89dfd3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF origination date and time. <br /></td></tr>
+<tr class="memitem:a1db4844d9e5824c4bc65e4dcc89dfd3c" id="r_a1db4844d9e5824c4bc65e4dcc89dfd3c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a1db4844d9e5824c4bc65e4dcc89dfd3c">OriginationDateTime</a></td></tr>
+<tr class="memdesc:a1db4844d9e5824c4bc65e4dcc89dfd3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF origination date and time.  <br /></td></tr>
 <tr class="separator:a1db4844d9e5824c4bc65e4dcc89dfd3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab75ac7d20449ebaf96b3769500d07501" id="r_ab75ac7d20449ebaf96b3769500d07501"><td class="memItemLeft" align="right" valign="top"><a id="ab75ac7d20449ebaf96b3769500d07501" name="ab75ac7d20449ebaf96b3769500d07501"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameRate</b> {&quot;FrameRate&quot;}</td></tr>
-<tr class="memdesc:ab75ac7d20449ebaf96b3769500d07501"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate of the associated video. <br /></td></tr>
+<tr class="memitem:ab75ac7d20449ebaf96b3769500d07501" id="r_ab75ac7d20449ebaf96b3769500d07501"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ab75ac7d20449ebaf96b3769500d07501">FrameRate</a></td></tr>
+<tr class="memdesc:ab75ac7d20449ebaf96b3769500d07501"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate of the associated video.  <br /></td></tr>
 <tr class="separator:ab75ac7d20449ebaf96b3769500d07501"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afe8072f24ffa0c7cd6c65bc72fe1a9e8" id="r_afe8072f24ffa0c7cd6c65bc72fe1a9e8"><td class="memItemLeft" align="right" valign="top"><a id="afe8072f24ffa0c7cd6c65bc72fe1a9e8" name="afe8072f24ffa0c7cd6c65bc72fe1a9e8"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameRateSource</b> {&quot;FrameRateSource&quot;}</td></tr>
-<tr class="memdesc:afe8072f24ffa0c7cd6c65bc72fe1a9e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Source that supplied the associated <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> (<a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>). One of: <code>"file"</code> (read from the container/sidecar), <code>"config"</code> (caller-supplied override), or <code>"default"</code> (backend fell back to its built-in default). <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> by backends whose intrinsic frame rate isn't known and must be guessed or overridden (image sequences, still images, etc.). <br /></td></tr>
+<tr class="memitem:afe8072f24ffa0c7cd6c65bc72fe1a9e8" id="r_afe8072f24ffa0c7cd6c65bc72fe1a9e8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#afe8072f24ffa0c7cd6c65bc72fe1a9e8">FrameRateSource</a></td></tr>
+<tr class="memdesc:afe8072f24ffa0c7cd6c65bc72fe1a9e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Source that supplied the associated <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> (<a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>). One of: <code>"file"</code> (read from the container/sidecar), <code>"config"</code> (caller-supplied override), or <code>"default"</code> (backend fell back to its built-in default).  <br /></td></tr>
 <tr class="separator:afe8072f24ffa0c7cd6c65bc72fe1a9e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30c3a9afa5c38b60bea34b28972b81c8" id="r_a30c3a9afa5c38b60bea34b28972b81c8"><td class="memItemLeft" align="right" valign="top"><a id="a30c3a9afa5c38b60bea34b28972b81c8" name="a30c3a9afa5c38b60bea34b28972b81c8"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>UMID</b> {&quot;UMID&quot;}</td></tr>
-<tr class="memdesc:a30c3a9afa5c38b60bea34b28972b81c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE <a class="el" href="classUMID.html" title="SMPTE 330M Unique Material Identifier (UMID).">UMID</a> (Unique Material Identifier). <br /></td></tr>
+<tr class="memitem:a30c3a9afa5c38b60bea34b28972b81c8" id="r_a30c3a9afa5c38b60bea34b28972b81c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a30c3a9afa5c38b60bea34b28972b81c8">UMID</a></td></tr>
+<tr class="memdesc:a30c3a9afa5c38b60bea34b28972b81c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE <a class="el" href="classUMID.html" title="SMPTE 330M Unique Material Identifier (UMID).">UMID</a> (Unique Material Identifier).  <br /></td></tr>
 <tr class="separator:a30c3a9afa5c38b60bea34b28972b81c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45eb709bf03f032dd95d5dc5c0f36131" id="r_a45eb709bf03f032dd95d5dc5c0f36131"><td class="memItemLeft" align="right" valign="top"><a id="a45eb709bf03f032dd95d5dc5c0f36131" name="a45eb709bf03f032dd95d5dc5c0f36131"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>CodingHistory</b> {&quot;CodingHistory&quot;}</td></tr>
-<tr class="memdesc:a45eb709bf03f032dd95d5dc5c0f36131"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF coding history string. <br /></td></tr>
+<tr class="memitem:a45eb709bf03f032dd95d5dc5c0f36131" id="r_a45eb709bf03f032dd95d5dc5c0f36131"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a45eb709bf03f032dd95d5dc5c0f36131">CodingHistory</a></td></tr>
+<tr class="memdesc:a45eb709bf03f032dd95d5dc5c0f36131"><td class="mdescLeft">&#160;</td><td class="mdescRight">BWF coding history string.  <br /></td></tr>
 <tr class="separator:a45eb709bf03f032dd95d5dc5c0f36131"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c48efad27e79d85afbb42ae5664c1d4" id="r_a6c48efad27e79d85afbb42ae5664c1d4"><td class="memItemLeft" align="right" valign="top"><a id="a6c48efad27e79d85afbb42ae5664c1d4" name="a6c48efad27e79d85afbb42ae5664c1d4"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>CompressionLevel</b> {&quot;CompressionLevel&quot;}</td></tr>
-<tr class="memdesc:a6c48efad27e79d85afbb42ae5664c1d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compression level hint for lossy codecs. <br /></td></tr>
+<tr class="memitem:a6c48efad27e79d85afbb42ae5664c1d4" id="r_a6c48efad27e79d85afbb42ae5664c1d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a6c48efad27e79d85afbb42ae5664c1d4">CompressionLevel</a></td></tr>
+<tr class="memdesc:a6c48efad27e79d85afbb42ae5664c1d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compression level hint for lossy codecs.  <br /></td></tr>
 <tr class="separator:a6c48efad27e79d85afbb42ae5664c1d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54cbe52280f137ffedd628d134240b65" id="r_a54cbe52280f137ffedd628d134240b65"><td class="memItemLeft" align="right" valign="top"><a id="a54cbe52280f137ffedd628d134240b65" name="a54cbe52280f137ffedd628d134240b65"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EnableVBR</b> {&quot;EnableVBR&quot;}</td></tr>
-<tr class="memdesc:a54cbe52280f137ffedd628d134240b65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable variable bit-rate encoding. <br /></td></tr>
+<tr class="memitem:a54cbe52280f137ffedd628d134240b65" id="r_a54cbe52280f137ffedd628d134240b65"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a54cbe52280f137ffedd628d134240b65">EnableVBR</a></td></tr>
+<tr class="memdesc:a54cbe52280f137ffedd628d134240b65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable variable bit-rate encoding.  <br /></td></tr>
 <tr class="separator:a54cbe52280f137ffedd628d134240b65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a304cb8d139b4a3e1a3c2423fe0c3f134" id="r_a304cb8d139b4a3e1a3c2423fe0c3f134"><td class="memItemLeft" align="right" valign="top"><a id="a304cb8d139b4a3e1a3c2423fe0c3f134" name="a304cb8d139b4a3e1a3c2423fe0c3f134"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>VBRQuality</b> {&quot;VBRQuality&quot;}</td></tr>
-<tr class="memdesc:a304cb8d139b4a3e1a3c2423fe0c3f134"><td class="mdescLeft">&#160;</td><td class="mdescRight">VBR quality setting (codec-specific). <br /></td></tr>
+<tr class="memitem:a304cb8d139b4a3e1a3c2423fe0c3f134" id="r_a304cb8d139b4a3e1a3c2423fe0c3f134"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a304cb8d139b4a3e1a3c2423fe0c3f134">VBRQuality</a></td></tr>
+<tr class="memdesc:a304cb8d139b4a3e1a3c2423fe0c3f134"><td class="mdescLeft">&#160;</td><td class="mdescRight">VBR quality setting (codec-specific).  <br /></td></tr>
 <tr class="separator:a304cb8d139b4a3e1a3c2423fe0c3f134"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac30cead856a7b4a4951ae3728e2dd35f" id="r_ac30cead856a7b4a4951ae3728e2dd35f"><td class="memItemLeft" align="right" valign="top"><a id="ac30cead856a7b4a4951ae3728e2dd35f" name="ac30cead856a7b4a4951ae3728e2dd35f"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>CompressedSize</b> {&quot;CompressedSize&quot;}</td></tr>
-<tr class="memdesc:ac30cead856a7b4a4951ae3728e2dd35f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal: allocation hint for compressed pixel formats. Use <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">Image::compressedSize()</a> instead. <br /></td></tr>
+<tr class="memitem:ac30cead856a7b4a4951ae3728e2dd35f" id="r_ac30cead856a7b4a4951ae3728e2dd35f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ac30cead856a7b4a4951ae3728e2dd35f">CompressedSize</a></td></tr>
+<tr class="memdesc:ac30cead856a7b4a4951ae3728e2dd35f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Internal: allocation hint for compressed pixel formats. Use <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">Image::compressedSize()</a> instead.  <br /></td></tr>
 <tr class="separator:ac30cead856a7b4a4951ae3728e2dd35f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add28417cdbff180be46db1679b84e34e" id="r_add28417cdbff180be46db1679b84e34e"><td class="memItemLeft" align="right" valign="top"><a id="add28417cdbff180be46db1679b84e34e" name="add28417cdbff180be46db1679b84e34e"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>EndOfStream</b> {&quot;EndOfStream&quot;}</td></tr>
-<tr class="memdesc:add28417cdbff180be46db1679b84e34e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream to downstream nodes. <br /></td></tr>
+<tr class="memitem:add28417cdbff180be46db1679b84e34e" id="r_add28417cdbff180be46db1679b84e34e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#add28417cdbff180be46db1679b84e34e">EndOfStream</a></td></tr>
+<tr class="memdesc:add28417cdbff180be46db1679b84e34e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signals end-of-stream to downstream nodes.  <br /></td></tr>
 <tr class="separator:add28417cdbff180be46db1679b84e34e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3143e8fc4cc53a130fadcf7593dbe77a" id="r_a3143e8fc4cc53a130fadcf7593dbe77a"><td class="memItemLeft" align="right" valign="top"><a id="a3143e8fc4cc53a130fadcf7593dbe77a" name="a3143e8fc4cc53a130fadcf7593dbe77a"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameNumber</b> {&quot;FrameNumber&quot;}</td></tr>
-<tr class="memdesc:a3143e8fc4cc53a130fadcf7593dbe77a"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> sequence number within a stream. <br /></td></tr>
+<tr class="memitem:a3143e8fc4cc53a130fadcf7593dbe77a" id="r_a3143e8fc4cc53a130fadcf7593dbe77a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a3143e8fc4cc53a130fadcf7593dbe77a">FrameNumber</a></td></tr>
+<tr class="memdesc:a3143e8fc4cc53a130fadcf7593dbe77a"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> sequence number within a stream.  <br /></td></tr>
 <tr class="separator:a3143e8fc4cc53a130fadcf7593dbe77a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1065498d0642feef02e77bca6b7c1212" id="r_a1065498d0642feef02e77bca6b7c1212"><td class="memItemLeft" align="right" valign="top"><a id="a1065498d0642feef02e77bca6b7c1212" name="a1065498d0642feef02e77bca6b7c1212"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>CaptureTime</b> {&quot;CaptureTime&quot;}</td></tr>
-<tr class="memdesc:a1065498d0642feef02e77bca6b7c1212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock timestamp of when a frame was captured (<a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>). <br /></td></tr>
+<tr class="memitem:a1065498d0642feef02e77bca6b7c1212" id="r_a1065498d0642feef02e77bca6b7c1212"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a1065498d0642feef02e77bca6b7c1212">CaptureTime</a></td></tr>
+<tr class="memdesc:a1065498d0642feef02e77bca6b7c1212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wall-clock timestamp of when a frame was captured (<a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>).  <br /></td></tr>
 <tr class="separator:a1065498d0642feef02e77bca6b7c1212"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af39a39dc96761ba399c4ecf891111bed" id="r_af39a39dc96761ba399c4ecf891111bed"><td class="memItemLeft" align="right" valign="top"><a id="af39a39dc96761ba399c4ecf891111bed" name="af39a39dc96761ba399c4ecf891111bed"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PresentationTime</b> {&quot;PresentationTime&quot;}</td></tr>
-<tr class="memdesc:af39a39dc96761ba399c4ecf891111bed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timestamp at which a frame should be presented (<a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>). <br /></td></tr>
+<tr class="memitem:af39a39dc96761ba399c4ecf891111bed" id="r_af39a39dc96761ba399c4ecf891111bed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#af39a39dc96761ba399c4ecf891111bed">PresentationTime</a></td></tr>
+<tr class="memdesc:af39a39dc96761ba399c4ecf891111bed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timestamp at which a frame should be presented (<a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>).  <br /></td></tr>
 <tr class="separator:af39a39dc96761ba399c4ecf891111bed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f17fcddf9ea27028e2122b9fc416154" id="r_a0f17fcddf9ea27028e2122b9fc416154"><td class="memItemLeft" align="right" valign="top"><a id="a0f17fcddf9ea27028e2122b9fc416154" name="a0f17fcddf9ea27028e2122b9fc416154"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameRepeated</b> {&quot;FrameRepeated&quot;}</td></tr>
-<tr class="memdesc:a0f17fcddf9ea27028e2122b9fc416154"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of times this frame was repeated due to underrun (int). <br /></td></tr>
+<tr class="memitem:a0f17fcddf9ea27028e2122b9fc416154" id="r_a0f17fcddf9ea27028e2122b9fc416154"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a0f17fcddf9ea27028e2122b9fc416154">FrameRepeated</a></td></tr>
+<tr class="memdesc:a0f17fcddf9ea27028e2122b9fc416154"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of times this frame was repeated due to underrun (int).  <br /></td></tr>
 <tr class="separator:a0f17fcddf9ea27028e2122b9fc416154"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9003adfa4fa88d39ae273005e4f02f7e" id="r_a9003adfa4fa88d39ae273005e4f02f7e"><td class="memItemLeft" align="right" valign="top"><a id="a9003adfa4fa88d39ae273005e4f02f7e" name="a9003adfa4fa88d39ae273005e4f02f7e"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameDropped</b> {&quot;FrameDropped&quot;}</td></tr>
-<tr class="memdesc:a9003adfa4fa88d39ae273005e4f02f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of frames dropped immediately before this one (int). <br /></td></tr>
+<tr class="memitem:a9003adfa4fa88d39ae273005e4f02f7e" id="r_a9003adfa4fa88d39ae273005e4f02f7e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a9003adfa4fa88d39ae273005e4f02f7e">FrameDropped</a></td></tr>
+<tr class="memdesc:a9003adfa4fa88d39ae273005e4f02f7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of frames dropped immediately before this one (int).  <br /></td></tr>
 <tr class="separator:a9003adfa4fa88d39ae273005e4f02f7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22dbb6283ada803e1ef4a5a1c39fc8b3" id="r_a22dbb6283ada803e1ef4a5a1c39fc8b3"><td class="memItemLeft" align="right" valign="top"><a id="a22dbb6283ada803e1ef4a5a1c39fc8b3" name="a22dbb6283ada803e1ef4a5a1c39fc8b3"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameLate</b> {&quot;FrameLate&quot;}</td></tr>
-<tr class="memdesc:a22dbb6283ada803e1ef4a5a1c39fc8b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame arrived later than its scheduled time (bool). <br /></td></tr>
+<tr class="memitem:a22dbb6283ada803e1ef4a5a1c39fc8b3" id="r_a22dbb6283ada803e1ef4a5a1c39fc8b3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a22dbb6283ada803e1ef4a5a1c39fc8b3">FrameLate</a></td></tr>
+<tr class="memdesc:a22dbb6283ada803e1ef4a5a1c39fc8b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame arrived later than its scheduled time (bool).  <br /></td></tr>
 <tr class="separator:a22dbb6283ada803e1ef4a5a1c39fc8b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71eff521db54b8dcf1564fad698855a2" id="r_a71eff521db54b8dcf1564fad698855a2"><td class="memItemLeft" align="right" valign="top"><a id="a71eff521db54b8dcf1564fad698855a2" name="a71eff521db54b8dcf1564fad698855a2"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FrameKeyframe</b> {&quot;FrameKeyframe&quot;}</td></tr>
-<tr class="memdesc:a71eff521db54b8dcf1564fad698855a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame is a keyframe / intra frame (bool). <br /></td></tr>
+<tr class="memitem:a71eff521db54b8dcf1564fad698855a2" id="r_a71eff521db54b8dcf1564fad698855a2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a71eff521db54b8dcf1564fad698855a2">FrameKeyframe</a></td></tr>
+<tr class="memdesc:a71eff521db54b8dcf1564fad698855a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame is a keyframe / intra frame (bool).  <br /></td></tr>
 <tr class="separator:a71eff521db54b8dcf1564fad698855a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6762a5698ac8412dff444fcf9d6745d" id="r_af6762a5698ac8412dff444fcf9d6745d"><td class="memItemLeft" align="right" valign="top"><a id="af6762a5698ac8412dff444fcf9d6745d" name="af6762a5698ac8412dff444fcf9d6745d"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>MediaDescChanged</b> {&quot;MediaDescChanged&quot;}</td></tr>
-<tr class="memdesc:af6762a5698ac8412dff444fcf9d6745d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame's <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> differs from the previously reported one (bool). When set, <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> has updated its cached descriptor and emitted the descriptorChanged signal. <br /></td></tr>
+<tr class="memitem:af6762a5698ac8412dff444fcf9d6745d" id="r_af6762a5698ac8412dff444fcf9d6745d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#af6762a5698ac8412dff444fcf9d6745d">MediaDescChanged</a></td></tr>
+<tr class="memdesc:af6762a5698ac8412dff444fcf9d6745d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This frame's <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> differs from the previously reported one (bool).  <br /></td></tr>
 <tr class="separator:af6762a5698ac8412dff444fcf9d6745d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f0abff54a023b2a46885726c4c00a0c" id="r_a0f0abff54a023b2a46885726c4c00a0c"><td class="memItemLeft" align="right" valign="top"><a id="a0f0abff54a023b2a46885726c4c00a0c" name="a0f0abff54a023b2a46885726c4c00a0c"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FileOrigName</b> {&quot;FileOrigName&quot;}</td></tr>
-<tr class="memdesc:a0f0abff54a023b2a46885726c4c00a0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Original source filename (from previous save). <br /></td></tr>
+<tr class="memitem:a0f0abff54a023b2a46885726c4c00a0c" id="r_a0f0abff54a023b2a46885726c4c00a0c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a0f0abff54a023b2a46885726c4c00a0c">FileOrigName</a></td></tr>
+<tr class="memdesc:a0f0abff54a023b2a46885726c4c00a0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Original source filename (from previous save).  <br /></td></tr>
 <tr class="separator:a0f0abff54a023b2a46885726c4c00a0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41f809d7c13def63a94c37d4b4b73b73" id="r_a41f809d7c13def63a94c37d4b4b73b73"><td class="memItemLeft" align="right" valign="top"><a id="a41f809d7c13def63a94c37d4b4b73b73" name="a41f809d7c13def63a94c37d4b4b73b73"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Project</b> {&quot;Project&quot;}</td></tr>
-<tr class="memdesc:a41f809d7c13def63a94c37d4b4b73b73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Project name. <br /></td></tr>
+<tr class="memitem:a41f809d7c13def63a94c37d4b4b73b73" id="r_a41f809d7c13def63a94c37d4b4b73b73"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a41f809d7c13def63a94c37d4b4b73b73">Project</a></td></tr>
+<tr class="memdesc:a41f809d7c13def63a94c37d4b4b73b73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Project name.  <br /></td></tr>
 <tr class="separator:a41f809d7c13def63a94c37d4b4b73b73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6572053182263021c19ecfb00ea42f2" id="r_ab6572053182263021c19ecfb00ea42f2"><td class="memItemLeft" align="right" valign="top"><a id="ab6572053182263021c19ecfb00ea42f2" name="ab6572053182263021c19ecfb00ea42f2"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Reel</b> {&quot;Reel&quot;}</td></tr>
-<tr class="memdesc:ab6572053182263021c19ecfb00ea42f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reel or input device name. <br /></td></tr>
+<tr class="memitem:ab6572053182263021c19ecfb00ea42f2" id="r_ab6572053182263021c19ecfb00ea42f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ab6572053182263021c19ecfb00ea42f2">Reel</a></td></tr>
+<tr class="memdesc:ab6572053182263021c19ecfb00ea42f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reel or input device name.  <br /></td></tr>
 <tr class="separator:ab6572053182263021c19ecfb00ea42f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2feb95f185786b7b96811b06dbe2c937" id="r_a2feb95f185786b7b96811b06dbe2c937"><td class="memItemLeft" align="right" valign="top"><a id="a2feb95f185786b7b96811b06dbe2c937" name="a2feb95f185786b7b96811b06dbe2c937"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmMfgID</b> {&quot;FilmMfgID&quot;}</td></tr>
-<tr class="memdesc:a2feb95f185786b7b96811b06dbe2c937"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film manufacturer ID code (2 chars). <br /></td></tr>
+<tr class="memitem:a2feb95f185786b7b96811b06dbe2c937" id="r_a2feb95f185786b7b96811b06dbe2c937"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a2feb95f185786b7b96811b06dbe2c937">FilmMfgID</a></td></tr>
+<tr class="memdesc:a2feb95f185786b7b96811b06dbe2c937"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film manufacturer ID code (2 chars).  <br /></td></tr>
 <tr class="separator:a2feb95f185786b7b96811b06dbe2c937"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc34fb66384e56586c15852f78978403" id="r_afc34fb66384e56586c15852f78978403"><td class="memItemLeft" align="right" valign="top"><a id="afc34fb66384e56586c15852f78978403" name="afc34fb66384e56586c15852f78978403"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmType</b> {&quot;FilmType&quot;}</td></tr>
-<tr class="memdesc:afc34fb66384e56586c15852f78978403"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film type (2 chars). <br /></td></tr>
+<tr class="memitem:afc34fb66384e56586c15852f78978403" id="r_afc34fb66384e56586c15852f78978403"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#afc34fb66384e56586c15852f78978403">FilmType</a></td></tr>
+<tr class="memdesc:afc34fb66384e56586c15852f78978403"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film type (2 chars).  <br /></td></tr>
 <tr class="separator:afc34fb66384e56586c15852f78978403"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28e999258824d53f69e222f5fbb33bbc" id="r_a28e999258824d53f69e222f5fbb33bbc"><td class="memItemLeft" align="right" valign="top"><a id="a28e999258824d53f69e222f5fbb33bbc" name="a28e999258824d53f69e222f5fbb33bbc"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmOffset</b> {&quot;FilmOffset&quot;}</td></tr>
-<tr class="memdesc:a28e999258824d53f69e222f5fbb33bbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film offset in perfs (2 chars). <br /></td></tr>
+<tr class="memitem:a28e999258824d53f69e222f5fbb33bbc" id="r_a28e999258824d53f69e222f5fbb33bbc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a28e999258824d53f69e222f5fbb33bbc">FilmOffset</a></td></tr>
+<tr class="memdesc:a28e999258824d53f69e222f5fbb33bbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film offset in perfs (2 chars).  <br /></td></tr>
 <tr class="separator:a28e999258824d53f69e222f5fbb33bbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3196ba4707a7e91015a2b147fcbaa151" id="r_a3196ba4707a7e91015a2b147fcbaa151"><td class="memItemLeft" align="right" valign="top"><a id="a3196ba4707a7e91015a2b147fcbaa151" name="a3196ba4707a7e91015a2b147fcbaa151"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmPrefix</b> {&quot;FilmPrefix&quot;}</td></tr>
-<tr class="memdesc:a3196ba4707a7e91015a2b147fcbaa151"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film prefix (6 chars). <br /></td></tr>
+<tr class="memitem:a3196ba4707a7e91015a2b147fcbaa151" id="r_a3196ba4707a7e91015a2b147fcbaa151"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a3196ba4707a7e91015a2b147fcbaa151">FilmPrefix</a></td></tr>
+<tr class="memdesc:a3196ba4707a7e91015a2b147fcbaa151"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film prefix (6 chars).  <br /></td></tr>
 <tr class="separator:a3196ba4707a7e91015a2b147fcbaa151"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1aa02a2f7a11f1c71d9b1d22cabbc38d" id="r_a1aa02a2f7a11f1c71d9b1d22cabbc38d"><td class="memItemLeft" align="right" valign="top"><a id="a1aa02a2f7a11f1c71d9b1d22cabbc38d" name="a1aa02a2f7a11f1c71d9b1d22cabbc38d"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmCount</b> {&quot;FilmCount&quot;}</td></tr>
-<tr class="memdesc:a1aa02a2f7a11f1c71d9b1d22cabbc38d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film count (4 chars). <br /></td></tr>
+<tr class="memitem:a1aa02a2f7a11f1c71d9b1d22cabbc38d" id="r_a1aa02a2f7a11f1c71d9b1d22cabbc38d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a1aa02a2f7a11f1c71d9b1d22cabbc38d">FilmCount</a></td></tr>
+<tr class="memdesc:a1aa02a2f7a11f1c71d9b1d22cabbc38d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film count (4 chars).  <br /></td></tr>
 <tr class="separator:a1aa02a2f7a11f1c71d9b1d22cabbc38d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac036842d0b81b88e21ed3ae0b2be8e1d" id="r_ac036842d0b81b88e21ed3ae0b2be8e1d"><td class="memItemLeft" align="right" valign="top"><a id="ac036842d0b81b88e21ed3ae0b2be8e1d" name="ac036842d0b81b88e21ed3ae0b2be8e1d"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmFormat</b> {&quot;FilmFormat&quot;}</td></tr>
-<tr class="memdesc:ac036842d0b81b88e21ed3ae0b2be8e1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film format (e.g. "Academy"). <br /></td></tr>
+<tr class="memitem:ac036842d0b81b88e21ed3ae0b2be8e1d" id="r_ac036842d0b81b88e21ed3ae0b2be8e1d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ac036842d0b81b88e21ed3ae0b2be8e1d">FilmFormat</a></td></tr>
+<tr class="memdesc:ac036842d0b81b88e21ed3ae0b2be8e1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film format (e.g. "Academy").  <br /></td></tr>
 <tr class="separator:ac036842d0b81b88e21ed3ae0b2be8e1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b303c173d4283031a65a85dd4fce7ba" id="r_a3b303c173d4283031a65a85dd4fce7ba"><td class="memItemLeft" align="right" valign="top"><a id="a3b303c173d4283031a65a85dd4fce7ba" name="a3b303c173d4283031a65a85dd4fce7ba"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmSeqPos</b> {&quot;FilmSeqPos&quot;}</td></tr>
-<tr class="memdesc:a3b303c173d4283031a65a85dd4fce7ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sequence position (frame number in sequence). <br /></td></tr>
+<tr class="memitem:a3b303c173d4283031a65a85dd4fce7ba" id="r_a3b303c173d4283031a65a85dd4fce7ba"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a3b303c173d4283031a65a85dd4fce7ba">FilmSeqPos</a></td></tr>
+<tr class="memdesc:a3b303c173d4283031a65a85dd4fce7ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sequence position (frame number in sequence).  <br /></td></tr>
 <tr class="separator:a3b303c173d4283031a65a85dd4fce7ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aacf69c5075739728b5589d1bfe5f86f9" id="r_aacf69c5075739728b5589d1bfe5f86f9"><td class="memItemLeft" align="right" valign="top"><a id="aacf69c5075739728b5589d1bfe5f86f9" name="aacf69c5075739728b5589d1bfe5f86f9"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmSeqLen</b> {&quot;FilmSeqLen&quot;}</td></tr>
-<tr class="memdesc:aacf69c5075739728b5589d1bfe5f86f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sequence length (total frames in sequence). <br /></td></tr>
+<tr class="memitem:aacf69c5075739728b5589d1bfe5f86f9" id="r_aacf69c5075739728b5589d1bfe5f86f9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#aacf69c5075739728b5589d1bfe5f86f9">FilmSeqLen</a></td></tr>
+<tr class="memdesc:aacf69c5075739728b5589d1bfe5f86f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sequence length (total frames in sequence).  <br /></td></tr>
 <tr class="separator:aacf69c5075739728b5589d1bfe5f86f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3189d867195a51b0dc4f98681939ae8b" id="r_a3189d867195a51b0dc4f98681939ae8b"><td class="memItemLeft" align="right" valign="top"><a id="a3189d867195a51b0dc4f98681939ae8b" name="a3189d867195a51b0dc4f98681939ae8b"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmHoldCount</b> {&quot;FilmHoldCount&quot;}</td></tr>
-<tr class="memdesc:a3189d867195a51b0dc4f98681939ae8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Held count (1 = default, &gt;1 = repeated frame). <br /></td></tr>
+<tr class="memitem:a3189d867195a51b0dc4f98681939ae8b" id="r_a3189d867195a51b0dc4f98681939ae8b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a3189d867195a51b0dc4f98681939ae8b">FilmHoldCount</a></td></tr>
+<tr class="memdesc:a3189d867195a51b0dc4f98681939ae8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Held count (1 = default, &gt;1 = repeated frame).  <br /></td></tr>
 <tr class="separator:a3189d867195a51b0dc4f98681939ae8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4ad30dc33957e7da438ec8884774c62" id="r_ae4ad30dc33957e7da438ec8884774c62"><td class="memItemLeft" align="right" valign="top"><a id="ae4ad30dc33957e7da438ec8884774c62" name="ae4ad30dc33957e7da438ec8884774c62"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmShutter</b> {&quot;FilmShutter&quot;}</td></tr>
-<tr class="memdesc:ae4ad30dc33957e7da438ec8884774c62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film shutter angle in degrees. <br /></td></tr>
+<tr class="memitem:ae4ad30dc33957e7da438ec8884774c62" id="r_ae4ad30dc33957e7da438ec8884774c62"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ae4ad30dc33957e7da438ec8884774c62">FilmShutter</a></td></tr>
+<tr class="memdesc:ae4ad30dc33957e7da438ec8884774c62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film shutter angle in degrees.  <br /></td></tr>
 <tr class="separator:ae4ad30dc33957e7da438ec8884774c62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5e433d1b7759e12f75dc628b894e4a8" id="r_ae5e433d1b7759e12f75dc628b894e4a8"><td class="memItemLeft" align="right" valign="top"><a id="ae5e433d1b7759e12f75dc628b894e4a8" name="ae5e433d1b7759e12f75dc628b894e4a8"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmFrameID</b> {&quot;FilmFrameID&quot;}</td></tr>
-<tr class="memdesc:ae5e433d1b7759e12f75dc628b894e4a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film frame identification (e.g. keycode). <br /></td></tr>
+<tr class="memitem:ae5e433d1b7759e12f75dc628b894e4a8" id="r_ae5e433d1b7759e12f75dc628b894e4a8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#ae5e433d1b7759e12f75dc628b894e4a8">FilmFrameID</a></td></tr>
+<tr class="memdesc:ae5e433d1b7759e12f75dc628b894e4a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film frame identification (e.g. keycode).  <br /></td></tr>
 <tr class="separator:ae5e433d1b7759e12f75dc628b894e4a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3fdb00144ae05912c86e40cd2a7b315a" id="r_a3fdb00144ae05912c86e40cd2a7b315a"><td class="memItemLeft" align="right" valign="top"><a id="a3fdb00144ae05912c86e40cd2a7b315a" name="a3fdb00144ae05912c86e40cd2a7b315a"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FilmSlate</b> {&quot;FilmSlate&quot;}</td></tr>
-<tr class="memdesc:a3fdb00144ae05912c86e40cd2a7b315a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film slate information. <br /></td></tr>
+<tr class="memitem:a3fdb00144ae05912c86e40cd2a7b315a" id="r_a3fdb00144ae05912c86e40cd2a7b315a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a3fdb00144ae05912c86e40cd2a7b315a">FilmSlate</a></td></tr>
+<tr class="memdesc:a3fdb00144ae05912c86e40cd2a7b315a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Film slate information.  <br /></td></tr>
 <tr class="separator:a3fdb00144ae05912c86e40cd2a7b315a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa370a3c48561bc6474fa782b33961fdc" id="r_aa370a3c48561bc6474fa782b33961fdc"><td class="memItemLeft" align="right" valign="top"><a id="aa370a3c48561bc6474fa782b33961fdc" name="aa370a3c48561bc6474fa782b33961fdc"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>FieldID</b> {&quot;FieldID&quot;}</td></tr>
-<tr class="memdesc:aa370a3c48561bc6474fa782b33961fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field number within an interlaced frame (0 or 1). <br /></td></tr>
+<tr class="memitem:aa370a3c48561bc6474fa782b33961fdc" id="r_aa370a3c48561bc6474fa782b33961fdc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#aa370a3c48561bc6474fa782b33961fdc">FieldID</a></td></tr>
+<tr class="memdesc:aa370a3c48561bc6474fa782b33961fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Field number within an interlaced frame (0 or 1).  <br /></td></tr>
 <tr class="separator:aa370a3c48561bc6474fa782b33961fdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d76ff2e68eee780461d23d7593fca9f" id="r_a4d76ff2e68eee780461d23d7593fca9f"><td class="memItemLeft" align="right" valign="top"><a id="a4d76ff2e68eee780461d23d7593fca9f" name="a4d76ff2e68eee780461d23d7593fca9f"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>TransferCharacteristic</b> {&quot;TransferCharacteristic&quot;}</td></tr>
-<tr class="memdesc:a4d76ff2e68eee780461d23d7593fca9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE 268M transfer characteristic code. <br /></td></tr>
+<tr class="memitem:a4d76ff2e68eee780461d23d7593fca9f" id="r_a4d76ff2e68eee780461d23d7593fca9f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a4d76ff2e68eee780461d23d7593fca9f">TransferCharacteristic</a></td></tr>
+<tr class="memdesc:a4d76ff2e68eee780461d23d7593fca9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE 268M transfer characteristic code.  <br /></td></tr>
 <tr class="separator:a4d76ff2e68eee780461d23d7593fca9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acd67b046bc7227cce2ed84575a7bd12a" id="r_acd67b046bc7227cce2ed84575a7bd12a"><td class="memItemLeft" align="right" valign="top"><a id="acd67b046bc7227cce2ed84575a7bd12a" name="acd67b046bc7227cce2ed84575a7bd12a"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Colorimetric</b> {&quot;Colorimetric&quot;}</td></tr>
-<tr class="memdesc:acd67b046bc7227cce2ed84575a7bd12a"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE 268M colorimetric specification code. <br /></td></tr>
+<tr class="memitem:acd67b046bc7227cce2ed84575a7bd12a" id="r_acd67b046bc7227cce2ed84575a7bd12a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#acd67b046bc7227cce2ed84575a7bd12a">Colorimetric</a></td></tr>
+<tr class="memdesc:acd67b046bc7227cce2ed84575a7bd12a"><td class="mdescLeft">&#160;</td><td class="mdescRight">SMPTE 268M colorimetric specification code.  <br /></td></tr>
 <tr class="separator:acd67b046bc7227cce2ed84575a7bd12a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d2d98dbe903ea7a95880163c5812b96" id="r_a7d2d98dbe903ea7a95880163c5812b96"><td class="memItemLeft" align="right" valign="top"><a id="a7d2d98dbe903ea7a95880163c5812b96" name="a7d2d98dbe903ea7a95880163c5812b96"></a>
-<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Orientation</b> {&quot;Orientation&quot;}</td></tr>
-<tr class="memdesc:a7d2d98dbe903ea7a95880163c5812b96"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> orientation code (0 = left-to-right, top-to-bottom). <br /></td></tr>
+<tr class="memitem:a7d2d98dbe903ea7a95880163c5812b96" id="r_a7d2d98dbe903ea7a95880163c5812b96"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMetadata.html#a7d2d98dbe903ea7a95880163c5812b96">Orientation</a></td></tr>
+<tr class="memdesc:a7d2d98dbe903ea7a95880163c5812b96"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> orientation code (0 = left-to-right, top-to-bottom).  <br /></td></tr>
 <tr class="separator:a7d2d98dbe903ea7a95880163c5812b96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Key-value metadata container using typed Variant values. </p>
 <p>Stores metadata entries keyed by well-known string-registered IDs. Each value is stored as a Variant, supporting types such as <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>, int, double, bool, <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a>, and <a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a>. Supports JSON serialization and deserialization. When shared ownership is needed, use <a class="el" href="classMetadata.html#a5385a0d2ae648d73ce72f419508aa84a" title="Shared pointer type for Metadata.">Metadata::Ptr</a>.</p>
+<p>Each ID is declared via <a class="el" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a> with a mandatory <a class="el" href="classVariantSpec.html">VariantSpec</a> that captures the accepted type, default value, and description.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classMetadata.html">Metadata</a> <a class="code hl_class" href="classList.html">meta</a>;</div>
 <div class="line"><a class="code hl_class" href="classList.html">meta</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_variable" href="classMetadata.html#aff99fcd1fd3fb4c681442f7d1c0d8f83">Metadata::Title</a>, <a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;My Video&quot;</span>));</div>
 <div class="line"><a class="code hl_class" href="classList.html">meta</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_variable" href="classMetadata.html#ab75ac7d20449ebaf96b3769500d07501">Metadata::FrameRate</a>, <a class="code hl_class" href="classList.html">Rational&lt;int&gt;</a>(24, 1));</div>
@@ -479,10 +452,10 @@ Static Public Attributes</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a005dfb8de3f6007d62777c6112a5271d"><div class="ttname"><a href="classList.html#a005dfb8de3f6007d62777c6112a5271d">List::contains</a></div><div class="ttdeci">bool contains(const T &amp;val) const</div><div class="ttdoc">Returns true if the list contains the given value.</div><div class="ttdef"><b>Definition</b> list.h:593</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
-<div class="ttc" id="aclassMetadata_html"><div class="ttname"><a href="classMetadata.html">Metadata</a></div><div class="ttdoc">Key-value metadata container using typed Variant values.</div><div class="ttdef"><b>Definition</b> metadata.h:41</div></div>
-<div class="ttc" id="aclassMetadata_html_ab75ac7d20449ebaf96b3769500d07501"><div class="ttname"><a href="classMetadata.html#ab75ac7d20449ebaf96b3769500d07501">Metadata::FrameRate</a></div><div class="ttdeci">static const ID FrameRate</div><div class="ttdoc">Frame rate of the associated video.</div><div class="ttdef"><b>Definition</b> metadata.h:87</div></div>
-<div class="ttc" id="aclassMetadata_html_ac3d8cdd3aec28815d4376e0c78cd4dac"><div class="ttname"><a href="classMetadata.html#ac3d8cdd3aec28815d4376e0c78cd4dac">Metadata::Copyright</a></div><div class="ttdeci">static const ID Copyright</div><div class="ttdoc">Copyright notice.</div><div class="ttdef"><b>Definition</b> metadata.h:59</div></div>
-<div class="ttc" id="aclassMetadata_html_aff99fcd1fd3fb4c681442f7d1c0d8f83"><div class="ttname"><a href="classMetadata.html#aff99fcd1fd3fb4c681442f7d1c0d8f83">Metadata::Title</a></div><div class="ttdeci">static const ID Title</div><div class="ttdoc">Title of the media.</div><div class="ttdef"><b>Definition</b> metadata.h:57</div></div>
+<div class="ttc" id="aclassMetadata_html"><div class="ttname"><a href="classMetadata.html">Metadata</a></div><div class="ttdoc">Key-value metadata container using typed Variant values.</div><div class="ttdef"><b>Definition</b> metadata.h:44</div></div>
+<div class="ttc" id="aclassMetadata_html_ab75ac7d20449ebaf96b3769500d07501"><div class="ttname"><a href="classMetadata.html#ab75ac7d20449ebaf96b3769500d07501">Metadata::FrameRate</a></div><div class="ttdeci">static const ID FrameRate</div><div class="ttdoc">Frame rate of the associated video.</div><div class="ttdef"><b>Definition</b> metadata.h:163</div></div>
+<div class="ttc" id="aclassMetadata_html_ac3d8cdd3aec28815d4376e0c78cd4dac"><div class="ttname"><a href="classMetadata.html#ac3d8cdd3aec28815d4376e0c78cd4dac">Metadata::Copyright</a></div><div class="ttdeci">static const ID Copyright</div><div class="ttdoc">Copyright notice.</div><div class="ttdef"><b>Definition</b> metadata.h:79</div></div>
+<div class="ttc" id="aclassMetadata_html_aff99fcd1fd3fb4c681442f7d1c0d8f83"><div class="ttname"><a href="classMetadata.html#aff99fcd1fd3fb4c681442f7d1c0d8f83">Metadata::Title</a></div><div class="ttdeci">static const ID Title</div><div class="ttdoc">Title of the media.</div><div class="ttdef"><b>Definition</b> metadata.h:73</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -678,6 +651,1508 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="ac111c4181b61f9a1a07072e660214030" name="ac111c4181b61f9a1a07072e660214030"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac111c4181b61f9a1a07072e660214030">&#9670;&#160;</a></span>Album</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Album</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Album&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Album name (audio media).&quot;</span>))</div>
+<div class="ttc" id="aclassVariantDatabase_html_aa81c6cfc6ceee506ea6c50b918644aa7"><div class="ttname"><a href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">VariantDatabase&lt; MetadataTag &gt;::declareID</a></div><div class="ttdeci">static ID declareID(const String &amp;name, const VariantSpec &amp;spec)</div><div class="ttdoc">Declares an ID and registers its VariantSpec.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:112</div></div>
+<div class="ttc" id="aclassVariantSpec_html"><div class="ttname"><a href="classVariantSpec.html">VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:62</div></div>
+</div><!-- fragment -->
+<p>Album name (audio media). </p>
+
+</div>
+</div>
+<a id="a4244a4f8bc7ef525ddbba3c9d373e0a5" name="a4244a4f8bc7ef525ddbba3c9d373e0a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4244a4f8bc7ef525ddbba3c9d373e0a5">&#9670;&#160;</a></span>Artist</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Artist</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Artist&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Artist or creator name.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Artist or creator name. </p>
+
+</div>
+</div>
+<a id="a1065498d0642feef02e77bca6b7c1212" name="a1065498d0642feef02e77bca6b7c1212"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1065498d0642feef02e77bca6b7c1212">&#9670;&#160;</a></span>CaptureTime</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::CaptureTime</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;CaptureTime&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeTimeStamp)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classTimeStamp.html">TimeStamp</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Wall-clock timestamp when frame was captured.&quot;</span>))</div>
+<div class="ttc" id="aclassTimeStamp_html"><div class="ttname"><a href="classTimeStamp.html">TimeStamp</a></div><div class="ttdoc">A monotonic timestamp based on std::chrono::steady_clock.</div><div class="ttdef"><b>Definition</b> timestamp.h:33</div></div>
+</div><!-- fragment -->
+<p>Wall-clock timestamp of when a frame was captured (<a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>). </p>
+
+</div>
+</div>
+<a id="a45eb709bf03f032dd95d5dc5c0f36131" name="a45eb709bf03f032dd95d5dc5c0f36131"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45eb709bf03f032dd95d5dc5c0f36131">&#9670;&#160;</a></span>CodingHistory</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::CodingHistory</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;CodingHistory&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;BWF coding history string.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>BWF coding history string. </p>
+
+</div>
+</div>
+<a id="acd67b046bc7227cce2ed84575a7bd12a" name="acd67b046bc7227cce2ed84575a7bd12a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd67b046bc7227cce2ed84575a7bd12a">&#9670;&#160;</a></span>Colorimetric</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Colorimetric</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Colorimetric&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;SMPTE 268M colorimetric specification code.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>SMPTE 268M colorimetric specification code. </p>
+
+</div>
+</div>
+<a id="a6ba3ff7db1f5ac2b7d1ad099b6f9be9b" name="a6ba3ff7db1f5ac2b7d1ad099b6f9be9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ba3ff7db1f5ac2b7d1ad099b6f9be9b">&#9670;&#160;</a></span>Comment</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Comment</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Comment&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Free-form comment.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Free-form comment. </p>
+
+</div>
+</div>
+<a id="ac30cead856a7b4a4951ae3728e2dd35f" name="ac30cead856a7b4a4951ae3728e2dd35f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac30cead856a7b4a4951ae3728e2dd35f">&#9670;&#160;</a></span>CompressedSize</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::CompressedSize</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;CompressedSize&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Internal allocation hint for compressed pixel formats.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Internal: allocation hint for compressed pixel formats. Use <a class="el" href="classImage.html#a9b610a3cd7782ad7318d22a912021243" title="Returns the compressed data size in bytes.">Image::compressedSize()</a> instead. </p>
+
+</div>
+</div>
+<a id="a6c48efad27e79d85afbb42ae5664c1d4" name="a6c48efad27e79d85afbb42ae5664c1d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c48efad27e79d85afbb42ae5664c1d4">&#9670;&#160;</a></span>CompressionLevel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::CompressionLevel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;CompressionLevel&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Compression level hint for lossy codecs.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Compression level hint for lossy codecs. </p>
+
+</div>
+</div>
+<a id="ac3d8cdd3aec28815d4376e0c78cd4dac" name="ac3d8cdd3aec28815d4376e0c78cd4dac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3d8cdd3aec28815d4376e0c78cd4dac">&#9670;&#160;</a></span>Copyright</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Copyright</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Copyright&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Copyright notice.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Copyright notice. </p>
+
+</div>
+</div>
+<a id="a687079d5e8a71579ffb8b69b7eff5436" name="a687079d5e8a71579ffb8b69b7eff5436"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a687079d5e8a71579ffb8b69b7eff5436">&#9670;&#160;</a></span>Date</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Date</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Date&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Creation or origination date.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Creation or origination date. </p>
+
+</div>
+</div>
+<a id="a09b92adbb432382a1de7451addd7f30b" name="a09b92adbb432382a1de7451addd7f30b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09b92adbb432382a1de7451addd7f30b">&#9670;&#160;</a></span>Description</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Description</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Description&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Human-readable description of the content.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Human-readable description of the content. </p>
+
+</div>
+</div>
+<a id="a9bb0103fbaf7fa783eed12a258339c73" name="a9bb0103fbaf7fa783eed12a258339c73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9bb0103fbaf7fa783eed12a258339c73">&#9670;&#160;</a></span>EnableBWF</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::EnableBWF</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;EnableBWF&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Enable Broadcast Wave Format metadata.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Enable Broadcast Wave Format metadata in audio files. </p>
+
+</div>
+</div>
+<a id="a54cbe52280f137ffedd628d134240b65" name="a54cbe52280f137ffedd628d134240b65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54cbe52280f137ffedd628d134240b65">&#9670;&#160;</a></span>EnableVBR</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::EnableVBR</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;EnableVBR&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Enable variable bit-rate encoding.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Enable variable bit-rate encoding. </p>
+
+</div>
+</div>
+<a id="add28417cdbff180be46db1679b84e34e" name="add28417cdbff180be46db1679b84e34e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add28417cdbff180be46db1679b84e34e">&#9670;&#160;</a></span>EndOfStream</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::EndOfStream</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;EndOfStream&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Signals end-of-stream to downstream nodes.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Signals end-of-stream to downstream nodes. </p>
+
+</div>
+</div>
+<a id="aa370a3c48561bc6474fa782b33961fdc" name="aa370a3c48561bc6474fa782b33961fdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa370a3c48561bc6474fa782b33961fdc">&#9670;&#160;</a></span>FieldID</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FieldID</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FieldID&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setRange(<a class="code hl_class" href="classList.html">int32_t</a>(0), <a class="code hl_class" href="classList.html">int32_t</a>(1))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Field number within an interlaced frame (0 or 1).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Field number within an interlaced frame (0 or 1). </p>
+
+</div>
+</div>
+<a id="a0f0abff54a023b2a46885726c4c00a0c" name="a0f0abff54a023b2a46885726c4c00a0c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f0abff54a023b2a46885726c4c00a0c">&#9670;&#160;</a></span>FileOrigName</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FileOrigName</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FileOrigName&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Original source filename.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Original source filename (from previous save). </p>
+
+</div>
+</div>
+<a id="a1aa02a2f7a11f1c71d9b1d22cabbc38d" name="a1aa02a2f7a11f1c71d9b1d22cabbc38d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1aa02a2f7a11f1c71d9b1d22cabbc38d">&#9670;&#160;</a></span>FilmCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmCount</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmCount&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film count (4 chars).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film count (4 chars). </p>
+
+</div>
+</div>
+<a id="ac036842d0b81b88e21ed3ae0b2be8e1d" name="ac036842d0b81b88e21ed3ae0b2be8e1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac036842d0b81b88e21ed3ae0b2be8e1d">&#9670;&#160;</a></span>FilmFormat</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmFormat</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmFormat&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film format (e.g. Academy).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film format (e.g. "Academy"). </p>
+
+</div>
+</div>
+<a id="ae5e433d1b7759e12f75dc628b894e4a8" name="ae5e433d1b7759e12f75dc628b894e4a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5e433d1b7759e12f75dc628b894e4a8">&#9670;&#160;</a></span>FilmFrameID</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmFrameID</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmFrameID&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film frame identification (e.g. keycode).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film frame identification (e.g. keycode). </p>
+
+</div>
+</div>
+<a id="a3189d867195a51b0dc4f98681939ae8b" name="a3189d867195a51b0dc4f98681939ae8b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3189d867195a51b0dc4f98681939ae8b">&#9670;&#160;</a></span>FilmHoldCount</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmHoldCount</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmHoldCount&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(1))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(1))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Held count (1 = default, &gt;1 = repeated frame).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Held count (1 = default, &gt;1 = repeated frame). </p>
+
+</div>
+</div>
+<a id="a2feb95f185786b7b96811b06dbe2c937" name="a2feb95f185786b7b96811b06dbe2c937"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2feb95f185786b7b96811b06dbe2c937">&#9670;&#160;</a></span>FilmMfgID</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmMfgID</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmMfgID&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film manufacturer ID code (2 chars).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film manufacturer ID code (2 chars). </p>
+
+</div>
+</div>
+<a id="a28e999258824d53f69e222f5fbb33bbc" name="a28e999258824d53f69e222f5fbb33bbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28e999258824d53f69e222f5fbb33bbc">&#9670;&#160;</a></span>FilmOffset</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmOffset</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmOffset&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film offset in perfs (2 chars).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film offset in perfs (2 chars). </p>
+
+</div>
+</div>
+<a id="a3196ba4707a7e91015a2b147fcbaa151" name="a3196ba4707a7e91015a2b147fcbaa151"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3196ba4707a7e91015a2b147fcbaa151">&#9670;&#160;</a></span>FilmPrefix</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmPrefix</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmPrefix&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film prefix (6 chars).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film prefix (6 chars). </p>
+
+</div>
+</div>
+<a id="aacf69c5075739728b5589d1bfe5f86f9" name="aacf69c5075739728b5589d1bfe5f86f9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aacf69c5075739728b5589d1bfe5f86f9">&#9670;&#160;</a></span>FilmSeqLen</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmSeqLen</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmSeqLen&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Sequence length (total frames in sequence).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Sequence length (total frames in sequence). </p>
+
+</div>
+</div>
+<a id="a3b303c173d4283031a65a85dd4fce7ba" name="a3b303c173d4283031a65a85dd4fce7ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b303c173d4283031a65a85dd4fce7ba">&#9670;&#160;</a></span>FilmSeqPos</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmSeqPos</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmSeqPos&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Sequence position (frame number in sequence).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Sequence position (frame number in sequence). </p>
+
+</div>
+</div>
+<a id="ae4ad30dc33957e7da438ec8884774c62" name="ae4ad30dc33957e7da438ec8884774c62"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4ad30dc33957e7da438ec8884774c62">&#9670;&#160;</a></span>FilmShutter</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmShutter</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmShutter&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
+<div class="line">                                .setDefault(0.0)</div>
+<div class="line">                                .setMin(0.0)</div>
+<div class="line">                                .setMax(360.0)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film shutter angle in degrees.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film shutter angle in degrees. </p>
+
+</div>
+</div>
+<a id="a3fdb00144ae05912c86e40cd2a7b315a" name="a3fdb00144ae05912c86e40cd2a7b315a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3fdb00144ae05912c86e40cd2a7b315a">&#9670;&#160;</a></span>FilmSlate</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmSlate</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmSlate&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film slate information.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film slate information. </p>
+
+</div>
+</div>
+<a id="afc34fb66384e56586c15852f78978403" name="afc34fb66384e56586c15852f78978403"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc34fb66384e56586c15852f78978403">&#9670;&#160;</a></span>FilmType</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FilmType</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FilmType&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Film type (2 chars).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Film type (2 chars). </p>
+
+</div>
+</div>
+<a id="a9003adfa4fa88d39ae273005e4f02f7e" name="a9003adfa4fa88d39ae273005e4f02f7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9003adfa4fa88d39ae273005e4f02f7e">&#9670;&#160;</a></span>FrameDropped</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameDropped</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameDropped&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Number of frames dropped before this one.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Number of frames dropped immediately before this one (int). </p>
+
+</div>
+</div>
+<a id="a71eff521db54b8dcf1564fad698855a2" name="a71eff521db54b8dcf1564fad698855a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71eff521db54b8dcf1564fad698855a2">&#9670;&#160;</a></span>FrameKeyframe</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameKeyframe</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameKeyframe&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Frame is a keyframe / intra frame.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>This frame is a keyframe / intra frame (bool). </p>
+
+</div>
+</div>
+<a id="a22dbb6283ada803e1ef4a5a1c39fc8b3" name="a22dbb6283ada803e1ef4a5a1c39fc8b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22dbb6283ada803e1ef4a5a1c39fc8b3">&#9670;&#160;</a></span>FrameLate</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameLate</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameLate&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Frame arrived later than scheduled.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>This frame arrived later than its scheduled time (bool). </p>
+
+</div>
+</div>
+<a id="a3143e8fc4cc53a130fadcf7593dbe77a" name="a3143e8fc4cc53a130fadcf7593dbe77a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3143e8fc4cc53a130fadcf7593dbe77a">&#9670;&#160;</a></span>FrameNumber</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameNumber</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameNumber&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS64)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int64_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Frame sequence number within a stream.&quot;</span>))</div>
+</div><!-- fragment -->
+<p><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> sequence number within a stream. </p>
+
+</div>
+</div>
+<a id="ab75ac7d20449ebaf96b3769500d07501" name="ab75ac7d20449ebaf96b3769500d07501"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab75ac7d20449ebaf96b3769500d07501">&#9670;&#160;</a></span>FrameRate</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameRate</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameRate&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setTypes({Variant::TypeRational, Variant::TypeDouble, Variant::TypeFrameRate})</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">Rational&lt;int&gt;</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Frame rate of the associated video.&quot;</span>))</div>
+</div><!-- fragment -->
+<p><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a> rate of the associated video. </p>
+
+</div>
+</div>
+<a id="afe8072f24ffa0c7cd6c65bc72fe1a9e8" name="afe8072f24ffa0c7cd6c65bc72fe1a9e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe8072f24ffa0c7cd6c65bc72fe1a9e8">&#9670;&#160;</a></span>FrameRateSource</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameRateSource</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameRateSource&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Source of the FrameRate value (file, config, or default).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Source that supplied the associated <a class="el" href="classFrameRate.html" title="Represents a video frame rate as a rational number.">FrameRate</a> (<a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>). One of: <code>"file"</code> (read from the container/sidecar), <code>"config"</code> (caller-supplied override), or <code>"default"</code> (backend fell back to its built-in default). </p>
+
+</div>
+</div>
+<a id="a0f17fcddf9ea27028e2122b9fc416154" name="a0f17fcddf9ea27028e2122b9fc416154"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f17fcddf9ea27028e2122b9fc416154">&#9670;&#160;</a></span>FrameRepeated</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::FrameRepeated</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;FrameRepeated&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Number of times frame repeated due to underrun.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Number of times this frame was repeated due to underrun (int). </p>
+
+</div>
+</div>
+<a id="a30b9865d30e8dcc9511f439e270cd6b9" name="a30b9865d30e8dcc9511f439e270cd6b9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30b9865d30e8dcc9511f439e270cd6b9">&#9670;&#160;</a></span>Gamma</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Gamma</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Gamma&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
+<div class="line">                                .setDefault(0.0)</div>
+<div class="line">                                .setMin(0.0)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Gamma / transfer-function exponent.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Gamma / transfer-function exponent. </p>
+
+</div>
+</div>
+<a id="aad446146e07fc61aefe2b9996f94a2bd" name="aad446146e07fc61aefe2b9996f94a2bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad446146e07fc61aefe2b9996f94a2bd">&#9670;&#160;</a></span>Genre</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Genre</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Genre&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Genre (audio media).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Genre (audio media). </p>
+
+</div>
+</div>
+<a id="a6d74384e72bf5b17339d6373c78f0fef" name="a6d74384e72bf5b17339d6373c78f0fef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6d74384e72bf5b17339d6373c78f0fef">&#9670;&#160;</a></span>License</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::License</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;License&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;License information.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>License information. </p>
+
+</div>
+</div>
+<a id="af6762a5698ac8412dff444fcf9d6745d" name="af6762a5698ac8412dff444fcf9d6745d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6762a5698ac8412dff444fcf9d6745d">&#9670;&#160;</a></span>MediaDescChanged</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::MediaDescChanged</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;MediaDescChanged&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Frame&#39;s MediaDesc differs from previously reported.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>This frame's <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> differs from the previously reported one (bool). </p>
+
+</div>
+</div>
+<a id="a7d2d98dbe903ea7a95880163c5812b96" name="a7d2d98dbe903ea7a95880163c5812b96"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d2d98dbe903ea7a95880163c5812b96">&#9670;&#160;</a></span>Orientation</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Orientation</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Orientation&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Image orientation code (0 = left-to-right, top-to-bottom).&quot;</span>))</div>
+</div><!-- fragment -->
+<p><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> orientation code (0 = left-to-right, top-to-bottom). </p>
+
+</div>
+</div>
+<a id="a1db4844d9e5824c4bc65e4dcc89dfd3c" name="a1db4844d9e5824c4bc65e4dcc89dfd3c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1db4844d9e5824c4bc65e4dcc89dfd3c">&#9670;&#160;</a></span>OriginationDateTime</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::OriginationDateTime</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;OriginationDateTime&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;BWF origination date and time.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>BWF origination date and time. </p>
+
+</div>
+</div>
+<a id="ac6f3e3758aaa031a697987a4808ccbc0" name="ac6f3e3758aaa031a697987a4808ccbc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6f3e3758aaa031a697987a4808ccbc0">&#9670;&#160;</a></span>Originator</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Originator</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Originator&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;BWF originator name.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>BWF originator name. </p>
+
+</div>
+</div>
+<a id="a95263f7b9a9356b29e20a8e6b7d71386" name="a95263f7b9a9356b29e20a8e6b7d71386"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95263f7b9a9356b29e20a8e6b7d71386">&#9670;&#160;</a></span>OriginatorReference</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::OriginatorReference</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;OriginatorReference&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setTypes({Variant::TypeString, Variant::TypeUUID})</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;BWF originator reference.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>BWF originator reference. </p>
+
+</div>
+</div>
+<a id="af39a39dc96761ba399c4ecf891111bed" name="af39a39dc96761ba399c4ecf891111bed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af39a39dc96761ba399c4ecf891111bed">&#9670;&#160;</a></span>PresentationTime</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::PresentationTime</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;PresentationTime&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeTimeStamp)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classTimeStamp.html">TimeStamp</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Timestamp when frame should be presented.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Timestamp at which a frame should be presented (<a class="el" href="classTimeStamp.html" title="A monotonic timestamp based on std::chrono::steady_clock.">TimeStamp</a>). </p>
+
+</div>
+</div>
+<a id="a41f809d7c13def63a94c37d4b4b73b73" name="a41f809d7c13def63a94c37d4b4b73b73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41f809d7c13def63a94c37d4b4b73b73">&#9670;&#160;</a></span>Project</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Project</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Project&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Project name.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Project name. </p>
+
+</div>
+</div>
+<a id="ab6572053182263021c19ecfb00ea42f2" name="ab6572053182263021c19ecfb00ea42f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6572053182263021c19ecfb00ea42f2">&#9670;&#160;</a></span>Reel</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Reel</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Reel&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Reel or input device name.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Reel or input device name. </p>
+
+</div>
+</div>
+<a id="a121b2c33d6b23d806b28b7de4c772eda" name="a121b2c33d6b23d806b28b7de4c772eda"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a121b2c33d6b23d806b28b7de4c772eda">&#9670;&#160;</a></span>Software</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Software</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Software&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Software that created or modified the media.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Software that created or last modified the media. </p>
+
+</div>
+</div>
+<a id="afcab0b9a69d3b11c78761888f3e7072a" name="afcab0b9a69d3b11c78761888f3e7072a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afcab0b9a69d3b11c78761888f3e7072a">&#9670;&#160;</a></span>Timecode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Timecode</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Timecode&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeTimecode)</div>
+<div class="line">                                .setDefault(promeki::Timecode())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;SMPTE timecode associated with this media unit.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>SMPTE timecode associated with this media unit. </p>
+
+</div>
+</div>
+<a id="aff99fcd1fd3fb4c681442f7d1c0d8f83" name="aff99fcd1fd3fb4c681442f7d1c0d8f83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff99fcd1fd3fb4c681442f7d1c0d8f83">&#9670;&#160;</a></span>Title</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::Title</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Title&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Title of the media.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Title of the media. </p>
+
+</div>
+</div>
+<a id="a16bab06e9349647ccc88a9679363dd83" name="a16bab06e9349647ccc88a9679363dd83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16bab06e9349647ccc88a9679363dd83">&#9670;&#160;</a></span>TrackNumber</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::TrackNumber</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;TrackNumber&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setTypes({Variant::TypeS32, Variant::TypeString})</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Track number (audio media).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>Track number (audio media). </p>
+
+</div>
+</div>
+<a id="a4d76ff2e68eee780461d23d7593fca9f" name="a4d76ff2e68eee780461d23d7593fca9f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d76ff2e68eee780461d23d7593fca9f">&#9670;&#160;</a></span>TransferCharacteristic</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::TransferCharacteristic</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;TransferCharacteristic&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setMin(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;SMPTE 268M transfer characteristic code.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>SMPTE 268M transfer characteristic code. </p>
+
+</div>
+</div>
+<a id="a30c3a9afa5c38b60bea34b28972b81c8" name="a30c3a9afa5c38b60bea34b28972b81c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30c3a9afa5c38b60bea34b28972b81c8">&#9670;&#160;</a></span>UMID</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::UMID</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;UMID&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setTypes({Variant::TypeString, Variant::TypeUMID})</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;SMPTE UMID (Unique Material Identifier).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>SMPTE <a class="el" href="classUMID.html" title="SMPTE 330M Unique Material Identifier (UMID).">UMID</a> (Unique Material Identifier). </p>
+
+</div>
+</div>
+<a id="a304cb8d139b4a3e1a3c2423fe0c3f134" name="a304cb8d139b4a3e1a3c2423fe0c3f134"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a304cb8d139b4a3e1a3c2423fe0c3f134">&#9670;&#160;</a></span>VBRQuality</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> Metadata::VBRQuality</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;VBRQuality&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classList.html">int32_t</a>(0))</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;VBR quality setting (codec-specific).&quot;</span>))</div>
+</div><!-- fragment -->
+<p>VBR quality setting (codec-specific). </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="metadata_8h_source.html">metadata.h</a></li>
 </ul>
@@ -688,7 +2163,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMetadata.html">Metadata</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

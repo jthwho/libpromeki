@@ -58,6 +58,7 @@ var hierarchy =
     [ "AudioGen::Config", "structAudioGen_1_1Config.html", null ],
     [ "ConfigTag", "structConfigTag.html", null ],
     [ "FileFormatFactory< Product >::Context", "structFileFormatFactory_1_1Context.html", null ],
+    [ "CrashHandler", "classCrashHandler.html", null ],
     [ "CSCContext", "classCSCContext.html", null ],
     [ "CscPath", "structCscPath.html", null ],
     [ "CSCPipeline", "classCSCPipeline.html", null ],
@@ -135,6 +136,7 @@ var hierarchy =
     [ "StringRegistry< Tag >::Item", "classStringRegistry_1_1Item.html", null ],
     [ "JsonArray", "classJsonArray.html", null ],
     [ "JsonObject", "classJsonObject.html", null ],
+    [ "LibraryOptionsTag", "structLibraryOptionsTag.html", null ],
     [ "Line< T, N >", "classLine.html", null ],
     [ "List< T >", "classList.html", null ],
     [ "List< Attribute >", "classList.html", null ],
@@ -175,6 +177,7 @@ var hierarchy =
     [ "List< TuiAction * >", "classList.html", null ],
     [ "List< TuiCell >", "classList.html", null ],
     [ "List< TuiMenu * >", "classList.html", null ],
+    [ "List< Type >", "classList.html", null ],
     [ "List< uint8_t >", "classList.html", null ],
     [ "List< Widget * >", "classList.html", null ],
     [ "Mutex::Locker", "classMutex_1_1Locker.html", null ],
@@ -196,6 +199,7 @@ var hierarchy =
     [ "Map< uint32_t, CachedGlyph >", "classMap.html", null ],
     [ "Map< uint32_t, SDLWindow * >", "classMap.html", null ],
     [ "Map< uint32_t, VariantImpl >", "classMap.html", null ],
+    [ "Map< uint32_t, VariantSpec >", "classMap.html", null ],
     [ "Map< uint64_t, String >", "classMap.html", null ],
     [ "Map< uintptr_t, Block >", "classMap.html", null ],
     [ "Matrix< T, W, H >", "classMatrix.html", null ],
@@ -423,6 +427,9 @@ var hierarchy =
     [ "UUID", "classUUID.html", null ],
     [ "VariantDatabase< Tag >", "classVariantDatabase.html", null ],
     [ "VariantDatabase< ConfigTag >", "classVariantDatabase.html", null ],
+    [ "VariantDatabase< LibraryOptionsTag >", "classVariantDatabase.html", [
+      [ "LibraryOptions", "classLibraryOptions.html", null ]
+    ] ],
     [ "VariantDatabase< MediaConfigTag >", "classVariantDatabase.html", [
       [ "MediaConfig", "classMediaConfig.html", null ]
     ] ],
@@ -435,6 +442,8 @@ var hierarchy =
     ] ],
     [ "detail::VariantEnd", "structdetail_1_1VariantEnd.html", null ],
     [ "VariantImpl< Types >", "classVariantImpl.html", null ],
+    [ "VariantImpl< std::monostate, bool, uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double, String, DateTime, TimeStamp, Size2Du32, UUID, UMID, Timecode, Rational< int >, FrameRate, StringList, Color, ColorModel, MemSpace, PixelFormat, PixelDesc, Enum, detail::VariantEnd >", "classVariantImpl.html", null ],
+    [ "VariantSpec", "classVariantSpec.html", null ],
     [ "VideoPattern", "structVideoPattern.html", null ],
     [ "VideoTestPattern", "classVideoTestPattern.html", null ],
     [ "WaitCondition", "classWaitCondition.html", null ],

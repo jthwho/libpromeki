@@ -164,6 +164,7 @@ var classPixelDesc =
       [ "JPEG_XS_YUV10_420_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa2afc50cb5939fbcb461a458768764bef", null ],
       [ "JPEG_XS_YUV12_420_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c", null ],
       [ "JPEG_XS_RGB8_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35", null ],
+      [ "RGB8_Planar_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa28b78e60c2efa5ac1a80bdde26bea677", null ],
       [ "UserDefined", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c", null ]
     ] ],
     [ "PixelDesc", "classPixelDesc.html#a1a604806861a4bf14aac3805667679e0", null ],

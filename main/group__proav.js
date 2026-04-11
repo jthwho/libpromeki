@@ -410,7 +410,8 @@ var group__proav =
         [ "TGA", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa4b1b30315e91f6e295c0918af41dd084", null ],
         [ "SGI", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9001995d4005855523088ca640275310", null ],
         [ "PNM", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa713d726c6c2ac040f9993c880d843e72", null ],
-        [ "JPEG", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa7291eb65fe7335fa895139e096bfd584", null ]
+        [ "JPEG", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa7291eb65fe7335fa895139e096bfd584", null ],
+        [ "JpegXS", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9042aef653f4e83272ed612adfccf5fc", null ]
       ] ],
       [ "ImageFile", "classImageFile.html#a18de969707a0b98ee83d336a9f588454", null ],
       [ "filename", "classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59", null ],
@@ -583,8 +584,8 @@ var group__proav =
     ] ],
     [ "MediaIO", "classMediaIO.html", [
       [ "FormatDesc", "structMediaIO_1_1FormatDesc.html", [
+        [ "ConfigSpecFunc", "structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77", null ],
         [ "CreateFunc", "structMediaIO_1_1FormatDesc.html#a040ef25827914e55c2e8209c77033a33", null ],
-        [ "DefaultConfigFunc", "structMediaIO_1_1FormatDesc.html#a164084af396b01be58b5a5e2402b55ab", null ],
         [ "DefaultMetadataFunc", "structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e", null ],
         [ "EnumerateFunc", "structMediaIO_1_1FormatDesc.html#a2149dbe59cbb4e01b85ac4ea67a06576", null ],
         [ "ProbeFunc", "structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54", null ],
@@ -592,8 +593,8 @@ var group__proav =
         [ "canRead", "structMediaIO_1_1FormatDesc.html#a8ddabfb044787f2633c75b25d1580750", null ],
         [ "canReadWrite", "structMediaIO_1_1FormatDesc.html#a80b2ff329a262db254c054a8d900aff3", null ],
         [ "canWrite", "structMediaIO_1_1FormatDesc.html#a4e86af46648e6cbe5c97606f002c3444", null ],
+        [ "configSpecs", "structMediaIO_1_1FormatDesc.html#a33c29ac64149cabee55431e220323f47", null ],
         [ "create", "structMediaIO_1_1FormatDesc.html#af6eff6b05d298393e15a22e0f742c295", null ],
-        [ "defaultConfig", "structMediaIO_1_1FormatDesc.html#ad07d2975cd2e5d4af142ed0b52aa0496", null ],
         [ "defaultMetadata", "structMediaIO_1_1FormatDesc.html#ad88fec58f6ccda8f746cf04ca2b9a470", null ],
         [ "description", "structMediaIO_1_1FormatDesc.html#a351b863c1f26e0652c764c806d276e14", null ],
         [ "enumerate", "structMediaIO_1_1FormatDesc.html#aa766150e2cf030dbca33a410334594c1", null ],
@@ -860,6 +861,7 @@ var group__proav =
         [ "JPEG_XS_YUV10_420_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa2afc50cb5939fbcb461a458768764bef", null ],
         [ "JPEG_XS_YUV12_420_Rec709", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa6594ba82e4c365798ab8c1cff4a4832c", null ],
         [ "JPEG_XS_RGB8_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa95f731ef537694e2f41f4be4183bcc35", null ],
+        [ "RGB8_Planar_sRGB", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa28b78e60c2efa5ac1a80bdde26bea677", null ],
         [ "UserDefined", "classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafad1f157e0770de6458974f043eb52b79c", null ]
       ] ],
       [ "PixelDesc", "classPixelDesc.html#a1a604806861a4bf14aac3805667679e0", null ],
@@ -1006,6 +1008,7 @@ var group__proav =
         [ "SP_420_16_BE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda0131043e165a91b510c377cbe2494ece", null ],
         [ "I_422_UYVY_3x16_LE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda3a1e9b203bc793831f3aad6f7257b235", null ],
         [ "I_422_UYVY_3x16_BE", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4dedaf9d1fb7baad15a4117f715d9f619e656", null ],
+        [ "P_444_3x8", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda204ec4bb75ca3e9699ea7704a15eb703", null ],
         [ "UserDefined", "classPixelFormat.html#a7ae7d8a6cf46a5c9947b72d5ec9d4deda4f0fbe6edb23ddd49c7721c444b0bb10", null ]
       ] ],
       [ "Sampling", "classPixelFormat.html#a85ea5c79ba2eb68e0bf4613d9524612b", [

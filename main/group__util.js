@@ -79,6 +79,7 @@ var group__util =
       [ "parseMain", "classCmdLineParser.html#afba5d73d1ec8bc943abd0581ef48eeb6", null ],
       [ "registerOptions", "classCmdLineParser.html#a7f734841ba0fa78c0cb05e3fc31b7ae4", null ]
     ] ],
+    [ "CrashHandler", "classCrashHandler.html", null ],
     [ "Enum", "classEnum.html", [
       [ "Type", "classEnum_1_1Type.html", [
         [ "Type", "classEnum_1_1Type.html#a09973b8a56c5ab2de5eb60b54b406346", null ],
@@ -263,6 +264,11 @@ var group__util =
       [ "key", "classKeyEvent.html#a02eeabfb5ec14131d10a857438dbfeb4", null ],
       [ "modifiers", "classKeyEvent.html#a2c3416f1af65a1861f537cc08ade0bc9", null ],
       [ "text", "classKeyEvent.html#af036d487a5d7e7b7c0ecfa357166ac6c", null ]
+    ] ],
+    [ "LibraryOptionsTag", "structLibraryOptionsTag.html", null ],
+    [ "LibraryOptions", "classLibraryOptions.html", [
+      [ "Base", "classLibraryOptions.html#aee549979be4c0ad3619755f2ae8e6f12", null ],
+      [ "loadFromEnvironment", "classLibraryOptions.html#a264a69ff51b497ce1cadf82f84cc3513", null ]
     ] ],
     [ "Logger", "classLogger.html", [
       [ "LogEntry", "structLogger_1_1LogEntry.html", null ],
@@ -571,6 +577,7 @@ var group__util =
     ] ],
     [ "VariantDatabase< Tag >", "classVariantDatabase.html", [
       [ "ID", "classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b", null ],
+      [ "SpecMap", "classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505", null ],
       [ "VariantDatabase", "classVariantDatabase.html#a0c4d5feedfdea38ab75909d0cfa59b19", null ],
       [ "clear", "classVariantDatabase.html#af4ffb4cbbab027a6bd317f9c64738923", null ],
       [ "contains", "classVariantDatabase.html#a524252cc19d0a1aefef82f20bc9c53eb", null ],
@@ -585,19 +592,59 @@ var group__util =
       [ "operator==", "classVariantDatabase.html#ad91d4b7a1ae1ec7b2452b06bfc76ffe6", null ],
       [ "readFrom", "classVariantDatabase.html#a31258932ed076d71a8071e88f1237d77", null ],
       [ "remove", "classVariantDatabase.html#a32d6ad251d26ffab267241da18c60722", null ],
-      [ "set", "classVariantDatabase.html#a0105273e5397bebb5589d363ecff7c3e", null ],
-      [ "set", "classVariantDatabase.html#a4c3385dc86892284ad66426d6dc5d4f3", null ],
+      [ "set", "classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a", null ],
+      [ "set", "classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc", null ],
       [ "setIfMissing", "classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa", null ],
       [ "setIfMissing", "classVariantDatabase.html#a18c3f904128a5335145787436352f8dc", null ],
+      [ "setValidation", "classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2", null ],
       [ "size", "classVariantDatabase.html#a754a53ccdcff2331726bf470da32f5bc", null ],
       [ "toJson", "classVariantDatabase.html#a21f88197acfc8698bf01a095ad6c1498", null ],
+      [ "validation", "classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4", null ],
       [ "writeTo", "classVariantDatabase.html#a0b35835fce4daa2a5f70179c9e287043", null ],
       [ "writeTo", "classVariantDatabase.html#addc64ebe789a1513cf0d6621ace73f0f", null ]
+    ] ],
+    [ "VariantSpec", "classVariantSpec.html", [
+      [ "Type", "classVariantSpec.html#acb73d1fdda875e2825bae15df6030ced", null ],
+      [ "TypeList", "classVariantSpec.html#a679ab0766715574b3ee1565974f184fc", null ],
+      [ "VariantSpec", "classVariantSpec.html#a8e7639f0f32e2848e1c0f88c39e2be11", null ],
+      [ "acceptsType", "classVariantSpec.html#a0bf3e5544a79cd08cd3952e087bec16e", null ],
+      [ "defaultString", "classVariantSpec.html#a908d92ca4fbea040fdfafc8f8fb33bdd", null ],
+      [ "defaultValue", "classVariantSpec.html#a104d2e67b86bc2c7fbb32fd007e21766", null ],
+      [ "description", "classVariantSpec.html#a70d0f96b403f617602c9fdbb282ef5ef", null ],
+      [ "enumType", "classVariantSpec.html#adedc8af7a160f82d3f27253794ef6de2", null ],
+      [ "hasEnumType", "classVariantSpec.html#a9273c0ef0063174ad6aafe046cb38471", null ],
+      [ "hasMax", "classVariantSpec.html#a270550763c409ffbea91b866c2b9407b", null ],
+      [ "hasMin", "classVariantSpec.html#a5c358a3da008db791a1e84728c86c623", null ],
+      [ "hasRange", "classVariantSpec.html#a8f7335327a3d981dcd303cad12a0bdb5", null ],
+      [ "isPolymorphic", "classVariantSpec.html#af696a1a3373ac3a0ea9a003c3be43ae5", null ],
+      [ "isValid", "classVariantSpec.html#a0cae2b40bb4b13edf1e7beea6ed03c50", null ],
+      [ "operator Variant", "classVariantSpec.html#aed5febbff66650a64df44b704201f407", null ],
+      [ "parseString", "classVariantSpec.html#aadc6da5be06d4177c3e12ec96842cba8", null ],
+      [ "rangeMax", "classVariantSpec.html#a56cf5fdaae27d1f84bb9f63a5f2dffe5", null ],
+      [ "rangeMin", "classVariantSpec.html#aa8d8989314235a31d305244717fec2ae", null ],
+      [ "rangeString", "classVariantSpec.html#a103d3154dcd08257a46098af17f7d25d", null ],
+      [ "setDefault", "classVariantSpec.html#a8c2a305e8432cdc0e335e9fa384f849f", null ],
+      [ "setDescription", "classVariantSpec.html#ac9bf4b3d2fff7903d3b68919b4ecfa45", null ],
+      [ "setEnumType", "classVariantSpec.html#a338d74b6e604bc66c377e7b92c987e89", null ],
+      [ "setMax", "classVariantSpec.html#ab215ae01364bfe30ed932aa898143804", null ],
+      [ "setMin", "classVariantSpec.html#aebe5556f9eeba60a811061ee3d9fe23e", null ],
+      [ "setRange", "classVariantSpec.html#a3c454e264b430bb84f458686d05ab5b8", null ],
+      [ "setType", "classVariantSpec.html#a825695bf7a60f33617a206ce0d891ea7", null ],
+      [ "setTypes", "classVariantSpec.html#a6ce989cfccc4e97d533474bb819771ce", null ],
+      [ "typeName", "classVariantSpec.html#af60b54a40c7ca89e04beca0c30e61140", null ],
+      [ "types", "classVariantSpec.html#a9a9eb09c9544db50ae115989cc0610b7", null ],
+      [ "validate", "classVariantSpec.html#aa7b6da2209fad230a6158db936acc3e4", null ],
+      [ "writeHelp", "classVariantSpec.html#a28b3e2fee41c447faf4fcec80e2e98fa", null ]
     ] ],
     [ "PROMEKI_SHARED", "group__util.html#ga171ec9034fbfc2c134195af18ea762e7", null ],
     [ "PROMEKI_VARIANT_TYPES_NETWORK", "group__util.html#gadd038fa9fc95b7e756cc1f175a180eb2", null ],
     [ "Config", "group__util.html#gaf8b66ff752a54a8c6048a661432bd094", null ],
     [ "Result", "group__util.html#ga72213850e8f39e4956d4ce23dd5238f7", null ],
+    [ "SpecValidation", "group__util.html#ga3e19f7ded49aac87704161e5d5b458db", [
+      [ "SpecValidation::None", "group__util.html#gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754", null ],
+      [ "SpecValidation::Warn", "group__util.html#gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17", null ],
+      [ "SpecValidation::Strict", "group__util.html#gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974", null ]
+    ] ],
     [ "fnv1a", "group__util.html#gab69e96bcf690e69917938a80b3e84123", null ],
     [ "secureZero", "group__util.html#ga67dcec7dbce274b3670485a4dc82d808", null ],
     [ "sorted", "group__util.html#gac27428ecfe86c08c467f57d7ab38308d", null ]

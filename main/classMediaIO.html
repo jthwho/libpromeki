@@ -359,6 +359,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a0cb498ce63da62e06f5f463c0b046d74" id="r_a0cb498ce63da62e06f5f463c0b046d74"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">defaultConfig</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName)</td></tr>
 <tr class="memdesc:a0cb498ce63da62e06f5f463c0b046d74"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the default configuration for the named backend.  <br /></td></tr>
 <tr class="separator:a0cb498ce63da62e06f5f463c0b046d74"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19ced79f69ff203cadf8039a60001caa" id="r_a19ced79f69ff203cadf8039a60001caa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">Config::SpecMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a19ced79f69ff203cadf8039a60001caa">configSpecs</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName)</td></tr>
+<tr class="memdesc:a19ced79f69ff203cadf8039a60001caa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the config specs for the named backend.  <br /></td></tr>
+<tr class="separator:a19ced79f69ff203cadf8039a60001caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2bf93a4db4de6830764ee938a80b54ac" id="r_a2bf93a4db4de6830764ee938a80b54ac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMetadata.html">Metadata</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a2bf93a4db4de6830764ee938a80b54ac">defaultMetadata</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName)</td></tr>
 <tr class="memdesc:a2bf93a4db4de6830764ee938a80b54ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metadata schema the named backend honors.  <br /></td></tr>
 <tr class="separator:a2bf93a4db4de6830764ee938a80b54ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -591,6 +594,42 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a19ced79f69ff203cadf8039a60001caa" name="a19ced79f69ff203cadf8039a60001caa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19ced79f69ff203cadf8039a60001caa">&#9670;&#160;</a></span>configSpecs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">Config::SpecMap</a> MediaIO::configSpecs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the config specs for the named backend. </p>
+<p>The returned map contains one entry per config key the backend supports, each paired with a <a class="el" href="classVariantSpec.html">VariantSpec</a> describing the accepted types, default, range, and description. Use this for introspection (e.g. <code>--help</code> dumps, config GUIs).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>The registered backend name. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A SpecMap, or an empty map if the backend is not found. </dd></dl>
+
+</div>
+</div>
 <a id="a594b8b55ae788efe104c871248d73808" name="a594b8b55ae788efe104c871248d73808"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a594b8b55ae788efe104c871248d73808">&#9670;&#160;</a></span>create()</h2>
 
@@ -754,6 +793,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Returns the default configuration for the named backend. </p>
+<p>Builds a <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> by extracting the default value from each <a class="el" href="classVariantSpec.html">VariantSpec</a> in the backend's config spec map.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">typeName</td><td>The registered backend name (e.g. "TPG"). </td></tr>
@@ -1143,7 +1183,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Emitted when the cached <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> has changed mid-stream. </p>
 <dl class="signal"><dt><b><a class="el" href="signal.html#_signal000014">Signal:</a></b></dt><dd></dd></dl>
-<p>Fires when a backend reports a descriptor change in <code><a class="el" href="classMediaIOCommandRead.html" title="Command to read the next frame.">MediaIOCommandRead</a></code> and <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> updates its cache. Listeners can call <code><a class="el" href="classMediaIO.html#af11b9ed12de09ee03a21a113dddc542b" title="Returns the cached media description.">mediaDesc()</a></code> / <code><a class="el" href="classMediaIO.html#aafd52b1340c54ed99dd259c9cf938646" title="Returns the cached frame rate.">frameRate()</a></code> to get the new values. The triggering frame also has <code><a class="el" href="classMetadata.html#af6762a5698ac8412dff444fcf9d6745d" title="This frame&#39;s MediaDesc differs from the previously reported one (bool). When set, MediaIO has updated...">Metadata::MediaDescChanged</a></code> stamped on it. </p>
+<p>Fires when a backend reports a descriptor change in <code><a class="el" href="classMediaIOCommandRead.html" title="Command to read the next frame.">MediaIOCommandRead</a></code> and <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> updates its cache. Listeners can call <code><a class="el" href="classMediaIO.html#af11b9ed12de09ee03a21a113dddc542b" title="Returns the cached media description.">mediaDesc()</a></code> / <code><a class="el" href="classMediaIO.html#aafd52b1340c54ed99dd259c9cf938646" title="Returns the cached frame rate.">frameRate()</a></code> to get the new values. The triggering frame also has <code><a class="el" href="classMetadata.html#af6762a5698ac8412dff444fcf9d6745d" title="This frame&#39;s MediaDesc differs from the previously reported one (bool).">Metadata::MediaDescChanged</a></code> stamped on it. </p>
 
 </div>
 </div>
@@ -1733,7 +1773,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

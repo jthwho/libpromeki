@@ -1,3 +1,91 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classObjectBasePtr.html" title="Object that holds a pointer to an ObjectBase (or derived) object. This class will register itself wit..." alt="" coords="5,5,120,31"/>
+<area shape="rect" id="Node000000" href="$classObjectBase.html" title="Base object for promeki." alt="" coords="5,436,101,461"/>
+<area shape="rect" id="Node000001" href="$classAudioBlock.html" title="Base class for an audio processing block This object defines an interface for composing an audio proc..." alt="" coords="171,165,266,191"/>
+<area shape="poly" id="edge28_Node000000_Node000001" title=" " alt="" coords="55,422,63,375,80,316,107,254,125,226,148,200,170,186,172,190,151,204,130,229,112,257,85,318,68,376,60,423"/>
+<area shape="rect" id="Node000002" href="$classIODevice.html" title="Abstract base class for all I/O devices." alt="" coords="178,215,259,240"/>
+<area shape="poly" id="edge29_Node000000_Node000002" title=" " alt="" coords="62,422,95,353,119,312,147,275,170,254,193,238,196,242,173,258,151,278,123,315,100,355,67,424"/>
+<area shape="rect" id="Node000014" href="$classLayout.html" title="Abstract base class for layout managers." alt="" coords="185,288,252,313"/>
+<area shape="poly" id="edge41_Node000000_Node000014" title=" " alt="" coords="66,422,99,373,122,347,148,324,184,306,186,311,151,328,126,351,103,376,70,425"/>
+<area shape="rect" id="Node000019" href="$classMediaIO.html" title="Controller for media I/O backends." alt="" coords="181,337,257,363"/>
+<area shape="poly" id="edge46_Node000000_Node000019" title=" " alt="" coords="77,425,110,398,148,373,179,359,182,364,151,378,113,403,80,429"/>
+<area shape="rect" id="Node000020" href="$classMulticastManager.html" title="Manages multicast group membership for multi&#45;stream scenarios." alt="" coords="149,387,288,412"/>
+<area shape="poly" id="edge47_Node000000_Node000020" title=" " alt="" coords="109,429,174,410,176,415,110,435"/>
+<area shape="rect" id="Node000021" href="$classProcess.html" title="Subprocess execution with pipe&#45;based I/O." alt="" coords="183,436,255,461"/>
+<area shape="poly" id="edge48_Node000000_Node000021" title=" " alt="" coords="115,446,182,446,182,451,115,451"/>
+<area shape="rect" id="Node000022" href="$classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550)." alt="" coords="171,485,266,511"/>
+<area shape="poly" id="edge49_Node000000_Node000022" title=" " alt="" coords="110,463,176,483,174,488,109,468"/>
+<area shape="rect" id="Node000023" href="$classTcpServer.html" title="TCP server that listens for incoming connections." alt="" coords="176,535,261,560"/>
+<area shape="poly" id="edge50_Node000000_Node000023" title=" " alt="" coords="80,469,113,496,151,521,177,533,175,538,148,526,109,500,77,473"/>
+<area shape="rect" id="Node000024" href="$classThread.html" title="Wrapper around std::thread with a built&#45;in EventLoop." alt="" coords="185,584,252,609"/>
+<area shape="poly" id="edge51_Node000000_Node000024" title=" " alt="" coords="70,472,103,522,125,548,151,570,186,587,184,592,148,575,121,552,99,525,65,475"/>
+<area shape="rect" id="Node000026" href="$classTuiAction.html" title="A menu action item." alt="" coords="178,633,259,659"/>
+<area shape="poly" id="edge53_Node000000_Node000026" title=" " alt="" coords="65,474,77,507,95,546,120,586,151,620,179,635,176,640,148,624,116,589,90,549,72,509,60,476"/>
+<area shape="rect" id="Node000027" href="$classWidget.html" title="Base class for all widgets across UI backends." alt="" coords="185,683,253,708"/>
+<area shape="poly" id="edge54_Node000000_Node000027" title=" " alt="" coords="61,475,71,517,88,569,114,623,131,648,151,669,167,680,186,687,184,692,165,685,148,673,127,651,110,626,83,571,66,519,56,476"/>
+<area shape="rect" id="Node000003" href="$classAbstractSocket.html" title="Abstract base class for network sockets." alt="" coords="360,55,479,80"/>
+<area shape="poly" id="edge30_Node000002_Node000003" title=" " alt="" coords="270,211,286,200,297,187,304,173,309,146,314,118,322,103,334,89,359,75,361,80,338,93,326,106,320,119,314,147,309,175,302,190,290,204,273,215"/>
+<area shape="rect" id="Node000008" href="$classBufferIODevice.html" title="IODevice backed by an in&#45;memory Buffer." alt="" coords="359,104,479,129"/>
+<area shape="poly" id="edge35_Node000002_Node000008" title=" " alt="" coords="271,209,286,200,301,185,309,170,318,154,334,138,358,127,360,131,338,143,322,157,314,172,305,188,290,204,273,214"/>
+<area shape="rect" id="Node000009" href="$classBufferedIODevice.html" title="Abstract IODevice with an internal read buffer." alt="" coords="351,153,487,179"/>
+<area shape="poly" id="edge36_Node000002_Node000009" title=" " alt="" coords="270,208,335,187,373,176,374,181,337,193,272,213"/>
+<area shape="rect" id="Node000011" href="$classFileIODevice.html" title="IODevice wrapping a C stdio FILE pointer." alt="" coords="367,203,471,228"/>
+<area shape="poly" id="edge38_Node000002_Node000011" title=" " alt="" coords="273,221,367,216,367,221,273,227"/>
+<area shape="rect" id="Node000012" href="$classStreamStringIODevice.html" title="Write&#45;only IODevice that intercepts writes, accumulates characters, and invokes a callback on newline..." alt="" coords="336,252,503,277"/>
+<area shape="poly" id="edge39_Node000002_Node000012" title=" " alt="" coords="273,235,351,249,350,255,272,240"/>
+<area shape="rect" id="Node000013" href="$classStringIODevice.html" title="IODevice backed by a promeki String." alt="" coords="360,301,479,327"/>
+<area shape="poly" id="edge40_Node000002_Node000013" title=" " alt="" coords="253,245,337,288,369,299,368,304,335,292,251,249"/>
+<area shape="rect" id="Node000004" href="$classRawSocket.html" title="Raw Ethernet frame socket." alt="" coords="563,5,657,31"/>
+<area shape="poly" id="edge31_Node000003_Node000004" title=" " alt="" coords="481,49,562,27,564,33,483,54"/>
+<area shape="rect" id="Node000005" href="$classTcpSocket.html" title="Stream&#45;oriented TCP socket." alt="" coords="567,55,653,80"/>
+<area shape="poly" id="edge32_Node000003_Node000005" title=" " alt="" coords="493,65,566,65,566,70,493,70"/>
+<area shape="rect" id="Node000006" href="$classUdpSocket.html" title="Datagram&#45;oriented UDP socket with multicast support." alt="" coords="565,104,655,129"/>
+<area shape="poly" id="edge33_Node000003_Node000006" title=" " alt="" coords="483,81,565,102,564,108,482,86"/>
+<area shape="rect" id="Node000007" href="$classPrioritySocket.html" title="UDP socket with QoS priority convenience methods." alt="" coords="717,104,829,129"/>
+<area shape="poly" id="edge34_Node000006_Node000007" title=" " alt="" coords="669,114,717,114,717,119,669,119"/>
+<area shape="rect" id="Node000010" href="$classFile.html" title="File I/O device with buffered reading." alt="" coords="587,153,633,179"/>
+<area shape="poly" id="edge37_Node000009_Node000010" title=" " alt="" coords="501,163,587,163,587,169,501,169"/>
+<area shape="rect" id="Node000015" href="$classBoxLayout.html" title="Layout that arranges widgets in a horizontal or vertical line." alt="" coords="374,351,465,376"/>
+<area shape="poly" id="edge42_Node000014_Node000015" title=" " alt="" coords="266,314,337,337,374,348,373,353,335,342,264,319"/>
+<area shape="rect" id="Node000018" href="$classGridLayout.html" title="Grid layout with rows and columns." alt="" coords="373,400,466,425"/>
+<area shape="poly" id="edge45_Node000014_Node000018" title=" " alt="" coords="266,311,290,324,305,340,314,356,322,372,337,386,373,402,371,407,335,391,318,375,309,359,301,343,286,328,264,316"/>
+<area shape="rect" id="Node000016" href="$classHBoxLayout.html" title="Horizontal box layout (left to right)." alt="" coords="559,311,661,336"/>
+<area shape="poly" id="edge43_Node000015_Node000016" title=" " alt="" coords="477,349,559,331,560,336,478,354"/>
+<area shape="rect" id="Node000017" href="$classVBoxLayout.html" title="Vertical box layout (top to bottom)." alt="" coords="560,360,660,385"/>
+<area shape="poly" id="edge44_Node000015_Node000017" title=" " alt="" coords="478,364,560,368,560,373,478,369"/>
+<area shape="rect" id="Node000025" href="$classMulticastReceiver.html" title="Standalone multicast datagram receiver with an owned worker thread." alt="" coords="350,584,489,609"/>
+<area shape="poly" id="edge52_Node000024_Node000025" title=" " alt="" coords="266,594,350,594,350,599,266,599"/>
+<area shape="rect" id="Node000028" href="$classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering." alt="" coords="355,633,484,659"/>
+<area shape="poly" id="edge55_Node000027_Node000028" title=" " alt="" coords="265,681,366,656,368,661,267,686"/>
+<area shape="rect" id="Node000029" href="$classSDLWindow.html" title="Top&#45;level SDL window that serves as a root Widget." alt="" coords="370,683,469,708"/>
+<area shape="poly" id="edge56_Node000027_Node000029" title=" " alt="" coords="266,693,370,693,370,698,266,698"/>
+<area shape="rect" id="Node000030" href="$classTuiWidget.html" title="TUI&#45;specific widget base class." alt="" coords="376,732,463,757"/>
+<area shape="poly" id="edge57_Node000027_Node000030" title=" " alt="" coords="266,704,377,732,375,737,265,709"/>
+<area shape="rect" id="Node000031" href="$classTuiButton.html" title="Clickable button with text label." alt="" coords="569,427,651,452"/>
+<area shape="poly" id="edge58_Node000030_Node000031" title=" " alt="" coords="475,735,489,728,501,719,522,688,530,657,530,626,526,595,522,563,521,531,529,497,549,463,567,449,570,453,553,466,534,499,526,531,527,563,531,594,536,626,535,658,527,690,505,722,492,733,477,740"/>
+<area shape="rect" id="Node000032" href="$classTuiCheckBox.html" title="Toggleable checkbox with text label." alt="" coords="557,476,663,501"/>
+<area shape="poly" id="edge59_Node000030_Node000032" title=" " alt="" coords="474,735,489,728,501,719,518,694,526,669,528,644,526,619,523,593,524,567,532,540,549,512,564,499,568,504,553,516,536,542,529,568,529,593,531,619,533,644,532,670,523,696,505,723,492,733,477,740"/>
+<area shape="rect" id="Node000033" href="$classTuiFrame.html" title="Container widget with a border and optional title." alt="" coords="569,525,651,551"/>
+<area shape="poly" id="edge60_Node000030_Node000033" title=" " alt="" coords="474,734,501,719,515,700,523,681,525,643,527,603,534,582,549,561,567,548,570,552,553,565,539,585,533,604,531,643,528,683,520,703,504,723,477,739"/>
+<area shape="rect" id="Node000034" href="$classTuiLabel.html" title="Displays text (single or multi&#45;line)." alt="" coords="573,575,647,600"/>
+<area shape="poly" id="edge61_Node000030_Node000034" title=" " alt="" coords="475,733,501,719,512,706,519,693,525,667,530,639,537,625,549,611,571,596,574,601,552,615,542,628,536,641,530,668,524,695,517,709,504,723,477,738"/>
+<area shape="rect" id="Node000035" href="$classTuiLineEdit.html" title="Single&#45;line text input widget." alt="" coords="564,624,656,649"/>
+<area shape="poly" id="edge62_Node000030_Node000035" title=" " alt="" coords="474,731,501,718,516,705,525,691,534,676,549,660,571,647,574,652,552,664,538,679,529,693,520,708,504,723,477,736"/>
+<area shape="rect" id="Node000036" href="$classTuiListView.html" title="Scrollable list of items with keyboard and mouse navigation." alt="" coords="563,673,657,699"/>
+<area shape="poly" id="edge63_Node000030_Node000036" title=" " alt="" coords="475,726,502,718,570,696,571,701,503,723,477,731"/>
+<area shape="rect" id="Node000037" href="$classTuiMenu.html" title="Dropdown menu." alt="" coords="572,723,648,748"/>
+<area shape="poly" id="edge64_Node000030_Node000037" title=" " alt="" coords="476,739,572,735,572,740,477,745"/>
+<area shape="rect" id="Node000038" href="$classTuiMenuBar.html" title="Top&#45;of&#45;screen menu bar with dropdown menus." alt="" coords="561,772,659,797"/>
+<area shape="poly" id="edge65_Node000030_Node000038" title=" " alt="" coords="477,754,561,772,560,777,475,759"/>
+<area shape="rect" id="Node000039" href="$classTuiProgressBar.html" title="Horizontal progress indicator." alt="" coords="551,821,669,847"/>
+<area shape="poly" id="edge66_Node000030_Node000039" title=" " alt="" coords="458,761,552,808,578,819,576,824,550,812,456,766"/>
+<area shape="rect" id="Node000040" href="$classTuiScrollArea.html" title="Container that scrolls content larger than its viewport." alt="" coords="557,871,663,896"/>
+<area shape="poly" id="edge67_Node000030_Node000040" title=" " alt="" coords="444,765,491,811,552,857,574,868,572,873,549,862,488,815,440,769"/>
+<area shape="rect" id="Node000041" href="$classTuiSplitter.html" title="Resizable split between two child widgets." alt="" coords="567,920,653,945"/>
+<area shape="poly" id="edge68_Node000030_Node000041" title=" " alt="" coords="437,768,483,836,516,873,552,907,571,917,568,922,549,911,512,877,479,839,433,771"/>
+<area shape="rect" id="Node000042" href="$classTuiStatusBar.html" title="Bottom&#45;of&#45;screen status line." alt="" coords="559,969,661,995"/>
+<area shape="poly" id="edge69_Node000030_Node000042" title=" " alt="" coords="432,769,450,809,476,859,510,911,552,956,570,967,567,971,549,960,506,914,471,862,445,812,428,771"/>
+<area shape="rect" id="Node000043" href="$classTuiTabWidget.html" title="Tabbed container with keyboard&#45;switchable tabs." alt="" coords="556,1019,664,1044"/>
+<area shape="poly" id="edge70_Node000030_Node000043" title=" " alt="" coords="430,770,444,819,469,882,505,948,527,978,552,1005,569,1016,566,1021,549,1009,523,982,500,951,464,884,439,821,424,772"/>
+<area shape="rect" id="Node000044" href="$classTuiTextArea.html" title="Multi&#45;line text editing/display widget." alt="" coords="561,1068,659,1093"/>
+<area shape="poly" id="edge71_Node000030_Node000044" title=" " alt="" coords="427,771,440,829,463,904,500,984,524,1021,552,1055,568,1066,565,1070,549,1059,520,1025,495,987,458,906,435,830,422,772"/>
 </map>

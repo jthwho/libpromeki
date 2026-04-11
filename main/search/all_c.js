@@ -28,12 +28,13 @@ var searchData=
   ['jpegpixeldescfromsdp_25',['jpegPixelDescFromSdp',['../classImageDesc.html#aab518e43202b9c321183c0c46d8766e2',1,'ImageDesc']]],
   ['jpegquality_26',['JpegQuality',['../classMediaConfig.html#a214ed57abc7e330e459128e8466f8951',1,'MediaConfig']]],
   ['jpegsubsampling_27',['JpegSubsampling',['../classMediaConfig.html#a177b37d7554c3a401879d78b244a4440',1,'MediaConfig']]],
-  ['jpegxsbpp_28',['JpegXsBpp',['../classMediaConfig.html#aaba9512a6f2892fe8e1bc0e7a3b7d0bd',1,'MediaConfig']]],
-  ['jpegxsdecomposition_29',['JpegXsDecomposition',['../classMediaConfig.html#a88004dbb053cc48e8408ca861510e08b',1,'MediaConfig']]],
-  ['jpegxsimagecodec_30',['jpegxsimagecodec',['../classJpegXsImageCodec.html#a5cd3e060751cb3992b8b3ba6ba88327a',1,'JpegXsImageCodec::JpegXsImageCodec()'],['../classJpegXsImageCodec.html',1,'JpegXsImageCodec']]],
-  ['jpegxsimagecodec_2eh_31',['jpegxsimagecodec.h',['../jpegxsimagecodec_8h.html',1,'']]],
-  ['json_2eh_32',['json.h',['../json_8h.html',1,'']]],
-  ['jsonarray_33',['jsonarray',['../classJsonArray.html',1,'JsonArray'],['../classJsonArray.html#a304f5ede160dbc87f9ec7d7983bd1cbf',1,'JsonArray::JsonArray()']]],
-  ['jsonobject_34',['jsonobject',['../classJsonObject.html',1,'JsonObject'],['../classJsonObject.html#aa41d053fc27e4fcf4f1c6f55ef28f4a9',1,'JsonObject::JsonObject()']]],
-  ['just_20copy_35',['Simple types: just copy',['../dataobjects.html#thread_simple',1,'']]]
+  ['jpegxs_28',['JpegXS',['../classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9042aef653f4e83272ed612adfccf5fc',1,'ImageFile']]],
+  ['jpegxsbpp_29',['JpegXsBpp',['../classMediaConfig.html#aaba9512a6f2892fe8e1bc0e7a3b7d0bd',1,'MediaConfig']]],
+  ['jpegxsdecomposition_30',['JpegXsDecomposition',['../classMediaConfig.html#a88004dbb053cc48e8408ca861510e08b',1,'MediaConfig']]],
+  ['jpegxsimagecodec_31',['jpegxsimagecodec',['../classJpegXsImageCodec.html#a5cd3e060751cb3992b8b3ba6ba88327a',1,'JpegXsImageCodec::JpegXsImageCodec()'],['../classJpegXsImageCodec.html',1,'JpegXsImageCodec']]],
+  ['jpegxsimagecodec_2eh_32',['jpegxsimagecodec.h',['../jpegxsimagecodec_8h.html',1,'']]],
+  ['json_2eh_33',['json.h',['../json_8h.html',1,'']]],
+  ['jsonarray_34',['jsonarray',['../classJsonArray.html',1,'JsonArray'],['../classJsonArray.html#a304f5ede160dbc87f9ec7d7983bd1cbf',1,'JsonArray::JsonArray()']]],
+  ['jsonobject_35',['jsonobject',['../classJsonObject.html',1,'JsonObject'],['../classJsonObject.html#aa41d053fc27e4fcf4f1c6f55ef28f4a9',1,'JsonObject::JsonObject()']]],
+  ['just_20copy_36',['Simple types: just copy',['../dataobjects.html#thread_simple',1,'']]]
 ];

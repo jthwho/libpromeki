@@ -9,7 +9,8 @@ var classImageFile =
       [ "TGA", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa4b1b30315e91f6e295c0918af41dd084", null ],
       [ "SGI", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9001995d4005855523088ca640275310", null ],
       [ "PNM", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa713d726c6c2ac040f9993c880d843e72", null ],
-      [ "JPEG", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa7291eb65fe7335fa895139e096bfd584", null ]
+      [ "JPEG", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa7291eb65fe7335fa895139e096bfd584", null ],
+      [ "JpegXS", "classImageFile.html#ae0e1dfa29f57da6aa4665566347722daa9042aef653f4e83272ed612adfccf5fc", null ]
     ] ],
     [ "ImageFile", "classImageFile.html#a18de969707a0b98ee83d336a9f588454", null ],
     [ "filename", "classImageFile.html#ac5e46d8a3293c3665a94f09587de5c59", null ],

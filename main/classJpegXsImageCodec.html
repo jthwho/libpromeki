@@ -235,11 +235,12 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>JPEG XS image codec using SVT-JPEG-XS. </p>
 <p>Encodes and decodes JPEG XS (ISO/IEC 21122), a modern low-complexity intra-only codec designed for visually-lossless contribution and transport. JPEG XS targets the broadcast / ST 2110 / RFC 9134 RTP workflow: sub-frame latency, constant bitrate, and native support for 10- and 12-bit YCbCr.</p>
-<p>Supported input formats (all <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> limited range):</p><ul>
-<li><code>YUV8_422_Planar_Rec709</code>, <code>YUV10_422_Planar_LE_Rec709</code>, <code>YUV12_422_Planar_LE_Rec709</code> </li>
-<li><code>YUV8_420_Planar_Rec709</code>, <code>YUV10_420_Planar_LE_Rec709</code>, <code>YUV12_420_Planar_LE_Rec709</code> </li>
+<p>Supported input formats:</p><ul>
+<li><code>YUV8_422_Planar_Rec709</code>, <code>YUV10_422_Planar_LE_Rec709</code>, <code>YUV12_422_Planar_LE_Rec709</code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> limited range)</li>
+<li><code>YUV8_420_Planar_Rec709</code>, <code>YUV10_420_Planar_LE_Rec709</code>, <code>YUV12_420_Planar_LE_Rec709</code> (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Rec.709</a> limited range)</li>
+<li><code>RGB8_Planar_sRGB</code> (sRGB full range)</li>
 </ul>
-<p>Decoder targets are the matching uncompressed formats. The <code>JPEG_XS_RGB8_sRGB</code> <a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> entry exists so the library can describe RGB JPEG XS streams, but the packed-RGB input path is not implemented in this codec yet — use a planar YUV encode for now.</p>
+<p>Decoder targets are the matching uncompressed planar formats. Interleaved RGB (e.g. <code>RGB8_sRGB</code>) reaches the codec via the CSC fast path (<code>RGB8_sRGB</code> ↔ <code>RGB8_Planar_sRGB</code>) — the full encode/decode chain through <code><a class="el" href="classImage.html#aaeb74cf6bc00468468d74fa278209f9d" title="Converts this image to a different pixel description.">Image::convert()</a></code> is transparent to callers.</p>
 <p>JPEG XS is constant-bitrate rather than quality-targeted: configure the encoder with a bits-per-pixel budget via <code>setBpp</code> (or <a class="el" href="classMediaConfig.html#aaba9512a6f2892fe8e1bc0e7a3b7d0bd">MediaConfig::JpegXsBpp</a>). Typical visually-lossless broadcast values are 2-6 bpp; the codec default is 3 bpp (≈ 8:1 compression for 8-bit 4:2:2).</p>
 <p>Configuration (bpp, decomposition depth) is set once after construction and applies to all subsequent <a class="el" href="classJpegXsImageCodec.html#aa9e6b61c35d59d3f09d5061135710274" title="Encodes an uncompressed image to JPEG XS.">encode()</a> calls. Changing parameters between calls is legal; the internal SVT encoder is re-initialised lazily on the next encode.</p>
 <p>This class is not thread-safe. Each thread should use its own instance. The underlying SVT encoder is multi-threaded internally, so a single instance per producer thread is already parallel.</p>
@@ -247,7 +248,7 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">codec.<a class="code hl_function" href="classJpegXsImageCodec.html#a852821d0b2b1535530c64516c7fdb4bd">setBpp</a>(4);                 <span class="comment">// 4 bits/pixel constant bitrate</span></div>
 <div class="line"><a class="code hl_class" href="classImage.html">Image</a> compressed = codec.<a class="code hl_function" href="classJpegXsImageCodec.html#aa9e6b61c35d59d3f09d5061135710274">encode</a>(<a class="code hl_class" href="classList.html">sourceImage</a>);</div>
 <div class="ttc" id="aclassImage_html"><div class="ttname"><a href="classImage.html">Image</a></div><div class="ttdoc">Raster image with pixel description, planes, and metadata.</div><div class="ttdef"><b>Definition</b> image.h:48</div></div>
-<div class="ttc" id="aclassJpegXsImageCodec_html"><div class="ttname"><a href="classJpegXsImageCodec.html">JpegXsImageCodec</a></div><div class="ttdoc">JPEG XS image codec using SVT-JPEG-XS.</div><div class="ttdef"><b>Definition</b> jpegxsimagecodec.h:59</div></div>
+<div class="ttc" id="aclassJpegXsImageCodec_html"><div class="ttname"><a href="classJpegXsImageCodec.html">JpegXsImageCodec</a></div><div class="ttdoc">JPEG XS image codec using SVT-JPEG-XS.</div><div class="ttdef"><b>Definition</b> jpegxsimagecodec.h:60</div></div>
 <div class="ttc" id="aclassJpegXsImageCodec_html_a852821d0b2b1535530c64516c7fdb4bd"><div class="ttname"><a href="classJpegXsImageCodec.html#a852821d0b2b1535530c64516c7fdb4bd">JpegXsImageCodec::setBpp</a></div><div class="ttdeci">void setBpp(int bpp)</div><div class="ttdoc">Sets the target bits-per-pixel budget.</div></div>
 <div class="ttc" id="aclassJpegXsImageCodec_html_aa9e6b61c35d59d3f09d5061135710274"><div class="ttname"><a href="classJpegXsImageCodec.html#aa9e6b61c35d59d3f09d5061135710274">JpegXsImageCodec::encode</a></div><div class="ttdeci">Image encode(const Image &amp;input) override</div><div class="ttdoc">Encodes an uncompressed image to JPEG XS.</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
@@ -558,7 +559,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classJpegXsImageCodec.html">JpegXsImageCodec</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

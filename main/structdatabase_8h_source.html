@@ -121,8 +121,8 @@ $(document).ready(function(){initNavTree('structdatabase_8h_source.html',''); in
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="classStructDatabase.html#aa70de67fb18d0a14a26109e9cefcd578">   36</a></span>                <a class="code hl_function" href="classStructDatabase.html#aa70de67fb18d0a14a26109e9cefcd578">StructDatabase</a>() = <span class="keywordflow">default</span>;</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
 <div class="foldopen" id="foldopen00040" data-start="{" data-end="}">
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classStructDatabase.html#a8e67b1cf020142029e588deb1f925868">   40</a></span>                <a class="code hl_function" href="classStructDatabase.html#a8e67b1cf020142029e588deb1f925868">StructDatabase</a>(<span class="keyword">const</span> std::initializer_list&lt;StructType&gt; &amp;&amp;<a class="code hl_class" href="classList.html">list</a>) {</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>                        <a class="code hl_function" href="classStructDatabase.html#a0eb95d17a921611bdd06bb8ceb09241f">load</a>(std::move(<a class="code hl_class" href="classList.html">list</a>));</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classStructDatabase.html#a8e67b1cf020142029e588deb1f925868">   40</a></span>                <a class="code hl_function" href="classStructDatabase.html#a8e67b1cf020142029e588deb1f925868">StructDatabase</a>(<span class="keyword">const</span> std::initializer_list&lt;StructType&gt; &amp;&amp;list) {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>                        <a class="code hl_function" href="classStructDatabase.html#a0eb95d17a921611bdd06bb8ceb09241f">load</a>(std::move(list));</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                }</div>
 </div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
@@ -155,8 +155,8 @@ $(document).ready(function(){initNavTree('structdatabase_8h_source.html',''); in
 </div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>                        </div>
 <div class="foldopen" id="foldopen00076" data-start="{" data-end="}">
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classStructDatabase.html#a0eb95d17a921611bdd06bb8ceb09241f">   76</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classStructDatabase.html#a0eb95d17a921611bdd06bb8ceb09241f">load</a>(<span class="keyword">const</span> std::initializer_list&lt;StructType&gt; &amp;&amp;<a class="code hl_class" href="classList.html">list</a>) {</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                        <span class="keywordflow">for</span>(<span class="keyword">auto</span> &amp;&amp;<a class="code hl_class" href="classList.html">item</a> : <a class="code hl_class" href="classList.html">list</a>) <a class="code hl_function" href="classStructDatabase.html#af3e9910563fd1f98ab3bc516f6bdb839">add</a>(std::move(<a class="code hl_class" href="classList.html">item</a>));</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classStructDatabase.html#a0eb95d17a921611bdd06bb8ceb09241f">   76</a></span>                <span class="keywordtype">void</span> <a class="code hl_function" href="classStructDatabase.html#a0eb95d17a921611bdd06bb8ceb09241f">load</a>(<span class="keyword">const</span> std::initializer_list&lt;StructType&gt; &amp;&amp;list) {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>                        <span class="keywordflow">for</span>(<span class="keyword">auto</span> &amp;&amp;<a class="code hl_class" href="classList.html">item</a> : list) <a class="code hl_function" href="classStructDatabase.html#af3e9910563fd1f98ab3bc516f6bdb839">add</a>(std::move(<a class="code hl_class" href="classList.html">item</a>));</div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>                        <span class="keywordflow">return</span>;</div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>                }</div>
 </div>
@@ -195,7 +195,7 @@ $(document).ready(function(){initNavTree('structdatabase_8h_source.html',''); in
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="structdatabase_8h.html">structdatabase.h</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

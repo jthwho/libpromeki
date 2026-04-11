@@ -10,7 +10,7 @@ var searchData=
   ['noframerate_7',['NoFrameRate',['../classError.html#ab5980e13b879db253df802b0950d1708a2695d424a618d219be1876e3c9339de0',1,'Error']]],
   ['noise_8',['Noise',['../classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a621cfbb12ec1b70e763f0ffa63739163',1,'VideoTestPattern']]],
   ['nomem_9',['NoMem',['../classError.html#ab5980e13b879db253df802b0950d1708a6281ee333607973d160cf87638760753',1,'Error']]],
-  ['none_10',['None',['../classNetworkAddress.html#af8e7aa72337940d76d1095abe7a19982a9bc10ca1213d69380d6c95a98f8bbf89',1,'NetworkAddress']]],
+  ['none_10',['none',['../group__util.html#gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754',1,'None:&#160;variantdatabase.h'],['../classNetworkAddress.html#af8e7aa72337940d76d1095abe7a19982a9bc10ca1213d69380d6c95a98f8bbf89',1,'NetworkAddress::None']]],
   ['nopermission_11',['NoPermission',['../classError.html#ab5980e13b879db253df802b0950d1708ac48367ea433f3803331e95dd3641f5a4',1,'Error']]],
   ['nospace_12',['NoSpace',['../classError.html#ab5980e13b879db253df802b0950d1708a4b6f521d95a2728ad46bcec5c751ad07',1,'Error']]],
   ['notdir_13',['NotDir',['../classError.html#ab5980e13b879db253df802b0950d1708afc03161dcb792e3e7e6dd39efcb32438',1,'Error']]],

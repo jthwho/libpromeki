@@ -100,6 +100,7 @@ $(document).ready(function(){initNavTree('classVariantDatabase.html',''); initRe
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
@@ -119,19 +120,29 @@ Public Types</h2></td></tr>
 <a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ID</b> = <a class="el" href="classList.html">typename</a> <a class="el" href="classStringRegistry.html">StringRegistry</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::Item</td></tr>
 <tr class="memdesc:a08cce9737a8bae134efe77f5b3392f9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lightweight handle identifying an entry by name. <br /></td></tr>
 <tr class="separator:a08cce9737a8bae134efe77f5b3392f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76e6097358e353e2dc6de5aa86a63505" id="r_a76e6097358e353e2dc6de5aa86a63505"><td class="memItemLeft" align="right" valign="top"><a id="a76e6097358e353e2dc6de5aa86a63505" name="a76e6097358e353e2dc6de5aa86a63505"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SpecMap</b> = <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;</td></tr>
+<tr class="memdesc:a76e6097358e353e2dc6de5aa86a63505"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a> of ID to <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for batch spec operations. <br /></td></tr>
+<tr class="separator:a76e6097358e353e2dc6de5aa86a63505"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a0c4d5feedfdea38ab75909d0cfa59b19" id="r_a0c4d5feedfdea38ab75909d0cfa59b19"><td class="memItemLeft" align="right" valign="top"><a id="a0c4d5feedfdea38ab75909d0cfa59b19" name="a0c4d5feedfdea38ab75909d0cfa59b19"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>VariantDatabase</b> ()=<a class="el" href="classList.html">default</a></td></tr>
-<tr class="memdesc:a0c4d5feedfdea38ab75909d0cfa59b19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database. <br /></td></tr>
+<tr class="memdesc:a0c4d5feedfdea38ab75909d0cfa59b19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an empty database with Warn validation. <br /></td></tr>
 <tr class="separator:a0c4d5feedfdea38ab75909d0cfa59b19"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0105273e5397bebb5589d363ecff7c3e" id="r_a0105273e5397bebb5589d363ecff7c3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a0105273e5397bebb5589d363ecff7c3e">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a0105273e5397bebb5589d363ecff7c3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
-<tr class="separator:a0105273e5397bebb5589d363ecff7c3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c3385dc86892284ad66426d6dc5d4f3" id="r_a4c3385dc86892284ad66426d6dc5d4f3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a4c3385dc86892284ad66426d6dc5d4f3">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
-<tr class="memdesc:a4c3385dc86892284ad66426d6dc5d4f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
-<tr class="separator:a4c3385dc86892284ad66426d6dc5d4f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3e3820c886e257bdd72a38507461bb2" id="r_ac3e3820c886e257bdd72a38507461bb2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2">setValidation</a> (<a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> mode)</td></tr>
+<tr class="memdesc:ac3e3820c886e257bdd72a38507461bb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the validation mode for this database instance.  <br /></td></tr>
+<tr class="separator:ac3e3820c886e257bdd72a38507461bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada585323d1db22e24541527411cb4ce4" id="r_ada585323d1db22e24541527411cb4ce4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4">validation</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ada585323d1db22e24541527411cb4ce4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current validation mode.  <br /></td></tr>
+<tr class="separator:ada585323d1db22e24541527411cb4ce4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5170ad7c04260f90b69bfa2aff2fdc2a" id="r_a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
+<tr class="separator:a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8451aca5a2a870fd1df8dc3de13055bc" id="r_a8451aca5a2a870fd1df8dc3de13055bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memdesc:a8451aca5a2a870fd1df8dc3de13055bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
+<tr class="separator:a8451aca5a2a870fd1df8dc3de13055bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54e9118a807e4dff06a6f9f12c2f1aaa" id="r_a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value only if no entry exists for <code>id</code>.  <br /></td></tr>
 <tr class="separator:a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -196,6 +207,21 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:aa81c6cfc6ceee506ea6c50b918644aa7" id="r_aa81c6cfc6ceee506ea6c50b918644aa7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> &amp;<a class="el" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">spec</a>)</td></tr>
+<tr class="memdesc:aa81c6cfc6ceee506ea6c50b918644aa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declares an ID and registers its <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a>.  <br /></td></tr>
+<tr class="separator:aa81c6cfc6ceee506ea6c50b918644aa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe019941e5ee644f48f1590e2a025c71" id="r_abe019941e5ee644f48f1590e2a025c71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">spec</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id)</td></tr>
+<tr class="memdesc:abe019941e5ee644f48f1590e2a025c71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none.  <br /></td></tr>
+<tr class="separator:abe019941e5ee644f48f1590e2a025c71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84df1f7e946887f83852ed42d1f9b299" id="r_a84df1f7e946887f83852ed42d1f9b299"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint32_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a84df1f7e946887f83852ed42d1f9b299">registeredSpecs</a> ()</td></tr>
+<tr class="memdesc:a84df1f7e946887f83852ed42d1f9b299"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy of the entire spec registry.  <br /></td></tr>
+<tr class="separator:a84df1f7e946887f83852ed42d1f9b299"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84c46ba9dc80cd52c6cdc468a0e7403a" id="r_a84c46ba9dc80cd52c6cdc468a0e7403a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a84c46ba9dc80cd52c6cdc468a0e7403a">fromSpecs</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>)</td></tr>
+<tr class="memdesc:a84c46ba9dc80cd52c6cdc468a0e7403a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a SpecMap's default values.  <br /></td></tr>
+<tr class="separator:a84c46ba9dc80cd52c6cdc468a0e7403a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6ab45eceb475564cb25fecfad3e96ed" id="r_ac6ab45eceb475564cb25fecfad3e96ed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ac6ab45eceb475564cb25fecfad3e96ed">writeSpecMapHelp</a> (<a class="el" href="classTextStream.html">TextStream</a> &amp;stream, <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;<a class="el" href="classList.html">specs</a>)</td></tr>
+<tr class="memdesc:ac6ab45eceb475564cb25fecfad3e96ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes formatted help text for every spec in a SpecMap.  <br /></td></tr>
+<tr class="separator:ac6ab45eceb475564cb25fecfad3e96ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae06c400a4039edd713e22fc9e2bc14aa" id="r_ae06c400a4039edd713e22fc9e2bc14aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ae06c400a4039edd713e22fc9e2bc14aa">fromJson</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classJsonObject.html">JsonObject</a> &amp;<a class="el" href="classList.html">json</a>)</td></tr>
 <tr class="memdesc:ae06c400a4039edd713e22fc9e2bc14aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>.  <br /></td></tr>
 <tr class="separator:ae06c400a4039edd713e22fc9e2bc14aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -210,33 +236,30 @@ class VariantDatabase&lt; Tag &gt;</div><p>A collection of named Variant values 
   </dd>
 </dl>
 <p><a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> maps string names to Variant values using integer IDs for fast lookup. The nested ID type is a <a class="el" href="classStringRegistry_1_1Item.html" title="Lightweight handle identifying a registered string.">StringRegistry::Item</a> scoped to this database's Tag.</p>
+<p>Each ID can optionally have a <a class="el" href="classVariantSpec.html">VariantSpec</a> registered via <a class="el" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>. Specs describe the accepted types, numeric range, default value, and human-readable description. When a spec is registered, <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a> can optionally validate incoming values (controlled by <a class="el" href="classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2">setValidation</a>).</p>
 <p>Supports serialization to/from JSON, <a class="el" href="classTextStream.html" title="Formatted text I/O with encoding awareness.">TextStream</a>, and <a class="el" href="classDataStream.html" title="Binary stream for structured, portable serialization.">DataStream</a>. All serialization formats use the string names (not integer IDs), so data can be safely persisted and loaded across runs.</p>
 <dl class="section warning"><dt>Warning</dt><dd>The integer IDs within ID are assigned in registration order and must not be persisted or used outside the current process.</dd></dl>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">struct </span><a class="code hl_struct" href="structConfigTag.html">ConfigTag</a> {};</div>
 <div class="line"><span class="keyword">using </span><a class="code hl_class" href="classVariantDatabase.html">Config</a> = <a class="code hl_class" href="classList.html">VariantDatabase&lt;ConfigTag&gt;</a>;</div>
 <div class="line"> </div>
+<div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Config::ID</a> <a class="code hl_class" href="classList.html">Width</a> = <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">Config::declareID</a>(<span class="stringliteral">&quot;Width&quot;</span>,</div>
+<div class="line">    <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32).setDefault(1920)</div>
+<div class="line">                 .setRange(1, 8192).setDescription(<span class="stringliteral">&quot;Frame width in pixels&quot;</span>));</div>
+<div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classVariantDatabase.html">Config</a> <a class="code hl_class" href="classList.html">cfg</a>;</div>
-<div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Config::ID</a> width(<span class="stringliteral">&quot;video.width&quot;</span>);</div>
-<div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">Config::ID</a> height(<span class="stringliteral">&quot;video.height&quot;</span>);</div>
+<div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_class" href="classList.html">Width</a>, 1920);</div>
+<div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">cfg</a>.getAs&lt;<a class="code hl_class" href="classList.html">int32_t</a>&gt;(<a class="code hl_class" href="classList.html">Width</a>); <span class="comment">// 1920</span></div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(width, 1920);</div>
-<div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(height, 1080);</div>
-<div class="line"> </div>
-<div class="line"><span class="keywordtype">int</span> <a class="code hl_class" href="classList.html">w</a> = <a class="code hl_class" href="classList.html">cfg</a>.get(width).get&lt;<a class="code hl_class" href="classList.html">int32_t</a>&gt;(); <span class="comment">// 1920</span></div>
-<div class="line"><span class="keywordtype">bool</span> <a class="code hl_class" href="classList.html">has</a> = <a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#a005dfb8de3f6007d62777c6112a5271d">contains</a>(width);        <span class="comment">// true</span></div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// Serialize to JSON</span></div>
-<div class="line"><a class="code hl_class" href="classJsonObject.html">JsonObject</a> <a class="code hl_class" href="classList.html">json</a> = <a class="code hl_class" href="classList.html">cfg</a>.toJson();</div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// Deserialize from JSON</span></div>
-<div class="line"><a class="code hl_class" href="classVariantDatabase.html">Config</a> <a class="code hl_class" href="classList.html">cfg2</a> = <a class="code hl_function" href="classVariantDatabase.html#ae06c400a4039edd713e22fc9e2bc14aa">Config::fromJson</a>(<a class="code hl_class" href="classList.html">json</a>);</div>
-<div class="ttc" id="aclassJsonObject_html"><div class="ttname"><a href="classJsonObject.html">JsonObject</a></div><div class="ttdoc">JSON object container wrapping nlohmann::json.</div><div class="ttdef"><b>Definition</b> json.h:45</div></div>
+<div class="line"><span class="keyword">const</span> <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a> *s = <a class="code hl_function" href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">Config::spec</a>(<a class="code hl_class" href="classList.html">Width</a>);</div>
+<div class="line"><a class="code hl_class" href="classString.html">String</a> desc = s-&gt;description(); <span class="comment">// &quot;Frame width in pixels&quot;</span></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
-<div class="ttc" id="aclassList_html_a005dfb8de3f6007d62777c6112a5271d"><div class="ttname"><a href="classList.html#a005dfb8de3f6007d62777c6112a5271d">List::contains</a></div><div class="ttdeci">bool contains(const T &amp;val) const</div><div class="ttdoc">Returns true if the list contains the given value.</div><div class="ttdef"><b>Definition</b> list.h:593</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
 <div class="ttc" id="aclassVariantDatabase_html"><div class="ttname"><a href="classVariantDatabase.html">VariantDatabase&lt; ConfigTag &gt;</a></div></div>
-<div class="ttc" id="aclassVariantDatabase_html_a08cce9737a8bae134efe77f5b3392f9b"><div class="ttname"><a href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">VariantDatabase&lt; ConfigTag &gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; ConfigTag &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:67</div></div>
-<div class="ttc" id="aclassVariantDatabase_html_ae06c400a4039edd713e22fc9e2bc14aa"><div class="ttname"><a href="classVariantDatabase.html#ae06c400a4039edd713e22fc9e2bc14aa">VariantDatabase&lt; ConfigTag &gt;::fromJson</a></div><div class="ttdeci">static VariantDatabase fromJson(const JsonObject &amp;json)</div><div class="ttdoc">Creates a VariantDatabase from a JsonObject.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:81</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_a08cce9737a8bae134efe77f5b3392f9b"><div class="ttname"><a href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">VariantDatabase&lt; ConfigTag &gt;::ID</a></div><div class="ttdeci">typename StringRegistry&lt; ConfigTag &gt;::Item ID</div><div class="ttdoc">Lightweight handle identifying an entry by name.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:84</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_aa81c6cfc6ceee506ea6c50b918644aa7"><div class="ttname"><a href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">VariantDatabase&lt; ConfigTag &gt;::declareID</a></div><div class="ttdeci">static ID declareID(const String &amp;name, const VariantSpec &amp;spec)</div><div class="ttdoc">Declares an ID and registers its VariantSpec.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:112</div></div>
+<div class="ttc" id="aclassVariantDatabase_html_abe019941e5ee644f48f1590e2a025c71"><div class="ttname"><a href="classVariantDatabase.html#abe019941e5ee644f48f1590e2a025c71">VariantDatabase&lt; ConfigTag &gt;::spec</a></div><div class="ttdeci">static const VariantSpec * spec(ID id)</div><div class="ttdoc">Returns the VariantSpec for the given ID, or nullptr if none.</div><div class="ttdef"><b>Definition</b> variantdatabase.h:123</div></div>
+<div class="ttc" id="aclassVariantSpec_html"><div class="ttname"><a href="classVariantSpec.html">VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:62</div></div>
 <div class="ttc" id="astructConfigTag_html"><div class="ttname"><a href="structConfigTag.html">ConfigTag</a></div><div class="ttdoc">Tag type for the Config variant database.</div><div class="ttdef"><b>Definition</b> configoption.h:16</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -274,6 +297,60 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>True if a value is stored for the ID. </dd></dl>
+
+</div>
+</div>
+<a id="aa81c6cfc6ceee506ea6c50b918644aa7" name="aa81c6cfc6ceee506ea6c50b918644aa7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa81c6cfc6ceee506ea6c50b918644aa7">&#9670;&#160;</a></span>declareID()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::declareID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> &amp;&#160;</td>
+          <td class="paramname"><em>spec</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Declares an ID and registers its <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a>. </p>
+<p>This is the mandatory way to declare well-known IDs. The string name is registered in the <a class="el" href="classStringRegistry.html" title="Thread-safe append-only registry that maps unique strings to integer IDs.">StringRegistry</a> and the spec is stored in the per-Tag spec registry.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The string name for the ID. </td></tr>
+    <tr><td class="paramname">spec</td><td>The <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> describing this ID. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The newly created (or existing) ID.</dd></dl>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> <a class="code hl_class" href="classList.html">Width</a> = <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;Width&quot;</span>,</div>
+<div class="line">    <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeS32)</div>
+<div class="line">                 .setDefault(1920)</div>
+<div class="line">                 .setDescription(<span class="stringliteral">&quot;Frame width&quot;</span>));</div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -386,7 +463,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Creates a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>. </p>
-<p>Each key in the JSON object becomes an ID (registered if new) and its value is converted to a Variant via Variant::fromJson().</p>
+<p>Each key in the JSON object becomes an ID (registered if new) and its value is converted to a Variant via <a class="el" href="classVariantImpl.html#a742303e0eb9374239f4fadf7f2c05bac" title="Constructs a VariantImpl from a JSON value, inferring the best native type.">Variant::fromJson()</a>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">json</td><td>The <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a> to deserialize from. </td></tr>
@@ -394,6 +471,44 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> populated with the JSON contents. </dd></dl>
+
+</div>
+</div>
+<a id="a84c46ba9dc80cd52c6cdc468a0e7403a" name="a84c46ba9dc80cd52c6cdc468a0e7403a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84c46ba9dc80cd52c6cdc468a0e7403a">&#9670;&#160;</a></span>fromSpecs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::fromSpecs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>specs</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Builds a <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> from a SpecMap's default values. </p>
+<p>For each entry in <code>specs</code>, the spec's default value is stored under the corresponding ID. This is the canonical way to convert a set of specs into a concrete configuration.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">specs</td><td>The spec map to extract defaults from. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a> populated with default values. </dd></dl>
 
 </div>
 </div>
@@ -490,7 +605,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Returns the stored value converted to the requested type. </p>
-<p>Combines <a class="el" href="classVariantDatabase.html#adee72b5568d54f44185e3598b2ed7bf5" title="Returns the value for the given ID.">get()</a> and <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">Variant::get&lt;T&gt;()</a> in a single call.</p>
+<p>Combines <a class="el" href="classVariantDatabase.html#adee72b5568d54f44185e3598b2ed7bf5" title="Returns the value for the given ID.">get()</a> and <a class="el" href="classVariantImpl.html#a95ca32106dbaee20a12d1a3a8c9e48fe" title="Converts the stored value to the requested type To.">Variant::get&lt;T&gt;()</a> in a single call.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>The desired result type. </td></tr>
@@ -633,7 +748,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Returns true if both databases contain the same entries. </p>
-<p>Two databases are equal if they hold the same set of IDs and each corresponding value compares equal via <a class="el" href="classList.html#a7cf420b9349348966733f514f619bf84" title="Returns true if both lists have identical contents.">Variant::operator==</a>.</p>
+<p>Two databases are equal if they hold the same set of IDs and each corresponding value compares equal via <a class="el" href="classVariantImpl.html#a43409c9668791efb1404d487e1286b93" title="Returns true if both variants hold equal values.">Variant::operator==</a>.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">VariantDatabase&lt;MyTag&gt;</a> a, b;</div>
 <div class="line"><a class="code hl_typedef" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">VariantDatabase&lt;MyTag&gt;::ID</a> key(<span class="stringliteral">&quot;width&quot;</span>);</div>
 <div class="line">a.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(key, 1920);</div>
@@ -680,6 +795,36 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="a84df1f7e946887f83852ed42d1f9b299" name="a84df1f7e946887f83852ed42d1f9b299"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84df1f7e946887f83852ed42d1f9b299">&#9670;&#160;</a></span>registeredSpecs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classList.html">uint32_t</a>, <a class="el" href="classVariantSpec.html">VariantSpec</a> &gt; <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::registeredSpecs </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a copy of the entire spec registry. </p>
+<dl class="section return"><dt>Returns</dt><dd>A map from integer ID to <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a>. </dd></dl>
+
+</div>
+</div>
 <a id="a32d6ad251d26ffab267241da18c60722" name="a32d6ad251d26ffab267241da18c60722"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a32d6ad251d26ffab267241da18c60722">&#9670;&#160;</a></span>remove()</h2>
 
@@ -717,8 +862,8 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
-<a id="a0105273e5397bebb5589d363ecff7c3e" name="a0105273e5397bebb5589d363ecff7c3e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0105273e5397bebb5589d363ecff7c3e">&#9670;&#160;</a></span>set() <span class="overload">[1/2]</span></h2>
+<a id="a5170ad7c04260f90b69bfa2aff2fdc2a" name="a5170ad7c04260f90b69bfa2aff2fdc2a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5170ad7c04260f90b69bfa2aff2fdc2a">&#9670;&#160;</a></span>set() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -729,7 +874,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::set </td>
+          <td class="memname"><a class="el" href="classList.html">bool</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::set </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td>
           <td class="paramname"><em>id</em>, </td>
@@ -754,6 +899,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Sets the value for the given ID. </p>
+<p>If a <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> is registered for this ID and validation is enabled, the value is checked before storing. In Warn mode, a warning is logged but the value is stored. In Strict mode, the value is rejected and false is returned.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id</td><td>The entry identifier. </td></tr>
@@ -761,11 +907,12 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the value was stored. False only in Strict mode when validation fails. </dd></dl>
 
 </div>
 </div>
-<a id="a4c3385dc86892284ad66426d6dc5d4f3" name="a4c3385dc86892284ad66426d6dc5d4f3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c3385dc86892284ad66426d6dc5d4f3">&#9670;&#160;</a></span>set() <span class="overload">[2/2]</span></h2>
+<a id="a8451aca5a2a870fd1df8dc3de13055bc" name="a8451aca5a2a870fd1df8dc3de13055bc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8451aca5a2a870fd1df8dc3de13055bc">&#9670;&#160;</a></span>set() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -776,7 +923,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::set </td>
+          <td class="memname"><a class="el" href="classList.html">bool</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::set </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td>
           <td class="paramname"><em>id</em>, </td>
@@ -808,6 +955,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the value was stored. </dd></dl>
 
 </div>
 </div>
@@ -848,7 +996,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 </div><div class="memdoc">
 
 <p>Sets the value only if no entry exists for <code>id</code>. </p>
-<p>Unlike <a class="el" href="classVariantDatabase.html#a0105273e5397bebb5589d363ecff7c3e">set</a>, which always overwrites, this call is a no-op when the key already has a value. It is intended as a primitive for filling in defaults without clobbering caller-supplied values.</p>
+<p>Unlike <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a>, which always overwrites, this call is a no-op when the key already has a value. It is intended as a primitive for filling in defaults without clobbering caller-supplied values.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">id</td><td>The entry identifier. </td></tr>
@@ -908,6 +1056,47 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 </div>
 </div>
+<a id="ac3e3820c886e257bdd72a38507461bb2" name="ac3e3820c886e257bdd72a38507461bb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3e3820c886e257bdd72a38507461bb2">&#9670;&#160;</a></span>setValidation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">void</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::setValidation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the validation mode for this database instance. </p>
+<ul>
+<li><a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba6adf97f83acf6453d4a6a4b1070f3754">SpecValidation::None</a> — no checking on <a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a" title="Sets the value for the given ID.">set()</a>.</li>
+<li><a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba56525ae64d370c0b448ac0d60710ef17">SpecValidation::Warn</a> — log a warning but store anyway (default).</li>
+<li><a class="el" href="group__util.html#gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974">SpecValidation::Strict</a> — reject out-of-spec values.</li>
+</ul>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mode</td><td>The validation mode. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a754a53ccdcff2331726bf470da32f5bc" name="a754a53ccdcff2331726bf470da32f5bc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a754a53ccdcff2331726bf470da32f5bc">&#9670;&#160;</a></span>size()</h2>
 
@@ -935,6 +1124,43 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 
 <p>Returns the number of entries in the database. </p>
 <dl class="section return"><dt>Returns</dt><dd>The number of stored key-value pairs. </dd></dl>
+
+</div>
+</div>
+<a id="abe019941e5ee644f48f1590e2a025c71" name="abe019941e5ee644f48f1590e2a025c71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe019941e5ee644f48f1590e2a025c71">&#9670;&#160;</a></span>spec()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantSpec.html">VariantSpec</a> * <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::spec </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td>
+          <td class="paramname"><em>id</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the <a class="el" href="classVariantSpec.html" title="Describes the constraints and default value for a VariantDatabase ID.">VariantSpec</a> for the given ID, or nullptr if none. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">id</td><td>The ID to look up. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the spec, or nullptr if no spec was registered. </dd></dl>
 
 </div>
 </div>
@@ -966,6 +1192,84 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <p>Serializes the database to a <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a>. </p>
 <p>Each entry is stored as a key-value pair where the key is the string name of the ID and the value is set via <a class="el" href="classJsonObject.html#a372017596a1d61328ed030caa2a8794f" title="Sets a value from a Variant, automatically selecting the JSON type.">JsonObject::setFromVariant()</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classJsonObject.html" title="JSON object container wrapping nlohmann::json.">JsonObject</a> containing all entries. </dd></dl>
+
+</div>
+</div>
+<a id="ada585323d1db22e24541527411cb4ce4" name="ada585323d1db22e24541527411cb4ce4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada585323d1db22e24541527411cb4ce4">&#9670;&#160;</a></span>validation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::validation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the current validation mode. </p>
+<dl class="section return"><dt>Returns</dt><dd>The validation mode. </dd></dl>
+
+</div>
+</div>
+<a id="ac6ab45eceb475564cb25fecfad3e96ed" name="ac6ab45eceb475564cb25fecfad3e96ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6ab45eceb475564cb25fecfad3e96ed">&#9670;&#160;</a></span>writeSpecMapHelp()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href="classList.html">Tag</a> &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> <a class="el" href="classVariantDatabase.html">VariantDatabase</a>&lt; <a class="el" href="classList.html">Tag</a> &gt;::writeSpecMapHelp </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classTextStream.html">TextStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>stream</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505">SpecMap</a> &amp;&#160;</td>
+          <td class="paramname"><em>specs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Writes formatted help text for every spec in a SpecMap. </p>
+<p>Iterates the map in key-name order and calls <a class="el" href="classVariantSpec.html#a28b3e2fee41c447faf4fcec80e2e98fa">VariantSpec::writeHelp</a> for each entry. This is the canonical way to dump a backend's configuration reference to a terminal or log.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">stream</td><td>The output stream. </td></tr>
+    <tr><td class="paramname">specs</td><td>The spec map to format. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -1055,7 +1359,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classVariantDatabase.html">VariantDatabase</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

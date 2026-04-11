@@ -60,10 +60,11 @@ var searchData=
   ['statusbartext_57',['StatusBarText',['../classTuiPalette.html#a956117cb0e6b79dbf0e39af067bad2e0a02ff7c90a175be1e1639f666ab8cf363',1,'TuiPalette']]],
   ['still_58',['Still',['../classTimecodeGenerator.html#a4c4ad2cf7baea2f3f1e93dc3b68c0dbdab2cd87e4cb90bf39c849b12100bf2d78',1,'TimecodeGenerator']]],
   ['stopped_59',['Stopped',['../classError.html#ab5980e13b879db253df802b0950d1708a57deae1c5de62d83f172f42a3db7fcc2',1,'Error']]],
-  ['strongfocus_60',['StrongFocus',['../group__widget.html#ggab55053d0a57be0d70df423df9c2b12cdacd803f669da6ea95150385d1d17b166c',1,'widget.h']]],
-  ['subsampling420_61',['Subsampling420',['../classJpegImageCodec.html#a6e47893b83e08a5b9357dafc7a7f8d1aa38685720fe7e964ca5fe2cce54d38051',1,'JpegImageCodec']]],
-  ['subsampling422_62',['Subsampling422',['../classJpegImageCodec.html#a6e47893b83e08a5b9357dafc7a7f8d1aac1b93dab883a401e7dd0b99b25f3e552',1,'JpegImageCodec']]],
-  ['subsampling444_63',['Subsampling444',['../classJpegImageCodec.html#a6e47893b83e08a5b9357dafc7a7f8d1aa0c22ca4009969e3eaebc23f97a31d384',1,'JpegImageCodec']]],
-  ['system_64',['System',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c',1,'MemSpace']]],
-  ['systemsecure_65',['SystemSecure',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da',1,'MemSpace']]]
+  ['strict_60',['Strict',['../group__util.html#gga3e19f7ded49aac87704161e5d5b458dba2e979835dd62324f5bfe217449ba4974',1,'variantdatabase.h']]],
+  ['strongfocus_61',['StrongFocus',['../group__widget.html#ggab55053d0a57be0d70df423df9c2b12cdacd803f669da6ea95150385d1d17b166c',1,'widget.h']]],
+  ['subsampling420_62',['Subsampling420',['../classJpegImageCodec.html#a6e47893b83e08a5b9357dafc7a7f8d1aa38685720fe7e964ca5fe2cce54d38051',1,'JpegImageCodec']]],
+  ['subsampling422_63',['Subsampling422',['../classJpegImageCodec.html#a6e47893b83e08a5b9357dafc7a7f8d1aac1b93dab883a401e7dd0b99b25f3e552',1,'JpegImageCodec']]],
+  ['subsampling444_64',['Subsampling444',['../classJpegImageCodec.html#a6e47893b83e08a5b9357dafc7a7f8d1aa0c22ca4009969e3eaebc23f97a31d384',1,'JpegImageCodec']]],
+  ['system_65',['System',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6eda1f66732061fbde88c5ea8d221dec722c',1,'MemSpace']]],
+  ['systemsecure_66',['SystemSecure',['../classMemSpace.html#a2b727b5807b3aed1ae585d1603a0d6edad7f94fb530f27adf051618eef6c1a6da',1,'MemSpace']]]
 ];

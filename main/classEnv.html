@@ -128,17 +128,23 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a356dc8242c91b1837ad565980368a1c4" id="r_a356dc8242c91b1837ad565980368a1c4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#a356dc8242c91b1837ad565980368a1c4">unset</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">char</a> *name)</td></tr>
 <tr class="memdesc:a356dc8242c91b1837ad565980368a1c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes an environment variable.  <br /></td></tr>
 <tr class="separator:a356dc8242c91b1837ad565980368a1c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9657a00078595f7f477e4e0b1cb376e" id="r_af9657a00078595f7f477e4e0b1cb376e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#af9657a00078595f7f477e4e0b1cb376e">list</a> ()</td></tr>
+<tr class="memdesc:af9657a00078595f7f477e4e0b1cb376e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns all environment variables as a name/value map.  <br /></td></tr>
+<tr class="separator:af9657a00078595f7f477e4e0b1cb376e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a647bfde3204888afb908ff1d9148e08f" id="r_a647bfde3204888afb908ff1d9148e08f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="classString.html">String</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classEnv.html#a647bfde3204888afb908ff1d9148e08f">list</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classRegEx.html">RegEx</a> &amp;filter)</td></tr>
+<tr class="memdesc:a647bfde3204888afb908ff1d9148e08f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns environment variables whose names match a regex.  <br /></td></tr>
+<tr class="separator:a647bfde3204888afb908ff1d9148e08f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Provides access to process environment variables. </p>
-<p>Static utility class wrapping standard environment variable operations. All methods return promeki::String for consistent integration with the</p>
+<p>Static utility class wrapping standard environment variable operations. All methods return promeki::String for consistent integration with the rest of the library.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> home = <a class="code hl_function" href="classEnv.html#a1a7542737d1fce2a67a13d87dbb94267">Env::get</a>(<span class="stringliteral">&quot;HOME&quot;</span>);</div>
 <div class="line"><a class="code hl_function" href="classEnv.html#ab4f7d1f9ef3fe165d1e57fb9a29dbdf9">Env::set</a>(<span class="stringliteral">&quot;MY_APP_DEBUG&quot;</span>, <span class="stringliteral">&quot;1&quot;</span>);</div>
 <div class="line"><span class="keywordtype">bool</span> exists = Env::contains(<span class="stringliteral">&quot;PATH&quot;</span>);</div>
-<div class="ttc" id="aclassEnv_html_a1a7542737d1fce2a67a13d87dbb94267"><div class="ttname"><a href="classEnv.html#a1a7542737d1fce2a67a13d87dbb94267">Env::get</a></div><div class="ttdeci">static String get(const char *name)</div><div class="ttdoc">Returns the value of an environment variable.</div><div class="ttdef"><b>Definition</b> env.h:38</div></div>
+<div class="ttc" id="aclassEnv_html_a1a7542737d1fce2a67a13d87dbb94267"><div class="ttname"><a href="classEnv.html#a1a7542737d1fce2a67a13d87dbb94267">Env::get</a></div><div class="ttdeci">static String get(const char *name)</div><div class="ttdoc">Returns the value of an environment variable.</div><div class="ttdef"><b>Definition</b> env.h:43</div></div>
 <div class="ttc" id="aclassEnv_html_ab4f7d1f9ef3fe165d1e57fb9a29dbdf9"><div class="ttname"><a href="classEnv.html#ab4f7d1f9ef3fe165d1e57fb9a29dbdf9">Env::set</a></div><div class="ttdeci">static bool set(const char *name, const String &amp;value, bool overwrite=true)</div><div class="ttdoc">Sets an environment variable.</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:55</div></div>
-</div><!-- fragment --> rest of the library. </dd></dl>
+</div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a1a7542737d1fce2a67a13d87dbb94267" name="a1a7542737d1fce2a67a13d87dbb94267"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1a7542737d1fce2a67a13d87dbb94267">&#9670;&#160;</a></span>get() <span class="overload">[1/2]</span></h2>
@@ -256,6 +262,76 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="af9657a00078595f7f477e4e0b1cb376e" name="af9657a00078595f7f477e4e0b1cb376e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9657a00078595f7f477e4e0b1cb376e">&#9670;&#160;</a></span>list() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="classString.html">String</a> &gt; Env::list </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns all environment variables as a name/value map. </p>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a> of every variable in the process environment. </dd></dl>
+
+</div>
+</div>
+<a id="a647bfde3204888afb908ff1d9148e08f" name="a647bfde3204888afb908ff1d9148e08f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a647bfde3204888afb908ff1d9148e08f">&#9670;&#160;</a></span>list() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classMap.html">Map</a>&lt; <a class="el" href="classString.html">String</a>, <a class="el" href="classString.html">String</a> &gt; Env::list </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classRegEx.html">RegEx</a> &amp;&#160;</td>
+          <td class="paramname"><em>filter</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns environment variables whose names match a regex. </p>
+<p>Iterates the entire process environment and returns only those variables whose name is matched by <code>filter</code> (using <a class="el" href="classRegEx.html#a230ea9f54bc50a544c4d9da0d6fcb479" title="Searches for the first occurrence of the pattern within the string.">RegEx::search</a>, so partial matches count).</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// All vars starting with PROMEKI_OPT_</span></div>
+<div class="line"><span class="keyword">auto</span> <a class="code hl_class" href="classList.html">opts</a> = <a class="code hl_function" href="classEnv.html#af9657a00078595f7f477e4e0b1cb376e">Env::list</a>(<a class="code hl_class" href="classRegEx.html">RegEx</a>(<span class="stringliteral">&quot;^PROMEKI_OPT_&quot;</span>));</div>
+<div class="ttc" id="aclassEnv_html_af9657a00078595f7f477e4e0b1cb376e"><div class="ttname"><a href="classEnv.html#af9657a00078595f7f477e4e0b1cb376e">Env::list</a></div><div class="ttdeci">static Map&lt; String, String &gt; list()</div><div class="ttdoc">Returns all environment variables as a name/value map.</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassRegEx_html"><div class="ttname"><a href="classRegEx.html">RegEx</a></div><div class="ttdoc">Regular expression wrapper around std::regex.</div><div class="ttdef"><b>Definition</b> regex.h:34</div></div>
+</div><!-- fragment --></dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filter</td><td>Regex applied to the variable name. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <a class="el" href="classMap.html" title="Ordered associative container wrapping std::map.">Map</a> of matching variables. </dd></dl>
+
+</div>
+</div>
 <a id="ab4f7d1f9ef3fe165d1e57fb9a29dbdf9" name="ab4f7d1f9ef3fe165d1e57fb9a29dbdf9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab4f7d1f9ef3fe165d1e57fb9a29dbdf9">&#9670;&#160;</a></span>set()</h2>
 
@@ -354,7 +430,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classEnv.html">Env</a></li>
-    <li class="footer">Generated on 2026-04-10 07:48:04 from commit 73ed549 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-11 00:54:36 from commit a008980 (1.0.0).</li>
   </ul>
 </div>
 </body>

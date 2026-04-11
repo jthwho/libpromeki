@@ -1,6 +1,7 @@
 var classVariantDatabase =
 [
     [ "ID", "classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b", null ],
+    [ "SpecMap", "classVariantDatabase.html#a76e6097358e353e2dc6de5aa86a63505", null ],
     [ "VariantDatabase", "classVariantDatabase.html#a0c4d5feedfdea38ab75909d0cfa59b19", null ],
     [ "clear", "classVariantDatabase.html#af4ffb4cbbab027a6bd317f9c64738923", null ],
     [ "contains", "classVariantDatabase.html#a524252cc19d0a1aefef82f20bc9c53eb", null ],
@@ -15,12 +16,14 @@ var classVariantDatabase =
     [ "operator==", "classVariantDatabase.html#ad91d4b7a1ae1ec7b2452b06bfc76ffe6", null ],
     [ "readFrom", "classVariantDatabase.html#a31258932ed076d71a8071e88f1237d77", null ],
     [ "remove", "classVariantDatabase.html#a32d6ad251d26ffab267241da18c60722", null ],
-    [ "set", "classVariantDatabase.html#a0105273e5397bebb5589d363ecff7c3e", null ],
-    [ "set", "classVariantDatabase.html#a4c3385dc86892284ad66426d6dc5d4f3", null ],
+    [ "set", "classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a", null ],
+    [ "set", "classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc", null ],
     [ "setIfMissing", "classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa", null ],
     [ "setIfMissing", "classVariantDatabase.html#a18c3f904128a5335145787436352f8dc", null ],
+    [ "setValidation", "classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2", null ],
     [ "size", "classVariantDatabase.html#a754a53ccdcff2331726bf470da32f5bc", null ],
     [ "toJson", "classVariantDatabase.html#a21f88197acfc8698bf01a095ad6c1498", null ],
+    [ "validation", "classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4", null ],
     [ "writeTo", "classVariantDatabase.html#a0b35835fce4daa2a5f70179c9e287043", null ],
     [ "writeTo", "classVariantDatabase.html#addc64ebe789a1513cf0d6621ace73f0f", null ]
 ];
