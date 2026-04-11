@@ -41,3 +41,43 @@ Needed to make `MediaConfig`/`MediaPipelineConfig` JSON round-trip work across e
 - [ ] Named capture support: `(?P<name>...)` syntax
 - [ ] `namedCapture(const String &name)` — returns named capture from last match
 - [ ] Update tests
+
+---
+
+## Env Enhancements — DONE
+
+- [x] `Env::list()` — returns all process environment variables as `Map<String, String>`
+- [x] `Env::list(const RegEx &filter)` — returns filtered subset by name regex
+- [x] Tests added in `tests/env.cpp`
+
+---
+
+## LibraryOptions — DONE
+
+- [x] `LibraryOptions` — `VariantDatabase<LibraryOptionsTag>` singleton; options declared with `VariantSpec` (type, default, description)
+- [x] `LibraryOptions::loadFromEnvironment()` — scans `PROMEKI_OPT_*` env vars, type-coerces via `VariantSpec::parseString`, warns on unknown names
+- [x] Options: `CrashHandler` (bool, default true), `CoreDumps` (bool, default false), `CrashLogDir` (String, default empty), `CaptureEnvironment` (bool, default true)
+- [x] Wired into `Application` constructor; loads env overrides before `CrashHandler::install()`
+- [x] Tests in `tests/libraryoptions.cpp`
+
+---
+
+## CrashHandler — DONE
+
+- [x] Signal-safe crash handler for SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL
+- [x] Writes crash report to stderr and pre-built log file path (no heap allocation in handler signal-safe stage)
+- [x] Reports: signal name/number, PID, ISO 8601 UTC timestamp (hand-rolled, signal-safe), crashing thread TID/name, all thread TIDs/names (Linux: via `/proc/self/task` + `getdents64`)
+- [x] Demangled C++ backtrace via `abi::__cxa_demangle` (gated on `PROMEKI_HAVE_CXA_DEMANGLE`; falls back to `backtrace_symbols_fd` if allocation fails)
+- [x] OS info via `uname` (sysname, release, version, machine)
+- [x] Memory stats via `getrusage` + `sysinfo` (resident set, virtual size, swap)
+- [x] Resource limits via `getrlimit` (core, data, stack, open files, virtual memory)
+- [x] CPU register dump from `ucontext_t` (x86_64 and aarch64)
+- [x] `/proc/self/maps` memory map dump
+- [x] Environment snapshot (gated on `LibraryOptions::CaptureEnvironment`)
+- [x] `LibraryOptions` state snapshot appended to each report
+- [x] `writeTrace(const char *reason)` — non-crash diagnostic snapshot with atomic seqno for unique filenames
+- [x] Core dump support: raises `RLIMIT_CORE` to hard limit when `LibraryOptions::CoreDumps` is true
+- [x] Non-POSIX stub provided for portability
+- [x] Wired into `Application` constructor/destructor; `setAppName()` re-installs to pick up new name in log path
+- [x] `Application::writeTrace()` forwarder added
+- [x] Tests in `tests/crashhandler.cpp`

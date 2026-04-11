@@ -10,6 +10,11 @@
 #include <cstdlib>
 #include <promeki/namespace.h>
 #include <promeki/string.h>
+#include <promeki/map.h>
+
+PROMEKI_NAMESPACE_BEGIN
+class RegEx;
+PROMEKI_NAMESPACE_END
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -19,6 +24,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * Static utility class wrapping standard environment variable operations.
  * All methods return promeki::String for consistent integration with the
+ * rest of the library.
  *
  * @par Example
  * @code
@@ -26,7 +32,6 @@ PROMEKI_NAMESPACE_BEGIN
  * Env::set("MY_APP_DEBUG", "1");
  * bool exists = Env::contains("PATH");
  * @endcode
- * rest of the library.
  */
 class Env {
         public:
@@ -75,6 +80,30 @@ class Env {
                  * @return true on success.
                  */
                 static bool unset(const char *name);
+
+                /**
+                 * @brief Returns all environment variables as a name/value map.
+                 * @return A Map of every variable in the process environment.
+                 */
+                static Map<String, String> list();
+
+                /**
+                 * @brief Returns environment variables whose names match a regex.
+                 *
+                 * Iterates the entire process environment and returns only
+                 * those variables whose name is matched by @p filter (using
+                 * RegEx::search, so partial matches count).
+                 *
+                 * @par Example
+                 * @code
+                 * // All vars starting with PROMEKI_OPT_
+                 * auto opts = Env::list(RegEx("^PROMEKI_OPT_"));
+                 * @endcode
+                 *
+                 * @param filter Regex applied to the variable name.
+                 * @return A Map of matching variables.
+                 */
+                static Map<String, String> list(const RegEx &filter);
 };
 
 PROMEKI_NAMESPACE_END

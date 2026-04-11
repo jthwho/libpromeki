@@ -5,4 +5,4 @@
    the threads with this name.  The mediaplay application, and eventual MediaPipeline, should give
    these short default names. (e.g. out1, in1, in2).
 
-2. Put the crash log code in the library.  We're currently using it in the unit tests.
+2. ~~Put the crash log code in the library.~~ **Done** — `CrashHandler` and `LibraryOptions` added; wired into `Application` constructor/destructor.

@@ -46,6 +46,7 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |
+| [logger_ring_buffer.md](logger_ring_buffer.md) | cross-cutting | Retain last N log messages in a lock-free ring for inclusion in crash reports |
 | [fixme.md](fixme.md) | ongoing | Existing FIXME comments tracked across the tree |
 | [ideas.md](ideas.md) | backlog | Exploratory ideas that need further design |
 

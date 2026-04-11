@@ -11,6 +11,8 @@
 #include <promeki/eventloop.h>
 #include <promeki/logger.h>
 #include <promeki/fileiodevice.h>
+#include <promeki/libraryoptions.h>
+#include <promeki/crashhandler.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -22,10 +24,15 @@ Application::Data &Application::data() {
 Application::Application(int argc, char **argv) {
         data().arguments = StringList(static_cast<size_t>(argc), const_cast<const char **>(argv));
         data().mainThread = Thread::adoptCurrentThread();
+        LibraryOptions::instance().loadFromEnvironment();
+        if(LibraryOptions::instance().getAs<bool>(LibraryOptions::CrashHandler)) {
+                CrashHandler::install();
+        }
         return;
 }
 
 Application::~Application() {
+        CrashHandler::uninstall();
         delete data().mainThread;
         data().mainThread = nullptr;
         data().arguments.clear();
@@ -53,6 +60,8 @@ const String &Application::appName() {
 
 void Application::setAppName(const String &name) {
         data().appName = name;
+        // Re-install so the crash log path picks up the new name.
+        if(CrashHandler::isInstalled()) CrashHandler::install();
         return;
 }
 
@@ -75,6 +84,11 @@ IODevice *Application::stdoutDevice() {
 
 IODevice *Application::stderrDevice() {
         return FileIODevice::stderrDevice();
+}
+
+void Application::writeTrace(const char *reason) {
+        CrashHandler::writeTrace(reason);
+        return;
 }
 
 void Application::quit(int exitCode) {

@@ -7,6 +7,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/env.h>
+#include <promeki/regex.h>
 
 using namespace promeki;
 
@@ -80,4 +81,35 @@ TEST_CASE("Env: set and get empty value") {
         CHECK(Env::isSet(name));
         CHECK(Env::get(name).isEmpty());
         Env::unset(name);
+}
+
+TEST_CASE("Env: list returns all variables including a known one") {
+        const char *name = "PROMEKI_TEST_LIST_ALL";
+        Env::set(name, "listval");
+        Map<String, String> all = Env::list();
+        CHECK(all.contains(name));
+        CHECK(all.value(name) == "listval");
+        // PATH should also be present in a normal environment.
+        CHECK(all.contains("PATH"));
+        Env::unset(name);
+}
+
+TEST_CASE("Env: list with regex filters by name") {
+        const char *a = "PROMEKI_TEST_LIST_ALPHA";
+        const char *b = "PROMEKI_TEST_LIST_BETA";
+        const char *other = "PROMEKI_TEST_UNRELATED_VAR";
+        Env::set(a, "1");
+        Env::set(b, "2");
+        Env::set(other, "3");
+
+        Map<String, String> filtered = Env::list(RegEx("^PROMEKI_TEST_LIST_"));
+        CHECK(filtered.contains(a));
+        CHECK(filtered.contains(b));
+        CHECK_FALSE(filtered.contains(other));
+        CHECK(filtered.value(a) == "1");
+        CHECK(filtered.value(b) == "2");
+
+        Env::unset(a);
+        Env::unset(b);
+        Env::unset(other);
 }

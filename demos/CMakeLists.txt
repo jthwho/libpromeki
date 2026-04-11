@@ -21,5 +21,6 @@ if(NOT TARGET promeki::promeki)
     find_package(promeki REQUIRED)
 endif()
 
+add_subdirectory(crashtest)
 add_subdirectory(tui-demo)
 add_subdirectory(tui-event-test)

@@ -128,6 +128,23 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND} -E touch ${PROJECT_SOURCE_DIR}/src/core/buildinfo.cpp.in
 )
 
+# Feature detection ############################################################
+
+# abi::__cxa_demangle from <cxxabi.h> is part of the Itanium C++ ABI and
+# is available on GCC and Clang toolchains, but not on MSVC and can be
+# absent on some minimal libc++ configurations.  The crash handler uses
+# it to demangle stack frames when present.
+include(CheckCXXSourceCompiles)
+check_cxx_source_compiles("
+    #include <cxxabi.h>
+    int main() {
+        int status = 0;
+        char *d = abi::__cxa_demangle(\"_Z3foov\", nullptr, nullptr, &status);
+        (void)d;
+        return 0;
+    }
+" PROMEKI_HAVE_CXA_DEMANGLE)
+
 # Generate config.h
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/promeki/config.h.in
@@ -589,6 +606,7 @@ set(PROMEKI_SOURCES
     src/core/cmdlineparser.cpp
     src/core/color.cpp
     src/core/colormodel.cpp
+    src/core/crashhandler.cpp
     src/core/datastream.cpp
     src/core/datetime.cpp
     src/core/dir.cpp
@@ -610,6 +628,7 @@ set(PROMEKI_SOURCES
     src/core/layout.cpp
     src/core/line.cpp
     src/core/list.cpp
+    src/core/libraryoptions.cpp
     src/core/logger.cpp
     src/core/map.cpp
     src/core/matrix.cpp
@@ -1242,6 +1261,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/color.cpp
         tests/colormodel.cpp
         tests/configoption.cpp
+        tests/crashhandler.cpp
         tests/datastream.cpp
         tests/datastream_include_chain.cpp
         tests/datetime.cpp
@@ -1269,6 +1289,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/iodevice.cpp
         tests/json.cpp
         tests/line.cpp
+        tests/libraryoptions.cpp
         tests/list.cpp
         tests/logger.cpp
         tests/map.cpp

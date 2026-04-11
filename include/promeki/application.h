@@ -143,6 +143,21 @@ class Application {
                 static IODevice *stderrDevice();
 
                 /**
+                 * @brief Writes a diagnostic trace report to a unique file.
+                 *
+                 * Convenience forwarder to @ref CrashHandler::writeTrace.
+                 * Useful for snapshotting application state (build info,
+                 * OS info, memory usage, thread list, stack trace) from
+                 * code paths that detect a soft failure or an unexpected
+                 * condition worth investigating later.
+                 *
+                 * @param reason Optional human-readable reason for the trace.
+                 *
+                 * @see CrashHandler::writeTrace
+                 */
+                static void writeTrace(const char *reason = nullptr);
+
+                /**
                  * @brief Requests the application to quit.
                  * @param exitCode The exit code (retrievable via exitCode()).
                  */
