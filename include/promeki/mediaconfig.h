@@ -624,12 +624,29 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setMin(int32_t(0))
                                 .setDescription("First frame index for a sequence writer."));
 
-                /// @brief String — if non-empty, the backend writes an @c .imgseq
-                /// JSON sidecar to this path when the sequence writer closes.
+                /// @brief bool — enable automatic @c .imgseq sidecar for image
+                /// sequences.  When true (the default), the ImageFile backend
+                /// writes a @c .imgseq sidecar alongside the image files when
+                /// a sequence writer closes and auto-detects an existing
+                /// sidecar on read.  The sidecar filename is derived from the
+                /// sequence pattern (e.g. @c "shot_####.dpx" produces
+                /// @c "shot.imgseq").  Set to @c false to inhibit both
+                /// behaviours.
+                static inline const ID SaveImgSeqEnabled = declareID("SaveImgSeqEnabled",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Enable automatic .imgseq sidecar for image sequences."));
+
+                /// @brief String — override path for the @c .imgseq sidecar.
+                /// When empty (default), the filename is derived from the
+                /// sequence pattern (e.g. @c "shot_####.dpx" produces
+                /// @c "shot.imgseq" in the sequence directory).  Relative paths
+                /// are resolved from the sequence directory; absolute paths
+                /// are used as-is.
                 static inline const ID SaveImgSeqPath = declareID("SaveImgSeqPath",
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
-                                .setDescription("Path to write .imgseq JSON sidecar."));
+                                .setDescription("Override path for the .imgseq sidecar."));
 
                 /// @brief Enum @ref ImgSeqPathMode — whether the sidecar's
                 /// directory reference is relative (to the sidecar) or absolute.
@@ -638,6 +655,39 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDefault(ImgSeqPathMode::Relative)
                                 .setEnumType(ImgSeqPathMode::Type)
                                 .setDescription("Sidecar directory reference mode (Relative or Absolute)."));
+
+                /// @brief bool — enable sidecar audio file alongside an image
+                /// sequence.  When true (the default), the ImageFile backend
+                /// writes a Broadcast WAV sidecar when audio data is present
+                /// and auto-detects an existing sidecar on read.  Set to
+                /// @c false to inhibit both behaviours.
+                static inline const ID SidecarAudioEnabled = declareID("SidecarAudioEnabled",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Enable sidecar audio file for image sequences."));
+
+                /// @brief String — override path for the sidecar audio file.
+                /// When empty (default), the filename is derived from the
+                /// sequence pattern (e.g. @c "shot_####.dpx" produces
+                /// @c "shot.wav" in the sequence directory).  Relative paths
+                /// are resolved from the sequence directory; absolute paths
+                /// are used as-is.
+                static inline const ID SidecarAudioPath = declareID("SidecarAudioPath",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("Override path for the sidecar audio file."));
+
+                /// @brief Enum @ref AudioSourceHint — preferred audio source
+                /// when reading an image sequence.  Selects between the
+                /// sidecar audio file and embedded per-frame audio (e.g. DPX
+                /// user-data blocks).  Acts as a hint: if the preferred
+                /// source is unavailable, the backend falls back to the
+                /// other.  Default is @c Sidecar.
+                static inline const ID AudioSource = declareID("AudioSource",
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(AudioSourceHint::Sidecar)
+                                .setEnumType(AudioSourceHint::Type)
+                                .setDescription("Preferred audio source for image sequence readers."));
 
                 // ============================================================
                 // QuickTime / ISO-BMFF (MediaIOTask_QuickTime)

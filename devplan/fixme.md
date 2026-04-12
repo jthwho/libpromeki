@@ -210,21 +210,18 @@ Likely additions when an upstream caller actually asks for them:
 
 ## JPEG XS: QuickTime / ISO-BMFF container support (jxsm sample entry)
 
-**Files:** `src/proav/quicktime_writer.cpp` (visual sample entry writer, `fourCCForPixelDesc`), `src/proav/quicktime_reader.cpp` (video sample-entry parse path), `src/proav/mediaiotask_quicktime.cpp` (`pickStorageFormat`)
-**FIXME:** The codec can encode and decode JPEG XS, the `PixelDesc` carries the `jxsm` FourCC in its `fourccList`, but nothing on the QuickTime writer/reader path knows how to actually emit or consume an ISO/IEC 21122-3 sample entry. Writing a JPEG XS MP4 requires:
+**Files:** `src/proav/quicktime_writer.cpp` (visual sample entry writer, `quickTimeCodecFourCC`), `src/proav/quicktime_reader.cpp` (video sample-entry parse path and `pixelDescForQuickTimeFourCC`), `src/proav/mediaiotask_quicktime.cpp` (`pickStorageFormat`)
+**FIXME:** `JpegXsImageCodec` can encode and decode JPEG XS and every `JPEG_XS_*` PixelDesc already carries `fourccList = { "jxsm" }`, but the QuickTime reader/writer does not implement the ISO/IEC 21122-3 Annex C sample entry. The writer currently closes the `jxsm` sample entry immediately after the base `VisualSampleEntry` header with no codec-specific child boxes (`quicktime_writer.cpp:847-903`), and the reader's `pixelDescForQuickTimeFourCC()` (`quicktime_reader.cpp:33-41`) does a linear scan that always returns the first `JPEG_XS_*` variant (id 153) regardless of the actual codestream — the `VisualSampleEntry.depth` field is skipped (`quicktime_reader.cpp:466`) and the sample-entry parser never walks child boxes inside the entry (the remainder is `(void)entryRemain;` at line 531).
 
-1. A `jxsm` (JPEG XS movie) visual sample entry in `stsd` — the standard ISO visual sample entry plus an extension box that carries the JPEG XS codestream headers (`jxpl` profile/level, `colr` nclc/nclx colour info, `jpgC` codestream header sample for random access).
-2. The sample entry's `depth` and `component_count` fields pulled from the JPEG XS image config (`bit_depth`, `components_num`), not the current `depth=24` default the `raw ` / `2vuy` path uses.
-3. In the reader, sample-entry recognition for `jxsm` and mapping back to one of the `JPEG_XS_*_Rec709` PixelDescs (matrix / range come from the `colr` atom's nclc codes, not from inspecting the bitstream).
-4. Round-trip test that writes a JPEG XS-encoded image into an MP4, reads it back, and verifies the decompressed frame matches the source within JPEG XS's quantisation tolerance.
+**Blocked on ISO/IEC 21122-3:2024 procurement.** Implementation will be a byte-exact spec-compliant reader and writer per Annex C ("Use of JPEG XS codestreams in the ISOBMFF — Motion JPEG XS"). Registered 4CCs per the MP4 Registration Authority (`github.com/mp4ra/mp4ra.github.io`): `jxsm` (sample entry), `jxpl` (Profile and Level), `jpvi` (Video Information), `jpvs` (Video Support), `jptp` (Video Transport Parameter).
 
-Relevant references: ISO/IEC 21122-3 Annex A for the `jxsm` sample entry, ISO/IEC 14496-12 for the host visual sample entry layout, and the SVT-JPEG-XS ffmpeg-plugin source (`thirdparty/svt-jpeg-xs/ffmpeg-plugin/`) which implements the same bindings against FFmpeg's ISO-BMFF writer — a useful cross-check for the extension-atom byte layout.
-
-- [ ] Add a `jxsm` sample entry emitter in `quicktime_writer.cpp` that carries the required extension atoms (`jpgC` at minimum — verify which others are mandatory per 21122-3).
-- [ ] Teach `pickStorageFormat()` in `mediaiotask_quicktime.cpp` to route `JPEG_XS_*` PixelDescs through the new path (instead of the current RGB8 / 2vuy fallback).
-- [ ] Add reader support: recognise `jxsm`, parse the extension atoms, and map the track to the corresponding `JPEG_XS_*_Rec709` PixelDesc using the `colr` atom's matrix/range codes.
-- [ ] Round-trip test: `MediaIOTask_QuickTime` writer → reader, comparing decoded frame to source.
-- [ ] External interop test: verify the written `.mov` opens in ffplay/VLC/QuickTime Player.
+- [ ] Obtain ISO/IEC 21122-3:2024 (`iso.org/standard/86420.html`).
+- [ ] Implement the `jxsm` sample entry writer in `quicktime_writer.cpp` with all mandatory child boxes (`jxpl`, `jpvi`, and whatever else Annex C requires) byte-exact to the spec. Cite clause numbers in code comments.
+- [ ] Implement sample-entry child-box parsing in `quicktime_reader.cpp`: walk child boxes until `entrySize` is exhausted (replacing the `(void)entryRemain;` at line 531), parse the JPEG XS boxes and the standard `colr` box, actually read `VisualSampleEntry.depth` (currently skipped at line 466).
+- [ ] Map the parsed sample entry back to the correct `JPEG_XS_*` PixelDesc variant using the spec's fields (bit depth, sampling, colour model).
+- [ ] Route `JPEG_XS_*` PixelDescs through `MediaIOTask_QuickTime::pickStorageFormat()` as their own storage format.
+- [ ] Round-trip test `tests/quicktime_jpegxs.cpp`: write → read for each of the seven `JPEG_XS_*` PixelDescs, verify decoded frame matches source within codec tolerance.
+- [ ] External interop test: verify the written `.mov` opens in whatever JPEG XS-in-MOV consumers exist at the time of implementation.
 
 ---
 

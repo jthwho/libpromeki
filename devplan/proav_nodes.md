@@ -61,6 +61,16 @@ New static constants: `kSrcProbeFrequencyHz`, `kPcmMarkerPreambleSamples`, `kPcm
 
 **Inspector new-pattern coverage** — two new test cases in `tests/mediaiotask_inspector.cpp`: `Inspector pipeline carries a SrcProbe channel unharmed` and `Inspector pipeline carries a ChannelId channel map unharmed`, exercising the full TPG→Inspector pipeline with the new pattern types.
 
+**Phase 4c additions (this session):**
+
+**`MediaIOTask_ImageFile` sidecar audio** — automatic Broadcast WAV sidecar alongside image sequences.  On write: when audio is present in the pending `MediaDesc`, the backend creates a `<prefix>.wav` alongside the image files (e.g. `shot_####.dpx` → `shot.wav`), writes frame-aligned audio with silence padding on frames that carry no audio, and records the sidecar filename in the `.imgseq` JSON under `"audioFile"`.  On read: the backend probes for a sidecar `.wav` (resolution priority: `.imgseq` `"audioFile"` field → `SidecarAudioPath` config override → auto-derived name), opens it, and delivers frame-aligned audio chunks via `FrameRate::samplesPerFrame()`.  Seeking syncs both the image position and the audio file position via `AudioFile::seekToSample()`.  Three new `MediaConfig` keys: `SidecarAudioEnabled` (bool, default true — suppress sidecar on both read and write), `SidecarAudioPath` (String — override auto-derived path), `AudioSource` (Enum `AudioSourceHint` — `Sidecar`/`Embedded`, selects preferred source when both are available, falls back to the other).  `AudioSourceHint` TypedEnum added to `enums.h`.
+
+**Auto-sidecar `.imgseq`** — `SaveImgSeqEnabled` (bool, default true) replaces the old "non-empty path = enable" pattern.  When true and `SaveImgSeqPath` is empty the sidecar filename is auto-derived from the sequence pattern prefix (e.g. `shot_####.dpx` → `shot.imgseq`).  Mask-based readers auto-discover the conventionally-named sidecar when `SaveImgSeqEnabled` is true.  `ImgSeq` gains an `"audioFile"` JSON field.
+
+**Sequence writer output directory auto-creation** — if the target directory does not exist the writer calls `Dir::mkpath()` before attempting to write the first frame.
+
+**`MediaIOTask_Inspector` improvements** — log lines simplified (removed `"Frame N:"` prefix from periodic report lines — the prefix was redundant with the report header and cluttered grep output).  `executeCmd(Close)` now emits a structured final-report block (total frames, per-check decode rates and pass/fail counts, A/V sync last offset, continuity discontinuity count).
+
 All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, `tests/imagefileio_jpegxs.cpp`, `tests/crc.cpp`, `tests/imagedataencoder.cpp`, `tests/imagedatadecoder.cpp`, `tests/mediaiotask_inspector.cpp`, `tests/enumlist.cpp`, `tests/audiotestpattern.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
 
 ---
@@ -314,5 +324,5 @@ All tracked in `fixme.md`. Summary of the ones that belong to this document:
 - QuickTime: `BufferPool` available but not wired into the hot path
 - JPEG XS: RGB encode path uses CSC workaround (`RGB8_sRGB` → `RGB8_Planar_sRGB` → SVT planar) due to SVT validation bug in `send_picture` for packed format; details and future direct path in `fixme.md`
 - JPEG XS: additional matrix/range/colour-space variants (only Rec.709 limited-range and sRGB wired up)
-- JPEG XS: QuickTime/ISO-BMFF `jxsm` sample entry not implemented
+- JPEG XS: QuickTime/ISO-BMFF `jxsm` sample entry not implemented — blocked on procuring ISO/IEC 21122-3:2024. See `fixme.md` for details.
 - JPEG XS: RFC 9134 RTP slice packetization mode (K=1) + fmtp generation from SVT image config

@@ -1707,6 +1707,9 @@ TEST_CASE("MediaIO_ImageSequence_WriteBasic") {
         CHECK(FilePath(dir / "out_0003.dpx").exists());
         CHECK(FilePath(dir / "out_0004.dpx").exists());
 
+        // Auto-sidecar: the writer should have created out.imgseq.
+        CHECK(FilePath(dir / "out.imgseq").exists());
+
         Dir(dir).removeRecursively();
 }
 
@@ -1911,6 +1914,148 @@ TEST_CASE("MediaIO_ImageSequence_ImgSeqSidecarAutoDetectRange") {
         Dir(dir).removeRecursively();
 }
 
+TEST_CASE("MediaIO_ImageSequence_AutoSidecarWrite") {
+        // Writing a sequence with default config should auto-create a
+        // conventionally-named .imgseq sidecar alongside the frames.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_autosidecar_w";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "clip_####.dpx").toString();
+        FrameRate fps(FrameRate::FPS_24);
+
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                io->setMediaDesc(md);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+                for(int i = 0; i < 4; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        // Verify the sidecar was created with the auto-derived name.
+        FilePath sidecarPath = dir / "clip.imgseq";
+        REQUIRE(sidecarPath.exists());
+
+        // Verify sidecar contents.
+        Error sErr;
+        ImgSeq seq = ImgSeq::load(sidecarPath, &sErr);
+        REQUIRE(sErr.isOk());
+        CHECK(seq.isValid());
+        CHECK(seq.head() == 1);
+        CHECK(seq.tail() == 4);
+        CHECK(seq.frameRate() == fps);
+        CHECK(seq.videoSize() == Size2Du32(16, 8));
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_AutoSidecarRead") {
+        // Write a sequence (auto-creates .imgseq), then read via mask.
+        // The reader should auto-discover the sidecar and pick up the
+        // frame rate as a "file" source.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_autosidecar_r";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "sc_####.dpx").toString();
+        FrameRate fps(FrameRate::FPS_24);
+
+        // Write.
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                io->setMediaDesc(md);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+                for(int i = 0; i < 3; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        // Read via mask — auto-discover the sidecar.
+        {
+                MediaIO *io = MediaIO::createForFileRead(mask);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+                CHECK(io->frameCount() == 3);
+                CHECK(io->frameRate() == fps);
+                // Frame rate came from the auto-discovered sidecar.
+                const Metadata &md = io->metadata();
+                CHECK(md.getAs<String>(Metadata::FrameRateSource) == "file");
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_AutoSidecarDisabled") {
+        // Setting SaveImgSeqEnabled=false should suppress the auto-sidecar.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_imgseq_autosidecar_off";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "no_####.dpx").toString();
+
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::SaveImgSeqEnabled, false);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Input).isOk());
+
+                for(int i = 0; i < 2; i++) {
+                        Image img(8, 8, PixelDesc::RGB8_sRGB);
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        // No sidecar should exist.
+        CHECK_FALSE(FilePath(dir / "no.imgseq").exists());
+
+        Dir(dir).removeRecursively();
+}
+
 TEST_CASE("MediaIO_ImageSequence_FrameRateSourceConfigFromDefault") {
         // No sidecar and no explicit --incfg FrameRate — the backend's
         // default config still pre-populates ConfigFrameRate with
@@ -2057,6 +2202,36 @@ TEST_CASE("MediaIO_ImageFile_SingleFileUnchanged") {
                 delete io;
         }
         std::remove(fn);
+}
+
+TEST_CASE("MediaIO_ImageSequence_WriterCreatesDirectory") {
+        // Opening a sequence writer whose output directory does not yet
+        // exist should create all missing path components automatically.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_mkdir" / "sub" / "dir";
+
+        // Make sure neither the leaf nor its parents exist.
+        Dir cleanup(t.path() / "promeki_test_mkdir");
+        if(cleanup.exists()) cleanup.removeRecursively();
+        CHECK_FALSE(Dir(dir).exists());
+
+        String mask = (dir / "mk_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileWrite(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Input).isOk());
+
+        CHECK(Dir(dir).exists());
+
+        Image img(8, 8, PixelDesc::RGB8_sRGB);
+        Frame::Ptr wf = Frame::Ptr::create();
+        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+        CHECK(io->writeFrame(wf).isOk());
+        CHECK(FilePath(dir / "mk_0001.dpx").exists());
+
+        io->close();
+        delete io;
+        cleanup.removeRecursively();
 }
 
 // ============================================================================
@@ -2335,6 +2510,618 @@ TEST_CASE("MediaIO_AudioFile_WriterCannotSeek") {
         io->close();
         delete io;
         std::remove(fn);
+}
+
+// ============================================================================
+// Sidecar audio for image sequences
+// ============================================================================
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioWriteAndRead") {
+        // Write a DPX image sequence with audio + timecode metadata.
+        // The sidecar .wav should appear alongside the images as a BWF
+        // file.  Reading the sequence back should auto-detect the
+        // sidecar and deliver audio with every frame.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_audio";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "sc_####.dpx").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+        Timecode startTc(Timecode::NDF24, 1, 0, 0, 0);
+
+        // ---- write ----
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                md.audioList().pushToBack(adesc);
+                io->setMediaDesc(md);
+
+                Metadata meta;
+                meta.set(Metadata::Timecode, startTc);
+                io->setMetadata(meta);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+
+                // The MediaDesc should report audio
+                CHECK(io->mediaDesc().audioList().size() == 1);
+                CHECK(io->audioDesc().isValid());
+
+                for(int i = 0; i < 4; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        REQUIRE(img.isValid());
+                        Audio audio(adesc, samplesPerFrame);
+                        REQUIRE(audio.isValid());
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        // Verify the sidecar .wav exists alongside the images.
+        CHECK(FilePath(dir / "sc.wav").exists());
+
+        // ---- read back ----
+        {
+                MediaIO::Config rcfg = MediaIO::defaultConfig("ImageFile");
+                rcfg.set(MediaConfig::Filename, mask);
+                rcfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(rcfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+                CHECK(io->frameCount() == 4);
+
+                // AudioDesc should be populated from the sidecar.
+                MediaDesc md = io->mediaDesc();
+                REQUIRE(md.audioList().size() == 1);
+                CHECK(md.audioList()[0].sampleRate() == 48000.0f);
+                CHECK(md.audioList()[0].channels() == 2);
+                CHECK(io->audioDesc().isValid());
+
+                // Read all frames and verify audio.
+                for(int i = 0; i < 4; i++) {
+                        Frame::Ptr f;
+                        REQUIRE(io->readFrame(f).isOk());
+                        REQUIRE(f.isValid());
+                        REQUIRE(f->audioList().size() == 1);
+                        CHECK(f->audioList()[0]->samples() == samplesPerFrame);
+                        CHECK(f->audioList()[0]->desc().channels() == 2);
+                }
+
+                io->close();
+                delete io;
+        }
+
+        // Verify the timecode was forwarded to the writer's container
+        // metadata.  The ImageFile backend sets Metadata::Timecode on
+        // the cached metadata at open time; the AudioFile writer
+        // receives it and calls writeBroadcastInfo() which embeds the
+        // BWF time_reference.  (AudioFile::createReader does not yet
+        // parse BWF broadcast info back, so we verify the write-side
+        // path by confirming that the container metadata on the
+        // reader's MediaIO has a valid timecode.)
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+
+                Metadata meta = io->metadata();
+                CHECK(meta.contains(Metadata::Timecode));
+                Timecode readTc = meta.get(Metadata::Timecode).get<Timecode>();
+                CHECK(readTc.isValid());
+                CHECK(readTc.toString() == startTc.toString());
+
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioDisabled") {
+        // With SidecarAudioEnabled=false, no sidecar audio is written
+        // even when audio data is provided.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_disabled";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "nd_####.dpx").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+
+        MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+        cfg.set(MediaConfig::Filename, mask);
+        cfg.set(MediaConfig::FrameRate, fps);
+        cfg.set(MediaConfig::SidecarAudioEnabled, false);
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        MediaDesc md;
+        md.setFrameRate(fps);
+        md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                PixelDesc(PixelDesc::RGB8_sRGB)));
+        md.audioList().pushToBack(adesc);
+        io->setMediaDesc(md);
+
+        REQUIRE(io->open(MediaIO::Input).isOk());
+
+        // No audio should be reported when sidecar is disabled.
+        CHECK(io->mediaDesc().audioList().isEmpty());
+
+        for(int i = 0; i < 2; i++) {
+                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                Audio audio(adesc, samplesPerFrame);
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                CHECK(io->writeFrame(wf).isOk());
+        }
+        io->close();
+        delete io;
+
+        // No .wav file should have been created.
+        CHECK_FALSE(FilePath(dir / "nd.wav").exists());
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioNoAudio") {
+        // When writing an image sequence without any audio configured,
+        // no sidecar audio file should be created.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_noaudio";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "na_####.dpx").toString();
+
+        MediaIO *io = MediaIO::createForFileWrite(mask);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::Input).isOk());
+
+        for(int i = 0; i < 2; i++) {
+                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                CHECK(io->writeFrame(wf).isOk());
+        }
+        io->close();
+        delete io;
+
+        CHECK_FALSE(FilePath(dir / "na.wav").exists());
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioPathOverride") {
+        // SidecarAudioPath config overrides the auto-derived name.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_path";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "po_####.dpx").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+
+        MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+        cfg.set(MediaConfig::Filename, mask);
+        cfg.set(MediaConfig::FrameRate, fps);
+        cfg.set(MediaConfig::SidecarAudioPath, String("custom_audio.wav"));
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+
+        MediaDesc md;
+        md.setFrameRate(fps);
+        md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                PixelDesc(PixelDesc::RGB8_sRGB)));
+        md.audioList().pushToBack(adesc);
+        io->setMediaDesc(md);
+
+        REQUIRE(io->open(MediaIO::Input).isOk());
+
+        Image img(16, 8, PixelDesc::RGB8_sRGB);
+        Audio audio(adesc, samplesPerFrame);
+        Frame::Ptr wf = Frame::Ptr::create();
+        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+        wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+        CHECK(io->writeFrame(wf).isOk());
+        io->close();
+        delete io;
+
+        // The auto-derived name (po.wav) should NOT exist.
+        CHECK_FALSE(FilePath(dir / "po.wav").exists());
+        // The custom name should exist.
+        CHECK(FilePath(dir / "custom_audio.wav").exists());
+
+        // Read back with the same config override — should auto-detect.
+        {
+                MediaIO::Config rcfg = MediaIO::defaultConfig("ImageFile");
+                rcfg.set(MediaConfig::Filename, mask);
+                rcfg.set(MediaConfig::SidecarAudioPath, String("custom_audio.wav"));
+
+                MediaIO *rio = MediaIO::create(rcfg);
+                REQUIRE(rio != nullptr);
+                REQUIRE(rio->open(MediaIO::Output).isOk());
+                CHECK(rio->audioDesc().isValid());
+                CHECK(rio->audioDesc().sampleRate() == 48000.0f);
+                rio->close();
+                delete rio;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioImgSeqField") {
+        // When writing with SaveImgSeqPath, the .imgseq sidecar should
+        // capture the audioFile field.  Reading from that sidecar should
+        // find the audio through the field.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_imgseq";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "is_####.dpx").toString();
+        String sidecarPath = (dir / "test.imgseq").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+
+        // ---- write ----
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::SaveImgSeqPath, sidecarPath);
+
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                md.audioList().pushToBack(adesc);
+                io->setMediaDesc(md);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+
+                for(int i = 0; i < 3; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Audio audio(adesc, samplesPerFrame);
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        // Verify the .imgseq sidecar has the audioFile field.
+        {
+                Error sErr;
+                ImgSeq seq = ImgSeq::load(FilePath(sidecarPath), &sErr);
+                REQUIRE(sErr.isOk());
+                CHECK(seq.audioFile() == "is.wav");
+        }
+
+        // Read via the .imgseq sidecar — audio should be found.
+        {
+                MediaIO *io = MediaIO::createForFileRead(sidecarPath);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+                CHECK(io->frameCount() == 3);
+                CHECK(io->audioDesc().isValid());
+                CHECK(io->audioDesc().sampleRate() == 48000.0f);
+
+                Frame::Ptr f;
+                REQUIRE(io->readFrame(f).isOk());
+                REQUIRE(f->audioList().size() == 1);
+                CHECK(f->audioList()[0]->samples() == samplesPerFrame);
+
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioSeek") {
+        // Seeking the image sequence should sync the audio position.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_seek";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "sk_####.dpx").toString();
+        AudioDesc adesc(AudioDesc::NativeType, 48000.0f, 1);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+
+        // Write 8 frames with distinct audio fills.
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                md.audioList().pushToBack(adesc);
+                io->setMediaDesc(md);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+
+                for(int i = 0; i < 8; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Audio audio(adesc, samplesPerFrame);
+                        // Fill channel 0 with a per-frame constant so
+                        // we can verify seek lands on the right audio.
+                        float *ptr = audio.data<float>();
+                        float val = static_cast<float>(i + 1) * 0.1f;
+                        for(size_t s = 0; s < samplesPerFrame; s++) ptr[s] = val;
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        // Read: seek to frame 4 (0-based), read, verify audio.
+        {
+                MediaIO::Config rcfg = MediaIO::defaultConfig("ImageFile");
+                rcfg.set(MediaConfig::Filename, mask);
+                rcfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(rcfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+                CHECK(io->frameCount() == 8);
+
+                CHECK(io->seekToFrame(4).isOk());
+                Frame::Ptr f;
+                REQUIRE(io->readFrame(f).isOk());
+                REQUIRE(f->audioList().size() == 1);
+                CHECK(f->audioList()[0]->samples() == samplesPerFrame);
+                // Frame 4 (0-based) was written with fill = (4+1)*0.1 = 0.5
+                const float *ptr = f->audioList()[0]->data<float>();
+                CHECK(ptr[0] == doctest::Approx(0.5f));
+
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioReadDisabled") {
+        // With SidecarAudioEnabled=false on reader, sidecar audio
+        // should not be detected even when the .wav exists.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_read_dis";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        // Use PNG so DPX embedded audio doesn't mask the sidecar
+        // disable — PNG has no embedded audio support.
+        String mask = (dir / "rd_####.png").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+
+        // Write with audio (sidecar is created).
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                md.audioList().pushToBack(adesc);
+                io->setMediaDesc(md);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                Audio audio(adesc, samplesPerFrame);
+                Frame::Ptr wf = Frame::Ptr::create();
+                wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                CHECK(io->writeFrame(wf).isOk());
+                io->close();
+                delete io;
+        }
+
+        CHECK(FilePath(dir / "rd.wav").exists());
+
+        // Read with sidecar disabled.
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::SidecarAudioEnabled, false);
+
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+
+                // No audio descriptor should be reported.
+                CHECK(io->mediaDesc().audioList().isEmpty());
+                CHECK_FALSE(io->audioDesc().isValid());
+
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
+}
+
+TEST_CASE("MediaIO_ImageSequence_SidecarAudioSourceHint") {
+        // Write a DPX sequence with both embedded audio (DPX carries it)
+        // and a sidecar .wav.  Then test the AudioSourceHint to select
+        // which source the reader uses.
+        Dir t = Dir::temp();
+        FilePath dir = t.path() / "promeki_test_sidecar_hint";
+        Dir d(dir);
+        if(d.exists()) d.removeRecursively();
+        d.mkdir();
+
+        String mask = (dir / "hn_####.dpx").toString();
+        AudioDesc adesc(AudioDesc::PCMI_S16LE, 48000.0f, 2);
+        FrameRate fps(FrameRate::FPS_24);
+        const size_t samplesPerFrame = fps.samplesPerFrame(48000, 0);
+
+        // Write sequence with audio — DPX embeds per-frame audio AND
+        // the sidecar .wav is created.
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+
+                MediaDesc md;
+                md.setFrameRate(fps);
+                md.imageList().pushToBack(ImageDesc(Size2Du32(16, 8),
+                        PixelDesc(PixelDesc::RGB8_sRGB)));
+                md.audioList().pushToBack(adesc);
+                io->setMediaDesc(md);
+
+                REQUIRE(io->open(MediaIO::Input).isOk());
+                for(int i = 0; i < 3; i++) {
+                        Image img(16, 8, PixelDesc::RGB8_sRGB);
+                        Audio audio(adesc, samplesPerFrame);
+                        Frame::Ptr wf = Frame::Ptr::create();
+                        wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                        wf.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
+                        CHECK(io->writeFrame(wf).isOk());
+                }
+                io->close();
+                delete io;
+        }
+
+        CHECK(FilePath(dir / "hn.wav").exists());
+
+        // Default (Sidecar hint): should use sidecar audio.
+        // Sidecar sample rate == 48000, channels == 2.
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+                CHECK(io->audioDesc().isValid());
+                CHECK(io->audioDesc().sampleRate() == 48000.0f);
+
+                Frame::Ptr f;
+                REQUIRE(io->readFrame(f).isOk());
+                REQUIRE(f->audioList().size() == 1);
+                // Sidecar delivers frame-rate-aligned chunks.
+                CHECK(f->audioList()[0]->samples() == samplesPerFrame);
+
+                io->close();
+                delete io;
+        }
+
+        // Embedded hint: should prefer the DPX embedded audio.
+        {
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, mask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioSource, AudioSourceHint::Embedded);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+                CHECK(io->audioDesc().isValid());
+
+                // The embedded audio from DPX should be used.  Its
+                // sample count may differ from the sidecar's
+                // frame-rate-aligned chunks.
+                Frame::Ptr f;
+                REQUIRE(io->readFrame(f).isOk());
+                REQUIRE(f->audioList().size() == 1);
+                CHECK(f->audioList()[0]->desc().sampleRate() == 48000.0f);
+
+                io->close();
+                delete io;
+        }
+
+        // Embedded hint with no embedded audio (PNG, which has no
+        // embedded audio) — should fall back to sidecar.
+        {
+                // Write a PNG sequence with NO embedded audio, but with
+                // the sidecar from the DPX sequence still present.
+                String pngMask = (dir / "hn_####.png").toString();
+                {
+                        MediaIO *io = MediaIO::createForFileWrite(pngMask);
+                        REQUIRE(io != nullptr);
+                        REQUIRE(io->open(MediaIO::Input).isOk());
+                        for(int i = 0; i < 3; i++) {
+                                Image img(16, 8, PixelDesc::RGB8_sRGB);
+                                Frame::Ptr wf = Frame::Ptr::create();
+                                wf.modify()->imageList().pushToBack(Image::Ptr::create(img));
+                                CHECK(io->writeFrame(wf).isOk());
+                        }
+                        io->close();
+                        delete io;
+                }
+
+                // Read the PNG sequence with Embedded hint — no embedded
+                // audio, so should fall back to the sidecar hn.wav.
+                MediaIO::Config cfg = MediaIO::defaultConfig("ImageFile");
+                cfg.set(MediaConfig::Filename, pngMask);
+                cfg.set(MediaConfig::FrameRate, fps);
+                cfg.set(MediaConfig::AudioSource, AudioSourceHint::Embedded);
+                MediaIO *io = MediaIO::create(cfg);
+                REQUIRE(io != nullptr);
+                REQUIRE(io->open(MediaIO::Output).isOk());
+
+                // Sidecar fallback — audio should be available.
+                CHECK(io->audioDesc().isValid());
+                CHECK(io->audioDesc().sampleRate() == 48000.0f);
+
+                io->close();
+                delete io;
+        }
+
+        Dir(dir).removeRecursively();
 }
 
 #endif // PROMEKI_ENABLE_AUDIO

@@ -141,15 +141,24 @@ Logger::LogFormatter Logger::defaultConsoleFormatter() {
                 char lvl = levelToChar(entry.level);
 
                 // Build source:line and pad to a fixed column width
-                String source;
-                if(entry.file != nullptr) {
-                        source = String::sprintf("%s:%d", entry.file, entry.line);
-                }
+                static const int maxSourceLen = 25;
+                String lineno = String::number(entry.line);
+                String file = String(entry.file).left(maxSourceLen - lineno.length() - 1);
+                String source = file + ":" + lineno;
 
                 String thread = fmt.threadName != nullptr ?
                         *fmt.threadName : String::dec(entry.threadId);
 
                 String result;
+                if(ansi) result += "\033[0;36m"; // Dim cyan
+                result += entry.ts.toString("%T.3");
+                if(ansi) result += "\033[0m";
+                result += ' ';
+                result += String::sprintf("%-25s", source.cstr());
+                result += ' ';
+                if(ansi) result += "\033[0;35m";
+                result += String::sprintf("%-10s", thread.cstr());
+                result += ' ';
                 if(ansi) {
                     switch(entry.level) {
                         case Warn: result += "\033[1;33m"; break;
@@ -158,15 +167,6 @@ Logger::LogFormatter Logger::defaultConsoleFormatter() {
                     }
                 }
                 result += lvl;
-                result += ' ';
-                if(ansi) result += "\033[0;36m"; // Dim cyan
-                result += entry.ts.toString("%T.3");
-                if(ansi) result += "\033[0m";
-                result += ' ';
-                result += String::sprintf("%-20s", source.cstr());
-                result += ' ';
-                if(ansi) result += "\033[0;35m";
-                result += String::sprintf("%-10s", thread.cstr());
                 result += ' ';
                 if(ansi) result += "\033[0m";
                 result += entry.msg;

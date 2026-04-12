@@ -94,6 +94,37 @@ TEST_CASE("Variant_StringToInt") {
     CHECK(val == 123);
 }
 
+TEST_CASE("Variant_StringToInt_HexBinOctSeparators") {
+    // Hex
+    Error e1;
+    CHECK(Variant(String("0xDEADBEEF")).get<uint32_t>(&e1) == 0xDEADBEEF);
+    CHECK(e1.isOk());
+
+    // Hex with separators
+    Error e2;
+    CHECK(Variant(String("0xDEAD_BEEF")).get<uint32_t>(&e2) == 0xDEADBEEF);
+    CHECK(e2.isOk());
+
+    // Binary
+    Error e3;
+    CHECK(Variant(String("0b1010")).get<int32_t>(&e3) == 10);
+    CHECK(e3.isOk());
+
+    // Octal
+    Error e4;
+    CHECK(Variant(String("0o777")).get<int32_t>(&e4) == 511);
+    CHECK(e4.isOk());
+
+    // Comma/apostrophe separators
+    Error e5;
+    CHECK(Variant(String("1,000,000")).get<int32_t>(&e5) == 1000000);
+    CHECK(e5.isOk());
+
+    Error e6;
+    CHECK(Variant(String("1'000'000")).get<int32_t>(&e6) == 1000000);
+    CHECK(e6.isOk());
+}
+
 TEST_CASE("Variant_BoolToInt") {
     Variant v(true);
     CHECK(v.get<int32_t>() == 1);

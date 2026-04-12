@@ -730,6 +730,42 @@ inline const MediaIODirection MediaIODirection::Output         { 0 };
 inline const MediaIODirection MediaIODirection::Input          { 1 };
 inline const MediaIODirection MediaIODirection::InputAndOutput { 2 };
 
+/**
+ * @brief Preferred audio source for image-sequence readers.
+ *
+ * Image sequences can carry audio in two places: embedded per-frame
+ * data (e.g. DPX user-data blocks) or a sidecar audio file
+ * (Broadcast WAV alongside the images).  This enum selects which
+ * source is preferred.
+ *
+ * The value is a **hint**, not a hard requirement.  If the preferred
+ * source is not available the backend falls back to the other:
+ *
+ * | Hint       | First choice     | Fallback         |
+ * |------------|------------------|------------------|
+ * | @c Sidecar | sidecar file     | embedded audio   |
+ * | @c Embedded| embedded audio   | sidecar file     |
+ *
+ * Default is @c Sidecar.
+ */
+class AudioSourceHint : public TypedEnum<AudioSourceHint> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("AudioSourceHint",
+                        {
+                                { "Sidecar",  0 },
+                                { "Embedded", 1 }
+                        },
+                        0);  // default: Sidecar
+
+                using TypedEnum<AudioSourceHint>::TypedEnum;
+
+                static const AudioSourceHint Sidecar;
+                static const AudioSourceHint Embedded;
+};
+
+inline const AudioSourceHint AudioSourceHint::Sidecar  { 0 };
+inline const AudioSourceHint AudioSourceHint::Embedded { 1 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

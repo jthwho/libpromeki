@@ -226,6 +226,20 @@ class ImgSeq {
                 /** @brief Sets the optional pixel descriptor. */
                 void setPixelDesc(const PixelDesc &val) { _pixelDesc = val; }
 
+                /**
+                 * @brief Returns the sidecar audio file path.
+                 *
+                 * When loaded from an @c .imgseq sidecar, this is the value
+                 * of the @c "audioFile" JSON field.  Relative paths are
+                 * resolved against the sidecar's (or sequence's) directory;
+                 * absolute paths are used as-is.  Empty means no sidecar
+                 * audio was specified in the sidecar file.
+                 */
+                const String &audioFile() const { return _audioFile; }
+
+                /** @brief Sets the sidecar audio file path. */
+                void setAudioFile(const String &val) { _audioFile = val; }
+
                 /** @brief Returns the sequence-level metadata. */
                 const Metadata &metadata() const { return _metadata; }
 
@@ -272,6 +286,7 @@ class ImgSeq {
                 FrameRate       _frameRate;
                 Size2Du32       _videoSize;
                 PixelDesc       _pixelDesc;
+                String          _audioFile;
                 Metadata        _metadata;
                 FilePath        _sidecarPath;
 };

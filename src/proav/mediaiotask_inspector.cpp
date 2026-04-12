@@ -7,7 +7,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <cstdio>
 #include <promeki/mediaiotask_inspector.h>
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
@@ -166,43 +165,15 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
         // periodic reports can be interpreted in context — especially
         // useful when post-mortem'ing a recorded log file.  Each line
         // shares the "config:" prefix so the whole block is scannable.
-        promekiInfo("config: image data decode  = %s",
-                    _decodeImageData ? "enabled" : "disabled");
-        promekiInfo("config: LTC decode         = %s%s",
-                    _decodeLtc ? "enabled" : "disabled",
-                    _decodeLtc ? "" : " (no audio LTC checks will run)");
-        if(_decodeLtc) {
-                promekiInfo("config: LTC channel        = %d", _ltcChannel);
-        }
-        promekiInfo("config: A/V sync check     = %s%s",
-                    _checkTcSync ? "enabled" : "disabled",
-                    _checkTcSync ? " (auto-enables image data + LTC decode)" : "");
-        if(_checkTcSync) {
-                promekiInfo("config: A/V sync jitter tolerance = %d sample%s "
-                            "(any frame-to-frame change beyond this fires a "
-                            "discontinuity warning; %s)",
-                            _syncOffsetToleranceSamples,
-                            _syncOffsetToleranceSamples == 1 ? "" : "s",
-                            _syncOffsetToleranceSamples == 0
-                                    ? "default = report any change at all"
-                                    : "set to 0 to report any change");
-        }
-        promekiInfo("config: continuity check    = %s%s",
-                    _checkContinuity ? "enabled" : "disabled",
-                    _checkContinuity ? " (auto-enables image data decode)" : "");
-        if(_decodeImageData) {
-                promekiInfo("config: image data band    = %d scan lines per item, "
-                            "TPG-convention 2 items at top of frame",
-                            _imageDataRepeatLines);
-        }
-        promekiInfo("config: drop frames         = %s",
-                    _dropFrames ? "yes (sink behaviour)" : "no");
-        if(_logIntervalSec > 0.0) {
-                promekiInfo("config: periodic log every  = %.2f seconds (wall time)",
-                            _logIntervalSec);
-        } else {
-                promekiInfo("config: periodic log        = disabled");
-        }
+        promekiInfo("Image data decode     = %s", _decodeImageData ? "enabled" : "disabled");
+        promekiInfo("LTC decode            = %s", _decodeLtc ? "enabled" : "disabled");
+        promekiInfo("LTC channel           = %d", _ltcChannel);
+        promekiInfo("A/V sync check        = %s", _checkTcSync ? "enabled" : "disabled");
+        promekiInfo("A/V sync jitter tol   = %d samples", _syncOffsetToleranceSamples);
+        promekiInfo("Continuity check      = %s", _checkContinuity ? "enabled" : "disabled");
+        promekiInfo("Image data band       = %d scan lines per item", _imageDataRepeatLines);
+        promekiInfo("Drop frames           = %s", _dropFrames ? "yes" : "no");
+        promekiInfo("Log interval          = %.2f seconds", _logIntervalSec);
 
         // We don't fill in mediaDesc / audioDesc / frameRate /
         // frameCount — the inspector is a sink, the upstream stage
@@ -216,6 +187,99 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
 Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         _isOpen = false;
+
+        // Emit a final summary so the log contains a complete record
+        // of the inspector's lifetime.  We snapshot under the mutex
+        // once and work from the copy — same pattern as the periodic
+        // report.
+        InspectorSnapshot snap;
+        {
+                Mutex::Locker lk(_stateMutex);
+                snap = _stats;
+        }
+
+        promekiInfo("=== INSPECTOR FINAL REPORT ===");
+        promekiInfo("  Total frames processed: %lld",
+                    static_cast<long long>(snap.framesProcessed));
+
+        if(_decodeImageData) {
+                const double pct = snap.framesProcessed > 0
+                        ? 100.0 * snap.framesWithPictureData / snap.framesProcessed
+                        : 0.0;
+                if(snap.framesWithPictureData == snap.framesProcessed) {
+                        promekiInfo("  Image data band: decoded %lld / %lld frames (%.1f%%)",
+                                    static_cast<long long>(snap.framesWithPictureData),
+                                    static_cast<long long>(snap.framesProcessed),
+                                    pct);
+                } else {
+                        promekiWarn("  Image data band: decoded %lld / %lld frames (%.1f%%) — "
+                                    "%lld frames failed to decode",
+                                    static_cast<long long>(snap.framesWithPictureData),
+                                    static_cast<long long>(snap.framesProcessed),
+                                    pct,
+                                    static_cast<long long>(snap.framesProcessed - snap.framesWithPictureData));
+                }
+                if(snap.hasLastEvent && snap.lastEvent.pictureDecoded) {
+                        promekiInfo("  Last picture: streamID 0x%08X, frameNo %u, TC %s",
+                                    snap.lastEvent.pictureStreamId,
+                                    snap.lastEvent.pictureFrameNumber,
+                                    renderTc(snap.lastEvent.pictureTimecode).cstr());
+                }
+        }
+
+        if(_decodeLtc) {
+                const double pct = snap.framesProcessed > 0
+                        ? 100.0 * snap.framesWithLtc / snap.framesProcessed
+                        : 0.0;
+                if(snap.framesWithLtc == snap.framesProcessed) {
+                        promekiInfo("  LTC: decoded %lld / %lld frames (%.1f%%)",
+                                    static_cast<long long>(snap.framesWithLtc),
+                                    static_cast<long long>(snap.framesProcessed),
+                                    pct);
+                } else {
+                        promekiWarn("  LTC: decoded %lld / %lld frames (%.1f%%) — "
+                                    "%lld frames failed to decode",
+                                    static_cast<long long>(snap.framesWithLtc),
+                                    static_cast<long long>(snap.framesProcessed),
+                                    pct,
+                                    static_cast<long long>(snap.framesProcessed - snap.framesWithLtc));
+                }
+                if(snap.hasLastEvent && snap.lastEvent.ltcDecoded) {
+                        promekiInfo("  Last LTC: TC %s",
+                                    renderTc(snap.lastEvent.ltcTimecode).cstr());
+                }
+        }
+
+        if(_checkTcSync && snap.hasLastEvent && snap.lastEvent.avSyncValid) {
+                const int64_t s = snap.lastEvent.avSyncOffsetSamples;
+                if(s == 0) {
+                        promekiInfo("  A/V Sync: audio and video locked (0 samples)");
+                } else {
+                        const int64_t absSamples = s < 0 ? -s : s;
+                        const double  frames     = _samplesPerFrame > 0.0
+                                ? static_cast<double>(absSamples) / _samplesPerFrame
+                                : 0.0;
+                        const char *direction = (s > 0)
+                                ? "Video leads audio"
+                                : "Audio leads video";
+                        promekiInfo("  A/V Sync: %s by %lld samples, %.4f frames",
+                                    direction,
+                                    static_cast<long long>(absSamples),
+                                    frames);
+                }
+        }
+
+        if(_checkContinuity) {
+                if(snap.totalDiscontinuities == 0) {
+                        promekiInfo("  Continuity: clean — no discontinuities detected");
+                } else {
+                        promekiWarn("  Continuity: %lld total discontinuities detected",
+                                    static_cast<long long>(snap.totalDiscontinuities));
+                }
+        }
+
+        promekiInfo("=== END OF FINAL REPORT ===");
+
         // Stats survive close so callers can retrieve final counts;
         // resetState happens on the next open.
         return Error::Ok;
@@ -441,24 +505,17 @@ void MediaIOTask_Inspector::runAvSyncCheck(const Frame &frame, InspectorEvent &e
                 if(absDelta > _syncOffsetToleranceSamples) {
                         InspectorDiscontinuity d;
                         d.kind = InspectorDiscontinuity::SyncOffsetChange;
-                        char prev[32];
-                        char curr[32];
-                        std::snprintf(prev, sizeof(prev), "%+lld",
+                        d.previousValue = String::sprintf("%+lld",
                                       static_cast<long long>(_previousSyncOffset));
-                        std::snprintf(curr, sizeof(curr), "%+lld",
+                        d.currentValue  = String::sprintf("%+lld",
                                       static_cast<long long>(event.avSyncOffsetSamples));
-                        d.previousValue = String(prev);
-                        d.currentValue  = String(curr);
-                        char desc[240];
-                        std::snprintf(desc, sizeof(desc),
+                        d.description = String::sprintf(
                                       "A/V sync offset moved: was %+lld samples, "
-                                      "now %+lld samples (delta %+lld, tolerance %d) — "
-                                      "audio and video are no longer locked",
+                                      "now %+lld samples (delta %+lld, tolerance %d)",
                                       static_cast<long long>(_previousSyncOffset),
                                       static_cast<long long>(event.avSyncOffsetSamples),
                                       static_cast<long long>(delta),
                                       _syncOffsetToleranceSamples);
-                        d.description = String(desc);
                         event.discontinuities.pushToBack(d);
                 }
         }
@@ -484,16 +541,9 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
                 if(event.pictureStreamId != _previousStreamId) {
                         InspectorDiscontinuity d;
                         d.kind          = InspectorDiscontinuity::StreamIdChange;
-                        char prev[32];
-                        char curr[32];
-                        std::snprintf(prev, sizeof(prev), "0x%08x", _previousStreamId);
-                        std::snprintf(curr, sizeof(curr), "0x%08x", event.pictureStreamId);
-                        d.previousValue = String(prev);
-                        d.currentValue  = String(curr);
-                        char desc[128];
-                        std::snprintf(desc, sizeof(desc),
-                                      "Stream ID changed: was %s, now %s", prev, curr);
-                        d.description = String(desc);
+                        d.previousValue = String::sprintf("0x%08X", _previousStreamId);
+                        d.currentValue  = String::sprintf("0x%08X", event.pictureStreamId);
+                        d.description   = String::sprintf("Stream ID changed: was %s, now %s", d.previousValue.cstr(), d.currentValue.cstr());
                         event.discontinuities.pushToBack(d);
                 }
 
@@ -501,23 +551,16 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
                 if(event.pictureFrameNumber != expectedNext) {
                         InspectorDiscontinuity d;
                         d.kind = InspectorDiscontinuity::FrameNumberJump;
-                        char prev[32];
-                        char curr[32];
-                        std::snprintf(prev, sizeof(prev), "%u", _previousFrameNumber);
-                        std::snprintf(curr, sizeof(curr), "%u", event.pictureFrameNumber);
-                        d.previousValue = String(prev);
-                        d.currentValue  = String(curr);
+                        d.previousValue = String::number(_previousFrameNumber);
+                        d.currentValue = String::number(event.pictureFrameNumber);
                         const long long deltaFromExpected =
                                 static_cast<long long>(event.pictureFrameNumber) -
                                 static_cast<long long>(expectedNext);
-                        char desc[200];
-                        std::snprintf(desc, sizeof(desc),
-                                      "Frame number jumped: was %u (expected %u next), got %u "
+                        d.description = String::sprintf("Frame number jumped: was %u (expected %u next), got %u "
                                       "(%+lld frame%s relative to expected)",
                                       _previousFrameNumber, expectedNext, event.pictureFrameNumber,
                                       deltaFromExpected,
                                       deltaFromExpected == 1 || deltaFromExpected == -1 ? "" : "s");
-                        d.description = String(desc);
                         event.discontinuities.pushToBack(d);
                 }
 
@@ -541,13 +584,11 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
                                 d.kind          = InspectorDiscontinuity::PictureTcJump;
                                 d.previousValue = renderTc(prevWithMode);
                                 d.currentValue  = renderTc(currWithMode);
-                                char desc[200];
-                                std::snprintf(desc, sizeof(desc),
+                                d.description = String::sprintf(
                                               "Picture TC jumped: was %s (expected %s next), got %s",
                                               d.previousValue.cstr(),
                                               renderTc(expectedTc).cstr(),
                                               d.currentValue.cstr());
-                                d.description = String(desc);
                                 event.discontinuities.pushToBack(d);
                         }
                 }
@@ -568,13 +609,11 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
                                 d.kind          = InspectorDiscontinuity::LtcTcJump;
                                 d.previousValue = renderTc(_previousLtcTc);
                                 d.currentValue  = renderTc(event.ltcTimecode);
-                                char desc[200];
-                                std::snprintf(desc, sizeof(desc),
+                                d.description = String::sprintf(
                                               "LTC jumped: was %s (expected %s next), got %s",
                                               d.previousValue.cstr(),
                                               renderTc(expectedLtc).cstr(),
                                               d.currentValue.cstr());
-                                d.description = String(desc);
                                 event.discontinuities.pushToBack(d);
                         }
                 }
@@ -603,29 +642,17 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                 snap = _stats;
         }
 
-        // Multi-line periodic report.  Every line shares the same
-        // "Frame N:" prefix where N is the inspector's monotonic
-        // frame index at report time, so a log reader can group all
-        // lines from the same report by string match.  Lines for
-        // disabled checks are elided so the log doesn't carry stale
-        // "n/a" placeholders.
-        char prefix[32];
-        std::snprintf(prefix, sizeof(prefix), "Frame %lld:",
-                      static_cast<long long>(snap.framesProcessed));
-
-        promekiInfo("%s report after %lld frames (%.2f s wall) — "
-                    "%lld total since open",
-                    prefix,
-                    static_cast<long long>(_framesSinceLastLog),
-                    elapsed,
-                    static_cast<long long>(snap.framesProcessed));
+        promekiInfo("[INSPECTOR REPORT] Frame %lld: %lld frames (%.2f s wall) since last report - %lld total",
+            static_cast<long long>(snap.framesProcessed),
+            static_cast<long long>(_framesSinceLastLog),
+            elapsed,
+            static_cast<long long>(snap.framesProcessed));
 
         if(_decodeImageData) {
                 if(snap.lastEvent.pictureDecoded) {
-                        promekiInfo("%s picture data band: decoded %lld / %lld frames "
-                                    "(%.1f%%) — most recent: streamID 0x%08x, "
+                        promekiInfo("  Image data band: decoded %lld / %lld frames "
+                                    "(%.1f%%) — most recent: streamID 0x%08X, "
                                     "frameNo %u, TC %s",
-                                    prefix,
                                     static_cast<long long>(snap.framesWithPictureData),
                                     static_cast<long long>(snap.framesProcessed),
                                     snap.framesProcessed > 0
@@ -635,9 +662,8 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                                     snap.lastEvent.pictureFrameNumber,
                                     renderTc(snap.lastEvent.pictureTimecode).cstr());
                 } else {
-                        promekiWarn("%s picture data band: NOT DECODED in latest frame "
+                        promekiWarn("  Image data band: NOT DECODED in latest frame "
                                     "(decoded %lld / %lld frames since open)",
-                                    prefix,
                                     static_cast<long long>(snap.framesWithPictureData),
                                     static_cast<long long>(snap.framesProcessed));
                 }
@@ -645,10 +671,9 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
 
         if(_decodeLtc) {
                 if(snap.lastEvent.ltcDecoded) {
-                        promekiInfo("%s audio LTC: decoded %lld / %lld frames (%.1f%%) — "
+                        promekiInfo("  LTC: decoded %lld / %lld frames (%.1f%%) — "
                                     "most recent: TC %s, sync word at sample %lld "
                                     "within chunk",
-                                    prefix,
                                     static_cast<long long>(snap.framesWithLtc),
                                     static_cast<long long>(snap.framesProcessed),
                                     snap.framesProcessed > 0
@@ -657,9 +682,8 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                                     renderTc(snap.lastEvent.ltcTimecode).cstr(),
                                     static_cast<long long>(snap.lastEvent.ltcSampleStart));
                 } else {
-                        promekiWarn("%s audio LTC: NOT DECODED in latest frame "
+                        promekiWarn("  LTC: NOT DECODED in latest frame "
                                     "(decoded %lld / %lld frames since open)",
-                                    prefix,
                                     static_cast<long long>(snap.framesWithLtc),
                                     static_cast<long long>(snap.framesProcessed));
                 }
@@ -669,8 +693,7 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                 if(snap.lastEvent.avSyncValid) {
                         const int64_t s = snap.lastEvent.avSyncOffsetSamples;
                         if(s == 0) {
-                                promekiInfo("%s A/V Sync: audio and video locked (0 samples)",
-                                            prefix);
+                                promekiInfo("  A/V Sync: audio and video locked (0 samples)");
                         } else {
                                 // Render direction in plain language
                                 // and report both the raw sample count
@@ -688,18 +711,12 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                                 const char *direction = (s > 0)
                                         ? "Video leads audio"
                                         : "Audio leads video";
-                                promekiInfo("%s A/V Sync: %s by %lld samples, "
+                                promekiInfo("  A/V Sync: %s by %lld samples, "
                                             "%.4f frames",
-                                            prefix,
                                             direction,
                                             static_cast<long long>(absSamples),
                                             frames);
                         }
-                } else {
-                        promekiInfo("%s A/V Sync: not measurable in latest frame "
-                                    "(needs both picture data and LTC decoded with a "
-                                    "valid frame rate)",
-                                    prefix);
                 }
         }
 
@@ -708,13 +725,11 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
         // accumulated we emit a warning summary so the line stands
         // out from the routine info-level traffic.
         if(_checkContinuity && snap.totalDiscontinuities > 0) {
-                promekiWarn("%s continuity: %lld discontinuities detected "
-                            "since open (see earlier warning lines for "
-                            "details on each)",
-                            prefix,
+                promekiWarn("  Continuity: %lld total discontinuities detected",
                             static_cast<long long>(snap.totalDiscontinuities));
         }
 
+        promekiInfo("=== END OF REPORT ===");
         _lastLogWallSec     = now;
         _framesSinceLastLog = 0;
 }
@@ -744,20 +759,30 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
                 _stats.lastEvent    = event;
         }
 
-        // Anything that needs human attention is logged immediately as
-        // a warning so it lands in the log file at the right point in
-        // wall time, with the same "Frame N:" prefix the periodic
-        // report uses so log readers can tie them together.  The
-        // discontinuities have pre-rendered descriptions courtesy of
-        // runContinuityCheck, so we just relay them here.
-        if(!event.discontinuities.isEmpty()) {
-                char prefix[32];
-                std::snprintf(prefix, sizeof(prefix), "Frame %lld:",
-                              static_cast<long long>(event.frameIndex));
-                for(const auto &d : event.discontinuities) {
-                        promekiWarn("%s discontinuity: %s",
-                                    prefix, d.description.cstr());
-                }
+        // Log every per-frame problem immediately as a warning so it
+        // lands in the log at the right point in wall time.  All lines
+        // share the "Frame N:" prefix so log readers can correlate
+        // them with the periodic report.
+
+        // Decode failures — the continuity check only catches failures
+        // that follow a previously-successful decode.  These warnings
+        // fire unconditionally so the first failure (and failures when
+        // continuity is disabled) are never silent.
+        if(_decodeImageData && !event.pictureDecoded) {
+                promekiWarn("Frame %lld: image data band decode failed",
+                            static_cast<long long>(event.frameIndex));
+        }
+        if(_decodeLtc && !event.ltcDecoded) {
+                promekiWarn("Frame %lld: LTC decode failed",
+                            static_cast<long long>(event.frameIndex));
+        }
+
+        // Discontinuities have pre-rendered descriptions courtesy of
+        // runContinuityCheck / runAvSyncCheck, so we relay them here.
+        for(const auto &d : event.discontinuities) {
+                promekiWarn("Frame %lld: discontinuity: %s",
+                            static_cast<long long>(event.frameIndex),
+                            d.description.cstr());
         }
 
         // Fire the per-frame callback (worker thread context — caller

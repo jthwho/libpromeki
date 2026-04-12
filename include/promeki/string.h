@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <cerrno>
 #include <cstring>
 #include <format>
 #include <utility>
@@ -617,6 +618,34 @@ class String {
                         return substr(length() - count, count);
                 }
 
+                /**
+                 * @brief Returns a copy truncated to at most @p maxChars characters.
+                 *
+                 * If the string already fits within @p maxChars it is returned
+                 * unchanged.  Otherwise the result is shortened and an
+                 * ellipsis ("...") is inserted to indicate the truncation.
+                 * The returned string (including the ellipsis) is guaranteed
+                 * to be no longer than @p maxChars.
+                 *
+                 * When @p maxChars is less than 3 there is not enough room
+                 * for the ellipsis, so the string is hard-truncated instead.
+                 *
+                 * @par Examples
+                 * @code
+                 *   String("Hello World").truncated(8);  // "Hello..."
+                 *   String("Hello World").truncated(11); // "Hello World"
+                 *   String("Hello World").truncated(2);  // "He"
+                 * @endcode
+                 *
+                 * @param maxChars Maximum number of characters in the result.
+                 * @return The (possibly truncated) string.
+                 */
+                String truncated(size_t maxChars) const {
+                        if(length() <= maxChars) return *this;
+                        if(maxChars < 3) return left(maxChars);
+                        return left(maxChars - 3) + "...";
+                }
+
                 // ============================================================
                 // Mutation (COW)
                 // ============================================================
@@ -1085,28 +1114,62 @@ class String {
                  * @return The converted value, or a default-constructed value on failure.
                  */
                 template <typename OutputType> OutputType to(Error *err = nullptr) const {
-                        const char *s = cstr();
-                        char *end = nullptr;
-                        OutputType ret{};
-                        if constexpr (std::is_integral_v<OutputType> && std::is_signed_v<OutputType>) {
-                                long long v = std::strtoll(s, &end, 10);
-                                ret = static_cast<OutputType>(v);
+                        if constexpr (std::is_same_v<OutputType, bool>) {
+                                return toBool(err);
+                        } else if constexpr (std::is_integral_v<OutputType> && std::is_signed_v<OutputType>) {
+                                int base = 10;
+                                String cleaned = prepareIntParse(cstr(), &base);
+                                const char *s = cleaned.cstr();
+                                char *end = nullptr;
+                                errno = 0;
+                                long long v = std::strtoll(s, &end, base);
+                                if(end == s || *end != '\0') {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return OutputType{};
+                                }
+                                if(errno == ERANGE) {
+                                        if(err != nullptr) *err = Error::OutOfRange;
+                                        return OutputType{};
+                                }
+                                if(err != nullptr) *err = Error::Ok;
+                                return static_cast<OutputType>(v);
                         } else if constexpr (std::is_integral_v<OutputType> && std::is_unsigned_v<OutputType>) {
-                                unsigned long long v = std::strtoull(s, &end, 10);
-                                ret = static_cast<OutputType>(v);
+                                int base = 10;
+                                String cleaned = prepareIntParse(cstr(), &base);
+                                const char *s = cleaned.cstr();
+                                char *end = nullptr;
+                                errno = 0;
+                                unsigned long long v = std::strtoull(s, &end, base);
+                                if(end == s || *end != '\0') {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return OutputType{};
+                                }
+                                if(errno == ERANGE) {
+                                        if(err != nullptr) *err = Error::OutOfRange;
+                                        return OutputType{};
+                                }
+                                if(err != nullptr) *err = Error::Ok;
+                                return static_cast<OutputType>(v);
                         } else if constexpr (std::is_floating_point_v<OutputType>) {
+                                String cleaned = stripNumericSeparators(cstr());
+                                const char *s = cleaned.cstr();
+                                char *end = nullptr;
+                                errno = 0;
                                 double v = std::strtod(s, &end);
-                                ret = static_cast<OutputType>(v);
+                                if(end == s || *end != '\0') {
+                                        if(err != nullptr) *err = Error::Invalid;
+                                        return OutputType{};
+                                }
+                                if(errno == ERANGE) {
+                                        if(err != nullptr) *err = Error::OutOfRange;
+                                        return OutputType{};
+                                }
+                                if(err != nullptr) *err = Error::Ok;
+                                return static_cast<OutputType>(v);
                         } else {
-                                if(err != nullptr) *err = Error::Invalid;
-                                return ret;
-                        }
-                        if(end == s || *end != '\0') {
                                 if(err != nullptr) *err = Error::Invalid;
                                 return OutputType{};
                         }
-                        if(err != nullptr) *err = Error::Ok;
-                        return ret;
                 }
 
                 /**
@@ -1156,6 +1219,32 @@ class String {
 
                 explicit String(StringData *data)
                         : d(SharedPtr<StringData>::takeOwnership(data)) {}
+
+                /**
+                 * @brief Strips digit-group separators from a numeric string.
+                 *
+                 * Removes @c ', @c _, and @c , characters from the input,
+                 * returning a cleaned copy suitable for @c std::strtod.
+                 *
+                 * @param s  Null-terminated input.
+                 * @return   Cleaned string.
+                 */
+                static String stripNumericSeparators(const char *s);
+
+                /**
+                 * @brief Preprocesses a string for integer parsing.
+                 *
+                 * Strips digit-group separators (@c ', @c _, @c ,) and
+                 * detects base prefixes (@c 0x/@c 0X for hex, @c 0b/@c 0B
+                 * for binary, @c 0o/@c 0O for octal).  The prefix is removed
+                 * from the returned string and the detected base (2, 8, 10,
+                 * or 16) is written through @p base.
+                 *
+                 * @param s    Null-terminated input.
+                 * @param base Receives the detected base (never null).
+                 * @return     Cleaned string without the base prefix.
+                 */
+                static String prepareIntParse(const char *s, int *base);
 };
 
 /** @brief Concatenation with a C string on the left-hand side. */

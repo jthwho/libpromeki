@@ -5,6 +5,7 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cerrno>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -312,6 +313,61 @@ String &String::arg(const String &str) {
 // Conversion
 // ============================================================================
 
+// ----------------------------------------------------------------------------
+// Numeric string preprocessing
+// ----------------------------------------------------------------------------
+
+String String::stripNumericSeparators(const char *s) {
+        String result;
+        while(*s) {
+                char c = *s++;
+                if(c == '\'' || c == '_' || c == ',') continue;
+                result += c;
+        }
+        return result;
+}
+
+String String::prepareIntParse(const char *s, int *base) {
+        String result;
+        *base = 10;
+        const char *p = s;
+
+        // Preserve leading whitespace (strtoll skips it anyway).
+        while(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') {
+                result += *p++;
+        }
+
+        // Preserve optional sign.
+        if(*p == '+' || *p == '-') {
+                result += *p++;
+        }
+
+        // Detect and consume base prefix.
+        if(*p == '0' && p[1] != '\0') {
+                char next = p[1];
+                if(next == 'x' || next == 'X') {
+                        *base = 16; p += 2;
+                } else if(next == 'b' || next == 'B') {
+                        *base = 2; p += 2;
+                } else if(next == 'o' || next == 'O') {
+                        *base = 8; p += 2;
+                }
+        }
+
+        // Copy remaining characters, stripping separators.
+        while(*p) {
+                char c = *p++;
+                if(c == '\'' || c == '_' || c == ',') continue;
+                result += c;
+        }
+
+        return result;
+}
+
+// ----------------------------------------------------------------------------
+// Convenience numeric conversions
+// ----------------------------------------------------------------------------
+
 bool String::toBool(Error *e) const {
         Error err;
         bool ret = false;
@@ -335,46 +391,61 @@ bool String::toBool(Error *e) const {
 }
 
 int String::toInt(Error *e) const {
-        Error err;
-        int ret = 0;
-        try {
-                ret = std::stoi(d->str());
-        } catch(const std::invalid_argument &) {
-                err = Error::Invalid;
-        } catch(const std::out_of_range &) {
-                err = Error::OutOfRange;
+        int base = 10;
+        String cleaned = prepareIntParse(cstr(), &base);
+        char *end = nullptr;
+        const char *s = cleaned.cstr();
+        errno = 0;
+        long long v = std::strtoll(s, &end, base);
+        if(end == s || *end != '\0') {
+                if(e != nullptr) *e = Error::Invalid;
+                return 0;
         }
-        if(e != nullptr) *e = err;
-        return ret;
+        if(errno == ERANGE ||
+           v > std::numeric_limits<int>::max() ||
+           v < std::numeric_limits<int>::min()) {
+                if(e != nullptr) *e = Error::OutOfRange;
+                return 0;
+        }
+        if(e != nullptr) *e = Error::Ok;
+        return static_cast<int>(v);
 }
 
 unsigned int String::toUInt(Error *e) const {
-        Error err;
-        unsigned long ret = 0;
-        try {
-                ret = std::stoul(d->str());
-        } catch(const std::invalid_argument &) {
-                err = Error::Invalid;
-        } catch(const std::out_of_range &) {
-                err = Error::OutOfRange;
+        int base = 10;
+        String cleaned = prepareIntParse(cstr(), &base);
+        char *end = nullptr;
+        const char *s = cleaned.cstr();
+        errno = 0;
+        unsigned long long v = std::strtoull(s, &end, base);
+        if(end == s || *end != '\0') {
+                if(e != nullptr) *e = Error::Invalid;
+                return 0;
         }
-        if(ret > static_cast<unsigned long>(std::numeric_limits<unsigned int>::max())) err = Error::OutOfRange;
-        if(e != nullptr) *e = err;
-        return ret;
+        if(errno == ERANGE || v > std::numeric_limits<unsigned int>::max()) {
+                if(e != nullptr) *e = Error::OutOfRange;
+                return 0;
+        }
+        if(e != nullptr) *e = Error::Ok;
+        return static_cast<unsigned int>(v);
 }
 
 double String::toDouble(Error *e) const {
-        Error err;
-        double ret = 0.0;
-        try {
-                ret = std::stod(d->str());
-        } catch(const std::invalid_argument &) {
-                err = Error::Invalid;
-        } catch(const std::out_of_range &) {
-                err = Error::OutOfRange;
+        String cleaned = stripNumericSeparators(cstr());
+        char *end = nullptr;
+        const char *s = cleaned.cstr();
+        errno = 0;
+        double v = std::strtod(s, &end);
+        if(end == s || *end != '\0') {
+                if(e != nullptr) *e = Error::Invalid;
+                return 0.0;
         }
-        if(e != nullptr) *e = err;
-        return ret;
+        if(errno == ERANGE) {
+                if(e != nullptr) *e = Error::OutOfRange;
+                return 0.0;
+        }
+        if(e != nullptr) *e = Error::Ok;
+        return v;
 }
 
 int64_t String::parseNumberWords(Error *err) const {

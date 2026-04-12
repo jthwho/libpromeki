@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <promeki/mediaiotask_imagefile.h>
+#include <promeki/audio.h>
 #include <promeki/imagefileio.h>
 #include <promeki/iodevice.h>
 #include <promeki/image.h>
@@ -113,6 +114,39 @@ static bool filenameHasMask(const String &name) {
 
 static bool filenameIsImgSeqSidecar(const String &filename) {
         return extensionOf(filename) == kImgSeqExtension;
+}
+
+// Strip trailing non-alphanumeric characters from a NumName prefix.
+// Shared by the audio and imgseq sidecar naming helpers.
+static String sidecarPrefix(const NumName &nn) {
+        String px = nn.prefix();
+        while(!px.isEmpty()) {
+                char c = px[px.size() - 1];
+                if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                   (c >= '0' && c <= '9')) {
+                        break;
+                }
+                px = px.left(px.size() - 1);
+        }
+        return px;
+}
+
+// Derive a sidecar audio filename from a sequence pattern.
+// Strip trailing non-alphanumeric characters from the prefix and
+// append ".wav".  If the prefix is empty, fall back to "audio.wav".
+static String sidecarAudioName(const NumName &nn) {
+        String px = sidecarPrefix(nn);
+        if(px.isEmpty()) return String("audio.wav");
+        return px + ".wav";
+}
+
+// Derive a sidecar .imgseq filename from a sequence pattern.
+// Uses the same prefix-stripping logic as the audio sidecar:
+// "shot_####.dpx" → "shot.imgseq", "####.dpx" → "sequence.imgseq".
+static String sidecarImgSeqName(const NumName &nn) {
+        String px = sidecarPrefix(nn);
+        if(px.isEmpty()) return String("sequence.imgseq");
+        return px + ".imgseq";
 }
 
 // ============================================================================
@@ -222,8 +256,12 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                         s(MediaConfig::VideoPixelFormat, PixelDesc());
                         s(MediaConfig::FrameRate, DefaultFrameRate);
                         s(MediaConfig::SequenceHead, int32_t(DefaultSequenceHead));
+                        s(MediaConfig::SaveImgSeqEnabled, true);
                         s(MediaConfig::SaveImgSeqPath, String());
                         s(MediaConfig::SaveImgSeqPathMode, ImgSeqPathMode::Relative);
+                        s(MediaConfig::SidecarAudioEnabled, true);
+                        s(MediaConfig::SidecarAudioPath, String());
+                        s(MediaConfig::AudioSource, AudioSourceHint::Sidecar);
                         return specs;
                 },
                 []() -> Metadata {
@@ -264,6 +302,15 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                         m.set(Metadata::TransferCharacteristic, int(0));
                         m.set(Metadata::Colorimetric,           int(0));
                         m.set(Metadata::Orientation,            int(0));
+                        // Sidecar audio (BWF) metadata forwarded to
+                        // the sidecar audio file when present.
+                        m.set(Metadata::EnableBWF,              false);
+                        m.set(Metadata::Description,            String());
+                        m.set(Metadata::Originator,             String());
+                        m.set(Metadata::OriginatorReference,    String());
+                        m.set(Metadata::OriginationDateTime,    String());
+                        m.set(Metadata::CodingHistory,          String());
+                        m.set(Metadata::UMID,                   String());
                         return m;
                 },
                 probeImageDevice
@@ -287,9 +334,11 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         _filename = cfg.getAs<String>(MediaConfig::Filename);
         _mode = cmd.mode;
         _sequenceMode = false;
+        _saveImgSeqEnabled = cfg.getAs<bool>(MediaConfig::SaveImgSeqEnabled, true);
         _saveImgSeqPath = cfg.getAs<String>(MediaConfig::SaveImgSeqPath, String());
         _saveImgSeqPathMode = cfg.get(MediaConfig::SaveImgSeqPathMode)
                 .asEnum(ImgSeqPathMode::Type, nullptr);
+        _sidecarAudioEnabled = cfg.getAs<bool>(MediaConfig::SidecarAudioEnabled, true);
 
         // Resolve the reported frame rate with a documented priority:
         //   1. Writer with a valid pendingMediaDesc frame rate
@@ -471,6 +520,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
         PixelDesc hintPixel = cfg.getAs<PixelDesc>(MediaConfig::VideoPixelFormat, PixelDesc());
         Metadata  sidecarMeta;
         FrameRate sidecarFps;
+        String    sidecarAudioFile;         // From .imgseq "audioFile" field
 
         if(filenameIsImgSeqSidecar(_filename)) {
                 // Load the sidecar: this gives us the pattern and
@@ -511,6 +561,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                         hintPixel = seq.pixelDesc();
                 }
                 sidecarMeta = seq.metadata();
+                sidecarAudioFile = seq.audioFile();
         } else {
                 // Mask supplied directly (e.g. "seq_####.dpx").  The
                 // parent directory is the directory portion of the
@@ -522,6 +573,38 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 if(dir.isEmpty()) dir = FilePath(".");
                 String maskName = full.fileName();
                 pattern = NumName::fromMask(maskName);
+
+                // Auto-discover a conventionally-named .imgseq sidecar
+                // sitting next to the image files.  If found, pull out
+                // the optional extras (head/tail, frame rate, size,
+                // pixel desc, metadata, audio file) so the mask-based
+                // open gets the same benefits as opening the sidecar
+                // directly.
+                if(_saveImgSeqEnabled && pattern.isValid()) {
+                        FilePath imgseqPath = dir / sidecarImgSeqName(pattern);
+                        if(imgseqPath.exists()) {
+                                Error sErr;
+                                ImgSeq seq = ImgSeq::load(imgseqPath, &sErr);
+                                if(sErr.isOk() && seq.isValid()) {
+                                        if(seq.head() != 0 || seq.tail() != 0) {
+                                                head = static_cast<int64_t>(seq.head());
+                                                tail = static_cast<int64_t>(seq.tail());
+                                        }
+                                        if(seq.frameRate().isValid()) {
+                                                sidecarFps = seq.frameRate();
+                                        }
+                                        if(seq.videoSize().width() > 0 &&
+                                           seq.videoSize().height() > 0) {
+                                                hintSize = seq.videoSize();
+                                        }
+                                        if(seq.pixelDesc().isValid()) {
+                                                hintPixel = seq.pixelDesc();
+                                        }
+                                        sidecarMeta = seq.metadata();
+                                        sidecarAudioFile = seq.audioFile();
+                                }
+                        }
+                }
         }
 
         if(!pattern.isValid()) {
@@ -654,7 +737,110 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 meta.set(Metadata::FrameRateSource, frSource);
                 cmd.metadata = meta;
                 cmd.frameCount = _seqTail - _seqHead + 1;
+
+                // --- Audio source selection (reader) ---
+                //
+                // Two audio sources may be available:
+                //   1. Embedded per-frame audio (e.g. DPX user-data
+                //      blocks) — already surfaced in mediaDesc above.
+                //   2. Sidecar audio file (Broadcast WAV).
+                //
+                // AudioSourceHint selects which is preferred; if the
+                // preferred source is unavailable, fall back to the
+                // other.  SidecarAudioEnabled=false skips the sidecar
+                // probe entirely.
+                bool hasEmbeddedAudio = !mediaDesc.audioList().isEmpty();
+                bool hasSidecarAudio = false;
+
+                if(_sidecarAudioEnabled) {
+                        // Resolve the sidecar path.  Priority: .imgseq
+                        // audioFile field, config override, auto-derived.
+                        String audioPath;
+                        if(!sidecarAudioFile.isEmpty()) {
+                                FilePath ap(sidecarAudioFile);
+                                if(ap.isAbsolute()) {
+                                        audioPath = sidecarAudioFile;
+                                } else {
+                                        audioPath = (dir / sidecarAudioFile).toString();
+                                }
+                        } else {
+                                String cfgPath = cfg.getAs<String>(MediaConfig::SidecarAudioPath, String());
+                                if(!cfgPath.isEmpty()) {
+                                        FilePath ap(cfgPath);
+                                        if(ap.isAbsolute()) {
+                                                audioPath = cfgPath;
+                                        } else {
+                                                audioPath = (dir / cfgPath).toString();
+                                        }
+                                } else {
+                                        audioPath = (dir / sidecarAudioName(pattern)).toString();
+                                }
+                        }
+
+                        if(FilePath(audioPath).exists()) {
+                                _sidecarAudio = AudioFile::createReader(audioPath);
+                                if(!_sidecarAudio.isValid()) {
+                                        promekiErr("MediaIOTask_ImageFile: failed to create sidecar audio reader for '%s'",
+                                                audioPath.cstr());
+                                        return Error::NotSupported;
+                                }
+                                Error audioErr = _sidecarAudio.open();
+                                if(audioErr.isError()) {
+                                        promekiErr("MediaIOTask_ImageFile: sidecar audio open '%s' failed: %s",
+                                                audioPath.cstr(), audioErr.name().cstr());
+                                        return audioErr;
+                                }
+                                _sidecarAudioDesc = _sidecarAudio.desc();
+                                _sidecarAudioPath = audioPath;
+                                _sidecarFrameRate = mediaDesc.frameRate();
+                                _sidecarSampleRate = static_cast<int64_t>(
+                                        _sidecarAudioDesc.sampleRate());
+                                hasSidecarAudio = true;
+                        }
+                }
+
+                // Decide which source to activate based on the hint.
+                Enum sourceHint = cfg.get(MediaConfig::AudioSource)
+                        .asEnum(AudioSourceHint::Type, nullptr);
+                bool preferSidecar = !sourceHint.isValid() ||
+                        sourceHint == AudioSourceHint::Sidecar;
+
+                bool useSidecar;
+                if(preferSidecar) {
+                        useSidecar = hasSidecarAudio ? true : false;
+                } else {
+                        // Prefer embedded; fall back to sidecar.
+                        useSidecar = hasEmbeddedAudio ? false : hasSidecarAudio;
+                }
+
+                if(useSidecar) {
+                        _sidecarAudioOpen = true;
+                        mediaDesc.audioList().clear();
+                        mediaDesc.audioList().pushToBack(_sidecarAudioDesc);
+                        cmd.audioDesc = _sidecarAudioDesc;
+                } else if(hasSidecarAudio) {
+                        // We opened the sidecar but won't use it — close.
+                        _sidecarAudio.close();
+                        _sidecarAudio = AudioFile();
+                        _sidecarAudioDesc = AudioDesc();
+                        _sidecarAudioPath = String();
+                        _sidecarFrameRate = FrameRate();
+                        _sidecarSampleRate = 0;
+                }
+
         } else {
+                // Ensure the output directory exists, creating any
+                // missing parents along the way.
+                Dir outDir(dir);
+                if(!outDir.exists()) {
+                        Error mkErr = outDir.mkpath();
+                        if(mkErr.isError()) {
+                                promekiErr("MediaIOTask_ImageFile: failed to create output directory '%s': %s",
+                                        dir.toString().cstr(), mkErr.name().cstr());
+                                return mkErr;
+                        }
+                }
+
                 // Writer: start at either the configured head or the
                 // default.  The writer hasn't written anything yet, so
                 // frameCount is 0 and will be updated after each write.
@@ -683,6 +869,79 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 // Date, Software, Originator, UMID, etc.
                 _writeContainerMetadata = meta;
                 cmd.frameCount = 0;
+
+                // --- Auto-derive .imgseq sidecar path (writer) ---
+                if(_saveImgSeqEnabled && _saveImgSeqPath.isEmpty()) {
+                        _saveImgSeqPath = (dir / sidecarImgSeqName(pattern)).toString();
+                }
+
+                // --- Sidecar audio setup (writer) ---
+                if(_sidecarAudioEnabled) {
+                        // Resolve AudioDesc from pending inputs.
+                        AudioDesc audioDesc;
+                        if(cmd.pendingAudioDesc.isValid()) {
+                                audioDesc = cmd.pendingAudioDesc;
+                        } else if(!cmd.pendingMediaDesc.audioList().isEmpty()) {
+                                audioDesc = cmd.pendingMediaDesc.audioList()[0];
+                        }
+
+                        if(audioDesc.isValid()) {
+                                // Derive sidecar audio path.
+                                String cfgPath = cfg.getAs<String>(MediaConfig::SidecarAudioPath, String());
+                                String audioPath;
+                                String audioName;
+                                if(!cfgPath.isEmpty()) {
+                                        FilePath ap(cfgPath);
+                                        if(ap.isAbsolute()) {
+                                                audioPath = cfgPath;
+                                                audioName = ap.fileName();
+                                        } else {
+                                                audioPath = (dir / cfgPath).toString();
+                                                audioName = cfgPath;
+                                        }
+                                } else {
+                                        audioName = sidecarAudioName(pattern);
+                                        audioPath = (dir / audioName).toString();
+                                }
+
+                                // Build audio metadata: start from the
+                                // container metadata (which already has
+                                // write defaults applied), enable BWF,
+                                // and set the FrameRate for time_reference
+                                // computation.
+                                Metadata audioMeta = _writeContainerMetadata;
+                                audioMeta.set(Metadata::EnableBWF, true);
+                                audioMeta.set(Metadata::FrameRate,
+                                        _writerFrameRate.toDouble());
+                                // AudioDesc-level values win.
+                                audioMeta.merge(audioDesc.metadata());
+                                audioDesc.metadata() = std::move(audioMeta);
+
+                                _sidecarAudio = AudioFile::createWriter(audioPath);
+                                if(!_sidecarAudio.isValid()) {
+                                        promekiErr("MediaIOTask_ImageFile: failed to create sidecar audio writer for '%s'",
+                                                audioPath.cstr());
+                                        return Error::NotSupported;
+                                }
+                                _sidecarAudio.setDesc(audioDesc);
+                                Error audioErr = _sidecarAudio.open();
+                                if(audioErr.isError()) {
+                                        promekiErr("MediaIOTask_ImageFile: sidecar audio open '%s' for write failed: %s",
+                                                audioPath.cstr(), audioErr.name().cstr());
+                                        return audioErr;
+                                }
+                                _sidecarAudioDesc = audioDesc;
+                                _sidecarAudioPath = audioPath;
+                                _sidecarAudioName = audioName;
+                                _sidecarAudioOpen = true;
+                                _sidecarFrameRate = _writerFrameRate;
+                                _sidecarSampleRate = static_cast<int64_t>(
+                                        _sidecarAudioDesc.sampleRate());
+
+                                mediaDesc.audioList().pushToBack(_sidecarAudioDesc);
+                                cmd.audioDesc = _sidecarAudioDesc;
+                        }
+                }
         }
 
         cmd.canSeek = (cmd.mode == MediaIO::Output);
@@ -695,6 +954,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
 // ----------------------------------------------------------------------------
 
 Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
+        if(!_saveImgSeqEnabled) return Error::Ok;
         if(_saveImgSeqPath.isEmpty()) return Error::Ok;
         if(_writeCount <= 0) {
                 promekiInfo("MediaIOTask_ImageFile: skipping .imgseq sidecar — no frames written");
@@ -712,6 +972,9 @@ Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
         }
         if(_seqPixelDesc.isValid()) {
                 seq.setPixelDesc(_seqPixelDesc);
+        }
+        if(!_sidecarAudioName.isEmpty()) {
+                seq.setAudioFile(_sidecarAudioName);
         }
 
         // If SaveImgSeqPath is relative, resolve it against the image
@@ -761,6 +1024,12 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
                 writeImgSeqSidecar();
         }
 
+        // Close the sidecar audio file before resetting state.
+        if(_sidecarAudioOpen) {
+                _sidecarAudio.close();
+                _sidecarAudioOpen = false;
+        }
+
         _frame = {};
         _filename = String();
         _imageFileID = ImageFile::Invalid;
@@ -770,6 +1039,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         _loaded = false;
         _writeContainerMetadata = Metadata();
         _ioConfig = MediaConfig();
+        _saveImgSeqEnabled = true;
         _saveImgSeqPath = String();
         _saveImgSeqPathMode = Enum();
         _writerFrameRate = FrameRate();
@@ -784,6 +1054,14 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         _seqMetadata = Metadata();
         _seqSize = Size2Du32();
         _seqPixelDesc = PixelDesc();
+
+        _sidecarAudio = AudioFile();
+        _sidecarAudioDesc = AudioDesc();
+        _sidecarAudioPath = String();
+        _sidecarFrameRate = FrameRate();
+        _sidecarSampleRate = 0;
+        _sidecarAudioEnabled = true;
+        _sidecarAudioName = String();
         return Error::Ok;
 }
 
@@ -841,6 +1119,22 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
         Metadata &fm = frame.modify()->metadata();
         fm.merge(_seqMetadata);
         fm.set(Metadata::FrameNumber, frameNum);
+
+        // Read sidecar audio for this frame.
+        if(_sidecarAudioOpen) {
+                size_t spf = _sidecarFrameRate.samplesPerFrame(
+                        _sidecarSampleRate, _seqIndex);
+                Audio sidecarAudio;
+                Error audioErr = _sidecarAudio.read(sidecarAudio, spf);
+                if(audioErr.isError()) {
+                        promekiErr("MediaIOTask_ImageFile: sidecar audio read failed: %s",
+                                audioErr.name().cstr());
+                        return audioErr;
+                }
+                // Sidecar audio replaces any embedded per-frame audio.
+                frame.modify()->audioList().clear();
+                frame.modify()->audioList().pushToBack(Audio::Ptr::create(sidecarAudio));
+        }
 
         cmd.frame = frame;
         cmd.currentFrame = _seqIndex + 1;
@@ -910,6 +1204,33 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
                         fn.cstr(), err.name().cstr());
                 return err;
         }
+
+        // Write audio to the sidecar file.
+        if(_sidecarAudioOpen) {
+                if(!cmd.frame->audioList().isEmpty()) {
+                        const Audio &audio = *cmd.frame->audioList()[0];
+                        Error audioErr = _sidecarAudio.write(audio);
+                        if(audioErr.isError()) {
+                                promekiErr("MediaIOTask_ImageFile: sidecar audio write failed: %s",
+                                        audioErr.name().cstr());
+                                return audioErr;
+                        }
+                } else {
+                        // No audio on this frame — write silence to
+                        // maintain frame-accurate sync.
+                        size_t spf = _sidecarFrameRate.samplesPerFrame(
+                                _sidecarSampleRate, _writeCount);
+                        Audio silence(_sidecarAudioDesc, spf);
+                        silence.zero();
+                        Error audioErr = _sidecarAudio.write(silence);
+                        if(audioErr.isError()) {
+                                promekiErr("MediaIOTask_ImageFile: sidecar audio silence write failed: %s",
+                                        audioErr.name().cstr());
+                                return audioErr;
+                        }
+                }
+        }
+
         _writeCount++;
         if(frameNum > _seqTail) _seqTail = frameNum;
         cmd.currentFrame = _writeCount;
@@ -930,6 +1251,19 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandSeek &cmd) {
         if(target >= length) target = length - 1;
         _seqIndex = target;
         _seqAtEnd = false;
+
+        // Seek the sidecar audio to the corresponding sample position.
+        if(_sidecarAudioOpen) {
+                size_t targetSample = static_cast<size_t>(
+                        _sidecarFrameRate.cumulativeTicks(_sidecarSampleRate, target));
+                Error audioErr = _sidecarAudio.seekToSample(targetSample);
+                if(audioErr.isError()) {
+                        promekiErr("MediaIOTask_ImageFile: sidecar audio seek to sample %zu failed: %s",
+                                targetSample, audioErr.name().cstr());
+                        return audioErr;
+                }
+        }
+
         cmd.currentFrame = _seqIndex;
         return Error::Ok;
 }

@@ -10,6 +10,8 @@
 #include <promeki/namespace.h>
 #include <promeki/mediaiotask.h>
 #include <promeki/imagefile.h>
+#include <promeki/audiofile.h>
+#include <promeki/audiodesc.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/mediadesc.h>
 #include <promeki/metadata.h>
@@ -102,8 +104,12 @@ PROMEKI_NAMESPACE_BEGIN
  * | @ref MediaConfig::VideoPixelFormat | PixelDesc | — | Pixel description for headerless formats. |
  * | @ref MediaConfig::FrameRate        | FrameRate | 30/1 | Reported frame rate for the still image or sequence. |
  * | @ref MediaConfig::SequenceHead     | int       | 1 | First frame number for a sequence writer. |
- * | @ref MediaConfig::SaveImgSeqPath   | String    | — | Path for @c .imgseq sidecar written on close (writer only). |
+ * | @ref MediaConfig::SaveImgSeqEnabled | bool      | true | Enable automatic @c .imgseq sidecar (read + write). |
+ * | @ref MediaConfig::SaveImgSeqPath   | String    | — | Override path for @c .imgseq sidecar (empty = auto-derive from pattern). |
  * | @ref MediaConfig::SaveImgSeqPathMode | Enum @ref ImgSeqPathMode | Relative | Whether sidecar dir reference is relative or absolute. |
+ * | @ref MediaConfig::SidecarAudioEnabled | bool   | true | Enable automatic sidecar Broadcast WAV (read + write). |
+ * | @ref MediaConfig::SidecarAudioPath  | String   | — | Override path for the sidecar audio file (empty = auto-derive from pattern). |
+ * | @ref MediaConfig::AudioSource       | Enum @ref AudioSourceHint | Sidecar | Preferred audio source when reading (sidecar vs. embedded). |
  */
 class MediaIOTask_ImageFile : public MediaIOTask {
         public:
@@ -150,6 +156,7 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 bool            _sequenceMode = false;
                 Metadata        _writeContainerMetadata; ///< @brief Container metadata merged into each written frame (writer only).
                 MediaConfig     _ioConfig;          ///< @brief Open-time MediaConfig forwarded to ImageFileIO load/save calls.
+                bool            _saveImgSeqEnabled = true; ///< @brief Config-level switch for .imgseq sidecar.
                 String          _saveImgSeqPath;    ///< @brief Path for .imgseq sidecar written on close (writer only).
                 Enum            _saveImgSeqPathMode; ///< @brief Relative or Absolute path mode for the sidecar.
                 FrameRate       _writerFrameRate;   ///< @brief Resolved frame rate stashed for the sidecar.
@@ -170,6 +177,16 @@ class MediaIOTask_ImageFile : public MediaIOTask {
                 Metadata        _seqMetadata;        ///< @brief Sidecar-supplied metadata merged onto frames.
                 Size2Du32       _seqSize;            ///< @brief Size hint for headerless formats.
                 PixelDesc       _seqPixelDesc;       ///< @brief Pixel desc hint for headerless formats.
+
+                // Sidecar audio state (sequence mode only)
+                AudioFile       _sidecarAudio;       ///< @brief Reader/writer handle for the sidecar audio file.
+                AudioDesc       _sidecarAudioDesc;   ///< @brief Audio format descriptor for the sidecar.
+                String          _sidecarAudioPath;   ///< @brief Resolved path to the sidecar audio file.
+                FrameRate       _sidecarFrameRate;   ///< @brief Frame rate for per-frame sample accounting.
+                int64_t         _sidecarSampleRate = 0; ///< @brief Audio sample rate (int64_t for FrameRate API).
+                bool            _sidecarAudioOpen = false;   ///< @brief True when the sidecar file is open.
+                bool            _sidecarAudioEnabled = true; ///< @brief Config-level master switch.
+                String          _sidecarAudioName;   ///< @brief Bare filename of the sidecar (for .imgseq output).
 };
 
 PROMEKI_NAMESPACE_END

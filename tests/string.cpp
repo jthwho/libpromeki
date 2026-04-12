@@ -390,6 +390,33 @@ TEST_CASE("String_Substrings") {
         CHECK(s.find('W') == 6);
 }
 
+TEST_CASE("String_Truncated") {
+        String s = "Hello World";
+
+        SUBCASE("No truncation when string fits") {
+                CHECK(s.truncated(11) == "Hello World");
+                CHECK(s.truncated(20) == "Hello World");
+        }
+
+        SUBCASE("Truncation with ellipsis") {
+                CHECK(s.truncated(8) == "Hello...");
+                CHECK(s.truncated(4) == "H...");
+                CHECK(s.truncated(3) == "...");
+        }
+
+        SUBCASE("Hard truncation when maxChars < 3") {
+                CHECK(s.truncated(2) == "He");
+                CHECK(s.truncated(1) == "H");
+                CHECK(s.truncated(0) == "");
+        }
+
+        SUBCASE("Empty string") {
+                String empty;
+                CHECK(empty.truncated(5) == "");
+                CHECK(empty.truncated(0) == "");
+        }
+}
+
 // ============================================================================
 // Find and Contains
 // ============================================================================
@@ -858,6 +885,136 @@ TEST_CASE("String_NumericConversions_EdgeCases") {
         double d = String("").to<double>(&err4);
         CHECK(err4.isError());
         CHECK(d == 0.0);
+}
+
+TEST_CASE("String_NumericConversions_BasePrefixes") {
+        // Hexadecimal
+        CHECK(String("0xDEADBEEF").to<uint32_t>() == 0xDEADBEEF);
+        CHECK(String("0xFF").to<int>() == 255);
+        CHECK(String("0XFF").to<int>() == 255);
+        CHECK(String("-0xFF").to<int>() == -255);
+        CHECK(String("0x0").to<int>() == 0);
+
+        // Binary
+        CHECK(String("0b1010").to<int>() == 10);
+        CHECK(String("0B11111111").to<uint8_t>() == 255);
+        CHECK(String("-0b1010").to<int>() == -10);
+
+        // Octal
+        CHECK(String("0o777").to<int>() == 511);
+        CHECK(String("0O10").to<int>() == 8);
+        CHECK(String("-0o77").to<int>() == -63);
+
+        // Plain decimal still works
+        CHECK(String("42").to<int>() == 42);
+        CHECK(String("0").to<int>() == 0);
+        CHECK(String("-7").to<int>() == -7);
+
+        // toInt/toUInt also handle prefixes
+        CHECK(String("0xFF").toInt() == 255);
+        CHECK(String("0b1010").toInt() == 10);
+        CHECK(String("0o777").toInt() == 511);
+        CHECK(String("0xDEADBEEF").toUInt() == 0xDEADBEEF);
+}
+
+TEST_CASE("String_NumericConversions_Separators") {
+        // Underscores
+        CHECK(String("1_000_000").to<int>() == 1000000);
+        CHECK(String("0xDEAD_BEEF").to<uint32_t>() == 0xDEADBEEF);
+        CHECK(String("0b1111_0000").to<int>() == 0xF0);
+
+        // Commas
+        CHECK(String("1,000,000").to<int>() == 1000000);
+
+        // Apostrophes (C++ digit separator style)
+        CHECK(String("1'000'000").to<int>() == 1000000);
+
+        // Mixed separators
+        CHECK(String("1_000,000'000").to<int64_t>() == 1000000000LL);
+
+        // Float with separators
+        Error err;
+        double d = String("1_000.5").to<double>(&err);
+        CHECK(err.isOk());
+        CHECK(d == doctest::Approx(1000.5));
+
+        CHECK(String("1,234,567.89").to<double>() == doctest::Approx(1234567.89));
+
+        // toInt/toUInt/toDouble also strip separators
+        CHECK(String("1_000").toInt() == 1000);
+        CHECK(String("1_000").toUInt() == 1000);
+        CHECK(String("1_000.5").toDouble() == doctest::Approx(1000.5));
+}
+
+TEST_CASE("String_NumericConversions_BasePrefixErrors") {
+        // Invalid digits for the base
+        Error err;
+        int v = String("0b2").to<int>(&err);
+        CHECK(err.isError());
+        CHECK(v == 0);
+
+        Error err2;
+        int v2 = String("0o8").to<int>(&err2);
+        CHECK(err2.isError());
+        CHECK(v2 == 0);
+
+        // Just a prefix with no digits
+        Error err3;
+        int v3 = String("0x").to<int>(&err3);
+        CHECK(err3.isError());
+        CHECK(v3 == 0);
+}
+
+TEST_CASE("String_NumericConversions_Overflow") {
+        // Overflow for signed 64-bit
+        Error err;
+        int64_t v = String("99999999999999999999").to<int64_t>(&err);
+        CHECK(err == Error::OutOfRange);
+        CHECK(v == 0);
+
+        // Overflow for unsigned 64-bit
+        Error err2;
+        uint64_t v2 = String("99999999999999999999").to<uint64_t>(&err2);
+        CHECK(err2 == Error::OutOfRange);
+        CHECK(v2 == 0);
+
+        // toInt overflow (value exceeds int range but fits long long)
+        Error err3;
+        int v3 = String("9999999999").toInt(&err3);
+        CHECK(err3 == Error::OutOfRange);
+        CHECK(v3 == 0);
+
+        // toUInt overflow
+        Error err4;
+        unsigned int v4 = String("9999999999").toUInt(&err4);
+        CHECK(err4 == Error::OutOfRange);
+        CHECK(v4 == 0);
+
+        // Double overflow
+        Error err5;
+        double v5 = String("1e9999").to<double>(&err5);
+        CHECK(err5 == Error::OutOfRange);
+        CHECK(v5 == 0.0);
+}
+
+TEST_CASE("String_NumericConversions_Bool") {
+        // to<bool>() should delegate to toBool() and handle
+        // string representations, not just numeric ones.
+        Error err;
+        CHECK(String("true").to<bool>(&err) == true);
+        CHECK(err.isOk());
+
+        CHECK(String("false").to<bool>() == false);
+        CHECK(String("TRUE").to<bool>() == true);
+        CHECK(String("FALSE").to<bool>() == false);
+        CHECK(String("1").to<bool>() == true);
+        CHECK(String("0").to<bool>() == false);
+
+        // Invalid bool string
+        Error err2;
+        bool b = String("maybe").to<bool>(&err2);
+        CHECK(err2.isError());
+        CHECK(b == false);
 }
 
 // ============================================================================

@@ -9,16 +9,12 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
-#include <system_error>
 
 #include <promeki/buffer.h>
 #include <promeki/cmdlineparser.h>
 #include <promeki/error.h>
-#include <promeki/filepath.h>
 #include <promeki/mediaio.h>
 #include <promeki/metadata.h>
-#include <promeki/numname.h>
 #include <promeki/textstream.h>
 #include <promeki/variant.h>
 #include <promeki/variantdatabase.h>
@@ -106,7 +102,7 @@ void printBackendConfigHelp() {
 
 void usage() {
         fprintf(stderr,
-                "Usage: mediaplay [OPTIONS] [SOURCE [DESTINATION...]]\n"
+                "Usage: mediaplay [OPTIONS]\n"
                 "\n"
                 "Pumps media frames from one MediaIO source, through an optional\n"
                 "Converter stage, out to one or more MediaIO sinks.  Every stage\n"
@@ -158,11 +154,6 @@ void usage() {
                 "  --dc SdlAudioEnabled:false   Open the SDL window but no audio.\n"
                 "  --dc SdlWindowSize:1920x1080 Initial SDL window size.\n"
                 "  --dc SdlWindowTitle:Preview  Set the SDL window title bar.\n"
-                "\n"
-                "Positional shortcuts:\n"
-                "  mediaplay <src-file>              Read the file, play to SDL.\n"
-                "  mediaplay <src> <dst>...          Transcode src to every\n"
-                "                                    destination path listed.\n"
                 "\n"
                 "Playback control:\n"
                 "  --duration <SEC>          Wall-clock runtime limit for\n"
@@ -363,44 +354,12 @@ bool parseOptions(int argc, char **argv, Options &opts) {
         }
         if(r != 0) return false;
 
-        // --- Positional arguments ---
-        //
-        // Positional handling depends on whether the user gave an
-        // explicit --src.  Without --src the first positional
-        // becomes the source when it looks like an existing readable
-        // file — otherwise (sequence mask, non-existent path, etc.)
-        // it is treated as a destination target.  Once --src is set,
-        // every positional is a destination.
-        //
-        //   mediaplay foo.mov                 → read foo.mov, SDL dst
-        //   mediaplay out.dpx                 → TPG src, write out.dpx
-        //   mediaplay out_####.dpx            → TPG src, sequence dst
-        //   mediaplay foo.mov out.mov         → transcode
-        int positional = parser.argCount();
-        int posStart = 0;
-        if(positional > 0 && !opts.explicitSrc) {
-                const String &first = parser.arg(0);
-                NumName maskProbe = NumName::fromMask(FilePath(first).fileName());
-                bool looksLikeSource = false;
-                if(!maskProbe.isValid()) {
-                        // stat() — std::filesystem is acceptable here
-                        // because mediaplay is a utility and already
-                        // depends on libstdc++.
-                        std::error_code ec;
-                        looksLikeSource = std::filesystem::exists(first.cstr(), ec);
-                }
-                if(looksLikeSource) {
-                        StageSpec sp;
-                        classifyStageArg(first, sp);
-                        opts.source = sp;
-                        posStart = 1;
-                }
-        }
-        for(int i = posStart; i < positional; ++i) {
-                StageSpec sp;
-                classifyStageArg(parser.arg(i), sp);
-                opts.sinks.pushToBack(sp);
-                opts.explicitDst = true;
+        if(parser.argCount() > 0) {
+                fprintf(stderr,
+                        "Error: unexpected positional argument '%s'.\n"
+                        "Use -s/--src for the source and -d/--dst for destinations.\n",
+                        parser.arg(0).cstr());
+                return false;
         }
 
         return true;

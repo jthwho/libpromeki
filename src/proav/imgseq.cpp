@@ -30,6 +30,7 @@ constexpr const char *kFieldFrameRate = "frameRate";
 constexpr const char *kFieldVideoSize = "videoSize";
 constexpr const char *kFieldPixelDesc = "pixelDesc";
 constexpr const char *kFieldMetadata  = "metadata";
+constexpr const char *kFieldAudioFile = "audioFile";
 
 } // namespace
 
@@ -151,6 +152,10 @@ ImgSeq ImgSeq::fromJson(const JsonObject &json, Error *err) {
                 }
         }
 
+        if(json.contains(kFieldAudioFile)) {
+                ret.setAudioFile(json.getString(kFieldAudioFile));
+        }
+
         if(json.valueIsObject(kFieldMetadata)) {
                 JsonObject metaObj = json.getObject(kFieldMetadata);
                 ret.setMetadata(Metadata::fromJson(metaObj));
@@ -185,6 +190,9 @@ JsonObject ImgSeq::toJson() const {
         }
         if(_pixelDesc.isValid()) {
                 root.set(kFieldPixelDesc, _pixelDesc.name());
+        }
+        if(!_audioFile.isEmpty()) {
+                root.set(kFieldAudioFile, _audioFile);
         }
         if(!_metadata.isEmpty()) {
                 root.set(kFieldMetadata, _metadata.toJson());
