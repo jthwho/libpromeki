@@ -177,12 +177,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3901aaefead0c0858a81bb922fd17056" id="r_a3901aaefead0c0858a81bb922fd17056"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a3901aaefead0c0858a81bb922fd17056">setLineAlign</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a3901aaefead0c0858a81bb922fd17056"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the scanline alignment requirement.  <br /></td></tr>
 <tr class="separator:a3901aaefead0c0858a81bb922fd17056"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a05ba8f3cc264981778ccd82e1804be" id="r_a8a05ba8f3cc264981778ccd82e1804be"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a8a05ba8f3cc264981778ccd82e1804be">interlaced</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a8a05ba8f3cc264981778ccd82e1804be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the image is interlaced.  <br /></td></tr>
-<tr class="separator:a8a05ba8f3cc264981778ccd82e1804be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a481fca50d1e0f005ef8eb6342c796cdc" id="r_a481fca50d1e0f005ef8eb6342c796cdc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a481fca50d1e0f005ef8eb6342c796cdc">setInterlaced</a> (<a class="el" href="classList.html">bool</a> <a class="el" href="classList.html">val</a>)</td></tr>
-<tr class="memdesc:a481fca50d1e0f005ef8eb6342c796cdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets whether the image is interlaced.  <br /></td></tr>
-<tr class="separator:a481fca50d1e0f005ef8eb6342c796cdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08a657bbdf3890d7286de77e8103e33c" id="r_a08a657bbdf3890d7286de77e8103e33c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classInterlaceMode.html">InterlaceMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#a08a657bbdf3890d7286de77e8103e33c">interlaceMode</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a08a657bbdf3890d7286de77e8103e33c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the scan mode (progressive / interlaced / unknown).  <br /></td></tr>
+<tr class="separator:a08a657bbdf3890d7286de77e8103e33c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9920aa92cb13f132a7a59a8c04d7188" id="r_aa9920aa92cb13f132a7a59a8c04d7188"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImageDesc.html#aa9920aa92cb13f132a7a59a8c04d7188">setInterlaceMode</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a> &amp;mode)</td></tr>
+<tr class="memdesc:aa9920aa92cb13f132a7a59a8c04d7188"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the scan mode.  <br /></td></tr>
+<tr class="separator:aa9920aa92cb13f132a7a59a8c04d7188"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a805a901251772c07f2c9309d016e1e56" id="r_a805a901251772c07f2c9309d016e1e56"><td class="memItemLeft" align="right" valign="top"><a id="a805a901251772c07f2c9309d016e1e56" name="a805a901251772c07f2c9309d016e1e56"></a>
 <a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a805a901251772c07f2c9309d016e1e56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the metadata. <br /></td></tr>
@@ -217,7 +217,7 @@ Static Public Member Functions</h2></td></tr>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classImageDesc.html">ImageDesc</a> desc(1920, 1080, <a class="code hl_enumvalue" href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a>);</div>
 <div class="line"><span class="keywordtype">size_t</span> <a class="code hl_class" href="classList.html">stride</a> = desc.pixelDesc().lineStride(0, desc);</div>
 <div class="line"><span class="keywordtype">int</span> planes = desc.planeCount();</div>
-<div class="ttc" id="aclassImageDesc_html"><div class="ttname"><a href="classImageDesc.html">ImageDesc</a></div><div class="ttdoc">Describes the format and layout of a single image.</div><div class="ttdef"><b>Definition</b> imagedesc.h:36</div></div>
+<div class="ttc" id="aclassImageDesc_html"><div class="ttname"><a href="classImageDesc.html">ImageDesc</a></div><div class="ttdoc">Describes the format and layout of a single image.</div><div class="ttdef"><b>Definition</b> imagedesc.h:37</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassPixelDesc_html_ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00"><div class="ttname"><a href="classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab348e67521fd719ca3a887c9c877be00">PixelDesc::RGBA8_sRGB</a></div><div class="ttdeci">@ RGBA8_sRGB</div><div class="ttdoc">8-bit RGBA, sRGB, full range.</div><div class="ttdef"><b>Definition</b> pixeldesc.h:140</div></div>
 </div><!-- fragment --> </dd></dl>
@@ -418,8 +418,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a8a05ba8f3cc264981778ccd82e1804be" name="a8a05ba8f3cc264981778ccd82e1804be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8a05ba8f3cc264981778ccd82e1804be">&#9670;&#160;</a></span>interlaced()</h2>
+<a id="a08a657bbdf3890d7286de77e8103e33c" name="a08a657bbdf3890d7286de77e8103e33c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08a657bbdf3890d7286de77e8103e33c">&#9670;&#160;</a></span>interlaceMode()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -428,7 +428,7 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">bool</a> ImageDesc::interlaced </td>
+          <td class="memname"><a class="el" href="classInterlaceMode.html">InterlaceMode</a> ImageDesc::interlaceMode </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -441,8 +441,9 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns true if the image is interlaced. </p>
-<dl class="section return"><dt>Returns</dt><dd>true if interlaced, false if progressive. </dd></dl>
+<p>Returns the scan mode (progressive / interlaced / unknown). </p>
+<p>Replaces the earlier <code>bool</code> interlaced flag with a three-state <a class="el" href="classInterlaceMode.html">InterlaceMode</a> value so the field order is captured alongside the interlaced-vs- progressive distinction.</p>
+<dl class="section return"><dt>Returns</dt><dd>The scan mode. </dd></dl>
 
 </div>
 </div>
@@ -675,8 +676,8 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a481fca50d1e0f005ef8eb6342c796cdc" name="a481fca50d1e0f005ef8eb6342c796cdc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a481fca50d1e0f005ef8eb6342c796cdc">&#9670;&#160;</a></span>setInterlaced()</h2>
+<a id="aa9920aa92cb13f132a7a59a8c04d7188" name="aa9920aa92cb13f132a7a59a8c04d7188"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9920aa92cb13f132a7a59a8c04d7188">&#9670;&#160;</a></span>setInterlaceMode()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -685,10 +686,10 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setInterlaced </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> ImageDesc::setInterlaceMode </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">bool</a>&#160;</td>
-          <td class="paramname"><em>val</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classInterlaceMode.html">InterlaceMode</a> &amp;&#160;</td>
+          <td class="paramname"><em>mode</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -699,10 +700,10 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets whether the image is interlaced. </p>
+<p>Sets the scan mode. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">val</td><td>true for interlaced, false for progressive. </td></tr>
+    <tr><td class="paramname">mode</td><td>The scan mode to store. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1018,7 +1019,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImageDesc.html">ImageDesc</a></li>
-    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -23,6 +23,7 @@ var classVariantDatabase =
     [ "setValidation", "classVariantDatabase.html#ac3e3820c886e257bdd72a38507461bb2", null ],
     [ "size", "classVariantDatabase.html#a754a53ccdcff2331726bf470da32f5bc", null ],
     [ "toJson", "classVariantDatabase.html#a21f88197acfc8698bf01a095ad6c1498", null ],
+    [ "unknownKeys", "classVariantDatabase.html#ab07f34aabfe277dc8a5b06af8a33b80e", null ],
     [ "validation", "classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4", null ],
     [ "writeTo", "classVariantDatabase.html#a0b35835fce4daa2a5f70179c9e287043", null ],
     [ "writeTo", "classVariantDatabase.html#addc64ebe789a1513cf0d6621ace73f0f", null ]

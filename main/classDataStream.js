@@ -52,7 +52,8 @@ var classDataStream =
       [ "TypeAudioDesc", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aa00fe1ddf9e894602a96cf751bdcd0db", null ],
       [ "TypeImageDesc", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a15b8b70656cb4b3d1131b59caf131da6", null ],
       [ "TypeMediaDesc", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369a9ace74558d81881d2da4c2b9f3d59687", null ],
-      [ "TypeUMID", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ab9816c821e5248d25461a36759183ea3", null ]
+      [ "TypeUMID", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369ab9816c821e5248d25461a36759183ea3", null ],
+      [ "TypeEnumList", "classDataStream.html#a781a61c06aaf1ba83ae8f3ab5aadd369aab409c43a16f0db71acfba0ee17421b7", null ]
     ] ],
     [ "DataStream", "classDataStream.html#a031c1cb50817d1530452c4feae207fcb", null ],
     [ "~DataStream", "classDataStream.html#acb58db98cafee8eca367437c9bd9a46e", null ],
@@ -67,6 +68,7 @@ var classDataStream =
     [ "operator<<", "classDataStream.html#a0cbb6d6da1e6beadef80873aafca6c72", null ],
     [ "operator<<", "classDataStream.html#a984ea8bb95704ea860d6c7f9355b1845", null ],
     [ "operator<<", "classDataStream.html#a8e724f1fec78026ef7bccbc517a1b112", null ],
+    [ "operator<<", "classDataStream.html#a0fb73c6c34d056b70c06ee4cc8e6eade", null ],
     [ "operator<<", "classDataStream.html#a07e8c110e5960131c12fee5ebcce783d", null ],
     [ "operator<<", "classDataStream.html#a5faec6d97a3b2f3d4cc0ede2873f11fb", null ],
     [ "operator<<", "classDataStream.html#adbc025f6aaecf40646ef3aa7fda0e5b8", null ],
@@ -96,6 +98,7 @@ var classDataStream =
     [ "operator>>", "classDataStream.html#a117d5ff7d8a75ea41fc0532d4a87dbb9", null ],
     [ "operator>>", "classDataStream.html#a21c47563a1b715aa9d288f6ab5e45bd2", null ],
     [ "operator>>", "classDataStream.html#a77ecfa22525eb5524592c4bfd6e1561f", null ],
+    [ "operator>>", "classDataStream.html#a9abdc3c2ddf0c1f09576b18465d485f6", null ],
     [ "operator>>", "classDataStream.html#a36373d3d95bf8fa73e18dd77cf0a5f1c", null ],
     [ "operator>>", "classDataStream.html#a633cf5953697fcf53d50238067a81163", null ],
     [ "operator>>", "classDataStream.html#a2fdb5dc98d0f31e036250e9406f92abc", null ],

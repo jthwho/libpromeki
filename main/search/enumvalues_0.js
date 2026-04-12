@@ -30,5 +30,5 @@ var searchData=
   ['argstring_27',['ArgString',['../classCmdLineParser_1_1Option.html#a3e71d113538143612177668d1d710fe1aab5582550bb942a66bae4cf8f29d34b3',1,'CmdLineParser::Option']]],
   ['argunknown_28',['ArgUnknown',['../classCmdLineParser_1_1Option.html#a3e71d113538143612177668d1d710fe1ada34e9e376e51f00aa100d967b3b503d',1,'CmdLineParser::Option']]],
   ['averageband_29',['AverageBand',['../classImageDataDecoder.html#a469b38f2f959b73cc7af5ac6caccb511a62283784e23c065a153c8bd1936a5365',1,'ImageDataDecoder']]],
-  ['avsync_30',['avsync',['../classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ae87b77ea18b082070d2886002f7b53c2',1,'AudioTestPattern::AvSync'],['../classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a2a56cc7d6df77cb218bc6377dc1fd0c3',1,'VideoTestPattern::AvSync']]]
+  ['avsync_30',['AvSync',['../classVideoTestPattern.html#a9d55b6a3fb65fd485e4fcd0696d52d61a2a56cc7d6df77cb218bc6377dc1fd0c3',1,'VideoTestPattern']]]
 ];

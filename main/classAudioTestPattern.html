@@ -100,33 +100,23 @@ $(document).ready(function(){initNavTree('classAudioTestPattern.html',''); initR
 
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-static-methods">Static Public Member Functions</a> &#124;
+<a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="classAudioTestPattern-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">AudioTestPattern Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Standalone audio test pattern generator.  
+<p>Multi-channel audio test pattern generator.  
  <a href="classAudioTestPattern.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="audiotestpattern_8h_source.html">audiotestpattern.h</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:abe30b2cdcee08bb0eec254f2465223d0" id="r_abe30b2cdcee08bb0eec254f2465223d0"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a> { <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1">Tone</a>
-, <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a0e65fc32dde0d311fc81d6c2b01283da">Silence</a>
-, <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9">LTC</a>
-, <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ae87b77ea18b082070d2886002f7b53c2">AvSync</a>
- }</td></tr>
-<tr class="memdesc:abe30b2cdcee08bb0eec254f2465223d0"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> generation mode.  <a href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">More...</a><br /></td></tr>
-<tr class="separator:abe30b2cdcee08bb0eec254f2465223d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa4356079cf315f6f3a4f12db027c9be3" id="r_aa4356079cf315f6f3a4f12db027c9be3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#aa4356079cf315f6f3a4f12db027c9be3">AudioTestPattern</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudioTestPattern.html#add4b4395f9304b1babc7bcf896b69df6">desc</a>)</td></tr>
-<tr class="memdesc:aa4356079cf315f6f3a4f12db027c9be3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioTestPattern.html" title="Standalone audio test pattern generator.">AudioTestPattern</a>.  <br /></td></tr>
+<tr class="memdesc:aa4356079cf315f6f3a4f12db027c9be3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioTestPattern.html" title="Multi-channel audio test pattern generator.">AudioTestPattern</a> for the given stream.  <br /></td></tr>
 <tr class="separator:aa4356079cf315f6f3a4f12db027c9be3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a246792157b53446f6212fbf4d4006c99" id="r_a246792157b53446f6212fbf4d4006c99"><td class="memItemLeft" align="right" valign="top"><a id="a246792157b53446f6212fbf4d4006c99" name="a246792157b53446f6212fbf4d4006c99"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>~AudioTestPattern</b> ()</td></tr>
@@ -142,20 +132,20 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>desc</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:add4b4395f9304b1babc7bcf896b69df6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the audio descriptor. <br /></td></tr>
 <tr class="separator:add4b4395f9304b1babc7bcf896b69df6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98cbf3af7fc2762a891c8d486e4e5029" id="r_a98cbf3af7fc2762a891c8d486e4e5029"><td class="memItemLeft" align="right" valign="top"><a id="a98cbf3af7fc2762a891c8d486e4e5029" name="a98cbf3af7fc2762a891c8d486e4e5029"></a>
-<a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a>&#160;</td><td class="memItemRight" valign="bottom"><b>mode</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a98cbf3af7fc2762a891c8d486e4e5029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current audio mode. <br /></td></tr>
-<tr class="separator:a98cbf3af7fc2762a891c8d486e4e5029"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1983d579e8ee7f112277a99634372674" id="r_a1983d579e8ee7f112277a99634372674"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a1983d579e8ee7f112277a99634372674">setMode</a> (<a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a> <a class="el" href="classAudioTestPattern.html#a98cbf3af7fc2762a891c8d486e4e5029">mode</a>)</td></tr>
-<tr class="memdesc:a1983d579e8ee7f112277a99634372674"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the audio mode.  <br /></td></tr>
-<tr class="separator:a1983d579e8ee7f112277a99634372674"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a591f7c169997f84184f6582ffaeef3f2" id="r_a591f7c169997f84184f6582ffaeef3f2"><td class="memItemLeft" align="right" valign="top"><a id="a591f7c169997f84184f6582ffaeef3f2" name="a591f7c169997f84184f6582ffaeef3f2"></a>
+<a class="el" href="classList.html">const</a> <a class="el" href="classEnumList.html">EnumList</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>channelModes</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a591f7c169997f84184f6582ffaeef3f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the per-channel pattern list. <br /></td></tr>
+<tr class="separator:a591f7c169997f84184f6582ffaeef3f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff1fb92b064a5a71fd8fe63b19417e9d" id="r_aff1fb92b064a5a71fd8fe63b19417e9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#aff1fb92b064a5a71fd8fe63b19417e9d">setChannelModes</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classEnumList.html">EnumList</a> &amp;<a class="el" href="classList.html">modes</a>)</td></tr>
+<tr class="memdesc:aff1fb92b064a5a71fd8fe63b19417e9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the per-channel pattern list.  <br /></td></tr>
+<tr class="separator:aff1fb92b064a5a71fd8fe63b19417e9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a670c1b8df8b480a962bf542976ab2653" id="r_a670c1b8df8b480a962bf542976ab2653"><td class="memItemLeft" align="right" valign="top"><a id="a670c1b8df8b480a962bf542976ab2653" name="a670c1b8df8b480a962bf542976ab2653"></a>
 <a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>toneFrequency</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a670c1b8df8b480a962bf542976ab2653"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the tone frequency in Hz. <br /></td></tr>
 <tr class="separator:a670c1b8df8b480a962bf542976ab2653"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8eb652cae2c8f893ce25c58f1929f70c" id="r_a8eb652cae2c8f893ce25c58f1929f70c"><td class="memItemLeft" align="right" valign="top"><a id="a8eb652cae2c8f893ce25c58f1929f70c" name="a8eb652cae2c8f893ce25c58f1929f70c"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setToneFrequency</b> (<a class="el" href="classList.html">double</a> freq)</td></tr>
-<tr class="memdesc:a8eb652cae2c8f893ce25c58f1929f70c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the tone frequency in Hz. <br /></td></tr>
+<tr class="memdesc:a8eb652cae2c8f893ce25c58f1929f70c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the tone frequency in Hz (for <code>Tone</code> / <code>AvSync</code>). <br /></td></tr>
 <tr class="separator:a8eb652cae2c8f893ce25c58f1929f70c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6d4925618164f1c5f2547ae1336b781" id="r_aa6d4925618164f1c5f2547ae1336b781"><td class="memItemLeft" align="right" valign="top"><a id="aa6d4925618164f1c5f2547ae1336b781" name="aa6d4925618164f1c5f2547ae1336b781"></a>
 <a class="el" href="classAudioLevel.html">AudioLevel</a>&#160;</td><td class="memItemRight" valign="bottom"><b>toneLevel</b> () <a class="el" href="classList.html">const</a></td></tr>
@@ -163,7 +153,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa6d4925618164f1c5f2547ae1336b781"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62f018f43f8f02d824abf663c0fe036b" id="r_a62f018f43f8f02d824abf663c0fe036b"><td class="memItemLeft" align="right" valign="top"><a id="a62f018f43f8f02d824abf663c0fe036b" name="a62f018f43f8f02d824abf663c0fe036b"></a>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setToneLevel</b> (<a class="el" href="classAudioLevel.html">AudioLevel</a> level)</td></tr>
-<tr class="memdesc:a62f018f43f8f02d824abf663c0fe036b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the tone level. <br /></td></tr>
+<tr class="memdesc:a62f018f43f8f02d824abf663c0fe036b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the tone level (for <code>Tone</code> / <code>AvSync</code> / <code>SrcProbe</code> / <code>ChannelId</code>). <br /></td></tr>
 <tr class="separator:a62f018f43f8f02d824abf663c0fe036b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac072503691b1f21d69a75eb0e1209724" id="r_ac072503691b1f21d69a75eb0e1209724"><td class="memItemLeft" align="right" valign="top"><a id="ac072503691b1f21d69a75eb0e1209724" name="ac072503691b1f21d69a75eb0e1209724"></a>
 <a class="el" href="classAudioLevel.html">AudioLevel</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ltcLevel</b> () <a class="el" href="classList.html">const</a></td></tr>
@@ -173,86 +163,162 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setLtcLevel</b> (<a class="el" href="classAudioLevel.html">AudioLevel</a> level)</td></tr>
 <tr class="memdesc:a3d937def684b5433fa3a99d31cb5da05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LTC level. <br /></td></tr>
 <tr class="separator:a3d937def684b5433fa3a99d31cb5da05"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a275d616e4dbad9b0fa8f72da862e12fb" id="r_a275d616e4dbad9b0fa8f72da862e12fb"><td class="memItemLeft" align="right" valign="top"><a id="a275d616e4dbad9b0fa8f72da862e12fb" name="a275d616e4dbad9b0fa8f72da862e12fb"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>ltcChannel</b> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a275d616e4dbad9b0fa8f72da862e12fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the LTC target channel (-1 = all). <br /></td></tr>
-<tr class="separator:a275d616e4dbad9b0fa8f72da862e12fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38c9a65a77aff64aa99cd90ee7c31683" id="r_a38c9a65a77aff64aa99cd90ee7c31683"><td class="memItemLeft" align="right" valign="top"><a id="a38c9a65a77aff64aa99cd90ee7c31683" name="a38c9a65a77aff64aa99cd90ee7c31683"></a>
-<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setLtcChannel</b> (int <a class="el" href="classList.html">channel</a>)</td></tr>
-<tr class="memdesc:a38c9a65a77aff64aa99cd90ee7c31683"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LTC target channel (-1 = all). <br /></td></tr>
-<tr class="separator:a38c9a65a77aff64aa99cd90ee7c31683"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bcf812a26fa0c3873ee04dd90d7abaa" id="r_a8bcf812a26fa0c3873ee04dd90d7abaa"><td class="memItemLeft" align="right" valign="top"><a id="a8bcf812a26fa0c3873ee04dd90d7abaa" name="a8bcf812a26fa0c3873ee04dd90d7abaa"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>channelIdBaseFreq</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8bcf812a26fa0c3873ee04dd90d7abaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ChannelId base frequency in Hz. <br /></td></tr>
+<tr class="separator:a8bcf812a26fa0c3873ee04dd90d7abaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4112571dfb7cca2589594b831abbd66" id="r_af4112571dfb7cca2589594b831abbd66"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#af4112571dfb7cca2589594b831abbd66">setChannelIdBaseFreq</a> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">hz</a>)</td></tr>
+<tr class="memdesc:af4112571dfb7cca2589594b831abbd66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ChannelId base frequency in Hz.  <br /></td></tr>
+<tr class="separator:af4112571dfb7cca2589594b831abbd66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a545a4ddc49d8b99dc1093a19d0fea706" id="r_a545a4ddc49d8b99dc1093a19d0fea706"><td class="memItemLeft" align="right" valign="top"><a id="a545a4ddc49d8b99dc1093a19d0fea706" name="a545a4ddc49d8b99dc1093a19d0fea706"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>channelIdStepFreq</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a545a4ddc49d8b99dc1093a19d0fea706"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ChannelId step frequency in Hz. <br /></td></tr>
+<tr class="separator:a545a4ddc49d8b99dc1093a19d0fea706"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7bcd95366e2878967b4b951780cf1b3" id="r_aa7bcd95366e2878967b4b951780cf1b3"><td class="memItemLeft" align="right" valign="top"><a id="aa7bcd95366e2878967b4b951780cf1b3" name="aa7bcd95366e2878967b4b951780cf1b3"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setChannelIdStepFreq</b> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">hz</a>)</td></tr>
+<tr class="memdesc:aa7bcd95366e2878967b4b951780cf1b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ChannelId step frequency in Hz. <br /></td></tr>
+<tr class="separator:aa7bcd95366e2878967b4b951780cf1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f55dd55cbf06cae7a86eb6817b302eb" id="r_a0f55dd55cbf06cae7a86eb6817b302eb"><td class="memItemLeft" align="right" valign="top"><a id="a0f55dd55cbf06cae7a86eb6817b302eb" name="a0f55dd55cbf06cae7a86eb6817b302eb"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chirpStartFreq</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a0f55dd55cbf06cae7a86eb6817b302eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the Chirp sweep start frequency in Hz. <br /></td></tr>
+<tr class="separator:a0f55dd55cbf06cae7a86eb6817b302eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ce2c6d8400e99e1b84833111fe7b36b" id="r_a5ce2c6d8400e99e1b84833111fe7b36b"><td class="memItemLeft" align="right" valign="top"><a id="a5ce2c6d8400e99e1b84833111fe7b36b" name="a5ce2c6d8400e99e1b84833111fe7b36b"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setChirpStartFreq</b> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">hz</a>)</td></tr>
+<tr class="memdesc:a5ce2c6d8400e99e1b84833111fe7b36b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the Chirp sweep start frequency in Hz. <br /></td></tr>
+<tr class="separator:a5ce2c6d8400e99e1b84833111fe7b36b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f222db2a3b3da60ddc1b344ca3d83cc" id="r_a3f222db2a3b3da60ddc1b344ca3d83cc"><td class="memItemLeft" align="right" valign="top"><a id="a3f222db2a3b3da60ddc1b344ca3d83cc" name="a3f222db2a3b3da60ddc1b344ca3d83cc"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chirpEndFreq</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a3f222db2a3b3da60ddc1b344ca3d83cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the Chirp sweep end frequency in Hz. <br /></td></tr>
+<tr class="separator:a3f222db2a3b3da60ddc1b344ca3d83cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af24ac671afaf7f34a236a6a0f7dc75ef" id="r_af24ac671afaf7f34a236a6a0f7dc75ef"><td class="memItemLeft" align="right" valign="top"><a id="af24ac671afaf7f34a236a6a0f7dc75ef" name="af24ac671afaf7f34a236a6a0f7dc75ef"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setChirpEndFreq</b> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">hz</a>)</td></tr>
+<tr class="memdesc:af24ac671afaf7f34a236a6a0f7dc75ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the Chirp sweep end frequency in Hz. <br /></td></tr>
+<tr class="separator:af24ac671afaf7f34a236a6a0f7dc75ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5610df50894599d43d9b7a8bdb328d4e" id="r_a5610df50894599d43d9b7a8bdb328d4e"><td class="memItemLeft" align="right" valign="top"><a id="a5610df50894599d43d9b7a8bdb328d4e" name="a5610df50894599d43d9b7a8bdb328d4e"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>chirpDurationSec</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a5610df50894599d43d9b7a8bdb328d4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the Chirp sweep period in seconds. <br /></td></tr>
+<tr class="separator:a5610df50894599d43d9b7a8bdb328d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad631b80c264c73af88201a49cf758e73" id="r_ad631b80c264c73af88201a49cf758e73"><td class="memItemLeft" align="right" valign="top"><a id="ad631b80c264c73af88201a49cf758e73" name="ad631b80c264c73af88201a49cf758e73"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setChirpDurationSec</b> (<a class="el" href="classList.html">double</a> sec)</td></tr>
+<tr class="memdesc:ad631b80c264c73af88201a49cf758e73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the Chirp sweep period in seconds. <br /></td></tr>
+<tr class="separator:ad631b80c264c73af88201a49cf758e73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d65c54a8466c322b7eeea6be22a3206" id="r_a7d65c54a8466c322b7eeea6be22a3206"><td class="memItemLeft" align="right" valign="top"><a id="a7d65c54a8466c322b7eeea6be22a3206" name="a7d65c54a8466c322b7eeea6be22a3206"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>dualToneFreq1</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7d65c54a8466c322b7eeea6be22a3206"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the DualTone low-side frequency in Hz. <br /></td></tr>
+<tr class="separator:a7d65c54a8466c322b7eeea6be22a3206"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fbc5445e3d48303d743160e59b1d1fb" id="r_a4fbc5445e3d48303d743160e59b1d1fb"><td class="memItemLeft" align="right" valign="top"><a id="a4fbc5445e3d48303d743160e59b1d1fb" name="a4fbc5445e3d48303d743160e59b1d1fb"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setDualToneFreq1</b> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">hz</a>)</td></tr>
+<tr class="memdesc:a4fbc5445e3d48303d743160e59b1d1fb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the DualTone low-side frequency in Hz. <br /></td></tr>
+<tr class="separator:a4fbc5445e3d48303d743160e59b1d1fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60577c6f3d75a0ff7d51d256e2401293" id="r_a60577c6f3d75a0ff7d51d256e2401293"><td class="memItemLeft" align="right" valign="top"><a id="a60577c6f3d75a0ff7d51d256e2401293" name="a60577c6f3d75a0ff7d51d256e2401293"></a>
+<a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><b>dualToneFreq2</b> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a60577c6f3d75a0ff7d51d256e2401293"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the DualTone high-side frequency in Hz. <br /></td></tr>
+<tr class="separator:a60577c6f3d75a0ff7d51d256e2401293"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6ef6a267690b551d632c352b886277e" id="r_ad6ef6a267690b551d632c352b886277e"><td class="memItemLeft" align="right" valign="top"><a id="ad6ef6a267690b551d632c352b886277e" name="ad6ef6a267690b551d632c352b886277e"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setDualToneFreq2</b> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">hz</a>)</td></tr>
+<tr class="memdesc:ad6ef6a267690b551d632c352b886277e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the DualTone high-side frequency in Hz. <br /></td></tr>
+<tr class="separator:ad6ef6a267690b551d632c352b886277e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65790ff6c494bb8906ea7adb5ba7b171" id="r_a65790ff6c494bb8906ea7adb5ba7b171"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a65790ff6c494bb8906ea7adb5ba7b171">dualToneRatio</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a65790ff6c494bb8906ea7adb5ba7b171"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the amplitude ratio of freq2 to freq1.  <br /></td></tr>
+<tr class="separator:a65790ff6c494bb8906ea7adb5ba7b171"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ce5778e22be5b43d8db4150b6a541ff" id="r_a2ce5778e22be5b43d8db4150b6a541ff"><td class="memItemLeft" align="right" valign="top"><a id="a2ce5778e22be5b43d8db4150b6a541ff" name="a2ce5778e22be5b43d8db4150b6a541ff"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setDualToneRatio</b> (<a class="el" href="classList.html">double</a> <a class="el" href="classList.html">ratio</a>)</td></tr>
+<tr class="memdesc:a2ce5778e22be5b43d8db4150b6a541ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the DualTone amplitude ratio. <br /></td></tr>
+<tr class="separator:a2ce5778e22be5b43d8db4150b6a541ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a222052246eb7b0bd680bd21949696fb8" id="r_a222052246eb7b0bd680bd21949696fb8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a222052246eb7b0bd680bd21949696fb8">noiseBufferSeconds</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a222052246eb7b0bd680bd21949696fb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the noise buffer length in seconds.  <br /></td></tr>
+<tr class="separator:a222052246eb7b0bd680bd21949696fb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3511c9fd89208b69db8423049daa2f23" id="r_a3511c9fd89208b69db8423049daa2f23"><td class="memItemLeft" align="right" valign="top"><a id="a3511c9fd89208b69db8423049daa2f23" name="a3511c9fd89208b69db8423049daa2f23"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setNoiseBufferSeconds</b> (<a class="el" href="classList.html">double</a> sec)</td></tr>
+<tr class="memdesc:a3511c9fd89208b69db8423049daa2f23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the noise buffer length in seconds. <br /></td></tr>
+<tr class="separator:a3511c9fd89208b69db8423049daa2f23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abefd2018733d488e01938fe1c8cb7bad" id="r_abefd2018733d488e01938fe1c8cb7bad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">uint32_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#abefd2018733d488e01938fe1c8cb7bad">noiseSeed</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:abefd2018733d488e01938fe1c8cb7bad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the seed used to generate the noise buffers.  <br /></td></tr>
+<tr class="separator:abefd2018733d488e01938fe1c8cb7bad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25957ca3f460462c88b553dd9691983c" id="r_a25957ca3f460462c88b553dd9691983c"><td class="memItemLeft" align="right" valign="top"><a id="a25957ca3f460462c88b553dd9691983c" name="a25957ca3f460462c88b553dd9691983c"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setNoiseSeed</b> (<a class="el" href="classList.html">uint32_t</a> seed)</td></tr>
+<tr class="memdesc:a25957ca3f460462c88b553dd9691983c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the seed used to generate the noise buffers. <br /></td></tr>
+<tr class="separator:a25957ca3f460462c88b553dd9691983c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb1fb4ec7799bca1c1cfbb56b9cb90c0" id="r_acb1fb4ec7799bca1c1cfbb56b9cb90c0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#acb1fb4ec7799bca1c1cfbb56b9cb90c0">configure</a> ()</td></tr>
-<tr class="memdesc:acb1fb4ec7799bca1c1cfbb56b9cb90c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configures internal generators based on current settings.  <br /></td></tr>
+<tr class="memdesc:acb1fb4ec7799bca1c1cfbb56b9cb90c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Configures internal generators for the current settings.  <br /></td></tr>
 <tr class="separator:acb1fb4ec7799bca1c1cfbb56b9cb90c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad667713bc364edff1cf3c7b48bfd64bb" id="r_ad667713bc364edff1cf3c7b48bfd64bb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html">Audio</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#ad667713bc364edff1cf3c7b48bfd64bb">create</a> (<a class="el" href="classList.html">size_t</a> samples, <a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">tc</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ad667713bc364edff1cf3c7b48bfd64bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer with the test pattern.  <br /></td></tr>
 <tr class="separator:ad667713bc364edff1cf3c7b48bfd64bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1592293e4d55f1a9302b2e75c5b526a" id="r_ad1592293e4d55f1a9302b2e75c5b526a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html">Audio</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#ad1592293e4d55f1a9302b2e75c5b526a">create</a> (<a class="el" href="classList.html">size_t</a> samples) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ad1592293e4d55f1a9302b2e75c5b526a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer with the test pattern (no timecode).  <br /></td></tr>
+<tr class="memdesc:ad1592293e4d55f1a9302b2e75c5b526a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer with no timecode context.  <br /></td></tr>
 <tr class="separator:ad1592293e4d55f1a9302b2e75c5b526a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9bc7ab45acf4d29630ad807666f1f43c" id="r_a9bc7ab45acf4d29630ad807666f1f43c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a9bc7ab45acf4d29630ad807666f1f43c">render</a> (<a class="el" href="classAudio.html">Audio</a> &amp;audio, <a class="el" href="classList.html">const</a> <a class="el" href="classTimecode.html">Timecode</a> &amp;<a class="el" href="classList.html">tc</a>) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a9bc7ab45acf4d29630ad807666f1f43c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the test pattern into an existing <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer.  <br /></td></tr>
 <tr class="separator:a9bc7ab45acf4d29630ad807666f1f43c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a043e89571242d90dde2aee442c2efc95" id="r_a043e89571242d90dde2aee442c2efc95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a043e89571242d90dde2aee442c2efc95">render</a> (<a class="el" href="classAudio.html">Audio</a> &amp;audio) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:a043e89571242d90dde2aee442c2efc95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the test pattern into an existing <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer (no timecode).  <br /></td></tr>
+<tr class="memitem:a043e89571242d90dde2aee442c2efc95" id="r_a043e89571242d90dde2aee442c2efc95"><td class="memItemLeft" align="right" valign="top"><a id="a043e89571242d90dde2aee442c2efc95" name="a043e89571242d90dde2aee442c2efc95"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>render</b> (<a class="el" href="classAudio.html">Audio</a> &amp;audio) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a043e89571242d90dde2aee442c2efc95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders with no timecode context. <br /></td></tr>
 <tr class="separator:a043e89571242d90dde2aee442c2efc95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aee6d80bf5b3d0f745fe70c87748427ad" id="r_aee6d80bf5b3d0f745fe70c87748427ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#aee6d80bf5b3d0f745fe70c87748427ad">fromString</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;name)</td></tr>
-<tr class="memdesc:aee6d80bf5b3d0f745fe70c87748427ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a mode name string.  <br /></td></tr>
-<tr class="separator:aee6d80bf5b3d0f745fe70c87748427ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74eeedbb508977e25b19a26c0df441c3" id="r_a74eeedbb508977e25b19a26c0df441c3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a74eeedbb508977e25b19a26c0df441c3">toString</a> (<a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a> <a class="el" href="classAudioTestPattern.html#a98cbf3af7fc2762a891c8d486e4e5029">mode</a>)</td></tr>
-<tr class="memdesc:a74eeedbb508977e25b19a26c0df441c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the name string for a Mode value.  <br /></td></tr>
-<tr class="separator:a74eeedbb508977e25b19a26c0df441c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0b39c0b1d2d7a8154315b8ef80179b0" id="r_aa0b39c0b1d2d7a8154315b8ef80179b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#aa0b39c0b1d2d7a8154315b8ef80179b0">channelIdFrequency</a> (<a class="el" href="classList.html">size_t</a> <a class="el" href="classList.html">channelIndex</a>, <a class="el" href="classList.html">double</a> <a class="el" href="classList.html">baseFreq</a>, <a class="el" href="classList.html">double</a> <a class="el" href="classList.html">stepFreq</a>)</td></tr>
+<tr class="memdesc:aa0b39c0b1d2d7a8154315b8ef80179b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the ChannelId tone frequency for a given channel.  <br /></td></tr>
+<tr class="separator:aa0b39c0b1d2d7a8154315b8ef80179b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a852e1beb7487d36c42c3eef52c4bc97d" id="r_a852e1beb7487d36c42c3eef52c4bc97d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">double</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#a852e1beb7487d36c42c3eef52c4bc97d">kSrcProbeFrequencyHz</a> = 997.0</td></tr>
+<tr class="memdesc:a852e1beb7487d36c42c3eef52c4bc97d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Canonical SRC-probe reference frequency in Hz.  <br /></td></tr>
+<tr class="separator:a852e1beb7487d36c42c3eef52c4bc97d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a361a11c2f8ed7d60fd3b07010aca8f61" id="r_a361a11c2f8ed7d60fd3b07010aca8f61"><td class="memItemLeft" align="right" valign="top"><a id="a361a11c2f8ed7d60fd3b07010aca8f61" name="a361a11c2f8ed7d60fd3b07010aca8f61"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerPreambleSamples</b> = 16</td></tr>
+<tr class="memdesc:a361a11c2f8ed7d60fd3b07010aca8f61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of the PcmMarker sync preamble in samples. <br /></td></tr>
+<tr class="separator:a361a11c2f8ed7d60fd3b07010aca8f61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad915545729338f9c1e28b0f3d7142f88" id="r_ad915545729338f9c1e28b0f3d7142f88"><td class="memItemLeft" align="right" valign="top"><a id="ad915545729338f9c1e28b0f3d7142f88" name="ad915545729338f9c1e28b0f3d7142f88"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerStartSamples</b> = 8</td></tr>
+<tr class="memdesc:ad915545729338f9c1e28b0f3d7142f88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of the PcmMarker "start of payload" marker (four high samples followed by four low samples). <br /></td></tr>
+<tr class="separator:ad915545729338f9c1e28b0f3d7142f88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab867ba1721d171d1ffdbb93a62f8f523" id="r_ab867ba1721d171d1ffdbb93a62f8f523"><td class="memItemLeft" align="right" valign="top"><a id="ab867ba1721d171d1ffdbb93a62f8f523" name="ab867ba1721d171d1ffdbb93a62f8f523"></a>
+<a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kPcmMarkerPayloadBits</b> = 64</td></tr>
+<tr class="memdesc:ab867ba1721d171d1ffdbb93a62f8f523"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bits in the PcmMarker payload. <br /></td></tr>
+<tr class="separator:ab867ba1721d171d1ffdbb93a62f8f523"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaefe7b4dd1eab47567ef2f1981c40d18" id="r_aaefe7b4dd1eab47567ef2f1981c40d18"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioTestPattern.html#aaefe7b4dd1eab47567ef2f1981c40d18">kPcmMarkerFrameSamples</a></td></tr>
+<tr class="memdesc:aaefe7b4dd1eab47567ef2f1981c40d18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total number of deterministic samples in one PcmMarker framing unit (preamble + start + 64 bits.  <br /></td></tr>
+<tr class="separator:aaefe7b4dd1eab47567ef2f1981c40d18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Standalone audio test pattern generator. </p>
-<p>Generates audio test patterns including sine tones, silence, and LTC. Supports dual-mode: create a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer or render into an existing one.</p>
-<p>Call <a class="el" href="classAudioTestPattern.html#acb1fb4ec7799bca1c1cfbb56b9cb90c0" title="Configures internal generators based on current settings.">configure()</a> after setting mode, frequency, and level parameters to prepare the internal generators. Then call <a class="el" href="classAudioTestPattern.html#ad667713bc364edff1cf3c7b48bfd64bb" title="Creates a new Audio buffer with the test pattern.">create()</a> or <a class="el" href="classAudioTestPattern.html#a9bc7ab45acf4d29630ad807666f1f43c" title="Renders the test pattern into an existing Audio buffer.">render()</a> to produce audio data.</p>
-<p>This class is not thread-safe. External synchronization is required for concurrent access.</p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioTestPattern.html">AudioTestPattern</a> <a class="code hl_class" href="classList.html">gen</a>(<a class="code hl_class" href="classAudioDesc.html">AudioDesc</a>(48000, 2));</div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setMode(<a class="code hl_enumvalue" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1">AudioTestPattern::Tone</a>);</div>
+<div class="textblock"><p>Multi-channel audio test pattern generator. </p>
+<p>Generates audio test patterns with per-channel pattern assignment. Every channel is driven by its own <a class="el" href="classAudioPattern.html">AudioPattern</a> value pulled from the configured <a class="el" href="classEnumList.html">EnumList</a>. If the channel-mode list is shorter than the stream's channel count, any remaining channels are silenced; if the list is longer, the extra entries are ignored.</p>
+<p>Supported per-channel patterns:</p><ul>
+<li><code>Tone</code> — continuous sine at <a class="el" href="classAudioTestPattern.html#a670c1b8df8b480a962bf542976ab2653">toneFrequency</a>.</li>
+<li><code>Silence</code> — constant zero.</li>
+<li><code>LTC</code> — Linear <a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> audio for the current frame timecode.</li>
+<li><code>AvSync</code> — one-shot tone burst on <code>tc.frame()</code> == 0, silent otherwise. Pairs with the picture AvSync marker for A/V drift detection.</li>
+<li><code>SrcProbe</code> — 997 Hz reference sine. The prime-relative frequency reveals sample-rate-conversion artifacts on the decode side.</li>
+<li><code>ChannelId</code> — channel-unique sine at <code><a class="el" href="classAudioTestPattern.html#a8bcf812a26fa0c3873ee04dd90d7abaa" title="Returns the ChannelId base frequency in Hz.">channelIdBaseFreq()</a> + ch * <a class="el" href="classAudioTestPattern.html#a545a4ddc49d8b99dc1093a19d0fea706" title="Returns the ChannelId step frequency in Hz.">channelIdStepFreq()</a></code>, so a downstream consumer that sees channels out of order can identify each one by frequency.</li>
+</ul>
+<p>Call <a class="el" href="classAudioTestPattern.html#acb1fb4ec7799bca1c1cfbb56b9cb90c0">configure</a> after changing any pattern parameter and before calling <a class="el" href="classAudioTestPattern.html#ad667713bc364edff1cf3c7b48bfd64bb">create</a> or <a class="el" href="classAudioTestPattern.html#a9bc7ab45acf4d29630ad807666f1f43c">render</a>. The class is not thread-safe; external synchronization is required for concurrent access.</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioTestPattern.html">AudioTestPattern</a> <a class="code hl_class" href="classList.html">gen</a>(<a class="code hl_class" href="classAudioDesc.html">AudioDesc</a>(48000, 4));</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// LTC on ch0, AvSync click on ch1, SRC probe on ch2, silence on ch3.</span></div>
+<div class="line"><a class="code hl_class" href="classEnumList.html">EnumList</a> <a class="code hl_class" href="classList.html">modes</a> = EnumList::forType&lt;AudioPattern&gt;();</div>
+<div class="line"><a class="code hl_class" href="classList.html">modes</a>.append(AudioPattern::LTC);</div>
+<div class="line"><a class="code hl_class" href="classList.html">modes</a>.append(AudioPattern::AvSync);</div>
+<div class="line"><a class="code hl_class" href="classList.html">modes</a>.append(AudioPattern::SrcProbe);</div>
+<div class="line"><a class="code hl_class" href="classList.html">modes</a>.append(AudioPattern::Silence);</div>
+<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setChannelModes(<a class="code hl_class" href="classList.html">modes</a>);</div>
+<div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classList.html">gen</a>.setToneFrequency(1000.0);</div>
 <div class="line"><a class="code hl_class" href="classList.html">gen</a>.setToneLevel(<a class="code hl_function" href="classAudioLevel.html#abeffc78ff3a6f77c3dc4f5d521feea07">AudioLevel::fromDbfs</a>(-20.0));</div>
+<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setLtcLevel(<a class="code hl_function" href="classAudioLevel.html#abeffc78ff3a6f77c3dc4f5d521feea07">AudioLevel::fromDbfs</a>(-20.0));</div>
 <div class="line"><a class="code hl_class" href="classList.html">gen</a>.configure();</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> audio = <a class="code hl_class" href="classList.html">gen</a>.create(4800);</div>
+<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> audio = <a class="code hl_class" href="classList.html">gen</a>.create(samplesPerFrame, <a class="code hl_class" href="classList.html">currentTimecode</a>);</div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes an audio format including sample type, rate, and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:31</div></div>
 <div class="ttc" id="aclassAudioLevel_html_abeffc78ff3a6f77c3dc4f5d521feea07"><div class="ttname"><a href="classAudioLevel.html#abeffc78ff3a6f77c3dc4f5d521feea07">AudioLevel::fromDbfs</a></div><div class="ttdeci">static AudioLevel fromDbfs(double dbfs)</div><div class="ttdoc">Creates an AudioLevel from a dBFS value.</div><div class="ttdef"><b>Definition</b> audiolevel.h:43</div></div>
-<div class="ttc" id="aclassAudioTestPattern_html"><div class="ttname"><a href="classAudioTestPattern.html">AudioTestPattern</a></div><div class="ttdoc">Standalone audio test pattern generator.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:50</div></div>
-<div class="ttc" id="aclassAudioTestPattern_html_abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1"><div class="ttname"><a href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1">AudioTestPattern::Tone</a></div><div class="ttdeci">@ Tone</div><div class="ttdoc">Sine tone (configurable frequency).</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:54</div></div>
+<div class="ttc" id="aclassAudioTestPattern_html"><div class="ttname"><a href="classAudioTestPattern.html">AudioTestPattern</a></div><div class="ttdoc">Multi-channel audio test pattern generator.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:78</div></div>
 <div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:45</div></div>
+<div class="ttc" id="aclassEnumList_html"><div class="ttname"><a href="classEnumList.html">EnumList</a></div><div class="ttdoc">Ordered, duplicate-preserving list of Enum values sharing one type.</div><div class="ttdef"><b>Definition</b> enumlist.h:59</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --> </dd></dl>
-</div><h2 class="groupheader">Member Enumeration Documentation</h2>
-<a id="abe30b2cdcee08bb0eec254f2465223d0" name="abe30b2cdcee08bb0eec254f2465223d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abe30b2cdcee08bb0eec254f2465223d0">&#9670;&#160;</a></span>Mode</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">enum</a> <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">AudioTestPattern::Mode</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> generation mode. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1" name="abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1"></a>Tone&#160;</td><td class="fielddoc"><p>Sine tone (configurable frequency). </p>
-</td></tr>
-<tr><td class="fieldname"><a id="abe30b2cdcee08bb0eec254f2465223d0a0e65fc32dde0d311fc81d6c2b01283da" name="abe30b2cdcee08bb0eec254f2465223d0a0e65fc32dde0d311fc81d6c2b01283da"></a>Silence&#160;</td><td class="fielddoc"><p>Silence. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9" name="abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9"></a>LTC&#160;</td><td class="fielddoc"><p>LTC timecode audio. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="abe30b2cdcee08bb0eec254f2465223d0ae87b77ea18b082070d2886002f7b53c2" name="abe30b2cdcee08bb0eec254f2465223d0ae87b77ea18b082070d2886002f7b53c2"></a>AvSync&#160;</td><td class="fielddoc"><p>Tone on tc.frame()==0, silence otherwise. </p>
-</td></tr>
-</table>
-
-</div>
-</div>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa4356079cf315f6f3a4f12db027c9be3" name="aa4356079cf315f6f3a4f12db027c9be3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa4356079cf315f6f3a4f12db027c9be3">&#9670;&#160;</a></span>AudioTestPattern()</h2>
 
@@ -269,10 +335,10 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Constructs an <a class="el" href="classAudioTestPattern.html" title="Standalone audio test pattern generator.">AudioTestPattern</a>. </p>
+<p>Constructs an <a class="el" href="classAudioTestPattern.html" title="Multi-channel audio test pattern generator.">AudioTestPattern</a> for the given stream. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">desc</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> format descriptor. </td></tr>
+    <tr><td class="paramname">desc</td><td><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> format descriptor. The channel count drives how many entries from <a class="el" href="classAudioTestPattern.html#a591f7c169997f84184f6582ffaeef3f2">channelModes</a> are consumed. </td></tr>
   </table>
   </dd>
 </dl>
@@ -280,6 +346,60 @@ Static Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="aa0b39c0b1d2d7a8154315b8ef80179b0" name="aa0b39c0b1d2d7a8154315b8ef80179b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0b39c0b1d2d7a8154315b8ef80179b0">&#9670;&#160;</a></span>channelIdFrequency()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">double</a> AudioTestPattern::channelIdFrequency </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>channelIndex</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">double</a>&#160;</td>
+          <td class="paramname"><em>baseFreq</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">double</a>&#160;</td>
+          <td class="paramname"><em>stepFreq</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the ChannelId tone frequency for a given channel. </p>
+<p>Exposed for the Inspector / test code so it can independently compute the expected frequency for a <code>ChannelId</code> channel without duplicating the formula.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">channelIndex</td><td>Zero-based channel index. </td></tr>
+    <tr><td class="paramname">baseFreq</td><td>Base frequency (Hz). </td></tr>
+    <tr><td class="paramname">stepFreq</td><td>Per-channel step frequency (Hz). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><code>baseFreq + channelIndex * stepFreq</code>. </dd></dl>
+
+</div>
+</div>
 <a id="acb1fb4ec7799bca1c1cfbb56b9cb90c0" name="acb1fb4ec7799bca1c1cfbb56b9cb90c0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acb1fb4ec7799bca1c1cfbb56b9cb90c0">&#9670;&#160;</a></span>configure()</h2>
 
@@ -295,14 +415,9 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Configures internal generators based on current settings. </p>
-<p>Must be called after changing mode, frequency, or level settings and before calling <a class="el" href="classAudioTestPattern.html#ad667713bc364edff1cf3c7b48bfd64bb" title="Creates a new Audio buffer with the test pattern.">create()</a> or <a class="el" href="classAudioTestPattern.html#a9bc7ab45acf4d29630ad807666f1f43c" title="Renders the test pattern into an existing Audio buffer.">render()</a>. Sets up <a class="el" href="classAudioGen.html" title="Audio signal generator for producing test tones and silence.">AudioGen</a> or <a class="el" href="classLtcEncoder.html" title="Encodes timecode values into LTC (Linear Timecode) audio samples.">LtcEncoder</a> as appropriate.</p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a> on success.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">gen</a>.setMode(<a class="code hl_enumvalue" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1">AudioTestPattern::Tone</a>);</div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setToneFrequency(440.0);</div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.configure();           <span class="comment">// must call before create()/render()</span></div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">buf</a> = <a class="code hl_class" href="classList.html">gen</a>.create(4800);</div>
-</div><!-- fragment --> </dd></dl>
+<p>Configures internal generators for the current settings. </p>
+<p>Must be called after changing mode list, frequencies, or levels and before calling <a class="el" href="classAudioTestPattern.html#ad667713bc364edff1cf3c7b48bfd64bb">create</a> or <a class="el" href="classAudioTestPattern.html#a9bc7ab45acf4d29630ad807666f1f43c">render</a>. Rebuilds per-channel generator state and drops any cached pattern buffers.</p>
+<dl class="section return"><dt>Returns</dt><dd><code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a></code> on success. </dd></dl>
 
 </div>
 </div>
@@ -322,17 +437,15 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Creates a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer with the test pattern (no timecode). </p>
+<p>Creates a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer with no timecode context. </p>
+<p>Equivalent to <code>create(samples, Timecode())</code>. <code>LTC</code> and <code>AvSync</code> channels degrade to silence.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">samples</td><td>Number of samples to generate. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object containing the generated samples.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Tone or silence mode</span></div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">buf</a> = <a class="code hl_class" href="classList.html">gen</a>.create(samplesPerFrame);</div>
-</div><!-- fragment --> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer. </dd></dl>
 
 </div>
 </div>
@@ -363,22 +476,20 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Creates a new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer with the test pattern. </p>
+<p>Iterates the per-channel mode list, generates the corresponding signal for each channel (or silence for channels with no mode entry), and returns the combined interleaved <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">samples</td><td>Number of samples to generate. </td></tr>
-    <tr><td class="paramname">tc</td><td><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> for LTC mode (ignored for other modes). </td></tr>
+    <tr><td class="paramname">tc</td><td>Current frame timecode. Used by <code>LTC</code> and <code>AvSync</code> channels; invalid values degrade to silence on those channels. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> object containing the generated samples.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// LTC mode: embed timecode into audio</span></div>
-<div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">buf</a> = <a class="code hl_class" href="classList.html">gen</a>.create(samplesPerFrame, <a class="code hl_class" href="classList.html">currentTimecode</a>);</div>
-</div><!-- fragment --> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A new <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer, or an invalid <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> on failure. </dd></dl>
 
 </div>
 </div>
-<a id="aee6d80bf5b3d0f745fe70c87748427ad" name="aee6d80bf5b3d0f745fe70c87748427ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aee6d80bf5b3d0f745fe70c87748427ad">&#9670;&#160;</a></span>fromString()</h2>
+<a id="a65790ff6c494bb8906ea7adb5ba7b171" name="a65790ff6c494bb8906ea7adb5ba7b171"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65790ff6c494bb8906ea7adb5ba7b171">&#9670;&#160;</a></span>dualToneRatio()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -387,68 +498,82 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a> &gt; AudioTestPattern::fromString </td>
+          <td class="memname"><a class="el" href="classList.html">double</a> AudioTestPattern::dualToneRatio </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
-          <td class="paramname"><em>name</em></td><td>)</td>
-          <td></td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Parses a mode name string. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">name</td><td>Mode name ("tone", "silence", "ltc"). </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Result containing Mode on success, or <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708ab18e94a3b678690f8c48bc252ae63b85" title="Invalid value or argument (EINVAL).">Error::Invalid</a>.</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="classAudioTestPattern.html#a98cbf3af7fc2762a891c8d486e4e5029">mode</a>, <a class="code hl_class" href="classList.html">err</a>] = <a class="code hl_function" href="classAudioTestPattern.html#aee6d80bf5b3d0f745fe70c87748427ad">AudioTestPattern::fromString</a>(<span class="stringliteral">&quot;ltc&quot;</span>);</div>
-<div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a>.isOk()) <a class="code hl_class" href="classList.html">gen</a>.setMode(<a class="code hl_function" href="classAudioTestPattern.html#a98cbf3af7fc2762a891c8d486e4e5029">mode</a>);</div>
-<div class="ttc" id="aclassAudioTestPattern_html_a98cbf3af7fc2762a891c8d486e4e5029"><div class="ttname"><a href="classAudioTestPattern.html#a98cbf3af7fc2762a891c8d486e4e5029">AudioTestPattern::mode</a></div><div class="ttdeci">Mode mode() const</div><div class="ttdoc">Returns the current audio mode.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:76</div></div>
-<div class="ttc" id="aclassAudioTestPattern_html_aee6d80bf5b3d0f745fe70c87748427ad"><div class="ttname"><a href="classAudioTestPattern.html#aee6d80bf5b3d0f745fe70c87748427ad">AudioTestPattern::fromString</a></div><div class="ttdeci">static Result&lt; Mode &gt; fromString(const String &amp;name)</div><div class="ttdoc">Parses a mode name string.</div></div>
-</div><!-- fragment --> </dd></dl>
+<p>Returns the amplitude ratio of freq2 to freq1. </p>
+<p>Default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.25</a> reproduces the SMPTE IMD-1 reference (4:1 freq1-to-freq2 amplitude). The output is normalised so the peak stays at <a class="el" href="classAudioTestPattern.html#aa6d4925618164f1c5f2547ae1336b781">toneLevel</a>. </p>
 
 </div>
 </div>
-<a id="a043e89571242d90dde2aee442c2efc95" name="a043e89571242d90dde2aee442c2efc95"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a043e89571242d90dde2aee442c2efc95">&#9670;&#160;</a></span>render() <span class="overload">[1/2]</span></h2>
+<a id="a222052246eb7b0bd680bd21949696fb8" name="a222052246eb7b0bd680bd21949696fb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a222052246eb7b0bd680bd21949696fb8">&#9670;&#160;</a></span>noiseBufferSeconds()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioTestPattern::render </td>
+          <td class="memname"><a class="el" href="classList.html">double</a> AudioTestPattern::noiseBufferSeconds </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
-          <td class="paramname"><em>audio</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Renders the test pattern into an existing <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> buffer (no timecode). </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">audio</td><td>The target audio buffer.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">buf</a>(<a class="code hl_function" href="classAudioTestPattern.html#add4b4395f9304b1babc7bcf896b69df6">desc</a>, samplesPerFrame);</div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.render(<a class="code hl_class" href="classList.html">buf</a>);  <span class="comment">// fill in-place (tone or silence)</span></div>
-<div class="ttc" id="aclassAudioTestPattern_html_add4b4395f9304b1babc7bcf896b69df6"><div class="ttname"><a href="classAudioTestPattern.html#add4b4395f9304b1babc7bcf896b69df6">AudioTestPattern::desc</a></div><div class="ttdeci">const AudioDesc &amp; desc() const</div><div class="ttdoc">Returns the audio descriptor.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:73</div></div>
-</div><!-- fragment --> </dd></dl>
+<p>Returns the noise buffer length in seconds. </p>
+<p>The white/pink noise channels share a pre-generated sample buffer of this duration, cached in <a class="el" href="classAudioTestPattern.html#acb1fb4ec7799bca1c1cfbb56b9cb90c0">configure</a>. The default is ten seconds — long enough that a casual listener can't pick out the loop repetition, and cheap enough at typical sample rates (≈1.9 MB at 48 kHz float). The buffer is generated with a raised-cosine crossfade at the wrap boundary so the loop is seamless; the longer the buffer the less often the (already-inaudible) transition fires. </p>
+
+</div>
+</div>
+<a id="abefd2018733d488e01938fe1c8cb7bad" name="abefd2018733d488e01938fe1c8cb7bad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abefd2018733d488e01938fe1c8cb7bad">&#9670;&#160;</a></span>noiseSeed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">uint32_t</a> AudioTestPattern::noiseSeed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the seed used to generate the noise buffers. </p>
+<p>Fixed by default so noise is reproducible across runs — the TPG is a test-pattern generator, and reproducibility is strictly more useful than unpredictability for verification workloads. </p>
 
 </div>
 </div>
 <a id="a9bc7ab45acf4d29630ad807666f1f43c" name="a9bc7ab45acf4d29630ad807666f1f43c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9bc7ab45acf4d29630ad807666f1f43c">&#9670;&#160;</a></span>render() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9bc7ab45acf4d29630ad807666f1f43c">&#9670;&#160;</a></span>render()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -477,18 +602,15 @@ Static Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">audio</td><td>The target audio buffer. </td></tr>
-    <tr><td class="paramname">tc</td><td><a class="el" href="classTimecode.html" title="Class for holding and manipulating timecode.">Timecode</a> for LTC mode (ignored for other modes).</td></tr>
+    <tr><td class="paramname">tc</td><td>Current frame timecode. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">buf</a>(<a class="code hl_function" href="classAudioTestPattern.html#add4b4395f9304b1babc7bcf896b69df6">desc</a>, samplesPerFrame);</div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.render(<a class="code hl_class" href="classList.html">buf</a>, <a class="code hl_class" href="classList.html">currentTimecode</a>);  <span class="comment">// fill in-place (LTC)</span></div>
-</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
-<a id="a1983d579e8ee7f112277a99634372674" name="a1983d579e8ee7f112277a99634372674"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1983d579e8ee7f112277a99634372674">&#9670;&#160;</a></span>setMode()</h2>
+<a id="af4112571dfb7cca2589594b831abbd66" name="af4112571dfb7cca2589594b831abbd66"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4112571dfb7cca2589594b831abbd66">&#9670;&#160;</a></span>setChannelIdBaseFreq()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -497,10 +619,10 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">void</a> AudioTestPattern::setMode </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> AudioTestPattern::setChannelIdBaseFreq </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a>&#160;</td>
-          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">double</a>&#160;</td>
+          <td class="paramname"><em>hz</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -511,18 +633,13 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the audio mode. </p>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classList.html">gen</a>.setMode(<a class="code hl_enumvalue" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a7fbfd527c7a3f39844d17aa5f10ba6d1">AudioTestPattern::Tone</a>);    <span class="comment">// sine wave</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setMode(<a class="code hl_enumvalue" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a0e65fc32dde0d311fc81d6c2b01283da">AudioTestPattern::Silence</a>); <span class="comment">// silence</span></div>
-<div class="line"><a class="code hl_class" href="classList.html">gen</a>.setMode(<a class="code hl_enumvalue" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9">AudioTestPattern::LTC</a>);     <span class="comment">// LTC timecode</span></div>
-<div class="ttc" id="aclassAudioTestPattern_html_abe30b2cdcee08bb0eec254f2465223d0a0e65fc32dde0d311fc81d6c2b01283da"><div class="ttname"><a href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0a0e65fc32dde0d311fc81d6c2b01283da">AudioTestPattern::Silence</a></div><div class="ttdeci">@ Silence</div><div class="ttdoc">Silence.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:55</div></div>
-<div class="ttc" id="aclassAudioTestPattern_html_abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9"><div class="ttname"><a href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9">AudioTestPattern::LTC</a></div><div class="ttdeci">@ LTC</div><div class="ttdoc">LTC timecode audio.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:56</div></div>
-</div><!-- fragment --> </dd></dl>
+<p>Sets the ChannelId base frequency in Hz. </p>
+<p>Channel <em>N</em> carries <code><a class="el" href="classAudioTestPattern.html#a8bcf812a26fa0c3873ee04dd90d7abaa" title="Returns the ChannelId base frequency in Hz.">channelIdBaseFreq()</a> + N * <a class="el" href="classAudioTestPattern.html#a545a4ddc49d8b99dc1093a19d0fea706" title="Returns the ChannelId step frequency in Hz.">channelIdStepFreq()</a></code>. </p>
 
 </div>
 </div>
-<a id="a74eeedbb508977e25b19a26c0df441c3" name="a74eeedbb508977e25b19a26c0df441c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a74eeedbb508977e25b19a26c0df441c3">&#9670;&#160;</a></span>toString()</h2>
+<a id="aff1fb92b064a5a71fd8fe63b19417e9d" name="aff1fb92b064a5a71fd8fe63b19417e9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff1fb92b064a5a71fd8fe63b19417e9d">&#9670;&#160;</a></span>setChannelModes()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -531,33 +648,82 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classString.html">String</a> AudioTestPattern::toString </td>
+          <td class="memname"><a class="el" href="classList.html">void</a> AudioTestPattern::setChannelModes </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0">Mode</a>&#160;</td>
-          <td class="paramname"><em>mode</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classEnumList.html">EnumList</a> &amp;&#160;</td>
+          <td class="paramname"><em>modes</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the name string for a Mode value. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">mode</td><td>The mode value. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>The mode name string (lowercase).</dd></dl>
-<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> name = <a class="code hl_function" href="classAudioTestPattern.html#a74eeedbb508977e25b19a26c0df441c3">AudioTestPattern::toString</a>(<a class="code hl_enumvalue" href="classAudioTestPattern.html#abe30b2cdcee08bb0eec254f2465223d0ab3f5c9fcc3affa6407c20ad24effc7c9">AudioTestPattern::LTC</a>);</div>
-<div class="line"><span class="comment">// name == &quot;ltc&quot;</span></div>
-<div class="ttc" id="aclassAudioTestPattern_html_a74eeedbb508977e25b19a26c0df441c3"><div class="ttname"><a href="classAudioTestPattern.html#a74eeedbb508977e25b19a26c0df441c3">AudioTestPattern::toString</a></div><div class="ttdeci">static String toString(Mode mode)</div><div class="ttdoc">Returns the name string for a Mode value.</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
-</div><!-- fragment --> </dd></dl>
+<p>Sets the per-channel pattern list. </p>
+<p><code>modes</code> must be an <a class="el" href="classEnumList.html">EnumList</a> whose element type is <a class="el" href="classAudioPattern.html">AudioPattern</a>. An empty / invalid list is accepted and silences every channel. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="aaefe7b4dd1eab47567ef2f1981c40d18" name="aaefe7b4dd1eab47567ef2f1981c40d18"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaefe7b4dd1eab47567ef2f1981c40d18">&#9670;&#160;</a></span>kPcmMarkerFrameSamples</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">size_t</a> AudioTestPattern::kPcmMarkerFrameSamples</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">                        <a class="code hl_variable" href="classAudioTestPattern.html#a361a11c2f8ed7d60fd3b07010aca8f61">kPcmMarkerPreambleSamples</a> +</div>
+<div class="line">                        <a class="code hl_variable" href="classAudioTestPattern.html#ad915545729338f9c1e28b0f3d7142f88">kPcmMarkerStartSamples</a> +</div>
+<div class="line">                        <a class="code hl_variable" href="classAudioTestPattern.html#ab867ba1721d171d1ffdbb93a62f8f523">kPcmMarkerPayloadBits</a> + 1</div>
+<div class="ttc" id="aclassAudioTestPattern_html_a361a11c2f8ed7d60fd3b07010aca8f61"><div class="ttname"><a href="classAudioTestPattern.html#a361a11c2f8ed7d60fd3b07010aca8f61">AudioTestPattern::kPcmMarkerPreambleSamples</a></div><div class="ttdeci">static constexpr size_t kPcmMarkerPreambleSamples</div><div class="ttdoc">Length of the PcmMarker sync preamble in samples.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:293</div></div>
+<div class="ttc" id="aclassAudioTestPattern_html_ab867ba1721d171d1ffdbb93a62f8f523"><div class="ttname"><a href="classAudioTestPattern.html#ab867ba1721d171d1ffdbb93a62f8f523">AudioTestPattern::kPcmMarkerPayloadBits</a></div><div class="ttdeci">static constexpr size_t kPcmMarkerPayloadBits</div><div class="ttdoc">Bits in the PcmMarker payload.</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:300</div></div>
+<div class="ttc" id="aclassAudioTestPattern_html_ad915545729338f9c1e28b0f3d7142f88"><div class="ttname"><a href="classAudioTestPattern.html#ad915545729338f9c1e28b0f3d7142f88">AudioTestPattern::kPcmMarkerStartSamples</a></div><div class="ttdeci">static constexpr size_t kPcmMarkerStartSamples</div><div class="ttdoc">Length of the PcmMarker &quot;start of payload&quot; marker (four high samples followed by four low samples).</div><div class="ttdef"><b>Definition</b> audiotestpattern.h:297</div></div>
+</div><!-- fragment -->
+<p>Total number of deterministic samples in one PcmMarker framing unit (preamble + start + 64 bits. </p>
+<ul>
+<li>parity). Channels shorter than this carry a truncated frame; the decoder is expected to resynchronise. </li>
+</ul>
+
+</div>
+</div>
+<a id="a852e1beb7487d36c42c3eef52c4bc97d" name="a852e1beb7487d36c42c3eef52c4bc97d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a852e1beb7487d36c42c3eef52c4bc97d">&#9670;&#160;</a></span>kSrcProbeFrequencyHz</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">constexpr</a> <a class="el" href="classList.html">double</a> AudioTestPattern::kSrcProbeFrequencyHz = 997.0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Canonical SRC-probe reference frequency in Hz. </p>
+<p>997 Hz is coprime with every common audio sample rate so any SRC applied downstream shifts the observed frequency by a detectable amount. </p>
 
 </div>
 </div>
@@ -571,7 +737,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioTestPattern.html">AudioTestPattern</a></li>
-    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
   </ul>
 </div>
 </body>

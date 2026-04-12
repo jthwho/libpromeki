@@ -2,7 +2,7 @@ var searchData=
 [
   ['terminationsignalhandler_0',['TerminationSignalHandler',['../classLibraryOptions.html#ab98ee2f75c05fdbafc96ee9ff4784377',1,'LibraryOptions']]],
   ['time_1',['time',['../structBuildInfo.html#a481d627e0e866d0d31b97cd3e01aa2a2',1,'BuildInfo']]],
-  ['timecode_2',['timecode',['../structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf',1,'LtcDecoder::DecodedTimecode::timecode'],['../classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a',1,'Metadata::Timecode']]],
+  ['timecode_2',['timecode',['../classMetadata.html#afcab0b9a69d3b11c78761888f3e7072a',1,'Metadata::Timecode'],['../structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf',1,'LtcDecoder::DecodedTimecode::timecode']]],
   ['timecodedropframe_3',['TimecodeDropFrame',['../classMediaConfig.html#af1ef1773fa288ae9340c92fa9fe1584f',1,'MediaConfig']]],
   ['timecodeenabled_4',['TimecodeEnabled',['../classMediaConfig.html#a6e1f9ffd6d4e35c6c31e9d70745cab93',1,'MediaConfig']]],
   ['timecodestart_5',['TimecodeStart',['../classMediaConfig.html#a3c81773e8e88cdcce788dc5f9c90acdf',1,'MediaConfig']]],

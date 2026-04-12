@@ -151,8 +151,8 @@ $(document).ready(function(){initNavTree('inspector.html',''); initResizable(); 
   MediaIO *src  = MediaIO::create(MediaIO::defaultConfig("TPG"));
   MediaIO *sink = MediaIO::create(MediaIO::defaultConfig("Inspector"));
  
-  src-&gt;open(MediaIO::Reader);
-  sink-&gt;open(MediaIO::Writer);
+  src-&gt;open(MediaIO::Output);
+  sink-&gt;open(MediaIO::Input);
  
   for(int i = 0; i &lt; 1000; i++) {
       Frame::Ptr frame;
@@ -312,14 +312,15 @@ Construction patterns</h1>
 <h2><a class="anchor" id="inspector_construct_factory"></a>
 Standard factory (no callback)</h2>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classMediaIO.html">MediaIO</a> *io = <a class="code hl_function" href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a>(<a class="code hl_function" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a>(<span class="stringliteral">&quot;Inspector&quot;</span>));</div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(MediaIO::Writer);</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a>);</div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">writeFrame</a>(frame);</div>
 <div class="line"><span class="comment">// ... query io-&gt;stats() or rely on the periodic log</span></div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;</div>
-<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:467</div></div>
+<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:476</div></div>
 <div class="ttc" id="aclassMediaIO_html_a083b9e49f5f676da9066f084bfbd0f60"><div class="ttname"><a href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a></div><div class="ttdeci">Error writeFrame(const Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Writes a frame to the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a0cb498ce63da62e06f5f463c0b046d74"><div class="ttname"><a href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a></div><div class="ttdeci">static Config defaultConfig(const String &amp;typeName)</div><div class="ttdoc">Returns the default configuration for the named backend.</div></div>
+<div class="ttc" id="aclassMediaIO_html_a3f8b370536ea3e89c4598bb475fedc87"><div class="ttname"><a href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a></div><div class="ttdeci">static constexpr Mode Input</div><div class="ttdoc">Backend accepts frames (sink).</div><div class="ttdef"><b>Definition</b> mediaio.h:484</div></div>
 <div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_adec397e0125f2e156de27c9ac5cb1f3d"><div class="ttname"><a href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">MediaIO::close</a></div><div class="ttdeci">Error close()</div><div class="ttdoc">Closes the media resource.</div></div>
@@ -338,7 +339,7 @@ Adopt-task path (per-frame callback)</h2>
 <div class="line"><a class="code hl_class" href="classMediaIO.html">MediaIO</a> *io = <span class="keyword">new</span> <a class="code hl_class" href="classMediaIO.html">MediaIO</a>();</div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">setConfig</a>(<a class="code hl_function" href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a>(<span class="stringliteral">&quot;Inspector&quot;</span>));</div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adf861eac41671d654408efeada979bcd">adoptTask</a>(<a class="code hl_class" href="classList.html">insp</a>);                  <span class="comment">// takes ownership of `insp`</span></div>
-<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(MediaIO::Writer);</div>
+<div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">open</a>(<a class="code hl_variable" href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a>);</div>
 <div class="line"> </div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">writeFrame</a>(frame);</div>
 <div class="line"><span class="comment">// ... insp is still valid as long as io is — you keep the typed</span></div>
@@ -347,7 +348,7 @@ Adopt-task path (per-frame callback)</h2>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;                           <span class="comment">// also deletes insp</span></div>
 <div class="ttc" id="aclassMediaIOTask__Inspector_html"><div class="ttname"><a href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a></div><div class="ttdoc">MediaIO sink backend that decodes and validates a media stream.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:270</div></div>
-<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1146</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1232</div></div>
 <div class="ttc" id="aclassMediaIO_html_adf861eac41671d654408efeada979bcd"><div class="ttname"><a href="classMediaIO.html#adf861eac41671d654408efeada979bcd">MediaIO::adoptTask</a></div><div class="ttdeci">Error adoptTask(MediaIOTask *task)</div><div class="ttdoc">Injects an externally constructed backend task.</div></div>
 <div class="ttc" id="astructInspectorEvent_html"><div class="ttname"><a href="structInspectorEvent.html">InspectorEvent</a></div><div class="ttdoc">Per-frame measurement record produced by MediaIOTask_Inspector.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:83</div></div>
 </div><!-- fragment --><p>The callback <b>must</b> be installed before <code>open()</code> — calling <code>setEventCallback</code> on a running inspector is a data race. This is why the factory path can't expose the callback: by the time <code>create()</code> returns, the task is already owned and inaccessible to user code.</p>
@@ -429,7 +430,7 @@ See also</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
   </ul>
 </div>
 </body>

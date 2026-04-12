@@ -7,6 +7,7 @@ var classVariantSpec =
     [ "defaultString", "classVariantSpec.html#a908d92ca4fbea040fdfafc8f8fb33bdd", null ],
     [ "defaultValue", "classVariantSpec.html#a104d2e67b86bc2c7fbb32fd007e21766", null ],
     [ "description", "classVariantSpec.html#a70d0f96b403f617602c9fdbb282ef5ef", null ],
+    [ "detailsString", "classVariantSpec.html#ab41bd3bbb29c93a1370d77f491ed8fd0", null ],
     [ "enumType", "classVariantSpec.html#adedc8af7a160f82d3f27253794ef6de2", null ],
     [ "hasEnumType", "classVariantSpec.html#a9273c0ef0063174ad6aafe046cb38471", null ],
     [ "hasMax", "classVariantSpec.html#a270550763c409ffbea91b866c2b9407b", null ],
@@ -29,6 +30,5 @@ var classVariantSpec =
     [ "setTypes", "classVariantSpec.html#a6ce989cfccc4e97d533474bb819771ce", null ],
     [ "typeName", "classVariantSpec.html#af60b54a40c7ca89e04beca0c30e61140", null ],
     [ "types", "classVariantSpec.html#a9a9eb09c9544db50ae115989cc0610b7", null ],
-    [ "validate", "classVariantSpec.html#aa7b6da2209fad230a6158db936acc3e4", null ],
-    [ "writeHelp", "classVariantSpec.html#a28b3e2fee41c447faf4fcec80e2e98fa", null ]
+    [ "validate", "classVariantSpec.html#aa7b6da2209fad230a6158db936acc3e4", null ]
 ];

@@ -1606,15 +1606,15 @@ template&lt;typename... Args&gt; </div>
 </div><div class="memdoc">
 
 <p>Formats a byte count with an explicit <a class="el" href="classByteCountStyle.html">ByteCountStyle</a>. </p>
-<p>Takes the strongly-typed <a class="el" href="classByteCountStyle.html">ByteCountStyle</a> enum directly so the unit family is checked at compile time — passing an unrelated enum kind (e.g. <code><a class="el" href="classVideoPattern.html" title="Well-known Enum type for video test pattern generator modes.">VideoPattern</a></code>) fails to compile. Runtime values stored in a <a class="el" href="variant_8h.html#ac15b79be40667401a29a7cf97c330853">Variant</a> can still be passed here by constructing a <a class="el" href="classByteCountStyle.html">ByteCountStyle</a> from the integer or round-tripped <a class="el" href="classEnum.html">Enum</a>.</p>
+<p>Takes the strongly-typed <a class="el" href="classByteCountStyle.html">ByteCountStyle</a> enum directly so the unit family is checked at compile time — passing an unrelated enum kind (e.g. <code><a class="el" href="classVideoPattern.html" title="Well-known Enum type for video test pattern generator modes.">VideoPattern</a></code>) fails to compile. Runtime values stored in a <a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a> can still be passed here by constructing a <a class="el" href="classByteCountStyle.html">ByteCountStyle</a> from the integer or round-tripped <a class="el" href="classEnum.html">Enum</a>.</p>
 <dl class="section user"><dt>Examples</dt><dd><div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="enums_8h.html">promeki/enums.h</a>&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_function" href="classString.html#a0dec855c1f50eac6ffe149fce7f86679">String::fromByteCount</a>(1048576, 3, <a class="code hl_variable" href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a>); <span class="comment">// &quot;1 MiB&quot;</span></div>
 <div class="line"><a class="code hl_function" href="classString.html#a0dec855c1f50eac6ffe149fce7f86679">String::fromByteCount</a>(1024,    3, <a class="code hl_variable" href="group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892">ByteCountStyle::Metric</a>); <span class="comment">// &quot;1.024 KB&quot;</span></div>
 <div class="ttc" id="aclassString_html_a0dec855c1f50eac6ffe149fce7f86679"><div class="ttname"><a href="classString.html#a0dec855c1f50eac6ffe149fce7f86679">String::fromByteCount</a></div><div class="ttdeci">static String fromByteCount(uint64_t bytes, int maxDecimals=3)</div><div class="ttdoc">Formats a byte count as a human-readable string (metric default).</div></div>
 <div class="ttc" id="aenums_8h_html"><div class="ttname"><a href="enums_8h.html">enums.h</a></div></div>
-<div class="ttc" id="agroup__wellknownenums_html_ga6d3dd14d60f115203c9061ab83edb892"><div class="ttname"><a href="group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892">ByteCountStyle::Metric</a></div><div class="ttdeci">static const ByteCountStyle Metric</div><div class="ttdoc">Powers of 1000 (KB, MB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:484</div></div>
-<div class="ttc" id="agroup__wellknownenums_html_ga9d2d3b34e2e3e410560df0546f7dc983"><div class="ttname"><a href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a></div><div class="ttdeci">static const ByteCountStyle Binary</div><div class="ttdoc">Powers of 1024 (KiB, MiB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:485</div></div>
+<div class="ttc" id="agroup__wellknownenums_html_ga6d3dd14d60f115203c9061ab83edb892"><div class="ttname"><a href="group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892">ByteCountStyle::Metric</a></div><div class="ttdeci">static const ByteCountStyle Metric</div><div class="ttdoc">Powers of 1000 (KB, MB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:550</div></div>
+<div class="ttc" id="agroup__wellknownenums_html_ga9d2d3b34e2e3e410560df0546f7dc983"><div class="ttname"><a href="group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983">ByteCountStyle::Binary</a></div><div class="ttdeci">static const ByteCountStyle Binary</div><div class="ttdoc">Powers of 1024 (KiB, MiB, ...).</div><div class="ttdef"><b>Definition</b> enums.h:551</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -3940,7 +3940,7 @@ template&lt;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classString.html">String</a></li>
-    <li class="footer">Generated on 2026-04-11 22:47:01 from commit 589d6ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
   </ul>
 </div>
 </body>

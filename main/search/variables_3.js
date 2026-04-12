@@ -2,9 +2,9 @@ var searchData=
 [
   ['callback_0',['callback',['../classCmdLineParser_1_1Option.html#a60b2fd6572c0b9c734056de456cebedc',1,'CmdLineParser::Option']]],
   ['canhandledevice_1',['canHandleDevice',['../structMediaIO_1_1FormatDesc.html#a8cb05daaef47af69482f1e5c30a244b9',1,'MediaIO::FormatDesc']]],
-  ['canread_2',['canRead',['../structMediaIO_1_1FormatDesc.html#a8ddabfb044787f2633c75b25d1580750',1,'MediaIO::FormatDesc']]],
-  ['canreadwrite_3',['canReadWrite',['../structMediaIO_1_1FormatDesc.html#a80b2ff329a262db254c054a8d900aff3',1,'MediaIO::FormatDesc']]],
-  ['canwrite_4',['canWrite',['../structMediaIO_1_1FormatDesc.html#a4e86af46648e6cbe5c97606f002c3444',1,'MediaIO::FormatDesc']]],
+  ['caninput_2',['canInput',['../structMediaIO_1_1FormatDesc.html#aae7cc36c2f62f617e022823820f3844c',1,'MediaIO::FormatDesc']]],
+  ['caninputandoutput_3',['canInputAndOutput',['../structMediaIO_1_1FormatDesc.html#a2837b066a3c3143ad5789e49fe63b55d',1,'MediaIO::FormatDesc']]],
+  ['canoutput_4',['canOutput',['../structMediaIO_1_1FormatDesc.html#a0fddb44661a7e54ff529a1d8febe9a02',1,'MediaIO::FormatDesc']]],
   ['capacity_5',['Capacity',['../classMediaConfig.html#a140d259eae837c2210ff3bd7d9042117',1,'MediaConfig']]],
   ['captureenvironment_6',['CaptureEnvironment',['../classLibraryOptions.html#a9db25db1e38c5c1c3a7b736179fa1a62',1,'LibraryOptions']]],
   ['capturetime_7',['CaptureTime',['../classMetadata.html#a1065498d0642feef02e77bca6b7c1212',1,'Metadata']]],
