@@ -1,5 +1,8 @@
 var NAVTREEINDEX20 =
 {
+"classTuiApplication.html#afea82b68f6050da42d09234e3714974f":[15,20,0,19],
+"classTuiButton.html":[15,19,0],
+"classTuiButton.html#a026e2292d24e5cb83664cdcac7c08811":[15,19,0,2],
 "classTuiButton.html#a3a9f036b70d6ec03f9307225eb9a90ff":[15,19,0,7],
 "classTuiButton.html#a53de611e4078be71d22106e902674788":[15,19,0,8],
 "classTuiButton.html#aaac8d04d4185788d551cd05a7f478fe0":[15,19,0,1],
@@ -246,8 +249,5 @@ var NAVTREEINDEX20 =
 "classUdpSocket.html#aa3e71cccd2d27986479f9b6a15ba24fb":[15,12,25,1],
 "classUdpSocket.html#aa837ef3b63156eb8fd3ee2958f9a102d":[15,12,25,2],
 "classUdpSocket.html#abb70a958826f6f6d24b19f4b7992b50f":[15,12,25,27],
-"classUdpSocket.html#ace9424bdf144770de40fcbce8b70659f":[15,12,25,17],
-"classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0":[15,12,25,26],
-"classUdpSocket.html#add5c68fef5c035cd83fcd5c9a986eefe":[15,12,25,4],
-"classUdpSocket.html#aeab9244817662235c7f6bb4f04290070":[15,12,25,7]
+"classUdpSocket.html#ace9424bdf144770de40fcbce8b70659f":[15,12,25,17]
 };

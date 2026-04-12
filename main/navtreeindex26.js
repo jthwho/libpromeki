@@ -1,5 +1,8 @@
 var NAVTREEINDEX26 =
 {
+"structLogger_1_1LogEntry.html":[15,10,23,0],
+"structLogger_1_1LogFormat.html":[15,10,23,1],
+"structLtcDecoder_1_1DecodedTimecode.html":[15,13,22,0],
 "structLtcDecoder_1_1DecodedTimecode.html#a000465fa4e6b38ae2b5f5ffedcf01ea8":[15,13,22,0,0],
 "structLtcDecoder_1_1DecodedTimecode.html#a498bcfdeaea00cca924cab759912beaf":[15,13,22,0,2],
 "structLtcDecoder_1_1DecodedTimecode.html#af6c7ed1cb360465eb1752d58f4158f35":[15,13,22,0,1],
@@ -246,8 +249,5 @@ var NAVTREEINDEX26 =
 "timerevent_8h_source.html":[18,0,0,0,182],
 "timestamp_8h.html":[18,0,0,0,183],
 "timestamp_8h.html#a05fd27c0cb2d79b67aec629786c5d5b4":[18,0,0,0,183,6],
-"timestamp_8h.html#a45d005facd66d543d90fe90d7d62445f":[18,0,0,0,183,0],
-"timestamp_8h.html#a4659c04c8ea7e2675b92273bb13fd0d6":[18,0,0,0,183,3],
-"timestamp_8h.html#a4a9def840a4f40903c87cd16e5c6328e":[18,0,0,0,183,5],
-"timestamp_8h.html#a896b960defc7651879f7b090a769924e":[18,0,0,0,183,7]
+"timestamp_8h.html#a45d005facd66d543d90fe90d7d62445f":[18,0,0,0,183,0]
 };

@@ -1,5 +1,8 @@
 var NAVTREEINDEX22 =
 {
+"classXYZColor.html#a854f153a4c2c313c243c34a536e9e79b":[15,14,4,8],
+"classXYZColor.html#aa66fa454e0cfc48fc2ed9036a0c52050":[15,14,4,11],
+"classXYZColor.html#ab2ce8642723d866e749ab6d5abb6e261":[15,14,4,5],
 "classXYZColor.html#ab2e27d69cfd18c3b7df40516f3abda12":[15,14,4,1],
 "classXYZColor.html#abf41e5fa837d9231d800185e5ffb03a1":[15,14,4,6],
 "classXYZColor.html#ad659ce61d11b5c04af11fa25b3b35280":[15,14,4,3],
@@ -246,8 +249,5 @@ var NAVTREEINDEX22 =
 "functions_m.html":[17,3,0,13],
 "functions_n.html":[17,3,0,14],
 "functions_o.html":[17,3,0,15],
-"functions_p.html":[17,3,0,16],
-"functions_q.html":[17,3,0,17],
-"functions_r.html":[17,3,0,18],
-"functions_rela.html":[17,3,6]
+"functions_p.html":[17,3,0,16]
 };

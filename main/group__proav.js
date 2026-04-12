@@ -618,6 +618,7 @@ var group__proav =
       [ "defaultPrefetchDepth", "classMediaIOCommandOpen.html#a34c8e5769ba8345330e956c7eba5c493", null ],
       [ "defaultSeekMode", "classMediaIOCommandOpen.html#a0f6ec8ac1675fd2423c9a44ad0564c9b", null ],
       [ "defaultStep", "classMediaIOCommandOpen.html#a8d173a8261405ca80ac81363ff3ed743", null ],
+      [ "defaultWriteDepth", "classMediaIOCommandOpen.html#a27d39093c4e335af40c7ce2b2103aa36", null ],
       [ "videoTracks", "classMediaIOCommandOpen.html#a87a227be4768e01014c02b4dbd6e5a0d", null ]
     ] ],
     [ "MediaIOCommandClose", "classMediaIOCommandClose.html", [
@@ -721,7 +722,9 @@ var group__proav =
       [ "stats", "classMediaIO.html#a3249b9b60ce5deeb47a885e4cca4de2c", null ],
       [ "step", "classMediaIO.html#af5de472d92c64fd2b4fc010b14381194", null ],
       [ "uuid", "classMediaIO.html#aaa4eed4f1032cc745b89e9c78837e038", null ],
-      [ "writeFrame", "classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60", null ]
+      [ "writeDepth", "classMediaIO.html#ae1ec99e28db88b2ab6b0dc064d1f4586", null ],
+      [ "writeFrame", "classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60", null ],
+      [ "writesAccepted", "classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8", null ]
     ] ],
     [ "MediaIOTask", "classMediaIOTask.html", [
       [ "MediaIOTask", "classMediaIOTask.html#a0b805f45d7b99204ec16da2f3ee060c1", null ],

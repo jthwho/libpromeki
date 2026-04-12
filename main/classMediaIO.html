@@ -239,6 +239,12 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>step</b> () <a class="
 <tr class="memitem:aaf1ea27a191795c10a61cbdc97397f56" id="r_aaf1ea27a191795c10a61cbdc97397f56"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#aaf1ea27a191795c10a61cbdc97397f56">prefetchDepth</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:aaf1ea27a191795c10a61cbdc97397f56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current read prefetch depth.  <br /></td></tr>
 <tr class="separator:aaf1ea27a191795c10a61cbdc97397f56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1ec99e28db88b2ab6b0dc064d1f4586" id="r_ae1ec99e28db88b2ab6b0dc064d1f4586"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#ae1ec99e28db88b2ab6b0dc064d1f4586">writeDepth</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:ae1ec99e28db88b2ab6b0dc064d1f4586"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the maximum write pipeline depth.  <br /></td></tr>
+<tr class="separator:ae1ec99e28db88b2ab6b0dc064d1f4586"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ce9a1fdad6095256ca5c22e1bb787f8" id="r_a7ce9a1fdad6095256ca5c22e1bb787f8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8">writesAccepted</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a7ce9a1fdad6095256ca5c22e1bb787f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns how many frames the backend can accept right now.  <br /></td></tr>
+<tr class="separator:a7ce9a1fdad6095256ca5c22e1bb787f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2b3a33fc6d2c89b2eca5a896b461f214" id="r_a2b3a33fc6d2c89b2eca5a896b461f214"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a2b3a33fc6d2c89b2eca5a896b461f214">setPrefetchDepth</a> (int <a class="el" href="classList.html">n</a>)</td></tr>
 <tr class="memdesc:a2b3a33fc6d2c89b2eca5a896b461f214"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the number of read commands to keep in flight.  <br /></td></tr>
 <tr class="separator:a2b3a33fc6d2c89b2eca5a896b461f214"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2082,6 +2088,35 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="ae1ec99e28db88b2ab6b0dc064d1f4586" name="ae1ec99e28db88b2ab6b0dc064d1f4586"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1ec99e28db88b2ab6b0dc064d1f4586">&#9670;&#160;</a></span>writeDepth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MediaIO::writeDepth </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the maximum write pipeline depth. </p>
+<p>Reflects the task's preferred default after <a class="el" href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3" title="Opens the media resource.">open()</a>. Callers should limit the number of non-blocking <a class="el" href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60" title="Writes a frame to the media resource.">writeFrame()</a> calls in flight to this value; exceeding it may cause the backend's internal queue to grow beyond its preferred operating point.</p>
+<dl class="section return"><dt>Returns</dt><dd>The write depth (≥ 1). </dd></dl>
+
+</div>
+</div>
 <a id="a083b9e49f5f676da9066f084bfbd0f60" name="a083b9e49f5f676da9066f084bfbd0f60"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a083b9e49f5f676da9066f084bfbd0f60">&#9670;&#160;</a></span>writeFrame()</h2>
 
@@ -2118,6 +2153,27 @@ Additional Inherited Members</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708aa5758bc6cc59cd5dcedfb62d4cbbc76b" title="Resource temporarily unavailable (EAGAIN).">Error::TryAgain</a>, or an error. </dd></dl>
+
+</div>
+</div>
+<a id="a7ce9a1fdad6095256ca5c22e1bb787f8" name="a7ce9a1fdad6095256ca5c22e1bb787f8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ce9a1fdad6095256ca5c22e1bb787f8">&#9670;&#160;</a></span>writesAccepted()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int MediaIO::writesAccepted </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns how many frames the backend can accept right now. </p>
+<p>Convenience for <code><a class="el" href="classMediaIO.html#ae1ec99e28db88b2ab6b0dc064d1f4586" title="Returns the maximum write pipeline depth.">writeDepth()</a></code> - <a class="el" href="classMediaIO.html#a8d6077a1817f66954ffa588b664f3f63" title="Returns the number of CmdWrite commands in flight on the strand (queued or running).">pendingWrites()</a>, clamped to zero. A return of 0 means the write pipeline is full and the caller should wait for a <code>frameWantedSignal</code> before submitting more work.</p>
+<dl class="section return"><dt>Returns</dt><dd>Available write slots (≥ 0). </dd></dl>
 
 </div>
 </div>
@@ -2182,7 +2238,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 08:37:52 from commit c0af658 (1.0.0).</li>
   </ul>
 </div>
 </body>

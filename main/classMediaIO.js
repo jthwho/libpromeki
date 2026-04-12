@@ -58,5 +58,7 @@ var classMediaIO =
     [ "stats", "classMediaIO.html#a3249b9b60ce5deeb47a885e4cca4de2c", null ],
     [ "step", "classMediaIO.html#af5de472d92c64fd2b4fc010b14381194", null ],
     [ "uuid", "classMediaIO.html#aaa4eed4f1032cc745b89e9c78837e038", null ],
-    [ "writeFrame", "classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60", null ]
+    [ "writeDepth", "classMediaIO.html#ae1ec99e28db88b2ab6b0dc064d1f4586", null ],
+    [ "writeFrame", "classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60", null ],
+    [ "writesAccepted", "classMediaIO.html#a7ce9a1fdad6095256ca5c22e1bb787f8", null ]
 ];

@@ -1,5 +1,8 @@
 var NAVTREEINDEX25 =
 {
+"result_8h.html#ac141a8321ba3515f706bba4e16588495":[18,0,0,0,148,5],
+"result_8h.html#ac336da514fe7594aba63bf46596d47ed":[18,0,0,0,148,1],
+"result_8h.html#aedc5c8420b853718fc662829e990675d":[18,0,0,0,148,4],
 "result_8h_source.html":[18,0,0,0,148],
 "rtppacket_8h.html":[18,0,0,0,149],
 "rtppacket_8h_source.html":[18,0,0,0,149],
@@ -246,8 +249,5 @@ var NAVTREEINDEX25 =
 "structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5":[15,13,41,5],
 "structIsSharedObject.html":[17,0,98],
 "structIsSharedObject_3_01T_00_01std_1_1void__t_3_01decltype_07_6T_1_1__promeki__refct_08_4_01_4.html":[17,0,99],
-"structLibraryOptionsTag.html":[15,10,21],
-"structLogger_1_1LogEntry.html":[15,10,23,0],
-"structLogger_1_1LogFormat.html":[15,10,23,1],
-"structLtcDecoder_1_1DecodedTimecode.html":[15,13,22,0]
+"structLibraryOptionsTag.html":[15,10,21]
 };
