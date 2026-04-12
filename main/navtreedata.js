@@ -70,6 +70,37 @@ var NAVTREE =
         [ "Avoid: Mutex around data objects", "dataobjects.html#thread_antipattern", null ]
       ] ]
     ] ],
+    [ "Debugging and Diagnostics", "debugging.html", [
+      [ "Build Types", "debugging.html#debug_build_types", [
+        [ "DevRelease — the recommended default", "debugging.html#debug_build_devrelease", null ],
+        [ "Debug", "debugging.html#debug_build_debug", null ],
+        [ "Release", "debugging.html#debug_build_release", null ]
+      ] ],
+      [ "The Logger System", "debugging.html#debug_logging", [
+        [ "Convenience Macros", "debugging.html#debug_logging_macros", null ],
+        [ "Configuring the Logger", "debugging.html#debug_logging_config", null ],
+        [ "Flushing Log Output", "debugging.html#debug_logging_sync", null ]
+      ] ],
+      [ "Per-Module Debug Logging (promekiDebug)", "debugging.html#debug_promekidebug", [
+        [ "How It Works", "debugging.html#debug_promekidebug_how", null ],
+        [ "Activating Debug Output", "debugging.html#debug_promekidebug_activate", null ],
+        [ "What Happens in Release Builds?", "debugging.html#debug_promekidebug_compiled_out", null ],
+        [ "Benchmarking with PROMEKI_BENCHMARK", "debugging.html#debug_promekidebug_benchmarks", null ]
+      ] ],
+      [ "Crash Handling", "debugging.html#debug_crashhandler", [
+        [ "What the Crash Report Contains", "debugging.html#debug_crash_report", null ],
+        [ "Automatic Installation via Application", "debugging.html#debug_crash_auto", null ],
+        [ "Manual Installation", "debugging.html#debug_crash_manual", null ],
+        [ "Refreshing the Snapshot", "debugging.html#debug_crash_refresh", null ],
+        [ "Diagnostic Traces Without Crashing", "debugging.html#debug_crash_trace", null ],
+        [ "Enabling Core Dumps", "debugging.html#debug_crash_coredumps", null ],
+        [ "CrashHandler Library Options", "debugging.html#debug_crash_options", null ]
+      ] ],
+      [ "Quick Reference", "debugging.html#debug_summary", [
+        [ "Environment Variables", "debugging.html#debug_summary_env", null ],
+        [ "Typical Debugging Workflow", "debugging.html#debug_summary_workflow", null ]
+      ] ]
+    ] ],
     [ "Demonstration Applications", "demos.html", [
       [ "Building", "demos.html#demos_building", null ],
       [ "Standalone Build", "demos.html#demos_standalone", null ],
@@ -189,78 +220,85 @@ var NAVTREE =
       [ "Current Utilities", "utils.html#utils_list", null ]
     ] ],
     [ "Coding Standards", "md_CODING__STANDARDS.html", [
-      [ "Design Philosophy", "md_CODING__STANDARDS.html#autotoc_md23", null ],
+      [ "Design Philosophy", "md_CODING__STANDARDS.html#autotoc_md28", null ],
       [ "Object Categories", "md_CODING__STANDARDS.html#object-categories", [
-        [ "Data Objects", "md_CODING__STANDARDS.html#autotoc_md25", null ],
-        [ "Functional Objects (ObjectBase)", "md_CODING__STANDARDS.html#autotoc_md26", null ],
-        [ "Utility Classes", "md_CODING__STANDARDS.html#autotoc_md27", null ],
-        [ "Choosing the Right Category", "md_CODING__STANDARDS.html#autotoc_md28", null ],
-        [ "Sharing Data Objects Across Threads", "md_CODING__STANDARDS.html#autotoc_md29", null ]
+        [ "Data Objects", "md_CODING__STANDARDS.html#autotoc_md30", null ],
+        [ "Functional Objects (ObjectBase)", "md_CODING__STANDARDS.html#autotoc_md31", null ],
+        [ "Utility Classes", "md_CODING__STANDARDS.html#autotoc_md32", null ],
+        [ "Choosing the Right Category", "md_CODING__STANDARDS.html#autotoc_md33", null ],
+        [ "Sharing Data Objects Across Threads", "md_CODING__STANDARDS.html#autotoc_md34", null ]
       ] ],
-      [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md31", [
-        [ "Header Files", "md_CODING__STANDARDS.html#autotoc_md32", null ],
-        [ "File Header Comment", "md_CODING__STANDARDS.html#autotoc_md33", null ],
-        [ "Include Guards", "md_CODING__STANDARDS.html#autotoc_md34", null ],
-        [ "Includes", "md_CODING__STANDARDS.html#autotoc_md35", null ]
+      [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md36", [
+        [ "Header Files", "md_CODING__STANDARDS.html#autotoc_md37", null ],
+        [ "File Header Comment", "md_CODING__STANDARDS.html#autotoc_md38", null ],
+        [ "Include Guards", "md_CODING__STANDARDS.html#autotoc_md39", null ],
+        [ "Includes", "md_CODING__STANDARDS.html#autotoc_md40", null ]
       ] ],
-      [ "Naming Conventions", "md_CODING__STANDARDS.html#autotoc_md37", [
-        [ "Classes and Types", "md_CODING__STANDARDS.html#autotoc_md38", null ],
-        [ "Convenience Type Aliases for Templates", "md_CODING__STANDARDS.html#autotoc_md39", null ],
-        [ "Methods", "md_CODING__STANDARDS.html#autotoc_md40", null ],
-        [ "Member Variables", "md_CODING__STANDARDS.html#autotoc_md41", null ],
-        [ "Enums", "md_CODING__STANDARDS.html#autotoc_md42", null ],
-        [ "Standard Library Type Aliases", "md_CODING__STANDARDS.html#autotoc_md43", null ],
-        [ "Prefer Library Wrappers Over Raw std:: Types", "md_CODING__STANDARDS.html#autotoc_md44", null ],
-        [ "Macros", "md_CODING__STANDARDS.html#autotoc_md45", null ],
-        [ "Constants", "md_CODING__STANDARDS.html#autotoc_md46", null ]
+      [ "Naming Conventions", "md_CODING__STANDARDS.html#autotoc_md42", [
+        [ "Classes and Types", "md_CODING__STANDARDS.html#autotoc_md43", null ],
+        [ "Convenience Type Aliases for Templates", "md_CODING__STANDARDS.html#autotoc_md44", null ],
+        [ "Methods", "md_CODING__STANDARDS.html#autotoc_md45", null ],
+        [ "Member Variables", "md_CODING__STANDARDS.html#autotoc_md46", null ],
+        [ "Enums", "md_CODING__STANDARDS.html#autotoc_md47", null ],
+        [ "Standard Library Type Aliases", "md_CODING__STANDARDS.html#autotoc_md48", null ],
+        [ "Prefer Library Wrappers Over Raw std:: Types", "md_CODING__STANDARDS.html#autotoc_md49", null ],
+        [ "Macros", "md_CODING__STANDARDS.html#autotoc_md50", null ],
+        [ "Constants", "md_CODING__STANDARDS.html#autotoc_md51", null ]
       ] ],
-      [ "Indentation and Formatting", "md_CODING__STANDARDS.html#autotoc_md48", null ],
-      [ "The SharedPtr / Copy-on-Write Pattern", "md_CODING__STANDARDS.html#autotoc_md50", [
-        [ "Shareable Data Objects Support SharedPtr", "md_CODING__STANDARDS.html#autotoc_md51", null ],
-        [ "No Internal SharedPtr<Data>", "md_CODING__STANDARDS.html#autotoc_md52", null ],
-        [ "How to Implement (Shareable Classes)", "md_CODING__STANDARDS.html#autotoc_md53", null ]
+      [ "Indentation and Formatting", "md_CODING__STANDARDS.html#autotoc_md53", null ],
+      [ "The SharedPtr / Copy-on-Write Pattern", "md_CODING__STANDARDS.html#autotoc_md55", [
+        [ "Shareable Data Objects Support SharedPtr", "md_CODING__STANDARDS.html#autotoc_md56", null ],
+        [ "No Internal SharedPtr<Data>", "md_CODING__STANDARDS.html#autotoc_md57", null ],
+        [ "How to Implement (Shareable Classes)", "md_CODING__STANDARDS.html#autotoc_md58", null ]
       ] ],
-      [ "Error Handling", "md_CODING__STANDARDS.html#autotoc_md55", [
-        [ "The Error Class", "md_CODING__STANDARDS.html#autotoc_md56", null ],
-        [ "Return Patterns", "md_CODING__STANDARDS.html#autotoc_md57", null ],
-        [ "Avoid <tt>bool</tt> for Error Reporting", "md_CODING__STANDARDS.html#autotoc_md58", null ]
+      [ "Error Handling", "md_CODING__STANDARDS.html#autotoc_md60", [
+        [ "The Error Class", "md_CODING__STANDARDS.html#autotoc_md61", null ],
+        [ "Return Patterns", "md_CODING__STANDARDS.html#autotoc_md62", null ],
+        [ "Avoid <tt>bool</tt> for Error Reporting", "md_CODING__STANDARDS.html#autotoc_md63", null ]
       ] ],
-      [ "Container and Wrapper Types", "md_CODING__STANDARDS.html#autotoc_md60", [
-        [ "String", "md_CODING__STANDARDS.html#autotoc_md61", null ],
-        [ "List<T>", "md_CODING__STANDARDS.html#autotoc_md62", null ],
-        [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md63", null ],
-        [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md64", null ]
+      [ "Container and Wrapper Types", "md_CODING__STANDARDS.html#autotoc_md65", [
+        [ "String", "md_CODING__STANDARDS.html#autotoc_md66", null ],
+        [ "List<T>", "md_CODING__STANDARDS.html#autotoc_md67", null ],
+        [ "Array<T, N>", "md_CODING__STANDARDS.html#autotoc_md68", null ],
+        [ "Buffer", "md_CODING__STANDARDS.html#autotoc_md69", null ]
       ] ],
-      [ "TypeRegistry Types", "md_CODING__STANDARDS.html#autotoc_md66", [
-        [ "Pass the Wrapper, Not the ID", "md_CODING__STANDARDS.html#autotoc_md67", null ],
-        [ "ID Disambiguation Guards", "md_CODING__STANDARDS.html#autotoc_md68", null ]
+      [ "TypeRegistry Types", "md_CODING__STANDARDS.html#autotoc_md71", [
+        [ "Pass the Wrapper, Not the ID", "md_CODING__STANDARDS.html#autotoc_md72", null ],
+        [ "ID Disambiguation Guards", "md_CODING__STANDARDS.html#autotoc_md73", null ]
       ] ],
-      [ "Well-Known Enums", "md_CODING__STANDARDS.html#autotoc_md70", [
-        [ "Use the <tt>TypedEnum<Derived></tt> CRTP Pattern", "md_CODING__STANDARDS.html#autotoc_md71", null ],
-        [ "Where Well-Known Enums Live", "md_CODING__STANDARDS.html#autotoc_md72", null ],
-        [ "Function Signatures", "md_CODING__STANDARDS.html#autotoc_md73", null ],
-        [ "Backward Compatibility", "md_CODING__STANDARDS.html#autotoc_md74", null ]
+      [ "Well-Known Enums", "md_CODING__STANDARDS.html#autotoc_md75", [
+        [ "Use the <tt>TypedEnum<Derived></tt> CRTP Pattern", "md_CODING__STANDARDS.html#autotoc_md76", null ],
+        [ "Where Well-Known Enums Live", "md_CODING__STANDARDS.html#autotoc_md77", null ],
+        [ "Function Signatures", "md_CODING__STANDARDS.html#autotoc_md78", null ],
+        [ "Backward Compatibility", "md_CODING__STANDARDS.html#autotoc_md79", null ]
       ] ],
-      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md76", null ],
-      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md78", null ],
-      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md80", [
-        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md81", null ],
-        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md82", null ],
-        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md83", null ]
+      [ "ObjectBase and Signals/Slots", "md_CODING__STANDARDS.html#autotoc_md81", null ],
+      [ "Namespace", "md_CODING__STANDARDS.html#autotoc_md83", null ],
+      [ "Stream Operator Support (TextStream / DataStream)", "md_CODING__STANDARDS.html#autotoc_md85", [
+        [ "TextStream", "md_CODING__STANDARDS.html#autotoc_md86", null ],
+        [ "DataStream", "md_CODING__STANDARDS.html#autotoc_md87", null ],
+        [ "When to Omit", "md_CODING__STANDARDS.html#autotoc_md88", null ]
       ] ],
-      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md85", [
-        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md86", null ],
-        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md87", null ],
-        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md88", null ],
-        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md89", null ]
+      [ "Documentation (Doxygen)", "md_CODING__STANDARDS.html#autotoc_md90", [
+        [ "Class Documentation", "md_CODING__STANDARDS.html#autotoc_md91", null ],
+        [ "Method Documentation", "md_CODING__STANDARDS.html#autotoc_md92", null ],
+        [ "Thread Safety Documentation", "md_CODING__STANDARDS.html#autotoc_md93", null ],
+        [ "What Not to Document", "md_CODING__STANDARDS.html#autotoc_md94", null ]
       ] ],
-      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md91", [
-        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md92", null ],
-        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md93", null ],
-        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md94", null ],
-        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md95", null ]
+      [ "Testing", "md_CODING__STANDARDS.html#autotoc_md96", [
+        [ "File Layout", "md_CODING__STANDARDS.html#autotoc_md97", null ],
+        [ "Structure", "md_CODING__STANDARDS.html#autotoc_md98", null ],
+        [ "Assertions", "md_CODING__STANDARDS.html#autotoc_md99", null ],
+        [ "Build Integration", "md_CODING__STANDARDS.html#autotoc_md100", null ]
       ] ],
-      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md97", null ]
+      [ "Logging", "md_CODING__STANDARDS.html#autotoc_md102", [
+        [ "Use the Right Level", "md_CODING__STANDARDS.html#autotoc_md103", null ],
+        [ "Register Every Source File for Debug Logging", "md_CODING__STANDARDS.html#autotoc_md104", null ],
+        [ "Capture All Relevant State", "md_CODING__STANDARDS.html#autotoc_md105", null ],
+        [ "Identify the Object Instance", "md_CODING__STANDARDS.html#autotoc_md106", null ],
+        [ "Instrument the Library with promekiDebug", "md_CODING__STANDARDS.html#autotoc_md107", null ]
+      ] ],
+      [ "Miscellaneous", "md_CODING__STANDARDS.html#autotoc_md109", null ]
     ] ],
     [ "Signal List", "signal.html", null ],
     [ "Deprecated List", "deprecated.html", null ],
@@ -303,33 +341,33 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "abstractsocket_8h.html",
-"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca71ff34b31580faf6bef52a04b8fbbc81",
-"classAudio.html#a362f7b18724ad4b8b50f6afdef1cd5e2",
-"classBenchmarkReporter.html#a1c9f20a8d4920f6c984abde8d8bf32dd",
-"classChar.html#ac4e5b882d6d1006b01dab19cda85b602",
-"classDataStream.html#a8e724f1fec78026ef7bccbc517a1b112",
-"classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823",
-"classFrameRate.html#a0b03c0fe2f653ec8479d240690191b9ca198a79526b01e187d966bf564ccb9d24",
-"classImageDataEncoder.html#a7794a87d154a78a3df15373e955106ba",
-"classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a41ad5b18382215c12a38d44d798ca9fe",
-"classMap.html#ac6d3cb9fc0bd93b0a5855f5677924451",
-"classMemPool_1_1Block.html#a9832fa37c5c118a8c50eaad32b5ac5d7",
-"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3adbca672bd4865ce51cb657bb30ad91bb",
-"classObjectBase_1_1MetaInfo.html",
-"classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafac405c692ccece380da2d4e86a96e056c",
-"classPromise.html#a46b39615ec87d853521ab6779f996dea",
-"classRtpPacket.html#a833002a99604a777771d0988ce369dae",
-"classSet.html#a7ba0e9567cd6052108ad94d25f6b6de9",
-"classString.html#a9c3c4c0e2ff486a3f2c6c7f92540d310",
-"classTcpServer.html#ae76e1c9a2ddb80fddff5ce905543e4c4",
-"classTuiApplication.html#afea82b68f6050da42d09234e3714974f",
-"classUdpSocket.html#adc0eb8f1f70c3ece44e0c2a03dc003d0",
-"classXYZColor.html#a854f153a4c2c313c243c34a536e9e79b",
-"functions_q.html",
-"matrix_8h_source.html",
-"result_8h.html#ac141a8321ba3515f706bba4e16588495",
-"structLogger_1_1LogEntry.html",
-"timestamp_8h.html#a4659c04c8ea7e2675b92273bb13fd0d6"
+"classAnsiStream.html#a338b08f6aae49641c1f62523260304dca6d5726ff84550bc2e3044d29e8a36551",
+"classAudio.html",
+"classBenchmarkCase.html#a99e071f4329d73cfea03f3173c6fac90",
+"classChar.html#a6c6c643def5e43f3ae96a784120a564a",
+"classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566a2269130ae37464ed37a57102518b9263",
+"classError.html#ab5980e13b879db253df802b0950d1708a1bf6bbc9f6c819cc824bf0dc3d5e7aec",
+"classFrame.html#a8d258b0e55414fc85257cb1784559db5",
+"classImageDataEncoder.html#a22cc4c9e0d401f83e2363c764cb21a1d",
+"classKeyEvent.html#a404b4d08ed7bcbae5b99c5da4950c4b6a1ee1aa9a4566959a90a4fe4f168611bb",
+"classMap.html#a92d131b2cb5fc2e00974e37c0396bd31",
+"classMemPool_1_1Block.html",
+"classMidiNote.html#ae35b95311738089287eaa0e86d959ac3ad7ad1ad2fd2b5a2a449f4f6ca7089d8c",
+"classObjectBasePtr.html#a1f36bcdbbd6210d0dc176295194aa509",
+"classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafab815427229d9cabe8eed1ae95915247b",
+"classProcess.html#ad8d755a6f72d293e890cd66a2d0fcc74",
+"classRtpPacket.html#a3864a634b107b52326b0513fcff1ae2f",
+"classSet.html#a562df6b4c71670839f59fa4475f2b944",
+"classString.html#a8f7df0f4325d807598e85590786589e8",
+"classTcpServer.html#a6e94bd28e3d3d506609df98afb94c879",
+"classTuiApplication.html#a79e9e47ebfd992adee8e4e4e488d6faf",
+"classUdpSocket.html#a89b7e8595e82ce968190b28e87ee0a0f",
+"classXYZColor.html#a12018006909ed442a2b297285de1057d",
+"functions_func_d.html",
+"libraryoptions_8h_source.html",
+"point_8h.html#af5cf1d3bd7cd1a4b2b8c5bbf8de59883",
+"structImageDataEncoder_1_1Item.html#a3ecc2f29bd0721804d0fc63df94c4137",
+"textstream_8h.html#a000f36a17f7f5d7c80eaa3b3b827951c"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

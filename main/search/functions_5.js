@@ -45,7 +45,7 @@ var searchData=
   ['errorcontext_42',['errorContext',['../classDataStream.html#a366e909f679cf2d61c998aaa0c72fdc3',1,'DataStream']]],
   ['errors_43',['errors',['../classNoteSequenceParser.html#a13d58dc0a391b93e4aacdb143579578d',1,'NoteSequenceParser']]],
   ['estimateddurationms_44',['estimatedDurationMs',['../classBenchmarkRunner.html#a42698d4484fb3fd88b14eab5b6a8c377',1,'BenchmarkRunner']]],
-  ['event_45',['event',['../classWidget.html#a9bcfe234f6bfb86b768e5dcb556d5e7d',1,'Widget::event()'],['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()'],['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()']]],
+  ['event_45',['event',['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()'],['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()'],['../classWidget.html#a9bcfe234f6bfb86b768e5dcb556d5e7d',1,'Widget::event()']]],
   ['eventloop_46',['eventloop',['../classSDLApplication.html#a09aa72c5fa029bb904b5d0467bd221a1',1,'SDLApplication::eventLoop()'],['../classEventLoop.html#a33fa78d25c8dc23ece149c805e0f2d17',1,'EventLoop::EventLoop()'],['../classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb',1,'ObjectBase::eventLoop()']]],
   ['eventpump_47',['eventPump',['../classSDLApplication.html#aa968ab11621182bbdbd51e234c70ee18',1,'SDLApplication']]],
   ['exchange_48',['exchange',['../classAtomic.html#ad75480aef0b76963c56f8dc4d845683f',1,'Atomic']]],

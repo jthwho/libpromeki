@@ -107,24 +107,27 @@ $(document).ready(function(){initNavTree('classThreadPool.html',''); initResizab
 <table class="directory">
   <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#a092c98221fd19f663e4efc7529677fed">activeThreadCount</a>() const</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
   <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#a835353ac595ea11f22e59918d214592b">clear</a>()</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#afde4806fb2de0a8d5bcbeff991426b0a">maxThreadCount</a>() const</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#ab8578881889a5e840435d449bbcce618">namePrefix</a>() const</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>operator=</b>(const ThreadPool &amp;)=delete (defined in <a class="el" href="classThreadPool.html">ThreadPool</a>)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>operator=</b>(ThreadPool &amp;&amp;)=delete (defined in <a class="el" href="classThreadPool.html">ThreadPool</a>)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#a982f1915f769ed4e8ee70d59590b3128">setThreadCount</a>(int count)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">submit</a>(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#a3e3d5ca424242baf391fd05370fe4e5b">threadCount</a>() const</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#afda6ddbc1868e054ad198e868eee4ac1">ThreadPool</a>(int threadCount=-1)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>ThreadPool</b>(const ThreadPool &amp;)=delete (defined in <a class="el" href="classThreadPool.html">ThreadPool</a>)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>ThreadPool</b>(ThreadPool &amp;&amp;)=delete (defined in <a class="el" href="classThreadPool.html">ThreadPool</a>)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#ae910863b7092c5621921794cc32519e9">waitForDone</a>()</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#a42ced97a72aaf3e2ee5d027b7bd39bcc">waitForDone</a>(unsigned int timeoutMs)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#a44d3d2ab618970605e684efc216655eb">~ThreadPool</a>()</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#aaaf12a57c1cc60acca9a7e892118cb96">setNamePrefix</a>(const String &amp;prefix)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#a47a7c99d7713952a36ee988301d9e490">setThreadCount</a>(int count, bool lazy=true)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">submit</a>(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#a3e3d5ca424242baf391fd05370fe4e5b">threadCount</a>() const</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#a3616b7cc8a2c595e420f9c0439db9c64">ThreadPool</a>(int maxThreadCount=-1, bool lazy=true)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>ThreadPool</b>(const ThreadPool &amp;)=delete (defined in <a class="el" href="classThreadPool.html">ThreadPool</a>)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>ThreadPool</b>(ThreadPool &amp;&amp;)=delete (defined in <a class="el" href="classThreadPool.html">ThreadPool</a>)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#ae910863b7092c5621921794cc32519e9">waitForDone</a>()</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="classThreadPool.html#a42ced97a72aaf3e2ee5d027b7bd39bcc">waitForDone</a>(unsigned int timeoutMs)</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="classThreadPool.html#a44d3d2ab618970605e684efc216655eb">~ThreadPool</a>()</td><td class="entry"><a class="el" href="classThreadPool.html">ThreadPool</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-12 08:37:52 from commit c0af658 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
   </ul>
 </div>
 </body>

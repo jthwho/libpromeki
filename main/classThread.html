@@ -265,6 +265,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:aa636a1ceb2605284fb7d91bdf08f5c62" id="r_aa636a1ceb2605284fb7d91bdf08f5c62"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">uint64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classThread.html#aa636a1ceb2605284fb7d91bdf08f5c62">currentNativeId</a> ()</td></tr>
 <tr class="memdesc:aa636a1ceb2605284fb7d91bdf08f5c62"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the OS-native thread ID of the calling thread.  <br /></td></tr>
 <tr class="separator:aa636a1ceb2605284fb7d91bdf08f5c62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a49b385217e1a9a16e76c9db71620207b" id="r_a49b385217e1a9a16e76c9db71620207b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classThread.html#a49b385217e1a9a16e76c9db71620207b">setCurrentThreadName</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classThread.html#a9ad3d0ef676b2c44b6e2233204762fdc">name</a>)</td></tr>
+<tr class="memdesc:a49b385217e1a9a16e76c9db71620207b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the OS-level name and logger name for the calling thread.  <br /></td></tr>
+<tr class="separator:a49b385217e1a9a16e76c9db71620207b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aceb30476d0e40ce9e626de6042629cb0" id="r_aceb30476d0e40ce9e626de6042629cb0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classThread.html#aceb30476d0e40ce9e626de6042629cb0">priorityMin</a> (<a class="el" href="group__events.html#ga5f6319f9bba46b51ebc61f9c0e4a896d">SchedulePolicy</a> <a class="el" href="classList.html">policy</a>=<a class="el" href="group__events.html#gga5f6319f9bba46b51ebc61f9c0e4a896da7a1920d61156abc05a60135aefe8bc67">SchedulePolicy::Default</a>)</td></tr>
 <tr class="memdesc:aceb30476d0e40ce9e626de6042629cb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the minimum priority for a scheduling policy.  <br /></td></tr>
 <tr class="separator:aceb30476d0e40ce9e626de6042629cb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -897,6 +900,42 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a49b385217e1a9a16e76c9db71620207b" name="a49b385217e1a9a16e76c9db71620207b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a49b385217e1a9a16e76c9db71620207b">&#9670;&#160;</a></span>setCurrentThreadName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> Thread::setCurrentThreadName </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the OS-level name and logger name for the calling thread. </p>
+<p>Convenience for threads not managed by a <a class="el" href="classThread.html" title="Wrapper around std::thread with a built-in EventLoop.">Thread</a> object (e.g. <a class="el" href="classThreadPool.html" title="General-purpose thread pool for submitting callable tasks.">ThreadPool</a> workers). Sets the OS-level thread name (visible in debuggers, <code>htop</code>, <code>ps&#160;-L</code>) and updates the <a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a>'s cached thread name.</p>
+<p>On Linux/macOS the name is silently truncated to 15 characters by the OS.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>The name to assign to the calling thread. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="af20756cccbcf948efd7ae2dce1804483" name="af20756cccbcf948efd7ae2dce1804483"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af20756cccbcf948efd7ae2dce1804483">&#9670;&#160;</a></span>setName()</h2>
 
@@ -1052,7 +1091,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classThread.html">Thread</a></li>
-    <li class="footer">Generated on 2026-04-12 08:37:52 from commit c0af658 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
   </ul>
 </div>
 </body>

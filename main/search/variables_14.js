@@ -25,6 +25,6 @@ var searchData=
   ['transfercharacteristic_22',['TransferCharacteristic',['../classMetadata.html#a4d76ff2e68eee780461d23d7593fca9f',1,'Metadata']]],
   ['transparent_23',['Transparent',['../classColor.html#ab0826c48816176cd42b5226becebf69d',1,'Color']]],
   ['txtimens_24',['txtimens',['../structPacketTransport_1_1Datagram.html#a74cc7586d150bcb5da4028333a1077ab',1,'PacketTransport::Datagram::txTimeNs'],['../structUdpSocket_1_1Datagram.html#a118e37ee4be4cf9451ae5d61efa4f037',1,'UdpSocket::Datagram::txTimeNs']]],
-  ['type_25',['type',['../classMediaConfig.html#a10e0225661fb05485a0cd21d75f1eaf7',1,'MediaConfig::Type'],['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type'],['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../structColorModel_1_1Data.html#a2bac1789ecc4f6fa41ff68c1dd6d3750',1,'ColorModel::Data::type']]],
+  ['type_25',['type',['../structAudioGen_1_1Config.html#ab54ff544fa9eda37e5d519219ea56f8b',1,'AudioGen::Config::type'],['../structBuildInfo.html#ac867d3d6d2cd6b050312346ae0db1f7a',1,'BuildInfo::type'],['../structColorModel_1_1Data.html#a2bac1789ecc4f6fa41ff68c1dd6d3750',1,'ColorModel::Data::type'],['../classMediaConfig.html#a10e0225661fb05485a0cd21d75f1eaf7',1,'MediaConfig::Type']]],
   ['typetag_26',['TypeTag',['../classImgSeq.html#a874c453b7992f884ad865967d2d81524',1,'ImgSeq']]]
 ];

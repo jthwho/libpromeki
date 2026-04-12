@@ -9,7 +9,7 @@ var searchData=
   ['ycbcr_5frec601_6',['YCbCr_Rec601',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa9a12ddc201146b5e634fa1b912f4c41a',1,'ColorModel']]],
   ['ycbcr_5frec709_7',['YCbCr_Rec709',['../classColorModel.html#aca0059e9fdc0d7c39dec6c523c6cb3baa793b2029cecb7ba45dd5d7f22eb5891a',1,'ColorModel']]],
   ['yellow_8',['Yellow',['../classColor.html#afc6c72f651b3fb77452a86a4fcab7582',1,'Color']]],
-  ['your_20project_9',['Using libpromeki in Your Project',['../index.html#autotoc_md16',1,'']]],
+  ['your_20project_9',['Using libpromeki in Your Project',['../index.html#autotoc_md21',1,'']]],
   ['yuv_10',['Why YCbCr, not YUV?',['../color_science.html#cs_not_yuv',1,'']]],
   ['yuv10_5f420_5fnv21_5fbe_5frec709_11',['YUV10_420_NV21_BE_Rec709',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafa186eb211c396869310ae0933ce4c0ea5',1,'PixelDesc']]],
   ['yuv10_5f420_5fnv21_5fle_5frec709_12',['YUV10_420_NV21_LE_Rec709',['../classPixelDesc.html#ac8b8cdd7bab3e05c21bdb406cee6faafaf0cb4953cbcf0632d12e3ad1cb10c31c',1,'PixelDesc']]],

@@ -31,7 +31,7 @@ var searchData=
   ['global_28',['global',['../classRandom.html#a0543016b80f333ade4769ce022937775',1,'Random']]],
   ['gmpercussion_29',['gmPercussion',['../classMidiNoteNames.html#a8733a11bd004d68fd532a47812ebfe7f',1,'MidiNoteNames']]],
   ['grabmouse_30',['grabMouse',['../classTuiApplication.html#a07b6736b52630f2870d5bd4006957d8c',1,'TuiApplication']]],
-  ['graphics_20promeki_20sdl_31',['SDL Graphics (promeki-sdl)',['../index.html#autotoc_md7',1,'']]],
+  ['graphics_20promeki_20sdl_31',['SDL Graphics (promeki-sdl)',['../index.html#autotoc_md12',1,'']]],
   ['grayscale16_32',['Grayscale16',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6adf62871c321c6dad2a9aef1919e64385',1,'Terminal']]],
   ['grayscale256_33',['Grayscale256',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6ae5ee2bf91a497feadd9fb38e42d93e4c',1,'Terminal']]],
   ['grayscaletrue_34',['GrayscaleTrue',['../classTerminal.html#a3b725bcffc87ab4f96885009ca7aded6a050c96373a5448ac4f89e8aaaf5ea0be',1,'Terminal']]],
@@ -43,6 +43,6 @@ var searchData=
   ['groupentry_40',['GroupEntry',['../structMulticastReceiver_1_1GroupEntry.html',1,'MulticastReceiver']]],
   ['grouplist_41',['GroupList',['../classMulticastReceiver.html#a25807eb027d663ffeaa1d8c50ef0d7d5',1,'MulticastReceiver']]],
   ['groups_42',['groups',['../classMulticastReceiver.html#a0edec448bc795d802cc874182f843e84',1,'MulticastReceiver']]],
-  ['guards_43',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md68',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md34',1,'Include Guards']]],
+  ['guards_43',['guards',['../typeregistry.html#tr_disambiguation',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md73',1,'ID Disambiguation Guards'],['../md_CODING__STANDARDS.html#autotoc_md39',1,'Include Guards']]],
   ['guidelines_44',['Design Guidelines',['../typeregistry.html#tr_guidelines',1,'']]]
 ];

@@ -252,8 +252,8 @@ ThreadPool</h1>
 <div class="line"> </div>
 <div class="line"><span class="comment">// Later...</span></div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>, <a class="code hl_class" href="classList.html">err</a>] = result.result();</div>
-<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:44</div></div>
-<div class="ttc" id="aclassThreadPool_html_acd7225ce903d2a46a744f23eeb9b8d47"><div class="ttname"><a href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">ThreadPool::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for asynchronous execution.</div><div class="ttdef"><b>Definition</b> threadpool.h:75</div></div>
+<div class="ttc" id="aclassThreadPool_html"><div class="ttname"><a href="classThreadPool.html">ThreadPool</a></div><div class="ttdoc">General-purpose thread pool for submitting callable tasks.</div><div class="ttdef"><b>Definition</b> threadpool.h:50</div></div>
+<div class="ttc" id="aclassThreadPool_html_acd7225ce903d2a46a744f23eeb9b8d47"><div class="ttname"><a href="classThreadPool.html#acd7225ce903d2a46a744f23eeb9b8d47">ThreadPool::submit</a></div><div class="ttdeci">auto submit(F &amp;&amp;callable) -&gt; Future&lt; std::invoke_result_t&lt; F &gt; &gt;</div><div class="ttdoc">Submits a callable for asynchronous execution.</div><div class="ttdef"><b>Definition</b> threadpool.h:86</div></div>
 </div><!-- fragment --><p>Key features:</p><ul>
 <li>Default thread count is <code>std::thread::hardware_concurrency()</code>.</li>
 <li><code>setThreadCount(0)</code> switches to inline mode where tasks run on the calling thread &ndash; useful for WASM or single-threaded contexts.</li>
@@ -272,7 +272,7 @@ MediaIO Threading</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-12 08:37:52 from commit c0af658 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
   </ul>
 </div>
 </body>

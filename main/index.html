@@ -109,9 +109,9 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </blockquote>
 <p>libpromeki provides the foundational building blocks that professional media software needs: timecode, frame rates, image and audio descriptors, pixel formats, color science, networking, memory management, signal/slot event systems, and more. It is designed so that you can focus on your application logic instead of reinventing infrastructure.</p>
 <p><b><a href="https://jthwho.github.io/libpromeki/main/">API Documentation</a></b></p>
-<h1><a class="anchor" id="autotoc_md1"></a>
+<h1><a class="anchor" id="autotoc_md6"></a>
 Feature Overview</h1>
-<h2><a class="anchor" id="autotoc_md2"></a>
+<h2><a class="anchor" id="autotoc_md7"></a>
 Core Library</h2>
 <p>General-purpose C++ infrastructure that the rest of the library is built on.</p>
 <ul>
@@ -128,7 +128,7 @@ Core Library</h2>
 <li><b>Utilities</b> — <code><a class="el" href="classUUID.html" title="Universally Unique Identifier (UUID).">UUID</a></code>, <code><a class="el" href="classFourCC.html" title="A four-character code (FourCC) identifier.">FourCC</a></code>, <code><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a></code> (reflection), <code><a class="el" href="classRandom.html" title="Pseudo-random number generator wrapping std::mt19937_64.">Random</a></code>, <code>CommandLineParser</code>, <code><a class="el" href="classLogger.html" title="Asynchronous thread-safe logging facility.">Logger</a></code>, <code><a class="el" href="classProcess.html" title="Subprocess execution with pipe-based I/O.">Process</a></code>, <code><a class="el" href="classBenchmark.html" title="Ordered collection of named timestamps for pipeline performance measurement.">Benchmark</a></code>, <code><a class="el" href="classVariantDatabase.html" title="A collection of named Variant values keyed by string-registered IDs.">VariantDatabase</a></code>, <code>ConfigOption</code>, <code><a class="el" href="classHistogram.html" title="Lightweight sub-bucketed log2 histogram for hot-path instrumentation.">Histogram</a></code></li>
 <li><b>Math &amp; geometry</b> — <code><a class="el" href="classMatrix.html" title="Generic fixed-size matrix with compile-time dimensions.">Matrix</a></code>, <code><a class="el" href="classPoint.html" title="N-dimensional point with arithmetic, interpolation, and serialization.">Point</a></code>, <code>Size2D</code>, <code><a class="el" href="classRect.html" title="2D rectangle defined by position and size.">Rect</a></code>, <code><a class="el" href="classLine.html" title="N-dimensional line segment defined by a start and end point.">Line</a></code>, <code><a class="el" href="classRational.html" title="Rational number with numerator and denominator.">Rational</a></code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md3"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Professional Audio / Video</h2>
 <p>Classes for working with professional media formats, images, audio, color science, and timecode.</p>
 <p><b>Descriptors &amp; formats:</b></p><ul>
@@ -179,7 +179,7 @@ Professional Audio / Video</h2>
 <li><b>Converter</b> — pixel format and color space conversion</li>
 <li>Custom backends are registered with <code><a class="el" href="group__proav.html#ga10f5578b94caf8706a28ed5b9e7b087f" title="Macro to register a MediaIO backend at static initialization time.">PROMEKI_REGISTER_MEDIAIO()</a></code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md4"></a>
+<h2><a class="anchor" id="autotoc_md9"></a>
 Networking</h2>
 <p>BSD-socket abstractions and real-time media transport protocols.</p>
 <ul>
@@ -188,7 +188,7 @@ Networking</h2>
 <li><b>RTP/SDP</b> — <code><a class="el" href="classRtpSession.html" title="RTP session for sending and receiving packets (RFC 3550).">RtpSession</a></code>, <code><a class="el" href="classRtpPacket.html" title="A BufferView that interprets its data as an RTP packet.">RtpPacket</a></code>, <code><a class="el" href="classRtpPayload.html" title="Abstract base class for RTP payload type handlers.">RtpPayload</a></code> (RFC 3550); <code><a class="el" href="classSdpSession.html" title="SDP session description (RFC 4566).">SdpSession</a></code>, <code><a class="el" href="classSdpMediaDescription.html" title="SDP media description (m= section).">SdpMediaDescription</a></code></li>
 <li><b>Transport</b> — <code><a class="el" href="classPacketTransport.html" title="Abstract packet-I/O transport for datagram-oriented protocols.">PacketTransport</a></code>, <code><a class="el" href="classUdpSocketTransport.html" title="UDP socket implementation of PacketTransport.">UdpSocketTransport</a></code>, <code><a class="el" href="classMulticastManager.html" title="Manages multicast group membership for multi-stream scenarios.">MulticastManager</a></code>, <code><a class="el" href="classMulticastReceiver.html" title="Standalone multicast datagram receiver with an owned worker thread.">MulticastReceiver</a></code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md5"></a>
+<h2><a class="anchor" id="autotoc_md10"></a>
 Music &amp; MIDI</h2>
 <ul>
 <li><code><a class="el" href="classMidiNote.html" title="Represents a MIDI note number (0–127) with utility methods.">MidiNote</a></code> / <code><a class="el" href="classMidiNoteNames.html" title="Provides a customizable name overlay for MIDI notes.">MidiNoteNames</a></code> — MIDI note representation and lookup</li>
@@ -196,7 +196,7 @@ Music &amp; MIDI</h2>
 <li><code><a class="el" href="classMusicalScale.html" title="Represents a musical scale with a root pitch class and mode.">MusicalScale</a></code> — scale descriptors (major, minor, modes, custom)</li>
 <li><code><a class="el" href="classNoteSequenceParser.html" title="Parses a domain-specific text notation into a sequence of MusicalNote objects.">NoteSequenceParser</a></code> — parse note strings (e.g. <code>"C4 D4 E4 C5"</code>)</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md6"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Terminal UI (promeki-tui)</h2>
 <p>An optional shared library providing a terminal widget toolkit.</p>
 <ul>
@@ -204,25 +204,25 @@ Terminal UI (promeki-tui)</h2>
 <li><b>Widgets</b> — <code>Label</code>, <code>LineEdit</code>, <code>TextArea</code>, <code>Button</code>, <code>CheckBox</code>, <code>ProgressBar</code>, <code>ListView</code>, <code><a class="el" href="classFrame.html" title="A media frame containing images, audio, and metadata.">Frame</a></code>, <code>ScrollArea</code>, <code>Splitter</code>, <code>TabWidget</code>, <code>StatusBar</code>, <code>Menu</code></li>
 <li><b>Input</b> — keyboard and mouse event parsing</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 SDL Graphics (promeki-sdl)</h2>
 <p>An optional shared library for SDL3-based applications (off by default).</p>
 <ul>
 <li><code><a class="el" href="classSDLApplication.html" title="Application class for SDL-based programs.">SDLApplication</a></code>, <code><a class="el" href="classSDLWindow.html" title="Top-level SDL window that serves as a root Widget.">SDLWindow</a></code>, <code><a class="el" href="classSDLVideoWidget.html" title="Widget that displays a promeki Image via SDL texture rendering.">SDLVideoWidget</a></code>, <code><a class="el" href="classSDLAudioOutput.html" title="Manages an SDL3 audio output device for playback.">SDLAudioOutput</a></code></li>
 <li><code>SDLPlayer</code> — MediaIO-backed player with video display and audio output</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md13"></a>
 Library Architecture</h1>
 <p>libpromeki is organized into one main shared library and two optional UI libraries:</p>
 <p><b>promeki</b> — the core library. Networking, pro A/V, music, and other feature areas can be independently enabled or disabled via CMake feature flags.</p>
 <p><b>promeki-tui</b> — terminal UI widget library (optional).</p>
 <p><b>promeki-sdl</b> — SDL3-based GUI library (optional, off by default).</p>
-<h1><a class="anchor" id="autotoc_md9"></a>
+<h1><a class="anchor" id="autotoc_md14"></a>
 No Dependency Hell</h1>
 <p>All third-party libraries that promeki depends on are vendored as git submodules, built as static libraries with <code>-fPIC</code>, and absorbed directly into <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki.so</a></code>. Alternatively, each dependency can be switched to use system-installed versions via <code>PROMEKI_USE_SYSTEM_*</code> CMake options.</p>
 <p>When you install libpromeki, you get a shared library and a set of headers. Your application links against <code>promeki::promeki</code> — no chasing down system packages, no version mismatches, no transitive dependency surprises.</p>
 <p>Vendored dependencies: zlib-ng, libspng, libjpeg-turbo, FreeType, libsndfile, nlohmann/json, libvtc, SVT-JPEG-XS, Highway, CIRF.</p>
-<h1><a class="anchor" id="autotoc_md10"></a>
+<h1><a class="anchor" id="autotoc_md15"></a>
 Included Utilities</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -236,14 +236,14 @@ Included Utilities</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>imgtest</code>   </td><td class="markdownTableBodyNone"><a class="el" href="classImage.html" title="Raster image with pixel description, planes, and metadata.">Image</a> file I/O test utility   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md11"></a>
+<h1><a class="anchor" id="autotoc_md16"></a>
 Building</h1>
 <p>Requirements: a C++20 compiler, CMake <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">3.22</a>+, and git. Some vendored libraries (libjpeg-turbo, SVT-JPEG-XS) use hand-written SIMD assembly and will build their accelerated code paths when <code>nasm</code> or <code>yasm</code> is available. They still build without an assembler, but without the SIMD fast paths.</p>
 <div class="fragment"><div class="line">git clone --recurse-submodules https://github.com/jthwho/libpromeki.git</div>
 <div class="line">cd libpromeki</div>
 <div class="line">cmake -B build -DCMAKE_BUILD_TYPE=Release</div>
 <div class="line">cmake --build build -j$(nproc)</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md12"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md17"></a>
 CMake Build Options</h2>
 <p><b>Feature flags</b> (control what goes into <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">libpromeki.so</a></code>):</p>
 <table class="markdownTable">
@@ -318,17 +318,17 @@ CMake Build Options</h2>
 <div class="fragment"><div class="line">cmake -B build -DPROMEKI_USE_SYSTEM_ZLIB=ON -DPROMEKI_USE_SYSTEM_LIBSPNG=ON \</div>
 <div class="line">    -DPROMEKI_USE_SYSTEM_FREETYPE=ON -DPROMEKI_USE_SYSTEM_SNDFILE=ON \</div>
 <div class="line">    -DPROMEKI_USE_SYSTEM_LIBJPEG=ON</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md13"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md18"></a>
 Cleaning</h2>
 <p>The <code>libclean</code> target removes only the promeki library objects, test executables, and utilities while preserving third-party builds. This avoids rebuilding vendored dependencies which rarely change:</p>
 <div class="fragment"><div class="line">cmake --build build --target libclean</div>
 </div><!-- fragment --><p>To clean everything including third-party builds, use the standard CMake <code>clean</code> target:</p>
 <div class="fragment"><div class="line">cmake --build build --target clean</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md14"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md19"></a>
 Running Tests</h2>
 <div class="fragment"><div class="line">cd build</div>
 <div class="line">ctest --output-on-failure</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md15"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md20"></a>
 Installing</h2>
 <div class="fragment"><div class="line">cmake --install build</div>
 <div class="line"># or to a custom prefix:</div>
@@ -340,7 +340,7 @@ Installing</h2>
 <li><code>lib/cmake/promeki/</code> — CMake package config files</li>
 <li><code>share/doc/promeki/</code> — license and third-party notices</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md16"></a>
+<h1><a class="anchor" id="autotoc_md21"></a>
 Using libpromeki in Your Project</h1>
 <p>After installing, add this to your project's <code><a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">CMakeLists.txt</a></code>:</p>
 <div class="fragment"><div class="line">find_package(promeki REQUIRED)</div>
@@ -355,7 +355,7 @@ Using libpromeki in Your Project</h1>
 <div class="line">target_link_libraries(myapp PRIVATE promeki::sdl)</div>
 </div><!-- fragment --><p>If you installed to a non-standard prefix, tell CMake where to find it:</p>
 <div class="fragment"><div class="line">cmake -B build -DCMAKE_PREFIX_PATH=/opt/promeki</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md17"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md22"></a>
 Include Conventions</h2>
 <p>All promeki headers live under the <code>promeki/</code> namespace:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="string_8h.html">promeki/string.h</a>&gt;</span></div>
@@ -379,12 +379,12 @@ Include Conventions</h2>
 <div class="ttc" id="aclassTimecode_html"><div class="ttname"><a href="classTimecode.html">Timecode</a></div><div class="ttdoc">Class for holding and manipulating timecode.</div><div class="ttdef"><b>Definition</b> timecode.h:47</div></div>
 <div class="ttc" id="aclassUUID_html"><div class="ttname"><a href="classUUID.html">UUID</a></div><div class="ttdoc">Universally Unique Identifier (UUID).</div><div class="ttdef"><b>Definition</b> uuid.h:34</div></div>
 <div class="ttc" id="aclassUUID_html_aa4b21b5eec74fc441124669adb10ed78"><div class="ttname"><a href="classUUID.html#aa4b21b5eec74fc441124669adb10ed78">UUID::generate</a></div><div class="ttdeci">static UUID generate(int version=4)</div><div class="ttdoc">Convenience generator that dispatches to the appropriate generateVn() function.</div></div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md18"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md23"></a>
 Building the Documentation</h1>
 <p>To build the API documentation locally (requires Doxygen):</p>
 <div class="fragment"><div class="line">cmake -B build -DPROMEKI_BUILD_DOCS=ON</div>
 <div class="line">cmake --build build --target docs</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md19"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md24"></a>
 Debugging</h1>
 <p>If you build the library in Debug mode (<code>-DCMAKE_BUILD_TYPE=Debug</code>), the <code>promekiDebug()</code> logging function is enabled. Each source file that wants to use it must register a debug channel:</p>
 <div class="fragment"><div class="line">PROMEKI_DEBUG(<a class="code hl_class" href="classList.html">MyChannel</a>)</div>
@@ -394,11 +394,11 @@ Debugging</h1>
 </div><!-- fragment --><p>Then enable channels at runtime via the <code>PROMEKI_DEBUG</code> environment variable (comma-separated):</p>
 <div class="fragment"><div class="line">export PROMEKI_DEBUG=MyChannel,AnotherChannel</div>
 <div class="line">./yourapp</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md20"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md25"></a>
 History</h1>
 <p>The bulk of the code that makes up libpromeki started out life as code that existed across multiple libraries originally developed by my (now defunct) company, <a href="https://en.wikipedia.org/wiki/SpectSoft">SpectSoft</a>, for our video disk recorder product called RaveHD. During its run, it was used in post production, VFX, animation, and other media related sectors. At that time, the entire application stack was built on top of the <a href="https://www.qt.io/">Qt</a> framework. The Qt design patterns, aesthetic, and general way of doing things has certainly informed much of how this library was architected.</p>
 <p>What you see now is a library that takes the good bits from that old code base and has removed the Qt coupling and replaced it with modern C++ native STL. Hopefully you'll find it as useful as I have over the years. &ndash;jth</p>
-<h1><a class="anchor" id="autotoc_md21"></a>
+<h1><a class="anchor" id="autotoc_md26"></a>
 License</h1>
 <p>libpromeki is licensed under the [MIT License](LICENSE).</p>
 <p>Third-party library licenses and attribution notices are documented in [THIRD-PARTY-LICENSES](THIRD-PARTY-LICENSES). </p>
@@ -409,7 +409,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-12 08:37:52 from commit c0af658 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
   </ul>
 </div>
 </body>
