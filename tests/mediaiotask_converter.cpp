@@ -353,7 +353,7 @@ TEST_CASE("MediaIOTask_Converter_UnknownJpegSubsamplingRejected") {
 // Back-pressure: write while queue is full returns TryAgain
 // ============================================================================
 
-TEST_CASE("MediaIOTask_Converter_WriteBackPressure") {
+TEST_CASE("MediaIOTask_Converter_WriteBeyondCapacity") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         cfg.set(MediaConfig::Capacity, 2);
 
@@ -364,13 +364,62 @@ TEST_CASE("MediaIOTask_Converter_WriteBackPressure") {
         Frame::Ptr f = makeRgbFrame(8, 8, PixelDesc::RGB8_sRGB, 0x22);
         CHECK(io->writeFrame(f).isOk());   // queue depth 1
         CHECK(io->writeFrame(f).isOk());   // queue depth 2 — at capacity
-        // Third blocking write should bubble up TryAgain from the backend
-        CHECK(io->writeFrame(f) == Error::TryAgain);
+        // Third write exceeds capacity — succeeds (with a warning) so
+        // frames are never silently dropped by the converter.  Back-
+        // pressure is the caller's responsibility.
+        CHECK(io->writeFrame(f).isOk());   // queue depth 3 — beyond capacity
 
-        // Drain one and the next write should succeed
+        // All three frames should be readable.
         Frame::Ptr out;
         CHECK(io->readFrame(out).isOk());
+        CHECK(io->readFrame(out).isOk());
+        CHECK(io->readFrame(out).isOk());
+
+        io->close();
+        delete io;
+}
+
+// ============================================================================
+// writesAccepted / writeDepth / pendingOutput
+// ============================================================================
+
+TEST_CASE("MediaIOTask_Converter_WritesAccepted") {
+        MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
+        cfg.set(MediaConfig::Capacity, 3);
+
+        MediaIO *io = MediaIO::create(cfg);
+        REQUIRE(io != nullptr);
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
+
+        // writeDepth reflects the configured capacity.
+        CHECK(io->writeDepth() == 3);
+
+        // Empty converter — full capacity available.
+        CHECK(io->writesAccepted() == 3);
+
+        // Each blocking write lands immediately; pendingWrites goes
+        // back to 0, but the frame sits in the output queue, so
+        // writesAccepted decreases by one per write.
+        Frame::Ptr f = makeRgbFrame(8, 8, PixelDesc::RGB8_sRGB, 0x33);
         CHECK(io->writeFrame(f).isOk());
+        CHECK(io->writesAccepted() == 2);
+
+        CHECK(io->writeFrame(f).isOk());
+        CHECK(io->writesAccepted() == 1);
+
+        CHECK(io->writeFrame(f).isOk());
+        CHECK(io->writesAccepted() == 0);   // at capacity
+
+        // Reading a frame frees a slot.
+        Frame::Ptr out;
+        CHECK(io->readFrame(out).isOk());
+        CHECK(io->writesAccepted() == 1);
+
+        CHECK(io->readFrame(out).isOk());
+        CHECK(io->writesAccepted() == 2);
+
+        CHECK(io->readFrame(out).isOk());
+        CHECK(io->writesAccepted() == 3);   // fully drained
 
         io->close();
         delete io;

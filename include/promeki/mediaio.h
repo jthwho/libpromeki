@@ -311,6 +311,7 @@ class MediaIOCommandOpen : public MediaIOCommand {
                 int64_t                 frameCount = 0;
                 int                     defaultStep = 1;             ///< @brief Backend's preferred default step.
                 int                     defaultPrefetchDepth = 1;    ///< @brief Backend's preferred prefetch depth.
+                int                     defaultWriteDepth = 4;       ///< @brief Backend's preferred write pipeline depth.
                 MediaIOSeekMode         defaultSeekMode = MediaIO_SeekExact; ///< @brief Backend's resolution of @c SeekDefault.
 };
 
@@ -948,6 +949,32 @@ class MediaIO : public ObjectBase {
                 int prefetchDepth() const { return _prefetchDepth; }
 
                 /**
+                 * @brief Returns the maximum write pipeline depth.
+                 *
+                 * Reflects the task's preferred default after open().
+                 * Callers should limit the number of non-blocking
+                 * writeFrame() calls in flight to this value; exceeding
+                 * it may cause the backend's internal queue to grow
+                 * beyond its preferred operating point.
+                 *
+                 * @return The write depth (≥ 1).
+                 */
+                int writeDepth() const { return _writeDepth; }
+
+                /**
+                 * @brief Returns how many frames the backend can accept
+                 *        right now.
+                 *
+                 * Convenience for @c writeDepth() - pendingWrites(),
+                 * clamped to zero.  A return of 0 means the write
+                 * pipeline is full and the caller should wait for a
+                 * @c frameWantedSignal before submitting more work.
+                 *
+                 * @return Available write slots (≥ 0).
+                 */
+                int writesAccepted() const;
+
+                /**
                  * @brief Sets the number of read commands to keep in flight.
                  *
                  * MediaIO will top up the strand queue to this many
@@ -1390,6 +1417,7 @@ class MediaIO : public ObjectBase {
                 int                         _step = 1;
                 int                         _prefetchDepth = 1;
                 bool                        _prefetchDepthExplicit = false;
+                int                         _writeDepth = 4;
                 bool                        _atEnd = false;
 
                 // Per-instance identifiers.  _localId is assigned from a

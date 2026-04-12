@@ -49,13 +49,14 @@ struct Sink {
  * source is optionally routed through a blocking
  * @c writeFrame+readFrame round-trip on the Converter, then
  * fanned out to every sink via @c writeFrame(frame, false).  Sink
- * @c frameWantedSignal callbacks decrement per-sink in-flight
- * counters to reopen the drain once back-pressure eases; sink
+ * @c frameWantedSignal callbacks call @c writesAccepted() to
+ * reopen the drain once back-pressure eases; sink
  * @c writeErrorSignal callbacks finalize the pipeline with a
  * non-zero exit code.
  *
  * Shutdown semantics:
- *  - EOF / frame-count reached → @c finish(0) (clean).
+ *  - EOF / frame-count reached → converter pipeline is drained
+ *    to the sinks before @c finish(0) (clean).
  *  - Source or sink error → @c finish(1) (not clean).
  *  - External quit → `app.exec()` returns with the shouldQuit rc;
  *    @c finishedCleanly() stays @c false so the caller cancels
@@ -64,12 +65,6 @@ struct Sink {
 class Pipeline : public ObjectBase {
         PROMEKI_OBJECT(Pipeline, ObjectBase)
         public:
-                /// @brief Max non-blocking writes in flight on any one sink.
-                static constexpr int MaxInflightPerSink = 4;
-
-                /// @brief Max non-blocking writes in flight on the converter.
-                static constexpr int MaxInflightConverter = 4;
-
                 Pipeline(MediaIO *source,
                          MediaIO *converter,
                          List<Sink> sinks,
@@ -94,38 +89,25 @@ class Pipeline : public ObjectBase {
 
         private:
                 void reportWriteError(Error err);
-                void reportSinkFrameWanted(size_t sinkIndex);
+                void reportSinkFrameWanted();
                 void reportConverterFrameWanted();
-                void onSinkFrameWantedPosted(size_t sinkIndex);
+                void onSinkFrameWantedPosted();
                 void onConverterFrameWantedPosted();
 
-                // Pulls frames from the source and either fans them
-                // out to the sinks (no converter) or writes them
-                // non-blocking to the converter.
                 void drainSource();
-
-                // Pulls frames from the converter and fans them out
-                // to the sinks.  Only invoked when a converter is
-                // present and its frameReadySignal fires.
                 void drainConverter();
-
-                // Fans a single frame out to every sink via
-                // writeFrame(frame, false) and updates the in-flight
-                // bookkeeping.  Returns true if the frame was pushed
-                // to every sink, false on a terminal error.
                 bool fanOutToSinks(const Frame::Ptr &frame);
-
+                bool sinksCanAccept() const;
                 void finish(int rc);
 
                 MediaIO            *_source = nullptr;
                 MediaIO            *_converter = nullptr;
                 List<Sink>          _sinks;
-                List<int>           _inflight;
-                int                 _converterInflight = 0;
                 int64_t             _frameCountLimit = 0;
                 uint64_t            _framesPumped = 0;
                 bool                _finished = false;
                 bool                _cleanFinish = false;
+                bool                _sourceAtEnd = false;
                 EventLoop          *_mainLoop = nullptr;
                 Atomic<bool>        _writeErrorPending{false};
                 Error               _writeError;

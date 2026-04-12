@@ -39,6 +39,10 @@ Error MediaIOTask::executeCmd(MediaIOCommandStats &cmd) {
         return Error::Ok;
 }
 
+int MediaIOTask::pendingOutput() const {
+        return 0;
+}
+
 // ---- Live-telemetry helper forwarders ----
 //
 // All three forward into the owning MediaIO's per-instance counters.

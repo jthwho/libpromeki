@@ -743,6 +743,8 @@ Error MediaIO::open(Mode mode) {
                         _prefetchDepth = cmdOpen->defaultPrefetchDepth;
                         if(_prefetchDepth < 1) _prefetchDepth = 1;
                 }
+                _writeDepth = cmdOpen->defaultWriteDepth;
+                if(_writeDepth < 1) _writeDepth = 1;
         } else {
                 // Open failed — give the task a chance to clean up any
                 // partially-allocated resources via its Close handler.
@@ -782,6 +784,7 @@ Error MediaIO::close() {
         _defaultSeekMode = SeekExact;
         _prefetchDepth = 1;
         _prefetchDepthExplicit = false;
+        _writeDepth = 4;
         _atEnd = false;
 
         // Clear the benchmark-enable latch so a reopen with a fresh
@@ -851,6 +854,13 @@ int MediaIO::pendingReads() const {
 
 int MediaIO::pendingWrites() const {
         return _pendingWriteCount.value();
+}
+
+int MediaIO::writesAccepted() const {
+        int used = _pendingWriteCount.value();
+        if(_task != nullptr) used += _task->pendingOutput();
+        int avail = _writeDepth - used;
+        return avail > 0 ? avail : 0;
 }
 
 Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {

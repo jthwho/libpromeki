@@ -194,6 +194,24 @@ class MediaIOTask {
                  * @return Error::Ok on success.
                  */
                 virtual Error executeCmd(MediaIOCommandStats &cmd);
+
+                /**
+                 * @brief Returns the number of frames the task is
+                 *        holding internally beyond what
+                 *        @c pendingWrites tracks.
+                 *
+                 * The base MediaIO uses this in @c writesAccepted() to
+                 * account for frames that have been processed by the
+                 * write side but not yet consumed by the read side
+                 * (e.g. a converter's output FIFO).  The default
+                 * returns 0 (no internal buffering).
+                 *
+                 * Called from the main thread — implementations must
+                 * be safe against concurrent strand activity.
+                 *
+                 * @return Buffered frame count (≥ 0).
+                 */
+                virtual int pendingOutput() const;
 };
 
 PROMEKI_NAMESPACE_END

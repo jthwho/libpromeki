@@ -91,9 +91,15 @@ Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it,
 - Video transforms all go through a single `Image::convert()` call.  The converter parses its config keys at open time and forwards them as a `MediaConfig` to `Image::convert()`, which dispatches uncompressed↔uncompressed CSC, JPEG encode, JPEG decode, and JPEG↔JPEG transcode internally.  Pass-through when no output pixel desc is set, or when source and target match.
 - Audio transform: `Audio::convertTo()` whenever `ConfigOutputAudioDataType` is set and differs from the input data type; otherwise pass-through.
 - Output `MediaDesc` is computed from `pendingMediaDesc` at open so downstream consumers see the post-conversion descriptor before the first frame.
-- Internal FIFO with configurable capacity. `executeCmd(Write)` returns `Error::TryAgain` when full; `executeCmd(Read)` returns `Error::TryAgain` when empty. Queue is drained on `close()`.
+- Internal FIFO with configurable capacity. `executeCmd(Read)` returns `Error::TryAgain` when empty. Queue is drained on `close()`.
 - Stats: `FramesConverted`, `BytesIn`, `BytesOut`, plus standard `QueueDepth` / `QueueCapacity`.
 - Stateless (1 input → 1 output) for all current transforms.
+
+**Phase 4d additions:**
+
+- **No-drop write semantics:** `executeCmd(Write)` no longer returns `Error::TryAgain` at capacity. Frames are always accepted; when the output FIFO exceeds the configured capacity a one-shot warning is logged (`_capacityWarned` flag suppresses repeats). Back-pressure is the caller's responsibility.
+- **Write pipeline depth API:** `MediaIOCommandOpen::defaultWriteDepth` (int) added so backends can advertise their preferred write pipeline depth. `MediaIO::writeDepth()` returns the value captured at `open()`; `MediaIO::writesAccepted()` computes `writeDepth() - pendingWrites() - task->pendingOutput()`, clamped to zero. `MediaIOTask::pendingOutput()` virtual added (default 0); `MediaIOTask_Converter` overrides it to return its output FIFO depth.
+- **Tests:** `WriteBeyondCapacity` renamed from `WriteBackPressure` and updated to verify all frames are readable. New `WritesAccepted` test exercises the full `writeDepth / writesAccepted / pendingOutput` contract.
 
 **Remaining work (future):**
 - [ ] `ConfigOutputColorModel` / `ConfigOutputSampleRate` as first-class knobs (today the ColorModel rides inside the target `PixelDesc`, sample-rate conversion is deferred to a future audio resampler).

@@ -136,6 +136,7 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandOpen &cmd) {
         cmd.frameCount = MediaIO::FrameCountInfinite;
         cmd.defaultStep = 1;
         cmd.defaultPrefetchDepth = 1;
+        cmd.defaultWriteDepth = _capacity;
         return Error::Ok;
 }
 
@@ -150,6 +151,7 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandClose &cmd) {
         _frameCount = 0;
         _readCount = 0;
         _framesConverted = 0;
+        _capacityWarned = false;
         return Error::Ok;
 }
 
@@ -249,8 +251,10 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandWrite &cmd) {
                 return Error::InvalidArgument;
         }
 
-        if(static_cast<int>(_outputQueue.size()) >= _capacity) {
-                return Error::TryAgain;
+        if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
+                promekiWarn("MediaIOTask_Converter: output queue exceeded capacity (%d >= %d)",
+                        static_cast<int>(_outputQueue.size()), _capacity);
+                _capacityWarned = true;
         }
 
         Frame::Ptr outFrame;
@@ -288,6 +292,10 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandStats &cmd) {
         cmd.stats.set(MediaIOStats::QueueDepth, static_cast<int64_t>(_outputQueue.size()));
         cmd.stats.set(MediaIOStats::QueueCapacity, static_cast<int64_t>(_capacity));
         return Error::Ok;
+}
+
+int MediaIOTask_Converter::pendingOutput() const {
+        return static_cast<int>(_outputQueue.size());
 }
 
 PROMEKI_NAMESPACE_END

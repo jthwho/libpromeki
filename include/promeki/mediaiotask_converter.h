@@ -54,12 +54,13 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Back-pressure
  *
- * The Converter maintains an internal output FIFO.  When the FIFO is
- * full, @c executeCmd(MediaIOCommandWrite&) returns @c Error::TryAgain
- * so the producer can back off.  When the FIFO is empty,
- * @c executeCmd(MediaIOCommandRead&) returns @c Error::TryAgain so
- * the consumer can wait for more input.  FIFO capacity is configurable
- * via @ref MediaConfig::Capacity (default 4).
+ * The Converter maintains an internal output FIFO.  Writes always
+ * succeed — frames are never silently dropped.  When the FIFO
+ * exceeds the configured capacity a one-shot warning is logged;
+ * back-pressure is the caller's responsibility.  When the FIFO is
+ * empty, @c executeCmd(MediaIOCommandRead&) returns @c Error::TryAgain
+ * so the consumer can wait for more input.  FIFO capacity is
+ * configurable via @ref MediaConfig::Capacity (default 4).
  *
  * @par Config keys
  *
@@ -124,6 +125,7 @@ class MediaIOTask_Converter : public MediaIOTask {
                 Error executeCmd(MediaIOCommandRead &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
                 Error executeCmd(MediaIOCommandStats &cmd) override;
+                int pendingOutput() const override;
 
                 // Helpers
                 Error convertImage(const Image &input, Image &output);
@@ -143,6 +145,7 @@ class MediaIOTask_Converter : public MediaIOTask {
                 int64_t                         _frameCount = 0;
                 int64_t                         _readCount = 0;
                 int64_t                         _framesConverted = 0;
+                bool                            _capacityWarned = false;
 };
 
 PROMEKI_NAMESPACE_END

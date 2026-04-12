@@ -28,20 +28,12 @@ Pipeline::Pipeline(MediaIO *source,
           _frameCountLimit(frameCountLimit),
           _mainLoop(EventLoop::current())
 {
-        _inflight.resize(_sinks.size(), 0);
-
-        // The source's frameReady drives the "source -> converter or
-        // sinks" half of the drain.  If a converter is present, its
-        // own frameReady drives the "converter -> sinks" half.  Both
-        // halves stay non-blocking so the main thread's EventLoop is
-        // always free to service timers (--duration) and signals.
         ObjectBase::connect(&_source->frameReadySignal, &onSourceFrameReadySlot);
         if(_converter != nullptr) {
                 ObjectBase::connect(&_converter->frameReadySignal,
                                     &onConverterFrameReadySlot);
-                // Converter write back-pressure: each completed write
-                // posts frameWanted, which lets drainSource push
-                // another frame.
+                // A completed converter write means its output queue
+                // now has a frame — kick drainConverter to pop it.
                 _converter->frameWantedSignal.connect(
                         [this]() { reportConverterFrameWanted(); },
                         this);
@@ -55,16 +47,15 @@ Pipeline::Pipeline(MediaIO *source,
                 sinkIO->writeErrorSignal.connect(
                         [this](Error err) { reportWriteError(err); },
                         this);
+                // A completed sink write frees a slot — restart the
+                // side that feeds it.
                 sinkIO->frameWantedSignal.connect(
-                        [this, i]() { reportSinkFrameWanted(i); },
+                        [this]() { reportSinkFrameWanted(); },
                         this);
         }
 }
 
 void Pipeline::start() {
-        // Prime both halves: the source drain may fill the converter
-        // with its first batch of work, and the converter drain will
-        // no-op until there's something to pop.
         drainSource();
         if(_converter != nullptr) drainConverter();
 }
@@ -79,10 +70,10 @@ void Pipeline::reportWriteError(Error err) {
         }
 }
 
-void Pipeline::reportSinkFrameWanted(size_t sinkIndex) {
+void Pipeline::reportSinkFrameWanted() {
         if(_mainLoop != nullptr) {
-                _mainLoop->postCallable([this, sinkIndex]() {
-                        onSinkFrameWantedPosted(sinkIndex);
+                _mainLoop->postCallable([this]() {
+                        onSinkFrameWantedPosted();
                 });
         }
 }
@@ -95,36 +86,37 @@ void Pipeline::reportConverterFrameWanted() {
         }
 }
 
-void Pipeline::onSinkFrameWantedPosted(size_t sinkIndex) {
-        if(sinkIndex < _inflight.size() &&
-           _inflight[sinkIndex] > 0) {
-                _inflight[sinkIndex]--;
-        }
-        // Sink back-pressure has eased — restart whichever side was
-        // feeding it.  If a converter is present, the converter
-        // drain is the one pushing to sinks; otherwise it's
-        // drainSource itself.
+void Pipeline::onSinkFrameWantedPosted() {
+        // A sink finished a write — back-pressure eased.  Restart
+        // whichever side feeds the sinks.
         if(_converter != nullptr) drainConverter();
         else                      drainSource();
 }
 
 void Pipeline::onConverterFrameWantedPosted() {
-        if(_converterInflight > 0) _converterInflight--;
-        // Converter accepted a frame — try to push another one in.
-        drainSource();
+        // A converter write completed — its output queue now has a
+        // frame.  Kick drainConverter to read it.
+        drainConverter();
 }
 
 bool Pipeline::fanOutToSinks(const Frame::Ptr &frame) {
         for(size_t i = 0; i < _sinks.size(); ++i) {
-                _inflight[i]++;
                 _sinks[i].io->writeFrame(frame, false);
         }
         _framesPumped++;
         return true;
 }
 
+// Returns true if every sink can accept at least one more frame.
+bool Pipeline::sinksCanAccept() const {
+        for(size_t i = 0; i < _sinks.size(); ++i) {
+                if(_sinks[i].io->writesAccepted() <= 0) return false;
+        }
+        return true;
+}
+
 void Pipeline::drainSource() {
-        if(_finished) return;
+        if(_finished || _sourceAtEnd) return;
         while(true) {
                 if(_frameCountLimit > 0 &&
                    _framesPumped >=
@@ -133,16 +125,12 @@ void Pipeline::drainSource() {
                         return;
                 }
 
-                // Back-pressure gate: honour whichever downstream
-                // stage is next in the chain.  With a converter the
-                // gate is its own in-flight counter; without one the
-                // sinks' counters matter here.
+                // Back-pressure gate: ask the next downstream stage
+                // whether it can accept another frame.
                 if(_converter != nullptr) {
-                        if(_converterInflight >= MaxInflightConverter) return;
+                        if(_converter->writesAccepted() <= 0) return;
                 } else {
-                        for(size_t i = 0; i < _sinks.size(); ++i) {
-                                if(_inflight[i] >= MaxInflightPerSink) return;
-                        }
+                        if(!sinksCanAccept()) return;
                 }
 
                 Frame::Ptr frame;
@@ -150,7 +138,15 @@ void Pipeline::drainSource() {
                 if(err == Error::TryAgain) return;
                 if(err == Error::EndOfFile) {
                         fprintf(stdout, "Source reached EOF.\n");
-                        finish(0);
+                        if(_converter != nullptr &&
+                           _converter->writesAccepted() < _converter->writeDepth()) {
+                                // Frames are still in the converter
+                                // pipeline — let drainConverter flush
+                                // them to the sinks before finishing.
+                                _sourceAtEnd = true;
+                        } else {
+                                finish(0);
+                        }
                         return;
                 }
                 if(err.isError()) {
@@ -164,19 +160,7 @@ void Pipeline::drainSource() {
                 }
 
                 if(_converter != nullptr) {
-                        // Non-blocking write to the converter: the
-                        // strand picks up the frame, runs the
-                        // transform, and eventually emits its own
-                        // frameReady which drives drainConverter.
-                        // Track it as an in-flight unit of work so
-                        // the source honours back-pressure.
-                        _converterInflight++;
                         _converter->writeFrame(frame, false);
-                        // Do NOT increment _framesPumped here; that
-                        // counter tracks frames that reached the
-                        // sinks, and the converter stage is one step
-                        // upstream of that.  drainConverter bumps
-                        // _framesPumped when fanning out.
                 } else {
                         fanOutToSinks(frame);
                 }
@@ -193,23 +177,22 @@ void Pipeline::drainConverter() {
                         return;
                 }
 
-                // Sink back-pressure gate — the converter is the
-                // producer for the real sinks, so its drain respects
-                // them.
-                for(size_t i = 0; i < _sinks.size(); ++i) {
-                        if(_inflight[i] >= MaxInflightPerSink) return;
-                }
+                // Sink back-pressure gate.
+                if(!sinksCanAccept()) return;
 
                 Frame::Ptr converted;
                 Error err = _converter->readFrame(converted, false);
-                // Converter::executeCmd(Read) returns TryAgain when
-                // its output FIFO is empty — totally normal, just
-                // means there's nothing to fan out right now.
-                if(err == Error::TryAgain) return;
+                if(err == Error::TryAgain) {
+                        // Output FIFO is empty.  If the source has
+                        // finished and nothing remains in the
+                        // converter pipeline, the run is complete.
+                        if(_sourceAtEnd &&
+                           _converter->writesAccepted() >= _converter->writeDepth()) {
+                                finish(0);
+                        }
+                        return;
+                }
                 if(err == Error::EndOfFile) {
-                        // Converter doesn't emit EOF today, but
-                        // treat it the same way a source would if it
-                        // ever does.
                         finish(0);
                         return;
                 }
@@ -224,6 +207,12 @@ void Pipeline::drainConverter() {
                 }
 
                 fanOutToSinks(converted);
+
+                // A frame left the converter — its pending-write
+                // slot has already been released by the strand, so
+                // writesAccepted() has increased.  Let drainSource
+                // push more work in.
+                drainSource();
         }
 }
 
@@ -240,11 +229,9 @@ void Pipeline::onConverterFrameReady() { drainConverter(); }
 
 void Pipeline::onWriteErrorPosted() {
         Error err = _writeError;
-        // Converter back-pressure shows up as Error::TryAgain on the
-        // writeError signal because the backend's executeCmd(Write)
-        // returns it — treat it as a deferred write, not a fatal
-        // pipeline error.  The next frameWanted callback will reopen
-        // the drain.
+        // A backend may return TryAgain on a non-blocking write
+        // (e.g. internal queue full).  Treat it as transient rather
+        // than fatal — the next frameWanted will reopen the drain.
         if(err == Error::TryAgain) {
                 _writeErrorPending.setValue(false);
                 return;
