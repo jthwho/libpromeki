@@ -9,6 +9,7 @@
 #include <thread>
 #include <doctest/doctest.h>
 #include <promeki/threadpool.h>
+#include <promeki/string.h>
 
 using namespace promeki;
 
@@ -56,7 +57,17 @@ TEST_CASE("ThreadPool_WaitForDoneTimeout") {
 
 TEST_CASE("ThreadPool_ThreadCount") {
         ThreadPool pool(4);
-        CHECK(pool.threadCount() == 4);
+        CHECK(pool.maxThreadCount() == 4);
+        CHECK(pool.threadCount() == 0);  // lazy: no threads until work arrives
+        auto f = pool.submit([] { return 1; });
+        f.waitForFinished();
+        CHECK(pool.threadCount() == 1);  // one thread spawned on demand
+}
+
+TEST_CASE("ThreadPool_ThreadCount_Eager") {
+        ThreadPool pool(4, false);
+        CHECK(pool.maxThreadCount() == 4);
+        CHECK(pool.threadCount() == 4);  // all threads pre-spawned
 }
 
 TEST_CASE("ThreadPool_InlineMode") {
@@ -76,9 +87,9 @@ TEST_CASE("ThreadPool_InlineMode") {
 
 TEST_CASE("ThreadPool_SetThreadCount") {
         ThreadPool pool(2);
-        CHECK(pool.threadCount() == 2);
+        CHECK(pool.maxThreadCount() == 2);
         pool.setThreadCount(4);
-        CHECK(pool.threadCount() == 4);
+        CHECK(pool.maxThreadCount() == 4);
 
         // Verify pool still works after resize
         auto f = pool.submit([] { return 42; });
@@ -130,9 +141,48 @@ TEST_CASE("ThreadPool_ActiveThreadCount") {
         CHECK(pool.activeThreadCount() == 0);
 }
 
+TEST_CASE("ThreadPool_NamePrefix") {
+        ThreadPool pool(2);
+        pool.setNamePrefix("test");
+        CHECK(pool.namePrefix() == String("test"));
+        // Verify threads can run with the name prefix set
+        auto f = pool.submit([] { return 1; });
+        auto [val, err] = f.result();
+        CHECK(err == Error::Ok);
+        CHECK(val == 1);
+}
+
+TEST_CASE("ThreadPool_LazySpawn") {
+        ThreadPool pool(4);
+        CHECK(pool.threadCount() == 0);
+
+        // Submit tasks that block so we can observe thread growth
+        std::atomic<int> barrier{0};
+        std::atomic<int> running{0};
+        auto blockingTask = [&] {
+                running++;
+                while(barrier.load() == 0) {
+                        std::this_thread::yield();
+                }
+        };
+
+        // Submit 3 blocking tasks — should spawn 3 threads
+        Future<void> f1 = pool.submit(blockingTask);
+        Future<void> f2 = pool.submit(blockingTask);
+        Future<void> f3 = pool.submit(blockingTask);
+        // Wait for threads to actually start running
+        while(running.load() < 3) std::this_thread::yield();
+        CHECK(pool.threadCount() >= 3);
+        CHECK(pool.threadCount() <= 4);
+
+        // Release and clean up
+        barrier.store(1);
+        pool.waitForDone();
+}
+
 TEST_CASE("ThreadPool_DefaultConstructor") {
         ThreadPool pool;
-        CHECK(pool.threadCount() > 0);
+        CHECK(pool.maxThreadCount() > 0);
         auto f = pool.submit([] { return 42; });
         auto [val, err] = f.result();
         CHECK(err == Error::Ok);

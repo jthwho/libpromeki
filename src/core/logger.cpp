@@ -11,6 +11,7 @@
 #include <promeki/list.h>
 #include <promeki/fileiodevice.h>
 #include <promeki/env.h>
+#include <promeki/buildinfo.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -42,6 +43,11 @@ static bool checkForEnvDebugEnable(const String &name) {
                 list = enval.split(",");
                 if(!list.isEmpty()) {
                         promekiInfo("Env PROMEKI_DEBUG: %s", list.join(", ").cstr());
+#ifndef PROMEKI_DEBUG_ENABLE
+                        promekiWarn("PROMEKI_DEBUG is set but promekiDebug() messages are "
+                                    "compiled out. Rebuild with "
+                                    "-DCMAKE_BUILD_TYPE=DevRelease or Debug.");
+#endif
                 }
         }
         return list.contains(name);
@@ -179,6 +185,21 @@ void Logger::worker() {
         self->setName("logger");
 
         FileIODevice *logFile = nullptr;
+
+#ifdef PROMEKI_DEBUG_ENABLE
+        // When PROMEKI_DEBUG is set, write a startup banner before
+        // processing any queued messages so log files always begin
+        // with the build/platform context needed for diagnosis.
+        if(!Env::get("PROMEKI_DEBUG").isEmpty()) {
+                uint64_t tid = cachedThreadId();
+                _threadNames[tid] = "logger";
+                DateTime now = DateTime::now();
+                for(const auto &line : buildInfoStrings()) {
+                        writeLog(LogEntry{now, Info, "LOGGER", 0, tid, line}, logFile);
+                }
+        }
+#endif
+
         bool running = true;
         size_t cmdct = 0;
 

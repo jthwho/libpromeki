@@ -11,6 +11,7 @@
 #include <functional>
 #include <type_traits>
 #include <promeki/namespace.h>
+#include <promeki/string.h>
 #include <promeki/error.h>
 #include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
@@ -26,9 +27,14 @@ PROMEKI_NAMESPACE_BEGIN
  * Tasks are submitted via submit() which returns a Future for the result.
  * The pool manages a set of worker threads that pull tasks from an internal
  *
+ * By default, worker threads are spawned lazily — the first submit()
+ * that finds all existing workers busy spawns a new thread, up to the
+ * configured maximum.  Pass @c lazy=false to the constructor (or call
+ * setThreadCount()) to pre-spawn all threads immediately.
+ *
  * @par Example
  * @code
- * ThreadPool pool(4);  // 4 worker threads
+ * ThreadPool pool(4);  // up to 4 worker threads, spawned on demand
  * Future<int> result = pool.submit([]() {
  *     return expensiveComputation();
  * });
@@ -44,12 +50,17 @@ PROMEKI_NAMESPACE_BEGIN
 class ThreadPool {
         public:
                 /**
-                 * @brief Constructs a ThreadPool with the given number of threads.
-                 * @param threadCount Number of worker threads.  Defaults to
-                 *        std::thread::hardware_concurrency().  A value of 0
-                 *        means tasks run inline on the calling thread.
+                 * @brief Constructs a ThreadPool with the given maximum thread count.
+                 *
+                 * @param maxThreadCount Maximum number of worker threads.
+                 *        Defaults to std::thread::hardware_concurrency().
+                 *        A value of 0 means tasks run inline on the calling
+                 *        thread.
+                 * @param lazy When @c true (default), threads are spawned on
+                 *        demand as tasks arrive.  When @c false, all threads
+                 *        are pre-spawned immediately.
                  */
-                ThreadPool(int threadCount = -1);
+                ThreadPool(int maxThreadCount = -1, bool lazy = true);
 
                 /**
                  * @brief Destructor.  Signals shutdown and joins all worker threads.
@@ -80,10 +91,11 @@ class ThreadPool {
                         bool runInline = false;
                         {
                                 Mutex::Locker locker(_mutex);
-                                if(_threadCount == 0) {
+                                if(_maxThreadCount == 0) {
                                         runInline = true;
                                 } else {
                                         _tasks.pushToBack([task]() { (*task)(); });
+                                        maybeSpawnOne();
                                         _cv.wakeOne();
                                 }
                         }
@@ -92,19 +104,45 @@ class ThreadPool {
                 }
 
                 /**
-                 * @brief Resizes the thread pool.
+                 * @brief Sets the name prefix for worker threads.
                  *
-                 * If @p count is less than the current thread count, excess
-                 * threads are stopped and joined.  If greater, new threads are
-                 * spawned.  A count of 0 means subsequent tasks run inline.
+                 * Each worker is named @c prefix0, @c prefix1, etc.  The
+                 * name is applied to the OS thread (visible in debuggers,
+                 * @c htop, @c ps&nbsp;-L).  Must be called before threads
+                 * are spawned to take effect on all workers.
                  *
-                 * @param count The new thread count.
+                 * @param prefix The name prefix (e.g. "media").
                  */
-                void setThreadCount(int count);
+                void setNamePrefix(const String &prefix);
 
                 /**
-                 * @brief Returns the current thread count.
-                 * @return The number of worker threads.
+                 * @brief Returns the current name prefix.
+                 * @return The name prefix, or an empty string if none.
+                 */
+                String namePrefix() const;
+
+                /**
+                 * @brief Resizes the thread pool.
+                 *
+                 * Shuts down all existing threads, then respawns up to
+                 * @p count threads.  When @p lazy is true (default), no
+                 * threads are spawned until tasks arrive.  A count of 0
+                 * means subsequent tasks run inline.
+                 *
+                 * @param count The new maximum thread count.
+                 * @param lazy  When true, threads are spawned on demand.
+                 */
+                void setThreadCount(int count, bool lazy = true);
+
+                /**
+                 * @brief Returns the maximum thread count.
+                 * @return The maximum number of worker threads.
+                 */
+                int maxThreadCount() const;
+
+                /**
+                 * @brief Returns the current number of spawned threads.
+                 * @return The number of live worker threads.
                  */
                 int threadCount() const;
 
@@ -134,16 +172,20 @@ class ThreadPool {
         private:
                 using Task = std::function<void()>;
 
-                void workerFunc();
+                void workerFunc(int index);
                 void spawnThreads(int count);
+                void maybeSpawnOne();
 
                 mutable Mutex           _mutex;
                 WaitCondition           _cv;
                 WaitCondition           _doneCv;
                 List<Task>              _tasks;
                 List<std::thread>       _threads;
+                String                  _namePrefix;
+                int                     _maxThreadCount = 0;
                 int                     _threadCount = 0;
                 int                     _activeCount = 0;
+                int                     _waitingCount = 0;
                 bool                    _shutdown = false;
 };
 

@@ -44,8 +44,12 @@ static MediaIO::FormatDescList &formatRegistry() {
 }
 
 ThreadPool &MediaIO::pool() {
-        static ThreadPool p;
-        return p;
+        static ThreadPool *p = []() {
+                auto *tp = new ThreadPool;
+                tp->setNamePrefix("media");
+                return tp;
+        }();
+        return *p;
 }
 
 int MediaIO::registerFormat(const FormatDesc &desc) {

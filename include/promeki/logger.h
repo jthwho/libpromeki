@@ -59,7 +59,9 @@ static consteval const char *sourceFileName(const char *path) {
         } while(0)
 
 #ifdef PROMEKI_DEBUG_ENABLE
-#define promekiDebug(format, ...) if(_promeki_debug_enabled) { promekiLog(Logger::LogLevel::Debug, format, ##__VA_ARGS__); }
+#define promekiDebug(format, ...) if(_promeki_debug_enabled) { \
+        Logger::defaultLogger().log(Logger::LogLevel::Debug, PROMEKI_SOURCE_FILE, __LINE__, \
+                String::sprintf(format, ##__VA_ARGS__)); }
 #else
 #define promekiDebug(format, ...)
 #endif

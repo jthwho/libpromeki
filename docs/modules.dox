@@ -94,6 +94,9 @@
  * Variant type, Error reporting, UUID generation, FourCC codes,
  * Metadata key-value store, environment access, command-line parsing,
  * logging, memory pools, platform detection, terminal I/O, and more.
+ *
+ * See @ref debugging "Debugging and Diagnostics" for build types,
+ * per-module debug logging, and crash handling.
  */
 
 /**

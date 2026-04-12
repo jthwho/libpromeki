@@ -1,0 +1,413 @@
+/**
+ * @page debugging Debugging and Diagnostics
+ *
+ * @brief Build types, debug logging, and crash handling in libpromeki.
+ *
+ * This page explains the tools libpromeki provides for diagnosing problems
+ * at development time and in production.  It covers:
+ *
+ * - @ref debug_build_types — choosing the right CMake build type
+ * - @ref debug_logging — the Logger system and convenience macros
+ * - @ref debug_promekidebug — per-module debug logging with PROMEKI_DEBUG
+ * - @ref debug_crashhandler — automatic crash reports for fatal signals
+ *
+ * ---
+ *
+ * @section debug_build_types Build Types
+ *
+ * libpromeki defines three CMake build types.  The build type controls
+ * optimisation level, debug symbols, and whether per-module debug
+ * logging (@c promekiDebug()) is compiled in.
+ *
+ * | Build type | Optimisation | Debug symbols | @c promekiDebug() | @c NDEBUG | Typical use |
+ * |------------|-------------|---------------|-------------------|-----------|-------------|
+ * | **Debug** | @c -O0 | Yes | Compiled in | Not set | Step-through debugging, sanitizers |
+ * | **DevRelease** (default) | @c -O3 | Yes (@c -g) | Compiled in | Set | Day-to-day development, CI, profiling |
+ * | **Release** | @c -O3 | No | Compiled out | Set | Distribution / final packaging |
+ *
+ * @subsection debug_build_devrelease DevRelease — the recommended default
+ *
+ * When no @c CMAKE_BUILD_TYPE is specified, the build defaults to
+ * @b DevRelease.  This gives you release-level performance (@c -O3)
+ * plus two features that are invaluable during development and
+ * production troubleshooting:
+ *
+ * - **Debug symbols** (@c -g) — so crash reports, core dumps, and
+ *   profilers show meaningful function names and line numbers.
+ * - **@c promekiDebug() compiled in** — the per-module debug logging
+ *   system is available and can be activated at runtime via the
+ *   @c PROMEKI_DEBUG environment variable without recompiling.
+ *
+ * @c NDEBUG is still set, so @c assert() macros are disabled and the
+ * library runs at full speed.
+ *
+ * @code{.sh}
+ * # These are equivalent — DevRelease is the default:
+ * cmake -B build
+ * cmake -B build -DCMAKE_BUILD_TYPE=DevRelease
+ * @endcode
+ *
+ * @subsection debug_build_debug Debug
+ *
+ * The @b Debug build type disables optimisation entirely and enables
+ * debug symbols.  Use it when you need to step through code in a
+ * debugger (GDB, LLDB) or run sanitizers (ASan, TSan, UBSan).
+ *
+ * @code{.sh}
+ * cmake -B build -DCMAKE_BUILD_TYPE=Debug
+ * @endcode
+ *
+ * @subsection debug_build_release Release
+ *
+ * The @b Release build type enables full optimisation with no debug
+ * symbols and compiles out all @c promekiDebug() calls.  Use it for
+ * final distribution builds where binary size and performance are
+ * paramount and debug logging overhead must be zero.
+ *
+ * @code{.sh}
+ * cmake -B build -DCMAKE_BUILD_TYPE=Release
+ * @endcode
+ *
+ * ---
+ *
+ * @section debug_logging The Logger System
+ *
+ * All logging in libpromeki goes through the @ref Logger class.  The
+ * logger is thread-safe and asynchronous — log messages are enqueued
+ * and written by a dedicated background thread so the calling thread
+ * is never blocked on I/O.
+ *
+ * @subsection debug_logging_macros Convenience Macros
+ *
+ * In practice you will almost always use the convenience macros rather
+ * than calling @ref Logger methods directly:
+ *
+ * | Macro | Level | When to use |
+ * |-------|-------|-------------|
+ * | @c promekiDebug(fmt,&nbsp;...) | Debug | Per-module diagnostic output (see @ref debug_promekidebug) |
+ * | @c promekiInfo(fmt,&nbsp;...) | Info | Normal operational messages |
+ * | @c promekiWarn(fmt,&nbsp;...) | Warn | Recoverable problems worth investigating |
+ * | @c promekiErr(fmt,&nbsp;...) | Err | Errors that affect correctness |
+ *
+ * All macros accept @c printf-style format strings:
+ *
+ * @code
+ * promekiInfo("Opened %s (%d x %d)", path.cstr(), w, h);
+ * promekiWarn("Buffer underrun at %s", tc.toString().first().cstr());
+ * promekiErr("Failed to bind socket: %s", err.desc().cstr());
+ * @endcode
+ *
+ * Every log line automatically includes a timestamp, source file and
+ * line number, log level, and the name of the calling thread.
+ *
+ * @subsection debug_logging_config Configuring the Logger
+ *
+ * The default logger writes to the console (stderr).  You can also
+ * direct output to a file and adjust the minimum log level:
+ *
+ * @code
+ * // Send log output to a file (in addition to the console)
+ * Logger::defaultLogger().setLogFile("/tmp/myapp.log");
+ *
+ * // Only show warnings and errors on the console
+ * Logger::defaultLogger().setLogLevel(Logger::Warn);
+ *
+ * // Disable console output entirely (file-only logging)
+ * Logger::defaultLogger().setConsoleLoggingEnabled(false);
+ * @endcode
+ *
+ * You can also install custom formatters for file and console output:
+ *
+ * @code
+ * Logger::defaultLogger().setFileFormatter([](const Logger::LogFormat &fmt) -> String {
+ *         return String::sprintf("[%c] %s",
+ *                 Logger::levelToChar(fmt.entry->level),
+ *                 fmt.entry->msg.cstr());
+ * });
+ * @endcode
+ *
+ * @subsection debug_logging_sync Flushing Log Output
+ *
+ * Because logging is asynchronous, the log queue may contain
+ * unwritten messages when your program exits or when you need to
+ * inspect a log file mid-run.  Use @c sync() to block until the
+ * queue is drained:
+ *
+ * @code
+ * promekiInfo("About to do something risky...");
+ * promekiLogSync();  // block until all queued messages are written
+ * @endcode
+ *
+ * ---
+ *
+ * @section debug_promekidebug Per-Module Debug Logging (promekiDebug)
+ *
+ * The @c promekiDebug() macro provides fine-grained, per-module debug
+ * logging that can be compiled in but only activated at runtime for
+ * the modules you care about.  This lets you instrument the library
+ * heavily without any runtime cost until you need it.
+ *
+ * @subsection debug_promekidebug_how How It Works
+ *
+ * Each source file that wants to emit debug output places the
+ * @c PROMEKI_DEBUG macro near the top, inside the @c promeki
+ * namespace:
+ *
+ * @code
+ * #include <promeki/myclass.h>
+ * #include <promeki/logger.h>
+ *
+ * PROMEKI_NAMESPACE_BEGIN
+ *
+ * PROMEKI_DEBUG(MyClass)
+ *
+ * MyClass::MyClass() {
+ *         promekiDebug("MyClass(%p): created, size %d", (void *)this, _size);
+ * }
+ * @endcode
+ *
+ * The @c PROMEKI_DEBUG(Name) macro registers the module name with the
+ * debug database.  At startup, the library checks the
+ * @c PROMEKI_DEBUG environment variable and enables logging for any
+ * module whose name appears in the comma-separated list.
+ *
+ * @subsection debug_promekidebug_activate Activating Debug Output
+ *
+ * Set the @c PROMEKI_DEBUG environment variable to a comma-separated
+ * list of module names:
+ *
+ * @code{.sh}
+ * # Enable debug output for ThreadPool and MediaIO:
+ * PROMEKI_DEBUG=ThreadPool,MediaIO ./myapp
+ *
+ * # Enable debug output for everything (if modules are named):
+ * PROMEKI_DEBUG=ThreadPool,Thread,Logger,MediaIO,MediaIOTask_Rtp ./myapp
+ * @endcode
+ *
+ * When enabled, @c promekiDebug() messages appear alongside normal
+ * log output at the @c Debug level.  When disabled, the module's
+ * @c promekiDebug() calls skip the logging call entirely — just a
+ * branch on a local @c bool.
+ *
+ * @subsection debug_promekidebug_compiled_out What Happens in Release Builds?
+ *
+ * In a @b Release build, @c PROMEKI_DEBUG_ENABLE is not defined, so
+ * the @c promekiDebug() macro expands to nothing.  The compiler
+ * eliminates all debug logging calls entirely — zero overhead.
+ *
+ * If you set the @c PROMEKI_DEBUG environment variable in a Release
+ * build, the library will print a warning:
+ *
+ * @verbatim
+ * [W] PROMEKI_DEBUG is set but promekiDebug() messages are compiled out.
+ *     Rebuild with -DCMAKE_BUILD_TYPE=DevRelease or Debug.
+ * @endverbatim
+ *
+ * @subsection debug_promekidebug_benchmarks Benchmarking with PROMEKI_BENCHMARK
+ *
+ * Two companion macros let you time sections of code, gated on the
+ * same per-module enable flag:
+ *
+ * @code
+ * void MyClass::processFrame(const Frame &frame) {
+ *         PROMEKI_BENCHMARK_BEGIN(processFrame)
+ *         // ... expensive work ...
+ *         PROMEKI_BENCHMARK_END(processFrame)
+ *         // prints: "[MyClass] processFrame took 0.003217000 sec"
+ * }
+ * @endcode
+ *
+ * Like @c promekiDebug(), these are compiled out in Release builds
+ * and only run when the module's debug flag is enabled.
+ *
+ * ---
+ *
+ * @section debug_crashhandler Crash Handling
+ *
+ * The @ref CrashHandler class installs signal handlers for five
+ * fatal POSIX signals: @c SIGSEGV, @c SIGABRT, @c SIGBUS,
+ * @c SIGFPE, and @c SIGILL.  When a crash occurs, it writes a
+ * detailed report to stderr and to a log file, then re-raises the
+ * signal so the OS can generate a core dump.
+ *
+ * @subsection debug_crash_report What the Crash Report Contains
+ *
+ * - Signal name and number (e.g. @c SIGSEGV)
+ * - Fault address and signal code
+ * - Process ID and ISO 8601 UTC timestamp
+ * - Crashing thread's TID and name
+ * - List of all threads with TIDs and names
+ * - Demangled C++ stack trace
+ * - OS info (kernel version, architecture)
+ * - Memory usage and resource limits
+ * - Memory map (@c /proc/self/maps on Linux)
+ * - Environment snapshot (if enabled)
+ * - Registered @ref MemSpace allocation counters
+ *
+ * The crash log is written to:
+ * @verbatim
+ * <tempdir>/promeki-crash-<appname>-<pid>.log
+ * @endverbatim
+ *
+ * The directory can be overridden via @ref LibraryOptions::CrashLogDir
+ * or the @c PROMEKI_OPT_CrashLogDir environment variable.
+ *
+ * @subsection debug_crash_auto Automatic Installation via Application
+ *
+ * If your program uses the @ref Application class, crash handlers
+ * are installed automatically.  No extra code is needed:
+ *
+ * @code
+ * #include <promeki/application.h>
+ *
+ * int main(int argc, char **argv) {
+ *         Application app(argc, argv);
+ *
+ *         // Crash handlers are now active.
+ *         // If the process crashes, a report is written automatically.
+ *
+ *         return app.exec();
+ * }
+ * @endcode
+ *
+ * The @ref Application constructor checks
+ * @ref LibraryOptions::CrashHandler (default @c true).  To disable
+ * it, set the option before constructing Application or via the
+ * environment:
+ *
+ * @code
+ * // Programmatically
+ * LibraryOptions::instance().set(LibraryOptions::CrashHandler, false);
+ * Application app(argc, argv);
+ *
+ * // Or via environment
+ * // export PROMEKI_OPT_CrashHandler=false
+ * @endcode
+ *
+ * @subsection debug_crash_manual Manual Installation
+ *
+ * If your program does not use @ref Application (e.g. a library
+ * consumer that has its own main loop), you can install the crash
+ * handler directly:
+ *
+ * @code
+ * #include <promeki/crashhandler.h>
+ *
+ * int main(int argc, char **argv) {
+ *         // Install crash handlers as early as possible
+ *         CrashHandler::install();
+ *
+ *         // ... your application code ...
+ *
+ *         // Optional: remove handlers before exit
+ *         CrashHandler::uninstall();
+ *         return 0;
+ * }
+ * @endcode
+ *
+ * @c install() is safe to call multiple times — subsequent calls
+ * refresh the snapshotted process state (hostname, thread list,
+ * MemSpace entries, etc.) without stacking signal handlers.
+ *
+ * @subsection debug_crash_refresh Refreshing the Snapshot
+ *
+ * The crash handler snapshots process state at @c install() time so
+ * it can write the report from inside a signal handler without
+ * calling non-signal-safe functions.  If your application registers
+ * new @ref MemSpace entries or changes the app name after startup,
+ * call @ref Application::refreshCrashHandler() (or just call
+ * @c CrashHandler::install() again) to update the snapshot:
+ *
+ * @code
+ * Application app(argc, argv);
+ * app.setAppName("my-tool");   // automatically refreshes
+ *
+ * // If you register MemSpaces later:
+ * MemSpace::registerData(...);
+ * Application::refreshCrashHandler();
+ * @endcode
+ *
+ * @subsection debug_crash_trace Diagnostic Traces Without Crashing
+ *
+ * You can produce the same report a crash would generate — without
+ * actually crashing — using @ref CrashHandler::writeTrace():
+ *
+ * @code
+ * // Something unexpected happened; capture a diagnostic snapshot
+ * if(unexpectedState) {
+ *         CrashHandler::writeTrace("unexpected state in pipeline stage 3");
+ * }
+ * @endcode
+ *
+ * Each call writes to a unique file:
+ * @verbatim
+ * <tempdir>/promeki-trace-<appname>-<pid>-<seqno>.log
+ * @endverbatim
+ *
+ * This is useful for capturing the state of a long-running process
+ * without stopping it.
+ *
+ * @subsection debug_crash_coredumps Enabling Core Dumps
+ *
+ * By default the crash handler does not modify the core dump
+ * resource limit.  To enable core dumps, set
+ * @ref LibraryOptions::CoreDumps to @c true:
+ *
+ * @code
+ * // Programmatically
+ * LibraryOptions::instance().set(LibraryOptions::CoreDumps, true);
+ *
+ * // Or via environment
+ * // export PROMEKI_OPT_CoreDumps=true
+ * @endcode
+ *
+ * When enabled, @c install() raises @c RLIMIT_CORE to the hard limit
+ * so the kernel generates a core file on crash.  Combined with the
+ * @c -g debug symbols from @b DevRelease builds, you get a core dump
+ * that GDB/LLDB can make full use of.
+ *
+ * @subsection debug_crash_options CrashHandler Library Options
+ *
+ * All crash-related options can be set via code or environment
+ * variables:
+ *
+ * | Option | Env variable | Type | Default | Description |
+ * |--------|-------------|------|---------|-------------|
+ * | @ref LibraryOptions::CrashHandler | @c PROMEKI_OPT_CrashHandler | bool | true | Install crash signal handlers |
+ * | @ref LibraryOptions::CoreDumps | @c PROMEKI_OPT_CoreDumps | bool | false | Raise RLIMIT_CORE for core dumps |
+ * | @ref LibraryOptions::CrashLogDir | @c PROMEKI_OPT_CrashLogDir | String | (empty = temp dir) | Directory for crash/trace log files |
+ * | @ref LibraryOptions::CaptureEnvironment | @c PROMEKI_OPT_CaptureEnvironment | bool | true | Include env vars in crash reports |
+ *
+ * ---
+ *
+ * @section debug_summary Quick Reference
+ *
+ * @subsection debug_summary_env Environment Variables
+ *
+ * | Variable | Purpose | Example |
+ * |----------|---------|---------|
+ * | @c PROMEKI_DEBUG | Enable per-module debug logging | @c PROMEKI_DEBUG=ThreadPool,MediaIO |
+ * | @c PROMEKI_OPT_CrashHandler | Enable/disable crash handlers | @c PROMEKI_OPT_CrashHandler=false |
+ * | @c PROMEKI_OPT_CoreDumps | Enable core dumps | @c PROMEKI_OPT_CoreDumps=true |
+ * | @c PROMEKI_OPT_CrashLogDir | Override crash log directory | @c PROMEKI_OPT_CrashLogDir=/var/log/myapp |
+ * | @c PROMEKI_OPT_CaptureEnvironment | Include env in crash reports | @c PROMEKI_OPT_CaptureEnvironment=false |
+ *
+ * @subsection debug_summary_workflow Typical Debugging Workflow
+ *
+ * @code{.sh}
+ * # 1. Build with DevRelease (the default — just run cmake)
+ * cmake -B build
+ * cmake --build build
+ *
+ * # 2. Run with debug logging for the subsystem you're investigating
+ * PROMEKI_DEBUG=ThreadPool ./build/myapp
+ *
+ * # 3. If a crash occurs, check the crash log
+ * cat /tmp/promeki-crash-myapp-12345.log
+ *
+ * # 4. For deeper investigation, enable core dumps
+ * PROMEKI_OPT_CoreDumps=true ./build/myapp
+ * # After crash:
+ * gdb ./build/myapp core
+ * @endcode
+ */

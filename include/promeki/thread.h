@@ -79,6 +79,21 @@ class Thread : public ObjectBase {
                 static uint64_t currentNativeId();
 
                 /**
+                 * @brief Sets the OS-level name and logger name for the calling thread.
+                 *
+                 * Convenience for threads not managed by a Thread object
+                 * (e.g. ThreadPool workers).  Sets the OS-level thread
+                 * name (visible in debuggers, @c htop, @c ps&nbsp;-L) and
+                 * updates the Logger's cached thread name.
+                 *
+                 * On Linux/macOS the name is silently truncated to 15
+                 * characters by the OS.
+                 *
+                 * @param name The name to assign to the calling thread.
+                 */
+                static void setCurrentThreadName(const String &name);
+
+                /**
                  * @brief Returns the minimum priority for a scheduling policy.
                  * @param policy The scheduling policy to query.
                  * @return The minimum valid priority value.

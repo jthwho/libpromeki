@@ -765,6 +765,80 @@ All library code is built into a single `promeki` shared library with one test e
 
 ---
 
+## Logging
+
+All logging goes through the `Logger` system via the convenience macros in `logger.h`. Follow these conventions so that log output is useful for diagnosing problems without access to a debugger.
+
+### Use the Right Level
+
+| Macro | When to use |
+|---|---|
+| `promekiDebug(fmt, ...)` | Per-module diagnostic output — gated on `PROMEKI_DEBUG` and compiled out in Release builds. Use liberally inside the library. |
+| `promekiInfo(fmt, ...)` | Normal operational events (startup, shutdown, configuration applied). |
+| `promekiWarn(fmt, ...)` | Recoverable problems that are worth investigating (fallbacks, unexpected but handled conditions). |
+| `promekiErr(fmt, ...)` | Errors that affect correctness or represent failed operations. |
+
+### Register Every Source File for Debug Logging
+
+Any `.cpp` file that contains `promekiDebug()` calls must register a debug module name near the top, after the includes and inside the `promeki` namespace:
+
+```cpp
+#include <promeki/myclass.h>
+#include <promeki/logger.h>
+
+PROMEKI_NAMESPACE_BEGIN
+
+PROMEKI_DEBUG(MyClass)
+```
+
+This lets users activate debug output for individual modules at runtime via `PROMEKI_DEBUG=MyClass`.
+
+### Capture All Relevant State
+
+A log message should contain enough context to understand what happened without cross-referencing other output. Include the values of variables, arguments, and state that led to the message:
+
+```cpp
+// BAD — no context, impossible to diagnose
+promekiWarn("Open failed");
+
+// GOOD — captures the path, the error, and enough state to reproduce
+promekiWarn("Failed to open '%s': %s", path.cstr(), err.desc().cstr());
+```
+
+### Identify the Object Instance
+
+When logging from an instance method, prefix the message with the class name and `this` pointer so you can correlate log lines with a specific object, especially when multiple instances of the same class exist:
+
+```cpp
+promekiDebug("ThreadPool(%p): spawning thread %d (active %d, waiting %d, max %d)",
+             (void *)this, _threadCount, _activeCount, _waitingCount,
+             _maxThreadCount);
+
+promekiDebug("MediaIO(%p): configure() called with %d keys",
+             (void *)this, config.size());
+```
+
+The format is `ClassName(%p):` followed by the message. For classes that have a user-visible name, include that too:
+
+```cpp
+promekiDebug("Thread(%p '%s'): started, priority %d",
+             (void *)this, _name.cstr(), _priority);
+```
+
+### Instrument the Library with promekiDebug
+
+Use `promekiDebug()` generously throughout library code so the library can be debugged in-situ at runtime. Key places to add debug logging:
+
+- **Construction and destruction** — log creation/teardown of heavyweight objects with their configuration.
+- **State transitions** — log when an object changes state (started, stopped, resized, connected, disconnected).
+- **Configuration changes** — log when settings are applied, with before and after values.
+- **Error recovery** — log the fallback path taken when a recoverable error occurs.
+- **Thread lifecycle** — log thread start, naming, and exit.
+
+Because `promekiDebug()` is compiled out in Release builds and skipped at runtime unless the module is activated, there is no performance cost to having extensive instrumentation.
+
+---
+
 ## Miscellaneous
 
 - **C++ standard**: C++20.

@@ -69,6 +69,24 @@ uint64_t Thread::currentNativeId() {
 #endif
 }
 
+void Thread::setCurrentThreadName(const String &name) {
+        if(name.isEmpty()) return;
+#if defined(PROMEKI_PLATFORM_LINUX)
+        pthread_setname_np(pthread_self(), name.cstr());
+#elif defined(PROMEKI_PLATFORM_APPLE)
+        pthread_setname_np(name.cstr());
+#elif defined(PROMEKI_PLATFORM_WINDOWS)
+        int len = MultiByteToWideChar(CP_UTF8, 0, name.cstr(), -1, nullptr, 0);
+        if(len > 0) {
+                std::wstring wide(len, L'\0');
+                MultiByteToWideChar(CP_UTF8, 0, name.cstr(), -1, wide.data(), len);
+                SetThreadDescription(GetCurrentThread(), wide.c_str());
+        }
+#endif
+        Logger::setThreadName(name);
+        return;
+}
+
 int Thread::priorityMin(SchedulePolicy policy) {
 #if defined(PROMEKI_PLATFORM_LINUX) || defined(PROMEKI_PLATFORM_APPLE)
         return sched_get_priority_min(schedulePolicyToNative(policy));
@@ -276,47 +294,29 @@ void Thread::setName(const String &n) {
         if(_running.value()) {
                 applyOsName();
         }
-        if(_currentThread == this) {
-                Logger::setThreadName(n);
-        }
         return;
 }
 
 void Thread::applyOsName() {
         Mutex::Locker locker(_mutex);
         if(_name.isEmpty()) return;
-        // When applyOsName() is called from the thread being named
-        // itself — which is always the case during threadEntry()'s
-        // startup sequence — prefer pthread_self() over nativeHandle().
-        //
-        // Rationale: threadEntry() starts running on the child thread
-        // as soon as pthread_create() / std::thread{} dispatches it,
-        // which may be *before* the parent has finished assigning
-        // _thread / _pthreadHandle / _usesPthread.  If the child wins
-        // that race, nativeHandle() falls through to a default-
-        // constructed std::thread::native_handle() == 0, and
-        // pthread_setname_np(0, ...) crashes inside libc.
-        //
-        // _currentThread is set by threadEntry() before applyOsName()
-        // runs, so testing "_currentThread == this" reliably detects
-        // the "called from self" case and lets us sidestep the race
-        // entirely with pthread_self(), which is always valid in the
-        // running thread.
+        // When called from the thread itself (always the case during
+        // threadEntry() startup), delegate to setCurrentThreadName()
+        // which uses pthread_self() — safe even before the parent has
+        // finished storing _thread / _pthreadHandle.
         const bool fromSelf = (_currentThread == this);
+        if(fromSelf) {
+                setCurrentThreadName(_name);
+                return;
+        }
+        // Cross-thread naming — use the stored native handle.
 #if defined(PROMEKI_PLATFORM_LINUX)
-        pthread_t target = fromSelf ? pthread_self() : nativeHandle();
-        pthread_setname_np(target, _name.cstr());
+        pthread_setname_np(nativeHandle(), _name.cstr());
 #elif defined(PROMEKI_PLATFORM_APPLE)
         // macOS only allows setting the name of the current thread.
-        if(fromSelf) {
-                pthread_setname_np(_name.cstr());
-        }
+        // Cross-thread naming is not supported.
 #elif defined(PROMEKI_PLATFORM_WINDOWS)
-        // Convert to wide string for SetThreadDescription.  Same race
-        // as above: when called from threadEntry() before the parent
-        // has stored _thread, nativeHandle() returns an invalid HANDLE.
-        // Use GetCurrentThread() when naming ourselves.
-        HANDLE target = fromSelf ? GetCurrentThread() : nativeHandle();
+        HANDLE target = nativeHandle();
         int len = MultiByteToWideChar(CP_UTF8, 0, _name.cstr(), -1, nullptr, 0);
         if(len > 0) {
                 std::wstring wide(len, L'\0');

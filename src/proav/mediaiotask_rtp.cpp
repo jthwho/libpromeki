@@ -32,6 +32,8 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
+PROMEKI_DEBUG(MediaIOTask_Rtp)
+
 // ----------------------------------------------------------------------------
 // SendThread — per-stream TX worker.
 //

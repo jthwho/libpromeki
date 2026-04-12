@@ -21,5 +21,9 @@ int main(int argc, char *argv[]) {
         std::printf("  Build Type: %s\n", info->type);
         std::printf("  Build Host: %s\n", info->hostname);
         std::printf("  Repo Ident: %s\n", info->repoident);
+        std::printf("  %s\n", buildPlatformString().cstr());
+        std::printf("  %s\n", buildFeatureString().cstr());
+        std::printf("  %s\n", runtimeInfoString().cstr());
+        std::printf("  %s\n", debugStatusString().cstr());
         return 0;
 }

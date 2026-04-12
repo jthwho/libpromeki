@@ -11,7 +11,30 @@ set(APP_VERSION_RC 0) # If this is a release candidate, set this value to the re
 set(APP_VERSION_BETA 0) # If this is a beta, set this value to the beta version (non-zero)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# DevRelease build type --------------------------------------------------------
+# Release-level optimisations with developer features: debug symbols for
+# useful crash logs / core dumps, and promekiDebug() logging compiled in.
+# Must be set before project() so CMake picks up the _INIT flags.
+set(CMAKE_C_FLAGS_DEVRELEASE_INIT            "-O3 -g -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEVRELEASE_INIT          "-O3 -g -DNDEBUG")
+set(CMAKE_EXE_LINKER_FLAGS_DEVRELEASE_INIT   "")
+set(CMAKE_SHARED_LINKER_FLAGS_DEVRELEASE_INIT "")
+
+# Default to DevRelease when no build type is specified (single-config generators only).
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+        set(CMAKE_BUILD_TYPE DevRelease CACHE STRING "Build type (Debug, Release, DevRelease, ...)" FORCE)
+        message(STATUS "No CMAKE_BUILD_TYPE specified — defaulting to DevRelease")
+endif()
+
 project(${APP_NAME} VERSION ${APP_VERSION} LANGUAGES C CXX)
+
+mark_as_advanced(
+    CMAKE_C_FLAGS_DEVRELEASE
+    CMAKE_CXX_FLAGS_DEVRELEASE
+    CMAKE_EXE_LINKER_FLAGS_DEVRELEASE
+    CMAKE_SHARED_LINKER_FLAGS_DEVRELEASE
+)
+
 include(CTest)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -20,7 +43,9 @@ include(ExternalProject)
 # Build options ################################################################
 
 option(PROMEKI_BUILD_TUI        "Build the promeki-tui library"    ON)
-option(PROMEKI_BUILD_SDL        "Build the promeki-sdl library"    OFF)
+# Default ON when SDL3 is available, OFF otherwise.
+find_package(SDL3 QUIET)
+option(PROMEKI_BUILD_SDL        "Build the promeki-sdl library"    ${SDL3_FOUND})
 option(PROMEKI_BUILD_UTILS      "Build utility applications"       ON)
 option(PROMEKI_BUILD_DEMOS      "Build demonstration applications" ON)
 option(PROMEKI_BUILD_TESTS      "Build unit tests"                 ON)
@@ -28,6 +53,9 @@ option(PROMEKI_BUILD_DOCS       "Build documentation"              OFF)
 option(PROMEKI_BUILD_BENCHMARKS "Build the promeki-bench utility"  ON)
 
 # Feature flags for the main promeki library
+# NOTE: When adding a new PROMEKI_ENABLE_* flag, also update
+# src/core/buildinfo.cpp.in (buildFeatureString) and
+# include/promeki/config.h.in so the flag appears in build-info output.
 option(PROMEKI_ENABLE_NETWORK  "Include networking support"             ON)
 option(PROMEKI_ENABLE_PROAV    "Include pro A/V support"                ON)
 option(PROMEKI_ENABLE_MUSIC    "Include music support"                  ON)
@@ -123,6 +151,11 @@ set(BUILD_INFO_TYPE "${CMAKE_BUILD_TYPE}")
 cmake_host_system_information(RESULT BUILD_INFO_HOSTNAME QUERY HOSTNAME)
 configure_file(src/core/buildinfo.cpp.in buildinfo.cpp)
 
+# Touch the .in file every build so configure_file re-generates buildinfo.cpp
+# with a fresh timestamp and git hash.  The generated file also #includes
+# config.h and platform.h for buildPlatformString(), buildFeatureString(),
+# etc. — if you add a new PROMEKI_ENABLE_* flag or platform macro that
+# should appear in build-info output, update buildinfo.cpp.in as well.
 add_custom_target(
     libpromeki_invalidate_build_info
     ALL
@@ -955,7 +988,7 @@ endif()
 
 target_link_libraries(promeki PUBLIC stdc++fs)
 target_link_libraries(promeki PRIVATE m)
-target_compile_definitions(promeki PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+target_compile_definitions(promeki PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
 
 # Vendored thirdparty include paths and link dependencies
 if(PROMEKI_ENABLE_PROAV)
@@ -1081,7 +1114,7 @@ if(PROMEKI_BUILD_TUI)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(promeki-tui PUBLIC promeki)
-    target_compile_definitions(promeki-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+    target_compile_definitions(promeki-tui PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
 # SDL Library ##################################################################
@@ -1120,7 +1153,7 @@ if(PROMEKI_BUILD_SDL)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
     target_link_libraries(promeki-sdl PUBLIC promeki SDL3::SDL3)
-    target_compile_definitions(promeki-sdl PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+    target_compile_definitions(promeki-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
 endif()
 
 # Utility Applications #########################################################
@@ -1470,7 +1503,7 @@ if(PROMEKI_BUILD_TESTS)
 
     add_executable(unittest-promeki ${UNITTEST_SOURCES})
     target_compile_definitions(unittest-promeki PRIVATE
-        $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>
         PROMEKI_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
     )
     target_include_directories(unittest-promeki PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
@@ -1502,7 +1535,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/tui/widget.cpp
         )
         add_executable(unittest-tui ${UNITTEST_TUI_SOURCES})
-        target_compile_definitions(unittest-tui PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_compile_definitions(unittest-tui PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
         target_include_directories(unittest-tui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-tui PRIVATE promeki-tui)
         add_test(NAME unittest-tui COMMAND unittest-tui)
@@ -1515,7 +1548,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/sdl/sdlrenderer.cpp
         )
         add_executable(unittest-sdl ${UNITTEST_SDL_SOURCES})
-        target_compile_definitions(unittest-sdl PRIVATE $<$<CONFIG:Debug>:PROMEKI_DEBUG_ENABLE>)
+        target_compile_definitions(unittest-sdl PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:DevRelease>>:PROMEKI_DEBUG_ENABLE>)
         target_include_directories(unittest-sdl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
         target_link_libraries(unittest-sdl PRIVATE promeki-sdl)
         add_test(NAME unittest-sdl COMMAND unittest-sdl)

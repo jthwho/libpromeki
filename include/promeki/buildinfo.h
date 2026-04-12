@@ -8,6 +8,8 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/string.h>
+#include <promeki/stringlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -32,6 +34,49 @@ const BuildInfo * getBuildInfo();
 
 /** @brief Writes all build information fields to the log output. */
 void logBuildInfo();
+
+/**
+ * @brief Returns the build identity as a human-readable string.
+ *
+ * Includes the project name, version, repo ident, build type,
+ * build date/time, and build hostname.
+ */
+String buildInfoString();
+
+/**
+ * @brief Returns the platform and compiler as a human-readable string.
+ *
+ * Example: @c "Platform: Linux | Compiler: GCC 13.2.0 | C++: 202002"
+ */
+String buildPlatformString();
+
+/**
+ * @brief Returns enabled library features as a space-separated string.
+ *
+ * Example: @c "Features: NETWORK PROAV MUSIC PNG JPEG AUDIO CSC"
+ */
+String buildFeatureString();
+
+/**
+ * @brief Returns hardware and runtime info for the current process.
+ *
+ * Includes the CPU count and process ID.
+ */
+String runtimeInfoString();
+
+/**
+ * @brief Returns whether promekiDebug() logging is compiled in.
+ */
+String debugStatusString();
+
+/**
+ * @brief Returns all build, platform, feature, runtime, and debug
+ *        status strings as a list of lines.
+ *
+ * Convenience for logging or display — each entry is one logical
+ * line suitable for printing or enqueuing to the Logger.
+ */
+StringList buildInfoStrings();
 
 PROMEKI_NAMESPACE_END
 
