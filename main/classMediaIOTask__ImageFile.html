@@ -247,9 +247,17 @@ Additional Inherited Members</h2></td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a013218f7dd22f641c5471b3a670482e2">MediaConfig::SequenceHead</a>   </td><td class="markdownTableBodyNone">int   </td><td class="markdownTableBodyNone">1   </td><td class="markdownTableBodyNone">First frame number for a sequence writer.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a0ac37a2d239fdb5e8acf7ca9b9a43597">MediaConfig::SaveImgSeqPath</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">Path for <code></code>.imgseq sidecar written on close (writer only).    </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a1795704807fab9909e78dc660973f392">MediaConfig::SaveImgSeqEnabled</a>   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">true   </td><td class="markdownTableBodyNone">Enable automatic <code></code>.imgseq sidecar (read + write).    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a703db9362562ff545cc174d55df0c713">MediaConfig::SaveImgSeqPathMode</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classImgSeqPathMode.html">ImgSeqPathMode</a>   </td><td class="markdownTableBodyNone">Relative   </td><td class="markdownTableBodyNone">Whether sidecar dir reference is relative or absolute.   </td></tr>
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a0ac37a2d239fdb5e8acf7ca9b9a43597">MediaConfig::SaveImgSeqPath</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">Override path for <code></code>.imgseq sidecar (empty = auto-derive from pattern).    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a703db9362562ff545cc174d55df0c713">MediaConfig::SaveImgSeqPathMode</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classImgSeqPathMode.html">ImgSeqPathMode</a>   </td><td class="markdownTableBodyNone">Relative   </td><td class="markdownTableBodyNone">Whether sidecar dir reference is relative or absolute.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a270f3321b9d6980a957de036cfeac78c">MediaConfig::SidecarAudioEnabled</a>   </td><td class="markdownTableBodyNone">bool   </td><td class="markdownTableBodyNone">true   </td><td class="markdownTableBodyNone">Enable automatic sidecar Broadcast WAV (read + write).    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a98a1e470adbf4e46c7b58424dffecb61">MediaConfig::SidecarAudioPath</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a>   </td><td class="markdownTableBodyNone">—   </td><td class="markdownTableBodyNone">Override path for the sidecar audio file (empty = auto-derive from pattern).    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a class="el" href="classMediaConfig.html#a452289fb8654100ab968f0414a1339c8">MediaConfig::AudioSource</a>   </td><td class="markdownTableBodyNone"><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> <a class="el" href="classAudioSourceHint.html">AudioSourceHint</a>   </td><td class="markdownTableBodyNone">Sidecar   </td><td class="markdownTableBodyNone">Preferred audio source when reading (sidecar vs. embedded).   </td></tr>
 </table>
 </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
@@ -291,7 +299,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOTask__ImageFile.html">MediaIOTask_ImageFile</a></li>
-    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
   </ul>
 </div>
 </body>

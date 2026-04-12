@@ -531,9 +531,30 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classMediaIODirection.html">MediaIODirection</a> MediaIODirection::Input          { 1 };</div>
 <div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classMediaIODirection.html">MediaIODirection</a> MediaIODirection::InputAndOutput { 2 };</div>
 <div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span> </div>
-<div class="line"><a id="l00735" name="l00735"></a><span class="lineno">  735</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="foldopen" id="foldopen00751" data-start="{" data-end="};">
+<div class="line"><a id="l00751" name="l00751"></a><span class="lineno"><a class="line" href="classAudioSourceHint.html">  751</a></span><span class="keyword">class </span><a class="code hl_class" href="classAudioSourceHint.html">AudioSourceHint</a> : <span class="keyword">public</span> <a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;AudioSourceHint&gt; {</div>
+<div class="line"><a id="l00752" name="l00752"></a><span class="lineno">  752</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00753" name="l00753"></a><span class="lineno">  753</span>                <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classEnum_1_1Type.html">Enum::Type</a> <a class="code hl_class" href="classEnum_1_1Type.html">Type</a> = <a class="code hl_function" href="classEnum.html#aee589f1f0e9bceb1bd1ca13ac005dd74">Enum::registerType</a>(<span class="stringliteral">&quot;AudioSourceHint&quot;</span>,</div>
+<div class="line"><a id="l00754" name="l00754"></a><span class="lineno">  754</span>                        {</div>
+<div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span>                                { <span class="stringliteral">&quot;Sidecar&quot;</span>,  0 },</div>
+<div class="line"><a id="l00756" name="l00756"></a><span class="lineno">  756</span>                                { <span class="stringliteral">&quot;Embedded&quot;</span>, 1 }</div>
+<div class="line"><a id="l00757" name="l00757"></a><span class="lineno">  757</span>                        },</div>
+<div class="line"><a id="l00758" name="l00758"></a><span class="lineno">  758</span>                        0);  <span class="comment">// default: Sidecar</span></div>
+<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span> </div>
+<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>                <span class="keyword">using </span><a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;<a class="code hl_class" href="classAudioSourceHint.html">AudioSourceHint</a>&gt;<a class="code hl_function" href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">::TypedEnum</a>;</div>
+<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span> </div>
+<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classAudioSourceHint.html">AudioSourceHint</a> Sidecar;</div>
+<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classAudioSourceHint.html">AudioSourceHint</a> Embedded;</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>};</div>
+</div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span> </div>
+<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classAudioSourceHint.html">AudioSourceHint</a> AudioSourceHint::Sidecar  { 0 };</div>
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classAudioSourceHint.html">AudioSourceHint</a> AudioSourceHint::Embedded { 1 };</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span> </div>
+<div class="line"><a id="l00771" name="l00771"></a><span class="lineno">  771</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aclassAudioDataType_html"><div class="ttname"><a href="classAudioDataType.html">AudioDataType</a></div><div class="ttdoc">Well-known Enum type for audio sample formats.</div><div class="ttdef"><b>Definition</b> enums.h:295</div></div>
 <div class="ttc" id="aclassAudioPattern_html"><div class="ttname"><a href="classAudioPattern.html">AudioPattern</a></div><div class="ttdoc">Well-known Enum type for audio test pattern generator modes.</div><div class="ttdef"><b>Definition</b> enums.h:208</div></div>
+<div class="ttc" id="aclassAudioSourceHint_html"><div class="ttname"><a href="classAudioSourceHint.html">AudioSourceHint</a></div><div class="ttdoc">Preferred audio source for image-sequence readers.</div><div class="ttdef"><b>Definition</b> enums.h:751</div></div>
 <div class="ttc" id="aclassBurnPosition_html"><div class="ttname"><a href="classBurnPosition.html">BurnPosition</a></div><div class="ttdoc">Well-known Enum type for on-screen burn-in position presets.</div><div class="ttdef"><b>Definition</b> enums.h:120</div></div>
 <div class="ttc" id="aclassByteCountStyle_html"><div class="ttname"><a href="classByteCountStyle.html">ByteCountStyle</a></div><div class="ttdoc">Well-known Enum type for human-readable byte-count formatting.</div><div class="ttdef"><b>Definition</b> enums.h:535</div></div>
 <div class="ttc" id="aclassChromaSubsampling_html"><div class="ttname"><a href="classChromaSubsampling.html">ChromaSubsampling</a></div><div class="ttdoc">Well-known Enum type for chroma subsampling modes.</div><div class="ttdef"><b>Definition</b> enums.h:260</div></div>
@@ -563,7 +584,7 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="enums_8h.html">enums.h</a></li>
-    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -32,6 +32,7 @@ var annotated_dup =
     [ "AudioGen", "classAudioGen.html", "classAudioGen" ],
     [ "AudioLevel", "classAudioLevel.html", "classAudioLevel" ],
     [ "AudioPattern", "classAudioPattern.html", null ],
+    [ "AudioSourceHint", "classAudioSourceHint.html", null ],
     [ "AudioTestPattern", "classAudioTestPattern.html", "classAudioTestPattern" ],
     [ "BasicFont", "classBasicFont.html", "classBasicFont" ],
     [ "Benchmark", "classBenchmark.html", "classBenchmark" ],

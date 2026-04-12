@@ -190,6 +190,13 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setPixelDesc</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classPixelDesc.html">PixelDesc</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
 <tr class="memdesc:a5b3d023855fb3d95cac7af93dc57f23e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the optional pixel descriptor. <br /></td></tr>
 <tr class="separator:a5b3d023855fb3d95cac7af93dc57f23e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac2eb5a1791195aa8dbade250517163d" id="r_aac2eb5a1791195aa8dbade250517163d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classImgSeq.html#aac2eb5a1791195aa8dbade250517163d">audioFile</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:aac2eb5a1791195aa8dbade250517163d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the sidecar audio file path.  <br /></td></tr>
+<tr class="separator:aac2eb5a1791195aa8dbade250517163d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab86c951f9eaeef1d67ea174bc1ccd4ca" id="r_ab86c951f9eaeef1d67ea174bc1ccd4ca"><td class="memItemLeft" align="right" valign="top"><a id="ab86c951f9eaeef1d67ea174bc1ccd4ca" name="ab86c951f9eaeef1d67ea174bc1ccd4ca"></a>
+<a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>setAudioFile</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;<a class="el" href="classList.html">val</a>)</td></tr>
+<tr class="memdesc:ab86c951f9eaeef1d67ea174bc1ccd4ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the sidecar audio file path. <br /></td></tr>
+<tr class="separator:ab86c951f9eaeef1d67ea174bc1ccd4ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ae8c3b6808c505caa738a8a592699c5" id="r_a3ae8c3b6808c505caa738a8a592699c5"><td class="memItemLeft" align="right" valign="top"><a id="a3ae8c3b6808c505caa738a8a592699c5" name="a3ae8c3b6808c505caa738a8a592699c5"></a>
 <a class="el" href="classList.html">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metadata</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a3ae8c3b6808c505caa738a8a592699c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the sequence-level metadata. <br /></td></tr>
@@ -257,6 +264,34 @@ Static Public Attributes</h2></td></tr>
 <dl class="section user"><dt>Separation from MediaIOTask_ImageFile</dt><dd></dd></dl>
 <p><code><a class="el" href="classImgSeq.html" title="Describes a numbered image sequence on disk.">ImgSeq</a></code> is a standalone data class with no dependency on the <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> framework. Code that wants to describe or persist a sequence can use it directly; the image-file <a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> task uses it as a convenient container when reading <code></code>.imgseq files and when a user chooses to write one out after producing a sequence. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="aac2eb5a1791195aa8dbade250517163d" name="aac2eb5a1791195aa8dbade250517163d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac2eb5a1791195aa8dbade250517163d">&#9670;&#160;</a></span>audioFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp; ImgSeq::audioFile </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the sidecar audio file path. </p>
+<p>When loaded from an <code></code>.imgseq sidecar, this is the value of the <code>"audioFile"</code> JSON field. Relative paths are resolved against the sidecar's (or sequence's) directory; absolute paths are used as-is. Empty means no sidecar audio was specified in the sidecar file. </p>
+
+</div>
+</div>
 <a id="a68ad991c3693719dde9bfae3988c285e" name="a68ad991c3693719dde9bfae3988c285e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a68ad991c3693719dde9bfae3988c285e">&#9670;&#160;</a></span>detectRange()</h2>
 
@@ -620,7 +655,7 @@ Static Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classImgSeq.html">ImgSeq</a></li>
-    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
   </ul>
 </div>
 </body>

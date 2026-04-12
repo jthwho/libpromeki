@@ -87,6 +87,9 @@ var hierarchy =
       [ "TypedEnum< AudioPattern >", "classTypedEnum.html", [
         [ "AudioPattern", "classAudioPattern.html", null ]
       ] ],
+      [ "TypedEnum< AudioSourceHint >", "classTypedEnum.html", [
+        [ "AudioSourceHint", "classAudioSourceHint.html", null ]
+      ] ],
       [ "TypedEnum< BurnPosition >", "classTypedEnum.html", [
         [ "BurnPosition", "classBurnPosition.html", null ]
       ] ],

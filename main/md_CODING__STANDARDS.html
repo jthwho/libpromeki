@@ -495,7 +495,7 @@ Return Patterns</h2>
 <ol type="1">
 <li>**<code>Result&lt;T&gt;</code>** — Best for factory/parse methods where both a value and error status are needed. <code>Result&lt;T&gt;</code> is defined in <code><a class="el" href="result_8h.html">result.h</a></code> as <code><a class="el" href="classPair.html" title="Typed pair container wrapping std::pair.">Pair</a>&lt;T, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>&gt;</code> and supports structured bindings: <div class="fragment"><div class="line"><span class="keyword">static</span> <a class="code hl_class" href="classList.html">Result&lt;Timecode&gt;</a> fromString(<span class="keyword">const</span> <a class="code hl_class" href="classString.html">String</a> &amp;str);</div>
 <div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">tc</a>, <a class="code hl_class" href="classList.html">err</a>] = <a class="code hl_function" href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">Timecode::fromString</a>(str);</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
 <div class="ttc" id="aclassTimecode_html_abdfde6ef249fe224b4986ee482ee6bf0"><div class="ttname"><a href="classTimecode.html#abdfde6ef249fe224b4986ee482ee6bf0">Timecode::fromString</a></div><div class="ttdeci">static Result&lt; Timecode &gt; fromString(const String &amp;str)</div><div class="ttdoc">Parses a Timecode from its string representation.</div></div>
 </div><!-- fragment --> Use <code>Result&lt;T&gt;</code> (not <code>std::pair&lt;T, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>&gt;</code>) in all public APIs. The helper functions <code>makeResult(value)</code> and <code>makeError&lt;T&gt;(err)</code> simplify construction.</li>
 <li><b>Direct <code><a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a></code> return</b> — For operations that don't produce a value: <div class="fragment"><div class="line"><a class="code hl_class" href="classError.html">Error</a> open(<span class="keyword">const</span> <a class="code hl_class" href="classString.html">String</a> &amp;path);</div>
@@ -798,7 +798,7 @@ Miscellaneous</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
   </ul>
 </div>
 </body>

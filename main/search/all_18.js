@@ -64,7 +64,7 @@ var searchData=
   ['videortppayloadtype_61',['VideoRtpPayloadType',['../classMediaConfig.html#abd26b0481b8bdb31b4335d8b4755b4e7',1,'MediaConfig']]],
   ['videortpssrc_62',['VideoRtpSsrc',['../classMediaConfig.html#a60ebba38dcc0bb23567d1f3a803c0824',1,'MediaConfig']]],
   ['videortptargetbitrate_63',['VideoRtpTargetBitrate',['../classMediaConfig.html#a2ca22a52fb32942468cf7adbb411329e',1,'MediaConfig']]],
-  ['videosize_64',['videosize',['../classMediaConfig.html#a7d80868703d9c175b31ae92af1e7a60d',1,'MediaConfig::VideoSize'],['../classImgSeq.html#a3b5155fba1472f84c86f3370a376e4fc',1,'ImgSeq::videoSize()']]],
+  ['videosize_64',['videosize',['../classImgSeq.html#a3b5155fba1472f84c86f3370a376e4fc',1,'ImgSeq::videoSize()'],['../classMediaConfig.html#a7d80868703d9c175b31ae92af1e7a60d',1,'MediaConfig::VideoSize']]],
   ['videosolidcolor_65',['VideoSolidColor',['../classMediaConfig.html#a96d5b6840dc0a062787766ec01899494',1,'MediaConfig']]],
   ['videotestpattern_66',['videotestpattern',['../classVideoTestPattern.html#afe3332167e195dd2f5ba008b7542404c',1,'VideoTestPattern::VideoTestPattern()'],['../classVideoTestPattern.html',1,'VideoTestPattern']]],
   ['videotestpattern_2eh_67',['videotestpattern.h',['../videotestpattern_8h.html',1,'']]],

@@ -36,7 +36,7 @@ var searchData=
   ['devicebytesavailable_33',['devicebytesavailable',['../classBufferedIODevice.html#a530584a50ef7cbc296c15efefce6eac5',1,'BufferedIODevice::deviceBytesAvailable()'],['../classFile.html#afd2dea3c7b7078b7af7538fff97ba2d6',1,'File::deviceBytesAvailable()']]],
   ['diagonal_34',['diagonal',['../classMatrix.html#a58820ac6d5669a86755b90b78b87f784',1,'Matrix']]],
   ['digits_35',['digits',['../classNumName.html#af21cf7d53c4fdbea249bb929cdd6238f',1,'NumName']]],
-  ['dir_36',['dir',['../classDir.html#a980b2eede48ad286e81ac910871985ad',1,'Dir::Dir()=default'],['../classDir.html#ad3c44b29f945bf9780b89d375e1c9ae4',1,'Dir::Dir(const FilePath &amp;path)'],['../classDir.html#a5c98012c55d4fce20697e406a0451f58',1,'Dir::Dir(const String &amp;path)'],['../classDir.html#acb2953d5a2838dcaa33c90fc08612bc6',1,'Dir::Dir(const char *path)'],['../classImgSeq.html#acd266e19a9d806a3298a5923c962568b',1,'ImgSeq::dir()']]],
+  ['dir_36',['dir',['../classImgSeq.html#acd266e19a9d806a3298a5923c962568b',1,'ImgSeq::dir()'],['../classDir.html#a980b2eede48ad286e81ac910871985ad',1,'Dir::Dir()=default'],['../classDir.html#ad3c44b29f945bf9780b89d375e1c9ae4',1,'Dir::Dir(const FilePath &amp;path)'],['../classDir.html#a5c98012c55d4fce20697e406a0451f58',1,'Dir::Dir(const String &amp;path)'],['../classDir.html#acb2953d5a2838dcaa33c90fc08612bc6',1,'Dir::Dir(const char *path)']]],
   ['directioalignment_37',['directIOAlignment',['../classFile.html#ab5c88c11d95cc841bc9db6193d75c78d',1,'File']]],
   ['direction_38',['direction',['../classBoxLayout.html#a393035c69c3fac93a20ac602c30a8d13',1,'BoxLayout']]],
   ['disablealternatescreen_39',['disableAlternateScreen',['../classTerminal.html#a7da1f4a539b363bfcb61a10d71689cf4',1,'Terminal']]],
@@ -66,5 +66,5 @@ var searchData=
   ['dualtoneratio_63',['dualToneRatio',['../classAudioTestPattern.html#a65790ff6c494bb8906ea7adb5ba7b171',1,'AudioTestPattern']]],
   ['dump_64',['dump',['../classMemPool.html#a32cf00546985155cae9ad8cbed98d9f6',1,'MemPool::dump()'],['../classMetadata.html#a0439b960456c3aeb5e295e0be54eebc9',1,'Metadata::dump()']]],
   ['dumptolog_65',['dumpToLog',['../classObjectBase_1_1MetaInfo.html#a2ef6f61cdad6e653758bfa13dfd874b5',1,'ObjectBase::MetaInfo']]],
-  ['duration_66',['duration',['../classBenchmark.html#ae51f175af480c5d10b6a4b05f9f4bf20',1,'Benchmark::duration()'],['../classMusicalNote.html#a86ccc39ef69c46733098738de48a1413',1,'MusicalNote::duration()'],['../classQuickTime_1_1Track.html#a5cb85e6a2a1694375577cda422d0e5fd',1,'QuickTime::Track::duration()'],['../classDuration.html#a688948a87d69e8982cf7e292c7fe4b0a',1,'Duration::Duration()']]]
+  ['duration_66',['duration',['../classDuration.html#a688948a87d69e8982cf7e292c7fe4b0a',1,'Duration::Duration()'],['../classBenchmark.html#ae51f175af480c5d10b6a4b05f9f4bf20',1,'Benchmark::duration()'],['../classMusicalNote.html#a86ccc39ef69c46733098738de48a1413',1,'MusicalNote::duration()'],['../classQuickTime_1_1Track.html#a5cb85e6a2a1694375577cda422d0e5fd',1,'QuickTime::Track::duration()']]]
 ];

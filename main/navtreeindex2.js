@@ -180,6 +180,7 @@ var NAVTREEINDEX2 =
 "classAudioLevel.html#ab7923d8420aa262dfbf51a97fc399ba8":[15,6,0,8],
 "classAudioLevel.html#afb9b9ca8d2ac4306ff432b48b335b065":[15,6,0,1],
 "classAudioPattern.html":[15,10,0,2],
+"classAudioSourceHint.html":[15,10,0,14],
 "classAudioTestPattern.html":[15,13,6],
 "classAudioTestPattern.html#a043e89571242d90dde2aee442c2efc95":[15,13,6,18],
 "classAudioTestPattern.html#a0f55dd55cbf06cae7a86eb6817b302eb":[15,13,6,7],
@@ -248,6 +249,5 @@ var NAVTREEINDEX2 =
 "classBenchmarkCase.html#aaca3be94a876171356291891710aa76b":[15,10,7,6],
 "classBenchmarkCase.html#ae5b5c851aab5bc8b77bdea65169b12a0":[15,10,7,4],
 "classBenchmarkCase.html#afe083a64bea8f13693249988f13ca4c8":[15,10,7,2],
-"classBenchmarkReporter.html":[15,15,0],
-"classBenchmarkReporter.html#a1c9f20a8d4920f6c984abde8d8bf32dd":[15,15,0,7]
+"classBenchmarkReporter.html":[15,15,0]
 };

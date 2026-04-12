@@ -278,6 +278,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>referenceCount</b> () 
 <tr class="memitem:a1af289a24738c695ab296a7a9c258a9e" id="r_a1af289a24738c695ab296a7a9c258a9e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classString.html#a1af289a24738c695ab296a7a9c258a9e">right</a> (std::size_t <a class="el" href="classString.html#a236448b02a1ea6f7a1e61a5fbe702797">count</a>) <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a></td></tr>
 <tr class="memdesc:a1af289a24738c695ab296a7a9c258a9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the last <code>count</code> characters.  <br /></td></tr>
 <tr class="separator:a1af289a24738c695ab296a7a9c258a9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a113954a7efb9643cf146dd49b10c61aa" id="r_a113954a7efb9643cf146dd49b10c61aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classString.html">String</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classString.html#a113954a7efb9643cf146dd49b10c61aa">truncated</a> (<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">size_t</a> <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">maxChars</a>) <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">const</a></td></tr>
+<tr class="memdesc:a113954a7efb9643cf146dd49b10c61aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a copy truncated to at most <code>maxChars</code> characters.  <br /></td></tr>
+<tr class="separator:a113954a7efb9643cf146dd49b10c61aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5b0c43ae84247df8e5f9488a911587c" id="r_ab5b0c43ae84247df8e5f9488a911587c"><td class="memItemLeft" align="right" valign="top"><a id="ab5b0c43ae84247df8e5f9488a911587c" name="ab5b0c43ae84247df8e5f9488a911587c"></a>
 <a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">void</a>&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
 <tr class="memdesc:ab5b0c43ae84247df8e5f9488a911587c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all characters from the string. <br /></td></tr>
@@ -555,9 +558,9 @@ Friends</h2></td></tr>
 <dl class="section user"><dt>Formatting</dt><dd>New code should prefer <a class="el" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a> (a thin wrapper over C++20 <code>std::format</code>) over the older <a class="el" href="classString.html#a5deff0f28cdedb981f63457592900d86">String::sprintf</a> and <a class="el" href="classString.html#ad777a870c1cfb54ac3612dcb732f5d02">String::arg</a> helpers. <code>format</code> gives compile-time format string checking, type-safe argument handling, and an extensible mechanism for adding format support to user-defined types via the standard <code>std::formatter</code> customization point. <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> and <a class="el" href="classChar.html" title="Unicode-aware character class wrapping a single codepoint.">Char</a> already have formatter specializations, so they compose with <code>std::format</code> directly: <div class="fragment"><div class="line"><a class="code hl_class" href="classString.html">String</a> name = <span class="stringliteral">&quot;Alice&quot;</span>;</div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;hello, {}!&quot;</span>, name);</div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> <a class="code hl_typedef" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">s2</a> = <a class="code hl_function" href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a>(<span class="stringliteral">&quot;{:&gt;8}&quot;</span>, 42);</div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
-<div class="ttc" id="aclassString_html_a6dd70844f5f292c4b3325e6e761a5c33"><div class="ttname"><a href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a></div><div class="ttdeci">static String format(std::format_string&lt; Args... &gt; fmt, Args &amp;&amp;... args)</div><div class="ttdoc">Creates a formatted string using C++20 std::format syntax.</div><div class="ttdef"><b>Definition</b> string.h:266</div></div>
-<div class="ttc" id="aclassString_html_aa47fc64069a6cad0f6123caf035841b7"><div class="ttname"><a href="classString.html#aa47fc64069a6cad0f6123caf035841b7">String::List</a></div><div class="ttdeci">promeki::List&lt; String &gt; List</div><div class="ttdoc">List of Strings.</div><div class="ttdef"><b>Definition</b> string.h:59</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
+<div class="ttc" id="aclassString_html_a6dd70844f5f292c4b3325e6e761a5c33"><div class="ttname"><a href="classString.html#a6dd70844f5f292c4b3325e6e761a5c33">String::format</a></div><div class="ttdeci">static String format(std::format_string&lt; Args... &gt; fmt, Args &amp;&amp;... args)</div><div class="ttdoc">Creates a formatted string using C++20 std::format syntax.</div><div class="ttdef"><b>Definition</b> string.h:267</div></div>
+<div class="ttc" id="aclassString_html_aa47fc64069a6cad0f6123caf035841b7"><div class="ttname"><a href="classString.html#aa47fc64069a6cad0f6123caf035841b7">String::List</a></div><div class="ttdeci">promeki::List&lt; String &gt; List</div><div class="ttdoc">List of Strings.</div><div class="ttdef"><b>Definition</b> string.h:60</div></div>
 </div><!-- fragment --> <code>sprintf</code> and <code>arg</code> are not deprecated yet, but expect them to be phased out as call sites are migrated. </dd></dl>
 </div><h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a9c3c4c0e2ff486a3f2c6c7f92540d310" name="a9c3c4c0e2ff486a3f2c6c7f92540d310"></a>
@@ -3839,6 +3842,48 @@ template&lt;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841
 
 </div>
 </div>
+<a id="a113954a7efb9643cf146dd49b10c61aa" name="a113954a7efb9643cf146dd49b10c61aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a113954a7efb9643cf146dd49b10c61aa">&#9670;&#160;</a></span>truncated()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classString.html">String</a> String::truncated </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">size_t</a>&#160;</td>
+          <td class="paramname"><em>maxChars</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a copy truncated to at most <code>maxChars</code> characters. </p>
+<p>If the string already fits within <code>maxChars</code> it is returned unchanged. Otherwise the result is shortened and an ellipsis ("...") is inserted to indicate the truncation. The returned string (including the ellipsis) is guaranteed to be no longer than <code>maxChars</code>.</p>
+<p>When <code>maxChars</code> is less than 3 there is not enough room for the ellipsis, so the string is hard-truncated instead.</p>
+<dl class="section user"><dt>Examples</dt><dd><div class="fragment"><div class="line"><a class="code hl_function" href="classString.html#a8a7ef356e05eb9b1ea1ab518baee3095">String</a>(<span class="stringliteral">&quot;Hello World&quot;</span>).truncated(8);  <span class="comment">// &quot;Hello...&quot;</span></div>
+<div class="line"><a class="code hl_function" href="classString.html#a8a7ef356e05eb9b1ea1ab518baee3095">String</a>(<span class="stringliteral">&quot;Hello World&quot;</span>).truncated(11); <span class="comment">// &quot;Hello World&quot;</span></div>
+<div class="line"><a class="code hl_function" href="classString.html#a8a7ef356e05eb9b1ea1ab518baee3095">String</a>(<span class="stringliteral">&quot;Hello World&quot;</span>).truncated(2);  <span class="comment">// &quot;He&quot;</span></div>
+<div class="ttc" id="aclassString_html_a8a7ef356e05eb9b1ea1ab518baee3095"><div class="ttname"><a href="classString.html#a8a7ef356e05eb9b1ea1ab518baee3095">String::String</a></div><div class="ttdeci">String()</div><div class="ttdoc">Default constructor. Creates an empty Latin1 string.</div><div class="ttdef"><b>Definition</b> string.h:391</div></div>
+</div><!-- fragment --></dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">maxChars</td><td>Maximum number of characters in the result. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The (possibly truncated) string. </dd></dl>
+
+</div>
+</div>
 <a id="a3c743dacbebc0135a0d2179d96a7e17c" name="a3c743dacbebc0135a0d2179d96a7e17c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3c743dacbebc0135a0d2179d96a7e17c">&#9670;&#160;</a></span>vformat()</h2>
 
@@ -3877,7 +3922,7 @@ template&lt;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841
 <p>Use when the format string is not known at compile time (e.g. loaded from a translation table or user input). Compile-time format string checking is not available in this case — a malformed format string throws <code>std::format_error</code> at runtime.</p>
 <div class="fragment"><div class="line">std::string <a class="code hl_typedef" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">fmt</a> = <a class="code hl_typedef" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">loadFormat</a>();</div>
 <div class="line"><a class="code hl_class" href="classString.html">String</a> s = <a class="code hl_function" href="classString.html#a3c743dacbebc0135a0d2179d96a7e17c">String::vformat</a>(<a class="code hl_typedef" href="classString.html#aa47fc64069a6cad0f6123caf035841b7">fmt</a>, std::make_format_args(<a class="code hl_function" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>));</div>
-<div class="ttc" id="aclassString_html_a3c743dacbebc0135a0d2179d96a7e17c"><div class="ttname"><a href="classString.html#a3c743dacbebc0135a0d2179d96a7e17c">String::vformat</a></div><div class="ttdeci">static String vformat(std::string_view fmt, std::format_args args)</div><div class="ttdoc">Runtime-format-string variant of format.</div><div class="ttdef"><b>Definition</b> string.h:289</div></div>
+<div class="ttc" id="aclassString_html_a3c743dacbebc0135a0d2179d96a7e17c"><div class="ttname"><a href="classString.html#a3c743dacbebc0135a0d2179d96a7e17c">String::vformat</a></div><div class="ttdeci">static String vformat(std::string_view fmt, std::format_args args)</div><div class="ttdoc">Runtime-format-string variant of format.</div><div class="ttdef"><b>Definition</b> string.h:290</div></div>
 <div class="ttc" id="aresult_8h_html_a3cb138b5e2739be6ec1340a22bbac91f"><div class="ttname"><a href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a></div><div class="ttdeci">const T &amp; value(const Result&lt; T &gt; &amp;r)</div><div class="ttdoc">Returns the value from a Result.</div><div class="ttdef"><b>Definition</b> result.h:56</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -3940,7 +3985,7 @@ template&lt;<a class="el" href="classString.html#aa47fc64069a6cad0f6123caf035841
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classString.html">String</a></li>
-    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -76,7 +76,7 @@ var searchData=
   ['event_73',['event',['../classEvent.html#a07dd964621d0623bfccc24197c2f509b',1,'Event::Event()'],['../classObjectBase.html#aa3d2ac9f3b27592045bfc0226d2a5e4f',1,'ObjectBase::event()'],['../classWidget.html#a9bcfe234f6bfb86b768e5dcb556d5e7d',1,'Widget::event()'],['../classEvent.html',1,'Event']]],
   ['event_2eh_74',['event.h',['../event_8h.html',1,'']]],
   ['eventcallback_75',['EventCallback',['../classMediaIOTask__Inspector.html#a497edb7adb3ac341dfbda6d88714cf5a',1,'MediaIOTask_Inspector']]],
-  ['eventloop_76',['eventloop',['../classEventLoop.html',1,'EventLoop'],['../classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb',1,'ObjectBase::eventLoop()'],['../classSDLApplication.html#a09aa72c5fa029bb904b5d0467bd221a1',1,'SDLApplication::eventLoop()'],['../classEventLoop.html#a33fa78d25c8dc23ece149c805e0f2d17',1,'EventLoop::EventLoop()'],['../threading.html#thread_eventloop',1,'EventLoop']]],
+  ['eventloop_76',['eventloop',['../classEventLoop.html',1,'EventLoop'],['../classEventLoop.html#a33fa78d25c8dc23ece149c805e0f2d17',1,'EventLoop::EventLoop()'],['../classObjectBase.html#a54164d8d143ef786cce570a2d897d7fb',1,'ObjectBase::eventLoop()'],['../classSDLApplication.html#a09aa72c5fa029bb904b5d0467bd221a1',1,'SDLApplication::eventLoop()'],['../threading.html#thread_eventloop',1,'EventLoop']]],
   ['eventloop_2eh_77',['eventloop.h',['../eventloop_8h.html',1,'']]],
   ['eventpump_78',['eventPump',['../classSDLApplication.html#aa968ab11621182bbdbd51e234c70ee18',1,'SDLApplication']]],
   ['events_79',['Events',['../group__events.html',1,'']]],

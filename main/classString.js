@@ -99,6 +99,7 @@ var classString =
     [ "toUnicode", "classString.html#a2536754d36ae79cc1ea0b63bb1dc2153", null ],
     [ "toUpper", "classString.html#ad72c7328e23bb1f5384295e7af3a40d1", null ],
     [ "trim", "classString.html#a5ed648f71d99bb8aef15e8ba35422a30", null ],
+    [ "truncated", "classString.html#a113954a7efb9643cf146dd49b10c61aa", null ],
     [ "operator<", "classString.html#ad94401dcf2dfb1476aa89ca9835170b5", null ],
     [ "operator<=", "classString.html#a48545cc6c63142caa4dcce85a1b6feda", null ],
     [ "operator>", "classString.html#a1d1bcc50e73c2538ca16f3aec01eef87", null ],

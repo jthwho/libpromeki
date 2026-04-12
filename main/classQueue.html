@@ -164,7 +164,7 @@ class Queue&lt; T &gt;</div><p>Thread-safe FIFO queue. </p>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_a683d6370957f79aba4bf57865db68965"><div class="ttname"><a href="classList.html#a683d6370957f79aba4bf57865db68965">List::emplace</a></div><div class="ttdeci">Iterator emplace(ConstIterator pos, Args &amp;&amp;...args)</div><div class="ttdoc">Emplaces an object right before the given position.</div><div class="ttdef"><b>Definition</b> list.h:382</div></div>
 <div class="ttc" id="aclassList_html_af3d391ef4c79dc222e1361613e831e5a"><div class="ttname"><a href="classList.html#af3d391ef4c79dc222e1361613e831e5a">List::isEmpty</a></div><div class="ttdeci">bool isEmpty() const noexcept</div><div class="ttdoc">Returns true if the list has no elements.</div><div class="ttdef"><b>Definition</b> list.h:296</div></div>
-<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:56</div></div>
+<div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
 </div><!-- fragment --> Internally synchronized with a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a> and <a class="el" href="classWaitCondition.html" title="Condition variable wrapping std::condition_variable.">WaitCondition</a>. Blocking methods (<a class="el" href="classQueue.html#a554f6bc2dec3ed83ad0fe9a323c2e915" title="Removes and returns the front element, blocking until one is available or the timeout expires.">pop()</a>, <a class="el" href="classQueue.html#adb2a13a32ef6adf616c2e69911e78dfa" title="Returns a copy of the front element without removing it, blocking until one is available or the timeo...">peek()</a>, <a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a>) will sleep until their condition is met rather than spinning or polling.</dd></dl>
 <dl class="section note"><dt>Note</dt><dd><a class="el" href="classQueue.html#ab18970a73283f0fafbf05978ae2f121c" title="Blocks until the queue is empty.">waitForEmpty()</a> indicates that all items have been removed from the queue, not that they have been fully processed by the consumer. If you need a "processing complete" guarantee, use an out-of-band mechanism such as a promise/future handshake.</dd></dl>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
@@ -582,7 +582,7 @@ template&lt;<a class="el" href="classList.html">typename</a> <a class="el" href=
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classQueue.html">Queue</a></li>
-    <li class="footer">Generated on 2026-04-12 02:40:16 from commit b1c5870 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-12 07:11:42 from commit 07283dd (1.0.0).</li>
   </ul>
 </div>
 </body>

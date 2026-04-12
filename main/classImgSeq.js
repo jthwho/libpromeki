@@ -1,6 +1,7 @@
 var classImgSeq =
 [
     [ "ImgSeq", "classImgSeq.html#a646e40d62cd21fdce2bc5068eaf73ca5", null ],
+    [ "audioFile", "classImgSeq.html#aac2eb5a1791195aa8dbade250517163d", null ],
     [ "detectRange", "classImgSeq.html#a68ad991c3693719dde9bfae3988c285e", null ],
     [ "dir", "classImgSeq.html#acd266e19a9d806a3298a5923c962568b", null ],
     [ "frameFileName", "classImgSeq.html#ac64fdc14213aa351225ed46d1c033c79", null ],
@@ -13,6 +14,7 @@ var classImgSeq =
     [ "name", "classImgSeq.html#a1bb1f186f5c5b951a0685f75d905e6f5", null ],
     [ "pixelDesc", "classImgSeq.html#a06041490e0764b6fa9fb2fc25230f2ce", null ],
     [ "save", "classImgSeq.html#a142a2a4fe22bf6d19160d7f62ba2096a", null ],
+    [ "setAudioFile", "classImgSeq.html#ab86c951f9eaeef1d67ea174bc1ccd4ca", null ],
     [ "setDir", "classImgSeq.html#a437426dcc7f15693ee6bbe48c2270b51", null ],
     [ "setFrameRate", "classImgSeq.html#a83758163491f7c4e4d01bd51c76eaf88", null ],
     [ "setHead", "classImgSeq.html#a675dbee6571fdd55e5000a53c5c087d0", null ],

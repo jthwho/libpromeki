@@ -1,5 +1,6 @@
 var NAVTREEINDEX4 =
 {
+"classChar.html#ac4e5b882d6d1006b01dab19cda85b602":[15,4,2,3],
 "classChar.html#ac5fc1cd97845bc98dfb4e702a2ecf0d6":[15,4,2,8],
 "classChar.html#ad6d482575c9386e3155c7660d485b29c":[15,4,2,18],
 "classChar.html#ae0d765d84df492928332f3ae0394d1ab":[15,4,2,5],
@@ -153,9 +154,9 @@ var NAVTREEINDEX4 =
 "classColorModel.html#ad83e707a21e04937a5607244604c7e2c":[15,14,3,23],
 "classColorModel.html#ad9537f45cd167f2b7c131c888334b1ae":[15,14,3,20],
 "classColorModel.html#af7e1c8091b1bd0c94648f79624658493":[15,14,3,10],
-"classCompiledCodepoints.html":[17,0,42],
-"classCompiledString.html":[17,0,43],
-"classCompiledString.html#a3887f51e1ea105291ebeef09fa065eb4":[17,0,43,0],
+"classCompiledCodepoints.html":[17,0,43],
+"classCompiledString.html":[17,0,44],
+"classCompiledString.html#a3887f51e1ea105291ebeef09fa065eb4":[17,0,44,0],
 "classCrashHandler.html":[15,10,12],
 "classCscPath.html":[15,10,0,5],
 "classDataStream.html":[15,3,0],
@@ -248,6 +249,5 @@ var NAVTREEINDEX4 =
 "classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566ac9af5710b2a7175d657465fc810d27fc":[15,3,0,1,0],
 "classDataStream.html#a7cd591107dc7c74d3bb2cfd08e9ab566ae54ef43afa0dbf86a6a2fe3fa84981a6":[15,3,0,1,1],
 "classDataStream.html#a81cc70ad0a9de47f62d97e0a0263bfd0":[15,3,0,68],
-"classDataStream.html#a8a8ba52684538631965a1edf08067c16":[15,3,0,55],
-"classDataStream.html#a8e724f1fec78026ef7bccbc517a1b112":[15,3,0,15]
+"classDataStream.html#a8a8ba52684538631965a1edf08067c16":[15,3,0,55]
 };

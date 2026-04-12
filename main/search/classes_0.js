@@ -29,5 +29,6 @@ var searchData=
   ['audiogen_26',['AudioGen',['../classAudioGen.html',1,'']]],
   ['audiolevel_27',['AudioLevel',['../classAudioLevel.html',1,'']]],
   ['audiopattern_28',['AudioPattern',['../classAudioPattern.html',1,'']]],
-  ['audiotestpattern_29',['AudioTestPattern',['../classAudioTestPattern.html',1,'']]]
+  ['audiosourcehint_29',['AudioSourceHint',['../classAudioSourceHint.html',1,'']]],
+  ['audiotestpattern_30',['AudioTestPattern',['../classAudioTestPattern.html',1,'']]]
 ];
