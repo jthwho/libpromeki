@@ -5,6 +5,10 @@
  * See LICENSE file in the project root folder for license information.
  */
 
+#include <cmath>
+#include <cstring>
+#include <random>
+
 #include <promeki/audiotestpattern.h>
 #include <promeki/audiogen.h>
 #include <promeki/ltcencoder.h>
@@ -13,183 +17,685 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-AudioTestPattern::AudioTestPattern(const AudioDesc &desc) : _desc(desc) {
+namespace {
+
+/// Two-pi constant with enough precision for audio phase integration.
+static constexpr double kTwoPi = 6.28318530717958647692;
+
+/// Peak amplitude for the PcmMarker payload bits.  Bits land at
+/// ±kPcmMarkerBitLevel, the preamble and start-of-frame marker
+/// sit at ±kPcmMarkerSyncLevel (≈full scale) so the decoder can
+/// confidently distinguish the two bands.
+static constexpr float kPcmMarkerSyncLevel = 1.0f;
+static constexpr float kPcmMarkerBitLevel  = 0.8f;
+static constexpr float kPcmMarkerParityLevel = 0.6f;
+
+} // anonymous namespace
+
+AudioTestPattern::AudioTestPattern(const AudioDesc &desc)
+        : _desc(desc),
+          _channelModes(AudioPattern::Type) {
 }
 
 AudioTestPattern::~AudioTestPattern() {
-        delete _audioGen;
+        clearGenerators();
         delete _ltcEncoder;
+}
+
+void AudioTestPattern::clearGenerators() {
+        for(size_t i = 0; i < _chanGens.size(); ++i) {
+                delete _chanGens[i];
+        }
+        _chanGens.clear();
+}
+
+AudioPattern AudioTestPattern::modeForChannel(size_t channelIndex) const {
+        // Channels beyond the end of the mode list collapse to Silence,
+        // matching the documented "short list silences the tail"
+        // contract.  Invalid / unbound mode lists silence everything.
+        if(!_channelModes.isValid()) return AudioPattern::Silence;
+        if(channelIndex >= _channelModes.size()) return AudioPattern::Silence;
+        Enum e = _channelModes[channelIndex];
+        return AudioPattern(e.value());
 }
 
 Error AudioTestPattern::configure() {
-        delete _audioGen;
-        _audioGen = nullptr;
+        clearGenerators();
         delete _ltcEncoder;
         _ltcEncoder = nullptr;
-
-        // Drop any AvSync caches so the next create() rebuilds with the
-        // current settings (e.g. tone freq / level changes).
         _avSyncToneCache.clear();
-        _avSyncSilenceCache.clear();
+        _whiteNoiseBuffer.clear();
+        _pinkNoiseBuffer.clear();
+        _chirpSampleCursor = 0.0;
+        _chirpPhase        = 0.0;
+        _dualTonePhase1    = 0.0;
+        _dualTonePhase2    = 0.0;
+        _noiseSampleCursor = 0;
+        _pcmMarkerCounter  = 0;
 
-        if(_mode == LTC || _mode == AvSync) {
-                // AvSync embeds LTC alongside the click marker so the
-                // inspector / monitor side has both signals to verify
-                // — visual sync (the click) and frame-accurate timecode
-                // (the LTC) — out of the box from the default TPG
-                // configuration.
-                _ltcEncoder = new LtcEncoder((int)_desc.sampleRate(), _ltcLevel.toLinearFloat());
+        const size_t channels = _desc.channels();
+
+        // Scan the channel-mode list once to figure out which optional
+        // subsystems we need this round — so a stream that only uses
+        // Tone / Silence / SrcProbe doesn't pay the allocation for an
+        // LTC encoder or a noise buffer.
+        bool needsLtc = false;
+        bool needsWhiteNoise = false;
+        bool needsPinkNoise  = false;
+        for(size_t ch = 0; ch < channels; ++ch) {
+                AudioPattern m = modeForChannel(ch);
+                if(m == AudioPattern::LTC)        needsLtc        = true;
+                if(m == AudioPattern::WhiteNoise) needsWhiteNoise = true;
+                if(m == AudioPattern::PinkNoise)  needsPinkNoise  = true;
         }
-        if(_mode == Tone || _mode == Silence) {
-                _audioGen = new AudioGen(_desc);
-                for(size_t ch = 0; ch < _desc.channels(); ch++) {
-                        AudioGen::Config cfg;
-                        if(_mode == Tone) {
-                                cfg.type = AudioGen::Sine;
-                                cfg.freq = (float)_toneFreq;
-                                cfg.level = _toneLevel;
-                                cfg.phase = 0.0f;
-                                cfg.dutyCycle = 0.0f;
-                        } else {
-                                cfg.type = AudioGen::Silence;
-                                cfg.freq = 0.0f;
-                                cfg.level = AudioLevel();
-                                cfg.phase = 0.0f;
-                                cfg.dutyCycle = 0.0f;
-                        }
-                        _audioGen->setConfig(ch, cfg);
+
+        if(needsLtc) {
+                _ltcEncoder = new LtcEncoder(
+                        static_cast<int>(_desc.sampleRate()),
+                        _ltcLevel.toLinearFloat());
+        }
+
+        if(needsWhiteNoise) buildWhiteNoiseBuffer();
+        if(needsPinkNoise)  buildPinkNoiseBuffer();
+
+        // Per-channel AudioGen entries: one mono generator per channel,
+        // configured to emit the shape required by that channel's
+        // mode.  LTC / AvSync / noise / chirp / dual-tone / PcmMarker
+        // channels get a nullptr generator because they are synthesized
+        // per-call by dedicated paths — storing them here would
+        // duplicate state.
+        _chanGens.resize(channels);
+        const AudioDesc monoDesc(_desc.dataType(), _desc.sampleRate(), 1);
+        for(size_t ch = 0; ch < channels; ++ch) {
+                AudioPattern mode = modeForChannel(ch);
+                _chanGens[ch] = nullptr;
+
+                AudioGen::Config cfg;
+                cfg.phase = 0.0f;
+                cfg.dutyCycle = 0.0f;
+                bool buildGen = true;
+
+                if(mode == AudioPattern::Tone) {
+                        cfg.type  = AudioGen::Sine;
+                        cfg.freq  = static_cast<float>(_toneFreq);
+                        cfg.level = _toneLevel;
+                } else if(mode == AudioPattern::Silence) {
+                        cfg.type  = AudioGen::Silence;
+                        cfg.freq  = 0.0f;
+                        cfg.level = AudioLevel();
+                } else if(mode == AudioPattern::SrcProbe) {
+                        cfg.type  = AudioGen::Sine;
+                        cfg.freq  = static_cast<float>(kSrcProbeFrequencyHz);
+                        cfg.level = _toneLevel;
+                } else if(mode == AudioPattern::ChannelId) {
+                        cfg.type  = AudioGen::Sine;
+                        cfg.freq  = static_cast<float>(
+                                channelIdFrequency(ch, _chanIdBaseFreq, _chanIdStepFreq));
+                        cfg.level = _toneLevel;
+                } else {
+                        // LTC / AvSync / noise / chirp / dual-tone /
+                        // PcmMarker / unknown → no persistent AudioGen
+                        // state; the per-call dispatch handles them.
+                        buildGen = false;
+                }
+
+                if(buildGen) {
+                        AudioGen *gen = new AudioGen(monoDesc);
+                        gen->setConfig(0, cfg);
+                        _chanGens[ch] = gen;
                 }
         }
-        // AvSync requires no eager setup — buildAvSyncCache() runs on
-        // the first create() call once the per-frame sample count is
-        // known.
+
         return Error::Ok;
 }
 
-const Audio &AudioTestPattern::avSyncTone(size_t samples) const {
+namespace {
+
+/// Return the default crossfade length for a noise buffer.  One
+/// thirty-second of the buffer is long enough to hide even the
+/// low-frequency content of pink noise (≈300 ms at 10 s / 48 kHz),
+/// short enough that the faded region is a negligible fraction of the
+/// total, and always at least a few hundred samples so even tiny
+/// buffers still loop cleanly.
+size_t noiseCrossfadeLength(size_t bufferLength) {
+        size_t fade = bufferLength / 32;
+        if(fade < 256) fade = (bufferLength < 256) ? bufferLength / 2 : 256;
+        if(fade > bufferLength / 2) fade = bufferLength / 2;
+        return fade;
+}
+
+} // anonymous namespace
+
+void AudioTestPattern::buildWhiteNoiseBuffer() {
+        // Pre-generate a deterministic PRNG buffer the noise channels
+        // can index with a per-channel offset.  Fixed seed keeps the
+        // output reproducible across runs (reproducibility is strictly
+        // more useful than unpredictability for verification workloads
+        // — a random-every-run noise source would force every test
+        // downstream to match against a tolerance band).
+        //
+        // Seamless loop trick: generate `length + fadeLen` raw
+        // samples, then build the cached buffer so output[0..fade) is
+        // a raised-cosine crossfade between the raw tail
+        // (raw[length..length+fade)) and the raw head (raw[0..fade)).
+        // When a reader wraps from output[length-1] → output[0] the
+        // sequence appears to continue from raw[length-1] → raw[length],
+        // which is just "one more sample from the PRNG" with no
+        // discontinuity — the click at the wrap boundary disappears.
+        const size_t length = static_cast<size_t>(
+                _noiseBufferSeconds * static_cast<double>(_desc.sampleRate()));
+        if(length == 0) return;
+        const size_t fadeLen = noiseCrossfadeLength(length);
+
+        std::mt19937 rng(_noiseSeed);
+        // Gaussian white noise — matches the "true" definition of
+        // white noise (uncorrelated samples drawn from a normal
+        // distribution) rather than the uniform-distribution
+        // shortcut we used earlier.  Both are spectrally flat, but
+        // Gaussian matches standard pro-audio test tooling and has
+        // the heavier tails one expects from broadband noise.
+        //
+        // We pick the initial σ at a third of the target peak and
+        // then peak-normalise the whole buffer after generation — a
+        // long buffer is almost certain to contain samples out past
+        // 3σ, so the post-generation rescale lands the actual peak
+        // on `peak` regardless of the chosen starting σ.
+        const float peak = _toneLevel.toLinearFloat();
+        std::normal_distribution<float> dist(0.0f, peak / 3.0f);
+
+        List<float> raw;
+        raw.resize(length + fadeLen);
+        double maxAbs = 0.0;
+        for(size_t i = 0; i < length + fadeLen; ++i) {
+                const float v = dist(rng);
+                raw[i] = v;
+                const double a = v < 0 ? -v : v;
+                if(a > maxAbs) maxAbs = a;
+        }
+        if(maxAbs > 0.0) {
+                const float scale = static_cast<float>(peak / maxAbs);
+                for(size_t i = 0; i < length + fadeLen; ++i) {
+                        raw[i] *= scale;
+                }
+        }
+
+        _whiteNoiseBuffer.resize(length);
+        for(size_t i = 0; i < fadeLen; ++i) {
+                // Equal-power (sin/cos) crossfade — keeps the
+                // combined power constant across the fade because
+                // sin²(θ) + cos²(θ) = 1.  A raised-cosine or linear
+                // weight would drop the combined power of two
+                // uncorrelated noise streams by −3 dB at the
+                // midpoint of the fade, which shows up as an audible
+                // volume dip at the loop wrap.  At i=0 we play the
+                // tail continuation raw[length+0]; at i=fadeLen-1 we
+                // play raw[fadeLen-1]; the seam from output[length-1]
+                // back to output[0] remains one natural sample step
+                // in the PRNG sequence.
+                const double theta = 0.5 * M_PI * static_cast<double>(i)
+                                   / static_cast<double>(fadeLen);
+                const double fadeIn  = std::sin(theta);
+                const double fadeOut = std::cos(theta);
+                _whiteNoiseBuffer[i] = static_cast<float>(
+                        raw[i] * fadeIn + raw[length + i] * fadeOut);
+        }
+        for(size_t i = fadeLen; i < length; ++i) {
+                _whiteNoiseBuffer[i] = raw[i];
+        }
+
+        // DC removal on the final buffer.  We do this AFTER the
+        // crossfade (rather than on the raw samples) because the
+        // crossfade's per-sample weights are sin/cos, not uniform,
+        // and it's the weighted sum of the sample population that
+        // becomes the DC component of the output.  Subtracting the
+        // final buffer mean preserves seam continuity — the same
+        // constant is removed from both sides of the wrap, so the
+        // one-sample delta at the boundary is unchanged.
+        double sum = 0.0;
+        for(size_t i = 0; i < length; ++i) sum += _whiteNoiseBuffer[i];
+        const float dc = static_cast<float>(sum / static_cast<double>(length));
+        for(size_t i = 0; i < length; ++i) _whiteNoiseBuffer[i] -= dc;
+}
+
+void AudioTestPattern::buildPinkNoiseBuffer() {
+        // Paul Kellet's 7-tap IIR approximation of a -3 dB/octave pink
+        // slope applied to white noise.  The coefficient choice is
+        // well-known in audio DSP circles and hits within ~0.05 dB of
+        // the ideal pink slope from ~20 Hz to 20 kHz.  We burn a
+        // 4096-sample warm-up pass so the IIR is settled before we
+        // capture the cached buffer.
+        //
+        // Same seamless-loop trick as the white buffer: generate
+        // `length + fadeLen` filtered samples and crossfade the tail
+        // onto the head so the loop wraps without a click.  The
+        // crossfade region needs to be a handful of low-frequency
+        // cycles long for pink noise (the low end is where the wrap
+        // artefact would otherwise be most audible), which is why
+        // noiseCrossfadeLength() picks a generous 1/32 of the buffer
+        // — ≈300 ms at the 10 s default.
+        const size_t length = static_cast<size_t>(
+                _noiseBufferSeconds * static_cast<double>(_desc.sampleRate()));
+        if(length == 0) return;
+        const size_t fadeLen = noiseCrossfadeLength(length);
+
+        // Independent seed for pink so white and pink don't correlate
+        // when both appear on different channels of the same stream.
+        std::mt19937 rng(_noiseSeed ^ 0xA3C7B1F0u);
+        const float peak = _toneLevel.toLinearFloat();
+        std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+        double b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        auto pinkStep = [&](float w) {
+                b0 = 0.99886 * b0 + w * 0.0555179;
+                b1 = 0.99332 * b1 + w * 0.0750759;
+                b2 = 0.96900 * b2 + w * 0.1538520;
+                b3 = 0.86650 * b3 + w * 0.3104856;
+                b4 = 0.55000 * b4 + w * 0.5329522;
+                b5 = -0.7616 * b5 - w * 0.0168980;
+                double pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362;
+                b6 = w * 0.115926;
+                return pink;
+        };
+
+        // Warm-up pass so the IIR state is representative of "steady
+        // state" pink before the first captured sample.
+        for(int i = 0; i < 4096; ++i) pinkStep(dist(rng));
+
+        // Generate `length + fadeLen` pink samples into a scratch
+        // buffer.  The Kellet IIR has very large DC gain (the slowest
+        // pole alone multiplies DC by ≈ 49), so the raw output is
+        // effectively guaranteed to have a real DC component coming
+        // from the filter's transient response and any residual drift
+        // in the white input.  We DC-remove the raw buffer first so
+        // the subsequent peak-normalisation scales the actual AC
+        // component to `peak` rather than "DC + AC"; a second
+        // DC-removal pass runs at the very end on the final output
+        // because the crossfade's sin/cos weighting can reintroduce
+        // a small offset that the pre-crossfade pass can't see.
+        List<float> raw;
+        raw.resize(length + fadeLen);
+        double rawSum = 0.0;
+        for(size_t i = 0; i < length + fadeLen; ++i) {
+                double s = pinkStep(dist(rng));
+                raw[i] = static_cast<float>(s);
+                rawSum += s;
+        }
+        const double rawDc =
+                rawSum / static_cast<double>(length + fadeLen);
+        double maxAbs = 0.0;
+        for(size_t i = 0; i < length + fadeLen; ++i) {
+                const double centred = static_cast<double>(raw[i]) - rawDc;
+                raw[i] = static_cast<float>(centred);
+                const double a = centred < 0 ? -centred : centred;
+                if(a > maxAbs) maxAbs = a;
+        }
+        if(maxAbs > 0.0) {
+                const float scale = static_cast<float>(peak / maxAbs);
+                for(size_t i = 0; i < length + fadeLen; ++i) {
+                        raw[i] *= scale;
+                }
+        }
+
+        // Crossfade the tail onto the head using an equal-power
+        // sin/cos curve — see the comment in buildWhiteNoiseBuffer
+        // for why a raised cosine would introduce an audible −3 dB
+        // volume dip at the loop boundary.
+        _pinkNoiseBuffer.resize(length);
+        for(size_t i = 0; i < fadeLen; ++i) {
+                const double theta = 0.5 * M_PI * static_cast<double>(i)
+                                   / static_cast<double>(fadeLen);
+                const double fadeIn  = std::sin(theta);
+                const double fadeOut = std::cos(theta);
+                _pinkNoiseBuffer[i] = static_cast<float>(
+                        raw[i] * fadeIn + raw[length + i] * fadeOut);
+        }
+        for(size_t i = fadeLen; i < length; ++i) {
+                _pinkNoiseBuffer[i] = raw[i];
+        }
+
+        // Final DC-removal pass on the cached buffer.  See the
+        // matching comment in buildWhiteNoiseBuffer — the crossfade's
+        // non-uniform weights can leave a small residual DC that we
+        // can only eliminate by measuring and subtracting the mean
+        // of the final, post-crossfade buffer.
+        double outSum = 0.0;
+        for(size_t i = 0; i < length; ++i) outSum += _pinkNoiseBuffer[i];
+        const float outDc = static_cast<float>(
+                outSum / static_cast<double>(length));
+        for(size_t i = 0; i < length; ++i) _pinkNoiseBuffer[i] -= outDc;
+}
+
+const Audio &AudioTestPattern::avSyncBurst(size_t samples) const {
         auto it = _avSyncToneCache.find(samples);
         if(it != _avSyncToneCache.end()) return it->second;
 
-        // Tone buffer: a one-shot AudioGen so its phase doesn't get
-        // tangled up with anything else.  Each "marker" frame returns
-        // the same identical tone burst.
-        AudioGen burst(_desc);
-        for(size_t ch = 0; ch < _desc.channels(); ch++) {
-                AudioGen::Config cfg;
-                cfg.type = AudioGen::Sine;
-                cfg.freq = (float)_toneFreq;
-                cfg.level = _toneLevel;
-                cfg.phase = 0.0f;
-                cfg.dutyCycle = 0.0f;
-                burst.setConfig(ch, cfg);
-        }
+        // Mono one-shot sine burst.  Phase is reset to zero on every
+        // call so every marker frame ends up byte-identical, which is
+        // what the Inspector A/V sync check expects when it validates
+        // the marker waveform.
+        const AudioDesc monoDesc(_desc.dataType(), _desc.sampleRate(), 1);
+        AudioGen burst(monoDesc);
+        AudioGen::Config cfg;
+        cfg.type  = AudioGen::Sine;
+        cfg.freq  = static_cast<float>(_toneFreq);
+        cfg.level = _toneLevel;
+        cfg.phase = 0.0f;
+        cfg.dutyCycle = 0.0f;
+        burst.setConfig(0, cfg);
         _avSyncToneCache.insert(samples, burst.generate(samples));
         return _avSyncToneCache.find(samples)->second;
 }
 
-const Audio &AudioTestPattern::avSyncSilence(size_t samples) const {
-        auto it = _avSyncSilenceCache.find(samples);
-        if(it != _avSyncSilenceCache.end()) return it->second;
+Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
+        Audio audio(_desc, samples);
+        if(!audio.isValid()) return Audio();
+        audio.zero();
 
-        Audio silence(_desc, samples);
-        if(silence.isValid()) silence.zero();
-        _avSyncSilenceCache.insert(samples, silence);
-        return _avSyncSilenceCache.find(samples)->second;
+        const size_t channels = _desc.channels();
+        if(channels == 0) return audio;
+        float *out = audio.data<float>();
+
+        // LTC is synthesized once per create() call and then scattered
+        // into every LTC channel.  Invalid timecode gracefully degrades
+        // to silence on those channels (the encoder returns an invalid
+        // Audio in that case).
+        Audio ltcAudio;
+        if(_ltcEncoder != nullptr && tc.isValid()) {
+                ltcAudio = _ltcEncoder->encode(tc);
+        }
+        const bool haveLtc = ltcAudio.isValid();
+        const int8_t *ltcData = haveLtc ? ltcAudio.data<int8_t>() : nullptr;
+        const size_t ltcSamples = haveLtc ? ltcAudio.samples() : 0;
+        const size_t ltcCopyN = (ltcSamples < samples) ? ltcSamples : samples;
+
+        // AvSync tone burst fires only on the first frame of each
+        // second (tc.frame() == 0) and only when the timecode is
+        // valid.  Cache it up front so the per-channel loop is a
+        // single pointer read.
+        const bool avSyncActive = tc.isValid() && tc.frame() == 0;
+        const float *avSyncData = nullptr;
+        if(avSyncActive) {
+                const Audio &burst = avSyncBurst(samples);
+                if(burst.isValid()) avSyncData = burst.data<float>();
+        }
+
+        // PcmMarker payload: prefer the frame's BCD64 timecode when we
+        // have one (gives the decoder a self-describing time anchor
+        // that matches the picture-side data band), otherwise fall
+        // back to a per-instance monotonic counter.  The counter is
+        // incremented regardless so invalid-tc and valid-tc runs still
+        // produce distinct per-call payloads.
+        const uint64_t pcmPayload = tc.isValid()
+                ? tc.toBcd64()
+                : _pcmMarkerCounter;
+        _pcmMarkerCounter++;
+
+        for(size_t ch = 0; ch < channels; ++ch) {
+                AudioPattern mode = modeForChannel(ch);
+
+                if(mode == AudioPattern::LTC) {
+                        if(!haveLtc) continue;  // already zero-filled
+                        for(size_t s = 0; s < ltcCopyN; ++s) {
+                                out[s * channels + ch] =
+                                        static_cast<float>(ltcData[s]) / 127.0f;
+                        }
+                        continue;
+                }
+
+                if(mode == AudioPattern::AvSync) {
+                        if(avSyncData != nullptr) {
+                                for(size_t s = 0; s < samples; ++s) {
+                                        out[s * channels + ch] = avSyncData[s];
+                                }
+                        }
+                        // Off-marker frames remain silent.
+                        continue;
+                }
+
+                if(mode == AudioPattern::WhiteNoise) {
+                        writeNoiseChannel(out, ch, channels, samples, _whiteNoiseBuffer);
+                        continue;
+                }
+                if(mode == AudioPattern::PinkNoise) {
+                        writeNoiseChannel(out, ch, channels, samples, _pinkNoiseBuffer);
+                        continue;
+                }
+                if(mode == AudioPattern::Chirp) {
+                        writeChirpChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::DualTone) {
+                        writeDualToneChannel(out, ch, channels, samples);
+                        continue;
+                }
+                if(mode == AudioPattern::PcmMarker) {
+                        writePcmMarkerChannel(out, ch, channels, samples, pcmPayload);
+                        continue;
+                }
+
+                // Everything else flows through a per-channel AudioGen.
+                // Channels beyond the mode list, or channels explicitly
+                // set to Silence, have a nullptr generator (or
+                // generate Silence) and leave the buffer zeroed.
+                AudioGen *gen = (ch < _chanGens.size()) ? _chanGens[ch] : nullptr;
+                if(gen == nullptr) continue;
+                Audio chAudio = gen->generate(samples);
+                if(!chAudio.isValid()) continue;
+                const float *chData = chAudio.data<float>();
+                for(size_t s = 0; s < samples; ++s) {
+                        out[s * channels + ch] = chData[s];
+                }
+        }
+
+        // Chirp / DualTone phase is advanced inside their per-channel
+        // generators now (one running phase accumulator per pattern,
+        // wrapped modulo 2π).  They intentionally don't rely on an
+        // end-of-create() bookkeeping pass, so phase stays correct
+        // whether or not a given channel is present on this stream.
+
+        // Noise channels share a single cumulative read cursor.
+        // Advance it once per create() call so successive frames read
+        // successive regions of the cached buffer — the per-frame
+        // advance is what turns a static repeating slice into a
+        // rolling, spectrally-flat stream.  The cursor wraps at the
+        // buffer length of whichever noise buffer is populated (they
+        // have the same length by construction); if neither is
+        // populated we still advance so the state stays predictable
+        // across configure() → create() sequences that switch modes.
+        size_t noiseBufLen = _whiteNoiseBuffer.size();
+        if(noiseBufLen == 0) noiseBufLen = _pinkNoiseBuffer.size();
+        if(noiseBufLen > 0) {
+                _noiseSampleCursor = (_noiseSampleCursor + samples) % noiseBufLen;
+        }
+
+        return audio;
 }
 
-Audio AudioTestPattern::create(size_t samples, const Timecode &tc) const {
-        if(_mode == AvSync) {
-                // AvSync output is now a mix of two signals:
-                //   1. The historical "click marker" tone burst on
-                //      every channel that isn't the LTC channel,
-                //      fired on the first frame of each second so
-                //      a viewer can confirm visual A/V alignment.
-                //   2. Continuous LTC on _ltcChannel (default 0),
-                //      which the @ref MediaIOTask_Inspector A/V sync
-                //      check decodes to validate frame-accurate
-                //      audio↔video lock.
-                // For the LTC line we need to encode this frame's
-                // timecode fresh, so the cached silence/tone buffers
-                // can't be returned wholesale — we build a per-call
-                // mix instead.  The cost is one buffer allocation
-                // and a single linear pass per frame, which is
-                // negligible compared to the LTC encode itself.
-                Audio audio(_desc, samples);
-                if(!audio.isValid()) return Audio();
-                audio.zero();
-                float *out = audio.data<float>();
-                const size_t channels = _desc.channels();
+void AudioTestPattern::writeNoiseChannel(float *out, size_t channel,
+                                         size_t channels, size_t samples,
+                                         const List<float> &buffer) const {
+        if(buffer.isEmpty()) return;
+        const size_t bufLen = buffer.size();
 
-                // Pick the LTC channel.  -1 (the @ref MediaConfig
-                // "all channels" sentinel) collapses to channel 0 for
-                // AvSync mode — putting LTC on every channel would
-                // wipe out the click marker, defeating the point.
-                int ltcChannel = (_ltcChannel >= 0 && _ltcChannel < (int)channels)
-                                         ? _ltcChannel : 0;
+        // Per-channel spatial offset decorrelates multiple noise
+        // channels that share the same buffer — the spread is a
+        // fraction of the buffer per extra channel, modulo bufLen.
+        const size_t channelStride =
+                bufLen / (channels > 1 ? channels : 1);
+        const size_t channelOffset = (channel * channelStride) % bufLen;
 
-                // Mix LTC into the chosen channel.  An invalid TC
-                // gracefully degrades to silence (the encoder returns
-                // an invalid Audio when it can't encode), which is
-                // exactly what we want when the timecode generator is
-                // disabled upstream.
-                if(_ltcEncoder != nullptr && tc.isValid()) {
-                        Audio ltcAudio = _ltcEncoder->encode(tc);
-                        if(ltcAudio.isValid()) {
-                                const int8_t *ltcData = ltcAudio.data<int8_t>();
-                                const size_t  copyN   = ltcAudio.samples() < samples
-                                                                ? ltcAudio.samples()
-                                                                : samples;
-                                for(size_t s = 0; s < copyN; s++) {
-                                        out[s * channels + (size_t)ltcChannel] =
-                                                static_cast<float>(ltcData[s]) / 127.0f;
-                                }
-                        }
-                }
+        // The cumulative `_noiseSampleCursor` is advanced once per
+        // create() call in create() itself.  Folding it into the base
+        // index here turns the cached one-second buffer into a
+        // rolling random-access window: successive frames read
+        // successive regions instead of re-reading the same slice —
+        // which is what would happen if we only used the per-channel
+        // offset.  Without this, noise would modulate at the frame
+        // rate and sound like a 30 Hz tone instead of hiss.
+        const size_t base = (channelOffset + _noiseSampleCursor) % bufLen;
 
-                // Overlay the AvSync click marker onto the *other*
-                // channels.  Mono streams have nowhere to put the
-                // click without trampling LTC, so they get LTC only.
-                const bool marker = tc.isValid() && tc.frame() == 0;
-                if(marker && channels > 1) {
-                        const Audio  &tone        = avSyncTone(samples);
-                        const float  *toneData    = tone.data<float>();
-                        const size_t  toneStride  = tone.desc().channels();
-                        for(size_t s = 0; s < samples; s++) {
-                                for(size_t c = 0; c < channels; c++) {
-                                        if((int)c == ltcChannel) continue;
-                                        out[s * channels + c] = toneData[s * toneStride + c];
-                                }
-                        }
-                }
+        for(size_t s = 0; s < samples; ++s) {
+                const size_t idx = (base + s) % bufLen;
+                out[s * channels + channel] = buffer[idx];
+        }
+}
 
-                return audio;
+void AudioTestPattern::writeChirpChannel(float *out, size_t channel,
+                                         size_t channels, size_t samples) const {
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+        if(_chirpDurationSec <= 0.0) return;
+
+        const double durationSec   = _chirpDurationSec;
+        const double periodSamples = durationSec * sampleRate;
+        const double fStart = _chirpStartFreq;
+        const double fEnd   = _chirpEndFreq;
+        if(fStart <= 0.0 || fEnd <= 0.0) return;
+        if(periodSamples <= 0.0) return;
+
+        const double logRatio = std::log(fEnd / fStart);
+        const float  level    = _toneLevel.toLinearFloat();
+
+        // Advance phase incrementally.  For each sample we compute
+        // the instantaneous frequency
+        //   f = fStart * exp((cursor/periodSamples) * logRatio)
+        // and add its per-sample contribution to the running phase:
+        //   dφ = 2π * f / sampleRate
+        //   φ += dφ
+        // then take sin(φ) as the output.
+        //
+        // This is intentionally different from an earlier closed-form
+        // implementation.  The closed form computes φ(t) from t=0 of
+        // the current sweep period, which resets the phase to zero
+        // whenever the cursor wraps — a once-per-period click in the
+        // audio.  By carrying φ across create() calls AND across
+        // period wraps, the waveform stays sample-exact continuous;
+        // the only discontinuity is a tangent-slope change when the
+        // frequency jumps from fEnd back to fStart at the wrap,
+        // which is far less audible than a sample-level step.
+        //
+        // The phase is wrapped modulo 2π each sample so the
+        // accumulator stays numerically well-conditioned even over
+        // hour-long runs.
+        const double wrapMod = kTwoPi;
+        double cursor = _chirpSampleCursor;
+        if(cursor < 0.0) cursor = 0.0;
+        if(cursor >= periodSamples) cursor = std::fmod(cursor, periodSamples);
+
+        double phase = _chirpPhase;
+        for(size_t s = 0; s < samples; ++s) {
+                const double progress = cursor / periodSamples;
+                const double freq     = fStart * std::exp(progress * logRatio);
+                phase += kTwoPi * freq / sampleRate;
+                if(phase >= wrapMod) phase = std::fmod(phase, wrapMod);
+                out[s * channels + channel] =
+                        level * static_cast<float>(std::sin(phase));
+
+                cursor += 1.0;
+                if(cursor >= periodSamples) cursor -= periodSamples;
         }
 
-        if(_mode == LTC && _ltcEncoder != nullptr) {
-                Audio ltcAudio = _ltcEncoder->encode(tc);
-                if(!ltcAudio.isValid()) return Audio();
+        _chirpPhase        = phase;
+        _chirpSampleCursor = cursor;
+}
 
-                // If multi-channel and specific LTC channel, embed in silent multi-ch audio
-                if(_desc.channels() > 1 && _ltcChannel >= 0) {
-                        Audio audio(_desc, ltcAudio.samples());
-                        audio.zero();
-                        int8_t *ltcData = ltcAudio.data<int8_t>();
-                        float *outData = audio.data<float>();
-                        size_t channels = _desc.channels();
-                        for(size_t s = 0; s < ltcAudio.samples(); s++) {
-                                float val = (float)ltcData[s] / 127.0f;
-                                outData[s * channels + (size_t)_ltcChannel] = val;
-                        }
-                        return audio;
-                }
-                return ltcAudio;
+void AudioTestPattern::writeDualToneChannel(float *out, size_t channel,
+                                            size_t channels, size_t samples) const {
+        const double sampleRate = static_cast<double>(_desc.sampleRate());
+        if(sampleRate <= 0.0) return;
+
+        // Normalised dual-sine: the mix is `sin(f1) + ratio*sin(f2)`,
+        // scaled so the peak stays at `toneLevel`.  The peak of the
+        // sum is at most (1 + ratio), so dividing by that keeps the
+        // signal inside [-level, +level].
+        const double ratio = _dualToneRatio;
+        const double norm  = 1.0 + (ratio < 0.0 ? -ratio : ratio);
+        const float  level = _toneLevel.toLinearFloat();
+        const double w1 = kTwoPi * _dualToneFreq1 / sampleRate;
+        const double w2 = kTwoPi * _dualToneFreq2 / sampleRate;
+
+        // Phase state is carried across create() calls — the
+        // accumulators live in _dualTonePhase1 / _dualTonePhase2 and
+        // get wrapped modulo 2π each sample so the generator stays
+        // sample-continuous regardless of chunk size.  An earlier
+        // stateless implementation restarted phase at zero on every
+        // create(), which at a 30 fps pipeline cadence produces a
+        // 30 Hz buzz overlaid on the real signal.
+        double phase1 = _dualTonePhase1;
+        double phase2 = _dualTonePhase2;
+        const double wrapMod = kTwoPi;
+        for(size_t s = 0; s < samples; ++s) {
+                const double v = (std::sin(phase1) + ratio * std::sin(phase2)) / norm;
+                out[s * channels + channel] = level * static_cast<float>(v);
+                phase1 += w1;
+                if(phase1 >= wrapMod) phase1 = std::fmod(phase1, wrapMod);
+                phase2 += w2;
+                if(phase2 >= wrapMod) phase2 = std::fmod(phase2, wrapMod);
+        }
+        _dualTonePhase1 = phase1;
+        _dualTonePhase2 = phase2;
+}
+
+void AudioTestPattern::writePcmMarkerChannel(float *out, size_t channel,
+                                             size_t channels, size_t samples,
+                                             uint64_t payload) const {
+        // Wire format (all values land verbatim in PCM samples):
+        //
+        //   [ preamble     ] kPcmMarkerPreambleSamples of alternating
+        //                    +full / -full so a decoder can detect the
+        //                    pattern via a simple AC-coupled toggle.
+        //   [ start-of-frame ] kPcmMarkerStartSamples: four +full
+        //                    followed by four -full; distinguishes the
+        //                    preamble (alternating) from the marker.
+        //   [ payload      ] kPcmMarkerPayloadBits samples, one per
+        //                    payload bit, MSB first.  A set bit lands
+        //                    at +kPcmMarkerBitLevel; a clear bit at
+        //                    -kPcmMarkerBitLevel.
+        //   [ parity       ] one sample at ±kPcmMarkerParityLevel
+        //                    encoding the XOR of all payload bits so
+        //                    the decoder can sanity-check a frame.
+        //   [ silence      ] any remaining samples in the chunk.
+        //
+        // Chunks shorter than the full frame are truncated; the
+        // decoder is expected to resynchronise on the next chunk.
+        size_t pos = 0;
+
+        // Preamble.
+        for(size_t i = 0; i < kPcmMarkerPreambleSamples && pos < samples; ++i, ++pos) {
+                const float v = (i & 1u) ? -kPcmMarkerSyncLevel : kPcmMarkerSyncLevel;
+                out[pos * channels + channel] = v;
         }
 
-        if(_audioGen != nullptr) {
-                return _audioGen->generate(samples);
+        // Start-of-frame marker: four highs then four lows.
+        for(size_t i = 0; i < kPcmMarkerStartSamples && pos < samples; ++i, ++pos) {
+                const float v = (i < (kPcmMarkerStartSamples / 2))
+                                ? kPcmMarkerSyncLevel
+                                : -kPcmMarkerSyncLevel;
+                out[pos * channels + channel] = v;
         }
 
-        return Audio();
+        // Payload: 64 bits MSB-first.
+        int parity = 0;
+        for(size_t i = 0; i < kPcmMarkerPayloadBits && pos < samples; ++i, ++pos) {
+                const int bit = static_cast<int>(
+                        (payload >> (kPcmMarkerPayloadBits - 1 - i)) & 0x1u);
+                parity ^= bit;
+                out[pos * channels + channel] = bit
+                        ? kPcmMarkerBitLevel
+                        : -kPcmMarkerBitLevel;
+        }
+
+        // Parity bit — lives at a lower amplitude than the payload so
+        // a rough decoder can't confuse the two bands.
+        if(pos < samples) {
+                out[pos * channels + channel] = parity
+                        ? kPcmMarkerParityLevel
+                        : -kPcmMarkerParityLevel;
+                ++pos;
+        }
+
+        // Remaining samples are left at zero (the buffer was
+        // pre-zeroed in create()) — they act as an inter-frame gap.
 }
 
 Audio AudioTestPattern::create(size_t samples) const {
@@ -200,33 +706,16 @@ void AudioTestPattern::render(Audio &audio, const Timecode &tc) const {
         Audio generated = create(audio.samples(), tc);
         if(!generated.isValid()) return;
 
-        // Copy generated data into the target buffer
-        size_t bytes = audio.samples() * audio.desc().channels() * audio.desc().bytesPerSample();
-        size_t genBytes = generated.samples() * generated.desc().channels() * generated.desc().bytesPerSample();
+        size_t bytes = audio.samples() * audio.desc().channels()
+                                       * audio.desc().bytesPerSample();
+        size_t genBytes = generated.samples() * generated.desc().channels()
+                                              * generated.desc().bytesPerSample();
         size_t copyBytes = (bytes < genBytes) ? bytes : genBytes;
-        memcpy(audio.data<uint8_t>(), generated.data<uint8_t>(), copyBytes);
+        std::memcpy(audio.data<uint8_t>(), generated.data<uint8_t>(), copyBytes);
 }
 
 void AudioTestPattern::render(Audio &audio) const {
         render(audio, Timecode());
-}
-
-Result<AudioTestPattern::Mode> AudioTestPattern::fromString(const String &name) {
-        if(name == "tone")    return makeResult(Tone);
-        if(name == "silence") return makeResult(Silence);
-        if(name == "ltc")     return makeResult(LTC);
-        if(name == "avsync")  return makeResult(AvSync);
-        return makeError<Mode>(Error::Invalid);
-}
-
-String AudioTestPattern::toString(Mode mode) {
-        switch(mode) {
-                case Tone:    return "tone";
-                case Silence: return "silence";
-                case LTC:     return "ltc";
-                case AvSync:  return "avsync";
-        }
-        return "unknown";
 }
 
 PROMEKI_NAMESPACE_END

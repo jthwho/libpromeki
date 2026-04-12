@@ -406,7 +406,7 @@ TEST_CASE("ImageDataEncoder end-to-end via TPG MediaIO") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr frame;
         REQUIRE(io->readFrame(frame).isOk());

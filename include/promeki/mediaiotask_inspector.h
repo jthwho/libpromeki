@@ -250,7 +250,7 @@ struct InspectorSnapshot {
  * cfg.set(MediaConfig::InspectorCheckContinuity, true);
  * io->setConfig(cfg);
  * io->adoptTask(insp);
- * io->open(MediaIO::Writer);
+ * io->open(MediaIO::Input);
  *
  * // Pump frames in:
  * io->writeFrame(frame);

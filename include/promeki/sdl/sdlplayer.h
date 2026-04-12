@@ -109,7 +109,7 @@ class SDLAudioOutput;
  * MediaIO *player = createSDLPlayer(&videoWidget, &audioOutput);
  * player->setMediaDesc(sourceMediaIO->mediaDesc());
  * player->setAudioDesc(sourceMediaIO->audioDesc());
- * player->open(MediaIO::Writer);
+ * player->open(MediaIO::Input);
  * @endcode
  *
  * @par Teardown ordering
@@ -218,7 +218,7 @@ class SDLPlayerTask : public MediaIOTask {
  * Creates an SDLPlayerTask with the supplied widget/audio pointers
  * and adopts it into a newly allocated MediaIO.  The returned MediaIO
  * is not yet open; the caller must set the source MediaDesc (and
- * optionally an AudioDesc) and then call @c open(MediaIO::Writer).
+ * optionally an AudioDesc) and then call @c open(MediaIO::Input).
  *
  * The returned MediaIO owns the task and deletes it on destruction.
  * Ownership of @p video and @p audio stays with the caller — they

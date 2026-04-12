@@ -10,6 +10,7 @@
 #include <promeki/color.h>
 #include <promeki/colormodel.h>
 #include <promeki/datetime.h>
+#include <promeki/enumlist.h>
 #include <promeki/framerate.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/pixelformat.h>
@@ -84,6 +85,10 @@ String singleTypeName(Variant::Type t, Enum::Type enumType) {
                 case Variant::TypeEnum: {
                         if(enumType.isValid()) return String("Enum ") + enumType.name();
                         return "Enum";
+                }
+                case Variant::TypeEnumList: {
+                        if(enumType.isValid()) return String("EnumList ") + enumType.name();
+                        return "EnumList";
                 }
 #if PROMEKI_ENABLE_NETWORK
                 case Variant::TypeSocketAddress: return "SocketAddress";
@@ -183,6 +188,13 @@ Variant parseAsType(Variant::Type type, Enum::Type enumType,
                                 return Variant(fq);
                         break;
                 }
+                case Variant::TypeEnumList: {
+                        if(!enumType.isValid()) break;
+                        Error listErr;
+                        EnumList list = EnumList::fromString(enumType, str, &listErr);
+                        if(listErr.isError()) break;
+                        return Variant(list);
+                }
                 case Variant::TypeStringList:
                         return Variant(str.split(","));
 #if PROMEKI_ENABLE_NETWORK
@@ -257,10 +269,18 @@ bool VariantSpec::validate(const Variant &value, Error *err) const {
                 }
         }
 
-        // 3. Enum type check
+        // 3. Enum type check — applies to both Enum and EnumList values,
+        //    since EnumList pins every element to a single Enum::Type.
         if(_enumType.isValid() && value.type() == Variant::TypeEnum) {
                 Enum e = value.get<Enum>();
                 if(e.type() != _enumType) {
+                        if(err) *err = Error::InvalidArgument;
+                        return false;
+                }
+        }
+        if(_enumType.isValid() && value.type() == Variant::TypeEnumList) {
+                EnumList list = value.get<EnumList>();
+                if(list.elementType() != _enumType) {
                         if(err) *err = Error::InvalidArgument;
                         return false;
                 }
@@ -357,52 +377,16 @@ Variant VariantSpec::parseString(const String &str, Error *err) const {
 // Help output
 // ============================================================================
 
-void VariantSpec::writeHelp(TextStream &stream, const String &name, int maxWidth) const {
-        // Line 1: Name (type) [range]              default: value
-        String header = "  " + name + " (" + typeName() + ")";
+String VariantSpec::detailsString() const {
+        // Compact "details" column: type, optional range, default.
+        // "def" is deliberately short so the column stays tight even
+        // when several backends declare many keys in the same help
+        // block.
+        String details = "(" + typeName() + ")";
         String range = rangeString();
-        if(!range.isEmpty()) header += " [" + range + "]";
-
-        String def = "default: " + defaultString();
-
-        // Pad to align defaults.
-        int pad = 50 - static_cast<int>(header.size());
-        if(pad < 2) pad = 2;
-        for(int i = 0; i < pad; i++) header += " ";
-        header += def;
-        // Truncate to maxWidth if needed.
-        if(maxWidth > 0 && static_cast<int>(header.size()) > maxWidth) {
-                header = header.left(maxWidth - 3) + "...";
-        }
-        stream << header << endl;
-
-        // Line 2: description (word-wrapped to maxWidth).
-        if(!_description.isEmpty()) {
-                if(maxWidth > 0 && static_cast<int>(_description.size()) + 4 > maxWidth) {
-                        // Word-wrap the description.
-                        int wrapAt = maxWidth - 4; // 4 for indent
-                        size_t pos = 0;
-                        while(pos < _description.size()) {
-                                size_t remaining = _description.size() - pos;
-                                if(static_cast<int>(remaining) <= wrapAt) {
-                                        stream << "    " << _description.mid(pos) << endl;
-                                        break;
-                                }
-                                // Find last space before wrapAt.
-                                size_t breakAt = pos + wrapAt;
-                                while(breakAt > pos && _description[breakAt] != ' ') breakAt--;
-                                if(breakAt == pos) breakAt = pos + wrapAt; // no space found
-                                stream << "    " << _description.mid(pos, breakAt - pos) << endl;
-                                pos = breakAt;
-                                while(pos < _description.size() && _description[pos] == ' ') pos++;
-                        }
-                } else {
-                        stream << "    " << _description << endl;
-                }
-        }
-
-        // Blank line between entries for readability.
-        stream << endl;
+        if(!range.isEmpty()) details += " [" + range + "]";
+        details += " [def: " + defaultString() + "]";
+        return details;
 }
 
 PROMEKI_NAMESPACE_END

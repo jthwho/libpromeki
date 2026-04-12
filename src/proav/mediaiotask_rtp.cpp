@@ -120,9 +120,9 @@ MediaIO::FormatDesc MediaIOTask_Rtp::formatDesc() {
                          // extension-based factory still uses this
                          // list so `-i foo.sdp` in mediaplay picks
                          // the Rtp backend automatically.
-                true,   // canRead
-                true,   // canWrite
-                false,  // canReadWrite
+                true,   // canOutput
+                true,   // canInput
+                false,  // canInputAndOutput
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Rtp();
                 },
@@ -1441,12 +1441,12 @@ void MediaIOTask_Rtp::pushReaderFrame(Frame::Ptr frame) {
 // ----- Command dispatch -----
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Writer && cmd.mode != MediaIO::Reader) {
+        if(cmd.mode != MediaIO::Input && cmd.mode != MediaIO::Output) {
                 promekiErr("MediaIOTask_Rtp: only Reader and Writer modes are supported");
                 return Error::NotSupported;
         }
 
-        _readerMode = (cmd.mode == MediaIO::Reader);
+        _readerMode = (cmd.mode == MediaIO::Output);
         MediaIO::Config cfg = cmd.config;
 
         // Transport-global parameters.

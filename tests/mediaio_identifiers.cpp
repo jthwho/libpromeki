@@ -95,7 +95,7 @@ TEST_CASE("MediaIO::name default survives open when config::Name is empty") {
         MediaIO *io = makeTpgReader();
         REQUIRE(io != nullptr);
         String expected = String("media") + String::number(io->localId());
-        Error err = io->open(MediaIO::Reader);
+        Error err = io->open(MediaIO::Output);
         REQUIRE(err.isOk());
         CHECK(io->name() == expected);
         CHECK(io->config().getAs<String>(MediaConfig::Name) == expected);
@@ -106,7 +106,7 @@ TEST_CASE("MediaIO::name default survives open when config::Name is empty") {
 TEST_CASE("MediaIO::name honors explicit config::Name at open") {
         MediaIO *io = makeTpgReader(false, String("tpg-source"));
         REQUIRE(io != nullptr);
-        Error err = io->open(MediaIO::Reader);
+        Error err = io->open(MediaIO::Output);
         REQUIRE(err.isOk());
         CHECK(io->name() == "tpg-source");
         CHECK(io->config().getAs<String>(MediaConfig::Name) == "tpg-source");
@@ -135,7 +135,7 @@ TEST_CASE("MediaIO::uuid honors explicit config::Uuid at open") {
         REQUIRE(forced.isValid());
         MediaIO *io = makeTpgReader(false, String(), forced);
         REQUIRE(io != nullptr);
-        Error err = io->open(MediaIO::Reader);
+        Error err = io->open(MediaIO::Output);
         REQUIRE(err.isOk());
         CHECK(io->uuid() == forced);
         CHECK(io->config().getAs<UUID>(MediaConfig::Uuid) == forced);
@@ -148,7 +148,7 @@ TEST_CASE("MediaIO::uuid default survives open when config::Uuid is unset") {
         REQUIRE(io != nullptr);
         UUID beforeOpen = io->uuid();
         REQUIRE(beforeOpen.isValid());
-        Error err = io->open(MediaIO::Reader);
+        Error err = io->open(MediaIO::Output);
         REQUIRE(err.isOk());
         CHECK(io->uuid() == beforeOpen);
         CHECK(io->config().getAs<UUID>(MediaConfig::Uuid) == beforeOpen);
@@ -165,7 +165,7 @@ TEST_CASE("MediaIO: reader stamps frames when EnableBenchmark is set") {
         REQUIRE(io != nullptr);
         BenchmarkReporter reporter;
         io->setBenchmarkReporter(&reporter);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         // Read a handful of frames.
         for(int i = 0; i < 5; i++) {
@@ -194,7 +194,7 @@ TEST_CASE("MediaIO: reader does not stamp when EnableBenchmark is false") {
         REQUIRE(io != nullptr);
         BenchmarkReporter reporter;
         io->setBenchmarkReporter(&reporter);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         // Read a bunch of frames; with benchmarking off they should
         // arrive without an attached benchmark and nothing should
@@ -219,7 +219,7 @@ TEST_CASE("MediaIO: non-sink reader stamps but does not submit") {
         BenchmarkReporter reporter;
         io->setBenchmarkReporter(&reporter);
         io->setBenchmarkIsSink(false);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         for(int i = 0; i < 5; i++) {
                 Frame::Ptr frame;
@@ -245,7 +245,7 @@ TEST_CASE("MediaIO::sendParams BenchmarkReport returns the reporter summary") {
         REQUIRE(io != nullptr);
         BenchmarkReporter reporter;
         io->setBenchmarkReporter(&reporter);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         // Generate some stamped frames so the report is non-empty.
         for(int i = 0; i < 3; i++) {
@@ -266,7 +266,7 @@ TEST_CASE("MediaIO::sendParams BenchmarkReport returns the reporter summary") {
 TEST_CASE("MediaIO::sendParams BenchmarkReport returns NotSupported without a reporter") {
         MediaIO *io = makeTpgReader(true);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
         MediaIOParams result;
         Error err = io->sendParams(String("BenchmarkReport"), MediaIOParams(), &result);
         CHECK(err == Error::NotSupported);
@@ -279,7 +279,7 @@ TEST_CASE("MediaIO::sendParams BenchmarkReset clears accumulated statistics") {
         REQUIRE(io != nullptr);
         BenchmarkReporter reporter;
         io->setBenchmarkReporter(&reporter);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         for(int i = 0; i < 4; i++) {
                 Frame::Ptr frame;

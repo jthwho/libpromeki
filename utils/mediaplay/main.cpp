@@ -5,16 +5,17 @@
  * See LICENSE file in the project root folder for license information.
  *
  * General-purpose media pump built on the MediaIO framework.  The CLI
- * is a thin wrapper over `MediaConfig`: one `--in` picks the source
+ * is a thin wrapper over `MediaConfig`: one `--src` picks the source
  * backend, an optional `--convert` stage inserts a
- * `MediaIOTask_Converter` between input and outputs, and any number
- * of `--out` flags register sink backends.  Each stage is configured
- * via repeatable `--ic` / `--cc` / `--oc Key:Value` options
- * whose values are type-coerced against the backend's default config
- * via the Variant type system — see `stage.cpp` for the dispatcher.
+ * `MediaIOTask_Converter` between source and destinations, and any
+ * number of `--dst` flags register sink backends.  Each stage is
+ * configured via repeatable `--sc` / `--cc` / `--dc Key:Value`
+ * options whose values are type-coerced against the backend's
+ * default config via the Variant type system — see `stage.cpp` for
+ * the dispatcher.
  *
  * This file is deliberately thin: it wires the CLI to the stage
- * builders, builds the SDL UI when a `SDL` output is requested,
+ * builders, builds the SDL UI when a `SDL` destination is requested,
  * constructs the Pipeline, runs the event loop, then cleans up.
  * Anything reusable lives in one of the split modules:
  *
@@ -34,6 +35,7 @@
 #include <promeki/frame.h>
 #include <promeki/framerate.h>
 #include <promeki/list.h>
+#include <promeki/logger.h>
 #include <promeki/mediaconfig.h>
 #include <promeki/mediadesc.h>
 #include <promeki/mediaio.h>
@@ -96,23 +98,22 @@ void attachStatsReporter(MediaIO *io, const String &label,
 }
 
 /**
- * @brief Prints one line per stage with the current telemetry snapshot.
+ * @brief Logs one line per stage with the current telemetry snapshot.
  *
- * Called from the main-loop --stats timer.  Delegates formatting to
- * @ref MediaIOStats::toString — everything here is just labeling and
- * I/O — so the rendering stays consistent with any other tool in the
- * library that logs stats.
+ * Called from the --stats timer thread.  Delegates formatting to
+ * @ref MediaIOStats::toString and routes each row through the promeki
+ * logger at Info level so stats are subject to the same routing,
+ * timestamps, and filtering as the rest of the library's output.
  */
 void printStats(const List<StatsSlot> &slots) {
         if(slots.isEmpty()) return;
         for(auto it = slots.begin(); it != slots.end(); ++it) {
                 if(it->io == nullptr) continue;
                 MediaIOStats s = it->io->stats();
-                fprintf(stdout, "[stats] %-16s  %s\n",
+                promekiInfo("[stats] %-16s  %s",
                         it->label.cstr(),
                         s.toString().cstr());
         }
-        fflush(stdout);
 }
 
 } // namespace
@@ -124,21 +125,33 @@ int main(int argc, char **argv) {
                 return 1;
         }
 
+        // If the user asked for any form of live reporting, force the
+        // default logger to at least Info so the rows actually reach
+        // stdout — the user may have an environment variable raising
+        // the default to Warn, and silently eating --stats output is a
+        // lousy user experience.  We only ever *lower* the threshold:
+        // callers who set it to Debug keep Debug.
+        const bool reportingEnabled = (opts.statsInterval > 0.0) || opts.verbose;
+        if(reportingEnabled
+           && Logger::defaultLogger().level() > Logger::LogLevel::Info) {
+                Logger::defaultLogger().setLogLevel(Logger::LogLevel::Info);
+        }
+
         SDLApplication app(argc, argv);
 
-        // --- Default output: SDL when no -o was given ---
-        // If the user didn't pass any -o / --out, auto-add an SDL
+        // --- Default destination: SDL when no -d was given ---
+        // If the user didn't pass any -d / --dst, auto-add an SDL
         // sink so plain `mediaplay` just shows a window.  If they
-        // passed any -o (file or otherwise), we respect their
+        // passed any -d (file or otherwise), we respect their
         // explicit choice and do not inject the default SDL.
-        if(!opts.explicitOut) {
+        if(!opts.explicitDst) {
                 StageSpec sdlSpec;
                 sdlSpec.type = kStageSdl;
-                opts.outputs.pushToBack(sdlSpec);
+                opts.sinks.pushToBack(sdlSpec);
         }
 
         // --- Build source ---
-        MediaIO *source = buildSource(opts.input);
+        MediaIO *source = buildSource(opts.source);
         if(source == nullptr) return 1;
 
         // Stats plumbing.  When --stats is on we attach a
@@ -151,7 +164,7 @@ int main(int argc, char **argv) {
                 attachStatsReporter(source, String("source"), statsSlots);
         }
 
-        Error err = source->open(MediaIO::Reader);
+        Error err = source->open(MediaIO::Output);
         if(err.isError()) {
                 fprintf(stderr, "Error: source open failed: %s\n", err.name().cstr());
                 delete source;
@@ -162,8 +175,8 @@ int main(int argc, char **argv) {
         AudioDesc srcAudioDesc = source->audioDesc();
         FrameRate srcRate = source->frameRate();
         fprintf(stdout, "Source: %s  %s @ %s fps\n",
-                opts.input.type == kStageFile ? opts.input.path.cstr()
-                                              : opts.input.type.cstr(),
+                opts.source.type == kStageFile ? opts.source.path.cstr()
+                                               : opts.source.type.cstr(),
                 srcDesc.imageList().isEmpty() ? "(no video)"
                         : srcDesc.imageList()[0].toString().cstr(),
                 srcRate.toString().cstr());
@@ -190,7 +203,7 @@ int main(int argc, char **argv) {
                         attachStatsReporter(converter, String("converter"),
                                             statsSlots);
                 }
-                err = converter->open(MediaIO::ReadWrite);
+                err = converter->open(MediaIO::InputAndOutput);
                 if(err.isError()) {
                         fprintf(stderr, "Error: Converter open failed: %s\n",
                                 err.name().cstr());
@@ -242,20 +255,20 @@ int main(int argc, char **argv) {
                 return rc;
         };
 
-        for(size_t i = 0; i < opts.outputs.size(); ++i) {
-                StageSpec spec = opts.outputs[i];
+        for(size_t i = 0; i < opts.sinks.size(); ++i) {
+                StageSpec spec = opts.sinks[i];
 
                 if(spec.type == kStageSdl) {
-                        // Apply --oc / --om overrides against the
+                        // Apply --dc / --dm overrides against the
                         // SDL schema so Paced / Audio / WindowSize /
                         // WindowTitle are resolved before we create
                         // widgets.  applyStageConfig uses
                         // sdlDefaultConfig() as the type schema for
                         // kStageSdl stages.
                         spec.config = sdlDefaultConfig();
-                        Error ae = applyStageConfig(spec, String("--oc[SDL]"));
+                        Error ae = applyStageConfig(spec, String("--dc[SDL]"));
                         if(ae.isError()) return cleanupAndFail(1);
-                        Error me = applyStageMetadata(spec, String("--om[SDL]"));
+                        Error me = applyStageMetadata(spec, String("--dm[SDL]"));
                         if(me.isError()) return cleanupAndFail(1);
 
                         const bool  sdlPaced  = spec.config.getAs<bool>(MediaIO::ConfigID("Paced"), true);
@@ -320,7 +333,7 @@ int main(int argc, char **argv) {
                                 attachStatsReporter(player, String("sink:sdl"),
                                                     statsSlots);
                         }
-                        err = player->open(MediaIO::Writer);
+                        err = player->open(MediaIO::Input);
                         if(err.isError()) {
                                 fprintf(stderr, "Error: player open failed: %s\n",
                                         err.name().cstr());
@@ -342,7 +355,7 @@ int main(int argc, char **argv) {
                                             String("sink:") + label,
                                             statsSlots);
                 }
-                err = sinkIO->open(MediaIO::Writer);
+                err = sinkIO->open(MediaIO::Input);
                 if(err.isError()) {
                         fprintf(stderr, "Error: output '%s' open failed: %s\n",
                                 label.cstr(), err.name().cstr());

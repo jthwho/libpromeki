@@ -25,9 +25,9 @@ MediaIO::FormatDesc MediaIOTask_Converter::formatDesc() {
                 "Converter",
                 "Intra-frame media converter (CSC, JPEG encode/decode, audio sample format)",
                 {},     // No file extensions — this is a transform filter
-                false,  // canRead  — pure Reader has no input source
-                false,  // canWrite — pure Writer has no output sink
-                true,   // canReadWrite
+                false,  // canOutput  — pure Reader has no input source
+                false,  // canInput — pure Writer has no output sink
+                true,   // canInputAndOutput
                 []() -> MediaIOTask * {
                         return new MediaIOTask_Converter();
                 },
@@ -50,7 +50,7 @@ MediaIO::FormatDesc MediaIOTask_Converter::formatDesc() {
 MediaIOTask_Converter::~MediaIOTask_Converter() = default;
 
 Error MediaIOTask_Converter::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::ReadWrite) {
+        if(cmd.mode != MediaIO::InputAndOutput) {
                 promekiErr("MediaIOTask_Converter: only ReadWrite mode is supported");
                 return Error::NotSupported;
         }

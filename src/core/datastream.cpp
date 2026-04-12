@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstring>
 #include <promeki/datastream.h>
+#include <promeki/enumlist.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -389,6 +390,25 @@ void DataStream::writeEnumData(const Enum &val) {
         writeStringData(val.toString());
 }
 
+void DataStream::writeEnumListData(const EnumList &val) {
+        // Wire format mirrors the EnumList data model exactly:
+        //   - type name (length-prefixed String)
+        //   - count (tagged uint32)
+        //   - each element as a tagged int32
+        //
+        // Storing each element as a plain integer keeps round-trips
+        // lossless for out-of-list values — toString() would collapse
+        // them to a decimal that then re-parses through fromString(),
+        // but only via the string detour.  The integer form avoids
+        // that round-trip and matches how we serialize primitives.
+        writeStringData(val.elementType().name());
+        *this << static_cast<uint32_t>(val.size());
+        const List<int> &values = val.values();
+        for(size_t i = 0; i < values.size(); ++i) {
+                *this << static_cast<int32_t>(values[i]);
+        }
+}
+
 void DataStream::writeStringListData(const StringList &val) {
         // Use a tagged uint32_t count to match the List/Map/Set convention.
         *this << static_cast<uint32_t>(val.size());
@@ -577,6 +597,33 @@ Enum DataStream::readEnumData() {
                 return Enum();
         }
         return e;
+}
+
+EnumList DataStream::readEnumListData() {
+        String typeName = readStringData();
+        if(_status != Ok) return EnumList();
+        Enum::Type type = Enum::findType(typeName);
+        if(!type.isValid()) {
+                setError(ReadCorruptData,
+                        String("EnumList: unknown type '") + typeName + "'");
+                return EnumList();
+        }
+        uint32_t count = 0;
+        *this >> count;  // tagged read
+        if(_status != Ok) return EnumList();
+        if(count > 256 * 1024 * 1024) {
+                setError(ReadCorruptData,
+                        String("EnumList count exceeds sanity limit"));
+                return EnumList();
+        }
+        EnumList out(type);
+        for(uint32_t i = 0; i < count; ++i) {
+                int32_t v = 0;
+                *this >> v;  // tagged read
+                if(_status != Ok) return EnumList();
+                out.append(static_cast<int>(v));
+        }
+        return out;
 }
 
 StringList DataStream::readStringListData() {
@@ -773,6 +820,12 @@ DataStream &DataStream::operator<<(const Enum &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const EnumList &val) {
+        writeTag(TypeEnumList);
+        writeEnumListData(val);
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const StringList &val) {
         writeTag(TypeStringList);
         writeStringListData(val);
@@ -815,6 +868,7 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypePixelFormat: *this << val.get<PixelFormat>(); break;
                 case Variant::TypePixelDesc:  *this << val.get<PixelDesc>(); break;
                 case Variant::TypeEnum:       *this << val.get<Enum>(); break;
+                case Variant::TypeEnumList:   *this << val.get<EnumList>(); break;
                 default:
                         setError(WriteFailed,
                                 String::sprintf("Variant::write: unknown type %d",
@@ -1011,6 +1065,12 @@ DataStream &DataStream::operator>>(Enum &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(EnumList &val) {
+        if(!readTag(TypeEnumList)) { val = EnumList(); return *this; }
+        val = readEnumListData();
+        return *this;
+}
+
 DataStream &DataStream::operator>>(StringList &val) {
         if(!readTag(TypeStringList)) { val = StringList(); return *this; }
         val = readStringListData();
@@ -1064,6 +1124,7 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypePixelFormat: val = readPixelFormatData(); break;
                 case TypePixelDesc:   val = readPixelDescData(); break;
                 case TypeEnum:        val = readEnumData(); break;
+                case TypeEnumList:    val = readEnumListData(); break;
                 case TypeStringList:  val = readStringListData(); break;
                 default:
                         setError(ReadCorruptData,

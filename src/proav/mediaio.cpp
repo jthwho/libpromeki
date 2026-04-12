@@ -93,7 +93,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         // Pass 1: extension match (fast path)
         if(!ext.isEmpty()) {
                 for(const auto &desc : list) {
-                        if(!desc.canRead) continue;
+                        if(!desc.canOutput) continue;
                         for(const auto &e : desc.extensions) {
                                 if(ext == e) return &desc;
                         }
@@ -105,7 +105,7 @@ static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) 
         if(probeFile.open(IODevice::ReadOnly).isError()) return nullptr;
         const MediaIO::FormatDesc *result = nullptr;
         for(const auto &desc : list) {
-                if(!desc.canRead) continue;
+                if(!desc.canOutput) continue;
                 if(!desc.canHandleDevice) continue;
                 probeFile.seek(0);
                 if(desc.canHandleDevice(&probeFile)) {
@@ -146,6 +146,53 @@ Metadata MediaIO::defaultMetadata(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
         if(desc == nullptr || !desc->defaultMetadata) return Metadata();
         return desc->defaultMetadata();
+}
+
+StringList MediaIO::unknownConfigKeys(const String &typeName,
+                                      const Config &cfg) {
+        // Detection is intentionally spec-driven: pull the backend's
+        // spec map once, and let VariantDatabase::unknownKeys fall back
+        // to the global MediaConfig spec registry for common keys like
+        // Filename / Type / Name / Uuid / EnableBenchmark.  No
+        // task-specific knowledge is hard-coded here — a brand-new
+        // backend gets key validation for free the moment it publishes
+        // a FormatDesc::configSpecs callback.
+        Config::SpecMap specs = configSpecs(typeName);
+        return cfg.unknownKeys(specs);
+}
+
+Error MediaIO::validateConfigKeys(const String &typeName,
+                                  const Config &cfg,
+                                  ConfigValidation mode,
+                                  const String &contextLabel) {
+        StringList unknown = unknownConfigKeys(typeName, cfg);
+        if(unknown.isEmpty()) return Error::Ok;
+
+        // One log line per unknown key so a caller's grep-friendly log
+        // shows each typo individually.  The contextLabel lets the
+        // caller embed its own scope (e.g. "mediaplay: input[TPG]")
+        // without the framework having to know anything about the
+        // caller — MediaIO stays caller-agnostic.
+        const char *modeTag = (mode == ConfigValidation::Strict)
+                ? "rejecting"
+                : "ignoring";
+        for(size_t i = 0; i < unknown.size(); ++i) {
+                if(contextLabel.isEmpty()) {
+                        promekiWarn("MediaIO[%s]: unknown config key '%s' (%s)",
+                                typeName.cstr(),
+                                unknown[i].cstr(),
+                                modeTag);
+                } else {
+                        promekiWarn("%s: MediaIO[%s]: unknown config key '%s' (%s)",
+                                contextLabel.cstr(),
+                                typeName.cstr(),
+                                unknown[i].cstr(),
+                                modeTag);
+                }
+        }
+        return (mode == ConfigValidation::Strict)
+                ? Error::InvalidArgument
+                : Error::Ok;
 }
 
 MediaIO *MediaIO::create(const Config &config, ObjectBase *parent) {
@@ -192,7 +239,7 @@ MediaIO *MediaIO::createForFileRead(const String &filename, ObjectBase *parent) 
                 promekiWarn("MediaIO::createForFileRead: no backend for '%s'", filename.cstr());
                 return nullptr;
         }
-        if(!desc->canRead) {
+        if(!desc->canOutput) {
                 promekiWarn("MediaIO::createForFileRead: '%s' does not support reading", desc->name.cstr());
                 return nullptr;
         }
@@ -217,7 +264,7 @@ MediaIO *MediaIO::createForFileWrite(const String &filename, ObjectBase *parent)
                 promekiWarn("MediaIO::createForFileWrite: no backend for '%s'", filename.cstr());
                 return nullptr;
         }
-        if(!desc->canWrite) {
+        if(!desc->canInput) {
                 promekiWarn("MediaIO::createForFileWrite: '%s' does not support writing", desc->name.cstr());
                 return nullptr;
         }
@@ -381,7 +428,15 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
                         if(s.count < minCount) minCount = s.count;
                 };
 
-                if(_mode == Writer || _mode == ReadWrite) {
+                // The enqueue→dequeue stamp exists only on the sink
+                // path — writeFrame() emits an enqueue stamp from the
+                // user thread right before handing the command to the
+                // strand, which the worker then pairs with a dequeue
+                // stamp.  The source path (readFrame) pulls from the
+                // strand directly and has no equivalent step, so we
+                // only pair this stamp when the MediaIO is accepting
+                // frames.
+                if(_mode == Input || _mode == InputAndOutput) {
                         addPair(_idStampEnqueue,   _idStampDequeue);
                 }
                 addPair(_idStampDequeue,   _idStampTaskBegin);
@@ -657,7 +712,7 @@ Error MediaIO::open(Mode mode) {
         // the free-standing pending metadata and the media descriptor's
         // own metadata, so writer backends see the same information
         // regardless of which path they read from.
-        if(mode == Writer || mode == ReadWrite) {
+        if(mode == Output || mode == InputAndOutput) {
                 _pendingMetadata.applyMediaIOWriteDefaults();
                 _pendingMediaDesc.metadata().applyMediaIOWriteDefaults();
         }
@@ -800,7 +855,10 @@ int MediaIO::pendingWrites() const {
 
 Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
         if(!isOpen()) return Error::NotOpen;
-        if(_mode != Reader && _mode != ReadWrite) return Error::NotSupported;
+        // readFrame() pulls a frame out of the MediaIO — the caller is
+        // consuming the backend's output, so the backend must have
+        // been opened in Output (source) or InputAndOutput mode.
+        if(_mode != Output && _mode != InputAndOutput) return Error::NotSupported;
 
         // Once EOF has been hit, every subsequent read returns EOF
         // without going down to the backend.  Cleared on seek/close.
@@ -886,7 +944,10 @@ size_t MediaIO::cancelPending() {
 
 Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         if(!isOpen()) return Error::NotOpen;
-        if(_mode != Writer && _mode != ReadWrite) return Error::NotSupported;
+        // writeFrame() pushes a frame into the MediaIO — the caller is
+        // feeding the backend, so the backend must have been opened in
+        // Input (sink) or InputAndOutput mode.
+        if(_mode != Input && _mode != InputAndOutput) return Error::NotSupported;
 
         auto *cmdWrite = new MediaIOCommandWrite();
         cmdWrite->frame = frame;

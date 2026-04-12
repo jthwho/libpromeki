@@ -82,12 +82,18 @@ TEST_CASE("ImageDesc_SetLineAlign") {
     CHECK(desc.lineAlign() == 16);
 }
 
-TEST_CASE("ImageDesc_SetInterlaced") {
+TEST_CASE("ImageDesc_SetInterlaceMode") {
     ImageDesc desc;
-    CHECK(desc.interlaced() == false);
+    CHECK(desc.interlaceMode() == InterlaceMode::Unknown);
 
-    desc.setInterlaced(true);
-    CHECK(desc.interlaced() == true);
+    desc.setInterlaceMode(InterlaceMode::Progressive);
+    CHECK(desc.interlaceMode() == InterlaceMode::Progressive);
+
+    desc.setInterlaceMode(InterlaceMode::InterlacedEvenFirst);
+    CHECK(desc.interlaceMode() == InterlaceMode::InterlacedEvenFirst);
+
+    desc.setInterlaceMode(InterlaceMode::InterlacedOddFirst);
+    CHECK(desc.interlaceMode() == InterlaceMode::InterlacedOddFirst);
 }
 
 // ============================================================================

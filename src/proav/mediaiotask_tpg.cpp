@@ -27,9 +27,9 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                 "TPG",
                 "Video/audio/timecode test pattern generator",
                 {},     // No file extensions — this is a generator
-                true,   // canRead
-                false,  // canWrite
-                false,  // canReadWrite
+                true,   // canOutput
+                false,  // canInput
+                false,  // canInputAndOutput
                 []() -> MediaIOTask * {
                         return new MediaIOTask_TPG();
                 },
@@ -63,17 +63,33 @@ MediaIO::FormatDesc MediaIOTask_TPG::formatDesc() {
                         s(MediaConfig::VideoBurnBgColor, Color::Black);
                         s(MediaConfig::VideoBurnDrawBg, true);
                         // Audio — enabled by default, defaulting to
-                        // the AvSync pattern so the plain TPG stream
-                        // emits a per-frame A/V sync marker that pairs
-                        // with the video AvSync pattern and the burn.
+                        // LTC on ch0 and an AvSync click marker on
+                        // ch1 so the plain TPG stream emits both a
+                        // decodable timecode reference and a
+                        // per-second click that pairs with the video
+                        // AvSync pattern and the burn.  The channel
+                        // list is interpreted positionally: extra
+                        // channels beyond the list are silenced.
+                        EnumList defaultAudioModes = EnumList::forType<AudioPattern>();
+                        defaultAudioModes.append(AudioPattern::LTC);
+                        defaultAudioModes.append(AudioPattern::AvSync);
                         s(MediaConfig::AudioEnabled, true);
-                        s(MediaConfig::AudioMode, AudioPattern::AvSync);
+                        s(MediaConfig::AudioChannelModes, defaultAudioModes);
                         s(MediaConfig::AudioRate, 48000.0f);
                         s(MediaConfig::AudioChannels, int32_t(2));
                         s(MediaConfig::AudioToneFrequency, 1000.0);
                         s(MediaConfig::AudioToneLevel, -20.0);
                         s(MediaConfig::AudioLtcLevel, -20.0);
-                        s(MediaConfig::AudioLtcChannel, int32_t(0));
+                        s(MediaConfig::AudioChannelIdBaseFreq, 1000.0);
+                        s(MediaConfig::AudioChannelIdStepFreq, 100.0);
+                        s(MediaConfig::AudioChirpStartFreq,    20.0);
+                        s(MediaConfig::AudioChirpEndFreq,      20000.0);
+                        s(MediaConfig::AudioChirpDurationSec,  1.0);
+                        s(MediaConfig::AudioDualToneFreq1,     60.0);
+                        s(MediaConfig::AudioDualToneFreq2,     7000.0);
+                        s(MediaConfig::AudioDualToneRatio,     0.25);
+                        s(MediaConfig::AudioNoiseBufferSec,    10.0);
+                        s(MediaConfig::AudioNoiseSeed,         uint32_t(0x505244A4u));
                         // Timecode
                         s(MediaConfig::TimecodeEnabled, true);
                         s(MediaConfig::TimecodeStart, String("01:00:00:00"));
@@ -109,7 +125,7 @@ MediaIOTask_TPG::~MediaIOTask_TPG() {
 }
 
 Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
-        if(cmd.mode != MediaIO::Reader) return Error::NotSupported;
+        if(cmd.mode != MediaIO::Output) return Error::NotSupported;
 
         const MediaIO::Config &cfg = cmd.config;
 
@@ -221,28 +237,52 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandOpen &cmd) {
                 delete _audioPattern;
                 _audioPattern = new AudioTestPattern(_audioDesc);
 
-                Error modeErr;
-                Enum audioModeEnum = cfg.get(MediaConfig::AudioMode)
-                                         .asEnum(AudioPattern::Type, &modeErr);
-                if(modeErr.isError() || !audioModeEnum.hasListedValue()) {
-                        promekiErr("MediaIOTask_TPG: unknown audio mode '%s'",
-                                   cfg.get(MediaConfig::AudioMode).get<String>().cstr());
+                // Pull the per-channel mode list.  Fall back to a
+                // silent list when the config is missing so at least
+                // open() succeeds — the user gets an all-silent audio
+                // stream rather than a hard failure.
+                EnumList channelModes =
+                        cfg.get(MediaConfig::AudioChannelModes).get<EnumList>();
+                if(!channelModes.isValid()) {
+                        channelModes = EnumList::forType<AudioPattern>();
+                }
+                if(channelModes.elementType() != AudioPattern::Type) {
+                        promekiErr("MediaIOTask_TPG: AudioChannelModes has wrong "
+                                "element type");
                         delete _audioPattern;
                         _audioPattern = nullptr;
                         return Error::InvalidArgument;
                 }
-                _audioPattern->setMode(
-                        static_cast<AudioTestPattern::Mode>(audioModeEnum.value()));
+                _audioPattern->setChannelModes(channelModes);
 
-                double toneFreq = cfg.getAs<double>(MediaConfig::AudioToneFrequency, 1000.0);
-                double toneLevel = cfg.getAs<double>(MediaConfig::AudioToneLevel, -20.0);
-                double ltcLevel = cfg.getAs<double>(MediaConfig::AudioLtcLevel, -20.0);
-                int ltcChannel = cfg.getAs<int>(MediaConfig::AudioLtcChannel, 0);
+                double toneFreq   = cfg.getAs<double>(MediaConfig::AudioToneFrequency, 1000.0);
+                double toneLevel  = cfg.getAs<double>(MediaConfig::AudioToneLevel, -20.0);
+                double ltcLevel   = cfg.getAs<double>(MediaConfig::AudioLtcLevel, -20.0);
+                double chanBase   = cfg.getAs<double>(MediaConfig::AudioChannelIdBaseFreq, 1000.0);
+                double chanStep   = cfg.getAs<double>(MediaConfig::AudioChannelIdStepFreq, 100.0);
+                double chirpStart = cfg.getAs<double>(MediaConfig::AudioChirpStartFreq, 20.0);
+                double chirpEnd   = cfg.getAs<double>(MediaConfig::AudioChirpEndFreq, 20000.0);
+                double chirpDur   = cfg.getAs<double>(MediaConfig::AudioChirpDurationSec, 1.0);
+                double dt1        = cfg.getAs<double>(MediaConfig::AudioDualToneFreq1, 60.0);
+                double dt2        = cfg.getAs<double>(MediaConfig::AudioDualToneFreq2, 7000.0);
+                double dtRatio    = cfg.getAs<double>(MediaConfig::AudioDualToneRatio, 0.25);
+                double noiseSec   = cfg.getAs<double>(MediaConfig::AudioNoiseBufferSec, 1.0);
+                uint32_t noiseSeed =
+                        cfg.getAs<uint32_t>(MediaConfig::AudioNoiseSeed, uint32_t(0x505244A4u));
 
                 _audioPattern->setToneFrequency(toneFreq);
                 _audioPattern->setToneLevel(AudioLevel::fromDbfs(toneLevel));
                 _audioPattern->setLtcLevel(AudioLevel::fromDbfs(ltcLevel));
-                _audioPattern->setLtcChannel(ltcChannel);
+                _audioPattern->setChannelIdBaseFreq(chanBase);
+                _audioPattern->setChannelIdStepFreq(chanStep);
+                _audioPattern->setChirpStartFreq(chirpStart);
+                _audioPattern->setChirpEndFreq(chirpEnd);
+                _audioPattern->setChirpDurationSec(chirpDur);
+                _audioPattern->setDualToneFreq1(dt1);
+                _audioPattern->setDualToneFreq2(dt2);
+                _audioPattern->setDualToneRatio(dtRatio);
+                _audioPattern->setNoiseBufferSeconds(noiseSec);
+                _audioPattern->setNoiseSeed(noiseSeed);
                 _audioPattern->configure();
         }
 

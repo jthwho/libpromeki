@@ -57,12 +57,21 @@ class BenchmarkReporter;
 // defined before MediaIO without circular dependencies.
 // ============================================================================
 
-/** @brief Open mode for a media resource. */
+/**
+ * @brief Open direction for a media resource.
+ *
+ * @c Input and @c Output describe the role of the @ref MediaIO
+ * itself, not the pipeline around it:
+ *  - @c MediaIO_Input  — the backend @em accepts frames from the
+ *                        caller (it is a sink).
+ *  - @c MediaIO_Output — the backend @em provides frames to the
+ *                        caller (it is a source).
+ */
 enum MediaIOMode {
-        MediaIO_NotOpen = 0, ///< @brief Resource is not open.
-        MediaIO_Reader,      ///< @brief Open for reading.
-        MediaIO_Writer,      ///< @brief Open for writing.
-        MediaIO_ReadWrite    ///< @brief Open for both reading and writing.
+        MediaIO_NotOpen = 0,        ///< @brief Resource is not open.
+        MediaIO_Output,             ///< @brief Open as an output — provides frames to the caller (source).
+        MediaIO_Input,              ///< @brief Open as an input — accepts frames from the caller (sink).
+        MediaIO_InputAndOutput      ///< @brief Open as both — consumes and emits frames in the same instance.
 };
 
 /**
@@ -467,13 +476,13 @@ class MediaIOCommandStats : public MediaIOCommand {
 class MediaIO : public ObjectBase {
         PROMEKI_OBJECT(MediaIO, ObjectBase)
         public:
-                /** @brief Open mode (alias for MediaIOMode). */
+                /** @brief Open direction (alias for MediaIOMode). */
                 using Mode = MediaIOMode;
 
-                static constexpr Mode NotOpen   = MediaIO_NotOpen;
-                static constexpr Mode Reader    = MediaIO_Reader;
-                static constexpr Mode Writer    = MediaIO_Writer;
-                static constexpr Mode ReadWrite = MediaIO_ReadWrite;
+                static constexpr Mode NotOpen        = MediaIO_NotOpen;
+                static constexpr Mode Output         = MediaIO_Output;          ///< @brief Backend provides frames (source).
+                static constexpr Mode Input          = MediaIO_Input;           ///< @brief Backend accepts frames (sink).
+                static constexpr Mode InputAndOutput = MediaIO_InputAndOutput;  ///< @brief Backend does both (converter / passthrough).
 
                 /** @brief Seek mode (alias for MediaIOSeekMode). */
                 using SeekMode = MediaIOSeekMode;
@@ -558,9 +567,9 @@ class MediaIO : public ObjectBase {
                         String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
                         String              description;     ///< @brief Human-readable description.
                         StringList          extensions;      ///< @brief Supported file extensions (no dots).
-                        bool                canRead;         ///< @brief Whether the backend supports reading.
-                        bool                canWrite;        ///< @brief Whether the backend supports writing.
-                        bool                canReadWrite;    ///< @brief Whether the backend supports bidirectional mode.
+                        bool                canOutput;         ///< @brief Whether the backend can provide frames (source mode).
+                        bool                canInput;          ///< @brief Whether the backend can accept frames (sink mode).
+                        bool                canInputAndOutput; ///< @brief Whether the backend supports combined Input+Output mode.
                         CreateFunc          create;          ///< @brief Backend factory.
                         ConfigSpecFunc      configSpecs;     ///< @brief Backend config specs provider.
                         DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
@@ -624,6 +633,83 @@ class MediaIO : public ObjectBase {
                  * @return A @ref Metadata listing the honored keys.
                  */
                 static Metadata defaultMetadata(const String &typeName);
+
+                /**
+                 * @brief Policy for @ref validateConfigKeys.
+                 *
+                 * Controls what @ref validateConfigKeys does when it
+                 * finds a config key that has no spec registered —
+                 * either in the named backend's spec map or in the
+                 * global @ref MediaConfig spec registry.  The detection
+                 * logic itself (@ref unknownConfigKeys) is unaffected
+                 * by this enum.
+                 */
+                enum class ConfigValidation {
+                        Lenient, ///< @brief Log each unknown key as a warning and return @c Error::Ok.
+                        Strict   ///< @brief Log each unknown key as a warning and return @c Error::InvalidArgument.
+                };
+
+                /**
+                 * @brief Returns the names of config keys in @p cfg that are
+                 *        not recognized by the backend or the global registry.
+                 *
+                 * Walks @p cfg's stored keys and filters out any that have
+                 * a @ref VariantSpec — either in the backend's
+                 * @c configSpecs map or in the global @ref MediaConfig
+                 * spec registry.  The result is the set of leftover key
+                 * names, sorted lexicographically for stable logging.
+                 *
+                 * This is the pure detection primitive.  Callers that
+                 * want a ready-made error policy should use
+                 * @ref validateConfigKeys instead.  Zero task-specific
+                 * knowledge — the check is driven entirely by
+                 * registered specs.
+                 *
+                 * @param typeName The registered backend name.  When the
+                 *                 backend is unknown or has no spec map,
+                 *                 only the global registry is consulted.
+                 * @param cfg      The configuration to check.
+                 * @return The sorted list of unrecognized key names; an
+                 *         empty list when every key is recognized.
+                 */
+                static StringList unknownConfigKeys(const String &typeName,
+                                                    const Config &cfg);
+
+                /**
+                 * @brief Validates a config's key set against the registered specs.
+                 *
+                 * Calls @ref unknownConfigKeys and then applies the error
+                 * policy selected by @p mode:
+                 *  - @ref ConfigValidation::Lenient "Lenient" — emit a
+                 *    warning for each unknown key and return
+                 *    @c Error::Ok.  Used when typos should be visible
+                 *    but not fatal (e.g. an interactive REPL or a
+                 *    long-running service that accepts loose config).
+                 *  - @ref ConfigValidation::Strict "Strict" — emit a
+                 *    warning for each unknown key and return
+                 *    @c Error::InvalidArgument.  Used when callers want
+                 *    a typo to fail the open immediately (e.g. a CLI
+                 *    tool where a misspelled key almost certainly means
+                 *    the user got something wrong).
+                 *
+                 * Warnings are emitted via @c promekiWarn and include the
+                 * optional @p contextLabel so callers can make each line
+                 * self-identifying (e.g. @c "mediaplay: input[TPG]") —
+                 * the framework never embeds caller-specific strings on
+                 * its own.
+                 *
+                 * @param typeName     The registered backend name.
+                 * @param cfg          The configuration to check.
+                 * @param mode         The error policy to apply.
+                 * @param contextLabel Optional prefix for log messages.
+                 * @return @c Error::Ok or @c Error::InvalidArgument per
+                 *         @p mode.  Always @c Error::Ok when there are
+                 *         no unknown keys.
+                 */
+                static Error validateConfigKeys(const String &typeName,
+                                                const Config &cfg,
+                                                ConfigValidation mode,
+                                                const String &contextLabel = String());
 
                 /**
                  * @brief Creates a MediaIO instance from a configuration.
@@ -920,7 +1006,7 @@ class MediaIO : public ObjectBase {
                  * until it completes.  On success, copies descriptor and
                  * navigation state from the command into the cache.
                  *
-                 * @param mode Reader, Writer, or ReadWrite.
+                 * @param mode Input, Output, or InputAndOutput.
                  * @return Error::Ok on success, or an error.
                  */
                 Error open(Mode mode);

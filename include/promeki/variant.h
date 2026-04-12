@@ -29,6 +29,7 @@
 #include <promeki/pixelformat.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/enum.h>
+#include <promeki/enumlist.h>
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
@@ -80,6 +81,7 @@ PROMEKI_NAMESPACE_BEGIN
  * | TypePixelFormat | `PixelFormat`     |
  * | TypePixelDesc | `PixelDesc`         |
  * | TypeEnum      | `Enum`              |
+ * | TypeEnumList  | `EnumList`          |
  *
  * When @c PROMEKI_ENABLE_NETWORK is true, the following types are also available:
  *
@@ -125,6 +127,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypePixelFormat, PixelFormat) \
         X(TypePixelDesc, PixelDesc)     \
         X(TypeEnum, Enum)               \
+        X(TypeEnumList, EnumList)       \
         PROMEKI_VARIANT_TYPES_NETWORK
 
 namespace detail {
@@ -385,6 +388,15 @@ template <typename... Types> class VariantImpl {
                                                 return ret;
                                         }
 
+                                } else if constexpr (std::is_same_v<To, EnumList>) {
+                                        // EnumList can only be built from a String when the
+                                        // target element type is known — which the Variant
+                                        // layer does not know on its own.  Leave String->EnumList
+                                        // to VariantSpec::parseString (which has the spec's
+                                        // enumType in scope); here we only accept an explicit
+                                        // EnumList value that is already in the Variant.
+                                        (void)arg;
+
                                 } else if constexpr (std::is_same_v<To, String>) {
                                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -409,6 +421,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, Color>) return arg.toString();
                                         if constexpr (detail::is_type_registry_v<From>) return arg.name();
                                         if constexpr (std::is_same_v<From, Enum>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, EnumList>) return arg.toString();
 #if PROMEKI_ENABLE_NETWORK
                                         if constexpr (std::is_same_v<From, SocketAddress>) return arg.toString();
                                         if constexpr (std::is_same_v<From, SdpSession>) return arg.toString();
@@ -490,6 +503,7 @@ template <typename... Types> class VariantImpl {
                                 case TypePixelFormat:
                                 case TypePixelDesc:
                                 case TypeEnum:
+                                case TypeEnumList:
 #if PROMEKI_ENABLE_NETWORK
                                 case TypeSocketAddress:
                                 case TypeSdpSession:

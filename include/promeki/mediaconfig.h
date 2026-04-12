@@ -10,6 +10,7 @@
 #include <promeki/namespace.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/enums.h>
+#include <promeki/enumlist.h>
 #include <promeki/uuid.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -258,19 +259,22 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // Audio test pattern generator
                 // ============================================================
 
-                /// @brief Enum @ref AudioPattern — selected audio mode.
-                static inline const ID AudioMode = declareID("AudioMode",
-                        VariantSpec().setType(Variant::TypeEnum)
-                                .setDefault(AudioPattern::Tone)
+                /// @brief EnumList @ref AudioPattern — per-channel test
+                ///        patterns.  Channels beyond the end of the
+                ///        list are silenced.
+                static inline const ID AudioChannelModes = declareID("AudioChannelModes",
+                        VariantSpec().setType(Variant::TypeEnumList)
+                                .setDefault(EnumList::forType<AudioPattern>())
                                 .setEnumType(AudioPattern::Type)
-                                .setDescription("Selected audio test pattern."));
+                                .setDescription("Comma-separated list of per-channel audio test "
+                                        "patterns (extra channels silenced)."));
 
-                /// @brief double — tone frequency in Hz.
+                /// @brief double — tone frequency in Hz (used by Tone / AvSync).
                 static inline const ID AudioToneFrequency = declareID("AudioToneFrequency",
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(1000.0)
                                 .setMin(0.0)
-                                .setDescription("Tone frequency in Hz."));
+                                .setDescription("Tone frequency in Hz (Tone / AvSync channels)."));
 
                 /// @brief double — tone level in dBFS.
                 static inline const ID AudioToneLevel = declareID("AudioToneLevel",
@@ -286,12 +290,77 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setMax(0.0)
                                 .setDescription("LTC burn-in level in dBFS."));
 
-                /// @brief int — LTC channel index (-1 = all).
-                static inline const ID AudioLtcChannel = declareID("AudioLtcChannel",
-                        VariantSpec().setType(Variant::TypeS32)
-                                .setDefault(int32_t(-1))
-                                .setMin(int32_t(-1))
-                                .setDescription("LTC channel index (-1 = all)."));
+                /// @brief double — ChannelId base frequency in Hz.
+                ///        Channel @em N carries a sine at
+                ///        `base + N * step`.
+                static inline const ID AudioChannelIdBaseFreq = declareID("AudioChannelIdBaseFreq",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(1000.0)
+                                .setMin(0.0)
+                                .setDescription("ChannelId base tone frequency in Hz."));
+
+                /// @brief double — ChannelId per-channel step in Hz.
+                static inline const ID AudioChannelIdStepFreq = declareID("AudioChannelIdStepFreq",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(100.0)
+                                .setMin(0.0)
+                                .setDescription("ChannelId per-channel tone step in Hz."));
+
+                /// @brief double — Chirp sweep start frequency in Hz.
+                static inline const ID AudioChirpStartFreq = declareID("AudioChirpStartFreq",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(20.0)
+                                .setMin(0.0)
+                                .setDescription("Chirp log-sweep start frequency in Hz."));
+
+                /// @brief double — Chirp sweep end frequency in Hz.
+                static inline const ID AudioChirpEndFreq = declareID("AudioChirpEndFreq",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(20000.0)
+                                .setMin(0.0)
+                                .setDescription("Chirp log-sweep end frequency in Hz."));
+
+                /// @brief double — Chirp sweep period in seconds.
+                static inline const ID AudioChirpDurationSec = declareID("AudioChirpDurationSec",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(1.0)
+                                .setMin(0.0)
+                                .setDescription("Chirp log-sweep period in seconds."));
+
+                /// @brief double — DualTone low-side frequency in Hz.
+                static inline const ID AudioDualToneFreq1 = declareID("AudioDualToneFreq1",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(60.0)
+                                .setMin(0.0)
+                                .setDescription("DualTone low-side frequency in Hz (SMPTE IMD default 60 Hz)."));
+
+                /// @brief double — DualTone high-side frequency in Hz.
+                static inline const ID AudioDualToneFreq2 = declareID("AudioDualToneFreq2",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(7000.0)
+                                .setMin(0.0)
+                                .setDescription("DualTone high-side frequency in Hz (SMPTE IMD default 7 kHz)."));
+
+                /// @brief double — DualTone amplitude ratio freq2 / freq1.
+                static inline const ID AudioDualToneRatio = declareID("AudioDualToneRatio",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.25)
+                                .setMin(0.0)
+                                .setDescription("DualTone amplitude ratio of freq2 to freq1 "
+                                        "(SMPTE IMD default 0.25 = 4:1)."));
+
+                /// @brief double — WhiteNoise / PinkNoise buffer length in seconds.
+                static inline const ID AudioNoiseBufferSec = declareID("AudioNoiseBufferSec",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(10.0)
+                                .setMin(0.0)
+                                .setDescription("WhiteNoise / PinkNoise cached buffer length in seconds."));
+
+                /// @brief uint32 — PRNG seed used to build the noise buffers.
+                static inline const ID AudioNoiseSeed = declareID("AudioNoiseSeed",
+                        VariantSpec().setType(Variant::TypeU32)
+                                .setDefault(uint32_t(0x505244A4u))
+                                .setDescription("WhiteNoise / PinkNoise PRNG seed."));
 
                 // ============================================================
                 // Timecode

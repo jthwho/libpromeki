@@ -437,45 +437,40 @@ TEST_CASE("VariantSpec_ParseString_NoType") {
 }
 
 // ============================================================================
-// writeHelp
+// detailsString / description
 // ============================================================================
 
-TEST_CASE("VariantSpec_WriteHelp") {
+TEST_CASE("VariantSpec_DetailsString") {
     VariantSpec s = VariantSpec()
         .setType(Variant::TypeS32)
         .setDefault(85)
         .setRange(1, 100)
         .setDescription("JPEG quality 1-100.");
 
-    Buffer buf;
-    TextStream ts(&buf);
-    s.writeHelp(ts, "JpegQuality");
-    ts.flush();
-    String output(static_cast<const char *>(buf.data()), buf.size());
+    String details = s.detailsString();
+    // Details column packs the type, range, and default into a
+    // compact form the caller can line up in its own column.
+    CHECK(details.contains("int"));
+    CHECK(details.contains("1 - 100"));
+    CHECK(details.contains("def: 85"));
 
-    CHECK(output.contains("JpegQuality"));
-    CHECK(output.contains("int"));
-    CHECK(output.contains("1 - 100"));
-    CHECK(output.contains("default: 85"));
-    CHECK(output.contains("JPEG quality"));
+    // Description stays on VariantSpec — callers render it as the
+    // third help column.
+    CHECK(s.description() == "JPEG quality 1-100.");
 }
 
-TEST_CASE("VariantSpec_WriteHelp_Enum") {
+TEST_CASE("VariantSpec_DetailsString_Enum") {
     VariantSpec s = VariantSpec()
         .setType(Variant::TypeEnum)
         .setDefault(VideoPattern::ColorBars)
         .setEnumType(VideoPattern::Type)
         .setDescription("Selected test pattern.");
 
-    Buffer buf;
-    TextStream ts(&buf);
-    s.writeHelp(ts, "VideoPattern");
-    ts.flush();
-    String output(static_cast<const char *>(buf.data()), buf.size());
+    String details = s.detailsString();
+    CHECK(details.contains("Enum VideoPattern"));
+    CHECK(details.contains("def: ColorBars"));
+    // Enum values should not be listed inside the details column.
+    CHECK(!details.contains("Values:"));
 
-    CHECK(output.contains("Enum VideoPattern"));
-    CHECK(output.contains("default: ColorBars"));
-    CHECK(output.contains("Selected test pattern."));
-    // Enum values should NOT be listed in default help output
-    CHECK(!output.contains("Values:"));
+    CHECK(s.description() == "Selected test pattern.");
 }

@@ -75,9 +75,9 @@ TEST_CASE("MediaIOTask_Converter_Registry") {
         bool found = false;
         for(const auto &desc : formats) {
                 if(desc.name == "Converter") {
-                        CHECK_FALSE(desc.canRead);
-                        CHECK_FALSE(desc.canWrite);
-                        CHECK(desc.canReadWrite);
+                        CHECK_FALSE(desc.canOutput);
+                        CHECK_FALSE(desc.canInput);
+                        CHECK(desc.canInputAndOutput);
                         CHECK(desc.extensions.isEmpty());
                         found = true;
                         break;
@@ -114,7 +114,7 @@ TEST_CASE("MediaIOTask_Converter_RejectsReaderMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Reader).isError());
+        CHECK(io->open(MediaIO::Output).isError());
         CHECK_FALSE(io->isOpen());
         delete io;
 }
@@ -123,7 +123,7 @@ TEST_CASE("MediaIOTask_Converter_RejectsWriterMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::Writer).isError());
+        CHECK(io->open(MediaIO::Input).isError());
         CHECK_FALSE(io->isOpen());
         delete io;
 }
@@ -132,9 +132,9 @@ TEST_CASE("MediaIOTask_Converter_AcceptsReadWriteMode") {
         MediaIO::Config cfg = MediaIO::defaultConfig("Converter");
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
         CHECK(io->isOpen());
-        CHECK(io->mode() == MediaIO::ReadWrite);
+        CHECK(io->mode() == MediaIO::InputAndOutput);
         io->close();
         delete io;
 }
@@ -148,7 +148,7 @@ TEST_CASE("MediaIOTask_Converter_PassThroughVideo") {
         // Leave output pixel desc invalid -> pass-through
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         Frame::Ptr in = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB, 0x42);
         CHECK(io->writeFrame(in).isOk());
@@ -172,7 +172,7 @@ TEST_CASE("MediaIOTask_Converter_CSC_Rgb8ToRgba8") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         // Verify computed output mediaDesc reflects the conversion
         // (Converter was opened with an empty pendingMediaDesc, so the
@@ -209,7 +209,7 @@ TEST_CASE("MediaIOTask_Converter_OutputMediaDesc") {
                 ImageDesc(Size2Du32(640, 480), PixelDesc(PixelDesc::RGB8_sRGB)));
         io->setMediaDesc(pending);
 
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         MediaDesc vd = io->mediaDesc();
         REQUIRE(vd.imageList().size() == 1);
@@ -236,7 +236,7 @@ TEST_CASE("MediaIOTask_Converter_JpegEncodeDecode") {
                         converterConfig(PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+                REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
                 Frame::Ptr in = makeRgbFrame(W, H, PixelDesc::RGB8_sRGB, 0x80);
                 CHECK(io->writeFrame(in).isOk());
@@ -262,7 +262,7 @@ TEST_CASE("MediaIOTask_Converter_JpegEncodeDecode") {
                                 converterConfig(PixelDesc(PixelDesc::JPEG_RGB8_sRGB));
                         MediaIO *io = MediaIO::create(enc);
                         REQUIRE(io != nullptr);
-                        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+                        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
                         Frame::Ptr in = makeRgbFrame(W, H, PixelDesc::RGB8_sRGB, 0x80);
                         REQUIRE(io->writeFrame(in).isOk());
                         REQUIRE(io->readFrame(jpegFrame).isOk());
@@ -277,7 +277,7 @@ TEST_CASE("MediaIOTask_Converter_JpegEncodeDecode") {
                         converterConfig(PixelDesc(PixelDesc::RGB8_sRGB));
                 MediaIO *io = MediaIO::create(dec);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+                REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
                 CHECK(io->writeFrame(jpegFrame).isOk());
 
@@ -307,7 +307,7 @@ TEST_CASE("MediaIOTask_Converter_AudioFormatConversion") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         Frame::Ptr in = makeAudioFrame(AudioDesc::PCMI_Float32LE, 48000.0f, 2, 1024);
         CHECK(io->writeFrame(in).isOk());
@@ -334,7 +334,7 @@ TEST_CASE("MediaIOTask_Converter_UnknownAudioDataTypeRejected") {
                 String("NotARealFormat"));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::ReadWrite).isError());
+        CHECK(io->open(MediaIO::InputAndOutput).isError());
         delete io;
 }
 
@@ -345,7 +345,7 @@ TEST_CASE("MediaIOTask_Converter_UnknownJpegSubsamplingRejected") {
         cfg.set(MediaConfig::JpegSubsampling, String("YUV777"));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        CHECK(io->open(MediaIO::ReadWrite).isError());
+        CHECK(io->open(MediaIO::InputAndOutput).isError());
         delete io;
 }
 
@@ -359,7 +359,7 @@ TEST_CASE("MediaIOTask_Converter_WriteBackPressure") {
 
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         Frame::Ptr f = makeRgbFrame(8, 8, PixelDesc::RGB8_sRGB, 0x22);
         CHECK(io->writeFrame(f).isOk());   // queue depth 1
@@ -384,7 +384,7 @@ TEST_CASE("MediaIOTask_Converter_ReadEmptyQueueTryAgain") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         Frame::Ptr out;
         CHECK(io->readFrame(out, /*block=*/false) == Error::TryAgain);
@@ -401,7 +401,7 @@ TEST_CASE("MediaIOTask_Converter_Stats") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         Frame::Ptr f = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB, 0x55);
         CHECK(io->writeFrame(f).isOk());
@@ -428,7 +428,7 @@ TEST_CASE("MediaIOTask_Converter_ReopenAfterClose") {
         MediaIO::Config cfg = converterConfig(PixelDesc(PixelDesc::RGBA8_sRGB));
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         // Write a frame into the first session and leave it pending in
         // the Converter's output FIFO.
@@ -444,7 +444,7 @@ TEST_CASE("MediaIOTask_Converter_ReopenAfterClose") {
         // The backend must fully reset its output queue on close — a
         // fresh open must not surface the frame that was queued during
         // the previous session.
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
         CHECK(io->writeFrame(f).isOk());
         Frame::Ptr out;
         CHECK(io->readFrame(out).isOk());
@@ -465,7 +465,7 @@ TEST_CASE("MediaIOTask_Converter_PendingWritesNonBlocking") {
         cfg.set(MediaConfig::Capacity, 8);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::ReadWrite).isOk());
+        REQUIRE(io->open(MediaIO::InputAndOutput).isOk());
 
         Frame::Ptr f = makeRgbFrame(16, 16, PixelDesc::RGB8_sRGB, 0x33);
 

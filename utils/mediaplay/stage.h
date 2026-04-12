@@ -101,9 +101,21 @@ const char *sdlDescription();
 /** @brief Dumps every registered MediaIO backend and exits. */
 [[noreturn]] void listMediaIOBackendsAndExit();
 
-/** @brief Prints every value of an Enum::Type and exits. */
+/**
+ * @brief Prints every value of an Enum::Type and exits.
+ *
+ * @param keyLabel   Fully-qualified label to print as the header
+ *                   (e.g. @c "--sc[TPG].VideoPattern").
+ * @param type       The enum type whose values should be listed.
+ * @param isEnumList When @c true the header is labelled
+ *                   @c "EnumList <Type>" instead of @c "Enum <Type>"
+ *                   and a comma-separated usage hint is appended
+ *                   after the value list.  Pass @c true for keys
+ *                   whose spec type is @c Variant::TypeEnumList.
+ */
 [[noreturn]] void listEnumTypeAndExit(const promeki::String &keyLabel,
-                                      promeki::Enum::Type type);
+                                      promeki::Enum::Type type,
+                                      bool isEnumList = false);
 
 /** @brief Prints every registered PixelDesc and exits. */
 [[noreturn]] void listPixelFormatsAndExit(const promeki::String &keyLabel);

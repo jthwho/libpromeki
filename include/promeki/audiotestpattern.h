@@ -7,13 +7,17 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include <promeki/namespace.h>
 #include <promeki/string.h>
 #include <promeki/error.h>
-#include <promeki/result.h>
 #include <promeki/audiolevel.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audio.h>
+#include <promeki/enumlist.h>
+#include <promeki/enums.h>
+#include <promeki/list.h>
 #include <promeki/map.h>
 
 PROMEKI_NAMESPACE_BEGIN
@@ -23,43 +27,61 @@ class LtcEncoder;
 class Timecode;
 
 /**
- * @brief Standalone audio test pattern generator.
+ * @brief Multi-channel audio test pattern generator.
  * @ingroup proav
  *
- * Generates audio test patterns including sine tones, silence, and LTC.
- * Supports dual-mode: create a new Audio buffer or render into an existing one.
+ * Generates audio test patterns with per-channel pattern assignment.
+ * Every channel is driven by its own @ref AudioPattern value pulled
+ * from the configured @ref EnumList.  If the channel-mode list is
+ * shorter than the stream's channel count, any remaining channels are
+ * silenced; if the list is longer, the extra entries are ignored.
  *
- * Call configure() after setting mode, frequency, and level parameters
- * to prepare the internal generators. Then call create() or render()
- * to produce audio data.
+ * Supported per-channel patterns:
+ *  - @c Tone — continuous sine at @ref toneFrequency.
+ *  - @c Silence — constant zero.
+ *  - @c LTC — Linear Timecode audio for the current frame timecode.
+ *  - @c AvSync — one-shot tone burst on @c tc.frame() == 0, silent
+ *                otherwise.  Pairs with the picture AvSync marker for
+ *                A/V drift detection.
+ *  - @c SrcProbe — 997 Hz reference sine.  The prime-relative
+ *                  frequency reveals sample-rate-conversion artifacts
+ *                  on the decode side.
+ *  - @c ChannelId — channel-unique sine at
+ *                  `channelIdBaseFreq() + ch * channelIdStepFreq()`,
+ *                  so a downstream consumer that sees channels out of
+ *                  order can identify each one by frequency.
  *
- * This class is not thread-safe. External synchronization is required
- * for concurrent access.
+ * Call @ref configure after changing any pattern parameter and before
+ * calling @ref create or @ref render.  The class is not thread-safe;
+ * external synchronization is required for concurrent access.
  *
  * @par Example
  * @code
- * AudioTestPattern gen(AudioDesc(48000, 2));
- * gen.setMode(AudioTestPattern::Tone);
+ * AudioTestPattern gen(AudioDesc(48000, 4));
+ *
+ * // LTC on ch0, AvSync click on ch1, SRC probe on ch2, silence on ch3.
+ * EnumList modes = EnumList::forType<AudioPattern>();
+ * modes.append(AudioPattern::LTC);
+ * modes.append(AudioPattern::AvSync);
+ * modes.append(AudioPattern::SrcProbe);
+ * modes.append(AudioPattern::Silence);
+ * gen.setChannelModes(modes);
+ *
  * gen.setToneFrequency(1000.0);
  * gen.setToneLevel(AudioLevel::fromDbfs(-20.0));
+ * gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
  * gen.configure();
  *
- * Audio audio = gen.create(4800);
+ * Audio audio = gen.create(samplesPerFrame, currentTimecode);
  * @endcode
  */
 class AudioTestPattern {
         public:
-                /** @brief Audio generation mode. */
-                enum Mode {
-                        Tone,           ///< @brief Sine tone (configurable frequency).
-                        Silence,        ///< @brief Silence.
-                        LTC,            ///< @brief LTC timecode audio.
-                        AvSync          ///< @brief Tone on tc.frame()==0, silence otherwise.
-                };
-
                 /**
-                 * @brief Constructs an AudioTestPattern.
-                 * @param desc Audio format descriptor.
+                 * @brief Constructs an AudioTestPattern for the given stream.
+                 * @param desc Audio format descriptor.  The channel count
+                 *             drives how many entries from
+                 *             @ref channelModes are consumed.
                  */
                 AudioTestPattern(const AudioDesc &desc);
 
@@ -72,31 +94,28 @@ class AudioTestPattern {
                 /** @brief Returns the audio descriptor. */
                 const AudioDesc &desc() const { return _desc; }
 
-                /** @brief Returns the current audio mode. */
-                Mode mode() const { return _mode; }
+                /** @brief Returns the per-channel pattern list. */
+                const EnumList &channelModes() const { return _channelModes; }
 
                 /**
-                 * @brief Sets the audio mode.
+                 * @brief Sets the per-channel pattern list.
                  *
-                 * @par Example
-                 * @code
-                 * gen.setMode(AudioTestPattern::Tone);    // sine wave
-                 * gen.setMode(AudioTestPattern::Silence); // silence
-                 * gen.setMode(AudioTestPattern::LTC);     // LTC timecode
-                 * @endcode
+                 * @p modes must be an @ref EnumList whose element type
+                 * is @ref AudioPattern.  An empty / invalid list is
+                 * accepted and silences every channel.
                  */
-                void setMode(Mode mode) { _mode = mode; }
+                void setChannelModes(const EnumList &modes) { _channelModes = modes; }
 
                 /** @brief Returns the tone frequency in Hz. */
                 double toneFrequency() const { return _toneFreq; }
 
-                /** @brief Sets the tone frequency in Hz. */
+                /** @brief Sets the tone frequency in Hz (for @c Tone / @c AvSync). */
                 void setToneFrequency(double freq) { _toneFreq = freq; }
 
                 /** @brief Returns the tone level. */
                 AudioLevel toneLevel() const { return _toneLevel; }
 
-                /** @brief Sets the tone level. */
+                /** @brief Sets the tone level (for @c Tone / @c AvSync / @c SrcProbe / @c ChannelId). */
                 void setToneLevel(AudioLevel level) { _toneLevel = level; }
 
                 /** @brief Returns the LTC level. */
@@ -105,130 +124,289 @@ class AudioTestPattern {
                 /** @brief Sets the LTC level. */
                 void setLtcLevel(AudioLevel level) { _ltcLevel = level; }
 
-                /** @brief Returns the LTC target channel (-1 = all). */
-                int ltcChannel() const { return _ltcChannel; }
-
-                /** @brief Sets the LTC target channel (-1 = all). */
-                void setLtcChannel(int channel) { _ltcChannel = channel; }
+                /** @brief Returns the ChannelId base frequency in Hz. */
+                double channelIdBaseFreq() const { return _chanIdBaseFreq; }
 
                 /**
-                 * @brief Configures internal generators based on current settings.
+                 * @brief Sets the ChannelId base frequency in Hz.
                  *
-                 * Must be called after changing mode, frequency, or level settings
-                 * and before calling create() or render(). Sets up AudioGen or
-                 * LtcEncoder as appropriate.
+                 * Channel @em N carries
+                 * `channelIdBaseFreq() + N * channelIdStepFreq()`.
+                 */
+                void setChannelIdBaseFreq(double hz) { _chanIdBaseFreq = hz; }
+
+                /** @brief Returns the ChannelId step frequency in Hz. */
+                double channelIdStepFreq() const { return _chanIdStepFreq; }
+
+                /** @brief Sets the ChannelId step frequency in Hz. */
+                void setChannelIdStepFreq(double hz) { _chanIdStepFreq = hz; }
+
+                /** @brief Returns the Chirp sweep start frequency in Hz. */
+                double chirpStartFreq() const { return _chirpStartFreq; }
+
+                /** @brief Sets the Chirp sweep start frequency in Hz. */
+                void setChirpStartFreq(double hz) { _chirpStartFreq = hz; }
+
+                /** @brief Returns the Chirp sweep end frequency in Hz. */
+                double chirpEndFreq() const { return _chirpEndFreq; }
+
+                /** @brief Sets the Chirp sweep end frequency in Hz. */
+                void setChirpEndFreq(double hz) { _chirpEndFreq = hz; }
+
+                /** @brief Returns the Chirp sweep period in seconds. */
+                double chirpDurationSec() const { return _chirpDurationSec; }
+
+                /** @brief Sets the Chirp sweep period in seconds. */
+                void setChirpDurationSec(double sec) { _chirpDurationSec = sec; }
+
+                /** @brief Returns the DualTone low-side frequency in Hz. */
+                double dualToneFreq1() const { return _dualToneFreq1; }
+
+                /** @brief Sets the DualTone low-side frequency in Hz. */
+                void setDualToneFreq1(double hz) { _dualToneFreq1 = hz; }
+
+                /** @brief Returns the DualTone high-side frequency in Hz. */
+                double dualToneFreq2() const { return _dualToneFreq2; }
+
+                /** @brief Sets the DualTone high-side frequency in Hz. */
+                void setDualToneFreq2(double hz) { _dualToneFreq2 = hz; }
+
+                /**
+                 * @brief Returns the amplitude ratio of freq2 to freq1.
                  *
-                 * @return Error::Ok on success.
+                 * Default 0.25 reproduces the SMPTE IMD-1 reference
+                 * (4:1 freq1-to-freq2 amplitude).  The output is
+                 * normalised so the peak stays at @ref toneLevel.
+                 */
+                double dualToneRatio() const { return _dualToneRatio; }
+
+                /** @brief Sets the DualTone amplitude ratio. */
+                void setDualToneRatio(double ratio) { _dualToneRatio = ratio; }
+
+                /**
+                 * @brief Returns the noise buffer length in seconds.
                  *
-                 * @par Example
-                 * @code
-                 * gen.setMode(AudioTestPattern::Tone);
-                 * gen.setToneFrequency(440.0);
-                 * gen.configure();           // must call before create()/render()
-                 * Audio buf = gen.create(4800);
-                 * @endcode
+                 * The white/pink noise channels share a pre-generated
+                 * sample buffer of this duration, cached in
+                 * @ref configure.  The default is ten seconds — long
+                 * enough that a casual listener can't pick out the
+                 * loop repetition, and cheap enough at typical sample
+                 * rates (≈1.9 MB at 48 kHz float).  The buffer is
+                 * generated with a raised-cosine crossfade at the
+                 * wrap boundary so the loop is seamless; the longer
+                 * the buffer the less often the (already-inaudible)
+                 * transition fires.
+                 */
+                double noiseBufferSeconds() const { return _noiseBufferSeconds; }
+
+                /** @brief Sets the noise buffer length in seconds. */
+                void setNoiseBufferSeconds(double sec) { _noiseBufferSeconds = sec; }
+
+                /**
+                 * @brief Returns the seed used to generate the noise buffers.
+                 *
+                 * Fixed by default so noise is reproducible across
+                 * runs — the TPG is a test-pattern generator, and
+                 * reproducibility is strictly more useful than
+                 * unpredictability for verification workloads.
+                 */
+                uint32_t noiseSeed() const { return _noiseSeed; }
+
+                /** @brief Sets the seed used to generate the noise buffers. */
+                void setNoiseSeed(uint32_t seed) { _noiseSeed = seed; }
+
+                /**
+                 * @brief Configures internal generators for the current settings.
+                 *
+                 * Must be called after changing mode list, frequencies, or
+                 * levels and before calling @ref create or @ref render.
+                 * Rebuilds per-channel generator state and drops any
+                 * cached pattern buffers.
+                 *
+                 * @return @c Error::Ok on success.
                  */
                 Error configure();
 
                 /**
                  * @brief Creates a new Audio buffer with the test pattern.
-                 * @param samples Number of samples to generate.
-                 * @param tc Timecode for LTC mode (ignored for other modes).
-                 * @return A new Audio object containing the generated samples.
                  *
-                 * @par Example
-                 * @code
-                 * // LTC mode: embed timecode into audio
-                 * Audio buf = gen.create(samplesPerFrame, currentTimecode);
-                 * @endcode
+                 * Iterates the per-channel mode list, generates the
+                 * corresponding signal for each channel (or silence for
+                 * channels with no mode entry), and returns the combined
+                 * interleaved Audio buffer.
+                 *
+                 * @param samples Number of samples to generate.
+                 * @param tc      Current frame timecode.  Used by @c LTC
+                 *                and @c AvSync channels; invalid values
+                 *                degrade to silence on those channels.
+                 * @return A new Audio buffer, or an invalid Audio on failure.
                  */
                 Audio create(size_t samples, const Timecode &tc) const;
 
                 /**
-                 * @brief Creates a new Audio buffer with the test pattern (no timecode).
-                 * @param samples Number of samples to generate.
-                 * @return A new Audio object containing the generated samples.
+                 * @brief Creates a new Audio buffer with no timecode context.
                  *
-                 * @par Example
-                 * @code
-                 * // Tone or silence mode
-                 * Audio buf = gen.create(samplesPerFrame);
-                 * @endcode
+                 * Equivalent to @c create(samples, Timecode()).
+                 * @c LTC and @c AvSync channels degrade to silence.
+                 *
+                 * @param samples Number of samples to generate.
+                 * @return A new Audio buffer.
                  */
                 Audio create(size_t samples) const;
 
                 /**
                  * @brief Renders the test pattern into an existing Audio buffer.
                  * @param audio The target audio buffer.
-                 * @param tc Timecode for LTC mode (ignored for other modes).
-                 *
-                 * @par Example
-                 * @code
-                 * Audio buf(desc, samplesPerFrame);
-                 * gen.render(buf, currentTimecode);  // fill in-place (LTC)
-                 * @endcode
+                 * @param tc    Current frame timecode.
                  */
                 void render(Audio &audio, const Timecode &tc) const;
 
-                /**
-                 * @brief Renders the test pattern into an existing Audio buffer (no timecode).
-                 * @param audio The target audio buffer.
-                 *
-                 * @par Example
-                 * @code
-                 * Audio buf(desc, samplesPerFrame);
-                 * gen.render(buf);  // fill in-place (tone or silence)
-                 * @endcode
-                 */
+                /** @brief Renders with no timecode context. */
                 void render(Audio &audio) const;
 
                 /**
-                 * @brief Parses a mode name string.
-                 * @param name Mode name ("tone", "silence", "ltc").
-                 * @return Result containing Mode on success, or Error::Invalid.
+                 * @brief Returns the ChannelId tone frequency for a given channel.
                  *
-                 * @par Example
-                 * @code
-                 * auto [mode, err] = AudioTestPattern::fromString("ltc");
-                 * if(err.isOk()) gen.setMode(mode);
-                 * @endcode
+                 * Exposed for the Inspector / test code so it can
+                 * independently compute the expected frequency for a
+                 * @c ChannelId channel without duplicating the formula.
+                 *
+                 * @param channelIndex Zero-based channel index.
+                 * @param baseFreq     Base frequency (Hz).
+                 * @param stepFreq     Per-channel step frequency (Hz).
+                 * @return `baseFreq + channelIndex * stepFreq`.
                  */
-                static Result<Mode> fromString(const String &name);
+                static double channelIdFrequency(size_t channelIndex,
+                                                 double baseFreq,
+                                                 double stepFreq) {
+                        return baseFreq + static_cast<double>(channelIndex) * stepFreq;
+                }
 
-                /**
-                 * @brief Returns the name string for a Mode value.
-                 * @param mode The mode value.
-                 * @return The mode name string (lowercase).
-                 *
-                 * @par Example
-                 * @code
-                 * String name = AudioTestPattern::toString(AudioTestPattern::LTC);
-                 * // name == "ltc"
-                 * @endcode
-                 */
-                static String toString(Mode mode);
+                /// @brief Canonical SRC-probe reference frequency in Hz.
+                ///
+                /// 997 Hz is coprime with every common audio sample rate
+                /// so any SRC applied downstream shifts the observed
+                /// frequency by a detectable amount.
+                static constexpr double kSrcProbeFrequencyHz = 997.0;
+
+                /// @brief Length of the PcmMarker sync preamble in samples.
+                static constexpr size_t kPcmMarkerPreambleSamples = 16;
+
+                /// @brief Length of the PcmMarker "start of payload" marker
+                ///        (four high samples followed by four low samples).
+                static constexpr size_t kPcmMarkerStartSamples = 8;
+
+                /// @brief Bits in the PcmMarker payload.
+                static constexpr size_t kPcmMarkerPayloadBits = 64;
+
+                /// @brief Total number of deterministic samples in one
+                ///        PcmMarker framing unit (preamble + start + 64 bits
+                ///        + parity).  Channels shorter than this carry
+                ///        a truncated frame; the decoder is expected to
+                ///        resynchronise.
+                static constexpr size_t kPcmMarkerFrameSamples =
+                        kPcmMarkerPreambleSamples +
+                        kPcmMarkerStartSamples +
+                        kPcmMarkerPayloadBits + 1;  // +1 trailing parity bit
 
         private:
                 AudioDesc       _desc;
-                Mode            _mode = Tone;
-                double          _toneFreq = 1000.0;
-                AudioLevel      _toneLevel = AudioLevel::fromDbfs(-20.0);
-                AudioLevel      _ltcLevel = AudioLevel::fromDbfs(-20.0);
-                int             _ltcChannel = 0;
-                AudioGen        *_audioGen = nullptr;
-                LtcEncoder      *_ltcEncoder = nullptr;
+                EnumList        _channelModes;
+                double          _toneFreq        = 1000.0;
+                AudioLevel      _toneLevel       = AudioLevel::fromDbfs(-20.0);
+                AudioLevel      _ltcLevel        = AudioLevel::fromDbfs(-20.0);
+                double          _chanIdBaseFreq  = 1000.0;
+                double          _chanIdStepFreq  = 100.0;
 
-                // AvSync caches: built lazily per requested sample count
-                // so the cadenced rates (29.97, 59.94) which alternate
-                // between two sizes don't thrash the cache.  Each entry
-                // is a one-shot tone burst (phase reset to zero so every
-                // marker frame is byte-identical) or a pre-zeroed
-                // silence buffer of the matching size.
-                mutable Map<size_t, Audio>      _avSyncToneCache;
-                mutable Map<size_t, Audio>      _avSyncSilenceCache;
+                double          _chirpStartFreq   = 20.0;
+                double          _chirpEndFreq     = 20000.0;
+                double          _chirpDurationSec = 1.0;
 
-                const Audio &avSyncTone(size_t samples) const;
-                const Audio &avSyncSilence(size_t samples) const;
+                double          _dualToneFreq1 = 60.0;
+                double          _dualToneFreq2 = 7000.0;
+                double          _dualToneRatio = 0.25;
+
+                double          _noiseBufferSeconds = 10.0;
+                uint32_t        _noiseSeed          = 0x505244A4u; // 'PRDA' — TPG test seed
+
+                // Per-channel generators built in configure().  A nullptr
+                // entry means the channel is silenced (either because
+                // the mode list is shorter than the channel count, or
+                // because it carries a mode that does not need a
+                // persistent generator — e.g. LTC / AvSync / noise /
+                // chirp / PCM marker, which are synthesized per-call).
+                mutable List<AudioGen *> _chanGens;
+                LtcEncoder              *_ltcEncoder = nullptr;
+
+                // AvSync tone burst cache: built lazily per requested
+                // sample count so the cadenced rates (29.97, 59.94)
+                // which alternate between two sizes don't thrash the
+                // cache.  Each entry is a one-shot tone burst (phase
+                // reset to zero so every marker frame is byte-identical).
+                mutable Map<size_t, Audio> _avSyncToneCache;
+
+                // Cached noise buffers.  One-dimensional arrays of
+                // samples that the per-channel noise dispatch indexes
+                // with a per-channel offset so different WhiteNoise /
+                // PinkNoise channels stay decorrelated while sharing
+                // the same underlying samples.  Generated at most once
+                // per configure() call; empty until a noise channel
+                // requests them.
+                List<float>     _whiteNoiseBuffer;
+                List<float>     _pinkNoiseBuffer;
+
+                // Continuous-sweep cursor/phase for the Chirp
+                // generator.  The cursor is the sample position inside
+                // the current sweep period (wraps at
+                // _chirpDurationSec * sampleRate).  The phase is the
+                // running sin-argument; we accumulate it sample-by-
+                // sample instead of recomputing it from the closed-
+                // form integral so the waveform stays sample-exact
+                // continuous across both chunk boundaries and period
+                // wraps (the closed form resets to 0 at each period
+                // wrap, which causes an audible click).
+                mutable double  _chirpSampleCursor = 0.0;
+                mutable double  _chirpPhase        = 0.0;
+
+                // Per-tone phase accumulators for the DualTone
+                // generator.  Tracking these across create() calls is
+                // the only way to avoid a once-per-chunk phase-reset
+                // click; a 30 fps pipeline restarts the pattern 30
+                // times a second otherwise, which is plainly audible.
+                mutable double  _dualTonePhase1 = 0.0;
+                mutable double  _dualTonePhase2 = 0.0;
+
+                // Cumulative sample cursor for the cached noise
+                // buffers.  Advanced once per create() call so
+                // successive frames read from successive regions of
+                // the buffer instead of re-reading the same slice —
+                // otherwise the noise would modulate at the frame
+                // rate and sound like a tone, not noise.  All noise
+                // channels share this cursor, with a per-channel
+                // offset layered on top so multiple noise channels
+                // on the same stream stay decorrelated.
+                mutable size_t _noiseSampleCursor = 0;
+
+                // Running monotonic counter used by the PcmMarker
+                // generator when the current frame has no valid
+                // timecode.  Incremented on every create() call.
+                mutable uint64_t _pcmMarkerCounter = 0;
+
+                void clearGenerators();
+                AudioPattern modeForChannel(size_t channelIndex) const;
+                const Audio &avSyncBurst(size_t samples) const;
+                void buildWhiteNoiseBuffer();
+                void buildPinkNoiseBuffer();
+
+                void writeNoiseChannel(float *out, size_t channel, size_t channels,
+                                       size_t samples,
+                                       const List<float> &buffer) const;
+                void writeChirpChannel(float *out, size_t channel, size_t channels,
+                                       size_t samples) const;
+                void writeDualToneChannel(float *out, size_t channel, size_t channels,
+                                          size_t samples) const;
+                void writePcmMarkerChannel(float *out, size_t channel, size_t channels,
+                                           size_t samples, uint64_t payload) const;
 };
 
 PROMEKI_NAMESPACE_END

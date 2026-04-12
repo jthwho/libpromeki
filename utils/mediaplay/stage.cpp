@@ -78,27 +78,45 @@ void listMediaIOBackendsAndExit() {
         fprintf(stdout, "Registered MediaIO backends:\n");
         for(const auto &desc : MediaIO::registeredFormats()) {
                 String caps;
-                if(desc.canRead) caps += "R";
-                if(desc.canWrite) caps += "W";
-                if(desc.canReadWrite) caps += "RW";
+                if(desc.canInput) caps += "I";
+                if(desc.canOutput) caps += "O";
+                if(desc.canInputAndOutput && caps.isEmpty()) caps = "IO";
                 fprintf(stdout, "  %-16s [%-3s]  %s\n",
                         desc.name.cstr(), caps.cstr(), desc.description.cstr());
         }
         // SDL is a mediaplay-local pseudo-backend (see the note in
         // stage.h) — it isn't in MediaIO::registeredFormats() but it
-        // accepts the same -o / --oc CLI surface, so list it here too
+        // accepts the same -d / --dc CLI surface, so list it here too
         // to keep the --help picture honest.
         fprintf(stdout, "  %-16s [%-3s]  %s\n",
-                kStageSdl, "W", sdlDescription());
+                kStageSdl, "I", sdlDescription());
         std::exit(0);
 }
 
-void listEnumTypeAndExit(const String &keyLabel, Enum::Type type) {
-        fprintf(stdout, "%s (Enum %s):\n", keyLabel.cstr(), type.name().cstr());
+void listEnumTypeAndExit(const String &keyLabel, Enum::Type type,
+                         bool isEnumList) {
+        // The kind tag mirrors the VariantSpec::typeName() output so a
+        // user who dumps both `Key:list` and `Key:help` sees consistent
+        // labels — "Enum Foo" for single-value keys and "EnumList Foo"
+        // for per-channel / per-slot list keys.  The bottom-of-block
+        // usage hint spells out how an EnumList accepts its value so
+        // callers don't have to go hunt for the syntax.
+        const char *kind = isEnumList ? "EnumList" : "Enum";
+        fprintf(stdout, "%s (%s %s):\n",
+                keyLabel.cstr(), kind, type.name().cstr());
         Enum::ValueList vals = Enum::values(type);
         for(size_t i = 0; i < vals.size(); i++) {
                 fprintf(stdout, "  %-24s (%d)\n",
                         vals[i].first().cstr(), vals[i].second());
+        }
+        if(isEnumList) {
+                fprintf(stdout,
+                        "\nPass a comma-separated list of names to set "
+                        "multiple slots, e.g.\n  %s:%s,%s\n",
+                        keyLabel.cstr(),
+                        vals.isEmpty() ? "" : vals[0].first().cstr(),
+                        vals.size() > 1 ? vals[1].first().cstr()
+                                        : (vals.isEmpty() ? "" : vals[0].first().cstr()));
         }
         std::exit(0);
 }
@@ -157,16 +175,32 @@ Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
 
                 // Handle sentinels.
                 if(val == "list") {
-                        if(spec && spec->hasEnumType()) listEnumTypeAndExit(label, spec->enumType());
-                        if(spec && spec->acceptsType(Variant::TypePixelDesc)) listPixelFormatsAndExit(label);
-                        fprintf(stderr, "Error: %s: 'list' is only supported for Enum / PixelDesc keys\n",
+                        if(spec && spec->hasEnumType()) {
+                                const bool isEnumList =
+                                        spec->acceptsType(Variant::TypeEnumList);
+                                listEnumTypeAndExit(label, spec->enumType(), isEnumList);
+                        }
+                        if(spec && spec->acceptsType(Variant::TypePixelDesc)) {
+                                listPixelFormatsAndExit(label);
+                        }
+                        fprintf(stderr,
+                                "Error: %s: 'list' is only supported for Enum, "
+                                "EnumList, and PixelDesc keys\n",
                                 label.cstr());
                         return Error::NotSupported;
                 }
                 if(val == "help") {
                         if(spec) {
+                                // Compose the same three-column layout
+                                // VariantDatabase::writeSpecMapHelp uses —
+                                // padding isn't meaningful for a single
+                                // entry, so just emit the fields inline.
                                 TextStream ts(stdout);
-                                spec->writeHelp(ts, key);
+                                ts << "  " << key << "  " << spec->detailsString();
+                                if(!spec->description().isEmpty()) {
+                                        ts << "  " << spec->description();
+                                }
+                                ts << endl;
                         } else {
                                 fprintf(stdout, "%s: no spec registered for this key\n", key.cstr());
                         }
@@ -184,10 +218,32 @@ Error applyStageConfig(StageSpec &stage, const String &stageLabel) {
                         }
                         stage.config.set(id, std::move(value));
                 } else {
-                        // No spec — accept as a raw string so late-bound
-                        // keys (e.g. __file__ stage) still work.
+                        // No spec — store as a raw string so the strict
+                        // validator below can report a single unified
+                        // "unknown key" error.  Parsing as String also
+                        // keeps the config-dump output on --help honest
+                        // when someone forwards a tolerant build.
                         stage.config.set(id, Variant(val));
                 }
+        }
+
+        // Strict key validation: any config key still missing a spec
+        // after the per-key loop is a user typo — fail the open rather
+        // than let it reach a backend that will silently ignore the
+        // key.  Uses the same spec set as the per-key loop (backend
+        // specs for MediaIO backends, sdlConfigSpecs() for SDL); both
+        // fall back to the global MediaConfig registry via
+        // VariantDatabase::unknownKeys.
+        StringList unknown = stage.config.unknownKeys(specs);
+        if(!unknown.isEmpty()) {
+                for(size_t i = 0; i < unknown.size(); ++i) {
+                        fprintf(stderr,
+                                "Error: %s: unknown config key '%s' for backend '%s'\n",
+                                stageLabel.cstr(),
+                                unknown[i].cstr(),
+                                stage.type.cstr());
+                }
+                return Error::InvalidArgument;
         }
         return Error::Ok;
 }
@@ -282,13 +338,13 @@ MediaIO *buildSource(const StageSpec &spec) {
         applyStage.rawKeyValues     = working.rawKeyValues;
         applyStage.rawMetaKeyValues = working.rawMetaKeyValues;
         applyStage.config           = cfg;
-        Error ae = applyStageConfig(applyStage, String("--ic[") + working.type + "]");
+        Error ae = applyStageConfig(applyStage, String("--sc[") + working.type + "]");
         if(ae.isError()) {
                 delete io;
                 return nullptr;
         }
         io->setConfig(applyStage.config);
-        Error me = applyStageMetadata(applyStage, String("--im[") + working.type + "]");
+        Error me = applyStageMetadata(applyStage, String("--sm[") + working.type + "]");
         if(me.isError()) {
                 delete io;
                 return nullptr;
@@ -376,7 +432,7 @@ MediaIO *buildFileSink(const StageSpec &spec,
         applyStage.rawKeyValues     = spec.rawKeyValues;
         applyStage.rawMetaKeyValues = spec.rawMetaKeyValues;
         applyStage.config           = cfg;
-        Error ae = applyStageConfig(applyStage, String("--oc[") + labelOut + "]");
+        Error ae = applyStageConfig(applyStage, String("--dc[") + labelOut + "]");
         if(ae.isError()) {
                 delete io;
                 return nullptr;
@@ -388,9 +444,9 @@ MediaIO *buildFileSink(const StageSpec &spec,
 
         // Metadata precedence: start from the upstream's metadata so
         // the sink inherits everything the source produced, then
-        // overlay any --om user overrides on top.
+        // overlay any --dm user overrides on top.
         Metadata merged = srcMetadata;
-        Error me = applyStageMetadata(applyStage, String("--om[") + labelOut + "]");
+        Error me = applyStageMetadata(applyStage, String("--dm[") + labelOut + "]");
         if(me.isError()) {
                 delete io;
                 return nullptr;

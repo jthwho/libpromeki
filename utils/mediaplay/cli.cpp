@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <system_error>
 
+#include <promeki/buffer.h>
 #include <promeki/cmdlineparser.h>
 #include <promeki/error.h>
 #include <promeki/filepath.h>
@@ -29,88 +30,139 @@ namespace mediaplay {
 
 void printBackendConfigHelp() {
         TextStream ts(stdout);
-        ts << endl << "Config per backend (set via --ic / --oc / --cc Key:Value," << endl
+        ts << endl << "Config per backend (set via --sc / --dc / --cc Key:Value," << endl
            << "  pass Key:list for enum values, Key:help for key details):" << endl;
+
+        // "Type" is implied by -i / -o / -c so it has no user-visible
+        // role in the per-backend help — hide it from every backend.
+        StringList hidden;
+        hidden.pushToBack(String("Type"));
 
         auto dumpBackend = [&](const String &name,
                                const String &caps,
                                const String &desc,
                                const MediaIO::Config::SpecMap &specs) {
-                ts << endl << "  " << name << " [" << caps << "] — " << desc << endl;
+                // Emit the header line, then the spec block bracketed
+                // by a dashed border that matches the widest physical
+                // line the block printed.  Two backends can produce
+                // very different widths — TPG is wide, AudioFile is
+                // narrow — so the border is computed per block rather
+                // than using a fixed column.
+                String header = String("  ") + name + " [" + caps + "] — " + desc;
+                ts << endl << header << endl;
                 if(specs.isEmpty()) {
                         ts << "    (no config keys)" << endl;
-                } else {
-                        MediaIO::Config::writeSpecMapHelp(ts, specs);
+                        return;
                 }
+
+                // Round-trip through a scratch buffer so we know the
+                // actual block width before we write the top border.
+                // The alternative — writing two passes directly to the
+                // stream — would put the top border below the block
+                // or force us to guess the width ahead of time.
+                Buffer scratch;
+                TextStream body(&scratch);
+                int bodyWidth = MediaIO::Config::writeSpecMapHelp(body, specs, hidden);
+                body.flush();
+
+                int borderWidth = bodyWidth;
+                int headerWidth = static_cast<int>(header.size());
+                if(headerWidth > borderWidth) borderWidth = headerWidth;
+                String border;
+                for(int i = 0; i < borderWidth; ++i) border += '-';
+                ts << border << endl;
+                ts << String(static_cast<const char *>(scratch.data()), scratch.size());
+                ts << border << endl;
         };
 
+        // Badge letters match the MediaIO's own perspective: a
+        // source (e.g. TPG) provides frames so it carries `[O]` for
+        // Output; a sink (e.g. a file writer) accepts frames so it
+        // carries `[I]` for Input.  The mediaplay CLI is named from
+        // the pipeline's perspective — `-s` takes a source backend
+        // (`[O]`) and `-d` takes a destination sink (`[I]`) — so the
+        // badge mirrors the backend's own role, not the CLI slot it
+        // plugs into.
+        //
+        // Order is Input-first so a backend that supports both (but
+        // not simultaneously) reads as `IO` — the same string a pure
+        // converter (canInputAndOutput only) displays, so the badge
+        // stays consistent regardless of how the backend decomposes
+        // its modes.
         for(const auto &desc : MediaIO::registeredFormats()) {
                 String caps;
-                if(desc.canRead) caps += "R";
-                if(desc.canWrite) caps += "W";
-                if(desc.canReadWrite) caps += "RW";
+                if(desc.canInput) caps += "I";
+                if(desc.canOutput) caps += "O";
+                if(desc.canInputAndOutput && caps.isEmpty()) caps = "IO";
                 MediaIO::Config::SpecMap specs = desc.configSpecs
                         ? desc.configSpecs() : MediaIO::Config::SpecMap();
                 dumpBackend(desc.name, caps, desc.description, specs);
         }
 
-        // SDL is a mediaplay-local pseudo-backend.
-        dumpBackend(String(kStageSdl), String("W"),
+        // SDL is a mediaplay-local pseudo-backend — strictly a sink.
+        dumpBackend(String(kStageSdl), String("I"),
                     String(sdlDescription()), sdlConfigSpecs());
 }
 
 void usage() {
         fprintf(stderr,
-                "Usage: mediaplay [OPTIONS] [INPUT [OUTPUT...]]\n"
+                "Usage: mediaplay [OPTIONS] [SOURCE [DESTINATION...]]\n"
                 "\n"
-                "Pumps media frames from one MediaIO input, through an optional\n"
+                "Pumps media frames from one MediaIO source, through an optional\n"
                 "Converter stage, out to one or more MediaIO sinks.  Every stage\n"
                 "is configured via generic Key:Value options whose values are\n"
                 "parsed against the backend's default config.  Pacing is\n"
-                "implicit: if an SDL output is present it drives the pipeline\n"
-                "at video rate (audio-led clock), otherwise frames flow as\n"
-                "fast as the file sinks can consume them.\n"
+                "implicit: if an SDL destination is present it drives the\n"
+                "pipeline at video rate (audio-led clock), otherwise frames\n"
+                "flow as fast as the file sinks can consume them.\n"
+                "\n"
+                "Backend badges in the schema below show which direction each\n"
+                "backend supports:\n"
+                "  [O]  = Output — backend provides frames; use with -s\n"
+                "  [I]  = Input  — backend accepts frames; use with -d\n"
+                "  [IO] = both\n"
                 "\n"
                 "Stages:\n"
-                "  -i, --in <NAME|list>      Input backend name (default: TPG).\n"
-                "  --ic <K:V>                Set one input stage config key.\n"
+                "  -s, --src <NAME|list>     Source backend name (default: TPG).\n"
+                "  --sc <K:V>                Set one source stage config key.\n"
                 "                            Repeatable.  Passing `K:list`\n"
-                "                            lists valid values for Enum/PixelDesc\n"
-                "                            keys.  Passing `K:help` shows the\n"
-                "                            key's type, range, and description.\n"
-                "  --im <K:V>                Set one input stage metadata key\n"
+                "                            lists valid values for Enum,\n"
+                "                            EnumList, and PixelDesc keys.\n"
+                "                            Passing `K:help` shows the key's\n"
+                "                            type, range, and description.\n"
+                "  --sm <K:V>                Set one source stage metadata key\n"
                 "                            (Title, Artist, Copyright, ...).\n"
                 "                            Repeatable.\n"
                 "  -c, --convert             Insert a MediaIOTask_Converter\n"
-                "                            between input and outputs.\n"
+                "                            between source and destinations.\n"
                 "  --cc <K:V>                Set one Converter config key.\n"
                 "                            Implies --convert.  Repeatable.\n"
                 "  --cm <K:V>                Set one Converter metadata key.\n"
                 "                            Implies --convert.  Repeatable.\n"
-                "  -o, --out <NAME|PATH|list>\n"
-                "                            Add an output stage — a backend\n"
+                "  -d, --dst <NAME|PATH|list>\n"
+                "                            Add a destination stage — a backend\n"
                 "                            name (SDL, QuickTime, ImageFile,\n"
                 "                            ...) or a file path auto-detected\n"
                 "                            via MediaIO::createForFileWrite.\n"
                 "                            Repeatable (fan-out).\n"
-                "  --oc <K:V>                Set one config key on the most\n"
-                "                            recently declared -o.  Repeatable.\n"
-                "  --om <K:V>                Set one metadata key on the most\n"
-                "                            recently declared -o.  Overlays\n"
+                "  --dc <K:V>                Set one config key on the most\n"
+                "                            recently declared -d.  Repeatable.\n"
+                "  --dm <K:V>                Set one metadata key on the most\n"
+                "                            recently declared -d.  Overlays\n"
                 "                            metadata inherited from upstream.\n"
                 "                            Repeatable.\n"
                 "\n"
-                "SDL output (use -o SDL, configure via --oc):\n"
-                "  --oc SdlPaced:false          Run the SDL sink as fast as\n"
+                "SDL destination (use -d SDL, configure via --dc):\n"
+                "  --dc SdlPaced:false          Run the SDL sink as fast as\n"
                 "                               possible (disables audio).\n"
-                "  --oc SdlAudioEnabled:false   Open the SDL window but no audio.\n"
-                "  --oc SdlWindowSize:1920x1080 Initial SDL window size.\n"
-                "  --oc SdlWindowTitle:Preview  Set the SDL window title bar.\n"
+                "  --dc SdlAudioEnabled:false   Open the SDL window but no audio.\n"
+                "  --dc SdlWindowSize:1920x1080 Initial SDL window size.\n"
+                "  --dc SdlWindowTitle:Preview  Set the SDL window title bar.\n"
                 "\n"
                 "Positional shortcuts:\n"
-                "  mediaplay <input-file>            Read the file, play to SDL.\n"
-                "  mediaplay <input> <output>...     Transcode input to every\n"
-                "                                    output path listed.\n"
+                "  mediaplay <src-file>              Read the file, play to SDL.\n"
+                "  mediaplay <src> <dst>...          Transcode src to every\n"
+                "                                    destination path listed.\n"
                 "\n"
                 "Playback control:\n"
                 "  --duration <SEC>          Wall-clock runtime limit for\n"
@@ -148,20 +200,20 @@ void usage() {
 }
 
 bool parseOptions(int argc, char **argv, Options &opts) {
-        // The parser is intentionally minimal: it collects --ic /
-        // --im / --cc / --cm / --oc / --om strings verbatim into the
+        // The parser is intentionally minimal: it collects --sc /
+        // --sm / --cc / --cm / --dc / --dm strings verbatim into the
         // appropriate StageSpec lists so the real resolution (type
         // coercion, list handling, etc.) happens later against the
         // backend's default config.
         //
         // Stage scoping for the --*c / --*m flags is strictly
-        // positional: each -i / -c / -o flips the "scope" that
-        // subsequent --ic / --cc / --oc (and their --im / --cm /
-        // --om metadata counterparts) attach to.
+        // positional: each -s / -c / -d flips the "scope" that
+        // subsequent --sc / --cc / --dc (and their --sm / --cm /
+        // --dm metadata counterparts) attach to.
         CmdLineParser parser;
         bool helpRequested = false;
 
-        opts.input.type = "TPG";          // default input
+        opts.source.type = "TPG";          // default source
 
         parser.registerOptions({
                 {'h', "help",
@@ -172,32 +224,32 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                  })},
 
                 // ---- Stages ----
-                {'i', "in",
-                 "Input MediaIO backend name (pass 'list' for the registry)",
+                {'s', "src",
+                 "Source MediaIO backend name (pass 'list' for the registry)",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
                          if(s == "list") listMediaIOBackendsAndExit();
                          StageSpec sp;
                          classifyStageArg(s, sp);
-                         opts.input = sp;
-                         opts.lastScope = Options::ScopeInput;
-                         opts.explicitIn = true;
+                         opts.source = sp;
+                         opts.lastScope = Options::ScopeSource;
+                         opts.explicitSrc = true;
                          return 0;
                  })},
-                {0, "ic",
-                 "Set input stage config (Key:Value), repeatable",
+                {0, "sc",
+                 "Set source stage config (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         opts.input.rawKeyValues.pushToBack(s);
+                         opts.source.rawKeyValues.pushToBack(s);
                          return 0;
                  })},
-                {0, "im",
-                 "Set input stage metadata (Key:Value), repeatable",
+                {0, "sm",
+                 "Set source stage metadata (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         opts.input.rawMetaKeyValues.pushToBack(s);
+                         opts.source.rawMetaKeyValues.pushToBack(s);
                          return 0;
                  })},
 
                 {'c', "convert",
-                 "Insert a MediaIOTask_Converter between input and outputs",
+                 "Insert a MediaIOTask_Converter between source and destinations",
                  CmdLineParser::OptionCallback([&]() {
                          opts.hasConverter = true;
                          opts.converter.type = "Converter";
@@ -221,38 +273,38 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                          return 0;
                  })},
 
-                {'o', "out",
-                 "Add an output stage (backend name, 'SDL', 'list', or path)",
+                {'d', "dst",
+                 "Add a destination stage (backend name, 'SDL', 'list', or path)",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
                          if(s == "list") listMediaIOBackendsAndExit();
                          StageSpec sp;
                          classifyStageArg(s, sp);
-                         opts.outputs.pushToBack(sp);
-                         opts.lastOutput  = opts.outputs.size() - 1;
-                         opts.lastScope   = Options::ScopeOutput;
-                         opts.explicitOut = true;
+                         opts.sinks.pushToBack(sp);
+                         opts.lastSink   = opts.sinks.size() - 1;
+                         opts.lastScope  = Options::ScopeSink;
+                         opts.explicitDst = true;
                          return 0;
                  })},
-                {0, "oc",
-                 "Set current output config (Key:Value), repeatable",
+                {0, "dc",
+                 "Set current destination config (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         if(opts.outputs.isEmpty()) {
+                         if(opts.sinks.isEmpty()) {
                                  fprintf(stderr,
-                                         "Error: --oc must follow at least one -o/--out\n");
+                                         "Error: --dc must follow at least one -d/--dst\n");
                                  return 1;
                          }
-                         opts.outputs[opts.lastOutput].rawKeyValues.pushToBack(s);
+                         opts.sinks[opts.lastSink].rawKeyValues.pushToBack(s);
                          return 0;
                  })},
-                {0, "om",
-                 "Set current output metadata (Key:Value), repeatable",
+                {0, "dm",
+                 "Set current destination metadata (Key:Value), repeatable",
                  CmdLineParser::OptionStringCallback([&](const String &s) {
-                         if(opts.outputs.isEmpty()) {
+                         if(opts.sinks.isEmpty()) {
                                  fprintf(stderr,
-                                         "Error: --om must follow at least one -o/--out\n");
+                                         "Error: --dm must follow at least one -d/--dst\n");
                                  return 1;
                          }
-                         opts.outputs[opts.lastOutput].rawMetaKeyValues.pushToBack(s);
+                         opts.sinks[opts.lastSink].rawMetaKeyValues.pushToBack(s);
                          return 0;
                  })},
 
@@ -314,41 +366,41 @@ bool parseOptions(int argc, char **argv, Options &opts) {
         // --- Positional arguments ---
         //
         // Positional handling depends on whether the user gave an
-        // explicit --in.  Without --in the first positional becomes
-        // the input when it looks like an existing readable file —
-        // otherwise (sequence mask, non-existent path, etc.) it is
-        // treated as an output target.  Once --in is set, every
-        // positional is an output.
+        // explicit --src.  Without --src the first positional
+        // becomes the source when it looks like an existing readable
+        // file — otherwise (sequence mask, non-existent path, etc.)
+        // it is treated as a destination target.  Once --src is set,
+        // every positional is a destination.
         //
-        //   mediaplay foo.mov                 → read foo.mov, SDL out
-        //   mediaplay out.dpx                 → TPG in, write out.dpx
-        //   mediaplay out_####.dpx            → TPG in, sequence out
+        //   mediaplay foo.mov                 → read foo.mov, SDL dst
+        //   mediaplay out.dpx                 → TPG src, write out.dpx
+        //   mediaplay out_####.dpx            → TPG src, sequence dst
         //   mediaplay foo.mov out.mov         → transcode
         int positional = parser.argCount();
         int posStart = 0;
-        if(positional > 0 && !opts.explicitIn) {
+        if(positional > 0 && !opts.explicitSrc) {
                 const String &first = parser.arg(0);
                 NumName maskProbe = NumName::fromMask(FilePath(first).fileName());
-                bool looksLikeInput = false;
+                bool looksLikeSource = false;
                 if(!maskProbe.isValid()) {
                         // stat() — std::filesystem is acceptable here
                         // because mediaplay is a utility and already
                         // depends on libstdc++.
                         std::error_code ec;
-                        looksLikeInput = std::filesystem::exists(first.cstr(), ec);
+                        looksLikeSource = std::filesystem::exists(first.cstr(), ec);
                 }
-                if(looksLikeInput) {
+                if(looksLikeSource) {
                         StageSpec sp;
                         classifyStageArg(first, sp);
-                        opts.input = sp;
+                        opts.source = sp;
                         posStart = 1;
                 }
         }
         for(int i = posStart; i < positional; ++i) {
                 StageSpec sp;
                 classifyStageArg(parser.arg(i), sp);
-                opts.outputs.pushToBack(sp);
-                opts.explicitOut = true;
+                opts.sinks.pushToBack(sp);
+                opts.explicitDst = true;
         }
 
         return true;

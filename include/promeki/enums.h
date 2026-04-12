@@ -153,21 +153,73 @@ inline const BurnPosition BurnPosition::Center       { 6 };
 /**
  * @brief Well-known Enum type for audio test pattern generator modes.
  *
- * Mirrors @c AudioTestPattern::Mode in value and order.  Used as the value
- * type for the @c MediaIOTask_TPG @c ConfigAudioMode config key.
+ * Used as the element type for the @ref MediaConfig::AudioChannelModes
+ * EnumList — the TPG consumes a list of @ref AudioPattern values, one
+ * per audio channel, so each channel can carry a different diagnostic
+ * signal.  If the configured list is shorter than the stream's channel
+ * count, the remaining channels are silenced.
  *
- * Note that the config key is historically named @c ConfigAudioMode, but
- * the corresponding Enum type is called @c AudioPattern for consistency
- * with @ref VideoPattern.
+ * - @c Tone       — continuous sine at the configured tone frequency.
+ * - @c Silence    — constant zero.
+ * - @c LTC        — Linear Timecode audio encoding this channel.
+ * - @c AvSync     — one-shot tone burst on @c tc.frame() == 0, silent
+ *                   otherwise.  Pairs with the picture AvSync marker
+ *                   so inspectors can measure audio-to-video drift.
+ * - @c SrcProbe   — 997 Hz reference tone.  997 Hz is prime relative
+ *                   to common sample rates so any downstream sample
+ *                   rate conversion shifts the observed frequency by
+ *                   a detectable amount.
+ * - @c ChannelId  — channel-unique sine whose frequency encodes the
+ *                   channel index, so a receiver that sees the audio
+ *                   out of order can identify which channel is which
+ *                   without metadata.  See
+ *                   @ref MediaConfig::AudioChannelIdBaseFreq and
+ *                   @ref MediaConfig::AudioChannelIdStepFreq.
+ * - @c PcmMarker  — sample-domain framing of a 64-bit payload
+ *                   (frame BCD64 timecode when available, otherwise
+ *                   a per-instance monotonic counter).  Enables
+ *                   bit-exact round-trip verification of the audio
+ *                   pipeline — the analog of the picture-side
+ *                   @ref ImageDataEncoder / @ref ImageDataDecoder.
+ * - @c WhiteNoise — flat-spectrum noise generated from a cached
+ *                   pseudo-random buffer.  The buffer is built once
+ *                   from a fixed seed in @ref AudioTestPattern::configure
+ *                   and shared across WhiteNoise channels, with a
+ *                   per-channel read offset so the channels stay
+ *                   decorrelated.
+ * - @c PinkNoise  — -3 dB/octave noise generated from a cached buffer
+ *                   (Paul Kellet's IIR filter applied to white noise).
+ *                   Same caching strategy as WhiteNoise.
+ * - @c Chirp      — continuous logarithmic sine sweep from
+ *                   @ref MediaConfig::AudioChirpStartFreq to
+ *                   @ref MediaConfig::AudioChirpEndFreq over
+ *                   @ref MediaConfig::AudioChirpDurationSec.  Phase
+ *                   is integrated across create() calls so chunk
+ *                   boundaries don't introduce clicks; the sweep
+ *                   loops once it reaches the end frequency.
+ * - @c DualTone   — two simultaneous sines summed on the channel.
+ *                   The default configuration reproduces the SMPTE
+ *                   IMD-1 reference (60 Hz + 7 kHz at 4:1 amplitude)
+ *                   for intermodulation-distortion measurement.
+ *                   See @ref MediaConfig::AudioDualToneFreq1,
+ *                   @ref MediaConfig::AudioDualToneFreq2, and
+ *                   @ref MediaConfig::AudioDualToneRatio.
  */
 class AudioPattern : public TypedEnum<AudioPattern> {
         public:
                 static inline const Enum::Type Type = Enum::registerType("AudioPattern",
                         {
-                                { "Tone",    0 },
-                                { "Silence", 1 },
-                                { "LTC",     2 },
-                                { "AvSync",  3 }
+                                { "Tone",       0 },
+                                { "Silence",    1 },
+                                { "LTC",        2 },
+                                { "AvSync",     3 },
+                                { "SrcProbe",   4 },
+                                { "ChannelId",  5 },
+                                { "PcmMarker",  6 },
+                                { "WhiteNoise", 7 },
+                                { "PinkNoise",  8 },
+                                { "Chirp",      9 },
+                                { "DualTone",  10 }
                         },
                         0);  // default: Tone
 
@@ -177,12 +229,26 @@ class AudioPattern : public TypedEnum<AudioPattern> {
                 static const AudioPattern Silence;
                 static const AudioPattern LTC;
                 static const AudioPattern AvSync;
+                static const AudioPattern SrcProbe;
+                static const AudioPattern ChannelId;
+                static const AudioPattern PcmMarker;
+                static const AudioPattern WhiteNoise;
+                static const AudioPattern PinkNoise;
+                static const AudioPattern Chirp;
+                static const AudioPattern DualTone;
 };
 
-inline const AudioPattern AudioPattern::Tone    { 0 };
-inline const AudioPattern AudioPattern::Silence { 1 };
-inline const AudioPattern AudioPattern::LTC     { 2 };
-inline const AudioPattern AudioPattern::AvSync  { 3 };
+inline const AudioPattern AudioPattern::Tone       { 0  };
+inline const AudioPattern AudioPattern::Silence    { 1  };
+inline const AudioPattern AudioPattern::LTC        { 2  };
+inline const AudioPattern AudioPattern::AvSync     { 3  };
+inline const AudioPattern AudioPattern::SrcProbe   { 4  };
+inline const AudioPattern AudioPattern::ChannelId  { 5  };
+inline const AudioPattern AudioPattern::PcmMarker  { 6  };
+inline const AudioPattern AudioPattern::WhiteNoise { 7  };
+inline const AudioPattern AudioPattern::PinkNoise  { 8  };
+inline const AudioPattern AudioPattern::Chirp      { 9  };
+inline const AudioPattern AudioPattern::DualTone   { 10 };
 
 /**
  * @brief Well-known Enum type for chroma subsampling modes.
@@ -563,6 +629,106 @@ class TimecodePackFormat : public TypedEnum<TimecodePackFormat> {
 
 inline const TimecodePackFormat TimecodePackFormat::Vitc { 0 };
 inline const TimecodePackFormat TimecodePackFormat::Ltc  { 1 };
+
+/**
+ * @brief Well-known Enum type for progressive / interlaced video scan mode.
+ *
+ * Describes how the rows of a single @ref ImageDesc are temporally
+ * arranged.  Replaces the earlier bare @c bool interlaced flag with a
+ * richer state that distinguishes progressive, interlaced with unknown
+ * field order, even-field-first interlaced, and odd-field-first
+ * interlaced content — which matters for field-aware deinterlacers,
+ * SDI receivers that hand back raw fields, and metadata round-trips
+ * through QuickTime / MXF containers.
+ *
+ * - @c Unknown             — scan mode is not specified (legacy /
+ *                            unassigned default).
+ * - @c Progressive         — all rows belong to the same temporal
+ *                            sample; no field separation.
+ * - @c Interlaced          — interlaced content with an unspecified
+ *                            field order.  Used when the source
+ *                            flagged the stream as interlaced but
+ *                            didn't carry a reliable dominance
+ *                            indicator — common with legacy DV, some
+ *                            MXF variants, and raw SDI captures that
+ *                            lost the container-level flag.
+ * - @c InterlacedEvenFirst — interlaced with the even (top) field
+ *                            first in time (NTSC / 480i, 1080i50,
+ *                            1080i59.94 per SMPTE 274M).
+ * - @c InterlacedOddFirst  — interlaced with the odd (bottom) field
+ *                            first in time (PAL / 576i legacy, some
+ *                            consumer DV variants).
+ */
+class InterlaceMode : public TypedEnum<InterlaceMode> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("InterlaceMode",
+                        {
+                                { "Unknown",             0 },
+                                { "Progressive",         1 },
+                                { "Interlaced",          2 },
+                                { "InterlacedEvenFirst", 3 },
+                                { "InterlacedOddFirst",  4 }
+                        },
+                        0);  // default: Unknown
+
+                using TypedEnum<InterlaceMode>::TypedEnum;
+
+                static const InterlaceMode Unknown;
+                static const InterlaceMode Progressive;
+                static const InterlaceMode Interlaced;
+                static const InterlaceMode InterlacedEvenFirst;
+                static const InterlaceMode InterlacedOddFirst;
+};
+
+inline const InterlaceMode InterlaceMode::Unknown             { 0 };
+inline const InterlaceMode InterlaceMode::Progressive         { 1 };
+inline const InterlaceMode InterlaceMode::Interlaced          { 2 };
+inline const InterlaceMode InterlaceMode::InterlacedEvenFirst { 3 };
+inline const InterlaceMode InterlaceMode::InterlacedOddFirst  { 4 };
+
+/**
+ * @brief Well-known Enum type for MediaIO open direction.
+ *
+ * Describes the role a @ref MediaIO instance plays in its pipeline
+ * from the backend's own perspective:
+ *
+ * - @c Input          — the @ref MediaIO @em accepts frames from
+ *                       the caller (it is a sink — e.g. a file
+ *                       writer, a display, an RTP sender).
+ * - @c Output         — the @ref MediaIO @em provides frames to
+ *                       the caller (it is a source — e.g. a file
+ *                       reader, a capture card, a test pattern
+ *                       generator).
+ * - @c InputAndOutput — the @ref MediaIO both consumes and emits
+ *                       frames in the same instance (a converter
+ *                       or passthrough filter).
+ *
+ * Note that the mediaplay CLI's @c -i / @c -o flags are named for
+ * the @em pipeline's input and output, which is the opposite
+ * perspective: @c -i wires a source backend into the pipeline (so
+ * it expects a backend registered with @ref Output support), and
+ * @c -o wires a sink backend (expects @ref Input support).
+ */
+class MediaIODirection : public TypedEnum<MediaIODirection> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("MediaIODirection",
+                        {
+                                { "Output",         0 },
+                                { "Input",          1 },
+                                { "InputAndOutput", 2 }
+                        },
+                        0);  // default: Output (source)
+
+                using TypedEnum<MediaIODirection>::TypedEnum;
+
+                static const MediaIODirection Output;
+                static const MediaIODirection Input;
+                static const MediaIODirection InputAndOutput;
+};
+
+inline const MediaIODirection MediaIODirection::Output         { 0 };
+inline const MediaIODirection MediaIODirection::Input          { 1 };
+inline const MediaIODirection MediaIODirection::InputAndOutput { 2 };
 
 /** @} */
 

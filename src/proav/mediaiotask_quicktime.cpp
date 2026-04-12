@@ -108,9 +108,9 @@ MediaIO::FormatDesc MediaIOTask_QuickTime::formatDesc() {
                 "QuickTime",
                 "QuickTime / ISO-BMFF container files (.mov, .mp4, .m4v)",
                 {"mov", "qt", "mp4", "m4v"},
-                true,    // canRead
-                true,    // canWrite
-                false,   // canReadWrite
+                true,    // canOutput
+                true,    // canInput
+                false,   // canInputAndOutput
                 []() -> MediaIOTask * {
                         return new MediaIOTask_QuickTime();
                 },
@@ -179,7 +179,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
         }
         _mode = cmd.mode;
 
-        if(cmd.mode == MediaIO::Reader) {
+        if(cmd.mode == MediaIO::Output) {
                 _qt = QuickTime::createReader(_filename);
                 Error err = _qt.open();
                 if(err.isError()) {
@@ -351,7 +351,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandOpen &cmd) {
 }
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandClose & /*cmd*/) {
-        if(_mode == MediaIO::Writer && _qt.isOpen()) {
+        if(_mode == MediaIO::Input && _qt.isOpen()) {
                 // Drain any tail audio remaining in the FIFO before finalize.
                 drainWriterAudio(/*flush=*/true);
                 Error err = _qt.finalize();
@@ -454,7 +454,7 @@ Error MediaIOTask_QuickTime::readAudioSlice(uint64_t startSample, size_t samples
 }
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
-        if(_mode != MediaIO::Reader) return Error::NotOpen;
+        if(_mode != MediaIO::Output) return Error::NotOpen;
 
         if(_currentFrame < 0 || _currentFrame >= _frameCount) {
                 cmd.result = Error::EndOfFile;
@@ -613,7 +613,7 @@ Error MediaIOTask_QuickTime::drainWriterAudio(bool flush) {
 }
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
-        if(_mode != MediaIO::Writer) return Error::NotOpen;
+        if(_mode != MediaIO::Input) return Error::NotOpen;
         if(!cmd.frame.isValid()) return Error::InvalidArgument;
         const Frame &frame = *cmd.frame;
 
@@ -688,7 +688,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
 // ----------------------------------------------------------------------------
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandSeek &cmd) {
-        if(_mode != MediaIO::Reader) return Error::IllegalSeek;
+        if(_mode != MediaIO::Output) return Error::IllegalSeek;
         if(_videoTrackIndex < 0) return Error::IllegalSeek;
         int64_t target = cmd.frameNumber;
         if(target < 0) target = 0;

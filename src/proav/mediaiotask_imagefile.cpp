@@ -199,9 +199,9 @@ MediaIO::FormatDesc MediaIOTask_ImageFile::formatDesc() {
                 "ImageFile",
                 "Single-image files and image sequences (DPX, Cineon, TGA, SGI, PNM, PNG, JPEG, JPEG XS, RawYUV, .imgseq)",
                 buildExtensions(),
-                true,   // canRead
-                true,   // canWrite
-                false,  // canReadWrite
+                true,   // canOutput
+                true,   // canInput
+                false,  // canInputAndOutput
                 []() -> MediaIOTask * {
                         return new MediaIOTask_ImageFile();
                 },
@@ -300,7 +300,7 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandOpen &cmd) {
         if(!fps.isValid()) fps = DefaultFrameRate;
         String frSource = kFrameRateSourceConfig;
 
-        if(cmd.mode == MediaIO::Writer && cmd.pendingMediaDesc.frameRate().isValid()) {
+        if(cmd.mode == MediaIO::Input && cmd.pendingMediaDesc.frameRate().isValid()) {
                 fps = cmd.pendingMediaDesc.frameRate();
                 frSource = kFrameRateSourceFile;
         }
@@ -368,18 +368,18 @@ Error MediaIOTask_ImageFile::openSingle(MediaIOCommandOpen &cmd,
                 promekiErr("MediaIOTask_ImageFile: no ImageFileIO backend for ID %d", _imageFileID);
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Reader && !io->canLoad()) {
+        if(cmd.mode == MediaIO::Output && !io->canLoad()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support loading",
                         io->name().cstr());
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Writer && !io->canSave()) {
+        if(cmd.mode == MediaIO::Input && !io->canSave()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support saving",
                         io->name().cstr());
                 return Error::NotSupported;
         }
 
-        if(cmd.mode == MediaIO::Reader) {
+        if(cmd.mode == MediaIO::Output) {
                 ImageFile imgFile(_imageFileID);
                 imgFile.setFilename(_filename);
 
@@ -557,12 +557,12 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 promekiErr("MediaIOTask_ImageFile: no ImageFileIO backend for ID %d", _imageFileID);
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Reader && !io->canLoad()) {
+        if(cmd.mode == MediaIO::Output && !io->canLoad()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support loading",
                         io->name().cstr());
                 return Error::NotSupported;
         }
-        if(cmd.mode == MediaIO::Writer && !io->canSave()) {
+        if(cmd.mode == MediaIO::Input && !io->canSave()) {
                 promekiErr("MediaIOTask_ImageFile: backend '%s' does not support saving",
                         io->name().cstr());
                 return Error::NotSupported;
@@ -576,7 +576,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 frSource = kFrameRateSourceFile;
         }
 
-        if(cmd.mode == MediaIO::Reader) {
+        if(cmd.mode == MediaIO::Output) {
                 // Detect head/tail from disk if we don't have them yet.
                 if(head < 0 || tail < 0 || tail < head) {
                         bool haveAny = false;
@@ -685,7 +685,7 @@ Error MediaIOTask_ImageFile::openSequence(MediaIOCommandOpen &cmd,
                 cmd.frameCount = 0;
         }
 
-        cmd.canSeek = (cmd.mode == MediaIO::Reader);
+        cmd.canSeek = (cmd.mode == MediaIO::Output);
         cmd.defaultStep = 1;  // sequences advance one frame at a time
         return Error::Ok;
 }
@@ -757,7 +757,7 @@ Error MediaIOTask_ImageFile::writeImgSeqSidecar() {
 
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
         // Write the .imgseq sidecar before resetting state (writer + sequence only).
-        if(_mode == MediaIO::Writer && _sequenceMode) {
+        if(_mode == MediaIO::Input && _sequenceMode) {
                 writeImgSeqSidecar();
         }
 
@@ -918,7 +918,7 @@ Error MediaIOTask_ImageFile::writeSequence(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandSeek &cmd) {
-        if(!_sequenceMode || _mode != MediaIO::Reader) {
+        if(!_sequenceMode || _mode != MediaIO::Output) {
                 return Error::IllegalSeek;
         }
 

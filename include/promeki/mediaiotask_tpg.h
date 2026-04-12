@@ -94,7 +94,7 @@ PROMEKI_NAMESPACE_BEGIN
  * // form is enough for a ready-to-use TPG source.
  * MediaIO::Config cfg = MediaIO::defaultConfig("TPG");
  * MediaIO *io = MediaIO::create(cfg);
- * io->open(MediaIO::Reader);
+ * io->open(MediaIO::Output);
  * Frame::Ptr frame;
  * io->readFrame(frame);
  * io->close();

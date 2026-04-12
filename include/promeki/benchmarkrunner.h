@@ -625,6 +625,13 @@ class BenchmarkRunner {
                 unsigned int           _repeats        = 1;
                 String                 _filterPattern;
                 bool                   _verbose        = false;
+                // Column width used for the "running" progress line so
+                // each case's result lines up in the same place on
+                // screen; computed by runAll() from the filtered case
+                // set and read by measureCase() when printing the case
+                // name.  0 means "no padding" — measureCase falls back
+                // to plain width when called outside a runAll() sweep.
+                size_t                 _progressNameWidth = 0;
                 List<BenchmarkResult>  _results;
 };
 

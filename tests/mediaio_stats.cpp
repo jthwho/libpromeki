@@ -118,7 +118,7 @@ TEST_CASE("MediaIO stats: freshly opened reports zero rates and counters") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         MediaIOStats stats = io->stats();
         CHECK(stats.getAs<double>(MediaIOStats::BytesPerSecond) == 0.0);
@@ -149,7 +149,7 @@ TEST_CASE("MediaIO stats: read path feeds BytesPerSecond / FramesPerSecond") {
         MediaIO *io = new MediaIO();
         auto *task = new TelemetryTestTask();
         REQUIRE(io->adoptTask(task).isOk());
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         // Read ten frames back-to-back.  Each read hands the
         // test-task's synthetic frame back to MediaIO, which feeds
@@ -191,7 +191,7 @@ TEST_CASE("MediaIO stats: noteFrameDropped increments FramesDropped") {
         auto *task = new TelemetryTestTask();
         task->injectDrops(3);
         REQUIRE(io->adoptTask(task).isOk());
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr f;
         REQUIRE(io->readFrame(f, true).isOk());
@@ -211,7 +211,7 @@ TEST_CASE("MediaIO stats: noteFrameRepeated / Late increment their counters") {
         task->injectRepeats(2);
         task->injectLates(5);
         REQUIRE(io->adoptTask(task).isOk());
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr f;
         REQUIRE(io->readFrame(f, true).isOk());
@@ -230,14 +230,14 @@ TEST_CASE("MediaIO stats: counters reset to zero on reopen") {
         auto *task = new TelemetryTestTask();
         task->injectDrops(4);
         REQUIRE(io->adoptTask(task).isOk());
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr f;
         REQUIRE(io->readFrame(f, true).isOk());
         CHECK(io->stats().getAs<int64_t>(MediaIOStats::FramesDropped) == 4);
 
         io->close();
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
         // A fresh open() must zero everything — we never call
         // injectDrops() here, so the counter must be clean.
         REQUIRE(io->readFrame(f, true).isOk());
@@ -264,7 +264,7 @@ TEST_CASE("MediaIO stats: latency keys populated when benchmarking is on") {
         BenchmarkReporter reporter;
         io->setBenchmarkReporter(&reporter);
 
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         // A handful of reads populate the reporter via the normal
         // sink-submits path wired up in submitReadCommand().
@@ -296,7 +296,7 @@ TEST_CASE("MediaIO stats: latency keys stay zero when no reporter attached") {
         cfg.set(MediaConfig::EnableBenchmark, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr f;
         REQUIRE(io->readFrame(f, true).isOk());
@@ -319,7 +319,7 @@ TEST_CASE("MediaIO stats: PendingOperations populated by base class") {
         cfg.set(MediaConfig::VideoEnabled, true);
         MediaIO *io = MediaIO::create(cfg);
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         // At steady state — strand idle or running a single prefetch
         // read — pending ops should be small.  We don't pin it to a

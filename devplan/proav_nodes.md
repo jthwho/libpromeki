@@ -38,7 +38,30 @@ The framework itself (`MediaIO` controller, `MediaIOTask` interface, `Strand` pe
 
 **Timecode BCD64 + mode handling** — `Timecode::toBcd64(TimecodePackFormat)` / `Timecode::fromBcd64(uint64_t, TimecodePackFormat, const Mode &)` added. New `TimecodePackFormat` enum in `enums.h` (`Vitc` / `Ltc`). `toString()` now returns `"--:--:--:--"` for invalid timecodes and plain digits for format-less timecodes (never fails); `fromString("")` and `fromString("--:--:--:--")` round-trip to a default-constructed Timecode with `Error::Ok`. Tests in `tests/timecode.cpp` (expanded, 29 new BCD64 / sentinel cases).
 
-All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, `tests/imagefileio_jpegxs.cpp`, `tests/crc.cpp`, `tests/imagedataencoder.cpp`, `tests/imagedatadecoder.cpp`, `tests/mediaiotask_inspector.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
+**Phase 4b additions (this session):**
+
+**`EnumList`** — new `include/promeki/enumlist.h` + `src/core/enumlist.cpp`.  Ordered, duplicate-preserving list of `Enum` values sharing one runtime-chosen element type.  Full Variant integration (`TypeEnumList`), DataStream round-trip, `toString()` / `fromString()` comma-separated serialization, `uniqueSorted()` helper.  22 unit-test cases in `tests/enumlist.cpp`.
+
+**`InterlaceMode` TypedEnum** — added to `enums.h` (Progressive / Interlaced / InterlacedEvenFirst / InterlacedOddFirst / Unknown).  `ImageDesc` drops its old `bool interlaced` field and adopts `InterlaceMode`.  DataStream serialization updated.  Tests in `tests/imagedesc.cpp` and `tests/datastream.cpp`.
+
+**`AudioTestPattern` rewrite** — `setChannelModes()` now accepts an `EnumList<AudioPattern>` (one entry per channel).  Seven new patterns beyond the original Tone/Silence/LTC/AvSync:
+- `SrcProbe` — 997 Hz reference sine (prime-relative, reveals SRC artifacts).
+- `ChannelId` — channel-unique sine at `base + ch * step` Hz; configurable via `AudioChannelIdBaseFreq` / `AudioChannelIdStepFreq`.
+- `WhiteNoise` — Gaussian white noise, cached pre-generated buffer + crossfade seam, fixed PRNG seed for reproducibility, per-channel offset for decorrelation, DC-removal pass.
+- `PinkNoise` — Kellet IIR-filtered pink, same caching/seam/DC-removal design as white.
+- `Chirp` — log-sweep from `chirpStartFreq` to `chirpEndFreq` over `chirpDurationSec`; incremental phase accumulator so the waveform is sample-exact continuous across both chunk boundaries and period wraps.
+- `DualTone` — two simultaneous sines (SMPTE IMD-1 defaults: 60 Hz + 7 kHz, 4:1 ratio); per-tone phase accumulators persist across `create()` calls.
+- `PcmMarker` — framing marker embedded in the sample domain: 16-sample alternating preamble, 8-sample start marker, 64-bit MSB-first payload (BCD64 timecode or monotonic counter), parity bit.
+
+New static constants: `kSrcProbeFrequencyHz`, `kPcmMarkerPreambleSamples`, `kPcmMarkerStartSamples`, `kPcmMarkerPayloadBits`.  New static helper: `channelIdFrequency(ch, base, step)`.  All patterns covered in `tests/audiotestpattern.cpp` (19 test cases, including regression tests for chirp unit bug, noise cursor bug, noise seam crossfade, and DualTone phase-reset click).
+
+**`MediaIO` unknown-config-key detection** — `MediaIO::unknownConfigKeys()` returns a `StringList` of keys present in a `MediaConfig` but not declared by the backend's `defaultConfig()` or the global common keys.  `MediaIO::validateConfigKeys()` applies a `ValidationMode::Lenient` (warn + return Ok) or `Strict` (warn + return `Error::InvalidArgument`) policy.  Tests: `MediaIO_UnknownConfigKeys_*` and `MediaIO_ValidateConfigKeys_*` in `tests/mediaio.cpp`.
+
+**`MediaIO` Input/Output semantics clarified** — terminology corrected so `MediaIO::Output` means the backend *provides* frames to the caller (source) and `MediaIO::Input` means the backend *accepts* frames from the caller (sink).  All in-tree callers updated; the `docs/mediaio.dox` open-direction table updated accordingly.
+
+**Inspector new-pattern coverage** — two new test cases in `tests/mediaiotask_inspector.cpp`: `Inspector pipeline carries a SrcProbe channel unharmed` and `Inspector pipeline carries a ChannelId channel map unharmed`, exercising the full TPG→Inspector pipeline with the new pattern types.
+
+All test coverage lives in `tests/mediaio.cpp`, `tests/quicktime.cpp`, `tests/mediaiotask_quicktime.cpp`, `tests/strand.cpp`, `tests/audiobuffer.cpp`, `tests/bufferpool.cpp`, `tests/histogram.cpp`, `tests/jpegxsimagecodec.cpp`, `tests/imagefileio_jpegxs.cpp`, `tests/crc.cpp`, `tests/imagedataencoder.cpp`, `tests/imagedatadecoder.cpp`, `tests/mediaiotask_inspector.cpp`, `tests/enumlist.cpp`, `tests/audiotestpattern.cpp`, plus the per-backend format tests. See git history for the sprawling completed-work log — this document stays focused on what still needs to be built.
 
 ---
 
@@ -53,7 +76,7 @@ Generic ReadWrite MediaIO that accepts a frame on `writeFrame()`, transforms it,
 
 **Initial version (complete):**
 
-- Registered as `"Converter"` with `canReadWrite = true`; Reader/Writer-only modes are rejected.
+- Registered as `"Converter"` with `canInputAndOutput = true`; Input/Output-only modes are rejected.
 - Config keys: `ConfigOutputPixelDesc` (PixelDesc), `ConfigJpegQuality` (int), `ConfigJpegSubsampling` (Enum `ChromaSubsampling`), `ConfigOutputAudioDataType` (Enum `AudioDataType`; `Invalid` = pass-through), `ConfigCapacity` (int, default 4).
 - Video transforms all go through a single `Image::convert()` call.  The converter parses its config keys at open time and forwards them as a `MediaConfig` to `Image::convert()`, which dispatches uncompressed↔uncompressed CSC, JPEG encode, JPEG decode, and JPEG↔JPEG transcode internally.  Pass-through when no output pixel desc is set, or when source and target match.
 - Audio transform: `Audio::convertTo()` whenever `ConfigOutputAudioDataType` is set and differs from the input data type; otherwise pass-through.
@@ -106,7 +129,7 @@ single unified task.
 
 **Shipped in the writer-mode first pass:**
 
-- Registered as `"Rtp"` with `canWrite = true` and `canRead = true` (`canReadWrite` is false).  `ReadWrite` mode is rejected at open time.
+- Registered as `"Rtp"` with `canInput = true` and `canOutput = true` (`canInputAndOutput` is false).  `InputAndOutput` mode is rejected at open time.
 - Built on the completed `PacketTransport` / `UdpSocketTransport` stack: every stream owns its own transport so destinations, DSCPs, and bind ports stay independent.
 - Supported payload classes (inferred from the media descriptor, no manual `RtpPayload` config key required):
   - Video MJPEG via `RtpPayloadJpeg` when the input `PixelDesc` is in the JPEG family.
@@ -229,15 +252,21 @@ JPEG XS read/write is wired into the existing `ImageFile` / `ImageFileIO` subsys
 
 **Files:** `utils/mediaplay/main.cpp`, `cli.{h,cpp}`, `stage.{h,cpp}`, `pipeline.{h,cpp}` (split from the original monolithic `main.cpp`; wired via `utils/mediaplay/CMakeLists.txt`)
 
-**Shipped — CLI rework (this session):**
+**Shipped — CLI flag rename (this session):**
 
-Short flag names: `-i/--in`, `-o/--out`, `-c/--convert`, `--ic`, `--im`, `--oc`, `--om`, `--cc`, `--cm` (renamed from `--incfg`/`--outcfg`/etc; no backwards compat aliases).
+Source/destination flags renamed from `-i`/`-o` to `-s`/`-d` (and `--ic`/`--oc`/`--im`/`--om` to `--sc`/`--dc`/`--sm`/`--dm`) to align naming with the library's own `MediaIO::Output` (source) / `MediaIO::Input` (sink) semantics.  No backwards-compat aliases.  Help text updated throughout.
 
-Removed flags: `--fast`, `--no-display`, `--no-audio`, `--window-size`.  SDL is now configured via `-oc Paced:false`, `--oc Audio:false`, `--oc WindowSize:1920x1080`, `--oc WindowTitle:Foo`.
+Three-column config schema layout in `--help` and `-s list` / `-d list` output: each config key rendered as `Key | Type | Description` in aligned columns, separated by dashed borders.
 
-Metadata schema support: `FormatDesc::defaultMetadata`, `MediaIO::defaultMetadata`, `applyStageMetadata`, `--im`/`--om`/`--cm` flags, and metadata dumps in `--help`.
+**Shipped — CLI rework (prior session):**
 
-SDL is a pseudo-backend (`kStageSdl`) that exposes a full schema via `sdlDefaultConfig()` / `sdlDefaultMetadata()` / `sdlDescription()` so it appears alongside real backends in `--help`, `-i list`, `-o list`.
+Short flag names: `-s/--src`, `-d/--dst`, `-c/--convert`, `--sc`, `--sm`, `--dc`, `--dm`, `--cc`, `--cm` (renamed across two sessions from original `--incfg`/`--outcfg`; no backwards compat aliases).
+
+Removed flags: `--fast`, `--no-display`, `--no-audio`, `--window-size`.  SDL is now configured via `--dc Paced:false`, `--dc Audio:false`, `--dc WindowSize:1920x1080`, `--dc WindowTitle:Foo`.
+
+Metadata schema support: `FormatDesc::defaultMetadata`, `MediaIO::defaultMetadata`, `applyStageMetadata`, `--sm`/`--dm`/`--cm` flags, and metadata dumps in `--help`.
+
+SDL is a pseudo-backend (`kStageSdl`) that exposes a full schema via `sdlDefaultConfig()` / `sdlDefaultMetadata()` / `sdlDescription()` so it appears alongside real backends in `--help`, `-s list`, `-d list`.
 
 `-h` as short alias for `--help`.
 
@@ -245,7 +274,7 @@ SDL is a pseudo-backend (`kStageSdl`) that exposes a full schema via `sdlDefault
 
 Also fixed sort-in-place bug in the help dumper: `List::sort()` returns a copy, does not sort in place.
 
-**Shipped — imgseq sidecar refactor (this session):**
+**Shipped — imgseq sidecar refactor (prior session):**
 
 Removed `--imgseq` / `--imgseq-file` CLI options and deleted `sidecar.{h,cpp}`.  Sidecar writing is now a library-level concern: set `MediaConfig::SaveImgSeqPath` on the ImageFile writer stage instead.  The `ImgSeq` format gained a `"dir"` JSON field; `FilePath::relativeTo()` was added.  `ImgSeqPathMode` enum (Relative/Absolute) controls whether the sidecar's `"dir"` field is written as a relative or absolute path.
 
@@ -253,17 +282,17 @@ Removed `--imgseq` / `--imgseq-file` CLI options and deleted `sidecar.{h,cpp}`. 
 
 Grammar built on `MediaConfig`: type-aware `Key:Value` parsing against each backend's `defaultConfig()`; `list` sentinel for any `Enum` or `PixelDesc` key; `--help` autogenerates the full backend schema from the live registry.  Positional shortcuts.  `createForFileRead`/`createForFileWrite` now seed the live config with full `defaultConfig()` + `ConfigType` + `ConfigFilename`.
 
-**Verified end-to-end:**
+**Verified end-to-end (current flags):**
 - Plain `mediaplay` with no flags: TPG default config (video+audio+timecode all enabled) → SDL, no configuration needed.
-- `-i TPG --ic VideoSize:64x48 --ic VideoPixelDesc:RGB8_sRGB --ic FrameRate:30` → 5 DPX files at the correct pixel layout.
+- `-s TPG --sc VideoSize:64x48 --sc VideoPixelDesc:RGB8_sRGB --sc FrameRate:30` → 5 DPX files at the correct pixel layout.
 - Adding `-c --cc OutputPixelDesc:RGBA8_sRGB` rewrites the sink mediaDesc; file size delta proves the CSC ran.
 - Audio TPG → `--cc OutputAudioDataType:PCMI_S16LE` → WAV sink produces 16-bit PCM stereo 48 kHz.
-- `-i TPG -c --cc OutputPixelDesc:RGBA8_sRGB -o /tmp/out.dpx --duration 2` honours `--duration` (the drain bug was the previous blocker).
-- Fan-out: `-o /tmp/a.dpx -o /tmp/b.dpx` produces two identical files from one source.
-- `--ic VideoPattern:list` → the 12 registered TPG pattern names.
-- `--ic VideoPixelDesc:list` → the 78 registered PixelDescs.
-- `-i list` → the registered MediaIO backends with R/W capability flags.
-- `--om Title:"My Recording" Originator:foo` → metadata stamped into WAV/MOV containers.
+- `-s TPG -c --cc OutputPixelDesc:RGBA8_sRGB -d /tmp/out.dpx --duration 2` honours `--duration`.
+- Fan-out: `-d /tmp/a.dpx -d /tmp/b.dpx` produces two identical files from one source.
+- `--sc VideoPattern:list` → the 12 registered TPG pattern names.
+- `--sc VideoPixelDesc:list` → the 78 registered PixelDescs.
+- `-s list` → the registered MediaIO backends with R/W capability flags.
+- `--dm Title:"My Recording" Originator:foo` → metadata stamped into WAV/MOV containers.
 
 **Still to do** (larger-scope work, depends on new framework classes):
 - [ ] `--pipeline <path>` JSON ingest / `--save-pipeline <path>` JSON export — blocked on the new `MediaPipelineConfig` data object (phase 4A, see `proav_pipeline.md`).

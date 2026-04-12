@@ -329,6 +329,20 @@ int64_t BenchmarkRunner::estimatedDurationMs() const {
 Error BenchmarkRunner::runAll() {
         const List<BenchmarkCase> &cases = registeredCases();
 
+        // Precompute a fixed width for the progress "running" column so
+        // each case's result time lines up vertically on screen.  The
+        // width is the longest filtered case fullName — using the
+        // filtered set (instead of every registered case) keeps the
+        // column from being dragged out by cases that will never
+        // actually run in this sweep.
+        size_t width = 0;
+        for(const auto &c : cases) {
+                if(!matchesFilter(c)) continue;
+                size_t n = c.fullName().size();
+                if(n > width) width = n;
+        }
+        _progressNameWidth = width;
+
         // Aggregate error stays Ok even when a case fails — per-case status
         // is captured inside BenchmarkResult::succeeded so callers can
         // inspect individual failures without losing otherwise-good data.
@@ -336,6 +350,7 @@ Error BenchmarkRunner::runAll() {
                 if(!matchesFilter(c)) continue;
                 runCase(c);
         }
+        _progressNameWidth = 0;
         return Error::Ok;
 }
 
@@ -430,8 +445,22 @@ BenchmarkResult BenchmarkRunner::measureCase(const BenchmarkCase &theCase) {
         if(_verbose) {
                 // Print the case id without a trailing newline so the
                 // result can flow onto the same line once the case
-                // finishes running.
-                std::printf("  %s ... ", theCase.fullName().cstr());
+                // finishes running.  _progressNameWidth — set by
+                // runAll() to the longest filtered case name — pads
+                // short names out to a fixed column so every result
+                // lines up vertically on screen.  When a caller runs a
+                // case outside runAll() (e.g. runCaseByName) the width
+                // is zero and the name prints at natural width.
+                String fullName = theCase.fullName();
+                size_t pad = 0;
+                if(_progressNameWidth > fullName.size()) {
+                        pad = _progressNameWidth - fullName.size();
+                }
+                String padding;
+                for(size_t i = 0; i < pad; i++) padding += ' ';
+                std::printf("  %s%s ... ",
+                            fullName.cstr(),
+                            padding.cstr());
                 std::fflush(stdout);
         }
 

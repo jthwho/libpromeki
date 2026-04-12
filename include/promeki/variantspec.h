@@ -324,22 +324,19 @@ class VariantSpec {
                 // ============================================================
 
                 /**
-                 * @brief Writes a multi-line help block for this spec to a TextStream.
+                 * @brief Returns the "details" column string for help output.
                  *
-                 * Format:
-                 * @code
-                 *   KeyName (type) [range]            default: value
-                 *     Description text.
-                 * @endcode
+                 * Concatenates the type name, the optional range, and the
+                 * default value into the compact form
+                 * `"(type) [range] [def: value]"` (range omitted when
+                 * unset).  Callers render help output as three columns —
+                 * name, details, description — and use this string for
+                 * the middle column; @ref VariantDatabase::writeSpecMapHelp
+                 * is the canonical caller.
                  *
-                 * A blank line is appended after each entry for readability.
-                 * Long descriptions are word-wrapped to @p maxWidth.
-                 *
-                 * @param stream   The output stream.
-                 * @param name     The key name to display.
-                 * @param maxWidth Maximum line width (0 = unlimited, default 80).
+                 * @return The details column string.
                  */
-                void writeHelp(TextStream &stream, const String &name, int maxWidth = 80) const;
+                String detailsString() const;
 
                 // ============================================================
                 // Conversion

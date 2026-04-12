@@ -55,9 +55,9 @@ MediaIO::FormatDesc MediaIOTask_AudioFile::formatDesc() {
                 "AudioFile",
                 "Audio file formats via libsndfile (WAV, BWF, AIFF, OGG)",
                 {"wav", "bwf", "aiff", "aif", "ogg"},
-                true,   // canRead
-                true,   // canWrite
-                false,  // canReadWrite
+                true,   // canOutput
+                true,   // canInput
+                false,  // canInputAndOutput
                 []() -> MediaIOTask * {
                         return new MediaIOTask_AudioFile();
                 },
@@ -130,7 +130,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
         _mode = cmd.mode;
         MediaDesc mediaDesc;
 
-        if(cmd.mode == MediaIO::Reader) {
+        if(cmd.mode == MediaIO::Output) {
                 _audioFile = AudioFile::createReader(filename);
                 if(!_audioFile.isValid()) {
                         promekiErr("MediaIOTask_AudioFile: failed to create reader for '%s'",
@@ -226,7 +226,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandOpen &cmd) {
         cmd.mediaDesc = mediaDesc;
         cmd.audioDesc = _audioDesc;
         cmd.frameRate = _frameRate;
-        if(cmd.mode == MediaIO::Writer) {
+        if(cmd.mode == MediaIO::Input) {
                 // Surface the merged AudioDesc metadata (caller values
                 // plus MediaIO write defaults) as the container
                 // metadata so MediaIO can cache it and clients can
@@ -285,7 +285,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
 }
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandSeek &cmd) {
-        if(_mode != MediaIO::Reader) return Error::IllegalSeek;
+        if(_mode != MediaIO::Output) return Error::IllegalSeek;
         size_t targetSample = cmd.frameNumber * _samplesPerFrame;
         Error err = _audioFile.seekToSample(targetSample);
         if(err.isError()) return err;

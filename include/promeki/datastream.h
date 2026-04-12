@@ -227,7 +227,8 @@ class DataStream {
                         TypeAudioDesc   = 0x33, ///< @brief AudioDesc (format + sample rate + channels + metadata)
                         TypeImageDesc   = 0x34, ///< @brief ImageDesc (size + pixel desc + line pad + align + interlaced + metadata)
                         TypeMediaDesc   = 0x35, ///< @brief MediaDesc (frame rate + image list + audio list + metadata)
-                        TypeUMID        = 0x36  ///< @brief UMID (uint8 length = 32 or 64, then N raw bytes)
+                        TypeUMID        = 0x36, ///< @brief UMID (uint8 length = 32 or 64, then N raw bytes)
+                        TypeEnumList    = 0x37  ///< @brief EnumList (type name + tagged uint32 count + N tagged int32 values)
                 };
 
                 /** @brief Current wire format version. */
@@ -426,6 +427,8 @@ class DataStream {
                 DataStream &operator<<(const PixelDesc &val);
                 /** @brief Writes an Enum as its qualified "TypeName::ValueName" string. */
                 DataStream &operator<<(const Enum &val);
+                /** @brief Writes an EnumList as its type name + tagged count + tagged int32 values. */
+                DataStream &operator<<(const EnumList &val);
                 /** @brief Writes a StringList as uint32 count + length-prefixed elements. */
                 DataStream &operator<<(const StringList &val);
 
@@ -492,6 +495,8 @@ class DataStream {
                 DataStream &operator>>(PixelDesc &val);
                 /** @brief Reads an Enum from its qualified "TypeName::ValueName" string. */
                 DataStream &operator>>(Enum &val);
+                /** @brief Reads an EnumList from type name + tagged count + tagged int32 values. */
+                DataStream &operator>>(EnumList &val);
                 /** @brief Reads a StringList from tagged count + length-prefixed elements. */
                 DataStream &operator>>(StringList &val);
 
@@ -655,6 +660,7 @@ class DataStream {
                 void writePixelFormatData(const PixelFormat &val);
                 void writePixelDescData(const PixelDesc &val);
                 void writeEnumData(const Enum &val);
+                void writeEnumListData(const EnumList &val);
                 void writeStringListData(const StringList &val);
 
                 // Untagged value read helpers
@@ -683,6 +689,7 @@ class DataStream {
                 PixelFormat readPixelFormatData();
                 PixelDesc readPixelDescData();
                 Enum      readEnumData();
+                EnumList  readEnumListData();
                 StringList readStringListData();
 
                 /**

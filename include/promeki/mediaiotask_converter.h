@@ -48,7 +48,7 @@ PROMEKI_NAMESPACE_BEGIN
  *
  * @par Mode support
  *
- * Only @c MediaIO::ReadWrite is supported.  The Converter has no
+ * Only @c MediaIO::InputAndOutput is supported.  The Converter has no
  * independent input source, so Reader mode has nothing to read; and
  * no independent output sink, so Writer mode has nowhere to write.
  *
@@ -88,7 +88,7 @@ PROMEKI_NAMESPACE_BEGIN
  * cfg.set(MediaConfig::OutputPixelDesc,
  *         PixelDesc(PixelDesc::RGBA8_sRGB));
  * MediaIO *io = MediaIO::create(cfg);
- * io->open(MediaIO::ReadWrite);
+ * io->open(MediaIO::InputAndOutput);
  * io->writeFrame(inputFrame);
  * Frame::Ptr outputFrame;
  * io->readFrame(outputFrame);

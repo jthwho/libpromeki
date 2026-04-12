@@ -57,7 +57,7 @@ TEST_CASE("MediaIO_QuickTime: createForFileRead picks the QuickTime backend") {
         // We verify the selection succeeded by checking the file actually opens.
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_uyvy_24p.mov"));
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
         // QuickTime returns a valid MediaDesc with a video image.
         CHECK(io->mediaDesc().imageList().size() == 1);
         io->close();
@@ -72,7 +72,7 @@ TEST_CASE("MediaIO_QuickTime: open uncompressed UYVY fixture") {
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_uyvy_24p.mov"));
         REQUIRE(io != nullptr);
 
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
         CHECK(io->isOpen());
         CHECK(io->frameCount() == 2);
 
@@ -108,7 +108,7 @@ TEST_CASE("MediaIO_QuickTime: open uncompressed UYVY fixture") {
 TEST_CASE("MediaIO_QuickTime: open ProRes fixture yields a compressed Image") {
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_prores_proxy_25p.mov"));
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr frame;
         REQUIRE(io->readFrame(frame).isOk());
@@ -128,7 +128,7 @@ TEST_CASE("MediaIO_QuickTime: open ProRes fixture yields a compressed Image") {
 TEST_CASE("MediaIO_QuickTime: opens AAC-in-MP4 and exposes compressed audio samples") {
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_h264_aac.mp4"));
         REQUIRE(io != nullptr);
-        Error err = io->open(MediaIO::Reader);
+        Error err = io->open(MediaIO::Output);
         CHECK(err.isOk());
 
         // AAC audio track should be present, marked compressed, with the
@@ -168,7 +168,7 @@ TEST_CASE("MediaIO_QuickTime: refuses non-PCM audio with NotSupported") {
         // confirms the regular PCM path opens successfully.
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_h264_pcm_24p.mov"));
         REQUIRE(io != nullptr);
-        Error err = io->open(MediaIO::Reader);
+        Error err = io->open(MediaIO::Output);
         CHECK(err.isOk());
         CHECK(io->mediaDesc().audioList().size() == 1);
         const AudioDesc &ad = io->mediaDesc().audioList()[0];
@@ -181,7 +181,7 @@ TEST_CASE("MediaIO_QuickTime: refuses non-PCM audio with NotSupported") {
 TEST_CASE("MediaIO_QuickTime: timecode propagates onto frame metadata") {
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_uyvy_24p_tc.mov"));
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
 
         Frame::Ptr frame;
         REQUIRE(io->readFrame(frame).isOk());
@@ -206,7 +206,7 @@ TEST_CASE("MediaIO_QuickTime: timecode propagates onto frame metadata") {
 TEST_CASE("MediaIO_QuickTime: seekToFrame moves the read cursor") {
         MediaIO *io = MediaIO::createForFileRead(fixturePath("tiny_uyvy_24p.mov"));
         REQUIRE(io != nullptr);
-        REQUIRE(io->open(MediaIO::Reader).isOk());
+        REQUIRE(io->open(MediaIO::Output).isOk());
         REQUIRE(io->frameCount() == 2);
 
         // Seek to frame 1 then read.
@@ -246,7 +246,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip uncompressed video via MediaIO") {
                         PixelDesc(PixelDesc::YUV8_422_UYVY_Rec709)));
                 io->setMediaDesc(md);
 
-                REQUIRE(io->open(MediaIO::Writer).isOk());
+                REQUIRE(io->open(MediaIO::Input).isOk());
 
                 // Write three frames with distinct fill bytes.
                 for(int f = 0; f < 3; ++f) {
@@ -267,7 +267,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip uncompressed video via MediaIO") {
         {
                 MediaIO *io = MediaIO::createForFileRead(tmp);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Reader).isOk());
+                REQUIRE(io->open(MediaIO::Output).isOk());
                 CHECK(io->frameCount() == 3);
                 CHECK(io->mediaDesc().imageList()[0].size().width() == 16);
                 CHECK(io->mediaDesc().imageList()[0].size().height() == 16);
@@ -318,7 +318,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 io->setMediaDesc(md);
-                REQUIRE(io->open(MediaIO::Writer).isOk());
+                REQUIRE(io->open(MediaIO::Input).isOk());
 
                 // Each frame gets samplesPerFrame stereo floats. Fill with
                 // a distinct sine-ish pattern so we can round-trip verify.
@@ -355,7 +355,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip video + audio via MediaIO") {
         {
                 MediaIO *io = MediaIO::createForFileRead(tmp);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Reader).isOk());
+                REQUIRE(io->open(MediaIO::Output).isOk());
 
                 // Must expose both tracks.
                 CHECK(io->mediaDesc().imageList().size() == 1);
@@ -412,7 +412,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip compressed (ProRes) bytes pass through"
                 MediaIO *io = MediaIO::create(cfg);
                 REQUIRE(io != nullptr);
                 io->setMediaDesc(md);
-                REQUIRE(io->open(MediaIO::Writer).isOk());
+                REQUIRE(io->open(MediaIO::Input).isOk());
 
                 static const size_t sizes[] = { 800, 850, 900 };
                 for(int f = 0; f < 3; ++f) {
@@ -432,7 +432,7 @@ TEST_CASE("MediaIO_QuickTime: round-trip compressed (ProRes) bytes pass through"
         {
                 MediaIO *io = MediaIO::createForFileRead(tmp);
                 REQUIRE(io != nullptr);
-                REQUIRE(io->open(MediaIO::Reader).isOk());
+                REQUIRE(io->open(MediaIO::Output).isOk());
                 CHECK(io->frameCount() == 3);
                 CHECK(io->mediaDesc().imageList()[0].pixelDesc().id() ==
                       PixelDesc::ProRes_422_HQ);

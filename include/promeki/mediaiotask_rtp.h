@@ -87,7 +87,7 @@ class Thread;
  *
  * @par Mode support
  *
- * Both @c MediaIO::Writer and @c MediaIO::Reader are supported.
+ * Both @c MediaIO::Input and @c MediaIO::Output are supported.
  * In reader mode, each configured stream opens its own
  * @ref UdpSocketTransport bound to the port in the corresponding
  * @c *RtpDestination key, joins the multicast group if the
@@ -282,7 +282,7 @@ class Thread;
  *
  * MediaIO *io = MediaIO::create(cfg);
  * io->setMediaDesc(mediaDesc);
- * io->open(MediaIO::Writer);
+ * io->open(MediaIO::Input);
  * io->writeFrame(frame);
  * io->close();
  * delete io;

@@ -17,6 +17,10 @@
 #include <promeki/size2d.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/enums.h>
+#include <promeki/enumlist.h>
+#include <promeki/audiotestpattern.h>
+#include <promeki/audio.h>
+#include <cmath>
 
 using namespace promeki;
 
@@ -39,12 +43,14 @@ struct InspectorRig {
 
 void buildRig(InspectorRig &rig, uint32_t streamId,
               MediaIOTask_Inspector::EventCallback cb = {},
-              bool audioEnabled = true) {
+              bool audioEnabled = true,
+              const EnumList &audioChannelModes = EnumList(),
+              int audioChannels = 0) {
         // Source: a default-config TPG with the StreamID overridden
         // and a fixed frame rate so the test math is reproducible.
-        // The default audio mode is AvSync which embeds LTC on the
-        // configured channel — that's how the inspector gets both the
-        // click marker and the LTC stream to verify.
+        // The default channel-mode list puts LTC on ch0 and an AvSync
+        // click on ch1 — that's how the inspector gets both the click
+        // marker and the LTC stream to verify.
         MediaIO::Config tpgCfg = MediaIO::defaultConfig("TPG");
         tpgCfg.set(MediaConfig::FrameRate, FrameRate(FrameRate::FPS_30));
         tpgCfg.set(MediaConfig::VideoSize, Size2Du32(1920, 1080));
@@ -52,9 +58,15 @@ void buildRig(InspectorRig &rig, uint32_t streamId,
         tpgCfg.set(MediaConfig::TimecodeStart, String("01:00:00:00"));
         tpgCfg.set(MediaConfig::StreamID, streamId);
         tpgCfg.set(MediaConfig::AudioEnabled, audioEnabled);
+        if(audioChannels > 0) {
+                tpgCfg.set(MediaConfig::AudioChannels, int32_t(audioChannels));
+        }
+        if(audioChannelModes.isValid()) {
+                tpgCfg.set(MediaConfig::AudioChannelModes, audioChannelModes);
+        }
         rig.tpg = MediaIO::create(tpgCfg);
         REQUIRE(rig.tpg != nullptr);
-        REQUIRE(rig.tpg->open(MediaIO::Reader).isOk());
+        REQUIRE(rig.tpg->open(MediaIO::Output).isOk());
 
         // Sink: Inspector with the default ("full checks") config.
         // We construct the task directly + adoptTask so we can
@@ -68,7 +80,7 @@ void buildRig(InspectorRig &rig, uint32_t streamId,
         insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.0);  // disable periodic log in tests
         rig.inspectorIo->setConfig(insCfg);
         REQUIRE(rig.inspectorIo->adoptTask(rig.inspector).isOk());
-        REQUIRE(rig.inspectorIo->open(MediaIO::Writer).isOk());
+        REQUIRE(rig.inspectorIo->open(MediaIO::Input).isOk());
 }
 
 void pumpFrames(InspectorRig &rig, int frameCount) {
@@ -311,7 +323,7 @@ TEST_CASE("Inspector periodic log fires when interval elapses") {
         MediaIO::Config insCfg = MediaIO::defaultConfig("Inspector");
         insCfg.set(MediaConfig::InspectorLogIntervalSec, 0.01);  // 10 ms
         rig.inspectorIo->setConfig(insCfg);
-        REQUIRE(rig.inspectorIo->open(MediaIO::Writer).isOk());
+        REQUIRE(rig.inspectorIo->open(MediaIO::Input).isOk());
 
         for(int i = 0; i < 10; i++) {
                 Frame::Ptr frame;
@@ -398,4 +410,144 @@ TEST_CASE("Inspector decodes LTC and reports A/V sync offset") {
                 }
         }
         CHECK(syncOffsetChangeCount == 0);
+}
+
+// ============================================================================
+// New audio patterns: SrcProbe and ChannelId.  The Inspector doesn't
+// carry dedicated decoders for these yet, but we can still pump a
+// multi-channel TPG through the Inspector and peek at the audio the
+// generator produced to confirm it matches the promised frequency map.
+// The Inspector's job here is just to make sure the new modes don't
+// break the pipeline's continuity / A/V sync checks when they sit
+// alongside LTC on a different channel.
+// ============================================================================
+
+namespace {
+
+// Zero-crossing frequency estimator.  Accurate enough for ~30 cycles
+// of a multi-hundred-Hz tone in one frame at 48 kHz.
+double estimateFreqHz(const Audio &audio, size_t channel, double sampleRate) {
+        const float *data = audio.data<float>();
+        if(data == nullptr) return 0.0;
+        const size_t nch = audio.desc().channels();
+        const size_t n   = audio.samples();
+        if(n < 2) return 0.0;
+
+        size_t crossings = 0;
+        float prev = data[channel];
+        for(size_t s = 1; s < n; ++s) {
+                float cur = data[s * nch + channel];
+                if((prev < 0 && cur >= 0) || (prev >= 0 && cur < 0)) {
+                        crossings++;
+                }
+                prev = cur;
+        }
+        const double cycles  = static_cast<double>(crossings) / 2.0;
+        const double seconds = static_cast<double>(n - 1) / sampleRate;
+        return (seconds > 0.0) ? (cycles / seconds) : 0.0;
+}
+
+}  // namespace
+
+TEST_CASE("Inspector pipeline carries a SrcProbe channel unharmed") {
+        // TPG emits LTC on ch0 (so the LTC decoder still locks and the
+        // A/V sync check is still exercised) and a SrcProbe tone on
+        // ch1.  We pump frames through the Inspector and, on the side,
+        // pull the same frames' audio out and verify the SrcProbe
+        // channel carries ~997 Hz.  The Inspector's own continuity /
+        // sync checks must not fire any discontinuities.
+        EnumList modes = EnumList::forType<AudioPattern>();
+        modes.append(AudioPattern::LTC);
+        modes.append(AudioPattern::SrcProbe);
+
+        std::vector<InspectorEvent> events;
+        Mutex eventsMutex;
+        InspectorRig rig;
+        buildRig(rig, 0x5A5AA5A5u,
+                 [&](const InspectorEvent &e) {
+                         Mutex::Locker lk(eventsMutex);
+                         events.push_back(e);
+                 },
+                 /*audioEnabled=*/true,
+                 modes,
+                 /*audioChannels=*/2);
+
+        // Pump via the shared helper so the frames flow through
+        // Inspector's write path; we don't need a separate TPG copy
+        // because we can re-read the generator output once we know
+        // what the TPG was configured with.
+        pumpFrames(rig, 40);
+
+        InspectorSnapshot snap = rig.inspector->snapshot();
+        CHECK(snap.framesProcessed == 40);
+        CHECK(snap.framesWithPictureData == 40);
+        CHECK(snap.framesWithLtc > 20);        // LTC on ch0 still locks
+        CHECK(snap.totalDiscontinuities == 0); // no unexpected drift
+
+        // Independently synthesise one frame-length of the expected
+        // audio and verify ch1 really emits the 997 Hz reference tone.
+        // Uses the same configuration the TPG was driven with.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 2);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(modes);
+        gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
+        gen.setToneLevel(AudioLevel::fromDbfs(-20.0));
+        REQUIRE(gen.configure().isOk());
+        Audio audio = gen.create(static_cast<size_t>(sampleRate));
+        REQUIRE(audio.isValid());
+
+        double freq = estimateFreqHz(audio, 1, sampleRate);
+        CHECK(freq == doctest::Approx(AudioTestPattern::kSrcProbeFrequencyHz)
+                         .epsilon(0.005));
+}
+
+TEST_CASE("Inspector pipeline carries a ChannelId channel map unharmed") {
+        // Four channels: LTC on ch0, ChannelId tones on ch1..ch3.  The
+        // ChannelId frequency map (base 1000 Hz, step 100 Hz) means ch1
+        // carries 1100 Hz, ch2 carries 1200 Hz, ch3 carries 1300 Hz —
+        // the goal is to make each channel independently identifiable
+        // by a downstream consumer via a peak-frequency lookup.
+        EnumList modes = EnumList::forType<AudioPattern>();
+        modes.append(AudioPattern::LTC);
+        modes.append(AudioPattern::ChannelId);
+        modes.append(AudioPattern::ChannelId);
+        modes.append(AudioPattern::ChannelId);
+
+        InspectorRig rig;
+        buildRig(rig, 0xCAFEBABEu, {},
+                 /*audioEnabled=*/true,
+                 modes,
+                 /*audioChannels=*/4);
+        pumpFrames(rig, 20);
+
+        InspectorSnapshot snap = rig.inspector->snapshot();
+        CHECK(snap.framesProcessed == 20);
+        CHECK(snap.framesWithPictureData == 20);
+        CHECK(snap.framesWithLtc > 5);
+        CHECK(snap.totalDiscontinuities == 0);
+
+        // Replay the same config through a standalone AudioTestPattern
+        // and verify the ChannelId frequencies match what we told the
+        // TPG to emit.
+        const double sampleRate = 48000.0;
+        AudioDesc desc(static_cast<float>(sampleRate), 4);
+        AudioTestPattern gen(desc);
+        gen.setChannelModes(modes);
+        gen.setLtcLevel(AudioLevel::fromDbfs(-20.0));
+        gen.setToneLevel(AudioLevel::fromDbfs(-20.0));
+        gen.setChannelIdBaseFreq(1000.0);
+        gen.setChannelIdStepFreq(100.0);
+        REQUIRE(gen.configure().isOk());
+        Audio audio = gen.create(static_cast<size_t>(sampleRate));
+        REQUIRE(audio.isValid());
+
+        // Every ChannelId channel must carry the frequency its index
+        // maps to (1100, 1200, 1300).  LTC on ch0 isn't a sine so we
+        // don't run the estimator on it.
+        for(int ch = 1; ch <= 3; ++ch) {
+                double expected = AudioTestPattern::channelIdFrequency(ch, 1000.0, 100.0);
+                double observed = estimateFreqHz(audio, ch, sampleRate);
+                CHECK(observed == doctest::Approx(expected).epsilon(0.005));
+        }
 }

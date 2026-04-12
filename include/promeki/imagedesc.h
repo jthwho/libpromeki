@@ -13,6 +13,7 @@
 #include <promeki/size2d.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/metadata.h>
+#include <promeki/enums.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -272,19 +273,25 @@ class ImageDesc {
                 }
 
                 /**
-                 * @brief Returns true if the image is interlaced.
-                 * @return true if interlaced, false if progressive.
+                 * @brief Returns the scan mode (progressive / interlaced / unknown).
+                 *
+                 * Replaces the earlier @c bool interlaced flag with a
+                 * three-state @ref InterlaceMode value so the field
+                 * order is captured alongside the interlaced-vs-
+                 * progressive distinction.
+                 *
+                 * @return The scan mode.
                  */
-                bool interlaced() const {
-                        return _interlaced;
+                InterlaceMode interlaceMode() const {
+                        return _interlaceMode;
                 }
 
                 /**
-                 * @brief Sets whether the image is interlaced.
-                 * @param val true for interlaced, false for progressive.
+                 * @brief Sets the scan mode.
+                 * @param mode The scan mode to store.
                  */
-                void setInterlaced(bool val) {
-                        _interlaced = val;
+                void setInterlaceMode(const InterlaceMode &mode) {
+                        _interlaceMode = mode;
                         return;
                 }
 
@@ -328,14 +335,14 @@ class ImageDesc {
                 Size2Du32               _size;
                 size_t                  _linePad = 0;
                 size_t                  _lineAlign = 1;
-                bool                    _interlaced = false;
+                InterlaceMode           _interlaceMode = InterlaceMode::Unknown;
                 PixelDesc               _pixelDesc;
                 Metadata                _metadata;
 };
 
 /**
  * @brief Writes an ImageDesc as tag + size + pixelDesc + linePad + lineAlign
- *        + interlaced + metadata.
+ *        + interlaceMode + metadata.
  * @param stream The stream to write to.
  * @param desc   The ImageDesc to serialize.
  * @return The stream, for chaining.
@@ -346,7 +353,7 @@ inline DataStream &operator<<(DataStream &stream, const ImageDesc &desc) {
         stream << desc.pixelDesc();
         stream << static_cast<uint64_t>(desc.linePad());
         stream << static_cast<uint64_t>(desc.lineAlign());
-        stream << desc.interlaced();
+        stream << static_cast<uint32_t>(desc.interlaceMode().value());
         stream << desc.metadata();
         return stream;
 }
@@ -362,14 +369,14 @@ inline DataStream &operator>>(DataStream &stream, ImageDesc &desc) {
         Size2Du32 size;
         PixelDesc pd;
         uint64_t linePad = 0, lineAlign = 1;
-        bool interlaced = false;
+        uint32_t interlaceValue = 0;
         Metadata meta;
-        stream >> size >> pd >> linePad >> lineAlign >> interlaced >> meta;
+        stream >> size >> pd >> linePad >> lineAlign >> interlaceValue >> meta;
         if(stream.status() != DataStream::Ok) { desc = ImageDesc(); return stream; }
         desc = ImageDesc(size, pd);
         desc.setLinePad(static_cast<size_t>(linePad));
         desc.setLineAlign(static_cast<size_t>(lineAlign));
-        desc.setInterlaced(interlaced);
+        desc.setInterlaceMode(InterlaceMode{static_cast<int>(interlaceValue)});
         desc.metadata() = std::move(meta);
         return stream;
 }

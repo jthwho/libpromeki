@@ -28,8 +28,8 @@
  * MediaIO *src  = MediaIO::create(MediaIO::defaultConfig("TPG"));
  * MediaIO *sink = MediaIO::create(MediaIO::defaultConfig("Inspector"));
  *
- * src->open(MediaIO::Reader);
- * sink->open(MediaIO::Writer);
+ * src->open(MediaIO::Output);
+ * sink->open(MediaIO::Input);
  *
  * for(int i = 0; i < 1000; i++) {
  *     Frame::Ptr frame;
@@ -319,7 +319,7 @@
  *
  * @code
  * MediaIO *io = MediaIO::create(MediaIO::defaultConfig("Inspector"));
- * io->open(MediaIO::Writer);
+ * io->open(MediaIO::Input);
  * io->writeFrame(frame);
  * // ... query io->stats() or rely on the periodic log
  * io->close();
@@ -346,7 +346,7 @@
  * MediaIO *io = new MediaIO();
  * io->setConfig(MediaIO::defaultConfig("Inspector"));
  * io->adoptTask(insp);                  // takes ownership of `insp`
- * io->open(MediaIO::Writer);
+ * io->open(MediaIO::Input);
  *
  * io->writeFrame(frame);
  * // ... insp is still valid as long as io is — you keep the typed

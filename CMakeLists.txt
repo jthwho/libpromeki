@@ -619,6 +619,7 @@ set(PROMEKI_SOURCES
     src/core/dir.cpp
     src/core/duration.cpp
     src/core/enum.cpp
+    src/core/enumlist.cpp
     src/core/env.cpp
     src/core/error.cpp
     src/core/event.cpp
@@ -1284,6 +1285,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/duration.cpp
         tests/elapsedtimer.cpp
         tests/enum.cpp
+        tests/enumlist.cpp
         tests/env.cpp
         tests/error.cpp
         tests/event.cpp

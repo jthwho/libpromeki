@@ -15,6 +15,7 @@
 #include <promeki/map.h>
 #include <promeki/list.h>
 #include <promeki/json.h>
+#include <promeki/stringlist.h>
 #include <promeki/textstream.h>
 #include <promeki/datastream.h>
 #include <promeki/readwritelock.h>
@@ -154,28 +155,88 @@ class VariantDatabase {
                 /**
                  * @brief Writes formatted help text for every spec in a SpecMap.
                  *
-                 * Iterates the map in key-name order and calls
-                 * @ref VariantSpec::writeHelp for each entry.  This is the
-                 * canonical way to dump a backend's configuration reference
-                 * to a terminal or log.
+                 * Iterates the map in key-name order and renders each
+                 * entry as a single line with three padded columns
+                 * (`name`, `details`, `description`).  The details
+                 * column is produced by @ref VariantSpec::detailsString.
                  *
-                 * @param stream The output stream.
-                 * @param specs  The spec map to format.
+                 * @param stream   The output stream.
+                 * @param specs    The spec map to format.
+                 * @param skipKeys Optional list of key names to omit from
+                 *                 the output.  Callers use this to hide
+                 *                 keys that are implied by other flags —
+                 *                 for example mediaplay hides the `Type`
+                 *                 key because it is already set by
+                 *                 `-i` / `-o` / `-c`.
+                 * @return         The widest physical line width emitted,
+                 *                 in characters.  Callers use the value to
+                 *                 size a visual border above and below
+                 *                 the block.  Returns 0 when nothing was
+                 *                 emitted.
                  */
-                static void writeSpecMapHelp(TextStream &stream, const SpecMap &specs) {
-                        // Collect and sort by name for stable output.
+                static int writeSpecMapHelp(TextStream &stream, const SpecMap &specs,
+                                            const StringList &skipKeys = StringList()) {
+                        // Collect the visible set first so the column
+                        // width pass doesn't count skipped keys.
                         StringList names;
                         for(auto it = specs.cbegin(); it != specs.cend(); ++it) {
-                                names.pushToBack(it->first.name());
+                                const String &n = it->first.name();
+                                if(skipKeys.contains(n)) continue;
+                                names.pushToBack(n);
                         }
                         names = names.sort();
+                        if(names.isEmpty()) return 0;
+
+                        // Three-column layout: name | details | description.
+                        // We cache the per-row details string so the width
+                        // pass and the emit pass don't rebuild it twice.
+                        List<String> details;
+                        details.resize(names.size());
+                        int nameWidth = 0;
+                        int detailsWidth = 0;
                         for(size_t i = 0; i < names.size(); ++i) {
                                 ID id(names[i]);
                                 auto it = specs.find(id);
-                                if(it != specs.end()) {
-                                        it->second.writeHelp(stream, names[i]);
-                                }
+                                if(it == specs.end()) continue;
+                                int nw = static_cast<int>(names[i].size());
+                                if(nw > nameWidth) nameWidth = nw;
+                                details[i] = it->second.detailsString();
+                                int dw = static_cast<int>(details[i].size());
+                                if(dw > detailsWidth) detailsWidth = dw;
                         }
+
+                        // Fixed structure: "  <name>  <details>  <desc>".
+                        // Everything up to the description is a known
+                        // size; the description's real width varies per
+                        // row, so we track the widest actual line as we
+                        // go and return that so the caller can draw a
+                        // border matching the block.
+                        const int prefixWidth = 2 + nameWidth + 2 + detailsWidth;
+                        int maxLineWidth = 0;
+                        for(size_t i = 0; i < names.size(); ++i) {
+                                ID id(names[i]);
+                                auto it = specs.find(id);
+                                if(it == specs.end()) continue;
+
+                                String nameCol = names[i];
+                                while(static_cast<int>(nameCol.size()) < nameWidth) {
+                                        nameCol += ' ';
+                                }
+                                String detailsCol = details[i];
+                                while(static_cast<int>(detailsCol.size()) < detailsWidth) {
+                                        detailsCol += ' ';
+                                }
+                                stream << "  " << nameCol << "  " << detailsCol;
+                                const String &desc = it->second.description();
+                                int lineWidth = prefixWidth;
+                                if(!desc.isEmpty()) {
+                                        stream << "  " << desc;
+                                        lineWidth += 2 + static_cast<int>(desc.size());
+                                }
+                                stream << endl;
+                                if(lineWidth > maxLineWidth) maxLineWidth = lineWidth;
+                        }
+                        return maxLineWidth;
                 }
 
                 // ============================================================
@@ -383,6 +444,42 @@ class VariantDatabase {
                                 ret.pushToBack(ID::fromId(it->first));
                         }
                         return ret;
+                }
+
+                /**
+                 * @brief Returns the names of entries in the database that have
+                 *        no @ref VariantSpec registered anywhere.
+                 *
+                 * A key is "unknown" when it has no spec in @p extraSpecs
+                 * (typically a backend-specific spec map) and no spec in
+                 * this database's per-@c Tag global registry.  Useful for
+                 * detecting typos in a configuration without knowing any
+                 * subsystem-specific key list — the caller decides what
+                 * to do with the result (log a warning, reject with an
+                 * error, prompt interactively, etc.).
+                 *
+                 * @param extraSpecs Optional extra spec map to consult
+                 *                   before falling back to the global
+                 *                   per-@c Tag registry.  Defaults to an
+                 *                   empty map (global registry only).
+                 * @return A StringList of key names, sorted in
+                 *         insertion-agnostic lexicographic order for
+                 *         stable logging.  Empty when every stored key
+                 *         has a spec.
+                 */
+                StringList unknownKeys(const SpecMap &extraSpecs = SpecMap()) const {
+                        StringList out;
+                        for(auto it = _data.cbegin(); it != _data.cend(); ++it) {
+                                ID id = ID::fromId(it->first);
+                                if(extraSpecs.find(id) != extraSpecs.end()) continue;
+                                if(spec(id) != nullptr) continue;
+                                out.pushToBack(id.name());
+                        }
+                        // List<String>::sort() returns a List<String>, not a
+                        // StringList — assign-through-base lets us keep
+                        // StringList's type identity on the return value.
+                        out = out.sort();
+                        return out;
                 }
 
                 /**

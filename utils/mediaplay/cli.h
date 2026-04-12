@@ -25,37 +25,39 @@ namespace mediaplay {
  * Stages are stored in their own fields rather than merged into a
  * generic list so main() can quickly answer "is there a source?"
  * and "is there a converter?" without walking the list.  Multiple
- * outputs are explicitly supported (fan-out).
+ * sinks are explicitly supported (fan-out).
  */
 struct Options {
-        // Stages
-        StageSpec                       input;
+        // Stages.  `source` holds the single pipeline source (`-s`),
+        // `sinks` holds the fan-out list of pipeline sinks (`-d`),
+        // and `converter` is the optional intermediate stage (`-c`).
+        StageSpec                       source;
         bool                            hasConverter = false;
         StageSpec                       converter;
-        promeki::List<StageSpec>        outputs;
+        promeki::List<StageSpec>        sinks;
 
-        // State used while parsing --ic / --oc / --cc — the parser
+        // State used while parsing --sc / --dc / --cc — the parser
         // needs to know which stage a stray `--*c` or `--*m` attaches
         // to.
         enum StageScope {
-                ScopeInput = 0,
+                ScopeSource = 0,
                 ScopeConverter,
-                ScopeOutput
+                ScopeSink
         };
-        StageScope                      lastScope   = ScopeInput;
-        size_t                          lastOutput  = 0;
+        StageScope                      lastScope = ScopeSource;
+        size_t                          lastSink  = 0;
 
         // Framework-level (non-stage) flags
         //
         // Pacing policy is determined implicitly by the sink set: if
-        // an SDL output is present, it paces the pipeline at video
-        // rate via its audio-led clock; if no SDL output is present,
+        // an SDL sink is present, it paces the pipeline at video
+        // rate via its audio-led clock; if no SDL sink is present,
         // the pipeline runs as fast as the file sinks can consume.
         // There's no --fast / --no-display — users drop the SDL
-        // sink by passing an explicit --out instead.
+        // sink by passing an explicit --dst instead.
         bool                            noAudio     = false;
-        bool                            explicitIn  = false;    ///< User passed --in at least once.
-        bool                            explicitOut = false;    ///< User passed --out at least once.
+        bool                            explicitSrc = false;    ///< User passed --src at least once.
+        bool                            explicitDst = false;    ///< User passed --dst at least once.
         promeki::String                 windowSize  = "1280x720";
         double                          duration    = 0.0;
         int64_t                         frameCount  = 0;

@@ -162,7 +162,7 @@
  * io->setMetadata(myMetadata);
  * io->setVideoTracks({0});           // optional track selection
  *
- * Error err = io->open(MediaIO::Reader);
+ * Error err = io->open(MediaIO::Output);
  * if(err.isError()) { ... }
  *
  * // ... read/write frames ...
@@ -188,7 +188,7 @@
  *
  * @code
  * io->setMediaDesc(myDesc);
- * io->open(MediaIO::Writer);
+ * io->open(MediaIO::Input);
  * io->writeFrame(frame);                     // blocking
  * io->writeFrame(frame, false);              // fire-and-forget
  * io->close();
