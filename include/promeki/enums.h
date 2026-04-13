@@ -824,6 +824,55 @@ inline const V4l2ExposureMode V4l2ExposureMode::Manual           { 1 };
 inline const V4l2ExposureMode V4l2ExposureMode::ShutterPriority  { 2 };
 inline const V4l2ExposureMode V4l2ExposureMode::AperturePriority { 3 };
 
+/**
+ * @brief Well-known Enum type for audio sample rate conversion quality.
+ *
+ * Selects the libsamplerate converter algorithm used by @ref AudioResampler.
+ * The integer values map directly to libsamplerate's converter type
+ * constants (@c SRC_SINC_BEST_QUALITY through @c SRC_ZERO_ORDER_HOLD),
+ * so conversion is a plain @c static_cast on @c Enum::value().
+ *
+ * - @c SincBest      — highest quality sinc interpolation; most CPU.
+ *                      Best for offline / non-real-time conversion.
+ * - @c SincMedium    — good balance of quality and CPU; the default.
+ *                      Suitable for most real-time use cases including
+ *                      drift correction and timebase conversion.
+ * - @c SincFastest   — lowest quality sinc; still bandlimited, no
+ *                      aliasing.  Use when latency or CPU budget is
+ *                      very tight.
+ * - @c Linear        — linear interpolation.  Fast but introduces
+ *                      aliasing on downsampling.  Acceptable for
+ *                      preview / monitoring paths.
+ * - @c ZeroOrderHold — nearest sample (sample-and-hold).  Useful
+ *                      only for testing or intentional lo-fi effects.
+ */
+class SrcQuality : public TypedEnum<SrcQuality> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("SrcQuality",
+                        {
+                                { "SincBest",      0 },
+                                { "SincMedium",    1 },
+                                { "SincFastest",   2 },
+                                { "Linear",        3 },
+                                { "ZeroOrderHold", 4 }
+                        },
+                        1);  // default: SincMedium
+
+                using TypedEnum<SrcQuality>::TypedEnum;
+
+                static const SrcQuality SincBest;
+                static const SrcQuality SincMedium;
+                static const SrcQuality SincFastest;
+                static const SrcQuality Linear;
+                static const SrcQuality ZeroOrderHold;
+};
+
+inline const SrcQuality SrcQuality::SincBest      { 0 };
+inline const SrcQuality SrcQuality::SincMedium    { 1 };
+inline const SrcQuality SrcQuality::SincFastest   { 2 };
+inline const SrcQuality SrcQuality::Linear        { 3 };
+inline const SrcQuality SrcQuality::ZeroOrderHold { 4 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

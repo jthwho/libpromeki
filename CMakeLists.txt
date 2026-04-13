@@ -75,6 +75,7 @@ endif()
 option(PROMEKI_ENABLE_JPEGXS   "Include JPEG XS codec (SVT-JPEG-XS, x86-64 + nasm/yasm)" ${PROMEKI_ENABLE_JPEGXS_DEFAULT})
 option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
+option(PROMEKI_ENABLE_SRC      "Include audio resampling (libsamplerate)" ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" ON)
 # V4L2 capture is Linux-only; default ON when videodev2.h and libasound are
@@ -98,6 +99,7 @@ option(PROMEKI_USE_SYSTEM_LIBJPEG       "Use system libjpeg instead of vendored"
 option(PROMEKI_USE_SYSTEM_SVT_JPEG_XS   "Use system SVT-JPEG-XS instead of vendored"    OFF)
 option(PROMEKI_USE_SYSTEM_FREETYPE      "Use system freetype instead of vendored"       OFF)
 option(PROMEKI_USE_SYSTEM_SNDFILE       "Use system libsndfile instead of vendored"     OFF)
+option(PROMEKI_USE_SYSTEM_SAMPLERATE   "Use system libsamplerate instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_NLOHMANN_JSON "Use system nlohmann_json instead of vendored"  OFF)
 option(PROMEKI_USE_SYSTEM_VTC           "Use system libvtc instead of vendored"         OFF)
 option(PROMEKI_USE_SYSTEM_HIGHWAY      "Use system Highway instead of vendored"        OFF)
@@ -122,6 +124,9 @@ if(PROMEKI_ENABLE_FREETYPE AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_ENABLE_AUDIO AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_AUDIO requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_SRC AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_SRC requires PROMEKI_ENABLE_PROAV")
 endif()
 if(PROMEKI_ENABLE_CSC AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_ENABLE_CSC requires PROMEKI_ENABLE_PROAV")
@@ -506,6 +511,32 @@ if(PROMEKI_ENABLE_AUDIO)
         )
         add_dependencies(promeki_sndfile_vendored libsndfile-ep)
         set(PROMEKI_SNDFILE_TARGET promeki_sndfile_vendored)
+    endif()
+endif()
+
+# --- libsamplerate ---
+if(PROMEKI_ENABLE_SRC)
+    if(PROMEKI_USE_SYSTEM_SAMPLERATE)
+        find_package(SampleRate REQUIRED)
+        set(PROMEKI_SAMPLERATE_TARGET SampleRate::samplerate)
+    else()
+        ExternalProject_Add(
+            libsamplerate-ep
+            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/libsamplerate
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX:PATH=${PROMEKI_THIRDPARTY_PREFIX}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_TESTING=OFF
+                -DLIBSAMPLERATE_EXAMPLES=OFF
+                -DLIBSAMPLERATE_INSTALL=ON
+        )
+        add_library(promeki_samplerate_vendored STATIC IMPORTED)
+        set_target_properties(promeki_samplerate_vendored PROPERTIES
+            IMPORTED_LOCATION ${PROMEKI_THIRDPARTY_PREFIX}/lib/libsamplerate.a
+        )
+        add_dependencies(promeki_samplerate_vendored libsamplerate-ep)
+        set(PROMEKI_SAMPLERATE_TARGET promeki_samplerate_vendored)
     endif()
 endif()
 
@@ -915,6 +946,10 @@ if(PROMEKI_ENABLE_PROAV)
             src/proav/mediaiotask_audiofile.cpp
         )
     endif()
+    if(PROMEKI_ENABLE_SRC)
+        list(APPEND PROMEKI_HEADERS include/promeki/audioresampler.h)
+        list(APPEND PROMEKI_SOURCES src/proav/audioresampler.cpp)
+    endif()
     if(PROMEKI_ENABLE_V4L2)
         list(APPEND PROMEKI_HEADERS include/promeki/mediaiotask_v4l2.h)
         list(APPEND PROMEKI_SOURCES src/proav/mediaiotask_v4l2.cpp)
@@ -1040,6 +1075,9 @@ if(PROMEKI_ENABLE_PROAV)
     if(NOT PROMEKI_USE_SYSTEM_SNDFILE AND PROMEKI_ENABLE_AUDIO)
         target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
     endif()
+    if(NOT PROMEKI_USE_SYSTEM_SAMPLERATE AND PROMEKI_ENABLE_SRC)
+        target_include_directories(promeki PRIVATE ${PROMEKI_THIRDPARTY_PREFIX}/include)
+    endif()
     if(NOT PROMEKI_USE_SYSTEM_FREETYPE AND PROMEKI_ENABLE_FREETYPE)
         target_include_directories(promeki PRIVATE
             ${PROMEKI_THIRDPARTY_PREFIX}/include
@@ -1073,6 +1111,10 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
+    endif()
+    if(PROMEKI_ENABLE_SRC)
+        target_link_libraries(promeki PRIVATE ${PROMEKI_SAMPLERATE_TARGET})
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SRC)
     endif()
     if(PROMEKI_ENABLE_V4L2)
         target_link_libraries(promeki PRIVATE ALSA::ALSA)
@@ -1525,6 +1567,11 @@ if(PROMEKI_BUILD_TESTS)
             list(APPEND UNITTEST_SOURCES
                 tests/jpegxsimagecodec.cpp
                 tests/imagefileio_jpegxs.cpp
+            )
+        endif()
+        if(PROMEKI_ENABLE_SRC)
+            list(APPEND UNITTEST_SOURCES
+                tests/audioresampler.cpp
             )
         endif()
     endif()

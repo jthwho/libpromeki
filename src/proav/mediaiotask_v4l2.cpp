@@ -533,6 +533,9 @@ MediaIO::FormatDesc MediaIOTask_V4L2::formatDesc() {
                         s(MediaConfig::V4l2DevicePath,  String());
                         s(MediaConfig::V4l2BufferCount, int32_t(4));
                         s(MediaConfig::V4l2AudioDevice, String("auto"));
+                        s(MediaConfig::V4l2AudioDriftCorrection, true);
+                        s(MediaConfig::V4l2AudioDriftGain, 0.001);
+                        s(MediaConfig::V4l2AudioDriftTarget, 0.1);
                         // Video
                         s(MediaConfig::VideoSize,       Size2Du32(1920, 1080));
                         s(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::YUV8_422_Rec709));
@@ -963,20 +966,40 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
 
         // Set up AudioBuffer ring — store in native float, 2 seconds of headroom.
         // setInputFormat tells it to convert from the ALSA capture format on push.
+        size_t ringCapacity = rate * 2;
         AudioDesc ringDesc(AudioDesc::NativeType,
                            static_cast<float>(rate),
                            static_cast<unsigned int>(channels));
-        _audioRing = AudioBuffer(ringDesc, rate * 2);
+        _audioRing = AudioBuffer(ringDesc, ringCapacity);
         _audioRing.setInputFormat(_audioDesc);
+
+#if PROMEKI_ENABLE_SRC
+        // Clock-drift correction: dynamically adjust the resampling ratio
+        // to keep the ring near half-capacity, compensating for ALSA/V4L2
+        // clock drift.
+        bool driftCorrection = cfg.getAs<bool>(
+                MediaConfig::V4l2AudioDriftCorrection, true);
+        if(driftCorrection) {
+                double driftGain = cfg.getAs<double>(
+                        MediaConfig::V4l2AudioDriftGain, 0.001);
+                double driftTargetSec = cfg.getAs<double>(
+                        MediaConfig::V4l2AudioDriftTarget, 0.1);
+                size_t driftTarget = static_cast<size_t>(
+                        static_cast<double>(rate) * driftTargetSec);
+                _audioRing.enableDriftCorrection(driftTarget, driftGain);
+                promekiDebug("MediaIOTask_V4L2: audio drift correction enabled "
+                             "(target=%zu, gain=%.4f)", driftTarget, driftGain);
+        }
+#endif
 
         _audioEnabled = true;
         promekiDebug("MediaIOTask_V4L2: ALSA opened %s  format=%s  rate=%u  "
-                     "channels=%d  bufferSize=%lu  ringCapacity=%u",
+                     "channels=%d  bufferSize=%lu  ringCapacity=%zu",
                      alsaDev.cstr(),
                      _audioDesc.dataTypeName().cstr(),
                      rate, channels,
                      static_cast<unsigned long>(bufferSize),
-                     rate * 2);
+                     ringCapacity);
         return Error::Ok;
 }
 
@@ -1187,93 +1210,94 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
         _frameDeltaCount = 0;
         _prevPeriodFps = 0.0;
 
-        // Set up periodic debug reporting (1 Hz)
-        if(_promeki_debug_enabled) {
-                _debugReport = PeriodicCallback(1.0, [this] {
-                        int64_t captured = _framesCaptured.load(std::memory_order_relaxed);
-                        size_t qDepth = _videoQueue.size();
+        // Periodic status reporting (1 Hz).  The rate and drift
+        // computations run unconditionally so the data is always
+        // fresh for runtime diagnostics; the log output is debug-only.
+        _debugReport = PeriodicCallback(1.0, [this] {
+                int64_t captured = _framesCaptured.load(std::memory_order_relaxed);
+                size_t qDepth = _videoQueue.size();
 
-                        // -- Video timing from V4L2 capture timestamps --
-                        double avgFps = 0.0;
-                        double periodFps = 0.0;
-                        double fpsChange = 0.0;
-                        double jitterUs = 0.0;
+                // -- Video timing from V4L2 capture timestamps --
+                double avgFps = 0.0;
+                double periodFps = 0.0;
+                double fpsChange = 0.0;
+                double jitterUs = 0.0;
 
-                        // Long-term average fps from first timestamp
-                        if(_firstCaptureFrame >= 0 &&
-                           _frameCount > _firstCaptureFrame + 1) {
-                                double totalSec = (_lastCaptureTime - _firstCaptureTime)
-                                                  .toSecondsDouble();
-                                if(totalSec > 0.0) {
-                                        avgFps = (double)(_frameCount - _firstCaptureFrame) /
-                                                 totalSec;
-                                }
+                // Long-term average fps from first timestamp
+                if(_firstCaptureFrame >= 0 &&
+                   _frameCount > _firstCaptureFrame + 1) {
+                        double totalSec = (_lastCaptureTime - _firstCaptureTime)
+                                          .toSecondsDouble();
+                        if(totalSec > 0.0) {
+                                avgFps = (double)(_frameCount - _firstCaptureFrame) /
+                                         totalSec;
                         }
+                }
 
-                        // Period fps and jitter from accumulated deltas
-                        if(_frameDeltaCount > 0) {
-                                double meanDelta = _frameDeltaSum / (double)_frameDeltaCount;
-                                if(meanDelta > 0.0) periodFps = 1.0 / meanDelta;
-                                fpsChange = periodFps - _prevPeriodFps;
-                                if(_prevPeriodFps == 0.0) fpsChange = 0.0;
-                                _prevPeriodFps = periodFps;
+                // Period fps and jitter from accumulated deltas
+                if(_frameDeltaCount > 0) {
+                        double meanDelta = _frameDeltaSum / (double)_frameDeltaCount;
+                        if(meanDelta > 0.0) periodFps = 1.0 / meanDelta;
+                        fpsChange = periodFps - _prevPeriodFps;
+                        if(_prevPeriodFps == 0.0) fpsChange = 0.0;
+                        _prevPeriodFps = periodFps;
 
-                                // Jitter = stddev of inter-frame interval
-                                double variance = (_frameDeltaSqSum / (double)_frameDeltaCount) -
-                                                  (meanDelta * meanDelta);
-                                if(variance > 0.0) jitterUs = std::sqrt(variance) * 1e6;
+                        // Jitter = stddev of inter-frame interval
+                        double variance = (_frameDeltaSqSum / (double)_frameDeltaCount) -
+                                          (meanDelta * meanDelta);
+                        if(variance > 0.0) jitterUs = std::sqrt(variance) * 1e6;
 
-                                _frameDeltaSum = 0.0;
-                                _frameDeltaSqSum = 0.0;
-                                _frameDeltaCount = 0;
-                        }
+                        _frameDeltaSum = 0.0;
+                        _frameDeltaSqSum = 0.0;
+                        _frameDeltaCount = 0;
+                }
 
-                        if(_audioEnabled) {
-                                size_t ringAvail = _audioRing.available();
-                                size_t ringCap = _audioRing.capacity();
-                                int64_t overruns = _alsaOverruns.load(std::memory_order_relaxed);
-                                double ringAvg = 0.0;
-                                double ringDrift = 0.0;
-                                if(_ringAccumFrames > 0) {
-                                        ringAvg = (double)_ringAccum / (double)_ringAccumFrames;
-                                        _ringAccum = 0;
-                                        _ringAccumFrames = 0;
-                                        if(!_ringBaselineSet) {
-                                                _ringAvgBaseline = ringAvg;
-                                                _ringBaselineTime = _lastCaptureTime;
-                                                _ringBaselineSet = true;
-                                        } else {
-                                                double elapsedSec = (_lastCaptureTime - _ringBaselineTime)
-                                                                    .toSecondsDouble();
-                                                if(elapsedSec > 0.0) {
-                                                        ringDrift = (ringAvg - _ringAvgBaseline) / elapsedSec;
-                                                }
+                if(_audioEnabled) {
+                        size_t ringAvail = _audioRing.available();
+                        size_t ringCap = _audioRing.capacity();
+                        int64_t overruns = _alsaOverruns.load(std::memory_order_relaxed);
+                        double ringAvg = 0.0;
+                        double ringDrift = 0.0;
+                        if(_ringAccumFrames > 0) {
+                                ringAvg = (double)_ringAccum / (double)_ringAccumFrames;
+                                _ringAccum = 0;
+                                _ringAccumFrames = 0;
+                                if(!_ringBaselineSet) {
+                                        _ringAvgBaseline = ringAvg;
+                                        _ringBaselineTime = _lastCaptureTime;
+                                        _ringBaselineSet = true;
+                                } else {
+                                        double elapsedSec = (_lastCaptureTime - _ringBaselineTime)
+                                                            .toSecondsDouble();
+                                        if(elapsedSec > 0.0) {
+                                                ringDrift = (ringAvg - _ringAvgBaseline) / elapsedSec;
                                         }
                                 }
-                                promekiDebug("f=%lld cap=%lld q=%zu/%d "
-                                             "fps=%.3f pfps=%.3f fpsd=%+.3f jit=%.0fus "
-                                             "ring=%zu/%zu ovr=%lld "
-                                             "ravg=%.1f drift=%+.1f s/s",
-                                             static_cast<long long>(_frameCount),
-                                             static_cast<long long>(captured),
-                                             qDepth, VideoQueueDepth,
-                                             avgFps, periodFps, fpsChange,
-                                             jitterUs,
-                                             ringAvail, ringCap,
-                                             static_cast<long long>(overruns),
-                                             ringAvg, ringDrift);
-                        } else {
-                                promekiDebug("f=%lld cap=%lld q=%zu/%d "
-                                             "fps=%.3f pfps=%.3f fpsd=%+.3f jit=%.0fus "
-                                             "audio=off",
-                                             static_cast<long long>(_frameCount),
-                                             static_cast<long long>(captured),
-                                             qDepth, VideoQueueDepth,
-                                             avgFps, periodFps, fpsChange,
-                                             jitterUs);
                         }
-                });
-        }
+                        promekiDebug("f=%lld cap=%lld q=%zu/%d "
+                                     "fps=%.3f pfps=%.3f fpsd=%+.3f jit=%.0fus "
+                                     "ring=%zu/%zu ovr=%lld "
+                                     "ravg=%.1f drift=%+.1f s/s srcr=%.6f",
+                                     static_cast<long long>(_frameCount),
+                                     static_cast<long long>(captured),
+                                     qDepth, VideoQueueDepth,
+                                     avgFps, periodFps, fpsChange,
+                                     jitterUs,
+                                     ringAvail, ringCap,
+                                     static_cast<long long>(overruns),
+                                     ringAvg, ringDrift,
+                                     _audioRing.driftRatio());
+                } else {
+                        promekiDebug("f=%lld cap=%lld q=%zu/%d "
+                                     "fps=%.3f pfps=%.3f fpsd=%+.3f jit=%.0fus "
+                                     "audio=off",
+                                     static_cast<long long>(_frameCount),
+                                     static_cast<long long>(captured),
+                                     qDepth, VideoQueueDepth,
+                                     avgFps, periodFps, fpsChange,
+                                     jitterUs);
+                }
+        });
 
         // Launch video capture thread.  ALSA capture is deferred to
         // the first executeCmd(Read) so audio doesn't accumulate in
@@ -1419,14 +1443,11 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                 _ringAccum += static_cast<int64_t>(avail);
                 _ringAccumFrames++;
 
-                // Guard against ring overflow from USB audio/video
-                // clock drift.  When the ALSA and V4L2 endpoints use
-                // independent oscillators (depends on the USB host
-                // controller path at enumeration time), the audio
-                // sample rate can differ from nominal by up to ~1000
-                // ppm, slowly filling the ring.  Drop excess samples
-                // when we approach capacity to prevent data loss.
-                // A future audio resampler will eliminate this.
+                // Safety net: drop excess samples if the ring approaches
+                // capacity.  With drift correction enabled the PI
+                // controller should prevent this, but if drift correction
+                // is disabled or the drift exceeds the resampler's range,
+                // this keeps the ring from overflowing and losing data.
                 size_t cap = _audioRing.capacity();
                 if(avail > cap * 3 / 4) {
                         size_t excess = avail - cap / 4;
@@ -1444,19 +1465,16 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                                                 driftPpm = (driftRate / _audioDesc.sampleRate()) * 1e6;
                                         }
                                 }
-                                promekiErr("MediaIOTask_V4L2: audio ring drift overflow — "
+                                promekiErr("MediaIOTask_V4L2: audio ring overflow — "
                                            "dropped %zu samples (ring was %zu/%zu, "
                                            "drift %+.1f samp/sec, %.0f ppm, "
-                                           "%.0f sec into capture).  "
+                                           "srcr=%.6f, %.0f sec into capture).  "
                                            "The USB audio and video clocks are not "
-                                           "locked on this host controller path.  "
-                                           "Audio/video sync will drift until a "
-                                           "resampler is available.  This can vary "
-                                           "between device plug-ins depending on which "
-                                           "USB hub or controller the OS enumerates "
-                                           "the device on.",
+                                           "locked on this host controller path.",
                                            excess, avail, cap,
-                                           driftRate, driftPpm, elapsedSec);
+                                           driftRate, driftPpm,
+                                           _audioRing.driftRatio(),
+                                           elapsedSec);
                         }
                 }
         }

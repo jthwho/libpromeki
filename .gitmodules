@@ -31,3 +31,6 @@
 [submodule "thirdparty/svt-jpeg-xs"]
 	path = thirdparty/svt-jpeg-xs
 	url = https://github.com/OpenVisualCloud/SVT-JPEG-XS.git
+[submodule "thirdparty/libsamplerate"]
+	path = thirdparty/libsamplerate
+	url = https://github.com/libsndfile/libsamplerate.git

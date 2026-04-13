@@ -25,11 +25,11 @@ Biquad EQ filter (low/high-pass, band-pass/stop, notch, shelf, peaking) using Ro
 
 ### AudioResampler backend
 
-Polyphase sample-rate conversion with configurable quality (fast/medium/best → filter length). Handles arbitrary rational ratios.
+**Partially implemented (2026-04-12):** `AudioResampler` class exists in `include/promeki/audioresampler.h` / `src/proav/audioresampler.cpp`, backed by vendored libsamplerate (PROMEKI_ENABLE_SRC). Supports variable ratio, all five libsamplerate quality modes (SincBest → ZeroOrderHold via `SrcQuality` enum in `enums.h`), and end-of-input flush. Integrated into `AudioBuffer` for transparent push-time rate conversion and PI-controller clock-drift correction. V4L2 task uses this via `enableDriftCorrection()`.
 
-- Config keys: `ConfigOutputSampleRate`, `ConfigQuality`
-- Precompute filter bank at open time
-- Preserves channel count
+Remaining work for the full MediaIO backend:
+- `MediaIOTask` subclass wrapping `AudioResampler` for pipeline use (Config keys: `ConfigOutputSampleRate`, `ConfigQuality`)
+- Preserves channel count; no channel-map conversion needed for this backend
 
 ### AudioFormatConverter backend
 

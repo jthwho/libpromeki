@@ -8,13 +8,18 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/config.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audio.h>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
 #include <promeki/result.h>
+#include <promeki/enums.h>
 #include <promeki/mutex.h>
 #include <promeki/waitcondition.h>
+#if PROMEKI_ENABLE_SRC
+#include <promeki/audioresampler.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -37,10 +42,53 @@ PROMEKI_NAMESPACE_BEGIN
  * (bit depth / endian / float vs int), @c push() converts on the fly
  * via AudioDesc's @c samplesToFloat / @c floatToSamples helpers.
  *
- * When the input and output @b sample @b rates or @b channel @b counts
- * differ, @c push() returns @c Error::NotSupported. The resampler /
- * channel-map hook will land in a follow-up — this class is
- * pre-plumbed for it.
+ * When the input and output @b sample @b rates differ and
+ * @c PROMEKI_ENABLE_SRC is available, @c push() resamples on the fly
+ * via an internal @ref AudioResampler.  Use @c setResamplerQuality()
+ * to control the quality mode (default: @ref SrcQuality::SincMedium).
+ * When @c PROMEKI_ENABLE_SRC is not available, @c push() returns
+ * @c Error::NotSupported for rate mismatches.
+ *
+ * When the input and output @b channel @b counts differ, @c push()
+ * returns @c Error::NotSupported (channel-map hook TBD).
+ *
+ * @par Drift correction
+ *
+ * When the producer and consumer run on independent clocks (e.g.
+ * ALSA capture vs. video frame timer), their rates drift relative to
+ * each other.  Over time the buffer either fills up (producer faster)
+ * or drains (consumer faster).
+ *
+ * Call @c enableDriftCorrection() to engage the resampler with
+ * automatic ratio adjustment.  On each @c push(), the buffer
+ * measures its fill level against a caller-supplied target and
+ * adjusts the resampling ratio via a PI (proportional–integral)
+ * controller:
+ *
+ * @code
+ * error     = (available - target) / target
+ * integral += error
+ * ratio     = nominalRatio * (1.0 - Kp * error - Ki * integral)
+ * @endcode
+ *
+ * The proportional term (Kp = gain) reacts immediately to fill
+ * level deviations.  The integral term (Ki = gain / 1000)
+ * accumulates over time, eliminating any steady-state offset
+ * caused by a constant clock drift — without the integral, a
+ * proportional-only controller would allow the buffer to
+ * stabilize above or below the target.
+ *
+ * When the buffer is overfull the ratio decreases (fewer output
+ * samples per input), draining it back to the target.  When it is
+ * underfull the ratio increases, filling it back up.  The gain
+ * parameter controls how aggressively the correction is applied —
+ * small values (0.001 – 0.01) give inaudible corrections.
+ *
+ * Drift correction works whether the input and output sample rates
+ * are the same or different.  When rates are the same, the nominal
+ * ratio is 1.0 and only the drift adjustment moves it.  When rates
+ * differ, the nominal ratio handles the fixed conversion and the
+ * drift adjustment rides on top.
  *
  * @par Thread safety
  *
@@ -120,11 +168,88 @@ class AudioBuffer {
                  *
                  * If @p input differs from @c format() only in @c DataType,
                  * @c push() converts on-the-fly via @c samplesToFloat /
-                 * @c floatToSamples. If the sample rate or channel count
-                 * differs, @c push() returns @c NotSupported (resampler /
-                 * channel-map hook TBD).
+                 * @c floatToSamples.  If the sample rate differs and
+                 * @c PROMEKI_ENABLE_SRC is available, @c push() resamples
+                 * transparently.  If the channel count differs, @c push()
+                 * returns @c NotSupported (channel-map hook TBD).
+                 *
+                 * Changing the input format resets any internal resampler
+                 * state so filter history from the previous format does
+                 * not bleed through.
                  */
                 void setInputFormat(const AudioDesc &input);
+
+                /**
+                 * @brief Sets the resampler quality for sample-rate conversion on push.
+                 *
+                 * Controls the quality mode used for both fixed rate
+                 * conversion and drift correction.  The resampler is
+                 * lazily created on the first push that needs it.
+                 * Calling this method resets any existing resampler state.
+                 *
+                 * @param quality The SrcQuality mode to use.
+                 * @return Error::Ok on success, Error::NotSupported if
+                 *         PROMEKI_ENABLE_SRC is off.
+                 */
+                Error setResamplerQuality(const SrcQuality &quality);
+
+                /**
+                 * @brief Enables clock-drift correction on push.
+                 *
+                 * When enabled, the buffer dynamically adjusts the
+                 * resampling ratio on each push() to steer the fill
+                 * level toward @p targetSamples.  This compensates for
+                 * clock drift between a producer and consumer running
+                 * on independent oscillators.
+                 *
+                 * Drift correction works for both same-rate and
+                 * different-rate configurations.  When rates are the
+                 * same, the resampler is created with a nominal ratio
+                 * of 1.0 and only the drift adjustment moves it.
+                 *
+                 * @param targetSamples Desired steady-state fill level
+                 *        in samples.  A good default is half the
+                 *        reserved capacity.
+                 * @param gain Proportional gain for the correction.
+                 *        Small values (0.001 – 0.01) give smooth,
+                 *        inaudible corrections.  Larger values track
+                 *        drift faster but may cause audible pitch
+                 *        shifts.  Default: 0.001.
+                 * @return Error::Ok on success, Error::NotSupported if
+                 *         PROMEKI_ENABLE_SRC is off.
+                 */
+                Error enableDriftCorrection(size_t targetSamples, double gain = 0.001);
+
+                /**
+                 * @brief Disables clock-drift correction.
+                 *
+                 * The internal resampler is reset but kept alive if
+                 * the input and output sample rates still differ
+                 * (fixed rate conversion continues).  If rates are
+                 * the same, the resampler is no longer used until
+                 * drift correction is re-enabled.
+                 *
+                 * When PROMEKI_ENABLE_SRC is off this is a no-op.
+                 */
+                void disableDriftCorrection();
+
+                /**
+                 * @brief Returns true if drift correction is currently enabled.
+                 *
+                 * Always returns false when PROMEKI_ENABLE_SRC is off.
+                 */
+                bool driftCorrectionEnabled() const;
+
+                /**
+                 * @brief Returns the current effective resampling ratio.
+                 *
+                 * When drift correction is active this reflects the
+                 * most recent drift-adjusted ratio.  When only fixed
+                 * rate conversion is in use this is the nominal ratio
+                 * (outputRate / inputRate).  Returns 1.0 when no
+                 * resampler is active or PROMEKI_ENABLE_SRC is off.
+                 */
+                double driftRatio() const;
 
                 /**
                  * @brief Ensures capacity for at least @p samples samples.
@@ -278,6 +403,25 @@ class AudioBuffer {
                 size_t    _head = 0;      ///< Next sample index to pop (mod _capacity).
                 size_t    _tail = 0;      ///< Next sample index to push (mod _capacity).
                 size_t    _count = 0;     ///< Currently buffered samples.
+
+#if PROMEKI_ENABLE_SRC
+                SrcQuality      _resamplerQuality;
+                AudioResampler  _resampler;
+                bool            _driftEnabled = false;
+                size_t          _driftTarget  = 0;
+                double          _driftGain    = 0.001;
+                double          _driftRatio   = 1.0;    ///< Last applied ratio.
+                double          _driftIntegral = 0.0;   ///< Accumulated error for I term.
+
+                /** @brief Resamples native-float data and writes the result to the ring. */
+                Error resampleAndPush(const float *nativeData, size_t samples);
+
+                /** @brief Returns true if the resampler should be used for this push. */
+                bool needsResampler(const AudioDesc &srcFormat) const;
+
+                /** @brief Computes the effective ratio (nominal + drift adjustment). */
+                double computeRatio(const AudioDesc &srcFormat);
+#endif
 };
 
 PROMEKI_NAMESPACE_END

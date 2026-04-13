@@ -987,6 +987,37 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDescription("ALSA capture device for paired audio. "
                                         "\"auto\" = auto-detect, \"none\" or empty = disabled."));
 
+                /// @brief bool — enable audio clock-drift correction.
+                /// When true, the audio ring buffer dynamically adjusts its
+                /// resampling ratio to keep the fill level stable, compensating
+                /// for clock drift between the ALSA capture clock and the V4L2
+                /// video frame clock.  Default: true.
+                static inline const ID V4l2AudioDriftCorrection = declareID("V4l2AudioDriftCorrection",
+                        VariantSpec().setType(Variant::TypeBool)
+                                .setDefault(true)
+                                .setDescription("Enable ALSA/V4L2 audio clock-drift correction."));
+
+                /// @brief double — proportional gain for drift correction.
+                /// Controls how aggressively the resampler compensates for
+                /// clock drift.  Small values (0.001) give smooth, inaudible
+                /// corrections; larger values track drift faster but risk
+                /// audible pitch shifts.  Default: 0.001.
+                static inline const ID V4l2AudioDriftGain = declareID("V4l2AudioDriftGain",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.001)
+                                .setRange(0.0001, 0.1)
+                                .setDescription("Drift correction proportional gain."));
+
+                /// @brief double — drift correction target fill level in seconds.
+                /// The ring buffer aims to keep this much audio buffered.
+                /// Lower values reduce capture latency; higher values absorb
+                /// more jitter.  Default: 0.1 (100 ms).
+                static inline const ID V4l2AudioDriftTarget = declareID("V4l2AudioDriftTarget",
+                        VariantSpec().setType(Variant::TypeDouble)
+                                .setDefault(0.1)
+                                .setRange(0.01, 2.0)
+                                .setDescription("Drift correction target fill level in seconds."));
+
                 // ---- V4L2 camera controls ----
                 //
                 // These map directly to V4L2 CID controls.  A value of

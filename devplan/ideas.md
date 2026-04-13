@@ -154,4 +154,9 @@
     This gets tricky as some frame rates have a cadence to the audio and we can't assure we'll get
     in any particular phase.
 
+19. Need to make the SDL player use the pacer's suggestion to drop frames.
+
+20. Need to get the timestamps wired in completely. MediaIO should synthesize timestamps for tasks
+    that don't create them.  MediaDesc should capture the timestamp relationship (what clock domain
+    the image and audio come from and if there's an offset between timestamps)
 

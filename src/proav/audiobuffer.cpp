@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
+#include <promeki/config.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/logger.h>
 
@@ -71,7 +72,101 @@ void AudioBuffer::setFormat(const AudioDesc &format) {
 void AudioBuffer::setInputFormat(const AudioDesc &input) {
         Mutex::Locker lock(_mutex);
         _inputFormat = input;
+#if PROMEKI_ENABLE_SRC
+        if(_resampler.isValid()) _resampler.reset();
+#endif
 }
+
+Error AudioBuffer::setResamplerQuality(const SrcQuality &quality) {
+#if PROMEKI_ENABLE_SRC
+        Mutex::Locker lock(_mutex);
+        _resamplerQuality = quality;
+        if(_resampler.isValid()) {
+                _resampler.setup(_format.channels(), _resamplerQuality);
+        }
+        return Error::Ok;
+#else
+        (void)quality;
+        promekiWarn("AudioBuffer: setResamplerQuality() not available (PROMEKI_ENABLE_SRC=OFF)");
+        return Error::NotSupported;
+#endif
+}
+
+Error AudioBuffer::enableDriftCorrection(size_t targetSamples, double gain) {
+#if PROMEKI_ENABLE_SRC
+        Mutex::Locker lock(_mutex);
+        _driftEnabled  = true;
+        _driftTarget   = targetSamples;
+        _driftGain     = gain;
+        _driftRatio    = 1.0;
+        _driftIntegral = 0.0;
+        if(_resampler.isValid()) _resampler.reset();
+        return Error::Ok;
+#else
+        (void)targetSamples;
+        (void)gain;
+        promekiWarn("AudioBuffer: enableDriftCorrection() not available (PROMEKI_ENABLE_SRC=OFF)");
+        return Error::NotSupported;
+#endif
+}
+
+void AudioBuffer::disableDriftCorrection() {
+#if PROMEKI_ENABLE_SRC
+        Mutex::Locker lock(_mutex);
+        _driftEnabled  = false;
+        _driftRatio    = 1.0;
+        _driftIntegral = 0.0;
+        if(_resampler.isValid()) _resampler.reset();
+#endif
+}
+
+bool AudioBuffer::driftCorrectionEnabled() const {
+#if PROMEKI_ENABLE_SRC
+        Mutex::Locker lock(_mutex);
+        return _driftEnabled;
+#else
+        return false;
+#endif
+}
+
+double AudioBuffer::driftRatio() const {
+#if PROMEKI_ENABLE_SRC
+        Mutex::Locker lock(_mutex);
+        return _driftRatio;
+#else
+        return 1.0;
+#endif
+}
+
+#if PROMEKI_ENABLE_SRC
+bool AudioBuffer::needsResampler(const AudioDesc &srcFormat) const {
+        if(_driftEnabled) return true;
+        return srcFormat.sampleRate() != _format.sampleRate();
+}
+
+double AudioBuffer::computeRatio(const AudioDesc &srcFormat) {
+        double nominal = static_cast<double>(_format.sampleRate()) /
+                         static_cast<double>(srcFormat.sampleRate());
+        if(!_driftEnabled || _driftTarget == 0) return nominal;
+
+        double error = (static_cast<double>(_count) -
+                        static_cast<double>(_driftTarget)) /
+                        static_cast<double>(_driftTarget);
+
+        // PI controller: integral accumulates error to eliminate
+        // steady-state offset from constant clock drift.
+        // Ki = Kp / 1000 — slow integrator avoids overshoot.
+        _driftIntegral += error;
+
+        // Clamp integral to prevent windup during large transients.
+        const double kMaxIntegral = 1000.0;
+        if(_driftIntegral >  kMaxIntegral) _driftIntegral =  kMaxIntegral;
+        if(_driftIntegral < -kMaxIntegral) _driftIntegral = -kMaxIntegral;
+
+        double ki = _driftGain * 0.001;
+        return nominal * (1.0 - _driftGain * error - ki * _driftIntegral);
+}
+#endif
 
 // ---------------------------------------------------------------------------
 // Capacity
@@ -152,23 +247,129 @@ void AudioBuffer::readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) c
 // Lock-free internals (caller holds _mutex)
 // ---------------------------------------------------------------------------
 
+#if PROMEKI_ENABLE_SRC
+Error AudioBuffer::resampleAndPush(const float *nativeData, size_t samples) {
+        // Lazy-init the resampler.
+        if(!_resampler.isValid()) {
+                Error err = _resampler.setup(_format.channels(), _resamplerQuality);
+                if(err.isError()) return err;
+        }
+
+        double ratio = computeRatio(_inputFormat);
+        _driftRatio = ratio;
+        Error err = _resampler.setRatio(ratio);
+        if(err.isError()) return err;
+
+        // Estimate output size: ceil(input * ratio) + small margin for
+        // the sinc filter tail.
+        size_t estOutput = static_cast<size_t>(
+                static_cast<double>(samples) * ratio + 32.0);
+
+        // Check capacity before allocating.
+        if(_capacity - _count < estOutput) return Error::NoSpace;
+
+        // Allocate scratch for resampled native-float output.
+        size_t totalFloats = estOutput * _format.channels();
+        const size_t kStackFloats = 4096;
+        float  stackBuf[kStackFloats];
+        float *scratch = stackBuf;
+        float *heapScratch = nullptr;
+        if(totalFloats > kStackFloats) {
+                heapScratch = static_cast<float *>(std::malloc(totalFloats * sizeof(float)));
+                if(heapScratch == nullptr) return Error::NoMem;
+                scratch = heapScratch;
+        }
+
+        long inputUsed = 0;
+        long outputGen = 0;
+        err = _resampler.process(
+                nativeData, static_cast<long>(samples),
+                scratch, static_cast<long>(estOutput),
+                inputUsed, outputGen, false);
+        if(err.isError()) {
+                if(heapScratch != nullptr) std::free(heapScratch);
+                return err;
+        }
+
+        size_t outSamples = static_cast<size_t>(outputGen);
+        if(outSamples > 0) {
+                if(_capacity - _count < outSamples) {
+                        if(heapScratch != nullptr) std::free(heapScratch);
+                        return Error::NoSpace;
+                }
+
+                if(_format.isNative()) {
+                        // Direct write: resampled float -> ring.
+                        writeBytesAtTail(reinterpret_cast<const uint8_t *>(scratch), outSamples);
+                } else {
+                        // Convert resampled float -> storage format -> ring.
+                        size_t bps = bytesPerSample();
+                        uint8_t *base = static_cast<uint8_t *>(_storage.data());
+
+                        size_t firstChunk = outSamples;
+                        if(_tail + outSamples > _capacity) firstChunk = _capacity - _tail;
+                        size_t remainder = outSamples - firstChunk;
+
+                        if(firstChunk > 0) {
+                                _format.floatToSamples(base + _tail * bps, scratch, firstChunk);
+                        }
+                        if(remainder > 0) {
+                                _format.floatToSamples(base,
+                                                       scratch + firstChunk * _format.channels(),
+                                                       remainder);
+                        }
+                        _tail = (_tail + outSamples) % _capacity;
+                        _count += outSamples;
+                }
+        }
+
+        if(heapScratch != nullptr) std::free(heapScratch);
+        return Error::Ok;
+}
+#endif
+
 Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat) {
         if(!_format.isValid() || !srcFormat.isValid()) return Error::InvalidArgument;
         if(data == nullptr && samples > 0)            return Error::InvalidArgument;
         if(samples == 0)                              return Error::Ok;
 
-        if(srcFormat.sampleRate() != _format.sampleRate()) {
-                promekiWarn("AudioBuffer: sample rate mismatch (%.1f -> %.1f) "
-                            "-- resampling not yet implemented",
-                            srcFormat.sampleRate(), _format.sampleRate());
-                return Error::NotSupported;
-        }
         if(srcFormat.channels() != _format.channels()) {
                 promekiWarn("AudioBuffer: channel count mismatch (%u -> %u) "
                             "-- channel-map not yet implemented",
                             srcFormat.channels(), _format.channels());
                 return Error::NotSupported;
         }
+
+#if PROMEKI_ENABLE_SRC
+        // Resampler path: rates differ (fixed conversion) or drift
+        // correction is enabled (dynamic ratio adjustment).
+        if(needsResampler(srcFormat)) {
+                // Convert input to native float, then resample.
+                const float *nativeData;
+                float *heapFloat = nullptr;
+                if(srcFormat.isNative()) {
+                        nativeData = static_cast<const float *>(data);
+                } else {
+                        size_t totalFloats = samples * srcFormat.channels();
+                        heapFloat = static_cast<float *>(
+                                std::malloc(totalFloats * sizeof(float)));
+                        if(heapFloat == nullptr) return Error::NoMem;
+                        srcFormat.samplesToFloat(heapFloat,
+                                                static_cast<const uint8_t *>(data), samples);
+                        nativeData = heapFloat;
+                }
+                Error err = resampleAndPush(nativeData, samples);
+                if(heapFloat != nullptr) std::free(heapFloat);
+                return err;
+        }
+#else
+        if(srcFormat.sampleRate() != _format.sampleRate()) {
+                promekiWarn("AudioBuffer: sample rate mismatch (%.1f -> %.1f) "
+                            "-- resampling not available (PROMEKI_ENABLE_SRC=OFF)",
+                            srcFormat.sampleRate(), _format.sampleRate());
+                return Error::NotSupported;
+        }
+#endif
 
         if(_capacity - _count < samples) return Error::NoSpace;
 

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <doctest/doctest.h>
+#include <promeki/config.h>
 #include <promeki/audiobuffer.h>
 #include <promeki/audiodesc.h>
 #include <promeki/audio.h>
@@ -194,11 +195,17 @@ TEST_CASE("AudioBuffer: push float32, pop int16 at same rate") {
 // Non-supported conversions
 // ============================================================================
 
-TEST_CASE("AudioBuffer: push with mismatched sample rate returns NotSupported") {
+TEST_CASE("AudioBuffer: push with mismatched sample rate resamples") {
         AudioBuffer ab(s16LE48k2ch(), 64);
         AudioDesc src44(AudioDesc::PCMI_S16LE, 44100.0f, 2);
         int16_t samples[4] = {};
+        // With PROMEKI_ENABLE_SRC the push resamples; without it,
+        // it returns NotSupported.
+#if PROMEKI_ENABLE_SRC
+        CHECK(ab.push(samples, 2, src44).isOk());
+#else
         CHECK(ab.push(samples, 2, src44) == Error::NotSupported);
+#endif
 }
 
 TEST_CASE("AudioBuffer: push with mismatched channel count returns NotSupported") {
