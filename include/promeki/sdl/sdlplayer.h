@@ -12,11 +12,12 @@
 #include <promeki/mediaio.h>
 #include <promeki/mutex.h>
 #include <promeki/atomic.h>
-#include <promeki/timestamp.h>
+#include <promeki/framepacer.h>
 #include <promeki/framerate.h>
 #include <promeki/audiodesc.h>
 #include <promeki/image.h>
 #include <promeki/objectbase.h>
+#include <promeki/sdl/sdlaudiopacerclock.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -41,30 +42,6 @@ class SDLAudioOutput;
  * @c MediaConfig.  Use the free factory function
  * @c createSDLPlayer() to construct a ready-to-use @c MediaIO that
  * adopts a properly configured SDLPlayerTask.
- *
- * @par Pacing
- *
- * The task has two playback modes selected via the @c paced
- * constructor argument:
- *
- * - @b Paced (default): the task enforces the source's frame rate.
- *   When the frame contains audio and the caller supplied an
- *   SDLAudioOutput, the audio stream is used as the playback clock —
- *   each @c writeFrame() pushes the frame's audio to the output and
- *   then blocks until the queued audio drains below a one-frame
- *   threshold.  If there is no audio, the task falls back to a
- *   wall-clock sleep based on the configured frame rate.
- * - @b Fast ("as fast as possible"): audio is dropped entirely (the
- *   SDLAudioOutput is never opened), no pacing is applied, and the
- *   task simply hands each frame to the main thread for rendering.
- *   Because only the most recently stashed image is painted,
- *   intermediate frames are naturally dropped when the main thread
- *   cannot keep up.
- *
- * In both modes the video widget always sees only the most recent
- * image — the render callback posted to the main thread picks up
- * whatever image is currently stashed, so any older image still
- * waiting when a newer one arrives is counted as a dropped frame.
  *
  * @par Compressed input — automatic decode
  *
@@ -99,8 +76,8 @@ class SDLAudioOutput;
  *
  * For a writer, MediaIO delivers the caller-provided @c MediaDesc and
  * (optionally) @c AudioDesc to the task in @c MediaIOCommandOpen.
- * SDLPlayerTask reads the frame rate from the @c MediaDesc and, in
- * paced mode, configures and opens the SDLAudioOutput using either
+ * SDLPlayerTask reads the frame rate from the @c MediaDesc and
+ * configures and opens the SDLAudioOutput using either
  * the explicit @c pendingAudioDesc or the first entry in
  * @c pendingMediaDesc.audioList().  Callers must therefore set the
  * media description before opening:
@@ -133,15 +110,20 @@ class SDLPlayerTask : public MediaIOTask {
                  * the caller does not want audio, or if the source will
                  * never carry audio.
                  *
-                 * @param video Video widget used to display frames, or nullptr.
-                 * @param audio Audio output used for playback, or nullptr.
-                 * @param paced @c true to enforce the source's frame rate
-                 *              (audio-led pacing when available, wall-clock
-                 *              fallback otherwise); @c false to play frames
-                 *              as fast as possible with audio disabled.
+                 * The player is always paced to the source's frame
+                 * rate.  When @p useAudioClock is true and an audio
+                 * output is available, timing is derived from the
+                 * audio device's consumption rate; otherwise the
+                 * system's monotonic wall clock is used.
+                 *
+                 * @param video         Video widget for display, or nullptr.
+                 * @param audio         Audio output for playback, or nullptr.
+                 * @param useAudioClock @c true to prefer the audio device
+                 *                      as the timing source (default);
+                 *                      @c false to use wall clock.
                  */
                 SDLPlayerTask(SDLVideoWidget *video, SDLAudioOutput *audio,
-                              bool paced = true);
+                              bool useAudioClock = true);
 
                 /** @brief Destructor.  Does not close — that is MediaIO's job. */
                 ~SDLPlayerTask() override;
@@ -152,8 +134,8 @@ class SDLPlayerTask : public MediaIOTask {
                 /** @brief Returns the configured audio output (not owned). */
                 SDLAudioOutput *audioOutput() const { return _audioOutput; }
 
-                /** @brief Returns true if the task enforces the source frame rate. */
-                bool isPaced() const { return _paced; }
+                /** @brief Returns true if the audio device drives timing. */
+                bool useAudioClock() const { return _useAudioClock; }
 
                 /** @brief Total frames presented to the video widget. */
                 int64_t framesPresented() const { return _framesPresented.value(); }
@@ -183,17 +165,15 @@ class SDLPlayerTask : public MediaIOTask {
                 SDLVideoWidget *_videoWidget = nullptr;
                 SDLAudioOutput *_audioOutput = nullptr;
 
-                // Playback mode.
-                bool            _paced = true;
+                // Timing source preference.
+                bool            _useAudioClock = true;
 
                 // Per-open state.
                 bool            _audioConfigured = false;
                 FrameRate       _frameRate;
                 AudioDesc       _audioDesc;
-                int             _maxQueuedBytes = 0;
-                TimeStamp::Duration _frameInterval{};
-                TimeStamp       _nextFrameTime;
-                bool            _firstFrame = true;
+                FramePacer      _pacer;
+                SDLAudioPacerClock *_audioClock = nullptr;
 
                 // Latest image staged for the main thread to render.
                 Image::Ptr      _pendingImage;
@@ -224,17 +204,18 @@ class SDLPlayerTask : public MediaIOTask {
  * Ownership of @p video and @p audio stays with the caller — they
  * must outlive the returned MediaIO.
  *
- * @param video  Video widget to display frames in (may be nullptr).
- * @param audio  Audio output for playback (may be nullptr).
- * @param paced  @c true for frame-rate enforced playback (default),
- *               @c false for as-fast-as-possible with audio dropped.
- * @param parent Optional parent object for the MediaIO.
+ * @param video         Video widget to display frames in (may be nullptr).
+ * @param audio         Audio output for playback (may be nullptr).
+ * @param useAudioClock @c true to prefer the audio device as the
+ *                      timing source (default); @c false to use
+ *                      wall clock.
+ * @param parent        Optional parent object for the MediaIO.
  * @return A new MediaIO ready to be configured and opened as a
  *         writer, or nullptr if task adoption fails.
  */
 MediaIO *createSDLPlayer(SDLVideoWidget *video,
                          SDLAudioOutput *audio,
-                         bool paced = true,
+                         bool useAudioClock = true,
                          ObjectBase *parent = nullptr);
 
 PROMEKI_NAMESPACE_END

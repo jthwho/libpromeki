@@ -151,6 +151,16 @@ class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
                 static inline const ID PeakLatencyMs = declareID("PeakLatencyMs",
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription("Peak observed latency in ms."));
+                /// @brief double — average per-frame processing time.
+                static inline const ID AverageProcessingMs = declareID("AverageProcessingMs",
+                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
+                                .setMin(0.0).setDescription(
+                                        "Average per-frame processing time in ms."));
+                /// @brief double — peak per-frame processing time.
+                static inline const ID PeakProcessingMs = declareID("PeakProcessingMs",
+                        VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
+                                .setMin(0.0).setDescription(
+                                        "Peak per-frame processing time in ms."));
                 /// @brief String — most recent error description.
                 static inline const ID LastErrorMessage = declareID("LastErrorMessage",
                         VariantSpec().setType(Variant::TypeString).setDefault(String())
@@ -173,7 +183,8 @@ class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
                  * telemetry output stays scannable:
                  *
                  *   BytesPerSecond  FramesPerSecond  FramesDropped  FramesRepeated
-                 *   FramesLate  AverageLatencyMs/PeakLatencyMs  QueueDepth/QueueCapacity
+                 *   FramesLate  AverageLatencyMs/PeakLatencyMs
+                 *   AverageProcessingMs/PeakProcessingMs  QueueDepth/QueueCapacity
                  *   PendingOperations  LastErrorMessage
                  *
                  * Counters that are still zero (@c FramesRepeated, @c FramesLate)
@@ -1444,6 +1455,8 @@ class MediaIO : public ObjectBase {
                 Benchmark::Id               _idStampDequeue;
                 Benchmark::Id               _idStampTaskBegin;
                 Benchmark::Id               _idStampTaskEnd;
+                Benchmark::Id               _idStampWorkBegin;
+                Benchmark::Id               _idStampWorkEnd;
 
                 // Live telemetry — always on.  RateTracker does a
                 // pair of atomic increments per recorded frame, so

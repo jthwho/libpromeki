@@ -69,6 +69,7 @@ void SDLAudioOutput::close() {
                 _stream = nullptr;
         }
         _open = false;
+        _totalBytesPushed = 0;
         return;
 }
 
@@ -94,6 +95,7 @@ bool SDLAudioOutput::pushAudio(const Audio &audio) {
                 return false;
         }
 
+        _totalBytesPushed += static_cast<int64_t>(bytes);
         return true;
 }
 

@@ -16,8 +16,6 @@
 #include <promeki/logger.h>
 
 #include <SDL3/SDL.h>
-#include <chrono>
-#include <thread>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -26,18 +24,19 @@ uint32_t SDLPlayerTask::userEventType() {
         return type;
 }
 
-SDLPlayerTask::SDLPlayerTask(SDLVideoWidget *video, SDLAudioOutput *audio, bool paced) :
+SDLPlayerTask::SDLPlayerTask(SDLVideoWidget *video, SDLAudioOutput *audio, bool useAudioClock) :
         _videoWidget(video),
         _audioOutput(audio),
-        _paced(paced)
+        _useAudioClock(useAudioClock)
 {
         _renderScheduled.setValue(false);
 }
 
 SDLPlayerTask::~SDLPlayerTask() {
         // MediaIO guarantees Close has been dispatched before the task
-        // is destroyed, so there is nothing to release here.  The
-        // application owns the video widget and audio output.
+        // is destroyed, so _audioClock should already be null.  Belt
+        // and suspenders.
+        delete _audioClock;
 }
 
 Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
@@ -54,13 +53,6 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
         }
         _frameRate = fps;
 
-        // Wall-clock pacing fallback interval — used whenever audio-led
-        // pacing isn't available (no audio in the stream, no audio
-        // output configured, or fast mode).
-        Duration framePeriod = fps.frameDuration();
-        _frameInterval = std::chrono::nanoseconds(framePeriod.nanoseconds());
-        _firstFrame = true;
-
         // Resolve the audio description: explicit pendingAudioDesc wins,
         // otherwise use the first entry in the media desc's audio list.
         AudioDesc adesc = cmd.pendingAudioDesc;
@@ -68,12 +60,13 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                 adesc = mdesc.audioList()[0];
         }
 
-        // Configure and open the audio output, if we're supposed to
-        // play audio.  In fast mode we skip audio entirely.
+        // Configure and open the audio output if one was provided
+        // and the stream carries audio.
         _audioConfigured = false;
-        _maxQueuedBytes = 0;
         _audioDesc = AudioDesc();
-        if(_paced && _audioOutput != nullptr && adesc.isValid()) {
+        delete _audioClock;
+        _audioClock = nullptr;
+        if(_audioOutput != nullptr && adesc.isValid()) {
                 if(!_audioOutput->configure(adesc)) {
                         promekiErr("SDLPlayerTask: audio configure failed");
                         return Error::Invalid;
@@ -85,23 +78,30 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
                 _audioConfigured = true;
                 _audioDesc = adesc;
 
-                // Audio-led pacing threshold: allow up to two frames'
-                // worth of audio to sit in the SDL queue.  After pushing
-                // each frame we block until the queue drops back below
-                // this mark, which effectively throttles writeFrame() to
-                // the rate the audio device is actually consuming.
-                //
-                // SDLAudioOutput always pushes float32 samples regardless
-                // of the source format, so size the threshold in float
-                // bytes rather than adesc.bytesPerSample().
-                double bytesPerFrame =
-                        (double)adesc.sampleRate() *
-                        (double)adesc.channels() *
-                        (double)sizeof(float) *
-                        framePeriod.toSecondsDouble();
-                _maxQueuedBytes = (int)(bytesPerFrame * 2.0);
-                if(_maxQueuedBytes < 1) _maxQueuedBytes = 1;
+                // When the audio device is the timing source, create
+                // an audio-derived clock so the FramePacer tracks
+                // the device's actual consumption rate.  When wall
+                // clock is selected, audio still plays but is not
+                // used as the timing reference.
+                if(_useAudioClock) {
+                        double audioBytesPerSec =
+                                (double)adesc.sampleRate() *
+                                (double)adesc.channels() *
+                                (double)sizeof(float);
+                        _audioClock = new SDLAudioPacerClock(
+                                _audioOutput, audioBytesPerSec);
+                }
         }
+
+        // Configure the pacer.  When audio is available the audio
+        // clock drives timing; otherwise the built-in wall clock
+        // takes over.  Either way, pacing always flows through the
+        // same FramePacer with all its error compensation, drop
+        // recommendations, and periodic debug logging.
+        _pacer.setName(String("SDLPlayer"));
+        _pacer.setFrameRate(fps);
+        _pacer.setClock(_audioClock);
+        _pacer.reset();
 
         // Echo the caller's descriptors back — the user already has
         // these, but MediaIO caches whatever Open reports.
@@ -113,6 +113,15 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
         cmd.defaultStep = 1;
         cmd.defaultPrefetchDepth = 1;
         cmd.defaultSeekMode = MediaIO_SeekExact;
+
+        // The strand worker blocks for a full frame period on every
+        // write (audio drain or wall-clock sleep).  A deep write
+        // queue just adds latency — each queued frame waits behind
+        // the current frame's pacing sleep.  Depth 2 keeps one
+        // frame ready-to-go while the current one paces, without
+        // piling up.
+        cmd.defaultWriteDepth = 2;
+
         return Error::Ok;
 }
 
@@ -124,10 +133,11 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandClose &cmd) {
                 _audioOutput->close();
         }
         _audioConfigured = false;
-        _maxQueuedBytes = 0;
+        _pacer.setClock(nullptr);
+        delete _audioClock;
+        _audioClock = nullptr;
         _audioDesc = AudioDesc();
         _frameRate = FrameRate();
-        _firstFrame = true;
 
         // Drop any still-stashed image so a lingering render callable
         // from before the close sees nothing to paint.
@@ -143,39 +153,43 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
         const Frame::Ptr &frame = cmd.frame;
         if(!frame.isValid()) return Error::InvalidArgument;
 
-        // Audio first, then block on audio-led pacing.  This keeps the
-        // SDL audio queue topped up ahead of the video we're about to
-        // display, which matches the normal A/V presentation order.
-        bool paced = false;
-        if(_paced && _audioConfigured && _audioOutput != nullptr) {
+        // Push audio before pacing so the audio clock (if active)
+        // has up-to-date data.  This keeps the SDL audio queue
+        // topped up ahead of the video we're about to display,
+        // which matches the normal A/V presentation order.
+        if(_audioConfigured && _audioOutput != nullptr) {
                 for(const auto &audio : frame->audioList()) {
                         if(audio.isValid()) {
                                 _audioOutput->pushAudio(*audio);
                         }
                 }
-
-                // Block until the queue drains below the threshold.
-                // The 1 ms poll is coarse compared to the audio clock,
-                // but it keeps us from burning CPU and is well under a
-                // video frame period at all reasonable rates.
-                while(_audioOutput->queuedBytes() > _maxQueuedBytes) {
-                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-                paced = true;
         }
 
-        // If audio pacing wasn't available but the caller asked for
-        // paced playback, fall back to wall-clock sleep based on the
-        // configured frame rate.
-        if(_paced && !paced && _frameInterval > TimeStamp::Duration::zero()) {
-                if(_firstFrame) {
-                        _nextFrameTime = TimeStamp::now();
-                        _firstFrame = false;
-                } else {
-                        _nextFrameTime += _frameInterval;
-                        _nextFrameTime.sleepUntil();
+        // Pace through the FramePacer — regardless of whether the
+        // clock is audio-driven or wall-clock.  All error compensation,
+        // drop recommendations, and logging flow through the same path.
+        {
+                auto pr = _pacer.pace();
+                if(pr.framesToDrop > 0) {
+                        // The SDL player is a terminal sink — it
+                        // can't reach upstream to skip source frames.
+                        // Report the recommended drops and let the
+                        // pacer's error compensation handle catch-up
+                        // by returning immediately on subsequent
+                        // pace() calls.
+                        for(int64_t i = 0; i < pr.framesToDrop; i++) {
+                                noteFrameDropped();
+                        }
                 }
         }
+
+        // --- Actual processing work starts here ---
+        //
+        // Everything above is pacing / throttling.  stampWorkBegin()
+        // marks the start of real per-frame processing so the
+        // framework can report processing time separately from
+        // end-to-end latency.
+        stampWorkBegin();
 
         // Stash the latest video image for the main thread to render.
         // If an older image is still pending, count that as a drop.
@@ -227,6 +241,8 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandWrite &cmd) {
                         wakeMainThread();
                 }
         }
+
+        stampWorkEnd();
 
         cmd.currentFrame++;
         cmd.frameCount = MediaIO::FrameCountInfinite;
@@ -290,10 +306,10 @@ bool SDLPlayerTask::renderPending() {
 
 MediaIO *createSDLPlayer(SDLVideoWidget *video,
                          SDLAudioOutput *audio,
-                         bool paced,
+                         bool useAudioClock,
                          ObjectBase *parent)
 {
-        auto *task = new SDLPlayerTask(video, audio, paced);
+        auto *task = new SDLPlayerTask(video, audio, useAudioClock);
         auto *io = new MediaIO(parent);
         Error err = io->adoptTask(task);
         if(err.isError()) {

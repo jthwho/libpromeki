@@ -661,6 +661,7 @@ set(PROMEKI_SOURCES
     src/core/fileinfo.cpp
     src/core/fileiodevice.cpp
     src/core/fourcc.cpp
+    src/core/framepacer.cpp
     src/core/framerate.cpp
     src/core/histogram.cpp
     src/core/iodevice.cpp
@@ -1134,6 +1135,7 @@ if(PROMEKI_BUILD_SDL)
     set(PROMEKI_SDL_SOURCES
         src/sdl/sdlapplication.cpp
         src/sdl/sdlaudiooutput.cpp
+        src/sdl/sdlaudiopacerclock.cpp
         src/sdl/sdleventpump.cpp
         src/sdl/sdlplayer.cpp
         src/sdl/sdlvideowidget.cpp
@@ -1330,6 +1332,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/filepath.cpp
         tests/fnv1a.cpp
         tests/fourcc.cpp
+        tests/framepacer.cpp
         tests/framerate.cpp
         tests/future.cpp
         tests/hashmap.cpp

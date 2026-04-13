@@ -345,6 +345,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
+        stampWorkBegin();
         int s = cmd.step;
 
         // The TPG ignores step direction for the timecode generator's run mode;
@@ -445,6 +446,7 @@ Error MediaIOTask_TPG::executeCmd(MediaIOCommandRead &cmd) {
         _frameCount++;
         cmd.frame = std::move(frame);
         cmd.currentFrame = _frameCount;
+        stampWorkEnd();
         return Error::Ok;
 }
 

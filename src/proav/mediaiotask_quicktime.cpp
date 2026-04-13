@@ -455,9 +455,11 @@ Error MediaIOTask_QuickTime::readAudioSlice(uint64_t startSample, size_t samples
 
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
         if(_mode != MediaIO::Output) return Error::NotOpen;
+        stampWorkBegin();
 
         if(_currentFrame < 0 || _currentFrame >= _frameCount) {
                 cmd.result = Error::EndOfFile;
+                stampWorkEnd();
                 return Error::EndOfFile;
         }
 
@@ -465,6 +467,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
         Error err = readVideoFrame(static_cast<uint64_t>(_currentFrame), frame);
         if(err.isError()) {
                 cmd.result = err;
+                stampWorkEnd();
                 return err;
         }
 
@@ -514,6 +517,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandRead &cmd) {
         int s = cmd.step;
         _currentFrame += s;
         if(_currentFrame < 0) _currentFrame = 0;
+        stampWorkEnd();
         return Error::Ok;
 }
 
@@ -615,14 +619,16 @@ Error MediaIOTask_QuickTime::drainWriterAudio(bool flush) {
 Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
         if(_mode != MediaIO::Input) return Error::NotOpen;
         if(!cmd.frame.isValid()) return Error::InvalidArgument;
+        stampWorkBegin();
         const Frame &frame = *cmd.frame;
 
         Error err = setupWriterFromFrame(frame);
-        if(err.isError()) return err;
+        if(err.isError()) { stampWorkEnd(); return err; }
 
         // Write the first image as a single video sample.
         if(frame.imageList().isEmpty()) {
                 promekiWarn("MediaIOTask_QuickTime: write with no image; skipping");
+                stampWorkEnd();
                 return Error::InvalidArgument;
         }
         const Image &img = *frame.imageList()[0];
@@ -632,6 +638,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
         Buffer::Ptr plane = img.plane(0);
         if(!plane.isValid() || plane->size() == 0) {
                 promekiWarn("MediaIOTask_QuickTime: image plane is empty");
+                stampWorkEnd();
                 return Error::InvalidArgument;
         }
 
@@ -644,7 +651,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
                 s.keyframe = frame.metadata().get(Metadata::FrameKeyframe).get<bool>();
         }
         err = _qt.writeSample(_writerVideoTrackId, s);
-        if(err.isError()) return err;
+        if(err.isError()) { stampWorkEnd(); return err; }
 
         _writerFrameCount++;
         _writerFramesSinceFlush++;
@@ -680,6 +687,7 @@ Error MediaIOTask_QuickTime::executeCmd(MediaIOCommandWrite &cmd) {
 
         cmd.currentFrame = static_cast<int64_t>(_writerFrameCount);
         cmd.frameCount   = static_cast<int64_t>(_writerFrameCount);
+        stampWorkEnd();
         return Error::Ok;
 }
 

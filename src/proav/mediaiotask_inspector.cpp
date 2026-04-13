@@ -737,6 +737,7 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
 Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
         if(!_isOpen) return Error::NotOpen;
         if(!cmd.frame.isValid()) return Error::InvalidArgument;
+        stampWorkBegin();
 
         initDecoders(*cmd.frame);
 
@@ -802,6 +803,7 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
         // tee-style wrappers; for now we always "drop" by simply
         // returning Ok and letting cmd.frame's reference count expire.
         (void)_dropFrames;
+        stampWorkEnd();
         return Error::Ok;
 }
 

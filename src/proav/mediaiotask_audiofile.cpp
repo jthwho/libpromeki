@@ -249,9 +249,10 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandClose &cmd) {
 }
 
 Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
+        stampWorkBegin();
         Audio audio;
         Error err = _audioFile.read(audio, _samplesPerFrame);
-        if(err.isError()) return err;
+        if(err.isError()) { stampWorkEnd(); return err; }
 
         cmd.frame = Frame::Ptr::create();
         cmd.frame.modify()->audioList().pushToBack(Audio::Ptr::create(audio));
@@ -267,6 +268,7 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandRead &cmd) {
                 _currentFrame = target;
         }
         cmd.currentFrame = _currentFrame;
+        stampWorkEnd();
         return Error::Ok;
 }
 
@@ -275,12 +277,14 @@ Error MediaIOTask_AudioFile::executeCmd(MediaIOCommandWrite &cmd) {
                 promekiWarn("MediaIOTask_AudioFile: write with no audio");
                 return Error::InvalidArgument;
         }
+        stampWorkBegin();
         const Audio &audio = *cmd.frame->audioList()[0];
         Error err = _audioFile.write(audio);
-        if(err.isError()) return err;
+        if(err.isError()) { stampWorkEnd(); return err; }
         _currentFrame++;
         cmd.currentFrame = _currentFrame;
         cmd.frameCount = _currentFrame;
+        stampWorkEnd();
         return Error::Ok;
 }
 

@@ -717,17 +717,19 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // SDL display sink (mediaplay)
                 // ============================================================
 
-                /// @brief bool — pace video to real time (false = run as fast as possible).
-                static inline const ID SdlPaced = declareID("SdlPaced",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Pace video to real time."));
-
-                /// @brief bool — open audio output alongside the video window.
-                static inline const ID SdlAudioEnabled = declareID("SdlAudioEnabled",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Open audio output alongside the video window."));
+                /// @brief String — timing source for the SDL player.
+                ///
+                /// - @c "audio" (default) — pace to the audio device's
+                ///   consumption rate.  Falls back to wall clock if the
+                ///   stream has no audio or no audio output is available.
+                /// - @c "wall" — pace to the system's monotonic wall
+                ///   clock.  Audio is still played but is not used as
+                ///   the timing reference.
+                static inline const ID SdlTimingSource = declareID("SdlTimingSource",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String("audio"))
+                                .setDescription(
+                                        "Timing source: \"audio\" (default) or \"wall\"."));
 
                 /// @brief Size2Du32 — initial SDL window size.
                 static inline const ID SdlWindowSize = declareID("SdlWindowSize",

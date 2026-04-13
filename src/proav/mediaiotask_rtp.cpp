@@ -1793,8 +1793,10 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandRead &cmd) {
         if(result.second().isError()) {
                 return result.second();
         }
+        stampWorkBegin();
         cmd.frame = result.first();
         cmd.currentFrame = ++_frameCount;
+        stampWorkEnd();
         return Error::Ok;
 }
 
@@ -2045,6 +2047,7 @@ Error MediaIOTask_Rtp::sendData(const Metadata &metadata, int64_t frameIndex) {
 
 Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         if(cmd.frame.isNull()) return Error::InvalidArgument;
+        stampWorkBegin();
         const Frame &frame = *cmd.frame;
 
         // Capture the current frame index up-front so each worker
@@ -2124,6 +2127,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
 
         if(firstErr.isError()) {
                 noteFrameDropped();
+                stampWorkEnd();
                 return firstErr;
         }
 
@@ -2131,6 +2135,7 @@ Error MediaIOTask_Rtp::executeCmd(MediaIOCommandWrite &cmd) {
         _framesSent++;
         cmd.currentFrame = _frameCount;
         cmd.frameCount   = MediaIO::FrameCountInfinite;
+        stampWorkEnd();
         return Error::Ok;
 }
 

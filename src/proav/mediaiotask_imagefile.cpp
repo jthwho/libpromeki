@@ -1070,8 +1070,10 @@ Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandClose &cmd) {
 // ============================================================================
 
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandRead &cmd) {
-        if(_sequenceMode) return readSequence(cmd);
-        return readSingle(cmd);
+        stampWorkBegin();
+        Error err = _sequenceMode ? readSequence(cmd) : readSingle(cmd);
+        stampWorkEnd();
+        return err;
 }
 
 Error MediaIOTask_ImageFile::readSingle(MediaIOCommandRead &cmd) {
@@ -1154,8 +1156,10 @@ Error MediaIOTask_ImageFile::readSequence(MediaIOCommandRead &cmd) {
 }
 
 Error MediaIOTask_ImageFile::executeCmd(MediaIOCommandWrite &cmd) {
-        if(_sequenceMode) return writeSequence(cmd);
-        return writeSingle(cmd);
+        stampWorkBegin();
+        Error err = _sequenceMode ? writeSequence(cmd) : writeSingle(cmd);
+        stampWorkEnd();
+        return err;
 }
 
 Error MediaIOTask_ImageFile::writeSingle(MediaIOCommandWrite &cmd) {

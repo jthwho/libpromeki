@@ -36,7 +36,6 @@ using namespace promeki;
 struct Sink {
         MediaIO     *io    = nullptr;
         String       name;
-        bool         paced = false;
         bool         isFile = false;   ///< True for backends opened via createForFileWrite.
         String       path;             ///< File path for logging.
 };

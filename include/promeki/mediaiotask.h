@@ -97,6 +97,31 @@ class MediaIOTask {
                 void noteFrameLate();
 
                 /**
+                 * @brief Stamps the work-begin benchmark on the active frame.
+                 *
+                 * Call this at the point where the task begins its real
+                 * per-frame processing work (after any pacing or
+                 * throttling).  Paired with @c stampWorkEnd(), this
+                 * brackets the actual processing cost so the framework
+                 * can report it separately from end-to-end latency.
+                 *
+                 * The infrastructure sets the active benchmark pointer
+                 * before calling @c executeCmd() and clears it after,
+                 * so this works for both reads and writes with no
+                 * arguments needed.  No-op when benchmarking is
+                 * disabled or the task is unattached.
+                 */
+                void stampWorkBegin();
+
+                /**
+                 * @brief Stamps the work-end benchmark on the active frame.
+                 *
+                 * Call this when the task's per-frame processing is
+                 * complete.  See @c stampWorkBegin() for details.
+                 */
+                void stampWorkEnd();
+
+                /**
                  * @brief Returns the MediaIO that owns this task.
                  *
                  * Set by MediaIO immediately after adopting the task
@@ -109,7 +134,8 @@ class MediaIOTask {
                 MediaIO *mediaIo() const { return _owner; }
 
         private:
-                MediaIO *_owner = nullptr;
+                MediaIO     *_owner = nullptr;
+                Benchmark   *_activeBenchmark = nullptr;
 
                 /**
                  * @brief Handles a CmdOpen command.

@@ -66,4 +66,26 @@ void MediaIOTask::noteFrameLate() {
         _owner->_framesLateTotal.fetchAndAdd(1);
 }
 
+// ---- Benchmark stamp helpers ----
+//
+// These let backends bracket the real per-frame processing work
+// inside executeCmd(Read/Write) so the framework can report
+// processing time separately from end-to-end latency (which
+// includes queue wait and pacing).  The infrastructure sets
+// _activeBenchmark before calling executeCmd and clears it after,
+// so the helpers work identically for both reads and writes.  The
+// stamp IDs live on the owning MediaIO; friendship gives us access.
+
+void MediaIOTask::stampWorkBegin() {
+        if(_activeBenchmark == nullptr) return;
+        if(_owner == nullptr || !_owner->_benchmarkEnabled) return;
+        _activeBenchmark->stamp(_owner->_idStampWorkBegin);
+}
+
+void MediaIOTask::stampWorkEnd() {
+        if(_activeBenchmark == nullptr) return;
+        if(_owner == nullptr || !_owner->_benchmarkEnabled) return;
+        _activeBenchmark->stamp(_owner->_idStampWorkEnd);
+}
+
 PROMEKI_NAMESPACE_END

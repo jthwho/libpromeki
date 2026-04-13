@@ -100,11 +100,23 @@ class SDLAudioOutput {
                  */
                 const AudioDesc &desc() const { return _desc; }
 
+                /**
+                 * @brief Returns total float32 bytes pushed since open.
+                 *
+                 * Combined with @ref queuedBytes(), this lets callers
+                 * derive how many bytes the device has consumed:
+                 * <tt>consumed = totalBytesPushed() - queuedBytes()</tt>.
+                 *
+                 * @return Cumulative byte count.
+                 */
+                int64_t totalBytesPushed() const { return _totalBytesPushed; }
+
         private:
                 SDL_AudioStream *_stream = nullptr;
                 AudioDesc        _desc;
                 bool             _configured = false;
                 bool             _open = false;
+                int64_t          _totalBytesPushed = 0;
 };
 
 PROMEKI_NAMESPACE_END

@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
 
                 if(spec.type == kStageSdl) {
                         // Apply --dc / --dm overrides against the
-                        // SDL schema so Paced / Audio / WindowSize /
+                        // SDL schema so TimingSource / WindowSize /
                         // WindowTitle are resolved before we create
                         // widgets.  applyStageConfig uses
                         // sdlDefaultConfig() as the type schema for
@@ -271,12 +271,13 @@ int main(int argc, char **argv) {
                         Error me = applyStageMetadata(spec, String("--dm[SDL]"));
                         if(me.isError()) return cleanupAndFail(1);
 
-                        const bool  sdlPaced  = spec.config.getAs<bool>(MediaIO::ConfigID("Paced"), true);
-                        const bool  sdlAudio  = spec.config.getAs<bool>(MediaIO::ConfigID("Audio"), true);
+                        const String sdlTiming = spec.config.getAs<String>(
+                                MediaConfig::SdlTimingSource, String("audio"));
+                        const bool useAudioClock = (sdlTiming == String("audio"));
                         const Size2Du32 sdlWinSize = spec.config.getAs<Size2Du32>(
-                                MediaIO::ConfigID("WindowSize"), Size2Du32(1280, 720));
+                                MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
                         const String sdlWinTitle = spec.config.getAs<String>(
-                                MediaIO::ConfigID("WindowTitle"), String("mediaplay"));
+                                MediaConfig::SdlWindowTitle, String("mediaplay"));
 
                         // One SDL window/widget per pipeline — if the
                         // user requested multiple SDL stages we only
@@ -306,21 +307,20 @@ int main(int argc, char **argv) {
                                         });
                                 window->show();
 
-                                // Audio is only opened when both the
-                                // SDL stage asked for it (Audio:true)
-                                // AND the pipeline is paced (audio-led
-                                // pacing requires a working audio
-                                // clock) AND the stream actually has
-                                // an audio track.
-                                if(sdlAudio && sdlPaced &&
-                                   effectiveAudioDesc.isValid()) {
+                                // Open audio output when the stream
+                                // carries audio.  The audio device is
+                                // used for playback regardless of the
+                                // timing source — SdlTimingSource only
+                                // controls whether it also drives the
+                                // pacing clock.
+                                if(effectiveAudioDesc.isValid()) {
                                         audioOutput = new SDLAudioOutput();
                                 }
                         }
 
                         MediaIO *player = createSDLPlayer(videoWidget,
                                                           audioOutput,
-                                                          sdlPaced);
+                                                          useAudioClock);
                         if(player == nullptr) {
                                 fprintf(stderr, "Error: createSDLPlayer failed\n");
                                 return cleanupAndFail(1);
@@ -341,7 +341,7 @@ int main(int argc, char **argv) {
                                 return cleanupAndFail(1);
                         }
                         sinks.pushToBack(Sink{player, String("sdl"),
-                                              sdlPaced, false, String()});
+                                              false, String()});
                         continue;
                 }
 
@@ -363,7 +363,7 @@ int main(int argc, char **argv) {
                         return cleanupAndFail(1);
                 }
                 bool isFile = (spec.type == kStageFile);
-                sinks.pushToBack(Sink{sinkIO, label, false, isFile,
+                sinks.pushToBack(Sink{sinkIO, label, isFile,
                                       isFile ? spec.path : String()});
                 fprintf(stdout, "Output: %s\n", label.cstr());
         }

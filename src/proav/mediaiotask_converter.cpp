@@ -250,6 +250,7 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandWrite &cmd) {
                 promekiErr("MediaIOTask_Converter: write with null frame");
                 return Error::InvalidArgument;
         }
+        stampWorkBegin();
 
         if(static_cast<int>(_outputQueue.size()) >= _capacity && !_capacityWarned) {
                 promekiWarn("MediaIOTask_Converter: output queue exceeded capacity (%d >= %d)",
@@ -259,13 +260,14 @@ Error MediaIOTask_Converter::executeCmd(MediaIOCommandWrite &cmd) {
 
         Frame::Ptr outFrame;
         Error err = convertFrame(cmd.frame, outFrame);
-        if(err.isError()) return err;
+        if(err.isError()) { stampWorkEnd(); return err; }
 
         _outputQueue.pushToBack(std::move(outFrame));
         _frameCount++;
         _framesConverted++;
         cmd.currentFrame = _frameCount;
         cmd.frameCount = _frameCount;
+        stampWorkEnd();
         return Error::Ok;
 }
 

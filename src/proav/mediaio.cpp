@@ -350,6 +350,8 @@ void MediaIO::resolveIdentifiersAndBenchmark() {
                 _idStampDequeue   = Benchmark::Id(_name + ".dequeue");
                 _idStampTaskBegin = Benchmark::Id(_name + ".taskBegin");
                 _idStampTaskEnd   = Benchmark::Id(_name + ".taskEnd");
+                _idStampWorkBegin = Benchmark::Id(_name + ".workBegin");
+                _idStampWorkEnd   = Benchmark::Id(_name + ".workEnd");
         }
 
         // Fresh telemetry window per open.  A reopen must not show
@@ -450,6 +452,19 @@ void MediaIO::populateStandardStats(MediaIOStats &stats) const {
                         stats.set(MediaIOStats::AverageLatencyMs, avgMs);
                         stats.set(MediaIOStats::PeakLatencyMs, peakMs);
                 }
+
+                // Processing time — the interval between the task's
+                // workBegin and workEnd stamps.  Only populated when
+                // the task actually calls stampWorkBegin/stampWorkEnd;
+                // tasks that don't will simply omit these keys.
+                auto ws = _benchmarkReporter->stepStats(
+                        _idStampWorkBegin, _idStampWorkEnd);
+                if(ws.count > 0) {
+                        stats.set(MediaIOStats::AverageProcessingMs,
+                                  ws.avg * 1000.0);
+                        stats.set(MediaIOStats::PeakProcessingMs,
+                                  ws.max * 1000.0);
+                }
         }
 
         // Backlog depth from the strand itself.  Telemetry callers
@@ -504,6 +519,11 @@ String MediaIOStats::toString() const {
                 parts.pushToBack(String::format("lat={:.2f}/{:.2f} ms",
                         getAs<double>(AverageLatencyMs),
                         getAs<double>(PeakLatencyMs)));
+        }
+        if(contains(AverageProcessingMs) || contains(PeakProcessingMs)) {
+                parts.pushToBack(String::format("proc={:.2f}/{:.2f} ms",
+                        getAs<double>(AverageProcessingMs),
+                        getAs<double>(PeakProcessingMs)));
         }
         if(contains(QueueDepth) || contains(QueueCapacity)) {
                 parts.pushToBack(String::format("q={}/{}",
@@ -644,9 +664,11 @@ void MediaIO::submitReadCommand() {
                                 readBm = Benchmark::Ptr::takeOwnership(new Benchmark());
                                 readBm.modify()->stamp(_idStampDequeue);
                                 readBm.modify()->stamp(_idStampTaskBegin);
+                                _task->_activeBenchmark = readBm.modify();
                         }
 
                         cr->result = _task->executeCmd(*cr);
+                        _task->_activeBenchmark = nullptr;
 
                         // Happy-path live-telemetry hook.  Successful
                         // reads that actually produced a frame feed
@@ -1013,7 +1035,9 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
                                         Benchmark *bm = bmp.modify();
                                         bm->stamp(_idStampDequeue);
                                         bm->stamp(_idStampTaskBegin);
+                                        _task->_activeBenchmark = bm;
                                         Error err = _task->executeCmd(*cw);
+                                        _task->_activeBenchmark = nullptr;
                                         bm->stamp(_idStampTaskEnd);
                                         submitBenchmarkIfSink(cw->frame);
                                         if(err.isOk()) {
