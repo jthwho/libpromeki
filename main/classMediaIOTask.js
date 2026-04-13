@@ -5,5 +5,7 @@ var classMediaIOTask =
     [ "mediaIo", "classMediaIOTask.html#a56ee29aac6f338c32541042c01754160", null ],
     [ "noteFrameDropped", "classMediaIOTask.html#a33a701a9866643312bab92a63113fe83", null ],
     [ "noteFrameLate", "classMediaIOTask.html#a6acec0883297253ee37fef6b0b52f809", null ],
-    [ "noteFrameRepeated", "classMediaIOTask.html#a2748f45ad224498f2cc97a3976177e39", null ]
+    [ "noteFrameRepeated", "classMediaIOTask.html#a2748f45ad224498f2cc97a3976177e39", null ],
+    [ "stampWorkBegin", "classMediaIOTask.html#afaca2d6884414c034594700b04c81310", null ],
+    [ "stampWorkEnd", "classMediaIOTask.html#a81f836b3c76449f8b95f2cc763a88d5c", null ]
 ];

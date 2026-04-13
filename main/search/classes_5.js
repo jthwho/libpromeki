@@ -18,7 +18,9 @@ var searchData=
   ['formatter_3c_20promeki_3a_3avariantimpl_3c_20types_2e_2e_2e_20_3e_20_3e_15',['formatter&lt; promeki::VariantImpl&lt; Types... &gt; &gt;',['../structstd_1_1formatter_3_01promeki_1_1VariantImpl_3_01Types_8_8_8_01_4_01_4.html',1,'std']]],
   ['fourcc_16',['FourCC',['../classFourCC.html',1,'']]],
   ['frame_17',['Frame',['../classFrame.html',1,'']]],
-  ['framerate_18',['FrameRate',['../classFrameRate.html',1,'']]],
-  ['future_19',['Future',['../classFuture.html',1,'']]],
-  ['future_3c_20void_20_3e_20',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
+  ['framepacer_18',['FramePacer',['../classFramePacer.html',1,'']]],
+  ['framepacerclock_19',['FramePacerClock',['../classFramePacerClock.html',1,'']]],
+  ['framerate_20',['FrameRate',['../classFrameRate.html',1,'']]],
+  ['future_21',['Future',['../classFuture.html',1,'']]],
+  ['future_3c_20void_20_3e_22',['Future&lt; void &gt;',['../classFuture_3_01void_01_4.html',1,'']]]
 ];

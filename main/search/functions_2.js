@@ -12,7 +12,7 @@ var searchData=
   ['benchmarkcase_9',['BenchmarkCase',['../classBenchmarkCase.html#a9116a30afbbfa8322d233c1c8da2772b',1,'BenchmarkCase']]],
   ['benchmarkenabled_10',['benchmarkEnabled',['../classMediaIO.html#a8990d72f90bafa51c735c0a40fd29f83',1,'MediaIO']]],
   ['benchmarkissink_11',['benchmarkIsSink',['../classMediaIO.html#a16a5667b2b7b49933b515ee365881183',1,'MediaIO']]],
-  ['benchmarkreporter_12',['benchmarkreporter',['../classMediaIO.html#a983eef070dfddb5ec868e2286837c685',1,'MediaIO::benchmarkReporter()'],['../classBenchmarkReporter.html#aa31bf4aec91d06cda8b489696e0a779c',1,'BenchmarkReporter::BenchmarkReporter()']]],
+  ['benchmarkreporter_12',['benchmarkreporter',['../classBenchmarkReporter.html#aa31bf4aec91d06cda8b489696e0a779c',1,'BenchmarkReporter::BenchmarkReporter()'],['../classMediaIO.html#a983eef070dfddb5ec868e2286837c685',1,'MediaIO::benchmarkReporter()']]],
   ['benchmarkrunner_13',['BenchmarkRunner',['../classBenchmarkRunner.html#a8bdcee725fd974b5bcf5c4a3845ac4d0',1,'BenchmarkRunner']]],
   ['benchmarkstate_14',['BenchmarkState',['../classBenchmarkState.html#a74bbc6ccca1a359667f09de7f2552477',1,'BenchmarkState']]],
   ['bin_15',['bin',['../classString.html#ad4d1f49c1a7cc0983126be7b12e870a2',1,'String::bin()'],['../textstream_8h.html#ad48f2f3c236854fa3ab5d35934aaeec2',1,'bin():&#160;textstream.h']]],

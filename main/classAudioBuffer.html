@@ -100,30 +100,38 @@ $(document).ready(function(){initNavTree('classAudioBuffer.html',''); initResiza
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classAudioBuffer-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">AudioBuffer Class Reference<div class="ingroups"><a class="el" href="group__proav.html">ProAV Media</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Ring-buffered audio sample FIFO with format conversion on push.  
+<p>Thread-safe ring-buffered audio sample FIFO with format conversion on push.  
  <a href="classAudioBuffer.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="audiobuffer_8h_source.html">audiobuffer.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a0671c437c47f276df74df7dd58a67aff" id="r_a0671c437c47f276df74df7dd58a67aff"><td class="memItemLeft" align="right" valign="top"><a id="a0671c437c47f276df74df7dd58a67aff" name="a0671c437c47f276df74df7dd58a67aff"></a>
+<a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><b>PopResult</b> = <a class="el" href="group__util.html#ga72213850e8f39e4956d4ce23dd5238f7">Result</a>&lt; <a class="el" href="classList.html">size_t</a> &gt;</td></tr>
+<tr class="memdesc:a0671c437c47f276df74df7dd58a67aff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Result type for pop operations: {sampleCount, <a class="el" href="classError.html" title="Lightweight error code wrapper for the promeki library.">Error</a>}. <br /></td></tr>
+<tr class="separator:a0671c437c47f276df74df7dd58a67aff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:afbe4fb241170a4040542420f3846d4a2" id="r_afbe4fb241170a4040542420f3846d4a2"><td class="memItemLeft" align="right" valign="top"><a id="afbe4fb241170a4040542420f3846d4a2" name="afbe4fb241170a4040542420f3846d4a2"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AudioBuffer</b> ()=<a class="el" href="classList.html">default</a></td></tr>
-<tr class="memdesc:afbe4fb241170a4040542420f3846d4a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default-constructs an invalid <a class="el" href="classAudioBuffer.html" title="Ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> with no format. <br /></td></tr>
+<tr class="memdesc:afbe4fb241170a4040542420f3846d4a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default-constructs an invalid <a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> with no format. <br /></td></tr>
 <tr class="separator:afbe4fb241170a4040542420f3846d4a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a68a8145e508050ab6e727b46000a1e3e" id="r_a68a8145e508050ab6e727b46000a1e3e"><td class="memItemLeft" align="right" valign="top"><a id="a68a8145e508050ab6e727b46000a1e3e" name="a68a8145e508050ab6e727b46000a1e3e"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AudioBuffer</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b">format</a>)</td></tr>
-<tr class="memdesc:a68a8145e508050ab6e727b46000a1e3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioBuffer.html" title="Ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> with the given storage format. <br /></td></tr>
+<tr class="memdesc:a68a8145e508050ab6e727b46000a1e3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> with the given storage format. <br /></td></tr>
 <tr class="separator:a68a8145e508050ab6e727b46000a1e3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2d3b6cee7973c5940624af8324b0b16" id="r_af2d3b6cee7973c5940624af8324b0b16"><td class="memItemLeft" align="right" valign="top"><a id="af2d3b6cee7973c5940624af8324b0b16" name="af2d3b6cee7973c5940624af8324b0b16"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AudioBuffer</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b">format</a>, <a class="el" href="classList.html">size_t</a> <a class="el" href="classAudioBuffer.html#ab0635c541903684d866781c44b4ac3ba">capacity</a>)</td></tr>
-<tr class="memdesc:af2d3b6cee7973c5940624af8324b0b16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioBuffer.html" title="Ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> with storage format and reserved capacity. <br /></td></tr>
+<tr class="memdesc:af2d3b6cee7973c5940624af8324b0b16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> with storage format and reserved capacity. <br /></td></tr>
 <tr class="separator:af2d3b6cee7973c5940624af8324b0b16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25d8b8941f4769ed8ade13e89ec3a056" id="r_a25d8b8941f4769ed8ade13e89ec3a056"><td class="memItemLeft" align="right" valign="top"><a id="a25d8b8941f4769ed8ade13e89ec3a056" name="a25d8b8941f4769ed8ade13e89ec3a056"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>AudioBuffer</b> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudioBuffer.html">AudioBuffer</a> &amp;)=<a class="el" href="classList.html">delete</a></td></tr>
@@ -194,57 +202,65 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a73a7c3865156d2fed7abc39b4c5f9c97" id="r_a73a7c3865156d2fed7abc39b4c5f9c97"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classError.html">Error</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a73a7c3865156d2fed7abc39b4c5f9c97">push</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classList.html">void</a> *data, <a class="el" href="classList.html">size_t</a> samples, <a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;<a class="el" href="classList.html">srcFormat</a>)</td></tr>
 <tr class="memdesc:a73a7c3865156d2fed7abc39b4c5f9c97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes interleaved raw samples into the buffer.  <br /></td></tr>
 <tr class="separator:a73a7c3865156d2fed7abc39b4c5f9c97"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3e9a937be93c13b42074e9bf0e675ae" id="r_ad3e9a937be93c13b42074e9bf0e675ae"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#ad3e9a937be93c13b42074e9bf0e675ae">pop</a> (<a class="el" href="classAudio.html">Audio</a> &amp;audio, <a class="el" href="classList.html">size_t</a> samples)</td></tr>
-<tr class="memdesc:ad3e9a937be93c13b42074e9bf0e675ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pops up to <code>samples</code> samples into <code>audio</code>.  <br /></td></tr>
-<tr class="separator:ad3e9a937be93c13b42074e9bf0e675ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a40f96fe15e8f07b9f3a4c8ba3d3ae715" id="r_a40f96fe15e8f07b9f3a4c8ba3d3ae715"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a40f96fe15e8f07b9f3a4c8ba3d3ae715">pop</a> (<a class="el" href="classList.html">void</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">size_t</a> samples)</td></tr>
-<tr class="memdesc:a40f96fe15e8f07b9f3a4c8ba3d3ae715"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pops up to <code>samples</code> samples into a raw buffer.  <br /></td></tr>
-<tr class="separator:a40f96fe15e8f07b9f3a4c8ba3d3ae715"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aced06ecc91a6f939be31aa126cbff69b" id="r_aced06ecc91a6f939be31aa126cbff69b"><td class="memItemLeft" align="right" valign="top"><a id="aced06ecc91a6f939be31aa126cbff69b" name="aced06ecc91a6f939be31aa126cbff69b"></a>
-<a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>peek</b> (<a class="el" href="classList.html">void</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">size_t</a> samples) <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:aced06ecc91a6f939be31aa126cbff69b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Peeks at the next <code>samples</code> samples without consuming. <br /></td></tr>
-<tr class="separator:aced06ecc91a6f939be31aa126cbff69b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39a8e7bf9ad138f91e90ff65e0b5cef1" id="r_a39a8e7bf9ad138f91e90ff65e0b5cef1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a39a8e7bf9ad138f91e90ff65e0b5cef1">drop</a> (<a class="el" href="classList.html">size_t</a> samples)</td></tr>
-<tr class="memdesc:a39a8e7bf9ad138f91e90ff65e0b5cef1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops the next <code>samples</code> samples without copying.  <br /></td></tr>
-<tr class="separator:a39a8e7bf9ad138f91e90ff65e0b5cef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fe9c92997fb2f5a626bb3489e74984c" id="r_a2fe9c92997fb2f5a626bb3489e74984c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a2fe9c92997fb2f5a626bb3489e74984c">pop</a> (<a class="el" href="classAudio.html">Audio</a> &amp;audio, <a class="el" href="classList.html">size_t</a> samples)</td></tr>
+<tr class="memdesc:a2fe9c92997fb2f5a626bb3489e74984c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pops up to <code>samples</code> samples into <code>audio</code>.  <br /></td></tr>
+<tr class="separator:a2fe9c92997fb2f5a626bb3489e74984c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a030ecd5ad3ab6d043e7ee2a04d8f9266" id="r_a030ecd5ad3ab6d043e7ee2a04d8f9266"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a030ecd5ad3ab6d043e7ee2a04d8f9266">pop</a> (<a class="el" href="classList.html">void</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">size_t</a> samples)</td></tr>
+<tr class="memdesc:a030ecd5ad3ab6d043e7ee2a04d8f9266"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pops up to <code>samples</code> samples into a raw buffer.  <br /></td></tr>
+<tr class="separator:a030ecd5ad3ab6d043e7ee2a04d8f9266"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8a0df2a976464f34806b705a9d5cf7b" id="r_ab8a0df2a976464f34806b705a9d5cf7b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#ab8a0df2a976464f34806b705a9d5cf7b">popWait</a> (<a class="el" href="classAudio.html">Audio</a> &amp;audio, <a class="el" href="classList.html">size_t</a> samples, <a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
+<tr class="memdesc:ab8a0df2a976464f34806b705a9d5cf7b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until <code>samples</code> samples are available, then pops into <code>audio</code>.  <br /></td></tr>
+<tr class="separator:ab8a0df2a976464f34806b705a9d5cf7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29420829c5f6852b578fadfc44e0f9e7" id="r_a29420829c5f6852b578fadfc44e0f9e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a29420829c5f6852b578fadfc44e0f9e7">popWait</a> (<a class="el" href="classList.html">void</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">size_t</a> samples, <a class="el" href="classList.html">unsigned</a> int <a class="el" href="classList.html">timeoutMs</a>=0)</td></tr>
+<tr class="memdesc:a29420829c5f6852b578fadfc44e0f9e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until <code>samples</code> samples are available, then pops into a raw buffer.  <br /></td></tr>
+<tr class="separator:a29420829c5f6852b578fadfc44e0f9e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8aa81620cb94b16abdb2c00ff0b7a456" id="r_a8aa81620cb94b16abdb2c00ff0b7a456"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a8aa81620cb94b16abdb2c00ff0b7a456">peek</a> (<a class="el" href="classList.html">void</a> *<a class="el" href="classList.html">dst</a>, <a class="el" href="classList.html">size_t</a> samples) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a8aa81620cb94b16abdb2c00ff0b7a456"><td class="mdescLeft">&#160;</td><td class="mdescRight">Peeks at the next <code>samples</code> samples without consuming.  <br /></td></tr>
+<tr class="separator:a8aa81620cb94b16abdb2c00ff0b7a456"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b65594676a91a44e66798932003076a" id="r_a1b65594676a91a44e66798932003076a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudioBuffer.html#a1b65594676a91a44e66798932003076a">drop</a> (<a class="el" href="classList.html">size_t</a> samples)</td></tr>
+<tr class="memdesc:a1b65594676a91a44e66798932003076a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops the next <code>samples</code> samples without copying.  <br /></td></tr>
+<tr class="separator:a1b65594676a91a44e66798932003076a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Ring-buffered audio sample FIFO with format conversion on push. </p>
-<p><a class="el" href="classAudioBuffer.html" title="Ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> stores interleaved PCM samples in a fixed output format. Callers push audio in any compatible input format (differing bit depth, endianness, integer vs float are handled automatically) and pop samples in the storage format. The buffer is designed as the efficient bridge between an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> producer that works in one format (e.g. native float at the video frame rate) and a consumer that wants a different framing or format (e.g. a container writer that writes fixed-size chunks of s16 little-endian).</p>
+<div class="textblock"><p>Thread-safe ring-buffered audio sample FIFO with format conversion on push. </p>
+<p><a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> stores interleaved PCM samples in a fixed output format. Callers push audio in any compatible input format (differing bit depth, endianness, integer vs float are handled automatically) and pop samples in the storage format. The buffer is designed as the efficient bridge between an <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> producer that works in one format (e.g. native float at the video frame rate) and a consumer that wants a different framing or format (e.g. a container writer that writes fixed-size chunks of s16 little-endian).</p>
 <dl class="section user"><dt>Format conversion</dt><dd></dd></dl>
 <p>When <code><a class="el" href="classAudioBuffer.html#ade2778f5b7ed23a0395e1a8ee39a6363" title="Returns the expected input format for push().">inputFormat()</a></code> differs from <code><a class="el" href="classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b" title="Returns the storage (output) format.">format()</a></code> only in <code>DataType</code> (bit depth / endian / float vs int), <code><a class="el" href="classAudioBuffer.html#a778bf54ea0ff06dc0acb711c3f86b8eb" title="Pushes audio&#39;s samples into the buffer.">push()</a></code> converts on the fly via <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a>'s <code>samplesToFloat</code> / <code>floatToSamples</code> helpers.</p>
 <p>When the input and output <b>sample</b> <b>rates</b> or <b>channel</b> <b>counts</b> differ, <code><a class="el" href="classAudioBuffer.html#a778bf54ea0ff06dc0acb711c3f86b8eb" title="Pushes audio&#39;s samples into the buffer.">push()</a></code> returns <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a43f2b142b3d7aca3163f2e36e12c8fde" title="Operation is not supported.">Error::NotSupported</a></code>. The resampler / channel-map hook will land in a follow-up — this class is pre-plumbed for it.</p>
+<dl class="section user"><dt>Thread safety</dt><dd></dd></dl>
+<p>All push, pop, and query methods are internally synchronized via a <a class="el" href="classMutex.html" title="Mutual exclusion lock wrapping std::mutex.">Mutex</a>. Push methods wake any thread blocked in <code><a class="el" href="classAudioBuffer.html#ab8a0df2a976464f34806b705a9d5cf7b" title="Blocks until samples samples are available, then pops into audio.">popWait()</a></code> after writing. This allows a producer thread and a consumer thread to operate on the same <a class="el" href="classAudioBuffer.html" title="Thread-safe ring-buffered audio sample FIFO with format conversion on push.">AudioBuffer</a> without external locking.</p>
 <dl class="section user"><dt>Capacity and ownership</dt><dd></dd></dl>
 <p>The buffer is sized via <code><a class="el" href="classAudioBuffer.html#af65fd7f979f360b142862b720177c9cf" title="Ensures capacity for at least samples samples.">reserve()</a></code> (or constructor). Pushes that would exceed capacity return <code><a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a4b6f521d95a2728ad46bcec5c751ad07" title="No space left on device (ENOSPC).">Error::NoSpace</a></code> — the caller is expected to size the buffer for their expected peak residency. The class is move-only; copying a FIFO is almost always a mistake.</p>
 <dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><a class="code hl_class" href="classAudioBuffer.html">AudioBuffer</a> fifo(<a class="code hl_class" href="classAudioDesc.html">AudioDesc</a>(<a class="code hl_enumvalue" href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a80c0cb3918b290828c146e0d4da608d3">AudioDesc::PCMI_S16LE</a>, 48000, 2));</div>
 <div class="line">fifo.reserve(48000);                    <span class="comment">// 1 second of headroom</span></div>
 <div class="line">fifo.setInputFormat(<a class="code hl_variable" href="classAudioDesc.html#a4a8484fa1d21e315bcb0105b977d8c37">AudioDesc::NativeType</a>, 48000, 2);</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Producer side</span></div>
+<div class="line"><span class="comment">// Producer thread</span></div>
 <div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">chunk</a>(<a class="code hl_class" href="classList.html">nativeDesc</a>, 1602);</div>
 <div class="line"><span class="comment">// ... fill chunk ...</span></div>
 <div class="line">fifo.push(<a class="code hl_class" href="classList.html">chunk</a>);</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// Consumer side</span></div>
+<div class="line"><span class="comment">// Consumer thread — blocks until 1600 samples are ready</span></div>
 <div class="line"><a class="code hl_class" href="classAudio.html">Audio</a> <a class="code hl_class" href="classList.html">slice</a>(<a class="code hl_class" href="classList.html">outputDesc</a>, 1600);</div>
-<div class="line"><span class="keywordtype">size_t</span> <a class="code hl_class" href="classList.html">got</a> = fifo.pop(<a class="code hl_class" href="classList.html">slice</a>, 1600);</div>
-<div class="line"><span class="comment">// got is the actual number of samples written to `slice`.</span></div>
-<div class="ttc" id="aclassAudioBuffer_html"><div class="ttname"><a href="classAudioBuffer.html">AudioBuffer</a></div><div class="ttdoc">Ring-buffered audio sample FIFO with format conversion on push.</div><div class="ttdef"><b>Definition</b> audiobuffer.h:66</div></div>
+<div class="line"><span class="keyword">auto</span> [<a class="code hl_class" href="classList.html">got</a>, <a class="code hl_class" href="classList.html">err</a>] = fifo.popWait(<a class="code hl_class" href="classList.html">slice</a>, 1600, 200);</div>
+<div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">err</a> == <a class="code hl_enumvalue" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823">Error::Timeout</a>) { ... }</div>
+<div class="ttc" id="aclassAudioBuffer_html"><div class="ttname"><a href="classAudioBuffer.html">AudioBuffer</a></div><div class="ttdoc">Thread-safe ring-buffered audio sample FIFO with format conversion on push.</div><div class="ttdef"><b>Definition</b> audiobuffer.h:77</div></div>
 <div class="ttc" id="aclassAudioDesc_html"><div class="ttname"><a href="classAudioDesc.html">AudioDesc</a></div><div class="ttdoc">Describes an audio format including sample type, rate, and channel count.</div><div class="ttdef"><b>Definition</b> audiodesc.h:31</div></div>
 <div class="ttc" id="aclassAudioDesc_html_a4a8484fa1d21e315bcb0105b977d8c37"><div class="ttname"><a href="classAudioDesc.html#a4a8484fa1d21e315bcb0105b977d8c37">AudioDesc::NativeType</a></div><div class="ttdeci">static constexpr DataType NativeType</div><div class="ttdoc">The native float format for the current platform's endianness.</div><div class="ttdef"><b>Definition</b> audiodesc.h:214</div></div>
 <div class="ttc" id="aclassAudioDesc_html_aa6d81606b4d829f7579af9f6803750b4a80c0cb3918b290828c146e0d4da608d3"><div class="ttname"><a href="classAudioDesc.html#aa6d81606b4d829f7579af9f6803750b4a80c0cb3918b290828c146e0d4da608d3">AudioDesc::PCMI_S16LE</a></div><div class="ttdeci">@ PCMI_S16LE</div><div class="ttdoc">Signed 16-bit integer, little-endian, interleaved.</div><div class="ttdef"><b>Definition</b> audiodesc.h:199</div></div>
 <div class="ttc" id="aclassAudio_html"><div class="ttname"><a href="classAudio.html">Audio</a></div><div class="ttdoc">Object to hold some number of audio samples.</div><div class="ttdef"><b>Definition</b> audio.h:45</div></div>
+<div class="ttc" id="aclassError_html_ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823"><div class="ttname"><a href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823">Error::Timeout</a></div><div class="ttdeci">@ Timeout</div><div class="ttdoc">Operation timed out.</div><div class="ttdef"><b>Definition</b> error.h:78</div></div>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a39a8e7bf9ad138f91e90ff65e0b5cef1" name="a39a8e7bf9ad138f91e90ff65e0b5cef1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a39a8e7bf9ad138f91e90ff65e0b5cef1">&#9670;&#160;</a></span>drop()</h2>
+<a id="a1b65594676a91a44e66798932003076a" name="a1b65594676a91a44e66798932003076a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b65594676a91a44e66798932003076a">&#9670;&#160;</a></span>drop()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioBuffer::drop </td>
+          <td class="memname"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a> AudioBuffer::drop </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
           <td class="paramname"><em>samples</em></td><td>)</td>
@@ -254,18 +270,49 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Drops the next <code>samples</code> samples without copying. </p>
-<dl class="section return"><dt>Returns</dt><dd>The number of samples actually dropped. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>{count, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>}. </dd></dl>
 
 </div>
 </div>
-<a id="ad3e9a937be93c13b42074e9bf0e675ae" name="ad3e9a937be93c13b42074e9bf0e675ae"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3e9a937be93c13b42074e9bf0e675ae">&#9670;&#160;</a></span>pop() <span class="overload">[1/2]</span></h2>
+<a id="a8aa81620cb94b16abdb2c00ff0b7a456" name="a8aa81620cb94b16abdb2c00ff0b7a456"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8aa81620cb94b16abdb2c00ff0b7a456">&#9670;&#160;</a></span>peek()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioBuffer::pop </td>
+          <td class="memname"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a> AudioBuffer::peek </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">void</a> *&#160;</td>
+          <td class="paramname"><em>dst</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>samples</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Peeks at the next <code>samples</code> samples without consuming. </p>
+<dl class="section return"><dt>Returns</dt><dd>{count, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>}. </dd></dl>
+
+</div>
+</div>
+<a id="a2fe9c92997fb2f5a626bb3489e74984c" name="a2fe9c92997fb2f5a626bb3489e74984c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2fe9c92997fb2f5a626bb3489e74984c">&#9670;&#160;</a></span>pop() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a> AudioBuffer::pop </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
           <td class="paramname"><em>audio</em>, </td>
@@ -285,19 +332,19 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Pops up to <code>samples</code> samples into <code>audio</code>. </p>
-<p>The destination <code>audio</code> must have a descriptor matching <code><a class="el" href="classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b" title="Returns the storage (output) format.">format()</a></code> and <code>maxSamples()</code> &gt;= <code>samples</code>. On return, <code>audio's</code> sample count is set to the actual number popped.</p>
-<dl class="section return"><dt>Returns</dt><dd>The number of samples actually popped. </dd></dl>
+<p>Non-blocking: returns immediately with whatever is available (which may be 0). The destination <code>audio</code> must have a descriptor matching <code><a class="el" href="classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b" title="Returns the storage (output) format.">format()</a></code> and <code>maxSamples()</code> &gt;= <code>samples</code>. On return, <code>audio's</code> sample count is set to the actual number popped.</p>
+<dl class="section return"><dt>Returns</dt><dd>{count, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>} on success, or {0, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf" title="Audio/video format does not match the expected format.">Error::FormatMismatch</a>} if <code>audio's</code> descriptor does not match the storage format. </dd></dl>
 
 </div>
 </div>
-<a id="a40f96fe15e8f07b9f3a4c8ba3d3ae715" name="a40f96fe15e8f07b9f3a4c8ba3d3ae715"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a40f96fe15e8f07b9f3a4c8ba3d3ae715">&#9670;&#160;</a></span>pop() <span class="overload">[2/2]</span></h2>
+<a id="a030ecd5ad3ab6d043e7ee2a04d8f9266" name="a030ecd5ad3ab6d043e7ee2a04d8f9266"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a030ecd5ad3ab6d043e7ee2a04d8f9266">&#9670;&#160;</a></span>pop() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">size_t</a> AudioBuffer::pop </td>
+          <td class="memname"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a> AudioBuffer::pop </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classList.html">void</a> *&#160;</td>
           <td class="paramname"><em>dst</em>, </td>
@@ -317,14 +364,106 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Pops up to <code>samples</code> samples into a raw buffer. </p>
+<p>Non-blocking: returns immediately with whatever is available (which may be 0).</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">dst</td><td>Destination buffer, must be at least <code>samples</code> × bytes-per-sample bytes. </td></tr>
+    <tr><td class="paramname">dst</td><td>Destination buffer, must be at least <code>samples</code> x bytes-per-sample bytes. </td></tr>
     <tr><td class="paramname">samples</td><td>Number of samples to pop. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The number of samples actually popped. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>{count, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>}. </dd></dl>
+
+</div>
+</div>
+<a id="ab8a0df2a976464f34806b705a9d5cf7b" name="ab8a0df2a976464f34806b705a9d5cf7b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8a0df2a976464f34806b705a9d5cf7b">&#9670;&#160;</a></span>popWait() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a> AudioBuffer::popWait </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classAudio.html">Audio</a> &amp;&#160;</td>
+          <td class="paramname"><em>audio</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>samples</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramname"><em>timeoutMs</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Blocks until <code>samples</code> samples are available, then pops into <code>audio</code>. </p>
+<p>Waits for the ring to accumulate at least <code>samples</code> before popping.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">audio</td><td>Destination <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> (must match <a class="el" href="classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b" title="Returns the storage (output) format.">format()</a>). </td></tr>
+    <tr><td class="paramname">samples</td><td>Number of samples to wait for and pop. </td></tr>
+    <tr><td class="paramname">timeoutMs</td><td>Maximum wait in milliseconds (0 = indefinite). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{samples, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>} on success, {0, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a>} if the wait expired, or {0, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a7e5b3da50016db37eaa13051d0ae32bf" title="Audio/video format does not match the expected format.">Error::FormatMismatch</a>} if <code>audio's</code> descriptor does not match the storage format. </dd></dl>
+
+</div>
+</div>
+<a id="a29420829c5f6852b578fadfc44e0f9e7" name="a29420829c5f6852b578fadfc44e0f9e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29420829c5f6852b578fadfc44e0f9e7">&#9670;&#160;</a></span>popWait() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff">PopResult</a> AudioBuffer::popWait </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">void</a> *&#160;</td>
+          <td class="paramname"><em>dst</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">size_t</a>&#160;</td>
+          <td class="paramname"><em>samples</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">unsigned</a> int&#160;</td>
+          <td class="paramname"><em>timeoutMs</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Blocks until <code>samples</code> samples are available, then pops into a raw buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dst</td><td>Destination buffer. </td></tr>
+    <tr><td class="paramname">samples</td><td>Number of samples to wait for and pop. </td></tr>
+    <tr><td class="paramname">timeoutMs</td><td>Maximum wait in milliseconds (0 = indefinite). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>{samples, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a459721b2d3e27ec0840c131c09eabe34" title="No error.">Error::Ok</a>} on success, or {0, <a class="el" href="classError.html#ab5980e13b879db253df802b0950d1708a3aa3455e30f01a4b269528bd9e179823" title="Operation timed out.">Error::Timeout</a>} if the wait expired. </dd></dl>
 
 </div>
 </div>
@@ -384,7 +523,7 @@ Public Member Functions</h2></td></tr>
 <p>Pushes interleaved raw samples into the buffer. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">data</td><td>Pointer to <code>samples</code> × bytes-per-sample bytes. </td></tr>
+    <tr><td class="paramname">data</td><td>Pointer to <code>samples</code> x bytes-per-sample bytes. </td></tr>
     <tr><td class="paramname">samples</td><td>Number of samples (not bytes) in <code>data</code>. </td></tr>
     <tr><td class="paramname">srcFormat</td><td>Format of <code>data</code>. </td></tr>
   </table>
@@ -472,7 +611,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudioBuffer.html">AudioBuffer</a></li>
-    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-13 06:40:13 from commit 669d40e (1.0.0).</li>
   </ul>
 </div>
 </body>

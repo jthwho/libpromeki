@@ -14,7 +14,7 @@ var searchData=
   ['keyrelease_11',['KeyRelease',['../classKeyEvent.html#a4dc5e9b314879c2ef2ae39efa527ac71',1,'KeyEvent']]],
   ['keys_12',['keys',['../classHashMap.html#adfdbb7fe8eb114f05facb163953289d4',1,'HashMap::keys()'],['../classMap.html#a9c2431f70d28c82321654e5dc867b08b',1,'Map::keys()'],['../mediaio.html#mediaio_metadata',1,'Per-frame metadata keys']]],
   ['kill_13',['kill',['../classProcess.html#a861c495dd2f3f1fbe17e73abef6651fc',1,'Process']]],
-  ['kind_14',['kind',['../structInspectorDiscontinuity.html#a1935c3a4d2c999342e0e40ba2ffbe49d',1,'InspectorDiscontinuity::kind'],['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801d',1,'InspectorDiscontinuity::Kind']]],
+  ['kind_14',['kind',['../structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801d',1,'InspectorDiscontinuity::Kind'],['../structInspectorDiscontinuity.html#a1935c3a4d2c999342e0e40ba2ffbe49d',1,'InspectorDiscontinuity::kind']]],
   ['known_20enums_15',['known enums',['../md_CODING__STANDARDS.html#autotoc_md75',1,'Well-Known Enums'],['../group__wellknownenums.html',1,'Well-known Enums']]],
   ['known_20enums_20live_16',['Where Well-Known Enums Live',['../md_CODING__STANDARDS.html#autotoc_md77',1,'']]],
   ['known_20limits_17',['Known limits',['../inspector.html#inspector_known_limits',1,'']]],

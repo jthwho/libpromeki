@@ -31,6 +31,7 @@ var classAudioDesc =
     [ "channels", "classAudioDesc.html#a28ace60e735420592c1cc45eede92700", null ],
     [ "codecFourCC", "classAudioDesc.html#ae562a951eb019b6e0d9284f4bd1d425f", null ],
     [ "dataType", "classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76", null ],
+    [ "dataTypeName", "classAudioDesc.html#a9c3dadfc95cc99c53fd46be2cc1e3de9", null ],
     [ "floatToSamples", "classAudioDesc.html#a4d906fdd0d437c1310d196c18a143bc1", null ],
     [ "formatEquals", "classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2", null ],
     [ "isCompressed", "classAudioDesc.html#ab627ec31647826dda77b727aad03fe54", null ],

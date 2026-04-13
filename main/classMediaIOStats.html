@@ -262,6 +262,12 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a647e1c236f59a7894c427bee003d8a59" id="r_a647e1c236f59a7894c427bee003d8a59"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a647e1c236f59a7894c427bee003d8a59">PeakLatencyMs</a></td></tr>
 <tr class="memdesc:a647e1c236f59a7894c427bee003d8a59"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — peak observed latency.  <br /></td></tr>
 <tr class="separator:a647e1c236f59a7894c427bee003d8a59"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc1c154702aba8a8cf969b0d621668e2" id="r_acc1c154702aba8a8cf969b0d621668e2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#acc1c154702aba8a8cf969b0d621668e2">AverageProcessingMs</a></td></tr>
+<tr class="memdesc:acc1c154702aba8a8cf969b0d621668e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — average per-frame processing time.  <br /></td></tr>
+<tr class="separator:acc1c154702aba8a8cf969b0d621668e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53ec918b7460f5060a7c9a318f88ec69" id="r_a53ec918b7460f5060a7c9a318f88ec69"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a53ec918b7460f5060a7c9a318f88ec69">PeakProcessingMs</a></td></tr>
+<tr class="memdesc:a53ec918b7460f5060a7c9a318f88ec69"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — peak per-frame processing time.  <br /></td></tr>
+<tr class="separator:a53ec918b7460f5060a7c9a318f88ec69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ef4c2a1f18725b551cfbbb4948f152e" id="r_a2ef4c2a1f18725b551cfbbb4948f152e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIOStats.html#a2ef4c2a1f18725b551cfbbb4948f152e">LastErrorMessage</a></td></tr>
 <tr class="memdesc:a2ef4c2a1f18725b551cfbbb4948f152e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — most recent error description.  <br /></td></tr>
 <tr class="separator:a2ef4c2a1f18725b551cfbbb4948f152e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -313,7 +319,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Renders the standard telemetry keys as a compact log line. </p>
 <p>Formats whichever standard keys are present into a single space-separated line suitable for dumping to a terminal or logger. Keys are emitted in a fixed order so periodic telemetry output stays scannable:</p>
-<p>BytesPerSecond FramesPerSecond FramesDropped FramesRepeated FramesLate AverageLatencyMs/PeakLatencyMs QueueDepth/QueueCapacity PendingOperations LastErrorMessage</p>
+<p>BytesPerSecond FramesPerSecond FramesDropped FramesRepeated FramesLate AverageLatencyMs/PeakLatencyMs AverageProcessingMs/PeakProcessingMs QueueDepth/QueueCapacity PendingOperations LastErrorMessage</p>
 <p>Counters that are still zero (<code>FramesRepeated</code>, <code>FramesLate</code>) and the empty <code>LastErrorMessage</code> are elided to keep the line quiet under normal operation. Backend-specific keys are <em>not</em> included — callers that want a full dump should iterate via <a class="el" href="classVariantDatabase.html#a16c5c80ea6fe79deb9ebf8b2e16e780e">forEach</a>.</p>
 <dl class="section return"><dt>Returns</dt><dd>A single-line summary, or an empty <a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> if the container holds no standard keys. </dd></dl>
 
@@ -346,6 +352,34 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassVariantSpec_html"><div class="ttname"><a href="classVariantSpec.html">VariantSpec</a></div><div class="ttdoc">Describes the constraints and default value for a VariantDatabase ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:62</div></div>
 </div><!-- fragment -->
 <p>double — average end-to-end latency. </p>
+
+</div>
+</div>
+<a id="acc1c154702aba8a8cf969b0d621668e2" name="acc1c154702aba8a8cf969b0d621668e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acc1c154702aba8a8cf969b0d621668e2">&#9670;&#160;</a></span>AverageProcessingMs</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::AverageProcessingMs</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;AverageProcessingMs&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
+<div class="line">                                .setMin(0.0).setDescription(</div>
+<div class="line">                                        <span class="stringliteral">&quot;Average per-frame processing time in ms.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>double — average per-frame processing time. </p>
 
 </div>
 </div>
@@ -540,6 +574,34 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a53ec918b7460f5060a7c9a318f88ec69" name="a53ec918b7460f5060a7c9a318f88ec69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53ec918b7460f5060a7c9a318f88ec69">&#9670;&#160;</a></span>PeakProcessingMs</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaIOStats::PeakProcessingMs</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;PeakProcessingMs&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble).setDefault(0.0)</div>
+<div class="line">                                .setMin(0.0).setDescription(</div>
+<div class="line">                                        <span class="stringliteral">&quot;Peak per-frame processing time in ms.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>double — peak per-frame processing time. </p>
+
+</div>
+</div>
 <a id="a45df23c4523872b21a6182be941418a2" name="a45df23c4523872b21a6182be941418a2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a45df23c4523872b21a6182be941418a2">&#9670;&#160;</a></span>PendingOperations</h2>
 
@@ -632,7 +694,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIOStats.html">MediaIOStats</a></li>
-    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-13 06:40:13 from commit 669d40e (1.0.0).</li>
   </ul>
 </div>
 </body>

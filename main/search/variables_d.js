@@ -15,7 +15,7 @@ var searchData=
   ['maxs24_12',['MaxS24',['../classAudioDesc.html#af195b376da48d2d2ca152d7e0e0e2013',1,'AudioDesc']]],
   ['maxu24_13',['MaxU24',['../classAudioDesc.html#ae7a8153dc6502a6ba5182060d1b3b975',1,'AudioDesc']]],
   ['maxwavelength_14',['MaxWavelength',['../classCIEPoint.html#a1e09b6a4719f768b806aba60d0f93d7d',1,'CIEPoint']]],
-  ['mediadescchanged_15',['mediadescchanged',['../classMediaIOCommandRead.html#a616a6256d355d4997e5ef346760f94e0',1,'MediaIOCommandRead::mediaDescChanged'],['../classMetadata.html#af6762a5698ac8412dff444fcf9d6745d',1,'Metadata::MediaDescChanged']]],
+  ['mediadescchanged_15',['mediadescchanged',['../classMetadata.html#af6762a5698ac8412dff444fcf9d6745d',1,'Metadata::MediaDescChanged'],['../classMediaIOCommandRead.html#a616a6256d355d4997e5ef346760f94e0',1,'MediaIOCommandRead::mediaDescChanged']]],
   ['metric_16',['Metric',['../group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892',1,'ByteCountStyle']]],
   ['min_17',['min',['../structBenchmarkReporter_1_1StepStats.html#afb4d0efab4d2d91add27f88b664251cb',1,'BenchmarkReporter::StepStats']]],
   ['minnsperiter_18',['minNsPerIter',['../classBenchmarkResult.html#a1917939899be7fddd69a7067ab745cee',1,'BenchmarkResult']]],

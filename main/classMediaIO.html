@@ -425,6 +425,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a675744b1e381128db77e3b60470902c7" id="r_a675744b1e381128db77e3b60470902c7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classStringList.html">StringList</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a675744b1e381128db77e3b60470902c7">enumerate</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName)</td></tr>
 <tr class="memdesc:a675744b1e381128db77e3b60470902c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lists available instances for the named backend.  <br /></td></tr>
 <tr class="separator:a675744b1e381128db77e3b60470902c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b45b92814597472775b65741c8cc16f" id="r_a1b45b92814597472775b65741c8cc16f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a1b45b92814597472775b65741c8cc16f">findFormatForPath</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;path)</td></tr>
+<tr class="memdesc:a1b45b92814597472775b65741c8cc16f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the backend that claims a filesystem path.  <br /></td></tr>
+<tr class="separator:a1b45b92814597472775b65741c8cc16f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a562bcd543622c1bd6e9ad0a68b4dde5e" id="r_a562bcd543622c1bd6e9ad0a68b4dde5e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaDesc.html">MediaDesc</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a562bcd543622c1bd6e9ad0a68b4dde5e">queryDevice</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)</td></tr>
+<tr class="memdesc:a562bcd543622c1bd6e9ad0a68b4dde5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Queries a device for its supported configurations.  <br /></td></tr>
+<tr class="separator:a562bcd543622c1bd6e9ad0a68b4dde5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a895b71c7be0cacb8215ea8efc4667535" id="r_a895b71c7be0cacb8215ea8efc4667535"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaIO.html#a895b71c7be0cacb8215ea8efc4667535">printDeviceInfo</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;typeName, <a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)</td></tr>
+<tr class="memdesc:a895b71c7be0cacb8215ea8efc4667535"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prints backend-specific device info to stdout.  <br /></td></tr>
+<tr class="separator:a895b71c7be0cacb8215ea8efc4667535"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_classObjectBase"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_classObjectBase')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="classObjectBase.html">ObjectBase</a></td></tr>
 <tr class="memitem:a6cf10683d2b9fa2dd0ab9a0722e925ad inherit pub_static_methods_classObjectBase" id="r_a6cf10683d2b9fa2dd0ab9a0722e925ad"><td class="memItemLeft" align="right" valign="top">
 <a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classObjectBase_1_1MetaInfo.html">MetaInfo</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>metaInfo</b> ()</td></tr>
@@ -997,6 +1006,42 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a1b45b92814597472775b65741c8cc16f" name="a1b45b92814597472775b65741c8cc16f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b45b92814597472775b65741c8cc16f">&#9670;&#160;</a></span>findFormatForPath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a> * MediaIO::findFormatForPath </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>path</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Finds the backend that claims a filesystem path. </p>
+<p>Iterates registered backends and returns the first whose <a class="el" href="structMediaIO_1_1FormatDesc.html#a30a6c3a2ce1bdbb1743e8cd7d839e08a">FormatDesc::canHandlePath</a> returns true, or nullptr.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>The filesystem path to test. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The matching <a class="el" href="structMediaIO_1_1FormatDesc.html" title="Describes a registered media I/O backend.">FormatDesc</a>, or nullptr. </dd></dl>
+
+</div>
+</div>
 <a id="ae00ff63286f09a393d871c17e1538036" name="ae00ff63286f09a393d871c17e1538036"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae00ff63286f09a393d871c17e1538036">&#9670;&#160;</a></span>frameAvailable()</h2>
 
@@ -1315,6 +1360,52 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a895b71c7be0cacb8215ea8efc4667535" name="a895b71c7be0cacb8215ea8efc4667535"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a895b71c7be0cacb8215ea8efc4667535">&#9670;&#160;</a></span>printDeviceInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">void</a> MediaIO::printDeviceInfo </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;&#160;</td>
+          <td class="paramname"><em>config</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Prints backend-specific device info to stdout. </p>
+<p>Calls the named backend's <a class="el" href="structMediaIO_1_1FormatDesc.html#a777e7032562afbf4fb040df2692dcb9b">FormatDesc::printDeviceInfo</a> callback (if present). No-op if the backend is unknown or does not implement the callback.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>The registered backend name. </td></tr>
+    <tr><td class="paramname">config</td><td>Config carrying the device locator. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="af8a7c23e819e3eb161ccc2fda2796003" name="af8a7c23e819e3eb161ccc2fda2796003"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af8a7c23e819e3eb161ccc2fda2796003">&#9670;&#160;</a></span>PROMEKI_SIGNAL() <span class="overload">[1/5]</span></h2>
 
@@ -1440,6 +1531,53 @@ Additional Inherited Members</h2></td></tr>
 <p>Emitted when a non-blocking write completes with an error. </p>
 <dl class="signal"><dt><b><a class="el" href="signal.html#_signal000013">Signal:</a></b></dt><dd></dd></dl>
 <p>Non-blocking writes (writeFrame(frame, false)) discard their direct result; this signal is the only way for the user to learn about write errors that happen on the strand worker thread. </p>
+
+</div>
+</div>
+<a id="a562bcd543622c1bd6e9ad0a68b4dde5e" name="a562bcd543622c1bd6e9ad0a68b4dde5e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a562bcd543622c1bd6e9ad0a68b4dde5e">&#9670;&#160;</a></span>queryDevice()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaDesc.html">MediaDesc</a> &gt; MediaIO::queryDevice </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;&#160;</td>
+          <td class="paramname"><em>typeName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;&#160;</td>
+          <td class="paramname"><em>config</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Queries a device for its supported configurations. </p>
+<p>Calls the named backend's <a class="el" href="structMediaIO_1_1FormatDesc.html#ae18bcfbdca5fb3a179340131c60da710">FormatDesc::queryDevice</a> callback (if present) with the given config. Returns an empty list if the backend is unknown or does not implement the query.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">typeName</td><td>The registered backend name. </td></tr>
+    <tr><td class="paramname">config</td><td>Config carrying the device locator. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A list of supported <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> configurations. </dd></dl>
 
 </div>
 </div>
@@ -2238,7 +2376,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li>
-    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-13 06:40:13 from commit 669d40e (1.0.0).</li>
   </ul>
 </div>
 </body>

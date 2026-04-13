@@ -10,6 +10,7 @@ var searchData=
   ['font_2eh_7',['font.h',['../font_8h.html',1,'']]],
   ['fourcc_2eh_8',['fourcc.h',['../fourcc_8h.html',1,'']]],
   ['frame_2eh_9',['frame.h',['../frame_8h.html',1,'(Global Namespace)'],['../tui_2frame_8h.html',1,'(Global Namespace)']]],
-  ['framerate_2eh_10',['framerate.h',['../framerate_8h.html',1,'']]],
-  ['future_2eh_11',['future.h',['../future_8h.html',1,'']]]
+  ['framepacer_2eh_10',['framepacer.h',['../framepacer_8h.html',1,'']]],
+  ['framerate_2eh_11',['framerate.h',['../framerate_8h.html',1,'']]],
+  ['future_2eh_12',['future.h',['../future_8h.html',1,'']]]
 ];

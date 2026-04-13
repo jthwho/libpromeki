@@ -1,11 +1,15 @@
 var structMediaIO_1_1FormatDesc =
 [
+    [ "CanHandlePathFunc", "structMediaIO_1_1FormatDesc.html#a97cf0ce9d167f002aa303adaa59c0329", null ],
     [ "ConfigSpecFunc", "structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77", null ],
     [ "CreateFunc", "structMediaIO_1_1FormatDesc.html#a040ef25827914e55c2e8209c77033a33", null ],
     [ "DefaultMetadataFunc", "structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e", null ],
     [ "EnumerateFunc", "structMediaIO_1_1FormatDesc.html#a2149dbe59cbb4e01b85ac4ea67a06576", null ],
+    [ "PrintDeviceInfoFunc", "structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343", null ],
     [ "ProbeFunc", "structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54", null ],
+    [ "QueryFunc", "structMediaIO_1_1FormatDesc.html#a55e421a8b85374224d2793b44073c15f", null ],
     [ "canHandleDevice", "structMediaIO_1_1FormatDesc.html#a8cb05daaef47af69482f1e5c30a244b9", null ],
+    [ "canHandlePath", "structMediaIO_1_1FormatDesc.html#a30a6c3a2ce1bdbb1743e8cd7d839e08a", null ],
     [ "canInput", "structMediaIO_1_1FormatDesc.html#aae7cc36c2f62f617e022823820f3844c", null ],
     [ "canInputAndOutput", "structMediaIO_1_1FormatDesc.html#a2837b066a3c3143ad5789e49fe63b55d", null ],
     [ "canOutput", "structMediaIO_1_1FormatDesc.html#a0fddb44661a7e54ff529a1d8febe9a02", null ],
@@ -15,5 +19,7 @@ var structMediaIO_1_1FormatDesc =
     [ "description", "structMediaIO_1_1FormatDesc.html#a351b863c1f26e0652c764c806d276e14", null ],
     [ "enumerate", "structMediaIO_1_1FormatDesc.html#aa766150e2cf030dbca33a410334594c1", null ],
     [ "extensions", "structMediaIO_1_1FormatDesc.html#a3a4e3a7d574e1195b535b9f13e583aaa", null ],
-    [ "name", "structMediaIO_1_1FormatDesc.html#ab5897abedebdee3978485f689ae8eee5", null ]
+    [ "name", "structMediaIO_1_1FormatDesc.html#ab5897abedebdee3978485f689ae8eee5", null ],
+    [ "printDeviceInfo", "structMediaIO_1_1FormatDesc.html#a777e7032562afbf4fb040df2692dcb9b", null ],
+    [ "queryDevice", "structMediaIO_1_1FormatDesc.html#ae18bcfbdca5fb3a179340131c60da710", null ]
 ];

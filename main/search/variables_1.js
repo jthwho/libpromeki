@@ -41,9 +41,10 @@ var searchData=
   ['audiotrack_38',['AudioTrack',['../classMediaConfig.html#a059048e2fae438430397f92b91765229',1,'MediaConfig']]],
   ['audiotracks_39',['audioTracks',['../classMediaIOCommandOpen.html#a0d0b5f356c1896755dc09a049b29d4dc',1,'MediaIOCommandOpen']]],
   ['averagelatencyms_40',['AverageLatencyMs',['../classMediaIOStats.html#a1d1dcc32f0838834b06a0417c4717db6',1,'MediaIOStats']]],
-  ['avg_41',['avg',['../structBenchmarkReporter_1_1StepStats.html#a703cfdda69eb08f08b1994a37b42200a',1,'BenchmarkReporter::StepStats']]],
-  ['avgnsperiter_42',['avgNsPerIter',['../classBenchmarkResult.html#a79d6e40b8cbf375fd48ce51948c1719e',1,'BenchmarkResult']]],
-  ['avsyncoffsetsamples_43',['avSyncOffsetSamples',['../structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e',1,'InspectorEvent']]],
-  ['avsyncvalid_44',['avSyncValid',['../structInspectorEvent.html#a7306989a0c3cfe410da73abdfaf46acf',1,'InspectorEvent']]],
-  ['awk_45',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
+  ['averageprocessingms_41',['AverageProcessingMs',['../classMediaIOStats.html#acc1c154702aba8a8cf969b0d621668e2',1,'MediaIOStats']]],
+  ['avg_42',['avg',['../structBenchmarkReporter_1_1StepStats.html#a703cfdda69eb08f08b1994a37b42200a',1,'BenchmarkReporter::StepStats']]],
+  ['avgnsperiter_43',['avgNsPerIter',['../classBenchmarkResult.html#a79d6e40b8cbf375fd48ce51948c1719e',1,'BenchmarkResult']]],
+  ['avsyncoffsetsamples_44',['avSyncOffsetSamples',['../structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e',1,'InspectorEvent']]],
+  ['avsyncvalid_45',['avSyncValid',['../structInspectorEvent.html#a7306989a0c3cfe410da73abdfaf46acf',1,'InspectorEvent']]],
+  ['awk_46',['Awk',['../classRegEx.html#a18d157a1fe69da75c746579cc0e15c52',1,'RegEx']]]
 ];

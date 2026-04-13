@@ -123,6 +123,12 @@ var hierarchy =
       [ "TypedEnum< TimecodePackFormat >", "classTypedEnum.html", [
         [ "TimecodePackFormat", "classTimecodePackFormat.html", null ]
       ] ],
+      [ "TypedEnum< V4l2ExposureMode >", "classTypedEnum.html", [
+        [ "V4l2ExposureMode", "classV4l2ExposureMode.html", null ]
+      ] ],
+      [ "TypedEnum< V4l2PowerLineMode >", "classTypedEnum.html", [
+        [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ]
+      ] ],
       [ "TypedEnum< VideoPattern >", "classTypedEnum.html", [
         [ "VideoPattern", "classVideoPattern.html", null ]
       ] ],
@@ -161,6 +167,11 @@ var hierarchy =
     [ "std::formatter< promeki::Timecode >", "structstd_1_1formatter_3_01promeki_1_1Timecode_01_4.html", null ],
     [ "FourCC", "classFourCC.html", null ],
     [ "Frame", "classFrame.html", null ],
+    [ "FramePacer", "classFramePacer.html", null ],
+    [ "FramePacerClock", "classFramePacerClock.html", [
+      [ "SDLAudioPacerClock", "classSDLAudioPacerClock.html", null ],
+      [ "WallPacerClock", "classWallPacerClock.html", null ]
+    ] ],
     [ "FrameRate", "classFrameRate.html", null ],
     [ "Future< T >", "classFuture.html", null ],
     [ "Future< void >", "classFuture_3_01void_01_4.html", null ],
@@ -363,6 +374,7 @@ var hierarchy =
     [ "ObjectBasePtr", "classObjectBasePtr.html", null ],
     [ "MemSpace::Ops", "structMemSpace_1_1Ops.html", null ],
     [ "CmdLineParser::Option", "classCmdLineParser_1_1Option.html", null ],
+    [ "FramePacer::PaceResult", "structFramePacer_1_1PaceResult.html", null ],
     [ "PacketTransport", "classPacketTransport.html", [
       [ "LoopbackTransport", "classLoopbackTransport.html", null ],
       [ "UdpSocketTransport", "classUdpSocketTransport.html", null ]
@@ -371,6 +383,7 @@ var hierarchy =
     [ "Pair< A, B >", "classPair.html", null ],
     [ "CRC< T >::Params", "structCRC_1_1Params.html", null ],
     [ "TuiInputParser::ParsedEvent", "structTuiInputParser_1_1ParsedEvent.html", null ],
+    [ "PeriodicCallback", "classPeriodicCallback.html", null ],
     [ "PIDController< ValueType, TimeType >", "classPIDController.html", null ],
     [ "PaintEngine::Pixel", "structPaintEngine_1_1Pixel.html", null ],
     [ "PixelDesc", "classPixelDesc.html", null ],

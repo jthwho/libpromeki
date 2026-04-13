@@ -144,6 +144,15 @@ Public Types</h2></td></tr>
 <tr class="memitem:a2149dbe59cbb4e01b85ac4ea67a06576" id="r_a2149dbe59cbb4e01b85ac4ea67a06576"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a2149dbe59cbb4e01b85ac4ea67a06576">EnumerateFunc</a> = std::function&lt; <a class="el" href="classStringList.html">StringList</a>()&gt;</td></tr>
 <tr class="memdesc:a2149dbe59cbb4e01b85ac4ea67a06576"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional callback that lists available device instances.  <br /></td></tr>
 <tr class="separator:a2149dbe59cbb4e01b85ac4ea67a06576"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97cf0ce9d167f002aa303adaa59c0329" id="r_a97cf0ce9d167f002aa303adaa59c0329"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a97cf0ce9d167f002aa303adaa59c0329">CanHandlePathFunc</a> = std::function&lt; <a class="el" href="classList.html">bool</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;path)&gt;</td></tr>
+<tr class="memdesc:a97cf0ce9d167f002aa303adaa59c0329"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional path-based probe.  <br /></td></tr>
+<tr class="separator:a97cf0ce9d167f002aa303adaa59c0329"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55e421a8b85374224d2793b44073c15f" id="r_a55e421a8b85374224d2793b44073c15f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#a55e421a8b85374224d2793b44073c15f">QueryFunc</a> = std::function&lt; <a class="el" href="classList.html">List</a>&lt; <a class="el" href="classMediaDesc.html">MediaDesc</a> &gt;(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)&gt;</td></tr>
+<tr class="memdesc:a55e421a8b85374224d2793b44073c15f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional device capability query.  <br /></td></tr>
+<tr class="separator:a55e421a8b85374224d2793b44073c15f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa338f9de74f324830d6141b057e0a343" id="r_aa338f9de74f324830d6141b057e0a343"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343">PrintDeviceInfoFunc</a> = std::function&lt; <a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)&gt;</td></tr>
+<tr class="memdesc:aa338f9de74f324830d6141b057e0a343"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional device-info printer.  <br /></td></tr>
+<tr class="separator:aa338f9de74f324830d6141b057e0a343"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -191,10 +200,46 @@ Public Attributes</h2></td></tr>
 <a class="el" href="structMediaIO_1_1FormatDesc.html#a2149dbe59cbb4e01b85ac4ea67a06576">EnumerateFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>enumerate</b></td></tr>
 <tr class="memdesc:aa766150e2cf030dbca33a410334594c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance enumerator. <br /></td></tr>
 <tr class="separator:aa766150e2cf030dbca33a410334594c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30a6c3a2ce1bdbb1743e8cd7d839e08a" id="r_a30a6c3a2ce1bdbb1743e8cd7d839e08a"><td class="memItemLeft" align="right" valign="top"><a id="a30a6c3a2ce1bdbb1743e8cd7d839e08a" name="a30a6c3a2ce1bdbb1743e8cd7d839e08a"></a>
+<a class="el" href="structMediaIO_1_1FormatDesc.html#a97cf0ce9d167f002aa303adaa59c0329">CanHandlePathFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>canHandlePath</b></td></tr>
+<tr class="memdesc:a30a6c3a2ce1bdbb1743e8cd7d839e08a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Path-based probe. <br /></td></tr>
+<tr class="separator:a30a6c3a2ce1bdbb1743e8cd7d839e08a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae18bcfbdca5fb3a179340131c60da710" id="r_ae18bcfbdca5fb3a179340131c60da710"><td class="memItemLeft" align="right" valign="top"><a id="ae18bcfbdca5fb3a179340131c60da710" name="ae18bcfbdca5fb3a179340131c60da710"></a>
+<a class="el" href="structMediaIO_1_1FormatDesc.html#a55e421a8b85374224d2793b44073c15f">QueryFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>queryDevice</b></td></tr>
+<tr class="memdesc:ae18bcfbdca5fb3a179340131c60da710"><td class="mdescLeft">&#160;</td><td class="mdescRight">Device capability query. <br /></td></tr>
+<tr class="separator:ae18bcfbdca5fb3a179340131c60da710"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a777e7032562afbf4fb040df2692dcb9b" id="r_a777e7032562afbf4fb040df2692dcb9b"><td class="memItemLeft" align="right" valign="top"><a id="a777e7032562afbf4fb040df2692dcb9b" name="a777e7032562afbf4fb040df2692dcb9b"></a>
+<a class="el" href="structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343">PrintDeviceInfoFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><b>printDeviceInfo</b></td></tr>
+<tr class="memdesc:a777e7032562afbf4fb040df2692dcb9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Device-info printer. <br /></td></tr>
+<tr class="separator:a777e7032562afbf4fb040df2692dcb9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Describes a registered media I/O backend. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a97cf0ce9d167f002aa303adaa59c0329" name="a97cf0ce9d167f002aa303adaa59c0329"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97cf0ce9d167f002aa303adaa59c0329">&#9670;&#160;</a></span>CanHandlePathFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#a97cf0ce9d167f002aa303adaa59c0329">MediaIO::FormatDesc::CanHandlePathFunc</a> =  std::function&lt;<a class="el" href="classList.html">bool</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classString.html">String</a> &amp;path)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Optional path-based probe. </p>
+<p>Returns true if this backend can handle the given filesystem path (e.g. a V4L2 backend recognises <code>"/dev/video0"</code>). Checked by <a class="el" href="classMediaIO.html#af89231d60485661711ec7e11837a33d0">createForFileRead</a> before extension or content probes, so device nodes that are not regular files are routed to the right backend.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">path</td><td>The filesystem path to test. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if this backend claims the path. </dd></dl>
+
+</div>
+</div>
 <a id="a4333a05199c3d78390643fd1f08d2b77" name="a4333a05199c3d78390643fd1f08d2b77"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4333a05199c3d78390643fd1f08d2b77">&#9670;&#160;</a></span>ConfigSpecFunc</h2>
 
@@ -247,6 +292,29 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="aa338f9de74f324830d6141b057e0a343" name="aa338f9de74f324830d6141b057e0a343"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa338f9de74f324830d6141b057e0a343">&#9670;&#160;</a></span>PrintDeviceInfoFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343">MediaIO::FormatDesc::PrintDeviceInfoFunc</a> =  std::function&lt;<a class="el" href="classList.html">void</a>(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Optional device-info printer. </p>
+<p>Writes backend-specific device details (e.g. available controls and their ranges) to stdout. Called by CLI tools in probe / help modes.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td>Backend config with the device locator. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a2e385efad181e8f44c6369104c832f54" name="a2e385efad181e8f44c6369104c832f54"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2e385efad181e8f44c6369104c832f54">&#9670;&#160;</a></span>ProbeFunc</h2>
 
@@ -270,6 +338,30 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a55e421a8b85374224d2793b44073c15f" name="a55e421a8b85374224d2793b44073c15f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55e421a8b85374224d2793b44073c15f">&#9670;&#160;</a></span>QueryFunc</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">using</a> <a class="el" href="structMediaIO_1_1FormatDesc.html#a55e421a8b85374224d2793b44073c15f">MediaIO::FormatDesc::QueryFunc</a> =  std::function&lt;<a class="el" href="classList.html">List</a>&lt;<a class="el" href="classMediaDesc.html">MediaDesc</a>&gt;(<a class="el" href="classList.html">const</a> <a class="el" href="classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade">Config</a> &amp;<a class="el" href="classMediaIO.html#afd4dfa37eca8c62bb3bc6a3fb43bb0d9">config</a>)&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Optional device capability query. </p>
+<p>Returns every supported configuration as a <a class="el" href="classMediaDesc.html">MediaDesc</a> (format + resolution + frame rate). Backends that represent hardware devices implement this to let callers discover what the device offers without opening it. The <code>config</code> carries at least the device locator (e.g. <a class="el" href="classMediaConfig.html#a3c254e3b8b8e45f335fb781f6f93f92c">MediaConfig::V4l2DevicePath</a>).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">config</td><td>Backend config with the device locator. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A list of supported <a class="el" href="classMediaDesc.html" title="Describes a media format including frame rate, image layers, audio channels, and metadata.">MediaDesc</a> configurations. </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/promeki/<a class="el" href="mediaio_8h_source.html">mediaio.h</a></li>
 </ul>
@@ -280,7 +372,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaIO.html">MediaIO</a></li><li class="navelem"><a class="el" href="structMediaIO_1_1FormatDesc.html">FormatDesc</a></li>
-    <li class="footer">Generated on 2026-04-12 22:42:56 from commit 0d1d1ae (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-13 06:40:13 from commit 669d40e (1.0.0).</li>
   </ul>
 </div>
 </body>

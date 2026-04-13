@@ -48,6 +48,7 @@ var group__proav =
       [ "sourceSamplesAvailable", "classAudioBlock.html#ae2b33f89f8c400a8ee2ceb9bc592345f", null ]
     ] ],
     [ "AudioBuffer", "classAudioBuffer.html", [
+      [ "PopResult", "classAudioBuffer.html#a0671c437c47f276df74df7dd58a67aff", null ],
       [ "AudioBuffer", "classAudioBuffer.html#afbe4fb241170a4040542420f3846d4a2", null ],
       [ "AudioBuffer", "classAudioBuffer.html#a68a8145e508050ab6e727b46000a1e3e", null ],
       [ "AudioBuffer", "classAudioBuffer.html#af2d3b6cee7973c5940624af8324b0b16", null ],
@@ -56,7 +57,7 @@ var group__proav =
       [ "available", "classAudioBuffer.html#aeeacdd3b4e7781448987c957b4246245", null ],
       [ "capacity", "classAudioBuffer.html#ab0635c541903684d866781c44b4ac3ba", null ],
       [ "clear", "classAudioBuffer.html#a3d226fd1afcbf9e38f97c5ef153829cb", null ],
-      [ "drop", "classAudioBuffer.html#a39a8e7bf9ad138f91e90ff65e0b5cef1", null ],
+      [ "drop", "classAudioBuffer.html#a1b65594676a91a44e66798932003076a", null ],
       [ "format", "classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b", null ],
       [ "free", "classAudioBuffer.html#aaa015e77e95b4bb7d3c53fb46e463940", null ],
       [ "inputFormat", "classAudioBuffer.html#ade2778f5b7ed23a0395e1a8ee39a6363", null ],
@@ -64,9 +65,11 @@ var group__proav =
       [ "isFull", "classAudioBuffer.html#a22023a45637c8ecf99a7bad3d00c2467", null ],
       [ "isValid", "classAudioBuffer.html#a47b94253cbcce23aec8151664f447702", null ],
       [ "operator=", "classAudioBuffer.html#a5115f11624440dde8dbbfd22ca6560da", null ],
-      [ "peek", "classAudioBuffer.html#aced06ecc91a6f939be31aa126cbff69b", null ],
-      [ "pop", "classAudioBuffer.html#ad3e9a937be93c13b42074e9bf0e675ae", null ],
-      [ "pop", "classAudioBuffer.html#a40f96fe15e8f07b9f3a4c8ba3d3ae715", null ],
+      [ "peek", "classAudioBuffer.html#a8aa81620cb94b16abdb2c00ff0b7a456", null ],
+      [ "pop", "classAudioBuffer.html#a2fe9c92997fb2f5a626bb3489e74984c", null ],
+      [ "pop", "classAudioBuffer.html#a030ecd5ad3ab6d043e7ee2a04d8f9266", null ],
+      [ "popWait", "classAudioBuffer.html#ab8a0df2a976464f34806b705a9d5cf7b", null ],
+      [ "popWait", "classAudioBuffer.html#a29420829c5f6852b578fadfc44e0f9e7", null ],
       [ "push", "classAudioBuffer.html#a778bf54ea0ff06dc0acb711c3f86b8eb", null ],
       [ "push", "classAudioBuffer.html#a73a7c3865156d2fed7abc39b4c5f9c97", null ],
       [ "reserve", "classAudioBuffer.html#af65fd7f979f360b142862b720177c9cf", null ],
@@ -116,6 +119,7 @@ var group__proav =
       [ "channels", "classAudioDesc.html#a28ace60e735420592c1cc45eede92700", null ],
       [ "codecFourCC", "classAudioDesc.html#ae562a951eb019b6e0d9284f4bd1d425f", null ],
       [ "dataType", "classAudioDesc.html#aed77bd03c20f0e1b332243412bc6cb76", null ],
+      [ "dataTypeName", "classAudioDesc.html#a9c3dadfc95cc99c53fd46be2cc1e3de9", null ],
       [ "floatToSamples", "classAudioDesc.html#a4d906fdd0d437c1310d196c18a143bc1", null ],
       [ "formatEquals", "classAudioDesc.html#a6f30788b4198573e07bbe7cb50e63aa2", null ],
       [ "isCompressed", "classAudioDesc.html#ab627ec31647826dda77b727aad03fe54", null ],
@@ -648,12 +652,16 @@ var group__proav =
     ] ],
     [ "MediaIO", "classMediaIO.html", [
       [ "FormatDesc", "structMediaIO_1_1FormatDesc.html", [
+        [ "CanHandlePathFunc", "structMediaIO_1_1FormatDesc.html#a97cf0ce9d167f002aa303adaa59c0329", null ],
         [ "ConfigSpecFunc", "structMediaIO_1_1FormatDesc.html#a4333a05199c3d78390643fd1f08d2b77", null ],
         [ "CreateFunc", "structMediaIO_1_1FormatDesc.html#a040ef25827914e55c2e8209c77033a33", null ],
         [ "DefaultMetadataFunc", "structMediaIO_1_1FormatDesc.html#a056449f66cbbb6f4276f6c2ce9598f2e", null ],
         [ "EnumerateFunc", "structMediaIO_1_1FormatDesc.html#a2149dbe59cbb4e01b85ac4ea67a06576", null ],
+        [ "PrintDeviceInfoFunc", "structMediaIO_1_1FormatDesc.html#aa338f9de74f324830d6141b057e0a343", null ],
         [ "ProbeFunc", "structMediaIO_1_1FormatDesc.html#a2e385efad181e8f44c6369104c832f54", null ],
+        [ "QueryFunc", "structMediaIO_1_1FormatDesc.html#a55e421a8b85374224d2793b44073c15f", null ],
         [ "canHandleDevice", "structMediaIO_1_1FormatDesc.html#a8cb05daaef47af69482f1e5c30a244b9", null ],
+        [ "canHandlePath", "structMediaIO_1_1FormatDesc.html#a30a6c3a2ce1bdbb1743e8cd7d839e08a", null ],
         [ "canInput", "structMediaIO_1_1FormatDesc.html#aae7cc36c2f62f617e022823820f3844c", null ],
         [ "canInputAndOutput", "structMediaIO_1_1FormatDesc.html#a2837b066a3c3143ad5789e49fe63b55d", null ],
         [ "canOutput", "structMediaIO_1_1FormatDesc.html#a0fddb44661a7e54ff529a1d8febe9a02", null ],
@@ -663,7 +671,9 @@ var group__proav =
         [ "description", "structMediaIO_1_1FormatDesc.html#a351b863c1f26e0652c764c806d276e14", null ],
         [ "enumerate", "structMediaIO_1_1FormatDesc.html#aa766150e2cf030dbca33a410334594c1", null ],
         [ "extensions", "structMediaIO_1_1FormatDesc.html#a3a4e3a7d574e1195b535b9f13e583aaa", null ],
-        [ "name", "structMediaIO_1_1FormatDesc.html#ab5897abedebdee3978485f689ae8eee5", null ]
+        [ "name", "structMediaIO_1_1FormatDesc.html#ab5897abedebdee3978485f689ae8eee5", null ],
+        [ "printDeviceInfo", "structMediaIO_1_1FormatDesc.html#a777e7032562afbf4fb040df2692dcb9b", null ],
+        [ "queryDevice", "structMediaIO_1_1FormatDesc.html#ae18bcfbdca5fb3a179340131c60da710", null ]
       ] ],
       [ "Config", "classMediaIO.html#ac1c644eed8e4e85bcbc0c79a62630ade", null ],
       [ "ConfigID", "classMediaIO.html#a08d6f0ff155c9b44e241d5c0f4a4559f", null ],
@@ -732,7 +742,9 @@ var group__proav =
       [ "mediaIo", "classMediaIOTask.html#a56ee29aac6f338c32541042c01754160", null ],
       [ "noteFrameDropped", "classMediaIOTask.html#a33a701a9866643312bab92a63113fe83", null ],
       [ "noteFrameLate", "classMediaIOTask.html#a6acec0883297253ee37fef6b0b52f809", null ],
-      [ "noteFrameRepeated", "classMediaIOTask.html#a2748f45ad224498f2cc97a3976177e39", null ]
+      [ "noteFrameRepeated", "classMediaIOTask.html#a2748f45ad224498f2cc97a3976177e39", null ],
+      [ "stampWorkBegin", "classMediaIOTask.html#afaca2d6884414c034594700b04c81310", null ],
+      [ "stampWorkEnd", "classMediaIOTask.html#a81f836b3c76449f8b95f2cc763a88d5c", null ]
     ] ],
     [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html", [
       [ "MediaIOTask_AudioFile", "classMediaIOTask__AudioFile.html#a60af0a1cceb4782dfdd5c2f19cda6dc2", null ],
