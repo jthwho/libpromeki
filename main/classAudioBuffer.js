@@ -9,7 +9,11 @@ var classAudioBuffer =
     [ "available", "classAudioBuffer.html#aeeacdd3b4e7781448987c957b4246245", null ],
     [ "capacity", "classAudioBuffer.html#ab0635c541903684d866781c44b4ac3ba", null ],
     [ "clear", "classAudioBuffer.html#a3d226fd1afcbf9e38f97c5ef153829cb", null ],
+    [ "disableDriftCorrection", "classAudioBuffer.html#a20face8e58e78dc83a70b154b2c1e71e", null ],
+    [ "driftCorrectionEnabled", "classAudioBuffer.html#ab7be27d4f656731c0403dfd645a553f6", null ],
+    [ "driftRatio", "classAudioBuffer.html#a163f9609bd1a9066b13b81882cccb095", null ],
     [ "drop", "classAudioBuffer.html#a1b65594676a91a44e66798932003076a", null ],
+    [ "enableDriftCorrection", "classAudioBuffer.html#ad5f44fa750e44564d9cb5737c634c995", null ],
     [ "format", "classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b", null ],
     [ "free", "classAudioBuffer.html#aaa015e77e95b4bb7d3c53fb46e463940", null ],
     [ "inputFormat", "classAudioBuffer.html#ade2778f5b7ed23a0395e1a8ee39a6363", null ],
@@ -26,5 +30,6 @@ var classAudioBuffer =
     [ "push", "classAudioBuffer.html#a73a7c3865156d2fed7abc39b4c5f9c97", null ],
     [ "reserve", "classAudioBuffer.html#af65fd7f979f360b142862b720177c9cf", null ],
     [ "setFormat", "classAudioBuffer.html#ace9237e01637f1f38174474ab436c338", null ],
-    [ "setInputFormat", "classAudioBuffer.html#a1cc31990e2a83656b86e4f39c8ecf341", null ]
+    [ "setInputFormat", "classAudioBuffer.html#a1cc31990e2a83656b86e4f39c8ecf341", null ],
+    [ "setResamplerQuality", "classAudioBuffer.html#aa7e84a5e8742256b9cbecde8c7aa382b", null ]
 ];

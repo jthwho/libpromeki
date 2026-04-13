@@ -74,8 +74,8 @@ var searchData=
   ['attribute_71',['attribute',['../classSdpMediaDescription.html#ad45cf7d01966cfde398abc73fe009b60',1,'SdpMediaDescription']]],
   ['attributes_72',['attributes',['../classSdpMediaDescription.html#a38b4186a4ad64e6ed437ff1d1d96c57e',1,'SdpMediaDescription']]],
   ['attrmask_73',['attrMask',['../classTuiStyle.html#a9af99265e129eb8e386342bcf46acc67',1,'TuiStyle']]],
-  ['attrs_74',['attrs',['../classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a',1,'TuiStyle::attrs()'],['../classTuiPainter.html#a231b61e1377023b6b59c0bd6e1677dfb',1,'TuiPainter::attrs()']]],
-  ['audio_75',['audio',['../classAudio.html#a26f61701629343d1dd5933ad80aad188',1,'Audio::Audio(const AudioDesc &amp;desc, size_t samples, const MemSpace &amp;ms=MemSpace::Default)'],['../classAudio.html#a9f1d2e932cda2f1c674adde6ec51e0fb',1,'Audio::Audio()=default']]],
+  ['attrs_74',['attrs',['../classTuiPainter.html#a231b61e1377023b6b59c0bd6e1677dfb',1,'TuiPainter::attrs()'],['../classTuiStyle.html#aabbd1a7caae53e4c71ab63377052240a',1,'TuiStyle::attrs()']]],
+  ['audio_75',['audio',['../classAudio.html#a9f1d2e932cda2f1c674adde6ec51e0fb',1,'Audio::Audio()=default'],['../classAudio.html#a26f61701629343d1dd5933ad80aad188',1,'Audio::Audio(const AudioDesc &amp;desc, size_t samples, const MemSpace &amp;ms=MemSpace::Default)']]],
   ['audioblock_76',['AudioBlock',['../classAudioBlock.html#a876449e0fca988205e08ab188019e8a4',1,'AudioBlock']]],
   ['audiobuffer_77',['audiobuffer',['../classAudioBuffer.html#a68a8145e508050ab6e727b46000a1e3e',1,'AudioBuffer::AudioBuffer(const AudioDesc &amp;format)'],['../classAudioBuffer.html#af2d3b6cee7973c5940624af8324b0b16',1,'AudioBuffer::AudioBuffer(const AudioDesc &amp;format, size_t capacity)'],['../classAudioBuffer.html#a4d18e6438d02a9bee7b9785354d98938',1,'AudioBuffer::AudioBuffer(AudioBuffer &amp;&amp;other) noexcept'],['../classAudioBuffer.html#afbe4fb241170a4040542420f3846d4a2',1,'AudioBuffer::AudioBuffer()=default']]],
   ['audiodesc_78',['audiodesc',['../classQuickTime_1_1Track.html#ab27018b0c60a084c1162c97dbee241e8',1,'QuickTime::Track::audioDesc()'],['../classAudioDesc.html#a5275f5d780370d864e4e7b0b230e2aa5',1,'AudioDesc::AudioDesc()'],['../classAudioDesc.html#a47187fb3d1bc7b520f6012e27d512ecc',1,'AudioDesc::AudioDesc(float sr, unsigned int ch)'],['../classAudioDesc.html#a0f82693f1d149cd4cdff716b898ee0f0',1,'AudioDesc::AudioDesc(DataType dt, float sr, unsigned int ch)'],['../classMediaIO.html#aefa839dd20f3f8ae04600d2e8bff98fe',1,'MediaIO::audioDesc()']]],
@@ -84,8 +84,9 @@ var searchData=
   ['audiolevel_81',['audiolevel',['../classAudioLevel.html#ab1a9ba79a36998101b3ea0cd472ee2ec',1,'AudioLevel::AudioLevel()'],['../classAudioLevel.html#afb9b9ca8d2ac4306ff432b48b335b065',1,'AudioLevel::AudioLevel(double dbfs)']]],
   ['audiolist_82',['audiolist',['../classFrame.html#acd463c7e5ee785d13334c3e079cb23a3',1,'Frame::audioList() const'],['../classFrame.html#a467f242201a17814c868b403ae7c421f',1,'Frame::audioList()'],['../classMediaDesc.html#ab8f10591736a2ef503303514a3842b9d',1,'MediaDesc::audioList() const'],['../classMediaDesc.html#aacd3ce942257ce5ce9ac949e1f309eea',1,'MediaDesc::audioList()']]],
   ['audiooutput_83',['audioOutput',['../classSDLPlayerTask.html#a13c7e17c195b16fa2ab521d69e69c29b',1,'SDLPlayerTask']]],
-  ['audiotestpattern_84',['AudioTestPattern',['../classAudioTestPattern.html#aa4356079cf315f6f3a4f12db027c9be3',1,'AudioTestPattern']]],
-  ['autogrow_85',['autoGrow',['../classBufferIODevice.html#a15430ce57f4e8529ae3b12bdb085d7fd',1,'BufferIODevice']]],
-  ['available_86',['available',['../classAudioBuffer.html#aeeacdd3b4e7781448987c957b4246245',1,'AudioBuffer::available()'],['../classBufferPool.html#ab2881dbb5d431184c56e0ef3cbce0eec',1,'BufferPool::available()']]],
-  ['availsize_87',['availSize',['../classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd',1,'Buffer']]]
+  ['audioresampler_84',['AudioResampler',['../classAudioResampler.html#a79cee7b13dca6c009a53eae203b6c120',1,'AudioResampler']]],
+  ['audiotestpattern_85',['AudioTestPattern',['../classAudioTestPattern.html#aa4356079cf315f6f3a4f12db027c9be3',1,'AudioTestPattern']]],
+  ['autogrow_86',['autoGrow',['../classBufferIODevice.html#a15430ce57f4e8529ae3b12bdb085d7fd',1,'BufferIODevice']]],
+  ['available_87',['available',['../classAudioBuffer.html#aeeacdd3b4e7781448987c957b4246245',1,'AudioBuffer::available()'],['../classBufferPool.html#ab2881dbb5d431184c56e0ef3cbce0eec',1,'BufferPool::available()']]],
+  ['availsize_88',['availSize',['../classBuffer.html#a7aeccf7cb839af72d4cc429cd2e031fd',1,'Buffer']]]
 ];

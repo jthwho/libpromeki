@@ -1,3 +1,77 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classEnum_1_1Type.html" title="Lightweight handle identifying a registered enum kind." alt="" coords="5,5,103,31"/>
+<area shape="rect" id="Node000000" href="$classEnum.html" title="Runtime&#45;typed enumeration value carrying a registered type and integer." alt="" coords="5,449,64,475"/>
+<area shape="rect" id="Node000001" href="$classTypedEnum.html" title=" " alt="" coords="133,5,358,31"/>
+<area shape="poly" id="edge4_Node000000_Node000001" title=" " alt="" coords="34,435,40,346,52,228,62,169,75,115,91,70,110,40,131,25,134,30,114,44,95,73,80,116,67,170,58,229,45,347,40,436"/>
+<area shape="rect" id="Node000003" href="$classTypedEnum.html" title=" " alt="" coords="140,55,351,80"/>
+<area shape="poly" id="edge6_Node000000_Node000003" title=" " alt="" coords="35,435,42,356,56,252,78,154,92,116,110,89,138,72,141,76,114,93,97,118,83,156,61,253,47,357,40,436"/>
+<area shape="rect" id="Node000005" href="$classTypedEnum.html" title=" " alt="" coords="128,104,363,129"/>
+<area shape="poly" id="edge8_Node000000_Node000005" title=" " alt="" coords="36,435,44,366,59,277,81,193,94,161,110,139,126,127,129,131,114,143,99,163,86,195,65,278,50,366,41,436"/>
+<area shape="rect" id="Node000007" href="$classTypedEnum.html" title=" " alt="" coords="141,153,350,179"/>
+<area shape="poly" id="edge10_Node000000_Node000007" title=" " alt="" coords="32,435,34,383,44,316,54,281,67,247,86,215,110,188,139,171,142,175,114,192,90,218,72,249,59,283,49,317,39,383,38,435"/>
+<area shape="rect" id="Node000009" href="$classTypedEnum.html" title=" " alt="" coords="131,203,359,228"/>
+<area shape="poly" id="edge12_Node000000_Node000009" title=" " alt="" coords="34,435,39,392,51,338,73,284,90,259,110,237,130,225,133,229,114,241,94,262,78,286,56,340,44,393,39,436"/>
+<area shape="rect" id="Node000011" href="$classTypedEnum.html" title=" " alt="" coords="114,252,377,277"/>
+<area shape="poly" id="edge14_Node000000_Node000011" title=" " alt="" coords="37,435,45,401,59,360,80,320,110,287,128,275,131,280,114,291,84,323,63,362,50,402,42,436"/>
+<area shape="rect" id="Node000013" href="$classTypedEnum.html" title=" " alt="" coords="156,301,335,327"/>
+<area shape="poly" id="edge16_Node000000_Node000013" title=" " alt="" coords="42,435,67,384,86,358,110,336,132,324,155,317,157,322,134,329,114,340,90,361,71,387,47,438"/>
+<area shape="rect" id="Node000015" href="$classTypedEnum.html" title=" " alt="" coords="125,351,365,376"/>
+<area shape="poly" id="edge18_Node000000_Node000015" title=" " alt="" coords="52,436,77,409,111,385,139,374,141,379,113,390,81,413,56,440"/>
+<area shape="rect" id="Node000017" href="$classTypedEnum.html" title=" " alt="" coords="135,400,355,425"/>
+<area shape="poly" id="edge20_Node000000_Node000017" title=" " alt="" coords="76,445,111,434,163,423,164,428,113,439,78,450"/>
+<area shape="rect" id="Node000019" href="$classTypedEnum.html" title=" " alt="" coords="125,449,365,475"/>
+<area shape="poly" id="edge22_Node000000_Node000019" title=" " alt="" coords="78,459,125,459,125,465,78,465"/>
+<area shape="rect" id="Node000021" href="$classTypedEnum.html" title=" " alt="" coords="117,499,374,524"/>
+<area shape="poly" id="edge24_Node000000_Node000021" title=" " alt="" coords="78,473,113,483,170,496,169,501,111,489,77,479"/>
+<area shape="rect" id="Node000023" href="$classTypedEnum.html" title=" " alt="" coords="125,548,366,573"/>
+<area shape="poly" id="edge26_Node000000_Node000023" title=" " alt="" coords="56,484,81,510,113,533,145,546,143,550,111,538,78,514,52,488"/>
+<area shape="rect" id="Node000025" href="$classTypedEnum.html" title=" " alt="" coords="132,597,359,623"/>
+<area shape="poly" id="edge28_Node000000_Node000025" title=" " alt="" coords="47,486,72,537,90,562,114,582,137,595,135,599,110,587,87,565,67,539,42,489"/>
+<area shape="rect" id="Node000027" href="$classTypedEnum.html" title=" " alt="" coords="148,647,343,672"/>
+<area shape="poly" id="edge30_Node000000_Node000027" title=" " alt="" coords="42,488,50,521,64,561,84,600,114,632,130,642,149,650,147,655,128,647,110,636,80,603,59,563,45,523,37,489"/>
+<area shape="rect" id="Node000029" href="$classTypedEnum.html" title=" " alt="" coords="112,696,379,721"/>
+<area shape="poly" id="edge32_Node000000_Node000029" title=" " alt="" coords="40,488,44,531,56,584,79,637,94,661,114,681,133,694,130,698,110,685,90,664,74,639,51,586,39,532,34,489"/>
+<area shape="rect" id="Node000031" href="$classTypedEnum.html" title=" " alt="" coords="119,745,371,771"/>
+<area shape="poly" id="edge34_Node000000_Node000031" title=" " alt="" coords="38,488,39,540,49,606,59,640,72,674,91,704,114,731,131,743,128,747,110,735,86,707,68,676,54,642,44,607,34,541,32,489"/>
+<area shape="rect" id="Node000033" href="$classTypedEnum.html" title=" " alt="" coords="141,795,349,835"/>
+<area shape="poly" id="edge36_Node000000_Node000033" title=" " alt="" coords="41,488,50,557,65,645,87,727,100,759,114,780,143,799,140,804,110,784,95,761,82,729,60,646,45,558,36,489"/>
+<area shape="rect" id="Node000035" href="$classTypedEnum.html" title=" " alt="" coords="140,860,351,885"/>
+<area shape="poly" id="edge38_Node000000_Node000035" title=" " alt="" coords="40,488,47,570,60,678,82,780,97,819,114,845,141,863,138,868,110,849,92,822,77,782,55,679,41,571,35,489"/>
+<area shape="rect" id="Node000037" href="$classTypedEnum.html" title="CRTP base pinning an Enum value to a compile&#45;time type." alt="" coords="156,909,335,935"/>
+<area shape="poly" id="edge40_Node000000_Node000037" title=" " alt="" coords="39,488,44,580,56,703,66,765,79,821,95,866,114,896,133,910,157,919,155,924,131,915,110,900,90,868,74,822,61,766,51,704,39,580,34,489"/>
+<area shape="rect" id="Node000002" href="$classAudioDataType.html" title="Well&#45;known Enum type for audio sample formats." alt="" coords="448,5,568,31"/>
+<area shape="poly" id="edge5_Node000001_Node000002" title=" " alt="" coords="372,15,448,15,448,21,372,21"/>
+<area shape="rect" id="Node000004" href="$classAudioPattern.html" title="Well&#45;known Enum type for audio test pattern generator modes." alt="" coords="455,55,561,80"/>
+<area shape="poly" id="edge7_Node000003_Node000004" title=" " alt="" coords="364,65,455,65,455,70,364,70"/>
+<area shape="rect" id="Node000006" href="$classAudioSourceHint.html" title="Preferred audio source for image&#45;sequence readers." alt="" coords="443,104,573,129"/>
+<area shape="poly" id="edge9_Node000005_Node000006" title=" " alt="" coords="376,114,442,114,442,119,376,119"/>
+<area shape="rect" id="Node000008" href="$classBurnPosition.html" title="Well&#45;known Enum type for on&#45;screen burn&#45;in position presets." alt="" coords="456,153,560,179"/>
+<area shape="poly" id="edge11_Node000007_Node000008" title=" " alt="" coords="364,163,456,163,456,169,364,169"/>
+<area shape="rect" id="Node000010" href="$classByteCountStyle.html" title="Well&#45;known Enum type for human&#45;readable byte&#45;count formatting." alt="" coords="447,203,569,228"/>
+<area shape="poly" id="edge13_Node000009_Node000010" title=" " alt="" coords="373,213,446,213,446,218,373,218"/>
+<area shape="rect" id="Node000012" href="$classChromaSubsampling.html" title="Well&#45;known Enum type for chroma subsampling modes." alt="" coords="429,252,587,277"/>
+<area shape="poly" id="edge15_Node000011_Node000012" title=" " alt="" coords="390,262,429,262,429,267,390,267"/>
+<area shape="rect" id="Node000014" href="$classCscPath.html" title="Well&#45;known Enum type for CSCPipeline processing&#45;path selection." alt="" coords="471,301,545,327"/>
+<area shape="poly" id="edge17_Node000013_Node000014" title=" " alt="" coords="349,311,471,311,471,317,349,317"/>
+<area shape="rect" id="Node000016" href="$classImgSeqPathMode.html" title="Well&#45;known Enum type for .imgseq sidecar path mode." alt="" coords="441,351,575,376"/>
+<area shape="poly" id="edge19_Node000015_Node000016" title=" " alt="" coords="380,361,440,361,440,366,380,366"/>
+<area shape="rect" id="Node000018" href="$classInterlaceMode.html" title="Well&#45;known Enum type for progressive / interlaced video scan mode." alt="" coords="451,400,565,425"/>
+<area shape="poly" id="edge21_Node000017_Node000018" title=" " alt="" coords="369,410,450,410,450,415,369,415"/>
+<area shape="rect" id="Node000020" href="$classMediaIODirection.html" title="Well&#45;known Enum type for MediaIO open direction." alt="" coords="441,449,575,475"/>
+<area shape="poly" id="edge23_Node000019_Node000020" title=" " alt="" coords="380,459,440,459,440,465,380,465"/>
+<area shape="rect" id="Node000022" href="$classMetadataRtpFormat.html" title="Well&#45;known Enum type for the metadata&#45;stream wire format over RTP." alt="" coords="432,499,584,524"/>
+<area shape="poly" id="edge25_Node000021_Node000022" title=" " alt="" coords="387,509,432,509,432,514,387,514"/>
+<area shape="rect" id="Node000024" href="$classQuickTimeLayout.html" title="Well&#45;known Enum type for QuickTime / ISO&#45;BMFF container layout." alt="" coords="440,548,576,573"/>
+<area shape="poly" id="edge27_Node000023_Node000024" title=" " alt="" coords="380,558,440,558,440,563,380,563"/>
+<area shape="rect" id="Node000026" href="$classRtpPacingMode.html" title="Well&#45;known Enum type for RTP sender pacing mode." alt="" coords="447,597,569,623"/>
+<area shape="poly" id="edge29_Node000025_Node000026" title=" " alt="" coords="372,607,446,607,446,613,372,613"/>
+<area shape="rect" id="Node000028" href="$classSrcQuality.html" title="Well&#45;known Enum type for audio sample rate conversion quality." alt="" coords="463,647,553,672"/>
+<area shape="poly" id="edge31_Node000027_Node000028" title=" " alt="" coords="356,657,463,657,463,662,356,662"/>
+<area shape="rect" id="Node000030" href="$classTimecodePackFormat.html" title="Selects the on&#45;the&#45;wire BCD time&#45;address layout used by Timecode::toBcd64 and Timecode::fromBcd64." alt="" coords="427,696,589,721"/>
+<area shape="poly" id="edge33_Node000029_Node000030" title=" " alt="" coords="393,706,426,706,426,711,393,711"/>
+<area shape="rect" id="Node000032" href="$classV4l2ExposureMode.html" title="Well&#45;known Enum type for V4L2 auto exposure mode." alt="" coords="435,745,581,771"/>
+<area shape="poly" id="edge35_Node000031_Node000032" title=" " alt="" coords="385,755,434,755,434,761,385,761"/>
+<area shape="rect" id="Node000034" href="$classV4l2PowerLineMode.html" title="Well&#45;known Enum type for V4L2 power line frequency filter." alt="" coords="431,803,585,828"/>
+<area shape="poly" id="edge37_Node000033_Node000034" title=" " alt="" coords="363,813,430,813,430,818,363,818"/>
+<area shape="rect" id="Node000036" href="$classVideoPattern.html" title="Well&#45;known Enum type for video test pattern generator modes." alt="" coords="455,860,561,885"/>
+<area shape="poly" id="edge39_Node000035_Node000036" title=" " alt="" coords="364,870,455,870,455,875,364,875"/>
 </map>

@@ -57,7 +57,11 @@ var group__proav =
       [ "available", "classAudioBuffer.html#aeeacdd3b4e7781448987c957b4246245", null ],
       [ "capacity", "classAudioBuffer.html#ab0635c541903684d866781c44b4ac3ba", null ],
       [ "clear", "classAudioBuffer.html#a3d226fd1afcbf9e38f97c5ef153829cb", null ],
+      [ "disableDriftCorrection", "classAudioBuffer.html#a20face8e58e78dc83a70b154b2c1e71e", null ],
+      [ "driftCorrectionEnabled", "classAudioBuffer.html#ab7be27d4f656731c0403dfd645a553f6", null ],
+      [ "driftRatio", "classAudioBuffer.html#a163f9609bd1a9066b13b81882cccb095", null ],
       [ "drop", "classAudioBuffer.html#a1b65594676a91a44e66798932003076a", null ],
+      [ "enableDriftCorrection", "classAudioBuffer.html#ad5f44fa750e44564d9cb5737c634c995", null ],
       [ "format", "classAudioBuffer.html#a2eeca6c80f0ac074240442f1d9f92c6b", null ],
       [ "free", "classAudioBuffer.html#aaa015e77e95b4bb7d3c53fb46e463940", null ],
       [ "inputFormat", "classAudioBuffer.html#ade2778f5b7ed23a0395e1a8ee39a6363", null ],
@@ -74,7 +78,8 @@ var group__proav =
       [ "push", "classAudioBuffer.html#a73a7c3865156d2fed7abc39b4c5f9c97", null ],
       [ "reserve", "classAudioBuffer.html#af65fd7f979f360b142862b720177c9cf", null ],
       [ "setFormat", "classAudioBuffer.html#ace9237e01637f1f38174474ab436c338", null ],
-      [ "setInputFormat", "classAudioBuffer.html#a1cc31990e2a83656b86e4f39c8ecf341", null ]
+      [ "setInputFormat", "classAudioBuffer.html#a1cc31990e2a83656b86e4f39c8ecf341", null ],
+      [ "setResamplerQuality", "classAudioBuffer.html#aa7e84a5e8742256b9cbecde8c7aa382b", null ]
     ] ],
     [ "AudioDesc", "classAudioDesc.html", [
       [ "Format", "structAudioDesc_1_1Format.html", [
@@ -199,6 +204,21 @@ var group__proav =
       [ "config", "classAudioGen.html#a0a3203efb1db9da7c749593f88da1a09", null ],
       [ "generate", "classAudioGen.html#a94ffb805f9f499b22144bdec3e566820", null ],
       [ "setConfig", "classAudioGen.html#a6d4a4f382c4aeca00f5e5d123da5333b", null ]
+    ] ],
+    [ "AudioResampler", "classAudioResampler.html", [
+      [ "ProcessResult", "classAudioResampler.html#a0b7dac95f925a2ebad7b8c3d7d1c84f8", null ],
+      [ "AudioResampler", "classAudioResampler.html#a79cee7b13dca6c009a53eae203b6c120", null ],
+      [ "~AudioResampler", "classAudioResampler.html#ac726f5559e90fbd753b959a0030eacd2", null ],
+      [ "channels", "classAudioResampler.html#a455cb14c0f45fdf1b4f790f6bd539e0f", null ],
+      [ "isValid", "classAudioResampler.html#a37aca71f36b137d7f2e304c4e2aaaf43", null ],
+      [ "process", "classAudioResampler.html#ab9ab28e9add43e23bebbfbef8ac580ce", null ],
+      [ "process", "classAudioResampler.html#a2956a02b7db4711617a7d3a7c199d368", null ],
+      [ "quality", "classAudioResampler.html#a92dfb6fb845d2f34d182ff37fe3e39b9", null ],
+      [ "ratio", "classAudioResampler.html#ab96807f073505b21a9933b898f8795d5", null ],
+      [ "reset", "classAudioResampler.html#a1edce49a40c8726b2f27e82feaed2b02", null ],
+      [ "setRatio", "classAudioResampler.html#aea36a9456ad7ba2c96db1b532e2df215", null ],
+      [ "setRatio", "classAudioResampler.html#a2a858e69db15bc20b5c2d825ece2113c", null ],
+      [ "setup", "classAudioResampler.html#a493da667f9a4b24f2e1b5379ec1bf6b9", null ]
     ] ],
     [ "AudioTestPattern", "classAudioTestPattern.html", [
       [ "AudioTestPattern", "classAudioTestPattern.html#aa4356079cf315f6f3a4f12db027c9be3", null ],

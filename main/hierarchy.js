@@ -28,6 +28,7 @@ var hierarchy =
     [ "AudioFile", "classAudioFile.html", null ],
     [ "AudioGen", "classAudioGen.html", null ],
     [ "AudioLevel", "classAudioLevel.html", null ],
+    [ "AudioResampler", "classAudioResampler.html", null ],
     [ "AudioTestPattern", "classAudioTestPattern.html", null ],
     [ "ImageDataDecoder::Band", "structImageDataDecoder_1_1Band.html", null ],
     [ "Benchmark", "classBenchmark.html", null ],
@@ -119,6 +120,9 @@ var hierarchy =
       ] ],
       [ "TypedEnum< RtpPacingMode >", "classTypedEnum.html", [
         [ "RtpPacingMode", "classRtpPacingMode.html", null ]
+      ] ],
+      [ "TypedEnum< SrcQuality >", "classTypedEnum.html", [
+        [ "SrcQuality", "classSrcQuality.html", null ]
       ] ],
       [ "TypedEnum< TimecodePackFormat >", "classTypedEnum.html", [
         [ "TimecodePackFormat", "classTimecodePackFormat.html", null ]

@@ -480,6 +480,15 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:aa43aae8cebe2da515cac24cf256405d7" id="r_aa43aae8cebe2da515cac24cf256405d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#aa43aae8cebe2da515cac24cf256405d7">V4l2AudioDevice</a></td></tr>
 <tr class="memdesc:aa43aae8cebe2da515cac24cf256405d7"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — ALSA capture device name for paired audio. "auto" (default) auto-detects a paired USB audio device. "none" or empty disables audio capture. Any other value is used as-is (e.g. "hw:1,0", "default").  <br /></td></tr>
 <tr class="separator:aa43aae8cebe2da515cac24cf256405d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c4a552d3aba845b9120242672128e25" id="r_a5c4a552d3aba845b9120242672128e25"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a5c4a552d3aba845b9120242672128e25">V4l2AudioDriftCorrection</a></td></tr>
+<tr class="memdesc:a5c4a552d3aba845b9120242672128e25"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — enable audio clock-drift correction. When true, the audio ring buffer dynamically adjusts its resampling ratio to keep the fill level stable, compensating for clock drift between the ALSA capture clock and the V4L2 video frame clock. Default: true.  <br /></td></tr>
+<tr class="separator:a5c4a552d3aba845b9120242672128e25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23fb1f11c9d571b5bb4532a78a34be23" id="r_a23fb1f11c9d571b5bb4532a78a34be23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a23fb1f11c9d571b5bb4532a78a34be23">V4l2AudioDriftGain</a></td></tr>
+<tr class="memdesc:a23fb1f11c9d571b5bb4532a78a34be23"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — proportional gain for drift correction. Controls how aggressively the resampler compensates for clock drift. Small values (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>) give smooth, inaudible corrections; larger values track drift faster but risk audible pitch shifts. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>.  <br /></td></tr>
+<tr class="separator:a23fb1f11c9d571b5bb4532a78a34be23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58fd79e359349d6be1cf8336393d95ad" id="r_a58fd79e359349d6be1cf8336393d95ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a58fd79e359349d6be1cf8336393d95ad">V4l2AudioDriftTarget</a></td></tr>
+<tr class="memdesc:a58fd79e359349d6be1cf8336393d95ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — drift correction target fill level in seconds. The ring buffer aims to keep this much audio buffered. Lower values reduce capture latency; higher values absorb more jitter. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.1</a> (100 ms).  <br /></td></tr>
+<tr class="separator:a58fd79e359349d6be1cf8336393d95ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d4b23fec8304578bfe1cedadb3e6787" id="r_a6d4b23fec8304578bfe1cedadb3e6787"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a6d4b23fec8304578bfe1cedadb3e6787">V4l2Brightness</a></td></tr>
 <tr class="memdesc:a6d4b23fec8304578bfe1cedadb3e6787"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — Brightness (V4L2_CID_BRIGHTNESS). -1 = device default.  <br /></td></tr>
 <tr class="separator:a6d4b23fec8304578bfe1cedadb3e6787"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -3134,6 +3143,92 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a5c4a552d3aba845b9120242672128e25" name="a5c4a552d3aba845b9120242672128e25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c4a552d3aba845b9120242672128e25">&#9670;&#160;</a></span>V4l2AudioDriftCorrection</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::V4l2AudioDriftCorrection</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;V4l2AudioDriftCorrection&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
+<div class="line">                                .setDefault(<span class="keyword">true</span>)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Enable ALSA/V4L2 audio clock-drift correction.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>bool — enable audio clock-drift correction. When true, the audio ring buffer dynamically adjusts its resampling ratio to keep the fill level stable, compensating for clock drift between the ALSA capture clock and the V4L2 video frame clock. Default: true. </p>
+
+</div>
+</div>
+<a id="a23fb1f11c9d571b5bb4532a78a34be23" name="a23fb1f11c9d571b5bb4532a78a34be23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a23fb1f11c9d571b5bb4532a78a34be23">&#9670;&#160;</a></span>V4l2AudioDriftGain</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::V4l2AudioDriftGain</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;V4l2AudioDriftGain&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
+<div class="line">                                .setDefault(0.001)</div>
+<div class="line">                                .setRange(0.0001, 0.1)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Drift correction proportional gain.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>double — proportional gain for drift correction. Controls how aggressively the resampler compensates for clock drift. Small values (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>) give smooth, inaudible corrections; larger values track drift faster but risk audible pitch shifts. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>. </p>
+
+</div>
+</div>
+<a id="a58fd79e359349d6be1cf8336393d95ad" name="a58fd79e359349d6be1cf8336393d95ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58fd79e359349d6be1cf8336393d95ad">&#9670;&#160;</a></span>V4l2AudioDriftTarget</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::V4l2AudioDriftTarget</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;V4l2AudioDriftTarget&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
+<div class="line">                                .setDefault(0.1)</div>
+<div class="line">                                .setRange(0.01, 2.0)</div>
+<div class="line">                                .setDescription(<span class="stringliteral">&quot;Drift correction target fill level in seconds.&quot;</span>))</div>
+</div><!-- fragment -->
+<p>double — drift correction target fill level in seconds. The ring buffer aims to keep this much audio buffered. Lower values reduce capture latency; higher values absorb more jitter. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.1</a> (100 ms). </p>
+
+</div>
+</div>
 <a id="ab08f64014c7a62285ef8bc675d1d479c" name="ab08f64014c7a62285ef8bc675d1d479c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab08f64014c7a62285ef8bc675d1d479c">&#9670;&#160;</a></span>V4l2AutoExposure</h2>
 
@@ -4221,7 +4316,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaConfig.html">MediaConfig</a></li>
-    <li class="footer">Generated on 2026-04-13 06:40:13 from commit 669d40e (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
   </ul>
 </div>
 </body>

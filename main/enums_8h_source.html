@@ -603,7 +603,36 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div class="line"><a id="l00824" name="l00824"></a><span class="lineno">  824</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classV4l2ExposureMode.html">V4l2ExposureMode</a> V4l2ExposureMode::ShutterPriority  { 2 };</div>
 <div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classV4l2ExposureMode.html">V4l2ExposureMode</a> V4l2ExposureMode::AperturePriority { 3 };</div>
 <div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span> </div>
-<div class="line"><a id="l00829" name="l00829"></a><span class="lineno">  829</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
+<div class="foldopen" id="foldopen00849" data-start="{" data-end="};">
+<div class="line"><a id="l00849" name="l00849"></a><span class="lineno"><a class="line" href="classSrcQuality.html">  849</a></span><span class="keyword">class </span><a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> : <span class="keyword">public</span> <a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;SrcQuality&gt; {</div>
+<div class="line"><a id="l00850" name="l00850"></a><span class="lineno">  850</span>        <span class="keyword">public</span>:</div>
+<div class="line"><a id="l00851" name="l00851"></a><span class="lineno">  851</span>                <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classEnum_1_1Type.html">Enum::Type</a> <a class="code hl_class" href="classEnum_1_1Type.html">Type</a> = <a class="code hl_function" href="classEnum.html#aee589f1f0e9bceb1bd1ca13ac005dd74">Enum::registerType</a>(<span class="stringliteral">&quot;SrcQuality&quot;</span>,</div>
+<div class="line"><a id="l00852" name="l00852"></a><span class="lineno">  852</span>                        {</div>
+<div class="line"><a id="l00853" name="l00853"></a><span class="lineno">  853</span>                                { <span class="stringliteral">&quot;SincBest&quot;</span>,      0 },</div>
+<div class="line"><a id="l00854" name="l00854"></a><span class="lineno">  854</span>                                { <span class="stringliteral">&quot;SincMedium&quot;</span>,    1 },</div>
+<div class="line"><a id="l00855" name="l00855"></a><span class="lineno">  855</span>                                { <span class="stringliteral">&quot;SincFastest&quot;</span>,   2 },</div>
+<div class="line"><a id="l00856" name="l00856"></a><span class="lineno">  856</span>                                { <span class="stringliteral">&quot;Linear&quot;</span>,        3 },</div>
+<div class="line"><a id="l00857" name="l00857"></a><span class="lineno">  857</span>                                { <span class="stringliteral">&quot;ZeroOrderHold&quot;</span>, 4 }</div>
+<div class="line"><a id="l00858" name="l00858"></a><span class="lineno">  858</span>                        },</div>
+<div class="line"><a id="l00859" name="l00859"></a><span class="lineno">  859</span>                        1);  <span class="comment">// default: SincMedium</span></div>
+<div class="line"><a id="l00860" name="l00860"></a><span class="lineno">  860</span> </div>
+<div class="line"><a id="l00861" name="l00861"></a><span class="lineno">  861</span>                <span class="keyword">using </span><a class="code hl_class" href="classTypedEnum.html">TypedEnum</a>&lt;<a class="code hl_class" href="classSrcQuality.html">SrcQuality</a>&gt;<a class="code hl_function" href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">::TypedEnum</a>;</div>
+<div class="line"><a id="l00862" name="l00862"></a><span class="lineno">  862</span> </div>
+<div class="line"><a id="l00863" name="l00863"></a><span class="lineno">  863</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SincBest;</div>
+<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SincMedium;</div>
+<div class="line"><a id="l00865" name="l00865"></a><span class="lineno">  865</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SincFastest;</div>
+<div class="line"><a id="l00866" name="l00866"></a><span class="lineno">  866</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> Linear;</div>
+<div class="line"><a id="l00867" name="l00867"></a><span class="lineno">  867</span>                <span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> ZeroOrderHold;</div>
+<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span>};</div>
+</div>
+<div class="line"><a id="l00869" name="l00869"></a><span class="lineno">  869</span> </div>
+<div class="line"><a id="l00870" name="l00870"></a><span class="lineno">  870</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SrcQuality::SincBest      { 0 };</div>
+<div class="line"><a id="l00871" name="l00871"></a><span class="lineno">  871</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SrcQuality::SincMedium    { 1 };</div>
+<div class="line"><a id="l00872" name="l00872"></a><span class="lineno">  872</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SrcQuality::SincFastest   { 2 };</div>
+<div class="line"><a id="l00873" name="l00873"></a><span class="lineno">  873</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SrcQuality::Linear        { 3 };</div>
+<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span><span class="keyword">inline</span> <span class="keyword">const</span> <a class="code hl_class" href="classSrcQuality.html">SrcQuality</a> SrcQuality::ZeroOrderHold { 4 };</div>
+<div class="line"><a id="l00875" name="l00875"></a><span class="lineno">  875</span> </div>
+<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span><a class="code hl_define" href="namespace_8h.html#a9a7eb1268c947a92a8cb60d369b8abf8">PROMEKI_NAMESPACE_END</a></div>
 <div class="ttc" id="aclassAudioDataType_html"><div class="ttname"><a href="classAudioDataType.html">AudioDataType</a></div><div class="ttdoc">Well-known Enum type for audio sample formats.</div><div class="ttdef"><b>Definition</b> enums.h:295</div></div>
 <div class="ttc" id="aclassAudioPattern_html"><div class="ttname"><a href="classAudioPattern.html">AudioPattern</a></div><div class="ttdoc">Well-known Enum type for audio test pattern generator modes.</div><div class="ttdef"><b>Definition</b> enums.h:208</div></div>
 <div class="ttc" id="aclassAudioSourceHint_html"><div class="ttname"><a href="classAudioSourceHint.html">AudioSourceHint</a></div><div class="ttdoc">Preferred audio source for image-sequence readers.</div><div class="ttdef"><b>Definition</b> enums.h:751</div></div>
@@ -619,6 +648,7 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div class="ttc" id="aclassMetadataRtpFormat_html"><div class="ttname"><a href="classMetadataRtpFormat.html">MetadataRtpFormat</a></div><div class="ttdoc">Well-known Enum type for the metadata-stream wire format over RTP.</div><div class="ttdef"><b>Definition</b> enums.h:488</div></div>
 <div class="ttc" id="aclassQuickTimeLayout_html"><div class="ttname"><a href="classQuickTimeLayout.html">QuickTimeLayout</a></div><div class="ttdoc">Well-known Enum type for QuickTime / ISO-BMFF container layout.</div><div class="ttdef"><b>Definition</b> enums.h:395</div></div>
 <div class="ttc" id="aclassRtpPacingMode_html"><div class="ttname"><a href="classRtpPacingMode.html">RtpPacingMode</a></div><div class="ttdoc">Well-known Enum type for RTP sender pacing mode.</div><div class="ttdef"><b>Definition</b> enums.h:442</div></div>
+<div class="ttc" id="aclassSrcQuality_html"><div class="ttname"><a href="classSrcQuality.html">SrcQuality</a></div><div class="ttdoc">Well-known Enum type for audio sample rate conversion quality.</div><div class="ttdef"><b>Definition</b> enums.h:849</div></div>
 <div class="ttc" id="aclassTimecodePackFormat_html"><div class="ttname"><a href="classTimecodePackFormat.html">TimecodePackFormat</a></div><div class="ttdoc">Selects the on-the-wire BCD time-address layout used by Timecode::toBcd64 and Timecode::fromBcd64.</div><div class="ttdef"><b>Definition</b> enums.h:615</div></div>
 <div class="ttc" id="aclassTypedEnum_html"><div class="ttname"><a href="classTypedEnum.html">TypedEnum</a></div><div class="ttdoc">CRTP base pinning an Enum value to a compile-time type.</div><div class="ttdef"><b>Definition</b> enum.h:428</div></div>
 <div class="ttc" id="aclassTypedEnum_html_a4456f276a370afa987e063f2705a6894"><div class="ttname"><a href="classTypedEnum.html#a4456f276a370afa987e063f2705a6894">TypedEnum&lt; VideoPattern &gt;::TypedEnum</a></div><div class="ttdeci">TypedEnum()</div><div class="ttdoc">Default-constructs with the registered default value.</div><div class="ttdef"><b>Definition</b> enum.h:437</div></div>
@@ -638,7 +668,7 @@ $(document).ready(function(){initNavTree('enums_8h_source.html',''); initResizab
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_30d7745b8a6c1e773354baf27ada1f39.html">promeki</a></li><li class="navelem"><a class="el" href="enums_8h.html">enums.h</a></li>
-    <li class="footer">Generated on 2026-04-13 06:40:13 from commit 669d40e (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
   </ul>
 </div>
 </body>

@@ -17,5 +17,5 @@ var searchData=
   ['byteoffset_14',['byteOffset',['../structPixelFormat_1_1CompDesc.html#aeeb42db2533d5ccd8f4f08148b92091b',1,'PixelFormat::CompDesc']]],
   ['bytesperblock_15',['bytesperblock',['../structCSCPipeline_1_1Stage.html#a5ee6919a4748aa9817a415326294352c',1,'CSCPipeline::Stage::bytesPerBlock'],['../structPixelFormat_1_1Data.html#a109116d35ea10928b055cba775a1d29f',1,'PixelFormat::Data::bytesPerBlock']]],
   ['bytespersample_16',['bytespersample',['../structAudioDesc_1_1Format.html#af133ca4e1a0352333f30f2d87354bcec',1,'AudioDesc::Format::bytesPerSample'],['../structPixelFormat_1_1PlaneDesc.html#a11a8635a9ba6e3265899d2392d170a79',1,'PixelFormat::PlaneDesc::bytesPerSample']]],
-  ['bytespersecond_17',['bytespersecond',['../classBenchmarkResult.html#aff0948dfc5b60cffffd2717705e4125f',1,'BenchmarkResult::bytesPerSecond'],['../classMediaIOStats.html#a70c91fd6b0ccab2d9b7534d210a36a9a',1,'MediaIOStats::BytesPerSecond']]]
+  ['bytespersecond_17',['bytespersecond',['../classMediaIOStats.html#a70c91fd6b0ccab2d9b7534d210a36a9a',1,'MediaIOStats::BytesPerSecond'],['../classBenchmarkResult.html#aff0948dfc5b60cffffd2717705e4125f',1,'BenchmarkResult::bytesPerSecond']]]
 ];

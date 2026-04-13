@@ -16,6 +16,7 @@ var dir_30d7745b8a6c1e773354baf27ada1f39 =
     [ "audiofilefactory.h", "audiofilefactory_8h.html", "audiofilefactory_8h" ],
     [ "audiogen.h", "audiogen_8h.html", "audiogen_8h" ],
     [ "audiolevel.h", "audiolevel_8h.html", null ],
+    [ "audioresampler.h", "audioresampler_8h.html", null ],
     [ "audiotestpattern.h", "audiotestpattern_8h.html", null ],
     [ "basicfont.h", "basicfont_8h.html", null ],
     [ "benchmark.h", "benchmark_8h.html", "benchmark_8h" ],
