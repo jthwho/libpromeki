@@ -339,6 +339,12 @@ bool parseOptions(int argc, char **argv, Options &opts) {
                          opts.memStats = true;
                          return 0;
                  })},
+                {0, "probe",
+                 "Query and print the source device's supported formats, then exit",
+                 CmdLineParser::OptionCallback([&]() {
+                         opts.probe = true;
+                         return 0;
+                 })},
         });
 
         int r = parser.parseMain(argc, argv);

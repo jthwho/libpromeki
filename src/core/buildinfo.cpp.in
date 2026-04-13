@@ -120,6 +120,9 @@ String buildFeatureString() {
 #if PROMEKI_ENABLE_CIRF
         features += "CIRF";
 #endif
+#if PROMEKI_ENABLE_V4L2
+        features += "V4L2";
+#endif
         return String::sprintf("Features: %s",
                 features.isEmpty() ? "(none)" : features.join(" ").cstr());
 }

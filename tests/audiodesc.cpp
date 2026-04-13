@@ -280,3 +280,42 @@ TEST_CASE("AudioDesc_fromSdp_L16_HighChannelCount") {
     CHECK(ad.sampleRate() == 96000.0f);
     CHECK(ad.channels() == 16);
 }
+
+// ============================================================================
+// dataTypeName
+// ============================================================================
+
+TEST_CASE("AudioDesc_dataTypeName_native") {
+    AudioDesc desc(48000.0f, 2);
+    const String &name = desc.dataTypeName();
+    CHECK(name.contains("Float32"));
+}
+
+TEST_CASE("AudioDesc_dataTypeName_S16LE") {
+    AudioDesc desc(AudioDesc::PCMI_S16LE, 44100.0f, 1);
+    CHECK(desc.dataTypeName() == "PCMI_S16LE");
+}
+
+TEST_CASE("AudioDesc_dataTypeName_invalid") {
+    AudioDesc desc;
+    CHECK(desc.dataTypeName() == "InvalidAudioFormat");
+}
+
+TEST_CASE("AudioDesc_dataTypeName_roundtrips_with_stringToDataType") {
+    // Every PCM DataType should round-trip through dataTypeName → stringToDataType
+    AudioDesc::DataType types[] = {
+        AudioDesc::PCMI_Float32LE, AudioDesc::PCMI_Float32BE,
+        AudioDesc::PCMI_S8,       AudioDesc::PCMI_U8,
+        AudioDesc::PCMI_S16LE,    AudioDesc::PCMI_U16LE,
+        AudioDesc::PCMI_S16BE,    AudioDesc::PCMI_U16BE,
+        AudioDesc::PCMI_S24LE,    AudioDesc::PCMI_U24LE,
+        AudioDesc::PCMI_S24BE,    AudioDesc::PCMI_U24BE,
+        AudioDesc::PCMI_S32LE,    AudioDesc::PCMI_U32LE,
+        AudioDesc::PCMI_S32BE,    AudioDesc::PCMI_U32BE,
+    };
+    for(auto dt : types) {
+        AudioDesc desc(dt, 48000.0f, 2);
+        CAPTURE(desc.dataTypeName());
+        CHECK(AudioDesc::stringToDataType(desc.dataTypeName()) == dt);
+    }
+}

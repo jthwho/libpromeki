@@ -65,7 +65,8 @@ TEST_CASE("AudioBuffer: push and pop in same format") {
         CHECK(ab.available() == 4);
 
         int16_t out[8] = {};
-        size_t popped = ab.pop(out, 4);
+        auto [popped, popErr] = ab.pop(out, 4);
+        CHECK(popErr.isOk());
         CHECK(popped == 4);
         CHECK(ab.available() == 0);
         for(int i = 0; i < 8; ++i) CHECK(out[i] == samples[i]);
@@ -76,7 +77,8 @@ TEST_CASE("AudioBuffer: pop more than available returns partial") {
         int16_t samples[4] = { 1, 2, 3, 4 };
         CHECK(ab.push(samples, 2, s16LE48k2ch()).isOk());
         int16_t out[8] = { 0 };
-        size_t popped = ab.pop(out, 8);
+        auto [popped, popErr] = ab.pop(out, 8);
+        CHECK(popErr.isOk());
         CHECK(popped == 2);
         CHECK(ab.isEmpty());
 }
@@ -84,7 +86,9 @@ TEST_CASE("AudioBuffer: pop more than available returns partial") {
 TEST_CASE("AudioBuffer: pop from empty returns 0") {
         AudioBuffer ab(s16LE48k2ch(), 16);
         int16_t out[4] = { 1, 2, 3, 4 };
-        CHECK(ab.pop(out, 4) == 0);
+        auto [popped, popErr] = ab.pop(out, 4);
+        CHECK(popErr.isOk());
+        CHECK(popped == 0);
         // Destination untouched.
         CHECK(out[0] == 1);
 }
@@ -111,7 +115,8 @@ TEST_CASE("AudioBuffer: push/pop across the wraparound boundary") {
 
         // Pop one sample to move head forward.
         int16_t out[2] = {};
-        CHECK(ab.pop(out, 1) == 1);
+        auto [n1, e1] = ab.pop(out, 1);
+        CHECK(n1 == 1);
         CHECK(out[0] == 1);
         CHECK(out[1] == 2);
         CHECK(ab.available() == 1);
@@ -124,7 +129,8 @@ TEST_CASE("AudioBuffer: push/pop across the wraparound boundary") {
         // Pop all 4 and verify order: original sample at index 1 (3, 4),
         // then first 3 samples of b (5, 6, 7, 8, 9, 10).
         int16_t full[8] = {};
-        CHECK(ab.pop(full, 4) == 4);
+        auto [n4, e4] = ab.pop(full, 4);
+        CHECK(n4 == 4);
         CHECK(full[0] == 3);
         CHECK(full[1] == 4);
         CHECK(full[2] == 5);
@@ -149,7 +155,8 @@ TEST_CASE("AudioBuffer: push via Audio, pop via Audio") {
         CHECK(ab.available() == 8);
 
         Audio out(s16LE48k2ch(), 16);
-        size_t popped = ab.pop(out, 8);
+        auto [popped, popErr] = ab.pop(out, 8);
+        CHECK(popErr.isOk());
         CHECK(popped == 8);
         CHECK(out.samples() == 8);
         const int16_t *outData = out.data<int16_t>();
@@ -170,7 +177,9 @@ TEST_CASE("AudioBuffer: push float32, pop int16 at same rate") {
         CHECK(ab.available() == 4);
 
         int16_t out[8] = {};
-        CHECK(ab.pop(out, 4) == 4);
+        auto [got, gotErr] = ab.pop(out, 4);
+        CHECK(gotErr.isOk());
+        CHECK(got == 4);
         // After round-trip, values are clamped + quantized to s16 range.
         CHECK(out[0] == 0);
         CHECK(out[1] == 32767);
@@ -207,10 +216,13 @@ TEST_CASE("AudioBuffer: drop advances head without copying") {
         AudioBuffer ab(s16LE48k2ch(), 16);
         int16_t samples[16] = { 1, 2, 3, 4, 5, 6, 7, 8 };
         ab.push(samples, 4, s16LE48k2ch());
-        CHECK(ab.drop(2) == 2);
+        auto [dropped, dropErr] = ab.drop(2);
+        CHECK(dropErr.isOk());
+        CHECK(dropped == 2);
         CHECK(ab.available() == 2);
         int16_t out[4] = {};
-        CHECK(ab.pop(out, 4) == 2);
+        auto [popped, popErr] = ab.pop(out, 4);
+        CHECK(popped == 2);
         CHECK(out[0] == 5);
         CHECK(out[1] == 6);
         CHECK(out[2] == 7);
@@ -222,7 +234,9 @@ TEST_CASE("AudioBuffer: peek does not consume") {
         int16_t samples[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
         ab.push(samples, 4, s16LE48k2ch());
         int16_t out[8] = {};
-        CHECK(ab.peek(out, 4) == 4);
+        auto [peeked, peekErr] = ab.peek(out, 4);
+        CHECK(peekErr.isOk());
+        CHECK(peeked == 4);
         CHECK(ab.available() == 4);
         CHECK(out[0] == 1);
         CHECK(out[7] == 8);
@@ -247,7 +261,8 @@ TEST_CASE("AudioBuffer: grow preserves existing samples") {
         CHECK(ab.capacity() == 32);
         CHECK(ab.available() == 2);
         int16_t out[4] = {};
-        CHECK(ab.pop(out, 2) == 2);
+        auto [popped, popErr] = ab.pop(out, 2);
+        CHECK(popped == 2);
         CHECK(out[0] == 1);
         CHECK(out[3] == 4);
 }
@@ -262,7 +277,8 @@ TEST_CASE("AudioBuffer: move semantics transfer ownership") {
         // After move, the source has been reset; its _count is 0.
         CHECK(ab.available() == 0);
         int16_t out[4] = {};
-        CHECK(moved.pop(out, 2) == 2);
+        auto [popped, popErr] = moved.pop(out, 2);
+        CHECK(popped == 2);
         CHECK(out[0] == 10);
         CHECK(out[3] == 40);
 }

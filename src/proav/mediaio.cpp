@@ -91,10 +91,16 @@ static const MediaIO::FormatDesc *findFormatByExtension(const String &filename) 
 }
 
 static const MediaIO::FormatDesc *findFormatForFileRead(const String &filename) {
-        String ext = extractExtension(filename);
         const MediaIO::FormatDescList &list = formatRegistry();
 
+        // Pass 0: path-based probe (device nodes like /dev/video0)
+        for(const auto &desc : list) {
+                if(!desc.canOutput) continue;
+                if(desc.canHandlePath && desc.canHandlePath(filename)) return &desc;
+        }
+
         // Pass 1: extension match (fast path)
+        String ext = extractExtension(filename);
         if(!ext.isEmpty()) {
                 for(const auto &desc : list) {
                         if(!desc.canOutput) continue;
@@ -291,6 +297,29 @@ StringList MediaIO::enumerate(const String &typeName) {
         const FormatDesc *desc = findFormatByName(typeName);
         if(desc == nullptr || !desc->enumerate) return StringList();
         return desc->enumerate();
+}
+
+const MediaIO::FormatDesc *MediaIO::findFormatForPath(const String &path) {
+        const FormatDescList &list = formatRegistry();
+        for(const auto &desc : list) {
+                if(desc.canHandlePath && desc.canHandlePath(path)) return &desc;
+        }
+        return nullptr;
+}
+
+List<MediaDesc> MediaIO::queryDevice(const String &typeName,
+                                     const Config &config) {
+        const FormatDesc *desc = findFormatByName(typeName);
+        if(desc == nullptr || !desc->queryDevice) return {};
+        return desc->queryDevice(config);
+}
+
+void MediaIO::printDeviceInfo(const String &typeName,
+                              const Config &config) {
+        const FormatDesc *desc = findFormatByName(typeName);
+        if(desc != nullptr && desc->printDeviceInfo) {
+                desc->printDeviceInfo(config);
+        }
 }
 
 // ============================================================================

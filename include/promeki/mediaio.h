@@ -575,6 +575,45 @@ class MediaIO : public ObjectBase {
                          * provide an implementation that scans the system.
                          */
                         using EnumerateFunc = std::function<StringList()>;
+                        /**
+                         * @brief Optional path-based probe.
+                         *
+                         * Returns true if this backend can handle the
+                         * given filesystem path (e.g. a V4L2 backend
+                         * recognises @c "/dev/video0").  Checked by
+                         * @ref createForFileRead before extension or
+                         * content probes, so device nodes that are not
+                         * regular files are routed to the right backend.
+                         *
+                         * @param path The filesystem path to test.
+                         * @return true if this backend claims the path.
+                         */
+                        using CanHandlePathFunc = std::function<bool(const String &path)>;
+                        /**
+                         * @brief Optional device capability query.
+                         *
+                         * Returns every supported configuration as a
+                         * @ref MediaDesc (format + resolution + frame rate).
+                         * Backends that represent hardware devices
+                         * implement this to let callers discover what
+                         * the device offers without opening it.  The
+                         * @p config carries at least the device locator
+                         * (e.g. @ref MediaConfig::V4l2DevicePath).
+                         *
+                         * @param config Backend config with the device locator.
+                         * @return A list of supported MediaDesc configurations.
+                         */
+                        using QueryFunc = std::function<List<MediaDesc>(const Config &config)>;
+                        /**
+                         * @brief Optional device-info printer.
+                         *
+                         * Writes backend-specific device details (e.g.
+                         * available controls and their ranges) to stdout.
+                         * Called by CLI tools in probe / help modes.
+                         *
+                         * @param config Backend config with the device locator.
+                         */
+                        using PrintDeviceInfoFunc = std::function<void(const Config &config)>;
 
                         String              name;            ///< @brief Backend name (e.g. "MXF", "VideoDevice").
                         String              description;     ///< @brief Human-readable description.
@@ -587,6 +626,9 @@ class MediaIO : public ObjectBase {
                         DefaultMetadataFunc defaultMetadata; ///< @brief Honored metadata schema (may be null).
                         ProbeFunc           canHandleDevice; ///< @brief Content-based probe.
                         EnumerateFunc       enumerate;       ///< @brief Instance enumerator.
+                        CanHandlePathFunc   canHandlePath;   ///< @brief Path-based probe.
+                        QueryFunc           queryDevice;     ///< @brief Device capability query.
+                        PrintDeviceInfoFunc printDeviceInfo; ///< @brief Device-info printer.
                 };
 
                 using FormatDescList = List<FormatDesc>;
@@ -787,6 +829,45 @@ class MediaIO : public ObjectBase {
                  * @return A list of available instance locators.
                  */
                 static StringList enumerate(const String &typeName);
+
+                /**
+                 * @brief Finds the backend that claims a filesystem path.
+                 *
+                 * Iterates registered backends and returns the first whose
+                 * @ref FormatDesc::canHandlePath returns true, or nullptr.
+                 *
+                 * @param path The filesystem path to test.
+                 * @return The matching FormatDesc, or nullptr.
+                 */
+                static const FormatDesc *findFormatForPath(const String &path);
+
+                /**
+                 * @brief Queries a device for its supported configurations.
+                 *
+                 * Calls the named backend's @ref FormatDesc::queryDevice
+                 * callback (if present) with the given config.  Returns
+                 * an empty list if the backend is unknown or does not
+                 * implement the query.
+                 *
+                 * @param typeName The registered backend name.
+                 * @param config   Config carrying the device locator.
+                 * @return A list of supported MediaDesc configurations.
+                 */
+                static List<MediaDesc> queryDevice(const String &typeName,
+                                                   const Config &config);
+
+                /**
+                 * @brief Prints backend-specific device info to stdout.
+                 *
+                 * Calls the named backend's @ref FormatDesc::printDeviceInfo
+                 * callback (if present).  No-op if the backend is unknown
+                 * or does not implement the callback.
+                 *
+                 * @param typeName The registered backend name.
+                 * @param config   Config carrying the device locator.
+                 */
+                static void printDeviceInfo(const String &typeName,
+                                            const Config &config);
 
                 /**
                  * @brief Constructs a MediaIO with an optional parent.

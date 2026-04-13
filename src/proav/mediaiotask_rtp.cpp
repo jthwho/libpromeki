@@ -1259,21 +1259,11 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                         static_cast<int64_t>(_audio.readerAudioDesc.sampleRate()),
                         _readerAgg.videoFrameIndex);
                 if(needed > 0) {
-                        Mutex::Locker lock(_readerAgg.audioMutex);
-                        // Wait for enough samples, bounded by timeout.
-                        if(_readerAgg.audioFifo.available() < needed) {
-                                _readerAgg.audioReady.wait(
-                                        _readerAgg.audioMutex,
-                                        [&]() {
-                                                return _readerAgg.audioFifo.available() >= needed;
-                                        },
-                                        static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
-                        }
-                        const size_t got = std::min(
-                                _readerAgg.audioFifo.available(), needed);
+                        Audio audio(_audio.readerAudioDesc, needed);
+                        auto [got, err] = _readerAgg.audioFifo.popWait(
+                                audio, needed,
+                                static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
                         if(got > 0) {
-                                Audio audio(_audio.readerAudioDesc, got);
-                                _readerAgg.audioFifo.pop(audio, got);
                                 f->audioList().pushToBack(
                                         Audio::Ptr::create(std::move(audio)));
                         }
@@ -1325,7 +1315,6 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
         // fall back to the original per-chunk emission so the
         // reader queue still produces output.
         if(_video.active) {
-                Mutex::Locker lock(_readerAgg.audioMutex);
                 Error perr = _readerAgg.audioFifo.push(
                         pkt.payload(), samples, wireDesc);
                 if(perr.isError()) {
@@ -1333,8 +1322,6 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
                                     perr.desc().cstr());
                         return;
                 }
-                // Wake the video RX thread if it's waiting for audio.
-                _readerAgg.audioReady.wakeOne();
                 _audio.framesReceived++;
         } else {
                 // Audio-only stream — push directly.  Chunk into
@@ -1355,8 +1342,8 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
                 if(spf == 0) return;
                 while(_audioState.fifo.available() >= spf) {
                         Audio audio(_audio.readerAudioDesc, spf);
-                        size_t got = _audioState.fifo.pop(audio, spf);
-                        if(got == 0) break;
+                        auto [got, popErr] = _audioState.fifo.pop(audio, spf);
+                        if(popErr.isError() || got == 0) break;
                         _audio.framesReceived++;
                         Frame::Ptr frame = Frame::Ptr::create();
                         frame.modify()->audioList().pushToBack(
@@ -1980,7 +1967,8 @@ Error MediaIOTask_Rtp::sendAudio(const Audio &audio) {
         // buffer ready to hand to the payload handler.
         List<uint8_t> drained;
         drained.resize(totalBytes);
-        size_t popped = _audioState.fifo.pop(drained.data(), totalSamples);
+        auto [popped, popErr] = _audioState.fifo.pop(drained.data(), totalSamples);
+        if(popErr.isError()) return popErr;
         if(popped != totalSamples) {
                 promekiErr("MediaIOTask_Rtp: audio FIFO pop short (%zu / %zu)",
                            popped, totalSamples);

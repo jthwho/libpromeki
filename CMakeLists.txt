@@ -77,6 +77,19 @@ option(PROMEKI_ENABLE_FREETYPE "Include FreeType font rendering"        ON)
 option(PROMEKI_ENABLE_AUDIO    "Include audio file I/O (libsndfile)"    ON)
 option(PROMEKI_ENABLE_CSC      "Include color space conversion (Highway SIMD)" ON)
 option(PROMEKI_ENABLE_CIRF     "Include the built-in :/.PROMEKI/ resource set" ON)
+# V4L2 capture is Linux-only; default ON when videodev2.h and libasound are
+# found, silently OFF elsewhere.  Explicit -DPROMEKI_ENABLE_V4L2=ON/OFF
+# on the command line overrides the probe.
+set(PROMEKI_ENABLE_V4L2_DEFAULT OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include(CheckIncludeFile)
+    check_include_file(linux/videodev2.h PROMEKI_HAVE_VIDEODEV2_H)
+    find_package(ALSA QUIET)
+    if(PROMEKI_HAVE_VIDEODEV2_H AND ALSA_FOUND)
+        set(PROMEKI_ENABLE_V4L2_DEFAULT ON)
+    endif()
+endif()
+option(PROMEKI_ENABLE_V4L2 "Include V4L2 video capture + ALSA audio capture (Linux only)" ${PROMEKI_ENABLE_V4L2_DEFAULT})
 
 # Vendored vs system dependency options
 option(PROMEKI_USE_SYSTEM_ZLIB          "Use system zlib instead of vendored zlib-ng"   OFF)
@@ -115,6 +128,18 @@ if(PROMEKI_ENABLE_CSC AND NOT PROMEKI_ENABLE_PROAV)
 endif()
 if(PROMEKI_BUILD_SDL AND NOT PROMEKI_ENABLE_PROAV)
     message(FATAL_ERROR "PROMEKI_BUILD_SDL requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_V4L2 AND NOT PROMEKI_ENABLE_PROAV)
+    message(FATAL_ERROR "PROMEKI_ENABLE_V4L2 requires PROMEKI_ENABLE_PROAV")
+endif()
+if(PROMEKI_ENABLE_V4L2 AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "PROMEKI_ENABLE_V4L2 is only supported on Linux")
+endif()
+if(PROMEKI_ENABLE_V4L2)
+    if(NOT PROMEKI_HAVE_VIDEODEV2_H)
+        message(FATAL_ERROR "PROMEKI_ENABLE_V4L2 requires linux/videodev2.h")
+    endif()
+    find_package(ALSA REQUIRED)
 endif()
 
 # Build info ###################################################################
@@ -683,6 +708,7 @@ set(PROMEKI_SOURCES
     src/core/numname.cpp
     src/core/numnameseq.cpp
     src/core/objectbase.cpp
+    src/core/periodiccallback.cpp
     src/core/pidcontroller.cpp
     src/core/pixeldesc.cpp
     src/core/pixelformat.cpp
@@ -889,6 +915,10 @@ if(PROMEKI_ENABLE_PROAV)
             src/proav/mediaiotask_audiofile.cpp
         )
     endif()
+    if(PROMEKI_ENABLE_V4L2)
+        list(APPEND PROMEKI_HEADERS include/promeki/mediaiotask_v4l2.h)
+        list(APPEND PROMEKI_SOURCES src/proav/mediaiotask_v4l2.cpp)
+    endif()
     if(PROMEKI_ENABLE_CSC)
         list(APPEND PROMEKI_HEADERS
             include/promeki/cscpipeline.h
@@ -1043,6 +1073,10 @@ if(PROMEKI_ENABLE_PROAV)
     if(PROMEKI_ENABLE_AUDIO)
         target_link_libraries(promeki PRIVATE ${PROMEKI_SNDFILE_TARGET})
         target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_SNDFILE)
+    endif()
+    if(PROMEKI_ENABLE_V4L2)
+        target_link_libraries(promeki PRIVATE ALSA::ALSA)
+        target_compile_definitions(promeki PRIVATE PROMEKI_ENABLE_V4L2)
     endif()
     if(PROMEKI_ENABLE_CSC)
         target_link_libraries(promeki PRIVATE ${PROMEKI_HWY_TARGET})
@@ -1356,6 +1390,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/obfuscatedstring.cpp
         tests/objectbase.cpp
         tests/objectbase2.cpp
+        tests/periodiccallback.cpp
         tests/pair.cpp
         tests/pidcontroller.cpp
         tests/pixelformat.cpp

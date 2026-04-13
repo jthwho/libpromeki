@@ -563,10 +563,6 @@ class MediaIOTask_Rtp : public MediaIOTask {
                 struct ReaderAggregator {
                         /// @brief FIFO accumulating L16 samples from the audio RX thread.
                         AudioBuffer     audioFifo;
-                        /// @brief Protects @c audioFifo (audio RX pushes, video RX pops).
-                        Mutex           audioMutex;
-                        /// @brief Signalled by audio RX after each push; video RX waits on it.
-                        WaitCondition   audioReady;
                         /// @brief Latest metadata snapshot from the data RX thread.
                         Metadata        pendingMetadata;
                         /// @brief Protects @c pendingMetadata and @c hasMetadata.

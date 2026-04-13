@@ -98,6 +98,10 @@ Error SDLPlayerTask::executeCmd(MediaIOCommandOpen &cmd) {
         // takes over.  Either way, pacing always flows through the
         // same FramePacer with all its error compensation, drop
         // recommendations, and periodic debug logging.
+        if(_useAudioClock && _audioClock == nullptr) {
+                promekiInfo("SDLPlayerTask: audio clock requested but no audio "
+                            "available; using wall clock pacing");
+        }
         _pacer.setName(String("SDLPlayer"));
         _pacer.setFrameRate(fps);
         _pacer.setClock(_audioClock);

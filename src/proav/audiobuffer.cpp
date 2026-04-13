@@ -58,14 +58,18 @@ AudioBuffer &AudioBuffer::operator=(AudioBuffer &&other) noexcept {
 }
 
 void AudioBuffer::setFormat(const AudioDesc &format) {
+        Mutex::Locker lock(_mutex);
         _format      = format;
         _inputFormat = format;
-        clear();
+        _head     = 0;
+        _tail     = 0;
+        _count    = 0;
         _storage  = Buffer();
         _capacity = 0;
 }
 
 void AudioBuffer::setInputFormat(const AudioDesc &input) {
+        Mutex::Locker lock(_mutex);
         _inputFormat = input;
 }
 
@@ -79,6 +83,7 @@ size_t AudioBuffer::bytesPerSample() const {
 }
 
 Error AudioBuffer::reserve(size_t samples) {
+        Mutex::Locker lock(_mutex);
         if(!_format.isValid()) return Error::InvalidArgument;
         if(samples <= _capacity) return Error::Ok;
         if(samples < _count)     return Error::InvalidArgument;
@@ -102,6 +107,7 @@ Error AudioBuffer::reserve(size_t samples) {
 }
 
 void AudioBuffer::clear() {
+        Mutex::Locker lock(_mutex);
         _head  = 0;
         _tail  = 0;
         _count = 0;
@@ -143,48 +149,36 @@ void AudioBuffer::readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) c
 }
 
 // ---------------------------------------------------------------------------
-// Push
+// Lock-free internals (caller holds _mutex)
 // ---------------------------------------------------------------------------
 
-Error AudioBuffer::push(const Audio &audio) {
-        if(!audio.isValid()) return Error::InvalidArgument;
-        return push(audio.buffer()->data(), audio.samples(), audio.desc());
-}
-
-Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFormat) {
+Error AudioBuffer::pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat) {
         if(!_format.isValid() || !srcFormat.isValid()) return Error::InvalidArgument;
         if(data == nullptr && samples > 0)            return Error::InvalidArgument;
         if(samples == 0)                              return Error::Ok;
 
-        // Sample rate + channel count must match. A resampler / channel-map
-        // hook is reserved for a follow-up; this path returns NotSupported
-        // with a clear diagnostic so the caller knows what's missing.
         if(srcFormat.sampleRate() != _format.sampleRate()) {
-                promekiWarn("AudioBuffer: sample rate mismatch (%.1f → %.1f) "
-                            "— resampling not yet implemented",
+                promekiWarn("AudioBuffer: sample rate mismatch (%.1f -> %.1f) "
+                            "-- resampling not yet implemented",
                             srcFormat.sampleRate(), _format.sampleRate());
                 return Error::NotSupported;
         }
         if(srcFormat.channels() != _format.channels()) {
-                promekiWarn("AudioBuffer: channel count mismatch (%u → %u) "
-                            "— channel-map not yet implemented",
+                promekiWarn("AudioBuffer: channel count mismatch (%u -> %u) "
+                            "-- channel-map not yet implemented",
                             srcFormat.channels(), _format.channels());
                 return Error::NotSupported;
         }
 
         if(_capacity - _count < samples) return Error::NoSpace;
 
-        // Fast path: formats match → direct memcpy.
+        // Fast path: formats match -> direct memcpy.
         if(srcFormat.dataType() == _format.dataType()) {
                 writeBytesAtTail(static_cast<const uint8_t *>(data), samples);
                 return Error::Ok;
         }
 
-        // Conversion path: src → native float → dst. For the storage format
-        // to end up right, we convert one stride at a time using a stack
-        // scratch buffer (bounded in size by samples × channels × sizeof(float)).
-        // For large pushes we fall back to heap allocation to avoid stack
-        // pressure.
+        // Conversion path: src -> native float -> dst.
         size_t totalFloats = samples * _format.channels();
         const size_t kStackFloats = 4096;
         float  stackBuf[kStackFloats];
@@ -196,11 +190,10 @@ Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFo
                 scratch = heapScratch;
         }
 
-        // Step 1: srcFormat bytes → native float.
+        // Step 1: srcFormat bytes -> native float.
         srcFormat.samplesToFloat(scratch, static_cast<const uint8_t *>(data), samples);
 
-        // Step 2: native float → destination format bytes (possibly in two
-        // passes if we wrap around the ring buffer).
+        // Step 2: native float -> destination format bytes.
         size_t bps = bytesPerSample();
         uint8_t *base = static_cast<uint8_t *>(_storage.data());
 
@@ -224,25 +217,7 @@ Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFo
         return Error::Ok;
 }
 
-// ---------------------------------------------------------------------------
-// Pop / peek / drop
-// ---------------------------------------------------------------------------
-
-size_t AudioBuffer::pop(Audio &audio, size_t samples) {
-        if(!audio.isValid()) return 0;
-        if(audio.desc().dataType() != _format.dataType() ||
-           audio.desc().sampleRate() != _format.sampleRate() ||
-           audio.desc().channels() != _format.channels()) {
-                promekiWarn("AudioBuffer: pop format mismatch");
-                return 0;
-        }
-        if(samples > audio.maxSamples()) samples = audio.maxSamples();
-        size_t got = pop(audio.buffer()->data(), samples);
-        audio.resize(got);
-        return got;
-}
-
-size_t AudioBuffer::pop(void *dst, size_t samples) {
+size_t AudioBuffer::popLocked(void *dst, size_t samples) {
         if(_count == 0 || samples == 0 || dst == nullptr) return 0;
         size_t toRead = samples > _count ? _count : samples;
         readBytesFromHead(static_cast<uint8_t *>(dst), toRead, 0);
@@ -251,19 +226,102 @@ size_t AudioBuffer::pop(void *dst, size_t samples) {
         return toRead;
 }
 
-size_t AudioBuffer::peek(void *dst, size_t samples) const {
-        if(_count == 0 || samples == 0 || dst == nullptr) return 0;
-        size_t toRead = samples > _count ? _count : samples;
-        readBytesFromHead(static_cast<uint8_t *>(dst), toRead, 0);
-        return toRead;
+// ---------------------------------------------------------------------------
+// Push (public, locked)
+// ---------------------------------------------------------------------------
+
+Error AudioBuffer::push(const Audio &audio) {
+        if(!audio.isValid()) return Error::InvalidArgument;
+        Mutex::Locker lock(_mutex);
+        Error err = pushLocked(audio.buffer()->data(), audio.samples(), audio.desc());
+        if(err.isOk()) _cv.wakeOne();
+        return err;
 }
 
-size_t AudioBuffer::drop(size_t samples) {
-        if(_count == 0 || samples == 0) return 0;
+Error AudioBuffer::push(const void *data, size_t samples, const AudioDesc &srcFormat) {
+        Mutex::Locker lock(_mutex);
+        Error err = pushLocked(data, samples, srcFormat);
+        if(err.isOk() && samples > 0) _cv.wakeOne();
+        return err;
+}
+
+// ---------------------------------------------------------------------------
+// Pop (public, locked, non-blocking)
+// ---------------------------------------------------------------------------
+
+AudioBuffer::PopResult AudioBuffer::pop(Audio &audio, size_t samples) {
+        if(!audio.isValid()) return PopResult(0, Error::FormatMismatch);
+        Mutex::Locker lock(_mutex);
+        if(audio.desc().dataType() != _format.dataType() ||
+           audio.desc().sampleRate() != _format.sampleRate() ||
+           audio.desc().channels() != _format.channels()) {
+                return PopResult(0, Error::FormatMismatch);
+        }
+        if(samples > audio.maxSamples()) samples = audio.maxSamples();
+        size_t got = popLocked(audio.buffer()->data(), samples);
+        audio.resize(got);
+        return makeResult(got);
+}
+
+AudioBuffer::PopResult AudioBuffer::pop(void *dst, size_t samples) {
+        Mutex::Locker lock(_mutex);
+        size_t got = popLocked(dst, samples);
+        return makeResult(got);
+}
+
+// ---------------------------------------------------------------------------
+// popWait (public, locked, blocking)
+// ---------------------------------------------------------------------------
+
+AudioBuffer::PopResult AudioBuffer::popWait(Audio &audio, size_t samples, unsigned int timeoutMs) {
+        if(!audio.isValid()) return PopResult(0, Error::FormatMismatch);
+        Mutex::Locker lock(_mutex);
+        if(audio.desc().dataType() != _format.dataType() ||
+           audio.desc().sampleRate() != _format.sampleRate() ||
+           audio.desc().channels() != _format.channels()) {
+                return PopResult(0, Error::FormatMismatch);
+        }
+        if(samples > audio.maxSamples()) samples = audio.maxSamples();
+        if(_count < samples) {
+                Error waitErr = _cv.wait(_mutex,
+                        [&]() { return _count >= samples; }, timeoutMs);
+                if(waitErr != Error::Ok) return PopResult(0, waitErr);
+        }
+        size_t got = popLocked(audio.buffer()->data(), samples);
+        audio.resize(got);
+        return makeResult(got);
+}
+
+AudioBuffer::PopResult AudioBuffer::popWait(void *dst, size_t samples, unsigned int timeoutMs) {
+        Mutex::Locker lock(_mutex);
+        if(_count < samples) {
+                Error waitErr = _cv.wait(_mutex,
+                        [&]() { return _count >= samples; }, timeoutMs);
+                if(waitErr != Error::Ok) return PopResult(0, waitErr);
+        }
+        size_t got = popLocked(dst, samples);
+        return makeResult(got);
+}
+
+// ---------------------------------------------------------------------------
+// Peek / drop (public, locked)
+// ---------------------------------------------------------------------------
+
+AudioBuffer::PopResult AudioBuffer::peek(void *dst, size_t samples) const {
+        Mutex::Locker lock(_mutex);
+        if(_count == 0 || samples == 0 || dst == nullptr) return makeResult<size_t>(0);
+        size_t toRead = samples > _count ? _count : samples;
+        readBytesFromHead(static_cast<uint8_t *>(dst), toRead, 0);
+        return makeResult(toRead);
+}
+
+AudioBuffer::PopResult AudioBuffer::drop(size_t samples) {
+        Mutex::Locker lock(_mutex);
+        if(_count == 0 || samples == 0) return makeResult<size_t>(0);
         size_t toDrop = samples > _count ? _count : samples;
         _head = (_head + toDrop) % _capacity;
         _count -= toDrop;
-        return toDrop;
+        return makeResult(toDrop);
 }
 
 PROMEKI_NAMESPACE_END

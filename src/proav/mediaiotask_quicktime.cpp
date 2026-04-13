@@ -604,7 +604,8 @@ Error MediaIOTask_QuickTime::drainWriterAudio(bool flush) {
         // hand that Buffer to the engine as one audio sample.
         size_t bytes = _writerAudioStorage.bufferSize(toEmit);
         Buffer buf(bytes);
-        size_t got = _writerAudioFifo.pop(buf.data(), toEmit);
+        auto [got, popErr] = _writerAudioFifo.pop(buf.data(), toEmit);
+        if(popErr.isError()) return popErr;
         if(got == 0) return Error::Ok;
         buf.setSize(_writerAudioStorage.bufferSize(got));
 

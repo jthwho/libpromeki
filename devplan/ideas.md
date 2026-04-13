@@ -146,3 +146,12 @@
     can use this to write the TPG details to the output file to make it easier to setup an inspector
     later down the road.
 
+16. We should rename AudioBuffer to AudioFifo or AudioQueue
+
+17. We need to investigate audio resamplers and build an AudioResample object.
+
+18. Add a test in the Inspector to check that the number of audio samples per frame is correct.
+    This gets tricky as some frame rates have a cadence to the audio and we can't assure we'll get
+    in any particular phase.
+
+

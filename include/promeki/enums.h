@@ -766,6 +766,64 @@ class AudioSourceHint : public TypedEnum<AudioSourceHint> {
 inline const AudioSourceHint AudioSourceHint::Sidecar  { 0 };
 inline const AudioSourceHint AudioSourceHint::Embedded { 1 };
 
+/**
+ * @brief Well-known Enum type for V4L2 power line frequency filter.
+ *
+ * Maps to @c V4L2_CID_POWER_LINE_FREQUENCY menu items.
+ */
+class V4l2PowerLineMode : public TypedEnum<V4l2PowerLineMode> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("V4l2PowerLineMode",
+                        {
+                                { "Disabled", 0 },
+                                { "50Hz",     1 },
+                                { "60Hz",     2 },
+                                { "Auto",     3 }
+                        },
+                        3);  // default: Auto
+
+                using TypedEnum<V4l2PowerLineMode>::TypedEnum;
+
+                static const V4l2PowerLineMode Disabled;
+                static const V4l2PowerLineMode Hz50;
+                static const V4l2PowerLineMode Hz60;
+                static const V4l2PowerLineMode Auto;
+};
+
+inline const V4l2PowerLineMode V4l2PowerLineMode::Disabled { 0 };
+inline const V4l2PowerLineMode V4l2PowerLineMode::Hz50     { 1 };
+inline const V4l2PowerLineMode V4l2PowerLineMode::Hz60     { 2 };
+inline const V4l2PowerLineMode V4l2PowerLineMode::Auto     { 3 };
+
+/**
+ * @brief Well-known Enum type for V4L2 auto exposure mode.
+ *
+ * Maps to @c V4L2_CID_EXPOSURE_AUTO menu items.
+ */
+class V4l2ExposureMode : public TypedEnum<V4l2ExposureMode> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("V4l2ExposureMode",
+                        {
+                                { "Auto",             0 },
+                                { "Manual",           1 },
+                                { "ShutterPriority",  2 },
+                                { "AperturePriority", 3 }
+                        },
+                        3);  // default: AperturePriority
+
+                using TypedEnum<V4l2ExposureMode>::TypedEnum;
+
+                static const V4l2ExposureMode Auto;
+                static const V4l2ExposureMode Manual;
+                static const V4l2ExposureMode ShutterPriority;
+                static const V4l2ExposureMode AperturePriority;
+};
+
+inline const V4l2ExposureMode V4l2ExposureMode::Auto             { 0 };
+inline const V4l2ExposureMode V4l2ExposureMode::Manual           { 1 };
+inline const V4l2ExposureMode V4l2ExposureMode::ShutterPriority  { 2 };
+inline const V4l2ExposureMode V4l2ExposureMode::AperturePriority { 3 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

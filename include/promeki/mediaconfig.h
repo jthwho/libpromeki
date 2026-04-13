@@ -959,6 +959,132 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDefault(MetadataRtpFormat::JsonMetadata)
                                 .setEnumType(MetadataRtpFormat::Type)
                                 .setDescription("Wire format for the metadata RTP stream."));
+
+                // ============================================================
+                // V4L2 capture (Linux)
+                // ============================================================
+
+                /// @brief String — V4L2 device node path (e.g. "/dev/video0").
+                static inline const ID V4l2DevicePath = declareID("V4l2DevicePath",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription("V4L2 device node path."));
+
+                /// @brief int — number of MMAP capture buffers (2-32).
+                static inline const ID V4l2BufferCount = declareID("V4l2BufferCount",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(4))
+                                .setRange(int32_t(2), int32_t(32))
+                                .setDescription("Number of V4L2 MMAP capture buffers."));
+
+                /// @brief String — ALSA capture device name for paired audio.
+                /// "auto" (default) auto-detects a paired USB audio device.
+                /// "none" or empty disables audio capture.
+                /// Any other value is used as-is (e.g. "hw:1,0", "default").
+                static inline const ID V4l2AudioDevice = declareID("V4l2AudioDevice",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String("auto"))
+                                .setDescription("ALSA capture device for paired audio. "
+                                        "\"auto\" = auto-detect, \"none\" or empty = disabled."));
+
+                // ---- V4L2 camera controls ----
+                //
+                // These map directly to V4L2 CID controls.  A value of
+                // -1 (the default) means "don't touch, use device default."
+                // Actual ranges are device-dependent; see --probe output.
+
+                /// @brief int — Brightness (V4L2_CID_BRIGHTNESS).  -1 = device default.
+                static inline const ID V4l2Brightness = declareID("V4l2Brightness",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Brightness (-1 = device default)."));
+
+                /// @brief int — Contrast (V4L2_CID_CONTRAST).  -1 = device default.
+                static inline const ID V4l2Contrast = declareID("V4l2Contrast",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Contrast (-1 = device default)."));
+
+                /// @brief int — Saturation (V4L2_CID_SATURATION).  -1 = device default.
+                static inline const ID V4l2Saturation = declareID("V4l2Saturation",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Saturation (-1 = device default)."));
+
+                /// @brief int — Hue (V4L2_CID_HUE).  -1 = device default.
+                static inline const ID V4l2Hue = declareID("V4l2Hue",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Hue (-1 = device default)."));
+
+                /// @brief int — Gamma (V4L2_CID_GAMMA).  -1 = device default.
+                static inline const ID V4l2Gamma = declareID("V4l2Gamma",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Gamma (-1 = device default)."));
+
+                /// @brief int — Sharpness (V4L2_CID_SHARPNESS).  -1 = device default.
+                static inline const ID V4l2Sharpness = declareID("V4l2Sharpness",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Sharpness (-1 = device default)."));
+
+                /// @brief int — Backlight compensation (V4L2_CID_BACKLIGHT_COMPENSATION).
+                /// -1 = device default.
+                static inline const ID V4l2BacklightComp = declareID("V4l2BacklightComp",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Backlight compensation (-1 = device default)."));
+
+                /// @brief int — White balance temperature in Kelvin
+                /// (V4L2_CID_WHITE_BALANCE_TEMPERATURE).  -1 = device default.
+                static inline const ID V4l2WhiteBalanceTemp = declareID("V4l2WhiteBalanceTemp",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("White balance temperature in K (-1 = device default)."));
+
+                /// @brief bool — Auto white balance (V4L2_CID_AUTO_WHITE_BALANCE).
+                /// -1 = device default, 0 = off, 1 = on.
+                static inline const ID V4l2AutoWhiteBalance = declareID("V4l2AutoWhiteBalance",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setRange(int32_t(-1), int32_t(1))
+                                .setDescription("Auto white balance (-1 = device default, 0 = off, 1 = on)."));
+
+                /// @brief int — Exposure time, absolute, in 100µs units
+                /// (V4L2_CID_EXPOSURE_ABSOLUTE).  -1 = device default.
+                static inline const ID V4l2ExposureAbsolute = declareID("V4l2ExposureAbsolute",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Exposure time in 100us units (-1 = device default)."));
+
+                /// @brief Enum @ref V4l2ExposureMode — auto exposure mode (V4L2_CID_EXPOSURE_AUTO).
+                static inline const ID V4l2AutoExposure = declareID("V4l2AutoExposure",
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(Enum())
+                                .setEnumType(V4l2ExposureMode::Type)
+                                .setDescription("Auto exposure mode (empty = device default)."));
+
+                /// @brief int — Gain (V4L2_CID_GAIN).  -1 = device default.
+                static inline const ID V4l2Gain = declareID("V4l2Gain",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("Gain (-1 = device default)."));
+
+                /// @brief Enum @ref V4l2PowerLineMode — power line frequency filter (V4L2_CID_POWER_LINE_FREQUENCY).
+                static inline const ID V4l2PowerLineFreq = declareID("V4l2PowerLineFreq",
+                        VariantSpec().setType(Variant::TypeEnum)
+                                .setDefault(Enum())
+                                .setEnumType(V4l2PowerLineMode::Type)
+                                .setDescription("Power line frequency (empty = device default)."));
+
+                /// @brief int — JPEG compression quality 1-100
+                /// (V4L2_CID_JPEG_COMPRESSION_QUALITY).  -1 = device default.
+                /// Not all devices support this control.
+                static inline const ID V4l2JpegQuality = declareID("V4l2JpegQuality",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(-1))
+                                .setDescription("JPEG compression quality 1-100 (-1 = device default)."));
 };
 
 /**

@@ -93,7 +93,10 @@ class Error {
                         Cancelled,               ///< Operation was cancelled before completion.
                         DecodeFailed,            ///< Codec decoder reported a failure.
                         EncodeFailed,            ///< Codec encoder reported a failure.
-                        CorruptData              ///< Stored data is structurally corrupt.
+                        CorruptData,             ///< Stored data is structurally corrupt.
+                        DeviceError,             ///< Hardware device reported an error.
+                        DeviceNotFound,          ///< Hardware device was not found or cannot be opened.
+                        FormatMismatch           ///< Audio/video format does not match the expected format.
                 };
 
                 /**

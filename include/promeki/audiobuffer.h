@@ -12,11 +12,14 @@
 #include <promeki/audio.h>
 #include <promeki/buffer.h>
 #include <promeki/error.h>
+#include <promeki/result.h>
+#include <promeki/mutex.h>
+#include <promeki/waitcondition.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Ring-buffered audio sample FIFO with format conversion on push.
+ * @brief Thread-safe ring-buffered audio sample FIFO with format conversion on push.
  * @ingroup proav
  *
  * AudioBuffer stores interleaved PCM samples in a fixed output format.
@@ -39,6 +42,14 @@ PROMEKI_NAMESPACE_BEGIN
  * channel-map hook will land in a follow-up — this class is
  * pre-plumbed for it.
  *
+ * @par Thread safety
+ *
+ * All push, pop, and query methods are internally synchronized via
+ * a Mutex.  Push methods wake any thread blocked in @c popWait()
+ * after writing.  This allows a producer thread and a consumer
+ * thread to operate on the same AudioBuffer without external
+ * locking.
+ *
  * @par Capacity and ownership
  *
  * The buffer is sized via @c reserve() (or constructor). Pushes that
@@ -52,19 +63,22 @@ PROMEKI_NAMESPACE_BEGIN
  * fifo.reserve(48000);                    // 1 second of headroom
  * fifo.setInputFormat(AudioDesc::NativeType, 48000, 2);
  *
- * // Producer side
+ * // Producer thread
  * Audio chunk(nativeDesc, 1602);
  * // ... fill chunk ...
  * fifo.push(chunk);
  *
- * // Consumer side
+ * // Consumer thread — blocks until 1600 samples are ready
  * Audio slice(outputDesc, 1600);
- * size_t got = fifo.pop(slice, 1600);
- * // got is the actual number of samples written to `slice`.
+ * auto [got, err] = fifo.popWait(slice, 1600, 200);
+ * if(err == Error::Timeout) { ... }
  * @endcode
  */
 class AudioBuffer {
         public:
+                /** @brief Result type for pop operations: {sampleCount, Error}. */
+                using PopResult = Result<size_t>;
+
                 /** @brief Default-constructs an invalid AudioBuffer with no format. */
                 AudioBuffer() = default;
 
@@ -122,19 +136,34 @@ class AudioBuffer {
                 Error reserve(size_t samples);
 
                 /** @brief Returns the current capacity in samples. */
-                size_t capacity() const { return _capacity; }
+                size_t capacity() const {
+                        Mutex::Locker lock(_mutex);
+                        return _capacity;
+                }
 
                 /** @brief Returns the number of samples currently buffered. */
-                size_t available() const { return _count; }
+                size_t available() const {
+                        Mutex::Locker lock(_mutex);
+                        return _count;
+                }
 
                 /** @brief Returns the free capacity in samples. */
-                size_t free() const { return _capacity - _count; }
+                size_t free() const {
+                        Mutex::Locker lock(_mutex);
+                        return _capacity - _count;
+                }
 
                 /** @brief Returns true if no samples are buffered. */
-                bool isEmpty() const { return _count == 0; }
+                bool isEmpty() const {
+                        Mutex::Locker lock(_mutex);
+                        return _count == 0;
+                }
 
                 /** @brief Returns true if the buffer is full. */
-                bool isFull() const { return _count >= _capacity; }
+                bool isFull() const {
+                        Mutex::Locker lock(_mutex);
+                        return _count >= _capacity;
+                }
 
                 /** @brief Clears all buffered samples. */
                 void clear();
@@ -151,7 +180,7 @@ class AudioBuffer {
                 /**
                  * @brief Pushes interleaved raw samples into the buffer.
                  *
-                 * @param data       Pointer to @p samples × bytes-per-sample bytes.
+                 * @param data       Pointer to @p samples x bytes-per-sample bytes.
                  * @param samples    Number of samples (not bytes) in @p data.
                  * @param srcFormat  Format of @p data.
                  * @return Error::Ok, NoSpace, NotSupported, or InvalidArgument.
@@ -161,34 +190,69 @@ class AudioBuffer {
                 /**
                  * @brief Pops up to @p samples samples into @p audio.
                  *
-                 * The destination @p audio must have a descriptor matching
-                 * @c format() and @c maxSamples() >= @p samples. On return,
-                 * @p audio's sample count is set to the actual number popped.
+                 * Non-blocking: returns immediately with whatever is
+                 * available (which may be 0).  The destination @p audio
+                 * must have a descriptor matching @c format() and
+                 * @c maxSamples() >= @p samples.  On return, @p audio's
+                 * sample count is set to the actual number popped.
                  *
-                 * @return The number of samples actually popped.
+                 * @return {count, Error::Ok} on success, or
+                 *         {0, Error::FormatMismatch} if @p audio's
+                 *         descriptor does not match the storage format.
                  */
-                size_t pop(Audio &audio, size_t samples);
+                PopResult pop(Audio &audio, size_t samples);
 
                 /**
                  * @brief Pops up to @p samples samples into a raw buffer.
                  *
+                 * Non-blocking: returns immediately with whatever is
+                 * available (which may be 0).
+                 *
                  * @param dst     Destination buffer, must be at least
-                 *                @p samples × bytes-per-sample bytes.
+                 *                @p samples x bytes-per-sample bytes.
                  * @param samples Number of samples to pop.
-                 * @return The number of samples actually popped.
+                 * @return {count, Error::Ok}.
                  */
-                size_t pop(void *dst, size_t samples);
+                PopResult pop(void *dst, size_t samples);
+
+                /**
+                 * @brief Blocks until @p samples samples are available, then pops into @p audio.
+                 *
+                 * Waits for the ring to accumulate at least @p samples
+                 * before popping.
+                 *
+                 * @param audio     Destination Audio (must match format()).
+                 * @param samples   Number of samples to wait for and pop.
+                 * @param timeoutMs Maximum wait in milliseconds (0 = indefinite).
+                 * @return {samples, Error::Ok} on success,
+                 *         {0, Error::Timeout} if the wait expired, or
+                 *         {0, Error::FormatMismatch} if @p audio's
+                 *         descriptor does not match the storage format.
+                 */
+                PopResult popWait(Audio &audio, size_t samples, unsigned int timeoutMs = 0);
+
+                /**
+                 * @brief Blocks until @p samples samples are available, then pops into a raw buffer.
+                 *
+                 * @param dst       Destination buffer.
+                 * @param samples   Number of samples to wait for and pop.
+                 * @param timeoutMs Maximum wait in milliseconds (0 = indefinite).
+                 * @return {samples, Error::Ok} on success, or
+                 *         {0, Error::Timeout} if the wait expired.
+                 */
+                PopResult popWait(void *dst, size_t samples, unsigned int timeoutMs = 0);
 
                 /**
                  * @brief Peeks at the next @p samples samples without consuming.
+                 * @return {count, Error::Ok}.
                  */
-                size_t peek(void *dst, size_t samples) const;
+                PopResult peek(void *dst, size_t samples) const;
 
                 /**
                  * @brief Drops the next @p samples samples without copying.
-                 * @return The number of samples actually dropped.
+                 * @return {count, Error::Ok}.
                  */
-                size_t drop(size_t samples);
+                PopResult drop(size_t samples);
 
         private:
                 /** @brief Bytes per sample frame (all channels combined). */
@@ -199,6 +263,13 @@ class AudioBuffer {
 
                 /** @brief Reads @p samples samples from @p startSample into @p dst. */
                 void   readBytesFromHead(uint8_t *dst, size_t samples, size_t skip) const;
+
+                // Lock-free internals called with _mutex already held.
+                Error  pushLocked(const void *data, size_t samples, const AudioDesc &srcFormat);
+                size_t popLocked(void *dst, size_t samples);
+
+                mutable Mutex   _mutex;
+                WaitCondition   _cv;
 
                 AudioDesc _format;
                 AudioDesc _inputFormat;

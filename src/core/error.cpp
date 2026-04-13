@@ -88,7 +88,10 @@ static StructDatabase<Error::Code, ErrorData> db = {
         DEFINE_ERROR(Cancelled, NONE, "Operation was cancelled before completion"),
         DEFINE_ERROR(DecodeFailed, NONE, "Codec decoder reported a failure"),
         DEFINE_ERROR(EncodeFailed, NONE, "Codec encoder reported a failure"),
-        DEFINE_ERROR(CorruptData, NONE, "Stored data is structurally corrupt")
+        DEFINE_ERROR(CorruptData, NONE, "Stored data is structurally corrupt"),
+        DEFINE_ERROR(DeviceError, NONE, "Hardware device reported an error"),
+        DEFINE_ERROR(DeviceNotFound, NONE, "Hardware device was not found or cannot be opened"),
+        DEFINE_ERROR(FormatMismatch, NONE, "Audio/video format does not match the expected format")
 };
 
 static StructDatabase<int, Error::Code> &posixErrorDb() {

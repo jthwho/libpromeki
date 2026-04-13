@@ -150,6 +150,59 @@ int main(int argc, char **argv) {
                 opts.sinks.pushToBack(sdlSpec);
         }
 
+        // --- Probe mode ---
+        if(opts.probe) {
+                // Resolve the backend for the source argument
+                String probeName = opts.source.type;
+                MediaIO::Config probeCfg;
+                if(probeName == kStageFile) {
+                        // Path-based: check if a backend claims it
+                        const MediaIO::FormatDesc *desc =
+                                MediaIO::findFormatForPath(opts.source.path);
+                        if(desc == nullptr) {
+                                fprintf(stderr, "Error: no backend recognises '%s'\n",
+                                        opts.source.path.cstr());
+                                return 1;
+                        }
+                        probeName = desc->name;
+                        probeCfg = MediaIO::defaultConfig(probeName);
+                        probeCfg.set(MediaConfig::Filename, opts.source.path);
+                } else {
+                        probeCfg = MediaIO::defaultConfig(probeName);
+                }
+                // Apply any --sc overrides so V4l2DevicePath reaches the query
+                for(const auto &kv : opts.source.rawKeyValues) {
+                        size_t sep = kv.find(':');
+                        if(sep == String::npos) continue;
+                        String key = kv.left(sep);
+                        String val = kv.mid(sep + 1);
+                        MediaIO::ConfigID id(key);
+                        probeCfg.set(id, val);
+                }
+                auto caps = MediaIO::queryDevice(probeName, probeCfg);
+                if(caps.isEmpty()) {
+                        fprintf(stderr, "No supported configurations reported by '%s'\n",
+                                probeName.cstr());
+                        return 1;
+                }
+                fprintf(stdout, "Supported configurations for %s:\n", probeName.cstr());
+                for(const auto &md : caps) {
+                        String line;
+                        if(!md.imageList().isEmpty()) {
+                                const ImageDesc &id = md.imageList()[0];
+                                line = String::sprintf("  %s  %s",
+                                        id.toString().cstr(),
+                                        md.frameRate().toString().cstr());
+                        } else {
+                                line = String::sprintf("  (no video)  %s",
+                                        md.frameRate().toString().cstr());
+                        }
+                        fprintf(stdout, "%s\n", line.cstr());
+                }
+                MediaIO::printDeviceInfo(probeName, probeCfg);
+                return 0;
+        }
+
         // --- Build source ---
         MediaIO *source = buildSource(opts.source);
         if(source == nullptr) return 1;

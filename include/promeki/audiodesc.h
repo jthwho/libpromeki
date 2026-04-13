@@ -466,6 +466,14 @@ class AudioDesc {
                 }
 
                 /**
+                 * @brief Returns the short name of the data type (e.g. "PCMI_S16LE").
+                 * @return The format name string.
+                 */
+                const String &dataTypeName() const {
+                        return _format->name;
+                }
+
+                /**
                  * @brief Sets the data type.
                  * @param val The new DataType value.
                  */
