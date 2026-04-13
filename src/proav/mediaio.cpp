@@ -792,6 +792,8 @@ Error MediaIO::open(Mode mode) {
                 _canSeek = cmdOpen->canSeek;
                 _frameCount = cmdOpen->frameCount;
                 _currentFrame = 0;
+                _originTime = TimeStamp::now();
+                _writeFrameCount = 0;
                 _step = cmdOpen->defaultStep;
                 _defaultSeekMode = cmdOpen->defaultSeekMode;
                 if(!_prefetchDepthExplicit) {
@@ -976,6 +978,46 @@ Error MediaIO::readFrame(Frame::Ptr &frame, bool block) {
                                 frame.modify()->metadata().set(
                                         Metadata::MediaDescChanged, true);
                         }
+                        // Auto-stamp MediaTimeStamp on each essence if the
+                        // backend did not provide one.
+                        {
+                                int64_t ns = _frameRate.cumulativeTicks(
+                                        INT64_C(1000000000), _currentFrame);
+                                TimeStamp synTs = _originTime +
+                                        Duration::fromNanoseconds(ns);
+                                MediaTimeStamp synMts(synTs,
+                                        ClockDomain::Synthetic);
+                                for(size_t i = 0;
+                                    i < frame->imageList().size(); ++i) {
+                                        const Image::Ptr &img =
+                                                frame->imageList()[i];
+                                        if(img.isValid() &&
+                                           !img->metadata()
+                                                .get(Metadata::MediaTimeStamp)
+                                                .get<MediaTimeStamp>()
+                                                .isValid()) {
+                                                frame.modify()->imageList()[i]
+                                                        .modify()->metadata()
+                                                        .set(Metadata::MediaTimeStamp,
+                                                             synMts);
+                                        }
+                                }
+                                for(size_t i = 0;
+                                    i < frame->audioList().size(); ++i) {
+                                        const Audio::Ptr &aud =
+                                                frame->audioList()[i];
+                                        if(aud.isValid() &&
+                                           !aud->metadata()
+                                                .get(Metadata::MediaTimeStamp)
+                                                .get<MediaTimeStamp>()
+                                                .isValid()) {
+                                                frame.modify()->audioList()[i]
+                                                        .modify()->metadata()
+                                                        .set(Metadata::MediaTimeStamp,
+                                                             synMts);
+                                        }
+                                }
+                        }
                 }
         } else if(cmdRead->result == Error::EndOfFile) {
                 // Latch EOF — stop submitting prefetches.  Drain any
@@ -1017,6 +1059,47 @@ Error MediaIO::writeFrame(const Frame::Ptr &frame, bool block) {
         auto *cmdWrite = new MediaIOCommandWrite();
         cmdWrite->frame = frame;
         MediaIOCommand::Ptr cmd = MediaIOCommand::Ptr::takeOwnership(cmdWrite);
+
+        // Auto-stamp MediaTimeStamp on each essence if the caller
+        // did not provide one.
+        if(cmdWrite->frame.isValid()) {
+                int64_t ns = _frameRate.cumulativeTicks(
+                        INT64_C(1000000000), _writeFrameCount);
+                TimeStamp synTs = _originTime +
+                        Duration::fromNanoseconds(ns);
+                MediaTimeStamp synMts(synTs, ClockDomain::Synthetic);
+                for(size_t i = 0;
+                    i < cmdWrite->frame->imageList().size(); ++i) {
+                        const Image::Ptr &img =
+                                cmdWrite->frame->imageList()[i];
+                        if(img.isValid() &&
+                           !img->metadata()
+                                .get(Metadata::MediaTimeStamp)
+                                .get<MediaTimeStamp>()
+                                .isValid()) {
+                                cmdWrite->frame.modify()->imageList()[i]
+                                        .modify()->metadata()
+                                        .set(Metadata::MediaTimeStamp,
+                                             synMts);
+                        }
+                }
+                for(size_t i = 0;
+                    i < cmdWrite->frame->audioList().size(); ++i) {
+                        const Audio::Ptr &aud =
+                                cmdWrite->frame->audioList()[i];
+                        if(aud.isValid() &&
+                           !aud->metadata()
+                                .get(Metadata::MediaTimeStamp)
+                                .get<MediaTimeStamp>()
+                                .isValid()) {
+                                cmdWrite->frame.modify()->audioList()[i]
+                                        .modify()->metadata()
+                                        .set(Metadata::MediaTimeStamp,
+                                             synMts);
+                        }
+                }
+                _writeFrameCount++;
+        }
 
         // Enqueue stamp — runs on the user thread right before the
         // command is handed to the strand.  This is the one stamp the

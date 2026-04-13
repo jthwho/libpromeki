@@ -43,6 +43,7 @@ All media work happens in the `MediaIO` framework and its backends. The legacy `
 | [proav_nodes.md](proav_nodes.md) | 4B | MediaIO backends (all complete: TPG, ImageFile, AudioFile, QuickTime, Converter, Rtp, SDL) |
 | [proav_dsp.md](proav_dsp.md) | 4C | DSP and effects (future, as Converter subclasses) |
 | [proav_optimization.md](proav_optimization.md) | 4D | Network optimization (sendmmsg, kernel pacing, PacketTransport) |
+| [proav_timestamps.md](proav_timestamps.md) | 4E | MediaTimeStamp, ClockDomain, EUI64, PTP/SDP integration, auto-stamping |
 | [tui.md](tui.md) | 5 | TUI widget completion |
 | [music_theory.md](music_theory.md) | 6A, 6B | Core music theory objects |
 | [music_midi.md](music_midi.md) | 6C, 6D | MIDI I/O and arrangement |

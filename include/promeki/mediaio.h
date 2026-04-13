@@ -31,6 +31,8 @@
 #include <promeki/uuid.h>
 #include <promeki/benchmark.h>
 #include <promeki/ratetracker.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/clockdomain.h>
 
 /**
  * @brief Macro to register a MediaIO backend at static initialization time.
@@ -1559,6 +1561,8 @@ class MediaIO : public ObjectBase {
                 bool                        _canSeek = false;
                 int64_t                     _frameCount = 0;
                 int64_t                     _currentFrame = 0;
+                TimeStamp                   _originTime;
+                int64_t                     _writeFrameCount = 0;
                 SeekMode                    _defaultSeekMode = SeekExact;
 
                 // Pre-open settings (passed into CmdOpen)

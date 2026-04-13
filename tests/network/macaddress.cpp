@@ -10,6 +10,10 @@
 #include <promeki/ipv4address.h>
 #include <promeki/ipv6address.h>
 #include <promeki/textstream.h>
+#include <promeki/variant.h>
+#include <promeki/datastream.h>
+#include <promeki/buffer.h>
+#include <promeki/bufferiodevice.h>
 
 using namespace promeki;
 
@@ -242,5 +246,39 @@ TEST_CASE("MacAddress") {
                         ts << mac;
                 }
                 CHECK(str == "01:23:45:67:89:ab");
+        }
+
+        SUBCASE("Variant round-trip") {
+                MacAddress original(0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF);
+                Variant v = original;
+                CHECK(v.type() == Variant::TypeMacAddress);
+
+                MacAddress retrieved = v.get<MacAddress>();
+                CHECK(retrieved == original);
+
+                String s = v.get<String>();
+                CHECK(s == "aa:bb:cc:dd:ee:ff");
+        }
+
+        SUBCASE("DataStream round-trip") {
+                MacAddress original(0x01, 0x23, 0x45, 0x67, 0x89, 0xAB);
+
+                Buffer buf(4096);
+                BufferIODevice dev(&buf);
+                dev.open(IODevice::ReadWrite);
+
+                {
+                        DataStream ws = DataStream::createWriter(&dev);
+                        ws << original;
+                        CHECK(ws.status() == DataStream::Ok);
+                }
+                dev.seek(0);
+                {
+                        DataStream rs = DataStream::createReader(&dev);
+                        MacAddress loaded;
+                        rs >> loaded;
+                        CHECK(rs.status() == DataStream::Ok);
+                        CHECK(loaded == original);
+                }
         }
 }

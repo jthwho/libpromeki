@@ -698,6 +698,7 @@ set(PROMEKI_SOURCES
     src/core/bufferpool.cpp
     src/core/char.cpp
     src/core/ciepoint.cpp
+    src/core/clockdomain.cpp
     src/core/cmdlineparser.cpp
     src/core/color.cpp
     src/core/colormodel.cpp
@@ -731,6 +732,7 @@ set(PROMEKI_SOURCES
     src/core/map.cpp
     src/core/matrix.cpp
     src/core/matrix3x3.cpp
+    src/core/mediatimestamp.cpp
     src/core/md5.cpp
     src/core/mempool.cpp
     src/core/memspace.cpp
@@ -807,6 +809,7 @@ if(PROMEKI_ENABLE_NETWORK)
         src/network/abstractsocket.cpp
         src/network/ipv4address.cpp
         src/network/ipv6address.cpp
+        src/network/eui64.cpp
         src/network/loopbacktransport.cpp
         src/network/macaddress.cpp
         src/network/multicastmanager.cpp
@@ -1387,6 +1390,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/colormodel.cpp
         tests/configoption.cpp
         tests/crashhandler.cpp
+        tests/clockdomain.cpp
         tests/crc.cpp
         tests/datastream.cpp
         tests/datastream_include_chain.cpp
@@ -1423,6 +1427,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/map.cpp
         tests/matrix.cpp
         tests/matrix3x3.cpp
+        tests/mediatimestamp.cpp
         tests/md5.cpp
         tests/mempool.cpp
         tests/memspace.cpp
@@ -1487,6 +1492,7 @@ if(PROMEKI_BUILD_TESTS)
             tests/network/abstractsocket.cpp
             tests/network/ipv4address.cpp
             tests/network/ipv6address.cpp
+            tests/network/eui64.cpp
             tests/network/loopbacktransport.cpp
             tests/network/macaddress.cpp
             tests/network/multicastmanager.cpp

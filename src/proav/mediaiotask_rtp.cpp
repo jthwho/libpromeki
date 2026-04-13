@@ -25,6 +25,9 @@
 #include <promeki/sdpsession.h>
 #include <promeki/pixeldesc.h>
 #include <promeki/logger.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/clockdomain.h>
+#include <promeki/eui64.h>
 #include <promeki/file.h>
 #include <promeki/filepath.h>
 #include <promeki/json.h>
@@ -841,6 +844,27 @@ void MediaIOTask_Rtp::buildSdp() {
                 // has zero wire impact but unblocks the receiver's
                 // socket setup.
                 md.setAttribute("rtcp-mux", String());
+                // Write clock reference attributes when the stream has
+                // an absolute (PTP/GPS) clock domain.
+                if(s.clockDomain.isValid() &&
+                   s.clockDomain.isCrossMachineComparable()) {
+                        // Extract profile from domain name
+                        // (e.g. "ptp.IEEE1588-2008" -> "IEEE1588-2008")
+                        String domainName = s.clockDomain.name();
+                        String tsRefClk;
+                        if(domainName.startsWith("ptp.")) {
+                                String profile = domainName.mid(4);
+                                tsRefClk = String("ptp=") + profile;
+                                if(!s.ptpGrandmaster.isNull()) {
+                                        tsRefClk += String(":") +
+                                                s.ptpGrandmaster.toString();
+                                }
+                        }
+                        if(!tsRefClk.isEmpty()) {
+                                md.setAttribute("ts-refclk", tsRefClk);
+                                md.setAttribute("mediaclk", "direct=0");
+                        }
+                }
                 md.setConnectionAddress(s.destination.address().toString());
                 _sdpSession.addMediaDescription(md);
         };
@@ -950,6 +974,47 @@ Error MediaIOTask_Rtp::applySdp(const SdpSession &sdp,
                                         cfg.set(MediaConfig::AudioChannels,
                                                 static_cast<int>(rm.channels));
                                 }
+                        }
+                }
+
+                // Parse ts-refclk into a ClockDomain for this stream.
+                // RFC 7273 defines the attribute; ST 2110-10 mandates
+                // ptp=IEEE1588-2008 or ptp=IEEE1588-2019.  If absent,
+                // fall back to SystemMonotonic (library wall clock).
+                {
+                        Stream *stream = nullptr;
+                        if(md.mediaType() == "video")       stream = &_video;
+                        else if(md.mediaType() == "audio")  stream = &_audio;
+                        else                                 stream = &_data;
+                        String tsRefClk = md.attribute("ts-refclk");
+                        if(!tsRefClk.isEmpty() && tsRefClk.startsWith("ptp=")) {
+                                // "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11"
+                                // or "ptp=IEEE1588-2008" (no grandmaster ID)
+                                // Domain identity is the PTP profile; the
+                                // grandmaster is per-essence metadata that can
+                                // change due to BMCA failover.
+                                String ptpValue = tsRefClk.split("=")[1];
+                                String profile = ptpValue;
+                                StringList parts = ptpValue.split(":");
+                                if(parts.size() == 2) {
+                                        profile = parts[0];
+                                        auto [gm, gmErr] = EUI64::fromString(parts[1]);
+                                        if(gmErr.isOk()) {
+                                                stream->ptpGrandmaster = gm;
+                                        }
+                                }
+                                ClockDomain::ID cdId = ClockDomain::registerDomain(
+                                        String("ptp.") + profile,
+                                        String("PTP reference clock (") + tsRefClk + ")",
+                                        ClockEpoch::Absolute);
+                                stream->clockDomain = ClockDomain(cdId);
+                        } else if(!tsRefClk.isEmpty() && tsRefClk.startsWith("local")) {
+                                stream->clockDomain = ClockDomain(
+                                        ClockDomain::registerDomain("local",
+                                                "SDP ts-refclk:local",
+                                                ClockEpoch::Correlated));
+                        } else {
+                                stream->clockDomain = ClockDomain::SystemMonotonic;
                         }
                 }
 
@@ -1102,6 +1167,11 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                 }
         }
 
+        // Capture per-frame RTP metadata before unpack clears the list.
+        const uint32_t frameRtpTimestamp = _video.reasmTimestamp;
+        const int32_t  framePacketCount  = static_cast<int32_t>(
+                _video.reasmPackets.size());
+
         // Ask the payload class to reassemble the bitstream.
         Buffer reassembled = _video.payload->unpack(_video.reasmPackets);
         _video.reasmPackets.clear();
@@ -1247,6 +1317,26 @@ void MediaIOTask_Rtp::emitVideoFrame() {
         Frame *f = frame.modify();
         f->imageList().pushToBack(Image::Ptr::create(std::move(img)));
 
+        // Stamp the Image with RTP and capture metadata.
+        // CaptureTime is when the library saw the first packet of
+        // this frame (rxFrameStartTime); MediaTimeStamp uses the
+        // same value.  The raw RTP timestamp and packet count are
+        // recorded for protocol-level diagnostics.
+        {
+                MediaTimeStamp capMts(_video.rxFrameStartTime,
+                        _video.clockDomain);
+                Image::Ptr &imgPtr = f->imageList().back();
+                Metadata &imgMeta = imgPtr.modify()->metadata();
+                imgMeta.set(Metadata::CaptureTime, capMts);
+                imgMeta.set(Metadata::MediaTimeStamp, capMts);
+                imgMeta.set(Metadata::RtpTimestamp, frameRtpTimestamp);
+                imgMeta.set(Metadata::RtpPacketCount, framePacketCount);
+                if(!_video.ptpGrandmaster.isNull()) {
+                        imgMeta.set(Metadata::PtpGrandmasterId,
+                                _video.ptpGrandmaster);
+                }
+        }
+
         // Aggregate audio: drain one frame's worth of samples from
         // the FIFO that the audio RX thread is filling.  If the
         // samples haven't arrived yet, wait up to the configured
@@ -1264,6 +1354,15 @@ void MediaIOTask_Rtp::emitVideoFrame() {
                                 audio, needed,
                                 static_cast<unsigned int>(_readerAgg.audioTimeoutMs));
                         if(got > 0) {
+                                ClockDomain audioCd = _audio.clockDomain.isValid()
+                                        ? _audio.clockDomain
+                                        : _video.clockDomain;
+                                audio.metadata().set(Metadata::CaptureTime,
+                                        MediaTimeStamp(_video.rxFrameStartTime,
+                                                audioCd));
+                                audio.metadata().set(Metadata::MediaTimeStamp,
+                                        MediaTimeStamp(_video.rxFrameStartTime,
+                                                audioCd));
                                 f->audioList().pushToBack(
                                         Audio::Ptr::create(std::move(audio)));
                         }
@@ -1344,6 +1443,10 @@ void MediaIOTask_Rtp::onAudioPacket(const RtpPacket &pkt) {
                         Audio audio(_audio.readerAudioDesc, spf);
                         auto [got, popErr] = _audioState.fifo.pop(audio, spf);
                         if(popErr.isError() || got == 0) break;
+                        MediaTimeStamp capMts(TimeStamp::now(),
+                                _audio.clockDomain);
+                        audio.metadata().set(Metadata::CaptureTime, capMts);
+                        audio.metadata().set(Metadata::MediaTimeStamp, capMts);
                         _audio.framesReceived++;
                         Frame::Ptr frame = Frame::Ptr::create();
                         frame.modify()->audioList().pushToBack(
@@ -1380,6 +1483,11 @@ void MediaIOTask_Rtp::emitDataMessage() {
                 _data.reasmHasTimestamp = false;
                 return;
         }
+        // Capture per-message RTP metadata before unpack clears the list.
+        const uint32_t dataRtpTimestamp = _data.reasmTimestamp;
+        const int32_t  dataPacketCount  = static_cast<int32_t>(
+                _data.reasmPackets.size());
+
         Buffer bytes = _data.payload->unpack(_data.reasmPackets);
         _data.reasmPackets.clear();
         _data.reasmHasTimestamp = false;
@@ -1395,6 +1503,13 @@ void MediaIOTask_Rtp::emitDataMessage() {
         }
         Metadata m = Metadata::fromJson(obj);
         _data.framesReceived++;
+
+        // Stamp the metadata with capture and RTP timing.
+        MediaTimeStamp capMts(TimeStamp::now(),
+                _data.clockDomain);
+        m.set(Metadata::CaptureTime, capMts);
+        m.set(Metadata::RtpTimestamp, dataRtpTimestamp);
+        m.set(Metadata::RtpPacketCount, dataPacketCount);
 
         // When video is active, stash metadata so emitVideoFrame
         // can merge it into combined frames.  When video is NOT

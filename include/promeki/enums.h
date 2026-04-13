@@ -873,6 +873,75 @@ inline const SrcQuality SrcQuality::SincFastest   { 2 };
 inline const SrcQuality SrcQuality::Linear        { 3 };
 inline const SrcQuality SrcQuality::ZeroOrderHold { 4 };
 
+/**
+ * @brief Well-known Enum type for clock domain epoch behaviour.
+ *
+ * Describes whether timestamps from a @ref ClockDomain are comparable
+ * across independent streams and/or across machines.
+ *
+ * - @c PerStream  — each stream has its own origin.  Timestamps are
+ *   only meaningful within a single stream; cross-stream subtraction
+ *   is undefined without an external synchronisation event.
+ * - @c Correlated — all streams in this domain share a common epoch
+ *   within a process or machine (e.g. CLOCK_MONOTONIC).  Subtracting
+ *   timestamps from different streams on the same machine yields a
+ *   meaningful offset.
+ * - @c Absolute   — the epoch is a defined real-world time reference
+ *   (e.g. PTP/TAI, GPS).  Timestamps from different machines are
+ *   directly comparable.
+ */
+class ClockEpoch : public TypedEnum<ClockEpoch> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("ClockEpoch",
+                        {
+                                { "PerStream",  0 },
+                                { "Correlated", 1 },
+                                { "Absolute",   2 }
+                        },
+                        1);  // default: Correlated
+
+                using TypedEnum<ClockEpoch>::TypedEnum;
+
+                static const ClockEpoch PerStream;
+                static const ClockEpoch Correlated;
+                static const ClockEpoch Absolute;
+};
+
+inline const ClockEpoch ClockEpoch::PerStream  { 0 };
+inline const ClockEpoch ClockEpoch::Correlated { 1 };
+inline const ClockEpoch ClockEpoch::Absolute   { 2 };
+
+/**
+ * @brief Well-known Enum type for EUI-64 string formats.
+ *
+ * Selects the notation used by EUI64::toString(EUI64Format).
+ *
+ * - @c OctetHyphen  — `"aa-bb-cc-dd-ee-ff-00-11"` (PTP SDP convention).
+ * - @c OctetColon   — `"aa:bb:cc:dd:ee:ff:00:11"`.
+ * - @c IPv6         — `"aabb:ccdd:eeff:0011"` (four colon-separated
+ *                     16-bit groups, used in IPv6 interface identifiers).
+ */
+class EUI64Format : public TypedEnum<EUI64Format> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("EUI64Format",
+                        {
+                                { "OctetHyphen", 0 },
+                                { "OctetColon",  1 },
+                                { "IPv6",        2 }
+                        },
+                        0);  // default: OctetHyphen
+
+                using TypedEnum<EUI64Format>::TypedEnum;
+
+                static const EUI64Format OctetHyphen;
+                static const EUI64Format OctetColon;
+                static const EUI64Format IPv6;
+};
+
+inline const EUI64Format EUI64Format::OctetHyphen { 0 };
+inline const EUI64Format EUI64Format::OctetColon  { 1 };
+inline const EUI64Format EUI64Format::IPv6        { 2 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END

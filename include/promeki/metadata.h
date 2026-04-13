@@ -8,8 +8,12 @@
 #pragma once
 
 #include <promeki/namespace.h>
+#include <promeki/config.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/sharedptr.h>
+#if PROMEKI_ENABLE_NETWORK
+#include <promeki/eui64.h>
+#endif
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -233,17 +237,63 @@ class Metadata : public VariantDatabase<MetadataTag> {
                                 .setMin(int64_t(0))
                                 .setDescription("Frame sequence number within a stream."));
 
-                /// @brief Wall-clock timestamp of when a frame was captured (TimeStamp).
+                /// @brief Timestamp of when the library or device captured this data.
+                ///
+                /// Records when the frame was first observed by the library
+                /// or the device it talks to.  For live capture this is
+                /// typically SystemMonotonic; for network streams it is the
+                /// moment the first packet arrived.
                 static inline const ID CaptureTime = declareID("CaptureTime",
-                        VariantSpec().setType(Variant::TypeTimeStamp)
-                                .setDefault(TimeStamp())
-                                .setDescription("Wall-clock timestamp when frame was captured."));
+                        VariantSpec().setType(Variant::TypeMediaTimeStamp)
+                                .setDefault(promeki::MediaTimeStamp())
+                                .setDescription("Timestamp when the library or device captured this data."));
 
-                /// @brief Timestamp at which a frame should be presented (TimeStamp).
+                /// @brief Timestamp at which this essence should be presented.
+                ///
+                /// Set by downstream scheduling or pacing logic to indicate
+                /// when a frame should be rendered or transmitted.
                 static inline const ID PresentationTime = declareID("PresentationTime",
-                        VariantSpec().setType(Variant::TypeTimeStamp)
-                                .setDefault(TimeStamp())
-                                .setDescription("Timestamp when frame should be presented."));
+                        VariantSpec().setType(Variant::TypeMediaTimeStamp)
+                                .setDefault(promeki::MediaTimeStamp())
+                                .setDescription("Timestamp when this essence should be presented."));
+
+                /// @brief Clock-domain-aware timestamp for media timing.
+                static inline const ID MediaTimeStamp = declareID("MediaTimeStamp",
+                        VariantSpec().setType(Variant::TypeMediaTimeStamp)
+                                .setDefault(promeki::MediaTimeStamp())
+                                .setDescription("Clock-domain-aware timestamp for media timing."));
+
+                /// @brief RTP timestamp from the packet header (uint32_t).
+                ///
+                /// The raw 32-bit RTP timestamp carried in the packet(s)
+                /// that delivered this essence.  Clock rate is stream-defined
+                /// (typically 90 kHz for video).
+                static inline const ID RtpTimestamp = declareID("RtpTimestamp",
+                        VariantSpec().setType(Variant::TypeU32)
+                                .setDefault(uint32_t(0))
+                                .setDescription("RTP timestamp from the packet header."));
+
+                /// @brief Number of RTP packets that composed this essence (int32_t).
+                static inline const ID RtpPacketCount = declareID("RtpPacketCount",
+                        VariantSpec().setType(Variant::TypeS32)
+                                .setDefault(int32_t(0))
+                                .setMin(int32_t(0))
+                                .setDescription("Number of RTP packets that composed this essence."));
+
+#if PROMEKI_ENABLE_NETWORK
+                /// @brief PTP grandmaster clock identity (EUI-64).
+                static inline const ID PtpGrandmasterId = declareID("PtpGrandmasterId",
+                        VariantSpec().setType(Variant::TypeEUI64)
+                                .setDefault(EUI64())
+                                .setDescription("PTP grandmaster clock identity (EUI-64)."));
+
+                /// @brief PTP domain number (0-127).
+                static inline const ID PtpDomainNumber = declareID("PtpDomainNumber",
+                        VariantSpec().setType(Variant::TypeU8)
+                                .setDefault(uint8_t(0))
+                                .setMax(uint8_t(127))
+                                .setDescription("PTP domain number (0-127)."));
+#endif
 
                 /// @brief Number of times this frame was repeated due to underrun (int).
                 static inline const ID FrameRepeated = declareID("FrameRepeated",

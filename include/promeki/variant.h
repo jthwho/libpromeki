@@ -14,6 +14,7 @@
 #include <promeki/util.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/datetime.h>
 #include <promeki/size2d.h>
 #include <promeki/uuid.h>
@@ -33,6 +34,8 @@
 #if PROMEKI_ENABLE_NETWORK
 #include <promeki/socketaddress.h>
 #include <promeki/sdpsession.h>
+#include <promeki/macaddress.h>
+#include <promeki/eui64.h>
 #endif
 #include <nlohmann/json.hpp>
 
@@ -89,11 +92,15 @@ PROMEKI_NAMESPACE_BEGIN
  * |-------------------|---------------------|
  * | TypeSocketAddress | `SocketAddress`     |
  * | TypeSdpSession    | `SdpSession`        |
+ * | TypeMacAddress    | `MacAddress`        |
+ * | TypeEUI64         | `EUI64`             |
  */
 #if PROMEKI_ENABLE_NETWORK
 #       define PROMEKI_VARIANT_TYPES_NETWORK    \
                 X(TypeSocketAddress, SocketAddress) \
-                X(TypeSdpSession, SdpSession)
+                X(TypeSdpSession, SdpSession) \
+                X(TypeMacAddress, MacAddress) \
+                X(TypeEUI64, EUI64)
 #else
 #       define PROMEKI_VARIANT_TYPES_NETWORK
 #endif
@@ -114,6 +121,7 @@ PROMEKI_NAMESPACE_BEGIN
         X(TypeString, String)           \
         X(TypeDateTime, DateTime)       \
         X(TypeTimeStamp, TimeStamp)     \
+        X(TypeMediaTimeStamp, MediaTimeStamp) \
         X(TypeSize2D, Size2Du32)           \
         X(TypeUUID, UUID)               \
         X(TypeUMID, UMID)               \
@@ -397,6 +405,16 @@ template <typename... Types> class VariantImpl {
                                         // EnumList value that is already in the Variant.
                                         (void)arg;
 
+                                } else if constexpr (std::is_same_v<To, MediaTimeStamp>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [mts, parseErr] = MediaTimeStamp::fromString(arg);
+                                                if(parseErr.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return MediaTimeStamp();
+                                                }
+                                                return mts;
+                                        }
+
                                 } else if constexpr (std::is_same_v<To, String>) {
                                         if constexpr (std::is_same_v<From, bool>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, int8_t>) return String::number(arg);
@@ -411,6 +429,7 @@ template <typename... Types> class VariantImpl {
                                         if constexpr (std::is_same_v<From, double>) return String::number(arg);
                                         if constexpr (std::is_same_v<From, DateTime>) return arg.toString();
                                         if constexpr (std::is_same_v<From, TimeStamp>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, MediaTimeStamp>) return arg.toString();
                                         if constexpr (std::is_same_v<From, Size2Du32>) return arg.toString();
                                         if constexpr (std::is_same_v<From, UUID>) return arg.toString();
                                         if constexpr (std::is_same_v<From, UMID>) return arg.toString();
@@ -425,6 +444,8 @@ template <typename... Types> class VariantImpl {
 #if PROMEKI_ENABLE_NETWORK
                                         if constexpr (std::is_same_v<From, SocketAddress>) return arg.toString();
                                         if constexpr (std::is_same_v<From, SdpSession>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, MacAddress>) return arg.toString();
+                                        if constexpr (std::is_same_v<From, EUI64>) return arg.toString();
 #endif
 
                                 }
@@ -458,6 +479,24 @@ template <typename... Types> class VariantImpl {
                                                 }
                                                 return sdp;
                                         }
+                                } else if constexpr (std::is_same_v<To, MacAddress>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [mac, parseErr] = MacAddress::fromString(arg);
+                                                if(parseErr.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return MacAddress{};
+                                                }
+                                                return mac;
+                                        }
+                                } else if constexpr (std::is_same_v<To, EUI64>) {
+                                        if constexpr (std::is_same_v<From, String>) {
+                                                auto [eui, parseErr] = EUI64::fromString(arg);
+                                                if(parseErr.isError()) {
+                                                        if(err != nullptr) *err = Error::Invalid;
+                                                        return EUI64{};
+                                                }
+                                                return eui;
+                                        }
                                 }
 #endif
                                 if(err != nullptr) *err = Error::Invalid;
@@ -490,6 +529,7 @@ template <typename... Types> class VariantImpl {
                                 case TypeString:
                                 case TypeDateTime:
                                 case TypeTimeStamp:
+                                case TypeMediaTimeStamp:
                                 case TypeSize2D:
                                 case TypeUUID:
                                 case TypeUMID:
@@ -507,6 +547,8 @@ template <typename... Types> class VariantImpl {
 #if PROMEKI_ENABLE_NETWORK
                                 case TypeSocketAddress:
                                 case TypeSdpSession:
+                                case TypeMacAddress:
+                                case TypeEUI64:
 #endif
                                         return get<String>();
                                         break;

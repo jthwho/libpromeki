@@ -29,6 +29,8 @@
 #include <promeki/metadata.h>
 #include <promeki/timestamp.h>
 #include <promeki/duration.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/clockdomain.h>
 #include <promeki/logger.h>
 #include <promeki/thread.h>
 #include <promeki/dir.h>
@@ -38,6 +40,19 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_REGISTER_MEDIAIO(MediaIOTask_V4L2)
 PROMEKI_DEBUG(MediaIOTask_V4L2)
+
+// Clock domains for V4L2 video and ALSA audio timestamps.
+static const ClockDomain::ID _v4l2KernelClockID =
+        ClockDomain::registerDomain("v4l2.kernel",
+                "V4L2 CLOCK_MONOTONIC kernel video capture timestamp",
+                ClockEpoch::Correlated);
+static const ClockDomain::ID _alsaClockID =
+        ClockDomain::registerDomain("alsa.hardware",
+                "ALSA PCM hardware audio capture clock",
+                ClockEpoch::PerStream);
+
+static const ClockDomain V4L2KernelClock(_v4l2KernelClockID);
+static const ClockDomain AlsaClock(_alsaClockID);
 
 // ============================================================================
 // V4L2 ↔ PixelDesc mapping
@@ -1093,7 +1108,9 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                 }
 
                 Metadata imgMeta;
-                imgMeta.set(Metadata::CaptureTime, captureTime);
+                MediaTimeStamp captureMts(captureTime, V4L2KernelClock);
+                imgMeta.set(Metadata::CaptureTime, captureMts);
+                imgMeta.set(Metadata::MediaTimeStamp, captureMts);
 
                 Image img = Image::fromBuffer(imgBuf,
                                               _imageDesc.size().width(),
@@ -1378,7 +1395,8 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
         // frame-to-frame timing for the periodic debug report.
         Variant ctVar = imgPtr->metadata().get(Metadata::CaptureTime);
         if(ctVar.isValid()) {
-                TimeStamp ct = ctVar.get<TimeStamp>();
+                MediaTimeStamp ctMts = ctVar.get<MediaTimeStamp>();
+                TimeStamp ct = ctMts.timeStamp();
                 if(_firstCaptureFrame < 0) {
                         _firstCaptureTime = ct;
                         _firstCaptureFrame = _frameCount;
@@ -1434,6 +1452,16 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                                 return Error::Timeout;
                         }
                         if(err.isError()) return err;
+                        // When drift correction is active the resampler
+                        // has locked audio timing to the video clock, so
+                        // the samples are effectively in the V4L2 domain.
+                        // Without drift correction the ALSA hardware clock
+                        // is the authoritative source.
+                        audio.metadata().set(Metadata::MediaTimeStamp,
+                                MediaTimeStamp(_lastCaptureTime,
+                                        _audioRing.driftCorrectionEnabled()
+                                                ? V4L2KernelClock
+                                                : AlsaClock));
                         frame.modify()->audioList().pushToBack(
                                 Audio::Ptr::create(audio));
                 }

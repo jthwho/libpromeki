@@ -495,7 +495,8 @@
  *         auto [frame, err] = _captureQueue.pop();
  *         if(err.isError()) return err;
  *         cmd.frame = frame;
- *         cmd.frame.modify()->metadata().set(Metadata::CaptureTime, TimeStamp::now());
+ *         cmd.frame.modify()->metadata().set(Metadata::CaptureTime,
+                 MediaTimeStamp(TimeStamp::now(), ClockDomain::SystemMonotonic));
  *         return Error::Ok;
  *     }
  *

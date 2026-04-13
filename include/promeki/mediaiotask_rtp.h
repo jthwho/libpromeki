@@ -23,6 +23,8 @@
 #include <promeki/waitcondition.h>
 #include <promeki/string.h>
 #include <promeki/timestamp.h>
+#include <promeki/clockdomain.h>
+#include <promeki/eui64.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -376,6 +378,8 @@ class MediaIOTask_Rtp : public MediaIOTask {
                         String              rtpmap;       ///< @brief SDP a=rtpmap:... value
                         String              fmtp;         ///< @brief SDP a=fmtp:... value, optional
                         bool                active = false;
+                        ClockDomain         clockDomain;       ///< @brief Clock domain derived from SDP ts-refclk.
+                        EUI64               ptpGrandmaster;    ///< @brief PTP grandmaster ID from SDP ts-refclk.
 
                         // Reader-mode per-stream reassembly state.
                         ImageDesc           readerImageDesc;

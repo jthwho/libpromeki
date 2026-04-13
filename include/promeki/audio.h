@@ -131,6 +131,22 @@ class Audio {
                 }
 
                 /**
+                 * @brief Returns a const reference to the audio metadata.
+                 * @return The metadata.
+                 */
+                const Metadata &metadata() const {
+                        return _desc.metadata();
+                }
+
+                /**
+                 * @brief Returns a mutable reference to the audio metadata.
+                 * @return The metadata.
+                 */
+                Metadata &metadata() {
+                        return _desc.metadata();
+                }
+
+                /**
                  * @brief Returns the number of samples, irrespective of the channel count.
                  * @return The number of samples.
                  */

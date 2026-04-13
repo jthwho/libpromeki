@@ -27,6 +27,9 @@ PROMEKI_NAMESPACE_BEGIN
 
 class JsonObject;
 class JsonArray;
+class MediaTimeStamp;
+class MacAddress;
+class EUI64;
 
 /**
  * @brief Binary stream for structured, portable serialization.
@@ -228,7 +231,10 @@ class DataStream {
                         TypeImageDesc   = 0x34, ///< @brief ImageDesc (size + pixel desc + line pad + align + interlaced + metadata)
                         TypeMediaDesc   = 0x35, ///< @brief MediaDesc (frame rate + image list + audio list + metadata)
                         TypeUMID        = 0x36, ///< @brief UMID (uint8 length = 32 or 64, then N raw bytes)
-                        TypeEnumList    = 0x37  ///< @brief EnumList (type name + tagged uint32 count + N tagged int32 values)
+                        TypeEnumList    = 0x37, ///< @brief EnumList (type name + tagged uint32 count + N tagged int32 values)
+                        TypeMediaTimeStamp = 0x38, ///< @brief MediaTimeStamp (length-prefixed string round-trip)
+                        TypeMacAddress     = 0x39, ///< @brief MacAddress (length-prefixed string round-trip)
+                        TypeEUI64          = 0x3A  ///< @brief EUI64 (length-prefixed string round-trip)
                 };
 
                 /** @brief Current wire format version. */
@@ -429,6 +435,12 @@ class DataStream {
                 DataStream &operator<<(const Enum &val);
                 /** @brief Writes an EnumList as its type name + tagged count + tagged int32 values. */
                 DataStream &operator<<(const EnumList &val);
+                /** @brief Writes a MediaTimeStamp as a length-prefixed string. */
+                DataStream &operator<<(const MediaTimeStamp &val);
+                /** @brief Writes a MacAddress as a length-prefixed string. */
+                DataStream &operator<<(const MacAddress &val);
+                /** @brief Writes an EUI64 as a length-prefixed string. */
+                DataStream &operator<<(const EUI64 &val);
                 /** @brief Writes a StringList as uint32 count + length-prefixed elements. */
                 DataStream &operator<<(const StringList &val);
 
@@ -497,6 +509,12 @@ class DataStream {
                 DataStream &operator>>(Enum &val);
                 /** @brief Reads an EnumList from type name + tagged count + tagged int32 values. */
                 DataStream &operator>>(EnumList &val);
+                /** @brief Reads a MediaTimeStamp from a length-prefixed string. */
+                DataStream &operator>>(MediaTimeStamp &val);
+                /** @brief Reads a MacAddress from a length-prefixed string. */
+                DataStream &operator>>(MacAddress &val);
+                /** @brief Reads an EUI64 from a length-prefixed string. */
+                DataStream &operator>>(EUI64 &val);
                 /** @brief Reads a StringList from tagged count + length-prefixed elements. */
                 DataStream &operator>>(StringList &val);
 

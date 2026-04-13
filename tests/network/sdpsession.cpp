@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include <doctest/doctest.h>
 #include <promeki/sdpsession.h>
+#include <promeki/clockdomain.h>
+#include <promeki/eui64.h>
+#include <promeki/stringlist.h>
 
 using namespace promeki;
 
@@ -316,6 +319,107 @@ TEST_CASE("SdpSession attribute insertion order in toString") {
                 CHECK(attrs[1].first() == "ptime");
                 CHECK(attrs[2].first() == "mediaclk");
                 CHECK(attrs[3].first() == "ts-refclk");
+        }
+}
+
+TEST_CASE("SdpSession ts-refclk semantic interpretation") {
+        // Simulates the logic MediaIOTask_Rtp::applySdp uses to
+        // convert the ts-refclk attribute into a ClockDomain and
+        // PTP grandmaster EUI-64.
+
+        SUBCASE("PTP with grandmaster") {
+                SdpMediaDescription md;
+                md.setMediaType("video");
+                md.setPort(5004);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(96);
+                md.setAttribute("ts-refclk",
+                        "ptp=IEEE1588-2008:00-1A-2B-FF-FE-3C-4D-5E");
+                md.setAttribute("mediaclk", "direct=0");
+
+                // Parse ts-refclk the same way applySdp does
+                String tsRefClk = md.attribute("ts-refclk");
+                REQUIRE(tsRefClk.startsWith("ptp="));
+                String ptpValue = tsRefClk.split("=")[1];
+                StringList parts = ptpValue.split(":");
+                REQUIRE(parts.size() == 2);
+                String profile = parts[0];
+                CHECK(profile == "IEEE1588-2008");
+                auto [gm, gmErr] = EUI64::fromString(parts[1]);
+                CHECK(gmErr.isOk());
+                CHECK_FALSE(gm.isNull());
+
+                ClockDomain::ID cdId = ClockDomain::registerDomain(
+                        String("ptp.") + profile,
+                        String("PTP reference clock"),
+                        ClockEpoch::Absolute);
+                ClockDomain cd(cdId);
+                CHECK(cd.isValid());
+                CHECK(cd.isCrossMachineComparable());
+                CHECK(cd.name() == "ptp.IEEE1588-2008");
+
+                // Verify grandmaster round-trips through EUI-64
+                CHECK(gm.toString() == "00-1a-2b-ff-fe-3c-4d-5e");
+        }
+
+        SUBCASE("PTP without grandmaster") {
+                SdpMediaDescription md;
+                md.setMediaType("audio");
+                md.setPort(5006);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(97);
+                md.setAttribute("ts-refclk", "ptp=IEEE1588-2008");
+
+                String tsRefClk = md.attribute("ts-refclk");
+                String ptpValue = tsRefClk.split("=")[1];
+                StringList parts = ptpValue.split(":");
+                CHECK(parts.size() == 1);
+                String profile = parts[0];
+                CHECK(profile == "IEEE1588-2008");
+
+                ClockDomain::ID cdId = ClockDomain::registerDomain(
+                        String("ptp.") + profile,
+                        String("PTP reference clock"),
+                        ClockEpoch::Absolute);
+                ClockDomain cd(cdId);
+                CHECK(cd.isValid());
+                CHECK(cd.epoch() == ClockEpoch::Absolute);
+        }
+
+        SUBCASE("SDP write and re-parse preserves PTP domain") {
+                // Build SDP with ts-refclk
+                SdpSession sdp;
+                sdp.setSessionName("ptp test");
+                sdp.setOrigin("-", 1, 1);
+                SdpMediaDescription md;
+                md.setMediaType("video");
+                md.setPort(5004);
+                md.setProtocol("RTP/AVP");
+                md.addPayloadType(96);
+                md.setAttribute("rtpmap", "96 raw/90000");
+                md.setAttribute("ts-refclk",
+                        "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11");
+                md.setAttribute("mediaclk", "direct=0");
+                sdp.addMediaDescription(md);
+
+                // Round-trip through string
+                String text = sdp.toString();
+                auto [parsed, err] = SdpSession::fromString(text);
+                REQUIRE(err.isOk());
+                REQUIRE(parsed.mediaDescriptions().size() == 1);
+
+                // Verify ts-refclk survived
+                String tsRefClk = parsed.mediaDescriptions()[0]
+                        .attribute("ts-refclk");
+                CHECK(tsRefClk == "ptp=IEEE1588-2008:AA-BB-CC-DD-EE-FF-00-11");
+
+                // Verify grandmaster is parseable
+                String ptpValue = tsRefClk.split("=")[1];
+                StringList parts = ptpValue.split(":");
+                REQUIRE(parts.size() == 2);
+                auto [gm, gmErr] = EUI64::fromString(parts[1]);
+                CHECK(gmErr.isOk());
+                CHECK(gm.toString() == "aa-bb-cc-dd-ee-ff-00-11");
         }
 }
 

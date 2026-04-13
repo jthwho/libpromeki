@@ -9,6 +9,9 @@
 #include <cstring>
 #include <promeki/datastream.h>
 #include <promeki/enumlist.h>
+#include <promeki/mediatimestamp.h>
+#include <promeki/macaddress.h>
+#include <promeki/eui64.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -826,6 +829,24 @@ DataStream &DataStream::operator<<(const EnumList &val) {
         return *this;
 }
 
+DataStream &DataStream::operator<<(const MediaTimeStamp &val) {
+        writeTag(TypeMediaTimeStamp);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const MacAddress &val) {
+        writeTag(TypeMacAddress);
+        writeStringData(val.toString());
+        return *this;
+}
+
+DataStream &DataStream::operator<<(const EUI64 &val) {
+        writeTag(TypeEUI64);
+        writeStringData(val.toString());
+        return *this;
+}
+
 DataStream &DataStream::operator<<(const StringList &val) {
         writeTag(TypeStringList);
         writeStringListData(val);
@@ -869,6 +890,11 @@ DataStream &DataStream::operator<<(const Variant &val) {
                 case Variant::TypePixelDesc:  *this << val.get<PixelDesc>(); break;
                 case Variant::TypeEnum:       *this << val.get<Enum>(); break;
                 case Variant::TypeEnumList:   *this << val.get<EnumList>(); break;
+                case Variant::TypeMediaTimeStamp: *this << val.get<MediaTimeStamp>(); break;
+#if PROMEKI_ENABLE_NETWORK
+                case Variant::TypeMacAddress: *this << val.get<MacAddress>(); break;
+                case Variant::TypeEUI64:      *this << val.get<EUI64>(); break;
+#endif
                 default:
                         setError(WriteFailed,
                                 String::sprintf("Variant::write: unknown type %d",
@@ -1071,6 +1097,51 @@ DataStream &DataStream::operator>>(EnumList &val) {
         return *this;
 }
 
+DataStream &DataStream::operator>>(MediaTimeStamp &val) {
+        if(!readTag(TypeMediaTimeStamp)) { val = MediaTimeStamp(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = MediaTimeStamp(); return *this; }
+        auto [mts, parseErr] = MediaTimeStamp::fromString(s);
+        if(parseErr.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse MediaTimeStamp from '%s'", s.cstr()));
+                val = MediaTimeStamp();
+                return *this;
+        }
+        val = mts;
+        return *this;
+}
+
+DataStream &DataStream::operator>>(MacAddress &val) {
+        if(!readTag(TypeMacAddress)) { val = MacAddress(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = MacAddress(); return *this; }
+        auto [mac, parseErr] = MacAddress::fromString(s);
+        if(parseErr.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse MacAddress from '%s'", s.cstr()));
+                val = MacAddress();
+                return *this;
+        }
+        val = mac;
+        return *this;
+}
+
+DataStream &DataStream::operator>>(EUI64 &val) {
+        if(!readTag(TypeEUI64)) { val = EUI64(); return *this; }
+        String s = readStringData();
+        if(_status != Ok) { val = EUI64(); return *this; }
+        auto [eui, parseErr] = EUI64::fromString(s);
+        if(parseErr.isError()) {
+                setError(ReadCorruptData,
+                        String::sprintf("Failed to parse EUI64 from '%s'", s.cstr()));
+                val = EUI64();
+                return *this;
+        }
+        val = eui;
+        return *this;
+}
+
 DataStream &DataStream::operator>>(StringList &val) {
         if(!readTag(TypeStringList)) { val = StringList(); return *this; }
         val = readStringListData();
@@ -1125,7 +1196,38 @@ void DataStream::readVariantPayload(TypeId id, Variant &val) {
                 case TypePixelDesc:   val = readPixelDescData(); break;
                 case TypeEnum:        val = readEnumData(); break;
                 case TypeEnumList:    val = readEnumListData(); break;
+                case TypeMediaTimeStamp: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto [mts, parseErr] = MediaTimeStamp::fromString(s);
+                        if(parseErr.isError()) {
+                                setError(ReadCorruptData,
+                                        String::sprintf("Failed to parse MediaTimeStamp from '%s'", s.cstr()));
+                                val = Variant();
+                                break;
+                        }
+                        val = mts;
+                        break;
+                }
                 case TypeStringList:  val = readStringListData(); break;
+#if PROMEKI_ENABLE_NETWORK
+                case TypeMacAddress: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto [mac, parseErr] = MacAddress::fromString(s);
+                        if(parseErr.isError()) { setError(ReadCorruptData, String::sprintf("Failed to parse MacAddress from '%s'", s.cstr())); val = Variant(); break; }
+                        val = mac;
+                        break;
+                }
+                case TypeEUI64: {
+                        String s = readStringData();
+                        if(_status != Ok) { val = Variant(); break; }
+                        auto [eui, parseErr] = EUI64::fromString(s);
+                        if(parseErr.isError()) { setError(ReadCorruptData, String::sprintf("Failed to parse EUI64 from '%s'", s.cstr())); val = Variant(); break; }
+                        val = eui;
+                        break;
+                }
+#endif
                 default:
                         setError(ReadCorruptData,
                                 String::sprintf(
