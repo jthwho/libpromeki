@@ -75,7 +75,7 @@ class Metadata;
 class ClockDomain {
         public:
                 /** @brief Registered string identity type for clock domains. */
-                using ID = StringRegistry<ClockDomain>::Item;
+                using ID = StringRegistry<"ClockDomain">::Item;
 
                 /** @brief List of clock domain IDs. */
                 using IDList = List<ID>;

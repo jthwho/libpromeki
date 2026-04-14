@@ -1,0 +1,50 @@
+#
+# Valgrind suppression file for libpromeki.
+#
+# libpromeki has a handful of allocations that are intentionally
+# retained for the lifetime of the process:
+#
+#   - Registered enum Definitions (see Enum::registerDefinition,
+#     Enum::registerType, and populateStringLiterals in
+#     src/core/enum.cpp).  Enum types are globally addressable by
+#     their Definition pointer; freeing them during shutdown would
+#     invalidate any Enum value still held by user code at that point.
+#
+#   - Literal-backed StringLiteralData records cached per registered
+#     Enum entry (short name + fully-qualified name).  Same lifetime
+#     as the Definition they back.
+#
+# These allocations are annotated with PROMEKI_INTENTIONAL_LEAK()
+# (see include/promeki/util.h) so LeakSanitizer / AddressSanitizer
+# silently accept them.  Valgrind has no runtime API to mark a block
+# as intentionally leaked — suppress by stack frame instead.
+#
+# Usage:
+#   valgrind --leak-check=full --suppressions=etc/valgrind.supp <binary>
+# Or add a line to ~/.valgrindrc:
+#   --suppressions=/absolute/path/to/libpromeki/etc/valgrind.supp
+#
+
+{
+    promeki-enum-populate-string-literals
+    Memcheck:Leak
+    match-leak-kinds: reachable,definite,possible
+    ...
+    fun:*populateStringLiterals*
+}
+
+{
+    promeki-enum-register-definition
+    Memcheck:Leak
+    match-leak-kinds: reachable,definite,possible
+    ...
+    fun:*Enum*registerDefinition*
+}
+
+{
+    promeki-enum-register-type
+    Memcheck:Leak
+    match-leak-kinds: reachable,definite,possible
+    ...
+    fun:*Enum*registerType*
+}

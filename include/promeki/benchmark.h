@@ -55,7 +55,7 @@ class Benchmark {
                 using PtrList = promeki::List<Ptr>;
 
                 /** @brief Registered string ID type for benchmark events. */
-                using Id = StringRegistry<Benchmark>::Item;
+                using Id = StringRegistry<"Benchmark">::Item;
 
                 /** @brief A single timestamped benchmark entry. */
                 struct Entry {

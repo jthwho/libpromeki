@@ -28,7 +28,7 @@ struct ClockDomain::Data {
 // ============================================================================
 
 struct ClockDomainRegistry {
-        Map<uint32_t, ClockDomain::Data> entries;
+        Map<uint64_t, ClockDomain::Data> entries;
 
         ClockDomainRegistry() {
                 // Synthetic — frame-rate derived, per-stream epoch
@@ -52,7 +52,7 @@ struct ClockDomainRegistry {
         }
 
         void add(ClockDomain::Data &&d) {
-                uint32_t key = d.id.id();
+                uint64_t key = d.id.id();
                 entries.insert(key, std::move(d));
         }
 

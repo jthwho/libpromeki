@@ -131,10 +131,8 @@ TEST_CASE("VariantSpec_OperatorVariant") {
 // VariantDatabase spec registry
 // ============================================================================
 
-struct TestSpecTag {};
-
 TEST_CASE("VariantDatabase_DeclareID") {
-    using DB = VariantDatabase<TestSpecTag>;
+    using DB = VariantDatabase<"TestSpec">;
     static const DB::ID TestWidth = DB::declareID("TestWidth",
         VariantSpec().setType(Variant::TypeS32).setDefault(1920)
                      .setDescription("Width in pixels"));
@@ -148,13 +146,13 @@ TEST_CASE("VariantDatabase_DeclareID") {
 }
 
 TEST_CASE("VariantDatabase_SpecReturnsNull") {
-    using DB = VariantDatabase<TestSpecTag>;
+    using DB = VariantDatabase<"TestSpec">;
     DB::ID unspecced("NoSpec");
     CHECK(DB::spec(unspecced) == nullptr);
 }
 
 TEST_CASE("VariantDatabase_FromSpecs") {
-    using DB = VariantDatabase<TestSpecTag>;
+    using DB = VariantDatabase<"TestSpec">;
     DB::SpecMap specs;
     DB::ID a = DB::declareID("SpecA", VariantSpec().setType(Variant::TypeS32).setDefault(10));
     DB::ID b = DB::declareID("SpecB", VariantSpec().setType(Variant::TypeBool).setDefault(true));
@@ -167,7 +165,7 @@ TEST_CASE("VariantDatabase_FromSpecs") {
 }
 
 TEST_CASE("VariantDatabase_ValidationWarn") {
-    using DB = VariantDatabase<TestSpecTag>;
+    using DB = VariantDatabase<"TestSpec">;
     DB::ID quality = DB::declareID("Quality",
         VariantSpec().setType(Variant::TypeS32).setDefault(85).setRange(1, 100));
 
@@ -180,7 +178,7 @@ TEST_CASE("VariantDatabase_ValidationWarn") {
 }
 
 TEST_CASE("VariantDatabase_ValidationStrict") {
-    using DB = VariantDatabase<TestSpecTag>;
+    using DB = VariantDatabase<"TestSpec">;
     DB::ID level = DB::declareID("Level",
         VariantSpec().setType(Variant::TypeS32).setDefault(5).setRange(0, 10));
 
@@ -195,7 +193,7 @@ TEST_CASE("VariantDatabase_ValidationStrict") {
 }
 
 TEST_CASE("VariantDatabase_ValidationNone") {
-    using DB = VariantDatabase<TestSpecTag>;
+    using DB = VariantDatabase<"TestSpec">;
     DB::ID x = DB::declareID("X",
         VariantSpec().setType(Variant::TypeS32).setDefault(0).setRange(0, 10));
 

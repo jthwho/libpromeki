@@ -8,6 +8,7 @@
 
 #include <doctest/doctest.h>
 #include <promeki/metadata.h>
+#include <promeki/fnv1a.h>
 #include <promeki/stringlist.h>
 #include <promeki/application.h>
 #include <promeki/umid.h>
@@ -16,6 +17,16 @@
 #include <promeki/buffer.h>
 
 using namespace promeki;
+
+// Compile-time sanity: ID::literal agrees with the raw FNV-1a hash
+// for a real in-tree well-known name.  If this ever fails to compile,
+// Item::literal has drifted from the registry's hashing.
+static_assert(Metadata::ID::literal("Title").id() == fnv1a("Title"));
+
+// With PROMEKI_DECLARE_ID, Title itself is constexpr, so we can lock
+// the declareID path and the literal path together at compile time.
+static_assert(Metadata::Title.id() == Metadata::ID::literal("Title").id());
+static_assert(Metadata::Title.id() == fnv1a("Title"));
 
 // ============================================================================
 // Basic operations

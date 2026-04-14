@@ -45,6 +45,33 @@ class StringList;
 // Returns the number of elements in a statically defined simple array.
 #define PROMEKI_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
+// Marks a heap pointer as "intentionally leaked" so leak detectors
+// (AddressSanitizer / LeakSanitizer) stop reporting it.  Use at every
+// allocation site whose contents legitimately live for the process
+// lifetime — registered Definitions, StringLiteralData caches, etc.
+//
+// Under sanitizer builds this delegates to __lsan_ignore_object() (a
+// one-line registry entry, no runtime cost at the allocation site
+// beyond the call).  In all other builds it evaluates its argument and
+// discards the result, so the macro is safe to wrap any expression.
+// Valgrind does not offer a runtime "intentional leak" API — ship a
+// suppression file (tools/valgrind.supp) for that tool instead.
+#if defined(__has_feature)
+#       if __has_feature(address_sanitizer)
+#               define PROMEKI_ADDRESS_SANITIZER_ENABLED 1
+#       endif
+#endif
+#if defined(__SANITIZE_ADDRESS__)
+#       define PROMEKI_ADDRESS_SANITIZER_ENABLED 1
+#endif
+#if defined(PROMEKI_ADDRESS_SANITIZER_ENABLED) && \
+    __has_include(<sanitizer/lsan_interface.h>)
+#       include <sanitizer/lsan_interface.h>
+#       define PROMEKI_INTENTIONAL_LEAK(ptr) __lsan_ignore_object(ptr)
+#else
+#       define PROMEKI_INTENTIONAL_LEAK(ptr) ((void)(ptr))
+#endif
+
 // Some useful alignment macros
 #define PROMEKI_ALIGN_UP(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
 

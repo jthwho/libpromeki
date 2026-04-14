@@ -12,9 +12,6 @@
 
 PROMEKI_NAMESPACE_BEGIN
 
-/** @brief Tag type for the Config variant database. */
-struct ConfigTag {};
-
 /**
  * @brief Configuration database mapping named options to Variant values.
  * @ingroup util
@@ -34,6 +31,6 @@ struct ConfigTag {};
  * int w = cfg.get(width).get<int32_t>(); // 1920
  * @endcode
  */
-using Config = VariantDatabase<ConfigTag>;
+using Config = VariantDatabase<"Config">;
 
 PROMEKI_NAMESPACE_END

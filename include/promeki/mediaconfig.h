@@ -16,21 +16,10 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Phantom tag for the shared media config @ref StringRegistry.
- * @ingroup media
- *
- * Every class that consumes configuration in the media subsystem shares
- * this tag so a single key name resolves to the same @ref MediaConfig::ID
- * everywhere: @ref MediaIO backends, @ref Image::convert,
- * @ref CSCPipeline, and any future media component that exposes knobs.
- */
-struct MediaConfigTag {};
-
-/**
  * @brief Generic name/value configuration container for the media subsystem.
  * @ingroup media
  *
- * Thin subclass of @ref VariantDatabase "VariantDatabase<MediaConfigTag>"
+ * Thin subclass of @ref VariantDatabase "VariantDatabase<"MediaConfig">"
  * that adds a canonical catalog of well-known @ref ID constants for every
  * configurable knob in libpromeki.  All media components — @ref MediaIO
  * backends, @ref Image::convert, @ref CSCPipeline — share this single
@@ -62,10 +51,10 @@ struct MediaConfigTag {};
  * // s->rangeMax()     => 100
  * @endcode
  */
-class MediaConfig : public VariantDatabase<MediaConfigTag> {
+class MediaConfig : public VariantDatabase<"MediaConfig"> {
         public:
                 /** @brief Base class alias. */
-                using Base = VariantDatabase<MediaConfigTag>;
+                using Base = VariantDatabase<"MediaConfig">;
 
                 using Base::Base;
 
@@ -74,20 +63,20 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief String — path or URL to the media resource.
-                static inline const ID Filename = declareID("Filename",
+                PROMEKI_DECLARE_ID(Filename,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Path or URL to the media resource."));
 
                 /// @brief String — registered backend type name (e.g. "TPG", "ImageFile").
-                static inline const ID Type = declareID("Type",
+                PROMEKI_DECLARE_ID(Type,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Registered backend type name."));
 
                 /// @brief String — human-readable instance name (used in logs, spawned thread names,
                 /// benchmark stamp IDs). Defaults to `"media<localId>"` when left empty.
-                static inline const ID Name = declareID("Name",
+                PROMEKI_DECLARE_ID(Name,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Human-readable instance name; defaults to "
@@ -95,7 +84,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
 
                 /// @brief UUID — globally-unique instance identifier used for cross-process
                 /// pipeline correlation. Defaults to a freshly generated UUID when left invalid.
-                static inline const ID Uuid = declareID("Uuid",
+                PROMEKI_DECLARE_ID(Uuid,
                         VariantSpec().setType(Variant::TypeUUID)
                                 .setDefault(UUID())
                                 .setDescription("Globally-unique instance identifier; defaults "
@@ -105,14 +94,14 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// When true, every frame flowing through this MediaIO receives stamps at
                 /// enqueue / dequeue / taskBegin / taskEnd, aggregated by an attached
                 /// BenchmarkReporter when the stage is a sink.
-                static inline const ID EnableBenchmark = declareID("EnableBenchmark",
+                PROMEKI_DECLARE_ID(EnableBenchmark,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable per-frame Benchmark stamping in the "
                                         "MediaIO base class."));
 
                 /// @brief FrameRate — stream or target frame rate.
-                static inline const ID FrameRate = declareID("FrameRate",
+                PROMEKI_DECLARE_ID(FrameRate,
                         VariantSpec().setType(Variant::TypeFrameRate)
                                 .setDefault(promeki::FrameRate())
                                 .setDescription("Stream or target frame rate."));
@@ -122,26 +111,26 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief bool — enable video generation / decode.
-                static inline const ID VideoEnabled = declareID("VideoEnabled",
+                PROMEKI_DECLARE_ID(VideoEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable video generation or decode."));
 
                 /// @brief Size2Du32 — image dimensions.
-                static inline const ID VideoSize = declareID("VideoSize",
+                PROMEKI_DECLARE_ID(VideoSize,
                         VariantSpec().setType(Variant::TypeSize2D)
                                 .setDefault(Size2Du32())
                                 .setDescription("Image dimensions."));
 
                 /// @brief PixelDesc — stage video pixel description (target format for
                 /// generators, hint for headerless readers).
-                static inline const ID VideoPixelFormat = declareID("VideoPixelFormat",
+                PROMEKI_DECLARE_ID(VideoPixelFormat,
                         VariantSpec().setType(Variant::TypePixelDesc)
                                 .setDefault(PixelDesc())
                                 .setDescription("Video pixel description."));
 
                 /// @brief int — 0-based video track index to use (-1 = auto).
-                static inline const ID VideoTrack = declareID("VideoTrack",
+                PROMEKI_DECLARE_ID(VideoTrack,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setMin(int32_t(-1))
@@ -152,20 +141,20 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief Enum @ref VideoPattern — selected test pattern.
-                static inline const ID VideoPattern = declareID("VideoPattern",
+                PROMEKI_DECLARE_ID(VideoPattern,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(promeki::VideoPattern::ColorBars)
                                 .setEnumType(promeki::VideoPattern::Type)
                                 .setDescription("Selected video test pattern."));
 
                 /// @brief Color — fill color for @c SolidColor pattern.
-                static inline const ID VideoSolidColor = declareID("VideoSolidColor",
+                PROMEKI_DECLARE_ID(VideoSolidColor,
                         VariantSpec().setType(Variant::TypeColor)
                                 .setDefault(Color())
                                 .setDescription("Fill color for the SolidColor pattern."));
 
                 /// @brief double — horizontal motion pixels/frame.
-                static inline const ID VideoMotion = declareID("VideoMotion",
+                PROMEKI_DECLARE_ID(VideoMotion,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(0.0)
                                 .setDescription("Horizontal motion in pixels per frame."));
@@ -175,51 +164,51 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief bool — enable text burn-in.
-                static inline const ID VideoBurnEnabled = declareID("VideoBurnEnabled",
+                PROMEKI_DECLARE_ID(VideoBurnEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable text burn-in overlay."));
 
                 /// @brief String — TrueType / OpenType font path for burn-in.
-                static inline const ID VideoBurnFontPath = declareID("VideoBurnFontPath",
+                PROMEKI_DECLARE_ID(VideoBurnFontPath,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("TrueType or OpenType font path for burn-in."));
 
                 /// @brief int — burn-in font size in pixels.
-                static inline const ID VideoBurnFontSize = declareID("VideoBurnFontSize",
+                PROMEKI_DECLARE_ID(VideoBurnFontSize,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Burn-in font size in pixels."));
 
                 /// @brief String — static burn-in text (auto when empty).
-                static inline const ID VideoBurnText = declareID("VideoBurnText",
+                PROMEKI_DECLARE_ID(VideoBurnText,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Static burn-in text (auto when empty)."));
 
                 /// @brief Enum @ref BurnPosition — on-screen position.
-                static inline const ID VideoBurnPosition = declareID("VideoBurnPosition",
+                PROMEKI_DECLARE_ID(VideoBurnPosition,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(BurnPosition::BottomCenter)
                                 .setEnumType(BurnPosition::Type)
                                 .setDescription("On-screen burn-in text position."));
 
                 /// @brief Color — burn-in text color.
-                static inline const ID VideoBurnTextColor = declareID("VideoBurnTextColor",
+                PROMEKI_DECLARE_ID(VideoBurnTextColor,
                         VariantSpec().setType(Variant::TypeColor)
                                 .setDefault(Color())
                                 .setDescription("Burn-in text color."));
 
                 /// @brief Color — burn-in background color.
-                static inline const ID VideoBurnBgColor = declareID("VideoBurnBgColor",
+                PROMEKI_DECLARE_ID(VideoBurnBgColor,
                         VariantSpec().setType(Variant::TypeColor)
                                 .setDefault(Color())
                                 .setDescription("Burn-in background color."));
 
                 /// @brief bool — draw background rectangle behind burn-in text.
-                static inline const ID VideoBurnDrawBg = declareID("VideoBurnDrawBg",
+                PROMEKI_DECLARE_ID(VideoBurnDrawBg,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Draw background rectangle behind burn-in text."));
@@ -229,27 +218,27 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief bool — enable audio generation / decode.
-                static inline const ID AudioEnabled = declareID("AudioEnabled",
+                PROMEKI_DECLARE_ID(AudioEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable audio generation or decode."));
 
                 /// @brief float — audio sample rate in Hz.
-                static inline const ID AudioRate = declareID("AudioRate",
+                PROMEKI_DECLARE_ID(AudioRate,
                         VariantSpec().setType(Variant::TypeFloat)
                                 .setDefault(0.0f)
                                 .setMin(0.0f)
                                 .setDescription("Audio sample rate in Hz."));
 
                 /// @brief int — audio channel count.
-                static inline const ID AudioChannels = declareID("AudioChannels",
+                PROMEKI_DECLARE_ID(AudioChannels,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Audio channel count."));
 
                 /// @brief int — 0-based audio track index to use (-1 = auto).
-                static inline const ID AudioTrack = declareID("AudioTrack",
+                PROMEKI_DECLARE_ID(AudioTrack,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setMin(int32_t(-1))
@@ -262,7 +251,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief EnumList @ref AudioPattern — per-channel test
                 ///        patterns.  Channels beyond the end of the
                 ///        list are silenced.
-                static inline const ID AudioChannelModes = declareID("AudioChannelModes",
+                PROMEKI_DECLARE_ID(AudioChannelModes,
                         VariantSpec().setType(Variant::TypeEnumList)
                                 .setDefault(EnumList::forType<AudioPattern>())
                                 .setEnumType(AudioPattern::Type)
@@ -270,21 +259,21 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                         "patterns (extra channels silenced)."));
 
                 /// @brief double — tone frequency in Hz (used by Tone / AvSync).
-                static inline const ID AudioToneFrequency = declareID("AudioToneFrequency",
+                PROMEKI_DECLARE_ID(AudioToneFrequency,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(1000.0)
                                 .setMin(0.0)
                                 .setDescription("Tone frequency in Hz (Tone / AvSync channels)."));
 
                 /// @brief double — tone level in dBFS.
-                static inline const ID AudioToneLevel = declareID("AudioToneLevel",
+                PROMEKI_DECLARE_ID(AudioToneLevel,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(-20.0)
                                 .setMax(0.0)
                                 .setDescription("Tone level in dBFS."));
 
                 /// @brief double — LTC burn-in level in dBFS.
-                static inline const ID AudioLtcLevel = declareID("AudioLtcLevel",
+                PROMEKI_DECLARE_ID(AudioLtcLevel,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(-20.0)
                                 .setMax(0.0)
@@ -293,56 +282,56 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief double — ChannelId base frequency in Hz.
                 ///        Channel @em N carries a sine at
                 ///        `base + N * step`.
-                static inline const ID AudioChannelIdBaseFreq = declareID("AudioChannelIdBaseFreq",
+                PROMEKI_DECLARE_ID(AudioChannelIdBaseFreq,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(1000.0)
                                 .setMin(0.0)
                                 .setDescription("ChannelId base tone frequency in Hz."));
 
                 /// @brief double — ChannelId per-channel step in Hz.
-                static inline const ID AudioChannelIdStepFreq = declareID("AudioChannelIdStepFreq",
+                PROMEKI_DECLARE_ID(AudioChannelIdStepFreq,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(100.0)
                                 .setMin(0.0)
                                 .setDescription("ChannelId per-channel tone step in Hz."));
 
                 /// @brief double — Chirp sweep start frequency in Hz.
-                static inline const ID AudioChirpStartFreq = declareID("AudioChirpStartFreq",
+                PROMEKI_DECLARE_ID(AudioChirpStartFreq,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(20.0)
                                 .setMin(0.0)
                                 .setDescription("Chirp log-sweep start frequency in Hz."));
 
                 /// @brief double — Chirp sweep end frequency in Hz.
-                static inline const ID AudioChirpEndFreq = declareID("AudioChirpEndFreq",
+                PROMEKI_DECLARE_ID(AudioChirpEndFreq,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(20000.0)
                                 .setMin(0.0)
                                 .setDescription("Chirp log-sweep end frequency in Hz."));
 
                 /// @brief double — Chirp sweep period in seconds.
-                static inline const ID AudioChirpDurationSec = declareID("AudioChirpDurationSec",
+                PROMEKI_DECLARE_ID(AudioChirpDurationSec,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(1.0)
                                 .setMin(0.0)
                                 .setDescription("Chirp log-sweep period in seconds."));
 
                 /// @brief double — DualTone low-side frequency in Hz.
-                static inline const ID AudioDualToneFreq1 = declareID("AudioDualToneFreq1",
+                PROMEKI_DECLARE_ID(AudioDualToneFreq1,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(60.0)
                                 .setMin(0.0)
                                 .setDescription("DualTone low-side frequency in Hz (SMPTE IMD default 60 Hz)."));
 
                 /// @brief double — DualTone high-side frequency in Hz.
-                static inline const ID AudioDualToneFreq2 = declareID("AudioDualToneFreq2",
+                PROMEKI_DECLARE_ID(AudioDualToneFreq2,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(7000.0)
                                 .setMin(0.0)
                                 .setDescription("DualTone high-side frequency in Hz (SMPTE IMD default 7 kHz)."));
 
                 /// @brief double — DualTone amplitude ratio freq2 / freq1.
-                static inline const ID AudioDualToneRatio = declareID("AudioDualToneRatio",
+                PROMEKI_DECLARE_ID(AudioDualToneRatio,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(0.25)
                                 .setMin(0.0)
@@ -350,14 +339,14 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                         "(SMPTE IMD default 0.25 = 4:1)."));
 
                 /// @brief double — WhiteNoise / PinkNoise buffer length in seconds.
-                static inline const ID AudioNoiseBufferSec = declareID("AudioNoiseBufferSec",
+                PROMEKI_DECLARE_ID(AudioNoiseBufferSec,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(10.0)
                                 .setMin(0.0)
                                 .setDescription("WhiteNoise / PinkNoise cached buffer length in seconds."));
 
                 /// @brief uint32 — PRNG seed used to build the noise buffers.
-                static inline const ID AudioNoiseSeed = declareID("AudioNoiseSeed",
+                PROMEKI_DECLARE_ID(AudioNoiseSeed,
                         VariantSpec().setType(Variant::TypeU32)
                                 .setDefault(uint32_t(0x505244A4u))
                                 .setDescription("WhiteNoise / PinkNoise PRNG seed."));
@@ -367,25 +356,25 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief bool — enable timecode generation.
-                static inline const ID TimecodeEnabled = declareID("TimecodeEnabled",
+                PROMEKI_DECLARE_ID(TimecodeEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable timecode generation."));
 
                 /// @brief String — starting timecode (SMPTE "HH:MM:SS:FF" form).
-                static inline const ID TimecodeStart = declareID("TimecodeStart",
+                PROMEKI_DECLARE_ID(TimecodeStart,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Starting timecode in SMPTE HH:MM:SS:FF form."));
 
                 /// @brief Timecode — pre-built starting timecode (alternative to @c TimecodeStart).
-                static inline const ID TimecodeValue = declareID("TimecodeValue",
+                PROMEKI_DECLARE_ID(TimecodeValue,
                         VariantSpec().setType(Variant::TypeTimecode)
                                 .setDefault(Timecode())
                                 .setDescription("Pre-built starting timecode."));
 
                 /// @brief bool — drop-frame flag for 29.97 / 59.94 timecode.
-                static inline const ID TimecodeDropFrame = declareID("TimecodeDropFrame",
+                PROMEKI_DECLARE_ID(TimecodeDropFrame,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Drop-frame flag for 29.97 / 59.94 timecode."));
@@ -399,7 +388,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @ref ImageDataEncoder when @ref TpgDataEncoderEnabled is true.
                 /// Defaults to 0; use any value the application finds convenient
                 /// for cross-stream correlation.
-                static inline const ID StreamID = declareID("StreamID",
+                PROMEKI_DECLARE_ID(StreamID,
                         VariantSpec().setType(Variant::TypeU32)
                                 .setDefault(uint32_t(0))
                                 .setDescription("Opaque per-stream identifier (uint32)."));
@@ -409,7 +398,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// payloads into the top of every generated video frame:
                 /// (1) @c (StreamID << 32) | frameNumber, and
                 /// (2) the @ref Timecode::toBcd64 BCD timecode word.
-                static inline const ID TpgDataEncoderEnabled = declareID("TpgDataEncoderEnabled",
+                PROMEKI_DECLARE_ID(TpgDataEncoderEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Enable VITC-style binary data encoder pass on TPG video."));
@@ -420,7 +409,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// scan lines starting from the top of the image.  Default 16,
                 /// which gives a comfortable read margin for a noisy decoder
                 /// without consuming too much picture area.
-                static inline const ID TpgDataEncoderRepeatLines = declareID("TpgDataEncoderRepeatLines",
+                PROMEKI_DECLARE_ID(TpgDataEncoderRepeatLines,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(16))
                                 .setMin(int32_t(1))
@@ -435,7 +424,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// pacing purposes; the per-frame events and accumulator stats
                 /// are still produced as long as the corresponding decoders are
                 /// enabled.
-                static inline const ID InspectorDropFrames = declareID("InspectorDropFrames",
+                PROMEKI_DECLARE_ID(InspectorDropFrames,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Inspector drops frames after checks (sink behaviour)."));
@@ -463,7 +452,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// // Equivalent string form on the command line:
                 /// //   InspectorTests=Timestamp,TcSync
                 /// @endcode
-                static inline const ID InspectorTests = declareID("InspectorTests",
+                PROMEKI_DECLARE_ID(InspectorTests,
                         VariantSpec().setType(Variant::TypeEnumList)
                                 .setDefault([]{
                                         EnumList l = EnumList::forType<InspectorTest>();
@@ -486,7 +475,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// pair has a known small jitter that should not generate
                 /// noise.  Only meaningful when the @c TcSync test is
                 /// enabled.
-                static inline const ID InspectorSyncOffsetToleranceSamples = declareID("InspectorSyncOffsetToleranceSamples",
+                PROMEKI_DECLARE_ID(InspectorSyncOffsetToleranceSamples,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -498,7 +487,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief int — scan lines per @ref ImageDataEncoder band.  Must
                 /// match the encoder's @ref TpgDataEncoderRepeatLines so the
                 /// inspector reads at the right band offsets.  Default 16.
-                static inline const ID InspectorImageDataRepeatLines = declareID("InspectorImageDataRepeatLines",
+                PROMEKI_DECLARE_ID(InspectorImageDataRepeatLines,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(16))
                                 .setMin(int32_t(1))
@@ -506,7 +495,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
 
                 /// @brief int — audio channel index that carries LTC.  Mirrors
                 /// @ref AudioLtcChannel; default 0.
-                static inline const ID InspectorLtcChannel = declareID("InspectorLtcChannel",
+                PROMEKI_DECLARE_ID(InspectorLtcChannel,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -515,7 +504,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief double — periodic-summary log interval in seconds (wall
                 /// time, not media time).  Default 1.0.  Set to 0 to disable
                 /// periodic logging entirely; per-frame events are still produced.
-                static inline const ID InspectorLogIntervalSec = declareID("InspectorLogIntervalSec",
+                PROMEKI_DECLARE_ID(InspectorLogIntervalSec,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(1.0)
                                 .setMin(0.0)
@@ -532,7 +521,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @c promeki_inspector_stats_<pid>_<epoch_ns>.tsv).
                 /// The resolved path is logged at @c Info level when
                 /// the file is opened.
-                static inline const ID InspectorStatsFile = declareID("InspectorStatsFile",
+                PROMEKI_DECLARE_ID(InspectorStatsFile,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription(
@@ -546,21 +535,21 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
 
                 /// @brief PixelDesc — target pixel description for the converter
                 /// stage (@c Invalid = video pass-through).
-                static inline const ID OutputPixelDesc = declareID("OutputPixelDesc",
+                PROMEKI_DECLARE_ID(OutputPixelDesc,
                         VariantSpec().setType(Variant::TypePixelDesc)
                                 .setDefault(PixelDesc())
                                 .setDescription("Target pixel description (Invalid = pass-through)."));
 
                 /// @brief Enum @ref AudioDataType — target audio sample format
                 /// (@c Invalid = audio pass-through).
-                static inline const ID OutputAudioDataType = declareID("OutputAudioDataType",
+                PROMEKI_DECLARE_ID(OutputAudioDataType,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(Enum())
                                 .setEnumType(AudioDataType::Type)
                                 .setDescription("Target audio sample format (Invalid = pass-through)."));
 
                 /// @brief int — internal FIFO capacity in frames.
-                static inline const ID Capacity = declareID("Capacity",
+                PROMEKI_DECLARE_ID(Capacity,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -571,7 +560,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief int — JPEG quality 1-100 (codec default: 85).
-                static inline const ID JpegQuality = declareID("JpegQuality",
+                PROMEKI_DECLARE_ID(JpegQuality,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(85))
                                 .setRange(int32_t(1), int32_t(100))
@@ -579,7 +568,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
 
                 /// @brief Enum @ref ChromaSubsampling — JPEG chroma subsampling
                 /// (codec default: 4:2:2, RFC 2435 compatible).
-                static inline const ID JpegSubsampling = declareID("JpegSubsampling",
+                PROMEKI_DECLARE_ID(JpegSubsampling,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(ChromaSubsampling::YUV422)
                                 .setEnumType(ChromaSubsampling::Type)
@@ -592,7 +581,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief int (or float) — JPEG XS target bits per pixel.  JPEG XS is
                 /// constant-bitrate; typical broadcast values are 2-6 bpp for
                 /// visually-lossless contribution.  Codec default: 3.
-                static inline const ID JpegXsBpp = declareID("JpegXsBpp",
+                PROMEKI_DECLARE_ID(JpegXsBpp,
                         VariantSpec().setTypes({Variant::TypeS32, Variant::TypeFloat, Variant::TypeDouble})
                                 .setDefault(int32_t(3))
                                 .setMin(1)
@@ -601,7 +590,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief int — JPEG XS horizontal decomposition depth (0-5,
                 /// codec default: 5).  Higher values trade encode cost for
                 /// quality.  See @c ndecomp_h in SvtJpegxsEnc.h.
-                static inline const ID JpegXsDecomposition = declareID("JpegXsDecomposition",
+                PROMEKI_DECLARE_ID(JpegXsDecomposition,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(5))
                                 .setRange(int32_t(0), int32_t(5))
@@ -613,7 +602,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
 
                 /// @brief Enum @ref CscPath — CSC processing path selection
                 /// (@c Optimized default, @c Scalar for debug / reference).
-                static inline const ID CscPath = declareID("CscPath",
+                PROMEKI_DECLARE_ID(CscPath,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(promeki::CscPath::Optimized)
                                 .setEnumType(promeki::CscPath::Type)
@@ -624,14 +613,14 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief int — explicit @ref ImageFile::ID, bypasses extension probe.
-                static inline const ID ImageFileID = declareID("ImageFileID",
+                PROMEKI_DECLARE_ID(ImageFileID,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Explicit ImageFile ID (0 = infer from extension)."));
 
                 /// @brief int — first frame index for a sequence writer.
-                static inline const ID SequenceHead = declareID("SequenceHead",
+                PROMEKI_DECLARE_ID(SequenceHead,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -645,7 +634,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// sequence pattern (e.g. @c "shot_####.dpx" produces
                 /// @c "shot.imgseq").  Set to @c false to inhibit both
                 /// behaviours.
-                static inline const ID SaveImgSeqEnabled = declareID("SaveImgSeqEnabled",
+                PROMEKI_DECLARE_ID(SaveImgSeqEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Enable automatic .imgseq sidecar for image sequences."));
@@ -656,14 +645,14 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @c "shot.imgseq" in the sequence directory).  Relative paths
                 /// are resolved from the sequence directory; absolute paths
                 /// are used as-is.
-                static inline const ID SaveImgSeqPath = declareID("SaveImgSeqPath",
+                PROMEKI_DECLARE_ID(SaveImgSeqPath,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Override path for the .imgseq sidecar."));
 
                 /// @brief Enum @ref ImgSeqPathMode — whether the sidecar's
                 /// directory reference is relative (to the sidecar) or absolute.
-                static inline const ID SaveImgSeqPathMode = declareID("SaveImgSeqPathMode",
+                PROMEKI_DECLARE_ID(SaveImgSeqPathMode,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(ImgSeqPathMode::Relative)
                                 .setEnumType(ImgSeqPathMode::Type)
@@ -674,7 +663,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// writes a Broadcast WAV sidecar when audio data is present
                 /// and auto-detects an existing sidecar on read.  Set to
                 /// @c false to inhibit both behaviours.
-                static inline const ID SidecarAudioEnabled = declareID("SidecarAudioEnabled",
+                PROMEKI_DECLARE_ID(SidecarAudioEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Enable sidecar audio file for image sequences."));
@@ -685,7 +674,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @c "shot.wav" in the sequence directory).  Relative paths
                 /// are resolved from the sequence directory; absolute paths
                 /// are used as-is.
-                static inline const ID SidecarAudioPath = declareID("SidecarAudioPath",
+                PROMEKI_DECLARE_ID(SidecarAudioPath,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Override path for the sidecar audio file."));
@@ -696,7 +685,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// user-data blocks).  Acts as a hint: if the preferred
                 /// source is unavailable, the backend falls back to the
                 /// other.  Default is @c Sidecar.
-                static inline const ID AudioSource = declareID("AudioSource",
+                PROMEKI_DECLARE_ID(AudioSource,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(AudioSourceHint::Sidecar)
                                 .setEnumType(AudioSourceHint::Type)
@@ -707,21 +696,21 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief Enum QuickTimeLayout — writer on-disk layout.
-                static inline const ID QuickTimeLayout = declareID("QuickTimeLayout",
+                PROMEKI_DECLARE_ID(QuickTimeLayout,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(promeki::QuickTimeLayout::Fragmented)
                                 .setEnumType(promeki::QuickTimeLayout::Type)
                                 .setDescription("QuickTime writer on-disk layout."));
 
                 /// @brief int — video frames per fragment (fragmented writer).
-                static inline const ID QuickTimeFragmentFrames = declareID("QuickTimeFragmentFrames",
+                PROMEKI_DECLARE_ID(QuickTimeFragmentFrames,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Video frames per fragment (fragmented writer)."));
 
                 /// @brief bool — call @c fdatasync after each flush.
-                static inline const ID QuickTimeFlushSync = declareID("QuickTimeFlushSync",
+                PROMEKI_DECLARE_ID(QuickTimeFlushSync,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Call fdatasync after each flush."));
@@ -738,20 +727,20 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// - @c "wall" — pace to the system's monotonic wall
                 ///   clock.  Audio is still played but is not used as
                 ///   the timing reference.
-                static inline const ID SdlTimingSource = declareID("SdlTimingSource",
+                PROMEKI_DECLARE_ID(SdlTimingSource,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String("audio"))
                                 .setDescription(
                                         "Timing source: \"audio\" (default) or \"wall\"."));
 
                 /// @brief Size2Du32 — initial SDL window size.
-                static inline const ID SdlWindowSize = declareID("SdlWindowSize",
+                PROMEKI_DECLARE_ID(SdlWindowSize,
                         VariantSpec().setType(Variant::TypeSize2D)
                                 .setDefault(Size2Du32())
                                 .setDescription("Initial SDL window size."));
 
                 /// @brief String — SDL window title bar text.
-                static inline const ID SdlWindowTitle = declareID("SdlWindowTitle",
+                PROMEKI_DECLARE_ID(SdlWindowTitle,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("SDL window title bar text."));
@@ -766,7 +755,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// - @c "pacer" — legacy FramePacer-based
                 ///   @c SDLPlayerOldTask (deprecated; retained for
                 ///   side-by-side comparison).
-                static inline const ID SdlPlayerImpl = declareID("SdlPlayerImpl",
+                PROMEKI_DECLARE_ID(SdlPlayerImpl,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String("framesync"))
                                 .setDescription(
@@ -789,45 +778,45 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // --- Transport-global ---
 
                 /// @brief SocketAddress — local bind address for all RTP streams in this sink.
-                static inline const ID RtpLocalAddress = declareID("RtpLocalAddress",
+                PROMEKI_DECLARE_ID(RtpLocalAddress,
                         VariantSpec().setType(Variant::TypeSocketAddress)
                                 .setDescription("Local bind address for all RTP streams."));
 
                 /// @brief String — SDP @c s= line (session name).
-                static inline const ID RtpSessionName = declareID("RtpSessionName",
+                PROMEKI_DECLARE_ID(RtpSessionName,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("SDP session name (s= line)."));
 
                 /// @brief String — SDP @c o= originator username.
-                static inline const ID RtpSessionOrigin = declareID("RtpSessionOrigin",
+                PROMEKI_DECLARE_ID(RtpSessionOrigin,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("SDP originator username (o= line)."));
 
                 /// @brief Enum @ref RtpPacingMode — pacing mechanism used for all streams.
-                static inline const ID RtpPacingMode = declareID("RtpPacingMode",
+                PROMEKI_DECLARE_ID(RtpPacingMode,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(promeki::RtpPacingMode::Auto)
                                 .setEnumType(promeki::RtpPacingMode::Type)
                                 .setDescription("RTP pacing mechanism."));
 
                 /// @brief int — multicast TTL applied to the transport.
-                static inline const ID RtpMulticastTTL = declareID("RtpMulticastTTL",
+                PROMEKI_DECLARE_ID(RtpMulticastTTL,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(16))
                                 .setRange(int32_t(1), int32_t(255))
                                 .setDescription("Multicast TTL."));
 
                 /// @brief String — multicast outgoing interface name (empty = default).
-                static inline const ID RtpMulticastInterface = declareID("RtpMulticastInterface",
+                PROMEKI_DECLARE_ID(RtpMulticastInterface,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Multicast outgoing interface name."));
 
                 /// @brief String — if non-empty, the MediaIO opens this file and
                 /// writes the generated SDP session description to it at open time.
-                static inline const ID RtpSaveSdpPath = declareID("RtpSaveSdpPath",
+                PROMEKI_DECLARE_ID(RtpSaveSdpPath,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("File path to write generated SDP to."));
@@ -835,19 +824,19 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief Polymorphic reader-side SDP input.  Accepts either:
                 /// - @c String: interpreted as a filesystem path.
                 /// - @ref SdpSession: consumed directly, no filesystem access.
-                static inline const ID RtpSdp = declareID("RtpSdp",
+                PROMEKI_DECLARE_ID(RtpSdp,
                         VariantSpec().setTypes({Variant::TypeString, Variant::TypeSdpSession})
                                 .setDescription("SDP input: file path (String) or session object (SdpSession)."));
 
                 /// @brief int — reader-side jitter buffer depth in milliseconds.
-                static inline const ID RtpJitterMs = declareID("RtpJitterMs",
+                PROMEKI_DECLARE_ID(RtpJitterMs,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(50))
                                 .setMin(int32_t(0))
                                 .setDescription("Reader jitter buffer depth in ms."));
 
                 /// @brief int — reader-side output frame queue capacity.
-                static inline const ID RtpMaxReadQueueDepth = declareID("RtpMaxReadQueueDepth",
+                PROMEKI_DECLARE_ID(RtpMaxReadQueueDepth,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(4))
                                 .setMin(int32_t(1))
@@ -856,47 +845,47 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // --- Video stream ---
 
                 /// @brief SocketAddress — destination for the video stream. Empty = disabled.
-                static inline const ID VideoRtpDestination = declareID("VideoRtpDestination",
+                PROMEKI_DECLARE_ID(VideoRtpDestination,
                         VariantSpec().setType(Variant::TypeSocketAddress)
                                 .setDescription("Destination for the video RTP stream."));
 
                 /// @brief int — RTP payload type (0-127).
-                static inline const ID VideoRtpPayloadType = declareID("VideoRtpPayloadType",
+                PROMEKI_DECLARE_ID(VideoRtpPayloadType,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(96))
                                 .setRange(int32_t(0), int32_t(127))
                                 .setDescription("Video RTP payload type."));
 
                 /// @brief int — RTP timestamp clock rate in Hz (default 90000).
-                static inline const ID VideoRtpClockRate = declareID("VideoRtpClockRate",
+                PROMEKI_DECLARE_ID(VideoRtpClockRate,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(90000))
                                 .setMin(int32_t(1))
                                 .setDescription("Video RTP timestamp clock rate in Hz."));
 
                 /// @brief int — fixed SSRC, or 0 to auto-generate.
-                static inline const ID VideoRtpSsrc = declareID("VideoRtpSsrc",
+                PROMEKI_DECLARE_ID(VideoRtpSsrc,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Video RTP SSRC (0 = auto)."));
 
                 /// @brief int — DSCP marking for the video stream (default 46 / EF).
-                static inline const ID VideoRtpDscp = declareID("VideoRtpDscp",
+                PROMEKI_DECLARE_ID(VideoRtpDscp,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(46))
                                 .setRange(int32_t(0), int32_t(63))
                                 .setDescription("Video RTP DSCP marking."));
 
                 /// @brief int — target bitrate in bits/sec (0 = compute from descriptor).
-                static inline const ID VideoRtpTargetBitrate = declareID("VideoRtpTargetBitrate",
+                PROMEKI_DECLARE_ID(VideoRtpTargetBitrate,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Video RTP target bitrate in bps (0 = auto)."));
 
                 /// @brief String — raw @c a=fmtp value from the SDP for the video stream.
-                static inline const ID VideoRtpFmtp = declareID("VideoRtpFmtp",
+                PROMEKI_DECLARE_ID(VideoRtpFmtp,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Raw SDP a=fmtp value for the video stream."));
@@ -904,40 +893,40 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // --- Audio stream ---
 
                 /// @brief SocketAddress — destination for the audio stream. Empty = disabled.
-                static inline const ID AudioRtpDestination = declareID("AudioRtpDestination",
+                PROMEKI_DECLARE_ID(AudioRtpDestination,
                         VariantSpec().setType(Variant::TypeSocketAddress)
                                 .setDescription("Destination for the audio RTP stream."));
 
                 /// @brief int — RTP payload type (0-127).
-                static inline const ID AudioRtpPayloadType = declareID("AudioRtpPayloadType",
+                PROMEKI_DECLARE_ID(AudioRtpPayloadType,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(97))
                                 .setRange(int32_t(0), int32_t(127))
                                 .setDescription("Audio RTP payload type."));
 
                 /// @brief int — RTP clock rate in Hz (default matches @c AudioRate).
-                static inline const ID AudioRtpClockRate = declareID("AudioRtpClockRate",
+                PROMEKI_DECLARE_ID(AudioRtpClockRate,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Audio RTP clock rate in Hz (0 = match AudioRate)."));
 
                 /// @brief int — fixed SSRC, or 0 to auto-generate.
-                static inline const ID AudioRtpSsrc = declareID("AudioRtpSsrc",
+                PROMEKI_DECLARE_ID(AudioRtpSsrc,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Audio RTP SSRC (0 = auto)."));
 
                 /// @brief int — DSCP marking for the audio stream (default 34 / AF41).
-                static inline const ID AudioRtpDscp = declareID("AudioRtpDscp",
+                PROMEKI_DECLARE_ID(AudioRtpDscp,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(34))
                                 .setRange(int32_t(0), int32_t(63))
                                 .setDescription("Audio RTP DSCP marking."));
 
                 /// @brief int — packet time in microseconds (AES67 default 1000).
-                static inline const ID AudioRtpPacketTimeUs = declareID("AudioRtpPacketTimeUs",
+                PROMEKI_DECLARE_ID(AudioRtpPacketTimeUs,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(1000))
                                 .setMin(int32_t(1))
@@ -946,46 +935,46 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // --- Data / metadata stream ---
 
                 /// @brief bool — enable transmission of per-frame Metadata.
-                static inline const ID DataEnabled = declareID("DataEnabled",
+                PROMEKI_DECLARE_ID(DataEnabled,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable per-frame metadata transmission."));
 
                 /// @brief SocketAddress — destination for the metadata stream. Empty = disabled.
-                static inline const ID DataRtpDestination = declareID("DataRtpDestination",
+                PROMEKI_DECLARE_ID(DataRtpDestination,
                         VariantSpec().setType(Variant::TypeSocketAddress)
                                 .setDescription("Destination for the metadata RTP stream."));
 
                 /// @brief int — RTP payload type (0-127).
-                static inline const ID DataRtpPayloadType = declareID("DataRtpPayloadType",
+                PROMEKI_DECLARE_ID(DataRtpPayloadType,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(100))
                                 .setRange(int32_t(0), int32_t(127))
                                 .setDescription("Metadata RTP payload type."));
 
                 /// @brief int — RTP clock rate in Hz (default 90000).
-                static inline const ID DataRtpClockRate = declareID("DataRtpClockRate",
+                PROMEKI_DECLARE_ID(DataRtpClockRate,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(90000))
                                 .setMin(int32_t(1))
                                 .setDescription("Metadata RTP clock rate in Hz."));
 
                 /// @brief int — fixed SSRC, or 0 to auto-generate.
-                static inline const ID DataRtpSsrc = declareID("DataRtpSsrc",
+                PROMEKI_DECLARE_ID(DataRtpSsrc,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Metadata RTP SSRC (0 = auto)."));
 
                 /// @brief int — DSCP marking for the metadata stream.
-                static inline const ID DataRtpDscp = declareID("DataRtpDscp",
+                PROMEKI_DECLARE_ID(DataRtpDscp,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(34))
                                 .setRange(int32_t(0), int32_t(63))
                                 .setDescription("Metadata RTP DSCP marking."));
 
                 /// @brief Enum @ref MetadataRtpFormat — wire format for the metadata stream.
-                static inline const ID DataRtpFormat = declareID("DataRtpFormat",
+                PROMEKI_DECLARE_ID(DataRtpFormat,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(MetadataRtpFormat::JsonMetadata)
                                 .setEnumType(MetadataRtpFormat::Type)
@@ -996,13 +985,13 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // ============================================================
 
                 /// @brief String — V4L2 device node path (e.g. "/dev/video0").
-                static inline const ID V4l2DevicePath = declareID("V4l2DevicePath",
+                PROMEKI_DECLARE_ID(V4l2DevicePath,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("V4L2 device node path."));
 
                 /// @brief int — number of MMAP capture buffers (2-32).
-                static inline const ID V4l2BufferCount = declareID("V4l2BufferCount",
+                PROMEKI_DECLARE_ID(V4l2BufferCount,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(4))
                                 .setRange(int32_t(2), int32_t(32))
@@ -1012,7 +1001,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// "auto" (default) auto-detects a paired USB audio device.
                 /// "none" or empty disables audio capture.
                 /// Any other value is used as-is (e.g. "hw:1,0", "default").
-                static inline const ID V4l2AudioDevice = declareID("V4l2AudioDevice",
+                PROMEKI_DECLARE_ID(V4l2AudioDevice,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String("auto"))
                                 .setDescription("ALSA capture device for paired audio. "
@@ -1025,58 +1014,58 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 // Actual ranges are device-dependent; see --probe output.
 
                 /// @brief int — Brightness (V4L2_CID_BRIGHTNESS).  -1 = device default.
-                static inline const ID V4l2Brightness = declareID("V4l2Brightness",
+                PROMEKI_DECLARE_ID(V4l2Brightness,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Brightness (-1 = device default)."));
 
                 /// @brief int — Contrast (V4L2_CID_CONTRAST).  -1 = device default.
-                static inline const ID V4l2Contrast = declareID("V4l2Contrast",
+                PROMEKI_DECLARE_ID(V4l2Contrast,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Contrast (-1 = device default)."));
 
                 /// @brief int — Saturation (V4L2_CID_SATURATION).  -1 = device default.
-                static inline const ID V4l2Saturation = declareID("V4l2Saturation",
+                PROMEKI_DECLARE_ID(V4l2Saturation,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Saturation (-1 = device default)."));
 
                 /// @brief int — Hue (V4L2_CID_HUE).  -1 = device default.
-                static inline const ID V4l2Hue = declareID("V4l2Hue",
+                PROMEKI_DECLARE_ID(V4l2Hue,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Hue (-1 = device default)."));
 
                 /// @brief int — Gamma (V4L2_CID_GAMMA).  -1 = device default.
-                static inline const ID V4l2Gamma = declareID("V4l2Gamma",
+                PROMEKI_DECLARE_ID(V4l2Gamma,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Gamma (-1 = device default)."));
 
                 /// @brief int — Sharpness (V4L2_CID_SHARPNESS).  -1 = device default.
-                static inline const ID V4l2Sharpness = declareID("V4l2Sharpness",
+                PROMEKI_DECLARE_ID(V4l2Sharpness,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Sharpness (-1 = device default)."));
 
                 /// @brief int — Backlight compensation (V4L2_CID_BACKLIGHT_COMPENSATION).
                 /// -1 = device default.
-                static inline const ID V4l2BacklightComp = declareID("V4l2BacklightComp",
+                PROMEKI_DECLARE_ID(V4l2BacklightComp,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Backlight compensation (-1 = device default)."));
 
                 /// @brief int — White balance temperature in Kelvin
                 /// (V4L2_CID_WHITE_BALANCE_TEMPERATURE).  -1 = device default.
-                static inline const ID V4l2WhiteBalanceTemp = declareID("V4l2WhiteBalanceTemp",
+                PROMEKI_DECLARE_ID(V4l2WhiteBalanceTemp,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("White balance temperature in K (-1 = device default)."));
 
                 /// @brief bool — Auto white balance (V4L2_CID_AUTO_WHITE_BALANCE).
                 /// -1 = device default, 0 = off, 1 = on.
-                static inline const ID V4l2AutoWhiteBalance = declareID("V4l2AutoWhiteBalance",
+                PROMEKI_DECLARE_ID(V4l2AutoWhiteBalance,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setRange(int32_t(-1), int32_t(1))
@@ -1084,26 +1073,26 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
 
                 /// @brief int — Exposure time, absolute, in 100µs units
                 /// (V4L2_CID_EXPOSURE_ABSOLUTE).  -1 = device default.
-                static inline const ID V4l2ExposureAbsolute = declareID("V4l2ExposureAbsolute",
+                PROMEKI_DECLARE_ID(V4l2ExposureAbsolute,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Exposure time in 100us units (-1 = device default)."));
 
                 /// @brief Enum @ref V4l2ExposureMode — auto exposure mode (V4L2_CID_EXPOSURE_AUTO).
-                static inline const ID V4l2AutoExposure = declareID("V4l2AutoExposure",
+                PROMEKI_DECLARE_ID(V4l2AutoExposure,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(Enum())
                                 .setEnumType(V4l2ExposureMode::Type)
                                 .setDescription("Auto exposure mode (empty = device default)."));
 
                 /// @brief int — Gain (V4L2_CID_GAIN).  -1 = device default.
-                static inline const ID V4l2Gain = declareID("V4l2Gain",
+                PROMEKI_DECLARE_ID(V4l2Gain,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("Gain (-1 = device default)."));
 
                 /// @brief Enum @ref V4l2PowerLineMode — power line frequency filter (V4L2_CID_POWER_LINE_FREQUENCY).
-                static inline const ID V4l2PowerLineFreq = declareID("V4l2PowerLineFreq",
+                PROMEKI_DECLARE_ID(V4l2PowerLineFreq,
                         VariantSpec().setType(Variant::TypeEnum)
                                 .setDefault(Enum())
                                 .setEnumType(V4l2PowerLineMode::Type)
@@ -1112,7 +1101,7 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                 /// @brief int — JPEG compression quality 1-100
                 /// (V4L2_CID_JPEG_COMPRESSION_QUALITY).  -1 = device default.
                 /// Not all devices support this control.
-                static inline const ID V4l2JpegQuality = declareID("V4l2JpegQuality",
+                PROMEKI_DECLARE_ID(V4l2JpegQuality,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(-1))
                                 .setDescription("JPEG compression quality 1-100 (-1 = device default)."));

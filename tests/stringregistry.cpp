@@ -7,11 +7,11 @@
 
 #include <doctest/doctest.h>
 #include <promeki/stringregistry.h>
+#include <promeki/fnv1a.h>
 
 using namespace promeki;
 
-struct TestRegistryTag {};
-using TestRegistry = StringRegistry<TestRegistryTag>;
+using TestRegistry = StringRegistry<"TestRegistry">;
 using TestItem = TestRegistry::Item;
 
 TEST_CASE("StringRegistry: empty registry has zero count") {
@@ -26,32 +26,32 @@ TEST_CASE("StringRegistry: findId returns InvalidID for unknown string") {
         CHECK(TestRegistry::instance().findId("never.seen.xyzzy") == TestRegistry::InvalidID);
 }
 
-TEST_CASE("StringRegistry: findOrCreate assigns IDs") {
+TEST_CASE("StringRegistry: findOrCreateProbe assigns IDs") {
         auto &reg = TestRegistry::instance();
-        uint32_t id1 = reg.findOrCreate("sr.first");
-        uint32_t id2 = reg.findOrCreate("sr.second");
+        uint64_t id1 = reg.findOrCreateProbe("sr.first");
+        uint64_t id2 = reg.findOrCreateProbe("sr.second");
         CHECK(id1 != id2);
         CHECK(id1 != TestRegistry::InvalidID);
         CHECK(id2 != TestRegistry::InvalidID);
 }
 
-TEST_CASE("StringRegistry: findOrCreate returns same ID for same string") {
+TEST_CASE("StringRegistry: findOrCreateProbe returns same ID for same string") {
         auto &reg = TestRegistry::instance();
-        uint32_t id1 = reg.findOrCreate("sr.duplicate");
-        uint32_t id2 = reg.findOrCreate("sr.duplicate");
+        uint64_t id1 = reg.findOrCreateProbe("sr.duplicate");
+        uint64_t id2 = reg.findOrCreateProbe("sr.duplicate");
         CHECK(id1 == id2);
 }
 
 TEST_CASE("StringRegistry: findId returns correct ID after registration") {
         auto &reg = TestRegistry::instance();
-        uint32_t created = reg.findOrCreate("sr.findtest");
-        uint32_t found = reg.findId("sr.findtest");
+        uint64_t created = reg.findOrCreateProbe("sr.findtest");
+        uint64_t found = reg.findId("sr.findtest");
         CHECK(created == found);
 }
 
 TEST_CASE("StringRegistry: name returns correct string for ID") {
         auto &reg = TestRegistry::instance();
-        uint32_t id = reg.findOrCreate("sr.nametest");
+        uint64_t id = reg.findOrCreateProbe("sr.nametest");
         CHECK(reg.name(id) == "sr.nametest");
 }
 
@@ -63,8 +63,16 @@ TEST_CASE("StringRegistry: name returns empty for invalid ID") {
 TEST_CASE("StringRegistry: contains works correctly") {
         auto &reg = TestRegistry::instance();
         CHECK_FALSE(reg.contains("sr.missing.xyzzy"));
-        reg.findOrCreate("sr.present");
+        reg.findOrCreateProbe("sr.present");
         CHECK(reg.contains("sr.present"));
+}
+
+TEST_CASE("StringRegistry: findOrCreateStrict agrees with the pure hash") {
+        auto &reg = TestRegistry::instance();
+        uint64_t id = reg.findOrCreateStrict("sr.strict.one");
+        CHECK(id == fnv1a("sr.strict.one"));
+        // Idempotent on the same name.
+        CHECK(reg.findOrCreateStrict("sr.strict.one") == id);
 }
 
 TEST_CASE("StringRegistry::Item: default is invalid") {
@@ -111,4 +119,42 @@ TEST_CASE("StringRegistry::Item: less-than for ordered containers") {
         TestItem a("item.lt.alpha");
         TestItem b("item.lt.beta");
         CHECK((a < b) != (b < a));
+}
+
+TEST_CASE("StringRegistry::Item: literal matches runtime-registered ID") {
+        TestItem runtime("item.literal.match");
+        constexpr TestItem compile = TestItem::literal("item.literal.match");
+        CHECK(runtime.id() == compile.id());
+}
+
+TEST_CASE("StringRegistry::Item: literal is a constexpr constant") {
+        // Exercises the constexpr path: these must be usable in
+        // constant-expression contexts.
+        static constexpr TestItem lit = TestItem::literal("item.literal.constexpr");
+        static_assert(lit.id() != TestRegistry::InvalidID);
+        static_assert(lit.isValid());
+        static_assert(lit == TestItem::literal("item.literal.constexpr"));
+        static_assert(lit != TestItem::literal("item.literal.constexpr.other"));
+        CHECK(lit.isValid());
+}
+
+TEST_CASE("StringRegistry::Item: fromId wraps fnv1a output") {
+        constexpr TestItem a = TestItem::fromId(fnv1a("item.fromid"));
+        constexpr TestItem b = TestItem::literal("item.fromid");
+        static_assert(a == b);
+        CHECK(a == b);
+}
+
+TEST_CASE("StringRegistry::Item: literal does not register for reverse lookup") {
+        // The probe-free literal path is not expected to register the
+        // name, so a subsequent find() must still report invalid.
+        TestItem::literal("item.literal.noregister");
+        TestItem found = TestItem::find("item.literal.noregister");
+        CHECK_FALSE(found.isValid());
+}
+
+TEST_CASE("StringRegistry::Item: runtime + literal roundtrip") {
+        TestItem runtime("item.literal.roundtrip");
+        CHECK(TestItem::literal("item.literal.roundtrip").id() == runtime.id());
+        CHECK(runtime.name() == "item.literal.roundtrip");
 }

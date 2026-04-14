@@ -515,13 +515,11 @@ All enums in `enums.h` inherit from `TypedEnum<Self>`. This gives the enum a com
 // include/promeki/enums.h
 class VideoPattern : public TypedEnum<VideoPattern> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("VideoPattern",
-                        {
-                                { "ColorBars", 0 },
-                                { "Ramp",      1 },
-                                // ...
-                        },
-                        0);  // default: ColorBars
+                PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0,
+                        { "ColorBars", 0 },
+                        { "Ramp",      1 }
+                        // ...
+                );
 
                 using TypedEnum<VideoPattern>::TypedEnum;
 
@@ -537,10 +535,12 @@ inline const VideoPattern VideoPattern::Ramp      { 1 };
 Key elements:
 
 - **`class`, not `struct`** — the wrapper is a real type, not a namespace for loose constants.
-- **`static inline const Enum::Type Type`** defined *inside* the class body so it is initialized before the per-value constants that follow.
+- **`PROMEKI_REGISTER_ENUM_TYPE(TypeName, Default, Entries...)`** — defined in `include/promeki/enum.h`, the macro emits a `static constexpr Enum::Entry[]` table in rodata, a `static inline Enum::Definition` backed by that table (no heap allocations, no `Map` per type), and a `static inline const Enum::Type Type` handle bound through `Enum::registerDefinition`.  The first argument is a string literal (the public type name); the second is the integer default value.  Three `static_assert`s verify at compile time that the table is non-empty, has no duplicate names or values, and that the default value appears in the table.
 - **`using TypedEnum<Self>::TypedEnum;`** inherits the three base constructors (default / int / String name).
 - **`static const` member declarations inside the class, `inline const` definitions outside** — declaring them inline inside the class does not work because the enclosing class is not yet complete when the brace initializer runs. Defining them outside the class body after it closes is mandatory.
 - **No `Type` argument on the static definitions** — the inherited `TypedEnum(int)` pulls `Derived::Type` automatically, so `{ 0 }` is all that is needed.
+
+The low-level `Enum::registerType(const String &, const ValueList &, int)` is still available for truly dynamic cases (e.g. V4L2 menu controls built from device-advertised menu items); it copies the name and entry list onto the heap.  Do **not** use it for well-known enums in `enums.h` — always prefer `PROMEKI_REGISTER_ENUM_TYPE` so the data lives in rodata and the compile-time validators run.
 
 ### Where Well-Known Enums Live
 

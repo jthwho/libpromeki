@@ -19,9 +19,6 @@ PROMEKI_NAMESPACE_BEGIN
 
 class StringList;
 
-/// @brief Tag type that scopes the StringRegistry for Metadata IDs.
-struct MetadataTag {};
-
 /**
  * @brief Key-value metadata container using typed Variant values.
  * @ingroup util
@@ -45,14 +42,14 @@ struct MetadataTag {};
  * bool has = meta.contains(Metadata::Copyright);  // false
  * @endcode
  */
-class Metadata : public VariantDatabase<MetadataTag> {
+class Metadata : public VariantDatabase<"Metadata"> {
         PROMEKI_SHARED_FINAL(Metadata)
         public:
                 /** @brief Shared pointer type for Metadata. */
                 using Ptr = SharedPtr<Metadata>;
 
                 /** @brief Base class alias. */
-                using Base = VariantDatabase<MetadataTag>;
+                using Base = VariantDatabase<"Metadata">;
 
                 using Base::Base;
 
@@ -61,110 +58,110 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief SMPTE timecode associated with this media unit.
-                static inline const ID Timecode = declareID("Timecode",
+                PROMEKI_DECLARE_ID(Timecode,
                         VariantSpec().setType(Variant::TypeTimecode)
                                 .setDefault(promeki::Timecode())
                                 .setDescription("SMPTE timecode associated with this media unit."));
 
                 /// @brief Gamma / transfer-function exponent.
-                static inline const ID Gamma = declareID("Gamma",
+                PROMEKI_DECLARE_ID(Gamma,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(0.0)
                                 .setMin(0.0)
                                 .setDescription("Gamma / transfer-function exponent."));
 
                 /// @brief Title of the media.
-                static inline const ID Title = declareID("Title",
+                PROMEKI_DECLARE_ID(Title,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Title of the media."));
 
                 /// @brief Copyright notice.
-                static inline const ID Copyright = declareID("Copyright",
+                PROMEKI_DECLARE_ID(Copyright,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Copyright notice."));
 
                 /// @brief Software that created or last modified the media.
-                static inline const ID Software = declareID("Software",
+                PROMEKI_DECLARE_ID(Software,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Software that created or modified the media."));
 
                 /// @brief Artist or creator name.
-                static inline const ID Artist = declareID("Artist",
+                PROMEKI_DECLARE_ID(Artist,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Artist or creator name."));
 
                 /// @brief Free-form comment.
-                static inline const ID Comment = declareID("Comment",
+                PROMEKI_DECLARE_ID(Comment,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Free-form comment."));
 
                 /// @brief Creation or origination date.
-                static inline const ID Date = declareID("Date",
+                PROMEKI_DECLARE_ID(Date,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Creation or origination date."));
 
                 /// @brief Album name (audio media).
-                static inline const ID Album = declareID("Album",
+                PROMEKI_DECLARE_ID(Album,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Album name (audio media)."));
 
                 /// @brief License information.
-                static inline const ID License = declareID("License",
+                PROMEKI_DECLARE_ID(License,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("License information."));
 
                 /// @brief Track number (audio media).
-                static inline const ID TrackNumber = declareID("TrackNumber",
+                PROMEKI_DECLARE_ID(TrackNumber,
                         VariantSpec().setTypes({Variant::TypeS32, Variant::TypeString})
                                 .setDefault(String())
                                 .setDescription("Track number (audio media)."));
 
                 /// @brief Genre (audio media).
-                static inline const ID Genre = declareID("Genre",
+                PROMEKI_DECLARE_ID(Genre,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Genre (audio media)."));
 
                 /// @brief Enable Broadcast Wave Format metadata in audio files.
-                static inline const ID EnableBWF = declareID("EnableBWF",
+                PROMEKI_DECLARE_ID(EnableBWF,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable Broadcast Wave Format metadata."));
 
                 /// @brief Human-readable description of the content.
-                static inline const ID Description = declareID("Description",
+                PROMEKI_DECLARE_ID(Description,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Human-readable description of the content."));
 
                 /// @brief BWF originator name.
-                static inline const ID Originator = declareID("Originator",
+                PROMEKI_DECLARE_ID(Originator,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("BWF originator name."));
 
                 /// @brief BWF originator reference.
-                static inline const ID OriginatorReference = declareID("OriginatorReference",
+                PROMEKI_DECLARE_ID(OriginatorReference,
                         VariantSpec().setTypes({Variant::TypeString, Variant::TypeUUID})
                                 .setDefault(String())
                                 .setDescription("BWF originator reference."));
 
                 /// @brief BWF origination date and time.
-                static inline const ID OriginationDateTime = declareID("OriginationDateTime",
+                PROMEKI_DECLARE_ID(OriginationDateTime,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("BWF origination date and time."));
 
                 /// @brief Frame rate of the associated video.
-                static inline const ID FrameRate = declareID("FrameRate",
+                PROMEKI_DECLARE_ID(FrameRate,
                         VariantSpec().setTypes({Variant::TypeRational, Variant::TypeDouble, Variant::TypeFrameRate})
                                 .setDefault(Rational<int>())
                                 .setDescription("Frame rate of the associated video."));
@@ -173,19 +170,19 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 /// One of: @c "file" (read from the container/sidecar),
                 /// @c "config" (caller-supplied override), or @c "default"
                 /// (backend fell back to its built-in default).
-                static inline const ID FrameRateSource = declareID("FrameRateSource",
+                PROMEKI_DECLARE_ID(FrameRateSource,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Source of the FrameRate value (file, config, or default)."));
 
                 /// @brief SMPTE UMID (Unique Material Identifier).
-                static inline const ID UMID = declareID("UMID",
+                PROMEKI_DECLARE_ID(UMID,
                         VariantSpec().setTypes({Variant::TypeString, Variant::TypeUMID})
                                 .setDefault(String())
                                 .setDescription("SMPTE UMID (Unique Material Identifier)."));
 
                 /// @brief BWF coding history string.
-                static inline const ID CodingHistory = declareID("CodingHistory",
+                PROMEKI_DECLARE_ID(CodingHistory,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("BWF coding history string."));
@@ -195,26 +192,26 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief Compression level hint for lossy codecs.
-                static inline const ID CompressionLevel = declareID("CompressionLevel",
+                PROMEKI_DECLARE_ID(CompressionLevel,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setDescription("Compression level hint for lossy codecs."));
 
                 /// @brief Enable variable bit-rate encoding.
-                static inline const ID EnableVBR = declareID("EnableVBR",
+                PROMEKI_DECLARE_ID(EnableVBR,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable variable bit-rate encoding."));
 
                 /// @brief VBR quality setting (codec-specific).
-                static inline const ID VBRQuality = declareID("VBRQuality",
+                PROMEKI_DECLARE_ID(VBRQuality,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setDescription("VBR quality setting (codec-specific)."));
 
                 /// @brief Internal: allocation hint for compressed pixel formats.
                 /// Use Image::compressedSize() instead.
-                static inline const ID CompressedSize = declareID("CompressedSize",
+                PROMEKI_DECLARE_ID(CompressedSize,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -225,13 +222,13 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief Signals end-of-stream to downstream nodes.
-                static inline const ID EndOfStream = declareID("EndOfStream",
+                PROMEKI_DECLARE_ID(EndOfStream,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Signals end-of-stream to downstream nodes."));
 
                 /// @brief Frame sequence number within a stream.
-                static inline const ID FrameNumber = declareID("FrameNumber",
+                PROMEKI_DECLARE_ID(FrameNumber,
                         VariantSpec().setType(Variant::TypeS64)
                                 .setDefault(int64_t(0))
                                 .setMin(int64_t(0))
@@ -243,7 +240,7 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 /// or the device it talks to.  For live capture this is
                 /// typically SystemMonotonic; for network streams it is the
                 /// moment the first packet arrived.
-                static inline const ID CaptureTime = declareID("CaptureTime",
+                PROMEKI_DECLARE_ID(CaptureTime,
                         VariantSpec().setType(Variant::TypeMediaTimeStamp)
                                 .setDefault(promeki::MediaTimeStamp())
                                 .setDescription("Timestamp when the library or device captured this data."));
@@ -252,13 +249,13 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 ///
                 /// Set by downstream scheduling or pacing logic to indicate
                 /// when a frame should be rendered or transmitted.
-                static inline const ID PresentationTime = declareID("PresentationTime",
+                PROMEKI_DECLARE_ID(PresentationTime,
                         VariantSpec().setType(Variant::TypeMediaTimeStamp)
                                 .setDefault(promeki::MediaTimeStamp())
                                 .setDescription("Timestamp when this essence should be presented."));
 
                 /// @brief Clock-domain-aware timestamp for media timing.
-                static inline const ID MediaTimeStamp = declareID("MediaTimeStamp",
+                PROMEKI_DECLARE_ID(MediaTimeStamp,
                         VariantSpec().setType(Variant::TypeMediaTimeStamp)
                                 .setDefault(promeki::MediaTimeStamp())
                                 .setDescription("Clock-domain-aware timestamp for media timing."));
@@ -268,13 +265,13 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 /// The raw 32-bit RTP timestamp carried in the packet(s)
                 /// that delivered this essence.  Clock rate is stream-defined
                 /// (typically 90 kHz for video).
-                static inline const ID RtpTimestamp = declareID("RtpTimestamp",
+                PROMEKI_DECLARE_ID(RtpTimestamp,
                         VariantSpec().setType(Variant::TypeU32)
                                 .setDefault(uint32_t(0))
                                 .setDescription("RTP timestamp from the packet header."));
 
                 /// @brief Number of RTP packets that composed this essence (int32_t).
-                static inline const ID RtpPacketCount = declareID("RtpPacketCount",
+                PROMEKI_DECLARE_ID(RtpPacketCount,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -282,13 +279,13 @@ class Metadata : public VariantDatabase<MetadataTag> {
 
 #if PROMEKI_ENABLE_NETWORK
                 /// @brief PTP grandmaster clock identity (EUI-64).
-                static inline const ID PtpGrandmasterId = declareID("PtpGrandmasterId",
+                PROMEKI_DECLARE_ID(PtpGrandmasterId,
                         VariantSpec().setType(Variant::TypeEUI64)
                                 .setDefault(EUI64())
                                 .setDescription("PTP grandmaster clock identity (EUI-64)."));
 
                 /// @brief PTP domain number (0-127).
-                static inline const ID PtpDomainNumber = declareID("PtpDomainNumber",
+                PROMEKI_DECLARE_ID(PtpDomainNumber,
                         VariantSpec().setType(Variant::TypeU8)
                                 .setDefault(uint8_t(0))
                                 .setMax(uint8_t(127))
@@ -296,34 +293,34 @@ class Metadata : public VariantDatabase<MetadataTag> {
 #endif
 
                 /// @brief Number of times this frame was repeated due to underrun (int).
-                static inline const ID FrameRepeated = declareID("FrameRepeated",
+                PROMEKI_DECLARE_ID(FrameRepeated,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Number of times frame repeated due to underrun."));
 
                 /// @brief Number of frames dropped immediately before this one (int).
-                static inline const ID FrameDropped = declareID("FrameDropped",
+                PROMEKI_DECLARE_ID(FrameDropped,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Number of frames dropped before this one."));
 
                 /// @brief This frame arrived later than its scheduled time (bool).
-                static inline const ID FrameLate = declareID("FrameLate",
+                PROMEKI_DECLARE_ID(FrameLate,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Frame arrived later than scheduled."));
 
                 /// @brief This frame is a keyframe / intra frame (bool).
-                static inline const ID FrameKeyframe = declareID("FrameKeyframe",
+                PROMEKI_DECLARE_ID(FrameKeyframe,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Frame is a keyframe / intra frame."));
 
                 /// @brief This frame's MediaDesc differs from the previously
                 /// reported one (bool).
-                static inline const ID MediaDescChanged = declareID("MediaDescChanged",
+                PROMEKI_DECLARE_ID(MediaDescChanged,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Frame's MediaDesc differs from previously reported."));
@@ -333,19 +330,19 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief Original source filename (from previous save).
-                static inline const ID FileOrigName = declareID("FileOrigName",
+                PROMEKI_DECLARE_ID(FileOrigName,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Original source filename."));
 
                 /// @brief Project name.
-                static inline const ID Project = declareID("Project",
+                PROMEKI_DECLARE_ID(Project,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Project name."));
 
                 /// @brief Reel or input device name.
-                static inline const ID Reel = declareID("Reel",
+                PROMEKI_DECLARE_ID(Reel,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Reel or input device name."));
@@ -355,64 +352,64 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief Film manufacturer ID code (2 chars).
-                static inline const ID FilmMfgID = declareID("FilmMfgID",
+                PROMEKI_DECLARE_ID(FilmMfgID,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film manufacturer ID code (2 chars)."));
 
                 /// @brief Film type (2 chars).
-                static inline const ID FilmType = declareID("FilmType",
+                PROMEKI_DECLARE_ID(FilmType,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film type (2 chars)."));
 
                 /// @brief Film offset in perfs (2 chars).
-                static inline const ID FilmOffset = declareID("FilmOffset",
+                PROMEKI_DECLARE_ID(FilmOffset,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film offset in perfs (2 chars)."));
 
                 /// @brief Film prefix (6 chars).
-                static inline const ID FilmPrefix = declareID("FilmPrefix",
+                PROMEKI_DECLARE_ID(FilmPrefix,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film prefix (6 chars)."));
 
                 /// @brief Film count (4 chars).
-                static inline const ID FilmCount = declareID("FilmCount",
+                PROMEKI_DECLARE_ID(FilmCount,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film count (4 chars)."));
 
                 /// @brief Film format (e.g. "Academy").
-                static inline const ID FilmFormat = declareID("FilmFormat",
+                PROMEKI_DECLARE_ID(FilmFormat,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film format (e.g. Academy)."));
 
                 /// @brief Sequence position (frame number in sequence).
-                static inline const ID FilmSeqPos = declareID("FilmSeqPos",
+                PROMEKI_DECLARE_ID(FilmSeqPos,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Sequence position (frame number in sequence)."));
 
                 /// @brief Sequence length (total frames in sequence).
-                static inline const ID FilmSeqLen = declareID("FilmSeqLen",
+                PROMEKI_DECLARE_ID(FilmSeqLen,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("Sequence length (total frames in sequence)."));
 
                 /// @brief Held count (1 = default, >1 = repeated frame).
-                static inline const ID FilmHoldCount = declareID("FilmHoldCount",
+                PROMEKI_DECLARE_ID(FilmHoldCount,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(1))
                                 .setMin(int32_t(1))
                                 .setDescription("Held count (1 = default, >1 = repeated frame)."));
 
                 /// @brief Film shutter angle in degrees.
-                static inline const ID FilmShutter = declareID("FilmShutter",
+                PROMEKI_DECLARE_ID(FilmShutter,
                         VariantSpec().setType(Variant::TypeDouble)
                                 .setDefault(0.0)
                                 .setMin(0.0)
@@ -420,13 +417,13 @@ class Metadata : public VariantDatabase<MetadataTag> {
                                 .setDescription("Film shutter angle in degrees."));
 
                 /// @brief Film frame identification (e.g. keycode).
-                static inline const ID FilmFrameID = declareID("FilmFrameID",
+                PROMEKI_DECLARE_ID(FilmFrameID,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film frame identification (e.g. keycode)."));
 
                 /// @brief Film slate information.
-                static inline const ID FilmSlate = declareID("FilmSlate",
+                PROMEKI_DECLARE_ID(FilmSlate,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Film slate information."));
@@ -436,7 +433,7 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief Field number within an interlaced frame (0 or 1).
-                static inline const ID FieldID = declareID("FieldID",
+                PROMEKI_DECLARE_ID(FieldID,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setRange(int32_t(0), int32_t(1))
@@ -447,21 +444,21 @@ class Metadata : public VariantDatabase<MetadataTag> {
                 // ============================================================
 
                 /// @brief SMPTE 268M transfer characteristic code.
-                static inline const ID TransferCharacteristic = declareID("TransferCharacteristic",
+                PROMEKI_DECLARE_ID(TransferCharacteristic,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("SMPTE 268M transfer characteristic code."));
 
                 /// @brief SMPTE 268M colorimetric specification code.
-                static inline const ID Colorimetric = declareID("Colorimetric",
+                PROMEKI_DECLARE_ID(Colorimetric,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
                                 .setDescription("SMPTE 268M colorimetric specification code."));
 
                 /// @brief Image orientation code (0 = left-to-right, top-to-bottom).
-                static inline const ID Orientation = declareID("Orientation",
+                PROMEKI_DECLARE_ID(Orientation,
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
                                 .setMin(int32_t(0))
@@ -522,19 +519,19 @@ class Metadata : public VariantDatabase<MetadataTag> {
                  *
                  * Defaults populated:
                  *
-                 *  - @ref Date — current wall-clock UTC date, formatted as
+                 *  - `Date` — current wall-clock UTC date, formatted as
                  *    @c "YYYY-MM-DD".
-                 *  - @ref OriginationDateTime — current wall-clock UTC
+                 *  - `OriginationDateTime` — current wall-clock UTC
                  *    timestamp, formatted as @c "YYYY-MM-DDTHH:MM:SS"
                  *    (BWF-friendly ISO 8601).
-                 *  - @ref Software — the Application name if
+                 *  - `Software` — the Application name if
                  *    @ref Application::appName is non-empty, otherwise
                  *    @c "libpromeki (https://howardlogic.com)".
-                 *  - @ref Originator — always
+                 *  - `Originator` — always
                  *    @c "libpromeki howardlogic.com".  BWF caps this
                  *    field at 32 characters; this value fits and acts
                  *    as a persistent libpromeki signature.
-                 *  - @ref OriginatorReference — a fresh UUID v7
+                 *  - `OriginatorReference` — a fresh UUID v7
                  *    (time-sortable) as a string.
                  *  - @ref UMID — a fresh Extended SMPTE 330M UMID with
                  *    a random material number and a @c "MEKI"

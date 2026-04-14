@@ -13,12 +13,6 @@
 PROMEKI_NAMESPACE_BEGIN
 
 /**
- * @brief Phantom tag for the library-wide options @ref VariantDatabase.
- * @ingroup util
- */
-struct LibraryOptionsTag {};
-
-/**
  * @brief Library-wide option database populated from environment variables.
  * @ingroup util
  *
@@ -42,10 +36,10 @@ struct LibraryOptionsTag {};
  * //   export PROMEKI_OPT_CoreDumps=true
  * @endcode
  */
-class LibraryOptions : public VariantDatabase<LibraryOptionsTag> {
+class LibraryOptions : public VariantDatabase<"LibraryOptions"> {
         public:
                 /** @brief Base class alias. */
-                using Base = VariantDatabase<LibraryOptionsTag>;
+                using Base = VariantDatabase<"LibraryOptions">;
 
                 using Base::Base;
 
@@ -54,19 +48,19 @@ class LibraryOptions : public VariantDatabase<LibraryOptionsTag> {
                 // ============================================================
 
                 /// @brief bool — install crash signal handlers (default true).
-                static inline const ID CrashHandler = declareID("CrashHandler",
+                PROMEKI_DECLARE_ID(CrashHandler,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Install crash signal handlers."));
 
                 /// @brief bool — raise RLIMIT_CORE for core dumps (default false).
-                static inline const ID CoreDumps = declareID("CoreDumps",
+                PROMEKI_DECLARE_ID(CoreDumps,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(false)
                                 .setDescription("Enable core dumps via RLIMIT_CORE."));
 
                 /// @brief String — crash log directory (empty = Dir::temp()).
-                static inline const ID CrashLogDir = declareID("CrashLogDir",
+                PROMEKI_DECLARE_ID(CrashLogDir,
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("Crash log directory (empty = system temp)."));
@@ -74,7 +68,7 @@ class LibraryOptions : public VariantDatabase<LibraryOptionsTag> {
                 /// @brief bool — include the process environment in crash/trace
                 /// reports (default true).  Disable if the environment may
                 /// contain secrets you don't want written to disk.
-                static inline const ID CaptureEnvironment = declareID("CaptureEnvironment",
+                PROMEKI_DECLARE_ID(CaptureEnvironment,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Include environment variables in crash reports."));
@@ -91,7 +85,7 @@ class LibraryOptions : public VariantDatabase<LibraryOptionsTag> {
                 /// that turns those signals into @ref Application::quit
                 /// calls plus a wake-up posted to the main
                 /// @ref EventLoop.
-                static inline const ID TerminationSignalHandler = declareID("TerminationSignalHandler",
+                PROMEKI_DECLARE_ID(TerminationSignalHandler,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Install termination signal handlers (Ctrl-C/kill)."));
@@ -104,7 +98,7 @@ class LibraryOptions : public VariantDatabase<LibraryOptionsTag> {
                 /// to take effect on the very first delivery, or for
                 /// applications that want to handle multiple signals
                 /// themselves.
-                static inline const ID SignalDoubleTapExit = declareID("SignalDoubleTapExit",
+                PROMEKI_DECLARE_ID(SignalDoubleTapExit,
                         VariantSpec().setType(Variant::TypeBool)
                                 .setDefault(true)
                                 .setDescription("Force-exit on second termination signal delivery."));

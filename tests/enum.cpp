@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 #include <promeki/enum.h>
 #include <promeki/enums.h>
+#include <promeki/metadata.h>
 #include <promeki/variant.h>
 #include <promeki/variantdatabase.h>
 #include <promeki/datastream.h>
@@ -361,10 +362,8 @@ TEST_CASE("DataStream: round-trip Variant Enum preserves negative value") {
 // VariantDatabase / JSON round-trip
 // ---------------------------------------------------------------------------
 
-namespace { struct EnumTestDbTag {}; }
-
 TEST_CASE("VariantDatabase: Enum round-trips through JSON as its String form") {
-        using TestDb = VariantDatabase<EnumTestDbTag>;
+        using TestDb = VariantDatabase<"EnumTestDb">;
         TestDb db;
         TestDb::ID codec("codec");
         db.set(codec, Variant(TestCodec::H265));
@@ -385,7 +384,7 @@ TEST_CASE("VariantDatabase: Enum round-trips through JSON as its String form") {
 }
 
 TEST_CASE("VariantDatabase: getAs<Enum> recovers Enum from a stored String") {
-        using TestDb = VariantDatabase<EnumTestDbTag>;
+        using TestDb = VariantDatabase<"EnumTestDb">;
         TestDb db;
         TestDb::ID codec("codec2");
         // Mimic what happens after a JSON round-trip: value arrives as String.
@@ -684,4 +683,84 @@ TEST_CASE("ImgSeqPathMode: unqualified name resolves against type") {
         Enum e = v.asEnum(ImgSeqPathMode::Type, &err);
         CHECK(err.isOk());
         CHECK(e == ImgSeqPathMode::Relative);
+}
+
+// ---------------------------------------------------------------------------
+// Zero-copy String returns
+// ---------------------------------------------------------------------------
+
+TEST_CASE("Enum: typeName() is literal-backed (zero-copy)") {
+        // Type names are cached in a StringLiteralData at registration
+        // time — accessors return wrappers around that record rather
+        // than copying bytes.
+        String s = TestCodec::H265.typeName();
+        CHECK(s == String("TestCodec"));
+        CHECK(s.isLiteral());
+}
+
+TEST_CASE("Enum: valueName() is literal-backed for in-list values") {
+        String s = TestCodec::H265.valueName();
+        CHECK(s == String("H265"));
+        CHECK(s.isLiteral());
+}
+
+TEST_CASE("Enum: toString() is literal-backed for in-list values") {
+        String s = TestCodec::H265.toString();
+        CHECK(s == String("TestCodec::H265"));
+        CHECK(s.isLiteral());
+}
+
+TEST_CASE("Enum: toString() is NOT literal-backed for out-of-list values") {
+        // Out-of-list values have no pre-built qualified form, so the
+        // result falls through to a concatenation and lands in a
+        // mutable Latin1 buffer.
+        Enum e(TestCodec::Type, 999);
+        String s = e.toString();
+        CHECK(s == String("TestCodec::999"));
+        CHECK_FALSE(s.isLiteral());
+}
+
+TEST_CASE("Enum: two Enums of the same in-list value share toString() backing") {
+        // Same StringLiteralData record backs both returned Strings, so
+        // the underlying byte pointers compare equal and any downstream
+        // String == short-circuits on identity before byte compare.
+        Enum a(TestCodec::Type, 2);  // H265
+        Enum b(TestCodec::Type, 2);  // H265
+        String sa = a.toString();
+        String sb = b.toString();
+        CHECK(sa == sb);
+        CHECK(sa.cstr() == sb.cstr());
+}
+
+// ---------------------------------------------------------------------------
+// constexpr compatibility
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// Exercises that a Metadata ID declared via PROMEKI_DECLARE_ID is a
+// true constant expression — suitable for `switch` labels and
+// `static_assert`.  Any regression in the constexpr-id path here would
+// surface as a compile error in this helper, not a runtime failure.
+constexpr int classifyMetadataId(uint64_t id) {
+        switch(id) {
+                case Metadata::Title.id():     return 1;
+                case Metadata::Artist.id():    return 2;
+                case Metadata::Copyright.id(): return 3;
+                default:                       return 0;
+        }
+}
+
+static_assert(classifyMetadataId(Metadata::Title.id())     == 1);
+static_assert(classifyMetadataId(Metadata::Artist.id())    == 2);
+static_assert(classifyMetadataId(Metadata::Copyright.id()) == 3);
+static_assert(classifyMetadataId(0xdeadbeef)                == 0);
+
+} // namespace
+
+TEST_CASE("Metadata: constexpr ID usable in a switch statement") {
+        CHECK(classifyMetadataId(Metadata::Title.id())     == 1);
+        CHECK(classifyMetadataId(Metadata::Artist.id())    == 2);
+        CHECK(classifyMetadataId(Metadata::Copyright.id()) == 3);
+        CHECK(classifyMetadataId(0xdeadbeef)                == 0);
 }

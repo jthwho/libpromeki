@@ -20,6 +20,7 @@
 #include <promeki/datastream.h>
 #include <promeki/readwritelock.h>
 #include <promeki/logger.h>
+#include <promeki/util.h>
 
 PROMEKI_NAMESPACE_BEGIN
 
@@ -40,13 +41,15 @@ enum class SpecValidation {
  * @brief A collection of named Variant values keyed by string-registered IDs.
  * @ingroup util
  *
- * @tparam Tag A tag type that distinguishes this database's ID namespace.
- *         The Tag also serves as the StringRegistry tag, so each
- *         VariantDatabase type gets its own independent ID space.
+ * @tparam Name A compile-time string literal identifying this
+ *         database's ID namespace.  Each unique name gets its own
+ *         independent ID space via the underlying StringRegistry,
+ *         and the name appears in any collision diagnostic so the
+ *         responsible database is obvious from the failure message.
  *
  * VariantDatabase maps string names to Variant values using integer IDs
  * for fast lookup.  The nested ID type is a StringRegistry::Item scoped
- * to this database's Tag.
+ * to this database's Name.
  *
  * Each ID can optionally have a @ref VariantSpec registered via
  * @ref declareID.  Specs describe the accepted types, numeric range,
@@ -58,13 +61,17 @@ enum class SpecValidation {
  * All serialization formats use the string names (not integer IDs),
  * so data can be safely persisted and loaded across runs.
  *
- * @warning The integer IDs within ID are assigned in registration order
- *          and must not be persisted or used outside the current process.
+ * @warning The integer IDs within ID are deterministic hashes of the
+ *          string names, so they are stable across runs for the same
+ *          name but not across renames.  Well-known IDs (declared via
+ *          @ref declareID) use a strict registration path that aborts
+ *          on hash collision; runtime-dynamic names use a probing
+ *          path that never fails.  Serialization formats continue
+ *          to carry the name, not the ID.
  *
  * @par Example
  * @code
- * struct ConfigTag {};
- * using Config = VariantDatabase<ConfigTag>;
+ * using Config = VariantDatabase<"Config">;
  *
  * static inline const Config::ID Width = Config::declareID("Width",
  *     VariantSpec().setType(Variant::TypeS32).setDefault(1920)
@@ -76,13 +83,18 @@ enum class SpecValidation {
  *
  * const VariantSpec *s = Config::spec(Width);
  * String desc = s->description(); // "Frame width in pixels"
+ *
+ * // Compile-time constant for a well-known name that doesn't need a
+ * // spec.  Its ID matches any declareID("Height", ...) in the same Tag.
+ * static constexpr Config::ID Height = Config::ID::literal("Height");
+ * static_assert(Height.id() == Config::ID::literal("Height").id());
  * @endcode
  */
-template <typename Tag>
+template <CompiledString Name>
 class VariantDatabase {
         public:
                 /** @brief Lightweight handle identifying an entry by name. */
-                using ID = typename StringRegistry<Tag>::Item;
+                using ID = typename StringRegistry<Name>::Item;
 
                 /** @brief Map of ID to VariantSpec for batch spec operations. */
                 using SpecMap = Map<ID, VariantSpec>;
@@ -94,9 +106,12 @@ class VariantDatabase {
                 /**
                  * @brief Declares an ID and registers its VariantSpec.
                  *
-                 * This is the mandatory way to declare well-known IDs.
-                 * The string name is registered in the StringRegistry and
-                 * the spec is stored in the per-Tag spec registry.
+                 * Prefer the @ref PROMEKI_DECLARE_ID macro at the
+                 * declaration site: it expands to a `static constexpr ID`
+                 * (so the value is usable in `switch`, `static_assert`,
+                 * and other constant-expression contexts) plus a sibling
+                 * `static inline` declaration that calls this function
+                 * to register the spec.
                  *
                  * @param name The string name for the ID.
                  * @param spec The VariantSpec describing this ID.
@@ -104,14 +119,18 @@ class VariantDatabase {
                  *
                  * @par Example
                  * @code
-                 * static inline const ID Width = declareID("Width",
+                 * PROMEKI_DECLARE_ID(Width,
                  *     VariantSpec().setType(Variant::TypeS32)
                  *                  .setDefault(1920)
                  *                  .setDescription("Frame width"));
                  * @endcode
                  */
                 static ID declareID(const String &name, const VariantSpec &spec) {
-                        ID id(name);
+                        // Use the strict registration path so a hash collision
+                        // between two well-known names aborts at static-init
+                        // time instead of silently diverging from
+                        // `ID::literal(name)`.
+                        ID id = ID::fromId(StringRegistry<Name>::instance().findOrCreateStrict(name));
                         specRegistry().insert(id.id(), spec);
                         return id;
                 }
@@ -129,7 +148,7 @@ class VariantDatabase {
                  * @brief Returns a copy of the entire spec registry.
                  * @return A map from integer ID to VariantSpec.
                  */
-                static Map<uint32_t, VariantSpec> registeredSpecs() {
+                static Map<uint64_t, VariantSpec> registeredSpecs() {
                         return specRegistry().all();
                 }
 
@@ -540,8 +559,8 @@ class VariantDatabase {
                  *
                  * @par Example
                  * @code
-                 * VariantDatabase<MyTag> a, b;
-                 * VariantDatabase<MyTag>::ID key("width");
+                 * VariantDatabase<"MyDB"> a, b;
+                 * VariantDatabase<"MyDB">::ID key("width");
                  * a.set(key, 1920);
                  * b.set(key, 1920);
                  * bool same = (a == b);  // true
@@ -568,7 +587,7 @@ class VariantDatabase {
                 JsonObject toJson() const {
                         JsonObject json;
                         for(auto it = _data.cbegin(); it != _data.cend(); ++it) {
-                                String name = StringRegistry<Tag>::instance().name(it->first);
+                                String name = StringRegistry<Name>::instance().name(it->first);
                                 json.setFromVariant(name, it->second);
                         }
                         return json;
@@ -589,7 +608,7 @@ class VariantDatabase {
                 void writeTo(DataStream &stream) const {
                         stream << static_cast<uint32_t>(_data.size());
                         for(auto it = _data.cbegin(); it != _data.cend(); ++it) {
-                                String name = StringRegistry<Tag>::instance().name(it->first);
+                                String name = StringRegistry<Name>::instance().name(it->first);
                                 stream << name << it->second;
                         }
                 }
@@ -634,13 +653,13 @@ class VariantDatabase {
                  */
                 void writeTo(TextStream &stream) const {
                         for(auto it = _data.cbegin(); it != _data.cend(); ++it) {
-                                String name = StringRegistry<Tag>::instance().name(it->first);
+                                String name = StringRegistry<Name>::instance().name(it->first);
                                 stream << name << " = " << it->second << endl;
                         }
                 }
 
         private:
-                Map<uint32_t, Variant>  _data;
+                Map<uint64_t, Variant>  _data;
                 SpecValidation          _validation = SpecValidation::Warn;
 
                 /**
@@ -656,19 +675,19 @@ class VariantDatabase {
                                 return reg;
                         }
 
-                        void insert(uint32_t id, const VariantSpec &spec) {
+                        void insert(uint64_t id, const VariantSpec &spec) {
                                 ReadWriteLock::WriteLocker lock(_lock);
                                 _specs.insert(id, spec);
                         }
 
-                        const VariantSpec *find(uint32_t id) const {
+                        const VariantSpec *find(uint64_t id) const {
                                 ReadWriteLock::ReadLocker lock(_lock);
                                 auto it = _specs.find(id);
                                 if(it == _specs.end()) return nullptr;
                                 return &it->second;
                         }
 
-                        Map<uint32_t, VariantSpec> all() const {
+                        Map<uint64_t, VariantSpec> all() const {
                                 ReadWriteLock::ReadLocker lock(_lock);
                                 return _specs;
                         }
@@ -676,7 +695,7 @@ class VariantDatabase {
                 private:
                         SpecRegistry() = default;
                         mutable ReadWriteLock           _lock;
-                        Map<uint32_t, VariantSpec>      _specs;
+                        Map<uint64_t, VariantSpec>      _specs;
                 };
 
                 static SpecRegistry &specRegistry() { return SpecRegistry::instance(); }
@@ -710,8 +729,8 @@ class VariantDatabase {
  * @param db     The VariantDatabase to serialize.
  * @return A reference to the stream.
  */
-template <typename Tag>
-DataStream &operator<<(DataStream &stream, const VariantDatabase<Tag> &db) {
+template <CompiledString Name>
+DataStream &operator<<(DataStream &stream, const VariantDatabase<Name> &db) {
         db.writeTo(stream);
         return stream;
 }
@@ -722,8 +741,8 @@ DataStream &operator<<(DataStream &stream, const VariantDatabase<Tag> &db) {
  * @param db     The VariantDatabase to populate (cleared first).
  * @return A reference to the stream.
  */
-template <typename Tag>
-DataStream &operator>>(DataStream &stream, VariantDatabase<Tag> &db) {
+template <CompiledString Name>
+DataStream &operator>>(DataStream &stream, VariantDatabase<Name> &db) {
         db.readFrom(stream);
         return stream;
 }
@@ -734,10 +753,51 @@ DataStream &operator>>(DataStream &stream, VariantDatabase<Tag> &db) {
  * @param db     The VariantDatabase to serialize.
  * @return A reference to the stream.
  */
-template <typename Tag>
-TextStream &operator<<(TextStream &stream, const VariantDatabase<Tag> &db) {
+template <CompiledString Name>
+TextStream &operator<<(TextStream &stream, const VariantDatabase<Name> &db) {
         db.writeTo(stream);
         return stream;
 }
 
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief Declares a well-known VariantDatabase key as a compile-time constant.
+ * @ingroup util
+ *
+ * Expands, inside a class derived from @ref VariantDatabase, to two
+ * declarations that together give the key both a `constexpr` ID and a
+ * registered @ref VariantSpec :
+ *
+ * 1. `static constexpr ID <Name>` initialized from the pure FNV-1a hash of
+ *    `"<Name>"` via @ref StringRegistry::Item::literal — usable in `switch`
+ *    labels, `static_assert`, template parameters, and other constant
+ *    expression contexts.
+ * 2. A sibling `static inline const ID` whose initializer calls
+ *    @ref VariantDatabase::declareID with the same name to register the
+ *    spec (and the name, for reverse lookup) at static-init time.  The
+ *    strict-hash path guarantees the two IDs agree; a hash collision with
+ *    another well-known key will abort the process before `main()` runs.
+ *
+ * The name appears once in the macro call, so there is no risk of the
+ * literal hash and the registered name drifting apart.
+ *
+ * @par Example
+ * @code
+ * class Metadata : public VariantDatabase<"Metadata"> {
+ *     public:
+ *         PROMEKI_DECLARE_ID(Title,
+ *             VariantSpec().setType(Variant::TypeString)
+ *                          .setDefault(String())
+ *                          .setDescription("Title of the media."));
+ *
+ *         // Title.id() is now a constant expression:
+ *         static_assert(Title.id() == ID::literal("Title").id());
+ * };
+ * @endcode
+ */
+#define PROMEKI_DECLARE_ID(Name, ...)                                           \
+        static constexpr ID Name = ID::literal(#Name);                          \
+        [[maybe_unused]] static inline const ID                                 \
+                PROMEKI_CONCAT(_promeki_spec_reg_, Name) =                      \
+                        declareID(#Name, __VA_ARGS__)

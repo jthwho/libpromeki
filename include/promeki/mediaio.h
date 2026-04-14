@@ -95,9 +95,6 @@ enum MediaIOSeekMode {
         MediaIO_SeekKeyframeAfter       ///< @brief Land on the closest keyframe at or after.
 };
 
-/** @brief Phantom tag for the MediaIO stats StringRegistry. */
-struct MediaIOStatsTag {};
-
 /**
  * @brief Statistics container for MediaIO backends.
  * @ingroup proav
@@ -112,66 +109,66 @@ struct MediaIOStatsTag {};
  * free to add their own backend-specific keys for data not covered
  * by the standard set.
  */
-class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
+class MediaIOStats : public VariantDatabase<"MediaIOStats"> {
         public:
-                using Base = VariantDatabase<MediaIOStatsTag>;
+                using Base = VariantDatabase<"MediaIOStats">;
                 using Base::Base;
 
                 /// @brief int64_t — total frames dropped since open.
-                static inline const ID FramesDropped = declareID("FramesDropped",
+                PROMEKI_DECLARE_ID(FramesDropped,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
                                 .setMin(int64_t(0)).setDescription("Total frames dropped since open."));
                 /// @brief int64_t — total frames repeated due to underrun.
-                static inline const ID FramesRepeated = declareID("FramesRepeated",
+                PROMEKI_DECLARE_ID(FramesRepeated,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
                                 .setMin(int64_t(0)).setDescription("Total frames repeated due to underrun."));
                 /// @brief int64_t — total frames that arrived late.
-                static inline const ID FramesLate = declareID("FramesLate",
+                PROMEKI_DECLARE_ID(FramesLate,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
                                 .setMin(int64_t(0)).setDescription("Total frames that arrived late."));
                 /// @brief int64_t — current depth of internal buffer.
-                static inline const ID QueueDepth = declareID("QueueDepth",
+                PROMEKI_DECLARE_ID(QueueDepth,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
                                 .setMin(int64_t(0)).setDescription("Current depth of internal buffer."));
                 /// @brief int64_t — capacity of internal buffer.
-                static inline const ID QueueCapacity = declareID("QueueCapacity",
+                PROMEKI_DECLARE_ID(QueueCapacity,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
                                 .setMin(int64_t(0)).setDescription("Capacity of internal buffer."));
                 /// @brief double — current data rate.
-                static inline const ID BytesPerSecond = declareID("BytesPerSecond",
+                PROMEKI_DECLARE_ID(BytesPerSecond,
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription("Current data rate in bytes per second."));
                 /// @brief double — current frame rate (frames per second).
-                static inline const ID FramesPerSecond = declareID("FramesPerSecond",
+                PROMEKI_DECLARE_ID(FramesPerSecond,
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription("Current frame rate in frames per second."));
                 /// @brief double — average end-to-end latency.
-                static inline const ID AverageLatencyMs = declareID("AverageLatencyMs",
+                PROMEKI_DECLARE_ID(AverageLatencyMs,
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription("Average end-to-end latency in ms."));
                 /// @brief double — peak observed latency.
-                static inline const ID PeakLatencyMs = declareID("PeakLatencyMs",
+                PROMEKI_DECLARE_ID(PeakLatencyMs,
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription("Peak observed latency in ms."));
                 /// @brief double — average per-frame processing time.
-                static inline const ID AverageProcessingMs = declareID("AverageProcessingMs",
+                PROMEKI_DECLARE_ID(AverageProcessingMs,
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription(
                                         "Average per-frame processing time in ms."));
                 /// @brief double — peak per-frame processing time.
-                static inline const ID PeakProcessingMs = declareID("PeakProcessingMs",
+                PROMEKI_DECLARE_ID(PeakProcessingMs,
                         VariantSpec().setType(Variant::TypeDouble).setDefault(0.0)
                                 .setMin(0.0).setDescription(
                                         "Peak per-frame processing time in ms."));
                 /// @brief String — most recent error description.
-                static inline const ID LastErrorMessage = declareID("LastErrorMessage",
+                PROMEKI_DECLARE_ID(LastErrorMessage,
                         VariantSpec().setType(Variant::TypeString).setDefault(String())
                                 .setDescription("Most recent error description."));
                 /// @brief int64_t — number of commands queued on the strand but
                 /// not yet running.  Populated by the MediaIO base class from
                 /// Strand::pendingCount(); gives telemetry callers visibility
                 /// into backlog depth without every backend having to track it.
-                static inline const ID PendingOperations = declareID("PendingOperations",
+                PROMEKI_DECLARE_ID(PendingOperations,
                         VariantSpec().setType(Variant::TypeS64).setDefault(int64_t(0))
                                 .setMin(int64_t(0)).setDescription(
                                         "Commands queued on the strand but not yet running."));
@@ -201,9 +198,6 @@ class MediaIOStats : public VariantDatabase<MediaIOStatsTag> {
                 String toString() const;
 };
 
-/** @brief Phantom tag for the MediaIO parameterized-command StringRegistry. */
-struct MediaIOParamsTag {};
-
 /**
  * @brief Parameter / result container for MediaIO parameterized commands.
  *
@@ -214,7 +208,7 @@ struct MediaIOParamsTag {};
  * named parameters typically define static const IDs on their task
  * class.
  */
-using MediaIOParams = VariantDatabase<MediaIOParamsTag>;
+using MediaIOParams = VariantDatabase<"MediaIOParams">;
 
 /** @brief Parameterized command ID type. */
 using MediaIOParamsID = MediaIOParams::ID;

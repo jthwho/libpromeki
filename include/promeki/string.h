@@ -1421,7 +1421,11 @@ class CompiledString {
                         return fnv1aCodepoints(_codepoints, _charCount);
                 }
 
-        private:
+                // Data members are public so the class qualifies as a
+                // structural type (C++20 [temp.param]/7) and can therefore
+                // be used as a class-type non-type template parameter —
+                // e.g. `template <CompiledString Name>` in StringRegistry
+                // and VariantDatabase.  Treat them as private.
                 char     _bytes[N];
                 char32_t _codepoints[N];  // worst case: N-1 codepoints
                 size_t   _charCount;

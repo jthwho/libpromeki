@@ -12,8 +12,7 @@
 
 using namespace promeki;
 
-struct VDBTestTag {};
-using TestDB = VariantDatabase<VDBTestTag>;
+using TestDB = VariantDatabase<"VDBTest">;
 
 TEST_CASE("VariantDatabase: default is empty") {
         TestDB db;
@@ -145,10 +144,8 @@ TEST_CASE("VariantDatabase: ids returns stored IDs") {
 }
 
 TEST_CASE("VariantDatabase: separate tag types have independent ID spaces") {
-        struct TagA {};
-        struct TagB {};
-        using DBA = VariantDatabase<TagA>;
-        using DBB = VariantDatabase<TagB>;
+        using DBA = VariantDatabase<"IndepTagA">;
+        using DBB = VariantDatabase<"IndepTagB">;
 
         DBA::ID idA("shared.name");
         DBB::ID idB("shared.name");
@@ -384,8 +381,7 @@ TEST_CASE("VariantDatabase: extract from empty database") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: toJson roundtrip") {
-        struct JsonTag {};
-        using DB = VariantDatabase<JsonTag>;
+                using DB = VariantDatabase<"JsonTag">;
 
         DB db;
         db.set(DB::ID("json.int"), 42);
@@ -408,8 +404,7 @@ TEST_CASE("VariantDatabase: toJson roundtrip") {
 }
 
 TEST_CASE("VariantDatabase: toJson empty database") {
-        struct JsonEmptyTag {};
-        using DB = VariantDatabase<JsonEmptyTag>;
+                using DB = VariantDatabase<"JsonEmptyTag">;
 
         DB db;
         JsonObject json = db.toJson();
@@ -417,8 +412,7 @@ TEST_CASE("VariantDatabase: toJson empty database") {
 }
 
 TEST_CASE("VariantDatabase: fromJson empty object") {
-        struct JsonEmptyTag2 {};
-        using DB = VariantDatabase<JsonEmptyTag2>;
+        using DB = VariantDatabase<"JsonEmptyTag2">;
 
         JsonObject json;
         DB db = DB::fromJson(json);
@@ -426,8 +420,7 @@ TEST_CASE("VariantDatabase: fromJson empty object") {
 }
 
 TEST_CASE("VariantDatabase: toJson string roundtrip") {
-        struct JsonStrTag {};
-        using DB = VariantDatabase<JsonStrTag>;
+                using DB = VariantDatabase<"JsonStrTag">;
 
         DB db;
         db.set(DB::ID("jstr.key"), String("value"));
@@ -443,8 +436,7 @@ TEST_CASE("VariantDatabase: toJson string roundtrip") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: DataStream roundtrip") {
-        struct DSTag {};
-        using DB = VariantDatabase<DSTag>;
+                using DB = VariantDatabase<"DSTag">;
 
         DB db;
         db.set(DB::ID("ds.int"), 100);
@@ -475,8 +467,7 @@ TEST_CASE("VariantDatabase: DataStream roundtrip") {
 }
 
 TEST_CASE("VariantDatabase: DataStream empty roundtrip") {
-        struct DSEmptyTag {};
-        using DB = VariantDatabase<DSEmptyTag>;
+                using DB = VariantDatabase<"DSEmptyTag">;
 
         DB db;
 
@@ -501,8 +492,7 @@ TEST_CASE("VariantDatabase: DataStream empty roundtrip") {
 // ============================================================================
 
 TEST_CASE("VariantDatabase: TextStream output") {
-        struct TSTag {};
-        using DB = VariantDatabase<TSTag>;
+                using DB = VariantDatabase<"TSTag">;
 
         DB db;
         db.set(DB::ID("ts.name"), String("test"));
@@ -520,8 +510,7 @@ TEST_CASE("VariantDatabase: TextStream output") {
 }
 
 TEST_CASE("VariantDatabase: TextStream empty output") {
-        struct TSEmptyTag {};
-        using DB = VariantDatabase<TSEmptyTag>;
+                using DB = VariantDatabase<"TSEmptyTag">;
 
         DB db;
         String output;
@@ -537,8 +526,7 @@ TEST_CASE("VariantDatabase: TextStream empty output") {
 // ============================================================
 
 TEST_CASE("VariantDatabase: equality empty") {
-        struct EqEmptyTag {};
-        using DB = VariantDatabase<EqEmptyTag>;
+                using DB = VariantDatabase<"EqEmptyTag">;
 
         DB a;
         DB b;
@@ -547,8 +535,7 @@ TEST_CASE("VariantDatabase: equality empty") {
 }
 
 TEST_CASE("VariantDatabase: equality matching") {
-        struct EqMatchTag {};
-        using DB = VariantDatabase<EqMatchTag>;
+                using DB = VariantDatabase<"EqMatchTag">;
         DB::ID name("name");
         DB::ID count("count");
 
@@ -564,8 +551,7 @@ TEST_CASE("VariantDatabase: equality matching") {
 }
 
 TEST_CASE("VariantDatabase: inequality different values") {
-        struct EqDiffValTag {};
-        using DB = VariantDatabase<EqDiffValTag>;
+                using DB = VariantDatabase<"EqDiffValTag">;
         DB::ID name("name");
 
         DB a;
@@ -577,8 +563,7 @@ TEST_CASE("VariantDatabase: inequality different values") {
 }
 
 TEST_CASE("VariantDatabase: inequality different keys") {
-        struct EqDiffKeyTag {};
-        using DB = VariantDatabase<EqDiffKeyTag>;
+                using DB = VariantDatabase<"EqDiffKeyTag">;
         DB::ID k1("k1");
         DB::ID k2("k2");
 
@@ -591,8 +576,7 @@ TEST_CASE("VariantDatabase: inequality different keys") {
 }
 
 TEST_CASE("VariantDatabase: inequality different size") {
-        struct EqDiffSzTag {};
-        using DB = VariantDatabase<EqDiffSzTag>;
+                using DB = VariantDatabase<"EqDiffSzTag">;
         DB::ID k1("k1");
         DB::ID k2("k2");
 

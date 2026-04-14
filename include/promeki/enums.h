@@ -64,8 +64,7 @@ PROMEKI_NAMESPACE_BEGIN
  */
 class VideoPattern : public TypedEnum<VideoPattern> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("VideoPattern",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0,
                                 { "ColorBars",    0  },
                                 { "ColorBars75",  1  },
                                 { "Ramp",         2  },
@@ -77,9 +76,7 @@ class VideoPattern : public TypedEnum<VideoPattern> {
                                 { "Black",        8  },
                                 { "Noise",        9  },
                                 { "ZonePlate",    10 },
-                                { "AvSync",       11 }
-                        },
-                        0);  // default: ColorBars
+                                { "AvSync",       11 });  // default: ColorBars
 
                 using TypedEnum<VideoPattern>::TypedEnum;
 
@@ -119,17 +116,14 @@ inline const VideoPattern VideoPattern::AvSync       { 11 };
  */
 class BurnPosition : public TypedEnum<BurnPosition> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("BurnPosition",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("BurnPosition", 4,
                                 { "TopLeft",      0 },
                                 { "TopCenter",    1 },
                                 { "TopRight",     2 },
                                 { "BottomLeft",   3 },
                                 { "BottomCenter", 4 },
                                 { "BottomRight",  5 },
-                                { "Center",       6 }
-                        },
-                        4);  // default: BottomCenter
+                                { "Center",       6 });  // default: BottomCenter
 
                 using TypedEnum<BurnPosition>::TypedEnum;
 
@@ -207,8 +201,7 @@ inline const BurnPosition BurnPosition::Center       { 6 };
  */
 class AudioPattern : public TypedEnum<AudioPattern> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("AudioPattern",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("AudioPattern", 0,
                                 { "Tone",       0 },
                                 { "Silence",    1 },
                                 { "LTC",        2 },
@@ -219,9 +212,7 @@ class AudioPattern : public TypedEnum<AudioPattern> {
                                 { "WhiteNoise", 7 },
                                 { "PinkNoise",  8 },
                                 { "Chirp",      9 },
-                                { "DualTone",  10 }
-                        },
-                        0);  // default: Tone
+                                { "DualTone",  10 });  // default: Tone
 
                 using TypedEnum<AudioPattern>::TypedEnum;
 
@@ -259,13 +250,10 @@ inline const AudioPattern AudioPattern::DualTone   { 10 };
  */
 class ChromaSubsampling : public TypedEnum<ChromaSubsampling> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("ChromaSubsampling",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("ChromaSubsampling", 1,
                                 { "YUV444", 0 },
                                 { "YUV422", 1 },
-                                { "YUV420", 2 }
-                        },
-                        1);  // default: YUV422 (RFC 2435 JPEG-over-RTP compatible)
+                                { "YUV420", 2 });  // default: YUV422 (RFC 2435 JPEG-over-RTP compatible)
 
                 using TypedEnum<ChromaSubsampling>::TypedEnum;
 
@@ -294,8 +282,7 @@ inline const ChromaSubsampling ChromaSubsampling::YUV420 { 2 };
  */
 class AudioDataType : public TypedEnum<AudioDataType> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("AudioDataType",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("AudioDataType", 1,
                                 { "Invalid",        0  },
                                 { "PCMI_Float32LE", 1  },
                                 { "PCMI_Float32BE", 2  },
@@ -312,9 +299,7 @@ class AudioDataType : public TypedEnum<AudioDataType> {
                                 { "PCMI_S32LE",     13 },
                                 { "PCMI_U32LE",     14 },
                                 { "PCMI_S32BE",     15 },
-                                { "PCMI_U32BE",     16 }
-                        },
-                        1);  // default: PCMI_Float32LE
+                                { "PCMI_U32BE",     16 });  // default: PCMI_Float32LE
 
                 using TypedEnum<AudioDataType>::TypedEnum;
 
@@ -367,12 +352,9 @@ inline const AudioDataType AudioDataType::PCMI_U32BE     { 16 };
  */
 class CscPath : public TypedEnum<CscPath> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("CscPath",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("CscPath", 0,
                                 { "Optimized", 0 },
-                                { "Scalar",    1 }
-                        },
-                        0);  // default: Optimized
+                                { "Scalar",    1 });  // default: Optimized
 
                 using TypedEnum<CscPath>::TypedEnum;
 
@@ -394,12 +376,9 @@ inline const CscPath CscPath::Scalar    { 1 };
  */
 class QuickTimeLayout : public TypedEnum<QuickTimeLayout> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("QuickTimeLayout",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("QuickTimeLayout", 1,
                                 { "Classic",    0 },
-                                { "Fragmented", 1 }
-                        },
-                        1);  // default: Fragmented
+                                { "Fragmented", 1 });  // default: Fragmented
 
                 using TypedEnum<QuickTimeLayout>::TypedEnum;
 
@@ -441,15 +420,12 @@ inline const QuickTimeLayout QuickTimeLayout::Fragmented { 1 };
  */
 class RtpPacingMode : public TypedEnum<RtpPacingMode> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("RtpPacingMode",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("RtpPacingMode", 4,
                                 { "None",      0 },
                                 { "Userspace", 1 },
                                 { "KernelFq",  2 },
                                 { "TxTime",    3 },
-                                { "Auto",      4 }
-                        },
-                        4);  // default: Auto
+                                { "Auto",      4 });  // default: Auto
 
                 using TypedEnum<RtpPacingMode>::TypedEnum;
 
@@ -487,12 +463,9 @@ inline const RtpPacingMode RtpPacingMode::Auto      { 4 };
  */
 class MetadataRtpFormat : public TypedEnum<MetadataRtpFormat> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("MetadataRtpFormat",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("MetadataRtpFormat", 0,
                                 { "JsonMetadata", 0 },
-                                { "St2110_40",    1 }
-                        },
-                        0);  // default: JsonMetadata
+                                { "St2110_40",    1 });  // default: JsonMetadata
 
                 using TypedEnum<MetadataRtpFormat>::TypedEnum;
 
@@ -534,12 +507,9 @@ inline const MetadataRtpFormat MetadataRtpFormat::St2110_40    { 1 };
  */
 class ByteCountStyle : public TypedEnum<ByteCountStyle> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("ByteCountStyle",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("ByteCountStyle", 0,
                                 { "Metric", 0 },
-                                { "Binary", 1 }
-                        },
-                        0);  // default: Metric
+                                { "Binary", 1 });  // default: Metric
 
                 using TypedEnum<ByteCountStyle>::TypedEnum;
 
@@ -560,12 +530,9 @@ inline const ByteCountStyle ByteCountStyle::Binary{1};
  */
 class ImgSeqPathMode : public TypedEnum<ImgSeqPathMode> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("ImgSeqPathMode",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("ImgSeqPathMode", 0,
                                 { "Relative", 0 },
-                                { "Absolute", 1 }
-                        },
-                        0);  // default: Relative
+                                { "Absolute", 1 });  // default: Relative
 
                 using TypedEnum<ImgSeqPathMode>::TypedEnum;
 
@@ -614,12 +581,9 @@ inline const ImgSeqPathMode ImgSeqPathMode::Absolute { 1 };
  */
 class TimecodePackFormat : public TypedEnum<TimecodePackFormat> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("TimecodePackFormat",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("TimecodePackFormat", 0,
                                 { "Vitc", 0 },
-                                { "Ltc",  1 }
-                        },
-                        0);  // default: Vitc
+                                { "Ltc",  1 });  // default: Vitc
 
                 using TypedEnum<TimecodePackFormat>::TypedEnum;
 
@@ -661,15 +625,12 @@ inline const TimecodePackFormat TimecodePackFormat::Ltc  { 1 };
  */
 class InterlaceMode : public TypedEnum<InterlaceMode> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("InterlaceMode",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("InterlaceMode", 0,
                                 { "Unknown",             0 },
                                 { "Progressive",         1 },
                                 { "Interlaced",          2 },
                                 { "InterlacedEvenFirst", 3 },
-                                { "InterlacedOddFirst",  4 }
-                        },
-                        0);  // default: Unknown
+                                { "InterlacedOddFirst",  4 });  // default: Unknown
 
                 using TypedEnum<InterlaceMode>::TypedEnum;
 
@@ -711,13 +672,10 @@ inline const InterlaceMode InterlaceMode::InterlacedOddFirst  { 4 };
  */
 class MediaIODirection : public TypedEnum<MediaIODirection> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("MediaIODirection",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("MediaIODirection", 0,
                                 { "Output",         0 },
                                 { "Input",          1 },
-                                { "InputAndOutput", 2 }
-                        },
-                        0);  // default: Output (source)
+                                { "InputAndOutput", 2 });  // default: Output (source)
 
                 using TypedEnum<MediaIODirection>::TypedEnum;
 
@@ -750,12 +708,9 @@ inline const MediaIODirection MediaIODirection::InputAndOutput { 2 };
  */
 class AudioSourceHint : public TypedEnum<AudioSourceHint> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("AudioSourceHint",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("AudioSourceHint", 0,
                                 { "Sidecar",  0 },
-                                { "Embedded", 1 }
-                        },
-                        0);  // default: Sidecar
+                                { "Embedded", 1 });  // default: Sidecar
 
                 using TypedEnum<AudioSourceHint>::TypedEnum;
 
@@ -773,14 +728,11 @@ inline const AudioSourceHint AudioSourceHint::Embedded { 1 };
  */
 class V4l2PowerLineMode : public TypedEnum<V4l2PowerLineMode> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("V4l2PowerLineMode",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("V4l2PowerLineMode", 3,
                                 { "Disabled", 0 },
                                 { "50Hz",     1 },
                                 { "60Hz",     2 },
-                                { "Auto",     3 }
-                        },
-                        3);  // default: Auto
+                                { "Auto",     3 });  // default: Auto
 
                 using TypedEnum<V4l2PowerLineMode>::TypedEnum;
 
@@ -802,14 +754,11 @@ inline const V4l2PowerLineMode V4l2PowerLineMode::Auto     { 3 };
  */
 class V4l2ExposureMode : public TypedEnum<V4l2ExposureMode> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("V4l2ExposureMode",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("V4l2ExposureMode", 3,
                                 { "Auto",             0 },
                                 { "Manual",           1 },
                                 { "ShutterPriority",  2 },
-                                { "AperturePriority", 3 }
-                        },
-                        3);  // default: AperturePriority
+                                { "AperturePriority", 3 });  // default: AperturePriority
 
                 using TypedEnum<V4l2ExposureMode>::TypedEnum;
 
@@ -848,15 +797,12 @@ inline const V4l2ExposureMode V4l2ExposureMode::AperturePriority { 3 };
  */
 class SrcQuality : public TypedEnum<SrcQuality> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("SrcQuality",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("SrcQuality", 1,
                                 { "SincBest",      0 },
                                 { "SincMedium",    1 },
                                 { "SincFastest",   2 },
                                 { "Linear",        3 },
-                                { "ZeroOrderHold", 4 }
-                        },
-                        1);  // default: SincMedium
+                                { "ZeroOrderHold", 4 });  // default: SincMedium
 
                 using TypedEnum<SrcQuality>::TypedEnum;
 
@@ -892,13 +838,10 @@ inline const SrcQuality SrcQuality::ZeroOrderHold { 4 };
  */
 class ClockEpoch : public TypedEnum<ClockEpoch> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("ClockEpoch",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("ClockEpoch", 1,
                                 { "PerStream",  0 },
                                 { "Correlated", 1 },
-                                { "Absolute",   2 }
-                        },
-                        1);  // default: Correlated
+                                { "Absolute",   2 });  // default: Correlated
 
                 using TypedEnum<ClockEpoch>::TypedEnum;
 
@@ -923,13 +866,10 @@ inline const ClockEpoch ClockEpoch::Absolute   { 2 };
  */
 class EUI64Format : public TypedEnum<EUI64Format> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("EUI64Format",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("EUI64Format", 0,
                                 { "OctetHyphen", 0 },
                                 { "OctetColon",  1 },
-                                { "IPv6",        2 }
-                        },
-                        0);  // default: OctetHyphen
+                                { "IPv6",        2 });  // default: OctetHyphen
 
                 using TypedEnum<EUI64Format>::TypedEnum;
 
@@ -971,17 +911,14 @@ inline const EUI64Format EUI64Format::IPv6        { 2 };
  */
 class InspectorTest : public TypedEnum<InspectorTest> {
         public:
-                static inline const Enum::Type Type = Enum::registerType("InspectorTest",
-                        {
+                PROMEKI_REGISTER_ENUM_TYPE("InspectorTest", 0,
                                 { "ImageData",    0 },
                                 { "Ltc",          1 },
                                 { "TcSync",       2 },
                                 { "Continuity",   3 },
                                 { "Timestamp",    4 },
                                 { "AudioSamples", 5 },
-                                { "CaptureStats", 6 }
-                        },
-                        0);
+                                { "CaptureStats", 6 });
 
                 using TypedEnum<InspectorTest>::TypedEnum;
 

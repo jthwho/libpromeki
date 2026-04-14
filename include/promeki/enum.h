@@ -110,15 +110,98 @@ class Enum {
                 static constexpr int InvalidValue = -1;
 
                 /**
-                 * @brief Opaque per-type record stored in the global registry.
+                 * @brief One (name, integer) entry in an enum's value table.
                  *
-                 * Definitions are allocated once at registerType() time and
-                 * live for the lifetime of the process; pointers to them are
-                 * stable and safe to hold without locking.  The type is only
-                 * forward-declared in the public header — its contents are
-                 * private to enum.cpp.
+                 * A lightweight structural type suitable for placement in
+                 * rodata via a `static constexpr` array — see
+                 * @ref PROMEKI_REGISTER_ENUM_TYPE for the ergonomic wrapper
+                 * used by well-known enums in @c include/promeki/enums.h.
                  */
-                class Definition;
+                struct Entry {
+                        const char *name;
+                        int         value;
+                };
+
+                /**
+                 * @brief Immutable per-type record stored in the global registry.
+                 *
+                 * Definitions live for the lifetime of the process and are
+                 * referenced by direct const pointer from @ref Enum and
+                 * @ref Type — every accessor below is therefore lock-free.
+                 *
+                 * Two storage models share the same struct layout so the rest
+                 * of the class does not care which one it is looking at:
+                 *
+                 * - *Static* (the common case): declared via
+                 *   @ref PROMEKI_REGISTER_ENUM_TYPE.  Both the Definition and
+                 *   its Entry[] live in `.data` / `.rodata` — no heap
+                 *   allocation, no Map, no String copy.  The caller keeps
+                 *   ownership of the memory.
+                 *
+                 * - *Dynamic*: allocated on the heap by
+                 *   @ref Enum::registerType for truly dynamic cases
+                 *   (V4L2 menu controls, runtime-computed tables, …).
+                 *   Ownership transfers to the registry and is never freed.
+                 *
+                 * The data members are public so the struct is a structural
+                 * type, but treat them as read-only; the registry is the only
+                 * writer, and it only writes @ref typeIndex once at
+                 * registration time.
+                 */
+                struct Definition {
+                        const char   *name         = nullptr;      ///< Human-readable type name.
+                        const Entry  *entries      = nullptr;      ///< Pointer to the Entry table.
+                        size_t        entryCount   = 0;            ///< Number of entries in the table.
+                        int           defaultValue = InvalidValue; ///< Default integer value.
+                        mutable uint32_t typeIndex = 0;            ///< Monotonic id; set by the registry.
+
+                        /**
+                         * @brief Literal-backed @ref String cache for the type name.
+                         *
+                         * Populated by the registry at registration time.  Accessors
+                         * that return the type name as a @ref String wrap this record
+                         * via @ref String::fromLiteralData so no bytes are copied —
+                         * the same @c const @c char* that lives in rodata (static
+                         * path) or in the registry's leaked heap block (dynamic path)
+                         * is reused on every call.
+                         */
+                        mutable StringLiteralData *nameLit = nullptr;
+
+                        /**
+                         * @brief Parallel array of literal-backed @ref String caches,
+                         *        one per entry, with @c entryCount elements.
+                         *
+                         * Populated by the registry; same zero-copy story as
+                         * @ref nameLit.  Indexed in lock-step with @ref entries.
+                         */
+                        mutable StringLiteralData *entryNameLits = nullptr;
+
+                        /**
+                         * @brief Parallel array of fully-qualified literal-backed
+                         *        @ref String caches — `"TypeName::EntryName"`,
+                         *        one per entry, with @c entryCount elements,
+                         *        indexed in lock-step with @ref entries and
+                         *        @ref entryNameLits.
+                         *
+                         * Populated by the registry at the same time as
+                         * @ref entryNameLits.  Both parallel arrays share the
+                         * same underlying @c "Type::Entry\0" buffer per entry —
+                         * @ref entryNameLits points at offset @c typeNameLen+2
+                         * into it — so the per-entry storage is one heap block.
+                         *
+                         * Used by @ref Enum::toString so the in-list case never
+                         * has to concatenate; two Enums with the same value
+                         * return Strings backed by the same immortal storage,
+                         * so @ref String equality short-circuits on pointer
+                         * match.
+                         */
+                        mutable StringLiteralData *entryQualifiedLits = nullptr;
+
+                        /// @brief Linear-search lookup of an entry by name.
+                        const Entry *findByName(const String &n) const;
+                        /// @brief Linear-search lookup of an entry by integer value.
+                        const Entry *findByValue(int v) const;
+                };
 
                 /**
                  * @brief Lightweight handle identifying a registered enum kind.
@@ -172,7 +255,8 @@ class Enum {
                                 const Definition *_def = nullptr;
                 };
 
-                /// @brief One (name, integer) entry in an enum's value table.
+                /// @brief One (name, integer) pair used by the runtime
+                ///        @ref registerType overload.
                 using Value = Pair<String, int>;
 
                 /// @brief Ordered list of (name, integer) entries.
@@ -182,10 +266,36 @@ class Enum {
                 using TypeList = StringList;
 
                 /**
-                 * @brief Registers a new enum type with its complete value table.
+                 * @brief Registers a Definition that already lives in static
+                 *        storage (the preferred, zero-heap path).
                  *
-                 * Intended for use at static-init time.  The returned Type is
-                 * stable for the lifetime of the process.  Re-registering a
+                 * Used by @ref PROMEKI_REGISTER_ENUM_TYPE.  The @p def pointer
+                 * must remain valid for the process lifetime (typically
+                 * `static inline`).  The registry does not take ownership —
+                 * it only records the pointer and stamps
+                 * @ref Definition::typeIndex.
+                 *
+                 * Asserts when another definition with the same name is
+                 * already registered.  Also validates that the entry table
+                 * is non-empty, contains no duplicate names or values, and
+                 * that the default value is present.
+                 *
+                 * @param def  Static-storage Definition to register.
+                 * @return The stable @ref Type handle.
+                 */
+                static Type registerDefinition(Definition *def);
+
+                /**
+                 * @brief Registers a new enum type with a runtime-computed value table.
+                 *
+                 * Used when the table cannot be known at compile time (for
+                 * example V4L2 menu controls built from the device's advertised
+                 * menu items).  Heap-allocates a @ref Definition plus copies of
+                 * its name and entry array; ownership transfers to the registry
+                 * and is never freed.
+                 *
+                 * Intended for use at static-init time for well-known enums,
+                 * and at open-time for dynamic enums.  Re-registering a
                  * type name that has already been registered triggers an
                  * assertion (each enum type must be registered exactly once).
                  *
@@ -193,12 +303,9 @@ class Enum {
                  * returned by Enum(Type) and defaultValue(Type).  If it does
                  * not appear, an assertion is triggered.
                  *
-                 * Callers may pass a brace-init-list directly:
-                 * @code
-                 * Enum::registerType("Codec",
-                 *         { {"H264",1}, {"H265",2} },
-                 *         1);
-                 * @endcode
+                 * For the well-known library enums prefer
+                 * @ref PROMEKI_REGISTER_ENUM_TYPE which produces the same
+                 * result with the table pinned to rodata.
                  *
                  * @param typeName     Human-readable name of the enum kind.
                  * @param values       Complete set of (name, int) pairs.  Must
@@ -455,7 +562,110 @@ class TypedEnum : public Enum {
                 explicit TypedEnum(const String &name) : Enum(Derived::Type, name) {}
 };
 
+namespace detail {
+
+/// @brief Null-terminated-string equality, usable in constant expressions.
+constexpr bool enumStrEqual(const char *a, const char *b) {
+        while(*a != '\0' && *b != '\0') {
+                if(*a != *b) return false;
+                ++a;
+                ++b;
+        }
+        return *a == *b;
+}
+
+/// @brief Returns true if no two entries share a name or an integer value.
+consteval bool enumEntriesUnique(const Enum::Entry *entries, size_t count) {
+        for(size_t i = 0; i < count; ++i) {
+                for(size_t j = i + 1; j < count; ++j) {
+                        if(enumStrEqual(entries[i].name, entries[j].name)) return false;
+                        if(entries[i].value == entries[j].value) return false;
+                }
+        }
+        return true;
+}
+
+/// @brief Returns true if @p def matches the value of some entry.
+consteval bool enumHasDefault(const Enum::Entry *entries, size_t count, int def) {
+        for(size_t i = 0; i < count; ++i) {
+                if(entries[i].value == def) return true;
+        }
+        return false;
+}
+
+} // namespace detail
+
 PROMEKI_NAMESPACE_END
+
+/**
+ * @brief Declares an @ref Enum type with a table placed in rodata.
+ * @ingroup util
+ *
+ * Expands inside a class body (typically one deriving from
+ * @ref TypedEnum) to three declarations that together give the
+ * type a zero-heap, compile-time-validated registration:
+ *
+ * 1. `static constexpr Enum::Entry _promeki_enum_entries_[]` — the
+ *    (name, value) table, placed in rodata.
+ * 2. `static inline Enum::Definition _promeki_enum_def_` — a single
+ *    Definition struct pointing at the table.  The registry stamps
+ *    its @c typeIndex at static-init time; nothing else is ever
+ *    written.
+ * 3. `static inline const Enum::Type Type` — the handle consumed by
+ *    @ref TypedEnum's constructors and by user code.
+ *
+ * Three `static_assert`s verify at compile time that:
+ *
+ * - the entry table is non-empty,
+ * - no two entries share a name or an integer value,
+ * - the default value is present in the table.
+ *
+ * @param TypeName String literal — the human-readable type name.
+ * @param Default  Integer default value, which must appear in the table.
+ * @param ...      Brace-initialized `Enum::Entry` rows —
+ *                 `{ "Name", integer }` comma-separated.
+ *
+ * @par Example
+ * @code
+ * class VideoPattern : public TypedEnum<VideoPattern> {
+ *     public:
+ *         PROMEKI_REGISTER_ENUM_TYPE("VideoPattern", 0,
+ *                 { "ColorBars",   0 },
+ *                 { "ColorBars75", 1 },
+ *                 { "Ramp",        2 });
+ *         using TypedEnum<VideoPattern>::TypedEnum;
+ *         static const VideoPattern ColorBars;
+ * };
+ * @endcode
+ */
+#define PROMEKI_REGISTER_ENUM_TYPE(TypeName, Default, ...)                      \
+        static constexpr ::promeki::Enum::Entry _promeki_enum_entries_[] = {    \
+                __VA_ARGS__                                                     \
+        };                                                                      \
+        static_assert(sizeof(_promeki_enum_entries_) /                          \
+                              sizeof(_promeki_enum_entries_[0]) > 0,            \
+                "Enum type '" TypeName "' has no entries");                     \
+        static_assert(::promeki::detail::enumEntriesUnique(                     \
+                _promeki_enum_entries_,                                         \
+                sizeof(_promeki_enum_entries_) /                                \
+                        sizeof(_promeki_enum_entries_[0])),                     \
+                "Enum type '" TypeName "' has duplicate name or value");       \
+        static_assert(::promeki::detail::enumHasDefault(                        \
+                _promeki_enum_entries_,                                         \
+                sizeof(_promeki_enum_entries_) /                                \
+                        sizeof(_promeki_enum_entries_[0]),                      \
+                (Default)),                                                     \
+                "Enum type '" TypeName "' default value not in entry table"); \
+        static inline ::promeki::Enum::Definition _promeki_enum_def_{           \
+                .name         = TypeName,                                       \
+                .entries      = _promeki_enum_entries_,                         \
+                .entryCount   = sizeof(_promeki_enum_entries_) /                \
+                                sizeof(_promeki_enum_entries_[0]),              \
+                .defaultValue = (Default),                                      \
+                .typeIndex    = 0                                               \
+        };                                                                      \
+        static inline const ::promeki::Enum::Type Type =                        \
+                ::promeki::Enum::registerDefinition(&_promeki_enum_def_)
 
 PROMEKI_FORMAT_VIA_TOSTRING(promeki::Enum);
 

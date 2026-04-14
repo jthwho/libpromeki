@@ -765,6 +765,7 @@ set(PROMEKI_SOURCES
     src/core/stringdata.cpp
     src/core/stringiodevice.cpp
     src/core/stringlist.cpp
+    src/core/stringregistry.cpp
     src/core/syntheticclock.cpp
     src/core/system.cpp
     src/core/terminal.cpp
