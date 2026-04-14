@@ -23,5 +23,6 @@ var searchData=
   ['promise_20',['Promise',['../classPromise.html',1,'']]],
   ['promise_3c_20error_20_3e_21',['Promise&lt; Error &gt;',['../classPromise.html',1,'']]],
   ['promise_3c_20void_20_3e_22',['Promise&lt; void &gt;',['../classPromise_3_01void_01_4.html',1,'']]],
-  ['promiseerror_23',['PromiseError',['../structPromiseError.html',1,'']]]
+  ['promiseerror_23',['PromiseError',['../structPromiseError.html',1,'']]],
+  ['pullresult_24',['PullResult',['../structFrameSync_1_1PullResult.html',1,'FrameSync']]]
 ];

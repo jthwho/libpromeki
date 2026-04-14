@@ -7,7 +7,9 @@ var structInspectorDiscontinuity =
       [ "LtcTcJump", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daec026ed8cf22df8bb7896c9dae32eb77", null ],
       [ "ImageDataDecodeFailure", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da9ea6cad4db5d41e0d2b4662d696b5eaf", null ],
       [ "LtcDecodeFailure", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6", null ],
-      [ "SyncOffsetChange", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260", null ]
+      [ "SyncOffsetChange", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260", null ],
+      [ "MissingVideoTimestamp", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f", null ],
+      [ "MissingAudioTimestamp", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627", null ]
     ] ],
     [ "currentValue", "structInspectorDiscontinuity.html#abfd4e723af9bdcd681d8ffe1f0d943c3", null ],
     [ "description", "structInspectorDiscontinuity.html#a1bac026b34c80a43702307422a70163f", null ],

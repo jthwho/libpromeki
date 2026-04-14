@@ -136,16 +136,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0de080d16d2796df4913c5cb291b8a57" id="r_a0de080d16d2796df4913c5cb291b8a57"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioOutput.html#a0de080d16d2796df4913c5cb291b8a57">pushAudio</a> (<a class="el" href="classList.html">const</a> <a class="el" href="classAudio.html">Audio</a> &amp;audio)</td></tr>
 <tr class="memdesc:a0de080d16d2796df4913c5cb291b8a57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pushes audio samples to the output stream.  <br /></td></tr>
 <tr class="separator:a0de080d16d2796df4913c5cb291b8a57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1c96a3a935b3a4afd94321478cfc59b" id="r_ac1c96a3a935b3a4afd94321478cfc59b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioOutput.html#ac1c96a3a935b3a4afd94321478cfc59b">queuedBytes</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:ac1c96a3a935b3a4afd94321478cfc59b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes currently queued.  <br /></td></tr>
-<tr class="separator:ac1c96a3a935b3a4afd94321478cfc59b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f1235b456eb389a7eeb85abf495d9ff" id="r_a6f1235b456eb389a7eeb85abf495d9ff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioOutput.html#a6f1235b456eb389a7eeb85abf495d9ff">queuedBytes</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a6f1235b456eb389a7eeb85abf495d9ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of bytes currently queued.  <br /></td></tr>
+<tr class="separator:a6f1235b456eb389a7eeb85abf495d9ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b9cf8cb9942f35a514e31eae09b2e69" id="r_a0b9cf8cb9942f35a514e31eae09b2e69"><td class="memItemLeft" align="right" valign="top"><a id="a0b9cf8cb9942f35a514e31eae09b2e69" name="a0b9cf8cb9942f35a514e31eae09b2e69"></a>
 <a class="el" href="classList.html">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>desc</b> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:a0b9cf8cb9942f35a514e31eae09b2e69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the configured audio descriptor. <br /></td></tr>
 <tr class="separator:a0b9cf8cb9942f35a514e31eae09b2e69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afcd54261c41344d5b7c535dc00e89831" id="r_afcd54261c41344d5b7c535dc00e89831"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioOutput.html#afcd54261c41344d5b7c535dc00e89831">totalBytesPushed</a> () <a class="el" href="classList.html">const</a></td></tr>
-<tr class="memdesc:afcd54261c41344d5b7c535dc00e89831"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns total float32 bytes pushed since open.  <br /></td></tr>
-<tr class="separator:afcd54261c41344d5b7c535dc00e89831"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a760908b8b24201b0eb7125f76be0c9a9" id="r_a760908b8b24201b0eb7125f76be0c9a9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSDLAudioOutput.html#a760908b8b24201b0eb7125f76be0c9a9">totalBytesPushed</a> () <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memdesc:a760908b8b24201b0eb7125f76be0c9a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns total float32 bytes pushed since open.  <br /></td></tr>
+<tr class="separator:a760908b8b24201b0eb7125f76be0c9a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Manages an SDL3 audio output device for playback. </p>
@@ -237,29 +237,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ac1c96a3a935b3a4afd94321478cfc59b" name="ac1c96a3a935b3a4afd94321478cfc59b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac1c96a3a935b3a4afd94321478cfc59b">&#9670;&#160;</a></span>queuedBytes()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int SDLAudioOutput::queuedBytes </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Returns the number of bytes currently queued. </p>
-<p>Useful for monitoring buffer health and A/V sync.</p>
-<dl class="section return"><dt>Returns</dt><dd>Queued byte count, or 0 if not open. </dd></dl>
-
-</div>
-</div>
-<a id="afcd54261c41344d5b7c535dc00e89831" name="afcd54261c41344d5b7c535dc00e89831"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afcd54261c41344d5b7c535dc00e89831">&#9670;&#160;</a></span>totalBytesPushed()</h2>
+<a id="a6f1235b456eb389a7eeb85abf495d9ff" name="a6f1235b456eb389a7eeb85abf495d9ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f1235b456eb389a7eeb85abf495d9ff">&#9670;&#160;</a></span>queuedBytes()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -268,7 +247,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classList.html">int64_t</a> SDLAudioOutput::totalBytesPushed </td>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> int SDLAudioOutput::queuedBytes </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -276,13 +255,44 @@ Public Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the number of bytes currently queued. </p>
+<p>Useful for monitoring buffer health and A/V sync.</p>
+<p>Virtual so tests can supply a controllable stand-in without opening a real SDL audio device.</p>
+<dl class="section return"><dt>Returns</dt><dd>Queued byte count, or 0 if not open. </dd></dl>
+
+</div>
+</div>
+<a id="a760908b8b24201b0eb7125f76be0c9a9" name="a760908b8b24201b0eb7125f76be0c9a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a760908b8b24201b0eb7125f76be0c9a9">&#9670;&#160;</a></span>totalBytesPushed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">virtual</a> <a class="el" href="classList.html">int64_t</a> SDLAudioOutput::totalBytesPushed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 <p>Returns total float32 bytes pushed since open. </p>
-<p>Combined with <a class="el" href="classSDLAudioOutput.html#ac1c96a3a935b3a4afd94321478cfc59b">queuedBytes()</a>, this lets callers derive how many bytes the device has consumed: <code>consumed = <a class="el" href="classSDLAudioOutput.html#afcd54261c41344d5b7c535dc00e89831" title="Returns total float32 bytes pushed since open.">totalBytesPushed()</a> - <a class="el" href="classSDLAudioOutput.html#ac1c96a3a935b3a4afd94321478cfc59b" title="Returns the number of bytes currently queued.">queuedBytes()</a></code>.</p>
+<p>Combined with <a class="el" href="classSDLAudioOutput.html#a6f1235b456eb389a7eeb85abf495d9ff">queuedBytes()</a>, this lets callers derive how many bytes the device has consumed: <code>consumed = <a class="el" href="classSDLAudioOutput.html#a760908b8b24201b0eb7125f76be0c9a9" title="Returns total float32 bytes pushed since open.">totalBytesPushed()</a> - <a class="el" href="classSDLAudioOutput.html#a6f1235b456eb389a7eeb85abf495d9ff" title="Returns the number of bytes currently queued.">queuedBytes()</a></code>.</p>
+<p>Virtual so tests can supply a controllable stand-in without opening a real SDL audio device.</p>
 <dl class="section return"><dt>Returns</dt><dd>Cumulative byte count. </dd></dl>
 
 </div>
@@ -297,7 +307,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classSDLAudioOutput.html">SDLAudioOutput</a></li>
-    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
   </ul>
 </div>
 </body>

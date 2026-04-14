@@ -17,6 +17,8 @@ var group__proav =
       [ "isNative", "classAudio.html#a06acc626e1be46c11183951b474af0cf", null ],
       [ "isValid", "classAudio.html#af39f380ec7303f814f36d7f97cc48701", null ],
       [ "maxSamples", "classAudio.html#ac108341b8923cec805d8a5bd926ed657", null ],
+      [ "metadata", "classAudio.html#a4d444aebd87bc49e59eac89ef0441d16", null ],
+      [ "metadata", "classAudio.html#a08645d1308d88192f68851fbd1d44d04", null ],
       [ "resize", "classAudio.html#abc2ac90f3453dd40c349fecfd37739fb", null ],
       [ "samples", "classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3", null ],
       [ "zero", "classAudio.html#a07a3d3807c2d71f5ef1fa7be0c97d219", null ]
@@ -786,7 +788,9 @@ var group__proav =
         [ "LtcTcJump", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daec026ed8cf22df8bb7896c9dae32eb77", null ],
         [ "ImageDataDecodeFailure", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da9ea6cad4db5d41e0d2b4662d696b5eaf", null ],
         [ "LtcDecodeFailure", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6", null ],
-        [ "SyncOffsetChange", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260", null ]
+        [ "SyncOffsetChange", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260", null ],
+        [ "MissingVideoTimestamp", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f", null ],
+        [ "MissingAudioTimestamp", "structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627", null ]
       ] ],
       [ "currentValue", "structInspectorDiscontinuity.html#abfd4e723af9bdcd681d8ffe1f0d943c3", null ],
       [ "description", "structInspectorDiscontinuity.html#a1bac026b34c80a43702307422a70163f", null ],
@@ -794,6 +798,13 @@ var group__proav =
       [ "previousValue", "structInspectorDiscontinuity.html#a4805a1ae20db9515fa6dd56a9ddba30a", null ]
     ] ],
     [ "InspectorEvent", "structInspectorEvent.html", [
+      [ "audioSamplesTestEnabled", "structInspectorEvent.html#a5e8f8737d79354c4038b5e0d4dcd7fda", null ],
+      [ "audioSamplesThisFrame", "structInspectorEvent.html#a29b03a0d8abbf3d54e1d2e5bdfe6ad9a", null ],
+      [ "audioSamplesValid", "structInspectorEvent.html#ac6e71432988f87851061cf17543f283d", null ],
+      [ "audioTimestampDeltaNs", "structInspectorEvent.html#a4b28df1a7238a1417fa92918cf830eb8", null ],
+      [ "audioTimestampDeltaValid", "structInspectorEvent.html#a183e22b8444dfa0f9560e1881d972534", null ],
+      [ "audioTimestampNs", "structInspectorEvent.html#a0e617d2a7b17d574f7794bc1ad0bd895", null ],
+      [ "audioTimestampValid", "structInspectorEvent.html#a8191b2c7f514a8cdded67a75147c7d1d", null ],
       [ "avSyncOffsetSamples", "structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e", null ],
       [ "avSyncValid", "structInspectorEvent.html#a7306989a0c3cfe410da73abdfaf46acf", null ],
       [ "discontinuities", "structInspectorEvent.html#aabf26768b9d236ce4fe732a0943a9f03", null ],
@@ -806,15 +817,38 @@ var group__proav =
       [ "pictureDecoderEnabled", "structInspectorEvent.html#a1b1291a7d01d940b78ad6ebca487e3b0", null ],
       [ "pictureFrameNumber", "structInspectorEvent.html#acd06d9ce09f888e3ffb3c7b38a2c9b51", null ],
       [ "pictureStreamId", "structInspectorEvent.html#a84fb002c9775a10c958010d5642ff219", null ],
-      [ "pictureTimecode", "structInspectorEvent.html#a35faf4620e770dda09118863e1b2b874", null ]
+      [ "pictureTimecode", "structInspectorEvent.html#a35faf4620e770dda09118863e1b2b874", null ],
+      [ "timestampTestEnabled", "structInspectorEvent.html#a39200e5b5c458898cab204a6bedaa5a7", null ],
+      [ "videoTimestampDeltaNs", "structInspectorEvent.html#aeee69377bd2d99b875b030fa9273e6ed", null ],
+      [ "videoTimestampDeltaValid", "structInspectorEvent.html#a8b82229d361948994bd96d2fcab44d6b", null ],
+      [ "videoTimestampNs", "structInspectorEvent.html#ab2eb35f75bd549bd1f2d2dae1180b6e5", null ],
+      [ "videoTimestampValid", "structInspectorEvent.html#ac3a9bbd9c54a0c39d3e463c4d4e008e8", null ]
     ] ],
     [ "InspectorSnapshot", "structInspectorSnapshot.html", [
+      [ "actualFps", "structInspectorSnapshot.html#aede2f3423e6e6441035e673eaf3d13c9", null ],
+      [ "audioDeltaAvgNs", "structInspectorSnapshot.html#af90eb26a571ceb565de0efbe32032ea9", null ],
+      [ "audioDeltaMaxNs", "structInspectorSnapshot.html#a4911bb8cb49245ba35bfa417d6c394a3", null ],
+      [ "audioDeltaMinNs", "structInspectorSnapshot.html#ad6ed50285aa57da5d9b502d16f5077f0", null ],
+      [ "audioDeltaSamples", "structInspectorSnapshot.html#a68bfbe4ff82667547a89335641df253d", null ],
+      [ "audioSamplesAvg", "structInspectorSnapshot.html#af29c8594bbf62eb51e34c5620e793df9", null ],
+      [ "audioSamplesFrames", "structInspectorSnapshot.html#ae85001a61307b0bdb5c3186855516757", null ],
+      [ "audioSamplesMax", "structInspectorSnapshot.html#a1e9e5045f725d88536e1ce2c026b45dd", null ],
+      [ "audioSamplesMin", "structInspectorSnapshot.html#aebfa5f3e200ed86802125fe44a7df98b", null ],
+      [ "audioSamplesSpanNs", "structInspectorSnapshot.html#afef5225cad8e80f8f385a3165d33ca4f", null ],
+      [ "audioSamplesTotal", "structInspectorSnapshot.html#a11d307240b8dd460e8622ca7252ff4f1", null ],
       [ "framesProcessed", "structInspectorSnapshot.html#a08ede529519f69748bff66171f431126", null ],
+      [ "framesWithAudioTimestamp", "structInspectorSnapshot.html#ab82630448d87916daf30d226fe2c9e2e", null ],
       [ "framesWithLtc", "structInspectorSnapshot.html#aab78b4c6271d22bce133df411044285b", null ],
       [ "framesWithPictureData", "structInspectorSnapshot.html#ad0063a4655a21339e9ebe78ace4e96dc", null ],
+      [ "framesWithVideoTimestamp", "structInspectorSnapshot.html#a225b45a309ce24e4045590d7f1b3cb10", null ],
       [ "hasLastEvent", "structInspectorSnapshot.html#a74bf47a3d931b8120cb1e9dc765e1b45", null ],
       [ "lastEvent", "structInspectorSnapshot.html#a0c7f2dda7770d65e06415339996b10d3", null ],
-      [ "totalDiscontinuities", "structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5", null ]
+      [ "measuredAudioSampleRate", "structInspectorSnapshot.html#a45832a49039d8388b61cb31c72694ed6", null ],
+      [ "totalDiscontinuities", "structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5", null ],
+      [ "videoDeltaAvgNs", "structInspectorSnapshot.html#ae8f8c559220f21f6e26e26ba341e7446", null ],
+      [ "videoDeltaMaxNs", "structInspectorSnapshot.html#ad4d63b4693837dfde8f3b98bfa36fb45", null ],
+      [ "videoDeltaMinNs", "structInspectorSnapshot.html#a90c7846312725d6ae5eb4b14ef4124b1", null ],
+      [ "videoDeltaSamples", "structInspectorSnapshot.html#a2fd6c744db0327d1d667eb9bbbedc224", null ]
     ] ],
     [ "MediaIOTask_Inspector", "classMediaIOTask__Inspector.html", [
       [ "EventCallback", "classMediaIOTask__Inspector.html#a497edb7adb3ac341dfbda6d88714cf5a", null ],

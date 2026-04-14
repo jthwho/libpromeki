@@ -1,19 +1,21 @@
 <map id="include/promeki/mediaiotask.h" name="include/promeki/mediaiotask.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="825,5,1049,31"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="943,5,1167,31"/>
 <area shape="rect" id="Node000002" href="$mediaiotask__audiofile_8h.html" title=" " alt="" coords="5,79,217,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="811,30,543,50,229,81,218,83,217,77,228,76,542,44,811,24"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="930,28,611,47,420,62,229,81,218,83,217,77,228,76,420,57,611,41,930,22"/>
 <area shape="rect" id="Node000003" href="$mediaiotask__converter_8h.html" title=" " alt="" coords="241,79,453,119"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="825,35,465,81,454,83,453,78,464,76,825,30"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="930,33,712,53,465,81,454,83,453,78,464,76,712,48,929,27"/>
 <area shape="rect" id="Node000004" href="$mediaiotask__imagefile_8h.html" title=" " alt="" coords="477,79,689,119"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="873,36,669,81,667,76,871,31"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="974,35,690,82,689,77,973,30"/>
 <area shape="rect" id="Node000005" href="$mediaiotask__inspector_8h.html" title=" " alt="" coords="713,79,925,119"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="910,40,849,81,846,76,907,36"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1009,37,877,81,875,76,1007,32"/>
 <area shape="rect" id="Node000006" href="$mediaiotask__quicktime_8h.html" title=" " alt="" coords="949,79,1161,119"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="967,36,1028,76,1025,81,964,41"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1058,44,1058,79,1053,79,1053,44"/>
 <area shape="rect" id="Node000007" href="$mediaiotask__rtp_8h.html" title=" " alt="" coords="1185,79,1397,119"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1002,31,1207,76,1206,81,1001,36"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1103,32,1235,76,1234,81,1102,37"/>
 <area shape="rect" id="Node000008" href="$mediaiotask__tpg_8h.html" title=" " alt="" coords="1421,79,1633,119"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1049,30,1410,76,1422,78,1421,83,1410,81,1049,35"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1138,30,1422,77,1421,82,1137,35"/>
 <area shape="rect" id="Node000009" href="$sdlplayer_8h.html" title=" " alt="" coords="1657,79,1808,119"/>
-<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1063,22,1332,41,1489,56,1646,76,1658,78,1657,83,1646,81,1489,61,1331,46,1062,28"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1181,25,1399,45,1646,76,1658,78,1657,83,1646,81,1398,50,1181,31"/>
+<area shape="rect" id="Node000010" href="$sdlplayerold_8h.html" title=" " alt="" coords="1832,79,1983,119"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1181,21,1474,39,1648,55,1821,76,1832,78,1831,83,1820,81,1647,60,1474,44,1181,27"/>
 </map>

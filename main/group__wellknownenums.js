@@ -18,6 +18,9 @@ var group__wellknownenums =
     [ "V4l2PowerLineMode", "classV4l2PowerLineMode.html", null ],
     [ "V4l2ExposureMode", "classV4l2ExposureMode.html", null ],
     [ "SrcQuality", "classSrcQuality.html", null ],
+    [ "ClockEpoch", "classClockEpoch.html", null ],
+    [ "EUI64Format", "classEUI64Format.html", null ],
+    [ "InspectorTest", "classInspectorTest.html", null ],
     [ "ByteCountStyle::Binary", "group__wellknownenums.html#ga9d2d3b34e2e3e410560df0546f7dc983", null ],
     [ "ByteCountStyle::Metric", "group__wellknownenums.html#ga6d3dd14d60f115203c9061ab83edb892", null ]
 ];

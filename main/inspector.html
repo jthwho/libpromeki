@@ -104,7 +104,7 @@ $(document).ready(function(){initNavTree('inspector.html',''); initResizable(); 
 <div class="contents">
 <div class="toc"><h3>Table of Contents</h3>
 <ul><li class="level1"><a href="#inspector_quickstart">Quick start</a></li>
-<li class="level1"><a href="#inspector_checks">The four checks</a><ul><li class="level2"><a href="#inspector_check_picture">Picture data band decode</a></li>
+<li class="level1"><a href="#inspector_checks">The inspector tests</a><ul><li class="level2"><a href="#inspector_check_picture">Picture data band decode</a></li>
 <li class="level2"><a href="#inspector_check_ltc">Audio LTC decode</a></li>
 <li class="level2"><a href="#inspector_check_avsync">A/V Sync</a></li>
 <li class="level2"><a href="#inspector_check_continuity">Continuity tracking</a></li>
@@ -174,11 +174,10 @@ $(document).ready(function(){initNavTree('inspector.html',''); initResizable(); 
   - The TPG's image data encoder pass is on by default and stamps two
     64-bit payloads (frame ID + BCD timecode) into the top of every
     frame.
-  - The Inspector's defaults turn on every check
-    (@ref MediaConfig::InspectorDecodeImageData,
-     @ref MediaConfig::InspectorDecodeLtc,
-     @ref MediaConfig::InspectorCheckTcSync,
-     @ref MediaConfig::InspectorCheckContinuity).
+  - The Inspector's default @ref MediaConfig::InspectorTests list
+    carries every test (@c ImageData, @c Ltc, @c TcSync,
+    @c Continuity, @c Timestamp, @c AudioSamples), so the full
+    suite runs out of the box.
 
   The default periodic log writes a multi-line report once per second
   of wall time, plus immediate warnings whenever a discontinuity is
@@ -204,31 +203,51 @@ $(document).ready(function(){initNavTree('inspector.html',''); initResizable(); 
   inspector stays silent when there is nothing to flag.  See
   @ref inspector_log for a full annotation of every line.
 
-@section inspector_checks The four checks
+@section inspector_checks The inspector tests
 
-  The inspector runs four independent checks per frame.  Each is
-  gated by its own config flag, but the dependency-implication
-  matrix means turning on a higher-level check auto-enables the
-  lower-level decoders it depends on.
+  The inspector runs an independently-selectable set of tests per
+  frame.  The selection is driven by a single config key,
+  @ref MediaConfig::InspectorTests — an @ref EnumList of
+  @ref InspectorTest values.  The default list carries every test
+  so the full suite runs out of the box; narrow the list to run a
+  subset.  The inspector resolves test dependencies at
+  @ref MediaIOTask_Inspector::executeCmd "open" time, so you never
+  have to list the upstream decoders explicitly.
 
 &lt;table class="markdownTable"&gt;
-  &lt;tr class="markdownTableHead"&gt;    &lt;th class="markdownTableHeadNone"&gt; Check   </p>
-<p>Config key   </p>
+  &lt;tr class="markdownTableHead"&gt;    &lt;th class="markdownTableHeadNone"&gt; Test   </p>
+<p><a class="el" href="classEnum.html" title="Runtime-typed enumeration value carrying a registered type and integer.">Enum</a> value   </p>
 <p>Auto-enables    </p>
 <p>Decode picture data band   </p>
-<p><a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">MediaConfig::InspectorDecodeImageData</a>   </p>
+<p><code>InspectorTest::ImageData</code>   </p>
 <p>(no deps)    </p>
 <p>Decode audio LTC   </p>
-<p><a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">MediaConfig::InspectorDecodeLtc</a>   </p>
+<p><code>InspectorTest::Ltc</code>   </p>
 <p>(no deps)    </p>
 <p>A/V Sync (TC offset, samples)   </p>
-<p><a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">MediaConfig::InspectorCheckTcSync</a>   </p>
-<p>DecodeImageData + DecodeLtc    </p>
+<p><code>InspectorTest::TcSync</code>   </p>
+<p><code>ImageData</code> + <code>Ltc</code>    </p>
 <p>Continuity (TC / frame# / SID)   </p>
-<p><a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">MediaConfig::InspectorCheckContinuity</a>   </p>
-<p>DecodeImageData   </p>
-<p><b>You do not have to enable the upstream decoders explicitly.</b> Setting <code>InspectorCheckTcSync = true</code> is enough — the inspector resolves the dependencies at open time and turns the decoders on for you. The default config has all four checks enabled.</p>
-<h2><a class="anchor" id="inspector_check_picture"></a>
+<p><code>InspectorTest::Continuity</code>   </p>
+<p><code>ImageData</code>    </p>
+<p>Timestamp delta + actual FPS   </p>
+<p><code>InspectorTest::Timestamp</code>   </p>
+<p>(no deps)    </p>
+<p>Per-frame audio sample count   </p>
+<p><code>InspectorTest::AudioSamples</code>   </p>
+<p>(no deps)   </p>
+<p>Example — only run the timestamp and A/V sync checks:</p>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classEnumList.html">EnumList</a> <a class="code hl_class" href="classList.html">tests</a> = EnumList::forType&lt;InspectorTest&gt;();</div>
+<div class="line"><a class="code hl_class" href="classList.html">tests</a>.append(InspectorTest::Timestamp);</div>
+<div class="line"><a class="code hl_class" href="classList.html">tests</a>.append(InspectorTest::TcSync);</div>
+<div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_variable" href="classMediaConfig.html#a2bde3895b9c20caaab68563fb2b33cac">MediaConfig::InspectorTests</a>, <a class="code hl_class" href="classList.html">tests</a>);</div>
+<div class="line"><span class="comment">// Or from the command line / string form:</span></div>
+<div class="line"><span class="comment">//   InspectorTests=Timestamp,TcSync</span></div>
+<div class="ttc" id="aclassEnumList_html"><div class="ttname"><a href="classEnumList.html">EnumList</a></div><div class="ttdoc">Ordered, duplicate-preserving list of Enum values sharing one type.</div><div class="ttdef"><b>Definition</b> enumlist.h:59</div></div>
+<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
+<div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
+<div class="ttc" id="aclassMediaConfig_html_a2bde3895b9c20caaab68563fb2b33cac"><div class="ttname"><a href="classMediaConfig.html#a2bde3895b9c20caaab68563fb2b33cac">MediaConfig::InspectorTests</a></div><div class="ttdeci">static const ID InspectorTests</div><div class="ttdoc">EnumList InspectorTest — list of inspector tests to run.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:466</div></div>
+</div><!-- fragment --><h2><a class="anchor" id="inspector_check_picture"></a>
 Picture data band decode</h2>
 <p>Pulls the two 64-bit payloads written by <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> out of the top of every frame:</p>
 <ul>
@@ -248,7 +267,6 @@ A/V Sync</h2>
 <p>For picture frame N, the audio chunk for that frame spans absolute audio samples <code></code>[N*spf, (N+1)*spf), where <code>spf</code> is the average samples-per-frame (computed exactly from the LTC mode's rational frame rate, so <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">29.97</a> NDF and friends are accurate). The picture's "TC anchor" is sample 0 of that chunk: the picture says we are at <code>picTC</code> starting here. The LTC's "TC anchor" is the sample at which the LTC sync word is detected for the recovered LTC frame: the LTC says we are at <code>ltcTC</code> starting there.</p>
 <p>If the two streams are perfectly aligned, both should agree on the same TC at the same sample. The inspector measures:</p>
 <div class="fragment"><div class="line">offset = (ltcSampleStart - <a class="code hl_class" href="classList.html">chunkStart</a>) + (<a class="code hl_class" href="classList.html">picFrames</a> - <a class="code hl_class" href="classList.html">ltcFrames</a>) * <a class="code hl_class" href="classList.html">spf</a></div>
-<div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 </div><!-- fragment --><p>where <code>ltcSampleStart</code> - chunkStart is the LTC sync word's offset within this audio chunk and <code>picFrames</code> - ltcFrames is the difference between the two TCs converted to absolute frame counts.</p>
 <dl class="section user"><dt>Sign convention</dt><dd></dd></dl>
 <p>The inspector renders the offset in plain language so the sign convention isn't something a QA reader has to remember:</p>
@@ -300,7 +318,7 @@ Accumulator snapshot</h2>
 <div class="fragment"><div class="line"><a class="code hl_struct" href="structInspectorSnapshot.html">InspectorSnapshot</a> <a class="code hl_class" href="classList.html">snap</a> = inspector-&gt;snapshot();</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">snap</a>.totalDiscontinuities &gt; 0) { <a class="code hl_class" href="classList.html">failed_check_count</a>++; }</div>
 <div class="line"><span class="keywordflow">if</span>(<a class="code hl_class" href="classList.html">snap</a>.lastEvent.avSyncValid) { <a class="code hl_class" href="classList.html">recordAvSync</a>(<a class="code hl_class" href="classList.html">snap</a>.lastEvent.avSyncOffsetSamples); }</div>
-<div class="ttc" id="astructInspectorSnapshot_html"><div class="ttname"><a href="structInspectorSnapshot.html">InspectorSnapshot</a></div><div class="ttdoc">Aggregate snapshot of the inspector's accumulated state.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:169</div></div>
+<div class="ttc" id="astructInspectorSnapshot_html"><div class="ttname"><a href="structInspectorSnapshot.html">InspectorSnapshot</a></div><div class="ttdoc">Aggregate snapshot of the inspector's accumulated state.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:214</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="inspector_log"></a>
 Periodic log</h2>
 <p>The default delivery channel. At the cadence configured by <a class="el" href="classMediaConfig.html#a5b98f1e6982e7e355314616c358c4eb6">MediaConfig::InspectorLogIntervalSec</a> (default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a> second of wall time), the inspector emits a multi-line summary via <code>promekiInfo</code> plus immediate warnings via <code>promekiWarn</code> for any discontinuities detected. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> the interval to <code>0</code> to disable the periodic summary entirely (immediate warnings still fire).</p>
@@ -317,10 +335,10 @@ Standard factory (no callback)</h2>
 <div class="line"><span class="comment">// ... query io-&gt;stats() or rely on the periodic log</span></div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;</div>
-<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:488</div></div>
+<div class="ttc" id="aclassMediaIO_html"><div class="ttname"><a href="classMediaIO.html">MediaIO</a></div><div class="ttdoc">Controller for media I/O backends.</div><div class="ttdef"><b>Definition</b> mediaio.h:490</div></div>
 <div class="ttc" id="aclassMediaIO_html_a083b9e49f5f676da9066f084bfbd0f60"><div class="ttname"><a href="classMediaIO.html#a083b9e49f5f676da9066f084bfbd0f60">MediaIO::writeFrame</a></div><div class="ttdeci">Error writeFrame(const Frame::Ptr &amp;frame, bool block=true)</div><div class="ttdoc">Writes a frame to the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a0cb498ce63da62e06f5f463c0b046d74"><div class="ttname"><a href="classMediaIO.html#a0cb498ce63da62e06f5f463c0b046d74">MediaIO::defaultConfig</a></div><div class="ttdeci">static Config defaultConfig(const String &amp;typeName)</div><div class="ttdoc">Returns the default configuration for the named backend.</div></div>
-<div class="ttc" id="aclassMediaIO_html_a3f8b370536ea3e89c4598bb475fedc87"><div class="ttname"><a href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a></div><div class="ttdeci">static constexpr Mode Input</div><div class="ttdoc">Backend accepts frames (sink).</div><div class="ttdef"><b>Definition</b> mediaio.h:496</div></div>
+<div class="ttc" id="aclassMediaIO_html_a3f8b370536ea3e89c4598bb475fedc87"><div class="ttname"><a href="classMediaIO.html#a3f8b370536ea3e89c4598bb475fedc87">MediaIO::Input</a></div><div class="ttdeci">static constexpr Mode Input</div><div class="ttdoc">Backend accepts frames (sink).</div><div class="ttdef"><b>Definition</b> mediaio.h:498</div></div>
 <div class="ttc" id="aclassMediaIO_html_a594b8b55ae788efe104c871248d73808"><div class="ttname"><a href="classMediaIO.html#a594b8b55ae788efe104c871248d73808">MediaIO::create</a></div><div class="ttdeci">static MediaIO * create(const Config &amp;config, ObjectBase *parent=nullptr)</div><div class="ttdoc">Creates a MediaIO instance from a configuration.</div></div>
 <div class="ttc" id="aclassMediaIO_html_a6a601a20bd14d709a28e09e6165254d3"><div class="ttname"><a href="classMediaIO.html#a6a601a20bd14d709a28e09e6165254d3">MediaIO::open</a></div><div class="ttdeci">Error open(Mode mode)</div><div class="ttdoc">Opens the media resource.</div></div>
 <div class="ttc" id="aclassMediaIO_html_adec397e0125f2e156de27c9ac5cb1f3d"><div class="ttname"><a href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">MediaIO::close</a></div><div class="ttdeci">Error close()</div><div class="ttdoc">Closes the media resource.</div></div>
@@ -347,10 +365,10 @@ Adopt-task path (per-frame callback)</h2>
 <div class="line"> </div>
 <div class="line">io-&gt;<a class="code hl_function" href="classMediaIO.html#adec397e0125f2e156de27c9ac5cb1f3d">close</a>();</div>
 <div class="line"><span class="keyword">delete</span> io;                           <span class="comment">// also deletes insp</span></div>
-<div class="ttc" id="aclassMediaIOTask__Inspector_html"><div class="ttname"><a href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a></div><div class="ttdoc">MediaIO sink backend that decodes and validates a media stream.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:270</div></div>
-<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1351</div></div>
+<div class="ttc" id="aclassMediaIOTask__Inspector_html"><div class="ttname"><a href="classMediaIOTask__Inspector.html">MediaIOTask_Inspector</a></div><div class="ttdoc">MediaIO sink backend that decodes and validates a media stream.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:368</div></div>
+<div class="ttc" id="aclassMediaIO_html_aa7fa76347a8b9344c335fcda93658db3"><div class="ttname"><a href="classMediaIO.html#aa7fa76347a8b9344c335fcda93658db3">MediaIO::setConfig</a></div><div class="ttdeci">void setConfig(const Config &amp;config)</div><div class="ttdoc">Sets the configuration.</div><div class="ttdef"><b>Definition</b> mediaio.h:1353</div></div>
 <div class="ttc" id="aclassMediaIO_html_adf861eac41671d654408efeada979bcd"><div class="ttname"><a href="classMediaIO.html#adf861eac41671d654408efeada979bcd">MediaIO::adoptTask</a></div><div class="ttdeci">Error adoptTask(MediaIOTask *task)</div><div class="ttdoc">Injects an externally constructed backend task.</div></div>
-<div class="ttc" id="astructInspectorEvent_html"><div class="ttname"><a href="structInspectorEvent.html">InspectorEvent</a></div><div class="ttdoc">Per-frame measurement record produced by MediaIOTask_Inspector.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:83</div></div>
+<div class="ttc" id="astructInspectorEvent_html"><div class="ttname"><a href="structInspectorEvent.html">InspectorEvent</a></div><div class="ttdoc">Per-frame measurement record produced by MediaIOTask_Inspector.</div><div class="ttdef"><b>Definition</b> mediaiotask_inspector.h:91</div></div>
 </div><!-- fragment --><p>The callback <b>must</b> be installed before <code>open()</code> — calling <code>setEventCallback</code> on a running inspector is a data race. This is why the factory path can't expose the callback: by the time <code>create()</code> returns, the task is already owned and inaccessible to user code.</p>
 <h1><a class="anchor" id="inspector_what_to_look_for"></a>
 What to look for in CI / QA</h1>
@@ -430,7 +448,7 @@ See also</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
   </ul>
 </div>
 </body>

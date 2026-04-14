@@ -12,5 +12,6 @@ var searchData=
   ['frame_2eh_9',['frame.h',['../frame_8h.html',1,'(Global Namespace)'],['../tui_2frame_8h.html',1,'(Global Namespace)']]],
   ['framepacer_2eh_10',['framepacer.h',['../framepacer_8h.html',1,'']]],
   ['framerate_2eh_11',['framerate.h',['../framerate_8h.html',1,'']]],
-  ['future_2eh_12',['future.h',['../future_8h.html',1,'']]]
+  ['framesync_2eh_12',['framesync.h',['../framesync_8h.html',1,'']]],
+  ['future_2eh_13',['future.h',['../future_8h.html',1,'']]]
 ];

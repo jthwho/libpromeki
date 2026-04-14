@@ -13,7 +13,7 @@ var searchData=
   ['values_10',['values',['../classHashMap.html#aaf535209ab4b4e3785f0fa299c26ca5f',1,'HashMap::values()'],['../classEnum.html#a9a1cb9771ef619f493c1d9b1557f2aa1',1,'Enum::values()'],['../classMap.html#a21cb43b9b242923d9c8c2b4f3d613760',1,'Map::values()'],['../classEnumList.html#aee35a8ab3170db29dad119563113eedf',1,'EnumList::values()']]],
   ['variance_11',['variance',['../classStatsAccumulator.html#ad9ae3552ab64a89597c42f3fe8c48675',1,'StatsAccumulator']]],
   ['variantdatabase_12',['VariantDatabase',['../classVariantDatabase.html#a0c4d5feedfdea38ab75909d0cfa59b19',1,'VariantDatabase']]],
-  ['variantimpl_13',['variantimpl',['../classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868',1,'VariantImpl::VariantImpl()=default'],['../classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3',1,'VariantImpl::VariantImpl(const T &amp;value)']]],
+  ['variantimpl_13',['variantimpl',['../classVariantImpl.html#a12812ac638c2da0ded51d7552a29edf3',1,'VariantImpl::VariantImpl(const T &amp;value)'],['../classVariantImpl.html#a95a5de6be579c9c432a3d7c4e8e96868',1,'VariantImpl::VariantImpl()=default']]],
   ['variantspec_14',['VariantSpec',['../classVariantSpec.html#a8e7639f0f32e2848e1c0f88c39e2be11',1,'VariantSpec']]],
   ['vectortransform_15',['vectorTransform',['../classMatrix3x3.html#a1b5b4dd26786c6dc630a0051bcb13e0a',1,'Matrix3x3']]],
   ['version_16',['version',['../classDataStream.html#a6abb988e0426422d76c4b2ef3264c0f2',1,'DataStream::version()'],['../classRtpPacket.html#a3478759d407d7235d193e31c5fbe8e45',1,'RtpPacket::version()'],['../classUUID.html#a07c51b3f1a0766c42a46bf73cbbb903f',1,'UUID::version()']]],
@@ -22,6 +22,6 @@ var searchData=
   ['vibratorate_19',['vibratoRate',['../classMusicalNote.html#a6bfacc2d894969d74d2bdfde5c24884f',1,'MusicalNote']]],
   ['videosize_20',['videoSize',['../classImgSeq.html#a3b5155fba1472f84c86f3370a376e4fc',1,'ImgSeq']]],
   ['videotestpattern_21',['VideoTestPattern',['../classVideoTestPattern.html#afe3332167e195dd2f5ba008b7542404c',1,'VideoTestPattern']]],
-  ['videowidget_22',['videoWidget',['../classSDLPlayerTask.html#a064b89a410013eea93fbff0dee9c5706',1,'SDLPlayerTask']]],
+  ['videowidget_22',['videowidget',['../classSDLPlayerTask.html#a064b89a410013eea93fbff0dee9c5706',1,'SDLPlayerTask::videoWidget()'],['../classSDLPlayerOldTask.html#a9660baf4c8efbb81bbd515229acccba3',1,'SDLPlayerOldTask::videoWidget()']]],
   ['vtcformat_23',['vtcformat',['../classTimecode_1_1Mode.html#aa0a65217591cda81646bca6edca2aacd',1,'Timecode::Mode::vtcFormat()'],['../classTimecode.html#a8b7cb5b642f7f2d0696b3315785f221b',1,'Timecode::vtcFormat()']]]
 ];

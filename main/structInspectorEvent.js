@@ -1,5 +1,12 @@
 var structInspectorEvent =
 [
+    [ "audioSamplesTestEnabled", "structInspectorEvent.html#a5e8f8737d79354c4038b5e0d4dcd7fda", null ],
+    [ "audioSamplesThisFrame", "structInspectorEvent.html#a29b03a0d8abbf3d54e1d2e5bdfe6ad9a", null ],
+    [ "audioSamplesValid", "structInspectorEvent.html#ac6e71432988f87851061cf17543f283d", null ],
+    [ "audioTimestampDeltaNs", "structInspectorEvent.html#a4b28df1a7238a1417fa92918cf830eb8", null ],
+    [ "audioTimestampDeltaValid", "structInspectorEvent.html#a183e22b8444dfa0f9560e1881d972534", null ],
+    [ "audioTimestampNs", "structInspectorEvent.html#a0e617d2a7b17d574f7794bc1ad0bd895", null ],
+    [ "audioTimestampValid", "structInspectorEvent.html#a8191b2c7f514a8cdded67a75147c7d1d", null ],
     [ "avSyncOffsetSamples", "structInspectorEvent.html#a5544cf6790c55253b8b4cac661e8cf6e", null ],
     [ "avSyncValid", "structInspectorEvent.html#a7306989a0c3cfe410da73abdfaf46acf", null ],
     [ "discontinuities", "structInspectorEvent.html#aabf26768b9d236ce4fe732a0943a9f03", null ],
@@ -12,5 +19,10 @@ var structInspectorEvent =
     [ "pictureDecoderEnabled", "structInspectorEvent.html#a1b1291a7d01d940b78ad6ebca487e3b0", null ],
     [ "pictureFrameNumber", "structInspectorEvent.html#acd06d9ce09f888e3ffb3c7b38a2c9b51", null ],
     [ "pictureStreamId", "structInspectorEvent.html#a84fb002c9775a10c958010d5642ff219", null ],
-    [ "pictureTimecode", "structInspectorEvent.html#a35faf4620e770dda09118863e1b2b874", null ]
+    [ "pictureTimecode", "structInspectorEvent.html#a35faf4620e770dda09118863e1b2b874", null ],
+    [ "timestampTestEnabled", "structInspectorEvent.html#a39200e5b5c458898cab204a6bedaa5a7", null ],
+    [ "videoTimestampDeltaNs", "structInspectorEvent.html#aeee69377bd2d99b875b030fa9273e6ed", null ],
+    [ "videoTimestampDeltaValid", "structInspectorEvent.html#a8b82229d361948994bd96d2fcab44d6b", null ],
+    [ "videoTimestampNs", "structInspectorEvent.html#ab2eb35f75bd549bd1f2d2dae1180b6e5", null ],
+    [ "videoTimestampValid", "structInspectorEvent.html#ac3a9bbd9c54a0c39d3e463c4d4e008e8", null ]
 ];

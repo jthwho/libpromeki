@@ -1,0 +1,13 @@
+<map id="include/promeki/periodiccallback.h" name="include/promeki/periodiccallback.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="192,5,441,31"/>
+<area shape="rect" id="Node000002" href="$framesync_8h.html" title=" " alt="" coords="5,86,217,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,38,142,88,140,83,273,33"/>
+<area shape="rect" id="Node000004" href="$sdlaudioclock_8h.html" title=" " alt="" coords="241,79,392,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="319,44,319,79,314,79,314,44"/>
+<area shape="rect" id="Node000005" href="$sdlplayerold_8h.html" title=" " alt="" coords="297,167,448,207"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="361,35,387,53,407,77,413,101,409,126,400,149,389,168,385,165,395,146,404,124,408,102,402,80,383,57,358,39"/>
+<area shape="rect" id="Node000003" href="$sdlplayer_8h.html" title=" " alt="" coords="108,167,259,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="132,120,169,164,165,168,128,124"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="277,129,214,169,211,164,274,124"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="339,129,363,165,358,168,334,132"/>
+</map>

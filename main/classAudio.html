@@ -153,6 +153,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:af4c906c113ec44e511a595637482367c" id="r_af4c906c113ec44e511a595637482367c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classAudioDesc.html">AudioDesc</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#af4c906c113ec44e511a595637482367c">desc</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:af4c906c113ec44e511a595637482367c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the <a class="el" href="classAudioDesc.html" title="Describes an audio format including sample type, rate, and channel count.">AudioDesc</a> that describes the audio contained in this object.  <br /></td></tr>
 <tr class="separator:af4c906c113ec44e511a595637482367c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08645d1308d88192f68851fbd1d44d04" id="r_a08645d1308d88192f68851fbd1d44d04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a08645d1308d88192f68851fbd1d44d04">metadata</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
+<tr class="memdesc:a08645d1308d88192f68851fbd1d44d04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the audio metadata.  <br /></td></tr>
+<tr class="separator:a08645d1308d88192f68851fbd1d44d04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d444aebd87bc49e59eac89ef0441d16" id="r_a4d444aebd87bc49e59eac89ef0441d16"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMetadata.html">Metadata</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a4d444aebd87bc49e59eac89ef0441d16">metadata</a> ()</td></tr>
+<tr class="memdesc:a4d444aebd87bc49e59eac89ef0441d16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a mutable reference to the audio metadata.  <br /></td></tr>
+<tr class="separator:a4d444aebd87bc49e59eac89ef0441d16"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ec5c30a7e45cc01dc9eeffe033cd2e3" id="r_a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">size_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3">samples</a> () <a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a></td></tr>
 <tr class="memdesc:a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of samples, irrespective of the channel count.  <br /></td></tr>
 <tr class="separator:a0ec5c30a7e45cc01dc9eeffe033cd2e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -633,6 +639,62 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 
 </div>
 </div>
+<a id="a4d444aebd87bc49e59eac89ef0441d16" name="a4d444aebd87bc49e59eac89ef0441d16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d444aebd87bc49e59eac89ef0441d16">&#9670;&#160;</a></span>metadata() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classMetadata.html">Metadata</a> &amp; Audio::metadata </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a mutable reference to the audio metadata. </p>
+<dl class="section return"><dt>Returns</dt><dd>The metadata. </dd></dl>
+
+</div>
+</div>
+<a id="a08645d1308d88192f68851fbd1d44d04" name="a08645d1308d88192f68851fbd1d44d04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08645d1308d88192f68851fbd1d44d04">&#9670;&#160;</a></span>metadata() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed2">const</a> <a class="el" href="classMetadata.html">Metadata</a> &amp; Audio::metadata </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns a const reference to the audio metadata. </p>
+<dl class="section return"><dt>Returns</dt><dd>The metadata. </dd></dl>
+
+</div>
+</div>
 <a id="abc2ac90f3453dd40c349fecfd37739fb" name="abc2ac90f3453dd40c349fecfd37739fb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc2ac90f3453dd40c349fecfd37739fb">&#9670;&#160;</a></span>resize()</h2>
 
@@ -706,7 +768,7 @@ template&lt;<a class="el" href="classAudio.html#a7028fbb9df7a2d8b59cc5018940aeed
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classAudio.html">Audio</a></li>
-    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
   </ul>
 </div>
 </body>

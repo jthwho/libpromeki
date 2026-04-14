@@ -22,8 +22,10 @@ var searchData=
   ['rtpmulticastinterface_19',['RtpMulticastInterface',['../classMediaConfig.html#a4b6efd517b5f34f7d54b6a7cda119c8a',1,'MediaConfig']]],
   ['rtpmulticastttl_20',['RtpMulticastTTL',['../classMediaConfig.html#a70a088854f049e6f1df4c2a1801df6dc',1,'MediaConfig']]],
   ['rtppacingmode_21',['RtpPacingMode',['../classMediaConfig.html#acdb6805d5359f974ebf6817543648c6f',1,'MediaConfig']]],
-  ['rtpsavesdppath_22',['RtpSaveSdpPath',['../classMediaConfig.html#a0f06928ce4fa0ec9e444b517083b37ec',1,'MediaConfig']]],
-  ['rtpsdp_23',['RtpSdp',['../classMediaConfig.html#a3309867fff080edb6c0fd668c64a6623',1,'MediaConfig']]],
-  ['rtpsessionname_24',['RtpSessionName',['../classMediaConfig.html#acec8fb72e8a26f3190f9c30dcf212ce3',1,'MediaConfig']]],
-  ['rtpsessionorigin_25',['RtpSessionOrigin',['../classMediaConfig.html#ad3938301d77d76aeaf1f2be2effa9c24',1,'MediaConfig']]]
+  ['rtppacketcount_22',['RtpPacketCount',['../classMetadata.html#ac437189f2c428444b8c7fd804d24fb6a',1,'Metadata']]],
+  ['rtpsavesdppath_23',['RtpSaveSdpPath',['../classMediaConfig.html#a0f06928ce4fa0ec9e444b517083b37ec',1,'MediaConfig']]],
+  ['rtpsdp_24',['RtpSdp',['../classMediaConfig.html#a3309867fff080edb6c0fd668c64a6623',1,'MediaConfig']]],
+  ['rtpsessionname_25',['RtpSessionName',['../classMediaConfig.html#acec8fb72e8a26f3190f9c30dcf212ce3',1,'MediaConfig']]],
+  ['rtpsessionorigin_26',['RtpSessionOrigin',['../classMediaConfig.html#ad3938301d77d76aeaf1f2be2effa9c24',1,'MediaConfig']]],
+  ['rtptimestamp_27',['RtpTimestamp',['../classMetadata.html#a836504f34e558d9f29693b508a14c76e',1,'Metadata']]]
 ];

@@ -1,9 +1,27 @@
 var structInspectorSnapshot =
 [
+    [ "actualFps", "structInspectorSnapshot.html#aede2f3423e6e6441035e673eaf3d13c9", null ],
+    [ "audioDeltaAvgNs", "structInspectorSnapshot.html#af90eb26a571ceb565de0efbe32032ea9", null ],
+    [ "audioDeltaMaxNs", "structInspectorSnapshot.html#a4911bb8cb49245ba35bfa417d6c394a3", null ],
+    [ "audioDeltaMinNs", "structInspectorSnapshot.html#ad6ed50285aa57da5d9b502d16f5077f0", null ],
+    [ "audioDeltaSamples", "structInspectorSnapshot.html#a68bfbe4ff82667547a89335641df253d", null ],
+    [ "audioSamplesAvg", "structInspectorSnapshot.html#af29c8594bbf62eb51e34c5620e793df9", null ],
+    [ "audioSamplesFrames", "structInspectorSnapshot.html#ae85001a61307b0bdb5c3186855516757", null ],
+    [ "audioSamplesMax", "structInspectorSnapshot.html#a1e9e5045f725d88536e1ce2c026b45dd", null ],
+    [ "audioSamplesMin", "structInspectorSnapshot.html#aebfa5f3e200ed86802125fe44a7df98b", null ],
+    [ "audioSamplesSpanNs", "structInspectorSnapshot.html#afef5225cad8e80f8f385a3165d33ca4f", null ],
+    [ "audioSamplesTotal", "structInspectorSnapshot.html#a11d307240b8dd460e8622ca7252ff4f1", null ],
     [ "framesProcessed", "structInspectorSnapshot.html#a08ede529519f69748bff66171f431126", null ],
+    [ "framesWithAudioTimestamp", "structInspectorSnapshot.html#ab82630448d87916daf30d226fe2c9e2e", null ],
     [ "framesWithLtc", "structInspectorSnapshot.html#aab78b4c6271d22bce133df411044285b", null ],
     [ "framesWithPictureData", "structInspectorSnapshot.html#ad0063a4655a21339e9ebe78ace4e96dc", null ],
+    [ "framesWithVideoTimestamp", "structInspectorSnapshot.html#a225b45a309ce24e4045590d7f1b3cb10", null ],
     [ "hasLastEvent", "structInspectorSnapshot.html#a74bf47a3d931b8120cb1e9dc765e1b45", null ],
     [ "lastEvent", "structInspectorSnapshot.html#a0c7f2dda7770d65e06415339996b10d3", null ],
-    [ "totalDiscontinuities", "structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5", null ]
+    [ "measuredAudioSampleRate", "structInspectorSnapshot.html#a45832a49039d8388b61cb31c72694ed6", null ],
+    [ "totalDiscontinuities", "structInspectorSnapshot.html#ad25fb1797674f1e818153ae026815de5", null ],
+    [ "videoDeltaAvgNs", "structInspectorSnapshot.html#ae8f8c559220f21f6e26e26ba341e7446", null ],
+    [ "videoDeltaMaxNs", "structInspectorSnapshot.html#ad4d63b4693837dfde8f3b98bfa36fb45", null ],
+    [ "videoDeltaMinNs", "structInspectorSnapshot.html#a90c7846312725d6ae5eb4b14ef4124b1", null ],
+    [ "videoDeltaSamples", "structInspectorSnapshot.html#a2fd6c744db0327d1d667eb9bbbedc224", null ]
 ];

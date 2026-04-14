@@ -1,8 +1,5 @@
 <map id="include/promeki/framepacer.h" name="include/promeki/framepacer.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="37,5,254,31"/>
-<area shape="rect" id="Node000002" href="$sdlaudiopacerclock_8h.html" title=" " alt="" coords="5,79,168,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,43,103,80,99,77,126,40"/>
-<area shape="rect" id="Node000003" href="$sdlplayer_8h.html" title=" " alt="" coords="70,167,221,207"/>
-<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="165,41,183,78,186,99,183,119,173,145,161,168,156,165,168,143,177,118,181,99,177,79,160,43"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,128,135,165,130,168,105,131"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,223,31"/>
+<area shape="rect" id="Node000002" href="$sdlplayerold_8h.html" title=" " alt="" coords="39,79,189,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,44,117,79,111,79,111,44"/>
 </map>

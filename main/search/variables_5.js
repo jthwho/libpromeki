@@ -10,7 +10,7 @@ var searchData=
   ['endofstream_7',['EndOfStream',['../classMetadata.html#add28417cdbff180be46db1679b84e34e',1,'Metadata']]],
   ['enumerate_8',['enumerate',['../structMediaIO_1_1FormatDesc.html#aa766150e2cf030dbca33a410334594c1',1,'MediaIO::FormatDesc']]],
   ['eotf_9',['eotf',['../structColorModel_1_1Data.html#af6c7076fd80cbf85fd501a0cfc3babdb',1,'ColorModel::Data']]],
-  ['error_10',['error',['../structFramePacer_1_1PaceResult.html#ac655a95721681d6679c9704e885c29fc',1,'FramePacer::PaceResult::error'],['../structImageDataDecoder_1_1DecodedItem.html#a73967f24d5737a681401a032e5a6e756',1,'ImageDataDecoder::DecodedItem::error']]],
+  ['error_10',['error',['../structFramePacer_1_1PaceResult.html#ac655a95721681d6679c9704e885c29fc',1,'FramePacer::PaceResult::error'],['../structFrameSync_1_1PullResult.html#ac3c92d1fa6c695bf05effda92ec0ad0d',1,'FrameSync::PullResult::error'],['../structImageDataDecoder_1_1DecodedItem.html#a73967f24d5737a681401a032e5a6e756',1,'ImageDataDecoder::DecodedItem::error']]],
   ['errormessage_11',['errorMessage',['../classBenchmarkResult.html#ae8e0930f6347a15d3672c4b0e860f694',1,'BenchmarkResult']]],
   ['expectedcrc_12',['expectedCrc',['../structImageDataDecoder_1_1DecodedItem.html#a490771e997128b8656fcc9c2b8b239dd',1,'ImageDataDecoder::DecodedItem']]],
   ['extended_13',['Extended',['../classRegEx.html#a563873bebc0099d7febb442e31ad9af6',1,'RegEx']]],

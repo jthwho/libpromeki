@@ -1,5 +1,44 @@
 var group__time =
 [
+    [ "ClockJitter", "structClockJitter.html", [
+      [ "isSymmetric", "structClockJitter.html#adc437676f1edf42b11ca3ad10bce1f9c", null ],
+      [ "span", "structClockJitter.html#a974b7381304fdf47ff7cc895255fd33c", null ],
+      [ "maxError", "structClockJitter.html#ab5824afcc407414bce6daf61d9d1f6c2", null ],
+      [ "minError", "structClockJitter.html#a02f64b3fea3497898c12d37501b9bcba", null ]
+    ] ],
+    [ "Clock", "classClock.html", [
+      [ "domain", "classClock.html#ad78765d0f3cf546ae9ed0d518848af01", null ],
+      [ "jitter", "classClock.html#a78d42644cd73b0beba037134f7f36a5d", null ],
+      [ "nowNs", "classClock.html#ac4fb6ebb2edaab48b150f6209ab87619", null ],
+      [ "rateRatio", "classClock.html#ac1e728a766b91f93239f74a206a16e97", null ],
+      [ "resolutionNs", "classClock.html#ad95118aed30fce290503214f17b037e3", null ],
+      [ "sleepUntilNs", "classClock.html#a19238ec90f104f9065703b0a81b03f70", null ]
+    ] ],
+    [ "WallClock", "classWallClock.html", [
+      [ "domain", "classWallClock.html#aae295e6e18d58da9416b16538c9e88b4", null ],
+      [ "jitter", "classWallClock.html#aa77d77cfeb38ab0407677e18229cf8dc", null ],
+      [ "nowNs", "classWallClock.html#a3463852ffc3453eed2fd6a6f3b9c0b0f", null ],
+      [ "resolutionNs", "classWallClock.html#aa37cbbb7a41f4e08a57b7b69f9618a03", null ],
+      [ "sleepUntilNs", "classWallClock.html#a4c43c55c3121f6573c60e699dc891c39", null ]
+    ] ],
+    [ "ClockDomain", "classClockDomain.html", [
+      [ "ID", "classClockDomain.html#aefdeca0c9554b1995a3775cbc1ad479b", null ],
+      [ "IDList", "classClockDomain.html#ab532c72adc736380f2ec3737de634638", null ],
+      [ "ClockDomain", "classClockDomain.html#af62ca9ff7fcaf01c8d10b477163af416", null ],
+      [ "ClockDomain", "classClockDomain.html#a89113d7d25c795e929d7b7d0ec34a454", null ],
+      [ "data", "classClockDomain.html#ad1dd90ba63c1acdfde4b698b1303d3d8", null ],
+      [ "description", "classClockDomain.html#acd3c23a06cc616da07e0d5fd9da10096", null ],
+      [ "epoch", "classClockDomain.html#ad7a14633c620c5eee1cbb25d651f6e3d", null ],
+      [ "id", "classClockDomain.html#a90c6ae56e98c207e42b490fd11964da3", null ],
+      [ "isCrossMachineComparable", "classClockDomain.html#a2db27f3c4166aec6498a507fa5e0f23f", null ],
+      [ "isCrossStreamComparable", "classClockDomain.html#af942450f27d97107576b1dffe36ea0e3", null ],
+      [ "isValid", "classClockDomain.html#ae72e3db11f2e3e7db2fa30fa5e40e1cf", null ],
+      [ "metadata", "classClockDomain.html#ae81d07a6d637896e5098effa97424ba1", null ],
+      [ "name", "classClockDomain.html#a5e9b96dc5735a9dc07febc66a147abc3", null ],
+      [ "operator!=", "classClockDomain.html#a3d6bd403bac919e57cf6f70dad1e484a", null ],
+      [ "operator==", "classClockDomain.html#aa0ab30cb8f81f3c069b62b85ecce37d1", null ],
+      [ "toString", "classClockDomain.html#a4468ef5412ddc87fae34fb5781c79904", null ]
+    ] ],
     [ "DateTime", "classDateTime.html", [
       [ "Value", "classDateTime.html#afee458b9af0e73e2144831a0c97a9ea0", null ],
       [ "DateTime", "classDateTime.html#a3ccfb87f7a2e9683b91964e32d907161", null ],
@@ -60,18 +99,6 @@ var group__time =
       [ "restart", "classElapsedTimer.html#a764a4246b14f2fcc0eb31de5cf0496e2", null ],
       [ "start", "classElapsedTimer.html#a27343db4608fa0bce7182e4351974dd6", null ]
     ] ],
-    [ "FramePacerClock", "classFramePacerClock.html", [
-      [ "name", "classFramePacerClock.html#ac3a66afc247becd6b66f92a44712020d", null ],
-      [ "nowNs", "classFramePacerClock.html#aaafac306d92053c695a80b1ce439ac96", null ],
-      [ "resolutionNs", "classFramePacerClock.html#a19c0a99a43b822f0c724694a34b3df95", null ],
-      [ "sleepUntilNs", "classFramePacerClock.html#aed47a69838c1ca47315e107dc52ef176", null ]
-    ] ],
-    [ "WallPacerClock", "classWallPacerClock.html", [
-      [ "name", "classWallPacerClock.html#ae4aeb5696d3bebe9975b8d1802b3fc57", null ],
-      [ "nowNs", "classWallPacerClock.html#ac6396f452f186237db8a445d19390dea", null ],
-      [ "resolutionNs", "classWallPacerClock.html#a9a632a23fd1d2cf308b2b9d28aaf4888", null ],
-      [ "sleepUntilNs", "classWallPacerClock.html#a1f2379c0cf798989f6c4b8e7b90e6a0c", null ]
-    ] ],
     [ "FramePacer", "classFramePacer.html", [
       [ "PaceResult", "structFramePacer_1_1PaceResult.html", [
         [ "error", "structFramePacer_1_1PaceResult.html#ac655a95721681d6679c9704e885c29fc", null ],
@@ -83,15 +110,21 @@ var group__time =
       [ "~FramePacer", "classFramePacer.html#a4d71820956e2957ff50ae0c0b8b163aa", null ],
       [ "accumulatedError", "classFramePacer.html#a2ad35980b60de0b30719cc08dc16b95f", null ],
       [ "advance", "classFramePacer.html#ac9958292caf31486e130656f364fe6f1", null ],
-      [ "clock", "classFramePacer.html#aa32a62465d3d9df91662e9590b81b74b", null ],
+      [ "clock", "classFramePacer.html#a205a7d33ce1fe9d644991f43c7474e36", null ],
+      [ "droppedFrames", "classFramePacer.html#a5c957a0db3439d6930098c57735db474", null ],
       [ "frameCount", "classFramePacer.html#ab158c50183adc0e403668371532f8293", null ],
       [ "frameRate", "classFramePacer.html#a4b6d50e8f63fb67a215e263389a41215", null ],
       [ "missedFrames", "classFramePacer.html#a6e0450ef17619ebb6cc25ea6f9e94672", null ],
       [ "name", "classFramePacer.html#a7be9babce3bd509199dc1aad47fb3db7", null ],
+      [ "noteDropped", "classFramePacer.html#a1f0ce43a95cddf9e090a4b949fb5724d", null ],
+      [ "noteRendered", "classFramePacer.html#a01c8f1981d790d185e7adf8ff4d8c55a", null ],
+      [ "noteRepeated", "classFramePacer.html#a76a1993b79906c4b4f0357329c58565e", null ],
       [ "pace", "classFramePacer.html#a421cf42767c2e195f4243964d0b94f1f", null ],
+      [ "renderedFrames", "classFramePacer.html#aecf74eb57fa3b6c1654a4735b59d4065", null ],
+      [ "repeatedFrames", "classFramePacer.html#ac43c2f5a84e584817fa831a1509909f5", null ],
       [ "reset", "classFramePacer.html#a3188f9f7e86c24208e0e1abc1b458dd1", null ],
       [ "reset", "classFramePacer.html#a091f5c0265ec7b0c14f66685169bdce4", null ],
-      [ "setClock", "classFramePacer.html#afbb67fa82fac5f9424aa39dc14dbb32c", null ],
+      [ "setClock", "classFramePacer.html#ace64c3e09c9db9e3bb785a89bfe863c5", null ],
       [ "setFrameRate", "classFramePacer.html#a4d95ef03b4a6b9425221b94223b7c86d", null ],
       [ "setName", "classFramePacer.html#a11232e3e0bb8223fc332353dfe78066d", null ]
     ] ],
@@ -131,6 +164,49 @@ var group__time =
       [ "toString", "classFrameRate.html#aa6720aed23667e784d2f6ed26b397b12", null ],
       [ "wellKnownRate", "classFrameRate.html#a93b0aff90172523f99ac5dd2a357fbc3", null ]
     ] ],
+    [ "FrameSync", "classFrameSync.html", [
+      [ "PullResult", "structFrameSync_1_1PullResult.html", [
+        [ "error", "structFrameSync_1_1PullResult.html#ac3c92d1fa6c695bf05effda92ec0ad0d", null ],
+        [ "frame", "structFrameSync_1_1PullResult.html#a5fe50041d5ea53cff896ee22ba350777", null ],
+        [ "frameIndex", "structFrameSync_1_1PullResult.html#ac36e9cc3fd6e2813f1ecfaa5de569b93", null ],
+        [ "framesDropped", "structFrameSync_1_1PullResult.html#acd8a237a8bca7970942f220795930086", null ],
+        [ "framesRepeated", "structFrameSync_1_1PullResult.html#a8c9286ab155f08814a96a6191d8f7058", null ]
+      ] ],
+      [ "InputOverflowPolicy", "classFrameSync.html#ad80fade46930e81f41b11349ebe6c708", [
+        [ "DropOldest", "classFrameSync.html#ad80fade46930e81f41b11349ebe6c708ae273dab723fc345684a50d971853ccbd", null ],
+        [ "Block", "classFrameSync.html#ad80fade46930e81f41b11349ebe6c708ae1e4c8c9ccd9fc39c391da4bcd093fb2", null ]
+      ] ],
+      [ "FrameSync", "classFrameSync.html#acb01ca1e0357ea8fb69d949b90765db1", null ],
+      [ "FrameSync", "classFrameSync.html#a3ee57e69ac9b9f96ec063d77b112759a", null ],
+      [ "~FrameSync", "classFrameSync.html#a83dc511175e05d93a38b767fd485f0aa", null ],
+      [ "accumulatedError", "classFrameSync.html#a5eabad4f31d24db6bca95476ad410950", null ],
+      [ "clock", "classFrameSync.html#a1b840f254f328f45cc3aa83b1d6a171e", null ],
+      [ "currentResampleRatio", "classFrameSync.html#a22a93b7108e977f39b1a0bea1f369e2a", null ],
+      [ "currentSourceAudioRate", "classFrameSync.html#ac13f40a8f2f2bdc41e9b8d49fb98350f", null ],
+      [ "currentSourceVideoRate", "classFrameSync.html#abccf0e59afa2a0297239765628bba79e", null ],
+      [ "framesDropped", "classFrameSync.html#a3c3035418d825b7cb048b91170991eeb", null ],
+      [ "framesIn", "classFrameSync.html#ade92df13702c51f89c58df3aae72ee18", null ],
+      [ "framesOut", "classFrameSync.html#ae9f885631bc8520cc8f413ce446f13e7", null ],
+      [ "framesRepeated", "classFrameSync.html#aa8b9d125e197434172481e577fcb075e", null ],
+      [ "inputOverflowPolicy", "classFrameSync.html#a6e6844f789e2687521001b379a2a0e3b", null ],
+      [ "inputQueueCapacity", "classFrameSync.html#a11d7a108e8a694cddb279032f348cdf0", null ],
+      [ "interrupt", "classFrameSync.html#a7930fa43cb6c66b3f8a428cfd19587e5", null ],
+      [ "name", "classFrameSync.html#a86e8ddaa8171345d29e73d398e18771a", null ],
+      [ "overflowDrops", "classFrameSync.html#ac1c804eb856c8007daeeffb62db1b41b", null ],
+      [ "pullFrame", "classFrameSync.html#a77c525c0e90cf3c1ee577e44f011e5f5", null ],
+      [ "pushEndOfStream", "classFrameSync.html#a34a3a58187272443c6bd5c8037499b51", null ],
+      [ "pushFrame", "classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e", null ],
+      [ "reset", "classFrameSync.html#a2b723b9d9129dc45edd29712d2d5b4a6", null ],
+      [ "reset", "classFrameSync.html#a174877c719ed1250800a2c18ee0f2cf8", null ],
+      [ "setClock", "classFrameSync.html#a4bc72ade7a5259b1ce307121f2df8244", null ],
+      [ "setInputOverflowPolicy", "classFrameSync.html#a9fc8b2ea17a38d48a7d0ef515e790a9a", null ],
+      [ "setInputQueueCapacity", "classFrameSync.html#aa6a73eab50d8589e13b34a1f0e71aea4", null ],
+      [ "setName", "classFrameSync.html#a7800fac9bdc1e9b16f173f03bbae40d8", null ],
+      [ "setTargetAudioDesc", "classFrameSync.html#a4161e881634a2d2918dcb018dbb68822", null ],
+      [ "setTargetFrameRate", "classFrameSync.html#ac8a9b724896507465da94502f630f34a", null ],
+      [ "targetAudioDesc", "classFrameSync.html#a9a7cd745818b68f872c4d05a29095a06", null ],
+      [ "targetFrameRate", "classFrameSync.html#a24f1ce7eedb86f5a2e7d29a0f4cfa618", null ]
+    ] ],
     [ "Histogram", "classHistogram.html", [
       [ "Histogram", "classHistogram.html#af681f293852ac145f867ecfcce3062a5", null ],
       [ "addSample", "classHistogram.html#ac8e792b0c7643a07be4745ef0e870976", null ],
@@ -146,6 +222,37 @@ var group__time =
       [ "setUnit", "classHistogram.html#a7b999e433cd9b791269548776195291d", null ],
       [ "toString", "classHistogram.html#a38d2d3ae407505b14f2db3a346859327", null ],
       [ "unit", "classHistogram.html#aea563ae60c0c01b48f7dddd6ca2e87f3", null ]
+    ] ],
+    [ "MediaTimeStamp", "classMediaTimeStamp.html", [
+      [ "MediaTimeStamp", "classMediaTimeStamp.html#aedd17e92d35264fe758767c6b684a560", null ],
+      [ "MediaTimeStamp", "classMediaTimeStamp.html#a54e12fedf197722b40b5a7f07e058792", null ],
+      [ "domain", "classMediaTimeStamp.html#a2bee353a508d9d2235aaf8246597cfb1", null ],
+      [ "isValid", "classMediaTimeStamp.html#a33e9962963d5af84b818f951b4dd6c08", null ],
+      [ "offset", "classMediaTimeStamp.html#aebbd807b709fc608b3ba6c90eda53053", null ],
+      [ "operator!=", "classMediaTimeStamp.html#abd09750bac78d1ec31e1c4768b425471", null ],
+      [ "operator==", "classMediaTimeStamp.html#a23cdea86d7f48e2c27cfb726ad9b77f2", null ],
+      [ "setDomain", "classMediaTimeStamp.html#a43c18de508264ad86df37b866c439a65", null ],
+      [ "setOffset", "classMediaTimeStamp.html#a6efbe738604bdb0fa44da13f63f3dfee", null ],
+      [ "setTimeStamp", "classMediaTimeStamp.html#a9e3536f671e3f69d2e0ff884869ba047", null ],
+      [ "timeStamp", "classMediaTimeStamp.html#aedd16b6b3e436311557492296c86f8ff", null ],
+      [ "toString", "classMediaTimeStamp.html#ad29e7ccf040f63de808ce765fbd010c9", null ]
+    ] ],
+    [ "SyntheticClock", "classSyntheticClock.html", [
+      [ "SyntheticClock", "classSyntheticClock.html#a55163da79ab5f0e757ccb2748b70ed38", null ],
+      [ "SyntheticClock", "classSyntheticClock.html#a8c91d92b364f275f1bfe09c13d1b48f0", null ],
+      [ "advance", "classSyntheticClock.html#afbb24570c4807c7b5514939acb11c174", null ],
+      [ "currentFrame", "classSyntheticClock.html#a44d68359d40430a33612875464295379", null ],
+      [ "domain", "classSyntheticClock.html#afcbc7749c42f3984b8f304dd1762ea83", null ],
+      [ "frameRate", "classSyntheticClock.html#a35cefa6652cb657f2e6420396f10107f", null ],
+      [ "jitter", "classSyntheticClock.html#a5e81eec9c0190fe1245f3323e5e0cf06", null ],
+      [ "nowNs", "classSyntheticClock.html#ac08710f223740de86ed7003b89c77779", null ],
+      [ "rateRatio", "classSyntheticClock.html#ab443f45b7b931691ce95ae9d5d5be032", null ],
+      [ "reset", "classSyntheticClock.html#a049095aab3c1d0c09acfba1815d31370", null ],
+      [ "resolutionNs", "classSyntheticClock.html#aafa1481c3f32e84f2cd234b296aeb697", null ],
+      [ "setCurrentFrame", "classSyntheticClock.html#a120247c87195062e22070142ea279e15", null ],
+      [ "setDomain", "classSyntheticClock.html#a7a2bce7d2d686223d2837446f591d5c2", null ],
+      [ "setFrameRate", "classSyntheticClock.html#a2f203cffee58fa49b8027e3304735499", null ],
+      [ "sleepUntilNs", "classSyntheticClock.html#a2ddf1af29f48e510b36d330e2e22d73c", null ]
     ] ],
     [ "Timecode", "classTimecode.html", [
       [ "Mode", "classTimecode_1_1Mode.html", [

@@ -133,6 +133,9 @@ Public Types</h2></td></tr>
 &#160;&#160;<a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da9ea6cad4db5d41e0d2b4662d696b5eaf">ImageDataDecodeFailure</a>
 , <a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daaace8db4dbdeeafea92b6047beaaf7f6">LtcDecodeFailure</a>
 , <a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260">SyncOffsetChange</a>
+, <a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f">MissingVideoTimestamp</a>
+, <br />
+&#160;&#160;<a class="el" href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627">MissingAudioTimestamp</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a547c7128a8fb0e78643127d6d07d801d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Categorical type of the discontinuity.  <a href="structInspectorDiscontinuity.html#a547c7128a8fb0e78643127d6d07d801d">More...</a><br /></td></tr>
@@ -189,6 +192,10 @@ Public Attributes</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260" name="a547c7128a8fb0e78643127d6d07d801daf6c8f3df72441220403d04f3f581b260"></a>SyncOffsetChange&#160;</td><td class="fielddoc"><p>The picture-vs-LTC sync offset moved by more than the configured tolerance from the previous frame. <a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> and video are locked in pro workflows, so any change from a previously-stable offset is a real fault rather than a measurement artifact. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f" name="a547c7128a8fb0e78643127d6d07d801da6d434743fc94ff3a3f884740ac83f03f"></a>MissingVideoTimestamp&#160;</td><td class="fielddoc"><p>Video essence arrived without a valid <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled (<a class="el" href="classMediaIO.html" title="Controller for media I/O backends.">MediaIO</a> guarantees one on every essence). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627" name="a547c7128a8fb0e78643127d6d07d801da2230a10ca528a1515c912f5a3d499627"></a>MissingAudioTimestamp&#160;</td><td class="fielddoc"><p><a class="el" href="classAudio.html" title="Object to hold some number of audio samples.">Audio</a> essence arrived without a valid <a class="el" href="classMediaTimeStamp.html" title="Self-describing timestamp that pairs a time value with its clock domain and offset.">MediaTimeStamp</a> even though the Timestamp test is enabled. </p>
+</td></tr>
 </table>
 
 </div>
@@ -203,7 +210,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structInspectorDiscontinuity.html">InspectorDiscontinuity</a></li>
-    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
   </ul>
 </div>
 </body>

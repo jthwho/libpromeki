@@ -12,7 +12,7 @@ var searchData=
   ['queue_3c_20sharedptr_20_3e_9',['Queue&lt; SharedPtr &gt;',['../classQueue.html',1,'']]],
   ['queue_3c_20sharedptr_3c_20frame_20_3e_20_3e_10',['Queue&lt; SharedPtr&lt; Frame &gt; &gt;',['../classQueue.html',1,'']]],
   ['queuecapacity_11',['QueueCapacity',['../classMediaIOStats.html#a5b075cf96d76502ff35de4e9f758d9f5',1,'MediaIOStats']]],
-  ['queuedbytes_12',['queuedBytes',['../classSDLAudioOutput.html#ac1c96a3a935b3a4afd94321478cfc59b',1,'SDLAudioOutput']]],
+  ['queuedbytes_12',['queuedBytes',['../classSDLAudioOutput.html#a6f1235b456eb389a7eeb85abf495d9ff',1,'SDLAudioOutput']]],
   ['queuedepth_13',['QueueDepth',['../classMediaIOStats.html#a55a52f4428b37120017d7aafa3bec8a7',1,'MediaIOStats']]],
   ['quick_20reference_14',['Quick Reference',['../debugging.html#debug_summary',1,'']]],
   ['quick_20start_15',['quick start',['../inspector.html#inspector_quickstart',1,'Quick start'],['../color_science.html#cs_usage',1,'Quick Start']]],

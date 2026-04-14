@@ -1,0 +1,38 @@
+var classFrameSync =
+[
+    [ "PullResult", "structFrameSync_1_1PullResult.html", "structFrameSync_1_1PullResult" ],
+    [ "InputOverflowPolicy", "classFrameSync.html#ad80fade46930e81f41b11349ebe6c708", [
+      [ "DropOldest", "classFrameSync.html#ad80fade46930e81f41b11349ebe6c708ae273dab723fc345684a50d971853ccbd", null ],
+      [ "Block", "classFrameSync.html#ad80fade46930e81f41b11349ebe6c708ae1e4c8c9ccd9fc39c391da4bcd093fb2", null ]
+    ] ],
+    [ "FrameSync", "classFrameSync.html#acb01ca1e0357ea8fb69d949b90765db1", null ],
+    [ "FrameSync", "classFrameSync.html#a3ee57e69ac9b9f96ec063d77b112759a", null ],
+    [ "~FrameSync", "classFrameSync.html#a83dc511175e05d93a38b767fd485f0aa", null ],
+    [ "accumulatedError", "classFrameSync.html#a5eabad4f31d24db6bca95476ad410950", null ],
+    [ "clock", "classFrameSync.html#a1b840f254f328f45cc3aa83b1d6a171e", null ],
+    [ "currentResampleRatio", "classFrameSync.html#a22a93b7108e977f39b1a0bea1f369e2a", null ],
+    [ "currentSourceAudioRate", "classFrameSync.html#ac13f40a8f2f2bdc41e9b8d49fb98350f", null ],
+    [ "currentSourceVideoRate", "classFrameSync.html#abccf0e59afa2a0297239765628bba79e", null ],
+    [ "framesDropped", "classFrameSync.html#a3c3035418d825b7cb048b91170991eeb", null ],
+    [ "framesIn", "classFrameSync.html#ade92df13702c51f89c58df3aae72ee18", null ],
+    [ "framesOut", "classFrameSync.html#ae9f885631bc8520cc8f413ce446f13e7", null ],
+    [ "framesRepeated", "classFrameSync.html#aa8b9d125e197434172481e577fcb075e", null ],
+    [ "inputOverflowPolicy", "classFrameSync.html#a6e6844f789e2687521001b379a2a0e3b", null ],
+    [ "inputQueueCapacity", "classFrameSync.html#a11d7a108e8a694cddb279032f348cdf0", null ],
+    [ "interrupt", "classFrameSync.html#a7930fa43cb6c66b3f8a428cfd19587e5", null ],
+    [ "name", "classFrameSync.html#a86e8ddaa8171345d29e73d398e18771a", null ],
+    [ "overflowDrops", "classFrameSync.html#ac1c804eb856c8007daeeffb62db1b41b", null ],
+    [ "pullFrame", "classFrameSync.html#a77c525c0e90cf3c1ee577e44f011e5f5", null ],
+    [ "pushEndOfStream", "classFrameSync.html#a34a3a58187272443c6bd5c8037499b51", null ],
+    [ "pushFrame", "classFrameSync.html#ad6cc3588bf2a967c1706564a05c4a58e", null ],
+    [ "reset", "classFrameSync.html#a2b723b9d9129dc45edd29712d2d5b4a6", null ],
+    [ "reset", "classFrameSync.html#a174877c719ed1250800a2c18ee0f2cf8", null ],
+    [ "setClock", "classFrameSync.html#a4bc72ade7a5259b1ce307121f2df8244", null ],
+    [ "setInputOverflowPolicy", "classFrameSync.html#a9fc8b2ea17a38d48a7d0ef515e790a9a", null ],
+    [ "setInputQueueCapacity", "classFrameSync.html#aa6a73eab50d8589e13b34a1f0e71aea4", null ],
+    [ "setName", "classFrameSync.html#a7800fac9bdc1e9b16f173f03bbae40d8", null ],
+    [ "setTargetAudioDesc", "classFrameSync.html#a4161e881634a2d2918dcb018dbb68822", null ],
+    [ "setTargetFrameRate", "classFrameSync.html#ac8a9b724896507465da94502f630f34a", null ],
+    [ "targetAudioDesc", "classFrameSync.html#a9a7cd745818b68f872c4d05a29095a06", null ],
+    [ "targetFrameRate", "classFrameSync.html#a24f1ce7eedb86f5a2e7d29a0f4cfa618", null ]
+];

@@ -16,6 +16,8 @@ var classAudio =
     [ "isNative", "classAudio.html#a06acc626e1be46c11183951b474af0cf", null ],
     [ "isValid", "classAudio.html#af39f380ec7303f814f36d7f97cc48701", null ],
     [ "maxSamples", "classAudio.html#ac108341b8923cec805d8a5bd926ed657", null ],
+    [ "metadata", "classAudio.html#a4d444aebd87bc49e59eac89ef0441d16", null ],
+    [ "metadata", "classAudio.html#a08645d1308d88192f68851fbd1d44d04", null ],
     [ "resize", "classAudio.html#abc2ac90f3453dd40c349fecfd37739fb", null ],
     [ "samples", "classAudio.html#a0ec5c30a7e45cc01dc9eeffe033cd2e3", null ],
     [ "zero", "classAudio.html#a07a3d3807c2d71f5ef1fa7be0c97d219", null ]

@@ -291,21 +291,12 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:af739d099e46b957ddcfc6a4835c3933f" id="r_af739d099e46b957ddcfc6a4835c3933f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#af739d099e46b957ddcfc6a4835c3933f">InspectorDropFrames</a></td></tr>
 <tr class="memdesc:af739d099e46b957ddcfc6a4835c3933f"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — drop incoming frames after running checks. When true, the inspector behaves as a pure null sink for upstream pacing purposes; the per-frame events and accumulator stats are still produced as long as the corresponding decoders are enabled.  <br /></td></tr>
 <tr class="separator:af739d099e46b957ddcfc6a4835c3933f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9d90ebbff5ede647f8f02d1fc9248e7d" id="r_a9d90ebbff5ede647f8f02d1fc9248e7d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a></td></tr>
-<tr class="memdesc:a9d90ebbff5ede647f8f02d1fc9248e7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — decode the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> bands from the picture. Required for the picture-side timecode and frame ID checks; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> or <a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">InspectorCheckContinuity</a> is set.  <br /></td></tr>
-<tr class="separator:a9d90ebbff5ede647f8f02d1fc9248e7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeca6e42ab742cf541066deee93871aa9" id="r_aeca6e42ab742cf541066deee93871aa9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">InspectorDecodeLtc</a></td></tr>
-<tr class="memdesc:aeca6e42ab742cf541066deee93871aa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — decode LTC from the audio track. Required for the LTC vs picture-TC drift check; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is set.  <br /></td></tr>
-<tr class="separator:aeca6e42ab742cf541066deee93871aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4cc60ab320b26013dc5ae1a561d59dd3" id="r_a4cc60ab320b26013dc5ae1a561d59dd3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a></td></tr>
-<tr class="memdesc:a4cc60ab320b26013dc5ae1a561d59dd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — compare the picture timecode against the audio LTC and report the per-frame offset, in audio samples, on every frame. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a> and <a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">InspectorDecodeLtc</a>.  <br /></td></tr>
-<tr class="separator:a4cc60ab320b26013dc5ae1a561d59dd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bde3895b9c20caaab68563fb2b33cac" id="r_a2bde3895b9c20caaab68563fb2b33cac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a2bde3895b9c20caaab68563fb2b33cac">InspectorTests</a></td></tr>
+<tr class="memdesc:a2bde3895b9c20caaab68563fb2b33cac"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classEnumList.html" title="Ordered, duplicate-preserving list of Enum values sharing one type.">EnumList</a> <a class="el" href="classInspectorTest.html">InspectorTest</a> — list of inspector tests to run.  <br /></td></tr>
+<tr class="separator:a2bde3895b9c20caaab68563fb2b33cac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43de6cf6fa985ebd28d77ad0daa484bf" id="r_a43de6cf6fa985ebd28d77ad0daa484bf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a43de6cf6fa985ebd28d77ad0daa484bf">InspectorSyncOffsetToleranceSamples</a></td></tr>
-<tr class="memdesc:a43de6cf6fa985ebd28d77ad0daa484bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — maximum allowed sample-to-sample change in the picture-vs-LTC sync offset before the inspector flags a discontinuity. Default 0: any change is reported. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> higher (e.g. 1, 2, ...) when the upstream encode/decode pair has a known small jitter that should not generate noise. Only meaningful when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is enabled.  <br /></td></tr>
+<tr class="memdesc:a43de6cf6fa985ebd28d77ad0daa484bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — maximum allowed sample-to-sample change in the picture-vs-LTC sync offset before the inspector flags a discontinuity. Default 0: any change is reported. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> higher (e.g. 1, 2, ...) when the upstream encode/decode pair has a known small jitter that should not generate noise. Only meaningful when the <code>TcSync</code> test is enabled.  <br /></td></tr>
 <tr class="separator:a43de6cf6fa985ebd28d77ad0daa484bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8eb2a3ea1d7147fcf4f2249b8ec1c504" id="r_a8eb2a3ea1d7147fcf4f2249b8ec1c504"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">InspectorCheckContinuity</a></td></tr>
-<tr class="memdesc:a8eb2a3ea1d7147fcf4f2249b8ec1c504"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — track frame number, timecode, and stream ID continuity from one frame to the next. Any unexpected jump (skipped frame, repeated frame, stream-ID change, TC discontinuity) becomes a discontinuity record on the per-frame event with both the previous and current values. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a>.  <br /></td></tr>
-<tr class="separator:a8eb2a3ea1d7147fcf4f2249b8ec1c504"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ebc4c19e6667f94572f2dbe0f93eb89" id="r_a7ebc4c19e6667f94572f2dbe0f93eb89"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a7ebc4c19e6667f94572f2dbe0f93eb89">InspectorImageDataRepeatLines</a></td></tr>
 <tr class="memdesc:a7ebc4c19e6667f94572f2dbe0f93eb89"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — scan lines per <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> band. Must match the encoder's <a class="el" href="classMediaConfig.html#a669c0101bff62c9ff245b29b0076fa38">TpgDataEncoderRepeatLines</a> so the inspector reads at the right band offsets. Default 16.  <br /></td></tr>
 <tr class="separator:a7ebc4c19e6667f94572f2dbe0f93eb89"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -315,6 +306,9 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a5b98f1e6982e7e355314616c358c4eb6" id="r_a5b98f1e6982e7e355314616c358c4eb6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a5b98f1e6982e7e355314616c358c4eb6">InspectorLogIntervalSec</a></td></tr>
 <tr class="memdesc:a5b98f1e6982e7e355314616c358c4eb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — periodic-summary log interval in seconds (wall time, not media time). Default <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">1.0</a>. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to 0 to disable periodic logging entirely; per-frame events are still produced.  <br /></td></tr>
 <tr class="separator:a5b98f1e6982e7e355314616c358c4eb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9683b413ed90db55bebefe0bb1df57b1" id="r_a9683b413ed90db55bebefe0bb1df57b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a9683b413ed90db55bebefe0bb1df57b1">InspectorStatsFile</a></td></tr>
+<tr class="memdesc:a9683b413ed90db55bebefe0bb1df57b1"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — output file for the <code>CaptureStats</code> inspector test.  <br /></td></tr>
+<tr class="separator:a9683b413ed90db55bebefe0bb1df57b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae999aa7371378376e309d897f488710e" id="r_ae999aa7371378376e309d897f488710e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#ae999aa7371378376e309d897f488710e">OutputPixelDesc</a></td></tr>
 <tr class="memdesc:ae999aa7371378376e309d897f488710e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classPixelDesc.html" title="Complete pixel description combining format, color model, and semantics.">PixelDesc</a> — target pixel description for the converter stage (<code>Invalid</code> = video pass-through).  <br /></td></tr>
 <tr class="separator:ae999aa7371378376e309d897f488710e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -381,6 +375,9 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:a7f965680e86c2cc5ff3c40a71ba0242e" id="r_a7f965680e86c2cc5ff3c40a71ba0242e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a7f965680e86c2cc5ff3c40a71ba0242e">SdlWindowTitle</a></td></tr>
 <tr class="memdesc:a7f965680e86c2cc5ff3c40a71ba0242e"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — SDL window title bar text.  <br /></td></tr>
 <tr class="separator:a7f965680e86c2cc5ff3c40a71ba0242e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a78419ed4db8acc8e3688ba808a2503ff" id="r_a78419ed4db8acc8e3688ba808a2503ff"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a78419ed4db8acc8e3688ba808a2503ff">SdlPlayerImpl</a></td></tr>
+<tr class="memdesc:a78419ed4db8acc8e3688ba808a2503ff"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — which SDL player implementation to use.  <br /></td></tr>
+<tr class="separator:a78419ed4db8acc8e3688ba808a2503ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac94fd9276ecf247c674f6aaf50542238" id="r_ac94fd9276ecf247c674f6aaf50542238"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#ac94fd9276ecf247c674f6aaf50542238">RtpLocalAddress</a></td></tr>
 <tr class="memdesc:ac94fd9276ecf247c674f6aaf50542238"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classSocketAddress.html" title="Network address with port number.">SocketAddress</a> — local bind address for all RTP streams in this sink.  <br /></td></tr>
 <tr class="separator:ac94fd9276ecf247c674f6aaf50542238"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -480,15 +477,6 @@ Static Public Attributes</h2></td></tr>
 <tr class="memitem:aa43aae8cebe2da515cac24cf256405d7" id="r_aa43aae8cebe2da515cac24cf256405d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#aa43aae8cebe2da515cac24cf256405d7">V4l2AudioDevice</a></td></tr>
 <tr class="memdesc:aa43aae8cebe2da515cac24cf256405d7"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — ALSA capture device name for paired audio. "auto" (default) auto-detects a paired USB audio device. "none" or empty disables audio capture. Any other value is used as-is (e.g. "hw:1,0", "default").  <br /></td></tr>
 <tr class="separator:aa43aae8cebe2da515cac24cf256405d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c4a552d3aba845b9120242672128e25" id="r_a5c4a552d3aba845b9120242672128e25"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a5c4a552d3aba845b9120242672128e25">V4l2AudioDriftCorrection</a></td></tr>
-<tr class="memdesc:a5c4a552d3aba845b9120242672128e25"><td class="mdescLeft">&#160;</td><td class="mdescRight">bool — enable audio clock-drift correction. When true, the audio ring buffer dynamically adjusts its resampling ratio to keep the fill level stable, compensating for clock drift between the ALSA capture clock and the V4L2 video frame clock. Default: true.  <br /></td></tr>
-<tr class="separator:a5c4a552d3aba845b9120242672128e25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23fb1f11c9d571b5bb4532a78a34be23" id="r_a23fb1f11c9d571b5bb4532a78a34be23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a23fb1f11c9d571b5bb4532a78a34be23">V4l2AudioDriftGain</a></td></tr>
-<tr class="memdesc:a23fb1f11c9d571b5bb4532a78a34be23"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — proportional gain for drift correction. Controls how aggressively the resampler compensates for clock drift. Small values (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>) give smooth, inaudible corrections; larger values track drift faster but risk audible pitch shifts. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>.  <br /></td></tr>
-<tr class="separator:a23fb1f11c9d571b5bb4532a78a34be23"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a58fd79e359349d6be1cf8336393d95ad" id="r_a58fd79e359349d6be1cf8336393d95ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a58fd79e359349d6be1cf8336393d95ad">V4l2AudioDriftTarget</a></td></tr>
-<tr class="memdesc:a58fd79e359349d6be1cf8336393d95ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">double — drift correction target fill level in seconds. The ring buffer aims to keep this much audio buffered. Lower values reduce capture latency; higher values absorb more jitter. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.1</a> (100 ms).  <br /></td></tr>
-<tr class="separator:a58fd79e359349d6be1cf8336393d95ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d4b23fec8304578bfe1cedadb3e6787" id="r_a6d4b23fec8304578bfe1cedadb3e6787"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">static</a> <a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMediaConfig.html#a6d4b23fec8304578bfe1cedadb3e6787">V4l2Brightness</a></td></tr>
 <tr class="memdesc:a6d4b23fec8304578bfe1cedadb3e6787"><td class="mdescLeft">&#160;</td><td class="mdescRight">int — Brightness (V4L2_CID_BRIGHTNESS). -1 = device default.  <br /></td></tr>
 <tr class="separator:a6d4b23fec8304578bfe1cedadb3e6787"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -545,19 +533,19 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase" id="r_ada585323d1db22e24541527411cb4ce4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__util.html#ga3e19f7ded49aac87704161e5d5b458db">SpecValidation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#ada585323d1db22e24541527411cb4ce4">validation</a> () <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the current validation mode.  <br /></td></tr>
 <tr class="separator:ada585323d1db22e24541527411cb4ce4 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase" id="r_a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase" id="r_a5170ad7c04260f90b69bfa2aff2fdc2a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a5170ad7c04260f90b69bfa2aff2fdc2a">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID.  <br /></td></tr>
 <tr class="separator:a5170ad7c04260f90b69bfa2aff2fdc2a inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase" id="r_a8451aca5a2a870fd1df8dc3de13055bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase" id="r_a8451aca5a2a870fd1df8dc3de13055bc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a8451aca5a2a870fd1df8dc3de13055bc">set</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value for the given ID (move overload).  <br /></td></tr>
 <tr class="separator:a8451aca5a2a870fd1df8dc3de13055bc inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase" id="r_a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase" id="r_a54e9118a807e4dff06a6f9f12c2f1aaa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value only if no entry exists for <code>id</code>.  <br /></td></tr>
 <tr class="separator:a54e9118a807e4dff06a6f9f12c2f1aaa inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase" id="r_a18c3f904128a5335145787436352f8dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a18c3f904128a5335145787436352f8dc">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
+<tr class="memitem:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase" id="r_a18c3f904128a5335145787436352f8dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">bool</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a18c3f904128a5335145787436352f8dc">setIfMissing</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;&amp;<a class="el" href="result_8h.html#a3cb138b5e2739be6ec1340a22bbac91f">value</a>)</td></tr>
 <tr class="memdesc:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move overload of <a class="el" href="classVariantDatabase.html#a54e9118a807e4dff06a6f9f12c2f1aaa">setIfMissing</a>.  <br /></td></tr>
 <tr class="separator:a18c3f904128a5335145787436352f8dc inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase" id="r_adee72b5568d54f44185e3598b2ed7bf5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#adee72b5568d54f44185e3598b2ed7bf5">get</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a> &amp;defaultValue=<a class="el" href="variant_8h.html#a92c7d41e33ddf7c6d235bb717a4a88bf">Variant</a>()) <a class="el" href="classList.html">const</a></td></tr>
+<tr class="memitem:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase" id="r_adee72b5568d54f44185e3598b2ed7bf5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#adee72b5568d54f44185e3598b2ed7bf5">get</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a> &amp;defaultValue=<a class="el" href="variant_8h.html#aff586bc7a7e639d2d12af743ee54ebb1">Variant</a>()) <a class="el" href="classList.html">const</a></td></tr>
 <tr class="memdesc:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the value for the given ID.  <br /></td></tr>
 <tr class="separator:adee72b5568d54f44185e3598b2ed7bf5 inherit pub_methods_classVariantDatabase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a595109f7f0d3d6e20590bb6766cff058 inherit pub_methods_classVariantDatabase" id="r_a595109f7f0d3d6e20590bb6766cff058"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classList.html">T</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVariantDatabase.html#a595109f7f0d3d6e20590bb6766cff058">getAs</a> (<a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> id, <a class="el" href="classList.html">const</a> <a class="el" href="classList.html">T</a> &amp;defaultValue=<a class="el" href="classList.html">T</a>{}, <a class="el" href="classError.html">Error</a> *<a class="el" href="classList.html">err</a>=<a class="el" href="classList.html">nullptr</a>) <a class="el" href="classList.html">const</a></td></tr>
@@ -656,8 +644,8 @@ Additional Inherited Members</h2></td></tr>
 <div class="ttc" id="aclassList_html"><div class="ttname"><a href="classList.html">List</a></div><div class="ttdoc">Dynamic array container wrapping std::vector.</div><div class="ttdef"><b>Definition</b> list.h:40</div></div>
 <div class="ttc" id="aclassList_html_ab5f4f4c756727be7a037ea66660a2fec"><div class="ttname"><a href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">List::set</a></div><div class="ttdeci">bool set(size_t index, const T &amp;val)</div><div class="ttdoc">Sets an item in the list by index.</div><div class="ttdef"><b>Definition</b> list.h:541</div></div>
 <div class="ttc" id="aclassMediaConfig_html"><div class="ttname"><a href="classMediaConfig.html">MediaConfig</a></div><div class="ttdoc">Generic name/value configuration container for the media subsystem.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:65</div></div>
-<div class="ttc" id="aclassMediaConfig_html_a177b37d7554c3a401879d78b244a4440"><div class="ttname"><a href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a></div><div class="ttdeci">static const ID JpegSubsampling</div><div class="ttdoc">Enum ChromaSubsampling — JPEG chroma subsampling (codec default: 4:2:2, RFC 2435 compatible).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:569</div></div>
-<div class="ttc" id="aclassMediaConfig_html_a214ed57abc7e330e459128e8466f8951"><div class="ttname"><a href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a></div><div class="ttdeci">static const ID JpegQuality</div><div class="ttdoc">int — JPEG quality 1-100 (codec default: 85).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:561</div></div>
+<div class="ttc" id="aclassMediaConfig_html_a177b37d7554c3a401879d78b244a4440"><div class="ttname"><a href="classMediaConfig.html#a177b37d7554c3a401879d78b244a4440">MediaConfig::JpegSubsampling</a></div><div class="ttdeci">static const ID JpegSubsampling</div><div class="ttdoc">Enum ChromaSubsampling — JPEG chroma subsampling (codec default: 4:2:2, RFC 2435 compatible).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:582</div></div>
+<div class="ttc" id="aclassMediaConfig_html_a214ed57abc7e330e459128e8466f8951"><div class="ttname"><a href="classMediaConfig.html#a214ed57abc7e330e459128e8466f8951">MediaConfig::JpegQuality</a></div><div class="ttdeci">static const ID JpegQuality</div><div class="ttdoc">int — JPEG quality 1-100 (codec default: 85).</div><div class="ttdef"><b>Definition</b> mediaconfig.h:574</div></div>
 <div class="ttc" id="aclassMediaConfig_html_a35d1c7334bd471517976c367d29c6f0c"><div class="ttname"><a href="classMediaConfig.html#a35d1c7334bd471517976c367d29c6f0c">MediaConfig::Filename</a></div><div class="ttdeci">static const ID Filename</div><div class="ttdoc">String — path or URL to the media resource.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:77</div></div>
 <div class="ttc" id="aclassMediaConfig_html_a7d80868703d9c175b31ae92af1e7a60d"><div class="ttname"><a href="classMediaConfig.html#a7d80868703d9c175b31ae92af1e7a60d">MediaConfig::VideoSize</a></div><div class="ttdeci">static const ID VideoSize</div><div class="ttdoc">Size2Du32 — image dimensions.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:131</div></div>
 <div class="ttc" id="aclassString_html"><div class="ttname"><a href="classString.html">String</a></div><div class="ttdoc">Encoding-aware string class with copy-on-write semantics.</div><div class="ttdef"><b>Definition</b> string.h:57</div></div>
@@ -1763,119 +1751,6 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a8eb2a3ea1d7147fcf4f2249b8ec1c504" name="a8eb2a3ea1d7147fcf4f2249b8ec1c504"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8eb2a3ea1d7147fcf4f2249b8ec1c504">&#9670;&#160;</a></span>InspectorCheckContinuity</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorCheckContinuity</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorCheckContinuity&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
-<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector tracks TC / frame# / streamID continuity.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>bool — track frame number, timecode, and stream ID continuity from one frame to the next. Any unexpected jump (skipped frame, repeated frame, stream-ID change, TC discontinuity) becomes a discontinuity record on the per-frame event with both the previous and current values. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a>. </p>
-
-</div>
-</div>
-<a id="a4cc60ab320b26013dc5ae1a561d59dd3" name="a4cc60ab320b26013dc5ae1a561d59dd3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4cc60ab320b26013dc5ae1a561d59dd3">&#9670;&#160;</a></span>InspectorCheckTcSync</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorCheckTcSync</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorCheckTcSync&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
-<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector reports picture-TC vs LTC offset in samples.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>bool — compare the picture timecode against the audio LTC and report the per-frame offset, in audio samples, on every frame. Implies <a class="el" href="classMediaConfig.html#a9d90ebbff5ede647f8f02d1fc9248e7d">InspectorDecodeImageData</a> and <a class="el" href="classMediaConfig.html#aeca6e42ab742cf541066deee93871aa9">InspectorDecodeLtc</a>. </p>
-<p>In professional video workflows audio and video are locked to the same reference, so the offset is expected to be a fixed phase relationship and any <em>change</em> from one frame to the next is a real fault. Combined with <a class="el" href="classMediaConfig.html#a43de6cf6fa985ebd28d77ad0daa484bf">InspectorSyncOffsetToleranceSamples</a>, the inspector fires a discontinuity warning whenever the offset moves by more than the configured tolerance. </p>
-
-</div>
-</div>
-<a id="a9d90ebbff5ede647f8f02d1fc9248e7d" name="a9d90ebbff5ede647f8f02d1fc9248e7d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9d90ebbff5ede647f8f02d1fc9248e7d">&#9670;&#160;</a></span>InspectorDecodeImageData</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorDecodeImageData</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorDecodeImageData&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
-<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector decodes image-data bands from each frame.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>bool — decode the <a class="el" href="classImageDataEncoder.html">ImageDataEncoder</a> bands from the picture. Required for the picture-side timecode and frame ID checks; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> or <a class="el" href="classMediaConfig.html#a8eb2a3ea1d7147fcf4f2249b8ec1c504">InspectorCheckContinuity</a> is set. </p>
-
-</div>
-</div>
-<a id="aeca6e42ab742cf541066deee93871aa9" name="aeca6e42ab742cf541066deee93871aa9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeca6e42ab742cf541066deee93871aa9">&#9670;&#160;</a></span>InspectorDecodeLtc</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorDecodeLtc</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorDecodeLtc&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
-<div class="line">                                .setDefault(<span class="keyword">false</span>)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Inspector decodes LTC from each frame&#39;s audio.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>bool — decode LTC from the audio track. Required for the LTC vs picture-TC drift check; auto-enabled when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is set. </p>
-
-</div>
-</div>
 <a id="af739d099e46b957ddcfc6a4835c3933f" name="af739d099e46b957ddcfc6a4835c3933f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af739d099e46b957ddcfc6a4835c3933f">&#9670;&#160;</a></span>InspectorDropFrames</h2>
 
@@ -1991,6 +1866,38 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a9683b413ed90db55bebefe0bb1df57b1" name="a9683b413ed90db55bebefe0bb1df57b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9683b413ed90db55bebefe0bb1df57b1">&#9670;&#160;</a></span>InspectorStatsFile</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorStatsFile</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorStatsFile&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>())</div>
+<div class="line">                                .setDescription(</div>
+<div class="line">                                        <span class="stringliteral">&quot;Output file for Inspector CaptureStats test &quot;</span></div>
+<div class="line">                                        <span class="stringliteral">&quot;(TSV, one row per frame).  Empty = auto-name &quot;</span></div>
+<div class="line">                                        <span class="stringliteral">&quot;in Dir::temp().&quot;</span>))</div>
+</div><!-- fragment -->
+<p><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — output file for the <code>CaptureStats</code> inspector test. </p>
+<p>One tab-separated row per frame is appended to the named file while the <code>CaptureStats</code> test is enabled via <a class="el" href="classMediaConfig.html#a2bde3895b9c20caaab68563fb2b33cac">InspectorTests</a>. If the value is empty a unique filename is generated inside <code><a class="el" href="classDir.html#aa86a5841e3682c108faecc277d40b4d5" title="Returns a Dir for the system temp directory.">Dir::temp()</a></code> (form: <code>promeki_inspector_stats_&lt;pid&gt;<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">_&lt;epoch_ns&gt;.tsv</a></code>). The resolved path is logged at <code>Info</code> level when the file is opened. </p>
+
+</div>
+</div>
 <a id="a43de6cf6fa985ebd28d77ad0daa484bf" name="a43de6cf6fa985ebd28d77ad0daa484bf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a43de6cf6fa985ebd28d77ad0daa484bf">&#9670;&#160;</a></span>InspectorSyncOffsetToleranceSamples</h2>
 
@@ -2019,7 +1926,60 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">                                        <span class="stringliteral">&quot;picture-vs-LTC sync offset before flagging &quot;</span></div>
 <div class="line">                                        <span class="stringliteral">&quot;a discontinuity (0 = any change).&quot;</span>))</div>
 </div><!-- fragment -->
-<p>int — maximum allowed sample-to-sample change in the picture-vs-LTC sync offset before the inspector flags a discontinuity. Default 0: any change is reported. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> higher (e.g. 1, 2, ...) when the upstream encode/decode pair has a known small jitter that should not generate noise. Only meaningful when <a class="el" href="classMediaConfig.html#a4cc60ab320b26013dc5ae1a561d59dd3">InspectorCheckTcSync</a> is enabled. </p>
+<p>int — maximum allowed sample-to-sample change in the picture-vs-LTC sync offset before the inspector flags a discontinuity. Default 0: any change is reported. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> higher (e.g. 1, 2, ...) when the upstream encode/decode pair has a known small jitter that should not generate noise. Only meaningful when the <code>TcSync</code> test is enabled. </p>
+
+</div>
+</div>
+<a id="a2bde3895b9c20caaab68563fb2b33cac" name="a2bde3895b9c20caaab68563fb2b33cac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2bde3895b9c20caaab68563fb2b33cac">&#9670;&#160;</a></span>InspectorTests</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::InspectorTests</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;InspectorTests&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeEnumList)</div>
+<div class="line">                                .setDefault([]{</div>
+<div class="line">                                        <a class="code hl_class" href="classEnumList.html">EnumList</a> l = EnumList::forType&lt;InspectorTest&gt;();</div>
+<div class="line">                                        l.<a class="code hl_function" href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">append</a>(InspectorTest::ImageData);</div>
+<div class="line">                                        l.<a class="code hl_function" href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">append</a>(InspectorTest::Ltc);</div>
+<div class="line">                                        l.<a class="code hl_function" href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">append</a>(InspectorTest::TcSync);</div>
+<div class="line">                                        l.<a class="code hl_function" href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">append</a>(InspectorTest::Continuity);</div>
+<div class="line">                                        l.<a class="code hl_function" href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">append</a>(InspectorTest::Timestamp);</div>
+<div class="line">                                        l.<a class="code hl_function" href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">append</a>(InspectorTest::AudioSamples);</div>
+<div class="line">                                        <span class="keywordflow">return</span> l;</div>
+<div class="line">                                }())</div>
+<div class="line">                                .<a class="code hl_function" href="classVariantSpec.html#a338d74b6e604bc66c377e7b92c987e89">setEnumType</a>(<a class="code hl_class" href="classEnum_1_1Type.html">InspectorTest::Type</a>)</div>
+<div class="line">                                .<a class="code hl_function" href="classVariantSpec.html#ac9bf4b3d2fff7903d3b68919b4ecfa45">setDescription</a>(</div>
+<div class="line">                                        <span class="stringliteral">&quot;List of inspector tests to run.&quot;</span>))</div>
+<div class="ttc" id="aclassEnumList_html"><div class="ttname"><a href="classEnumList.html">EnumList</a></div><div class="ttdoc">Ordered, duplicate-preserving list of Enum values sharing one type.</div><div class="ttdef"><b>Definition</b> enumlist.h:59</div></div>
+<div class="ttc" id="aclassEnumList_html_a5b4907776b23ed119efc2b3ee0a80715"><div class="ttname"><a href="classEnumList.html#a5b4907776b23ed119efc2b3ee0a80715">EnumList::append</a></div><div class="ttdeci">bool append(const Enum &amp;e, Error *err=nullptr)</div><div class="ttdoc">Appends an Enum value.</div></div>
+<div class="ttc" id="aclassVariantSpec_html_a338d74b6e604bc66c377e7b92c987e89"><div class="ttname"><a href="classVariantSpec.html#a338d74b6e604bc66c377e7b92c987e89">VariantSpec::setEnumType</a></div><div class="ttdeci">VariantSpec &amp; setEnumType(Enum::Type enumType)</div><div class="ttdoc">Sets the Enum::Type for IDs that hold Enum values.</div><div class="ttdef"><b>Definition</b> variantspec.h:147</div></div>
+<div class="ttc" id="aclassVariantSpec_html_ac9bf4b3d2fff7903d3b68919b4ecfa45"><div class="ttname"><a href="classVariantSpec.html#ac9bf4b3d2fff7903d3b68919b4ecfa45">VariantSpec::setDescription</a></div><div class="ttdeci">VariantSpec &amp; setDescription(const String &amp;desc)</div><div class="ttdoc">Sets the human-readable description for this ID.</div><div class="ttdef"><b>Definition</b> variantspec.h:157</div></div>
+</div><!-- fragment -->
+<p><a class="el" href="classEnumList.html" title="Ordered, duplicate-preserving list of Enum values sharing one type.">EnumList</a> <a class="el" href="classInspectorTest.html">InspectorTest</a> — list of inspector tests to run. </p>
+<p>The default lists every known test (<code>ImageData</code>, <code>Ltc</code>, <code>TcSync</code>, <code>Continuity</code>, <code>Timestamp</code>, <code>AudioSamples</code>) so a default- configured inspector runs the full suite. <a class="el" href="classSet.html" title="Ordered unique-element container wrapping std::set.">Set</a> to a shorter list to disable tests; an empty list disables every test. Dependencies are still auto-resolved (e.g. asking for <code>TcSync</code> implicitly also enables <code>ImageData</code> and <code>Ltc</code>).</p>
+<dl class="section user"><dt>Example</dt><dd><div class="fragment"><div class="line"><span class="comment">// Only run the timestamp and A/V sync checks:</span></div>
+<div class="line"><a class="code hl_class" href="classEnumList.html">EnumList</a> <a class="code hl_class" href="classList.html">tests</a> = EnumList::forType&lt;InspectorTest&gt;();</div>
+<div class="line"><a class="code hl_class" href="classList.html">tests</a>.append(InspectorTest::Timestamp);</div>
+<div class="line"><a class="code hl_class" href="classList.html">tests</a>.append(InspectorTest::TcSync);</div>
+<div class="line"><a class="code hl_class" href="classList.html">cfg</a>.<a class="code hl_function" href="classList.html#ab5f4f4c756727be7a037ea66660a2fec">set</a>(<a class="code hl_variable" href="classMediaConfig.html#a2bde3895b9c20caaab68563fb2b33cac">MediaConfig::InspectorTests</a>, <a class="code hl_class" href="classList.html">tests</a>);</div>
+<div class="line"><span class="comment">// Equivalent string form on the command line:</span></div>
+<div class="line"><span class="comment">//   InspectorTests=Timestamp,TcSync</span></div>
+<div class="ttc" id="aclassMediaConfig_html_a2bde3895b9c20caaab68563fb2b33cac"><div class="ttname"><a href="classMediaConfig.html#a2bde3895b9c20caaab68563fb2b33cac">MediaConfig::InspectorTests</a></div><div class="ttdeci">static const ID InspectorTests</div><div class="ttdoc">EnumList InspectorTest — list of inspector tests to run.</div><div class="ttdef"><b>Definition</b> mediaconfig.h:466</div></div>
+</div><!-- fragment --> </dd></dl>
 
 </div>
 </div>
@@ -2684,6 +2644,41 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a78419ed4db8acc8e3688ba808a2503ff" name="a78419ed4db8acc8e3688ba808a2503ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a78419ed4db8acc8e3688ba808a2503ff">&#9670;&#160;</a></span>SdlPlayerImpl</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::SdlPlayerImpl</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;SdlPlayerImpl&quot;</span>,</div>
+<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeString)</div>
+<div class="line">                                .setDefault(<a class="code hl_class" href="classString.html">String</a>(<span class="stringliteral">&quot;framesync&quot;</span>))</div>
+<div class="line">                                .setDescription(</div>
+<div class="line">                                        <span class="stringliteral">&quot;SDL player implementation: &quot;</span></div>
+<div class="line">                                        <span class="stringliteral">&quot;\&quot;framesync\&quot; (default) or &quot;</span></div>
+<div class="line">                                        <span class="stringliteral">&quot;\&quot;pacer\&quot; (deprecated).&quot;</span>))</div>
+</div><!-- fragment -->
+<p><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — which SDL player implementation to use. </p>
+<ul>
+<li><code>"framesync"</code> (default) — <code>FrameSync-based</code> <code><a class="el" href="classSDLPlayerTask.html" title="MediaIOTask writer that plays frames through SDL via FrameSync.">SDLPlayerTask</a></code>. Runs video repeat/drop + audio drift-corrected resampling through a shared sync object; the sink's pull thread drives pacing instead of the strand worker.</li>
+<li><code>"pacer"</code> — legacy FramePacer-based <code><a class="el" href="classSDLPlayerOldTask.html" title="MediaIOTask writer that plays frames through SDL (legacy path).">SDLPlayerOldTask</a></code> (deprecated; retained for side-by-side comparison). </li>
+</ul>
+
+</div>
+</div>
 <a id="a72dcc3b26870a609c7681492d15e52fc" name="a72dcc3b26870a609c7681492d15e52fc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a72dcc3b26870a609c7681492d15e52fc">&#9670;&#160;</a></span>SdlTimingSource</h2>
 
@@ -3140,92 +3135,6 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">                                        <span class="stringliteral">&quot;\&quot;auto\&quot; = auto-detect, \&quot;none\&quot; or empty = disabled.&quot;</span>))</div>
 </div><!-- fragment -->
 <p><a class="el" href="classString.html" title="Encoding-aware string class with copy-on-write semantics.">String</a> — ALSA capture device name for paired audio. "auto" (default) auto-detects a paired USB audio device. "none" or empty disables audio capture. Any other value is used as-is (e.g. "hw:1,0", "default"). </p>
-
-</div>
-</div>
-<a id="a5c4a552d3aba845b9120242672128e25" name="a5c4a552d3aba845b9120242672128e25"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c4a552d3aba845b9120242672128e25">&#9670;&#160;</a></span>V4l2AudioDriftCorrection</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::V4l2AudioDriftCorrection</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;V4l2AudioDriftCorrection&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeBool)</div>
-<div class="line">                                .setDefault(<span class="keyword">true</span>)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Enable ALSA/V4L2 audio clock-drift correction.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>bool — enable audio clock-drift correction. When true, the audio ring buffer dynamically adjusts its resampling ratio to keep the fill level stable, compensating for clock drift between the ALSA capture clock and the V4L2 video frame clock. Default: true. </p>
-
-</div>
-</div>
-<a id="a23fb1f11c9d571b5bb4532a78a34be23" name="a23fb1f11c9d571b5bb4532a78a34be23"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a23fb1f11c9d571b5bb4532a78a34be23">&#9670;&#160;</a></span>V4l2AudioDriftGain</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::V4l2AudioDriftGain</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;V4l2AudioDriftGain&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
-<div class="line">                                .setDefault(0.001)</div>
-<div class="line">                                .setRange(0.0001, 0.1)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Drift correction proportional gain.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — proportional gain for drift correction. Controls how aggressively the resampler compensates for clock drift. Small values (<a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>) give smooth, inaudible corrections; larger values track drift faster but risk audible pitch shifts. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.001</a>. </p>
-
-</div>
-</div>
-<a id="a58fd79e359349d6be1cf8336393d95ad" name="a58fd79e359349d6be1cf8336393d95ad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a58fd79e359349d6be1cf8336393d95ad">&#9670;&#160;</a></span>V4l2AudioDriftTarget</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classList.html">const</a> <a class="el" href="classVariantDatabase.html#a08cce9737a8bae134efe77f5b3392f9b">ID</a> MediaConfig::V4l2AudioDriftTarget</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= <a class="code hl_function" href="classVariantDatabase.html#aa81c6cfc6ceee506ea6c50b918644aa7">declareID</a>(<span class="stringliteral">&quot;V4l2AudioDriftTarget&quot;</span>,</div>
-<div class="line">                        <a class="code hl_class" href="classVariantSpec.html">VariantSpec</a>().setType(Variant::TypeDouble)</div>
-<div class="line">                                .setDefault(0.1)</div>
-<div class="line">                                .setRange(0.01, 2.0)</div>
-<div class="line">                                .setDescription(<span class="stringliteral">&quot;Drift correction target fill level in seconds.&quot;</span>))</div>
-</div><!-- fragment -->
-<p>double — drift correction target fill level in seconds. The ring buffer aims to keep this much audio buffered. Lower values reduce capture latency; higher values absorb more jitter. Default: <a class="el" href="classList.html#a708769d50011e6bdadc6bed2a6468aec" title="Default constructor. Creates an empty list.">0.1</a> (100 ms). </p>
 
 </div>
 </div>
@@ -4316,7 +4225,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classMediaConfig.html">MediaConfig</a></li>
-    <li class="footer">Generated on 2026-04-13 08:33:25 from commit 5869943 (1.0.0).</li>
+    <li class="footer">Generated on 2026-04-14 08:50:30 from commit ef63b93 (1.0.0).</li>
   </ul>
 </div>
 </body>

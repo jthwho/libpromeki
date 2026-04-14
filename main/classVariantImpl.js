@@ -16,6 +16,7 @@ var classVariantImpl =
       [ "TypeString", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea22d9cb4a53c8c6b105683acc4e5c5aea", null ],
       [ "TypeDateTime", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaabaf3f09435e3cc45d958a234d63b767", null ],
       [ "TypeTimeStamp", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea630bfb6d9d75a6c55de61481bbd281b5", null ],
+      [ "TypeMediaTimeStamp", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beac9f983556a7ff2b4a74e22374b729545", null ],
       [ "TypeSize2D", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beaa2f79bee76029faa27358a61f5c25020", null ],
       [ "TypeUUID", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1bea28e486294acbb9023a03d22919ae540c", null ],
       [ "TypeUMID", "classVariantImpl.html#ab2d523ea5ddb45e27665551747d0c1beae1146349a0f6d16a70d17428010bf0b7", null ],
