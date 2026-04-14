@@ -49,6 +49,7 @@
 #include <promeki/sdl/sdlapplication.h>
 #include <promeki/sdl/sdlaudiooutput.h>
 #include <promeki/sdl/sdlplayer.h>
+#include <promeki/sdl/sdlplayerold.h>
 #include <promeki/sdl/sdlvideowidget.h>
 #include <promeki/sdl/sdlwindow.h>
 
@@ -327,6 +328,9 @@ int main(int argc, char **argv) {
                         const String sdlTiming = spec.config.getAs<String>(
                                 MediaConfig::SdlTimingSource, String("audio"));
                         const bool useAudioClock = (sdlTiming == String("audio"));
+                        const String sdlImpl = spec.config.getAs<String>(
+                                MediaConfig::SdlPlayerImpl, String("framesync"));
+                        const bool useFrameSync = (sdlImpl == String("framesync"));
                         const Size2Du32 sdlWinSize = spec.config.getAs<Size2Du32>(
                                 MediaConfig::SdlWindowSize, Size2Du32(1280, 720));
                         const String sdlWinTitle = spec.config.getAs<String>(
@@ -371,11 +375,18 @@ int main(int argc, char **argv) {
                                 }
                         }
 
-                        MediaIO *player = createSDLPlayer(videoWidget,
-                                                          audioOutput,
-                                                          useAudioClock);
+                        MediaIO *player = useFrameSync
+                                ? createSDLPlayer(videoWidget,
+                                                  audioOutput,
+                                                  useAudioClock)
+                                : createSDLPlayerOld(videoWidget,
+                                                     audioOutput,
+                                                     useAudioClock);
                         if(player == nullptr) {
-                                fprintf(stderr, "Error: createSDLPlayer failed\n");
+                                fprintf(stderr, "Error: %s failed\n",
+                                        useFrameSync
+                                                ? "createSDLPlayer"
+                                                : "createSDLPlayerOld");
                                 return cleanupAndFail(1);
                         }
                         player->setMediaDesc(effectiveDesc);

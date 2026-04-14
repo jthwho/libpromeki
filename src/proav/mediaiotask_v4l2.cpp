@@ -94,6 +94,17 @@ uint32_t MediaIOTask_V4L2::pixelDescToV4l2(PixelDesc::ID pd) {
 // ioctl wrapper with EINTR retry
 // ============================================================================
 
+// Monotonic max update on an atomic — used by capture-thread
+// instrumentation counters which the debug report periodically drains.
+static inline void atomicMaxUpdate(std::atomic<int64_t> &a, int64_t v) {
+        int64_t prev = a.load(std::memory_order_relaxed);
+        while(v > prev &&
+              !a.compare_exchange_weak(prev, v,
+                                       std::memory_order_relaxed,
+                                       std::memory_order_relaxed)) {
+        }
+}
+
 static int xioctl(int fd, unsigned long request, void *arg) {
         int r;
         do {
@@ -548,9 +559,6 @@ MediaIO::FormatDesc MediaIOTask_V4L2::formatDesc() {
                         s(MediaConfig::V4l2DevicePath,  String());
                         s(MediaConfig::V4l2BufferCount, int32_t(4));
                         s(MediaConfig::V4l2AudioDevice, String("auto"));
-                        s(MediaConfig::V4l2AudioDriftCorrection, true);
-                        s(MediaConfig::V4l2AudioDriftGain, 0.001);
-                        s(MediaConfig::V4l2AudioDriftTarget, 0.1);
                         // Video
                         s(MediaConfig::VideoSize,       Size2Du32(1920, 1080));
                         s(MediaConfig::VideoPixelFormat, PixelDesc(PixelDesc::YUV8_422_Rec709));
@@ -981,31 +989,18 @@ Error MediaIOTask_V4L2::openAudio(const MediaIO::Config &cfg) {
 
         // Set up AudioBuffer ring — store in native float, 2 seconds of headroom.
         // setInputFormat tells it to convert from the ALSA capture format on push.
+        //
+        // The ring is a short-term rate buffer only: the video path
+        // drains whatever ALSA has delivered since the previous
+        // frame.  Drift correction is done downstream (FrameSync),
+        // not here — each captured frame carries the natural sample
+        // count from its capture window.
         size_t ringCapacity = rate * 2;
         AudioDesc ringDesc(AudioDesc::NativeType,
                            static_cast<float>(rate),
                            static_cast<unsigned int>(channels));
         _audioRing = AudioBuffer(ringDesc, ringCapacity);
         _audioRing.setInputFormat(_audioDesc);
-
-#if PROMEKI_ENABLE_SRC
-        // Clock-drift correction: dynamically adjust the resampling ratio
-        // to keep the ring near half-capacity, compensating for ALSA/V4L2
-        // clock drift.
-        bool driftCorrection = cfg.getAs<bool>(
-                MediaConfig::V4l2AudioDriftCorrection, true);
-        if(driftCorrection) {
-                double driftGain = cfg.getAs<double>(
-                        MediaConfig::V4l2AudioDriftGain, 0.001);
-                double driftTargetSec = cfg.getAs<double>(
-                        MediaConfig::V4l2AudioDriftTarget, 0.1);
-                size_t driftTarget = static_cast<size_t>(
-                        static_cast<double>(rate) * driftTargetSec);
-                _audioRing.enableDriftCorrection(driftTarget, driftGain);
-                promekiDebug("MediaIOTask_V4L2: audio drift correction enabled "
-                             "(target=%zu, gain=%.4f)", driftTarget, driftGain);
-        }
-#endif
 
         _audioEnabled = true;
         promekiDebug("MediaIOTask_V4L2: ALSA opened %s  format=%s  rate=%u  "
@@ -1031,6 +1026,10 @@ void MediaIOTask_V4L2::closeAudio() {
         _audioEnabled = false;
         _audioDesc = AudioDesc();
         _audioRing = AudioBuffer();
+        {
+                Mutex::Locker lk(_audioPushMutex);
+                _audioPushRecords.clear();
+        }
 }
 
 // ============================================================================
@@ -1080,6 +1079,55 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                         break;
                 }
 
+                // Instrumentation: measure the wall-clock interval
+                // between successive DQBUF returns, detect
+                // kernel-side sequence gaps (frames the camera
+                // produced but no buffer could hold), and record how
+                // stale each frame is by the time we see it.
+                int64_t nowUs = TimeStamp::now().microseconds();
+                if(_prevIterUs != 0) {
+                        int64_t dtUs = nowUs - _prevIterUs;
+                        _loopTimeSumUsPeriod.fetch_add(dtUs,
+                                        std::memory_order_relaxed);
+                        _loopIterationsPeriod.fetch_add(1,
+                                        std::memory_order_relaxed);
+                        atomicMaxUpdate(_loopTimeMaxUsPeriod, dtUs);
+                }
+                _prevIterUs = nowUs;
+
+                if(!_seqInitialized) {
+                        _seqInitialized = true;
+                        uint32_t src = vbuf.flags &
+                                       V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
+                        const char *srcName =
+                                (src == V4L2_BUF_FLAG_TSTAMP_SRC_SOE) ? "SOE"
+                                : (src == V4L2_BUF_FLAG_TSTAMP_SRC_EOF) ? "EOF"
+                                : "unknown";
+                        uint32_t monoFlag = vbuf.flags &
+                                            V4L2_BUF_FLAG_TIMESTAMP_MASK;
+                        const char *monoName =
+                                (monoFlag == V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC)
+                                        ? "MONOTONIC"
+                                : (monoFlag == V4L2_BUF_FLAG_TIMESTAMP_COPY)
+                                        ? "COPY"
+                                        : "unknown";
+                        promekiDebug("MediaIOTask_V4L2: first DQBUF  "
+                                     "seq=%u  tstamp_src=%s  tstamp_clk=%s  "
+                                     "flags=0x%08x",
+                                     vbuf.sequence, srcName, monoName,
+                                     vbuf.flags);
+                } else {
+                        uint32_t prev = _lastVbufSequence.load(
+                                        std::memory_order_relaxed);
+                        if(vbuf.sequence > prev + 1) {
+                                _kernelDroppedPeriod.fetch_add(
+                                        vbuf.sequence - prev - 1,
+                                        std::memory_order_relaxed);
+                        }
+                }
+                _lastVbufSequence.store(vbuf.sequence,
+                                std::memory_order_relaxed);
+
                 int bufIdx = static_cast<int>(vbuf.index);
                 const void *src = _buffers[bufIdx].start;
                 size_t bytesUsed = vbuf.bytesused;
@@ -1088,6 +1136,52 @@ void MediaIOTask_V4L2::videoCaptureLoop() {
                 // to a TimeStamp for image metadata.
                 int64_t captureNs = static_cast<int64_t>(vbuf.timestamp.tv_sec) * 1000000000LL +
                                     static_cast<int64_t>(vbuf.timestamp.tv_usec) * 1000LL;
+
+                // DQBUF lag: gap between the hardware capture
+                // timestamp and when we got control of the buffer.
+                // If vbuf.timestamp is real hardware time this
+                // reflects kernel+USB+scheduling delay; if the driver
+                // instead stamps at frame-delivery, the lag is near
+                // zero and tracks our loop jitter.
+                int64_t rawLagUs = nowUs - (captureNs / 1000);
+                int64_t lagUs = rawLagUs < 0 ? 0 : rawLagUs;
+                _dqbufLagSumUsPeriod.fetch_add(lagUs,
+                                std::memory_order_relaxed);
+                _dqbufLagCountPeriod.fetch_add(1,
+                                std::memory_order_relaxed);
+                atomicMaxUpdate(_dqbufLagMaxUsPeriod, lagUs);
+
+                // Detect and correct bogus SOE timestamps.  Linux UVC
+                // computes buffer timestamps by regressing the USB
+                // Start-Of-Frame clock against CLOCK_MONOTONIC; the
+                // regression is uncalibrated until it has several
+                // samples, so the first frame after STREAMON
+                // routinely carries a SOE time stamped well before
+                // streaming actually started.  When lag (or negative
+                // lag — timestamp from the future) exceeds a few
+                // frame periods the timestamp is not trustworthy;
+                // substitute the wall-clock dequeue time so the
+                // delivered frame still has a monotonic, roughly
+                // real capture time.  The regression stabilizes
+                // almost immediately (usually within 1–2 frames),
+                // after which the hardware SOE is authoritative again.
+                int64_t maxLagUs = 500000;  // fallback: 500 ms
+                if(_frameRate.toDouble() > 0.0) {
+                        maxLagUs = static_cast<int64_t>(
+                                3.0e6 / _frameRate.toDouble());
+                }
+                if(rawLagUs > maxLagUs || rawLagUs < -maxLagUs) {
+                        promekiDebug("MediaIOTask_V4L2: frame seq=%u has "
+                                     "untrustworthy SOE timestamp "
+                                     "(lag %lld ms, threshold %lld ms) — "
+                                     "substituting dequeue wall time",
+                                     vbuf.sequence,
+                                     static_cast<long long>(rawLagUs / 1000),
+                                     static_cast<long long>(maxLagUs / 1000));
+                        captureNs = nowUs * 1000;
+                        _timestampSubstitutedPeriod.fetch_add(1,
+                                        std::memory_order_relaxed);
+                }
                 TimeStamp captureTime{TimeStamp::Clock::time_point{
                         std::chrono::nanoseconds{captureNs}}};
 
@@ -1177,9 +1271,15 @@ void MediaIOTask_V4L2::audioCaptureLoop() {
                         continue;
                 }
                 if(rd > 0) {
+                        int64_t pushWallNs = TimeStamp::now().nanoseconds();
                         _audioRing.push(tmpBuf.data(),
                                         static_cast<size_t>(rd),
                                         _audioDesc);
+                        Mutex::Locker lk(_audioPushMutex);
+                        AudioPushRecord rec;
+                        rec.wallNs = pushWallNs;
+                        rec.samplesRemaining = static_cast<size_t>(rd);
+                        _audioPushRecords.pushToBack(rec);
                 }
         }
         promekiDebug("MediaIOTask_V4L2: audio capture thread exiting  "
@@ -1226,6 +1326,17 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
         _frameDeltaSqSum = 0.0;
         _frameDeltaCount = 0;
         _prevPeriodFps = 0.0;
+        _lastVbufSequence.store(0, std::memory_order_relaxed);
+        _kernelDroppedPeriod.store(0, std::memory_order_relaxed);
+        _loopIterationsPeriod.store(0, std::memory_order_relaxed);
+        _loopTimeSumUsPeriod.store(0, std::memory_order_relaxed);
+        _loopTimeMaxUsPeriod.store(0, std::memory_order_relaxed);
+        _dqbufLagSumUsPeriod.store(0, std::memory_order_relaxed);
+        _dqbufLagMaxUsPeriod.store(0, std::memory_order_relaxed);
+        _dqbufLagCountPeriod.store(0, std::memory_order_relaxed);
+        _timestampSubstitutedPeriod.store(0, std::memory_order_relaxed);
+        _seqInitialized = false;
+        _prevIterUs = 0;
 
         // Periodic status reporting (1 Hz).  The rate and drift
         // computations run unconditionally so the data is always
@@ -1269,6 +1380,30 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
                         _frameDeltaCount = 0;
                 }
 
+                // -- Capture-thread instrumentation (drain & reset) --
+                int64_t kDrop  = _kernelDroppedPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t iters  = _loopIterationsPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t ltSum  = _loopTimeSumUsPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t ltMax  = _loopTimeMaxUsPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t lagSum = _dqbufLagSumUsPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t lagMax = _dqbufLagMaxUsPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t lagCnt = _dqbufLagCountPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                int64_t tsSub  = _timestampSubstitutedPeriod.exchange(0,
+                                        std::memory_order_relaxed);
+                double loopAvgMs = iters  > 0 ? (double)ltSum  / iters  / 1000.0 : 0.0;
+                double loopMaxMs = (double)ltMax / 1000.0;
+                double lagAvgMs  = lagCnt > 0 ? (double)lagSum / lagCnt / 1000.0 : 0.0;
+                double lagMaxMs  = (double)lagMax / 1000.0;
+                uint32_t lastSeq = _lastVbufSequence.load(
+                                std::memory_order_relaxed);
+
                 if(_audioEnabled) {
                         size_t ringAvail = _audioRing.available();
                         size_t ringCap = _audioRing.capacity();
@@ -1294,7 +1429,9 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
                         promekiDebug("f=%lld cap=%lld q=%zu/%d "
                                      "fps=%.3f pfps=%.3f fpsd=%+.3f jit=%.0fus "
                                      "ring=%zu/%zu ovr=%lld "
-                                     "ravg=%.1f drift=%+.1f s/s srcr=%.6f",
+                                     "ravg=%.1f drift=%+.1f s/s "
+                                     "seq=%u kdrop=%lld tssub=%lld "
+                                     "loop=%.2f/%.2fms lag=%.2f/%.2fms",
                                      static_cast<long long>(_frameCount),
                                      static_cast<long long>(captured),
                                      qDepth, VideoQueueDepth,
@@ -1303,16 +1440,25 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandOpen &cmd) {
                                      ringAvail, ringCap,
                                      static_cast<long long>(overruns),
                                      ringAvg, ringDrift,
-                                     _audioRing.driftRatio());
+                                     lastSeq, static_cast<long long>(kDrop),
+                                     static_cast<long long>(tsSub),
+                                     loopAvgMs, loopMaxMs,
+                                     lagAvgMs, lagMaxMs);
                 } else {
                         promekiDebug("f=%lld cap=%lld q=%zu/%d "
                                      "fps=%.3f pfps=%.3f fpsd=%+.3f jit=%.0fus "
-                                     "audio=off",
+                                     "audio=off "
+                                     "seq=%u kdrop=%lld tssub=%lld "
+                                     "loop=%.2f/%.2fms lag=%.2f/%.2fms",
                                      static_cast<long long>(_frameCount),
                                      static_cast<long long>(captured),
                                      qDepth, VideoQueueDepth,
                                      avgFps, periodFps, fpsChange,
-                                     jitterUs);
+                                     jitterUs,
+                                     lastSeq, static_cast<long long>(kDrop),
+                                     static_cast<long long>(tsSub),
+                                     loopAvgMs, loopMaxMs,
+                                     lagAvgMs, lagMaxMs);
                 }
         });
 
@@ -1438,71 +1584,107 @@ Error MediaIOTask_V4L2::executeCmd(MediaIOCommandRead &cmd) {
                                      "first video frame");
                 }
 
-                size_t samplesNeeded = _frameRate.samplesPerFrame(
-                        static_cast<int64_t>(_audioDesc.sampleRate()),
-                        _frameCount);
-                if(samplesNeeded > 0) {
+                // Take whatever the audio thread has delivered since
+                // the last video frame.  We do NOT round to "nominal
+                // samples-per-frame" here: letting the sample count
+                // vary naturally with ALSA's actual capture rate is
+                // exactly what downstream drift correction needs.
+                size_t avail = _audioRing.available();
+                if(avail > 0) {
                         AudioDesc nativeDesc = _audioRing.format();
-                        Audio audio(nativeDesc, samplesNeeded);
-                        auto [got, err] = _audioRing.popWait(audio, samplesNeeded, 200);
-                        if(err == Error::Timeout) {
-                                promekiWarn("MediaIOTask_V4L2: audio ring timeout "
-                                            "(needed %zu, available %zu)",
-                                            samplesNeeded, _audioRing.available());
-                                return Error::Timeout;
-                        }
+                        Audio audio(nativeDesc, avail);
+                        auto [got, err] = _audioRing.pop(audio, avail);
                         if(err.isError()) return err;
-                        // When drift correction is active the resampler
-                        // has locked audio timing to the video clock, so
-                        // the samples are effectively in the V4L2 domain.
-                        // Without drift correction the ALSA hardware clock
-                        // is the authoritative source.
+
+                        // Look up the wall time of the first popped
+                        // sample from the push-record queue, and
+                        // advance the queue to reflect what we just
+                        // consumed.  Timestamps carried this way
+                        // reflect real ALSA delivery rate — downstream
+                        // rate estimators get accurate drift from
+                        // samples/ts_delta.
+                        int64_t firstSampleWallNs = 0;
+                        {
+                                Mutex::Locker lk(_audioPushMutex);
+                                if(!_audioPushRecords.isEmpty()) {
+                                        firstSampleWallNs =
+                                                _audioPushRecords.front().wallNs;
+                                }
+                                size_t remaining = got;
+                                const double rateHz = _audioDesc.sampleRate();
+                                while(remaining > 0 &&
+                                      !_audioPushRecords.isEmpty()) {
+                                        AudioPushRecord &r =
+                                                _audioPushRecords.front();
+                                        if(r.samplesRemaining <= remaining) {
+                                                remaining -= r.samplesRemaining;
+                                                _audioPushRecords.remove(
+                                                        _audioPushRecords.begin());
+                                        } else {
+                                                // Advance this record's
+                                                // wallNs by the portion
+                                                // consumed, so the next
+                                                // pop sees the correct
+                                                // first-sample time.
+                                                double dt =
+                                                        (double)remaining / rateHz;
+                                                r.wallNs += (int64_t)(dt * 1e9);
+                                                r.samplesRemaining -= remaining;
+                                                remaining = 0;
+                                        }
+                                }
+                        }
+                        TimeStamp audioTs;
+                        audioTs.setValue(TimeStamp::Value(
+                                std::chrono::nanoseconds(firstSampleWallNs)));
                         audio.metadata().set(Metadata::MediaTimeStamp,
-                                MediaTimeStamp(_lastCaptureTime,
-                                        _audioRing.driftCorrectionEnabled()
-                                                ? V4L2KernelClock
-                                                : AlsaClock));
+                                MediaTimeStamp(audioTs, AlsaClock));
                         frame.modify()->audioList().pushToBack(
                                 Audio::Ptr::create(audio));
                 }
 
                 // Sample the ring level for the periodic average
-                size_t avail = _audioRing.available();
-                _ringAccum += static_cast<int64_t>(avail);
+                // (used only for telemetry now).
+                _ringAccum += static_cast<int64_t>(_audioRing.available());
                 _ringAccumFrames++;
 
-                // Safety net: drop excess samples if the ring approaches
-                // capacity.  With drift correction enabled the PI
-                // controller should prevent this, but if drift correction
-                // is disabled or the drift exceeds the resampler's range,
-                // this keeps the ring from overflowing and losing data.
+                // Stall safety net: if the ring nears full capacity
+                // the video path has stalled and samples will be
+                // lost.  Warn once and drop the excess so the ring
+                // doesn't jam the push side.
                 size_t cap = _audioRing.capacity();
-                if(avail > cap * 3 / 4) {
-                        size_t excess = avail - cap / 4;
+                size_t after = _audioRing.available();
+                if(after > cap * 3 / 4) {
+                        size_t excess = after - cap / 4;
                         _audioRing.drop(excess);
-                        if(!_ringOverflowWarned) {
-                                _ringOverflowWarned = true;
-                                double driftRate = 0.0;
-                                double driftPpm = 0.0;
-                                double elapsedSec = 0.0;
-                                if(_ringBaselineSet) {
-                                        elapsedSec = (_lastCaptureTime - _ringBaselineTime)
-                                                     .toSecondsDouble();
-                                        if(elapsedSec > 0.0) {
-                                                driftRate = (double)avail / elapsedSec;
-                                                driftPpm = (driftRate / _audioDesc.sampleRate()) * 1e6;
+                        {
+                                Mutex::Locker lk(_audioPushMutex);
+                                size_t remaining = excess;
+                                const double rateHz = _audioDesc.sampleRate();
+                                while(remaining > 0 &&
+                                      !_audioPushRecords.isEmpty()) {
+                                        AudioPushRecord &r =
+                                                _audioPushRecords.front();
+                                        if(r.samplesRemaining <= remaining) {
+                                                remaining -= r.samplesRemaining;
+                                                _audioPushRecords.remove(
+                                                        _audioPushRecords.begin());
+                                        } else {
+                                                double dt =
+                                                        (double)remaining / rateHz;
+                                                r.wallNs += (int64_t)(dt * 1e9);
+                                                r.samplesRemaining -= remaining;
+                                                remaining = 0;
                                         }
                                 }
-                                promekiErr("MediaIOTask_V4L2: audio ring overflow — "
-                                           "dropped %zu samples (ring was %zu/%zu, "
-                                           "drift %+.1f samp/sec, %.0f ppm, "
-                                           "srcr=%.6f, %.0f sec into capture).  "
-                                           "The USB audio and video clocks are not "
-                                           "locked on this host controller path.",
-                                           excess, avail, cap,
-                                           driftRate, driftPpm,
-                                           _audioRing.driftRatio(),
-                                           elapsedSec);
+                        }
+                        if(!_ringOverflowWarned) {
+                                _ringOverflowWarned = true;
+                                promekiErr("MediaIOTask_V4L2: audio ring "
+                                           "overflow — dropped %zu samples "
+                                           "(ring was %zu/%zu).  The video "
+                                           "capture path has stalled.",
+                                           excess, after, cap);
                         }
                 }
         }

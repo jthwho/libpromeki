@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <cstdio>
 #include <functional>
 #include <memory>
 #include <promeki/namespace.h>
@@ -62,6 +63,13 @@ struct InspectorDiscontinuity {
                 /// change from a previously-stable offset is a real
                 /// fault rather than a measurement artifact.
                 SyncOffsetChange,
+                /// Video essence arrived without a valid MediaTimeStamp
+                /// even though the Timestamp test is enabled (MediaIO
+                /// guarantees one on every essence).
+                MissingVideoTimestamp,
+                /// Audio essence arrived without a valid MediaTimeStamp
+                /// even though the Timestamp test is enabled.
+                MissingAudioTimestamp,
         };
 
         Kind     kind;             ///< Which kind of discontinuity this is.
@@ -150,6 +158,43 @@ struct InspectorEvent {
         /// @ref MediaConfig::InspectorSyncOffsetToleranceSamples).
         int64_t  avSyncOffsetSamples = 0;
 
+        // ---- Timestamps (per-essence MediaTimeStamps) ----
+
+        /// True if the *timestamp test enable* flag was set in the config.
+        bool     timestampTestEnabled = false;
+        /// True if the frame's first image carried a valid MediaTimeStamp.
+        bool     videoTimestampValid  = false;
+        /// True if the frame's first audio chunk carried a valid MediaTimeStamp.
+        bool     audioTimestampValid  = false;
+        /// Video @ref MediaTimeStamp converted to nanoseconds
+        /// (@c timeStamp.nanoseconds() + @c offset.nanoseconds()).
+        int64_t  videoTimestampNs     = 0;
+        /// Audio @ref MediaTimeStamp converted to nanoseconds.
+        int64_t  audioTimestampNs     = 0;
+        /// True if @c videoTimestampDeltaNs is meaningful (i.e. the
+        /// previous frame also had a valid video timestamp).  False on
+        /// the very first timestamped frame and across any gap.
+        bool     videoTimestampDeltaValid = false;
+        /// True if @c audioTimestampDeltaNs is meaningful.
+        bool     audioTimestampDeltaValid = false;
+        /// Nanoseconds between this frame's video timestamp and the
+        /// previous frame's.  Only valid when
+        /// @c videoTimestampDeltaValid is true.
+        int64_t  videoTimestampDeltaNs = 0;
+        /// Nanoseconds between this frame's audio timestamp and the
+        /// previous frame's.
+        int64_t  audioTimestampDeltaNs = 0;
+
+        // ---- Audio sample count ----
+
+        /// True if the *audio samples test enable* flag was set in the config.
+        bool     audioSamplesTestEnabled = false;
+        /// True if the frame carried an audio chunk (from which the
+        /// per-frame sample count was read).
+        bool     audioSamplesValid     = false;
+        /// Number of audio samples carried by this frame's first audio chunk.
+        int64_t  audioSamplesThisFrame = 0;
+
         // ---- Continuity ----
 
         /// Discontinuities detected on this specific frame, with both
@@ -173,6 +218,49 @@ struct InspectorSnapshot {
         int64_t framesWithPictureData = 0;
         /// Total number of frames where at least one LTC frame decoded.
         int64_t framesWithLtc         = 0;
+        /// Total number of frames where the video MediaTimeStamp was valid.
+        int64_t framesWithVideoTimestamp = 0;
+        /// Total number of frames where the audio MediaTimeStamp was valid.
+        int64_t framesWithAudioTimestamp = 0;
+        /// Number of consecutive-pair video timestamp deltas measured.
+        int64_t videoDeltaSamples     = 0;
+        /// Number of consecutive-pair audio timestamp deltas measured.
+        int64_t audioDeltaSamples     = 0;
+        /// Minimum observed frame-to-frame video timestamp delta (ns).
+        int64_t videoDeltaMinNs       = 0;
+        /// Maximum observed frame-to-frame video timestamp delta (ns).
+        int64_t videoDeltaMaxNs       = 0;
+        /// Running mean of frame-to-frame video timestamp delta (ns).
+        double  videoDeltaAvgNs       = 0.0;
+        /// Minimum observed frame-to-frame audio timestamp delta (ns).
+        int64_t audioDeltaMinNs       = 0;
+        /// Maximum observed frame-to-frame audio timestamp delta (ns).
+        int64_t audioDeltaMaxNs       = 0;
+        /// Running mean of frame-to-frame audio timestamp delta (ns).
+        double  audioDeltaAvgNs       = 0.0;
+        /// Actual observed frames-per-second, derived from
+        /// @c videoDeltaAvgNs (@c 0 if not yet measured).
+        double  actualFps             = 0.0;
+        /// Number of frames that contributed an audio sample count.
+        int64_t audioSamplesFrames    = 0;
+        /// Minimum observed per-frame audio sample count.
+        int64_t audioSamplesMin       = 0;
+        /// Maximum observed per-frame audio sample count.
+        int64_t audioSamplesMax       = 0;
+        /// Running mean of per-frame audio sample count.
+        double  audioSamplesAvg       = 0.0;
+        /// Total audio samples counted across every frame that
+        /// carried an audio chunk with a valid MediaTimeStamp anchor
+        /// (excludes the very first such frame, which is used only
+        /// as the anchor).
+        int64_t audioSamplesTotal     = 0;
+        /// Elapsed audio MediaTimeStamp time (ns) from the first
+        /// anchored frame to the most recent anchored frame.
+        int64_t audioSamplesSpanNs    = 0;
+        /// Measured audio sample rate (Hz), derived from
+        /// @c audioSamplesTotal divided by @c audioSamplesSpanNs.
+        /// @c 0 until at least two anchored frames have been seen.
+        double  measuredAudioSampleRate = 0.0;
         /// Total number of discontinuities of any kind, summed over all
         /// frames.
         int64_t totalDiscontinuities  = 0;
@@ -189,34 +277,41 @@ struct InspectorSnapshot {
  *
  * The inverse of @ref MediaIOTask_TPG: where the TPG @em produces
  * test-pattern frames, the inspector @em consumes frames and runs a
- * configurable set of checks on each one.  Currently supported checks:
+ * configurable set of checks on each one.  The set of checks is
+ * driven by @ref MediaConfig::InspectorTests — an EnumList of
+ * @ref InspectorTest values.  The default lists every known test,
+ * so a default-configured inspector runs the full suite; override
+ * the list to run a subset.  Currently supported tests:
  *
- *  - **Image data band decode** (@ref MediaConfig::InspectorDecodeImageData):
- *    pulls the two 64-bit payloads written by @ref ImageDataEncoder out
- *    of the top of every frame, recovering the rolling frame number,
- *    stream ID, and BCD timecode.
- *  - **LTC decode** (@ref MediaConfig::InspectorDecodeLtc): runs the
- *    selected audio channel through @ref LtcDecoder and reports any
- *    timecodes recovered.
- *  - **A/V Sync** (@ref MediaConfig::InspectorCheckTcSync): with
- *    both decoders enabled, computes the per-frame offset between
- *    the picture timecode and the audio LTC, in audio samples and
- *    in fractional frames.  This is an *instantaneous* measurement
- *    on each frame; a constant offset across frames is healthy
- *    (audio and video are locked), while any movement is flagged
- *    as a discontinuity.
- *  - **Continuity** (@ref MediaConfig::InspectorCheckContinuity):
- *    tracks frame number, stream ID, picture timecode, and LTC
- *    timecode from one frame to the next, and flags any unexpected
- *    jump as a @ref InspectorDiscontinuity record on the per-frame
- *    event.
+ *  - @c ImageData   — pulls the two 64-bit payloads written by
+ *    @ref ImageDataEncoder out of the top of every frame,
+ *    recovering the rolling frame number, stream ID, and BCD
+ *    timecode.
+ *  - @c Ltc         — runs the selected audio channel through
+ *    @ref LtcDecoder and reports any timecodes recovered.
+ *  - @c TcSync      — with both decoders running, computes the
+ *    per-frame offset between the picture timecode and the audio
+ *    LTC, in audio samples and in fractional frames.  This is an
+ *    *instantaneous* measurement; a constant offset across frames
+ *    is healthy (audio and video are locked), while any movement
+ *    is flagged as a discontinuity.
+ *  - @c Continuity  — tracks frame number, stream ID, picture
+ *    timecode, and LTC timecode from one frame to the next, and
+ *    flags any unexpected jump as a @ref InspectorDiscontinuity
+ *    record on the per-frame event.
+ *  - @c Timestamp   — checks that the per-essence
+ *    @ref MediaTimeStamp is valid on every frame, records the
+ *    frame-to-frame delta (min / max / avg) for video and audio,
+ *    and reports the actual observed FPS.
+ *  - @c AudioSamples — tracks per-frame audio sample count (min /
+ *    max / avg) and derives the measured audio sample rate by
+ *    dividing cumulative samples by the elapsed audio
+ *    @ref MediaTimeStamp span.
  *
- * The dependency relationships between these are auto-resolved at
- * open time: enabling @c InspectorCheckTcSync implicitly turns on
- * @c InspectorDecodeImageData and @c InspectorDecodeLtc; enabling
- * @c InspectorCheckContinuity implicitly turns on
- * @c InspectorDecodeImageData.  The user does not have to specify
- * the upstream decoders explicitly.
+ * Dependency relationships are auto-resolved at open time: enabling
+ * @c TcSync implicitly turns on @c ImageData and @c Ltc; enabling
+ * @c Continuity implicitly turns on @c ImageData.  The user does
+ * not have to specify the upstream decoders explicitly.
  *
  * @par Per-frame event delivery
  * The inspector exposes its results in three complementary ways:
@@ -246,8 +341,11 @@ struct InspectorSnapshot {
  *
  * MediaIO *io = new MediaIO();
  * MediaIO::Config cfg = MediaIO::defaultConfig("Inspector");
- * cfg.set(MediaConfig::InspectorCheckTcSync, true);
- * cfg.set(MediaConfig::InspectorCheckContinuity, true);
+ * // Default is every test; narrow the list to run a subset:
+ * EnumList tests = EnumList::forType<InspectorTest>();
+ * tests.append(InspectorTest::TcSync);
+ * tests.append(InspectorTest::Continuity);
+ * cfg.set(MediaConfig::InspectorTests, tests);
  * io->setConfig(cfg);
  * io->adoptTask(insp);
  * io->open(MediaIO::Input);
@@ -311,11 +409,17 @@ class MediaIOTask_Inspector : public MediaIOTask {
                 Error executeCmd(MediaIOCommandClose &cmd) override;
                 Error executeCmd(MediaIOCommandWrite &cmd) override;
 
+                void decompressImages(Frame &frame);
                 void initDecoders(const Frame &frame);
                 void runImageDataCheck(const Frame &frame, InspectorEvent &event);
                 void runLtcCheck(const Frame &frame, InspectorEvent &event);
                 void runAvSyncCheck(const Frame &frame, InspectorEvent &event);
                 void runContinuityCheck(InspectorEvent &event);
+                void runTimestampCheck(const Frame &frame, InspectorEvent &event);
+                void runAudioSamplesCheck(const Frame &frame, InspectorEvent &event);
+                void runCaptureStats(const Frame &frame, const InspectorEvent &event);
+                Error openCaptureStatsFile(const String &configured);
+                void closeCaptureStatsFile();
                 void emitPeriodicLogIfDue();
                 void resetState();
 
@@ -324,6 +428,9 @@ class MediaIOTask_Inspector : public MediaIOTask {
                 bool     _decodeLtc            = false;
                 bool     _checkTcSync          = false;
                 bool     _checkContinuity      = false;
+                bool     _checkTimestamp       = false;
+                bool     _checkAudioSamples    = false;
+                bool     _checkCaptureStats    = false;
                 bool     _dropFrames           = true;
                 int      _imageDataRepeatLines = 16;
                 int      _ltcChannel           = 0;
@@ -374,6 +481,26 @@ class MediaIOTask_Inspector : public MediaIOTask {
                 /// measurable".
                 double        _samplesPerFrame       = 0.0;
 
+                // ---- Timestamp test state (previous-frame anchors
+                // needed to compute frame-to-frame deltas) ----
+                bool          _hasPreviousVideoTimestamp = false;
+                bool          _hasPreviousAudioTimestamp = false;
+                int64_t       _previousVideoTimestampNs  = 0;
+                int64_t       _previousAudioTimestampNs  = 0;
+
+                // ---- AudioSamples test state (first-seen anchor;
+                // cumulative samples / elapsed ns since the anchor
+                // drive the measured-rate calculation).  The anchor
+                // frame's own sample count is NOT included in the
+                // cumulative total — it marks the start of the
+                // measurement window.  "Previous" is used to detect
+                // timestamp gaps so we can restart the anchor
+                // without poisoning the average. ----
+                bool          _audioSamplesAnchorSet       = false;
+                int64_t       _audioSamplesAnchorNs        = 0;
+                int64_t       _audioSamplesPreviousStampNs = 0;
+                int64_t       _audioSamplesCumulative      = 0;
+
                 // ---- Per-frame counter ----
                 int64_t  _frameIndex = 0;
 
@@ -387,6 +514,19 @@ class MediaIOTask_Inspector : public MediaIOTask {
 
                 // ---- Per-frame callback ----
                 EventCallback _callback;
+
+                // ---- CaptureStats test output ----
+                //
+                // TSV with one row per frame.  @c _statsFile is opened
+                // at @c open() time when the test is enabled and closed
+                // at @c close().  @c _statsFilePath holds the resolved
+                // path (caller-supplied or auto-generated inside
+                // @c Dir::temp()).  @c _statsWriteError latches on the
+                // first write failure so the inspector stops retrying
+                // rather than spamming the log.
+                FILE    *_statsFile        = nullptr;
+                String   _statsFilePath;
+                bool     _statsWriteError  = false;
 };
 
 PROMEKI_NAMESPACE_END

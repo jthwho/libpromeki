@@ -51,11 +51,10 @@
  * - The TPG's image data encoder pass is on by default and stamps two
  *   64-bit payloads (frame ID + BCD timecode) into the top of every
  *   frame.
- * - The Inspector's defaults turn on every check
- *   (@ref MediaConfig::InspectorDecodeImageData,
- *    @ref MediaConfig::InspectorDecodeLtc,
- *    @ref MediaConfig::InspectorCheckTcSync,
- *    @ref MediaConfig::InspectorCheckContinuity).
+ * - The Inspector's default @ref MediaConfig::InspectorTests list
+ *   carries every test (@c ImageData, @c Ltc, @c TcSync,
+ *   @c Continuity, @c Timestamp, @c AudioSamples), so the full
+ *   suite runs out of the box.
  *
  * The default periodic log writes a multi-line report once per second
  * of wall time, plus immediate warnings whenever a discontinuity is
@@ -81,25 +80,36 @@
  * inspector stays silent when there is nothing to flag.  See
  * @ref inspector_log for a full annotation of every line.
  *
- * @section inspector_checks The four checks
+ * @section inspector_checks The inspector tests
  *
- * The inspector runs four independent checks per frame.  Each is
- * gated by its own config flag, but the dependency-implication
- * matrix means turning on a higher-level check auto-enables the
- * lower-level decoders it depends on.
+ * The inspector runs an independently-selectable set of tests per
+ * frame.  The selection is driven by a single config key,
+ * @ref MediaConfig::InspectorTests — an @ref EnumList of
+ * @ref InspectorTest values.  The default list carries every test
+ * so the full suite runs out of the box; narrow the list to run a
+ * subset.  The inspector resolves test dependencies at
+ * @ref MediaIOTask_Inspector::executeCmd "open" time, so you never
+ * have to list the upstream decoders explicitly.
  *
- * | Check                          | Config key                                         | Auto-enables                                       |
- * |--------------------------------|----------------------------------------------------|----------------------------------------------------|
- * | Decode picture data band       | @ref MediaConfig::InspectorDecodeImageData         | (no deps)                                          |
- * | Decode audio LTC               | @ref MediaConfig::InspectorDecodeLtc               | (no deps)                                          |
- * | A/V Sync (TC offset, samples)  | @ref MediaConfig::InspectorCheckTcSync             | DecodeImageData + DecodeLtc                        |
- * | Continuity (TC / frame# / SID) | @ref MediaConfig::InspectorCheckContinuity         | DecodeImageData                                    |
+ * | Test                           | Enum value                         | Auto-enables                |
+ * |--------------------------------|------------------------------------|-----------------------------|
+ * | Decode picture data band       | @c InspectorTest::ImageData        | (no deps)                   |
+ * | Decode audio LTC               | @c InspectorTest::Ltc              | (no deps)                   |
+ * | A/V Sync (TC offset, samples)  | @c InspectorTest::TcSync           | @c ImageData + @c Ltc       |
+ * | Continuity (TC / frame# / SID) | @c InspectorTest::Continuity       | @c ImageData                |
+ * | Timestamp delta + actual FPS   | @c InspectorTest::Timestamp        | (no deps)                   |
+ * | Per-frame audio sample count   | @c InspectorTest::AudioSamples     | (no deps)                   |
  *
- * **You do not have to enable the upstream decoders explicitly.**
- * Setting `InspectorCheckTcSync = true` is enough — the inspector
- * resolves the dependencies at @ref MediaIOTask_Inspector::executeCmd
- * "open" time and turns the decoders on for you.  The default config
- * has all four checks enabled.
+ * Example — only run the timestamp and A/V sync checks:
+ *
+ * @code
+ * EnumList tests = EnumList::forType<InspectorTest>();
+ * tests.append(InspectorTest::Timestamp);
+ * tests.append(InspectorTest::TcSync);
+ * cfg.set(MediaConfig::InspectorTests, tests);
+ * // Or from the command line / string form:
+ * //   InspectorTests=Timestamp,TcSync
+ * @endcode
  *
  * @subsection inspector_check_picture Picture data band decode
  *

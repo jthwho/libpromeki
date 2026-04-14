@@ -195,6 +195,26 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 // -- Audio ring buffer (audio thread → read command) --
                 AudioBuffer             _audioRing;
 
+                // -- Push-time tracking for audio MediaTimeStamps --
+                //
+                // ALSA delivers samples in small chunks; we need to
+                // stamp each outgoing audio chunk (one per video
+                // frame) with the wall-time the first sample was
+                // pushed, so downstream drift correction can derive
+                // the true source audio rate from timestamp deltas.
+                //
+                // The list holds one record per outstanding push;
+                // the front is the oldest unpopped sample.  When a
+                // record's samplesRemaining reaches zero it is
+                // removed; when a pop consumes only part of a record
+                // its wallNs is advanced by (consumed / sampleRate).
+                struct AudioPushRecord {
+                        int64_t wallNs;
+                        size_t  samplesRemaining;
+                };
+                mutable Mutex           _audioPushMutex;
+                List<AudioPushRecord>   _audioPushRecords;
+
                 // -- Telemetry (updated atomically by capture threads) --
                 std::atomic<int64_t>    _framesCaptured{0};
                 std::atomic<int64_t>    _alsaOverruns{0};
@@ -216,8 +236,44 @@ class MediaIOTask_V4L2 : public MediaIOTask {
                 int64_t                 _frameDeltaCount = 0;   // deltas accumulated this period
                 double                  _prevPeriodFps = 0.0;   // previous period's measured fps
 
-                // -- Audio drift overflow protection --
+                // -- Stall-overflow protection --
                 bool                    _ringOverflowWarned = false;
+
+                // -- Capture-thread instrumentation --
+                //
+                // Populated by the V4L2 capture thread and drained
+                // each period by the debug report on the strand.  All
+                // fields reset to zero at the end of each report so
+                // averages reflect a single 1s window.
+                //
+                // Sequence tracking uses @c vbuf.sequence from
+                // VIDIOC_DQBUF to detect kernel-side frame drops
+                // (where the camera produced a frame but no buffer
+                // was available to hold it).  Loop-iteration timing
+                // measures how long our capture loop spends between
+                // successive DQBUF returns — if it's significantly
+                // longer than the nominal frame period the capture
+                // thread is the bottleneck.  DQBUF lag compares
+                // @c vbuf.timestamp to wall-clock @c now() so we can
+                // tell how stale the frame is by the time we see it.
+                std::atomic<uint32_t>   _lastVbufSequence{0};
+                std::atomic<int64_t>    _kernelDroppedPeriod{0};
+                std::atomic<int64_t>    _loopIterationsPeriod{0};
+                std::atomic<int64_t>    _loopTimeSumUsPeriod{0};
+                std::atomic<int64_t>    _loopTimeMaxUsPeriod{0};
+                std::atomic<int64_t>    _dqbufLagSumUsPeriod{0};
+                std::atomic<int64_t>    _dqbufLagMaxUsPeriod{0};
+                std::atomic<int64_t>    _dqbufLagCountPeriod{0};
+                // Count of frames whose hardware SOE timestamp was so
+                // far off the wall clock that we substituted the
+                // dequeue time instead.  Should be ~1 at stream
+                // startup; any steady-state non-zero value indicates
+                // the UVC PTS regression isn't locking (driver bug or
+                // camera glitch) and deserves investigation.
+                std::atomic<int64_t>    _timestampSubstitutedPeriod{0};
+                // Capture-thread-only state (no atomic needed):
+                bool                    _seqInitialized = false;
+                int64_t                 _prevIterUs = 0;
 
                 // -- General state --
                 FrameRate               _frameRate;

@@ -9,106 +9,10 @@
 
 #include <promeki/namespace.h>
 #include <promeki/framerate.h>
+#include <promeki/clock.h>
 #include <promeki/timestamp.h>
 
 PROMEKI_NAMESPACE_BEGIN
-
-/**
- * @brief Abstract clock interface for FramePacer.
- * @ingroup time
- *
- * A FramePacerClock provides the time source and sleep mechanism
- * for a FramePacer.  Implementations map to different clock
- * domains:
- *
- * - **Wall clock** (built into FramePacer) — steady_clock, good
- *   for local playback.
- * - **PTP clock** — for ST 2110 senders/receivers that must
- *   align frame boundaries to the network's PTP epoch.
- * - **Audio sample clock** — derives time from the audio
- *   device's consumed sample count, so video pacing tracks the
- *   audio device's actual consumption rate rather than the OS
- *   scheduler's approximation.
- *
- * All times are in nanoseconds from the clock's own epoch.
- * The epoch is opaque to the pacer — only offsets between
- * @c nowNs() readings and deadline values matter.
- */
-class FramePacerClock {
-        public:
-                virtual ~FramePacerClock() = default;
-
-                /**
-                 * @brief Human-readable name for log messages.
-                 *
-                 * Used by FramePacer to identify which clock is
-                 * active in debug and warning output (e.g.
-                 * "SDL Audio", "PTP", "wall").
-                 *
-                 * @return Short descriptive name.
-                 */
-                virtual const char *name() const = 0;
-
-                /**
-                 * @brief Smallest meaningful time step in nanoseconds.
-                 *
-                 * The resolution tells the pacer (and callers) what
-                 * precision to expect.  A 48 kHz audio clock has
-                 * ~20 833 ns resolution (one sample period); a PTP
-                 * hardware clock may report 1 ns; the built-in wall
-                 * clock is ~1 ns (steady_clock).
-                 *
-                 * The pacer uses this to avoid polling finer than the
-                 * clock can distinguish and to qualify error
-                 * measurements in the periodic debug log.
-                 *
-                 * @return Resolution in nanoseconds (must be >= 1).
-                 */
-                virtual int64_t resolutionNs() const = 0;
-
-                /**
-                 * @brief Returns the current time in nanoseconds.
-                 *
-                 * The epoch is clock-defined (steady_clock epoch for
-                 * a wall clock, TAI epoch for PTP, stream start for
-                 * audio, etc.).
-                 *
-                 * @return Current time in nanoseconds from epoch.
-                 */
-                virtual int64_t nowNs() const = 0;
-
-                /**
-                 * @brief Blocks until the clock reaches the target time.
-                 *
-                 * The implementation determines how waiting is done:
-                 * an OS sleep for wall clocks, polling a queue depth
-                 * for audio clocks, waiting on a hardware timer for
-                 * PTP, etc.
-                 *
-                 * If @p targetNs is in the past, returns immediately.
-                 *
-                 * @param targetNs Target time in nanoseconds from the
-                 *                 clock's epoch.
-                 */
-                virtual void sleepUntilNs(int64_t targetNs) = 0;
-};
-
-/**
- * @brief Wall-clock implementation of FramePacerClock.
- * @ingroup time
- *
- * Uses std::chrono::steady_clock for timing and
- * std::this_thread::sleep_until for waiting.  This is the
- * default clock created by FramePacer when no external clock
- * is supplied.
- */
-class WallPacerClock : public FramePacerClock {
-        public:
-                const char *name() const override;
-                int64_t resolutionNs() const override;
-                int64_t nowNs() const override;
-                void sleepUntilNs(int64_t targetNs) override;
-};
 
 /**
  * @brief Drift-free frame pacer with pluggable clock and phase control.
@@ -126,7 +30,7 @@ class WallPacerClock : public FramePacerClock {
  *
  * By default the pacer uses the system's monotonic wall clock
  * (steady_clock).  Call @ref setClock() to supply a custom
- * @ref FramePacerClock for PTP, audio, or other time sources.
+ * @ref Clock for PTP, audio, or other time sources.
  * The clock is not owned — the caller must keep it alive for
  * the lifetime of the pacer.
  *
@@ -305,15 +209,15 @@ class FramePacer {
                  * @param clock The clock to use, or nullptr for
                  *              wall clock.
                  */
-                void setClock(FramePacerClock *clock);
+                void setClock(Clock *clock);
 
                 /**
                  * @brief Returns the active clock.
                  *
-                 * Never returns nullptr — a default WallPacerClock
+                 * Never returns nullptr — a default @ref WallClock
                  * is used when no external clock is set.
                  */
-                FramePacerClock *clock() const { return _clock; }
+                Clock *clock() const { return _clock; }
 
                 /**
                  * @brief Resets the pacer for a new run.
@@ -368,10 +272,62 @@ class FramePacer {
                  * recommendation.  The pacer jumps ahead so the
                  * next @c pace() targets the correct future deadline.
                  *
+                 * Prefer @ref noteDropped or @ref noteRepeated when
+                 * you want the bump to be counted in the
+                 * drop/repeat stats as well.
+                 *
                  * @param frames Number of frames to skip forward.
                  *               Must be positive.
                  */
                 void advance(int64_t frames);
+
+                /**
+                 * @brief Records that the caller rendered the frame
+                 *        returned by the most recent @c pace().
+                 *
+                 * Does not advance the frame counter (@c pace() has
+                 * already done so for this frame).  Bumps the
+                 * @ref renderedFrames stat so the caller's render
+                 * rate can be observed independently of pacer
+                 * bookkeeping.
+                 */
+                void noteRendered();
+
+                /**
+                 * @brief Records that the caller dropped @p frames
+                 *        frames (skipped their render) in response to
+                 *        a @ref PaceResult::framesToDrop
+                 *        recommendation.
+                 *
+                 * Advances the pacer by @p frames (via
+                 * @ref advance) so the pacer's timeline re-syncs to
+                 * wall time, and bumps the @ref droppedFrames stat.
+                 * No-op when @p frames is not positive.
+                 *
+                 * @param frames Number of frames the caller dropped.
+                 */
+                void noteDropped(int64_t frames);
+
+                /**
+                 * @brief Records that @p frames frame periods passed
+                 *        without new source data, so the caller
+                 *        repeated the last frame (or let time advance
+                 *        without rendering anything new).
+                 *
+                 * Advances the pacer by @p frames (via
+                 * @ref advance) so the pacer's timeline re-syncs to
+                 * wall time, and bumps the @ref repeatedFrames stat.
+                 * No-op when @p frames is not positive.
+                 *
+                 * Use this for slow-source scenarios where the sink
+                 * has no new data to render but must still keep its
+                 * pacer-time aligned with wall time — e.g. the SDL
+                 * player receiving a source that delivers frames
+                 * slower than the reported rate.
+                 *
+                 * @param frames Number of frame periods to skip.
+                 */
+                void noteRepeated(int64_t frames);
 
                 /**
                  * @brief Returns the number of frames paced since
@@ -386,6 +342,27 @@ class FramePacer {
                  * @return Missed-frame count.
                  */
                 int64_t missedFrames() const { return _missedFrames; }
+
+                /**
+                 * @brief Returns the number of frames the caller has
+                 *        rendered (reported via @ref noteRendered)
+                 *        since the last @c reset().
+                 */
+                int64_t renderedFrames() const { return _renderedFrames; }
+
+                /**
+                 * @brief Returns the number of frames the caller has
+                 *        dropped (reported via @ref noteDropped)
+                 *        since the last @c reset().
+                 */
+                int64_t droppedFrames() const { return _droppedFrames; }
+
+                /**
+                 * @brief Returns the number of frames the caller has
+                 *        repeated (reported via @ref noteRepeated)
+                 *        since the last @c reset().
+                 */
+                int64_t repeatedFrames() const { return _repeatedFrames; }
 
                 /**
                  * @brief Returns the current accumulated timing error.
@@ -407,11 +384,14 @@ class FramePacer {
 
                 String             _name;
                 FrameRate          _frameRate;
-                FramePacerClock   *_clock = nullptr;
+                Clock             *_clock = nullptr;
                 bool               _ownsClock = false;
                 int64_t            _originNs = 0;
                 int64_t            _frameCount = 0;
                 int64_t            _missedFrames = 0;
+                int64_t            _renderedFrames = 0;
+                int64_t            _droppedFrames = 0;
+                int64_t            _repeatedFrames = 0;
                 int64_t            _accumulatedErrorNs = 0;
                 int64_t            _lastPeriodicLogNs = 0;
                 int64_t            _frameCountAtLastLog = 0;

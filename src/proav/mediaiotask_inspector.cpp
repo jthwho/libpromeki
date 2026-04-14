@@ -7,15 +7,26 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdio>
+#include <ctime>
+#include <unistd.h>
 #include <promeki/mediaiotask_inspector.h>
 #include <promeki/audio.h>
 #include <promeki/audiodesc.h>
+#include <promeki/buffer.h>
+#include <promeki/clockdomain.h>
+#include <promeki/dir.h>
+#include <promeki/enumlist.h>
+#include <promeki/enums.h>
 #include <promeki/frame.h>
 #include <promeki/image.h>
 #include <promeki/imagedesc.h>
 #include <promeki/ltcdecoder.h>
+#include <promeki/pixeldesc.h>
+#include <promeki/mediatimestamp.h>
 #include <promeki/metadata.h>
 #include <promeki/timecode.h>
+#include <promeki/timestamp.h>
 #include <promeki/framerate.h>
 #include <promeki/logger.h>
 
@@ -43,6 +54,50 @@ String renderTc(const Timecode &tc) {
         return tc.toString().first();
 }
 
+// Real wall-clock (system_clock) nanoseconds since the UNIX epoch.
+// Separate from TimeStamp::now() because that uses steady_clock — its
+// epoch is "some time in the past" (boot on Linux), which makes no
+// sense when rendering ISO-8601.
+int64_t wallClockEpochNs() {
+        using namespace std::chrono;
+        return duration_cast<nanoseconds>(
+                        system_clock::now().time_since_epoch()).count();
+}
+
+// ISO-8601 UTC rendering of an epoch nanosecond value, with
+// millisecond precision — wire format that every downstream log tool
+// handles without additional parsing code.  Buffer must be at least
+// @ref IsoBufLen bytes; the extra headroom over the fixed 24-char
+// output keeps gcc's -Wformat-truncation analysis happy for
+// hypothetically-huge tm_year values.
+static constexpr size_t IsoBufLen = 64;
+void formatIsoUtc(int64_t epochNs, char *out, size_t outLen) {
+        if(epochNs <= 0) {
+                if(outLen > 0) out[0] = '\0';
+                return;
+        }
+        const time_t secs = static_cast<time_t>(epochNs / 1000000000LL);
+        const int msec    = static_cast<int>((epochNs / 1000000LL) % 1000LL);
+        struct tm tm;
+        gmtime_r(&secs, &tm);
+        std::snprintf(out, outLen,
+                "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+                tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                tm.tm_hour, tm.tm_min, tm.tm_sec, msec);
+}
+
+// Sums every plane's buffer into one byte count — gives the "on the
+// wire" frame size, which is what a stats-file reader most likely
+// wants.  Returns 0 if the image has no planes.
+size_t imageByteSize(const Image &img) {
+        size_t total = 0;
+        const Buffer::PtrList &planes = img.planes();
+        for(size_t i = 0; i < planes.size(); ++i) {
+                if(planes[i].isValid()) total += planes[i]->size();
+        }
+        return total;
+}
+
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -67,24 +122,26 @@ MediaIO::FormatDesc MediaIOTask_Inspector::formatDesc() {
                                 specs.insert(id, gs ? VariantSpec(*gs).setDefault(def)
                                                     : VariantSpec().setDefault(def));
                         };
-                        // Inspector defaults run *full* checks out of
-                        // the box: image data decode, LTC decode, A/V
-                        // sync offset, and continuity all on.  This
-                        // pairs with the TPG's default AvSync audio
-                        // mode (which now embeds LTC alongside the
-                        // click marker) so an inspector + default-
-                        // configured TPG end-to-end pair validates
-                        // everything the TPG produces with no extra
-                        // configuration.
+                        // Inspector defaults run every *in-memory* check
+                        // out of the box.  CaptureStats is deliberately
+                        // excluded from the default list because it
+                        // opens an output file — making it opt-in keeps
+                        // a default-configured inspector side-effect
+                        // free.
+                        EnumList allTests = EnumList::forType<InspectorTest>();
+                        allTests.append(InspectorTest::ImageData);
+                        allTests.append(InspectorTest::Ltc);
+                        allTests.append(InspectorTest::TcSync);
+                        allTests.append(InspectorTest::Continuity);
+                        allTests.append(InspectorTest::Timestamp);
+                        allTests.append(InspectorTest::AudioSamples);
                         s(MediaConfig::InspectorDropFrames,           true);
-                        s(MediaConfig::InspectorDecodeImageData,      true);
-                        s(MediaConfig::InspectorDecodeLtc,            true);
-                        s(MediaConfig::InspectorCheckTcSync,          true);
-                        s(MediaConfig::InspectorCheckContinuity,      true);
+                        s(MediaConfig::InspectorTests,                allTests);
                         s(MediaConfig::InspectorImageDataRepeatLines, int32_t(16));
                         s(MediaConfig::InspectorLtcChannel,           int32_t(0));
                         s(MediaConfig::InspectorSyncOffsetToleranceSamples, int32_t(0));
                         s(MediaConfig::InspectorLogIntervalSec,       1.0);
+                        s(MediaConfig::InspectorStatsFile,            String());
                         return specs;
                 },
                 []() -> Metadata { return Metadata(); }
@@ -123,6 +180,14 @@ void MediaIOTask_Inspector::resetState() {
         _hasPreviousSyncOffset = false;
         _previousSyncOffset    = 0;
         _samplesPerFrame       = 0.0;
+        _hasPreviousVideoTimestamp = false;
+        _hasPreviousAudioTimestamp = false;
+        _previousVideoTimestampNs  = 0;
+        _previousAudioTimestampNs  = 0;
+        _audioSamplesAnchorSet       = false;
+        _audioSamplesAnchorNs        = 0;
+        _audioSamplesPreviousStampNs = 0;
+        _audioSamplesCumulative      = 0;
         _frameIndex          = 0;
         _decodersInitialized = false;
         _imageDataDecoder    = ImageDataDecoder();
@@ -137,10 +202,6 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
 
         const MediaIO::Config &cfg = cmd.config;
 
-        _decodeImageData      = cfg.getAs<bool>(MediaConfig::InspectorDecodeImageData,  false);
-        _decodeLtc            = cfg.getAs<bool>(MediaConfig::InspectorDecodeLtc,         false);
-        _checkTcSync          = cfg.getAs<bool>(MediaConfig::InspectorCheckTcSync,       false);
-        _checkContinuity      = cfg.getAs<bool>(MediaConfig::InspectorCheckContinuity,   false);
         _dropFrames           = cfg.getAs<bool>(MediaConfig::InspectorDropFrames,        true);
         _imageDataRepeatLines = cfg.getAs<int>(MediaConfig::InspectorImageDataRepeatLines, 16);
         _ltcChannel           = cfg.getAs<int>(MediaConfig::InspectorLtcChannel,         0);
@@ -148,8 +209,32 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
                 cfg.getAs<int>(MediaConfig::InspectorSyncOffsetToleranceSamples, 0);
         _logIntervalSec       = cfg.getAs<double>(MediaConfig::InspectorLogIntervalSec,  1.0);
 
-        // Auto-resolve dependencies.  TC sync needs both decoders;
-        // continuity needs the picture decoder.
+        // Resolve the test selection.  The configured list drives
+        // which tests run: each entry turns one test on, anything
+        // absent stays off.  Test dependencies (TcSync → ImageData
+        // + Ltc, Continuity → ImageData) are auto-added after the
+        // explicit list has been interpreted so callers never have
+        // to know about them.  The default config (set in
+        // formatDesc) carries every test, so a default-configured
+        // inspector runs the full suite.
+        _decodeImageData    = false;
+        _decodeLtc          = false;
+        _checkTcSync        = false;
+        _checkContinuity    = false;
+        _checkTimestamp     = false;
+        _checkAudioSamples  = false;
+        _checkCaptureStats  = false;
+        const EnumList testsCfg = cfg.get(MediaConfig::InspectorTests).get<EnumList>();
+        for(size_t i = 0; i < testsCfg.size(); ++i) {
+                const int v = testsCfg.at(i).value();
+                if(v == InspectorTest::ImageData.value())         _decodeImageData    = true;
+                else if(v == InspectorTest::Ltc.value())          _decodeLtc          = true;
+                else if(v == InspectorTest::TcSync.value())       _checkTcSync        = true;
+                else if(v == InspectorTest::Continuity.value())   _checkContinuity    = true;
+                else if(v == InspectorTest::Timestamp.value())    _checkTimestamp     = true;
+                else if(v == InspectorTest::AudioSamples.value()) _checkAudioSamples  = true;
+                else if(v == InspectorTest::CaptureStats.value()) _checkCaptureStats  = true;
+        }
         if(_checkTcSync) {
                 _decodeImageData = true;
                 _decodeLtc       = true;
@@ -159,6 +244,19 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
         }
 
         resetState();
+
+        // Open the CaptureStats output file after resetState so any
+        // leftover state from a previous run is cleared first.  A file
+        // open error aborts open() so the caller sees the failure
+        // immediately rather than discovering later that rows were
+        // silently dropped.
+        if(_checkCaptureStats) {
+                String configured = cfg.getAs<String>(
+                        MediaConfig::InspectorStatsFile, String());
+                Error ferr = openCaptureStatsFile(configured);
+                if(ferr.isError()) return ferr;
+        }
+
         _isOpen = true;
 
         // Dump the resolved configuration into the log so any later
@@ -171,6 +269,12 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
         promekiInfo("A/V sync check        = %s", _checkTcSync ? "enabled" : "disabled");
         promekiInfo("A/V sync jitter tol   = %d samples", _syncOffsetToleranceSamples);
         promekiInfo("Continuity check      = %s", _checkContinuity ? "enabled" : "disabled");
+        promekiInfo("Timestamp check       = %s", _checkTimestamp ? "enabled" : "disabled");
+        promekiInfo("Audio samples check   = %s", _checkAudioSamples ? "enabled" : "disabled");
+        promekiInfo("Capture stats check   = %s%s%s",
+                    _checkCaptureStats ? "enabled (writing " : "disabled",
+                    _checkCaptureStats ? _statsFilePath.cstr() : "",
+                    _checkCaptureStats ? ")" : "");
         promekiInfo("Image data band       = %d scan lines per item", _imageDataRepeatLines);
         promekiInfo("Drop frames           = %s", _dropFrames ? "yes" : "no");
         promekiInfo("Log interval          = %.2f seconds", _logIntervalSec);
@@ -187,6 +291,7 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandOpen &cmd) {
 Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
         (void)cmd;
         _isOpen = false;
+        closeCaptureStatsFile();
 
         // Emit a final summary so the log contains a complete record
         // of the inspector's lifetime.  We snapshot under the mutex
@@ -269,6 +374,68 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
                 }
         }
 
+        if(_checkTimestamp) {
+                if(snap.framesWithVideoTimestamp == snap.framesProcessed) {
+                        promekiInfo("  Video timestamps: all %lld frames stamped",
+                                    static_cast<long long>(snap.framesProcessed));
+                } else {
+                        promekiWarn("  Video timestamps: %lld / %lld frames stamped "
+                                    "(%lld missing)",
+                                    static_cast<long long>(snap.framesWithVideoTimestamp),
+                                    static_cast<long long>(snap.framesProcessed),
+                                    static_cast<long long>(snap.framesProcessed -
+                                                          snap.framesWithVideoTimestamp));
+                }
+                if(snap.videoDeltaSamples > 0) {
+                        promekiInfo("  Video delta: min %.3f ms / avg %.3f ms / max %.3f ms  "
+                                    "(actual %.4f fps over %lld samples)",
+                                    snap.videoDeltaMinNs / 1.0e6,
+                                    snap.videoDeltaAvgNs / 1.0e6,
+                                    snap.videoDeltaMaxNs / 1.0e6,
+                                    snap.actualFps,
+                                    static_cast<long long>(snap.videoDeltaSamples));
+                }
+                if(snap.framesWithAudioTimestamp == snap.framesProcessed) {
+                        promekiInfo("  Audio timestamps: all %lld frames stamped",
+                                    static_cast<long long>(snap.framesProcessed));
+                } else if(snap.framesWithAudioTimestamp > 0) {
+                        promekiWarn("  Audio timestamps: %lld / %lld frames stamped "
+                                    "(%lld missing)",
+                                    static_cast<long long>(snap.framesWithAudioTimestamp),
+                                    static_cast<long long>(snap.framesProcessed),
+                                    static_cast<long long>(snap.framesProcessed -
+                                                          snap.framesWithAudioTimestamp));
+                }
+                if(snap.audioDeltaSamples > 0) {
+                        promekiInfo("  Audio delta: min %.3f ms / avg %.3f ms / max %.3f ms  "
+                                    "(%lld samples)",
+                                    snap.audioDeltaMinNs / 1.0e6,
+                                    snap.audioDeltaAvgNs / 1.0e6,
+                                    snap.audioDeltaMaxNs / 1.0e6,
+                                    static_cast<long long>(snap.audioDeltaSamples));
+                }
+        }
+
+        if(_checkAudioSamples) {
+                if(snap.audioSamplesFrames == 0) {
+                        promekiWarn("  Audio samples: no audio frames observed");
+                } else {
+                        promekiInfo("  Audio samples: per-frame min/avg/max = "
+                                    "%lld / %.2f / %lld  (%lld frames)",
+                                    static_cast<long long>(snap.audioSamplesMin),
+                                    snap.audioSamplesAvg,
+                                    static_cast<long long>(snap.audioSamplesMax),
+                                    static_cast<long long>(snap.audioSamplesFrames));
+                        if(snap.measuredAudioSampleRate > 0.0) {
+                                promekiInfo("  Audio samples: measured rate %.2f Hz "
+                                            "(%lld samples over %.3f s)",
+                                            snap.measuredAudioSampleRate,
+                                            static_cast<long long>(snap.audioSamplesTotal),
+                                            snap.audioSamplesSpanNs / 1.0e9);
+                        }
+                }
+        }
+
         if(_checkContinuity) {
                 if(snap.totalDiscontinuities == 0) {
                         promekiInfo("  Continuity: clean — no discontinuities detected");
@@ -283,6 +450,42 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandClose &cmd) {
         // Stats survive close so callers can retrieve final counts;
         // resetState happens on the next open.
         return Error::Ok;
+}
+
+void MediaIOTask_Inspector::decompressImages(Frame &frame) {
+        // Walk every image in the frame; any that carries a
+        // compressed PixelDesc gets replaced in-place with the
+        // decompressed output of Image::convert().  The target
+        // format is the first entry in the codec's decodeTargets
+        // list — guaranteed to be a native decode format so
+        // convert() skips the post-decode CSC stage.  If the codec
+        // advertises no decode targets (shouldn't happen for a
+        // working codec), we fall back to RGBA8_sRGB which every
+        // codec can reach via CSC.
+        Image::PtrList &images = frame.imageList();
+        for(size_t i = 0; i < images.size(); ++i) {
+                Image::Ptr &imgPtr = images[i];
+                if(!imgPtr.isValid() || !imgPtr->isCompressed()) continue;
+
+                const PixelDesc &srcPd = imgPtr->desc().pixelDesc();
+                PixelDesc targetPd;
+                if(!srcPd.decodeTargets().isEmpty()) {
+                        targetPd = PixelDesc(srcPd.decodeTargets()[0]);
+                } else {
+                        targetPd = PixelDesc(PixelDesc::RGBA8_sRGB);
+                }
+
+                Image decoded = imgPtr->convert(targetPd, imgPtr->metadata());
+                if(!decoded.isValid()) {
+                        promekiWarn("MediaIOTask_Inspector: failed to decompress "
+                                    "%s image on frame %lld — downstream checks "
+                                    "may report failures",
+                                    srcPd.name().cstr(),
+                                    static_cast<long long>(_frameIndex));
+                        continue;
+                }
+                imgPtr = Image::Ptr::create(std::move(decoded));
+        }
 }
 
 void MediaIOTask_Inspector::initDecoders(const Frame &frame) {
@@ -629,6 +832,146 @@ void MediaIOTask_Inspector::runContinuityCheck(InspectorEvent &event) {
         }
 }
 
+void MediaIOTask_Inspector::runTimestampCheck(const Frame &frame, InspectorEvent &event) {
+        event.timestampTestEnabled = true;
+
+        // Pull the per-essence MediaTimeStamps.  MediaIO is
+        // responsible for ensuring every essence carries one (backends
+        // with hardware timestamps set them directly; MediaIO fills in
+        // a Synthetic fallback otherwise), so "missing" here is a real
+        // fault — we surface it as a warning and a discontinuity.
+        if(!frame.imageList().isEmpty()) {
+                const Image::Ptr &imgPtr = frame.imageList()[0];
+                if(imgPtr.isValid()) {
+                        MediaTimeStamp mts = imgPtr->metadata()
+                                .get(Metadata::MediaTimeStamp)
+                                .get<MediaTimeStamp>();
+                        if(mts.isValid()) {
+                                event.videoTimestampValid = true;
+                                event.videoTimestampNs =
+                                        mts.timeStamp().nanoseconds() +
+                                        mts.offset().nanoseconds();
+                        }
+                }
+        }
+        if(!frame.audioList().isEmpty()) {
+                const Audio::Ptr &audPtr = frame.audioList()[0];
+                if(audPtr.isValid()) {
+                        MediaTimeStamp mts = audPtr->metadata()
+                                .get(Metadata::MediaTimeStamp)
+                                .get<MediaTimeStamp>();
+                        if(mts.isValid()) {
+                                event.audioTimestampValid = true;
+                                event.audioTimestampNs =
+                                        mts.timeStamp().nanoseconds() +
+                                        mts.offset().nanoseconds();
+                        }
+                }
+        }
+
+        // Compute frame-to-frame deltas only when both the current and
+        // the previous frame carried a valid timestamp — a gap resets
+        // the anchor so one missing frame doesn't poison the next
+        // measurement.
+        if(event.videoTimestampValid && _hasPreviousVideoTimestamp) {
+                event.videoTimestampDeltaNs =
+                        event.videoTimestampNs - _previousVideoTimestampNs;
+                event.videoTimestampDeltaValid = true;
+        }
+        if(event.audioTimestampValid && _hasPreviousAudioTimestamp) {
+                event.audioTimestampDeltaNs =
+                        event.audioTimestampNs - _previousAudioTimestampNs;
+                event.audioTimestampDeltaValid = true;
+        }
+
+        // Surface a missing timestamp as a discontinuity so it lands in
+        // the same warning channel as the other continuity faults.  We
+        // fire unconditionally rather than "only after a previously
+        // valid frame" because MediaIO guarantees one on every essence
+        // — the very first missing stamp is already a real failure.
+        if(!frame.imageList().isEmpty() && !event.videoTimestampValid) {
+                InspectorDiscontinuity d;
+                d.kind          = InspectorDiscontinuity::MissingVideoTimestamp;
+                d.previousValue = String("valid");
+                d.currentValue  = String("missing");
+                d.description   = String("Video MediaTimeStamp missing on frame");
+                event.discontinuities.pushToBack(d);
+        }
+        if(!frame.audioList().isEmpty() && !event.audioTimestampValid) {
+                InspectorDiscontinuity d;
+                d.kind          = InspectorDiscontinuity::MissingAudioTimestamp;
+                d.previousValue = String("valid");
+                d.currentValue  = String("missing");
+                d.description   = String("Audio MediaTimeStamp missing on frame");
+                event.discontinuities.pushToBack(d);
+        }
+
+        // Advance the per-essence anchors.  On a gap we reset rather
+        // than carry forward, so the next valid timestamp starts a
+        // fresh delta chain.
+        if(event.videoTimestampValid) {
+                _previousVideoTimestampNs  = event.videoTimestampNs;
+                _hasPreviousVideoTimestamp = true;
+        } else {
+                _hasPreviousVideoTimestamp = false;
+        }
+        if(event.audioTimestampValid) {
+                _previousAudioTimestampNs  = event.audioTimestampNs;
+                _hasPreviousAudioTimestamp = true;
+        } else {
+                _hasPreviousAudioTimestamp = false;
+        }
+}
+
+void MediaIOTask_Inspector::runAudioSamplesCheck(const Frame &frame, InspectorEvent &event) {
+        event.audioSamplesTestEnabled = true;
+
+        if(frame.audioList().isEmpty()) return;
+        const Audio::Ptr &audPtr = frame.audioList()[0];
+        if(!audPtr.isValid()) return;
+
+        const int64_t n = static_cast<int64_t>(audPtr->samples());
+        event.audioSamplesValid     = true;
+        event.audioSamplesThisFrame = n;
+
+        // Derive the measured sample rate from cumulative samples and
+        // the elapsed audio MediaTimeStamp span.  The *first* anchored
+        // frame establishes the origin; samples from that frame are
+        // deliberately excluded because the measurement window they
+        // mark is the time from anchor to the *next* frame, not the
+        // samples that precede the anchor.  Any timestamp gap resets
+        // the anchor so the next valid chunk starts a fresh window.
+        MediaTimeStamp audMts = audPtr->metadata()
+                .get(Metadata::MediaTimeStamp)
+                .get<MediaTimeStamp>();
+        if(!audMts.isValid()) {
+                _audioSamplesAnchorSet = false;
+                return;
+        }
+        const int64_t stampNs = audMts.timeStamp().nanoseconds() +
+                                audMts.offset().nanoseconds();
+        if(!_audioSamplesAnchorSet) {
+                _audioSamplesAnchorSet       = true;
+                _audioSamplesAnchorNs        = stampNs;
+                _audioSamplesPreviousStampNs = stampNs;
+                _audioSamplesCumulative      = 0;
+                return;
+        }
+        // Timestamps must advance monotonically for the rate
+        // derivation to be meaningful; a non-monotone stamp points at
+        // a gap or a backend-level fault, so we reset the anchor
+        // rather than feeding a nonsensical denominator.
+        if(stampNs <= _audioSamplesPreviousStampNs) {
+                _audioSamplesAnchorSet       = true;
+                _audioSamplesAnchorNs        = stampNs;
+                _audioSamplesPreviousStampNs = stampNs;
+                _audioSamplesCumulative      = 0;
+                return;
+        }
+        _audioSamplesCumulative      += n;
+        _audioSamplesPreviousStampNs  = stampNs;
+}
+
 void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
         if(_logIntervalSec <= 0.0) return;
 
@@ -720,6 +1063,61 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
                 }
         }
 
+        if(_checkTimestamp) {
+                if(snap.videoDeltaSamples > 0) {
+                        promekiInfo("  Video timestamps: delta min/avg/max = "
+                                    "%.3f / %.3f / %.3f ms  (actual %.4f fps, "
+                                    "%lld / %lld frames stamped)",
+                                    snap.videoDeltaMinNs / 1.0e6,
+                                    snap.videoDeltaAvgNs / 1.0e6,
+                                    snap.videoDeltaMaxNs / 1.0e6,
+                                    snap.actualFps,
+                                    static_cast<long long>(snap.framesWithVideoTimestamp),
+                                    static_cast<long long>(snap.framesProcessed));
+                } else if(snap.framesWithVideoTimestamp > 0) {
+                        promekiInfo("  Video timestamps: %lld / %lld frames stamped "
+                                    "(no delta yet)",
+                                    static_cast<long long>(snap.framesWithVideoTimestamp),
+                                    static_cast<long long>(snap.framesProcessed));
+                } else {
+                        promekiWarn("  Video timestamps: no stamped frames yet");
+                }
+                if(snap.audioDeltaSamples > 0) {
+                        promekiInfo("  Audio timestamps: delta min/avg/max = "
+                                    "%.3f / %.3f / %.3f ms  (%lld / %lld frames stamped)",
+                                    snap.audioDeltaMinNs / 1.0e6,
+                                    snap.audioDeltaAvgNs / 1.0e6,
+                                    snap.audioDeltaMaxNs / 1.0e6,
+                                    static_cast<long long>(snap.framesWithAudioTimestamp),
+                                    static_cast<long long>(snap.framesProcessed));
+                } else if(snap.framesWithAudioTimestamp > 0) {
+                        promekiInfo("  Audio timestamps: %lld / %lld frames stamped "
+                                    "(no delta yet)",
+                                    static_cast<long long>(snap.framesWithAudioTimestamp),
+                                    static_cast<long long>(snap.framesProcessed));
+                }
+        }
+
+        if(_checkAudioSamples && snap.audioSamplesFrames > 0) {
+                if(snap.measuredAudioSampleRate > 0.0) {
+                        promekiInfo("  Audio samples: per-frame min/avg/max = "
+                                    "%lld / %.2f / %lld  (measured rate %.2f Hz "
+                                    "over %lld samples / %.3f s)",
+                                    static_cast<long long>(snap.audioSamplesMin),
+                                    snap.audioSamplesAvg,
+                                    static_cast<long long>(snap.audioSamplesMax),
+                                    snap.measuredAudioSampleRate,
+                                    static_cast<long long>(snap.audioSamplesTotal),
+                                    snap.audioSamplesSpanNs / 1.0e9);
+                } else {
+                        promekiInfo("  Audio samples: per-frame min/avg/max = "
+                                    "%lld / %.2f / %lld  (rate not yet measurable)",
+                                    static_cast<long long>(snap.audioSamplesMin),
+                                    snap.audioSamplesAvg,
+                                    static_cast<long long>(snap.audioSamplesMax));
+                }
+        }
+
         // Continuity is reported only when there's something to say —
         // a clean stream stays silent.  When discontinuities have
         // accumulated we emit a warning summary so the line stands
@@ -734,20 +1132,225 @@ void MediaIOTask_Inspector::emitPeriodicLogIfDue() {
         _framesSinceLastLog = 0;
 }
 
+// ---------------------------------------------------------------------------
+// CaptureStats output file
+// ---------------------------------------------------------------------------
+
+Error MediaIOTask_Inspector::openCaptureStatsFile(const String &configured) {
+        closeCaptureStatsFile();
+
+        if(configured.isEmpty()) {
+                // Synthesize a unique path under Dir::temp().  PID +
+                // steady-clock nanoseconds is effectively collision
+                // free on any machine that isn't spawning thousands of
+                // inspectors per nanosecond.
+                const int64_t ns = TimeStamp::now().nanoseconds();
+                FilePath p = Dir::temp().path() /
+                        String::sprintf("promeki_inspector_stats_%d_%lld.tsv",
+                                        static_cast<int>(getpid()),
+                                        static_cast<long long>(ns));
+                _statsFilePath = p.toString();
+        } else {
+                _statsFilePath = configured;
+        }
+
+        _statsFile = std::fopen(_statsFilePath.cstr(), "w");
+        if(_statsFile == nullptr) {
+                promekiErr("MediaIOTask_Inspector: failed to open CaptureStats "
+                           "file '%s': %s",
+                           _statsFilePath.cstr(), std::strerror(errno));
+                _statsFilePath = String();
+                return Error::OpenFailed;
+        }
+
+        // Line-buffer so a crash or kill -9 still leaves each
+        // completed row on disk.  Stats files are append-only and
+        // small enough that the per-line flush cost is irrelevant.
+        std::setvbuf(_statsFile, nullptr, _IOLBF, 0);
+
+        // Header: comment lines describe the provenance + column
+        // semantics, followed by a single tab-separated column line.
+        // Every data row has the same column count and order so tools
+        // like awk / cut / column -t work out of the box.
+        char iso[64];
+        formatIsoUtc(wallClockEpochNs(), iso, sizeof(iso));
+        std::fprintf(_statsFile,
+                "# libpromeki Inspector CaptureStats\n"
+                "# generated=%s  pid=%d\n"
+                "# One record per frame.  Columns are tab-separated.\n"
+                "# Missing / inapplicable values are written as '-'.\n"
+                "# wall_* columns are real (system_clock) time.\n"
+                "# video_ts_ns / audio_ts_ns are raw nanoseconds in the\n"
+                "# clock domain named by the adjacent *_clock column —\n"
+                "# NOT necessarily the UNIX epoch.\n"
+                "# *_delta_* columns are frame-to-frame differences.\n",
+                iso, static_cast<int>(getpid()));
+        std::fprintf(_statsFile,
+                "frame\t"
+                "wall_ns\twall_iso\t"
+                "video_ts_ns\tvideo_clock\tvideo_delta_ns\tvideo_delta_ms\t"
+                "image_width\timage_height\tpixel_format\timage_bytes\t"
+                "audio_ts_ns\taudio_clock\taudio_delta_ns\taudio_delta_ms\t"
+                "audio_samples\taudio_format\taudio_rate_hz\taudio_channels\taudio_bytes\n");
+
+        promekiInfo("MediaIOTask_Inspector: CaptureStats writing to %s",
+                    _statsFilePath.cstr());
+        _statsWriteError = false;
+        return Error::Ok;
+}
+
+void MediaIOTask_Inspector::closeCaptureStatsFile() {
+        if(_statsFile != nullptr) {
+                std::fclose(_statsFile);
+                _statsFile = nullptr;
+        }
+        _statsFilePath = String();
+        _statsWriteError = false;
+}
+
+void MediaIOTask_Inspector::runCaptureStats(const Frame &frame,
+                                            const InspectorEvent &event) {
+        if(_statsFile == nullptr || _statsWriteError) return;
+
+        // Wall time = when we're writing the row.  system_clock (not
+        // steady_clock) so the ISO rendering is meaningful.
+        const int64_t wallNs = wallClockEpochNs();
+        char wallIso[64];
+        formatIsoUtc(wallNs, wallIso, sizeof(wallIso));
+
+        // -- Video columns --
+        String videoTsNs      = String("-");
+        String videoClockName = String("-");
+        String videoDeltaNs   = String("-");
+        String videoDeltaMs   = String("-");
+        String imgWidth       = String("-");
+        String imgHeight      = String("-");
+        String pixelFormat    = String("-");
+        String imageBytes     = String("-");
+        if(!frame.imageList().isEmpty()) {
+                const Image::Ptr &imgPtr = frame.imageList()[0];
+                if(imgPtr.isValid()) {
+                        imgWidth    = String::number(imgPtr->size().width());
+                        imgHeight   = String::number(imgPtr->size().height());
+                        pixelFormat = PixelDesc(imgPtr->desc().pixelDesc()).name();
+                        imageBytes  = String::number(static_cast<int64_t>(
+                                imageByteSize(*imgPtr)));
+
+                        MediaTimeStamp mts = imgPtr->metadata()
+                                .get(Metadata::MediaTimeStamp)
+                                .get<MediaTimeStamp>();
+                        if(mts.isValid()) {
+                                const int64_t ns =
+                                        mts.timeStamp().nanoseconds() +
+                                        mts.offset().nanoseconds();
+                                videoTsNs = String::number(ns);
+                                videoClockName = mts.domain().name();
+                        }
+                }
+        }
+        if(event.videoTimestampDeltaValid) {
+                const int64_t d = event.videoTimestampDeltaNs;
+                videoDeltaNs = String::number(d);
+                videoDeltaMs = String::sprintf("%.6f", d / 1.0e6);
+        }
+
+        // -- Audio columns --
+        String audioTsNs      = String("-");
+        String audioClockName = String("-");
+        String audioDeltaNs   = String("-");
+        String audioDeltaMs   = String("-");
+        String audioSamples   = String("-");
+        String audioFormat    = String("-");
+        String audioRateHz    = String("-");
+        String audioChannels  = String("-");
+        String audioBytes     = String("-");
+        if(!frame.audioList().isEmpty()) {
+                const Audio::Ptr &audPtr = frame.audioList()[0];
+                if(audPtr.isValid()) {
+                        const AudioDesc &ad = audPtr->desc();
+                        audioSamples  = String::number(static_cast<int64_t>(
+                                audPtr->samples()));
+                        audioFormat   = ad.dataTypeName();
+                        audioRateHz   = String::sprintf("%.2f", ad.sampleRate());
+                        audioChannels = String::number(static_cast<int64_t>(
+                                ad.channels()));
+                        audioBytes    = String::number(static_cast<int64_t>(
+                                ad.bytesPerSample() * ad.channels() *
+                                audPtr->samples()));
+
+                        MediaTimeStamp mts = audPtr->metadata()
+                                .get(Metadata::MediaTimeStamp)
+                                .get<MediaTimeStamp>();
+                        if(mts.isValid()) {
+                                const int64_t ns =
+                                        mts.timeStamp().nanoseconds() +
+                                        mts.offset().nanoseconds();
+                                audioTsNs = String::number(ns);
+                                audioClockName = mts.domain().name();
+                        }
+                }
+        }
+        if(event.audioTimestampDeltaValid) {
+                const int64_t d = event.audioTimestampDeltaNs;
+                audioDeltaNs = String::number(d);
+                audioDeltaMs = String::sprintf("%.6f", d / 1.0e6);
+        }
+
+        const int rc = std::fprintf(_statsFile,
+                "%lld\t"
+                "%lld\t%s\t"
+                "%s\t%s\t%s\t%s\t"
+                "%s\t%s\t%s\t%s\t"
+                "%s\t%s\t%s\t%s\t"
+                "%s\t%s\t%s\t%s\t%s\n",
+                static_cast<long long>(event.frameIndex),
+                static_cast<long long>(wallNs), wallIso,
+                videoTsNs.cstr(), videoClockName.cstr(),
+                videoDeltaNs.cstr(), videoDeltaMs.cstr(),
+                imgWidth.cstr(), imgHeight.cstr(),
+                pixelFormat.cstr(), imageBytes.cstr(),
+                audioTsNs.cstr(), audioClockName.cstr(),
+                audioDeltaNs.cstr(), audioDeltaMs.cstr(),
+                audioSamples.cstr(), audioFormat.cstr(),
+                audioRateHz.cstr(), audioChannels.cstr(), audioBytes.cstr());
+        if(rc < 0) {
+                promekiErr("MediaIOTask_Inspector: CaptureStats write "
+                           "failed on frame %lld (%s) — further rows "
+                           "will be dropped",
+                           static_cast<long long>(event.frameIndex),
+                           std::strerror(errno));
+                _statsWriteError = true;
+        }
+}
+
 Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
         if(!_isOpen) return Error::NotOpen;
         if(!cmd.frame.isValid()) return Error::InvalidArgument;
         stampWorkBegin();
 
-        initDecoders(*cmd.frame);
+        // Decompress any compressed images into a local Frame copy
+        // before running the checks.  The inspector is a sink so we
+        // never emit the decompressed frame downstream — this local
+        // work is purely to give the picture-side checks (ImageData
+        // decode, continuity) readable pixels.  Frame's shared-plane
+        // model means the copy is cheap when no decompression is
+        // needed; when it is, the compressed entries get replaced
+        // in-place with freshly-allocated decoded images.
+        Frame work = *cmd.frame;
+        decompressImages(work);
+
+        initDecoders(work);
 
         InspectorEvent event;
         event.frameIndex = _frameIndex;
 
-        if(_decodeImageData) runImageDataCheck(*cmd.frame, event);
-        if(_decodeLtc)       runLtcCheck(*cmd.frame, event);
-        runAvSyncCheck(*cmd.frame, event);
+        if(_decodeImageData) runImageDataCheck(work, event);
+        if(_decodeLtc)       runLtcCheck(work, event);
+        runAvSyncCheck(work, event);
         runContinuityCheck(event);
+        if(_checkTimestamp)  runTimestampCheck(work, event);
+        if(_checkAudioSamples) runAudioSamplesCheck(work, event);
+        if(_checkCaptureStats) runCaptureStats(work, event);
 
         // Update stats accumulator under the mutex.
         {
@@ -755,6 +1358,73 @@ Error MediaIOTask_Inspector::executeCmd(MediaIOCommandWrite &cmd) {
                 _stats.framesProcessed++;
                 if(event.pictureDecoded) _stats.framesWithPictureData++;
                 if(event.ltcDecoded)     _stats.framesWithLtc++;
+                if(event.videoTimestampValid) _stats.framesWithVideoTimestamp++;
+                if(event.audioTimestampValid) _stats.framesWithAudioTimestamp++;
+                if(event.videoTimestampDeltaValid) {
+                        // Running min/max/avg.  We keep avg as a
+                        // double: numerically safer than summing int64
+                        // deltas for a long capture, and the fractional
+                        // precision is useful when reporting actual
+                        // FPS.
+                        const int64_t d = event.videoTimestampDeltaNs;
+                        if(_stats.videoDeltaSamples == 0) {
+                                _stats.videoDeltaMinNs = d;
+                                _stats.videoDeltaMaxNs = d;
+                                _stats.videoDeltaAvgNs = static_cast<double>(d);
+                        } else {
+                                if(d < _stats.videoDeltaMinNs) _stats.videoDeltaMinNs = d;
+                                if(d > _stats.videoDeltaMaxNs) _stats.videoDeltaMaxNs = d;
+                                const double n = static_cast<double>(_stats.videoDeltaSamples + 1);
+                                _stats.videoDeltaAvgNs +=
+                                        (static_cast<double>(d) - _stats.videoDeltaAvgNs) / n;
+                        }
+                        _stats.videoDeltaSamples++;
+                        _stats.actualFps = _stats.videoDeltaAvgNs > 0.0
+                                ? 1.0e9 / _stats.videoDeltaAvgNs
+                                : 0.0;
+                }
+                if(event.audioTimestampDeltaValid) {
+                        const int64_t d = event.audioTimestampDeltaNs;
+                        if(_stats.audioDeltaSamples == 0) {
+                                _stats.audioDeltaMinNs = d;
+                                _stats.audioDeltaMaxNs = d;
+                                _stats.audioDeltaAvgNs = static_cast<double>(d);
+                        } else {
+                                if(d < _stats.audioDeltaMinNs) _stats.audioDeltaMinNs = d;
+                                if(d > _stats.audioDeltaMaxNs) _stats.audioDeltaMaxNs = d;
+                                const double n = static_cast<double>(_stats.audioDeltaSamples + 1);
+                                _stats.audioDeltaAvgNs +=
+                                        (static_cast<double>(d) - _stats.audioDeltaAvgNs) / n;
+                        }
+                        _stats.audioDeltaSamples++;
+                }
+                if(event.audioSamplesValid) {
+                        const int64_t n = event.audioSamplesThisFrame;
+                        if(_stats.audioSamplesFrames == 0) {
+                                _stats.audioSamplesMin = n;
+                                _stats.audioSamplesMax = n;
+                                _stats.audioSamplesAvg = static_cast<double>(n);
+                        } else {
+                                if(n < _stats.audioSamplesMin) _stats.audioSamplesMin = n;
+                                if(n > _stats.audioSamplesMax) _stats.audioSamplesMax = n;
+                                const double k = static_cast<double>(_stats.audioSamplesFrames + 1);
+                                _stats.audioSamplesAvg +=
+                                        (static_cast<double>(n) - _stats.audioSamplesAvg) / k;
+                        }
+                        _stats.audioSamplesFrames++;
+                        // Expose the anchor-based cumulative totals so
+                        // snapshot consumers and the periodic log can
+                        // report measured rate.  These mirror the
+                        // inspector-private anchor fields.
+                        _stats.audioSamplesTotal  = _audioSamplesCumulative;
+                        _stats.audioSamplesSpanNs = _audioSamplesAnchorSet
+                                ? (_audioSamplesPreviousStampNs - _audioSamplesAnchorNs)
+                                : 0;
+                        _stats.measuredAudioSampleRate = _stats.audioSamplesSpanNs > 0
+                                ? (static_cast<double>(_stats.audioSamplesTotal) * 1.0e9 /
+                                   static_cast<double>(_stats.audioSamplesSpanNs))
+                                : 0.0;
+                }
                 _stats.totalDiscontinuities += event.discontinuities.size();
                 _stats.hasLastEvent = true;
                 _stats.lastEvent    = event;

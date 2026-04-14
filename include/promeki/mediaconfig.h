@@ -440,47 +440,52 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDefault(true)
                                 .setDescription("Inspector drops frames after checks (sink behaviour)."));
 
-                /// @brief bool — decode the @ref ImageDataEncoder bands from the
-                /// picture.  Required for the picture-side timecode and frame ID
-                /// checks; auto-enabled when @ref InspectorCheckTcSync or
-                /// @ref InspectorCheckContinuity is set.
-                static inline const ID InspectorDecodeImageData = declareID("InspectorDecodeImageData",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(false)
-                                .setDescription("Inspector decodes image-data bands from each frame."));
-
-                /// @brief bool — decode LTC from the audio track.  Required for
-                /// the LTC vs picture-TC drift check; auto-enabled when
-                /// @ref InspectorCheckTcSync is set.
-                static inline const ID InspectorDecodeLtc = declareID("InspectorDecodeLtc",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(false)
-                                .setDescription("Inspector decodes LTC from each frame's audio."));
-
-                /// @brief bool — compare the picture timecode against the audio
-                /// LTC and report the per-frame offset, in audio samples, on
-                /// every frame.  Implies @ref InspectorDecodeImageData and
-                /// @ref InspectorDecodeLtc.
+                /// @brief EnumList @ref InspectorTest — list of inspector
+                /// tests to run.
                 ///
-                /// In professional video workflows audio and video are locked
-                /// to the same reference, so the offset is expected to be a
-                /// fixed phase relationship and any *change* from one frame
-                /// to the next is a real fault.  Combined with
-                /// @ref InspectorSyncOffsetToleranceSamples, the inspector
-                /// fires a discontinuity warning whenever the offset moves
-                /// by more than the configured tolerance.
-                static inline const ID InspectorCheckTcSync = declareID("InspectorCheckTcSync",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(false)
-                                .setDescription("Inspector reports picture-TC vs LTC offset in samples."));
+                /// The default lists every known test
+                /// (@c ImageData, @c Ltc, @c TcSync, @c Continuity,
+                /// @c Timestamp, @c AudioSamples) so a default-
+                /// configured inspector runs the full suite.  Set to
+                /// a shorter list to disable tests; an empty list
+                /// disables every test.
+                /// Dependencies are still auto-resolved (e.g. asking
+                /// for @c TcSync implicitly also enables @c ImageData
+                /// and @c Ltc).
+                ///
+                /// @par Example
+                /// @code
+                /// // Only run the timestamp and A/V sync checks:
+                /// EnumList tests = EnumList::forType<InspectorTest>();
+                /// tests.append(InspectorTest::Timestamp);
+                /// tests.append(InspectorTest::TcSync);
+                /// cfg.set(MediaConfig::InspectorTests, tests);
+                /// // Equivalent string form on the command line:
+                /// //   InspectorTests=Timestamp,TcSync
+                /// @endcode
+                static inline const ID InspectorTests = declareID("InspectorTests",
+                        VariantSpec().setType(Variant::TypeEnumList)
+                                .setDefault([]{
+                                        EnumList l = EnumList::forType<InspectorTest>();
+                                        l.append(InspectorTest::ImageData);
+                                        l.append(InspectorTest::Ltc);
+                                        l.append(InspectorTest::TcSync);
+                                        l.append(InspectorTest::Continuity);
+                                        l.append(InspectorTest::Timestamp);
+                                        l.append(InspectorTest::AudioSamples);
+                                        return l;
+                                }())
+                                .setEnumType(InspectorTest::Type)
+                                .setDescription(
+                                        "List of inspector tests to run."));
 
                 /// @brief int — maximum allowed sample-to-sample change in the
                 /// picture-vs-LTC sync offset before the inspector flags a
                 /// discontinuity.  Default 0: any change is reported.  Set
                 /// higher (e.g. 1, 2, ...) when the upstream encode/decode
                 /// pair has a known small jitter that should not generate
-                /// noise.  Only meaningful when @ref InspectorCheckTcSync
-                /// is enabled.
+                /// noise.  Only meaningful when the @c TcSync test is
+                /// enabled.
                 static inline const ID InspectorSyncOffsetToleranceSamples = declareID("InspectorSyncOffsetToleranceSamples",
                         VariantSpec().setType(Variant::TypeS32)
                                 .setDefault(int32_t(0))
@@ -489,17 +494,6 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                         "Max allowed sample-to-sample change in "
                                         "picture-vs-LTC sync offset before flagging "
                                         "a discontinuity (0 = any change)."));
-
-                /// @brief bool — track frame number, timecode, and stream ID
-                /// continuity from one frame to the next.  Any unexpected jump
-                /// (skipped frame, repeated frame, stream-ID change, TC
-                /// discontinuity) becomes a discontinuity record on the per-frame
-                /// event with both the previous and current values.  Implies
-                /// @ref InspectorDecodeImageData.
-                static inline const ID InspectorCheckContinuity = declareID("InspectorCheckContinuity",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(false)
-                                .setDescription("Inspector tracks TC / frame# / streamID continuity."));
 
                 /// @brief int — scan lines per @ref ImageDataEncoder band.  Must
                 /// match the encoder's @ref TpgDataEncoderRepeatLines so the
@@ -526,6 +520,25 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDefault(1.0)
                                 .setMin(0.0)
                                 .setDescription("Inspector periodic-summary log interval, seconds."));
+
+                /// @brief String — output file for the @c CaptureStats
+                /// inspector test.
+                ///
+                /// One tab-separated row per frame is appended to the
+                /// named file while the @c CaptureStats test is enabled
+                /// via @ref InspectorTests.  If the value is empty a
+                /// unique filename is generated inside
+                /// @c Dir::temp() (form:
+                /// @c promeki_inspector_stats_<pid>_<epoch_ns>.tsv).
+                /// The resolved path is logged at @c Info level when
+                /// the file is opened.
+                static inline const ID InspectorStatsFile = declareID("InspectorStatsFile",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String())
+                                .setDescription(
+                                        "Output file for Inspector CaptureStats test "
+                                        "(TSV, one row per frame).  Empty = auto-name "
+                                        "in Dir::temp()."));
 
                 // ============================================================
                 // Converter (MediaIOTask_Converter)
@@ -742,6 +755,24 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                         VariantSpec().setType(Variant::TypeString)
                                 .setDefault(String())
                                 .setDescription("SDL window title bar text."));
+
+                /// @brief String — which SDL player implementation to use.
+                ///
+                /// - @c "framesync" (default) — @c FrameSync-based
+                ///   @c SDLPlayerTask.  Runs video repeat/drop +
+                ///   audio drift-corrected resampling through a
+                ///   shared sync object; the sink's pull thread
+                ///   drives pacing instead of the strand worker.
+                /// - @c "pacer" — legacy FramePacer-based
+                ///   @c SDLPlayerOldTask (deprecated; retained for
+                ///   side-by-side comparison).
+                static inline const ID SdlPlayerImpl = declareID("SdlPlayerImpl",
+                        VariantSpec().setType(Variant::TypeString)
+                                .setDefault(String("framesync"))
+                                .setDescription(
+                                        "SDL player implementation: "
+                                        "\"framesync\" (default) or "
+                                        "\"pacer\" (deprecated)."));
 
                 // ============================================================
                 // RTP sink (MediaIOTask_Rtp)
@@ -986,37 +1017,6 @@ class MediaConfig : public VariantDatabase<MediaConfigTag> {
                                 .setDefault(String("auto"))
                                 .setDescription("ALSA capture device for paired audio. "
                                         "\"auto\" = auto-detect, \"none\" or empty = disabled."));
-
-                /// @brief bool — enable audio clock-drift correction.
-                /// When true, the audio ring buffer dynamically adjusts its
-                /// resampling ratio to keep the fill level stable, compensating
-                /// for clock drift between the ALSA capture clock and the V4L2
-                /// video frame clock.  Default: true.
-                static inline const ID V4l2AudioDriftCorrection = declareID("V4l2AudioDriftCorrection",
-                        VariantSpec().setType(Variant::TypeBool)
-                                .setDefault(true)
-                                .setDescription("Enable ALSA/V4L2 audio clock-drift correction."));
-
-                /// @brief double — proportional gain for drift correction.
-                /// Controls how aggressively the resampler compensates for
-                /// clock drift.  Small values (0.001) give smooth, inaudible
-                /// corrections; larger values track drift faster but risk
-                /// audible pitch shifts.  Default: 0.001.
-                static inline const ID V4l2AudioDriftGain = declareID("V4l2AudioDriftGain",
-                        VariantSpec().setType(Variant::TypeDouble)
-                                .setDefault(0.001)
-                                .setRange(0.0001, 0.1)
-                                .setDescription("Drift correction proportional gain."));
-
-                /// @brief double — drift correction target fill level in seconds.
-                /// The ring buffer aims to keep this much audio buffered.
-                /// Lower values reduce capture latency; higher values absorb
-                /// more jitter.  Default: 0.1 (100 ms).
-                static inline const ID V4l2AudioDriftTarget = declareID("V4l2AudioDriftTarget",
-                        VariantSpec().setType(Variant::TypeDouble)
-                                .setDefault(0.1)
-                                .setRange(0.01, 2.0)
-                                .setDescription("Drift correction target fill level in seconds."));
 
                 // ---- V4L2 camera controls ----
                 //

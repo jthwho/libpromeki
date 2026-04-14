@@ -7,19 +7,25 @@
 
 #include <doctest/doctest.h>
 #include <promeki/framepacer.h>
+#include <promeki/clock.h>
 
 using namespace promeki;
 
 // ---- Mock clock ----
 //
-// Deterministic clock for testing.  Time only advances when the
+// Deterministic Clock for testing.  Time only advances when the
 // test calls advanceTo() or when sleepUntilNs() is called (which
 // instantly teleports to the target).
 
-class MockPacerClock : public FramePacerClock {
+class MockClock : public Clock {
         public:
-                const char *name() const override { return "mock"; }
+                ClockDomain domain() const override {
+                        return ClockDomain(ClockDomain::Synthetic);
+                }
                 int64_t resolutionNs() const override { return 1; }
+                ClockJitter jitter() const override {
+                        return ClockJitter{Duration(), Duration()};
+                }
 
                 int64_t nowNs() const override { return _nowNs; }
 
@@ -50,7 +56,7 @@ static int64_t periodNs(const FrameRate &fps) {
 TEST_CASE("FramePacer: default construction has wall clock") {
         FramePacer pacer;
         CHECK(pacer.clock() != nullptr);
-        CHECK(String(pacer.clock()->name()) == String("wall"));
+        CHECK(pacer.clock()->domain() == ClockDomain(ClockDomain::SystemMonotonic));
         CHECK(pacer.frameCount() == 0);
         CHECK(pacer.missedFrames() == 0);
 }
@@ -66,21 +72,20 @@ TEST_CASE("FramePacer: named construction") {
 // ============================================================================
 
 TEST_CASE("FramePacer: setClock replaces default") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         pacer.setClock(&mock);
         CHECK(pacer.clock() == &mock);
-        CHECK(String(pacer.clock()->name()) == String("mock"));
 }
 
 TEST_CASE("FramePacer: setClock(nullptr) restores wall clock") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         pacer.setClock(&mock);
         pacer.setClock(nullptr);
         CHECK(pacer.clock() != nullptr);
         CHECK(pacer.clock() != &mock);
-        CHECK(String(pacer.clock()->name()) == String("wall"));
+        CHECK(pacer.clock()->domain() == ClockDomain(ClockDomain::SystemMonotonic));
 }
 
 // ============================================================================
@@ -88,7 +93,7 @@ TEST_CASE("FramePacer: setClock(nullptr) restores wall clock") {
 // ============================================================================
 
 TEST_CASE("FramePacer: first pace returns frame 0 immediately") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         pacer.setFrameRate(FrameRate(FrameRate::FPS_24));
         pacer.setClock(&mock);
@@ -102,7 +107,7 @@ TEST_CASE("FramePacer: first pace returns frame 0 immediately") {
 }
 
 TEST_CASE("FramePacer: steady pacing with perfect clock") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         pacer.setFrameRate(FrameRate(FrameRate::FPS_24));
         pacer.setClock(&mock);
@@ -134,7 +139,7 @@ TEST_CASE("FramePacer: steady pacing with perfect clock") {
 // ============================================================================
 
 TEST_CASE("FramePacer: missed deadline reports framesToDrop") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         FrameRate fps(FrameRate::FPS_24);
         pacer.setFrameRate(fps);
@@ -157,7 +162,7 @@ TEST_CASE("FramePacer: missed deadline reports framesToDrop") {
 }
 
 TEST_CASE("FramePacer: pacer does not auto-advance on miss") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         FrameRate fps(FrameRate::FPS_30);
         pacer.setFrameRate(fps);
@@ -186,7 +191,7 @@ TEST_CASE("FramePacer: pacer does not auto-advance on miss") {
 // ============================================================================
 
 TEST_CASE("FramePacer: advance skips frames and corrects timeline") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         FrameRate fps(FrameRate::FPS_24);
         pacer.setFrameRate(fps);
@@ -216,11 +221,144 @@ TEST_CASE("FramePacer: advance skips frames and corrects timeline") {
 }
 
 // ============================================================================
+// noteRendered / noteDropped / noteRepeated
+// ============================================================================
+
+TEST_CASE("FramePacer: noteRendered bumps rendered counter only") {
+        MockClock mock;
+        FramePacer pacer;
+        pacer.setFrameRate(FrameRate(FrameRate::FPS_24));
+        pacer.setClock(&mock);
+        pacer.reset();
+
+        pacer.pace();
+        int64_t countBefore = pacer.frameCount();
+        pacer.noteRendered();
+        CHECK(pacer.renderedFrames() == 1);
+        CHECK(pacer.droppedFrames() == 0);
+        CHECK(pacer.repeatedFrames() == 0);
+        CHECK(pacer.frameCount() == countBefore);
+
+        pacer.noteRendered();
+        pacer.noteRendered();
+        CHECK(pacer.renderedFrames() == 3);
+}
+
+TEST_CASE("FramePacer: noteDropped advances counter and bumps dropped stat") {
+        MockClock mock;
+        FramePacer pacer;
+        FrameRate fps(FrameRate::FPS_24);
+        pacer.setFrameRate(fps);
+        pacer.setClock(&mock);
+        pacer.reset();
+
+        pacer.pace();                       // frame 0
+        CHECK(pacer.frameCount() == 0);
+
+        pacer.noteDropped(3);
+        CHECK(pacer.frameCount() == 3);
+        CHECK(pacer.droppedFrames() == 3);
+        CHECK(pacer.repeatedFrames() == 0);
+        CHECK(pacer.renderedFrames() == 0);
+
+        // Non-positive drop counts are no-ops.
+        pacer.noteDropped(0);
+        pacer.noteDropped(-5);
+        CHECK(pacer.frameCount() == 3);
+        CHECK(pacer.droppedFrames() == 3);
+}
+
+TEST_CASE("FramePacer: noteRepeated advances counter and bumps repeated stat") {
+        MockClock mock;
+        FramePacer pacer;
+        FrameRate fps(FrameRate::FPS_30);
+        pacer.setFrameRate(fps);
+        pacer.setClock(&mock);
+        pacer.reset();
+
+        pacer.pace();                       // frame 0
+
+        pacer.noteRepeated(2);
+        CHECK(pacer.frameCount() == 2);
+        CHECK(pacer.repeatedFrames() == 2);
+        CHECK(pacer.droppedFrames() == 0);
+        CHECK(pacer.renderedFrames() == 0);
+
+        pacer.noteRepeated(0);
+        pacer.noteRepeated(-1);
+        CHECK(pacer.frameCount() == 2);
+        CHECK(pacer.repeatedFrames() == 2);
+}
+
+TEST_CASE("FramePacer: reset clears all note* counters") {
+        MockClock mock;
+        FramePacer pacer;
+        pacer.setFrameRate(FrameRate(FrameRate::FPS_24));
+        pacer.setClock(&mock);
+        pacer.reset();
+
+        pacer.pace();
+        pacer.noteRendered();
+        pacer.noteDropped(2);
+        pacer.noteRepeated(3);
+
+        CHECK(pacer.renderedFrames() == 1);
+        CHECK(pacer.droppedFrames() == 2);
+        CHECK(pacer.repeatedFrames() == 3);
+
+        pacer.reset();
+        CHECK(pacer.renderedFrames() == 0);
+        CHECK(pacer.droppedFrames() == 0);
+        CHECK(pacer.repeatedFrames() == 0);
+
+        // reset(origin) overload also clears them.
+        pacer.pace();
+        pacer.noteRendered();
+        pacer.noteDropped(1);
+        pacer.noteRepeated(4);
+        pacer.reset(1000000LL);
+        CHECK(pacer.renderedFrames() == 0);
+        CHECK(pacer.droppedFrames() == 0);
+        CHECK(pacer.repeatedFrames() == 0);
+}
+
+TEST_CASE("FramePacer: noteRepeated re-syncs timeline after slow source") {
+        // Slow-source scenario: target 25 fps, frames arrive at 12.5 fps.
+        // Use FPS_25 so the period (40 ms) divides evenly into ns — 30 fps
+        // has an inexact period and integer truncation causes the "late"
+        // delta to fall just below a full period.
+        MockClock mock;
+        FramePacer pacer;
+        FrameRate fps(FrameRate::FPS_25);
+        int64_t period = periodNs(fps);
+        pacer.setFrameRate(fps);
+        pacer.setClock(&mock);
+        pacer.reset();
+
+        pacer.pace();  // frame 0, origin = 0
+
+        // Simulate five source frames arriving one full period late each.
+        // Each pace() should recommend exactly one drop; noteRepeated
+        // then re-syncs pacer-time to wall time so no backlog grows.
+        for(int i = 0; i < 5; i++) {
+                mock.advanceBy(period * 2);
+                auto r = pacer.pace();
+                CHECK(r.framesToDrop >= 1);
+                if(r.framesToDrop > 0) {
+                        pacer.noteRepeated(r.framesToDrop);
+                }
+        }
+
+        CHECK(pacer.repeatedFrames() >= 5);
+        CHECK(pacer.frameCount() >= 10);
+}
+
+// ============================================================================
 // Error compensation
 // ============================================================================
 
 TEST_CASE("FramePacer: oversleep compensated on next frame") {
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         FrameRate fps(FrameRate::FPS_24);
         int64_t period = periodNs(fps);
@@ -251,7 +389,7 @@ TEST_CASE("FramePacer: oversleep compensated on next frame") {
 TEST_CASE("FramePacer: catch-up returns immediately when behind") {
         // When accumulated error exceeds remaining time, pace()
         // should not sleep — the pipeline runs at full speed.
-        MockPacerClock mock;
+        MockClock mock;
         FramePacer pacer;
         FrameRate fps(FrameRate::FPS_24);
         int64_t period = periodNs(fps);
@@ -284,7 +422,7 @@ TEST_CASE("FramePacer: catch-up returns immediately when behind") {
 // ============================================================================
 
 TEST_CASE("FramePacer: reset with explicit origin") {
-        MockPacerClock mock;
+        MockClock mock;
         mock.advanceTo(1000000000LL);  // clock is at 1 second
 
         FramePacer pacer;
@@ -305,7 +443,7 @@ TEST_CASE("FramePacer: reset with explicit origin") {
 }
 
 TEST_CASE("FramePacer: reset with future origin sleeps") {
-        MockPacerClock mock;
+        MockClock mock;
         mock.advanceTo(0);
 
         FramePacer pacer;
@@ -339,12 +477,12 @@ TEST_CASE("FramePacer: pace with invalid rate is no-op") {
 }
 
 // ============================================================================
-// WallPacerClock
+// WallClock
 // ============================================================================
 
-TEST_CASE("WallPacerClock: basic properties") {
-        WallPacerClock clock;
-        CHECK(String(clock.name()) == String("wall"));
+TEST_CASE("WallClock: basic properties") {
+        WallClock clock;
+        CHECK(clock.domain() == ClockDomain(ClockDomain::SystemMonotonic));
         CHECK(clock.resolutionNs() == 1);
         CHECK(clock.nowNs() > 0);
 

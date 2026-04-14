@@ -12,30 +12,11 @@ PROMEKI_NAMESPACE_BEGIN
 
 PROMEKI_DEBUG(FramePacer)
 
-// ---- WallPacerClock ----
-
-const char *WallPacerClock::name() const { return "wall"; }
-
-int64_t WallPacerClock::resolutionNs() const {
-        // steady_clock is typically nanosecond or sub-nanosecond.
-        return 1;
-}
-
-int64_t WallPacerClock::nowNs() const {
-        return TimeStamp::now().nanoseconds();
-}
-
-void WallPacerClock::sleepUntilNs(int64_t targetNs) {
-        auto tp = TimeStamp::Clock::time_point(
-                std::chrono::nanoseconds(targetNs));
-        std::this_thread::sleep_until(tp);
-}
-
 // ---- FramePacer ----
 
 void FramePacer::ensureClock() {
         if(_clock == nullptr) {
-                _clock = new WallPacerClock();
+                _clock = new WallClock();
                 _ownsClock = true;
         }
 }
@@ -54,7 +35,7 @@ FramePacer::~FramePacer() {
         if(_ownsClock) delete _clock;
 }
 
-void FramePacer::setClock(FramePacerClock *clock) {
+void FramePacer::setClock(Clock *clock) {
         if(_ownsClock) {
                 delete _clock;
                 _ownsClock = false;
@@ -86,7 +67,7 @@ void FramePacer::periodicDebugLog(int64_t nowNs) {
                      actualFps,
                      (double)_accumulatedErrorNs / 1e6,
                      static_cast<long long>(_missedFrames),
-                     _clock->name(),
+                     _clock->domain().name().cstr(),
                      (double)_clock->resolutionNs() / 1e3);
 
         _lastPeriodicLogNs = nowNs;
@@ -99,6 +80,9 @@ void FramePacer::reset() {
         _originNs = 0;
         _frameCount = 0;
         _missedFrames = 0;
+        _renderedFrames = 0;
+        _droppedFrames = 0;
+        _repeatedFrames = 0;
         _accumulatedErrorNs = 0;
         _lastPeriodicLogNs = 0;
         _frameCountAtLastLog = 0;
@@ -107,13 +91,16 @@ void FramePacer::reset() {
         promekiDebug("FramePacer[%s]: reset (rate %s, origin=auto, clock=%s)",
                      _name.cstr(),
                      _frameRate.isValid() ? _frameRate.toString().cstr() : "none",
-                     _clock->name());
+                     _clock->domain().name().cstr());
 }
 
 void FramePacer::reset(int64_t originNs) {
         _originNs = originNs;
         _frameCount = 0;
         _missedFrames = 0;
+        _renderedFrames = 0;
+        _droppedFrames = 0;
+        _repeatedFrames = 0;
         _accumulatedErrorNs = 0;
         _lastPeriodicLogNs = 0;
         _frameCountAtLastLog = 0;
@@ -123,7 +110,7 @@ void FramePacer::reset(int64_t originNs) {
                      _name.cstr(),
                      _frameRate.isValid() ? _frameRate.toString().cstr() : "none",
                      static_cast<long long>(originNs),
-                     _clock->name());
+                     _clock->domain().name().cstr());
 }
 
 FramePacer::PaceResult FramePacer::pace() {
@@ -147,7 +134,7 @@ FramePacer::PaceResult FramePacer::pace() {
                              static_cast<long long>(_originNs),
                              _frameRate.toString().cstr(),
                              _frameRate.frameDuration().toSecondsDouble() * 1000.0,
-                             _clock->name());
+                             _clock->domain().name().cstr());
                 return result;
         }
 
@@ -185,14 +172,29 @@ FramePacer::PaceResult FramePacer::pace() {
                 result.framesToDrop = recommended;
                 result.error = Duration::fromNanoseconds(lateNs);
 
-                promekiWarn("FramePacer[%s]: frame %lld missed deadline by "
-                            "%.3f ms, recommend dropping %lld frame(s) "
-                            "(total misses: %lld)",
-                            _name.cstr(),
-                            static_cast<long long>(_frameCount),
-                            (double)lateNs / 1e6,
-                            static_cast<long long>(recommended),
-                            static_cast<long long>(_missedFrames));
+                // Only warn when the lateness exceeds a full frame
+                // period (i.e. the recommendation is actually to drop
+                // something).  Sub-period misses are common and not
+                // actionable — log them at debug level instead so
+                // they show up only when the caller opts in.
+                if(recommended > 0) {
+                        promekiWarn("FramePacer[%s]: frame %lld missed deadline by "
+                                    "%.3f ms, recommend dropping %lld frame(s) "
+                                    "(total misses: %lld)",
+                                    _name.cstr(),
+                                    static_cast<long long>(_frameCount),
+                                    (double)lateNs / 1e6,
+                                    static_cast<long long>(recommended),
+                                    static_cast<long long>(_missedFrames));
+                } else {
+                        promekiDebug("FramePacer[%s]: frame %lld missed deadline by "
+                                     "%.3f ms (<1 period, no drops needed, "
+                                     "total misses: %lld)",
+                                     _name.cstr(),
+                                     static_cast<long long>(_frameCount),
+                                     (double)lateNs / 1e6,
+                                     static_cast<long long>(_missedFrames));
+                }
 
                 periodicDebugLog(nowNs);
                 return result;
@@ -262,6 +264,22 @@ void FramePacer::advance(int64_t frames) {
                      static_cast<long long>(frames),
                      static_cast<long long>(_frameCount),
                      (double)_accumulatedErrorNs / 1e6);
+}
+
+void FramePacer::noteRendered() {
+        _renderedFrames++;
+}
+
+void FramePacer::noteDropped(int64_t frames) {
+        if(frames <= 0) return;
+        _droppedFrames += frames;
+        advance(frames);
+}
+
+void FramePacer::noteRepeated(int64_t frames) {
+        if(frames <= 0) return;
+        _repeatedFrames += frames;
+        advance(frames);
 }
 
 PROMEKI_NAMESPACE_END

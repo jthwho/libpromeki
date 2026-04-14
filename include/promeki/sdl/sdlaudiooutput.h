@@ -42,7 +42,7 @@ PROMEKI_NAMESPACE_BEGIN
 class SDLAudioOutput {
         public:
                 SDLAudioOutput();
-                ~SDLAudioOutput();
+                virtual ~SDLAudioOutput();
 
                 SDLAudioOutput(const SDLAudioOutput &) = delete;
                 SDLAudioOutput &operator=(const SDLAudioOutput &) = delete;
@@ -91,9 +91,12 @@ class SDLAudioOutput {
                  *
                  * Useful for monitoring buffer health and A/V sync.
                  *
+                 * Virtual so tests can supply a controllable stand-in
+                 * without opening a real SDL audio device.
+                 *
                  * @return Queued byte count, or 0 if not open.
                  */
-                int queuedBytes() const;
+                virtual int queuedBytes() const;
 
                 /**
                  * @brief Returns the configured audio descriptor.
@@ -107,9 +110,12 @@ class SDLAudioOutput {
                  * derive how many bytes the device has consumed:
                  * <tt>consumed = totalBytesPushed() - queuedBytes()</tt>.
                  *
+                 * Virtual so tests can supply a controllable stand-in
+                 * without opening a real SDL audio device.
+                 *
                  * @return Cumulative byte count.
                  */
-                int64_t totalBytesPushed() const { return _totalBytesPushed; }
+                virtual int64_t totalBytesPushed() const { return _totalBytesPushed; }
 
         private:
                 SDL_AudioStream *_stream = nullptr;

@@ -698,6 +698,7 @@ set(PROMEKI_SOURCES
     src/core/bufferpool.cpp
     src/core/char.cpp
     src/core/ciepoint.cpp
+    src/core/clock.cpp
     src/core/clockdomain.cpp
     src/core/cmdlineparser.cpp
     src/core/color.cpp
@@ -764,6 +765,7 @@ set(PROMEKI_SOURCES
     src/core/stringdata.cpp
     src/core/stringiodevice.cpp
     src/core/stringlist.cpp
+    src/core/syntheticclock.cpp
     src/core/system.cpp
     src/core/terminal.cpp
     src/core/textstream.cpp
@@ -882,6 +884,7 @@ if(PROMEKI_ENABLE_PROAV)
         src/proav/codec.cpp
         src/proav/encodeddesc.cpp
         src/proav/frame.cpp
+        src/proav/framesync.cpp
         src/proav/image.cpp
         src/proav/imagedataencoder.cpp
         src/proav/imagedatadecoder.cpp
@@ -1204,9 +1207,11 @@ if(PROMEKI_BUILD_SDL)
 
     set(PROMEKI_SDL_HEADERS
         include/promeki/sdl/sdlapplication.h
+        include/promeki/sdl/sdlaudioclock.h
         include/promeki/sdl/sdlaudiooutput.h
         include/promeki/sdl/sdleventpump.h
         include/promeki/sdl/sdlplayer.h
+        include/promeki/sdl/sdlplayerold.h
         include/promeki/sdl/sdlvideowidget.h
         include/promeki/sdl/sdlwindow.h
     )
@@ -1214,9 +1219,10 @@ if(PROMEKI_BUILD_SDL)
     set(PROMEKI_SDL_SOURCES
         src/sdl/sdlapplication.cpp
         src/sdl/sdlaudiooutput.cpp
-        src/sdl/sdlaudiopacerclock.cpp
+        src/sdl/sdlaudioclock.cpp
         src/sdl/sdleventpump.cpp
         src/sdl/sdlplayer.cpp
+        src/sdl/sdlplayerold.cpp
         src/sdl/sdlvideowidget.cpp
         src/sdl/sdlwindow.cpp
     )
@@ -1248,6 +1254,15 @@ endif()
 if(PROMEKI_BUILD_DEMOS)
     add_subdirectory(demos)
 endif()
+
+# Functional Tests #############################################################
+#
+# Always configured, never part of the default build.  Targets inside
+# functests/ inherit EXCLUDE_FROM_ALL from this add_subdirectory call,
+# so `cmake --build <dir>` leaves them alone but
+# `cmake --build <dir> --target <name>-functest` still builds one on
+# demand.  See functests/CMakeLists.txt for the full rationale.
+add_subdirectory(functests EXCLUDE_FROM_ALL)
 
 # Install ######################################################################
 
@@ -1413,6 +1428,7 @@ if(PROMEKI_BUILD_TESTS)
         tests/fnv1a.cpp
         tests/fourcc.cpp
         tests/framepacer.cpp
+        tests/framesync.cpp
         tests/framerate.cpp
         tests/future.cpp
         tests/hashmap.cpp
@@ -1636,6 +1652,7 @@ if(PROMEKI_BUILD_TESTS)
     if(PROMEKI_BUILD_SDL)
         set(UNITTEST_SDL_SOURCES
             tests/doctest_main.cpp
+            tests/sdl/sdlaudioclock.cpp
             tests/sdl/sdlrenderer.cpp
         )
         add_executable(unittest-sdl ${UNITTEST_SDL_SOURCES})

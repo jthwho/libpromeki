@@ -942,6 +942,66 @@ inline const EUI64Format EUI64Format::OctetHyphen { 0 };
 inline const EUI64Format EUI64Format::OctetColon  { 1 };
 inline const EUI64Format EUI64Format::IPv6        { 2 };
 
+/**
+ * @brief Well-known Enum type for @c MediaIOTask_Inspector test selection.
+ *
+ * Element type for the @ref MediaConfig::InspectorTests EnumList — the
+ * inspector consumes a list of tests to run.  An empty list runs the
+ * default suite (every value below); a non-empty list runs exactly the
+ * listed tests and disables the rest.
+ *
+ * - @c ImageData  — decode the @c ImageDataEncoder bands carried in
+ *                   the picture (frame number, stream ID, picture TC).
+ * - @c Ltc        — decode LTC from the audio track.
+ * - @c TcSync     — picture TC vs audio LTC offset in samples.
+ *                   Implies @c ImageData + @c Ltc.
+ * - @c Continuity — frame number / stream ID / TC continuity.
+ *                   Implies @c ImageData.
+ * - @c Timestamp    — per-essence @ref MediaTimeStamp existence
+ *                     check, frame-to-frame delta (min / max / avg),
+ *                     and actual observed FPS.
+ * - @c AudioSamples — per-frame audio sample count (min / max / avg)
+ *                     plus measured audio sample rate derived from
+ *                     cumulative samples and audio MediaTimeStamps.
+ * - @c CaptureStats — write a per-frame TSV record (timestamps, image
+ *                     and audio formats, buffer sizes) to the file
+ *                     named by @ref MediaConfig::InspectorStatsFile
+ *                     (or a unique file in @c Dir::temp() when that
+ *                     key is empty).
+ */
+class InspectorTest : public TypedEnum<InspectorTest> {
+        public:
+                static inline const Enum::Type Type = Enum::registerType("InspectorTest",
+                        {
+                                { "ImageData",    0 },
+                                { "Ltc",          1 },
+                                { "TcSync",       2 },
+                                { "Continuity",   3 },
+                                { "Timestamp",    4 },
+                                { "AudioSamples", 5 },
+                                { "CaptureStats", 6 }
+                        },
+                        0);
+
+                using TypedEnum<InspectorTest>::TypedEnum;
+
+                static const InspectorTest ImageData;
+                static const InspectorTest Ltc;
+                static const InspectorTest TcSync;
+                static const InspectorTest Continuity;
+                static const InspectorTest Timestamp;
+                static const InspectorTest AudioSamples;
+                static const InspectorTest CaptureStats;
+};
+
+inline const InspectorTest InspectorTest::ImageData    { 0 };
+inline const InspectorTest InspectorTest::Ltc          { 1 };
+inline const InspectorTest InspectorTest::TcSync       { 2 };
+inline const InspectorTest InspectorTest::Continuity   { 3 };
+inline const InspectorTest InspectorTest::Timestamp    { 4 };
+inline const InspectorTest InspectorTest::AudioSamples { 5 };
+inline const InspectorTest InspectorTest::CaptureStats { 6 };
+
 /** @} */
 
 PROMEKI_NAMESPACE_END
